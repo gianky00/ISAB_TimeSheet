@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
                                QPushButton, QHBoxLayout, QMessageBox, QHeaderView)
-from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtGui import QAction, QKeySequence, QColor, QBrush
 from PySide6.QtCore import Qt
-from utils.database import init_db, insert_activity, get_all_activities, clear_activities
+from utils.database import init_db, insert_activity, get_all_activities, clear_activities, reset_all_status
 
 class ActivityWidget(QWidget):
     def __init__(self):
@@ -24,22 +24,31 @@ class ActivityWidget(QWidget):
 
         self.clear_btn = QPushButton("Svuota Database")
         self.clear_btn.clicked.connect(self.clear_database)
+        
+        self.reset_status_btn = QPushButton("Reset Stati")
+        self.reset_status_btn.clicked.connect(self.reset_status)
+        self.reset_status_btn.setToolTip("Resetta tutti gli stati a 'da_processare'")
 
         btn_layout.addWidget(self.refresh_btn)
         btn_layout.addWidget(self.paste_btn)
         btn_layout.addWidget(self.clear_btn)
+        btn_layout.addWidget(self.reset_status_btn)
         btn_layout.addStretch()
 
         layout.addLayout(btn_layout)
 
-        # Table
+        # Table - Prima colonna è Stato (non editabile), seconda è Data TS
         self.table = QTableWidget()
         self.columns = [
+            "Stato",  # Prima colonna - non editabile
+            "Data TS",  # Seconda colonna - prima editabile
             "Numero OdA", "Posizione OdA", "Codice Fiscale", "Ingresso", "Uscita",
             "Tipo Prestazione", "C", "M", "Str D", "Str N", "Str F D", "Str F N",
             "Sq", "Nota D", "Nota S", "F S", "G T"
         ]
         self.db_columns = [
+            "stato",  # Prima colonna nel DB
+            "data_ts",  # Seconda colonna nel DB
             "numero_oda", "posizione_oda", "codice_fiscale", "ingresso", "uscita",
             "tipo_prestazione", "c", "m", "str_d", "str_n", "str_f_d", "str_f_n",
             "sq", "nota_d", "nota_s", "f_s", "g_t"
@@ -48,9 +57,26 @@ class ActivityWidget(QWidget):
         self.table.setColumnCount(len(self.columns))
         self.table.setHorizontalHeaderLabels(self.columns)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        
+        # Imposta larghezza minima per colonna Stato
+        self.table.setColumnWidth(0, 150)
 
         layout.addWidget(self.table)
         self.setLayout(layout)
+
+    def get_row_color(self, stato):
+        """
+        Ritorna il colore di sfondo basato sullo stato.
+        - completato: verde con trasparenza
+        - errore: rosso con trasparenza
+        - da_processare: nessun colore
+        """
+        if stato == "completato":
+            return QColor(76, 175, 80, 80)  # Verde con trasparenza (alpha=80)
+        elif stato and stato.startswith("errore"):
+            return QColor(244, 67, 54, 80)  # Rosso con trasparenza (alpha=80)
+        else:
+            return None  # Nessun colore (default)
 
     def load_data(self):
         self.table.setRowCount(0)
@@ -58,11 +84,24 @@ class ActivityWidget(QWidget):
         self.table.setRowCount(len(rows))
 
         for i, row in enumerate(rows):
-            # row is a sqlite3.Row object
+            # Ottieni lo stato per determinare il colore della riga
+            stato = row["stato"] if row["stato"] else "da_processare"
+            row_color = self.get_row_color(stato)
+            
             for j, db_col in enumerate(self.db_columns):
                 val = str(row[db_col]) if row[db_col] is not None else ""
                 item = QTableWidgetItem(val)
-                item.setFlags(item.flags() ^ Qt.ItemFlag.ItemIsEditable) # Make read-only for now? Or editable? User didn't specify, but DB is source of truth.
+                
+                # Prima colonna (Stato) non è mai editabile
+                if j == 0:
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                else:
+                    item.setFlags(item.flags() ^ Qt.ItemFlag.ItemIsEditable)
+                
+                # Applica il colore di sfondo se necessario
+                if row_color:
+                    item.setBackground(QBrush(row_color))
+                
                 self.table.setItem(i, j, item)
 
     def paste_from_clipboard(self):
@@ -79,16 +118,25 @@ class ActivityWidget(QWidget):
             return
 
         try:
-            # We assume the user copies columns in the exact order requested
+            # L'utente copia le colonne SENZA lo stato (che viene gestito automaticamente)
+            # Quindi le colonne dalla clipboard sono: data_ts, numero_oda, posizione_oda, codice_fiscale, ecc.
+            db_columns_without_stato = [
+                "data_ts", "numero_oda", "posizione_oda", "codice_fiscale", "ingresso", "uscita",
+                "tipo_prestazione", "c", "m", "str_d", "str_n", "str_f_d", "str_f_n",
+                "sq", "nota_d", "nota_s", "f_s", "g_t"
+            ]
+            
             count = 0
             for row_str in rows:
                 cols = row_str.split('\t')
 
                 # Create a dict for insertion
                 data = {}
-                # Map clipboard columns to DB columns by index
-                # If clipboard has fewer columns, fill with empty string
-                for idx, db_col in enumerate(self.db_columns):
+                # Lo stato viene impostato automaticamente a 'da_processare'
+                data["stato"] = "da_processare"
+                
+                # Map clipboard columns to DB columns by index (escludendo stato)
+                for idx, db_col in enumerate(db_columns_without_stato):
                     val = cols[idx].strip() if idx < len(cols) else ""
                     data[db_col] = val
 
@@ -106,6 +154,13 @@ class ActivityWidget(QWidget):
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
             clear_activities()
+            self.load_data()
+
+    def reset_status(self):
+        reply = QMessageBox.question(self, "Conferma", "Vuoi resettare tutti gli stati a 'da_processare'?",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            reset_all_status()
             self.load_data()
 
     def gui_clipboard(self):

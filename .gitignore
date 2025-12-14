@@ -6,3 +6,4 @@ database.db
 *.spec
 dist/
 build/
+venv/

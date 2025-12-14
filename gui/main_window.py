@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
         self.bot_thread.log_signal.connect(self.log_msg)
         self.bot_thread.error_signal.connect(self.log_error)
         self.bot_thread.finished_signal.connect(self.bot_finished)
+        self.bot_thread.refresh_db_signal.connect(self.refresh_database_view)
         self.bot_thread.start()
 
     def start_bot_upload(self):
@@ -132,13 +133,26 @@ class MainWindow(QMainWindow):
         upload_data = [dict(row) for row in rows]
 
         if not upload_data:
-            QMessageBox.warning(self, "Attenzione", "Nessun dato nel Database.")
+            QMessageBox.information(self, "Informazione", "Nessun dato nel Database.\nImporta prima i dati dalla tab 'Database'.")
             return
+
+        # Filtra solo le righe da processare (stato = 'da_processare' o vuoto)
+        righe_da_processare = [
+            row for row in upload_data 
+            if not row.get("stato") or row.get("stato") == "da_processare"
+        ]
+
+        if not righe_da_processare:
+            QMessageBox.information(self, "Informazione", "Nessuna riga da processare.\nTutte le righe sono già state elaborate o sono in errore.\n\nUsa il pulsante 'Reset Stati' nella tab Database per reimpostare.")
+            return
+
+        self.log_output.append(f"--- Trovate {len(righe_da_processare)} righe da processare ---")
 
         self.bot_thread = BotWorker(mode="UPLOAD", upload_data=upload_data)
         self.bot_thread.log_signal.connect(self.log_msg)
         self.bot_thread.error_signal.connect(self.log_error)
         self.bot_thread.finished_signal.connect(self.bot_finished)
+        self.bot_thread.refresh_db_signal.connect(self.refresh_database_view)
         self.bot_thread.start()
 
     def log_msg(self, msg):
@@ -151,6 +165,12 @@ class MainWindow(QMainWindow):
         self.log_output.append("--- Bot terminato ---")
         QMessageBox.information(self, "Info", "Operazioni Bot completate.")
         self.bot_thread = None
+        # Aggiorna la vista del database alla fine
+        self.refresh_database_view()
+
+    def refresh_database_view(self):
+        """Aggiorna la tabella del database per riflettere i cambiamenti di stato"""
+        self.activity_tab.load_data()
 
 def main():
     app = QApplication(sys.argv)

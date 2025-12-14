@@ -12,10 +12,17 @@ class UploadWidget(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
 
-        info_lbl = QLabel("Funzionalità Carico TS:\n"
-                          "Premi il pulsante sottostante per avviare il Login.\n"
-                          "Il Bot si fermerà dopo l'accesso per permettere operazioni manuali.")
-        info_lbl.setAlignment(Qt.AlignCenter)
+        info_lbl = QLabel("Funzionalità Carico TS:\n\n"
+                          "1. Il Bot aprirà il browser e farà il login automatico\n"
+                          "2. Navigherà a Gestione Timesheet\n"
+                          "3. Per ogni riga nel Database (stato='da_processare'):\n"
+                          "   - Inserirà il Numero OdA\n"
+                          "   - Cliccherà su 'Estrai OdA'\n"
+                          "   - Se trovato: cliccherà sull'icona link\n"
+                          "   - Se non trovato: aggiornerà lo stato a 'errore'\n\n"
+                          "Lo stato delle righe sarà aggiornato in tempo reale nella tab Database.")
+        info_lbl.setAlignment(Qt.AlignLeft)
+        info_lbl.setWordWrap(True)
         layout.addWidget(info_lbl)
 
         layout.addStretch()
