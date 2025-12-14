@@ -345,6 +345,7 @@ class BotWorker(QThread):
         var el = arguments[0]; var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
         var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);"""
 
+        # Process only the first valid row for now as requested
         for idx, row_data in enumerate(self.upload_data):
             oda = row_data.get("numero_oda", "").strip()
             if not oda:
@@ -372,17 +373,21 @@ class BotWorker(QThread):
                 # Let's assume it's the first visible one or try to match the ID pattern if stable? No.
                 # Let's try name 'NumeroOda' first as it's consistent in other parts.
 
+                # Refined selector based on Label "Numero OdA"
+                xpath_label_input = "//label[contains(text(), 'Numero OdA')]/following::input[1]"
                 try:
-                    input_oda = self.wait.until(EC.visibility_of_element_located((By.NAME, "NumeroOda")))
+                     input_oda = self.wait.until(EC.visibility_of_element_located((By.XPATH, xpath_label_input)))
                 except:
-                    # If name not found, try the xpath and hope it's the right one
-                    inputs = self.driver.find_elements(By.XPATH, xpath_input)
-                    # Filter visible
-                    visible_inputs = [i for i in inputs if i.is_displayed()]
-                    if visible_inputs:
-                        input_oda = visible_inputs[0] # Assume first
-                    else:
-                        raise Exception("Campo Input OdA non trovato")
+                     # Fallback
+                    try:
+                        input_oda = self.wait.until(EC.visibility_of_element_located((By.NAME, "NumeroOda")))
+                    except:
+                        inputs = self.driver.find_elements(By.XPATH, xpath_input)
+                        visible_inputs = [i for i in inputs if i.is_displayed()]
+                        if visible_inputs:
+                            input_oda = visible_inputs[0]
+                        else:
+                            raise Exception("Campo Input OdA non trovato")
 
                 # Ensure focus by clicking first
                 self.driver.execute_script("arguments[0].click();", input_oda)
@@ -405,10 +410,10 @@ class BotWorker(QThread):
                 # PAUSE HERE for further instructions or next steps
                 # For now, just a small sleep to let user see
                 time.sleep(2)
+                self.log("Fermato dopo la prima riga come richiesto.")
+                break # Stop after first row as requested
 
             except Exception as e:
                 self.log(f"Errore elaborazione OdA {oda}: {e}")
                 traceback.print_exc()
-                # Break or Continue?
-                # If one fails, maybe stop?
                 break
