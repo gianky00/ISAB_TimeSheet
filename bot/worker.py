@@ -281,16 +281,16 @@ class BotWorker(QThread):
         try:
             self.log("Selezione Fornitore 'COEMI'...")
             xpath_trigger = "//div[contains(@class, 'x-form-trigger') and contains(@class, 'x-form-trigger-default')]"
-            # Assuming it's the combo box that appears on this page. Might need index if multiple.
-            # User said ID ends in 1176.
-            # Let's try to find the combo box trigger associated with "Fornitore" or generic
+
+            # Use JS click to prevent double-click issues on sensitive ExtJS triggers
             trigger = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_trigger)))
-            trigger.click()
+            self.driver.execute_script("arguments[0].click();", trigger)
 
             # 4. Select Option
             coemi_xpath = f"//li[contains(text(), 'KK10608 - COEMI S.R.L.')]"
             option = self.long_wait.until(EC.element_to_be_clickable((By.XPATH, coemi_xpath)))
-            option.click()
+            self.driver.execute_script("arguments[0].click();", option) # Also use JS for option to be safe/fast
+
             self.attendi_scomparsa_overlay()
         except Exception as e:
             raise Exception(f"Errore selezione Fornitore: {e}")
