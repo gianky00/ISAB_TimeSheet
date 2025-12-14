@@ -1017,23 +1017,15 @@ class BotWorker(QThread):
     def clicca_aggiungi_finale(self):
         """
         Clicca sul pulsante Aggiungi per confermare.
-        Selettore dall'immagine: a#round_button-1427 con name 'Aggiungi', background bianco
+        Metodo: 1 TAB + INVIO dopo aver selezionato la riga.
         """
         try:
-            # Cerca il pulsante Aggiungi - è un pulsante con bordo verde
-            xpath_aggiungi = "//a[contains(@id, 'round_button')]//span[normalize-space(text())='Aggiungi']"
+            self.log("  Click su Aggiungi (1 TAB + INVIO)...")
             
-            try:
-                btn_aggiungi = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_aggiungi)))
-            except TimeoutException:
-                # Fallback
-                xpath_fallback = "//span[normalize-space(text())='Aggiungi' and contains(@class, 'x-btn-inner')]/ancestor::a[contains(@class, 'x-btn')]"
-                btn_aggiungi = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_fallback)))
-
-            # Click
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_aggiungi)
-            time.sleep(0.2)
-            self.driver.execute_script("arguments[0].click();", btn_aggiungi)
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.TAB)
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
             
             self.attendi_scomparsa_overlay()
             time.sleep(0.5)
