@@ -71,12 +71,9 @@ class MainWindow(QMainWindow):
         # Sub-tab 1: Scarico TS (Existing logic)
         self.download_tab = DownloadWidget()
 
-        # Sub-tab 2: Carico TS (New placeholder)
-        self.upload_tab = QWidget()
-        lbl_upload = QLabel("Funzionalità Carico TS in sviluppo...")
-        upload_layout = QVBoxLayout()
-        upload_layout.addWidget(lbl_upload)
-        self.upload_tab.setLayout(upload_layout)
+        # Sub-tab 2: Carico TS
+        from gui.upload_widget import UploadWidget
+        self.upload_tab = UploadWidget()
 
         self.bot_tabs.addTab(self.download_tab, "Scarico TS")
         self.bot_tabs.addTab(self.upload_tab, "Carico TS")
@@ -102,17 +99,33 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         # Connect Download Widget Signal
-        self.download_tab.start_download_signal.connect(self.start_bot)
+        self.download_tab.start_download_signal.connect(self.start_bot_download)
+
+        # Connect Upload Widget Signal
+        self.upload_tab.start_upload_signal.connect(self.start_bot_upload)
 
         self.bot_thread = None
 
-    def start_bot(self, download_tasks, data_da):
+    def start_bot_download(self, download_tasks, data_da):
         if self.bot_thread and self.bot_thread.isRunning():
             QMessageBox.warning(self, "Attenzione", "Il Bot è già in esecuzione.")
             return
 
         self.log_output.append(f"--- Avvio Bot con {len(download_tasks)} task (Data: {data_da}) ---")
         self.bot_thread = BotWorker(download_tasks, data_da=data_da)
+        self.bot_thread.log_signal.connect(self.log_msg)
+        self.bot_thread.error_signal.connect(self.log_error)
+        self.bot_thread.finished_signal.connect(self.bot_finished)
+        self.bot_thread.start()
+
+    def start_bot_upload(self):
+        if self.bot_thread and self.bot_thread.isRunning():
+            QMessageBox.warning(self, "Attenzione", "Il Bot è già in esecuzione.")
+            return
+
+        self.log_output.append("--- Avvio Bot: Login Only (Carico TS) ---")
+        # Empty task list -> Login only
+        self.bot_thread = BotWorker(download_tasks=[], data_da="01.01.2025")
         self.bot_thread.log_signal.connect(self.log_msg)
         self.bot_thread.error_signal.connect(self.log_error)
         self.bot_thread.finished_signal.connect(self.bot_finished)

@@ -1,27 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                               QLineEdit, QPushButton, QScrollArea, QFrame,
-                               QMessageBox, QDateEdit)
+                               QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
+                               QHeaderView, QMessageBox, QDateEdit, QAbstractItemView)
 from PySide6.QtCore import Qt, Signal, QDate
-
-class DownloadRow(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self.oda_input = QLineEdit()
-        self.oda_input.setPlaceholderText("Numero OdA")
-
-        self.pos_input = QLineEdit()
-        self.pos_input.setPlaceholderText("Posizione OdA")
-
-        layout.addWidget(self.oda_input)
-        layout.addWidget(self.pos_input)
-
-        self.setLayout(layout)
-
-    def get_data(self):
-        return self.oda_input.text().strip(), self.pos_input.text().strip()
 
 class DownloadWidget(QWidget):
     # Signal to start the bot: list of (oda, pos), data_da string
@@ -29,19 +9,18 @@ class DownloadWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.rows = []
         self.init_ui()
 
     def init_ui(self):
         main_layout = QVBoxLayout()
 
-        # Date Input
+        # --- Date Input Section ---
         date_layout = QHBoxLayout()
         date_lbl = QLabel("Data Inizio Timesheet:")
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDisplayFormat("dd.MM.yyyy")
-        # Default to 01.01.2025 as per previous hardcoded value, or current year start
+        # Default to 01.01.2025 as per request, or can be dynamic
         self.date_edit.setDate(QDate(2025, 1, 1))
 
         date_layout.addWidget(date_lbl)
@@ -49,21 +28,25 @@ class DownloadWidget(QWidget):
         date_layout.addStretch()
         main_layout.addLayout(date_layout)
 
-        # Instruction Label
-        lbl = QLabel("Inserisci fino a 20 righe di Numero OdA e Posizione OdA")
+        # --- Table Section ---
+        lbl = QLabel("Lista OdA da scaricare:")
         main_layout.addWidget(lbl)
 
-        # Scroll Area for rows
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
-        self.scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.scroll.setWidget(self.scroll_content)
+        self.table = QTableWidget()
+        self.table.setColumnCount(2)
+        self.table.setHorizontalHeaderLabels(["Numero OdA", "Posizione OdA"])
 
-        main_layout.addWidget(self.scroll)
+        # Stretch columns to fill space
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        # Buttons Control
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
+
+        main_layout.addWidget(self.table)
+
+        # --- Controls (Add/Remove) ---
         btn_layout = QHBoxLayout()
 
         add_btn = QPushButton("+ Aggiungi Riga")
@@ -76,7 +59,7 @@ class DownloadWidget(QWidget):
         btn_layout.addWidget(remove_btn)
         main_layout.addLayout(btn_layout)
 
-        # Start Button
+        # --- Start Button ---
         self.start_btn = QPushButton("Avvia Scarico TS")
         self.start_btn.clicked.connect(self.on_start_clicked)
         self.start_btn.setFixedHeight(40)
@@ -85,30 +68,40 @@ class DownloadWidget(QWidget):
 
         self.setLayout(main_layout)
 
-        # Add initial row
+        # Add a default starting row
         self.add_row()
 
     def add_row(self):
-        if len(self.rows) >= 20:
-            QMessageBox.warning(self, "Limite Raggiunto", "Massimo 20 righe consentite.")
-            return
-
-        row = DownloadRow()
-        self.scroll_layout.addWidget(row)
-        self.rows.append(row)
+        row_idx = self.table.rowCount()
+        self.table.insertRow(row_idx)
+        # Optional: Initialize with empty strings or specific widgets if needed,
+        # but default QTableWidgetItem editing is sufficient.
 
     def remove_row(self):
-        if not self.rows:
-            return
-
-        row = self.rows.pop()
-        self.scroll_layout.removeWidget(row)
-        row.deleteLater()
+        current_row = self.table.currentRow()
+        if current_row >= 0:
+            self.table.removeRow(current_row)
+        else:
+            # If no row selected, remove the last one?
+            # Or show warning? User asked for "Remove selected",
+            # let's try removing last if none selected for convenience,
+            # or just require selection.
+            # Behavior: Remove last if count > 0
+            count = self.table.rowCount()
+            if count > 0:
+                self.table.removeRow(count - 1)
 
     def on_start_clicked(self):
         data_to_process = []
-        for row in self.rows:
-            oda, pos = row.get_data()
+        rows = self.table.rowCount()
+
+        for r in range(rows):
+            item_oda = self.table.item(r, 0)
+            item_pos = self.table.item(r, 1)
+
+            oda = item_oda.text().strip() if item_oda else ""
+            pos = item_pos.text().strip() if item_pos else ""
+
             if oda: # Only add if OdA is present
                 data_to_process.append((oda, pos))
 
