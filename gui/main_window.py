@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget,
                                QTextEdit)
 from PySide6.QtCore import Qt
 from utils.config import load_config, save_config
+from utils.database import get_all_activities
 from bot.worker import BotWorker
 
 class SettingsWidget(QWidget):
@@ -123,9 +124,18 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Attenzione", "Il Bot è già in esecuzione.")
             return
 
-        self.log_output.append("--- Avvio Bot: Login Only (Carico TS) ---")
-        # Empty task list -> Login only
-        self.bot_thread = BotWorker(download_tasks=[], data_da="01.01.2025")
+        self.log_output.append("--- Avvio Bot: Carico TS ---")
+
+        # Fetch data from Database
+        rows = get_all_activities()
+        # Convert sqlite3.Row to dict for easier handling in worker
+        upload_data = [dict(row) for row in rows]
+
+        if not upload_data:
+            QMessageBox.warning(self, "Attenzione", "Nessun dato nel Database.")
+            return
+
+        self.bot_thread = BotWorker(mode="UPLOAD", upload_data=upload_data)
         self.bot_thread.log_signal.connect(self.log_msg)
         self.bot_thread.error_signal.connect(self.log_error)
         self.bot_thread.finished_signal.connect(self.bot_finished)

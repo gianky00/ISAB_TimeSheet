@@ -26,26 +26,32 @@ class BotWorker(QThread):
     finished_signal = Signal()
     error_signal = Signal(str)
 
-    def __init__(self, download_tasks=None, data_da="01.01.2025"):
+    def __init__(self, download_tasks=None, data_da="01.01.2025", mode="DOWNLOAD", upload_data=None):
         """
         download_tasks: List of tuples [(oda, pos), ...]
         data_da: Start date string (dd.mm.yyyy)
+        mode: "DOWNLOAD" or "UPLOAD"
+        upload_data: List of dicts (from DB) for upload logic
         """
         super().__init__()
         self.download_tasks = download_tasks or []
         self.data_da = data_da
+        self.mode = mode
+        self.upload_data = upload_data or []
         self.config = load_config()
         self.driver = None
         self.download_dir = get_downloads_path()
 
     def run(self):
         try:
-            self.log("Avvio del Bot...")
+            self.log(f"Avvio del Bot (Mode: {self.mode})...")
             self.init_driver()
             self.login()
 
-            if self.download_tasks:
+            if self.mode == "DOWNLOAD" and self.download_tasks:
                 self.process_download_tasks()
+            elif self.mode == "UPLOAD":
+                 self.process_upload_tasks()
 
             self.log("Operazioni completate. Il browser rimarrà aperto per eventuali ispezioni.")
 
@@ -248,3 +254,121 @@ class BotWorker(QThread):
             campo_data_da.send_keys(self.data_da)
         except Exception as e:
              raise Exception(f"Errore setup filtri: {str(e)}")
+
+    def process_upload_tasks(self):
+        self.log("Inizio procedura Carico TS...")
+
+        # 1. Timesheet
+        try:
+            self.log("Click su 'Timesheet'...")
+            # Using text based xpath as ID 1035 might be dynamic
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Timesheet']"))).click()
+            self.attendi_scomparsa_overlay()
+        except Exception as e:
+            raise Exception(f"Errore navigazione Timesheet: {e}")
+
+        # 2. Gestione Timesheet
+        try:
+            self.log("Click su 'Gestione Timesheet'...")
+            # Look for button containing text
+            xpath_gestione = "//span[contains(@class, 'x-btn-inner') and normalize-space(text())='Gestione Timesheet']"
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_gestione))).click()
+            self.attendi_scomparsa_overlay()
+        except Exception as e:
+            raise Exception(f"Errore navigazione Gestione Timesheet: {e}")
+
+        # 3. Apri elenco (Fornitore)
+        try:
+            self.log("Selezione Fornitore 'COEMI'...")
+            xpath_trigger = "//div[contains(@class, 'x-form-trigger') and contains(@class, 'x-form-trigger-default')]"
+            # Assuming it's the combo box that appears on this page. Might need index if multiple.
+            # User said ID ends in 1176.
+            # Let's try to find the combo box trigger associated with "Fornitore" or generic
+            trigger = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_trigger)))
+            trigger.click()
+
+            # 4. Select Option
+            coemi_xpath = f"//li[contains(text(), 'KK10608 - COEMI S.R.L.')]"
+            option = self.long_wait.until(EC.element_to_be_clickable((By.XPATH, coemi_xpath)))
+            option.click()
+            self.attendi_scomparsa_overlay()
+        except Exception as e:
+            raise Exception(f"Errore selezione Fornitore: {e}")
+
+        # Loop through rows from Database
+        if not self.upload_data:
+            self.log("Nessun dato trovato nel database per il Carico TS.")
+            return
+
+        # For now, we only process the first row as per implicit flow, or loop?
+        # User said "lo prendi dal database partendo dalla riga 1"
+        # and "continua con altre logiche che ti dirò dopo".
+        # I'll loop but maybe break after first or just do the entry part.
+
+        js_dispatch_events = """
+        var el = arguments[0]; var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
+        var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);"""
+
+        for idx, row_data in enumerate(self.upload_data):
+            oda = row_data.get("numero_oda", "").strip()
+            if not oda:
+                self.log(f"Riga {idx+1}: Numero OdA mancante, salto.")
+                continue
+
+            self.log(f"Elaborazione Riga {idx+1}: Inserimento OdA '{oda}'...")
+
+            try:
+                # 5. Inserisci Numero OdA
+                # Looking for input field. User ID: input#textfield-1177-inputEl
+                # Better: Input with name or label?
+                # Assuming it's the main text field that appears after selecting provider.
+                # Let's try finding by class x-form-field
+                # Or try to find by label if exists.
+                # Fallback to generic text input if specific ID not reliable.
+                # But typically OdA field has name="NumeroOda" or similar in ExtJS?
+                # In 'process_download_tasks' we used By.NAME, "NumeroOda".
+                # If this is the same 'Gestione Timesheet' page structure, it might have a name.
+                # If not, let's look for an input that is visible.
+
+                xpath_input = "//input[contains(@class, 'x-form-field') and contains(@class, 'x-form-text')]"
+                # There might be multiple. "Posizione" might be there too?
+                # User specifically pointed to one input.
+                # Let's assume it's the first visible one or try to match the ID pattern if stable? No.
+                # Let's try name 'NumeroOda' first as it's consistent in other parts.
+
+                try:
+                    input_oda = self.wait.until(EC.visibility_of_element_located((By.NAME, "NumeroOda")))
+                except:
+                    # If name not found, try the xpath and hope it's the right one
+                    inputs = self.driver.find_elements(By.XPATH, xpath_input)
+                    # Filter visible
+                    visible_inputs = [i for i in inputs if i.is_displayed()]
+                    if visible_inputs:
+                        input_oda = visible_inputs[0] # Assume first
+                    else:
+                        raise Exception("Campo Input OdA non trovato")
+
+                input_oda.clear()
+                self.driver.execute_script("arguments[0].value = arguments[1];", input_oda, oda)
+                self.driver.execute_script(js_dispatch_events, input_oda)
+
+                # 6. Estrai OdA
+                self.log("Click su 'Estrai OdA'...")
+                xpath_estrai = "//span[contains(@class, 'x-btn-inner') and normalize-space(text())='Estrai OdA']"
+                btn_estrai = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_estrai)))
+                btn_estrai.click()
+
+                self.attendi_scomparsa_overlay()
+
+                self.log(f"Estrai OdA cliccato per OdA {oda}.")
+
+                # PAUSE HERE for further instructions or next steps
+                # For now, just a small sleep to let user see
+                time.sleep(2)
+
+            except Exception as e:
+                self.log(f"Errore elaborazione OdA {oda}: {e}")
+                traceback.print_exc()
+                # Break or Continue?
+                # If one fails, maybe stop?
+                break
