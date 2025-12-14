@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+data/
+config.json
+database.db
+*.spec
+dist/
+build/
