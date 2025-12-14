@@ -60,12 +60,32 @@ class MainWindow(QMainWindow):
         # We will add Activity and Download tabs later, for now we can create empty widgets or minimal placeholders
         from gui.activity_widget import ActivityWidget
         from gui.download_widget import DownloadWidget
+
         self.activity_tab = ActivityWidget()
+
+        # BOT Tab Container with Sub-tabs
+        self.bot_tab_container = QWidget()
+        bot_layout = QVBoxLayout(self.bot_tab_container)
+        self.bot_tabs = QTabWidget()
+
+        # Sub-tab 1: Scarico TS (Existing logic)
         self.download_tab = DownloadWidget()
 
+        # Sub-tab 2: Carico TS (New placeholder)
+        self.upload_tab = QWidget()
+        lbl_upload = QLabel("Funzionalità Carico TS in sviluppo...")
+        upload_layout = QVBoxLayout()
+        upload_layout.addWidget(lbl_upload)
+        self.upload_tab.setLayout(upload_layout)
+
+        self.bot_tabs.addTab(self.download_tab, "Scarico TS")
+        self.bot_tabs.addTab(self.upload_tab, "Carico TS")
+
+        bot_layout.addWidget(self.bot_tabs)
+
         self.tabs.addTab(self.settings_tab, "Impostazioni")
-        self.tabs.addTab(self.activity_tab, "Attività")
-        self.tabs.addTab(self.download_tab, "Scarico TS")
+        self.tabs.addTab(self.activity_tab, "Database")
+        self.tabs.addTab(self.bot_tab_container, "BOT")
 
         # Log Output Area
         self.log_output = QTextEdit()
