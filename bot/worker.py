@@ -348,6 +348,10 @@ class BotWorker(QThread):
                     else:
                         raise Exception("Campo Input OdA non trovato")
 
+                # Ensure focus by clicking first
+                self.driver.execute_script("arguments[0].click();", input_oda)
+                time.sleep(0.5) # Small pause to allow UI to react to focus
+
                 input_oda.clear()
                 self.driver.execute_script("arguments[0].value = arguments[1];", input_oda, oda)
                 self.driver.execute_script(js_dispatch_events, input_oda)
