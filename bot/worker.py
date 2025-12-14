@@ -821,72 +821,56 @@ class BotWorker(QThread):
     def inserisci_codice_fiscale(self, codice_fiscale):
         """
         Inserisce il codice fiscale nel campo apposito.
-        Selettore dall'immagine: input#textfield-1280-inputEl con name 'Codice Fiscale:'
+        Metodo: 6 TAB dalla finestra per raggiungere il campo, poi digita carattere per carattere.
         """
         try:
-            js_dispatch_events = """
-            var el = arguments[0]; var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
-            var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);"""
-
-            # Cerca per label/name accessibilità "Codice Fiscale"
-            xpath_cf = "//label[contains(text(), 'Codice Fiscale')]/ancestor::div[contains(@class, 'x-field')]//input[contains(@class, 'x-form-text')]"
+            # Attendi che la finestra sia completamente caricata
+            time.sleep(1)
             
-            campo_cf = None
-            
+            # Clicca sulla finestra per assicurarsi che abbia il focus
             try:
-                campo_cf = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath_cf)))
-            except TimeoutException:
-                pass
-            
-            if not campo_cf:
-                # Fallback: cerca per ID pattern
+                xpath_window = "//div[contains(@class, 'x-window')]//span[contains(text(), 'Aggiungi Risorsa')]"
+                window_header = self.short_wait.until(EC.presence_of_element_located((By.XPATH, xpath_window)))
+                self.driver.execute_script("arguments[0].click();", window_header)
+                time.sleep(0.3)
+            except:
+                # Se non trova l'header, clicca sul body della finestra
                 try:
-                    xpath_id = "//input[contains(@id, 'textfield') and contains(@class, 'x-form-field')]"
-                    inputs = self.driver.find_elements(By.XPATH, xpath_id)
-                    # Filtra per quelli visibili nella popup
-                    for inp in inputs:
-                        if inp.is_displayed() and inp.is_enabled():
-                            # Verifica che sia il campo giusto controllando il parent
-                            try:
-                                parent = inp.find_element(By.XPATH, "./ancestor::div[contains(@class, 'x-field')]")
-                                if parent.is_displayed():
-                                    campo_cf = inp
-                                    break
-                            except:
-                                campo_cf = inp
-                                break
+                    xpath_body = "//div[contains(@class, 'x-window-body')]"
+                    window_body = self.driver.find_element(By.XPATH, xpath_body)
+                    self.driver.execute_script("arguments[0].click();", window_body)
+                    time.sleep(0.3)
                 except:
                     pass
             
-            if not campo_cf:
-                # Ultimo fallback: primo input text visibile e vuoto nella popup
-                xpath_fallback = "//div[contains(@class, 'x-window')]//input[contains(@class, 'x-form-field') and contains(@class, 'x-form-text')]"
-                inputs = self.driver.find_elements(By.XPATH, xpath_fallback)
-                for inp in inputs:
-                    if inp.is_displayed() and inp.is_enabled():
-                        val = inp.get_attribute("value") or ""
-                        if not val:  # Campo vuoto
-                            campo_cf = inp
-                            break
+            # Usa ActionChains per navigare con TAB fino al campo Codice Fiscale
+            actions = ActionChains(self.driver)
             
-            if not campo_cf:
-                raise Exception("Campo Codice Fiscale non trovato")
-
-            # Focus e inserimento
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", campo_cf)
-            time.sleep(0.2)
-            self.driver.execute_script("arguments[0].focus();", campo_cf)
-            time.sleep(0.2)
-            campo_cf.clear()
-            time.sleep(0.1)
+            # 6 TAB per raggiungere il campo Codice Fiscale
+            self.log("  Navigazione al campo Codice Fiscale (6 TAB)...")
+            for i in range(6):
+                actions.send_keys(Keys.TAB)
+            actions.perform()
+            time.sleep(0.5)
             
-            # Inserisci valore
-            self.driver.execute_script("arguments[0].value = arguments[1];", campo_cf, codice_fiscale)
-            self.driver.execute_script(js_dispatch_events, campo_cf)
-            
-            # Anche send_keys per sicurezza
-            campo_cf.send_keys(Keys.TAB)
+            # Ora il focus dovrebbe essere sul campo Codice Fiscale
+            # Digita il codice fiscale carattere per carattere per sicurezza
+            actions = ActionChains(self.driver)
+            actions.send_keys(codice_fiscale)
+            actions.perform()
             time.sleep(0.3)
+            
+            # Verifica che il valore sia stato inserito
+            try:
+                # Cerca il campo attivo o il campo CF
+                active_element = self.driver.switch_to.active_element
+                val_inserito = active_element.get_attribute("value") or ""
+                if codice_fiscale in val_inserito:
+                    self.log(f"  Codice Fiscale '{codice_fiscale}' inserito correttamente.")
+                else:
+                    self.log(f"  Valore nel campo: '{val_inserito}' - potrebbe non corrispondere.")
+            except:
+                pass
             
             self.log(f"  Codice Fiscale '{codice_fiscale}' inserito.")
             return True
@@ -898,29 +882,16 @@ class BotWorker(QThread):
     def clicca_cerca_popup(self):
         """
         Clicca sul pulsante Cerca nella popup.
-        Selettore dall'immagine: a#round_button-1325 con name 'Cerca', background #008E55
+        Metodo: 3 TAB + INVIO dopo aver inserito il Codice Fiscale.
         """
         try:
-            # Cerca il pulsante Cerca - è un pulsante verde rotondo
-            # Prima prova per ID pattern
-            xpath_cerca = "//a[contains(@id, 'round_button')]//span[normalize-space(text())='Cerca']"
+            self.log("  Navigazione al pulsante Cerca (3 TAB + INVIO)...")
             
-            try:
-                btn_cerca = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca)))
-            except TimeoutException:
-                # Fallback: cerca per testo e classe
-                xpath_fallback = "//a[contains(@class, 'x-btn') and contains(@class, 'round')]//span[normalize-space(text())='Cerca']"
-                try:
-                    btn_cerca = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_fallback)))
-                except TimeoutException:
-                    # Altro fallback
-                    xpath_text = "//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]/ancestor::a[contains(@class, 'x-btn')]"
-                    btn_cerca = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_text)))
-
-            # Click
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_cerca)
-            time.sleep(0.2)
-            self.driver.execute_script("arguments[0].click();", btn_cerca)
+            actions = ActionChains(self.driver)
+            for i in range(3):
+                actions.send_keys(Keys.TAB)
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
             
             self.attendi_scomparsa_overlay()
             time.sleep(1)  # Attendi che i risultati vengano caricati
@@ -1024,55 +995,20 @@ class BotWorker(QThread):
 
     def seleziona_riga_dipendente(self):
         """
-        Seleziona la riga del dipendente trovato cliccando sul checkbox.
-        Selettore dall'immagine: span.x-grid-checkcolumn::after
-        La riga mostra codice e nome come "KK10608 COEMI S.R.L."
+        Seleziona la riga del dipendente trovato.
+        Metodo: 2 TAB + INVIO dopo aver cliccato Cerca.
         """
         try:
-            # Cerca il checkbox della griglia - può essere in diverse forme in ExtJS
-            # Prova prima con la classe specifica
-            xpath_checkbox = "//div[contains(@class, 'x-grid-cell-checkcolumn')]"
+            self.log("  Selezione riga dipendente (2 TAB + INVIO)...")
             
-            try:
-                # Trova la cella del checkbox
-                checkbox_cell = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath_checkbox)))
-                # Clicca sulla cella per selezionare
-                self.driver.execute_script("arguments[0].click();", checkbox_cell)
-                time.sleep(0.3)
-                return True
-            except TimeoutException:
-                pass
+            actions = ActionChains(self.driver)
+            for i in range(2):
+                actions.send_keys(Keys.TAB)
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
             
-            # Fallback: cerca per classe span
-            xpath_span = "//span[contains(@class, 'x-grid-checkcolumn')]"
-            try:
-                checkbox = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_span)))
-                self.driver.execute_script("arguments[0].click();", checkbox)
-                time.sleep(0.3)
-                return True
-            except TimeoutException:
-                pass
-            
-            # Altro fallback: clicca sulla riga stessa
-            xpath_row = "//div[contains(@class, 'x-grid-item')]//table[contains(@class, 'x-grid-item')]"
-            try:
-                row = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_row)))
-                self.driver.execute_script("arguments[0].click();", row)
-                time.sleep(0.3)
-                return True
-            except TimeoutException:
-                pass
-            
-            # Ultimo tentativo: trova qualsiasi elemento cliccabile nella griglia della popup
-            xpath_grid_cell = "//div[contains(@class, 'x-window')]//div[contains(@class, 'x-grid')]//td"
-            cells = self.driver.find_elements(By.XPATH, xpath_grid_cell)
-            for cell in cells:
-                if cell.is_displayed():
-                    self.driver.execute_script("arguments[0].click();", cell)
-                    time.sleep(0.3)
-                    return True
-            
-            raise Exception("Checkbox/riga non trovata")
+            time.sleep(0.5)
+            return True
 
         except Exception as e:
             self.log(f"  Errore selezione riga dipendente: {e}")
