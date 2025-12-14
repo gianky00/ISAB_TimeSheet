@@ -1,85 +1,51 @@
 @echo off
-setlocal enableextensions enabledelayedexpansion
+setlocal
 
 echo ==========================================
-echo      AVVIO AUTOMATICO APPLICAZIONE
+echo      AVVIO APPLICAZIONE ISAB
 echo ==========================================
 echo.
 
 REM 1. Verifica Python
-echo [1/5] Verifica installazione Python...
+echo [1] Verifica installazione Python...
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERRORE] Python non trovato!
-    echo Assicurati che Python sia installato e aggiunto alle variabili d'ambiente (PATH).
-    goto :errore
+    echo [ERRORE] Python non trovato! Assicurati che sia installato e nel PATH.
+    pause
+    exit /b 1
 )
-python --version
 
-REM 2. Verifica/Creazione Virtual Environment
-set "VENV_DIR=venv"
-if not exist "%VENV_DIR%" (
-    echo [2/5] Creazione ambiente virtuale '%VENV_DIR%' in corso...
-    python -m venv %VENV_DIR%
-    if !errorlevel! neq 0 (
-        echo [ERRORE] Impossibile creare l'ambiente virtuale.
-        goto :errore
-    )
-    echo Ambiente creato con successo.
+REM 2. Setup Ambiente Virtuale
+if not exist "venv" (
+    echo [2] Creazione ambiente virtuale...
+    python -m venv venv
 ) else (
-    echo [2/5] Ambiente virtuale '%VENV_DIR%' gia' esistente.
+    echo [2] Ambiente virtuale esistente.
 )
 
-REM 3. Attivazione Virtual Environment
-echo [3/5] Attivazione ambiente virtuale...
-if not exist "%VENV_DIR%\Scripts\activate.bat" (
-    echo [ERRORE] File di attivazione non trovato: "%VENV_DIR%\Scripts\activate.bat"
-    echo Prova a cancellare la cartella 'venv' e riavviare.
-    goto :errore
-)
-call "%VENV_DIR%\Scripts\activate.bat"
-if !errorlevel! neq 0 (
-    echo [ERRORE] Attivazione fallita.
-    goto :errore
+REM 3. Attivazione e Dipendenze
+echo [3] Attivazione ambiente e controllo dipendenze...
+call venv\Scripts\activate.bat
+if exist requirements.txt (
+    pip install -r requirements.txt >nul
 )
 
-REM 4. Installazione Dipendenze
-if exist "requirements.txt" (
-    echo [4/5] Controllo e installazione dipendenze...
-    pip install -r requirements.txt
-    if !errorlevel! neq 0 (
-        echo [ERRORE] Installazione delle dipendenze fallita.
-        goto :errore
-    )
-) else (
-    echo [4/5] File requirements.txt non trovato. Salto installazione.
-)
-
-REM 5. Avvio Applicazione
+REM 4. Avvio Main
 echo.
-echo [5/5] Avvio applicazione (main.py)...
-echo ==========================================
-echo.
+echo [4] Avvio interfaccia grafica...
+echo ------------------------------------------
 python main.py
-if !errorlevel! neq 0 (
+
+REM 5. Gestione Chiusura
+if %errorlevel% neq 0 (
     echo.
-    echo ==========================================
-    echo [ERRORE] L'applicazione si e' chiusa in modo anomalo.
-    goto :errore
+    echo ------------------------------------------
+    echo [ERRORE] L'applicazione si e' chiusa con un errore.
+) else (
+    echo.
+    echo ------------------------------------------
+    echo Applicazione chiusa correttamente.
 )
 
 echo.
-echo ==========================================
-echo Applicazione chiusa correttamente.
-echo ==========================================
 pause
-exit /b 0
-
-:errore
-echo.
-echo ==========================================
-echo SI E' VERIFICATO UN ERRORE BLOCCANTE.
-echo Leggi i messaggi sopra per i dettagli.
-echo ==========================================
-pause
-exit /b 1

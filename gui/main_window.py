@@ -63,9 +63,9 @@ class MainWindow(QMainWindow):
         self.activity_tab = ActivityWidget()
         self.download_tab = DownloadWidget()
 
-        self.tabs.addWidget(self.settings_tab, "Impostazioni")
-        self.tabs.addWidget(self.activity_tab, "Attività")
-        self.tabs.addWidget(self.download_tab, "Scarico TS")
+        self.tabs.addTab(self.settings_tab, "Impostazioni")
+        self.tabs.addTab(self.activity_tab, "Attività")
+        self.tabs.addTab(self.download_tab, "Scarico TS")
 
         # Log Output Area
         self.log_output = QTextEdit()
