@@ -280,18 +280,54 @@ class BotWorker(QThread):
         # 3. Apri elenco (Fornitore)
         try:
             self.log("Selezione Fornitore 'COEMI'...")
+            # More specific xpath to find the trigger: looks for the trigger in a form item that likely contains 'Fornitore' or is the only enabled combo.
+            # Since structure is unknown, we stick to the class but filter for visibility and maybe index.
+            # Using ActionChains to ensure 'human-like' interaction which ExtJS often prefers for expanding lists.
+
             xpath_trigger = "//div[contains(@class, 'x-form-trigger') and contains(@class, 'x-form-trigger-default')]"
 
-            # Use JS click to prevent double-click issues on sensitive ExtJS triggers
-            trigger = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_trigger)))
-            self.driver.execute_script("arguments[0].click();", trigger)
+            triggers = self.wait.until(EC.presence_of_all_elements_located((By.XPATH, xpath_trigger)))
+            # Filter only visible triggers
+            visible_triggers = [t for t in triggers if t.is_displayed()]
+
+            if not visible_triggers:
+                raise Exception("Nessun menu a tendina visibile trovato.")
+
+            # Assume the relevant one is the last one or the one related to the filter.
+            # If there are multiple, usually the filter one is prominent. Let's try the first visible one first.
+            trigger = visible_triggers[0]
+
+            # Retry logic: Click and wait for option. If not found, click again.
+            coemi_xpath = f"//li[contains(text(), 'KK10608 - COEMI S.R.L.')]"
+
+            max_retries = 3
+            option = None
+
+            for attempt in range(max_retries):
+                try:
+                    self.log(f"  Tentativo apertura elenco {attempt+1}...")
+                    # Scroll to trigger
+                    self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", trigger)
+                    time.sleep(0.5)
+
+                    # Try ActionChains click
+                    ActionChains(self.driver).move_to_element(trigger).click().perform()
+
+                    # Wait quickly for option
+                    option = WebDriverWait(self.driver, 3).until(EC.element_to_be_clickable((By.XPATH, coemi_xpath)))
+                    if option:
+                        break # Found it!
+                except TimeoutException:
+                    self.log("  Opzione non apparsa, riprovo click...")
+                    time.sleep(1)
+
+            if not option:
+                raise Exception("Impossibile aprire l'elenco fornitori o opzione COEMI non trovata.")
 
             # 4. Select Option
-            coemi_xpath = f"//li[contains(text(), 'KK10608 - COEMI S.R.L.')]"
-            option = self.long_wait.until(EC.element_to_be_clickable((By.XPATH, coemi_xpath)))
-            self.driver.execute_script("arguments[0].click();", option) # Also use JS for option to be safe/fast
-
+            self.driver.execute_script("arguments[0].click();", option)
             self.attendi_scomparsa_overlay()
+
         except Exception as e:
             raise Exception(f"Errore selezione Fornitore: {e}")
 
