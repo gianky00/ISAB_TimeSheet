@@ -156,7 +156,7 @@ def auto_download_license_if_needed():
             return
     
     # Repository per Bot TS licenses
-    base_url = f"https://api.github.com/repos/gianky00/licenses/contents/{hw_id}"
+    base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
     token = get_github_token()
     headers = {
         "Authorization": f"token {token}",
@@ -207,7 +207,7 @@ def auto_download_license_if_needed():
     else:
         print("[LICENZA] ⚠ Download automatico fallito")
         print("[LICENZA] Assicurati che la licenza sia presente su GitHub:")
-        print(f"[LICENZA] github.com/gianky00/licenses/{hw_id}/")
+        print(f"[LICENZA] github.com/gianky00/intelleo-licenses/tree/main/licenses/{hw_id}/")
     
     print("[LICENZA] ═══════════════════════════════════════════════")
 
@@ -238,7 +238,7 @@ def run_update():
             return
 
     # Repository per Bot TS licenses
-    base_url = f"https://api.github.com/repos/gianky00/licenses/contents/{hw_id}"
+    base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
     token = get_github_token()
     headers = {
         "Authorization": f"token {token}",

@@ -125,7 +125,7 @@ python admin/Crea\ Licenze/admin_license_gui.py
 ### Repository Licenze
 
 Le licenze vengono distribuite tramite repository GitHub privato:
-`github.com/gianky00/licenses`
+`github.com/gianky00/intelleo-licenses/tree/main/licenses`
 
 ## ⚙️ Configurazione
 
