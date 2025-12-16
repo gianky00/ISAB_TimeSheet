@@ -1,6 +1,6 @@
 """
 Bot TS - Dettagli OdA Module
 """
-from .bot import DettagliOdABot
+from src.bots.dettagli_oda.bot import DettagliOdABot
 
 __all__ = ['DettagliOdABot']

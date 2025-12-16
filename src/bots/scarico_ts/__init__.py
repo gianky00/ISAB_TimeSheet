@@ -1,6 +1,6 @@
 """
 Bot TS - Scarico TS Module
 """
-from .bot import ScaricaTSBot
+from src.bots.scarico_ts.bot import ScaricaTSBot
 
 __all__ = ['ScaricaTSBot']

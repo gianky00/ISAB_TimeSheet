@@ -3,7 +3,7 @@ Bot TS - Carico Timesheet
 Bot per l'upload dei timesheet sul portale ISAB.
 """
 from typing import Dict, Any, List
-from src.bots.base import BaseBot, BotStatus
+from ..base import BaseBot, BotStatus
 
 
 class CaricoTSBot(BaseBot):
@@ -85,3 +85,11 @@ class CaricoTSBot(BaseBot):
         self.log("[INFO] Funzionalità Carico TS in fase di sviluppo...")
         
         return True
+
+
+class CaricoTSBotFactory:
+    """Factory per creare istanze di CaricoTSBot."""
+    
+    @staticmethod
+    def create(**kwargs) -> CaricoTSBot:
+        return CaricoTSBot(**kwargs)

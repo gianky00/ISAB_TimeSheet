@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 
-from src.bots.base import BaseBot, BotStatus
+from ..base import BaseBot
 
 
 class ScaricaTSBot(BaseBot):
@@ -25,7 +25,7 @@ class ScaricaTSBot(BaseBot):
     Funzionalità:
     - Login al portale ISAB
     - Navigazione a Report -> Timesheet
-    - Selezione fornitore (configurabile, default COEMI S.R.L.)
+    - Selezione fornitore COEMI S.R.L.
     - Impostazione data iniziale
     - Ricerca per Numero OdA / Posizione OdA
     - Download del file Excel
@@ -34,7 +34,7 @@ class ScaricaTSBot(BaseBot):
     """
     
     # Fornitore predefinito
-    DEFAULT_FORNITORE = "KK10608 - COEMI S.R.L."
+    FORNITORE = "KK10608 - COEMI S.R.L."
     
     @staticmethod
     def get_name() -> str:
@@ -59,18 +59,16 @@ class ScaricaTSBot(BaseBot):
     def description(self) -> str:
         return "Scarica i timesheet dal portale ISAB"
     
-    def __init__(self, data_da: str = "01.01.2025", fornitore: str = None, **kwargs):
+    def __init__(self, data_da: str = "01.01.2025", **kwargs):
         """
         Inizializza il bot.
         
         Args:
             data_da: Data inizio timesheet (formato dd.mm.yyyy)
-            fornitore: Nome fornitore da selezionare (default: KK10608 - COEMI S.R.L.)
             **kwargs: Altri parametri per BaseBot
         """
         super().__init__(**kwargs)
         self.data_da = data_da
-        self.fornitore = fornitore if fornitore else self.DEFAULT_FORNITORE
     
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """
@@ -78,7 +76,7 @@ class ScaricaTSBot(BaseBot):
         
         Args:
             data: Dict con 'rows' contenente lista di dict con keys: numero_oda, posizione_oda
-                  e opzionalmente 'data_da' e 'fornitore'
+                  e opzionalmente 'data_da' per la data
             
         Returns:
             True se tutti i download hanno successo
@@ -87,8 +85,6 @@ class ScaricaTSBot(BaseBot):
         if isinstance(data, dict):
             rows = data.get('rows', [])
             self.data_da = data.get('data_da', self.data_da)
-            if data.get('fornitore'):
-                self.fornitore = data.get('fornitore')
         else:
             rows = data
         
@@ -98,7 +94,6 @@ class ScaricaTSBot(BaseBot):
         
         self.log(f"Processamento {len(rows)} righe...")
         self.log(f"Data inizio: {self.data_da}")
-        self.log(f"Fornitore: {self.fornitore}")
         
         try:
             # 1. Naviga a Report -> Timesheet
@@ -220,7 +215,7 @@ class ScaricaTSBot(BaseBot):
         
         try:
             # Seleziona Fornitore
-            self.log(f"  Selezione fornitore: '{self.fornitore}'...")
+            self.log(f"  Selezione fornitore: '{self.FORNITORE}'...")
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             fornitore_arrow_element = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
@@ -228,15 +223,15 @@ class ScaricaTSBot(BaseBot):
             ActionChains(self.driver).move_to_element(fornitore_arrow_element).click().perform()
             self.log("  Click sulla freccia del dropdown Fornitore eseguito.")
             
-            # Seleziona l'opzione fornitore
-            fornitore_option_xpath = f"//li[normalize-space(text())='{self.fornitore}']"
-            fornitore_option = self.long_wait.until(
-                EC.presence_of_element_located((By.XPATH, fornitore_option_xpath))
+            # Seleziona l'opzione COEMI
+            coemi_option_xpath = f"//li[normalize-space(text())='{self.FORNITORE}']"
+            coemi_option = self.long_wait.until(
+                EC.presence_of_element_located((By.XPATH, coemi_option_xpath))
             )
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option)
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", coemi_option)
             time.sleep(0.5)
-            self.driver.execute_script("arguments[0].click();", fornitore_option)
-            self.log(f"  ✓ Fornitore '{self.fornitore}' selezionato.")
+            self.driver.execute_script("arguments[0].click();", coemi_option)
+            self.log(f"  ✓ Fornitore '{self.FORNITORE}' selezionato.")
             
             self._attendi_scomparsa_overlay()
             
@@ -339,24 +334,24 @@ class ScaricaTSBot(BaseBot):
             self._init_driver()
             
             if not self._login():
-                self.status = BotStatus.ERROR
+                self.status.ERROR
                 return False
             
-            self.status = BotStatus.RUNNING
+            self.status.RUNNING
             result = self.run(data)
             
             # Nota: logout è già chiamato in run()
             
-            self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
+            self.status = self.status.COMPLETED if result else self.status.ERROR
             return result
             
         except InterruptedError:
             self.log("Bot interrotto")
-            self.status = BotStatus.STOPPED
+            self.status = self.status.STOPPED
             return False
         except Exception as e:
             self.log(f"✗ Errore esecuzione: {e}")
-            self.status = BotStatus.ERROR
+            self.status = self.status.ERROR
             return False
         finally:
             # Pausa prima di chiudere

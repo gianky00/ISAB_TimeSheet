@@ -4,11 +4,12 @@ Pannelli specifici per ogni bot.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog
+    QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
+    QDateEdit, QLineEdit
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate
 
-from .widgets import EditableDataTable, LogWidget, StatusIndicator
+from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator
 from src.core import config_manager
 
 
@@ -193,6 +194,9 @@ class BaseBotPanel(QWidget):
 class ScaricaTSPanel(BaseBotPanel):
     """Pannello per il bot Scarico TS."""
     
+    # Fornitore predefinito
+    DEFAULT_FORNITORE = "KK10608 - COEMI S.R.L."
+    
     def __init__(self, parent=None):
         super().__init__(
             bot_name="📥 Scarico TS",
@@ -204,8 +208,94 @@ class ScaricaTSPanel(BaseBotPanel):
     
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        # Tabella dati
-        group = QGroupBox("Dati Timesheet")
+        # --- Sezione Parametri ---
+        params_group = QGroupBox("⚙️ Parametri")
+        params_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+            }
+        """)
+        params_layout = QVBoxLayout(params_group)
+        
+        # Riga 1: Fornitore
+        fornitore_layout = QHBoxLayout()
+        fornitore_label = QLabel("Fornitore:")
+        fornitore_label.setStyleSheet("font-weight: normal;")
+        fornitore_label.setMinimumWidth(80)
+        fornitore_layout.addWidget(fornitore_label)
+        
+        self.fornitore_edit = QLineEdit()
+        self.fornitore_edit.setText(self.DEFAULT_FORNITORE)
+        self.fornitore_edit.setMinimumHeight(35)
+        self.fornitore_edit.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 13px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border-color: #0d6efd;
+            }
+        """)
+        fornitore_layout.addWidget(self.fornitore_edit)
+        
+        params_layout.addLayout(fornitore_layout)
+        
+        # Riga 2: Data
+        date_layout = QHBoxLayout()
+        date_label = QLabel("Data Da:")
+        date_label.setStyleSheet("font-weight: normal;")
+        date_label.setMinimumWidth(80)
+        date_layout.addWidget(date_label)
+        
+        self.date_edit = QDateEdit()
+        self.date_edit.setCalendarPopup(True)
+        self.date_edit.setDisplayFormat("dd.MM.yyyy")
+        # Default: 01.01.2025
+        self.date_edit.setDate(QDate(2025, 1, 1))
+        self.date_edit.setMinimumWidth(150)
+        self.date_edit.setMinimumHeight(35)
+        self.date_edit.setStyleSheet("""
+            QDateEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 13px;
+                background-color: white;
+            }
+            QDateEdit:focus {
+                border-color: #0d6efd;
+            }
+            QDateEdit::drop-down {
+                border: none;
+                width: 30px;
+            }
+        """)
+        date_layout.addWidget(self.date_edit)
+        
+        date_hint = QLabel("(Formato: gg.mm.aaaa)")
+        date_hint.setStyleSheet("color: #6c757d; font-size: 11px; font-weight: normal;")
+        date_layout.addWidget(date_hint)
+        
+        date_layout.addStretch()
+        
+        params_layout.addLayout(date_layout)
+        
+        self.content_layout.addWidget(params_group)
+        
+        # --- Sezione Tabella Dati ---
+        group = QGroupBox("📋 Dati Timesheet")
         group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -247,11 +337,32 @@ class ScaricaTSPanel(BaseBotPanel):
         saved_data = config.get("last_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
+        
+        # Carica la data salvata se presente
+        saved_date = config.get("last_ts_date", "01.01.2025")
+        try:
+            parts = saved_date.split(".")
+            if len(parts) == 3:
+                day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
+                self.date_edit.setDate(QDate(year, month, day))
+        except:
+            pass
+        
+        # Carica il fornitore salvato se presente
+        saved_fornitore = config.get("last_ts_fornitore", self.DEFAULT_FORNITORE)
+        self.fornitore_edit.setText(saved_fornitore)
     
     def _save_data(self):
         """Salva i dati correnti."""
         data = self.data_table.get_data()
         config_manager.set_config_value("last_ts_data", data)
+        
+        # Salva anche la data
+        date_str = self.date_edit.date().toString("dd.MM.yyyy")
+        config_manager.set_config_value("last_ts_date", date_str)
+        
+        # Salva il fornitore
+        config_manager.set_config_value("last_ts_fornitore", self.fornitore_edit.text())
     
     def _on_start(self):
         """Avvia il bot Scarico TS."""
@@ -274,6 +385,21 @@ class ScaricaTSPanel(BaseBotPanel):
             )
             return
         
+        fornitore = self.fornitore_edit.text().strip()
+        if not fornitore:
+            QMessageBox.warning(
+                self,
+                "Fornitore mancante",
+                "Inserisci il nome del fornitore."
+            )
+            return
+        
+        # Salva i dati correnti
+        self._save_data()
+        
+        # Ottieni la data selezionata
+        data_da = self.date_edit.date().toString("dd.MM.yyyy")
+        
         # Crea e avvia il worker
         from src.bots import create_bot
         
@@ -284,14 +410,23 @@ class ScaricaTSPanel(BaseBotPanel):
             password=password,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path()
+            download_path=config_manager.get_download_path(),
+            data_da=data_da,
+            fornitore=fornitore
         )
         
         if not bot:
             QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
             return
         
-        self.worker = BotWorker(bot, {"rows": data})
+        # Prepara i dati con la data e il fornitore
+        bot_data = {
+            "rows": data,
+            "data_da": data_da,
+            "fornitore": fornitore
+        }
+        
+        self.worker = BotWorker(bot, bot_data)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -301,7 +436,9 @@ class ScaricaTSPanel(BaseBotPanel):
         self.status_indicator.set_status("running")
         
         self.log_widget.clear()
-        self.log_widget.append("▶ Avvio bot Scarico TS...")
+        self.log_widget.append(f"▶ Avvio bot Scarico TS")
+        self.log_widget.append(f"  Fornitore: {fornitore}")
+        self.log_widget.append(f"  Data: {data_da}")
         
         self.worker.start()
         self.bot_started.emit()
