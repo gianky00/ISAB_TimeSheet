@@ -1,33 +1,36 @@
 """
 Bot TS - Settings Panel
-Pannello per le impostazioni dell'applicazione con interfaccia a schede.
+Pannello per la configurazione dell'applicazione.
+Include gestione lista fornitori e tracking modifiche non salvate.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGroupBox, QLineEdit, QCheckBox, QFrame, QGridLayout,
-    QFileDialog, QMessageBox, QSpinBox, QApplication,
-    QTabWidget, QScrollArea
+    QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
+    QMessageBox, QListWidget, QListWidgetItem, QInputDialog,
+    QFrame, QScrollArea
 )
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 
-from src.core import config_manager, license_validator, version
+from src.core import config_manager
 
 
 class SettingsPanel(QWidget):
-    """Pannello impostazioni dell'applicazione con schede."""
+    """Pannello per le impostazioni dell'applicazione."""
     
-    settings_changed = pyqtSignal()
+    # Segnale emesso quando ci sono modifiche non salvate
+    unsaved_changes = pyqtSignal(bool)
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._has_unsaved_changes = False
         self._setup_ui()
         self._load_settings()
+        self._connect_change_signals()
     
     def _setup_ui(self):
         """Configura l'interfaccia."""
-        layout = QVBoxLayout(self)
-        layout.setSpacing(15)
-        layout.setContentsMargins(0, 0, 0, 0)
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(15)
         
         # Header
         header = QFrame()
@@ -40,87 +43,241 @@ class SettingsPanel(QWidget):
             }
         """)
         header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(20, 15, 20, 15)
         
         title = QLabel("⚙️ Impostazioni")
         title.setStyleSheet("color: white; font-size: 18px; font-weight: bold;")
         header_layout.addWidget(title)
         
-        desc = QLabel("Configura le impostazioni dell'applicazione")
+        desc = QLabel("Configurazione credenziali ISAB, browser e fornitori")
         desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 12px;")
         header_layout.addWidget(desc)
         
-        layout.addWidget(header)
+        main_layout.addWidget(header)
         
-        # Tab Widget
-        self.tab_widget = QTabWidget()
-        self.tab_widget.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
+        # Scroll area per il contenuto
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setSpacing(15)
+        
+        # --- Sezione Credenziali ISAB ---
+        credentials_group = self._create_group_box("🔐 Credenziali ISAB")
+        cred_layout = QVBoxLayout(credentials_group)
+        
+        # Username
+        username_layout = QHBoxLayout()
+        username_label = QLabel("Username:")
+        username_label.setMinimumWidth(120)
+        username_layout.addWidget(username_label)
+        
+        self.username_edit = QLineEdit()
+        self.username_edit.setPlaceholderText("Inserisci username ISAB")
+        self.username_edit.setMinimumHeight(35)
+        self._style_input(self.username_edit)
+        username_layout.addWidget(self.username_edit)
+        cred_layout.addLayout(username_layout)
+        
+        # Password
+        password_layout = QHBoxLayout()
+        password_label = QLabel("Password:")
+        password_label.setMinimumWidth(120)
+        password_layout.addWidget(password_label)
+        
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_edit.setPlaceholderText("Inserisci password ISAB")
+        self.password_edit.setMinimumHeight(35)
+        self._style_input(self.password_edit)
+        password_layout.addWidget(self.password_edit)
+        
+        self.show_password_btn = QPushButton("👁")
+        self.show_password_btn.setFixedSize(35, 35)
+        self.show_password_btn.setCheckable(True)
+        self.show_password_btn.clicked.connect(self._toggle_password_visibility)
+        password_layout.addWidget(self.show_password_btn)
+        cred_layout.addLayout(password_layout)
+        
+        scroll_layout.addWidget(credentials_group)
+        
+        # --- Sezione Fornitori ---
+        fornitori_group = self._create_group_box("🏢 Gestione Fornitori")
+        fornitori_layout = QVBoxLayout(fornitori_group)
+        
+        fornitori_hint = QLabel(
+            "Gestisci l'elenco dei fornitori disponibili nel menu a tendina dello Scarico TS.\n"
+            "Formato consigliato: CODICE - NOME (es: KK10608 - COEMI S.R.L.)"
+        )
+        fornitori_hint.setStyleSheet("color: #6c757d; font-size: 11px;")
+        fornitori_hint.setWordWrap(True)
+        fornitori_layout.addWidget(fornitori_hint)
+        
+        # Lista fornitori
+        self.fornitori_list = QListWidget()
+        self.fornitori_list.setMinimumHeight(150)
+        self.fornitori_list.setStyleSheet("""
+            QListWidget {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
                 background-color: white;
-                margin-top: -1px;
+                padding: 5px;
             }
-            QTabBar::tab {
-                background-color: #f8f9fa;
-                color: #495057;
-                padding: 10px 20px;
-                margin-right: 2px;
-                border: 1px solid #dee2e6;
-                border-bottom: none;
-                border-top-left-radius: 6px;
-                border-top-right-radius: 6px;
-                font-weight: bold;
+            QListWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #f0f0f0;
             }
-            QTabBar::tab:selected {
-                background-color: white;
+            QListWidget::item:selected {
+                background-color: #e7f1ff;
                 color: #0d6efd;
-                border-bottom: 2px solid white;
             }
-            QTabBar::tab:hover:!selected {
-                background-color: #e9ecef;
+            QListWidget::item:hover {
+                background-color: #f8f9fa;
             }
         """)
+        fornitori_layout.addWidget(self.fornitori_list)
         
-        # Tab 1: Credenziali
-        self.tab_widget.addTab(self._create_credentials_tab(), "🔐 Credenziali")
+        # Pulsanti gestione fornitori
+        fornitori_btn_layout = QHBoxLayout()
         
-        # Tab 2: Browser
-        self.tab_widget.addTab(self._create_browser_tab(), "🌐 Browser")
+        self.add_fornitore_btn = QPushButton("➕ Aggiungi")
+        self.add_fornitore_btn.setMinimumHeight(32)
+        self.add_fornitore_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #28a745;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #218838;
+            }
+        """)
+        self.add_fornitore_btn.clicked.connect(self._add_fornitore)
+        fornitori_btn_layout.addWidget(self.add_fornitore_btn)
         
-        # Tab 3: Licenza e Info
-        self.tab_widget.addTab(self._create_license_tab(), "📜 Licenza e Info")
-        
-        layout.addWidget(self.tab_widget)
-        
-        # Pulsanti
-        btn_layout = QHBoxLayout()
-        btn_layout.setContentsMargins(0, 10, 0, 0)
-        btn_layout.addStretch()
-        
-        self.save_btn = QPushButton("💾 Salva Impostazioni")
-        self.save_btn.setMinimumWidth(160)
-        self.save_btn.setMinimumHeight(42)
-        self.save_btn.setStyleSheet("""
+        self.edit_fornitore_btn = QPushButton("✏️ Modifica")
+        self.edit_fornitore_btn.setMinimumHeight(32)
+        self.edit_fornitore_btn.setStyleSheet("""
             QPushButton {
                 background-color: #0d6efd;
                 color: white;
                 border: none;
-                border-radius: 6px;
+                border-radius: 4px;
+                padding: 5px 15px;
                 font-weight: bold;
-                font-size: 13px;
             }
             QPushButton:hover {
                 background-color: #0b5ed7;
             }
         """)
-        self.save_btn.clicked.connect(self._save_settings)
-        btn_layout.addWidget(self.save_btn)
+        self.edit_fornitore_btn.clicked.connect(self._edit_fornitore)
+        fornitori_btn_layout.addWidget(self.edit_fornitore_btn)
         
-        reset_btn = QPushButton("🔄 Ripristina")
-        reset_btn.setMinimumWidth(110)
-        reset_btn.setMinimumHeight(42)
-        reset_btn.setStyleSheet("""
+        self.remove_fornitore_btn = QPushButton("🗑️ Rimuovi")
+        self.remove_fornitore_btn.setMinimumHeight(32)
+        self.remove_fornitore_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+        """)
+        self.remove_fornitore_btn.clicked.connect(self._remove_fornitore)
+        fornitori_btn_layout.addWidget(self.remove_fornitore_btn)
+        
+        fornitori_btn_layout.addStretch()
+        fornitori_layout.addLayout(fornitori_btn_layout)
+        
+        scroll_layout.addWidget(fornitori_group)
+        
+        # --- Sezione Browser ---
+        browser_group = self._create_group_box("🌐 Impostazioni Browser")
+        browser_layout = QVBoxLayout(browser_group)
+        
+        # Headless
+        self.headless_check = QCheckBox("Esegui in modalità headless (senza interfaccia grafica)")
+        self.headless_check.setStyleSheet("padding: 5px;")
+        browser_layout.addWidget(self.headless_check)
+        
+        # Timeout
+        timeout_layout = QHBoxLayout()
+        timeout_label = QLabel("Timeout (secondi):")
+        timeout_label.setMinimumWidth(120)
+        timeout_layout.addWidget(timeout_label)
+        
+        self.timeout_spin = QSpinBox()
+        self.timeout_spin.setRange(10, 120)
+        self.timeout_spin.setValue(30)
+        self.timeout_spin.setMinimumHeight(35)
+        self.timeout_spin.setMinimumWidth(100)
+        self._style_input(self.timeout_spin)
+        timeout_layout.addWidget(self.timeout_spin)
+        timeout_layout.addStretch()
+        browser_layout.addLayout(timeout_layout)
+        
+        scroll_layout.addWidget(browser_group)
+        
+        # --- Sezione Download ---
+        download_group = self._create_group_box("📁 Cartella Download")
+        download_layout = QVBoxLayout(download_group)
+        
+        path_layout = QHBoxLayout()
+        
+        self.download_path_edit = QLineEdit()
+        self.download_path_edit.setPlaceholderText("Seleziona cartella per i file scaricati")
+        self.download_path_edit.setReadOnly(True)
+        self.download_path_edit.setMinimumHeight(35)
+        self._style_input(self.download_path_edit)
+        path_layout.addWidget(self.download_path_edit)
+        
+        self.browse_btn = QPushButton("📂 Sfoglia")
+        self.browse_btn.setMinimumHeight(35)
+        self.browse_btn.setMinimumWidth(100)
+        self.browse_btn.clicked.connect(self._browse_download_path)
+        self._style_button(self.browse_btn)
+        path_layout.addWidget(self.browse_btn)
+        
+        download_layout.addLayout(path_layout)
+        
+        scroll_layout.addWidget(download_group)
+        
+        # Spacer
+        scroll_layout.addStretch()
+        
+        scroll.setWidget(scroll_content)
+        main_layout.addWidget(scroll)
+        
+        # --- Pulsanti azione ---
+        action_layout = QHBoxLayout()
+        action_layout.addStretch()
+        
+        # Indicatore modifiche non salvate
+        self.unsaved_label = QLabel("⚠️ Modifiche non salvate")
+        self.unsaved_label.setStyleSheet("""
+            QLabel {
+                color: #dc3545;
+                font-weight: bold;
+                padding: 5px 10px;
+            }
+        """)
+        self.unsaved_label.setVisible(False)
+        action_layout.addWidget(self.unsaved_label)
+        
+        self.reset_btn = QPushButton("↩️ Annulla modifiche")
+        self.reset_btn.setMinimumWidth(140)
+        self.reset_btn.setMinimumHeight(40)
+        self.reset_btn.clicked.connect(self._reset_settings)
+        self.reset_btn.setStyleSheet("""
             QPushButton {
                 background-color: #6c757d;
                 color: white;
@@ -132,331 +289,271 @@ class SettingsPanel(QWidget):
                 background-color: #5a6268;
             }
         """)
-        reset_btn.clicked.connect(self._load_settings)
-        btn_layout.addWidget(reset_btn)
+        action_layout.addWidget(self.reset_btn)
         
-        layout.addLayout(btn_layout)
+        self.save_btn = QPushButton("💾 Salva impostazioni")
+        self.save_btn.setMinimumWidth(160)
+        self.save_btn.setMinimumHeight(40)
+        self.save_btn.clicked.connect(self._save_settings)
+        self.save_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #28a745;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #218838;
+            }
+        """)
+        action_layout.addWidget(self.save_btn)
         
-        # Stile globale
-        self.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 10px 12px;
-                font-size: 13px;
-                background-color: #ffffff;
-                color: #333333;
-                min-height: 20px;
-            }
-            QLineEdit:focus {
-                border-color: #0d6efd;
-                border-width: 2px;
-            }
-            QLineEdit:read-only {
-                background-color: #f8f9fa;
-            }
-            QCheckBox {
-                spacing: 8px;
-                font-size: 12px;
-                color: #333333;
-            }
-            QSpinBox {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: #ffffff;
-                min-height: 20px;
-            }
-            QLabel {
-                color: #333333;
-            }
+        main_layout.addLayout(action_layout)
+    
+    def _create_group_box(self, title: str) -> QGroupBox:
+        """Crea un group box stilizzato."""
+        group = QGroupBox(title)
+        group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
                 border: 1px solid #dee2e6;
                 border-radius: 6px;
-                margin-top: 15px;
-                padding: 20px;
-                padding-top: 30px;
-                background-color: #fafbfc;
+                margin-top: 10px;
+                padding-top: 10px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
-                padding: 0 8px;
-                color: #495057;
+                padding: 0 5px;
+            }
+        """)
+        return group
+    
+    def _style_input(self, widget):
+        """Applica lo stile standard agli input."""
+        widget.setStyleSheet("""
+            QLineEdit, QSpinBox {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 13px;
+                background-color: white;
+            }
+            QLineEdit:focus, QSpinBox:focus {
+                border-color: #0d6efd;
+            }
+            QLineEdit:read-only {
+                background-color: #f8f9fa;
             }
         """)
     
-    def _create_credentials_tab(self) -> QWidget:
-        """Crea la scheda Credenziali."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
-        # Credenziali ISAB
-        credentials_group = QGroupBox("🔐 Credenziali ISAB")
-        cred_layout = QGridLayout(credentials_group)
-        cred_layout.setSpacing(15)
-        cred_layout.setColumnStretch(1, 1)
-        
-        # Username
-        username_label = QLabel("Username:")
-        username_label.setMinimumWidth(100)
-        cred_layout.addWidget(username_label, 0, 0)
-        
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Inserisci username ISAB")
-        self.username_input.setMinimumHeight(40)
-        cred_layout.addWidget(self.username_input, 0, 1)
-        
-        # Password
-        password_label = QLabel("Password:")
-        cred_layout.addWidget(password_label, 1, 0)
-        
-        self.password_input = QLineEdit()
-        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password_input.setPlaceholderText("Inserisci password ISAB")
-        self.password_input.setMinimumHeight(40)
-        cred_layout.addWidget(self.password_input, 1, 1)
-        
-        # Mostra password
-        self.show_password_cb = QCheckBox("Mostra password")
-        self.show_password_cb.toggled.connect(self._toggle_password_visibility)
-        cred_layout.addWidget(self.show_password_cb, 2, 1)
-        
-        layout.addWidget(credentials_group)
-        
-        # Nota sicurezza
-        security_note = QLabel(
-            "🔒 Le credenziali vengono salvate in modo sicuro nella cartella dati dell'applicazione."
-        )
-        security_note.setStyleSheet("color: #6c757d; font-size: 11px; font-style: italic;")
-        security_note.setWordWrap(True)
-        layout.addWidget(security_note)
-        
-        layout.addStretch()
-        return tab
+    def _style_button(self, button):
+        """Applica lo stile standard ai pulsanti."""
+        button.setStyleSheet("""
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+        """)
     
-    def _create_browser_tab(self) -> QWidget:
-        """Crea la scheda Browser."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
-        # Percorso Download
-        download_group = QGroupBox("📁 Percorso Download")
-        download_layout = QVBoxLayout(download_group)
-        download_layout.setSpacing(12)
-        
-        download_desc = QLabel(
-            "Seleziona la cartella dove verranno salvati i file scaricati dai bot. "
-            "Se lasciato vuoto, verrà usata la cartella Download predefinita."
-        )
-        download_desc.setStyleSheet("color: #6c757d; font-size: 11px;")
-        download_desc.setWordWrap(True)
-        download_layout.addWidget(download_desc)
-        
-        path_layout = QHBoxLayout()
-        
-        self.download_path_input = QLineEdit()
-        self.download_path_input.setPlaceholderText("Cartella Download predefinita")
-        self.download_path_input.setReadOnly(True)
-        self.download_path_input.setMinimumHeight(40)
-        path_layout.addWidget(self.download_path_input)
-        
-        browse_btn = QPushButton("📂 Sfoglia")
-        browse_btn.setMinimumWidth(100)
-        browse_btn.setMinimumHeight(40)
-        browse_btn.clicked.connect(self._browse_download_path)
-        path_layout.addWidget(browse_btn)
-        
-        clear_path_btn = QPushButton("✕")
-        clear_path_btn.setFixedSize(40, 40)
-        clear_path_btn.setToolTip("Ripristina percorso predefinito")
-        clear_path_btn.clicked.connect(self._clear_download_path)
-        path_layout.addWidget(clear_path_btn)
-        
-        download_layout.addLayout(path_layout)
-        
-        # Mostra percorso corrente
-        self.current_path_label = QLabel()
-        self.current_path_label.setStyleSheet("color: #28a745; font-size: 11px;")
-        download_layout.addWidget(self.current_path_label)
-        
-        layout.addWidget(download_group)
-        
-        # Opzioni Browser
-        browser_group = QGroupBox("🌐 Opzioni Browser")
-        browser_layout = QVBoxLayout(browser_group)
-        browser_layout.setSpacing(15)
-        
-        self.headless_cb = QCheckBox("Esegui in modalità headless (senza finestra browser)")
-        self.headless_cb.setToolTip(
-            "Se attivo, il browser funziona in background senza mostrare la finestra. "
-            "Utile per esecuzioni automatiche, ma non permette di vedere cosa sta facendo il bot."
-        )
-        browser_layout.addWidget(self.headless_cb)
-        
-        timeout_layout = QHBoxLayout()
-        timeout_label = QLabel("Timeout operazioni (secondi):")
-        timeout_layout.addWidget(timeout_label)
-        
-        self.timeout_spin = QSpinBox()
-        self.timeout_spin.setRange(10, 120)
-        self.timeout_spin.setValue(30)
-        self.timeout_spin.setFixedWidth(80)
-        self.timeout_spin.setMinimumHeight(36)
-        timeout_layout.addWidget(self.timeout_spin)
-        timeout_layout.addStretch()
-        browser_layout.addLayout(timeout_layout)
-        
-        layout.addWidget(browser_group)
-        
-        layout.addStretch()
-        return tab
+    def _connect_change_signals(self):
+        """Collega i segnali per tracciare le modifiche."""
+        self.username_edit.textChanged.connect(self._on_change)
+        self.password_edit.textChanged.connect(self._on_change)
+        self.headless_check.stateChanged.connect(self._on_change)
+        self.timeout_spin.valueChanged.connect(self._on_change)
+        self.download_path_edit.textChanged.connect(self._on_change)
+        # La lista fornitori è gestita separatamente nei metodi add/edit/remove
     
-    def _create_license_tab(self) -> QWidget:
-        """Crea la scheda Licenza e Info."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
-        # Informazioni Licenza
-        license_group = QGroupBox("📜 Licenza")
-        license_layout = QGridLayout(license_group)
-        license_layout.setSpacing(12)
-        license_layout.setColumnStretch(1, 1)
-        
-        # Hardware ID
-        license_layout.addWidget(QLabel("Hardware ID:"), 0, 0)
-        hw_id = license_validator.get_hardware_id()
-        hw_id_display = hw_id[:35] + "..." if len(hw_id) > 35 else hw_id
-        self.hw_id_label = QLabel(hw_id_display)
-        self.hw_id_label.setStyleSheet("color: #495057; font-family: 'Consolas', monospace;")
-        license_layout.addWidget(self.hw_id_label, 0, 1)
-        
-        copy_hwid_btn = QPushButton("📋 Copia")
-        copy_hwid_btn.setFixedWidth(90)
-        copy_hwid_btn.setMinimumHeight(32)
-        copy_hwid_btn.clicked.connect(self._copy_hardware_id)
-        license_layout.addWidget(copy_hwid_btn, 0, 2)
-        
-        # Stato licenza
-        license_layout.addWidget(QLabel("Stato:"), 1, 0)
-        is_valid, message = license_validator.verify_license()
-        self.license_status_label = QLabel(message)
-        if is_valid:
-            self.license_status_label.setStyleSheet("color: #28a745; font-weight: bold;")
-        else:
-            self.license_status_label.setStyleSheet("color: #dc3545; font-weight: bold;")
-        license_layout.addWidget(self.license_status_label, 1, 1, 1, 2)
-        
-        # Scadenza
-        license_layout.addWidget(QLabel("Scadenza:"), 2, 0)
-        expiry = license_validator.get_license_expiry()
-        self.license_expiry_label = QLabel(expiry)
-        self.license_expiry_label.setStyleSheet("color: #495057;")
-        license_layout.addWidget(self.license_expiry_label, 2, 1, 1, 2)
-        
-        layout.addWidget(license_group)
-        
-        # Info Applicazione
-        app_group = QGroupBox("ℹ️ Informazioni Applicazione")
-        app_layout = QGridLayout(app_group)
-        app_layout.setSpacing(12)
-        app_layout.setColumnStretch(1, 1)
-        
-        app_layout.addWidget(QLabel("Applicazione:"), 0, 0)
-        app_name_label = QLabel(version.__app_name__)
-        app_name_label.setStyleSheet("font-weight: bold; color: #0d6efd;")
-        app_layout.addWidget(app_name_label, 0, 1)
-        
-        app_layout.addWidget(QLabel("Versione:"), 1, 0)
-        version_label = QLabel(version.__version__)
-        version_label.setStyleSheet("font-weight: bold;")
-        app_layout.addWidget(version_label, 1, 1)
-        
-        app_layout.addWidget(QLabel("Percorso dati:"), 2, 0)
-        data_path = config_manager.get_data_path()
-        data_path_label = QLabel(data_path)
-        data_path_label.setStyleSheet("color: #6c757d; font-size: 10px;")
-        data_path_label.setWordWrap(True)
-        app_layout.addWidget(data_path_label, 2, 1)
-        
-        layout.addWidget(app_group)
-        
-        layout.addStretch()
-        return tab
+    def _on_change(self):
+        """Chiamato quando un campo viene modificato."""
+        self._set_unsaved_changes(True)
     
-    def _toggle_password_visibility(self, checked: bool):
+    def _set_unsaved_changes(self, has_changes: bool):
+        """Imposta lo stato delle modifiche non salvate."""
+        self._has_unsaved_changes = has_changes
+        self.unsaved_label.setVisible(has_changes)
+        self.unsaved_changes.emit(has_changes)
+    
+    def has_unsaved_changes(self) -> bool:
+        """Restituisce True se ci sono modifiche non salvate."""
+        return self._has_unsaved_changes
+    
+    def _toggle_password_visibility(self):
         """Mostra/nasconde la password."""
-        if checked:
-            self.password_input.setEchoMode(QLineEdit.EchoMode.Normal)
+        if self.show_password_btn.isChecked():
+            self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.show_password_btn.setText("🔒")
         else:
-            self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+            self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
+            self.show_password_btn.setText("👁")
     
     def _browse_download_path(self):
-        """Apre il dialog per selezionare la cartella download."""
-        current = self.download_path_input.text() or config_manager.get_download_path()
-        
-        folder = QFileDialog.getExistingDirectory(
+        """Apre il dialogo per selezionare la cartella download."""
+        current_path = self.download_path_edit.text()
+        path = QFileDialog.getExistingDirectory(
             self,
             "Seleziona cartella download",
-            current,
-            QFileDialog.Option.ShowDirsOnly
+            current_path if current_path else ""
+        )
+        if path:
+            self.download_path_edit.setText(path)
+            self._set_unsaved_changes(True)
+    
+    def _add_fornitore(self):
+        """Aggiunge un nuovo fornitore."""
+        text, ok = QInputDialog.getText(
+            self,
+            "Aggiungi Fornitore",
+            "Inserisci il codice e nome del fornitore:\n(es: KK10608 - COEMI S.R.L.)"
+        )
+        if ok and text.strip():
+            # Verifica duplicati
+            for i in range(self.fornitori_list.count()):
+                if self.fornitori_list.item(i).text().lower() == text.strip().lower():
+                    QMessageBox.warning(
+                        self,
+                        "Fornitore esistente",
+                        "Questo fornitore è già presente nella lista."
+                    )
+                    return
+            
+            self.fornitori_list.addItem(text.strip())
+            self._set_unsaved_changes(True)
+    
+    def _edit_fornitore(self):
+        """Modifica il fornitore selezionato."""
+        current_item = self.fornitori_list.currentItem()
+        if not current_item:
+            QMessageBox.information(
+                self,
+                "Nessuna selezione",
+                "Seleziona un fornitore da modificare."
+            )
+            return
+        
+        text, ok = QInputDialog.getText(
+            self,
+            "Modifica Fornitore",
+            "Modifica il codice e nome del fornitore:",
+            text=current_item.text()
+        )
+        if ok and text.strip():
+            current_item.setText(text.strip())
+            self._set_unsaved_changes(True)
+    
+    def _remove_fornitore(self):
+        """Rimuove il fornitore selezionato."""
+        current_item = self.fornitori_list.currentItem()
+        if not current_item:
+            QMessageBox.information(
+                self,
+                "Nessuna selezione",
+                "Seleziona un fornitore da rimuovere."
+            )
+            return
+        
+        reply = QMessageBox.question(
+            self,
+            "Conferma rimozione",
+            f"Vuoi rimuovere il fornitore:\n{current_item.text()}?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
-        if folder:
-            self.download_path_input.setText(folder)
-            self._update_current_path_label()
-    
-    def _clear_download_path(self):
-        """Ripristina il percorso download predefinito."""
-        self.download_path_input.clear()
-        self._update_current_path_label()
-    
-    def _update_current_path_label(self):
-        """Aggiorna l'etichetta del percorso corrente."""
-        custom_path = self.download_path_input.text()
-        if custom_path:
-            self.current_path_label.setText(f"📁 Percorso personalizzato: {custom_path}")
-        else:
-            default_path = config_manager.get_download_path()
-            self.current_path_label.setText(f"📁 Percorso predefinito: {default_path}")
-    
-    def _copy_hardware_id(self):
-        """Copia l'Hardware ID negli appunti."""
-        hw_id = license_validator.get_hardware_id()
-        QApplication.clipboard().setText(hw_id)
-        QMessageBox.information(self, "Copiato", "Hardware ID copiato negli appunti!")
+        if reply == QMessageBox.StandardButton.Yes:
+            row = self.fornitori_list.row(current_item)
+            self.fornitori_list.takeItem(row)
+            self._set_unsaved_changes(True)
     
     def _load_settings(self):
         """Carica le impostazioni salvate."""
         config = config_manager.load_config()
         
-        self.username_input.setText(config.get("isab_username", ""))
-        self.password_input.setText(config.get("isab_password", ""))
-        self.download_path_input.setText(config.get("download_path", ""))
-        self.headless_cb.setChecked(config.get("browser_headless", False))
+        self.username_edit.setText(config.get("isab_username", ""))
+        self.password_edit.setText(config.get("isab_password", ""))
+        self.headless_check.setChecked(config.get("browser_headless", False))
         self.timeout_spin.setValue(config.get("browser_timeout", 30))
+        self.download_path_edit.setText(config.get("download_path", ""))
         
-        self._update_current_path_label()
+        # Carica fornitori
+        self.fornitori_list.clear()
+        fornitori = config.get("fornitori", [])
+        for fornitore in fornitori:
+            self.fornitori_list.addItem(fornitore)
+        
+        # Reset stato modifiche dopo il caricamento
+        self._set_unsaved_changes(False)
     
     def _save_settings(self):
         """Salva le impostazioni."""
-        config = config_manager.load_config()
+        # Raccogli fornitori dalla lista
+        fornitori = []
+        for i in range(self.fornitori_list.count()):
+            fornitori.append(self.fornitori_list.item(i).text())
         
-        config["isab_username"] = self.username_input.text().strip()
-        config["isab_password"] = self.password_input.text()
-        config["download_path"] = self.download_path_input.text().strip()
-        config["browser_headless"] = self.headless_cb.isChecked()
-        config["browser_timeout"] = self.timeout_spin.value()
+        # Salva tutte le impostazioni
+        config_manager.set_config_value("isab_username", self.username_edit.text())
+        config_manager.set_config_value("isab_password", self.password_edit.text())
+        config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
+        config_manager.set_config_value("browser_timeout", self.timeout_spin.value())
+        config_manager.set_config_value("download_path", self.download_path_edit.text())
+        config_manager.set_config_value("fornitori", fornitori)
         
-        if config_manager.save_config(config):
-            QMessageBox.information(self, "Salvato", "Impostazioni salvate con successo!")
-            self.settings_changed.emit()
+        self._set_unsaved_changes(False)
+        
+        QMessageBox.information(
+            self,
+            "Impostazioni salvate",
+            "Le impostazioni sono state salvate con successo."
+        )
+    
+    def _reset_settings(self):
+        """Annulla le modifiche e ricarica le impostazioni salvate."""
+        if self._has_unsaved_changes:
+            reply = QMessageBox.question(
+                self,
+                "Annulla modifiche",
+                "Vuoi annullare tutte le modifiche non salvate?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self._load_settings()
         else:
-            QMessageBox.critical(self, "Errore", "Impossibile salvare le impostazioni.")
+            self._load_settings()
+    
+    def prompt_save_if_needed(self) -> bool:
+        """
+        Se ci sono modifiche non salvate, chiede all'utente se vuole salvarle.
+        
+        Returns:
+            True se si può procedere (salvato o scartato), False se annullato
+        """
+        if not self._has_unsaved_changes:
+            return True
+        
+        reply = QMessageBox.question(
+            self,
+            "Modifiche non salvate",
+            "Ci sono modifiche non salvate nelle Impostazioni.\n\n"
+            "Vuoi salvarle prima di continuare?",
+            QMessageBox.StandardButton.Save | 
+            QMessageBox.StandardButton.Discard | 
+            QMessageBox.StandardButton.Cancel
+        )
+        
+        if reply == QMessageBox.StandardButton.Save:
+            self._save_settings()
+            return True
+        elif reply == QMessageBox.StandardButton.Discard:
+            self._load_settings()  # Reset alle impostazioni salvate
+            return True
+        else:  # Cancel
+            return False

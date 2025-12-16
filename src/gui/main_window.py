@@ -2,323 +2,284 @@
 Bot TS - Main Window
 Finestra principale dell'applicazione.
 """
+import sys
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QFrame, QStackedWidget, QSizePolicy, QMessageBox,
-    QApplication, QSplashScreen
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+    QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication
 )
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QFont, QIcon, QPixmap, QPainter, QColor
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter
 
-from src.core import version, config_manager, license_validator, app_updater
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel
 from src.gui.settings_panel import SettingsPanel
-from src.utils import get_app_icon_path
 
 
 class SidebarButton(QPushButton):
-    """Pulsante della sidebar."""
+    """Pulsante personalizzato per la sidebar."""
     
     def __init__(self, text: str, icon: str = "", parent=None):
         super().__init__(parent)
         self.setText(f"{icon} {text}" if icon else text)
         self.setCheckable(True)
-        self.setMinimumHeight(50)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        
-        self.setStyleSheet("""
-            QPushButton {
-                text-align: left;
-                padding: 12px 20px;
-                border: none;
-                border-radius: 8px;
-                font-size: 13px;
-                color: #495057;
-                background-color: transparent;
-            }
-            QPushButton:hover {
-                background-color: #e9ecef;
-            }
-            QPushButton:checked {
-                background-color: #0d6efd;
-                color: white;
-                font-weight: bold;
-            }
-        """)
+        self.setMinimumHeight(45)
+        self.setMinimumWidth(180)
+        self._update_style()
+        self.toggled.connect(self._update_style)
+    
+    def _update_style(self):
+        """Aggiorna lo stile in base allo stato."""
+        if self.isChecked():
+            self.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255, 255, 255, 0.2);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 15px;
+                    text-align: left;
+                    font-weight: bold;
+                    font-size: 13px;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QPushButton {
+                    background-color: transparent;
+                    color: rgba(255, 255, 255, 0.8);
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 15px;
+                    text-align: left;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: white;
+                }
+            """)
 
 
 class MainWindow(QMainWindow):
-    """Finestra principale dell'applicazione."""
+    """Finestra principale dell'applicazione Bot TS."""
     
     def __init__(self):
         super().__init__()
-        self._setup_window()
+        self.setWindowTitle("Bot TS - ISAB Timesheet Manager")
+        self.setMinimumSize(1000, 700)
+        
+        self._current_page_index = 0
         self._setup_ui()
-        self._check_license()
-        self._check_updates()
-    
-    def _setup_window(self):
-        """Configura la finestra."""
-        self.setWindowTitle(f"{version.__app_name__} v{version.__version__}")
-        self.setMinimumSize(1100, 700)
-        self.resize(1200, 750)
-        
-        # Icona
-        icon_path = get_app_icon_path()
-        if icon_path:
-            self.setWindowIcon(QIcon(icon_path))
-        
-        # Centra la finestra
-        screen = QApplication.primaryScreen().geometry()
-        x = (screen.width() - self.width()) // 2
-        y = (screen.height() - self.height()) // 2
-        self.move(x, y)
+        self._connect_signals()
     
     def _setup_ui(self):
-        """Configura l'interfaccia utente."""
+        """Configura l'interfaccia."""
+        # Widget centrale
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
+        # Layout principale orizzontale
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Sidebar
-        self.sidebar = self._create_sidebar()
-        main_layout.addWidget(self.sidebar)
-        
-        # Content Area
-        content_frame = QFrame()
-        content_frame.setStyleSheet("""
-            QFrame {
-                background-color: #f8f9fa;
-            }
-        """)
-        content_layout = QVBoxLayout(content_frame)
-        content_layout.setContentsMargins(20, 20, 20, 20)
-        
-        # Stacked Widget per i pannelli
-        self.stack = QStackedWidget()
-        
-        # Pannelli
-        self.scarico_ts_panel = ScaricaTSPanel()
-        self.carico_ts_panel = CaricoTSPanel()
-        self.dettagli_oda_panel = DettagliOdAPanel()
-        self.settings_panel = SettingsPanel()
-        
-        self.stack.addWidget(self.scarico_ts_panel)
-        self.stack.addWidget(self.carico_ts_panel)
-        self.stack.addWidget(self.dettagli_oda_panel)
-        self.stack.addWidget(self.settings_panel)
-        
-        content_layout.addWidget(self.stack)
-        
-        main_layout.addWidget(content_frame, 1)
-        
-        # Connetti i segnali della sidebar
-        self._connect_sidebar()
-        
-        # Seleziona il primo pannello
-        self.sidebar_buttons[0].setChecked(True)
-    
-    def _create_sidebar(self) -> QFrame:
-        """Crea la sidebar."""
+        # === SIDEBAR ===
         sidebar = QFrame()
-        sidebar.setFixedWidth(250)
+        sidebar.setFixedWidth(220)
         sidebar.setStyleSheet("""
             QFrame {
-                background-color: white;
-                border-right: 1px solid #dee2e6;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #667eea, stop:1 #764ba2);
             }
         """)
+        sidebar_layout = QVBoxLayout(sidebar)
+        sidebar_layout.setContentsMargins(15, 20, 15, 20)
+        sidebar_layout.setSpacing(5)
         
-        layout = QVBoxLayout(sidebar)
-        layout.setContentsMargins(15, 20, 15, 20)
-        layout.setSpacing(8)
+        # Logo/Titolo
+        logo_label = QLabel("🤖 Bot TS")
+        logo_label.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 24px;
+                font-weight: bold;
+                padding: 10px 0;
+            }
+        """)
+        sidebar_layout.addWidget(logo_label)
         
-        # Logo/Header
-        header = QLabel(version.__app_name__)
-        header.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
-        header.setStyleSheet("color: #0d6efd; padding: 10px 0;")
-        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(header)
-        
-        version_label = QLabel(f"v{version.__version__}")
-        version_label.setStyleSheet("color: #6c757d; font-size: 11px;")
-        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(version_label)
-        
-        # Separatore
-        sep1 = QFrame()
-        sep1.setFrameShape(QFrame.Shape.HLine)
-        sep1.setStyleSheet("background-color: #dee2e6;")
-        sep1.setFixedHeight(1)
-        layout.addWidget(sep1)
-        layout.addSpacing(10)
-        
-        # Titolo sezione
-        bots_label = QLabel("BOT DISPONIBILI")
-        bots_label.setStyleSheet("color: #6c757d; font-size: 11px; font-weight: bold;")
-        layout.addWidget(bots_label)
-        
-        # Pulsanti bot
-        self.sidebar_buttons = []
-        
-        scarico_btn = SidebarButton("Scarico TS", "📥")
-        self.sidebar_buttons.append(scarico_btn)
-        layout.addWidget(scarico_btn)
-        
-        carico_btn = SidebarButton("Carico TS", "📤")
-        self.sidebar_buttons.append(carico_btn)
-        layout.addWidget(carico_btn)
-        
-        oda_btn = SidebarButton("Dettagli OdA", "📋")
-        self.sidebar_buttons.append(oda_btn)
-        layout.addWidget(oda_btn)
-        
-        layout.addStretch()
+        subtitle = QLabel("ISAB Timesheet Manager")
+        subtitle.setStyleSheet("""
+            QLabel {
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 11px;
+                padding-bottom: 20px;
+            }
+        """)
+        sidebar_layout.addWidget(subtitle)
         
         # Separatore
-        sep2 = QFrame()
-        sep2.setFrameShape(QFrame.Shape.HLine)
-        sep2.setStyleSheet("background-color: #dee2e6;")
-        sep2.setFixedHeight(1)
-        layout.addWidget(sep2)
-        layout.addSpacing(10)
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setStyleSheet("background-color: rgba(255, 255, 255, 0.2);")
+        sidebar_layout.addWidget(separator)
+        
+        sidebar_layout.addSpacing(15)
+        
+        # Pulsanti navigazione
+        self.btn_scarico = SidebarButton("Scarico TS", "📥")
+        self.btn_scarico.setChecked(True)
+        sidebar_layout.addWidget(self.btn_scarico)
+        
+        self.btn_carico = SidebarButton("Carico TS", "📤")
+        sidebar_layout.addWidget(self.btn_carico)
+        
+        self.btn_dettagli = SidebarButton("Dettagli OdA", "📋")
+        sidebar_layout.addWidget(self.btn_dettagli)
+        
+        sidebar_layout.addStretch()
+        
+        # Separatore
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.Shape.HLine)
+        separator2.setStyleSheet("background-color: rgba(255, 255, 255, 0.2);")
+        sidebar_layout.addWidget(separator2)
+        
+        sidebar_layout.addSpacing(10)
         
         # Impostazioni
-        settings_btn = SidebarButton("Impostazioni", "⚙️")
-        self.sidebar_buttons.append(settings_btn)
-        layout.addWidget(settings_btn)
+        self.btn_settings = SidebarButton("Impostazioni", "⚙️")
+        sidebar_layout.addWidget(self.btn_settings)
         
-        # Info licenza in fondo
-        layout.addSpacing(10)
-        
-        license_info = QFrame()
-        license_info.setStyleSheet("""
-            QFrame {
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                padding: 10px;
+        # Versione
+        version_label = QLabel("v1.0.0")
+        version_label.setStyleSheet("""
+            QLabel {
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 10px;
+                padding-top: 10px;
             }
         """)
-        license_layout = QVBoxLayout(license_info)
-        license_layout.setSpacing(2)
+        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sidebar_layout.addWidget(version_label)
         
-        is_valid, _ = license_validator.verify_license()
-        client = license_validator.get_license_client()
-        expiry = license_validator.get_license_expiry()
+        main_layout.addWidget(sidebar)
         
-        if is_valid:
-            status_icon = "✅"
-            status_color = "#28a745"
-        else:
-            status_icon = "⚠️"
-            status_color = "#dc3545"
+        # === CONTENT AREA ===
+        content_area = QWidget()
+        content_area.setStyleSheet("background-color: #f8f9fa;")
+        content_layout = QVBoxLayout(content_area)
+        content_layout.setContentsMargins(20, 20, 20, 20)
         
-        status_label = QLabel(f"{status_icon} {client}")
-        status_label.setStyleSheet(f"color: {status_color}; font-size: 11px; font-weight: bold;")
-        license_layout.addWidget(status_label)
+        # Stack per le pagine
+        self.page_stack = QStackedWidget()
         
-        expiry_label = QLabel(f"Scade: {expiry}")
-        expiry_label.setStyleSheet("color: #6c757d; font-size: 10px;")
-        license_layout.addWidget(expiry_label)
+        # Crea i pannelli
+        self.scarico_panel = ScaricaTSPanel()
+        self.carico_panel = CaricoTSPanel()
+        self.dettagli_panel = DettagliOdAPanel()
+        self.settings_panel = SettingsPanel()
         
-        layout.addWidget(license_info)
+        # Aggiungi i pannelli allo stack
+        self.page_stack.addWidget(self.scarico_panel)   # Index 0
+        self.page_stack.addWidget(self.carico_panel)    # Index 1
+        self.page_stack.addWidget(self.dettagli_panel)  # Index 2
+        self.page_stack.addWidget(self.settings_panel)  # Index 3
         
-        return sidebar
+        content_layout.addWidget(self.page_stack)
+        
+        main_layout.addWidget(content_area)
+        
+        # Lista pulsanti per gestione esclusiva
+        self.nav_buttons = [
+            self.btn_scarico, 
+            self.btn_carico, 
+            self.btn_dettagli, 
+            self.btn_settings
+        ]
     
-    def _connect_sidebar(self):
-        """Connette i segnali della sidebar."""
-        for i, btn in enumerate(self.sidebar_buttons):
-            btn.clicked.connect(lambda checked, idx=i: self._on_sidebar_clicked(idx))
+    def _connect_signals(self):
+        """Collega i segnali."""
+        self.btn_scarico.clicked.connect(lambda: self._navigate_to(0))
+        self.btn_carico.clicked.connect(lambda: self._navigate_to(1))
+        self.btn_dettagli.clicked.connect(lambda: self._navigate_to(2))
+        self.btn_settings.clicked.connect(lambda: self._navigate_to(3))
     
-    def _on_sidebar_clicked(self, index: int):
-        """Gestisce il click su un pulsante della sidebar."""
-        # Deseleziona tutti
-        for btn in self.sidebar_buttons:
-            btn.setChecked(False)
+    def _navigate_to(self, index: int):
+        """
+        Naviga alla pagina specificata.
         
-        # Seleziona quello cliccato
-        self.sidebar_buttons[index].setChecked(True)
+        Controlla se ci sono modifiche non salvate nelle impostazioni
+        prima di cambiare pagina.
+        """
+        # Se stiamo già sulla pagina richiesta, non fare nulla
+        if index == self._current_page_index:
+            # Assicura che il pulsante sia checked
+            self.nav_buttons[index].setChecked(True)
+            return
         
-        # Cambia pannello
-        self.stack.setCurrentIndex(index)
+        # Se stiamo lasciando la pagina delle impostazioni, controlla le modifiche
+        if self._current_page_index == 3:  # Settings page
+            if self.settings_panel.has_unsaved_changes():
+                can_proceed = self.settings_panel.prompt_save_if_needed()
+                if not can_proceed:
+                    # L'utente ha annullato - rimani sulla pagina corrente
+                    self.nav_buttons[3].setChecked(True)
+                    return
+        
+        # Procedi con la navigazione
+        self._current_page_index = index
+        self.page_stack.setCurrentIndex(index)
+        
+        # Aggiorna stato pulsanti
+        for i, btn in enumerate(self.nav_buttons):
+            btn.setChecked(i == index)
+        
+        # Se arriviamo su Scarico TS, aggiorna la lista fornitori
+        if index == 0:
+            self.scarico_panel.refresh_fornitori()
     
-    def _check_license(self):
-        """Verifica la licenza all'avvio."""
-        is_valid, message = license_validator.verify_license()
-        
-        if not is_valid:
-            QMessageBox.warning(
-                self,
-                "Licenza non valida",
-                f"⚠️ {message}\n\n"
-                f"Alcune funzionalità potrebbero essere limitate.\n"
-                f"Contatta l'amministratore per rinnovare la licenza."
-            )
-    
-    def _check_updates(self):
-        """Controlla aggiornamenti in background."""
-        QTimer.singleShot(2000, lambda: app_updater.check_for_updates(silent=True))
+    def show_settings(self):
+        """Metodo pubblico per navigare alle impostazioni."""
+        self._navigate_to(3)
     
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra."""
-        # Verifica se ci sono bot in esecuzione
-        panels = [self.scarico_ts_panel, self.carico_ts_panel, self.dettagli_oda_panel]
-        
-        for panel in panels:
-            if panel.worker and panel.worker.isRunning():
-                reply = QMessageBox.question(
-                    self,
-                    "Bot in esecuzione",
-                    "Un bot è ancora in esecuzione.\n"
-                    "Vuoi davvero chiudere l'applicazione?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No
-                )
-                
-                if reply == QMessageBox.StandardButton.No:
-                    event.ignore()
-                    return
-                else:
-                    panel.worker.stop()
-                    panel.worker.wait(3000)
+        # Controlla modifiche non salvate nelle impostazioni
+        if self.settings_panel.has_unsaved_changes():
+            can_close = self.settings_panel.prompt_save_if_needed()
+            if not can_close:
+                event.ignore()
+                return
         
         event.accept()
 
 
 def create_splash_screen() -> QSplashScreen:
-    """Crea lo splash screen."""
-    # Crea un pixmap per lo splash
+    """Crea e restituisce una splash screen."""
+    # Crea un pixmap per la splash
     splash_pixmap = QPixmap(400, 250)
-    splash_pixmap.fill(QColor("#0d6efd"))
+    splash_pixmap.fill(QColor("#667eea"))
     
-    # Disegna testo
     painter = QPainter(splash_pixmap)
     painter.setPen(QColor("white"))
     
     # Titolo
-    font = QFont("Segoe UI", 24, QFont.Weight.Bold)
-    painter.setFont(font)
-    painter.drawText(splash_pixmap.rect(), Qt.AlignmentFlag.AlignCenter, version.__app_name__)
+    font_title = QFont("Arial", 28, QFont.Weight.Bold)
+    painter.setFont(font_title)
+    painter.drawText(splash_pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "🤖 Bot TS")
     
-    # Versione
-    font = QFont("Segoe UI", 12)
-    painter.setFont(font)
-    rect = splash_pixmap.rect()
-    rect.setTop(rect.center().y() + 30)
-    painter.drawText(rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, 
-                    f"v{version.__version__}")
-    
-    # Loading
-    rect.setTop(rect.center().y() + 30)
-    painter.drawText(rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
-                    "Caricamento...")
+    # Sottotitolo
+    font_sub = QFont("Arial", 12)
+    painter.setFont(font_sub)
+    painter.setPen(QColor(255, 255, 255, 180))
+    sub_rect = splash_pixmap.rect()
+    sub_rect.setTop(sub_rect.center().y() + 30)
+    painter.drawText(sub_rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, 
+                    "ISAB Timesheet Manager\nCaricamento...")
     
     painter.end()
     
     splash = QSplashScreen(splash_pixmap)
-    splash.setWindowFlags(Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint)
+    splash.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
     
     return splash

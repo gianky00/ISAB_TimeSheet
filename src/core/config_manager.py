@@ -1,123 +1,173 @@
 """
 Bot TS - Configuration Manager
-Gestisce la configurazione persistente dell'applicazione.
+Gestione della configurazione dell'applicazione.
 """
 import os
-import sys
 import json
-import logging
-import platform
 from pathlib import Path
+from typing import Any, Dict, Optional
 
-# Default configuration
-DEFAULT_CONFIG = {
-    "download_path": "",  # Empty = default Downloads folder
+
+# Path del file di configurazione
+CONFIG_DIR = Path.home() / ".bot_ts"
+CONFIG_FILE = CONFIG_DIR / "config.json"
+
+# Configurazione di default
+DEFAULT_CONFIG: Dict[str, Any] = {
     "isab_username": "",
     "isab_password": "",
     "browser_headless": False,
     "browser_timeout": 30,
-    "last_ts_data": [],  # Last Scarico TS data
-    "last_oda_data": []  # Last Dettagli OdA data
+    "download_path": "",
+    "fornitori": [],  # Lista dei fornitori configurati
+    "last_ts_data": [],
+    "last_ts_date": "01.01.2025",
+    "last_ts_fornitore": "",
+    "last_carico_ts_data": [],
+    "last_oda_data": []
 }
 
 
-def get_base_path():
-    """Returns the base path of the application executable (read-only)."""
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    else:
-        return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+def ensure_config_dir():
+    """Assicura che la directory di configurazione esista."""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def get_data_path():
-    """Returns the writable data path for the application (AppData)."""
-    system = platform.system()
-
-    if system == "Windows":
-        base = os.getenv('LOCALAPPDATA')
-        if not base:
-            base = os.path.expanduser("~")
-        path = os.path.join(base, "Programs", "Bot TS")
-    else:
-        # Linux/Mac fallback
-        path = os.path.join(os.path.expanduser("~"), ".local", "share", "Bot TS")
-
-    # Ensure directory exists
-    if not os.path.exists(path):
+def load_config() -> Dict[str, Any]:
+    """
+    Carica la configurazione dal file.
+    
+    Returns:
+        Dict con la configurazione
+    """
+    ensure_config_dir()
+    
+    if CONFIG_FILE.exists():
         try:
-            os.makedirs(path)
-        except OSError as e:
-            logging.error(f"Error creating data directory {path}: {e}")
-
-    return path
-
-
-def get_download_path():
-    """Returns the configured download path or the default Downloads folder."""
-    config = load_config()
-    custom_path = config.get("download_path", "").strip()
-    
-    if custom_path and os.path.isdir(custom_path):
-        return custom_path
-    
-    # Default to user's Downloads folder
-    if platform.system() == "Windows":
-        return str(Path.home() / "Downloads")
-    else:
-        return str(Path.home() / "Downloads")
-
-
-def get_config_file_path():
-    """Returns the path to the config file."""
-    return os.path.join(get_data_path(), "config.json")
-
-
-def load_config():
-    """Loads configuration from config.json, or returns defaults if not found."""
-    config_file = get_config_file_path()
-    
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                user_config = json.load(f)
-                # Merge with defaults to ensure all keys exist
-                config = DEFAULT_CONFIG.copy()
-                config.update(user_config)
-                return config
-        except Exception as e:
-            logging.error(f"Error loading config.json: {e}")
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                
+            # Merge con default per nuove chiavi
+            for key, value in DEFAULT_CONFIG.items():
+                if key not in config:
+                    config[key] = value
+            
+            return config
+        except (json.JSONDecodeError, IOError):
             return DEFAULT_CONFIG.copy()
-    return DEFAULT_CONFIG.copy()
+    else:
+        return DEFAULT_CONFIG.copy()
 
 
-def save_config(config_data):
-    """Saves configuration to config.json."""
+def save_config(config: Dict[str, Any]):
+    """
+    Salva la configurazione su file.
+    
+    Args:
+        config: Dict con la configurazione da salvare
+    """
+    ensure_config_dir()
+    
     try:
-        path = get_data_path()
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        config_file = get_config_file_path()
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(config_data, f, indent=4, ensure_ascii=False)
-        return True
-    except Exception as e:
-        logging.error(f"Error saving config.json: {e}")
-        return False
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+    except IOError as e:
+        print(f"Errore salvataggio configurazione: {e}")
 
 
-def get_config_value(key, default=None):
-    """Gets a single config value."""
+def get_config_value(key: str, default: Any = None) -> Any:
+    """
+    Ottiene un valore dalla configurazione.
+    
+    Args:
+        key: Chiave del valore
+        default: Valore di default se la chiave non esiste
+        
+    Returns:
+        Il valore della chiave o il default
+    """
     config = load_config()
     return config.get(key, default)
 
 
-def set_config_value(key, value):
-    """Sets a single config value and saves."""
+def set_config_value(key: str, value: Any):
+    """
+    Imposta un valore nella configurazione.
+    
+    Args:
+        key: Chiave del valore
+        value: Valore da salvare
+    """
     config = load_config()
     config[key] = value
-    return save_config(config)
+    save_config(config)
 
 
-# Initialize config on module load
-current_config = load_config()
+def get_download_path() -> str:
+    """
+    Restituisce il path di download configurato.
+    
+    Returns:
+        Path di download o la cartella Downloads di default
+    """
+    path = get_config_value("download_path", "")
+    
+    if path and os.path.isdir(path):
+        return path
+    
+    # Default alla cartella Downloads
+    default_download = Path.home() / "Downloads"
+    if default_download.exists():
+        return str(default_download)
+    
+    return str(Path.home())
+
+
+def get_fornitori() -> list:
+    """
+    Restituisce la lista dei fornitori configurati.
+    
+    Returns:
+        Lista dei fornitori
+    """
+    return get_config_value("fornitori", [])
+
+
+def add_fornitore(fornitore: str) -> bool:
+    """
+    Aggiunge un fornitore alla lista.
+    
+    Args:
+        fornitore: Nome del fornitore da aggiungere
+        
+    Returns:
+        True se aggiunto, False se già presente
+    """
+    fornitori = get_fornitori()
+    
+    if fornitore not in fornitori:
+        fornitori.append(fornitore)
+        set_config_value("fornitori", fornitori)
+        return True
+    
+    return False
+
+
+def remove_fornitore(fornitore: str) -> bool:
+    """
+    Rimuove un fornitore dalla lista.
+    
+    Args:
+        fornitore: Nome del fornitore da rimuovere
+        
+    Returns:
+        True se rimosso, False se non presente
+    """
+    fornitori = get_fornitori()
+    
+    if fornitore in fornitori:
+        fornitori.remove(fornitore)
+        set_config_value("fornitori", fornitori)
+        return True
+    
+    return False

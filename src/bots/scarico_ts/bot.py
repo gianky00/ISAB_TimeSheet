@@ -25,16 +25,13 @@ class ScaricaTSBot(BaseBot):
     Funzionalità:
     - Login al portale ISAB
     - Navigazione a Report -> Timesheet
-    - Selezione fornitore (configurabile, default COEMI S.R.L.)
+    - Selezione fornitore (da configurazione)
     - Impostazione data iniziale
     - Ricerca per Numero OdA / Posizione OdA
     - Download del file Excel
     - Rinomina file scaricato
     - Logout e chiusura browser
     """
-    
-    # Fornitore predefinito
-    DEFAULT_FORNITORE = "KK10608 - COEMI S.R.L."
     
     @staticmethod
     def get_name() -> str:
@@ -59,18 +56,18 @@ class ScaricaTSBot(BaseBot):
     def description(self) -> str:
         return "Scarica i timesheet dal portale ISAB"
     
-    def __init__(self, data_da: str = "01.01.2025", fornitore: str = None, **kwargs):
+    def __init__(self, data_da: str = "01.01.2025", fornitore: str = "", **kwargs):
         """
         Inizializza il bot.
         
         Args:
             data_da: Data inizio timesheet (formato dd.mm.yyyy)
-            fornitore: Nome fornitore da selezionare (default: KK10608 - COEMI S.R.L.)
+            fornitore: Nome fornitore da selezionare (obbligatorio)
             **kwargs: Altri parametri per BaseBot
         """
         super().__init__(**kwargs)
         self.data_da = data_da
-        self.fornitore = fornitore if fornitore else self.DEFAULT_FORNITORE
+        self.fornitore = fornitore
     
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """

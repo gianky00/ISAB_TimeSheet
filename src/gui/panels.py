@@ -5,7 +5,7 @@ Pannelli specifici per ogni bot.
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
-    QDateEdit, QLineEdit
+    QDateEdit, QLineEdit, QComboBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate
 
@@ -194,9 +194,6 @@ class BaseBotPanel(QWidget):
 class ScaricaTSPanel(BaseBotPanel):
     """Pannello per il bot Scarico TS."""
     
-    # Fornitore predefinito
-    DEFAULT_FORNITORE = "KK10608 - COEMI S.R.L."
-    
     def __init__(self, parent=None):
         super().__init__(
             bot_name="📥 Scarico TS",
@@ -226,29 +223,61 @@ class ScaricaTSPanel(BaseBotPanel):
         """)
         params_layout = QVBoxLayout(params_group)
         
-        # Riga 1: Fornitore
+        # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
         fornitore_label.setStyleSheet("font-weight: normal;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
         
-        self.fornitore_edit = QLineEdit()
-        self.fornitore_edit.setText(self.DEFAULT_FORNITORE)
-        self.fornitore_edit.setMinimumHeight(35)
-        self.fornitore_edit.setStyleSheet("""
-            QLineEdit {
+        self.fornitore_combo = QComboBox()
+        self.fornitore_combo.setMinimumHeight(35)
+        self.fornitore_combo.setEditable(False)
+        self.fornitore_combo.setStyleSheet("""
+            QComboBox {
                 border: 1px solid #ced4da;
                 border-radius: 4px;
                 padding: 8px;
                 font-size: 13px;
                 background-color: white;
             }
-            QLineEdit:focus {
+            QComboBox:focus {
                 border-color: #0d6efd;
             }
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                width: 12px;
+                height: 12px;
+            }
+            QComboBox QAbstractItemView {
+                border: 1px solid #ced4da;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
+            }
         """)
-        fornitore_layout.addWidget(self.fornitore_edit)
+        fornitore_layout.addWidget(self.fornitore_combo)
+        
+        # Pulsante per aprire impostazioni
+        self.open_settings_btn = QPushButton("⚙️")
+        self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
+        self.open_settings_btn.setFixedSize(35, 35)
+        self.open_settings_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #5a6268;
+            }
+        """)
+        self.open_settings_btn.clicked.connect(self._open_settings)
+        fornitore_layout.addWidget(self.open_settings_btn)
         
         params_layout.addLayout(fornitore_layout)
         
@@ -331,9 +360,50 @@ class ScaricaTSPanel(BaseBotPanel):
         
         self.content_layout.addWidget(group)
     
+    def _open_settings(self):
+        """Emette un segnale per aprire le impostazioni (gestito dalla main window)."""
+        # Trova la main window e cambia pagina
+        main_window = self.window()
+        if hasattr(main_window, 'show_settings'):
+            main_window.show_settings()
+    
+    def refresh_fornitori(self):
+        """Ricarica l'elenco dei fornitori dalla configurazione."""
+        config = config_manager.load_config()
+        fornitori = config.get("fornitori", [])
+        
+        # Salva la selezione corrente
+        current_text = self.fornitore_combo.currentText()
+        
+        # Aggiorna la lista
+        self.fornitore_combo.clear()
+        
+        if fornitori:
+            self.fornitore_combo.addItems(fornitori)
+            
+            # Ripristina la selezione se ancora presente
+            index = self.fornitore_combo.findText(current_text)
+            if index >= 0:
+                self.fornitore_combo.setCurrentIndex(index)
+            else:
+            # Seleziona il primo elemento
+            self.fornitore_combo.setCurrentIndex(0)
+    
     def _load_saved_data(self):
         """Carica i dati salvati."""
         config = config_manager.load_config()
+        
+        # Carica fornitori
+        self.refresh_fornitori()
+        
+        # Carica fornitore selezionato
+        saved_fornitore = config.get("last_ts_fornitore", "")
+        if saved_fornitore:
+            index = self.fornitore_combo.findText(saved_fornitore)
+            if index >= 0:
+                self.fornitore_combo.setCurrentIndex(index)
+        
+        # Carica dati tabella
         saved_data = config.get("last_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
@@ -347,10 +417,6 @@ class ScaricaTSPanel(BaseBotPanel):
                 self.date_edit.setDate(QDate(year, month, day))
         except:
             pass
-        
-        # Carica il fornitore salvato se presente
-        saved_fornitore = config.get("last_ts_fornitore", self.DEFAULT_FORNITORE)
-        self.fornitore_edit.setText(saved_fornitore)
     
     def _save_data(self):
         """Salva i dati correnti."""
@@ -361,8 +427,10 @@ class ScaricaTSPanel(BaseBotPanel):
         date_str = self.date_edit.date().toString("dd.MM.yyyy")
         config_manager.set_config_value("last_ts_date", date_str)
         
-        # Salva il fornitore
-        config_manager.set_config_value("last_ts_fornitore", self.fornitore_edit.text())
+        # Salva il fornitore selezionato
+        fornitore = self.fornitore_combo.currentText()
+        if fornitore:
+            config_manager.set_config_value("last_ts_fornitore", fornitore)
     
     def _on_start(self):
         """Avvia il bot Scarico TS."""
@@ -385,12 +453,13 @@ class ScaricaTSPanel(BaseBotPanel):
             )
             return
         
-        fornitore = self.fornitore_edit.text().strip()
+        fornitore = self.fornitore_combo.currentText()
         if not fornitore:
             QMessageBox.warning(
                 self,
                 "Fornitore mancante",
-                "Inserisci il nome del fornitore."
+                "Seleziona un fornitore dal menu a tendina.\n\n"
+                "Puoi gestire i fornitori nelle Impostazioni."
             )
             return
         
