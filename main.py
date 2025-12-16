@@ -42,7 +42,7 @@ def main():
     
     # Set application metadata
     app.setApplicationName("Bot TS")
-    app.setOrganizationName("COEMI")
+    app.setOrganizationName("Giancarlo Allegretti")
     app.setApplicationVersion("1.0.0")
     
     # Import and show main window

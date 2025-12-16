@@ -2,7 +2,7 @@
 ; Installer configuration for Bot TS application
 
 #define MyAppName "Bot TS"
-#define MyAppPublisher "COEMI S.r.l."
+#define MyAppPublisher "Giancarlo Allegretti"
 #define MyAppURL "https://bot-ts.netlify.app"
 #define MyAppExeName "BotTS.exe"
 

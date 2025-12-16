@@ -2,7 +2,7 @@
 
 **Sistema di Automazione per Portale ISAB**
 
-Applicazione desktop per l'automazione delle operazioni sul portale fornitori ISAB, sviluppata per COEMI S.r.l.
+Applicazione desktop per l'automazione delle operazioni sul portale fornitori ISAB, sviluppata da Giancarlo Allegretti.
 
 ## 🚀 Funzionalità
 
@@ -163,8 +163,8 @@ pytest tests/ -v
 
 ## 📄 Licenza
 
-Software proprietario - COEMI S.r.l.
+Software proprietario - Giancarlo Allegretti
 
 ## 👤 Autore
 
-Giancarlo - COEMI S.r.l.
+Giancarlo Allegretti
