@@ -270,9 +270,9 @@ class BotWorker(QThread):
         except Exception as e:
             raise Exception(f"Errore navigazione Gestione Timesheet: {e}")
 
-        # 3. Selezione Fornitore COEMI
+        # 3. Selezione Fornitore
         try:
-            self.log("Selezione Fornitore 'COEMI'...")
+            self.log("Selezione Fornitore...")
             self.seleziona_fornitore_upload()
         except Exception as e:
             raise Exception(f"Errore selezione Fornitore: {e}")
@@ -475,7 +475,7 @@ class BotWorker(QThread):
         self.log("Elaborazione completata.")
 
     def seleziona_fornitore_upload(self):
-        """Seleziona il fornitore COEMI dal dropdown"""
+        """Seleziona il fornitore dal dropdown"""
         # Trova il trigger del dropdown fornitore
         # Usa un selettore più specifico basato sulla struttura della pagina
         xpath_trigger = "//div[contains(@class, 'x-form-trigger') and contains(@class, 'x-form-arrow-trigger')]"
@@ -515,12 +515,12 @@ class BotWorker(QThread):
                 time.sleep(0.5)
 
         if not option:
-            raise Exception("Impossibile aprire l'elenco fornitori o opzione COEMI non trovata.")
+            raise Exception("Impossibile aprire l'elenco fornitori o opzione desiderata non trovata.")
 
         # Seleziona l'opzione
         self.driver.execute_script("arguments[0].click();", option)
         self.attendi_scomparsa_overlay()
-        self.log("  Fornitore COEMI selezionato.")
+        self.log("  Fornitore selezionato.")
         time.sleep(1)  # Attendi che la UI si stabilizzi
 
     def trova_campo_numero_oda(self):

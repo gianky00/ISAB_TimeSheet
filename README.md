@@ -2,7 +2,7 @@
 
 **Sistema di Automazione per Portale ISAB**
 
-Applicazione desktop per l'automazione delle operazioni sul portale fornitori ISAB, sviluppata per COEMI S.r.l.
+Applicazione desktop per l'automazione delle operazioni sul portale fornitori ISAB, sviluppata da Giancarlo Allegretti.
 
 ## 🚀 Funzionalità
 
@@ -125,7 +125,7 @@ python admin/Crea\ Licenze/admin_license_gui.py
 ### Repository Licenze
 
 Le licenze vengono distribuite tramite repository GitHub privato:
-`github.com/gianky00/licenses`
+`github.com/gianky00/intelleo-licenses/tree/main/licenses`
 
 ## ⚙️ Configurazione
 
@@ -163,8 +163,8 @@ pytest tests/ -v
 
 ## 📄 Licenza
 
-Software proprietario - COEMI S.r.l.
+Software proprietario - Giancarlo Allegretti
 
 ## 👤 Autore
 
-Giancarlo - COEMI S.r.l.
+Giancarlo Allegretti

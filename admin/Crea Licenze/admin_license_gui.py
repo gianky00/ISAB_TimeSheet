@@ -109,7 +109,7 @@ class LicenseAdminApp:
             "I file generati saranno:\n"
             "• config.dat - Dati licenza cifrati\n"
             "• manifest.json - Checksum integrità\n\n"
-            "Caricare su: github.com/gianky00/licenses/{HW_ID}/"
+            "Caricare su: github.com/gianky00/intelleo-licenses/tree/main/licenses/{HW_ID}/"
         )
         ttk.Label(info_frame, text=info_text, justify="left").pack(anchor="w")
         
@@ -214,7 +214,7 @@ class LicenseAdminApp:
                 f"📅 Scadenza: {expiry_str}\n\n"
                 f"📁 File salvati in:\n{target_dir}\n\n"
                 f"⬆️ Caricare su GitHub:\n"
-                f"gianky00/licenses/{disk_serial.strip().rstrip('.')}/"
+                f"gianky00/intelleo-licenses/tree/main/licenses/{disk_serial.strip().rstrip('.')}/"
             )
             
             messagebox.showinfo("Successo", msg)

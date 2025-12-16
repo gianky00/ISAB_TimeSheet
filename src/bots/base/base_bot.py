@@ -49,7 +49,7 @@ class BaseBot(ABC):
     """
     
     # URL del portale ISAB
-    ISAB_URL = "https://portal.isab.com"
+    ISAB_URL = "https://portalefornitori.isab.com/Ui/"
     
     def __init__(
         self,
