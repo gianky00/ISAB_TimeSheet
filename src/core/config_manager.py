@@ -103,6 +103,28 @@ def set_config_value(key: str, value: Any):
     save_config(config)
 
 
+def get_data_path() -> str:
+    """
+    Restituisce il percorso base per i dati (es. Licenza).
+    Cerca prima in CONFIG_DIR (AppData), poi nel root del progetto.
+
+    Returns:
+        Path della directory dati
+    """
+    # 1. Cerca in CONFIG_DIR (AppData)
+    if (CONFIG_DIR / "Licenza").exists():
+        return str(CONFIG_DIR)
+
+    # 2. Cerca nel root del progetto
+    # src/core/config_manager.py -> src/core -> src -> root
+    project_root = Path(__file__).resolve().parent.parent.parent
+    if (project_root / "Licenza").exists():
+        return str(project_root)
+
+    # 3. Default: CONFIG_DIR
+    return str(CONFIG_DIR)
+
+
 def get_download_path() -> str:
     """
     Restituisce il path di download configurato.
