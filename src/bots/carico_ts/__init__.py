@@ -1,6 +1,6 @@
 """
 Bot TS - Carico Timesheet Module
 """
-from .bot import CaricoTSBot, CaricoTSBotFactory
+from src.bots.carico_ts.bot import CaricoTSBot
 
-__all__ = ['CaricoTSBot', 'CaricoTSBotFactory']
+__all__ = ['CaricoTSBot']

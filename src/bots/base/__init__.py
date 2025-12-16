@@ -1,6 +1,6 @@
 """
 Bot TS - Base Bot Module
 """
-from .base_bot import BaseBot, BotStatus
+from src.bots.base.base_bot import BaseBot, BotStatus
 
 __all__ = ['BaseBot', 'BotStatus']

@@ -3,10 +3,10 @@ Bot TS - Bots Module
 Registry e factory per tutti i bot disponibili.
 """
 from typing import Dict, Any, Optional
-from src.bots.base import BaseBot, BotStatus
-from src.bots.scarico_ts import ScaricaTSBot
-from src.bots.carico_ts import CaricoTSBot
-from src.bots.dettagli_oda import DettagliOdABot
+from .base import BaseBot, BotStatus
+from .scarico_ts import ScaricaTSBot
+from .carico_ts import CaricoTSBot
+from .dettagli_oda import DettagliOdABot
 
 
 # Registry dei bot disponibili
@@ -88,6 +88,8 @@ def create_bot(bot_id: str, **kwargs) -> Optional[BaseBot]:
     Args:
         bot_id: ID del bot da creare
         **kwargs: Parametri per il costruttore del bot
+                  Per ScaricaTSBot: username, password, headless, timeout, download_path, data_da
+                  Per altri bot: username, password, headless, timeout, download_path
         
     Returns:
         Istanza del bot o None se non trovato

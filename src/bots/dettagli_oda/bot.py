@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-from ..base import BaseBot
+from src.bots.base import BaseBot, BotStatus
 
 
 class DettagliOdABot(BaseBot):
@@ -67,16 +67,17 @@ class DettagliOdABot(BaseBot):
             self.log("⚠ Navigazione automatica fallita - prosegui manualmente")
         
         # Log data reference if provided
-        if data:
-            self.log(f"Riferimento: {len(data)} OdA da consultare")
-            for row in data[:5]:  # Show first 5
+        rows = data if isinstance(data, list) else data.get('rows', [])
+        if rows:
+            self.log(f"Riferimento: {len(rows)} OdA da consultare")
+            for row in rows[:5]:  # Show first 5
                 num = row.get('numero_oda', '')
                 pos = row.get('posizione_oda', '')
                 if num:
                     self.log(f"  • OdA {num}" + (f" - Pos. {pos}" if pos else ""))
             
-            if len(data) > 5:
-                self.log(f"  ... e altri {len(data) - 5}")
+            if len(rows) > 5:
+                self.log(f"  ... e altri {len(rows) - 5}")
         
         self.log("✓ Browser pronto - prosegui manualmente")
         self.log("⚠ Il browser rimarrà aperto")
