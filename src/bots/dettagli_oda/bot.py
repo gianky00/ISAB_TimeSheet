@@ -26,6 +26,21 @@ class DettagliOdABot(BaseBot):
     - L'utente può continuare manualmente
     """
     
+    @staticmethod
+    def get_name() -> str:
+        return "Dettagli OdA"
+    
+    @staticmethod
+    def get_description() -> str:
+        return "Accede ai Dettagli OdA - browser rimane aperto"
+    
+    @staticmethod
+    def get_columns() -> list:
+        return [
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"}
+        ]
+    
     @property
     def name(self) -> str:
         return "Dettagli OdA"

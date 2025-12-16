@@ -1,51 +1,43 @@
 @echo off
-setlocal
+title Bot TS - Avvio da sorgenti
+cd /d "%~dp0"
 
-echo ==========================================
-echo      AVVIO APPLICAZIONE ISAB
-echo ==========================================
+echo =============================================
+echo    Bot TS - Avvio da codici sorgenti
+echo =============================================
 echo.
 
-REM 1. Verifica Python
-echo [1] Verifica installazione Python...
+REM Verifica che Python sia installato
 python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERRORE] Python non trovato! Assicurati che sia installato e nel PATH.
+if errorlevel 1 (
+    echo [ERRORE] Python non trovato!
+    echo Installa Python da https://www.python.org/downloads/
     pause
     exit /b 1
 )
 
-REM 2. Setup Ambiente Virtuale
+REM Controlla e installa dipendenze se necessario
 if not exist "venv" (
-    echo [2] Creazione ambiente virtuale...
+    echo [INFO] Creazione ambiente virtuale...
     python -m venv venv
-) else (
-    echo [2] Ambiente virtuale esistente.
 )
 
-REM 3. Attivazione e Dipendenze
-echo [3] Attivazione ambiente e controllo dipendenze...
+echo [INFO] Attivazione ambiente virtuale...
 call venv\Scripts\activate.bat
-if exist requirements.txt (
-    pip install -r requirements.txt >nul
-)
 
-REM 4. Avvio Main
+echo [INFO] Verifica dipendenze...
+pip install -r requirements.txt -q
+
 echo.
-echo [4] Avvio interfaccia grafica...
-echo ------------------------------------------
+echo [INFO] Avvio applicazione...
+echo.
+
 python main.py
 
-REM 5. Gestione Chiusura
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     echo.
-    echo ------------------------------------------
-    echo [ERRORE] L'applicazione si e' chiusa con un errore.
-) else (
-    echo.
-    echo ------------------------------------------
-    echo Applicazione chiusa correttamente.
+    echo [ERRORE] L'applicazione si e' chiusa con errore.
+    pause
 )
 
-echo.
-pause
+deactivate

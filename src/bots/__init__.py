@@ -17,9 +17,8 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "description": "Scarica i timesheet dal portale ISAB",
         "icon": "📥",
         "columns": [
-            {"name": "Commessa", "type": "text"},
-            {"name": "Mese", "type": "month"},
-            {"name": "Anno", "type": "year"}
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"}
         ],
         "config_key": "last_ts_data"
     },

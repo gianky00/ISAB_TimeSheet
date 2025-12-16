@@ -1,19 +1,20 @@
 """
 Bot TS - Settings Panel
-Pannello per le impostazioni dell'applicazione.
+Pannello per le impostazioni dell'applicazione con interfaccia a schede.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QFrame, QGridLayout,
-    QFileDialog, QMessageBox, QSpinBox, QApplication
+    QFileDialog, QMessageBox, QSpinBox, QApplication,
+    QTabWidget, QScrollArea
 )
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, Qt
 
 from src.core import config_manager, license_validator, version
 
 
 class SettingsPanel(QWidget):
-    """Pannello impostazioni dell'applicazione."""
+    """Pannello impostazioni dell'applicazione con schede."""
     
     settings_changed = pyqtSignal()
     
@@ -25,7 +26,8 @@ class SettingsPanel(QWidget):
     def _setup_ui(self):
         """Configura l'interfaccia."""
         layout = QVBoxLayout(self)
-        layout.setSpacing(20)
+        layout.setSpacing(15)
+        layout.setContentsMargins(0, 0, 0, 0)
         
         # Header
         header = QFrame()
@@ -38,6 +40,7 @@ class SettingsPanel(QWidget):
             }
         """)
         header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(20, 15, 20, 15)
         
         title = QLabel("⚙️ Impostazioni")
         title.setStyleSheet("color: white; font-size: 18px; font-weight: bold;")
@@ -49,35 +52,203 @@ class SettingsPanel(QWidget):
         
         layout.addWidget(header)
         
+        # Tab Widget
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                background-color: white;
+                margin-top: -1px;
+            }
+            QTabBar::tab {
+                background-color: #f8f9fa;
+                color: #495057;
+                padding: 10px 20px;
+                margin-right: 2px;
+                border: 1px solid #dee2e6;
+                border-bottom: none;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                font-weight: bold;
+            }
+            QTabBar::tab:selected {
+                background-color: white;
+                color: #0d6efd;
+                border-bottom: 2px solid white;
+            }
+            QTabBar::tab:hover:!selected {
+                background-color: #e9ecef;
+            }
+        """)
+        
+        # Tab 1: Credenziali
+        self.tab_widget.addTab(self._create_credentials_tab(), "🔐 Credenziali")
+        
+        # Tab 2: Browser
+        self.tab_widget.addTab(self._create_browser_tab(), "🌐 Browser")
+        
+        # Tab 3: Licenza e Info
+        self.tab_widget.addTab(self._create_license_tab(), "📜 Licenza e Info")
+        
+        layout.addWidget(self.tab_widget)
+        
+        # Pulsanti
+        btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(0, 10, 0, 0)
+        btn_layout.addStretch()
+        
+        self.save_btn = QPushButton("💾 Salva Impostazioni")
+        self.save_btn.setMinimumWidth(160)
+        self.save_btn.setMinimumHeight(42)
+        self.save_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+        """)
+        self.save_btn.clicked.connect(self._save_settings)
+        btn_layout.addWidget(self.save_btn)
+        
+        reset_btn = QPushButton("🔄 Ripristina")
+        reset_btn.setMinimumWidth(110)
+        reset_btn.setMinimumHeight(42)
+        reset_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #5a6268;
+            }
+        """)
+        reset_btn.clicked.connect(self._load_settings)
+        btn_layout.addWidget(reset_btn)
+        
+        layout.addLayout(btn_layout)
+        
+        # Stile globale
+        self.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 10px 12px;
+                font-size: 13px;
+                background-color: #ffffff;
+                color: #333333;
+                min-height: 20px;
+            }
+            QLineEdit:focus {
+                border-color: #0d6efd;
+                border-width: 2px;
+            }
+            QLineEdit:read-only {
+                background-color: #f8f9fa;
+            }
+            QCheckBox {
+                spacing: 8px;
+                font-size: 12px;
+                color: #333333;
+            }
+            QSpinBox {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: #ffffff;
+                min-height: 20px;
+            }
+            QLabel {
+                color: #333333;
+            }
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 15px;
+                padding: 20px;
+                padding-top: 30px;
+                background-color: #fafbfc;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 8px;
+                color: #495057;
+            }
+        """)
+    
+    def _create_credentials_tab(self) -> QWidget:
+        """Crea la scheda Credenziali."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
         # Credenziali ISAB
         credentials_group = QGroupBox("🔐 Credenziali ISAB")
-        credentials_group.setStyleSheet(self._get_group_style())
         cred_layout = QGridLayout(credentials_group)
-        cred_layout.setSpacing(10)
+        cred_layout.setSpacing(15)
+        cred_layout.setColumnStretch(1, 1)
         
-        cred_layout.addWidget(QLabel("Username:"), 0, 0)
+        # Username
+        username_label = QLabel("Username:")
+        username_label.setMinimumWidth(100)
+        cred_layout.addWidget(username_label, 0, 0)
+        
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Inserisci username ISAB")
-        self.username_input.setMinimumHeight(36)
+        self.username_input.setMinimumHeight(40)
         cred_layout.addWidget(self.username_input, 0, 1)
         
-        cred_layout.addWidget(QLabel("Password:"), 1, 0)
+        # Password
+        password_label = QLabel("Password:")
+        cred_layout.addWidget(password_label, 1, 0)
+        
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.password_input.setPlaceholderText("Inserisci password ISAB")
-        self.password_input.setMinimumHeight(36)
+        self.password_input.setMinimumHeight(40)
         cred_layout.addWidget(self.password_input, 1, 1)
         
+        # Mostra password
         self.show_password_cb = QCheckBox("Mostra password")
         self.show_password_cb.toggled.connect(self._toggle_password_visibility)
         cred_layout.addWidget(self.show_password_cb, 2, 1)
         
         layout.addWidget(credentials_group)
         
-        # Download Path
+        # Nota sicurezza
+        security_note = QLabel(
+            "🔒 Le credenziali vengono salvate in modo sicuro nella cartella dati dell'applicazione."
+        )
+        security_note.setStyleSheet("color: #6c757d; font-size: 11px; font-style: italic;")
+        security_note.setWordWrap(True)
+        layout.addWidget(security_note)
+        
+        layout.addStretch()
+        return tab
+    
+    def _create_browser_tab(self) -> QWidget:
+        """Crea la scheda Browser."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Percorso Download
         download_group = QGroupBox("📁 Percorso Download")
-        download_group.setStyleSheet(self._get_group_style())
         download_layout = QVBoxLayout(download_group)
+        download_layout.setSpacing(12)
         
         download_desc = QLabel(
             "Seleziona la cartella dove verranno salvati i file scaricati dai bot. "
@@ -92,16 +263,17 @@ class SettingsPanel(QWidget):
         self.download_path_input = QLineEdit()
         self.download_path_input.setPlaceholderText("Cartella Download predefinita")
         self.download_path_input.setReadOnly(True)
-        self.download_path_input.setMinimumHeight(36)
+        self.download_path_input.setMinimumHeight(40)
         path_layout.addWidget(self.download_path_input)
         
         browse_btn = QPushButton("📂 Sfoglia")
         browse_btn.setMinimumWidth(100)
+        browse_btn.setMinimumHeight(40)
         browse_btn.clicked.connect(self._browse_download_path)
         path_layout.addWidget(browse_btn)
         
         clear_path_btn = QPushButton("✕")
-        clear_path_btn.setFixedWidth(40)
+        clear_path_btn.setFixedSize(40, 40)
         clear_path_btn.setToolTip("Ripristina percorso predefinito")
         clear_path_btn.clicked.connect(self._clear_download_path)
         path_layout.addWidget(clear_path_btn)
@@ -117,8 +289,8 @@ class SettingsPanel(QWidget):
         
         # Opzioni Browser
         browser_group = QGroupBox("🌐 Opzioni Browser")
-        browser_group.setStyleSheet(self._get_group_style())
         browser_layout = QVBoxLayout(browser_group)
+        browser_layout.setSpacing(15)
         
         self.headless_cb = QCheckBox("Esegui in modalità headless (senza finestra browser)")
         self.headless_cb.setToolTip(
@@ -128,32 +300,47 @@ class SettingsPanel(QWidget):
         browser_layout.addWidget(self.headless_cb)
         
         timeout_layout = QHBoxLayout()
-        timeout_layout.addWidget(QLabel("Timeout operazioni (secondi):"))
+        timeout_label = QLabel("Timeout operazioni (secondi):")
+        timeout_layout.addWidget(timeout_label)
+        
         self.timeout_spin = QSpinBox()
         self.timeout_spin.setRange(10, 120)
         self.timeout_spin.setValue(30)
         self.timeout_spin.setFixedWidth(80)
+        self.timeout_spin.setMinimumHeight(36)
         timeout_layout.addWidget(self.timeout_spin)
         timeout_layout.addStretch()
         browser_layout.addLayout(timeout_layout)
         
         layout.addWidget(browser_group)
         
+        layout.addStretch()
+        return tab
+    
+    def _create_license_tab(self) -> QWidget:
+        """Crea la scheda Licenza e Info."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
         # Informazioni Licenza
         license_group = QGroupBox("📜 Licenza")
-        license_group.setStyleSheet(self._get_group_style())
         license_layout = QGridLayout(license_group)
+        license_layout.setSpacing(12)
+        license_layout.setColumnStretch(1, 1)
         
         # Hardware ID
         license_layout.addWidget(QLabel("Hardware ID:"), 0, 0)
         hw_id = license_validator.get_hardware_id()
-        hw_id_display = hw_id[:30] + "..." if len(hw_id) > 30 else hw_id
+        hw_id_display = hw_id[:35] + "..." if len(hw_id) > 35 else hw_id
         self.hw_id_label = QLabel(hw_id_display)
-        self.hw_id_label.setStyleSheet("color: #495057; font-family: monospace;")
+        self.hw_id_label.setStyleSheet("color: #495057; font-family: 'Consolas', monospace;")
         license_layout.addWidget(self.hw_id_label, 0, 1)
         
         copy_hwid_btn = QPushButton("📋 Copia")
-        copy_hwid_btn.setFixedWidth(80)
+        copy_hwid_btn.setFixedWidth(90)
+        copy_hwid_btn.setMinimumHeight(32)
         copy_hwid_btn.clicked.connect(self._copy_hardware_id)
         license_layout.addWidget(copy_hwid_btn, 0, 2)
         
@@ -177,15 +364,20 @@ class SettingsPanel(QWidget):
         layout.addWidget(license_group)
         
         # Info Applicazione
-        app_group = QGroupBox("ℹ️ Informazioni")
-        app_group.setStyleSheet(self._get_group_style())
+        app_group = QGroupBox("ℹ️ Informazioni Applicazione")
         app_layout = QGridLayout(app_group)
+        app_layout.setSpacing(12)
+        app_layout.setColumnStretch(1, 1)
         
         app_layout.addWidget(QLabel("Applicazione:"), 0, 0)
-        app_layout.addWidget(QLabel(version.__app_name__), 0, 1)
+        app_name_label = QLabel(version.__app_name__)
+        app_name_label.setStyleSheet("font-weight: bold; color: #0d6efd;")
+        app_layout.addWidget(app_name_label, 0, 1)
         
         app_layout.addWidget(QLabel("Versione:"), 1, 0)
-        app_layout.addWidget(QLabel(version.__version__), 1, 1)
+        version_label = QLabel(version.__version__)
+        version_label.setStyleSheet("font-weight: bold;")
+        app_layout.addWidget(version_label, 1, 1)
         
         app_layout.addWidget(QLabel("Percorso dati:"), 2, 0)
         data_path = config_manager.get_data_path()
@@ -196,103 +388,8 @@ class SettingsPanel(QWidget):
         
         layout.addWidget(app_group)
         
-        # Spacer
         layout.addStretch()
-        
-        # Pulsanti
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
-        
-        self.save_btn = QPushButton("💾 Salva Impostazioni")
-        self.save_btn.setMinimumWidth(150)
-        self.save_btn.setMinimumHeight(40)
-        self.save_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #0d6efd;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #0b5ed7;
-            }
-        """)
-        self.save_btn.clicked.connect(self._save_settings)
-        btn_layout.addWidget(self.save_btn)
-        
-        reset_btn = QPushButton("🔄 Ripristina")
-        reset_btn.setMinimumWidth(100)
-        reset_btn.setMinimumHeight(40)
-        reset_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
-        """)
-        reset_btn.clicked.connect(self._load_settings)
-        btn_layout.addWidget(reset_btn)
-        
-        layout.addLayout(btn_layout)
-        
-        # Stile input
-        self.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px 12px;
-                font-size: 13px;
-                background-color: #ffffff;
-                color: #333333;
-                min-height: 20px;
-            }
-            QLineEdit:focus {
-                border-color: #0d6efd;
-                border-width: 2px;
-            }
-            QLineEdit:read-only {
-                background-color: #f8f9fa;
-            }
-            QCheckBox {
-                spacing: 8px;
-                font-size: 12px;
-            }
-            QSpinBox {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 6px;
-                background-color: #ffffff;
-                min-height: 20px;
-            }
-            QLabel {
-                color: #333333;
-            }
-        """)
-    
-    def _get_group_style(self) -> str:
-        """Restituisce lo stile per i GroupBox."""
-        return """
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding: 15px;
-                padding-top: 25px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """
+        return tab
     
     def _toggle_password_visibility(self, checked: bool):
         """Mostra/nasconde la password."""

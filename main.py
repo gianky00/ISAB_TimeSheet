@@ -20,6 +20,13 @@ if src_path not in sys.path:
 
 def main():
     """Main entry point."""
+    # Auto-download license if running from source and license folder is empty
+    try:
+        from src.core.license_updater import auto_download_license_if_needed
+        auto_download_license_if_needed()
+    except Exception as e:
+        print(f"[AVVISO] Controllo licenza: {e}")
+    
     # Import PyQt6 components
     from PyQt6.QtWidgets import QApplication
     from PyQt6.QtCore import Qt

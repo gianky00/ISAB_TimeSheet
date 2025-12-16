@@ -93,13 +93,18 @@ class TestBotRegistry:
         from src.bots import BOT_REGISTRY
         assert 'dettagli_oda' in BOT_REGISTRY
     
+    def test_carico_ts_registered(self):
+        """Carico TS bot should be registered."""
+        from src.bots import BOT_REGISTRY
+        assert 'carico_ts' in BOT_REGISTRY
+    
     def test_get_available_bots(self):
-        """Should return list of available bots."""
+        """Should return dict of available bots."""
         from src.bots import get_available_bots
         
         bots = get_available_bots()
-        assert isinstance(bots, list)
-        assert len(bots) >= 2
+        assert isinstance(bots, dict)
+        assert len(bots) >= 3
 
 
 class TestBaseBot:
@@ -124,19 +129,18 @@ class TestScaricaTSBot:
         from src.bots.scarico_ts import ScaricaTSBot
         
         columns = ScaricaTSBot.get_columns()
-        assert len(columns) == 3
+        assert len(columns) == 2
         
         column_names = [col['name'] for col in columns]
-        assert 'Commessa' in column_names
-        assert 'Mese' in column_names
-        assert 'Anno' in column_names
+        assert 'Numero OdA' in column_names
+        assert 'Posizione OdA' in column_names
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
         from src.bots.scarico_ts import ScaricaTSBot
         
         assert ScaricaTSBot.get_name() == "Scarico TS"
-        assert ScaricaTSBot.get_icon() is not None
+        assert ScaricaTSBot.get_description() is not None
 
 
 class TestDettagliOdABot:
@@ -158,7 +162,30 @@ class TestDettagliOdABot:
         from src.bots.dettagli_oda import DettagliOdABot
         
         assert DettagliOdABot.get_name() == "Dettagli OdA"
-        assert DettagliOdABot.get_icon() is not None
+        assert DettagliOdABot.get_description() is not None
+
+
+class TestCaricoTSBot:
+    """Test Carico TS bot."""
+    
+    def test_bot_columns(self):
+        """Should have correct column configuration."""
+        from src.bots.carico_ts import CaricoTSBot
+        
+        columns = CaricoTSBot.get_columns()
+        assert len(columns) == 17
+        
+        column_names = [col['name'] for col in columns]
+        assert 'Numero OdA' in column_names
+        assert 'Codice Fiscale' in column_names
+        assert 'G T' in column_names
+    
+    def test_bot_metadata(self):
+        """Should have correct metadata."""
+        from src.bots.carico_ts import CaricoTSBot
+        
+        assert CaricoTSBot.get_name() == "Carico TS"
+        assert CaricoTSBot.get_description() is not None
 
 
 if __name__ == '__main__':

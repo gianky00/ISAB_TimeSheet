@@ -106,6 +106,112 @@ def check_grace_period():
         raise Exception(f"Errore verifica periodo di grazia: {e}")
 
 
+def is_running_from_source() -> bool:
+    """Verifica se l'applicazione è in esecuzione dai sorgenti."""
+    import sys
+    return not getattr(sys, 'frozen', False)
+
+
+def is_license_folder_empty() -> bool:
+    """Verifica se la cartella licenza è vuota o non esiste."""
+    license_dir = get_license_dir()
+    
+    if not os.path.exists(license_dir):
+        return True
+    
+    # Controlla se ci sono i file necessari
+    config_dat = os.path.join(license_dir, "config.dat")
+    manifest_json = os.path.join(license_dir, "manifest.json")
+    
+    return not (os.path.exists(config_dat) and os.path.exists(manifest_json))
+
+
+def auto_download_license_if_needed():
+    """
+    Se in esecuzione dai sorgenti e la cartella licenza è vuota,
+    scarica automaticamente la licenza da GitHub.
+    """
+    if not is_running_from_source():
+        return  # Non fare nulla se installato
+    
+    if not is_license_folder_empty():
+        print("[LICENZA] File licenza già presenti")
+        return  # Licenza già presente
+    
+    print("[LICENZA] ═══════════════════════════════════════════════")
+    print("[LICENZA] Modalità sviluppo - download automatico licenza...")
+    
+    hw_id = license_validator.get_hardware_id().strip().rstrip('.')
+    license_dir = get_license_dir()
+    
+    print(f"[LICENZA] Hardware ID: {hw_id[:20]}...")
+    
+    # Crea la cartella se non esiste
+    if not os.path.exists(license_dir):
+        try:
+            os.makedirs(license_dir)
+            print("[LICENZA] Cartella licenza creata")
+        except OSError as e:
+            print(f"[ERRORE] Creazione cartella licenza: {e}")
+            return
+    
+    # Repository per Bot TS licenses
+    base_url = f"https://api.github.com/repos/gianky00/licenses/contents/{hw_id}"
+    token = get_github_token()
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3.raw"
+    }
+    
+    files_map = {
+        "config.dat": "config.dat",
+        "manifest.json": "manifest.json"
+    }
+    
+    downloaded_content = {}
+    success = True
+    
+    for remote_name, local_name in files_map.items():
+        url = f"{base_url}/{remote_name}"
+        
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                downloaded_content[local_name] = response.content
+                print(f"[LICENZA] ✓ {remote_name} scaricato")
+            elif response.status_code == 404:
+                print(f"[LICENZA] ⚠ {remote_name} non trovato su GitHub")
+                success = False
+                break
+            else:
+                print(f"[LICENZA] ⚠ {remote_name}: HTTP {response.status_code}")
+                success = False
+                break
+                
+        except requests.RequestException as e:
+            print(f"[ERRORE] Connessione fallita: {e}")
+            success = False
+            break
+    
+    if success and downloaded_content:
+        try:
+            for local_name, content in downloaded_content.items():
+                full_path = os.path.join(license_dir, local_name)
+                with open(full_path, "wb") as f:
+                    f.write(content)
+            print("[LICENZA] ✓ Download automatico completato")
+            update_grace_timestamp()
+        except OSError as e:
+            print(f"[ERRORE] Scrittura file licenza: {e}")
+    else:
+        print("[LICENZA] ⚠ Download automatico fallito")
+        print("[LICENZA] Assicurati che la licenza sia presente su GitHub:")
+        print(f"[LICENZA] github.com/gianky00/licenses/{hw_id}/")
+    
+    print("[LICENZA] ═══════════════════════════════════════════════")
+
+
 def run_update():
     """
     Controlla e scarica aggiornamenti licenza da GitHub.

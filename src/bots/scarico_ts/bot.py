@@ -22,9 +22,24 @@ class ScaricaTSBot(BaseBot):
     Funzionalità:
     - Login al portale ISAB
     - Navigazione alla sezione Timesheet
-    - Ricerca per Commessa/Mese/Anno
+    - Ricerca per Numero OdA / Posizione OdA
     - Download del file
     """
+    
+    @staticmethod
+    def get_name() -> str:
+        return "Scarico TS"
+    
+    @staticmethod
+    def get_description() -> str:
+        return "Scarica i timesheet dal portale ISAB"
+    
+    @staticmethod
+    def get_columns() -> list:
+        return [
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"}
+        ]
     
     @property
     def name(self) -> str:

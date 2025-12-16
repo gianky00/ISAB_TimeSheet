@@ -32,10 +32,23 @@ class CaricoTSBot(BaseBot):
     def get_columns() -> list:
         """Restituisce la configurazione delle colonne per la tabella dati."""
         return [
-            {"name": "Commessa", "type": "text"},
-            {"name": "Mese", "type": "month"},
-            {"name": "Anno", "type": "year"},
-            {"name": "File", "type": "file"}  # Percorso del file da caricare
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"},
+            {"name": "Codice Fiscale", "type": "text"},
+            {"name": "Ingresso", "type": "text"},
+            {"name": "Uscita", "type": "text"},
+            {"name": "Tipo Prestazione", "type": "text"},
+            {"name": "C", "type": "text"},
+            {"name": "M", "type": "text"},
+            {"name": "Str D", "type": "text"},
+            {"name": "Str N", "type": "text"},
+            {"name": "Str F D", "type": "text"},
+            {"name": "Str F N", "type": "text"},
+            {"name": "Sq", "type": "text"},
+            {"name": "Nota D", "type": "text"},
+            {"name": "Nota S", "type": "text"},
+            {"name": "F S", "type": "text"},
+            {"name": "G T", "type": "text"}
         ]
     
     @staticmethod
