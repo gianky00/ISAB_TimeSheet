@@ -48,19 +48,26 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
         draw.rounded_rectangle(rect_coords, radius=radius, fill=color_bg)
 
         # Add accent stripe at bottom (optional)
-        if accent_color:
+        if accent_color and width >= 32:  # Only for larger icons
             stripe_height = int(height * 0.12)
-            stripe_coords = [0, height - stripe_height, width, height]
-            # Create mask for rounded bottom corners
-            draw.rounded_rectangle(
-                [0, height - radius * 2, width, height],
-                radius=radius,
-                fill=accent_color
-            )
-            draw.rectangle(
-                [0, height - stripe_height, width, height - radius],
-                fill=accent_color
-            )
+            # Only draw accent if size is large enough
+            if stripe_height > 0 and height > radius * 2:
+                # Create mask for rounded bottom corners
+                accent_top = height - radius * 2
+                if accent_top > 0:
+                    draw.rounded_rectangle(
+                        [0, accent_top, width, height],
+                        radius=radius,
+                        fill=accent_color
+                    )
+                # Draw rectangle only if coordinates are valid
+                rect_top = height - stripe_height
+                rect_bottom = height - radius
+                if rect_bottom > rect_top and rect_top > 0:
+                    draw.rectangle(
+                        [0, rect_top, width, rect_bottom],
+                        fill=accent_color
+                    )
 
         # Load font
         font_size = int(height * 0.35) if len(text) <= 2 else int(height * 0.28)
@@ -95,13 +102,14 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
         draw.text((text_x + shadow_offset, text_y + shadow_offset), text, fill=shadow_color, font=font)
         draw.text((text_x, text_y), text, fill=color_text, font=font)
 
-        # Add subtle highlight overlay
-        overlay = Image.new('RGBA', size, (255, 255, 255, 0))
-        draw_overlay = ImageDraw.Draw(overlay)
-        highlight_rect = [2, 2, width - 2, height // 2]
-        draw_overlay.rounded_rectangle(highlight_rect, radius=radius - 2, fill=(255, 255, 255, 25))
-
-        img = Image.alpha_composite(img, overlay)
+        # Add subtle highlight overlay (only for larger sizes)
+        if width >= 32:
+            overlay = Image.new('RGBA', size, (255, 255, 255, 0))
+            draw_overlay = ImageDraw.Draw(overlay)
+            highlight_radius = max(0, radius - 2)
+            highlight_rect = [2, 2, width - 2, height // 2]
+            draw_overlay.rounded_rectangle(highlight_rect, radius=highlight_radius, fill=(255, 255, 255, 25))
+            img = Image.alpha_composite(img, overlay)
         images.append(img)
 
     # Save as ICO
