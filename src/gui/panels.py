@@ -386,8 +386,8 @@ class ScaricaTSPanel(BaseBotPanel):
             if index >= 0:
                 self.fornitore_combo.setCurrentIndex(index)
             else:
-            # Seleziona il primo elemento
-            self.fornitore_combo.setCurrentIndex(0)
+                # Seleziona il primo elemento
+                self.fornitore_combo.setCurrentIndex(0)
     
     def _load_saved_data(self):
         """Carica i dati salvati."""
