@@ -761,7 +761,13 @@ class DettagliOdAPanel(BaseBotPanel):
 
         saved_data = config.get("last_oda_data", [])
         if saved_data:
-            self.data_table.set_data(saved_data)
+            # Filtra i dati salvati per includere solo la colonna "numero_oda"
+            # Questo evita che vecchie configurazioni mostrino colonne rimosse (es. posizione_oda)
+            cleaned_data = []
+            for row in saved_data:
+                cleaned_row = {"numero_oda": row.get("numero_oda", "")}
+                cleaned_data.append(cleaned_row)
+            self.data_table.set_data(cleaned_data)
     
     def _save_data(self):
         """Salva i dati correnti."""

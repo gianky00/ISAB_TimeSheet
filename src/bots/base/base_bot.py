@@ -171,6 +171,17 @@ class BaseBot(ABC):
 
             # Disable download bubble
             options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
+
+            # Additional preferences to suppress download popups
+            prefs["safebrowsing.enabled"] = True  # Required to suppress some warnings
+            prefs["download.prompt_for_download"] = False
+            prefs["download.directory_upgrade"] = True
+            prefs["plugins.always_open_pdf_externally"] = True
+            prefs["profile.default_content_settings.popups"] = 0
+            prefs["profile.content_settings.exceptions.automatic_downloads.*.setting"] = 1
+
+            # Apply updated prefs
+            options.add_experimental_option("prefs", prefs)
         
         # Initialize driver
         service = Service(ChromeDriverManager().install())
