@@ -159,7 +159,9 @@ class BaseBot(ABC):
                 "download.directory_upgrade": True,
                 "plugins.always_open_pdf_externally": True,
                 "safebrowsing.enabled": True,
-                "safebrowsing.disable_download_protection": True
+                "safebrowsing.disable_download_protection": True,
+                "credentials_enable_service": False,
+                "profile.password_manager_enabled": False
             }
             options.add_experimental_option("prefs", prefs)
 
