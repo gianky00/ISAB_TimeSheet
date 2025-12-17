@@ -6,6 +6,7 @@ import time
 from typing import List, Dict, Any
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
@@ -101,25 +102,18 @@ class DettagliOdABot(BaseBot):
             self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Report']"))
             ).click()
-            self.log("'Report' cliccato.")
-            self._attendi_scomparsa_overlay()
+            self.log("'Report' cliccato. Attesa espansione sottomenu...")
+            time.sleep(1.5) # Attendi espansione animazione
 
-            # Click su "OdA"
+            # Click su "OdA" usando selettore specifico CSS/XPath
             self.log("Click su 'OdA'...")
-            # Cerca un pulsante/menu che contenga esattamente "OdA" o "Dettagli OdA"
-            # Basandoci su Scarico TS, usiamo una logica simile per i menu
-            oda_menu_xpath = "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='OdA']]"
+            # Target span with specific class and text 'OdA'
+            oda_xpath = "//span[contains(@class, 'x-btn-inner-navigation-small') and normalize-space(text())='OdA']"
             
-            try:
-                self.wait.until(EC.element_to_be_clickable((By.XPATH, oda_menu_xpath))).click()
-            except TimeoutException:
-                # Fallback: prova ricerca testuale generica se l'ID specifico non corrisponde
-                self.log("Menu specifico non trovato, provo ricerca generica...")
-                self.driver.find_element(By.XPATH, "//*[text()='OdA']").click()
-
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, oda_xpath))).click()
             self.log("'OdA' cliccato.")
-            
-            # Attendi caricamento pagina (cerca dropdown fornitore)
+
+            # Attendi caricamento pagina
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             self.wait.until(EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath)))
             self.log("✓ Pagina OdA caricata.")
@@ -132,13 +126,13 @@ class DettagliOdABot(BaseBot):
             return False
     
     def _setup_filters(self) -> bool:
-        """Imposta Fornitore, Data Da e Data A."""
+        """Imposta Fornitore, Data Da e Data A tramite sequenza tastiera."""
         self._check_stop()
         self.log("Impostazione filtri...")
         
         try:
+            # 1. Seleziona Fornitore (Click Mouse)
             if self.fornitore:
-                # Seleziona Fornitore
                 self.log(f"  Selezione fornitore: '{self.fornitore}'...")
                 fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
                 fornitore_arrow_element = self.wait.until(
@@ -157,27 +151,48 @@ class DettagliOdABot(BaseBot):
                 self.log(f"  ✓ Fornitore selezionato.")
                 self._attendi_scomparsa_overlay()
 
-            # Inserisci Data Da
-            if self.data_da:
-                self.log(f"  Inserimento Data Da: '{self.data_da}'...")
-                # Assumption: field name is DataOdaDa based on Scarico TS pattern
-                campo_data_da = self.wait.until(
-                    EC.visibility_of_element_located((By.NAME, "DataOdaDa"))
-                )
-                campo_data_da.clear()
-                campo_data_da.send_keys(self.data_da)
+            # 2. Navigazione Tastiera per Date e Flag
+            actions = ActionChains(self.driver)
 
-            # Inserisci Data A
+            # TAB x 3 -> Arrivo su Data Da
+            self.log("  Navigazione tab verso Data Da...")
+            for _ in range(3):
+                actions.send_keys(Keys.TAB)
+                actions.pause(0.2)
+
+            # CTRL+A e Inserimento Data Da
+            if self.data_da:
+                self.log(f"  Inserimento Data Da: '{self.data_da}'")
+                actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
+                actions.send_keys(self.data_da)
+                actions.pause(0.5)
+
+            # TAB x 1 -> Arrivo su Data A
+            self.log("  Navigazione tab verso Data A...")
+            actions.send_keys(Keys.TAB)
+            actions.pause(0.2)
+
+            # CTRL+A e Inserimento Data A
             if self.data_a:
-                self.log(f"  Inserimento Data A: '{self.data_a}'...")
-                # Assumption: field name is DataOdaA
-                campo_data_a = self.wait.until(
-                    EC.visibility_of_element_located((By.NAME, "DataOdaA"))
-                )
-                campo_data_a.clear()
-                campo_data_a.send_keys(self.data_a)
-            
-            self.log("✓ Filtri impostati.")
+                self.log(f"  Inserimento Data A: '{self.data_a}'")
+                actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
+                actions.send_keys(self.data_a)
+                actions.pause(0.5)
+
+            # TAB x 3 -> Arrivo su Flag "Includi Dettaglio"
+            self.log("  Navigazione tab verso Flag Dettagli...")
+            for _ in range(3):
+                actions.send_keys(Keys.TAB)
+                actions.pause(0.2)
+
+            # ENTER per attivare il flag
+            self.log("  Attivazione flag...")
+            actions.send_keys(Keys.ENTER)
+
+            # Esegui tutta la sequenza
+            actions.perform()
+
+            self.log("✓ Filtri e navigazione completati.")
             return True
 
         except Exception as e:
