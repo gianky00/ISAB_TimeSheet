@@ -146,9 +146,14 @@ class BaseBot(ABC):
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
                 "plugins.always_open_pdf_externally": True,
-                "safebrowsing.enabled": True
+                "safebrowsing.enabled": True,
+                "safebrowsing.disable_download_protection": True
             }
             options.add_experimental_option("prefs", prefs)
+
+            # Disable Safebrowsing checks for downloads
+            options.add_argument("--safebrowsing-disable-download-protection")
+            options.add_argument("--safebrowsing-disable-extension-blacklist")
         
         # Initialize driver
         service = Service(ChromeDriverManager().install())

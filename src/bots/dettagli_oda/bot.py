@@ -310,9 +310,9 @@ class DettagliOdABot(BaseBot):
             except Exception as e:
                 self.log(f"⚠ Errore click Excel: {e}")
 
-            self.log("Ritorno al menu fornitore (12 TAB + INVIO)...")
+            self.log("Ritorno al menu fornitore (13 TAB + INVIO)...")
             actions_return = ActionChains(self.driver)
-            for _ in range(12):
+            for _ in range(13):
                 actions_return.send_keys(Keys.TAB)
                 actions_return.pause(0.1)
             actions_return.send_keys(Keys.ENTER)
