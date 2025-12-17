@@ -527,6 +527,118 @@ class DettagliOdAPanel(BaseBotPanel):
     
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
+        # --- Sezione Parametri ---
+        params_group = QGroupBox("⚙️ Parametri")
+        params_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+            }
+        """)
+        params_layout = QVBoxLayout(params_group)
+
+        # Riga 1: Fornitore (ComboBox)
+        fornitore_layout = QHBoxLayout()
+        fornitore_label = QLabel("Fornitore:")
+        fornitore_label.setStyleSheet("font-weight: normal;")
+        fornitore_label.setMinimumWidth(80)
+        fornitore_layout.addWidget(fornitore_label)
+
+        self.fornitore_combo = QComboBox()
+        self.fornitore_combo.setMinimumHeight(35)
+        self.fornitore_combo.setEditable(False)
+        self.fornitore_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 13px;
+                background-color: white;
+            }
+            QComboBox:focus {
+                border-color: #0d6efd;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                width: 12px;
+                height: 12px;
+            }
+            QComboBox QAbstractItemView {
+                border: 1px solid #ced4da;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
+            }
+        """)
+        fornitore_layout.addWidget(self.fornitore_combo)
+
+        # Pulsante per aprire impostazioni
+        self.open_settings_btn = QPushButton("⚙️")
+        self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
+        self.open_settings_btn.setFixedSize(35, 35)
+        self.open_settings_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #5a6268;
+            }
+        """)
+        self.open_settings_btn.clicked.connect(self._open_settings)
+        fornitore_layout.addWidget(self.open_settings_btn)
+
+        params_layout.addLayout(fornitore_layout)
+
+        # Riga 2: Data Da e Data A
+        date_layout = QHBoxLayout()
+
+        # Data Da
+        date_da_label = QLabel("Data Da:")
+        date_da_label.setStyleSheet("font-weight: normal;")
+        date_layout.addWidget(date_da_label)
+
+        self.date_da_edit = QDateEdit()
+        self.date_da_edit.setCalendarPopup(True)
+        self.date_da_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_da_edit.setDate(QDate(2025, 1, 1))
+        self.date_da_edit.setMinimumHeight(35)
+        self.date_da_edit.setStyleSheet(self._get_date_style())
+        date_layout.addWidget(self.date_da_edit)
+
+        date_layout.addSpacing(15)
+
+        # Data A
+        date_a_label = QLabel("Data A:")
+        date_a_label.setStyleSheet("font-weight: normal;")
+        date_layout.addWidget(date_a_label)
+
+        self.date_a_edit = QDateEdit()
+        self.date_a_edit.setCalendarPopup(True)
+        self.date_a_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_a_edit.setDate(QDate.currentDate())
+        self.date_a_edit.setMinimumHeight(35)
+        self.date_a_edit.setStyleSheet(self._get_date_style())
+        date_layout.addWidget(self.date_a_edit)
+
+        date_layout.addStretch()
+        params_layout.addLayout(date_layout)
+
+        self.content_layout.addWidget(params_group)
+
         # Form dati OdA
         group = QGroupBox("Dati Ordine d'Acquisto")
         group.setStyleSheet("""
@@ -547,8 +659,8 @@ class DettagliOdAPanel(BaseBotPanel):
         
         # Istruzioni
         instructions = QLabel(
-            "💡 Questo bot esegue il login e si ferma, lasciando il browser aperto "
-            "per la navigazione manuale. I dati OdA sono opzionali."
+            "💡 Questo bot esegue il login, naviga a Dettagli OdA, imposta i filtri "
+            "e si ferma per la consultazione manuale."
         )
         instructions.setStyleSheet("color: #6c757d; font-size: 11px; padding: 5px;")
         instructions.setWordWrap(True)
@@ -564,7 +676,7 @@ class DettagliOdAPanel(BaseBotPanel):
         
         # Note
         note = QLabel(
-            "⚠️ Il browser rimarrà aperto dopo il login. Chiudilo manualmente quando hai finito."
+            "⚠️ Il browser rimarrà aperto. Chiudilo manualmente quando hai finito."
         )
         note.setStyleSheet("""
             QLabel {
@@ -580,9 +692,70 @@ class DettagliOdAPanel(BaseBotPanel):
         
         self.content_layout.addWidget(group)
     
+    def _get_date_style(self):
+        return """
+            QDateEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 13px;
+                background-color: white;
+            }
+            QDateEdit:focus {
+                border-color: #0d6efd;
+            }
+            QDateEdit::drop-down {
+                border: none;
+                width: 30px;
+            }
+        """
+
+    def _open_settings(self):
+        """Emette un segnale per aprire le impostazioni."""
+        main_window = self.window()
+        if hasattr(main_window, 'show_settings'):
+            main_window.show_settings()
+
+    def refresh_fornitori(self):
+        """Ricarica l'elenco dei fornitori."""
+        config = config_manager.load_config()
+        fornitori = config.get("fornitori", [])
+
+        current_text = self.fornitore_combo.currentText()
+        self.fornitore_combo.clear()
+
+        if fornitori:
+            self.fornitore_combo.addItems(fornitori)
+            index = self.fornitore_combo.findText(current_text)
+            if index >= 0:
+                self.fornitore_combo.setCurrentIndex(index)
+            else:
+                self.fornitore_combo.setCurrentIndex(0)
+
     def _load_saved_data(self):
         """Carica i dati salvati."""
         config = config_manager.load_config()
+
+        self.refresh_fornitori()
+
+        saved_fornitore = config.get("last_oda_fornitore", "")
+        if saved_fornitore:
+            index = self.fornitore_combo.findText(saved_fornitore)
+            if index >= 0:
+                self.fornitore_combo.setCurrentIndex(index)
+
+        # Carica date
+        try:
+            date_da = config.get("last_oda_date_da", "01.01.2025")
+            d, m, y = map(int, date_da.split("."))
+            self.date_da_edit.setDate(QDate(y, m, d))
+
+            date_a = config.get("last_oda_date_a", QDate.currentDate().toString("dd.MM.yyyy"))
+            d, m, y = map(int, date_a.split("."))
+            self.date_a_edit.setDate(QDate(y, m, d))
+        except:
+            pass
+
         saved_data = config.get("last_oda_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
@@ -591,40 +764,56 @@ class DettagliOdAPanel(BaseBotPanel):
         """Salva i dati correnti."""
         data = self.data_table.get_data()
         config_manager.set_config_value("last_oda_data", data)
+
+        config_manager.set_config_value("last_oda_fornitore", self.fornitore_combo.currentText())
+        config_manager.set_config_value("last_oda_date_da", self.date_da_edit.date().toString("dd.MM.yyyy"))
+        config_manager.set_config_value("last_oda_date_a", self.date_a_edit.date().toString("dd.MM.yyyy"))
     
     def _on_start(self):
         """Avvia il bot Dettagli OdA."""
         username, password = self.get_credentials()
         
         if not username or not password:
-            QMessageBox.warning(
-                self,
-                "Credenziali mancanti",
-                "Configura le credenziali ISAB nelle Impostazioni."
-            )
+            QMessageBox.warning(self, "Credenziali mancanti", "Configura le credenziali ISAB nelle Impostazioni.")
             return
+
+        fornitore = self.fornitore_combo.currentText()
+        if not fornitore:
+            QMessageBox.warning(self, "Fornitore mancante", "Seleziona un fornitore.")
+            return
+
+        # Salva dati
+        self._save_data()
         
-        # Ottieni i dati (opzionali)
         data = self.data_table.get_data()
+        data_da = self.date_da_edit.date().toString("dd.MM.yyyy")
+        data_a = self.date_a_edit.date().toString("dd.MM.yyyy")
         
-        # Crea e avvia il worker
         from src.bots import create_bot
-        
         config = config_manager.load_config()
+
         bot = create_bot(
             "dettagli_oda",
             username=username,
             password=password,
-            headless=False,  # Sempre visibile per questo bot
+            headless=False,
             timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path()
+            download_path=config_manager.get_download_path(),
+            fornitore=fornitore,
+            data_da=data_da,
+            data_a=data_a
         )
         
         if not bot:
             QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
             return
         
-        self.worker = BotWorker(bot, {"rows": data})
+        self.worker = BotWorker(bot, {
+            "rows": data,
+            "fornitore": fornitore,
+            "data_da": data_da,
+            "data_a": data_a
+        })
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -635,6 +824,8 @@ class DettagliOdAPanel(BaseBotPanel):
         
         self.log_widget.clear()
         self.log_widget.append("▶ Avvio bot Dettagli OdA...")
+        self.log_widget.append(f"  Fornitore: {fornitore}")
+        self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
         
         self.worker.start()
         self.bot_started.emit()
