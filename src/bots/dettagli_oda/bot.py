@@ -72,21 +72,26 @@ class DettagliOdABot(BaseBot):
         """
         Esegue la navigazione ai Dettagli OdA e imposta i filtri.
         """
+        rows = []
         # Estrai i parametri se passati nel dizionario data
         if isinstance(data, dict):
             self.data_da = data.get('data_da', self.data_da)
             self.data_a = data.get('data_a', self.data_a)
             self.fornitore = data.get('fornitore', self.fornitore)
-            self.numero_oda = data.get('numero_oda', self.numero_oda)
-            self.posizione_oda = data.get('posizione_oda', self.posizione_oda)
+            # Se ci sono righe multiple, usale
+            rows = data.get('rows', [])
+            # Fallback legacy per singola riga se rows è vuoto
+            if not rows:
+                self.numero_oda = data.get('numero_oda', self.numero_oda)
+                self.posizione_oda = data.get('posizione_oda', self.posizione_oda)
 
         self.log("Accesso sezione Dettagli OdA...")
         param_log = f"Fornitore='{self.fornitore}', Periodo={self.data_da}-{self.data_a}"
-        if self.numero_oda:
+        if not rows and self.numero_oda:
             param_log += f", OdA={self.numero_oda}"
-        if self.posizione_oda:
+        if not rows and self.posizione_oda:
             param_log += f", Pos={self.posizione_oda}"
-        self.log(f"Parametri: {param_log}")
+        self.log(f"Parametri Base: {param_log}")
         
         # 1. Navigazione Report -> OdA
         # Nota: Se siamo già sulla pagina (es. loop righe), la funzione gestirà l'eccezione o navigherà
@@ -94,11 +99,30 @@ class DettagliOdABot(BaseBot):
             self.log("⚠ Navigazione automatica fallita (o già in pagina). Proseguo con i filtri.")
         
         # 2. Impostazione Filtri
-        if not self._setup_filters():
-            self.log("⚠ Impostazione filtri fallita.")
-            # Non ritorniamo False qui per lasciare il browser aperto comunque
+        if rows:
+            self.log(f"Avvio elaborazione sequenziale di {len(rows)} righe...")
+            for i, row in enumerate(rows, 1):
+                self._check_stop()
+                self.log(f"--- Elaborazione Riga {i}/{len(rows)} ---")
+
+                # Aggiorna i parametri per la riga corrente
+                self.numero_oda = row.get("Numero OdA", "")
+                self.posizione_oda = row.get("Posizione OdA", "")
+
+                self.log(f"  OdA: {self.numero_oda}, Pos: {self.posizione_oda}")
+
+                # Esegui la sequenza completa (ripartendo dal Fornitore)
+                if not self._setup_filters():
+                    self.log(f"⚠ Errore impostazione filtri riga {i}")
+
+                # Breve pausa tra le righe per stabilità
+                time.sleep(1.0)
+        else:
+            # Esecuzione singola (legacy o nessuna riga specificata)
+            if not self._setup_filters():
+                self.log("⚠ Impostazione filtri fallita.")
         
-        self.log("✓ Browser pronto - prosegui manualmente")
+        self.log("✓ Processo completato - Browser rimane aperto")
         self.log("⚠ Il browser rimarrà aperto")
         
         return True
@@ -196,20 +220,33 @@ class DettagliOdABot(BaseBot):
             actions.send_keys(Keys.TAB)
             actions.pause(0.3)
             
+            # Inserimento Numero OdA
+            self.log(f"  Inserimento Numero OdA: '{self.numero_oda}'")
+            # Ctrl+A per pulire il campo
+            actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
+            actions.pause(0.1)
             if self.numero_oda:
-                self.log(f"  Inserimento Numero OdA: '{self.numero_oda}'")
                 actions.send_keys(self.numero_oda)
-                actions.pause(0.3)
+            else:
+                # Se vuoto, cancella eventuale testo precedente
+                actions.send_keys(Keys.DELETE)
+            actions.pause(0.3)
 
             # --- STEP 2: TAB verso Divisione/Posizione ---
             self.log("  Navigazione verso Divisione (TAB)...")
             actions.send_keys(Keys.TAB)
             actions.pause(0.3)
             
+            # Inserimento Divisione/Posizione
+            self.log(f"  Inserimento Divisione/Posizione: '{self.posizione_oda}'")
+            # Ctrl+A per pulire il campo
+            actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
+            actions.pause(0.1)
             if self.posizione_oda:
-                self.log(f"  Inserimento Divisione/Posizione: '{self.posizione_oda}'")
                 actions.send_keys(self.posizione_oda)
-                actions.pause(0.3)
+            else:
+                actions.send_keys(Keys.DELETE)
+            actions.pause(0.3)
 
             # --- STEP 3: TAB verso Data Da ---
             self.log("  Navigazione verso Data Da (TAB)...")
