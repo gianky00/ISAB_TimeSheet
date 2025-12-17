@@ -11,6 +11,7 @@ from typing import List, Dict, Any
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
@@ -314,16 +315,21 @@ class DettagliOdABot(BaseBot):
             except Exception as e:
                 self.log(f"⚠ Errore processo Excel: {e}")
 
-            self.log("Ritorno al menu fornitore (19 TAB + INVIO)...")
-            actions_return = ActionChains(self.driver)
-            for _ in range(19):
-                actions_return.send_keys(Keys.TAB)
-                actions_return.pause(0.1)
-            actions_return.send_keys(Keys.ENTER)
-            actions_return.perform()
+            # Reset menu navigation for next row if multiple rows exist
+            if len(rows) > 1:
+                self.log("Resetting form via expand/collapse tool (Multi-row mode)...")
+                try:
+                    # Selector based on user image: div.x-tool-expand-bottom
+                    expand_tool = self.wait.until(EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, "div.x-tool-expand-bottom")
+                    ))
+                    expand_tool.click()
+                    time.sleep(1.0) # Wait for UI to update
+                except Exception as e:
+                    self.log(f"Warning: Could not click expand tool: {e}")
             # ----------------------------------
 
-            self.log("✓ Filtri impostati, ricerca avviata e reset menu eseguito.")
+            self.log("✓ Filtri impostati, ricerca avviata.")
             return True
 
         except Exception as e:
