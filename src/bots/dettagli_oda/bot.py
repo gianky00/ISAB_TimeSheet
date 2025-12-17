@@ -301,7 +301,25 @@ class DettagliOdABot(BaseBot):
             # Esegui tutta la sequenza
             actions.perform()
 
-            self.log("✓ Filtri impostati e ricerca avviata.")
+            # --- Scarico Excel e Reset Menu ---
+            self.log("Clic su pulsante Excel...")
+            excel_button_xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
+            try:
+                self.wait.until(EC.element_to_be_clickable((By.XPATH, excel_button_xpath))).click()
+                self.log("Excel scaricato.")
+            except Exception as e:
+                self.log(f"⚠ Errore click Excel: {e}")
+
+            self.log("Ritorno al menu fornitore (12 TAB + INVIO)...")
+            actions_return = ActionChains(self.driver)
+            for _ in range(12):
+                actions_return.send_keys(Keys.TAB)
+                actions_return.pause(0.1)
+            actions_return.send_keys(Keys.ENTER)
+            actions_return.perform()
+            # ----------------------------------
+
+            self.log("✓ Filtri impostati, ricerca avviata e reset menu eseguito.")
             return True
 
         except Exception as e:
