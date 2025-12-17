@@ -12,6 +12,7 @@ from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter
 
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel
 from src.gui.settings_panel import SettingsPanel
+from src.core.license_validator import get_license_info
 
 
 class SidebarButton(QPushButton):
@@ -137,6 +138,26 @@ class MainWindow(QMainWindow):
         sidebar_layout.addWidget(self.btn_dettagli)
         
         sidebar_layout.addStretch()
+
+        # License Info
+        license_info = get_license_info()
+        if license_info:
+            client = license_info.get("Cliente", "N/D")
+            expiry = license_info.get("Scadenza Licenza", "N/D")
+            license_text = f"Licenza: {client}\nScadenza: {expiry}"
+        else:
+            license_text = "Licenza non trovata"
+
+        license_label = QLabel(license_text)
+        license_label.setWordWrap(True)
+        license_label.setStyleSheet("""
+            QLabel {
+                color: rgba(255, 255, 255, 0.6);
+                font-size: 11px;
+                padding: 5px;
+            }
+        """)
+        sidebar_layout.addWidget(license_label)
         
         # Separatore
         separator2 = QFrame()
