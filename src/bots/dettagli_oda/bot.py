@@ -106,8 +106,9 @@ class DettagliOdABot(BaseBot):
                 self.log(f"--- Elaborazione Riga {i}/{len(rows)} ---")
 
                 # Aggiorna i parametri per la riga corrente
-                self.numero_oda = row.get("Numero OdA", "")
-                self.posizione_oda = row.get("Posizione OdA", "")
+                # Nota: EditableDataTable converte le chiavi in lowercase + underscore
+                self.numero_oda = row.get("numero_oda", "")
+                self.posizione_oda = row.get("posizione_oda", "")
 
                 self.log(f"  OdA: {self.numero_oda}, Pos: {self.posizione_oda}")
 
