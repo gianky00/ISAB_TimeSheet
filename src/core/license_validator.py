@@ -10,9 +10,18 @@ import platform
 import uuid
 from datetime import date
 from cryptography.fernet import Fernet
+from enum import Enum
 
 # Chiave segreta per decifratura licenza
 LICENSE_SECRET_KEY = b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
+
+
+class LicenseStatus(Enum):
+    VALID = "Valid"
+    MISSING = "Missing"
+    INVALID = "Invalid"
+    EXPIRED = "Expired"
+    ERROR = "Error"
 
 
 def _calculate_sha256(filepath):
@@ -27,14 +36,6 @@ def _calculate_sha256(filepath):
 def get_hardware_id():
     """
     Ottiene un ID hardware univoco per la macchina.
-
-    Strategia con fallback multipli:
-    1. WMIC (Windows Legacy)
-    2. PowerShell CIM (Windows Modern)
-    3. PowerShell UUID (Windows Fallback)
-    4. lsblk (Linux)
-    5. machine-id (Linux Fallback)
-    6. Python UUID (Universale)
     """
     system = platform.system()
 
@@ -163,15 +164,19 @@ def verify_license():
     """
     Verifica la validità della licenza.
 
-    Controlli effettuati:
-    1. Esistenza cartella e file licenza
-    2. Integrità file tramite hash (manifest)
-    3. Decifratura dati licenza
-    4. Validazione Hardware ID
-    5. Verifica data di scadenza
-
+    Wrapper per retrocompatibilità.
     Returns:
         tuple: (is_valid: bool, message: str)
+    """
+    status, msg = get_detailed_license_status()
+    return status == LicenseStatus.VALID, msg
+
+
+def get_detailed_license_status():
+    """
+    Verifica dettagliata dello stato licenza.
+    Returns:
+        tuple: (LicenseStatus, message_str)
     """
     paths = _get_license_paths()
 
@@ -180,11 +185,11 @@ def verify_license():
         try:
             os.makedirs(paths["dir"])
         except OSError:
-            return False, "Impossibile creare cartella 'Licenza'"
+            return LicenseStatus.ERROR, "Impossibile creare cartella 'Licenza'"
 
     # Controllo file
     if not os.path.exists(paths["config"]) or not os.path.exists(paths["manifest"]):
-        return False, "File di licenza mancanti o danneggiati"
+        return LicenseStatus.MISSING, "File di licenza mancanti"
 
     # 1. Verifica integrità tramite manifest
     try:
@@ -193,16 +198,16 @@ def verify_license():
 
         # Verifica hash config.dat
         if _calculate_sha256(paths["config"]) != manifest.get("config.dat"):
-            return False, "Integrità licenza compromessa (config.dat)"
+            return LicenseStatus.INVALID, "Integrità licenza compromessa (config.dat)"
 
     except Exception as e:
-        return False, f"Errore lettura manifest: {e}"
+        return LicenseStatus.ERROR, f"Errore lettura manifest: {e}"
 
     # 2. Decifra e valida i dati
     try:
         payload = get_license_info()
         if not payload:
-            return False, "Impossibile leggere i dati della licenza"
+            return LicenseStatus.INVALID, "Impossibile leggere i dati della licenza"
 
         # Validazione Hardware ID
         current_hw_id = get_hardware_id()
@@ -213,7 +218,7 @@ def verify_license():
         norm_license = license_hw_id.strip().rstrip('.')
 
         if norm_current != norm_license and "UNKNOWN" not in current_hw_id:
-            return False, (
+            return LicenseStatus.INVALID, (
                 f"Hardware ID non valido\n"
                 f"Atteso: {license_hw_id}\n"
                 f"Rilevato: {current_hw_id}"
@@ -227,15 +232,15 @@ def verify_license():
                 expiry_date = date(year, month, day)
 
                 if date.today() > expiry_date:
-                    return False, f"Licenza SCADUTA il {expiry_str}"
+                    return LicenseStatus.EXPIRED, f"Licenza SCADUTA il {expiry_str}"
             except ValueError:
-                return False, "Formato data scadenza non valido"
+                return LicenseStatus.INVALID, "Formato data scadenza non valido"
 
         cliente = payload.get('Cliente', 'Utente')
-        return True, f"Licenza valida per: {cliente}"
+        return LicenseStatus.VALID, f"Licenza valida per: {cliente}"
 
     except Exception as e:
-        return False, f"Errore validazione licenza: {e}"
+        return LicenseStatus.ERROR, f"Errore validazione licenza: {e}"
 
 
 def get_license_expiry():
