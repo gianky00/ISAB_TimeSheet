@@ -49,7 +49,7 @@ def main():
     from src.gui.main_window import MainWindow
     
     window = MainWindow()
-    window.show()
+    window.showMaximized()
     
     # Run event loop
     sys.exit(app.exec())

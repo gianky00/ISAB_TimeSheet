@@ -2,7 +2,10 @@
 Bot TS - Dettagli OdA Bot
 Bot per l'accesso alla sezione Dettagli OdA del portale ISAB.
 """
+import os
+import glob
 import time
+import shutil
 from typing import List, Dict, Any
 
 from selenium.webdriver.common.by import By
@@ -36,8 +39,7 @@ class DettagliOdABot(BaseBot):
     @staticmethod
     def get_columns() -> list:
         return [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"}
+            {"name": "Numero OdA", "type": "text"}
         ]
     
     @property
@@ -49,7 +51,7 @@ class DettagliOdABot(BaseBot):
         return "Accede ai Dettagli OdA con filtri preimpostati"
     
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", 
-                 numero_oda: str = "", posizione_oda: str = "", **kwargs):
+                 numero_oda: str = "", **kwargs):
         """
         Inizializza il bot.
         
@@ -58,7 +60,6 @@ class DettagliOdABot(BaseBot):
             data_a: Data fine (formato dd.mm.yyyy)
             fornitore: Nome fornitore
             numero_oda: Numero OdA (opzionale)
-            posizione_oda: Posizione OdA / Divisione (opzionale)
             **kwargs: Altri parametri per BaseBot
         """
         super().__init__(**kwargs)
@@ -66,27 +67,33 @@ class DettagliOdABot(BaseBot):
         self.data_a = data_a
         self.fornitore = fornitore
         self.numero_oda = numero_oda
-        self.posizione_oda = posizione_oda
 
     def run(self, data: Dict[str, Any]) -> bool:
         """
         Esegue la navigazione ai Dettagli OdA e imposta i filtri.
         """
+        rows = []
         # Estrai i parametri se passati nel dizionario data
         if isinstance(data, dict):
             self.data_da = data.get('data_da', self.data_da)
             self.data_a = data.get('data_a', self.data_a)
             self.fornitore = data.get('fornitore', self.fornitore)
-            self.numero_oda = data.get('numero_oda', self.numero_oda)
-            self.posizione_oda = data.get('posizione_oda', self.posizione_oda)
+            # Se ci sono righe multiple, usale
+            rows = data.get('rows', [])
+            # Fallback legacy per singola riga se rows è vuoto
+            if not rows:
+                self.numero_oda = data.get('numero_oda', self.numero_oda)
 
         self.log("Accesso sezione Dettagli OdA...")
         param_log = f"Fornitore='{self.fornitore}', Periodo={self.data_da}-{self.data_a}"
-        if self.numero_oda:
-            param_log += f", OdA={self.numero_oda}"
-        if self.posizione_oda:
-            param_log += f", Pos={self.posizione_oda}"
-        self.log(f"Parametri: {param_log}")
+
+        if rows:
+            self.log(f"Parametri Base: {param_log}")
+            self.log(f"Modalità multi-riga: {len(rows)} elementi da processare.")
+        else:
+            if self.numero_oda:
+                param_log += f", OdA={self.numero_oda}"
+            self.log(f"Parametri Base: {param_log}")
         
         # 1. Navigazione Report -> OdA
         # Nota: Se siamo già sulla pagina (es. loop righe), la funzione gestirà l'eccezione o navigherà
@@ -94,11 +101,31 @@ class DettagliOdABot(BaseBot):
             self.log("⚠ Navigazione automatica fallita (o già in pagina). Proseguo con i filtri.")
         
         # 2. Impostazione Filtri
-        if not self._setup_filters():
-            self.log("⚠ Impostazione filtri fallita.")
-            # Non ritorniamo False qui per lasciare il browser aperto comunque
+        if rows:
+            self.log(f"Avvio elaborazione sequenziale di {len(rows)} righe...")
+            for i, row in enumerate(rows, 1):
+                self._check_stop()
+                self.log(f"--- Elaborazione Riga {i}/{len(rows)} ---")
+
+                # Aggiorna i parametri per la riga corrente
+                # Nota: EditableDataTable converte le chiavi in lowercase + underscore
+                self.numero_oda = row.get("numero_oda", "")
+
+                self.log(f"  OdA: {self.numero_oda}")
+
+                # Esegui la sequenza completa (ripartendo dal Fornitore)
+                # Dalla seconda riga in poi, saltiamo la pressione di SPAZIO sul flag
+                if not self._setup_filters(is_first_row=(i == 1)):
+                    self.log(f"⚠ Errore impostazione filtri riga {i}")
+
+                # Breve pausa tra le righe per stabilità
+                time.sleep(1.0)
+        else:
+            # Esecuzione singola (legacy o nessuna riga specificata)
+            if not self._setup_filters(is_first_row=True):
+                self.log("⚠ Impostazione filtri fallita.")
         
-        self.log("✓ Browser pronto - prosegui manualmente")
+        self.log("✓ Processo completato - Browser rimane aperto")
         self.log("⚠ Il browser rimarrà aperto")
         
         return True
@@ -160,10 +187,16 @@ class DettagliOdABot(BaseBot):
             # Tentiamo di proseguire comunque se fallisce la navigazione menu
             return False
     
-    def _setup_filters(self) -> bool:
-        """Imposta Fornitore, OdA, Divisione, Date e Flag."""
+    def _setup_filters(self, is_first_row: bool = True) -> bool:
+        """
+        Imposta Fornitore, OdA, Divisione, Date e Flag.
+
+        Args:
+            is_first_row: Se True, preme SPAZIO per attivare il flag.
+                          Se False, salta la pressione (flag già attivo).
+        """
         self._check_stop()
-        self.log("Impostazione filtri...")
+        self.log(f"Impostazione filtri (First Row: {is_first_row})...")
         
         try:
             # 1. Seleziona Fornitore (Click Mouse) - Punto di ripartenza per nuove righe
@@ -196,20 +229,23 @@ class DettagliOdABot(BaseBot):
             actions.send_keys(Keys.TAB)
             actions.pause(0.3)
             
+            # Inserimento Numero OdA
+            self.log(f"  Inserimento Numero OdA: '{self.numero_oda}'")
+            # Ctrl+A per pulire il campo
+            actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
+            actions.pause(0.1)
             if self.numero_oda:
-                self.log(f"  Inserimento Numero OdA: '{self.numero_oda}'")
                 actions.send_keys(self.numero_oda)
-                actions.pause(0.3)
+            else:
+                # Se vuoto, cancella eventuale testo precedente
+                actions.send_keys(Keys.DELETE)
+            actions.pause(0.3)
 
             # --- STEP 2: TAB verso Divisione/Posizione ---
-            self.log("  Navigazione verso Divisione (TAB)...")
+            # Nota: Campo Divisione/Posizione rimosso come richiesto, ma il TAB viene mantenuto
+            self.log("  Navigazione verso Divisione (TAB - campo saltato)...")
             actions.send_keys(Keys.TAB)
             actions.pause(0.3)
-            
-            if self.posizione_oda:
-                self.log(f"  Inserimento Divisione/Posizione: '{self.posizione_oda}'")
-                actions.send_keys(self.posizione_oda)
-                actions.pause(0.3)
 
             # --- STEP 3: TAB verso Data Da ---
             self.log("  Navigazione verso Data Da (TAB)...")
@@ -244,9 +280,12 @@ class DettagliOdABot(BaseBot):
                 actions.pause(0.3)
 
             # --- STEP 6: Attivazione e Conferma (SPAZIO -> TAB -> INVIO) ---
-            self.log("  Attivazione flag (SPAZIO)...")
-            actions.send_keys(Keys.SPACE)
-            actions.pause(0.3)
+            if is_first_row:
+                self.log("  Attivazione flag (SPAZIO)...")
+                actions.send_keys(Keys.SPACE)
+                actions.pause(0.3)
+            else:
+                self.log("  Flag già attivo, salto SPAZIO.")
 
             self.log("  Navigazione al pulsante conferma (TAB)...")
             actions.send_keys(Keys.TAB)
@@ -258,7 +297,34 @@ class DettagliOdABot(BaseBot):
             # Esegui tutta la sequenza
             actions.perform()
 
-            self.log("✓ Filtri impostati e ricerca avviata.")
+            # --- Scarico Excel e Reset Menu ---
+            self.log("Clic su pulsante Excel...")
+            excel_button_xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
+            try:
+                # Clicca per scaricare
+                self.wait.until(EC.element_to_be_clickable((By.XPATH, excel_button_xpath))).click()
+                self.log("Richiesta download inviata. Attesa completamento...")
+
+                # Attesa e rinomina file
+                time.sleep(2.0) # Attesa iniziale
+                if self._rename_latest_download(self.numero_oda):
+                    self.log(f"✓ File rinominato correttamente in {self.numero_oda}.xlsx")
+                else:
+                    self.log("⚠ Impossibile rinominare il file scaricato.")
+
+            except Exception as e:
+                self.log(f"⚠ Errore processo Excel: {e}")
+
+            self.log("Ritorno al menu fornitore (13 TAB + INVIO)...")
+            actions_return = ActionChains(self.driver)
+            for _ in range(13):
+                actions_return.send_keys(Keys.TAB)
+                actions_return.pause(0.1)
+            actions_return.send_keys(Keys.ENTER)
+            actions_return.perform()
+            # ----------------------------------
+
+            self.log("✓ Filtri impostati, ricerca avviata e reset menu eseguito.")
             return True
 
         except Exception as e:
@@ -278,4 +344,61 @@ class DettagliOdABot(BaseBot):
             return self.run(data)
         except Exception as e:
             self.log(f"Errore: {e}")
+            return False
+    def _rename_latest_download(self, new_name_base: str) -> bool:
+        """
+        Trova l'ultimo file scaricato e lo rinomina.
+
+        Args:
+            new_name_base: Il nuovo nome del file (senza estensione)
+
+        Returns:
+            True se successo, False altrimenti
+        """
+        if not self.download_path or not os.path.exists(self.download_path):
+            self.log("Path download non valido o inesistente.")
+            return False
+
+        # Attesa attiva del file (max 10 secondi)
+        timeout = 10
+        start_time = time.time()
+        latest_file = None
+
+        while time.time() - start_time < timeout:
+            # Cerca tutti i file, esclusi quelli temporanei di download
+            files = glob.glob(os.path.join(self.download_path, "*"))
+            files = [f for f in files if not f.endswith('.crdownload') and not f.endswith('.tmp') and os.path.isfile(f)]
+
+            if files:
+                # Trova il più recente
+                latest_file = max(files, key=os.path.getctime)
+
+                # Se il file è stato creato/modificato negli ultimi 15 secondi, è probabilmente il nostro
+                if time.time() - os.path.getctime(latest_file) < 15:
+                    break
+
+            time.sleep(1)
+
+        if not latest_file:
+            self.log("Nessun nuovo file trovato.")
+            return False
+
+        try:
+            # Determina estensione (di solito .xlsx)
+            _, ext = os.path.splitext(latest_file)
+            if not ext:
+                ext = ".xlsx" # Default safety
+
+            new_filename = f"{new_name_base}{ext}"
+            new_path = os.path.join(self.download_path, new_filename)
+
+            # Se esiste già, lo sovrascrive
+            if os.path.exists(new_path):
+                os.remove(new_path)
+
+            shutil.move(latest_file, new_path)
+            return True
+
+        except Exception as e:
+            self.log(f"Errore rinomina file: {e}")
             return False

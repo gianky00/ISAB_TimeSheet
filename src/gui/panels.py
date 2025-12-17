@@ -173,7 +173,11 @@ class BaseBotPanel(QWidget):
             self.status_indicator.set_status("error")
         
         self.bot_finished.emit(success)
-        self.worker = None
+
+        # Attendi che il thread sia effettivamente terminato per evitare crash
+        if self.worker:
+            self.worker.wait()
+            self.worker = None
     
     def _on_log(self, message: str):
         """Aggiunge un messaggio al log."""
@@ -350,10 +354,9 @@ class ScaricaTSPanel(BaseBotPanel):
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         
-        # Tabella con colonne: Numero OdA, Posizione OdA
+        # Tabella con colonne: Numero OdA
         self.data_table = EditableDataTable([
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"}
+            {"name": "Numero OdA", "type": "text"}
         ])
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
@@ -758,7 +761,13 @@ class DettagliOdAPanel(BaseBotPanel):
 
         saved_data = config.get("last_oda_data", [])
         if saved_data:
-            self.data_table.set_data(saved_data)
+            # Filtra i dati salvati per includere solo la colonna "numero_oda"
+            # Questo evita che vecchie configurazioni mostrino colonne rimosse (es. posizione_oda)
+            cleaned_data = []
+            for row in saved_data:
+                cleaned_row = {"numero_oda": row.get("numero_oda", "")}
+                cleaned_data.append(cleaned_row)
+            self.data_table.set_data(cleaned_data)
     
     def _save_data(self):
         """Salva i dati correnti."""

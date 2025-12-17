@@ -139,15 +139,48 @@ class BaseBot(ABC):
             options.add_argument("--headless=new")
             options.add_argument("--window-size=1920,1080")
         
-        # Download configuration
-        if self.download_path and os.path.isdir(self.download_path):
+        # Download configuration - CORRETTO CON PERCORSO ASSOLUTO
+        if self.download_path:
+            # Crea la cartella se non esiste
+            try:
+                os.makedirs(self.download_path, exist_ok=True)
+            except Exception as e:
+                self.log(f"Errore creazione cartella download: {e}")
+
+            # Converte in percorso assoluto (FONDAMENTALE per evitare l'errore di Chrome)
+            try:
+                download_dir_abs = str(os.path.abspath(self.download_path))
+            except Exception:
+                download_dir_abs = self.download_path
+
             prefs = {
-                "download.default_directory": self.download_path,
+                "download.default_directory": download_dir_abs,
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
                 "plugins.always_open_pdf_externally": True,
-                "safebrowsing.enabled": True
+                "safebrowsing.enabled": True,
+                "safebrowsing.disable_download_protection": True,
+                "credentials_enable_service": False,
+                "profile.password_manager_enabled": False
             }
+            options.add_experimental_option("prefs", prefs)
+
+            # Disable Safebrowsing checks for downloads
+            options.add_argument("--safebrowsing-disable-download-protection")
+            options.add_argument("--safebrowsing-disable-extension-blacklist")
+
+            # Disable download bubble
+            options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
+
+            # Additional preferences to suppress download popups
+            prefs["safebrowsing.enabled"] = True  # Required to suppress some warnings
+            prefs["download.prompt_for_download"] = False
+            prefs["download.directory_upgrade"] = True
+            prefs["plugins.always_open_pdf_externally"] = True
+            prefs["profile.default_content_settings.popups"] = 0
+            prefs["profile.content_settings.exceptions.automatic_downloads.*.setting"] = 1
+
+            # Apply updated prefs
             options.add_experimental_option("prefs", prefs)
         
         # Initialize driver
