@@ -118,14 +118,15 @@ class DettagliOdABot(BaseBot):
                 self.log(f"  OdA: {self.numero_oda}, Pos: {self.posizione_oda}")
 
                 # Esegui la sequenza completa (ripartendo dal Fornitore)
-                if not self._setup_filters():
+                # Dalla seconda riga in poi, saltiamo la pressione di SPAZIO sul flag
+                if not self._setup_filters(is_first_row=(i == 1)):
                     self.log(f"⚠ Errore impostazione filtri riga {i}")
 
                 # Breve pausa tra le righe per stabilità
                 time.sleep(1.0)
         else:
             # Esecuzione singola (legacy o nessuna riga specificata)
-            if not self._setup_filters():
+            if not self._setup_filters(is_first_row=True):
                 self.log("⚠ Impostazione filtri fallita.")
         
         self.log("✓ Processo completato - Browser rimane aperto")
@@ -190,10 +191,16 @@ class DettagliOdABot(BaseBot):
             # Tentiamo di proseguire comunque se fallisce la navigazione menu
             return False
     
-    def _setup_filters(self) -> bool:
-        """Imposta Fornitore, OdA, Divisione, Date e Flag."""
+    def _setup_filters(self, is_first_row: bool = True) -> bool:
+        """
+        Imposta Fornitore, OdA, Divisione, Date e Flag.
+
+        Args:
+            is_first_row: Se True, preme SPAZIO per attivare il flag.
+                          Se False, salta la pressione (flag già attivo).
+        """
         self._check_stop()
-        self.log("Impostazione filtri...")
+        self.log(f"Impostazione filtri (First Row: {is_first_row})...")
         
         try:
             # 1. Seleziona Fornitore (Click Mouse) - Punto di ripartenza per nuove righe
@@ -287,9 +294,12 @@ class DettagliOdABot(BaseBot):
                 actions.pause(0.3)
 
             # --- STEP 6: Attivazione e Conferma (SPAZIO -> TAB -> INVIO) ---
-            self.log("  Attivazione flag (SPAZIO)...")
-            actions.send_keys(Keys.SPACE)
-            actions.pause(0.3)
+            if is_first_row:
+                self.log("  Attivazione flag (SPAZIO)...")
+                actions.send_keys(Keys.SPACE)
+                actions.pause(0.3)
+            else:
+                self.log("  Flag già attivo, salto SPAZIO.")
 
             self.log("  Navigazione al pulsante conferma (TAB)...")
             actions.send_keys(Keys.TAB)
