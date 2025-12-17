@@ -139,10 +139,22 @@ class BaseBot(ABC):
             options.add_argument("--headless=new")
             options.add_argument("--window-size=1920,1080")
         
-        # Download configuration
-        if self.download_path and os.path.isdir(self.download_path):
+        # Download configuration - CORRETTO CON PERCORSO ASSOLUTO
+        if self.download_path:
+            # Crea la cartella se non esiste
+            try:
+                os.makedirs(self.download_path, exist_ok=True)
+            except Exception as e:
+                self.log(f"Errore creazione cartella download: {e}")
+
+            # Converte in percorso assoluto (FONDAMENTALE per evitare l'errore di Chrome)
+            try:
+                download_dir_abs = str(os.path.abspath(self.download_path))
+            except Exception:
+                download_dir_abs = self.download_path
+
             prefs = {
-                "download.default_directory": self.download_path,
+                "download.default_directory": download_dir_abs,
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
                 "plugins.always_open_pdf_externally": True,

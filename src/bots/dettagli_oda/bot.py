@@ -36,8 +36,7 @@ class DettagliOdABot(BaseBot):
     @staticmethod
     def get_columns() -> list:
         return [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"}
+            {"name": "Numero OdA", "type": "text"}
         ]
     
     @property
@@ -49,7 +48,7 @@ class DettagliOdABot(BaseBot):
         return "Accede ai Dettagli OdA con filtri preimpostati"
     
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", 
-                 numero_oda: str = "", posizione_oda: str = "", **kwargs):
+                 numero_oda: str = "", **kwargs):
         """
         Inizializza il bot.
         
@@ -58,7 +57,6 @@ class DettagliOdABot(BaseBot):
             data_a: Data fine (formato dd.mm.yyyy)
             fornitore: Nome fornitore
             numero_oda: Numero OdA (opzionale)
-            posizione_oda: Posizione OdA / Divisione (opzionale)
             **kwargs: Altri parametri per BaseBot
         """
         super().__init__(**kwargs)
@@ -66,7 +64,6 @@ class DettagliOdABot(BaseBot):
         self.data_a = data_a
         self.fornitore = fornitore
         self.numero_oda = numero_oda
-        self.posizione_oda = posizione_oda
 
     def run(self, data: Dict[str, Any]) -> bool:
         """
@@ -83,7 +80,6 @@ class DettagliOdABot(BaseBot):
             # Fallback legacy per singola riga se rows è vuoto
             if not rows:
                 self.numero_oda = data.get('numero_oda', self.numero_oda)
-                self.posizione_oda = data.get('posizione_oda', self.posizione_oda)
 
         self.log("Accesso sezione Dettagli OdA...")
         param_log = f"Fornitore='{self.fornitore}', Periodo={self.data_da}-{self.data_a}"
@@ -94,8 +90,6 @@ class DettagliOdABot(BaseBot):
         else:
             if self.numero_oda:
                 param_log += f", OdA={self.numero_oda}"
-            if self.posizione_oda:
-                param_log += f", Pos={self.posizione_oda}"
             self.log(f"Parametri Base: {param_log}")
         
         # 1. Navigazione Report -> OdA
@@ -113,9 +107,8 @@ class DettagliOdABot(BaseBot):
                 # Aggiorna i parametri per la riga corrente
                 # Nota: EditableDataTable converte le chiavi in lowercase + underscore
                 self.numero_oda = row.get("numero_oda", "")
-                self.posizione_oda = row.get("posizione_oda", "")
 
-                self.log(f"  OdA: {self.numero_oda}, Pos: {self.posizione_oda}")
+                self.log(f"  OdA: {self.numero_oda}")
 
                 # Esegui la sequenza completa (ripartendo dal Fornitore)
                 # Dalla seconda riga in poi, saltiamo la pressione di SPAZIO sul flag
@@ -246,19 +239,9 @@ class DettagliOdABot(BaseBot):
             actions.pause(0.3)
 
             # --- STEP 2: TAB verso Divisione/Posizione ---
-            self.log("  Navigazione verso Divisione (TAB)...")
+            # Nota: Campo Divisione/Posizione rimosso come richiesto, ma il TAB viene mantenuto
+            self.log("  Navigazione verso Divisione (TAB - campo saltato)...")
             actions.send_keys(Keys.TAB)
-            actions.pause(0.3)
-            
-            # Inserimento Divisione/Posizione
-            self.log(f"  Inserimento Divisione/Posizione: '{self.posizione_oda}'")
-            # Ctrl+A per pulire il campo
-            actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
-            actions.pause(0.1)
-            if self.posizione_oda:
-                actions.send_keys(self.posizione_oda)
-            else:
-                actions.send_keys(Keys.DELETE)
             actions.pause(0.3)
 
             # --- STEP 3: TAB verso Data Da ---

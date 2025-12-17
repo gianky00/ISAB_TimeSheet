@@ -354,10 +354,9 @@ class ScaricaTSPanel(BaseBotPanel):
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         
-        # Tabella con colonne: Numero OdA, Posizione OdA
+        # Tabella con colonne: Numero OdA
         self.data_table = EditableDataTable([
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"}
+            {"name": "Numero OdA", "type": "text"}
         ])
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
