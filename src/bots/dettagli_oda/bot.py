@@ -2,7 +2,10 @@
 Bot TS - Dettagli OdA Bot
 Bot per l'accesso alla sezione Dettagli OdA del portale ISAB.
 """
+import os
+import glob
 import time
+import shutil
 from typing import List, Dict, Any
 
 from selenium.webdriver.common.by import By
@@ -298,10 +301,19 @@ class DettagliOdABot(BaseBot):
             self.log("Clic su pulsante Excel...")
             excel_button_xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
             try:
+                # Clicca per scaricare
                 self.wait.until(EC.element_to_be_clickable((By.XPATH, excel_button_xpath))).click()
-                self.log("Excel scaricato.")
+                self.log("Richiesta download inviata. Attesa completamento...")
+
+                # Attesa e rinomina file
+                time.sleep(2.0) # Attesa iniziale
+                if self._rename_latest_download(self.numero_oda):
+                    self.log(f"✓ File rinominato correttamente in {self.numero_oda}.xlsx")
+                else:
+                    self.log("⚠ Impossibile rinominare il file scaricato.")
+
             except Exception as e:
-                self.log(f"⚠ Errore click Excel: {e}")
+                self.log(f"⚠ Errore processo Excel: {e}")
 
             self.log("Ritorno al menu fornitore (13 TAB + INVIO)...")
             actions_return = ActionChains(self.driver)
@@ -332,4 +344,61 @@ class DettagliOdABot(BaseBot):
             return self.run(data)
         except Exception as e:
             self.log(f"Errore: {e}")
+            return False
+    def _rename_latest_download(self, new_name_base: str) -> bool:
+        """
+        Trova l'ultimo file scaricato e lo rinomina.
+
+        Args:
+            new_name_base: Il nuovo nome del file (senza estensione)
+
+        Returns:
+            True se successo, False altrimenti
+        """
+        if not self.download_path or not os.path.exists(self.download_path):
+            self.log("Path download non valido o inesistente.")
+            return False
+
+        # Attesa attiva del file (max 10 secondi)
+        timeout = 10
+        start_time = time.time()
+        latest_file = None
+
+        while time.time() - start_time < timeout:
+            # Cerca tutti i file, esclusi quelli temporanei di download
+            files = glob.glob(os.path.join(self.download_path, "*"))
+            files = [f for f in files if not f.endswith('.crdownload') and not f.endswith('.tmp') and os.path.isfile(f)]
+
+            if files:
+                # Trova il più recente
+                latest_file = max(files, key=os.path.getctime)
+
+                # Se il file è stato creato/modificato negli ultimi 15 secondi, è probabilmente il nostro
+                if time.time() - os.path.getctime(latest_file) < 15:
+                    break
+
+            time.sleep(1)
+
+        if not latest_file:
+            self.log("Nessun nuovo file trovato.")
+            return False
+
+        try:
+            # Determina estensione (di solito .xlsx)
+            _, ext = os.path.splitext(latest_file)
+            if not ext:
+                ext = ".xlsx" # Default safety
+
+            new_filename = f"{new_name_base}{ext}"
+            new_path = os.path.join(self.download_path, new_filename)
+
+            # Se esiste già, lo sovrascrive
+            if os.path.exists(new_path):
+                os.remove(new_path)
+
+            shutil.move(latest_file, new_path)
+            return True
+
+        except Exception as e:
+            self.log(f"Errore rinomina file: {e}")
             return False
