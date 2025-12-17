@@ -151,11 +151,10 @@ class TestDettagliOdABot:
         from src.bots.dettagli_oda import DettagliOdABot
         
         columns = DettagliOdABot.get_columns()
-        assert len(columns) == 2
+        assert len(columns) == 1
         
         column_names = [col['name'] for col in columns]
         assert 'Numero OdA' in column_names
-        assert 'Posizione OdA' in column_names
     
     def test_bot_metadata(self):
         """Should have correct metadata."""

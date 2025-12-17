@@ -161,24 +161,21 @@ class BaseBot(ABC):
                 "safebrowsing.enabled": True,
                 "safebrowsing.disable_download_protection": True,
                 "credentials_enable_service": False,
-                "profile.password_manager_enabled": False
+                "profile.password_manager_enabled": False,
+                "browser.download.manager.showWhenStarting": False,
+                "download.manager.showWhenStarting": False,
+                "profile.default_content_settings.popups": 0,
+                "profile.content_settings.exceptions.automatic_downloads.*.setting": 1
             }
-            options.add_experimental_option("prefs", prefs)
 
             # Disable Safebrowsing checks for downloads
             options.add_argument("--safebrowsing-disable-download-protection")
             options.add_argument("--safebrowsing-disable-extension-blacklist")
 
-            # Disable download bubble
+            # Disable download bubble & other popups
             options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
-
-            # Additional preferences to suppress download popups
-            prefs["safebrowsing.enabled"] = True  # Required to suppress some warnings
-            prefs["download.prompt_for_download"] = False
-            prefs["download.directory_upgrade"] = True
-            prefs["plugins.always_open_pdf_externally"] = True
-            prefs["profile.default_content_settings.popups"] = 0
-            prefs["profile.content_settings.exceptions.automatic_downloads.*.setting"] = 1
+            options.add_argument("--disable-popup-blocking")
+            options.add_argument("--disable-search-engine-choice-screen")
 
             # Apply updated prefs
             options.add_experimental_option("prefs", prefs)

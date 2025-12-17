@@ -242,7 +242,6 @@ class DettagliOdABot(BaseBot):
             actions.pause(0.3)
 
             # --- STEP 2: TAB verso Divisione/Posizione ---
-            # Nota: Campo Divisione/Posizione rimosso come richiesto, ma il TAB viene mantenuto
             self.log("  Navigazione verso Divisione (TAB - campo saltato)...")
             actions.send_keys(Keys.TAB)
             actions.pause(0.3)
