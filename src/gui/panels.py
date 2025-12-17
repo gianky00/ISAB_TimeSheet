@@ -173,7 +173,11 @@ class BaseBotPanel(QWidget):
             self.status_indicator.set_status("error")
         
         self.bot_finished.emit(success)
-        self.worker = None
+
+        # Attendi che il thread sia effettivamente terminato per evitare crash
+        if self.worker:
+            self.worker.wait()
+            self.worker = None
     
     def _on_log(self, message: str):
         """Aggiunge un messaggio al log."""

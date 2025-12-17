@@ -87,11 +87,16 @@ class DettagliOdABot(BaseBot):
 
         self.log("Accesso sezione Dettagli OdA...")
         param_log = f"Fornitore='{self.fornitore}', Periodo={self.data_da}-{self.data_a}"
-        if not rows and self.numero_oda:
-            param_log += f", OdA={self.numero_oda}"
-        if not rows and self.posizione_oda:
-            param_log += f", Pos={self.posizione_oda}"
-        self.log(f"Parametri Base: {param_log}")
+
+        if rows:
+            self.log(f"Parametri Base: {param_log}")
+            self.log(f"Modalità multi-riga: {len(rows)} elementi da processare.")
+        else:
+            if self.numero_oda:
+                param_log += f", OdA={self.numero_oda}"
+            if self.posizione_oda:
+                param_log += f", Pos={self.posizione_oda}"
+            self.log(f"Parametri Base: {param_log}")
         
         # 1. Navigazione Report -> OdA
         # Nota: Se siamo già sulla pagina (es. loop righe), la funzione gestirà l'eccezione o navigherà
