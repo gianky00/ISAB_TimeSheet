@@ -113,8 +113,14 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
         images.append(img)
 
     # Save as ICO
-    images[0].save(filename, format='ICO', sizes=sizes, append_images=images[1:])
-    print(f"✓ Generated: {filename}")
+    try:
+        images[0].save(filename, format='ICO', sizes=sizes, append_images=images[1:])
+        print(f"✓ Generated: {filename}")
+    except OSError as e:
+        if e.errno == 22 or e.errno == 13:
+            print(f"⚠️  Skipping {filename}: File locked or invalid argument.")
+        else:
+            print(f"❌ Error saving {filename}: {e}")
 
 
 def main():
