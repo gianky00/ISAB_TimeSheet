@@ -20,19 +20,12 @@ if src_path not in sys.path:
 
 def main():
     """Main entry point."""
-    # Auto-download license if running from source and license folder is empty
-    try:
-        from src.core.license_updater import auto_download_license_if_needed
-        auto_download_license_if_needed()
-    except Exception as e:
-        print(f"[AVVISO] Controllo licenza: {e}")
-    
     # Import PyQt6 components
-    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication, QMessageBox
     from PyQt6.QtCore import Qt
-    from PyQt6.QtGui import QFont
+    from PyQt6.QtGui import QFont, QIcon
     
-    # Create application
+    # Create application first to allow message boxes
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
     
@@ -44,8 +37,61 @@ def main():
     app.setApplicationName("Bot TS")
     app.setOrganizationName("Giancarlo Allegretti")
     app.setApplicationVersion("1.0.0")
-    
-    # Import and show main window
+
+    # === LICENSE CHECK FLOW ===
+    try:
+        from src.core.license_validator import get_detailed_license_status, LicenseStatus, get_hardware_id
+        from src.core.license_updater import run_update, check_emergency_grace_period
+
+        status, msg = get_detailed_license_status()
+
+        # Se la licenza non è valida, proviamo a scaricarla di nuovo
+        if status != LicenseStatus.VALID:
+            print(f"[LICENZA] Stato: {status.name} ({msg}). Tentativo aggiornamento...")
+            run_update() # Forza il download
+            status, msg = get_detailed_license_status() # Ricontrolla
+
+        # Se ancora non valida, gestiamo i casi
+        if status != LicenseStatus.VALID:
+
+            # Verifichiamo il periodo di grazia (3 giorni)
+            grace_allowed, grace_msg, days_left = check_emergency_grace_period()
+
+            hw_id = get_hardware_id()
+
+            if grace_allowed:
+                # Avviso grazia attiva
+                QMessageBox.warning(
+                    None,
+                    "Licenza non trovata - Modalità Provvisoria",
+                    f"Licenza non rilevata o non valida.\n\n"
+                    f"{grace_msg}\n\n"
+                    f"ID Hardware: {hw_id}\n\n"
+                    "Contatta l'amministratore per ottenere una licenza valida.\n"
+                    "L'applicazione continuerà a funzionare per il periodo rimanente."
+                )
+            else:
+                # Blocco totale
+                QMessageBox.critical(
+                    None,
+                    "Errore Licenza",
+                    f"Licenza non valida e periodo di prova scaduto.\n\n"
+                    f"Errore: {msg}\n"
+                    f"ID Hardware: {hw_id}\n\n"
+                    "L'applicazione verrà chiusa. Contatta l'amministratore."
+                )
+                sys.exit(1)
+
+    except Exception as e:
+        # Fallback di sicurezza in caso di crash del controllo licenza
+        QMessageBox.critical(
+            None,
+            "Errore Critico",
+            f"Impossibile verificare la licenza.\n{e}"
+        )
+        sys.exit(1)
+
+    # === START APP ===
     from src.gui.main_window import MainWindow
     
     window = MainWindow()
