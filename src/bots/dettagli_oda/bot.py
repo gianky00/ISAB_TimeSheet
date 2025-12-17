@@ -314,16 +314,16 @@ class DettagliOdABot(BaseBot):
             except Exception as e:
                 self.log(f"⚠ Errore processo Excel: {e}")
 
-            # self.log("Ritorno al menu fornitore (18 TAB + INVIO)...")
-            # actions_return = ActionChains(self.driver)
-            # for _ in range(18):
-            #     actions_return.send_keys(Keys.TAB)
-            #     actions_return.pause(0.1)
-            # actions_return.send_keys(Keys.ENTER)
-            # actions_return.perform()
+            self.log("Ritorno al menu fornitore (11 TAB + INVIO)...")
+            actions_return = ActionChains(self.driver)
+            for _ in range(11):
+                actions_return.send_keys(Keys.TAB)
+                actions_return.pause(0.1)
+            actions_return.send_keys(Keys.ENTER)
+            actions_return.perform()
             # ----------------------------------
 
-            self.log("✓ Filtri impostati, ricerca avviata.")
+            self.log("✓ Filtri impostati, ricerca avviata e reset menu eseguito.")
             return True
 
         except Exception as e:
