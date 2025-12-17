@@ -314,9 +314,9 @@ class DettagliOdABot(BaseBot):
             except Exception as e:
                 self.log(f"⚠ Errore processo Excel: {e}")
 
-            self.log("Ritorno al menu fornitore (11 TAB + INVIO)...")
+            self.log("Ritorno al menu fornitore (19 TAB + INVIO)...")
             actions_return = ActionChains(self.driver)
-            for _ in range(11):
+            for _ in range(19):
                 actions_return.send_keys(Keys.TAB)
                 actions_return.pause(0.1)
             actions_return.send_keys(Keys.ENTER)
