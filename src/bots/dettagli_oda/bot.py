@@ -21,7 +21,7 @@ class DettagliOdABot(BaseBot):
     Funzionalità:
     - Login al portale ISAB
     - Navigazione a Report -> OdA
-    - Impostazione Filtri (Fornitore, Data Da, Data A)
+    - Impostazione Filtri (Fornitore, Num OdA, Divisione, Date)
     - Browser rimane aperto per uso manuale
     """
     
@@ -48,7 +48,8 @@ class DettagliOdABot(BaseBot):
     def description(self) -> str:
         return "Accede ai Dettagli OdA con filtri preimpostati"
     
-    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):
+    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", 
+                 numero_oda: str = "", posizione_oda: str = "", **kwargs):
         """
         Inizializza il bot.
         
@@ -56,12 +57,16 @@ class DettagliOdABot(BaseBot):
             data_da: Data inizio (formato dd.mm.yyyy)
             data_a: Data fine (formato dd.mm.yyyy)
             fornitore: Nome fornitore
+            numero_oda: Numero OdA (opzionale)
+            posizione_oda: Posizione OdA / Divisione (opzionale)
             **kwargs: Altri parametri per BaseBot
         """
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
+        self.numero_oda = numero_oda
+        self.posizione_oda = posizione_oda
 
     def run(self, data: Dict[str, Any]) -> bool:
         """
@@ -72,14 +77,21 @@ class DettagliOdABot(BaseBot):
             self.data_da = data.get('data_da', self.data_da)
             self.data_a = data.get('data_a', self.data_a)
             self.fornitore = data.get('fornitore', self.fornitore)
+            self.numero_oda = data.get('numero_oda', self.numero_oda)
+            self.posizione_oda = data.get('posizione_oda', self.posizione_oda)
 
         self.log("Accesso sezione Dettagli OdA...")
-        self.log(f"Parametri: Fornitore='{self.fornitore}', Periodo={self.data_da}-{self.data_a}")
+        param_log = f"Fornitore='{self.fornitore}', Periodo={self.data_da}-{self.data_a}"
+        if self.numero_oda:
+            param_log += f", OdA={self.numero_oda}"
+        if self.posizione_oda:
+            param_log += f", Pos={self.posizione_oda}"
+        self.log(f"Parametri: {param_log}")
         
         # 1. Navigazione Report -> OdA
+        # Nota: Se siamo già sulla pagina (es. loop righe), la funzione gestirà l'eccezione o navigherà
         if not self._navigate_to_oda():
-            self.log("⚠ Navigazione automatica fallita.")
-            return False
+            self.log("⚠ Navigazione automatica fallita (o già in pagina). Proseguo con i filtri.")
         
         # 2. Impostazione Filtri
         if not self._setup_filters():
@@ -92,26 +104,48 @@ class DettagliOdABot(BaseBot):
         return True
     
     def _navigate_to_oda(self) -> bool:
-        """Naviga a Report -> OdA."""
+        """Naviga a Report -> OdA usando navigazione tastiera."""
         self._check_stop()
+        
+        # Check rapido: se vediamo già il filtro fornitore, siamo già sulla pagina corretta
+        try:
+            fornitore_exists = self.driver.find_elements(By.XPATH, "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@class, 'x-form-arrow-trigger')]")
+            if fornitore_exists and fornitore_exists[0].is_displayed():
+                self.log("Pagina OdA già attiva. Salto navigazione menu.")
+                return True
+        except:
+            pass
+
         self.log("Navigazione menu Report -> OdA...")
         
         try:
             # Click su "Report"
             self.log("Click su 'Report'...")
-            self.wait.until(
+            report_element = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Report']"))
-            ).click()
+            )
+            report_element.click()
             self.log("'Report' cliccato. Attesa espansione sottomenu...")
-            time.sleep(1.5) # Attendi espansione animazione
+            time.sleep(1.5)  # Attendi espansione animazione ExtJS
 
-            # Click su "OdA" usando selettore specifico CSS/XPath
-            self.log("Click su 'OdA'...")
-            # Target span with specific class and text 'OdA'
-            oda_xpath = "//span[contains(@class, 'x-btn-inner-navigation-small') and normalize-space(text())='OdA']"
+            # Navigazione tastiera: 2 volte TAB + INVIO per selezionare Oda
+            self.log("Selezione 'Oda' tramite tastiera (2x TAB + INVIO)...")
+            actions = ActionChains(self.driver)
             
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, oda_xpath))).click()
-            self.log("'OdA' cliccato.")
+            # Primo TAB
+            actions.send_keys(Keys.TAB)
+            actions.pause(0.3)
+            
+            # Secondo TAB
+            actions.send_keys(Keys.TAB)
+            actions.pause(0.3)
+            
+            # Invio
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
+            
+            self.log("'Oda' selezionato.")
+            time.sleep(1.0)
 
             # Attendi caricamento pagina
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
@@ -122,16 +156,17 @@ class DettagliOdABot(BaseBot):
             return True
             
         except Exception as e:
-            self.log(f"✗ Errore navigazione menu: {e}")
+            self.log(f"✗ Errore navigazione menu (potrebbe essere già aperto): {e}")
+            # Tentiamo di proseguire comunque se fallisce la navigazione menu
             return False
     
     def _setup_filters(self) -> bool:
-        """Imposta Fornitore, Data Da e Data A tramite sequenza tastiera."""
+        """Imposta Fornitore, OdA, Divisione, Date e Flag."""
         self._check_stop()
         self.log("Impostazione filtri...")
         
         try:
-            # 1. Seleziona Fornitore (Click Mouse)
+            # 1. Seleziona Fornitore (Click Mouse) - Punto di ripartenza per nuove righe
             if self.fornitore:
                 self.log(f"  Selezione fornitore: '{self.fornitore}'...")
                 fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
@@ -139,6 +174,7 @@ class DettagliOdABot(BaseBot):
                     EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
                 )
                 ActionChains(self.driver).move_to_element(fornitore_arrow_element).click().perform()
+                time.sleep(0.5)
 
                 # Seleziona l'opzione
                 fornitore_option_xpath = f"//li[contains(text(), '{self.fornitore}')]"
@@ -149,50 +185,80 @@ class DettagliOdABot(BaseBot):
                 time.sleep(0.5)
                 self.driver.execute_script("arguments[0].click();", fornitore_option)
                 self.log(f"  ✓ Fornitore selezionato.")
+                time.sleep(0.5)
                 self._attendi_scomparsa_overlay()
 
-            # 2. Navigazione Tastiera per Date e Flag
+            # 2. Navigazione Tastiera per OdA, Divisione, Date e Flag
             actions = ActionChains(self.driver)
 
-            # TAB x 3 -> Arrivo su Data Da
-            self.log("  Navigazione tab verso Data Da...")
-            for _ in range(3):
-                actions.send_keys(Keys.TAB)
-                actions.pause(0.2)
+            # --- STEP 1: TAB verso Numero OdA ---
+            self.log("  Navigazione verso Numero OdA (TAB)...")
+            actions.send_keys(Keys.TAB)
+            actions.pause(0.3)
+            
+            if self.numero_oda:
+                self.log(f"  Inserimento Numero OdA: '{self.numero_oda}'")
+                actions.send_keys(self.numero_oda)
+                actions.pause(0.3)
 
-            # CTRL+A e Inserimento Data Da
+            # --- STEP 2: TAB verso Divisione/Posizione ---
+            self.log("  Navigazione verso Divisione (TAB)...")
+            actions.send_keys(Keys.TAB)
+            actions.pause(0.3)
+            
+            if self.posizione_oda:
+                self.log(f"  Inserimento Divisione/Posizione: '{self.posizione_oda}'")
+                actions.send_keys(self.posizione_oda)
+                actions.pause(0.3)
+
+            # --- STEP 3: TAB verso Data Da ---
+            self.log("  Navigazione verso Data Da (TAB)...")
+            actions.send_keys(Keys.TAB)
+            actions.pause(0.3)
+
+            # Inserimento Data Da
             if self.data_da:
                 self.log(f"  Inserimento Data Da: '{self.data_da}'")
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
+                actions.pause(0.1)
                 actions.send_keys(self.data_da)
                 actions.pause(0.5)
 
-            # TAB x 1 -> Arrivo su Data A
-            self.log("  Navigazione tab verso Data A...")
+            # --- STEP 4: TAB verso Data A ---
+            self.log("  Navigazione verso Data A (TAB)...")
             actions.send_keys(Keys.TAB)
-            actions.pause(0.2)
+            actions.pause(0.3)
 
-            # CTRL+A e Inserimento Data A
+            # Inserimento Data A
             if self.data_a:
                 self.log(f"  Inserimento Data A: '{self.data_a}'")
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL)
+                actions.pause(0.1)
                 actions.send_keys(self.data_a)
                 actions.pause(0.5)
 
-            # TAB x 3 -> Arrivo su Flag "Includi Dettaglio"
-            self.log("  Navigazione tab verso Flag Dettagli...")
-            for _ in range(3):
+            # --- STEP 5: Navigazione verso Flag (3 TAB) ---
+            self.log("  Navigazione tab verso Flag Dettagli (3 TAB)...")
+            for i in range(3):
                 actions.send_keys(Keys.TAB)
-                actions.pause(0.2)
+                actions.pause(0.3)
 
-            # ENTER per attivare il flag
-            self.log("  Attivazione flag...")
+            # --- STEP 6: Attivazione e Conferma (SPAZIO -> TAB -> INVIO) ---
+            self.log("  Attivazione flag (SPAZIO)...")
+            actions.send_keys(Keys.SPACE)
+            actions.pause(0.3)
+
+            self.log("  Navigazione al pulsante conferma (TAB)...")
+            actions.send_keys(Keys.TAB)
+            actions.pause(0.3)
+
+            self.log("  Conferma finale (INVIO)...")
             actions.send_keys(Keys.ENTER)
 
             # Esegui tutta la sequenza
             actions.perform()
 
-            self.log("✓ Filtri e navigazione completati.")
+            self.log("✓ Filtri impostati e ricerca avviata.")
             return True
 
         except Exception as e:
