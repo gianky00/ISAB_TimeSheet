@@ -7,6 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional, Callable, List, Dict, Any
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -117,13 +118,29 @@ class BaseBot(ABC):
             raise InterruptedError("Bot interrotto dall'utente")
     
     def _init_driver(self):
-        """Inizializza il driver Chrome con configurazione ottimizzata per ISAB."""
+        """Inizializza il driver Chrome con configurazione ottimizzata e SENZA POPUP."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
         
         options = Options()
         
-        # Anti-detection
+        # --- 1. ARGOMENTI PER DISABILITARE UI E POPUP (Chrome Switches) ---
+        # Disabilita la bolla dei download (Download Bubble)
+        options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
+        
+        # Disabilita la schermata di scelta motore di ricerca (EU compliance screen)
+        options.add_argument("--disable-search-engine-choice-screen")
+        
+        # Disabilita popup di "Ripristina sessione" in caso di chiusura forzata
+        options.add_argument("--no-restore-session-state")
+        options.add_argument("--disable-session-crashed-bubble")
+        
+        # Disabilita notifiche e infobar di automazione
+        options.add_argument("--disable-notifications")
+        options.add_argument("--disable-infobars")
+        options.add_argument("--disable-popup-blocking") # Blocca i popup nativi del browser
+        
+        # Anti-detection base
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
@@ -139,55 +156,63 @@ class BaseBot(ABC):
             options.add_argument("--headless=new")
             options.add_argument("--window-size=1920,1080")
         
-        # Download configuration - CORRETTO CON PERCORSO ASSOLUTO
+        # --- 2. PREFERENZE PROFILO UTENTE (Prefs) ---
+        prefs = {
+            # Blocca gestore password e credenziali
+            "credentials_enable_service": False,
+            "profile.password_manager_enabled": False,
+            "profile.password_manager_leak_detection": False,
+            "users.users_allowed_to_save_passwords": False,
+            
+            # Blocca notifiche e popup generici
+            "profile.default_content_settings.popups": 0,
+            "profile.default_content_setting_values.notifications": 2,
+            "profile.default_content_setting_values.automatic_downloads": 1,
+            
+            # Evita che il browser chieda cosa fare con i PDF (li scarica direttamente)
+            "plugins.always_open_pdf_externally": True,
+            
+            # Disabilita avvisi di sicurezza fastidiosi sui download
+            "safebrowsing.enabled": True, 
+            "safebrowsing.disable_download_protection": True,
+        }
+
+        # --- 3. CONFIGURAZIONE DOWNLOAD PATH ---
         if self.download_path:
             # Crea la cartella se non esiste
             try:
                 os.makedirs(self.download_path, exist_ok=True)
             except Exception as e:
                 self.log(f"Errore creazione cartella download: {e}")
-
-            # Converte in percorso assoluto (FONDAMENTALE per evitare l'errore di Chrome)
+            
+            # Converte in percorso assoluto (Fondamentale)
             try:
                 download_dir_abs = str(os.path.abspath(self.download_path))
             except Exception:
                 download_dir_abs = self.download_path
 
-            prefs = {
+            # Aggiorna le preferenze con i percorsi
+            prefs.update({
                 "download.default_directory": download_dir_abs,
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
-                "plugins.always_open_pdf_externally": True,
-                "safebrowsing.enabled": True,
-                "safebrowsing.disable_download_protection": True,
-                "credentials_enable_service": False,
-                "profile.password_manager_enabled": False
-            }
-            options.add_experimental_option("prefs", prefs)
-
-            # Disable Safebrowsing checks for downloads
+                # Impostazioni extra per evitare la barra/bolla dei download
+                "browser.download.manager.showWhenStarting": False,
+                "download.manager.showWhenStarting": False,
+            })
+            
+            # Argomenti extra di sicurezza per permettere download automatici
             options.add_argument("--safebrowsing-disable-download-protection")
             options.add_argument("--safebrowsing-disable-extension-blacklist")
 
-            # Disable download bubble
-            options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
-
-            # Additional preferences to suppress download popups
-            prefs["safebrowsing.enabled"] = True  # Required to suppress some warnings
-            prefs["download.prompt_for_download"] = False
-            prefs["download.directory_upgrade"] = True
-            prefs["plugins.always_open_pdf_externally"] = True
-            prefs["profile.default_content_settings.popups"] = 0
-            prefs["profile.content_settings.exceptions.automatic_downloads.*.setting"] = 1
-
-            # Apply updated prefs
-            options.add_experimental_option("prefs", prefs)
+        # Applica tutte le preferenze
+        options.add_experimental_option("prefs", prefs)
         
         # Initialize driver
         service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service, options=options)
         
-        # Remove webdriver flag
+        # Remove webdriver flag (JS side)
         self.driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"}
@@ -198,17 +223,11 @@ class BaseBot(ABC):
         self.popup_wait = WebDriverWait(self.driver, 7)
         self.long_wait = WebDriverWait(self.driver, 15)
         
-        self.log("✓ Browser inizializzato")
+        self.log("✓ Browser inizializzato (Modalità Silenziosa)")
     
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = 45) -> bool:
         """
         Attende in modo robusto che gli overlay di caricamento tipici dei siti Ext JS scompaiano.
-        
-        Args:
-            timeout_secondi: Timeout massimo di attesa
-            
-        Returns:
-            True se l'overlay è scomparso, False se timeout
         """
         try:
             overlay_wait = WebDriverWait(self.driver, timeout_secondi)
@@ -229,9 +248,6 @@ class BaseBot(ABC):
     def _login(self) -> bool:
         """
         Esegue il login al portale ISAB con i selettori corretti per ExtJS.
-        
-        Returns:
-            True se il login ha successo, False altrimenti
         """
         self._check_stop()
         self.log(f"Navigazione a: {self.ISAB_URL}")
@@ -320,9 +336,6 @@ class BaseBot(ABC):
     def _logout(self) -> bool:
         """
         Esegue il logout dal portale ISAB.
-        
-        Returns:
-            True se il logout ha successo
         """
         self.log("Tentativo di Logout...")
         try:
@@ -378,12 +391,6 @@ class BaseBot(ABC):
     def navigate_to_menu(self, menu_path: List[str]) -> bool:
         """
         Naviga attraverso i menu ExtJS.
-        
-        Args:
-            menu_path: Lista di elementi menu da cliccare in sequenza
-            
-        Returns:
-            True se la navigazione ha successo
         """
         self._check_stop()
         self.log(f"Navigazione: {' > '.join(menu_path)}")
@@ -440,24 +447,12 @@ class BaseBot(ABC):
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """
         Esegue la logica specifica del bot.
-        
-        Args:
-            data: Dati da processare (es. lista di commesse)
-            
-        Returns:
-            True se l'esecuzione ha successo
         """
         pass
     
     def execute(self, data: List[Dict[str, Any]]) -> bool:
         """
         Esegue il workflow completo del bot.
-        
-        Args:
-            data: Dati da processare
-            
-        Returns:
-            True se l'esecuzione ha successo
         """
         self._stop_requested = False
         
@@ -488,10 +483,6 @@ class BaseBot(ABC):
     def execute_login_only(self) -> bool:
         """
         Esegue solo il login senza cleanup.
-        Utile per bot che lasciano il browser aperto.
-        
-        Returns:
-            True se il login ha successo
         """
         self._stop_requested = False
         
@@ -515,4 +506,3 @@ class BaseBot(ABC):
             self.status = BotStatus.ERROR
             self.cleanup()
             return False
-        # Note: No cleanup here - browser stays open
