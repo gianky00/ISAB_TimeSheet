@@ -168,6 +168,9 @@ class BaseBot(ABC):
             # Disable Safebrowsing checks for downloads
             options.add_argument("--safebrowsing-disable-download-protection")
             options.add_argument("--safebrowsing-disable-extension-blacklist")
+
+            # Disable download bubble
+            options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
         
         # Initialize driver
         service = Service(ChromeDriverManager().install())
