@@ -22,7 +22,7 @@ class SidebarButton(QPushButton):
         super().__init__(parent)
         self.setText(f"{icon} {text}" if icon else text)
         self.setCheckable(True)
-        self.setMinimumHeight(45)
+        self.setMinimumHeight(55)
         self.setMinimumWidth(180)
         self._update_style()
         self.toggled.connect(self._update_style)
@@ -39,7 +39,7 @@ class SidebarButton(QPushButton):
                     padding: 12px 18px;
                     text-align: left;
                     font-weight: bold;
-                    font-size: 14px;
+                    font-size: 16px;
                 }
             """)
         else:
@@ -51,7 +51,7 @@ class SidebarButton(QPushButton):
                     border-radius: 8px;
                     padding: 12px 18px;
                     text-align: left;
-                    font-size: 14px;
+                    font-size: 16px;
                     font-weight: 500;
                 }
                 QPushButton:hover {
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Bot TS - ISAB Timesheet Manager")
-        self.setMinimumSize(1000, 700)
+        self.setMinimumSize(1200, 800)
         
         self._current_page_index = 0
         self._setup_ui()
@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
         
         # === SIDEBAR ===
         sidebar = QFrame()
-        sidebar.setFixedWidth(220)
+        sidebar.setFixedWidth(240)
         sidebar.setStyleSheet("""
             QFrame {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -95,14 +95,14 @@ class MainWindow(QMainWindow):
         """)
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(15, 20, 15, 20)
-        sidebar_layout.setSpacing(5)
+        sidebar_layout.setSpacing(10)
         
         # Logo/Titolo
         logo_label = QLabel("🤖 Bot TS")
         logo_label.setStyleSheet("""
             QLabel {
                 color: white;
-                font-size: 24px;
+                font-size: 28px;
                 font-weight: bold;
                 padding: 10px 0;
             }
@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
         subtitle.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.7);
-                font-size: 11px;
+                font-size: 13px;
                 padding-bottom: 20px;
             }
         """)
@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
         license_label.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.6);
-                font-size: 11px;
+                font-size: 13px;
                 padding: 5px;
             }
         """)
@@ -173,11 +173,12 @@ class MainWindow(QMainWindow):
         sidebar_layout.addWidget(self.btn_settings)
         
         # Versione
-        version_label = QLabel("v1.0.0")
+        from src.core.version import __version__
+        version_label = QLabel(f"v{__version__}")
         version_label.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.5);
-                font-size: 10px;
+                font-size: 13px;
                 padding-top: 10px;
             }
         """)

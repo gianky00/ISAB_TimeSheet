@@ -354,14 +354,9 @@ class ScaricaTSPanel(BaseBotPanel):
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         
-        # Tabella con colonne: Numero OdA e Numero Contratto
-        # Recupera default da config per le nuove righe
-        config = config_manager.load_config()
-        default_contract = config.get("default_contract_number", "")
-
+        # Tabella con colonne: Numero OdA
         self.data_table = EditableDataTable([
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Numero Contratto", "type": "text", "default": default_contract}
+            {"name": "Numero OdA", "type": "text"}
         ])
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
@@ -674,9 +669,19 @@ class DettagliOdAPanel(BaseBotPanel):
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         
-        # Tabella con colonne: Numero OdA
+        # Tabella con colonne: Numero OdA e Numero Contratto
+        # Recupera default da config per le nuove righe
+        config = config_manager.load_config()
+        contracts = config.get("contracts", [])
+        default_contract = config.get("default_contract", "")
+
+        # Se non c'è un default ma ci sono contratti, usa il primo
+        if not default_contract and contracts:
+            default_contract = contracts[0]
+
         self.data_table = EditableDataTable([
-            {"name": "Numero OdA", "type": "text"}
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Numero Contratto", "type": "combo", "options": contracts, "default": default_contract}
         ])
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
@@ -724,10 +729,11 @@ class DettagliOdAPanel(BaseBotPanel):
             main_window.show_settings()
 
     def refresh_fornitori(self):
-        """Ricarica l'elenco dei fornitori."""
+        """Ricarica l'elenco dei fornitori e contratti."""
         config = config_manager.load_config()
-        fornitori = config.get("fornitori", [])
 
+        # 1. Aggiorna Fornitori
+        fornitori = config.get("fornitori", [])
         current_text = self.fornitore_combo.currentText()
         self.fornitore_combo.clear()
 
@@ -738,6 +744,10 @@ class DettagliOdAPanel(BaseBotPanel):
                 self.fornitore_combo.setCurrentIndex(index)
             else:
                 self.fornitore_combo.setCurrentIndex(0)
+
+        # 2. Aggiorna Contratti nella tabella
+        contracts = config.get("contracts", [])
+        self.data_table.update_column_options("Numero Contratto", contracts)
 
     def _load_saved_data(self):
         """Carica i dati salvati."""
@@ -768,7 +778,10 @@ class DettagliOdAPanel(BaseBotPanel):
             # Assicuriamo che i vecchi dati abbiano il contratto vuoto o default
             # e puliamo da chiavi obsolete
             cleaned_data = []
-            default_contract = config.get("default_contract_number", "")
+            default_contract = config.get("default_contract", "")
+            contracts = config.get("contracts", [])
+            if not default_contract and contracts:
+                default_contract = contracts[0]
 
             for row in saved_data:
                 cleaned_row = {

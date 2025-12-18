@@ -15,7 +15,8 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 # Configurazione di default
 DEFAULT_CONFIG: Dict[str, Any] = {
     "accounts": [],  # Lista di dict: {"username": "", "password": "", "default": False}
-    "default_contract_number": "",  # Numero contratto di default
+    "contracts": [],  # Lista numeri contratto
+    "default_contract": "",  # Contratto di default (ridondante se usiamo il primo della lista, ma utile per persistenza)
     "browser_headless": False,
     "browser_timeout": 30,
     "download_path": "",
@@ -53,20 +54,33 @@ def load_config() -> Dict[str, Any]:
             # Merge con default
             for key, value in loaded_config.items():
                 config[key] = value
-                
+
             # --- MIGRAZIONE ---
-            # Se esistono vecchie credenziali e la lista accounts è vuota, migrale
+            migrated = False
+
+            # 1. Migrazione Account
             if "isab_username" in config and config["isab_username"] and not config["accounts"]:
                 config["accounts"].append({
                     "username": config["isab_username"],
                     "password": config.get("isab_password", ""),
                     "default": True
                 })
-                # Rimuovi le vecchie chiavi (opzionale, ma pulisce il file al prossimo salvataggio)
                 if "isab_username" in config: del config["isab_username"]
                 if "isab_password" in config: del config["isab_password"]
+                migrated = True
 
-                # Salva subito la migrazione
+            # 2. Migrazione Contratti
+            if "default_contract_number" in config and config["default_contract_number"]:
+                if config["default_contract_number"] not in config["contracts"]:
+                    config["contracts"].append(config["default_contract_number"])
+                # Imposta come default se non c'è
+                if not config.get("default_contract"):
+                    config["default_contract"] = config["default_contract_number"]
+
+                del config["default_contract_number"]
+                migrated = True
+
+            if migrated:
                 save_config(config)
             
             return config
