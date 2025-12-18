@@ -44,6 +44,7 @@ class EditableDataTable(QWidget):
                 border-radius: 4px;
                 background-color: white;
                 gridline-color: #e9ecef;
+                font-size: 14px;
             }
             QTableWidget::item {
                 padding: 8px;
@@ -58,6 +59,7 @@ class EditableDataTable(QWidget):
                 border: none;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
+                font-size: 14px;
             }
         """)
         
@@ -329,7 +331,7 @@ class LogWidget(QWidget):
                 border-radius: 4px;
                 padding: 10px;
                 font-family: 'Consolas', 'Monaco', monospace;
-                font-size: 12px;
+                font-size: 14px;
             }
         """)
         layout.addWidget(self.log_text)
@@ -390,7 +392,7 @@ class StatusIndicator(QWidget):
         
         # Testo stato
         self.status_label = QLabel("In attesa")
-        self.status_label.setStyleSheet("font-size: 12px; color: #6c757d;")
+        self.status_label.setStyleSheet("font-size: 14px; color: #6c757d;")
         layout.addWidget(self.status_label)
         
         layout.addStretch()
@@ -421,4 +423,4 @@ class StatusIndicator(QWidget):
             }}
         """)
         self.status_label.setText(text)
-        self.status_label.setStyleSheet(f"font-size: 12px; color: {color}; font-weight: bold;")
+        self.status_label.setStyleSheet(f"font-size: 14px; color: {color}; font-weight: bold;")

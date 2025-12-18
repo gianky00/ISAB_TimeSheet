@@ -82,11 +82,11 @@ class SettingsPanel(QWidget):
         header_layout = QVBoxLayout(header)
         
         title = QLabel("⚙️ Impostazioni")
-        title.setStyleSheet("color: white; font-size: 21px; font-weight: bold;")
+        title.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         header_layout.addWidget(title)
         
         desc = QLabel("Configurazione credenziali ISAB, browser e fornitori")
-        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 15px;")
+        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 16px;")
         header_layout.addWidget(desc)
         
         main_layout.addWidget(header)
