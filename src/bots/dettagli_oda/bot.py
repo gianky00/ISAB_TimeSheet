@@ -6,6 +6,7 @@ import os
 import glob
 import time
 import shutil
+from pathlib import Path
 from typing import List, Dict, Any
 
 from selenium.webdriver.common.by import By
@@ -334,17 +335,18 @@ class DettagliOdABot(BaseBot):
     def _rename_latest_download(self, new_name_base: str) -> str:
         """Trova l'ultimo file scaricato nella cartella default e lo sposta nella destinazione."""
         # Cartella di download predefinita del sistema (Source)
-        source_dir = str(Path.home() / "Downloads")
+        source_dir = Path.home() / "Downloads"
 
         # Cartella di destinazione configurata (Target)
-        dest_dir = self.download_path
-        if not dest_dir:
+        if self.download_path:
+            dest_dir = Path(self.download_path)
+        else:
             dest_dir = source_dir
 
         # Crea destinazione se non esiste
-        if not os.path.exists(dest_dir):
+        if not dest_dir.exists():
             try:
-                os.makedirs(dest_dir)
+                dest_dir.mkdir(parents=True, exist_ok=True)
             except:
                 self.log("Impossibile creare cartella destinazione.")
                 return ""
@@ -354,12 +356,14 @@ class DettagliOdABot(BaseBot):
         latest_file = None
 
         while time.time() - start_time < timeout:
-            files = glob.glob(os.path.join(source_dir, "*"))
-            files = [f for f in files if not f.endswith('.crdownload') and not f.endswith('.tmp') and os.path.isfile(f)]
+            # Cerca file nella source_dir
+            files = list(source_dir.glob("*"))
+            files = [f for f in files if not f.name.endswith('.crdownload') and not f.name.endswith('.tmp') and f.is_file()]
 
             if files:
-                latest_file = max(files, key=os.path.getctime)
-                if time.time() - os.path.getctime(latest_file) < 20:
+                latest_file = max(files, key=lambda f: f.stat().st_mtime)
+                # Controlla se è recente (< 20s)
+                if time.time() - latest_file.stat().st_mtime < 20:
                     break
             time.sleep(1)
 
@@ -367,25 +371,28 @@ class DettagliOdABot(BaseBot):
             return ""
 
         try:
-            _, ext = os.path.splitext(latest_file)
+            ext = latest_file.suffix
             if not ext: ext = ".xlsx"
+
             new_filename = f"dettaglio_oda_{new_name_base}{ext}"
             if not new_name_base:
                 new_filename = f"dettaglio_oda_{int(time.time())}{ext}"
                 
-            new_path = os.path.join(dest_dir, new_filename)
+            new_path = dest_dir / new_filename
 
             # Gestione duplicati
-            if os.path.exists(new_path):
+            if new_path.exists():
                 try:
-                    os.remove(new_path)
+                    new_path.unlink()
                 except:
                     # Se non riesco a rimuovere, cambio nome
                     new_filename = f"dettaglio_oda_{new_name_base}_{int(time.time())}{ext}"
-                    new_path = os.path.join(dest_dir, new_filename)
+                    new_path = dest_dir / new_filename
 
-            shutil.move(latest_file, new_path)
-            return new_path
+            # Sposta/Rinomina
+            # Se src == dest (es. utente non ha cambiato path), shutil.move o rename funzionano come rename
+            shutil.move(str(latest_file), str(new_path))
+            return str(new_path)
         except Exception as e:
             self.log(f"Errore spostamento file: {e}")
             return ""
