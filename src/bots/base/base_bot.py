@@ -237,6 +237,7 @@ class BaseBot(ABC):
     def _login(self) -> bool:
         """
         Esegue il login al portale ISAB con i selettori corretti per ExtJS.
+        Ritorna False se viene rilevato "Proxy Error".
         """
         self._check_stop()
         self.log(f"Navigazione a: {self.ISAB_URL}")
@@ -245,6 +246,13 @@ class BaseBot(ABC):
         try:
             self.driver.get(self.ISAB_URL)
             
+            # Check Proxy Error immediato
+            page_title = self.driver.title
+            page_source = self.driver.page_source
+            if "Proxy Error" in page_title or "Proxy Error" in page_source:
+                self.log("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
+                return False
+
             # Attendi il form di login - usa NAME invece di ID (specifico ISAB)
             self.log("Tentativo di login...")
             username_field = self.wait.until(
@@ -439,6 +447,29 @@ class BaseBot(ABC):
         """
         pass
     
+    def _safe_login_with_retry(self, max_retries: int = 3) -> bool:
+        """
+        Inizializza driver e login con retry in caso di Proxy Error.
+        """
+        for attempt in range(1, max_retries + 1):
+            self._check_stop()
+            try:
+                self._init_driver()
+                if self._login():
+                    return True
+
+                # Se login fallisce (es. Proxy Error), chiudi e riprova
+                self.log(f"Tentativo {attempt}/{max_retries} fallito. Riprovo tra 5 secondi...")
+                self.cleanup()
+                time.sleep(5)
+            except Exception as e:
+                self.log(f"Errore inizializzazione (Tentativo {attempt}): {e}")
+                self.cleanup()
+                time.sleep(5)
+
+        self.log("✗ Tutti i tentativi di login sono falliti.")
+        return False
+
     def execute(self, data: List[Dict[str, Any]]) -> bool:
         """
         Esegue il workflow completo del bot.
@@ -446,9 +477,7 @@ class BaseBot(ABC):
         self._stop_requested = False
         
         try:
-            self._init_driver()
-            
-            if not self._login():
+            if not self._safe_login_with_retry():
                 self.status = BotStatus.ERROR
                 return False
             

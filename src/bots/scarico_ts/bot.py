@@ -319,7 +319,7 @@ class ScaricaTSBot(BaseBot):
                 # Sposta e rinomina
                 import shutil
                 shutil.move(str(downloaded_file), str(percorso_finale))
-                
+
                 self.log(f"  ✓ Scaricato: {percorso_finale.name}")
                 return True
             else:
@@ -339,9 +339,7 @@ class ScaricaTSBot(BaseBot):
         self._stop_requested = False
         
         try:
-            self._init_driver()
-            
-            if not self._login():
+            if not self._safe_login_with_retry():
                 self.status = BotStatus.ERROR
                 return False
             

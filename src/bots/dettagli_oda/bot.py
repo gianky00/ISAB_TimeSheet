@@ -319,8 +319,7 @@ class DettagliOdABot(BaseBot):
         """Esegue login, run, logout e chiude il browser."""
         self._stop_requested = False
         try:
-            self._init_driver()
-            if not self._login():
+            if not self._safe_login_with_retry():
                 return False
 
             result = self.run(data)
