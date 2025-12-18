@@ -7,6 +7,7 @@ from src.bots.base import BaseBot, BotStatus
 from src.bots.scarico_ts import ScaricaTSBot
 from src.bots.carico_ts import CaricoTSBot
 from src.bots.dettagli_oda import DettagliOdABot
+from src.bots.timbrature import TimbratureBot
 
 
 # Registry dei bot disponibili
@@ -59,6 +60,14 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         ],
         "config_key": "last_oda_data",
         "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione"
+    },
+    "timbrature": {
+        "class": TimbratureBot,
+        "name": "Timbrature",
+        "description": "Scarica e archivia le timbrature dal portale ISAB",
+        "icon": "⏱️",
+        "columns": [],
+        "config_key": "last_timbrature_data"
     }
 }
 
@@ -105,6 +114,7 @@ __all__ = [
     'ScaricaTSBot',
     'CaricoTSBot',
     'DettagliOdABot',
+    'TimbratureBot',
     'BOT_REGISTRY',
     'get_available_bots',
     'get_bot_info',

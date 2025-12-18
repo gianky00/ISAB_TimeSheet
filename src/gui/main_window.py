@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter
 
-from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel
+from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbraturePanel
 from src.gui.settings_panel import SettingsPanel
 from src.core.license_validator import get_license_info
 
@@ -137,6 +137,9 @@ class MainWindow(QMainWindow):
         
         self.btn_dettagli = SidebarButton("Dettagli OdA", "📋")
         sidebar_layout.addWidget(self.btn_dettagli)
+
+        self.btn_timbrature = SidebarButton("Timbrature", "⏱️")
+        sidebar_layout.addWidget(self.btn_timbrature)
         
         sidebar_layout.addStretch()
 
@@ -200,13 +203,15 @@ class MainWindow(QMainWindow):
         self.scarico_panel = ScaricaTSPanel()
         self.carico_panel = CaricoTSPanel()
         self.dettagli_panel = DettagliOdAPanel()
+        self.timbrature_panel = TimbraturePanel()
         self.settings_panel = SettingsPanel()
         
         # Aggiungi i pannelli allo stack
         self.page_stack.addWidget(self.scarico_panel)   # Index 0
         self.page_stack.addWidget(self.carico_panel)    # Index 1
         self.page_stack.addWidget(self.dettagli_panel)  # Index 2
-        self.page_stack.addWidget(self.settings_panel)  # Index 3
+        self.page_stack.addWidget(self.timbrature_panel) # Index 3
+        self.page_stack.addWidget(self.settings_panel)  # Index 4
         
         content_layout.addWidget(self.page_stack)
         
@@ -216,7 +221,8 @@ class MainWindow(QMainWindow):
         self.nav_buttons = [
             self.btn_scarico, 
             self.btn_carico, 
-            self.btn_dettagli, 
+            self.btn_dettagli,
+            self.btn_timbrature,
             self.btn_settings
         ]
     
@@ -225,7 +231,8 @@ class MainWindow(QMainWindow):
         self.btn_scarico.clicked.connect(lambda: self._navigate_to(0))
         self.btn_carico.clicked.connect(lambda: self._navigate_to(1))
         self.btn_dettagli.clicked.connect(lambda: self._navigate_to(2))
-        self.btn_settings.clicked.connect(lambda: self._navigate_to(3))
+        self.btn_timbrature.clicked.connect(lambda: self._navigate_to(3))
+        self.btn_settings.clicked.connect(lambda: self._navigate_to(4))
 
         # Aggiornamento live impostazioni
         self.settings_panel.settings_saved.connect(self._on_settings_saved)
@@ -234,6 +241,7 @@ class MainWindow(QMainWindow):
         """Aggiorna i pannelli quando le impostazioni vengono salvate."""
         self.scarico_panel.refresh_fornitori()
         self.dettagli_panel.refresh_fornitori()
+        self.timbrature_panel.refresh_fornitori()
         # Aggiorna anche eventuali dati di default in futuro
     
     def _navigate_to(self, index: int):
@@ -250,12 +258,12 @@ class MainWindow(QMainWindow):
             return
         
         # Se stiamo lasciando la pagina delle impostazioni, controlla le modifiche
-        if self._current_page_index == 3:  # Settings page
+        if self._current_page_index == 4:  # Settings page is now index 4
             if self.settings_panel.has_unsaved_changes():
                 can_proceed = self.settings_panel.prompt_save_if_needed()
                 if not can_proceed:
                     # L'utente ha annullato - rimani sulla pagina corrente
-                    self.nav_buttons[3].setChecked(True)
+                    self.nav_buttons[4].setChecked(True)
                     return
         
         # Procedi con la navigazione
@@ -272,7 +280,7 @@ class MainWindow(QMainWindow):
     
     def show_settings(self):
         """Metodo pubblico per navigare alle impostazioni."""
-        self._navigate_to(3)
+        self._navigate_to(4)
     
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra."""

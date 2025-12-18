@@ -2,10 +2,13 @@
 Bot TS - Bot Panels
 Pannelli specifici per ogni bot.
 """
+import sqlite3
+from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
-    QDateEdit, QLineEdit, QComboBox
+    QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate
 
@@ -982,5 +985,390 @@ class CaricoTSPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append("▶ Avvio bot Carico TS...")
         
+        self.worker.start()
+        self.bot_started.emit()
+
+
+class TimbraturePanel(BaseBotPanel):
+    """Pannello per il bot Timbrature."""
+
+    def __init__(self, parent=None):
+        super().__init__(
+            bot_name="⏱️ Timbrature",
+            bot_description="Scarica e gestisci le timbrature del personale",
+            parent=parent
+        )
+        self.db_path = Path("data/timbrature_Isab.db")
+        self._setup_content()
+        self._load_saved_data()
+        self._load_db_data()
+
+    def _setup_content(self):
+        """Configura il contenuto specifico del pannello."""
+        # --- Sezione Parametri ---
+        params_group = QGroupBox("⚙️ Parametri")
+        params_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-size: 16px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+            }
+        """)
+        params_layout = QVBoxLayout(params_group)
+
+        # Riga 1: Fornitore (ComboBox)
+        fornitore_layout = QHBoxLayout()
+        fornitore_label = QLabel("Fornitore:")
+        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        fornitore_label.setMinimumWidth(80)
+        fornitore_layout.addWidget(fornitore_label)
+
+        self.fornitore_combo = QComboBox()
+        self.fornitore_combo.setMinimumHeight(40)
+        self.fornitore_combo.setEditable(False)
+        self.fornitore_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 15px;
+                background-color: white;
+            }
+            QComboBox:focus {
+                border-color: #0d6efd;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                width: 12px;
+                height: 12px;
+            }
+            QComboBox QAbstractItemView {
+                border: 1px solid #ced4da;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
+                font-size: 15px;
+            }
+        """)
+        fornitore_layout.addWidget(self.fornitore_combo)
+
+        # Pulsante per aprire impostazioni
+        self.open_settings_btn = QPushButton("⚙️")
+        self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
+        self.open_settings_btn.setFixedSize(35, 35)
+        self.open_settings_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #5a6268;
+            }
+        """)
+        self.open_settings_btn.clicked.connect(self._open_settings)
+        fornitore_layout.addWidget(self.open_settings_btn)
+
+        params_layout.addLayout(fornitore_layout)
+
+        # Riga 2: Data Da e Data A
+        date_layout = QHBoxLayout()
+
+        # Data Da
+        date_da_label = QLabel("Data Da:")
+        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        date_layout.addWidget(date_da_label)
+
+        self.date_da_edit = QDateEdit()
+        self.date_da_edit.setCalendarPopup(True)
+        self.date_da_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_da_edit.setDate(QDate(2025, 1, 1))
+        self.date_da_edit.setMinimumHeight(40)
+        self.date_da_edit.setStyleSheet(self._get_date_style())
+        date_layout.addWidget(self.date_da_edit)
+
+        date_layout.addSpacing(15)
+
+        # Data A
+        date_a_label = QLabel("Data A:")
+        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        date_layout.addWidget(date_a_label)
+
+        self.date_a_edit = QDateEdit()
+        self.date_a_edit.setCalendarPopup(True)
+        self.date_a_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_a_edit.setDate(QDate.currentDate())
+        self.date_a_edit.setMinimumHeight(40)
+        self.date_a_edit.setStyleSheet(self._get_date_style())
+        date_layout.addWidget(self.date_a_edit)
+
+        date_layout.addStretch()
+        params_layout.addLayout(date_layout)
+
+        self.content_layout.addWidget(params_group)
+
+        # --- Sezione Database ---
+        db_group = QGroupBox("🗄️ Database Timbrature")
+        db_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-size: 16px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+            }
+        """)
+        db_layout = QVBoxLayout(db_group)
+
+        # Search bar
+        search_layout = QHBoxLayout()
+        search_label = QLabel("🔍 Filtra:")
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Cerca per nome, cognome, data...")
+        self.search_input.textChanged.connect(self._filter_data)
+        search_layout.addWidget(search_label)
+        search_layout.addWidget(self.search_input)
+        db_layout.addLayout(search_layout)
+
+        # Table
+        self.db_table = QTableWidget()
+        self.db_table.setColumnCount(7)
+        self.db_table.setHorizontalHeaderLabels([
+            "Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito Timbratura"
+        ])
+
+        header = self.db_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+        self.db_table.setStyleSheet("""
+            QTableWidget {
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                background-color: white;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+            }
+            QTableWidget::item {
+                padding: 5px;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                padding: 8px;
+                border: none;
+                border-bottom: 2px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
+        self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.db_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+
+        db_layout.addWidget(self.db_table)
+
+        self.content_layout.addWidget(db_group)
+
+    def _get_date_style(self):
+        return """
+            QDateEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 15px;
+                background-color: white;
+            }
+            QDateEdit:focus {
+                border-color: #0d6efd;
+            }
+            QDateEdit::drop-down {
+                border: none;
+                width: 30px;
+            }
+        """
+
+    def _open_settings(self):
+        main_window = self.window()
+        if hasattr(main_window, 'show_settings'):
+            main_window.show_settings()
+
+    def refresh_fornitori(self):
+        config = config_manager.load_config()
+        fornitori = config.get("fornitori", [])
+
+        current_text = self.fornitore_combo.currentText()
+        self.fornitore_combo.clear()
+
+        if fornitori:
+            self.fornitore_combo.addItems(fornitori)
+            index = self.fornitore_combo.findText(current_text)
+            if index >= 0:
+                self.fornitore_combo.setCurrentIndex(index)
+            else:
+                self.fornitore_combo.setCurrentIndex(0)
+
+    def _load_saved_data(self):
+        self.refresh_fornitori()
+
+        config = config_manager.load_config()
+
+        saved_fornitore = config.get("last_timbrature_fornitore", "")
+        if saved_fornitore:
+            index = self.fornitore_combo.findText(saved_fornitore)
+            if index >= 0:
+                self.fornitore_combo.setCurrentIndex(index)
+
+        try:
+            date_da = config.get("last_timbrature_date_da", "01.01.2025")
+            d, m, y = map(int, date_da.split("."))
+            self.date_da_edit.setDate(QDate(y, m, d))
+
+            date_a = config.get("last_timbrature_date_a", QDate.currentDate().toString("dd.MM.yyyy"))
+            d, m, y = map(int, date_a.split("."))
+            self.date_a_edit.setDate(QDate(y, m, d))
+        except:
+            pass
+
+    def _save_data(self):
+        config_manager.set_config_value("last_timbrature_fornitore", self.fornitore_combo.currentText())
+        config_manager.set_config_value("last_timbrature_date_da", self.date_da_edit.date().toString("dd.MM.yyyy"))
+        config_manager.set_config_value("last_timbrature_date_a", self.date_a_edit.date().toString("dd.MM.yyyy"))
+
+    def _load_db_data(self):
+        """Carica i dati dal database nella tabella."""
+        if not self.db_path.exists():
+            return
+
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature ORDER BY id DESC")
+            rows = cursor.fetchall()
+            conn.close()
+
+            self._update_table(rows)
+        except Exception as e:
+            self.log_widget.append(f"Errore caricamento DB: {e}")
+
+    def _update_table(self, rows):
+        """Aggiorna la tabella con i dati forniti."""
+        self.db_table.setRowCount(0)
+        for row_idx, row_data in enumerate(rows):
+            self.db_table.insertRow(row_idx)
+            for col_idx, value in enumerate(row_data):
+                self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
+
+    def _filter_data(self, text):
+        """Filtra la tabella in base al testo usando SQL."""
+        if not self.db_path.exists():
+            return
+
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
+            params = []
+
+            if text:
+                # Cerca corrispondenza di TUTTE le parole cercate in QUALSIASI colonna rilevante
+                # Esempio: "Mario Rossi" -> (nome LIKE %mario% OR cognome LIKE %mario% ...) AND (nome LIKE %rossi% OR ...)
+                search_terms = text.lower().split()
+                conditions = []
+
+                columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
+
+                for term in search_terms:
+                    term_conditions = []
+                    for col in columns_to_search:
+                        term_conditions.append(f"{col} LIKE ?")
+                        params.append(f"%{term}%")
+                    # Unisci le condizioni per questo termine con OR (il termine deve apparire in almeno una colonna)
+                    conditions.append(f"({' OR '.join(term_conditions)})")
+
+                if conditions:
+                    query += " WHERE " + " AND ".join(conditions)
+
+            query += " ORDER BY id DESC LIMIT 500" # Limita a 500 risultati per performance
+
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            conn.close()
+
+            self._update_table(rows)
+
+        except Exception as e:
+            self.log_widget.append(f"Errore filtro: {e}")
+
+    def _on_start(self):
+        username, password = self.get_credentials()
+
+        if not username or not password:
+            QMessageBox.warning(self, "Credenziali mancanti", "Configura le credenziali ISAB nelle Impostazioni.")
+            return
+
+        fornitore = self.fornitore_combo.currentText()
+        if not fornitore:
+            QMessageBox.warning(self, "Fornitore mancante", "Seleziona un fornitore.")
+            return
+
+        self._save_data()
+
+        data_da = self.date_da_edit.date().toString("dd.MM.yyyy")
+        data_a = self.date_a_edit.date().toString("dd.MM.yyyy")
+
+        from src.bots import create_bot
+        config = config_manager.load_config()
+
+        bot = create_bot(
+            "timbrature",
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=config_manager.get_download_path(),
+            fornitore=fornitore,
+            data_da=data_da,
+            data_a=data_a
+        )
+
+        if not bot:
+            QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
+            return
+
+        self.worker = BotWorker(bot, {
+            "fornitore": fornitore,
+            "data_da": data_da,
+            "data_a": data_a
+        })
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+        self.worker.finished_signal.connect(lambda s: self._load_db_data() if s else None) # Ricarica DB se successo
+
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.status_indicator.set_status("running")
+
+        self.log_widget.clear()
+        self.log_widget.append("▶ Avvio bot Timbrature...")
+        self.log_widget.append(f"  Fornitore: {fornitore}")
+        self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
+
         self.worker.start()
         self.bot_started.emit()
