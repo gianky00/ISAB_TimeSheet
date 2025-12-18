@@ -229,95 +229,25 @@ class DettagliOdABot(BaseBot):
             else:
                 actions.send_keys(Keys.DELETE)
             actions.pause(0.3)
-
-            # --- Sequence Update ---
-            # Date A
-            if self.data_a:
-                actions.send_keys(self.data_a).pause(0.5) # Assuming we are in Date A field?
-                # Wait, existing logic was: TAB (Divisione), TAB (Data Da), TAB (Data A).
-                # But user requirement says:
-                # "CTRL+A seguito dall'inserimento della Data A (se presente)."
-                # "1 TAB per spostamento in Numero Contratto quindi CTRL+A seguito dall'inserimento del numero contratto"
-
-            # Re-implementing based on explicit user sequence:
-            # Previous state: We just filled Numero OdA.
-            # Old sequence was: ... -> TAB (Divisione) -> TAB (Data Da) -> TAB (Data A) ...
-            # The user says: "CTRL+A seguito dall'inserimento della Data A (se presente)". This implies we are already ON Data A?
-            # Or maybe the sequence starts from OdA?
-            # "CTRL+A seguito dall'inserimento della Data A (se presente)" matches what we might do if we are on Data A.
-
-            # Let's assume the flow is:
-            # 1. OdA (Done above)
-            # 2. TAB -> Divisione
-            # 3. TAB -> Data Da
-            # 4. TAB -> Data A
-
-            # So I need to navigate to Data A first.
-            actions.send_keys(Keys.TAB).pause(0.3) # Divisione
-            actions.send_keys(Keys.TAB).pause(0.3) # Data Da (Skipping Data Da input based on user desc? No, user says "Date A" maybe meaning "Date From"?)
-            # User said: "CTRL+A seguito dall'inserimento della Data A (se presente)."
-            # Wait, "Data A" usually means "Date To". But in Italian "Data A" is "Date To". "Data Da" is "Date From".
-            # The user prompt mentions "Data A".
-            # Let's look at the OLD sequence provided by user:
-            # "CTRL+A seguito dall'inserimento della Data A (se presente)."
-            # "3 TAB consecutivi (Spostamento verso il Flag Dettagli)."
-
-            # My old code was:
-            # TAB (Divisione), TAB (Data Da) -> Fill Data Da, TAB (Data A) -> Fill Data A.
-            # Then 3 TABS.
-
-            # The user description seems to skip Divisione and Data Da? Or maybe they assume we are there?
-            # Let's respect the visual flow of the form usually found in these apps.
-            # OdA -> Divisione -> Data Da -> Data A -> Contratto -> ...
-
-            # If I follow the user's *new* sequence literally:
-            # "CTRL+A seguito dall'inserimento della Data A (se presente)."
-            # "1 TAB per spostamento in Numero Contratto quindi CTRL+A seguito dall'inserimento del numero contratto"
-            # "2 TAB consecutivi (Spostamento verso il Flag Dettagli)."
-
-            # It seems "Data A" here refers to "Data OdA" (Date of OdA)? Or "Data A" (Date To)?
-            # Given the context of "Dettagli OdA", usually there are Date From/To.
-            # Let's assume the user means the field *before* Contract Number.
-            # If I look at my previous code, after OdA I did: TAB (Div), TAB (Data Da), TAB (Data A).
-            # If I insert Contract Number, where is it?
-            # Usually Contract Number is likely after Data A?
-
-            # Let's try to map the fields based on user instruction "1 TAB per spostamento in Numero Contratto".
-            # This implies Contract Number is immediately after the field where we put "Data A".
-
-            # So the flow:
-            # OdA -> [TABs...] -> Field X ("Data A") -> TAB -> Contract Number -> TAB -> TAB -> Flag.
-
-            # In my previous code:
-            # OdA -> TAB -> Div -> TAB -> Data Da -> TAB -> Data A -> [3 TABs] -> Flag.
-            # So "Data A" was indeed the field before the 3 TABs.
-            # So Contract Number must have been added *between* Data A and the Flag.
-            # And it takes 1 TAB to get there from Data A.
-            # And from Contract Number to Flag it takes 2 TABs.
-            # Total TABs from Data A to Flag = 1 + 2 = 3.
-            # This matches perfectly with the old "3 TABs" (which just skipped the Contract field because it wasn't used/focused or was skipped).
-
-            # So I will keep the navigation to "Data A" (which is Date To), fill it, then:
-            # TAB -> Fill Contract -> 2 TABs -> Flag.
             
-            # Navigation to Data A (Date To):
-            actions.send_keys(Keys.TAB).pause(0.3) # Divisione
+            # --- Sequence Correction ---
+            # 1. Move from OdA to Divisione
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Divisione
 
-            # Data Da handling (Keeping it as it might be needed, user didn't explicitly say to remove it, just described the part that changes)
-            actions.send_keys(Keys.TAB).pause(0.3) # Data Da
+            # 2. Move from Divisione to Data Da
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Data Da
             if self.data_da:
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
-                actions.send_keys(self.data_da).pause(0.5)
-
-            actions.send_keys(Keys.TAB).pause(0.3) # To Data A
+                actions.send_keys(self.data_da).pause(0.3)
             
-            # Data A handling
+            # 3. Move from Data Da to Data A
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Data A
             if self.data_a:
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
-                actions.send_keys(self.data_a).pause(0.5)
+                actions.send_keys(self.data_a).pause(0.3)
 
-            # NEW PART: Contract Number
-            actions.send_keys(Keys.TAB).pause(0.3) # Move to Contract Number
+            # 4. Move from Data A to Numero Contratto
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Numero Contratto
 
             actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
             if self.numero_contratto:
@@ -326,7 +256,7 @@ class DettagliOdABot(BaseBot):
                 actions.send_keys(Keys.DELETE)
             actions.pause(0.3)
 
-            # 2 TABs to Flag (replacing the old loop of 3)
+            # 5. Move from Numero Contratto to Flag (2 TABs)
             actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.TAB).pause(0.3)
 
