@@ -692,21 +692,6 @@ class DettagliOdAPanel(BaseBotPanel):
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
-        # Note
-        note = QLabel(
-            "⚠️ Il browser rimarrà aperto. Chiudilo manualmente quando hai finito."
-        )
-        note.setStyleSheet("""
-            QLabel {
-                background-color: #fff3cd;
-                color: #856404;
-                padding: 10px;
-                border: 1px solid #ffeeba;
-                border-radius: 4px;
-            }
-        """)
-        note.setWordWrap(True)
-        group_layout.addWidget(note)
         
         self.content_layout.addWidget(group)
     

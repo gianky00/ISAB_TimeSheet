@@ -56,6 +56,7 @@ class EditableDataTable(QWidget):
             QHeaderView::section {
                 background-color: #f8f9fa;
                 padding: 8px;
+                padding-left: 5px;
                 border: none;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
@@ -66,6 +67,7 @@ class EditableDataTable(QWidget):
         # Configurazione header
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
         # Menu contestuale
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)

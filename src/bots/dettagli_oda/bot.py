@@ -316,34 +316,51 @@ class DettagliOdABot(BaseBot):
             return ""
 
     def execute(self, data: Any) -> bool:
-        """Override: esegue login e run, ma non chiude il browser."""
+        """Esegue login, run, logout e chiude il browser."""
         self._stop_requested = False
         try:
             self._init_driver()
             if not self._login():
                 return False
 
-            return self.run(data)
+            result = self.run(data)
+            self._logout()
+            return result
         except Exception as e:
             self.log(f"Errore critico: {e}")
             return False
+        finally:
+            self.cleanup()
 
     def _rename_latest_download(self, new_name_base: str) -> str:
-        """Trova l'ultimo file scaricato e lo rinomina."""
-        if not self.download_path or not os.path.exists(self.download_path):
-            return ""
+        """Trova l'ultimo file scaricato nella cartella default e lo sposta nella destinazione."""
+        # Cartella di download predefinita del sistema (Source)
+        source_dir = str(Path.home() / "Downloads")
 
-        timeout = 10
+        # Cartella di destinazione configurata (Target)
+        dest_dir = self.download_path
+        if not dest_dir:
+            dest_dir = source_dir
+
+        # Crea destinazione se non esiste
+        if not os.path.exists(dest_dir):
+            try:
+                os.makedirs(dest_dir)
+            except:
+                self.log("Impossibile creare cartella destinazione.")
+                return ""
+
+        timeout = 15
         start_time = time.time()
         latest_file = None
 
         while time.time() - start_time < timeout:
-            files = glob.glob(os.path.join(self.download_path, "*"))
+            files = glob.glob(os.path.join(source_dir, "*"))
             files = [f for f in files if not f.endswith('.crdownload') and not f.endswith('.tmp') and os.path.isfile(f)]
 
             if files:
                 latest_file = max(files, key=os.path.getctime)
-                if time.time() - os.path.getctime(latest_file) < 15:
+                if time.time() - os.path.getctime(latest_file) < 20:
                     break
             time.sleep(1)
 
@@ -357,12 +374,21 @@ class DettagliOdABot(BaseBot):
             if not new_name_base:
                 new_filename = f"dettaglio_oda_{int(time.time())}{ext}"
                 
-            new_path = os.path.join(self.download_path, new_filename)
+            new_path = os.path.join(dest_dir, new_filename)
+
+            # Gestione duplicati
             if os.path.exists(new_path):
-                os.remove(new_path)
+                try:
+                    os.remove(new_path)
+                except:
+                    # Se non riesco a rimuovere, cambio nome
+                    new_filename = f"dettaglio_oda_{new_name_base}_{int(time.time())}{ext}"
+                    new_path = os.path.join(dest_dir, new_filename)
+
             shutil.move(latest_file, new_path)
             return new_path
-        except Exception:
+        except Exception as e:
+            self.log(f"Errore spostamento file: {e}")
             return ""
 
     def _verify_and_cleanup_excel_files(self, file_paths: List[str]) -> None:

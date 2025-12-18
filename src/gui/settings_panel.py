@@ -283,13 +283,13 @@ class SettingsPanel(QWidget):
         scroll_layout.addWidget(browser_group)
         
         # --- Sezione Download ---
-        download_group = self._create_group_box("📁 Cartella Download")
+        download_group = self._create_group_box("📁 Cartella di destinazione")
         download_layout = QVBoxLayout(download_group)
         
         path_layout = QHBoxLayout()
         
         self.download_path_edit = QLineEdit()
-        self.download_path_edit.setPlaceholderText("Seleziona cartella per i file scaricati")
+        self.download_path_edit.setPlaceholderText("Seleziona cartella di destinazione per i file scaricati")
         self.download_path_edit.setReadOnly(True)
         self.download_path_edit.setMinimumHeight(40)
         self._style_input(self.download_path_edit)
@@ -302,6 +302,10 @@ class SettingsPanel(QWidget):
         self._style_button(self.browse_btn)
         path_layout.addWidget(self.browse_btn)
         
+        note_dl = QLabel("Nota: I file verranno scaricati nella cartella Download predefinita e poi spostati qui.")
+        note_dl.setStyleSheet("color: #6c757d; font-size: 13px; margin-top: 5px;")
+        download_layout.addWidget(note_dl)
+
         download_layout.addLayout(path_layout)
         
         scroll_layout.addWidget(download_group)

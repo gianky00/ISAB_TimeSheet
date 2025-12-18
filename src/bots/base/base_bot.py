@@ -178,32 +178,21 @@ class BaseBot(ABC):
         }
 
         # --- 3. CONFIGURAZIONE DOWNLOAD PATH ---
-        if self.download_path:
-            # Crea la cartella se non esiste
-            try:
-                os.makedirs(self.download_path, exist_ok=True)
-            except Exception as e:
-                self.log(f"Errore creazione cartella download: {e}")
-            
-            # Converte in percorso assoluto (Fondamentale)
-            try:
-                download_dir_abs = str(os.path.abspath(self.download_path))
-            except Exception:
-                download_dir_abs = self.download_path
+        # Nota: Non impostiamo più 'download.default_directory' per usare quella di default del sistema/browser.
+        # I file verranno poi spostati nella cartella di destinazione configurata (self.download_path).
 
-            # Aggiorna le preferenze con i percorsi
-            prefs.update({
-                "download.default_directory": download_dir_abs,
-                "download.prompt_for_download": False,
-                "download.directory_upgrade": True,
-                # Impostazioni extra per evitare la barra/bolla dei download
-                "browser.download.manager.showWhenStarting": False,
-                "download.manager.showWhenStarting": False,
-            })
-            
-            # Argomenti extra di sicurezza per permettere download automatici
-            options.add_argument("--safebrowsing-disable-download-protection")
-            options.add_argument("--safebrowsing-disable-extension-blacklist")
+        # Aggiorna le preferenze base
+        prefs.update({
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            # Impostazioni extra per evitare la barra/bolla dei download
+            "browser.download.manager.showWhenStarting": False,
+            "download.manager.showWhenStarting": False,
+        })
+
+        # Argomenti extra di sicurezza per permettere download automatici
+        options.add_argument("--safebrowsing-disable-download-protection")
+        options.add_argument("--safebrowsing-disable-extension-blacklist")
 
         # Applica tutte le preferenze
         options.add_experimental_option("prefs", prefs)
