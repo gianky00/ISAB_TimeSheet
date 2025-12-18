@@ -188,11 +188,11 @@ class BaseBotPanel(QWidget):
         self.status_indicator.set_status(status)
     
     def get_credentials(self) -> tuple:
-        """Ottiene le credenziali dalla configurazione."""
-        config = config_manager.load_config()
-        username = config.get("isab_username", "")
-        password = config.get("isab_password", "")
-        return username, password
+        """Ottiene le credenziali dall'account di default."""
+        account = config_manager.get_default_account()
+        if account:
+            return account.get("username", ""), account.get("password", "")
+        return "", ""
 
 
 class ScaricaTSPanel(BaseBotPanel):
@@ -354,9 +354,14 @@ class ScaricaTSPanel(BaseBotPanel):
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         
-        # Tabella con colonne: Numero OdA
+        # Tabella con colonne: Numero OdA e Numero Contratto
+        # Recupera default da config per le nuove righe
+        config = config_manager.load_config()
+        default_contract = config.get("default_contract_number", "")
+
         self.data_table = EditableDataTable([
-            {"name": "Numero OdA", "type": "text"}
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Numero Contratto", "type": "text", "default": default_contract}
         ])
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
@@ -760,11 +765,16 @@ class DettagliOdAPanel(BaseBotPanel):
 
         saved_data = config.get("last_oda_data", [])
         if saved_data:
-            # Filtra i dati salvati per includere solo la colonna "numero_oda"
-            # Questo evita che vecchie configurazioni mostrino colonne rimosse (es. posizione_oda)
+            # Assicuriamo che i vecchi dati abbiano il contratto vuoto o default
+            # e puliamo da chiavi obsolete
             cleaned_data = []
+            default_contract = config.get("default_contract_number", "")
+
             for row in saved_data:
-                cleaned_row = {"numero_oda": row.get("numero_oda", "")}
+                cleaned_row = {
+                    "numero_oda": row.get("numero_oda", ""),
+                    "numero_contratto": row.get("numero_contratto", default_contract)
+                }
                 cleaned_data.append(cleaned_row)
             self.data_table.set_data(cleaned_data)
     

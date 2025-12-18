@@ -106,8 +106,9 @@ class EditableDataTable(QWidget):
         row = self.table.rowCount()
         self.table.insertRow(row)
         
-        for col in range(len(self.columns)):
-            item = QTableWidgetItem("")
+        for col, column in enumerate(self.columns):
+            default_val = column.get('default', "")
+            item = QTableWidgetItem(str(default_val))
             self.table.setItem(row, col, item)
         
         self.data_changed.emit()
@@ -120,8 +121,9 @@ class EditableDataTable(QWidget):
         
         self.table.insertRow(current_row)
         
-        for col in range(len(self.columns)):
-            item = QTableWidgetItem("")
+        for col, column in enumerate(self.columns):
+            default_val = column.get('default', "")
+            item = QTableWidgetItem(str(default_val))
             self.table.setItem(current_row, col, item)
         
         self.data_changed.emit()

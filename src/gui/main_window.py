@@ -32,29 +32,30 @@ class SidebarButton(QPushButton):
         if self.isChecked():
             self.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0.2);
-                    color: white;
-                    border: none;
+                    background-color: rgba(255, 255, 255, 0.25);
+                    color: #ffffff;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
                     border-radius: 8px;
-                    padding: 10px 15px;
+                    padding: 12px 18px;
                     text-align: left;
                     font-weight: bold;
-                    font-size: 13px;
+                    font-size: 14px;
                 }
             """)
         else:
             self.setStyleSheet("""
                 QPushButton {
                     background-color: transparent;
-                    color: rgba(255, 255, 255, 0.8);
-                    border: none;
+                    color: #ffffff;
+                    border: 1px solid transparent;
                     border-radius: 8px;
-                    padding: 10px 15px;
+                    padding: 12px 18px;
                     text-align: left;
-                    font-size: 13px;
+                    font-size: 14px;
+                    font-weight: 500;
                 }
                 QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0.1);
+                    background-color: rgba(255, 255, 255, 0.15);
                     color: white;
                 }
             """)
@@ -224,6 +225,15 @@ class MainWindow(QMainWindow):
         self.btn_carico.clicked.connect(lambda: self._navigate_to(1))
         self.btn_dettagli.clicked.connect(lambda: self._navigate_to(2))
         self.btn_settings.clicked.connect(lambda: self._navigate_to(3))
+
+        # Aggiornamento live impostazioni
+        self.settings_panel.settings_saved.connect(self._on_settings_saved)
+
+    def _on_settings_saved(self):
+        """Aggiorna i pannelli quando le impostazioni vengono salvate."""
+        self.scarico_panel.refresh_fornitori()
+        self.dettagli_panel.refresh_fornitori()
+        # Aggiorna anche eventuali dati di default in futuro
     
     def _navigate_to(self, index: int):
         """
