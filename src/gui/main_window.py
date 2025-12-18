@@ -22,7 +22,7 @@ class SidebarButton(QPushButton):
         super().__init__(parent)
         self.setText(f"{icon} {text}" if icon else text)
         self.setCheckable(True)
-        self.setMinimumHeight(45)
+        self.setMinimumHeight(55)
         self.setMinimumWidth(180)
         self._update_style()
         self.toggled.connect(self._update_style)
@@ -32,29 +32,30 @@ class SidebarButton(QPushButton):
         if self.isChecked():
             self.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0.2);
-                    color: white;
-                    border: none;
+                    background-color: rgba(255, 255, 255, 0.25);
+                    color: #ffffff;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
                     border-radius: 8px;
-                    padding: 10px 15px;
+                    padding: 12px 18px;
                     text-align: left;
                     font-weight: bold;
-                    font-size: 13px;
+                    font-size: 16px;
                 }
             """)
         else:
             self.setStyleSheet("""
                 QPushButton {
                     background-color: transparent;
-                    color: rgba(255, 255, 255, 0.8);
-                    border: none;
+                    color: #ffffff;
+                    border: 1px solid transparent;
                     border-radius: 8px;
-                    padding: 10px 15px;
+                    padding: 12px 18px;
                     text-align: left;
-                    font-size: 13px;
+                    font-size: 16px;
+                    font-weight: 500;
                 }
                 QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0.1);
+                    background-color: rgba(255, 255, 255, 0.15);
                     color: white;
                 }
             """)
@@ -66,7 +67,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Bot TS - ISAB Timesheet Manager")
-        self.setMinimumSize(1000, 700)
+        self.setMinimumSize(1200, 800)
         
         self._current_page_index = 0
         self._setup_ui()
@@ -85,7 +86,7 @@ class MainWindow(QMainWindow):
         
         # === SIDEBAR ===
         sidebar = QFrame()
-        sidebar.setFixedWidth(220)
+        sidebar.setFixedWidth(240)
         sidebar.setStyleSheet("""
             QFrame {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -94,14 +95,14 @@ class MainWindow(QMainWindow):
         """)
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(15, 20, 15, 20)
-        sidebar_layout.setSpacing(5)
+        sidebar_layout.setSpacing(10)
         
         # Logo/Titolo
         logo_label = QLabel("🤖 Bot TS")
         logo_label.setStyleSheet("""
             QLabel {
                 color: white;
-                font-size: 24px;
+                font-size: 28px;
                 font-weight: bold;
                 padding: 10px 0;
             }
@@ -112,7 +113,7 @@ class MainWindow(QMainWindow):
         subtitle.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.7);
-                font-size: 11px;
+                font-size: 13px;
                 padding-bottom: 20px;
             }
         """)
@@ -153,7 +154,7 @@ class MainWindow(QMainWindow):
         license_label.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.6);
-                font-size: 11px;
+                font-size: 13px;
                 padding: 5px;
             }
         """)
@@ -172,11 +173,12 @@ class MainWindow(QMainWindow):
         sidebar_layout.addWidget(self.btn_settings)
         
         # Versione
-        version_label = QLabel("v1.0.0")
+        from src.core.version import __version__
+        version_label = QLabel(f"v{__version__}")
         version_label.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.5);
-                font-size: 10px;
+                font-size: 13px;
                 padding-top: 10px;
             }
         """)
@@ -224,6 +226,15 @@ class MainWindow(QMainWindow):
         self.btn_carico.clicked.connect(lambda: self._navigate_to(1))
         self.btn_dettagli.clicked.connect(lambda: self._navigate_to(2))
         self.btn_settings.clicked.connect(lambda: self._navigate_to(3))
+
+        # Aggiornamento live impostazioni
+        self.settings_panel.settings_saved.connect(self._on_settings_saved)
+
+    def _on_settings_saved(self):
+        """Aggiorna i pannelli quando le impostazioni vengono salvate."""
+        self.scarico_panel.refresh_fornitori()
+        self.dettagli_panel.refresh_fornitori()
+        # Aggiorna anche eventuali dati di default in futuro
     
     def _navigate_to(self, index: int):
         """

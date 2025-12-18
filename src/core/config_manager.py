@@ -5,7 +5,7 @@ Gestione della configurazione dell'applicazione.
 import os
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 
 # Path del file di configurazione
@@ -14,8 +14,9 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 
 # Configurazione di default
 DEFAULT_CONFIG: Dict[str, Any] = {
-    "isab_username": "",
-    "isab_password": "",
+    "accounts": [],  # Lista di dict: {"username": "", "password": "", "default": False}
+    "contracts": [],  # Lista numeri contratto
+    "default_contract": "",  # Contratto di default (ridondante se usiamo il primo della lista, ma utile per persistenza)
     "browser_headless": False,
     "browser_timeout": 30,
     "download_path": "",
@@ -36,21 +37,51 @@ def ensure_config_dir():
 def load_config() -> Dict[str, Any]:
     """
     Carica la configurazione dal file.
+    Gestisce la migrazione automatica dalle vecchie chiavi.
     
     Returns:
         Dict con la configurazione
     """
     ensure_config_dir()
     
+    config = DEFAULT_CONFIG.copy()
+
     if CONFIG_FILE.exists():
         try:
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                
-            # Merge con default per nuove chiavi
-            for key, value in DEFAULT_CONFIG.items():
-                if key not in config:
-                    config[key] = value
+                loaded_config = json.load(f)
+
+            # Merge con default
+            for key, value in loaded_config.items():
+                config[key] = value
+
+            # --- MIGRAZIONE ---
+            migrated = False
+
+            # 1. Migrazione Account
+            if "isab_username" in config and config["isab_username"] and not config["accounts"]:
+                config["accounts"].append({
+                    "username": config["isab_username"],
+                    "password": config.get("isab_password", ""),
+                    "default": True
+                })
+                if "isab_username" in config: del config["isab_username"]
+                if "isab_password" in config: del config["isab_password"]
+                migrated = True
+
+            # 2. Migrazione Contratti
+            if "default_contract_number" in config and config["default_contract_number"]:
+                if config["default_contract_number"] not in config["contracts"]:
+                    config["contracts"].append(config["default_contract_number"])
+                # Imposta come default se non c'è
+                if not config.get("default_contract"):
+                    config["default_contract"] = config["default_contract_number"]
+
+                del config["default_contract_number"]
+                migrated = True
+
+            if migrated:
+                save_config(config)
             
             return config
         except (json.JSONDecodeError, IOError):
@@ -103,20 +134,94 @@ def set_config_value(key: str, value: Any):
     save_config(config)
 
 
+# --- Gestione Account ---
+
+def get_accounts() -> List[Dict[str, Any]]:
+    """Restituisce la lista degli account configurati."""
+    return get_config_value("accounts", [])
+
+def add_account(username: str, password: str, is_default: bool = False):
+    """
+    Aggiunge o aggiorna un account.
+
+    Args:
+        username: Username
+        password: Password
+        is_default: Se True, lo imposta come default (e rimuove default dagli altri)
+    """
+    accounts = get_accounts()
+
+    # Se è il primo account, è default per forza
+    if not accounts:
+        is_default = True
+
+    # Rimuovi se esiste già (update)
+    accounts = [a for a in accounts if a["username"] != username]
+
+    # Se questo diventa default, togli il flag agli altri
+    if is_default:
+        for acc in accounts:
+            acc["default"] = False
+
+    accounts.append({
+        "username": username,
+        "password": password,
+        "default": is_default
+    })
+
+    set_config_value("accounts", accounts)
+
+def remove_account(username: str):
+    """Rimuove un account."""
+    accounts = get_accounts()
+    accounts = [a for a in accounts if a["username"] != username]
+
+    # Se ho rimosso il default e ne rimangono altri, rendi il primo default
+    if accounts and not any(a.get("default") for a in accounts):
+        accounts[0]["default"] = True
+
+    set_config_value("accounts", accounts)
+
+def set_default_account(username: str):
+    """Imposta un account come default."""
+    accounts = get_accounts()
+    found = False
+    for acc in accounts:
+        if acc["username"] == username:
+            acc["default"] = True
+            found = True
+        else:
+            acc["default"] = False
+
+    if found:
+        set_config_value("accounts", accounts)
+
+def get_default_account() -> Optional[Dict[str, str]]:
+    """Restituisce l'account di default o il primo disponibile o None."""
+    accounts = get_accounts()
+    if not accounts:
+        return None
+
+    for acc in accounts:
+        if acc.get("default"):
+            return acc
+
+    # Fallback al primo
+    return accounts[0]
+
+
+# --- Altri Helper ---
+
 def get_data_path() -> str:
     """
     Restituisce il percorso base per i dati (es. Licenza).
     Cerca prima in CONFIG_DIR (AppData), poi nel root del progetto.
-
-    Returns:
-        Path della directory dati
     """
     # 1. Cerca in CONFIG_DIR (AppData)
     if (CONFIG_DIR / "Licenza").exists():
         return str(CONFIG_DIR)
 
     # 2. Cerca nel root del progetto
-    # src/core/config_manager.py -> src/core -> src -> root
     project_root = Path(__file__).resolve().parent.parent.parent
     if (project_root / "Licenza").exists():
         return str(project_root)
@@ -126,18 +231,12 @@ def get_data_path() -> str:
 
 
 def get_download_path() -> str:
-    """
-    Restituisce il path di download configurato.
-    
-    Returns:
-        Path di download o la cartella Downloads di default
-    """
+    """Restituisce il path di download configurato."""
     path = get_config_value("download_path", "")
     
     if path and os.path.isdir(path):
         return path
     
-    # Default alla cartella Downloads
     default_download = Path.home() / "Downloads"
     if default_download.exists():
         return str(default_download)
@@ -146,50 +245,5 @@ def get_download_path() -> str:
 
 
 def get_fornitori() -> list:
-    """
-    Restituisce la lista dei fornitori configurati.
-    
-    Returns:
-        Lista dei fornitori
-    """
+    """Restituisce la lista dei fornitori configurati."""
     return get_config_value("fornitori", [])
-
-
-def add_fornitore(fornitore: str) -> bool:
-    """
-    Aggiunge un fornitore alla lista.
-    
-    Args:
-        fornitore: Nome del fornitore da aggiungere
-        
-    Returns:
-        True se aggiunto, False se già presente
-    """
-    fornitori = get_fornitori()
-    
-    if fornitore not in fornitori:
-        fornitori.append(fornitore)
-        set_config_value("fornitori", fornitori)
-        return True
-    
-    return False
-
-
-def remove_fornitore(fornitore: str) -> bool:
-    """
-    Rimuove un fornitore dalla lista.
-    
-    Args:
-        fornitore: Nome del fornitore da rimuovere
-        
-    Returns:
-        True se rimosso, False se non presente
-    """
-    fornitori = get_fornitori()
-    
-    if fornitore in fornitori:
-        fornitori.remove(fornitore)
-        set_config_value("fornitori", fornitori)
-        return True
-    
-    return False

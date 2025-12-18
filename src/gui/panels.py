@@ -77,11 +77,11 @@ class BaseBotPanel(QWidget):
         header_layout = QVBoxLayout(header)
         
         title = QLabel(self.bot_name)
-        title.setStyleSheet("color: white; font-size: 18px; font-weight: bold;")
+        title.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         header_layout.addWidget(title)
         
         desc = QLabel(self.bot_description)
-        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 12px;")
+        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 16px;")
         header_layout.addWidget(desc)
         
         self.main_layout.addWidget(header)
@@ -188,11 +188,11 @@ class BaseBotPanel(QWidget):
         self.status_indicator.set_status(status)
     
     def get_credentials(self) -> tuple:
-        """Ottiene le credenziali dalla configurazione."""
-        config = config_manager.load_config()
-        username = config.get("isab_username", "")
-        password = config.get("isab_password", "")
-        return username, password
+        """Ottiene le credenziali dall'account di default."""
+        account = config_manager.get_default_account()
+        if account:
+            return account.get("username", ""), account.get("password", "")
+        return "", ""
 
 
 class ScaricaTSPanel(BaseBotPanel):
@@ -218,6 +218,7 @@ class ScaricaTSPanel(BaseBotPanel):
                 border-radius: 6px;
                 margin-top: 10px;
                 padding-top: 10px;
+                font-size: 16px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -230,19 +231,19 @@ class ScaricaTSPanel(BaseBotPanel):
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal;")
+        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
         
         self.fornitore_combo = QComboBox()
-        self.fornitore_combo.setMinimumHeight(35)
+        self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
         self.fornitore_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #ced4da;
                 border-radius: 4px;
                 padding: 8px;
-                font-size: 13px;
+                font-size: 15px;
                 background-color: white;
             }
             QComboBox:focus {
@@ -260,6 +261,7 @@ class ScaricaTSPanel(BaseBotPanel):
                 border: 1px solid #ced4da;
                 selection-background-color: #e7f1ff;
                 selection-color: #0d6efd;
+                font-size: 15px;
             }
         """)
         fornitore_layout.addWidget(self.fornitore_combo)
@@ -288,7 +290,7 @@ class ScaricaTSPanel(BaseBotPanel):
         # Riga 2: Data
         date_layout = QHBoxLayout()
         date_label = QLabel("Data Da:")
-        date_label.setStyleSheet("font-weight: normal;")
+        date_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_label.setMinimumWidth(80)
         date_layout.addWidget(date_label)
         
@@ -298,13 +300,13 @@ class ScaricaTSPanel(BaseBotPanel):
         # Default: 01.01.2025
         self.date_edit.setDate(QDate(2025, 1, 1))
         self.date_edit.setMinimumWidth(150)
-        self.date_edit.setMinimumHeight(35)
+        self.date_edit.setMinimumHeight(40)
         self.date_edit.setStyleSheet("""
             QDateEdit {
                 border: 1px solid #ced4da;
                 border-radius: 4px;
                 padding: 8px;
-                font-size: 13px;
+                font-size: 15px;
                 background-color: white;
             }
             QDateEdit:focus {
@@ -318,7 +320,7 @@ class ScaricaTSPanel(BaseBotPanel):
         date_layout.addWidget(self.date_edit)
         
         date_hint = QLabel("(Formato: gg.mm.aaaa)")
-        date_hint.setStyleSheet("color: #6c757d; font-size: 11px; font-weight: normal;")
+        date_hint.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: normal;")
         date_layout.addWidget(date_hint)
         
         date_layout.addStretch()
@@ -336,6 +338,7 @@ class ScaricaTSPanel(BaseBotPanel):
                 border-radius: 6px;
                 margin-top: 10px;
                 padding-top: 10px;
+                font-size: 16px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -350,7 +353,7 @@ class ScaricaTSPanel(BaseBotPanel):
             "💡 Tasto destro per aggiungere/rimuovere righe. "
             "Modifica i valori direttamente nelle celle."
         )
-        instructions.setStyleSheet("color: #6c757d; font-size: 11px; padding: 5px;")
+        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         
@@ -539,6 +542,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 border-radius: 6px;
                 margin-top: 10px;
                 padding-top: 10px;
+                font-size: 16px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -551,19 +555,19 @@ class DettagliOdAPanel(BaseBotPanel):
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal;")
+        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
 
         self.fornitore_combo = QComboBox()
-        self.fornitore_combo.setMinimumHeight(35)
+        self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
         self.fornitore_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #ced4da;
                 border-radius: 4px;
                 padding: 8px;
-                font-size: 13px;
+                font-size: 15px;
                 background-color: white;
             }
             QComboBox:focus {
@@ -581,6 +585,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 border: 1px solid #ced4da;
                 selection-background-color: #e7f1ff;
                 selection-color: #0d6efd;
+                font-size: 15px;
             }
         """)
         fornitore_layout.addWidget(self.fornitore_combo)
@@ -611,14 +616,14 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Data Da
         date_da_label = QLabel("Data Da:")
-        date_da_label.setStyleSheet("font-weight: normal;")
+        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_da_label)
 
         self.date_da_edit = QDateEdit()
         self.date_da_edit.setCalendarPopup(True)
         self.date_da_edit.setDisplayFormat("dd.MM.yyyy")
         self.date_da_edit.setDate(QDate(2025, 1, 1))
-        self.date_da_edit.setMinimumHeight(35)
+        self.date_da_edit.setMinimumHeight(40)
         self.date_da_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_da_edit)
 
@@ -626,14 +631,14 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Data A
         date_a_label = QLabel("Data A:")
-        date_a_label.setStyleSheet("font-weight: normal;")
+        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_a_label)
 
         self.date_a_edit = QDateEdit()
         self.date_a_edit.setCalendarPopup(True)
         self.date_a_edit.setDisplayFormat("dd.MM.yyyy")
         self.date_a_edit.setDate(QDate.currentDate())
-        self.date_a_edit.setMinimumHeight(35)
+        self.date_a_edit.setMinimumHeight(40)
         self.date_a_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_a_edit)
 
@@ -651,6 +656,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 border-radius: 6px;
                 margin-top: 10px;
                 padding-top: 10px;
+                font-size: 16px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -665,32 +671,27 @@ class DettagliOdAPanel(BaseBotPanel):
             "💡 Questo bot esegue il login, naviga a Dettagli OdA, imposta i filtri "
             "e si ferma per la consultazione manuale."
         )
-        instructions.setStyleSheet("color: #6c757d; font-size: 11px; padding: 5px;")
+        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         
-        # Tabella con colonne: Numero OdA
+        # Tabella con colonne: Numero OdA e Numero Contratto
+        # Recupera default da config per le nuove righe
+        config = config_manager.load_config()
+        contracts = config.get("contracts", [])
+        default_contract = config.get("default_contract", "")
+
+        # Se non c'è un default ma ci sono contratti, usa il primo
+        if not default_contract and contracts:
+            default_contract = contracts[0]
+
         self.data_table = EditableDataTable([
-            {"name": "Numero OdA", "type": "text"}
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Numero Contratto", "type": "combo", "options": contracts, "default": default_contract}
         ])
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
-        # Note
-        note = QLabel(
-            "⚠️ Il browser rimarrà aperto. Chiudilo manualmente quando hai finito."
-        )
-        note.setStyleSheet("""
-            QLabel {
-                background-color: #fff3cd;
-                color: #856404;
-                padding: 10px;
-                border: 1px solid #ffeeba;
-                border-radius: 4px;
-            }
-        """)
-        note.setWordWrap(True)
-        group_layout.addWidget(note)
         
         self.content_layout.addWidget(group)
     
@@ -700,7 +701,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 border: 1px solid #ced4da;
                 border-radius: 4px;
                 padding: 8px;
-                font-size: 13px;
+                font-size: 15px;
                 background-color: white;
             }
             QDateEdit:focus {
@@ -719,10 +720,11 @@ class DettagliOdAPanel(BaseBotPanel):
             main_window.show_settings()
 
     def refresh_fornitori(self):
-        """Ricarica l'elenco dei fornitori."""
+        """Ricarica l'elenco dei fornitori e contratti."""
         config = config_manager.load_config()
-        fornitori = config.get("fornitori", [])
 
+        # 1. Aggiorna Fornitori
+        fornitori = config.get("fornitori", [])
         current_text = self.fornitore_combo.currentText()
         self.fornitore_combo.clear()
 
@@ -733,6 +735,10 @@ class DettagliOdAPanel(BaseBotPanel):
                 self.fornitore_combo.setCurrentIndex(index)
             else:
                 self.fornitore_combo.setCurrentIndex(0)
+
+        # 2. Aggiorna Contratti nella tabella
+        contracts = config.get("contracts", [])
+        self.data_table.update_column_options("Numero Contratto", contracts)
 
     def _load_saved_data(self):
         """Carica i dati salvati."""
@@ -760,11 +766,19 @@ class DettagliOdAPanel(BaseBotPanel):
 
         saved_data = config.get("last_oda_data", [])
         if saved_data:
-            # Filtra i dati salvati per includere solo la colonna "numero_oda"
-            # Questo evita che vecchie configurazioni mostrino colonne rimosse (es. posizione_oda)
+            # Assicuriamo che i vecchi dati abbiano il contratto vuoto o default
+            # e puliamo da chiavi obsolete
             cleaned_data = []
+            default_contract = config.get("default_contract", "")
+            contracts = config.get("contracts", [])
+            if not default_contract and contracts:
+                default_contract = contracts[0]
+
             for row in saved_data:
-                cleaned_row = {"numero_oda": row.get("numero_oda", "")}
+                cleaned_row = {
+                    "numero_oda": row.get("numero_oda", ""),
+                    "numero_contratto": row.get("numero_contratto", default_contract)
+                }
                 cleaned_data.append(cleaned_row)
             self.data_table.set_data(cleaned_data)
     
@@ -862,6 +876,7 @@ class CaricoTSPanel(BaseBotPanel):
                 border-radius: 6px;
                 margin-top: 10px;
                 padding-top: 10px;
+                font-size: 16px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -876,7 +891,7 @@ class CaricoTSPanel(BaseBotPanel):
             "💡 Tasto destro per aggiungere/rimuovere righe. "
             "Modifica i valori direttamente nelle celle."
         )
-        instructions.setStyleSheet("color: #6c757d; font-size: 11px; padding: 5px;")
+        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
         

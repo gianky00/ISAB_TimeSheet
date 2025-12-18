@@ -6,6 +6,7 @@ import os
 import glob
 import time
 import shutil
+from pathlib import Path
 from typing import List, Dict, Any
 
 from selenium.webdriver.common.by import By
@@ -48,12 +49,13 @@ class DettagliOdABot(BaseBot):
         return "Accede ai Dettagli OdA con filtri preimpostati"
     
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", 
-                 numero_oda: str = "", **kwargs):
+                 numero_oda: str = "", numero_contratto: str = "", **kwargs):
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
         self.numero_oda = numero_oda
+        self.numero_contratto = numero_contratto
         # Variabile per tracciare l'ultimo log ed evitare spam
         self._last_log_msg = "" 
 
@@ -84,6 +86,7 @@ class DettagliOdABot(BaseBot):
                 self._check_stop()
                 
                 self.numero_oda = row.get("numero_oda", "")
+                self.numero_contratto = row.get("numero_contratto", "")
                 
                 # Setup filtri e download
                 file_path = self._setup_filters()
@@ -227,24 +230,36 @@ class DettagliOdABot(BaseBot):
             else:
                 actions.send_keys(Keys.DELETE)
             actions.pause(0.3)
-
-            # TAB vari
-            actions.send_keys(Keys.TAB).pause(0.3) # Divisione
-            actions.send_keys(Keys.TAB).pause(0.3) # Data Da
             
+            # --- Sequence Correction ---
+            # 1. Move from OdA to Divisione
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Divisione
+
+            # 2. Move from Divisione to Data Da
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Data Da
             if self.data_da:
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
-                actions.send_keys(self.data_da).pause(0.5)
-
-            actions.send_keys(Keys.TAB).pause(0.3) # Data A
+                actions.send_keys(self.data_da).pause(0.3)
             
+            # 3. Move from Data Da to Data A
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Data A
             if self.data_a:
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
-                actions.send_keys(self.data_a).pause(0.5)
+                actions.send_keys(self.data_a).pause(0.3)
 
-            # 3 TAB verso Flag Dettagli
-            for _ in range(3):
-                actions.send_keys(Keys.TAB).pause(0.3)
+            # 4. Move from Data A to Numero Contratto
+            actions.send_keys(Keys.TAB).pause(0.3) # -> Numero Contratto
+
+            actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
+            if self.numero_contratto:
+                actions.send_keys(self.numero_contratto)
+            else:
+                actions.send_keys(Keys.DELETE)
+            actions.pause(0.3)
+
+            # 5. Move from Numero Contratto to Flag (2 TABs)
+            actions.send_keys(Keys.TAB).pause(0.3)
+            actions.send_keys(Keys.TAB).pause(0.3)
 
             # Attivazione Flag e Conferma
             actions.send_keys(Keys.SPACE).pause(0.3) 
@@ -302,34 +317,53 @@ class DettagliOdABot(BaseBot):
             return ""
 
     def execute(self, data: Any) -> bool:
-        """Override: esegue login e run, ma non chiude il browser."""
+        """Esegue login, run, logout e chiude il browser."""
         self._stop_requested = False
         try:
-            self._init_driver()
-            if not self._login():
+            if not self._safe_login_with_retry():
                 return False
 
-            return self.run(data)
+            result = self.run(data)
+            self._logout()
+            return result
         except Exception as e:
             self.log(f"Errore critico: {e}")
             return False
+        finally:
+            self.cleanup()
 
     def _rename_latest_download(self, new_name_base: str) -> str:
-        """Trova l'ultimo file scaricato e lo rinomina."""
-        if not self.download_path or not os.path.exists(self.download_path):
-            return ""
+        """Trova l'ultimo file scaricato nella cartella default e lo sposta nella destinazione."""
+        # Cartella di download predefinita del sistema (Source)
+        source_dir = Path.home() / "Downloads"
 
-        timeout = 10
+        # Cartella di destinazione configurata (Target)
+        if self.download_path:
+            dest_dir = Path(self.download_path)
+        else:
+            dest_dir = source_dir
+
+        # Crea destinazione se non esiste
+        if not dest_dir.exists():
+            try:
+                dest_dir.mkdir(parents=True, exist_ok=True)
+            except:
+                self.log("Impossibile creare cartella destinazione.")
+                return ""
+
+        timeout = 15
         start_time = time.time()
         latest_file = None
 
         while time.time() - start_time < timeout:
-            files = glob.glob(os.path.join(self.download_path, "*"))
-            files = [f for f in files if not f.endswith('.crdownload') and not f.endswith('.tmp') and os.path.isfile(f)]
+            # Cerca file nella source_dir
+            files = list(source_dir.glob("*"))
+            files = [f for f in files if not f.name.endswith('.crdownload') and not f.name.endswith('.tmp') and f.is_file()]
 
             if files:
-                latest_file = max(files, key=os.path.getctime)
-                if time.time() - os.path.getctime(latest_file) < 15:
+                latest_file = max(files, key=lambda f: f.stat().st_mtime)
+                # Controlla se è recente (< 20s)
+                if time.time() - latest_file.stat().st_mtime < 20:
                     break
             time.sleep(1)
 
@@ -337,18 +371,30 @@ class DettagliOdABot(BaseBot):
             return ""
 
         try:
-            _, ext = os.path.splitext(latest_file)
+            ext = latest_file.suffix
             if not ext: ext = ".xlsx"
+
             new_filename = f"dettaglio_oda_{new_name_base}{ext}"
             if not new_name_base:
                 new_filename = f"dettaglio_oda_{int(time.time())}{ext}"
                 
-            new_path = os.path.join(self.download_path, new_filename)
-            if os.path.exists(new_path):
-                os.remove(new_path)
-            shutil.move(latest_file, new_path)
-            return new_path
-        except Exception:
+            new_path = dest_dir / new_filename
+
+            # Gestione duplicati
+            if new_path.exists():
+                try:
+                    new_path.unlink()
+                except:
+                    # Se non riesco a rimuovere, cambio nome
+                    new_filename = f"dettaglio_oda_{new_name_base}_{int(time.time())}{ext}"
+                    new_path = dest_dir / new_filename
+
+            # Sposta/Rinomina
+            # Se src == dest (es. utente non ha cambiato path), shutil.move o rename funzionano come rename
+            shutil.move(str(latest_file), str(new_path))
+            return str(new_path)
+        except Exception as e:
+            self.log(f"Errore spostamento file: {e}")
             return ""
 
     def _verify_and_cleanup_excel_files(self, file_paths: List[str]) -> None:

@@ -108,7 +108,10 @@ class ScaricaTSBot(BaseBot):
             
             # 3. Processa ogni riga
             success_count = 0
-            download_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
+
+            # Usa directory download di sistema, poi sposteremo i file
+            source_dir = Path.home() / "Downloads"
+            dest_dir = Path(self.download_path) if self.download_path else source_dir
             
             # JS per dispatch eventi su input ExtJS
             js_dispatch_events = """
@@ -137,7 +140,7 @@ class ScaricaTSBot(BaseBot):
                     )
                     self.driver.execute_script("arguments[0].value = arguments[1];", campo_numero_oda, numero_oda)
                     self.driver.execute_script(js_dispatch_events, campo_numero_oda)
-                    self.log(f"  Valore '{numero_oda}' impostato in 'NumeroOda'.")
+                    # self.log(f"  Valore '{numero_oda}' impostato in 'NumeroOda'.")
                     
                     # Inserisci Posizione OdA
                     campo_posizione_oda = self.wait.until(
@@ -146,18 +149,18 @@ class ScaricaTSBot(BaseBot):
                     self.driver.execute_script("arguments[0].value = '';", campo_posizione_oda)
                     self.driver.execute_script("arguments[0].value = arguments[1];", campo_posizione_oda, posizione_oda)
                     self.driver.execute_script(js_dispatch_events, campo_posizione_oda)
-                    self.log(f"  Valore '{posizione_oda}' impostato in 'PosizioneOda'.")
+                    # self.log(f"  Valore '{posizione_oda}' impostato in 'PosizioneOda'.")
                     
                     # Click su Cerca
                     pulsante_cerca_xpath = "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]]"
                     self.wait.until(EC.element_to_be_clickable((By.XPATH, pulsante_cerca_xpath))).click()
-                    self.log("  Pulsante 'Cerca' cliccato. Attesa risultati...")
+                    # self.log("  Pulsante 'Cerca' cliccato. Attesa risultati...")
                     
                     # Attendi risultati
                     self._attendi_scomparsa_overlay(90)
                     
-                    # Download file Excel
-                    if self._download_excel(download_dir, numero_oda, posizione_oda):
+                    # Download file Excel (usa source_dir e poi sposta in dest_dir)
+                    if self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda):
                         success_count += 1
                     
                 except Exception as e:
@@ -253,71 +256,74 @@ class ScaricaTSBot(BaseBot):
             self.log(f"✗ Errore impostazione filtri: {e}")
             return False
     
-    def _download_excel(self, download_dir: Path, numero_oda: str, posizione_oda: str) -> bool:
+    def _download_excel(self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str) -> bool:
         """
-        Scarica il file Excel e lo rinomina.
+        Scarica il file Excel, lo rinomina e lo sposta.
         
         Args:
-            download_dir: Directory di download
-            numero_oda: Numero OdA per il nome file
-            posizione_oda: Posizione OdA per il nome file
-            
-        Returns:
-            True se download e rinomina riusciti
+            source_dir: Directory di download (es. ~/Downloads)
+            dest_dir: Directory di destinazione finale
+            numero_oda: Numero OdA
+            posizione_oda: Posizione OdA
         """
-        self.log("  Tentativo di download del file Excel...")
+        # self.log("  Tentativo di download del file Excel...")
         
         try:
             # File esistenti prima del download
-            files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
+            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
             
             # Click sul pulsante Excel
             excel_button_xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
             self.wait.until(EC.element_to_be_clickable((By.XPATH, excel_button_xpath))).click()
-            self.log("  Icona Excel per download cliccata. Attesa download (max 25s)...")
+            # self.log("  Icona Excel cliccata...")
             
             # Attendi il download
             downloaded_file = None
             download_start_time = time.time()
             
             while time.time() - download_start_time < 25:
-                current_files = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
-                new_files = current_files - files_before
-                if new_files:
-                    downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
-                    self.log(f"  File scaricato rilevato: {downloaded_file.name}")
-                    break
+                try:
+                    current_files = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
+                    new_files = current_files - files_before
+                    if new_files:
+                        downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
+                        # self.log(f"  File rilevato: {downloaded_file.name}")
+                        break
+                except:
+                    pass
                 time.sleep(0.5)
             
-            # Fallback: controllo finale
-            if not downloaded_file:
-                self.log("  File non rilevato rapidamente, controllo finale dopo breve attesa...")
-                time.sleep(5)
-                current_files = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
-                new_files = current_files - files_before
-                if new_files:
-                    downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
-            
             if downloaded_file and downloaded_file.exists():
+                # Assicura dest dir
+                if not dest_dir.exists():
+                    try:
+                        dest_dir.mkdir(parents=True, exist_ok=True)
+                    except:
+                        pass
+
                 # Costruisci il nuovo nome
                 nome_base_pos = f"-{posizione_oda}" if posizione_oda else ""
                 nuovo_nome_base = f"{numero_oda}{nome_base_pos}"
                 nuovo_nome_file = f"{nuovo_nome_base}.xlsx"
-                percorso_rinominato = download_dir / nuovo_nome_file
+                percorso_finale = dest_dir / nuovo_nome_file
                 
                 # Gestisci duplicati
-                counter = 1
-                while percorso_rinominato.exists() and percorso_rinominato.resolve() != downloaded_file.resolve():
-                    timestamp = time.strftime("%Y%m%d-%H%M%S")
-                    nuovo_nome_file = f"{nuovo_nome_base}-{timestamp}_{counter}.xlsx"
-                    percorso_rinominato = download_dir / nuovo_nome_file
-                    counter += 1
-                
-                downloaded_file.rename(percorso_rinominato)
-                self.log(f"  ✓ File rinominato: {percorso_rinominato.name}")
+                if percorso_finale.exists():
+                    try:
+                        percorso_finale.unlink()
+                    except:
+                        timestamp = time.strftime("%Y%m%d-%H%M%S")
+                        nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
+                        percorso_finale = dest_dir / nuovo_nome_file
+
+                # Sposta e rinomina
+                import shutil
+                shutil.move(str(downloaded_file), str(percorso_finale))
+
+                self.log(f"  ✓ Scaricato: {percorso_finale.name}")
                 return True
             else:
-                self.log("  ✗ Download fallito o file non trovato.")
+                self.log("  ✗ File non trovato.")
                 return False
                 
         except Exception as e:
@@ -333,9 +339,7 @@ class ScaricaTSBot(BaseBot):
         self._stop_requested = False
         
         try:
-            self._init_driver()
-            
-            if not self._login():
+            if not self._safe_login_with_retry():
                 self.status = BotStatus.ERROR
                 return False
             

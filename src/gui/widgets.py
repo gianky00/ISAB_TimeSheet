@@ -5,7 +5,7 @@ Widget personalizzati riutilizzabili.
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
-    QTextEdit, QFrame, QAbstractItemView
+    QTextEdit, QFrame, QAbstractItemView, QComboBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QAction
@@ -44,6 +44,7 @@ class EditableDataTable(QWidget):
                 border-radius: 4px;
                 background-color: white;
                 gridline-color: #e9ecef;
+                font-size: 14px;
             }
             QTableWidget::item {
                 padding: 8px;
@@ -55,15 +56,18 @@ class EditableDataTable(QWidget):
             QHeaderView::section {
                 background-color: #f8f9fa;
                 padding: 8px;
+                padding-left: 5px;
                 border: none;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
+                font-size: 14px;
             }
         """)
         
         # Configurazione header
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
         # Menu contestuale
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -105,11 +109,7 @@ class EditableDataTable(QWidget):
         """Aggiunge una riga alla fine."""
         row = self.table.rowCount()
         self.table.insertRow(row)
-        
-        for col in range(len(self.columns)):
-            item = QTableWidgetItem("")
-            self.table.setItem(row, col, item)
-        
+        self._populate_row(row)
         self.data_changed.emit()
     
     def _add_row_above(self):
@@ -119,12 +119,35 @@ class EditableDataTable(QWidget):
             current_row = 0
         
         self.table.insertRow(current_row)
-        
-        for col in range(len(self.columns)):
-            item = QTableWidgetItem("")
-            self.table.setItem(current_row, col, item)
-        
+        self._populate_row(current_row)
         self.data_changed.emit()
+
+    def _populate_row(self, row: int):
+        """Popola una riga con widget o item di default."""
+        for col, column in enumerate(self.columns):
+            col_type = column.get('type', 'text')
+
+            if col_type == 'combo':
+                # Setup ComboBox
+                combo = QComboBox()
+                combo.setStyleSheet("border: none; background: transparent;")
+                options = column.get('options', [])
+                combo.addItems(options)
+
+                # Seleziona default se presente
+                default_val = column.get('default', "")
+                if default_val and default_val in options:
+                    combo.setCurrentText(default_val)
+
+                # Collega segnale modifica
+                combo.currentTextChanged.connect(lambda text: self.data_changed.emit())
+
+                self.table.setCellWidget(row, col, combo)
+            else:
+                # Standard Text Item
+                default_val = column.get('default', "")
+                item = QTableWidgetItem(str(default_val))
+                self.table.setItem(row, col, item)
     
     def _remove_row(self):
         """Rimuove la riga selezionata."""
@@ -156,11 +179,16 @@ class EditableDataTable(QWidget):
             has_data = False
             
             for col, column in enumerate(self.columns):
-                item = self.table.item(row, col)
-                value = item.text() if item else ""
-                
-                # Converti il nome colonna in chiave
                 key = column['name'].lower().replace(' ', '_')
+
+                # Gestione ComboBox vs Item
+                widget = self.table.cellWidget(row, col)
+                if isinstance(widget, QComboBox):
+                    value = widget.currentText()
+                else:
+                    item = self.table.item(row, col)
+                    value = item.text() if item else ""
+
                 row_data[key] = value
                 
                 if value:
@@ -187,17 +215,67 @@ class EditableDataTable(QWidget):
         for row_data in data:
             row = self.table.rowCount()
             self.table.insertRow(row)
+            self._populate_row(row) # Crea i widget se necessario
             
             for col, column in enumerate(self.columns):
                 key = column['name'].lower().replace(' ', '_')
                 value = row_data.get(key, "")
-                item = QTableWidgetItem(str(value))
-                self.table.setItem(row, col, item)
+
+                widget = self.table.cellWidget(row, col)
+                if isinstance(widget, QComboBox):
+                    if value:
+                        # Se il valore non è nelle opzioni, lo aggiungiamo temporaneamente?
+                        # O assumiamo sia corretto. Per sicurezza controlliamo index.
+                        idx = widget.findText(str(value))
+                        if idx >= 0:
+                            widget.setCurrentIndex(idx)
+                        else:
+                            # Opzionale: aggiungi e seleziona
+                            widget.addItem(str(value))
+                            widget.setCurrentText(str(value))
+                else:
+                    item = self.table.item(row, col)
+                    if item:
+                        item.setText(str(value))
         
         # Se non ci sono dati, aggiungi una riga vuota
         if self.table.rowCount() == 0:
             self._add_row()
         
+        self.table.blockSignals(False)
+
+    def update_column_options(self, column_name: str, new_options: list):
+        """Aggiorna le opzioni per una colonna di tipo combo."""
+        # 1. Aggiorna definizione colonna
+        target_col_idx = -1
+        for i, col in enumerate(self.columns):
+            if col['name'] == column_name:
+                col['options'] = new_options
+                target_col_idx = i
+                break
+
+        if target_col_idx == -1:
+            return
+
+        # 2. Aggiorna widget esistenti
+        self.table.blockSignals(True)
+        for row in range(self.table.rowCount()):
+            widget = self.table.cellWidget(row, target_col_idx)
+            if isinstance(widget, QComboBox):
+                current_text = widget.currentText()
+                widget.clear()
+                widget.addItems(new_options)
+
+                # Tenta di ripristinare il valore
+                if current_text in new_options:
+                    widget.setCurrentText(current_text)
+                elif new_options:
+                    # Se il vecchio valore non esiste più, metti il primo o lascia vuoto?
+                    # Meglio lasciare il vecchio valore se non è nella lista?
+                    # QComboBox non modificabile non lo permette.
+                    # Se è modificabile sì. Qui assumiamo non modificabile strict.
+                    # Se non trovato, mettiamo il primo.
+                    widget.setCurrentIndex(0)
         self.table.blockSignals(False)
 
 
@@ -255,7 +333,7 @@ class LogWidget(QWidget):
                 border-radius: 4px;
                 padding: 10px;
                 font-family: 'Consolas', 'Monaco', monospace;
-                font-size: 12px;
+                font-size: 14px;
             }
         """)
         layout.addWidget(self.log_text)
@@ -316,7 +394,7 @@ class StatusIndicator(QWidget):
         
         # Testo stato
         self.status_label = QLabel("In attesa")
-        self.status_label.setStyleSheet("font-size: 12px; color: #6c757d;")
+        self.status_label.setStyleSheet("font-size: 14px; color: #6c757d;")
         layout.addWidget(self.status_label)
         
         layout.addStretch()
@@ -347,4 +425,4 @@ class StatusIndicator(QWidget):
             }}
         """)
         self.status_label.setText(text)
-        self.status_label.setStyleSheet(f"font-size: 12px; color: {color}; font-weight: bold;")
+        self.status_label.setStyleSheet(f"font-size: 14px; color: {color}; font-weight: bold;")

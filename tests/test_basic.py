@@ -41,8 +41,7 @@ class TestConfigManager:
         
         required_keys = [
             'download_path',
-            'isab_username',
-            'isab_password',
+            'accounts',
             'browser_headless',
             'browser_timeout',
         ]
