@@ -1274,33 +1274,46 @@ class TimbraturePanel(BaseBotPanel):
                 self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
 
     def _filter_data(self, text):
-        """Filtra la tabella in base al testo."""
-        text = text.lower()
+        """Filtra la tabella in base al testo usando SQL."""
         if not self.db_path.exists():
             return
 
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            cursor.execute("SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature ORDER BY id DESC")
+
+            query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
+            params = []
+
+            if text:
+                # Cerca corrispondenza di TUTTE le parole cercate in QUALSIASI colonna rilevante
+                # Esempio: "Mario Rossi" -> (nome LIKE %mario% OR cognome LIKE %mario% ...) AND (nome LIKE %rossi% OR ...)
+                search_terms = text.lower().split()
+                conditions = []
+
+                columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
+
+                for term in search_terms:
+                    term_conditions = []
+                    for col in columns_to_search:
+                        term_conditions.append(f"{col} LIKE ?")
+                        params.append(f"%{term}%")
+                    # Unisci le condizioni per questo termine con OR (il termine deve apparire in almeno una colonna)
+                    conditions.append(f"({' OR '.join(term_conditions)})")
+
+                if conditions:
+                    query += " WHERE " + " AND ".join(conditions)
+
+            query += " ORDER BY id DESC LIMIT 500" # Limita a 500 risultati per performance
+
+            cursor.execute(query, params)
             rows = cursor.fetchall()
             conn.close()
 
-            filtered_rows = []
-            if not text:
-                filtered_rows = rows
-            else:
-                # Cerca corrispondenza di TUTTE le parole cercate nella riga
-                search_terms = text.split()
-                for row in rows:
-                    row_str = " ".join(str(v).lower() for v in row)
-                    if all(term in row_str for term in search_terms):
-                        filtered_rows.append(row)
-
-            self._update_table(filtered_rows)
+            self._update_table(rows)
 
         except Exception as e:
-            pass
+            self.log_widget.append(f"Errore filtro: {e}")
 
     def _on_start(self):
         username, password = self.get_credentials()

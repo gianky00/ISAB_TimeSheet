@@ -24,6 +24,14 @@ class TimbratureBot(BaseBot):
     Bot per l'accesso alle Timbrature.
     """
 
+    @property
+    def name(self) -> str:
+        return "Timbrature"
+
+    @property
+    def description(self) -> str:
+        return "Scarica e archivia le timbrature dal portale ISAB"
+
     @staticmethod
     def get_name() -> str:
         return "Timbrature"
@@ -137,23 +145,8 @@ class TimbratureBot(BaseBot):
         try:
             # 1. Seleziona Fornitore
             if self.fornitore:
-                # Trova la combo del fornitore.
-                # Nota: Assumiamo che la struttura sia simile a Dettagli OdA, ma dobbiamo essere sicuri.
-                # In Dettagli OdA: //div[starts-with(@id, 'generic_refresh_combo_box-') ...]
-                # Qui potrebbe essere diverso o uguale. Proveremo a trovarlo.
-                # Se è la prima combo box nella view, possiamo usare un approccio generico o tab.
-                # Ma il piano dice: "Seleziona Fornitore, 1 tab per Data Da".
-                # Quindi Fornitore è il primo campo focusable? O bisogna cliccarci?
-                # User request: "Poi selezioni Fornitore, 1 tab per selezionare Data Da..."
-
-                # Cerchiamo di interagire col fornitore via click se possibile, o via TAB se è già focusato?
-                # In Dettagli OdA si cliccava la freccetta. Facciamo lo stesso qui per sicurezza.
-
                 try:
                     fornitore_arrow_xpath = "//div[contains(@class, 'x-form-arrow-trigger')]"
-                    # Potrebbero essercene molteplici, prendiamo la prima visibile o quella corretta.
-                    # Spesso è meglio usare un selettore più specifico se possibile.
-                    # Ma dato che non ho il DOM, mi fido della sequenza del Dettagli OdA che sembra funzionare.
 
                     fornitore_arrow_element = self.wait.until(
                         EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
@@ -172,17 +165,12 @@ class TimbratureBot(BaseBot):
                     self._attendi_scomparsa_overlay()
                 except Exception as e:
                     self.log(f"⚠️ Errore selezione fornitore (tentativo mouse): {e}")
-                    # Fallback eventuale: proviamo a scrivere se fosse una combo editabile, o saltiamo.
 
             actions = ActionChains(self.driver)
 
             # 2. 1 tab per selezionare Data Da
             actions.send_keys(Keys.TAB).pause(0.3)
             if self.data_da:
-                # Converte dd.mm.yyyy -> dd/mm/yyyy se necessario, o viceversa?
-                # User request: "il formato deve essere GG/MM/AAAA ma poi convertito nel browser in GG.MM.AAAA"
-                # Wait, "convertito nel browser in GG.MM.AAAA" implies I should type dots.
-                # My UI input is QDateEdit (dd.MM.yyyy). So I send it as is.
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
                 actions.send_keys(self.data_da).pause(0.3)
 
@@ -196,12 +184,6 @@ class TimbratureBot(BaseBot):
             for _ in range(5):
                 actions.send_keys(Keys.TAB).pause(0.2)
 
-            # Select Flag (Space to toggle check?) User said "invio per selezionare flag".
-            # Usually checkboxes are toggled with Space. But user said Enter.
-            # "poi invio per selezionare flag ... e poi 1 volta tab e invio per cliccare su cerca"
-            # I will follow instructions: Enter. If it doesn't work, I might need Space.
-            # Actually, standard HTML checkboxes use Space. ExtJS might use Enter or Space.
-            # I'll stick to Enter as requested.
             actions.send_keys(Keys.ENTER).pause(0.3)
 
             # 5. 1 volta tab e invio per cliccare su cerca
@@ -218,9 +200,6 @@ class TimbratureBot(BaseBot):
             downloaded_file = ""
             try:
                 excel_xpath = "//*[contains(text(), 'Excel') or contains(@class, 'page-excel')]"
-                # Nota: L'utente ha detto "cliccare sul tasto Excel".
-                # In Dettagli OdA era "Esporta in Excel". Qui potrebbe essere un'icona o testo.
-                # Cerco qualcosa che contenga Excel.
 
                 excel_btn = WebDriverWait(self.driver, 5).until(
                     EC.element_to_be_clickable((By.XPATH, excel_xpath))

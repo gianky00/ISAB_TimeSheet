@@ -30,3 +30,4 @@ pytest-qt>=4.2.0
 # black>=23.0.0
 
 openpyxl
+pandas>=2.0.0
