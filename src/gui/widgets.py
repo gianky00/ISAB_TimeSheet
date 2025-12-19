@@ -194,6 +194,15 @@ class EditableDataTable(QWidget):
                         selection-background-color: #e7f1ff;
                         selection-color: #0d6efd;
                     }
+                    /* Forza il colore del testo nero anche durante l'hover/selezione */
+                    QComboBox QAbstractItemView::item:hover {
+                        background-color: #e7f1ff;
+                        color: black;
+                    }
+                    QComboBox QAbstractItemView::item:selected {
+                        background-color: #e7f1ff;
+                        color: black;
+                    }
                 """)
                 options = column.get('options', [])
                 combo.addItems(options)
