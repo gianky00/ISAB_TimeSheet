@@ -323,6 +323,46 @@ class BaseBot(ABC):
         self._handle_session_popup()
         self._handle_ok_popup()
     
+    def _handle_unsaved_changes_popup(self):
+        """
+        Gestisce il popup 'Attenzione - Le modifiche non salvate andranno perse'.
+        Questo popup può apparire dopo aver cliccato su 'Esci'.
+        """
+        try:
+            # Cerca popup con titolo "Attenzione" e messaggio su modifiche non salvate
+            # Prima verifica se c'è una finestra con titolo "Attenzione"
+            attenzione_xpath = "//span[contains(@class, 'x-window-header-text') and contains(text(), 'Attenzione')]"
+            
+            # Attendi brevemente per vedere se appare il popup
+            WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.XPATH, attenzione_xpath))
+            )
+            
+            self.log("Pop-up 'Attenzione - modifiche non salvate' trovato. Click su 'Si'...")
+            
+            # Trova il pulsante "Si" nel popup
+            si_button_xpath = "//div[contains(@class, 'x-window')]//span[normalize-space(text())='Si' and contains(@class, 'x-btn-inner')]"
+            si_button = WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, si_button_xpath))
+            )
+            
+            # Click sul pulsante Si
+            try:
+                si_button.click()
+            except:
+                self.driver.execute_script("arguments[0].click();", si_button)
+            
+            self.log("Popup 'Attenzione' gestito - cliccato 'Si'.")
+            time.sleep(0.5)
+            return True
+            
+        except TimeoutException:
+            pass  # Nessun popup "Attenzione" - normale
+        except Exception as e:
+            self.log(f"Errore gestione popup Attenzione: {e}")
+        
+        return False
+    
     def _verify_login(self) -> bool:
         """Verifica se il login è avvenuto con successo."""
         try:
@@ -333,6 +373,7 @@ class BaseBot(ABC):
     def _logout(self) -> bool:
         """
         Esegue il logout dal portale ISAB.
+        Gestisce anche il popup 'Attenzione - modifiche non salvate'.
         """
         self.log("Tentativo di Logout...")
         try:
@@ -350,16 +391,29 @@ class BaseBot(ABC):
             logout_option.click()
             self.log("Opzione 'Esci' cliccata.")
             
-            time.sleep(2)
+            time.sleep(1)
             
-            # Conferma logout cliccando su "Si"
+            # Gestisci popup "Attenzione - modifiche non salvate" se presente
+            self._handle_unsaved_changes_popup()
+            
+            time.sleep(1)
+            
+            # Conferma logout cliccando su "Si" (popup di conferma logout standard)
             yes_button_xpath = "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Si']]"
-            yes_button = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, yes_button_xpath))
-            )
-            self.log("Pulsante 'Si' per conferma logout trovato.")
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", yes_button)
-            self.log("Logout confermato.")
+            try:
+                yes_button = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, yes_button_xpath))
+                )
+                self.log("Pulsante 'Si' per conferma logout trovato.")
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", yes_button)
+                self.log("Logout confermato.")
+                
+                # Attesa per permettere al logout di completarsi
+                time.sleep(3)
+                
+            except TimeoutException:
+                # Potrebbe essere già stato gestito dal popup precedente
+                self.log("Nessun ulteriore popup di conferma logout.")
             
             # Verifica ritorno alla pagina di login
             WebDriverWait(self.driver, 10).until(

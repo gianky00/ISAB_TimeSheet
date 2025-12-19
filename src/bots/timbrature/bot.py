@@ -219,64 +219,100 @@ class TimbratureBot(BaseBot):
             except Exception as e:
                 self.log(f"Impossibile contare righe: {e}")
 
-            # 6. Cliccare sul tasto Excel
+            # 6. Cliccare sul tasto Excel (approccio identico a DettagliOdA)
             downloaded_file = ""
             try:
                 self.log("Cerco pulsante Excel...")
-                # Pausa extra per sicurezza
                 time.sleep(1.0)
 
-                # Tentativo 1: Cerca per testo (Fallback)
+                excel_btn = None
+                
+                # Strategia 1: Cerca per testo "Esporta in Excel" (come DettagliOdA)
+                excel_xpath_text = "//*[contains(text(), 'Esporta in Excel')]"
                 try:
-                    excel_xpath_text = "//*[contains(text(), 'Esporta in Excel')]"
-                    excel_btn = WebDriverWait(self.driver, 3).until(
+                    excel_btn = WebDriverWait(self.driver, 2).until(
                         EC.presence_of_element_located((By.XPATH, excel_xpath_text))
                     )
                     self.log("Pulsante Excel trovato per testo.")
                 except TimeoutException:
-                    # Tentativo 2: Cerca per classe tool e icona (Primary per Timbrature)
-                    self.log("Testo non trovato, cerco icona tool...")
-                    # Cerchiamo un div con classe 'x-tool-tool-el' che sia visibile
-                    # Potremmo raffinare cercando style='font-family: FontAwesome' se necessario
-                    tool_xpath = "//div[contains(@class, 'x-tool-tool-el')]"
+                    pass
+                
+                # Strategia 2: Cerca icona FontAwesome specifica per Excel (come ScaricaTS)
+                if not excel_btn:
+                    self.log("Testo non trovato, cerco icona FontAwesome...")
+                    excel_icon_xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
                     try:
-                        # Trova tutti i tool visibili
-                        tools = self.driver.find_elements(By.XPATH, tool_xpath)
-                        excel_btn = None
+                        excel_btn = WebDriverWait(self.driver, 2).until(
+                            EC.element_to_be_clickable((By.XPATH, excel_icon_xpath))
+                        )
+                        self.log("Pulsante Excel (icona FontAwesome) trovato.")
+                    except TimeoutException:
+                        pass
+                
+                # Strategia 3: Cerca con aria-label o title
+                if not excel_btn:
+                    self.log("Cerco pulsante con title/aria-label...")
+                    aria_xpath = "//*[contains(@title, 'Excel') or contains(@aria-label, 'Excel') or contains(@data-qtip, 'Excel')]"
+                    try:
+                        excel_btn = WebDriverWait(self.driver, 2).until(
+                            EC.element_to_be_clickable((By.XPATH, aria_xpath))
+                        )
+                        self.log("Pulsante Excel trovato per aria-label/title.")
+                    except TimeoutException:
+                        pass
+                
+                # Strategia 4: Cerca pulsante generico export/download nella toolbar della griglia
+                if not excel_btn:
+                    self.log("Cerco pulsante export nella toolbar griglia...")
+                    # Cerca div x-tool che contiene un'icona di download/export
+                    grid_tool_xpath = "//div[contains(@class, 'x-panel')]//div[contains(@class, 'x-tool') and @role='button']"
+                    try:
+                        tools = self.driver.find_elements(By.XPATH, grid_tool_xpath)
                         for tool in tools:
                             if tool.is_displayed():
-                                # Se c'è solo un tool o è il primo/unico rilevante
-                                # Il screenshot mostrava ID tool-1105-toolEl
-                                excel_btn = tool
-                                break
+                                # Verifica che sia un tool di export (non expand/collapse)
+                                tool_class = tool.get_attribute("class") or ""
+                                tool_id = tool.get_attribute("id") or ""
+                                # Escludi tool di expand/collapse
+                                if "expand" not in tool_class.lower() and "collapse" not in tool_class.lower():
+                                    # Verifica se contiene FontAwesome
+                                    inner = tool.find_elements(By.CSS_SELECTOR, "div[style*='FontAwesome']")
+                                    if inner:
+                                        excel_btn = tool
+                                        self.log(f"Pulsante Excel trovato (tool ID: {tool_id}).")
+                                        break
+                    except Exception as e:
+                        self.log(f"Errore ricerca tool: {e}")
+                
+                if not excel_btn:
+                    self.log("⚠️ Pulsante Excel non trovato con nessuna strategia.")
+                    return ""
 
-                        if not excel_btn:
-                            raise TimeoutException("Nessun tool visibile trovato")
-
-                        self.log("Pulsante Excel (icona tool) trovato.")
-                    except Exception:
-                        self.log(f"⚠️ Timeout: Pulsante Excel non trovato.")
-                        return ""
-
-                # Scroll e click
+                # Scroll e click (come DettagliOdA)
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
                 time.sleep(0.5)
 
                 self.log("Clicco su Excel...")
                 try:
-                    # Usa ActionChains per simulare un click utente più robusto su elementi ExtJS
-                    ActionChains(self.driver).move_to_element(excel_btn).pause(0.5).click().perform()
+                    excel_btn.click()
                 except Exception:
-                    try:
-                        excel_btn.click()
-                    except Exception:
-                        self.driver.execute_script("arguments[0].click();", excel_btn)
+                    self.driver.execute_script("arguments[0].click();", excel_btn)
 
                 # Attesa download
                 self.log("Attendo download...")
                 time.sleep(3.0)
                 downloaded_file = self._rename_latest_download("timbrature_temp")
+                
                 if downloaded_file:
+                    # Verifica che sia un file Excel e non PDF
+                    if downloaded_file.lower().endswith('.pdf'):
+                        self.log("⚠️ Scaricato un PDF invece di Excel. Pulsante sbagliato?")
+                        # Prova a eliminare il PDF
+                        try:
+                            os.remove(downloaded_file)
+                        except:
+                            pass
+                        return ""
                     self.log(f"File scaricato: {downloaded_file}")
                 else:
                     self.log("File non trovato dopo il download.")
@@ -418,14 +454,57 @@ class TimbratureBot(BaseBot):
             self.log(f"Errore spostamento file: {e}")
             return ""
 
-    def _attendi_scomparsa_overlay(self, *args, **kwargs):
-        """Attende scomparsa overlay caricamento."""
+    def _attendi_scomparsa_overlay(self, timeout_secondi: int = 60):
+        """
+        Attende la scomparsa dell'overlay di caricamento ExtJS.
+        Attende specificamente che l'elemento con testo "Caricamento..." scompaia.
+        """
         try:
-            WebDriverWait(self.driver, 0.5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "div[class*='x-mask']"))
-            )
-            WebDriverWait(self.driver, 30).until(
-                EC.invisibility_of_element_located((By.CSS_SELECTOR, "div[class*='x-mask']"))
-            )
-        except:
-            pass
+            # Selettori per gli elementi di caricamento ExtJS
+            # L'elemento mostrato nello screenshot: div.x-mask-msg-text con testo "Caricamento..."
+            selectors = [
+                "div.x-mask-msg-text",  # Testo "Caricamento..."
+                "div.x-mask-msg",       # Container del messaggio
+                "div.x-mask:not([style*='display: none'])",  # Maschera overlay visibile
+            ]
+            
+            # Prima verifica se c'è un overlay (attesa breve)
+            overlay_presente = False
+            for selector in selectors:
+                try:
+                    WebDriverWait(self.driver, 1).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+                    )
+                    overlay_presente = True
+                    break
+                except TimeoutException:
+                    continue
+            
+            if not overlay_presente:
+                # Nessun overlay trovato, prosegui
+                return True
+            
+            # Attendi che TUTTI gli elementi di caricamento scompaiano
+            for selector in selectors:
+                try:
+                    WebDriverWait(self.driver, timeout_secondi).until(
+                        EC.invisibility_of_element_located((By.CSS_SELECTOR, selector))
+                    )
+                except TimeoutException:
+                    pass
+            
+            # Attesa extra per sicurezza - verifica che non ci siano più elementi con testo "Caricamento"
+            try:
+                WebDriverWait(self.driver, timeout_secondi).until(
+                    EC.invisibility_of_element_located((By.XPATH, "//*[contains(text(), 'Caricamento')]"))
+                )
+            except TimeoutException:
+                pass
+            
+            # Piccola pausa per stabilizzare l'interfaccia
+            time.sleep(0.5)
+            return True
+            
+        except Exception as e:
+            self.log(f"⚠️ Errore attesa overlay: {e}")
+            return False
