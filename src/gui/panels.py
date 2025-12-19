@@ -1314,16 +1314,29 @@ class TimbraturePanel(BaseBotPanel):
                 columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
 
                 for term in search_terms:
-                    # Converti formato data italiano (DD/MM/YYYY) in formato DB (YYYY-MM-DD) se necessario
+                    # Converti formato data italiano in formato DB (YYYY-MM-DD) per permettere la ricerca
                     search_term = term
                     if '/' in term:
                         try:
                             parts = term.split('/')
+
+                            # Caso 1: Data completa DD/MM/YYYY -> YYYY-MM-DD
                             if len(parts) == 3:
-                                # Se è una data completa DD/MM/YYYY -> converti in YYYY-MM-DD
                                 d, m, y = parts
                                 if len(d) <= 2 and len(m) <= 2 and len(y) == 4:
                                      search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+
+                            # Caso 2: Parziale MM/YYYY -> YYYY-MM
+                            elif len(parts) == 2:
+                                p1, p2 = parts
+                                # Se il secondo pezzo è anno (4 cifre) -> MM/YYYY
+                                if len(p2) == 4:
+                                    search_term = f"{p2}-{p1.zfill(2)}"
+                                # Se il secondo pezzo è mese/giorno (2 cifre) e primo anche -> DD/MM
+                                # Cerchiamo nel DB (YYYY-MM-DD) la sequenza -MM-DD
+                                elif len(p2) <= 2:
+                                    # Attenzione: DD/MM (es. 17/12) diventa -12-17
+                                    search_term = f"-{p2.zfill(2)}-{p1.zfill(2)}"
                         except:
                             pass
 
