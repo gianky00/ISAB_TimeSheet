@@ -208,15 +208,18 @@ class TimbratureBot(BaseBot):
             # 6. Cliccare sul tasto Excel
             downloaded_file = ""
             try:
+                # Pausa extra per sicurezza
+                time.sleep(1.0)
+
                 excel_xpath = "//*[contains(text(), 'Esporta in Excel')]"
 
-                # Check rapido (2s)
+                # Check robusto (10s)
                 try:
-                    excel_btn = WebDriverWait(self.driver, 2).until(
+                    excel_btn = WebDriverWait(self.driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, excel_xpath))
                     )
                 except TimeoutException:
-                    self.log(f"⚠️ Nessun dato trovato (Tabella vuota).")
+                    self.log(f"⚠️ Nessun dato trovato o pulsante Excel non apparso.")
                     return ""
 
                 # Scroll e click
