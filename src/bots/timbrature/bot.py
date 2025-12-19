@@ -197,13 +197,12 @@ class TimbratureBot(BaseBot):
 
             # 5. 1 volta tab e invio per cliccare su cerca
             actions.send_keys(Keys.TAB).pause(0.3)
-            actions.send_keys(Keys.ENTER).pause(1.0)
+            actions.send_keys(Keys.ENTER)
 
             actions.perform()
 
             # Attesa caricamento risultati
             self._attendi_scomparsa_overlay()
-            time.sleep(2.0) # Extra wait for grid load
 
             # 6. Cliccare sul tasto Excel
             downloaded_file = ""
