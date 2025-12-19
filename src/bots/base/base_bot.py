@@ -161,13 +161,17 @@ class BaseBot(ABC):
             options.add_argument("--headless=new")
             options.add_argument("--window-size=1920,1080")
 
+        # Load strategy EAGER (DOMContentLoaded instead of Load complete)
+        # This speeds up automation significantly as we don't wait for all images/css
+        options.page_load_strategy = 'eager'
+
         # --- CACHING & PERSISTENT PROFILE ---
         # Usa un profilo persistente nella cartella data/chrome_profile del progetto.
         # Questo permette di mantenere la cache (immagini, JS, CSS) e velocizzare i caricamenti successivi.
         profile_dir = Path("data/chrome_profile").absolute()
         options.add_argument(f"user-data-dir={profile_dir}")
         self.log(f"Cache profilo attiva: {profile_dir}")
-        
+
         # --- 2. PREFERENZE PROFILO UTENTE (Prefs) ---
         prefs = {
             # Blocca gestore password e credenziali
@@ -246,6 +250,37 @@ class BaseBot(ABC):
             self.log(f"⚠ Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
     
+    def _perform_login_form_action(self):
+        """Esegue le azioni di compilazione form e click su Accedi."""
+        username_field = self.wait.until(
+            EC.element_to_be_clickable((By.NAME, "Username"))
+        )
+        username_field.clear()
+        username_field.send_keys(self.username)
+
+        password_field = self.wait.until(
+            EC.element_to_be_clickable((By.NAME, "Password"))
+        )
+        password_field.clear()
+        password_field.send_keys(self.password)
+
+        # Clicca sul pulsante Accedi (ExtJS button)
+        accedi_xpath = "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]"
+        try:
+            # Tenta click standard
+            accedi_btn = self.wait.until(
+                EC.element_to_be_clickable((By.XPATH, accedi_xpath))
+            )
+            accedi_btn.click()
+        except (TimeoutException, ElementClickInterceptedException):
+            self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
+            # Fallback: JavaScript click forzato
+            accedi_element = self.driver.find_element(By.XPATH, accedi_xpath)
+            self.driver.execute_script("arguments[0].click();", accedi_element)
+
+        self.log("Login effettuato. Attendo scomparsa overlay...")
+        self._attendi_scomparsa_overlay(60)
+
     def _login(self) -> bool:
         """
         Esegue il login al portale ISAB con i selettori corretti per ExtJS.
@@ -274,36 +309,12 @@ class BaseBot(ABC):
             # --- Check sessione esistente (Profilo Persistente) ---
             # Se siamo già loggati, il campo Username non c'è.
             try:
-                username_field = WebDriverWait(self.driver, 5).until(
-                    EC.element_to_be_clickable((By.NAME, "Username"))
+                # Tenta un'attesa breve per vedere se appare il login
+                WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located((By.NAME, "Username"))
                 )
-
-                # Se il campo c'è, procedi con il login
-                username_field.clear()
-                username_field.send_keys(self.username)
-
-                password_field = self.wait.until(
-                    EC.element_to_be_clickable((By.NAME, "Password"))
-                )
-                password_field.clear()
-                password_field.send_keys(self.password)
-
-                # Clicca sul pulsante Accedi (ExtJS button)
-                accedi_xpath = "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]"
-                try:
-                    # Tenta click standard
-                    accedi_btn = self.wait.until(
-                        EC.element_to_be_clickable((By.XPATH, accedi_xpath))
-                    )
-                    accedi_btn.click()
-                except (TimeoutException, ElementClickInterceptedException):
-                    self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
-                    # Fallback: JavaScript click forzato
-                    accedi_element = self.driver.find_element(By.XPATH, accedi_xpath)
-                    self.driver.execute_script("arguments[0].click();", accedi_element)
-
-                self.log("Login effettuato. Attendo scomparsa overlay...")
-                self._attendi_scomparsa_overlay(60)
+                # Se trovato, procedi con il login normale
+                self._perform_login_form_action()
 
             except TimeoutException:
                 # Se TimeoutException avviene nel blocco 'try' principale (attesa Username),
@@ -313,8 +324,18 @@ class BaseBot(ABC):
                     self.log("✓ Rilevata sessione attiva (skip login).")
                     return True
                 else:
-                    self.log("✗ Username assente e sessione non rilevata.")
-                    return False
+                    self.log("⚠️ Username assente e sessione invalida/scaduta.")
+                    self.log("🔄 Ricarico la pagina per forzare il form di login...")
+                    self.driver.refresh()
+                    self._attendi_scomparsa_overlay(10)
+
+                    # Riprova a cercare username DOPO il refresh
+                    try:
+                        self._perform_login_form_action()
+                        return True
+                    except Exception as e:
+                        self.log(f"✗ Fallito recupero sessione: {e}")
+                        return False
             
             self._check_stop()
             
