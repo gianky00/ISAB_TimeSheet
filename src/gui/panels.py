@@ -1314,10 +1314,23 @@ class TimbraturePanel(BaseBotPanel):
                 columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
 
                 for term in search_terms:
+                    # Converti formato data italiano (DD/MM/YYYY) in formato DB (YYYY-MM-DD) se necessario
+                    search_term = term
+                    if '/' in term:
+                        try:
+                            parts = term.split('/')
+                            if len(parts) == 3:
+                                # Se è una data completa DD/MM/YYYY -> converti in YYYY-MM-DD
+                                d, m, y = parts
+                                if len(d) <= 2 and len(m) <= 2 and len(y) == 4:
+                                     search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+                        except:
+                            pass
+
                     term_conditions = []
                     for col in columns_to_search:
                         term_conditions.append(f"{col} LIKE ?")
-                        params.append(f"%{term}%")
+                        params.append(f"%{search_term}%")
                     # Unisci le condizioni per questo termine con OR (il termine deve apparire in almeno una colonna)
                     conditions.append(f"({' OR '.join(term_conditions)})")
 
