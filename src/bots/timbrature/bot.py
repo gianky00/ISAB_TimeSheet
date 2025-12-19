@@ -264,9 +264,13 @@ class TimbratureBot(BaseBot):
 
                 self.log("Clicco su Excel...")
                 try:
-                    excel_btn.click()
+                    # Usa ActionChains per simulare un click utente più robusto su elementi ExtJS
+                    ActionChains(self.driver).move_to_element(excel_btn).pause(0.5).click().perform()
                 except Exception:
-                    self.driver.execute_script("arguments[0].click();", excel_btn)
+                    try:
+                        excel_btn.click()
+                    except Exception:
+                        self.driver.execute_script("arguments[0].click();", excel_btn)
 
                 # Attesa download
                 self.log("Attendo download...")
