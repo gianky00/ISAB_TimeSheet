@@ -146,9 +146,14 @@ class BaseBot(ABC):
         options.add_experimental_option("useAutomationExtension", False)
         
         # Performance
-        options.add_argument("--disable-gpu")
+        # options.add_argument("--disable-gpu") # Removed to allow hardware acceleration
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
+
+        # Network optimizations (No Proxy)
+        options.add_argument("--no-proxy-server")
+        options.add_argument("--proxy-server='direct://'")
+        options.add_argument("--proxy-bypass-list=*")
         options.add_argument("--start-maximized")
         
         # Headless mode
