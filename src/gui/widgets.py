@@ -180,7 +180,21 @@ class EditableDataTable(QWidget):
             if col_type == 'combo':
                 # Setup ComboBox
                 combo = QComboBox()
-                combo.setStyleSheet("border: none; background: transparent;")
+                # Fix colore testo bianco su sfondo bianco
+                combo.setStyleSheet("""
+                    QComboBox {
+                        border: none;
+                        background: transparent;
+                        color: black;
+                        padding-left: 5px;
+                    }
+                    QComboBox QAbstractItemView {
+                        background-color: white;
+                        color: black;
+                        selection-background-color: #e7f1ff;
+                        selection-color: #0d6efd;
+                    }
+                """)
                 options = column.get('options', [])
                 combo.addItems(options)
 

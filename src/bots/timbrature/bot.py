@@ -384,6 +384,21 @@ class TimbratureBot(BaseBot):
 
             for _, row in df_filtered.iterrows():
                 try:
+                    # Normalizza la data in formato YYYY-MM-DD
+                    if 'data' in row and pd.notna(row['data']):
+                        # Se è già datetime
+                        if isinstance(row['data'], (pd.Timestamp, pd.DatetimeIndex)):
+                            row['data'] = row['data'].strftime('%Y-%m-%d')
+                        else:
+                            # Tenta parsing stringa
+                            try:
+                                # Prova prima formato timestamp "YYYY-MM-DD HH:MM:SS"
+                                ts = pd.to_datetime(row['data'])
+                                row['data'] = ts.strftime('%Y-%m-%d')
+                            except:
+                                # Lascia come stringa se fallisce
+                                pass
+
                     # Converti nan a stringa vuota o None
                     vals = row.fillna("").astype(str).to_dict()
 
