@@ -1147,6 +1147,27 @@ class TimbraturePanel(BaseBotPanel):
         self.search_input.textChanged.connect(self._filter_data)
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.search_input)
+
+        # Import Button
+        import_btn = QPushButton("📥 Importa Excel")
+        import_btn.setToolTip("Importa manualmente un file Excel di timbrature")
+        import_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #17a2b8;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #138496;
+            }
+        """)
+        import_btn.clicked.connect(self._import_excel_manually)
+        search_layout.addWidget(import_btn)
+
         db_layout.addLayout(search_layout)
 
         # Table
@@ -1280,18 +1301,59 @@ class TimbraturePanel(BaseBotPanel):
             formatted_row = list(row_data)
             try:
                 date_str = str(formatted_row[0])
-                # Expecting YYYY-MM-DD HH:MM:SS
-                if ' ' in date_str:
-                    date_part = date_str.split(' ')[0]
-                    # Parse YYYY-MM-DD
-                    dt = datetime.strptime(date_part, "%Y-%m-%d")
-                    formatted_row[0] = dt.strftime("%d/%m/%Y")
+                if date_str:
+                    # Rimuovi l'eventuale parte oraria per pulizia
+                    date_part = date_str.split(' ')[0] if ' ' in date_str else date_str
+
+                    # Prova il parsing formato ISO standard (YYYY-MM-DD)
+                    try:
+                        dt = datetime.strptime(date_part, "%Y-%m-%d")
+                        formatted_row[0] = dt.strftime("%d/%m/%Y")
+                    except ValueError:
+                        pass # Se non è YYYY-MM-DD, lascia com'è (potrebbe essere già DD/MM/YYYY)
+
             except Exception:
-                # If parsing fails, keep original
+                # In caso di errore generico, mantieni il valore originale
                 pass
 
             for col_idx, value in enumerate(formatted_row):
                 self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
+
+    def _import_excel_manually(self):
+        """Importa manualmente un file Excel nel database."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona File Excel Timbrature",
+            str(Path.home() / "Downloads"),
+            "Excel Files (*.xlsx *.xls)"
+        )
+
+        if not file_path:
+            return
+
+        try:
+            from src.bots.timbrature.bot import TimbratureBot
+
+            self.log_widget.append(f"🔄 Importazione manuale avviata: {Path(file_path).name}...")
+
+            # Callback per loggare nella GUI
+            def gui_log(msg):
+                self.log_widget.append(msg)
+
+            # Usa il metodo statico del bot
+            success = TimbratureBot.import_to_db_static(file_path, self.db_path, gui_log)
+
+            if success:
+                self.log_widget.append("✅ Importazione manuale completata.")
+                self._load_db_data() # Ricarica la tabella
+                QMessageBox.information(self, "Successo", "Dati importati correttamente nel database.")
+            else:
+                self.log_widget.append("❌ Importazione fallita (vedi log).")
+                QMessageBox.warning(self, "Errore", "Impossibile importare il file. Controlla il log.")
+
+        except Exception as e:
+            self.log_widget.append(f"❌ Errore critico importazione: {e}")
+            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
 
     def _filter_data(self, text):
         """Filtra la tabella in base al testo usando SQL."""
@@ -1314,16 +1376,29 @@ class TimbraturePanel(BaseBotPanel):
                 columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
 
                 for term in search_terms:
-                    # Converti formato data italiano (DD/MM/YYYY) in formato DB (YYYY-MM-DD) se necessario
+                    # Converti formato data italiano in formato DB (YYYY-MM-DD) per permettere la ricerca
                     search_term = term
                     if '/' in term:
                         try:
                             parts = term.split('/')
+
+                            # Caso 1: Data completa DD/MM/YYYY -> YYYY-MM-DD
                             if len(parts) == 3:
-                                # Se è una data completa DD/MM/YYYY -> converti in YYYY-MM-DD
                                 d, m, y = parts
                                 if len(d) <= 2 and len(m) <= 2 and len(y) == 4:
                                      search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+
+                            # Caso 2: Parziale MM/YYYY -> YYYY-MM
+                            elif len(parts) == 2:
+                                p1, p2 = parts
+                                # Se il secondo pezzo è anno (4 cifre) -> MM/YYYY
+                                if len(p2) == 4:
+                                    search_term = f"{p2}-{p1.zfill(2)}"
+                                # Se il secondo pezzo è mese/giorno (2 cifre) e primo anche -> DD/MM
+                                # Cerchiamo nel DB (YYYY-MM-DD) la sequenza -MM-DD
+                                elif len(p2) <= 2:
+                                    # Attenzione: DD/MM (es. 17/12) diventa -12-17
+                                    search_term = f"-{p2.zfill(2)}-{p1.zfill(2)}"
                         except:
                             pass
 
