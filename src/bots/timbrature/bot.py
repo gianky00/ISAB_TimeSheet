@@ -146,6 +146,7 @@ class TimbratureBot(BaseBot):
         try:
             # 1. Seleziona Fornitore
             if self.fornitore:
+                self.log(f"Seleziono fornitore: {self.fornitore}")
                 try:
                     fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
 
@@ -154,6 +155,7 @@ class TimbratureBot(BaseBot):
                             EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
                         )
                     except TimeoutException:
+                        self.log("ID specifico non trovato, provo selettore generico...")
                         # Fallback se l'ID specifico non funziona
                         fornitore_arrow_xpath = "//div[contains(@class, 'x-form-arrow-trigger')]"
                         fornitore_arrow_element = self.wait.until(
@@ -172,9 +174,11 @@ class TimbratureBot(BaseBot):
                     self.driver.execute_script("arguments[0].click();", fornitore_option)
                     time.sleep(0.5)
                     self._attendi_scomparsa_overlay()
+                    self.log("Fornitore selezionato.")
                 except Exception as e:
                     self.log(f"⚠️ Errore selezione fornitore (tentativo mouse): {e}")
 
+            self.log("Imposto filtri data e flag...")
             actions = ActionChains(self.driver)
 
             # 2. 1 tab per selezionare Data Da
@@ -197,40 +201,81 @@ class TimbratureBot(BaseBot):
 
             # 5. 1 volta tab e invio per cliccare su cerca
             actions.send_keys(Keys.TAB).pause(0.3)
-            actions.send_keys(Keys.ENTER).pause(1.0)
+            actions.send_keys(Keys.ENTER)
 
+            self.log("Eseguo sequenza tasti e click su Cerca...")
             actions.perform()
 
             # Attesa caricamento risultati
+            self.log("Attendo caricamento risultati...")
             self._attendi_scomparsa_overlay()
-            time.sleep(2.0) # Extra wait for grid load
+            self.log("Caricamento terminato.")
+
+            # Verifica righe tabella
+            try:
+                rows_xpath = "//tr[contains(@class, 'x-grid-row')]"
+                rows = self.driver.find_elements(By.XPATH, rows_xpath)
+                self.log(f"Righe tabella trovate: {len(rows)}")
+            except Exception as e:
+                self.log(f"Impossibile contare righe: {e}")
 
             # 6. Cliccare sul tasto Excel
             downloaded_file = ""
             try:
-                excel_xpath = "//*[contains(text(), 'Esporta in Excel')]"
+                self.log("Cerco pulsante Excel...")
+                # Pausa extra per sicurezza
+                time.sleep(1.0)
 
-                # Check rapido (2s)
+                # Tentativo 1: Cerca per testo (Fallback)
                 try:
-                    excel_btn = WebDriverWait(self.driver, 2).until(
-                        EC.presence_of_element_located((By.XPATH, excel_xpath))
+                    excel_xpath_text = "//*[contains(text(), 'Esporta in Excel')]"
+                    excel_btn = WebDriverWait(self.driver, 3).until(
+                        EC.presence_of_element_located((By.XPATH, excel_xpath_text))
                     )
+                    self.log("Pulsante Excel trovato per testo.")
                 except TimeoutException:
-                    self.log(f"⚠️ Nessun dato trovato (Tabella vuota).")
-                    return ""
+                    # Tentativo 2: Cerca per classe tool e icona (Primary per Timbrature)
+                    self.log("Testo non trovato, cerco icona tool...")
+                    # Cerchiamo un div con classe 'x-tool-tool-el' che sia visibile
+                    # Potremmo raffinare cercando style='font-family: FontAwesome' se necessario
+                    tool_xpath = "//div[contains(@class, 'x-tool-tool-el')]"
+                    try:
+                        # Trova tutti i tool visibili
+                        tools = self.driver.find_elements(By.XPATH, tool_xpath)
+                        excel_btn = None
+                        for tool in tools:
+                            if tool.is_displayed():
+                                # Se c'è solo un tool o è il primo/unico rilevante
+                                # Il screenshot mostrava ID tool-1105-toolEl
+                                excel_btn = tool
+                                break
+
+                        if not excel_btn:
+                            raise TimeoutException("Nessun tool visibile trovato")
+
+                        self.log("Pulsante Excel (icona tool) trovato.")
+                    except Exception:
+                        self.log(f"⚠️ Timeout: Pulsante Excel non trovato.")
+                        return ""
 
                 # Scroll e click
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
                 time.sleep(0.5)
 
+                self.log("Clicco su Excel...")
                 try:
                     excel_btn.click()
                 except Exception:
                     self.driver.execute_script("arguments[0].click();", excel_btn)
 
                 # Attesa download
+                self.log("Attendo download...")
                 time.sleep(3.0)
                 downloaded_file = self._rename_latest_download("timbrature_temp")
+                if downloaded_file:
+                    self.log(f"File scaricato: {downloaded_file}")
+                else:
+                    self.log("File non trovato dopo il download.")
 
             except Exception as e:
                 self.log(f"⚠️ Errore download Excel: {e}")
