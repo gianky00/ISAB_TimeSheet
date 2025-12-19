@@ -1147,6 +1147,27 @@ class TimbraturePanel(BaseBotPanel):
         self.search_input.textChanged.connect(self._filter_data)
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.search_input)
+
+        # Import Button
+        import_btn = QPushButton("📥 Importa Excel")
+        import_btn.setToolTip("Importa manualmente un file Excel di timbrature")
+        import_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #17a2b8;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #138496;
+            }
+        """)
+        import_btn.clicked.connect(self._import_excel_manually)
+        search_layout.addWidget(import_btn)
+
         db_layout.addLayout(search_layout)
 
         # Table
@@ -1292,6 +1313,42 @@ class TimbraturePanel(BaseBotPanel):
 
             for col_idx, value in enumerate(formatted_row):
                 self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
+
+    def _import_excel_manually(self):
+        """Importa manualmente un file Excel nel database."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona File Excel Timbrature",
+            str(Path.home() / "Downloads"),
+            "Excel Files (*.xlsx *.xls)"
+        )
+
+        if not file_path:
+            return
+
+        try:
+            from src.bots.timbrature.bot import TimbratureBot
+
+            self.log_widget.append(f"🔄 Importazione manuale avviata: {Path(file_path).name}...")
+
+            # Callback per loggare nella GUI
+            def gui_log(msg):
+                self.log_widget.append(msg)
+
+            # Usa il metodo statico del bot
+            success = TimbratureBot.import_to_db_static(file_path, self.db_path, gui_log)
+
+            if success:
+                self.log_widget.append("✅ Importazione manuale completata.")
+                self._load_db_data() # Ricarica la tabella
+                QMessageBox.information(self, "Successo", "Dati importati correttamente nel database.")
+            else:
+                self.log_widget.append("❌ Importazione fallita (vedi log).")
+                QMessageBox.warning(self, "Errore", "Impossibile importare il file. Controlla il log.")
+
+        except Exception as e:
+            self.log_widget.append(f"❌ Errore critico importazione: {e}")
+            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
 
     def _filter_data(self, text):
         """Filtra la tabella in base al testo usando SQL."""

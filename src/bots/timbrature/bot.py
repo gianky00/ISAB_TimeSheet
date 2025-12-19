@@ -326,17 +326,17 @@ class TimbratureBot(BaseBot):
             self.log(f"❌ Errore impostazione filtri: {e}")
             return ""
 
-    def _import_to_db(self, excel_path: str):
-        """Legge Excel e importa in DB."""
-        # Intestazioni da A1 a P1
-        # Mappatura richiesta:
-        # Data Timbratura -> Data
-        # Ora Ingresso -> Ingresso
-        # Ora Uscita -> Uscita
-        # Nome Risorsa -> Nome
-        # Cognome Risorsa -> Cognome
-        # Presente Nei Timesheet -> Presenza TS
-        # Sito Timbratura -> Sito Timbratura
+    @staticmethod
+    def import_to_db_static(excel_path: str, db_path: Path, log_callback=None):
+        """
+        Metodo statico per importare Excel nel DB.
+        Utile per essere chiamato anche dalla GUI senza istanziare il bot.
+        """
+        def log(msg):
+            if log_callback:
+                log_callback(msg)
+            else:
+                print(msg)
 
         # Colonne da leggere
         cols_to_read = [
@@ -351,7 +351,6 @@ class TimbratureBot(BaseBot):
 
         try:
             # Leggi Excel
-            # openpyxl engine is safer for .xlsx
             df = pd.read_excel(excel_path, engine='openpyxl')
 
             # Normalizza nomi colonne (strip spazi)
@@ -360,8 +359,8 @@ class TimbratureBot(BaseBot):
             # Verifica presenza colonne
             missing_cols = [c for c in cols_to_read if c not in df.columns]
             if missing_cols:
-                self.log(f"⚠️ Colonne mancanti nel file Excel: {missing_cols}")
-                return
+                log(f"⚠️ Colonne mancanti nel file Excel: {missing_cols}")
+                return False
 
             # Filtra e rinomina
             df_filtered = df[cols_to_read].copy()
@@ -375,9 +374,27 @@ class TimbratureBot(BaseBot):
                 "Sito Timbratura": "sito_timbratura"
             }, inplace=True)
 
+            # Assicura che la directory del DB esista
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+
             # Inserisci in DB
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
+
+            # Assicura che la tabella esista (caso import manuale su DB nuovo)
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS timbrature (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    data TEXT,
+                    ingresso TEXT,
+                    uscita TEXT,
+                    nome TEXT,
+                    cognome TEXT,
+                    presenza_ts TEXT,
+                    sito_timbratura TEXT,
+                    UNIQUE(data, ingresso, uscita, nome, cognome)
+                )
+            ''')
 
             added_count = 0
             skipped_count = 0
@@ -386,17 +403,13 @@ class TimbratureBot(BaseBot):
                 try:
                     # Normalizza la data in formato YYYY-MM-DD
                     if 'data' in row and pd.notna(row['data']):
-                        # Se è già datetime
                         if isinstance(row['data'], (pd.Timestamp, pd.DatetimeIndex)):
                             row['data'] = row['data'].strftime('%Y-%m-%d')
                         else:
-                            # Tenta parsing stringa
                             try:
-                                # Prova prima formato timestamp "YYYY-MM-DD HH:MM:SS"
                                 ts = pd.to_datetime(row['data'])
                                 row['data'] = ts.strftime('%Y-%m-%d')
                             except:
-                                # Lascia come stringa se fallisce
                                 pass
 
                     # Converti nan a stringa vuota o None
@@ -410,15 +423,21 @@ class TimbratureBot(BaseBot):
                 except sqlite3.IntegrityError:
                     skipped_count += 1
                 except Exception as e:
-                    self.log(f"Errore riga: {e}")
+                    log(f"Errore riga: {e}")
 
             conn.commit()
             conn.close()
 
-            self.log(f"Importazione: {added_count} nuovi record aggiunti, {skipped_count} duplicati ignorati.")
+            log(f"Importazione: {added_count} nuovi record aggiunti, {skipped_count} duplicati ignorati.")
+            return True
 
         except Exception as e:
-            raise Exception(f"Errore lettura Excel: {e}")
+            log(f"Errore lettura Excel: {e}")
+            raise e
+
+    def _import_to_db(self, excel_path: str):
+        """Wrapper istanza per il metodo statico."""
+        self.import_to_db_static(excel_path, self.db_path, self.log)
 
     def execute(self, data: Any) -> bool:
         """Esegue login, run, logout e chiude il browser."""
