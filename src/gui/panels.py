@@ -4,15 +4,16 @@ Pannelli specifici per ogni bot.
 """
 import sqlite3
 from pathlib import Path
+from datetime import datetime
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
-    QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView
+    QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate
 
-from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator
+from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget
 from src.core import config_manager
 
 
@@ -1149,7 +1150,7 @@ class TimbraturePanel(BaseBotPanel):
         db_layout.addLayout(search_layout)
 
         # Table
-        self.db_table = QTableWidget()
+        self.db_table = ExcelTableWidget()
         self.db_table.setColumnCount(7)
         self.db_table.setHorizontalHeaderLabels([
             "Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito Timbratura"
@@ -1178,7 +1179,11 @@ class TimbraturePanel(BaseBotPanel):
             }
         """)
         self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.db_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        # setSelectionBehavior e setSelectionMode sono già impostati in ExcelTableWidget.__init__
+        # Ma per sicurezza e chiarezza li reimpostiamo se necessario, o ci fidiamo di ExcelTableWidget.
+        # ExcelTableWidget imposta:
+        # self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        # self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
         db_layout.addWidget(self.db_table)
 
@@ -1270,7 +1275,22 @@ class TimbraturePanel(BaseBotPanel):
         self.db_table.setRowCount(0)
         for row_idx, row_data in enumerate(rows):
             self.db_table.insertRow(row_idx)
-            for col_idx, value in enumerate(row_data):
+
+            # Format date (column 0) if necessary
+            formatted_row = list(row_data)
+            try:
+                date_str = str(formatted_row[0])
+                # Expecting YYYY-MM-DD HH:MM:SS
+                if ' ' in date_str:
+                    date_part = date_str.split(' ')[0]
+                    # Parse YYYY-MM-DD
+                    dt = datetime.strptime(date_part, "%Y-%m-%d")
+                    formatted_row[0] = dt.strftime("%d/%m/%Y")
+            except Exception:
+                # If parsing fails, keep original
+                pass
+
+            for col_idx, value in enumerate(formatted_row):
                 self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
 
     def _filter_data(self, text):
