@@ -1301,14 +1301,19 @@ class TimbraturePanel(BaseBotPanel):
             formatted_row = list(row_data)
             try:
                 date_str = str(formatted_row[0])
-                # Expecting YYYY-MM-DD HH:MM:SS
-                if ' ' in date_str:
-                    date_part = date_str.split(' ')[0]
-                    # Parse YYYY-MM-DD
-                    dt = datetime.strptime(date_part, "%Y-%m-%d")
-                    formatted_row[0] = dt.strftime("%d/%m/%Y")
+                if date_str:
+                    # Rimuovi l'eventuale parte oraria per pulizia
+                    date_part = date_str.split(' ')[0] if ' ' in date_str else date_str
+
+                    # Prova il parsing formato ISO standard (YYYY-MM-DD)
+                    try:
+                        dt = datetime.strptime(date_part, "%Y-%m-%d")
+                        formatted_row[0] = dt.strftime("%d/%m/%Y")
+                    except ValueError:
+                        pass # Se non è YYYY-MM-DD, lascia com'è (potrebbe essere già DD/MM/YYYY)
+
             except Exception:
-                # If parsing fails, keep original
+                # In caso di errore generico, mantieni il valore originale
                 pass
 
             for col_idx, value in enumerate(formatted_row):
