@@ -147,16 +147,24 @@ class TimbratureBot(BaseBot):
             # 1. Seleziona Fornitore
             if self.fornitore:
                 try:
-                    fornitore_arrow_xpath = "//div[contains(@class, 'x-form-arrow-trigger')]"
+                    fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
 
-                    fornitore_arrow_element = self.wait.until(
-                        EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
-                    )
+                    try:
+                        fornitore_arrow_element = self.wait.until(
+                            EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
+                        )
+                    except TimeoutException:
+                        # Fallback se l'ID specifico non funziona
+                        fornitore_arrow_xpath = "//div[contains(@class, 'x-form-arrow-trigger')]"
+                        fornitore_arrow_element = self.wait.until(
+                            EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
+                        )
+
                     ActionChains(self.driver).move_to_element(fornitore_arrow_element).click().perform()
                     time.sleep(0.5)
 
                     fornitore_option_xpath = f"//li[contains(text(), '{self.fornitore}')]"
-                    fornitore_option = WebDriverWait(self.driver, 5).until(
+                    fornitore_option = self.long_wait.until(
                         EC.presence_of_element_located((By.XPATH, fornitore_option_xpath))
                     )
                     self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option)
