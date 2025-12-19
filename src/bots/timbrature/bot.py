@@ -189,11 +189,11 @@ class TimbratureBot(BaseBot):
                 actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.1)
                 actions.send_keys(self.data_a).pause(0.3)
 
-            # 4. 5 tab e poi invio per selezionare flag "Verifica Presenza Timesheet"
+            # 4. 5 tab e poi SPAZIO per selezionare flag "Verifica Presenza Timesheet"
             for _ in range(5):
                 actions.send_keys(Keys.TAB).pause(0.2)
 
-            actions.send_keys(Keys.ENTER).pause(0.3)
+            actions.send_keys(Keys.SPACE).pause(0.3)
 
             # 5. 1 volta tab e invio per cliccare su cerca
             actions.send_keys(Keys.TAB).pause(0.3)
@@ -208,19 +208,32 @@ class TimbratureBot(BaseBot):
             # 6. Cliccare sul tasto Excel
             downloaded_file = ""
             try:
-                excel_xpath = "//*[contains(text(), 'Excel') or contains(@class, 'page-excel')]"
+                excel_xpath = "//*[contains(text(), 'Esporta in Excel')]"
 
-                excel_btn = WebDriverWait(self.driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, excel_xpath))
-                )
-                excel_btn.click()
+                # Check rapido (2s)
+                try:
+                    excel_btn = WebDriverWait(self.driver, 2).until(
+                        EC.presence_of_element_located((By.XPATH, excel_xpath))
+                    )
+                except TimeoutException:
+                    self.log(f"⚠️ Nessun dato trovato (Tabella vuota).")
+                    return ""
+
+                # Scroll e click
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
+                time.sleep(0.5)
+
+                try:
+                    excel_btn.click()
+                except Exception:
+                    self.driver.execute_script("arguments[0].click();", excel_btn)
 
                 # Attesa download
                 time.sleep(3.0)
                 downloaded_file = self._rename_latest_download("timbrature_temp")
 
-            except TimeoutException:
-                self.log("⚠️ Tasto Excel non trovato o timeout.")
+            except Exception as e:
+                self.log(f"⚠️ Errore download Excel: {e}")
 
             return downloaded_file
 
