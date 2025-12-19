@@ -126,6 +126,7 @@ class TimbratureBot(BaseBot):
             actions = ActionChains(self.driver)
             actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.TAB).pause(0.3)
+            actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.ENTER).perform()
 
             time.sleep(1.0)
