@@ -5,10 +5,60 @@ Widget personalizzati riutilizzabili.
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
-    QTextEdit, QFrame, QAbstractItemView, QComboBox
+    QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QAction
+from PyQt6.QtGui import QColor, QAction, QKeySequence
+
+
+class ExcelTableWidget(QTableWidget):
+    """QTableWidget potenziato con funzionalità copia stile Excel."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Abilita la selezione di intere righe ma permettendo selezioni multiple
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+    def keyPressEvent(self, event):
+        """Gestisce la pressione dei tasti, in particolare CTRL+C."""
+        if event.matches(QKeySequence.StandardKey.Copy):
+            self.copy_selection()
+        else:
+            super().keyPressEvent(event)
+
+    def copy_selection(self):
+        """Copia la selezione negli appunti in formato compatibile con Excel."""
+        selection = self.selectedRanges()
+        if not selection:
+            return
+
+        # Determina i limiti della selezione
+        rows = sorted(list(set(r for range_ in selection for r in range(range_.topRow(), range_.bottomRow() + 1))))
+        cols = sorted(list(set(c for range_ in selection for c in range(range_.leftColumn(), range_.rightColumn() + 1))))
+
+        if not rows or not cols:
+            return
+
+        tsv_rows = []
+        for r in rows:
+            row_data = []
+            for c in cols:
+                # Controlla se c'è un widget (es. ComboBox)
+                widget = self.cellWidget(r, c)
+                if isinstance(widget, QComboBox):
+                    text = widget.currentText()
+                else:
+                    item = self.item(r, c)
+                    text = item.text() if item else ""
+
+                # Escape per Excel se necessario (es. tab o newline nel testo)
+                text = text.replace('\t', ' ').replace('\n', ' ')
+                row_data.append(text)
+            tsv_rows.append("\t".join(row_data))
+
+        tsv_data = "\n".join(tsv_rows)
+        QApplication.clipboard().setText(tsv_data)
 
 
 class EditableDataTable(QWidget):
@@ -32,8 +82,8 @@ class EditableDataTable(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # Tabella
-        self.table = QTableWidget()
+        # Tabella (Usa ExcelTableWidget invece di QTableWidget)
+        self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.columns))
         self.table.setHorizontalHeaderLabels([c['name'] for c in self.columns])
         
