@@ -226,26 +226,37 @@ class TimbratureBot(BaseBot):
                 # Pausa extra per sicurezza
                 time.sleep(1.0)
 
-                excel_xpath = "//*[contains(text(), 'Esporta in Excel')]"
-
-                # Check robusto (10s)
+                # Tentativo 1: Cerca per testo (Fallback)
                 try:
-                    excel_btn = WebDriverWait(self.driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, excel_xpath))
+                    excel_xpath_text = "//*[contains(text(), 'Esporta in Excel')]"
+                    excel_btn = WebDriverWait(self.driver, 3).until(
+                        EC.presence_of_element_located((By.XPATH, excel_xpath_text))
                     )
-                    self.log("Pulsante Excel trovato.")
+                    self.log("Pulsante Excel trovato per testo.")
                 except TimeoutException:
-                    self.log(f"⚠️ Timeout: Pulsante 'Esporta in Excel' non trovato entro 10 secondi.")
-
-                    # Log debug pagina
+                    # Tentativo 2: Cerca per classe tool e icona (Primary per Timbrature)
+                    self.log("Testo non trovato, cerco icona tool...")
+                    # Cerchiamo un div con classe 'x-tool-tool-el' che sia visibile
+                    # Potremmo raffinare cercando style='font-family: FontAwesome' se necessario
+                    tool_xpath = "//div[contains(@class, 'x-tool-tool-el')]"
                     try:
-                        buttons = self.driver.find_elements(By.XPATH, "//a[contains(@class, 'x-btn')]")
-                        btn_texts = [b.text for b in buttons if b.is_displayed()]
-                        self.log(f"Bottoni visibili: {btn_texts}")
-                    except:
-                        pass
+                        # Trova tutti i tool visibili
+                        tools = self.driver.find_elements(By.XPATH, tool_xpath)
+                        excel_btn = None
+                        for tool in tools:
+                            if tool.is_displayed():
+                                # Se c'è solo un tool o è il primo/unico rilevante
+                                # Il screenshot mostrava ID tool-1105-toolEl
+                                excel_btn = tool
+                                break
 
-                    return ""
+                        if not excel_btn:
+                            raise TimeoutException("Nessun tool visibile trovato")
+
+                        self.log("Pulsante Excel (icona tool) trovato.")
+                    except Exception:
+                        self.log(f"⚠️ Timeout: Pulsante Excel non trovato.")
+                        return ""
 
                 # Scroll e click
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
