@@ -347,7 +347,7 @@ class TimbratureBot(BaseBot):
             self.log(f"Errore spostamento file: {e}")
             return ""
 
-    def _attendi_scomparsa_overlay(self):
+    def _attendi_scomparsa_overlay(self, *args, **kwargs):
         """Attende scomparsa overlay caricamento."""
         try:
             WebDriverWait(self.driver, 0.5).until(
