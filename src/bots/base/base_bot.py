@@ -5,7 +5,6 @@ Classe base astratta per tutti i bot di automazione.
 import os
 import time
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Optional, Callable, List, Dict, Any
 from pathlib import Path
 
@@ -25,51 +24,41 @@ from selenium.common.exceptions import (
 )
 from webdriver_manager.chrome import ChromeDriverManager
 
-
-class BotStatus(Enum):
-    """Stati possibili del bot."""
-    IDLE = "idle"
-    INITIALIZING = "initializing"
-    LOGGING_IN = "logging_in"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    ERROR = "error"
-    STOPPED = "stopped"
-
+from src.core.constants import URLs, Timeouts, BotStatus, BrowserConfig
+from src.bots.common.locators import LoginLocators, CommonLocators
 
 class BaseBot(ABC):
     """
-    Classe base astratta per tutti i bot ISAB.
+    Abstract base class for all ISAB bots.
     
-    Fornisce:
-    - Gestione Selenium/Chrome con anti-detection
-    - Login al portale ISAB
-    - Gestione popup "altro utente connesso"
-    - Navigazione menu ExtJS
-    - Sistema di callback per logging
-    - Meccanismo di stop
+    Provides:
+    - Selenium/Chrome management with anti-detection
+    - Login to ISAB portal
+    - Popup management
+    - ExtJS menu navigation
+    - Logging callback system
+    - Stop mechanism
     """
     
-    # URL del portale ISAB
-    ISAB_URL = "https://portalefornitori.isab.com/Ui/"
+    ISAB_URL = URLs.ISAB_PORTAL
     
     def __init__(
         self,
         username: str,
         password: str,
         headless: bool = False,
-        timeout: int = 30,
+        timeout: int = Timeouts.DEFAULT,
         download_path: str = ""
     ):
         """
-        Inizializza il bot.
+        Initialize the bot.
         
         Args:
-            username: Username ISAB
-            password: Password ISAB
-            headless: Se True, esegue Chrome in modalità headless
-            timeout: Timeout in secondi per le attese
-            download_path: Percorso per i download (vuoto = default)
+            username: ISAB Username
+            password: ISAB Password
+            headless: If True, run Chrome in headless mode
+            timeout: Timeout in seconds for waits
+            download_path: Path for downloads (empty = default)
         """
         self.username = username
         self.password = password
@@ -88,132 +77,98 @@ class BaseBot(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Nome del bot."""
+        """Name of the bot."""
         pass
     
     @property
     @abstractmethod
     def description(self) -> str:
-        """Descrizione del bot."""
+        """Description of the bot."""
         pass
     
     def set_log_callback(self, callback: Callable[[str], None]):
-        """Imposta la callback per il logging."""
+        """Set the logging callback."""
         self._log_callback = callback
     
     def log(self, message: str):
-        """Logga un messaggio."""
+        """Log a message."""
         print(f"[{self.name}] {message}")
         if self._log_callback:
             self._log_callback(message)
     
     def request_stop(self):
-        """Richiede l'interruzione del bot."""
+        """Request bot interruption."""
         self._stop_requested = True
         self.log("⚠️ Interruzione richiesta...")
     
     def _check_stop(self):
-        """Controlla se è stata richiesta l'interruzione."""
+        """Check if interruption was requested."""
         if self._stop_requested:
             raise InterruptedError("Bot interrotto dall'utente")
     
     def _init_driver(self):
-        """Inizializza il driver Chrome con configurazione ottimizzata e SENZA POPUP."""
+        """Initialize Chrome driver with optimized configuration."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
         
         options = Options()
         
-        # --- 1. ARGOMENTI PER DISABILITARE UI E POPUP (Chrome Switches) ---
-        # Disabilita la bolla dei download (Download Bubble)
+        # --- 1. UI & POPUP DISABLE ---
         options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
-        
-        # Disabilita la schermata di scelta motore di ricerca (EU compliance screen)
         options.add_argument("--disable-search-engine-choice-screen")
-        
-        # Disabilita popup di "Ripristina sessione" in caso di chiusura forzata
         options.add_argument("--no-restore-session-state")
         options.add_argument("--disable-session-crashed-bubble")
-        
-        # Disabilita notifiche e infobar di automazione
         options.add_argument("--disable-notifications")
         options.add_argument("--disable-infobars")
-        options.add_argument("--disable-popup-blocking") # Blocca i popup nativi del browser
+        options.add_argument("--disable-popup-blocking")
         
-        # Anti-detection base
+        # --- 2. ANTI-DETECTION ---
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
         
-        # Performance
-        # options.add_argument("--disable-gpu") # Removed to allow hardware acceleration
+        # --- 3. PERFORMANCE ---
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-
-        # Network optimizations (No Proxy)
         options.add_argument("--no-proxy-server")
         options.add_argument("--proxy-server='direct://'")
         options.add_argument("--proxy-bypass-list=*")
         options.add_argument("--start-maximized")
         
-        # Headless mode
         if self.headless:
             options.add_argument("--headless=new")
-            options.add_argument("--window-size=1920,1080")
+            options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
 
-        # Load strategy EAGER (DOMContentLoaded instead of Load complete)
-        # This speeds up automation significantly as we don't wait for all images/css
+        # Eager load strategy for speed
         options.page_load_strategy = 'eager'
 
-        # --- CACHING & PERSISTENT PROFILE ---
-        # Usa un profilo persistente nella cartella data/chrome_profile del progetto.
-        # Questo permette di mantenere la cache (immagini, JS, CSS) e velocizzare i caricamenti successivi.
-        profile_dir = Path("data/chrome_profile").absolute()
+        # --- 4. CACHING & PERSISTENT PROFILE ---
+        profile_dir = Path(f"data/{BrowserConfig.CACHE_DIR_NAME}").absolute()
         options.add_argument(f"user-data-dir={profile_dir}")
         self.log(f"Cache profilo attiva: {profile_dir}")
 
-        # --- 2. PREFERENZE PROFILO UTENTE (Prefs) ---
+        # --- 5. USER PREFERENCES ---
         prefs = {
-            # Blocca gestore password e credenziali
             "credentials_enable_service": False,
             "profile.password_manager_enabled": False,
             "profile.password_manager_leak_detection": False,
             "users.users_allowed_to_save_passwords": False,
-            
-            # Blocca notifiche e popup generici
             "profile.default_content_settings.popups": 0,
             "profile.default_content_setting_values.notifications": 2,
             "profile.default_content_setting_values.automatic_downloads": 1,
-            
-            # Evita che il browser chieda cosa fare con i PDF (li scarica direttamente)
             "plugins.always_open_pdf_externally": True,
-            
-            # Disabilita avvisi di sicurezza fastidiosi sui download
             "safebrowsing.enabled": True, 
             "safebrowsing.disable_download_protection": True,
-        }
-
-        # --- 3. CONFIGURAZIONE DOWNLOAD PATH ---
-        # Nota: Non impostiamo più 'download.default_directory' per usare quella di default del sistema/browser.
-        # I file verranno poi spostati nella cartella di destinazione configurata (self.download_path).
-
-        # Aggiorna le preferenze base
-        prefs.update({
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
-            # Impostazioni extra per evitare la barra/bolla dei download
             "browser.download.manager.showWhenStarting": False,
             "download.manager.showWhenStarting": False,
-        })
+        }
 
-        # Argomenti extra di sicurezza per permettere download automatici
         options.add_argument("--safebrowsing-disable-download-protection")
         options.add_argument("--safebrowsing-disable-extension-blacklist")
-
-        # Applica tutte le preferenze
         options.add_experimental_option("prefs", prefs)
         
-        # Initialize driver
         service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service, options=options)
         
@@ -223,68 +178,63 @@ class BaseBot(ABC):
             {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"}
         )
         
-        # Setup waits con timeout diversi
+        # Setup waits
         self.wait = WebDriverWait(self.driver, self.timeout)
-        self.popup_wait = WebDriverWait(self.driver, 7)
-        self.long_wait = WebDriverWait(self.driver, 15)
+        self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
+        self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
         
         self.log("✓ Browser inizializzato (Modalità Silenziosa)")
     
-    def _attendi_scomparsa_overlay(self, timeout_secondi: int = 45) -> bool:
+    def _attendi_scomparsa_overlay(self, timeout_secondi: int = Timeouts.OVERLAY) -> bool:
         """
-        Attende in modo robusto che gli overlay di caricamento tipici dei siti Ext JS scompaiano.
+        Waits for Ext JS loading overlays to disappear.
         """
         try:
             overlay_wait = WebDriverWait(self.driver, timeout_secondi)
-            # XPath per maschere di caricamento comuni in Ext JS
-            xpath_mask = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
-            # XPath per il testo di caricamento
-            xpath_text = "//div[text()='Caricamento...']"
+            # Combine selectors for efficiency
+            xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
             
-            # Attende che gli elementi diventino invisibili
-            overlay_wait.until(EC.invisibility_of_element_located((By.XPATH, f"{xpath_mask} | {xpath_text}")))
+            overlay_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_combined)))
             self.log(" -> Overlay di caricamento scomparso.")
-            time.sleep(0.3)  # Piccola pausa per stabilizzare l'interfaccia
+            time.sleep(0.3)
             return True
         except TimeoutException:
             self.log(f"⚠ Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
     
     def _perform_login_form_action(self):
-        """Esegue le azioni di compilazione form e click su Accedi."""
+        """Fills login form and clicks Enter."""
         username_field = self.wait.until(
-            EC.element_to_be_clickable((By.NAME, "Username"))
+            EC.element_to_be_clickable(LoginLocators.USERNAME_FIELD)
         )
         username_field.clear()
         username_field.send_keys(self.username)
 
         password_field = self.wait.until(
-            EC.element_to_be_clickable((By.NAME, "Password"))
+            EC.element_to_be_clickable(LoginLocators.PASSWORD_FIELD)
         )
         password_field.clear()
         password_field.send_keys(self.password)
 
-        # Clicca sul pulsante Accedi (ExtJS button)
-        accedi_xpath = "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]"
         try:
-            # Tenta click standard
+            # Standard click
             accedi_btn = self.wait.until(
-                EC.element_to_be_clickable((By.XPATH, accedi_xpath))
+                EC.element_to_be_clickable(LoginLocators.LOGIN_BUTTON)
             )
             accedi_btn.click()
         except (TimeoutException, ElementClickInterceptedException):
             self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
-            # Fallback: JavaScript click forzato
-            accedi_element = self.driver.find_element(By.XPATH, accedi_xpath)
+            # Fallback: JavaScript click
+            accedi_element = self.driver.find_element(*LoginLocators.LOGIN_BUTTON_FALLBACK)
             self.driver.execute_script("arguments[0].click();", accedi_element)
 
         self.log("Login effettuato. Attendo scomparsa overlay...")
-        self._attendi_scomparsa_overlay(60)
+        self._attendi_scomparsa_overlay(Timeouts.LONG)
 
     def _login(self) -> bool:
         """
-        Esegue il login al portale ISAB con i selettori corretti per ExtJS.
-        Ritorna False se viene rilevato "Proxy Error".
+        Performs login to ISAB portal.
+        Returns False if Proxy Error is detected.
         """
         self._check_stop()
         self.log(f"Navigazione a: {self.ISAB_URL}")
@@ -293,32 +243,22 @@ class BaseBot(ABC):
         try:
             self.driver.get(self.ISAB_URL)
             
-            # Check Proxy Error immediato
-            page_title = self.driver.title
-            page_source = self.driver.page_source
-            if "Proxy Error" in page_title or "Proxy Error" in page_source:
+            # Check Proxy Error
+            if "Proxy Error" in self.driver.title or "Proxy Error" in self.driver.page_source:
                 self.log("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
                 return False
 
-            # Attendi il form di login - usa NAME invece di ID (specifico ISAB)
             self.log("Tentativo di login...")
-            
-            # Attende che eventuali overlay iniziali spariscano prima di interagire
             self._attendi_scomparsa_overlay(timeout_secondi=10)
 
-            # --- Check sessione esistente (Profilo Persistente) ---
-            # Se siamo già loggati, il campo Username non c'è.
+            # Check for existing session
             try:
-                # Tenta un'attesa breve per vedere se appare il login
                 WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.NAME, "Username"))
+                    EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
                 )
-                # Se trovato, procedi con il login normale
                 self._perform_login_form_action()
 
             except TimeoutException:
-                # Se TimeoutException avviene nel blocco 'try' principale (attesa Username),
-                # potrebbe essere perché siamo già loggati. Verifichiamo.
                 self.log("Campo Username non trovato. Verifico se già loggato...")
                 if self._verify_logged_in_via_ui():
                     self.log("✓ Rilevata sessione attiva (skip login).")
@@ -329,7 +269,6 @@ class BaseBot(ABC):
                     self.driver.refresh()
                     self._attendi_scomparsa_overlay(10)
 
-                    # Riprova a cercare username DOPO il refresh
                     try:
                         self._perform_login_form_action()
                         return True
@@ -338,11 +277,7 @@ class BaseBot(ABC):
                         return False
             
             self._check_stop()
-            
-            # Gestisci popup "Sessione attiva" - clicca su "Si"
             self._handle_session_popup()
-            
-            # Gestisci popup generico "OK"
             self._handle_ok_popup()
             
             self.log("✓ Login completato con successo")
@@ -356,60 +291,48 @@ class BaseBot(ABC):
             return False
     
     def _handle_session_popup(self):
-        """Gestisce il popup 'Esiste già una sessione attiva'."""
+        """Handles 'Active Session' popup."""
         try:
-            si_button_xpath = "//span[text()='Si' and contains(@class, 'x-btn-inner')]/ancestor::a[contains(@class, 'x-btn')]"
-            si_button = self.popup_wait.until(EC.element_to_be_clickable((By.XPATH, si_button_xpath)))
+            si_button = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
             self.log("Pop-up 'Sessione attiva' trovato. Click su 'Si'...")
             si_button.click()
             self._attendi_scomparsa_overlay(10)
         except TimeoutException:
-            pass  # Nessun popup sessione - normale
+            pass
     
     def _handle_ok_popup(self):
-        """Gestisce popup generico con pulsante OK."""
+        """Handles generic OK popup."""
         try:
             ok_button = self.popup_wait.until(
-                EC.element_to_be_clickable((By.XPATH, "//span[text()='OK' and contains(@class, 'x-btn-inner')]"))
+                EC.element_to_be_clickable(CommonLocators.POPUP_OK)
             )
             self.log("Pop-up 'OK' trovato. Click...")
             ok_button.click()
             WebDriverWait(self.driver, 5).until(
-                EC.invisibility_of_element_located((By.XPATH, "//span[text()='OK' and contains(@class, 'x-btn-inner')]"))
+                EC.invisibility_of_element_located(CommonLocators.POPUP_OK)
             )
             self.log("Popup gestito.")
         except TimeoutException:
-            pass  # Nessun popup OK - normale
+            pass
     
     def _handle_new_session_popup(self):
-        """Alias per retrocompatibilità."""
+        """Alias for backward compatibility."""
         self._handle_session_popup()
         self._handle_ok_popup()
     
     def _handle_unsaved_changes_popup(self):
-        """
-        Gestisce il popup 'Attenzione - Le modifiche non salvate andranno perse'.
-        Questo popup può apparire dopo aver cliccato su 'Esci'.
-        """
+        """Handles 'Unsaved Changes' popup."""
         try:
-            # Cerca popup con titolo "Attenzione" e messaggio su modifiche non salvate
-            # Prima verifica se c'è una finestra con titolo "Attenzione"
-            attenzione_xpath = "//span[contains(@class, 'x-window-header-text') and contains(text(), 'Attenzione')]"
-            
-            # Attendi brevemente per vedere se appare il popup
             WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, attenzione_xpath))
+                EC.presence_of_element_located(CommonLocators.POPUP_ATTENTION_HEADER)
             )
             
             self.log("Pop-up 'Attenzione - modifiche non salvate' trovato. Click su 'Si'...")
             
-            # Trova il pulsante "Si" nel popup
-            si_button_xpath = "//div[contains(@class, 'x-window')]//span[normalize-space(text())='Si' and contains(@class, 'x-btn-inner')]"
             si_button = WebDriverWait(self.driver, 5).until(
-                EC.element_to_be_clickable((By.XPATH, si_button_xpath))
+                EC.element_to_be_clickable(CommonLocators.POPUP_YES_BUTTON)
             )
             
-            # Click sul pulsante Si
             try:
                 si_button.click()
             except:
@@ -420,75 +343,60 @@ class BaseBot(ABC):
             return True
             
         except TimeoutException:
-            pass  # Nessun popup "Attenzione" - normale
+            pass
         except Exception as e:
             self.log(f"Errore gestione popup Attenzione: {e}")
         
         return False
     
     def _verify_login(self) -> bool:
-        """Verifica se il login è avvenuto con successo."""
+        """Verifies if login was successful."""
         try:
             return "login" not in self.driver.current_url.lower()
         except Exception:
             return False
 
     def _verify_logged_in_via_ui(self) -> bool:
-        """Controlla se ci sono elementi della UI post-login (es. bottone Settings)."""
+        """Checks for post-login UI elements."""
         try:
-            # Cerca il bottone settings o logout
-            settings_xpath = "//span[contains(@id, 'user-info-settings-btnEl') or contains(@class, 'x-btn-icon-el-default-toolbar-small-settings')]"
-            WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, settings_xpath)))
+            WebDriverWait(self.driver, 5).until(EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON))
             return True
         except Exception:
             return False
     
     def _logout(self) -> bool:
-        """
-        Esegue il logout dal portale ISAB.
-        Gestisce anche il popup 'Attenzione - modifiche non salvate'.
-        """
+        """Performs logout."""
         self.log("Tentativo di Logout...")
         try:
-            # Click su pulsante Settings (ingranaggio)
             settings_button = self.wait.until(
-                EC.element_to_be_clickable((By.XPATH, "//span[@id='user-info-settings-btnEl' and contains(@class, 'x-btn-button')]"))
+                EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
             )
             settings_button.click()
             self.log("Pulsante Settings cliccato.")
             
-            # Click su "Esci"
             logout_option = self.wait.until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'x-menu-item-link')][.//span[normalize-space(text())='Esci']]"))
+                EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
             )
             logout_option.click()
             self.log("Opzione 'Esci' cliccata.")
             
             time.sleep(1)
-            
-            # Gestisci popup "Attenzione - modifiche non salvate" se presente
             self._handle_unsaved_changes_popup()
-            
             time.sleep(1)
             
-            # Conferma logout cliccando su "Si" (popup di conferma logout standard)
-            yes_button_xpath = "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Si']]"
+            # Confirm Logout (Standard 'Si' button)
             try:
                 yes_button = WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, yes_button_xpath))
+                    EC.presence_of_element_located(CommonLocators.POPUP_SESSION_YES)
                 )
                 self.log("Pulsante 'Si' per conferma logout trovato.")
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", yes_button)
                 self.log("Logout confermato.")
-                
-                # Attesa per permettere al logout di completarsi
                 time.sleep(3)
                 
             except TimeoutException:
-                # Potrebbe essere già stato gestito dal popup precedente
                 self.log("Nessun ulteriore popup di conferma logout.")
             
-            # Verifica ritorno alla pagina di login
             WebDriverWait(self.driver, 10).until(
                 EC.url_contains(self.ISAB_URL.split("://")[1].split("/")[0])
             )
@@ -498,10 +406,9 @@ class BaseBot(ABC):
         except TimeoutException:
             current_url = self.driver.current_url if self.driver else "N/A"
             self.log(f"⚠ Timeout durante il logout. URL attuale: {current_url}")
-            # Verifica comunque se siamo sulla pagina di login
             try:
                 WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.NAME, "Username"))
+                    EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
                 )
                 self.log("Campo Username trovato. Logout probabilmente riuscito.")
                 return True
@@ -513,9 +420,7 @@ class BaseBot(ABC):
             return False
     
     def navigate_to_menu(self, menu_path: List[str]) -> bool:
-        """
-        Naviga attraverso i menu ExtJS.
-        """
+        """Navigates through ExtJS menus."""
         self._check_stop()
         self.log(f"Navigazione: {' > '.join(menu_path)}")
         
@@ -523,7 +428,6 @@ class BaseBot(ABC):
             for menu_item in menu_path:
                 self._check_stop()
                 
-                # Try multiple selectors for ExtJS menus
                 selectors = [
                     f"//span[contains(text(), '{menu_item}')]",
                     f"//div[contains(text(), '{menu_item}')]",
@@ -557,7 +461,7 @@ class BaseBot(ABC):
             return False
     
     def cleanup(self):
-        """Chiude il browser e rilascia le risorse."""
+        """Closes browser and releases resources."""
         if self.driver:
             try:
                 self.driver.quit()
@@ -569,15 +473,11 @@ class BaseBot(ABC):
     
     @abstractmethod
     def run(self, data: List[Dict[str, Any]]) -> bool:
-        """
-        Esegue la logica specifica del bot.
-        """
+        """Main execution logic."""
         pass
     
     def _safe_login_with_retry(self, max_retries: int = 3) -> bool:
-        """
-        Inizializza driver e login con retry in caso di Proxy Error.
-        """
+        """Initializes driver and login with retry mechanism."""
         for attempt in range(1, max_retries + 1):
             self._check_stop()
             try:
@@ -585,7 +485,6 @@ class BaseBot(ABC):
                 if self._login():
                     return True
 
-                # Se login fallisce (es. Proxy Error), chiudi e riprova
                 self.log(f"Tentativo {attempt}/{max_retries} fallito. Riprovo tra 5 secondi...")
                 self.cleanup()
                 time.sleep(5)
@@ -598,9 +497,7 @@ class BaseBot(ABC):
         return False
 
     def execute(self, data: List[Dict[str, Any]]) -> bool:
-        """
-        Esegue il workflow completo del bot.
-        """
+        """Executes full bot workflow."""
         self._stop_requested = False
         
         try:
@@ -626,9 +523,7 @@ class BaseBot(ABC):
             self.cleanup()
     
     def execute_login_only(self) -> bool:
-        """
-        Esegue solo il login senza cleanup.
-        """
+        """Executes only login."""
         self._stop_requested = False
         
         try:
