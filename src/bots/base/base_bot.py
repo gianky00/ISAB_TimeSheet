@@ -4,6 +4,7 @@ Classe base astratta per tutti i bot di automazione.
 """
 import os
 import time
+import shutil
 from abc import ABC, abstractmethod
 from typing import Optional, Callable, List, Dict, Any
 from pathlib import Path
@@ -169,7 +170,38 @@ class BaseBot(ABC):
         options.add_argument("--safebrowsing-disable-extension-blacklist")
         options.add_experimental_option("prefs", prefs)
         
-        service = Service(ChromeDriverManager().install())
+        # --- 6. DRIVER INSTALLATION (Robust handling for WinError 193) ---
+        driver_path = None
+        try:
+            driver_path = ChromeDriverManager().install()
+            self.log(f"Driver installato in: {driver_path}")
+        except Exception as e:
+            # WinError 193 means corrupted binary or arch mismatch
+            if "WinError 193" in str(e) or "valid Win32" in str(e):
+                self.log("⚠️ Rilevato driver corrotto (WinError 193). Tento pulizia forzata...")
+
+                # Attempt to find the folder and delete it
+                # Usually: %USERPROFILE%/.wdm/drivers/chromedriver/win64/VERSION/chromedriver-win64/chromedriver.exe
+                try:
+                    wdm_root = Path.home() / ".wdm"
+                    if wdm_root.exists():
+                        self.log(f"Eliminazione cache driver: {wdm_root}")
+                        shutil.rmtree(wdm_root, ignore_errors=True)
+                        self.log("Cache eliminata. Riprovo download...")
+
+                        # Retry install
+                        time.sleep(2)
+                        driver_path = ChromeDriverManager().install()
+                        self.log(f"Driver reinstallato con successo: {driver_path}")
+                except Exception as cleanup_error:
+                    self.log(f"❌ Impossibile pulire/reinstallare driver: {cleanup_error}")
+                    raise e
+            else:
+                self.log(f"❌ Errore installazione driver: {e}")
+                raise e
+
+        # Initialize Service
+        service = Service(driver_path)
         self.driver = webdriver.Chrome(service=service, options=options)
         
         # Remove webdriver flag (JS side)
