@@ -4,6 +4,7 @@ Page Object Model for Dettagli OdA.
 """
 
 import time
+import traceback
 from pathlib import Path
 from typing import Optional
 
@@ -42,15 +43,23 @@ class DettagliOdAPage:
     def navigate_to_dettagli(self) -> bool:
         try:
             self.log("Navigazione menu Report -> Dettagli OdA...")
-            self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.REPORT_MENU)).click()
+            time.sleep(1) # Ensure UI is idle
+
+            # Click Report (using JS to avoid interception/crash)
+            report_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.REPORT_MENU))
+            self.driver.execute_script("arguments[0].click();", report_btn)
             self._wait_for_overlay()
 
-            self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETTAGLI_MENU)).click()
+            # Click Dettagli OdA
+            dettagli_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETTAGLI_MENU))
+            self.driver.execute_script("arguments[0].click();", dettagli_btn)
+
             self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
             self._wait_for_overlay()
             return True
         except Exception as e:
             self.log(f"✗ Navigazione fallita: {e}")
+            self.log(f"Stacktrace: {traceback.format_exc()}")
             return False
 
     def setup_supplier(self, supplier: str) -> bool:
