@@ -13,7 +13,7 @@ import numpy as np
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect, QSizePolicy, QGraphicsOpacityEffect,
-    QToolTip
+    QToolTip, QDialog, QPushButton
 )
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation
 from PyQt6.QtGui import QColor, QCursor, QFont
@@ -23,28 +23,85 @@ from src.core.contabilita_manager import ContabilitaManager
 # Costante per il costo orario aziendale standard
 HOURLY_COST_STD = 27.43
 
+class DetailedInfoDialog(QDialog):
+    """Dialogo modale per spiegazioni dettagliate KPI."""
+    def __init__(self, title, content, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Dettaglio KPI")
+        self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
+        self.setFixedWidth(400)
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #ffffff;
+                border: 2px solid #0d6efd;
+                border-radius: 8px;
+            }
+            QLabel {
+                color: #212529;
+                font-size: 14px;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+
+        # Title
+        lbl_title = QLabel(title)
+        lbl_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;")
+        layout.addWidget(lbl_title)
+
+        # Content (HTML)
+        lbl_content = QLabel(content)
+        lbl_content.setWordWrap(True)
+        lbl_content.setTextFormat(Qt.TextFormat.RichText)
+        layout.addWidget(lbl_content)
+
+        # Close info
+        lbl_close = QLabel("\n(Clicca per chiudere)")
+        lbl_close.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_close.setStyleSheet("color: #adb5bd; font-size: 11px;")
+        layout.addWidget(lbl_close)
+
+    def mousePressEvent(self, event):
+        self.accept()
+
 class InfoLabel(QLabel):
-    """Etichetta informativa con icona e tooltip."""
-    def __init__(self, tooltip_text, parent=None):
+    """Etichetta informativa con icona che apre un popup al click."""
+    def __init__(self, title, get_text_callback, parent=None):
         super().__init__("ⓘ", parent)
+        self.title = title
+        self.get_text_callback = get_text_callback # Funzione che restituisce il testo aggiornato
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.setToolTip(tooltip_text)
         self.setStyleSheet("""
             QLabel {
                 color: #6c757d;
                 font-weight: bold;
-                font-size: 14px;
+                font-size: 16px;
                 background: transparent;
+                padding: 0px 5px;
             }
             QLabel:hover {
                 color: #0d6efd;
             }
         """)
 
+    def mousePressEvent(self, event):
+        """Mostra il dialog con il testo aggiornato."""
+        content = self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
+        dlg = DetailedInfoDialog(self.title, content, self.window())
+        # Posiziona il dialog vicino al mouse
+        dlg.move(event.globalPosition().toPoint())
+        dlg.exec()
+
+    def enterEvent(self, event):
+        """Opzionale: tooltip veloce."""
+        pass
+
 class KPIBigCard(QFrame):
     """Card per mostrare un KPI numerico principale."""
-    def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None, tooltip_text=None):
+    def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None):
         super().__init__(parent)
+        self.info_content_callback = lambda: "Nessuna informazione disponibile."
+
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: white;
@@ -79,9 +136,9 @@ class KPIBigCard(QFrame):
 
         header_layout.addStretch()
 
-        if tooltip_text:
-            info_icon = InfoLabel(tooltip_text)
-            header_layout.addWidget(info_icon)
+        # Info Icon che chiama self.get_info_content
+        self.info_icon = InfoLabel(title, self._get_info_content)
+        header_layout.addWidget(self.info_icon)
 
         layout.addLayout(header_layout)
 
@@ -95,6 +152,13 @@ class KPIBigCard(QFrame):
             lbl_sub.setStyleSheet("color: #adb5bd; font-size: 11px; border: none; background: transparent;")
             lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl_sub)
+
+    def set_info_callback(self, callback):
+        """Imposta la funzione per generare il testo informativo."""
+        self.info_content_callback = callback
+
+    def _get_info_content(self):
+        return self.info_content_callback()
 
 
 class ContabilitaKPIPanel(QWidget):
@@ -159,22 +223,10 @@ class ContabilitaKPIPanel(QWidget):
         self.cards_layout = QHBoxLayout()
         self.cards_layout.setSpacing(20)
 
-        self.card_totale = KPIBigCard(
-            "TOTALE PREVENTIVATO", "€ 0,00", "#198754",
-            tooltip_text="Somma del valore economico di tutte le commesse (Preventivi)."
-        )
-        self.card_ore = KPIBigCard(
-            "ORE SPESE TOTALI", "0", "#0d6efd",
-            tooltip_text="Somma delle ore lavorate registrate su tutte le commesse."
-        )
-        self.card_resa = KPIBigCard(
-            "RESA MEDIA", "0", "#fd7e14",
-            tooltip_text="Media aritmetica del valore 'Resa' registrato sulle attività."
-        )
-        self.card_count = KPIBigCard(
-            "N° COMMESSE", "0", "#6f42c1",
-            tooltip_text="Numero totale di commesse/attività analizzate."
-        )
+        self.card_totale = KPIBigCard("TOTALE PREVENTIVATO", "€ 0,00", "#198754")
+        self.card_ore = KPIBigCard("ORE SPESE TOTALI", "0", "#0d6efd")
+        self.card_resa = KPIBigCard("RESA MEDIA", "0", "#fd7e14")
+        self.card_count = KPIBigCard("N° COMMESSE", "0", "#6f42c1")
 
         self.cards_layout.addWidget(self.card_totale)
         self.cards_layout.addWidget(self.card_ore)
@@ -192,23 +244,19 @@ class ContabilitaKPIPanel(QWidget):
 
         self.card_margine = KPIBigCard(
             "MARGINE OPERATIVO STIMATO", "€ 0,00", "#20c997",
-            subtitle=f"Base Costo Orario: € {HOURLY_COST_STD}",
-            tooltip_text=f"Differenza tra Totale Preventivato e Costo Stimato (Ore * € {HOURLY_COST_STD}). Indica l'utile lordo."
+            subtitle=f"Base Costo Orario: € {HOURLY_COST_STD}"
         )
         self.card_margine_perc = KPIBigCard(
             "MARGINALITÀ %", "0.0 %", "#20c997",
-            subtitle="Su Totale Preventivato",
-            tooltip_text="Rapporto % tra Margine Operativo e Totale Preventivato. Indica la redditività."
+            subtitle="Su Totale Preventivato"
         )
         self.card_eff_resa = KPIBigCard(
             "EFFICIENZA DI RESA", "€ 0,00 / h", "#6610f2",
-            subtitle="Resa / Ore Spese",
-            tooltip_text="Valore medio di 'Resa' per ogni ora lavorata (Resa / Ore Spese)."
+            subtitle="Resa / Ore Spese"
         )
         self.card_val_ora = KPIBigCard(
             "VALORE PER ORA SPESA", "€ 0,00 / h", "#d63384",
-            subtitle="Totale Prev / Ore Spese",
-            tooltip_text=f"Fatturato generato per ora lavorata (Totale Prev / Ore Spese). Se > € {HOURLY_COST_STD}, in utile."
+            subtitle="Totale Prev / Ore Spese"
         )
 
         self.tech_cards_layout.addWidget(self.card_margine)
@@ -231,7 +279,8 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas1 = FigureCanvas(self.fig1)
         self.container1 = self._create_chart_container(
             self.canvas1,
-            tooltip_text="Distribuzione percentuale delle attività per stato (esclusa FORNITURA)."
+            title="Distribuzione Stato Attività",
+            info_callback=lambda: "Distribuzione percentuale delle attività per stato (esclusa FORNITURA)."
         )
         charts_grid.addWidget(self.container1, 0, 0)
 
@@ -241,7 +290,8 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas2 = FigureCanvas(self.fig2)
         self.container2 = self._create_chart_container(
             self.canvas2,
-            tooltip_text="Confronto mensile tra valore preventivato e ore spese."
+            title="Preventivato vs Ore per Mese",
+            info_callback=lambda: "Confronto mensile tra valore preventivato e ore spese."
         )
         charts_grid.addWidget(self.container2, 0, 1)
 
@@ -251,7 +301,8 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas3 = FigureCanvas(self.fig3)
         self.container3 = self._create_chart_container(
             self.canvas3,
-            tooltip_text="Analisi redditività per tipologia (Verde=Margine, Rosso=Costo)."
+            title="Margine Operativo vs Costo",
+            info_callback=lambda: "Analisi redditività per tipologia (Verde=Margine, Rosso=Costo)."
         )
         charts_grid.addWidget(self.container3, 1, 0)
 
@@ -261,7 +312,8 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas4 = FigureCanvas(self.fig4)
         self.container4 = self._create_chart_container(
             self.canvas4,
-            tooltip_text="Andamento mensile del valore medio di Resa."
+            title="Andamento Resa Media",
+            info_callback=lambda: "Andamento mensile del valore medio di Resa."
         )
         charts_grid.addWidget(self.container4, 1, 1)
 
@@ -272,7 +324,8 @@ class ContabilitaKPIPanel(QWidget):
         self.container5 = self._create_chart_container(
             self.canvas5,
             height=200,
-            tooltip_text="Percentuale di attività contabilizzate rispetto al totale."
+            title="Stato Avanzamento Globale",
+            info_callback=lambda: "Percentuale di attività contabilizzate rispetto al totale."
         )
         charts_grid.addWidget(self.container5, 2, 0, 1, 2)
 
@@ -287,7 +340,7 @@ class ContabilitaKPIPanel(QWidget):
                       self.card_margine, self.card_margine_perc, self.card_eff_resa, self.card_val_ora]
         self.charts = [self.container1, self.container2, self.container3, self.container4, self.container5]
 
-    def _create_chart_container(self, widget, height=450, tooltip_text=None):
+    def _create_chart_container(self, widget, height=450, title="", info_callback=None):
         """Crea un container stilizzato per il grafico."""
         container = QWidget()
         container.setMinimumHeight(height)
@@ -312,14 +365,20 @@ class ContabilitaKPIPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         # Info icon overlay/header
-        if tooltip_text:
-            header_layout = QHBoxLayout()
-            header_layout.setContentsMargins(10, 10, 10, 0)
-            header_layout.addStretch()
-            info_icon = InfoLabel(tooltip_text)
-            header_layout.addWidget(info_icon)
-            layout.addLayout(header_layout)
+        header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(15, 10, 15, 0)
 
+        if title:
+            lbl = QLabel(title)
+            lbl.setStyleSheet("font-weight: bold; color: #495057; font-size: 14px; border: none;")
+            header_layout.addWidget(lbl)
+
+        header_layout.addStretch()
+        if info_callback:
+            info_icon = InfoLabel("Dettaglio Grafico", info_callback)
+            header_layout.addWidget(info_icon)
+
+        layout.addLayout(header_layout)
         layout.addWidget(widget)
 
         return container
@@ -398,7 +457,11 @@ class ContabilitaKPIPanel(QWidget):
             count = len(df)
 
             self.card_totale.lbl_value.setText(f"€ {self._format_currency(tot_prev)}")
+            self.card_totale.set_info_callback(lambda: f"Somma totale del valore economico di tutti i preventivi/commesse registrati per l'anno {year}.")
+
             self.card_ore.lbl_value.setText(f"{self._format_currency(tot_ore)}")
+            self.card_ore.set_info_callback(lambda: f"Totale delle ore lavorate registrate su tutte le commesse nell'anno {year}.")
+
             self.card_resa.lbl_value.setText(f"{self._format_currency(avg_resa)}")
             self.card_count.lbl_value.setText(str(count))
 
@@ -411,19 +474,57 @@ class ContabilitaKPIPanel(QWidget):
             efficienza_resa = (df['resa'].sum() / tot_ore) if tot_ore > 0 else 0
             valore_per_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
 
+            # Margine Info
             self.card_margine.lbl_value.setText(f"€ {self._format_currency(margine_operativo)}")
             self.card_margine.lbl_value.setStyleSheet(f"color: {'#20c997' if margine_operativo >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
+            self.card_margine.set_info_callback(lambda: (
+                f"<b>CALCOLO ESEMPIO REALE ({year}):</b><br><br>"
+                f"Totale Preventivato: € {self._format_currency(tot_prev)}<br>"
+                f" - Costo Stimato: € {self._format_currency(costo_totale_stimato)} (Ore {self._format_currency(tot_ore)} * € {HOURLY_COST_STD})<br>"
+                f"--------------------------------------------------<br>"
+                f"<b>= Margine Operativo: € {self._format_currency(margine_operativo)}</b><br><br>"
+                f"Indica l'utile lordo stimato dopo aver coperto i costi orari del personale."
+            ))
 
+            # Marginalita % Info
             self.card_margine_perc.lbl_value.setText(f"{marginalita_perc:.1f} %".replace(".", ","))
             self.card_margine_perc.lbl_value.setStyleSheet(f"color: {'#20c997' if marginalita_perc >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
+            self.card_margine_perc.set_info_callback(lambda: (
+                f"<b>CALCOLO ESEMPIO REALE ({year}):</b><br><br>"
+                f"Margine Operativo: € {self._format_currency(margine_operativo)}<br>"
+                f" / Totale Preventivato: € {self._format_currency(tot_prev)}<br>"
+                f"--------------------------------------------------<br>"
+                f"<b>= Marginalità: {marginalita_perc:.1f}%</b><br><br>"
+                f"Per ogni 100€ fatturati, rimangono € {marginalita_perc:.1f} di margine."
+            ))
 
+            # Efficienza Resa Info
             self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(efficienza_resa)} / h")
+            self.card_eff_resa.set_info_callback(lambda: (
+                f"<b>CALCOLO ESEMPIO REALE ({year}):</b><br><br>"
+                f"Resa Totale: {self._format_currency(df['resa'].sum())}<br>"
+                f" / Ore Spese Totali: {self._format_currency(tot_ore)}<br>"
+                f"--------------------------------------------------<br>"
+                f"<b>= Efficienza: € {self._format_currency(efficienza_resa)} / h</b><br><br>"
+                f"Valore medio di 'Resa' prodotto per ogni ora lavorata."
+            ))
+
+            # Valore per Ora Spesa Info
             self.card_val_ora.lbl_value.setText(f"€ {self._format_currency(valore_per_ora)} / h")
+            self.card_val_ora.set_info_callback(lambda: (
+                f"<b>CALCOLO ESEMPIO REALE ({year}):</b><br><br>"
+                f"Totale Preventivato: € {self._format_currency(tot_prev)}<br>"
+                f" / Ore Spese Totali: {self._format_currency(tot_ore)}<br>"
+                f"--------------------------------------------------<br>"
+                f"<b>= Valore Orario: € {self._format_currency(valore_per_ora)} / h</b><br><br>"
+                f"Ogni ora lavorata ha generato un fatturato medio di € {self._format_currency(valore_per_ora)}.<br>"
+                f"(Confrontalo con il costo orario base di € {HOURLY_COST_STD})"
+            ))
 
             # --- 3. Update Charts ---
             self._plot_stato_attivita(df)
             self._plot_prev_ore_mese(df)
-            self._plot_margine_tipologia(df) # Sostituisce resa_tipologia vecchio con uno piu tecnico
+            self._plot_margine_tipologia(df)
             self._plot_andamento_resa(df)
             self._plot_completamento(df)
 
@@ -459,7 +560,7 @@ class ContabilitaKPIPanel(QWidget):
             wedgeprops=dict(width=0.6, edgecolor='w') # Donut style for cleaner look
         )
 
-        ax.set_title('Distribuzione Stato Attività', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        # ax.set_title('Distribuzione Stato Attività', fontsize=14, fontweight='bold', color='#495057', pad=20)
 
         # --- Interactive Annotation ---
         self.annot = ax.annotate("", xy=(0,0), xytext=(0,0), textcoords="offset points",
@@ -536,7 +637,7 @@ class ContabilitaKPIPanel(QWidget):
         ax.set_xticks(x)
         ax.set_xticklabels([m.capitalize()[:3] for m in grouped.index], rotation=45)
 
-        ax.set_title('Preventivato (€) e Ore Spese per Mese', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        # ax.set_title('Preventivato (€) e Ore Spese per Mese', fontsize=14, fontweight='bold', color='#495057', pad=20)
 
         lines, labels = ax.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
@@ -595,7 +696,7 @@ class ContabilitaKPIPanel(QWidget):
         ax.set_yticklabels(grouped.index)
         ax.legend()
 
-        ax.set_title('Margine Operativo vs Costo per Tipologia', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        # ax.set_title('Margine Operativo vs Costo per Tipologia', fontsize=14, fontweight='bold', color='#495057', pad=20)
         ax.grid(axis='x', linestyle='--', alpha=0.5)
 
         self.fig3.tight_layout()
@@ -635,7 +736,7 @@ class ContabilitaKPIPanel(QWidget):
         for i, v in enumerate(grouped.values):
             ax.text(i, v + (v*0.05), f"{v:.1f}", ha='center', fontsize=9, fontweight='bold', color='#6f42c1')
 
-        ax.set_title('Andamento Resa Media Mensile', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        # ax.set_title('Andamento Resa Media Mensile', fontsize=14, fontweight='bold', color='#495057', pad=20)
         ax.grid(True, linestyle='--', alpha=0.5)
 
         self.fig4.tight_layout()
@@ -664,6 +765,6 @@ class ContabilitaKPIPanel(QWidget):
         ax.set_ylim(-0.5, 0.5)
         ax.axis('off')
 
-        ax.set_title('Stato Avanzamento Globale', fontsize=14, fontweight='bold', color='#495057', pad=10)
+        # ax.set_title('Stato Avanzamento Globale', fontsize=14, fontweight='bold', color='#495057', pad=10)
 
         self.canvas5.draw()
