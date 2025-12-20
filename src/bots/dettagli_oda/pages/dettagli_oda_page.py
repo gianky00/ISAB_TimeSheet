@@ -18,6 +18,7 @@ from selenium.common.exceptions import TimeoutException
 
 from src.core.constants import Timeouts
 from src.bots.dettagli_oda.locators import DettagliOdALocators
+from src.bots.common.locators import LoginLocators, CommonLocators
 
 class DettagliOdAPage:
 
@@ -79,73 +80,159 @@ class DettagliOdAPage:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
 
-    def process_oda(self, oda: str, contract: str, date_a: str, download_dir: Path) -> bool:
+    def logout(self):
         try:
-            # 1. Fill Form (Sequence: ODA -> TAB -> Date A -> TAB -> Contract -> TAB TAB -> Space)
+            self.log("Esecuzione logout...")
+            # Click Settings
+            settings_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON))
+            self.driver.execute_script("arguments[0].click();", settings_btn)
+            time.sleep(0.5)
 
-            # WORKAROUND: Focus Supplier field and TAB to 'Numero OdA' to avoid locating issues
-            # Locate input relative to the Arrow (which is reliably found in setup_supplier)
-            supplier_arrow = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
-            supplier_input = supplier_arrow.find_element(By.XPATH, "preceding::input[1]")
+            # Click Logout
+            logout_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION))
+            self.driver.execute_script("arguments[0].click();", logout_btn)
 
-            # Focus without clicking (to avoid opening dropdown)
-            self.driver.execute_script("arguments[0].focus();", supplier_input)
+            # Handle Confirmation Popup "Attenzione"
+            try:
+                self.log("  Attesa conferma logout...")
+                # Wait for header "Attenzione"
+                self.wait.until(EC.visibility_of_element_located(CommonLocators.POPUP_ATTENTION_HEADER))
 
-            # TAB to Numero OdA
-            actions = ActionChains(self.driver)
-            actions.send_keys(Keys.TAB).pause(0.2).perform()
+                # Click "Si"
+                yes_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_YES_BUTTON))
+                self.driver.execute_script("arguments[0].click();", yes_btn)
+                self.log("  Conferma cliccata.")
 
-            # Get the active element (which should be Numero OdA)
-            field_oda = self.driver.switch_to.active_element
+                # Wait for Login Screen (logout complete)
+                self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
+                self.log("✓ Logout completato con successo.")
 
-            # Use JS to set ODA safely
-            js_script = """
+            except TimeoutException:
+                self.log("⚠️ Popup conferma non apparso o timeout.")
+
+            time.sleep(1)
+        except Exception as e:
+            self.log(f"⚠️ Errore durante logout: {e}")
+
+    def process_oda(self, oda: str, contract: str, date_da: str, date_a: str, download_dir: Path) -> bool:
+        try:
+            # 1. Fill Form
+            js_set_value = """
                 var el = arguments[0];
                 el.value = arguments[1];
                 el.dispatchEvent(new Event('input', { bubbles: true }));
                 el.dispatchEvent(new Event('change', { bubbles: true }));
-                el.focus();
+                el.blur();
             """
-            self.driver.execute_script(js_script, field_oda, oda)
-            time.sleep(0.5)
 
-            # Proceed with ActionChains for the rest (already focused on ODA, so next TAB goes to next field)
-            actions = ActionChains(self.driver)
+            # ODA - Only fill if provided
+            if oda:
+                field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
+                self.driver.execute_script(js_set_value, field_oda, oda)
 
-            actions.send_keys(Keys.TAB).pause(0.5)
+            # Date From (Clear first by setting value)
+            field_date_da = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_FROM_FIELD))
+            self.driver.execute_script(js_set_value, field_date_da, date_da)
 
-            # Date A
-            actions.send_keys(date_a).pause(0.5)
-            actions.send_keys(Keys.TAB).pause(0.5)
+            # Date To
+            field_date_a = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD))
+            self.driver.execute_script(js_set_value, field_date_a, date_a)
 
             # Contract
-            actions.key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).pause(0.2)
-            actions.send_keys(contract).pause(0.5)
+            field_contract = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD))
+            self.driver.execute_script(js_set_value, field_contract, contract)
 
-            # Flag "Verifica Presenza"
-            actions.send_keys(Keys.TAB).pause(0.2)
-            actions.send_keys(Keys.TAB).pause(0.2)
-            actions.send_keys(Keys.SPACE).pause(0.5)
+            # Checkbox
+            checkbox = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD))
+            if not checkbox.is_selected():
+                 self.driver.execute_script("arguments[0].click();", checkbox)
 
-            actions.perform()
+            time.sleep(0.5)
 
             # Click Search
             self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)).click()
             self.log("  Cerca cliccato...")
             self._wait_for_overlay()
 
-            return self._download(download_dir, oda, contract)
+            # Check Results Count
+            try:
+                count_label = self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.RESULTS_COUNT_LABEL))
+                count_text = count_label.text.strip() # "Trovati : 676"
+                if ':' in count_text:
+                    count = int(count_text.split(':')[-1].strip())
+                    self.log(f"  Risultati trovati: {count}")
+                    if count == 0:
+                        self.log("  Nessun risultato. Salto esportazione.")
+                        self._close_all_tabs()
+                        return True
+                else:
+                    self.log(f"  ⚠️ Impossibile parsare risultati: {count_text}")
+            except Exception as e:
+                self.log(f"  ⚠️ Errore lettura conteggio: {e}")
+
+            # Decide Export Method based on ODA presence
+            target_filename = ""
+            if oda:
+                # ODA Present: Details Export
+                self.log("  Apertura dettagli (OdA specifico)...")
+                details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
+                self.driver.execute_script("arguments[0].click();", details_btn)
+                self._wait_for_overlay()
+
+                # Wait for Inner Export button
+                export_btn_locator = DettagliOdALocators.EXPORT_EXCEL_TEXT
+                target_filename = f"dettaglio_oda_{oda}.xlsx"
+            else:
+                # ODA Empty: General List Export
+                self.log("  Esportazione lista generale...")
+                export_btn_locator = DettagliOdALocators.GENERAL_EXPORT_BUTTON
+                target_filename = "lista_generale_oda.xlsx"
+
+            # Export and Download
+            res = self._download(download_dir, target_filename, export_btn_locator)
+
+            # Cleanup
+            self._close_all_tabs()
+            return res
 
         except Exception as e:
             self.log(f"  ✗ Errore processamento: {e}")
             self.log(f"Stacktrace: {traceback.format_exc()}")
+            # Ensure tabs are closed even on error
+            try:
+                self._close_all_tabs()
+            except:
+                pass
             return False
 
-    def _download(self, download_dir: Path, oda: str, contract: str) -> bool:
+    def _close_all_tabs(self):
+        """Closes all open tabs using the X button."""
+        try:
+            # Find all close buttons. We might need to iterate or they might be dynamic.
+            # Usually ExtJS tabs have a close tool.
+            # We assume clicking them one by one works.
+            # Warning: clicking one might change the DOM for others.
+            # It's safer to find one, click, wait, repeat until none found.
+            while True:
+                try:
+                    # Find *visible* close buttons only
+                    close_btn = self.driver.find_element(*DettagliOdALocators.TAB_CLOSE_BTN)
+                    if close_btn.is_displayed():
+                        self.driver.execute_script("arguments[0].click();", close_btn)
+                        time.sleep(0.5)
+                    else:
+                        break
+                except Exception:
+                    # No more close buttons found
+                    break
+        except Exception as e:
+            self.log(f"  ⚠️ Errore chiusura tab: {e}")
+
+    def _download(self, download_dir: Path, target_filename: str, button_locator: tuple) -> bool:
         try:
             files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
 
-            btn = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.EXPORT_EXCEL_TEXT))
+            btn = self.wait.until(EC.presence_of_element_located(button_locator))
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             time.sleep(0.5)
             try:
@@ -164,17 +251,23 @@ class DettagliOdAPage:
                 time.sleep(0.5)
 
             if downloaded_file:
-                new_name = f"{oda}_{contract}.xlsx"
-                new_path = download_dir / new_name
+                new_path = download_dir / target_filename
 
-                counter = 1
-                while new_path.exists() and new_path.resolve() != downloaded_file.resolve():
-                    new_path = download_dir / f"{oda}_{contract}_{counter}.xlsx"
-                    counter += 1
+                # Handle overwrite/uniqueness if needed, though user asked for specific name.
+                # If "lista_generale_oda.xlsx" exists, we might overwrite or append counter.
+                # Assuming overwrite is NOT desired for safe automation, adding counter if exists.
+                if new_path.exists():
+                    stem = new_path.stem
+                    suffix = new_path.suffix
+                    counter = 1
+                    while new_path.exists() and new_path.resolve() != downloaded_file.resolve():
+                        new_path = download_dir / f"{stem}_{counter}{suffix}"
+                        counter += 1
 
                 downloaded_file.rename(new_path)
                 self.log(f"  ✓ Scaricato: {new_path.name}")
                 return True
             return False
-        except Exception:
+        except Exception as e:
+            self.log(f"  ✗ Errore download: {e}")
             return False

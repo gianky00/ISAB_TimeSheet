@@ -31,7 +31,13 @@ class TestDettagliOdAPage:
         page = DettagliOdAPage(mock_driver)
         page.wait = MagicMock()
         page._download = MagicMock(return_value=True)
-        assert page.process_oda("123", "C1", "01.01.2025", Path(".")) is True
+        # Assuming process_oda(oda, contract, date_da, date_a, download_dir)
+        # Mock the results count check
+        count_label = MagicMock()
+        count_label.text = "Trovati : 1"
+        page.wait.until.return_value = count_label
+
+        assert page.process_oda("123", "C1", "01.01.2024", "01.01.2025", Path(".")) is True
 
 class TestDettagliOdABot:
     @patch('src.bots.dettagli_oda.bot.DettagliOdAPage')

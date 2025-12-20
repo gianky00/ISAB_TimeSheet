@@ -17,7 +17,7 @@ class DettagliOdABot(BaseBot):
     
     @staticmethod
     def get_description() -> str:
-        return "Scarica il dettaglio OdA"
+        return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
     
     @staticmethod
     def get_columns() -> list:
@@ -32,18 +32,18 @@ class DettagliOdABot(BaseBot):
     
     @property
     def description(self) -> str:
-        return "Scarica il dettaglio OdA"
+        return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
     
-    def __init__(self, data_a: str = "31.12.2025", fornitore: str = "KK10608 - COEMI S.R.L.", **kwargs):
-        # Remove extra arguments passed by the factory that BaseBot doesn't accept
-        kwargs.pop('data_da', None)
+    def __init__(self, data_da: str = "01.01.2024", data_a: str = "31.12.2025", fornitore: str = "KK10608 - COEMI S.R.L.", **kwargs):
         super().__init__(**kwargs)
+        self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
         if isinstance(data, dict):
             rows = data.get('rows', [])
+            self.data_da = data.get('data_da', self.data_da)
             self.data_a = data.get('data_a', self.data_a)
             self.fornitore = data.get('fornitore', self.fornitore)
         else:
@@ -54,9 +54,6 @@ class DettagliOdABot(BaseBot):
         self.log(f"Processamento {len(rows)} righe...")
         page = DettagliOdAPage(self.driver, self.log)
         
-        if not page.navigate_to_dettagli(): return False
-        if not page.setup_supplier(self.fornitore): return False
-        
         download_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
         success = 0
         
@@ -65,14 +62,23 @@ class DettagliOdABot(BaseBot):
             oda = str(row.get('numero_oda', '')).strip()
             contract = str(row.get('numero_contratto', '')).strip()
             
-            if not oda: continue
+            # Note: ODA can be empty for General List export
             
             self.log("-" * 40)
             self.log(f"Riga {i}: OdA={oda}, Contratto={contract}")
 
-            if page.process_oda(oda, contract, self.data_a, download_dir):
+            # Navigate and Setup for each row as required by the workflow (resetting tabs)
+            if not page.navigate_to_dettagli():
+                self.log("✗ Fallita navigazione iniziale per la riga.")
+                continue
+            if not page.setup_supplier(self.fornitore):
+                self.log("✗ Fallita selezione fornitore.")
+                continue
+
+            if page.process_oda(oda, contract, self.data_da, self.data_a, download_dir):
                 success += 1
             
             time.sleep(1)
 
+        page.logout()
         return success == len(rows)
