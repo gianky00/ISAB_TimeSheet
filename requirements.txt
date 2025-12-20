@@ -1,5 +1,5 @@
 # Core GUI
-PyQt6==6.6.1
+PyQt6==6.4.2
 
 # Web Automation
 selenium==4.18.1
