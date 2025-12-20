@@ -117,6 +117,10 @@ class ContabilitaManager:
                         # Legge il foglio. Intestazioni alla riga 2 (index 1) -> header=1
                         df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
 
+                        # Rimuovi sistematicamente l'ultima riga (presunta riga totali del file Excel)
+                        if not df.empty:
+                            df = df.iloc[:-1]
+
                         # Normalizza i nomi delle colonne per il mapping
                         # Rimuove spazi extra e converte in upper per confronto
                         df.columns = [str(c).strip().upper() for c in df.columns]

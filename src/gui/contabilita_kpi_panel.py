@@ -11,9 +11,9 @@ import pandas as pd
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect
+    QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect, QSizePolicy, QGraphicsOpacityEffect
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QParallelAnimationGroup
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation, QPoint
 from PyQt6.QtGui import QFont, QColor
 
 from src.core.contabilita_manager import ContabilitaManager
@@ -31,6 +31,7 @@ class KPIBigCard(QFrame):
             }}
         """)
         self.setMinimumWidth(200)
+        self.setMinimumHeight(120)
 
         # Effetto ombra
         shadow = QGraphicsDropShadowEffect(self)
@@ -64,7 +65,6 @@ class ContabilitaKPIPanel(QWidget):
         try:
             plt.style.use('seaborn-v0_8-darkgrid')
         except:
-            # Fallback se lo stile non esiste
             pass
 
         self._setup_ui()
@@ -96,10 +96,10 @@ class ContabilitaKPIPanel(QWidget):
         main_layout.addLayout(toolbar)
 
         # --- Scroll Area for Dashboard ---
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet("background-color: #f8f9fa;")
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll.setStyleSheet("background-color: #f8f9fa;")
 
         content = QWidget()
         content.setStyleSheet("background-color: #f8f9fa;")
@@ -129,49 +129,73 @@ class ContabilitaKPIPanel(QWidget):
         self.fig1 = Figure(figsize=(5, 4), dpi=100)
         self.fig1.patch.set_alpha(0) # Trasparente
         self.canvas1 = FigureCanvas(self.fig1)
-        self._style_chart_container(self.canvas1)
-        charts_grid.addWidget(self.canvas1, 0, 0)
+        self.container1 = self._create_chart_container(self.canvas1)
+        charts_grid.addWidget(self.container1, 0, 0)
 
         # Chart 2: Preventivato vs Ore per Mese (Bar)
         self.fig2 = Figure(figsize=(5, 4), dpi=100)
         self.fig2.patch.set_alpha(0)
         self.canvas2 = FigureCanvas(self.fig2)
-        self._style_chart_container(self.canvas2)
-        charts_grid.addWidget(self.canvas2, 0, 1)
+        self.container2 = self._create_chart_container(self.canvas2)
+        charts_grid.addWidget(self.container2, 0, 1)
 
         # Chart 3: Resa per Tipologia Specifiche (Bar H)
         self.fig3 = Figure(figsize=(5, 4), dpi=100)
         self.fig3.patch.set_alpha(0)
         self.canvas3 = FigureCanvas(self.fig3)
-        self._style_chart_container(self.canvas3)
-        charts_grid.addWidget(self.canvas3, 1, 0, 1, 2) # Span full width
+        self.container3 = self._create_chart_container(self.canvas3)
+        charts_grid.addWidget(self.container3, 1, 0)
+
+        # Chart 4: Andamento Resa Mensile (Line)
+        self.fig4 = Figure(figsize=(5, 4), dpi=100)
+        self.fig4.patch.set_alpha(0)
+        self.canvas4 = FigureCanvas(self.fig4)
+        self.container4 = self._create_chart_container(self.canvas4)
+        charts_grid.addWidget(self.container4, 1, 1)
+
+        # Chart 5: Completamento Attività
+        self.fig5 = Figure(figsize=(5, 2), dpi=100)
+        self.fig5.patch.set_alpha(0)
+        self.canvas5 = FigureCanvas(self.fig5)
+        self.container5 = self._create_chart_container(self.canvas5, height=200)
+        charts_grid.addWidget(self.container5, 2, 0, 1, 2)
 
         self.content_layout.addLayout(charts_grid)
         self.content_layout.addStretch()
 
-        scroll.setWidget(content)
-        main_layout.addWidget(scroll)
+        self.scroll.setWidget(content)
+        main_layout.addWidget(self.scroll)
 
-        # Preparazione animazioni
+        # Preparazione lista widget per animazioni
         self.cards = [self.card_totale, self.card_ore, self.card_resa, self.card_count]
-        self.charts = [self.canvas1, self.canvas2, self.canvas3]
+        self.charts = [self.container1, self.container2, self.container3, self.container4, self.container5]
 
-    def _style_chart_container(self, widget):
-        widget.setMinimumHeight(450)
-        widget.setStyleSheet("""
+    def _create_chart_container(self, widget, height=450):
+        """Crea un container stilizzato per il grafico."""
+        container = QWidget()
+        container.setMinimumHeight(height)
+        container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        container.setStyleSheet("""
             QWidget {
                 background-color: white;
                 border-radius: 12px;
                 border: 1px solid #e9ecef;
             }
         """)
-        # Ombra anche per i grafici
-        shadow = QGraphicsDropShadowEffect(widget)
+
+        # Ombra
+        shadow = QGraphicsDropShadowEffect(container)
         shadow.setBlurRadius(15)
         shadow.setXOffset(0)
         shadow.setYOffset(4)
         shadow.setColor(QColor(0, 0, 0, 30))
-        widget.setGraphicsEffect(shadow)
+        container.setGraphicsEffect(shadow)
+
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(widget)
+
+        return container
 
     def refresh_years(self):
         """Aggiorna combo box anni."""
@@ -188,29 +212,30 @@ class ContabilitaKPIPanel(QWidget):
         self.year_combo.blockSignals(False)
         self._load_kpi_data()
 
-        # Trigger animations on first load or refresh
+        # Avvia animazione
         self._animate_entry()
 
     def _animate_entry(self):
-        """Esegue animazione di entrata per cards e grafici."""
+        """Esegue animazione di entrata per cards e grafici (FadeIn)."""
         self.anim_group = QParallelAnimationGroup()
 
-        widgets = self.cards + self.charts
+        all_widgets = self.cards + self.charts
 
-        for i, widget in enumerate(widgets):
-            # Animazione Opacity (non supportata direttamente su tutti i widget Qt senza QGraphicsOpacityEffect)
-            # Faremo animazione Slide Up
+        for i, widget in enumerate(all_widgets):
+            # Crea effetto opacità
+            effect = QGraphicsOpacityEffect(widget)
+            widget.setGraphicsEffect(effect)
 
-            start_geo = widget.geometry()
-            # Non possiamo fidarci della geometry se non è mostrato, ma in un layout è gestito dal layout.
-            # Alternativa: Animiamo una proprietà custom o usiamo solo dissolvenza se possibile.
-            # Semplice: non facciamo animazione complessa che rompe il layout.
-            # Facciamo solo un repaint forzato o lasciamo stare per stabilità se non siamo sicuri delle coordinate.
-            pass
+            # Animazione Opacity 0 -> 1
+            anim = QPropertyAnimation(effect, b"opacity")
+            anim.setDuration(600 + (i * 100)) # Staggered
+            anim.setStartValue(0)
+            anim.setEndValue(1)
+            anim.setEasingCurve(QEasingCurve.Type.OutQuad)
 
-        # Nota: Animare widget in un layout QVBox è complesso perché il layout controlla la posizione.
-        # Meglio non rischiare glitch visivi senza un container assoluto.
-        # Lascio la struttura pronta per il futuro.
+            self.anim_group.addAnimation(anim)
+
+        self.anim_group.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
     def _load_kpi_data(self):
         """Carica i dati e aggiorna grafici."""
@@ -222,8 +247,7 @@ class ContabilitaKPIPanel(QWidget):
             year = int(year_text)
             data = ContabilitaManager.get_data_by_year(year)
 
-            # Converti in DataFrame per analisi facile
-            # Indices match ContabilitaManager query order
+            # Converti in DataFrame
             cols = [
                 'data_prev', 'mese', 'n_prev', 'totale_prev', 'attivita', 'tcl', 'odc',
                 'stato_attivita', 'tipologia', 'ore_sp', 'resa', 'annotazioni',
@@ -251,6 +275,8 @@ class ContabilitaKPIPanel(QWidget):
             self._plot_stato_attivita(df)
             self._plot_prev_ore_mese(df)
             self._plot_resa_tipologia(df)
+            self._plot_andamento_resa(df)
+            self._plot_completamento(df)
 
         except Exception as e:
             print(f"Errore caricamento KPI: {e}")
@@ -263,18 +289,22 @@ class ContabilitaKPIPanel(QWidget):
             self.canvas1.draw()
             return
 
-        counts = df['stato_attivita'].value_counts()
+        # FILTRO ESCLUSIONE FORNITURA
+        df_filtered = df[~df['stato_attivita'].str.contains('FORNITURA', case=False, na=False)]
+
+        counts = df_filtered['stato_attivita'].value_counts()
         if counts.empty:
+            ax.text(0.5, 0.5, 'Nessun dato (esclusa Fornitura)', ha='center', va='center')
+            self.canvas1.draw()
             return
 
-        # Professional palette
         colors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1', '#0dcaf0']
 
         wedges, texts, autotexts = ax.pie(
             counts, labels=counts.index, autopct='%1.1f%%', startangle=90,
             colors=colors[:len(counts)], textprops=dict(color="black", fontsize=9)
         )
-        ax.set_title('Distribuzione Stato Attività', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        ax.set_title('Distribuzione Stato Attività (No Fornitura)', fontsize=14, fontweight='bold', color='#495057', pad=20)
 
         plt.setp(texts, fontsize=9)
         plt.setp(autotexts, size=10, weight="bold", color="white")
@@ -303,10 +333,8 @@ class ContabilitaKPIPanel(QWidget):
             return
 
         x = range(len(grouped))
-        # Bar chart for Money
-        bars = ax.bar(x, grouped['totale_prev'], width=0.4, label='Totale Prev (€)', color='#198754', align='center', alpha=0.9)
+        ax.bar(x, grouped['totale_prev'], width=0.4, label='Totale Prev (€)', color='#198754', align='center', alpha=0.9)
 
-        # Line chart for Hours
         ax2 = ax.twinx()
         line = ax2.plot(x, grouped['ore_sp'], label='Ore Spese', color='#0d6efd', marker='o', linewidth=3, markersize=8)
 
@@ -315,13 +343,12 @@ class ContabilitaKPIPanel(QWidget):
 
         ax.set_title('Preventivato (€) e Ore Spese per Mese', fontsize=14, fontweight='bold', color='#495057', pad=20)
 
-        # Legend combinata
         lines, labels = ax.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax2.legend(lines + lines2, labels + labels2, loc='upper left')
 
         ax.grid(True, axis='y', alpha=0.3)
-        ax2.grid(False) # Disable grid for second axis to avoid clutter
+        ax2.grid(False)
 
         self.fig2.tight_layout()
         self.canvas2.draw()
@@ -334,40 +361,99 @@ class ContabilitaKPIPanel(QWidget):
             self.canvas3.draw()
             return
 
-        # Filtra solo le tipologie richieste
         target_types = ['SQUADRA', 'FERMATA', 'CANONE', 'MISURA', 'CHIAMATA']
-        # Converti a upper per confronto case-insensitive
         df['tipologia_upper'] = df['tipologia'].str.upper().str.strip()
 
-        # Filtra il dataframe
         filtered_df = df[df['tipologia_upper'].isin(target_types)]
 
         if filtered_df.empty:
-            # Se vuoto, mostra messaggio o grafico vuoto
             ax.text(0.5, 0.5, 'Nessun dato per le tipologie selezionate',
                     horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
             self.canvas3.draw()
             return
 
-        # Raggruppa e calcola media resa
         grouped = filtered_df.groupby('tipologia_upper')['resa'].mean().sort_values(ascending=True)
 
         if grouped.empty:
             return
 
-        # Colori custom per ogni tipologia (opzionale, o unico colore)
         bars = ax.barh(grouped.index, grouped.values, color='#fd7e14', alpha=0.9, height=0.6)
 
-        # Aggiungi etichette valore sulle barre
         for i, v in enumerate(grouped.values):
             ax.text(v + 0.5, i, f"{v:.2f}", color='black', va='center', fontweight='bold')
 
         ax.set_title('Resa Media per Tipologia (Target)', fontsize=14, fontweight='bold', color='#495057', pad=20)
         ax.grid(axis='x', linestyle='--', alpha=0.5)
 
-        # Imposta limite x per spazio etichette
         if not grouped.empty:
             ax.set_xlim(0, grouped.max() * 1.15)
 
         self.fig3.tight_layout()
         self.canvas3.draw()
+
+    def _plot_andamento_resa(self, df):
+        self.fig4.clear()
+        ax = self.fig4.add_subplot(111)
+
+        if df.empty:
+            self.canvas4.draw()
+            return
+
+        months_order = [
+            'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
+            'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'
+        ]
+        df['mese_lower'] = df['mese'].str.lower().str.strip()
+        df['mese_cat'] = pd.Categorical(df['mese_lower'], categories=months_order, ordered=True)
+
+        df_resa = df[df['resa'] > 0]
+        grouped = df_resa.groupby('mese_cat', observed=True)['resa'].mean()
+
+        if grouped.empty:
+            ax.text(0.5, 0.5, 'Nessun dato Resa', ha='center', va='center')
+            self.canvas4.draw()
+            return
+
+        x = range(len(grouped))
+        ax.plot(x, grouped.values, color='#6f42c1', marker='o', linewidth=3, markersize=8)
+
+        ax.fill_between(x, grouped.values, color='#6f42c1', alpha=0.1)
+
+        ax.set_xticks(x)
+        ax.set_xticklabels([m.capitalize()[:3] for m in grouped.index], rotation=45)
+
+        for i, v in enumerate(grouped.values):
+            ax.text(i, v + (v*0.05), f"{v:.1f}", ha='center', fontsize=9, fontweight='bold', color='#6f42c1')
+
+        ax.set_title('Andamento Resa Media Mensile', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        ax.grid(True, linestyle='--', alpha=0.5)
+
+        self.fig4.tight_layout()
+        self.canvas4.draw()
+
+    def _plot_completamento(self, df):
+        self.fig5.clear()
+        ax = self.fig5.add_axes([0.05, 0.3, 0.9, 0.4])
+
+        if df.empty:
+            self.canvas5.draw()
+            return
+
+        total = len(df)
+        contabilizzate = len(df[df['stato_attivita'].str.contains('CONTABILIZZA', case=False, na=False)])
+        percent = (contabilizzate / total * 100) if total > 0 else 0
+
+        ax.barh(0, 100, height=0.5, color='#e9ecef', edgecolor='none')
+        ax.barh(0, percent, height=0.5, color='#198754', edgecolor='none')
+
+        ax.text(50, 0, f"{percent:.1f}% ATTIVITÀ CONTABILIZZATE", ha='center', va='center',
+                color='white' if percent > 50 and percent < 60 else ('black' if percent < 50 else 'white'),
+                fontweight='bold', fontsize=12)
+
+        ax.set_xlim(0, 100)
+        ax.set_ylim(-0.5, 0.5)
+        ax.axis('off')
+
+        ax.set_title('Stato Avanzamento Globale', fontsize=14, fontweight='bold', color='#495057', pad=10)
+
+        self.canvas5.draw()
