@@ -8,20 +8,23 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect, QSizePolicy, QGraphicsOpacityEffect
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation, QPoint
-from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation
+from PyQt6.QtGui import QColor
 
 from src.core.contabilita_manager import ContabilitaManager
 
+# Costante per il costo orario aziendale standard
+HOURLY_COST_STD = 27.43
 
 class KPIBigCard(QFrame):
     """Card per mostrare un KPI numerico principale."""
-    def __init__(self, title, value, color="#0d6efd", parent=None):
+    def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None):
         super().__init__(parent)
         self.setStyleSheet(f"""
             QFrame {{
@@ -43,17 +46,23 @@ class KPIBigCard(QFrame):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(10)
+        layout.setSpacing(5)
 
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("color: #6c757d; font-size: 14px; font-weight: bold; border: none; background: transparent;")
+        lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;")
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_title)
 
         self.lbl_value = QLabel(value)
-        self.lbl_value.setStyleSheet(f"color: {color}; font-size: 32px; font-weight: 800; border: none; background: transparent;")
+        self.lbl_value.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
         self.lbl_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.lbl_value)
+
+        if subtitle:
+            lbl_sub = QLabel(subtitle)
+            lbl_sub.setStyleSheet("color: #adb5bd; font-size: 11px; border: none; background: transparent;")
+            lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(lbl_sub)
 
 
 class ContabilitaKPIPanel(QWidget):
@@ -69,6 +78,9 @@ class ContabilitaKPIPanel(QWidget):
 
         self._setup_ui()
         self.refresh_years()
+
+        # Variabili per annotazioni interattive
+        self.annot = None
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -107,13 +119,17 @@ class ContabilitaKPIPanel(QWidget):
         self.content_layout.setSpacing(30)
         self.content_layout.setContentsMargins(10, 10, 10, 10)
 
-        # 1. Scorecards Row
+        # --- ROW 1: General Scorecards ---
+        lbl_sect1 = QLabel("METRICHE GENERALI")
+        lbl_sect1.setStyleSheet("color: #495057; font-weight: bold; font-size: 16px; margin-bottom: 10px;")
+        self.content_layout.addWidget(lbl_sect1)
+
         self.cards_layout = QHBoxLayout()
         self.cards_layout.setSpacing(20)
-        self.card_totale = KPIBigCard("TOTALE PREVENTIVATO", "€ 0,00", "#198754") # Green
-        self.card_ore = KPIBigCard("ORE SPESE TOTALI", "0", "#0d6efd") # Blue
-        self.card_resa = KPIBigCard("RESA MEDIA", "0", "#fd7e14") # Orange
-        self.card_count = KPIBigCard("N° COMMESSE", "0", "#6f42c1") # Purple
+        self.card_totale = KPIBigCard("TOTALE PREVENTIVATO", "€ 0,00", "#198754")
+        self.card_ore = KPIBigCard("ORE SPESE TOTALI", "0", "#0d6efd")
+        self.card_resa = KPIBigCard("RESA MEDIA", "0", "#fd7e14")
+        self.card_count = KPIBigCard("N° COMMESSE", "0", "#6f42c1")
 
         self.cards_layout.addWidget(self.card_totale)
         self.cards_layout.addWidget(self.card_ore)
@@ -121,13 +137,36 @@ class ContabilitaKPIPanel(QWidget):
         self.cards_layout.addWidget(self.card_count)
         self.content_layout.addLayout(self.cards_layout)
 
-        # 2. Charts Grid
+        # --- ROW 2: Deep Technical Analysis ---
+        lbl_sect2 = QLabel("ANALISI TECNICA PROFONDA")
+        lbl_sect2.setStyleSheet("color: #495057; font-weight: bold; font-size: 16px; margin-top: 20px; margin-bottom: 10px;")
+        self.content_layout.addWidget(lbl_sect2)
+
+        self.tech_cards_layout = QHBoxLayout()
+        self.tech_cards_layout.setSpacing(20)
+
+        self.card_margine = KPIBigCard("MARGINE OPERATIVO STIMATO", "€ 0,00", "#20c997", subtitle=f"Base Costo Orario: € {HOURLY_COST_STD}")
+        self.card_margine_perc = KPIBigCard("MARGINALITÀ %", "0.0 %", "#20c997", subtitle="Su Totale Preventivato")
+        self.card_eff_resa = KPIBigCard("EFFICIENZA DI RESA", "€ 0,00 / h", "#6610f2", subtitle="Resa / Ore Spese")
+        self.card_val_ora = KPIBigCard("VALORE PER ORA SPESA", "€ 0,00 / h", "#d63384", subtitle="Totale Prev / Ore Spese")
+
+        self.tech_cards_layout.addWidget(self.card_margine)
+        self.tech_cards_layout.addWidget(self.card_margine_perc)
+        self.tech_cards_layout.addWidget(self.card_eff_resa)
+        self.tech_cards_layout.addWidget(self.card_val_ora)
+        self.content_layout.addLayout(self.tech_cards_layout)
+
+        # --- ROW 3: Charts Grid ---
+        lbl_sect3 = QLabel("GRAFICI ANALITICI")
+        lbl_sect3.setStyleSheet("color: #495057; font-weight: bold; font-size: 16px; margin-top: 20px; margin-bottom: 10px;")
+        self.content_layout.addWidget(lbl_sect3)
+
         charts_grid = QGridLayout()
         charts_grid.setSpacing(20)
 
-        # Chart 1: Stato Attività (Pie)
+        # Chart 1: Stato Attività (Pie) - Interactive
         self.fig1 = Figure(figsize=(5, 4), dpi=100)
-        self.fig1.patch.set_alpha(0) # Trasparente
+        self.fig1.patch.set_alpha(0)
         self.canvas1 = FigureCanvas(self.fig1)
         self.container1 = self._create_chart_container(self.canvas1)
         charts_grid.addWidget(self.container1, 0, 0)
@@ -139,7 +178,7 @@ class ContabilitaKPIPanel(QWidget):
         self.container2 = self._create_chart_container(self.canvas2)
         charts_grid.addWidget(self.container2, 0, 1)
 
-        # Chart 3: Resa per Tipologia Specifiche (Bar H)
+        # Chart 3: Analisi Margine per Tipologia (Nuovo Chart)
         self.fig3 = Figure(figsize=(5, 4), dpi=100)
         self.fig3.patch.set_alpha(0)
         self.canvas3 = FigureCanvas(self.fig3)
@@ -167,7 +206,8 @@ class ContabilitaKPIPanel(QWidget):
         main_layout.addWidget(self.scroll)
 
         # Preparazione lista widget per animazioni
-        self.cards = [self.card_totale, self.card_ore, self.card_resa, self.card_count]
+        self.cards = [self.card_totale, self.card_ore, self.card_resa, self.card_count,
+                      self.card_margine, self.card_margine_perc, self.card_eff_resa, self.card_val_ora]
         self.charts = [self.container1, self.container2, self.container3, self.container4, self.container5]
 
     def _create_chart_container(self, widget, height=450):
@@ -237,6 +277,10 @@ class ContabilitaKPIPanel(QWidget):
 
         self.anim_group.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
+    def _format_currency(self, value):
+        """Formatta valuta in italiano: 1.000,00"""
+        return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
     def _load_kpi_data(self):
         """Carica i dati e aggiorna grafici."""
         year_text = self.year_combo.currentText()
@@ -260,21 +304,39 @@ class ContabilitaKPIPanel(QWidget):
             df['ore_sp'] = pd.to_numeric(df['ore_sp'], errors='coerce').fillna(0)
             df['resa'] = pd.to_numeric(df['resa'], errors='coerce').fillna(0)
 
-            # 1. Update Scorecards
+            # --- 1. Update General Scorecards ---
             tot_prev = df['totale_prev'].sum()
             tot_ore = df['ore_sp'].sum()
             avg_resa = df['resa'].mean() if not df.empty else 0
             count = len(df)
 
-            self.card_totale.lbl_value.setText(f"€ {tot_prev:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            self.card_ore.lbl_value.setText(f"{tot_ore:,.2f}")
-            self.card_resa.lbl_value.setText(f"{avg_resa:.2f}")
+            self.card_totale.lbl_value.setText(f"€ {self._format_currency(tot_prev)}")
+            self.card_ore.lbl_value.setText(f"{self._format_currency(tot_ore)}")
+            self.card_resa.lbl_value.setText(f"{self._format_currency(avg_resa)}")
             self.card_count.lbl_value.setText(str(count))
 
-            # 2. Update Charts
+            # --- 2. Update Technical Scorecards ---
+            # Costo totale stimato
+            costo_totale_stimato = tot_ore * HOURLY_COST_STD
+            margine_operativo = tot_prev - costo_totale_stimato
+
+            marginalita_perc = (margine_operativo / tot_prev * 100) if tot_prev > 0 else 0
+            efficienza_resa = (df['resa'].sum() / tot_ore) if tot_ore > 0 else 0
+            valore_per_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
+
+            self.card_margine.lbl_value.setText(f"€ {self._format_currency(margine_operativo)}")
+            self.card_margine.lbl_value.setStyleSheet(f"color: {'#20c997' if margine_operativo >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
+
+            self.card_margine_perc.lbl_value.setText(f"{marginalita_perc:.1f} %".replace(".", ","))
+            self.card_margine_perc.lbl_value.setStyleSheet(f"color: {'#20c997' if marginalita_perc >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
+
+            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(efficienza_resa)} / h")
+            self.card_val_ora.lbl_value.setText(f"€ {self._format_currency(valore_per_ora)} / h")
+
+            # --- 3. Update Charts ---
             self._plot_stato_attivita(df)
             self._plot_prev_ore_mese(df)
-            self._plot_resa_tipologia(df)
+            self._plot_margine_tipologia(df) # Sostituisce resa_tipologia vecchio con uno piu tecnico
             self._plot_andamento_resa(df)
             self._plot_completamento(df)
 
@@ -282,6 +344,7 @@ class ContabilitaKPIPanel(QWidget):
             print(f"Errore caricamento KPI: {e}")
 
     def _plot_stato_attivita(self, df):
+        """Pie chart interattivo: mostra etichette solo al passaggio del mouse."""
         self.fig1.clear()
         ax = self.fig1.add_subplot(111)
 
@@ -294,20 +357,65 @@ class ContabilitaKPIPanel(QWidget):
 
         counts = df_filtered['stato_attivita'].value_counts()
         if counts.empty:
-            ax.text(0.5, 0.5, 'Nessun dato (esclusa Fornitura)', ha='center', va='center')
+            ax.text(0.5, 0.5, 'Nessun dato', ha='center', va='center')
             self.canvas1.draw()
             return
 
         colors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1', '#0dcaf0']
 
-        wedges, texts, autotexts = ax.pie(
-            counts, labels=counts.index, autopct='%1.1f%%', startangle=90,
-            colors=colors[:len(counts)], textprops=dict(color="black", fontsize=9)
+        # Create pie without labels and autopct (hidden by default)
+        wedges, texts = ax.pie(
+            counts,
+            labels=None, # No static labels
+            startangle=90,
+            colors=colors[:len(counts)],
+            wedgeprops=dict(width=0.6, edgecolor='w') # Donut style for cleaner look
         )
-        ax.set_title('Distribuzione Stato Attività (No Fornitura)', fontsize=14, fontweight='bold', color='#495057', pad=20)
 
-        plt.setp(texts, fontsize=9)
-        plt.setp(autotexts, size=10, weight="bold", color="white")
+        ax.set_title('Distribuzione Stato Attività', fontsize=14, fontweight='bold', color='#495057', pad=20)
+
+        # --- Interactive Annotation ---
+        self.annot = ax.annotate("", xy=(0,0), xytext=(0,0), textcoords="offset points",
+                                bbox=dict(boxstyle="round", fc="black", ec="none", alpha=0.9),
+                                color="white", fontweight="bold", fontsize=10,
+                                arrowprops=dict(arrowstyle="-", color="black"))
+        self.annot.set_visible(False)
+
+        def update_annot(wedge, idx):
+            # Posizione angolare media
+            ang = (wedge.theta2 - wedge.theta1)/2. + wedge.theta1
+            y = np.sin(np.deg2rad(ang))
+            x = np.cos(np.deg2rad(ang))
+
+            # Posiziona annotazione un po' fuori dal centro
+            self.annot.xy = (x*0.7, y*0.7)
+
+            count = counts.iloc[idx]
+            total = counts.sum()
+            percent = count / total * 100
+            label = counts.index[idx]
+
+            text = f"{label}\n{percent:.1f}% ({count})"
+            self.annot.set_text(text)
+            self.annot.get_bbox_patch().set_alpha(0.9)
+
+        def hover(event):
+            vis = self.annot.get_visible()
+            if event.inaxes == ax:
+                found = False
+                for i, wedge in enumerate(wedges):
+                    contains, _ = wedge.contains(event)
+                    if contains:
+                        update_annot(wedge, i)
+                        self.annot.set_visible(True)
+                        self.fig1.canvas.draw_idle()
+                        found = True
+                        break
+                if not found and vis:
+                    self.annot.set_visible(False)
+                    self.fig1.canvas.draw_idle()
+
+        self.fig1.canvas.mpl_connect("motion_notify_event", hover)
 
         self.fig1.tight_layout()
         self.canvas1.draw()
@@ -353,7 +461,8 @@ class ContabilitaKPIPanel(QWidget):
         self.fig2.tight_layout()
         self.canvas2.draw()
 
-    def _plot_resa_tipologia(self, df):
+    def _plot_margine_tipologia(self, df):
+        """Grafico a Barre: Margine Operativo vs Costo per Tipologia."""
         self.fig3.clear()
         ax = self.fig3.add_subplot(111)
 
@@ -367,26 +476,40 @@ class ContabilitaKPIPanel(QWidget):
         filtered_df = df[df['tipologia_upper'].isin(target_types)]
 
         if filtered_df.empty:
-            ax.text(0.5, 0.5, 'Nessun dato per le tipologie selezionate',
-                    horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+            ax.text(0.5, 0.5, 'Nessun dato per le tipologie target',
+                    ha='center', va='center')
             self.canvas3.draw()
             return
 
-        grouped = filtered_df.groupby('tipologia_upper')['resa'].mean().sort_values(ascending=True)
+        # Raggruppa e calcola Margine e Costo
+        # Margine = Prev - (Ore * Costo_Std)
+        # Costo = Ore * Costo_Std
+
+        # FIX: Evita FutureWarning su groupby().apply() con colonne di raggruppamento
+        # Raggruppiamo esplicitamente solo le colonne numeriche necessarie o usiamo include_groups=False se pandas > 2.2
+        # Un modo robusto è calcolare le somme prima
+
+        grouped_sums = filtered_df.groupby('tipologia_upper')[['totale_prev', 'ore_sp']].sum()
+        grouped_sums['Margine'] = grouped_sums['totale_prev'] - (grouped_sums['ore_sp'] * HOURLY_COST_STD)
+        grouped_sums['Costo'] = grouped_sums['ore_sp'] * HOURLY_COST_STD
+
+        grouped = grouped_sums.sort_values(by='Margine', ascending=True)
 
         if grouped.empty:
             return
 
-        bars = ax.barh(grouped.index, grouped.values, color='#fd7e14', alpha=0.9, height=0.6)
+        y = np.arange(len(grouped))
+        height = 0.35
 
-        for i, v in enumerate(grouped.values):
-            ax.text(v + 0.5, i, f"{v:.2f}", color='black', va='center', fontweight='bold')
+        ax.barh(y - height/2, grouped['Margine'], height, label='Margine Operativo', color='#20c997', alpha=0.9)
+        ax.barh(y + height/2, grouped['Costo'], height, label='Costo Stimato', color='#dc3545', alpha=0.6)
 
-        ax.set_title('Resa Media per Tipologia (Target)', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        ax.set_yticks(y)
+        ax.set_yticklabels(grouped.index)
+        ax.legend()
+
+        ax.set_title('Margine Operativo vs Costo per Tipologia', fontsize=14, fontweight='bold', color='#495057', pad=20)
         ax.grid(axis='x', linestyle='--', alpha=0.5)
-
-        if not grouped.empty:
-            ax.set_xlim(0, grouped.max() * 1.15)
 
         self.fig3.tight_layout()
         self.canvas3.draw()
