@@ -990,8 +990,11 @@ class CaricoTSPanel(BaseBotPanel):
         self.bot_started.emit()
 
 
-class TimbraturePanel(BaseBotPanel):
-    """Pannello per il bot Timbrature."""
+class TimbratureBotPanel(BaseBotPanel):
+    """Pannello per il bot Timbrature (Controlli e Log)."""
+
+    # Segnale per notificare che i dati sono stati aggiornati (e il DB deve ricaricare)
+    data_updated = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(
@@ -999,10 +1002,8 @@ class TimbraturePanel(BaseBotPanel):
             bot_description="Scarica e gestisci le timbrature del personale",
             parent=parent
         )
-        self.db_path = Path("data/timbrature_Isab.db")
         self._setup_content()
         self._load_saved_data()
-        self._load_db_data()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -1120,96 +1121,6 @@ class TimbraturePanel(BaseBotPanel):
 
         self.content_layout.addWidget(params_group)
 
-        # --- Sezione Database ---
-        db_group = QGroupBox("🗄️ Database Timbrature")
-        db_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
-        db_layout = QVBoxLayout(db_group)
-
-        # Search bar
-        search_layout = QHBoxLayout()
-        search_label = QLabel("🔍 Filtra:")
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca per nome, cognome, data...")
-        self.search_input.textChanged.connect(self._filter_data)
-        search_layout.addWidget(search_label)
-        search_layout.addWidget(self.search_input)
-
-        # Import Button
-        import_btn = QPushButton("📥 Importa Excel")
-        import_btn.setToolTip("Importa manualmente un file Excel di timbrature")
-        import_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #17a2b8;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-weight: bold;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #138496;
-            }
-        """)
-        import_btn.clicked.connect(self._import_excel_manually)
-        search_layout.addWidget(import_btn)
-
-        db_layout.addLayout(search_layout)
-
-        # Table
-        self.db_table = ExcelTableWidget()
-        self.db_table.setColumnCount(7)
-        self.db_table.setHorizontalHeaderLabels([
-            "Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito Timbratura"
-        ])
-
-        header = self.db_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-
-        self.db_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                background-color: white;
-                gridline-color: #e9ecef;
-                font-size: 13px;
-            }
-            QTableWidget::item {
-                padding: 5px;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                padding: 8px;
-                border: none;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-            }
-        """)
-        self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        # setSelectionBehavior e setSelectionMode sono già impostati in ExcelTableWidget.__init__
-        # Ma per sicurezza e chiarezza li reimpostiamo se necessario, o ci fidiamo di ExcelTableWidget.
-        # ExcelTableWidget imposta:
-        # self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        # self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-
-        db_layout.addWidget(self.db_table)
-
-        self.content_layout.addWidget(db_group)
-
     def _get_date_style(self):
         return """
             QDateEdit {
@@ -1275,6 +1186,191 @@ class TimbraturePanel(BaseBotPanel):
         config_manager.set_config_value("last_timbrature_date_da", self.date_da_edit.date().toString("dd.MM.yyyy"))
         config_manager.set_config_value("last_timbrature_date_a", self.date_a_edit.date().toString("dd.MM.yyyy"))
 
+    def _on_start(self):
+        username, password = self.get_credentials()
+
+        if not username or not password:
+            QMessageBox.warning(self, "Credenziali mancanti", "Configura le credenziali ISAB nelle Impostazioni.")
+            return
+
+        fornitore = self.fornitore_combo.currentText()
+        if not fornitore:
+            QMessageBox.warning(self, "Fornitore mancante", "Seleziona un fornitore.")
+            return
+
+        self._save_data()
+
+        data_da = self.date_da_edit.date().toString("dd.MM.yyyy")
+        data_a = self.date_a_edit.date().toString("dd.MM.yyyy")
+
+        from src.bots import create_bot
+        config = config_manager.load_config()
+
+        bot = create_bot(
+            "timbrature",
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=config_manager.get_download_path(),
+            fornitore=fornitore,
+            data_da=data_da,
+            data_a=data_a
+        )
+
+        if not bot:
+            QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
+            return
+
+        self.worker = BotWorker(bot, {
+            "fornitore": fornitore,
+            "data_da": data_da,
+            "data_a": data_a
+        })
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+
+        # Emetti segnale di update se successo
+        self.worker.finished_signal.connect(lambda s: self.data_updated.emit() if s else None)
+
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.status_indicator.set_status("running")
+
+        self.log_widget.clear()
+        self.log_widget.append("▶ Avvio bot Timbrature...")
+        self.log_widget.append(f"  Fornitore: {fornitore}")
+        self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
+
+        self.worker.start()
+        self.bot_started.emit()
+
+
+class TimbratureDBPanel(QWidget):
+    """Pannello per la visualizzazione del Database Timbrature Isab."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.db_path = Path("data/timbrature_Isab.db")
+        self._setup_ui()
+        self.refresh_data()
+
+    def _setup_ui(self):
+        """Configura l'interfaccia utente."""
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(15, 15, 15, 15)
+        self.main_layout.setSpacing(15)
+
+        # --- Sezione Database ---
+        db_group = QGroupBox("🗄️ Database Timbrature")
+        db_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-size: 16px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+            }
+        """)
+        db_layout = QVBoxLayout(db_group)
+
+        # Search bar
+        search_layout = QHBoxLayout()
+        search_label = QLabel("🔍 Filtra:")
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Cerca per nome, cognome, data...")
+        self.search_input.textChanged.connect(self._filter_data)
+        search_layout.addWidget(search_label)
+        search_layout.addWidget(self.search_input)
+
+        # Import Button
+        import_btn = QPushButton("📥 Importa Excel")
+        import_btn.setToolTip("Importa manualmente un file Excel di timbrature")
+        import_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #17a2b8;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #138496;
+            }
+        """)
+        import_btn.clicked.connect(self._import_excel_manually)
+        search_layout.addWidget(import_btn)
+
+        # Refresh Button
+        refresh_btn = QPushButton("🔄 Aggiorna")
+        refresh_btn.setToolTip("Ricarica i dati dal database")
+        refresh_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #5a6268;
+            }
+        """)
+        refresh_btn.clicked.connect(self.refresh_data)
+        search_layout.addWidget(refresh_btn)
+
+        db_layout.addLayout(search_layout)
+
+        # Table
+        self.db_table = ExcelTableWidget()
+        self.db_table.setColumnCount(7)
+        self.db_table.setHorizontalHeaderLabels([
+            "Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito Timbratura"
+        ])
+
+        header = self.db_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+        self.db_table.setStyleSheet("""
+            QTableWidget {
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                background-color: white;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+            }
+            QTableWidget::item {
+                padding: 5px;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                padding: 8px;
+                border: none;
+                border-bottom: 2px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
+        self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+
+        db_layout.addWidget(self.db_table)
+
+        self.main_layout.addWidget(db_group)
+
+    def refresh_data(self):
+        """Metodo pubblico per ricaricare i dati."""
+        self._load_db_data()
+
     def _load_db_data(self):
         """Carica i dati dal database nella tabella."""
         if not self.db_path.exists():
@@ -1289,7 +1385,8 @@ class TimbraturePanel(BaseBotPanel):
 
             self._update_table(rows)
         except Exception as e:
-            self.log_widget.append(f"Errore caricamento DB: {e}")
+            # Qui non abbiamo un log widget, usiamo print o potremmo aggiungere un piccolo status bar
+            print(f"Errore caricamento DB: {e}")
 
     def _update_table(self, rows):
         """Aggiorna la tabella con i dati forniti."""
@@ -1334,25 +1431,20 @@ class TimbraturePanel(BaseBotPanel):
         try:
             from src.bots.timbrature.bot import TimbratureBot
 
-            self.log_widget.append(f"🔄 Importazione manuale avviata: {Path(file_path).name}...")
-
-            # Callback per loggare nella GUI
+            # Callback per loggare (in questo caso useremo print o QMessageBox poiché non abbiamo log widget)
             def gui_log(msg):
-                self.log_widget.append(msg)
+                print(msg)
 
             # Usa il metodo statico del bot
             success = TimbratureBot.import_to_db_static(file_path, self.db_path, gui_log)
 
             if success:
-                self.log_widget.append("✅ Importazione manuale completata.")
                 self._load_db_data() # Ricarica la tabella
                 QMessageBox.information(self, "Successo", "Dati importati correttamente nel database.")
             else:
-                self.log_widget.append("❌ Importazione fallita (vedi log).")
-                QMessageBox.warning(self, "Errore", "Impossibile importare il file. Controlla il log.")
+                QMessageBox.warning(self, "Errore", "Impossibile importare il file. Controlla la console per i dettagli.")
 
         except Exception as e:
-            self.log_widget.append(f"❌ Errore critico importazione: {e}")
             QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
 
     def _filter_data(self, text):
@@ -1369,7 +1461,6 @@ class TimbraturePanel(BaseBotPanel):
 
             if text:
                 # Cerca corrispondenza di TUTTE le parole cercate in QUALSIASI colonna rilevante
-                # Esempio: "Mario Rossi" -> (nome LIKE %mario% OR cognome LIKE %mario% ...) AND (nome LIKE %rossi% OR ...)
                 search_terms = text.lower().split()
                 conditions = []
 
@@ -1421,62 +1512,4 @@ class TimbraturePanel(BaseBotPanel):
             self._update_table(rows)
 
         except Exception as e:
-            self.log_widget.append(f"Errore filtro: {e}")
-
-    def _on_start(self):
-        username, password = self.get_credentials()
-
-        if not username or not password:
-            QMessageBox.warning(self, "Credenziali mancanti", "Configura le credenziali ISAB nelle Impostazioni.")
-            return
-
-        fornitore = self.fornitore_combo.currentText()
-        if not fornitore:
-            QMessageBox.warning(self, "Fornitore mancante", "Seleziona un fornitore.")
-            return
-
-        self._save_data()
-
-        data_da = self.date_da_edit.date().toString("dd.MM.yyyy")
-        data_a = self.date_a_edit.date().toString("dd.MM.yyyy")
-
-        from src.bots import create_bot
-        config = config_manager.load_config()
-
-        bot = create_bot(
-            "timbrature",
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path(),
-            fornitore=fornitore,
-            data_da=data_da,
-            data_a=data_a
-        )
-
-        if not bot:
-            QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
-            return
-
-        self.worker = BotWorker(bot, {
-            "fornitore": fornitore,
-            "data_da": data_da,
-            "data_a": data_a
-        })
-        self.worker.log_signal.connect(self._on_log)
-        self.worker.status_signal.connect(self._on_status)
-        self.worker.finished_signal.connect(self._on_worker_finished)
-        self.worker.finished_signal.connect(lambda s: self._load_db_data() if s else None) # Ricarica DB se successo
-
-        self.start_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
-        self.status_indicator.set_status("running")
-
-        self.log_widget.clear()
-        self.log_widget.append("▶ Avvio bot Timbrature...")
-        self.log_widget.append(f"  Fornitore: {fornitore}")
-        self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
-
-        self.worker.start()
-        self.bot_started.emit()
+            print(f"Errore filtro: {e}")
