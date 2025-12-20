@@ -35,6 +35,8 @@ class DettagliOdABot(BaseBot):
         return "Scarica il dettaglio OdA"
     
     def __init__(self, data_a: str = "31.12.2025", fornitore: str = "KK10608 - COEMI S.R.L.", **kwargs):
+        # Remove extra arguments passed by the factory that BaseBot doesn't accept
+        kwargs.pop('data_da', None)
         super().__init__(**kwargs)
         self.data_a = data_a
         self.fornitore = fornitore

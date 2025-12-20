@@ -41,6 +41,9 @@ class ScaricaTSBot(BaseBot):
         return "Scarica i timesheet dal portale ISAB"
     
     def __init__(self, data_da: str = "01.01.2025", **kwargs):
+        # Clean kwargs for BaseBot
+        kwargs.pop('fornitore', None)
+        kwargs.pop('data_a', None)
         super().__init__(**kwargs)
         self.data_da = data_da
     
