@@ -313,8 +313,6 @@ class SettingsPanel(QWidget):
         timeout_layout.addStretch()
         browser_layout.addLayout(timeout_layout)
         
-        scroll_layout.addWidget(browser_group)
-        
         # --- Sezione Download ---
         download_group = self._create_group_box("📁 Cartella di destinazione")
         download_layout = QVBoxLayout(download_group)
@@ -480,6 +478,10 @@ class SettingsPanel(QWidget):
         self.unsaved_label.setVisible(has_changes)
         self.unsaved_changes.emit(has_changes)
     
+    def has_unsaved_changes(self) -> bool:
+        """Restituisce True se ci sono modifiche non salvate."""
+        return self._has_unsaved_changes
+
     def _browse_download_path(self):
         current_path = self.download_path_edit.text()
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella download", current_path if current_path else "")
