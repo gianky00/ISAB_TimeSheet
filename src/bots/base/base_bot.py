@@ -174,28 +174,25 @@ class BaseBot(ABC):
         driver_path = None
         try:
             driver_path = ChromeDriverManager().install()
-            self.log(f"Driver installato in: {driver_path}")
 
             # --- FIX FOR BAD WEBDRIVER PATH (THIRD_PARTY_NOTICES) ---
-            # Recent webdriver-manager versions sometimes return the LICENSE file path
-            # or the wrong file in the zip. We must ensure it's the executable.
             path_obj = Path(driver_path)
             if not driver_path.lower().endswith(".exe"):
-                self.log(f"⚠️ Il path del driver non è un eseguibile: {driver_path}")
-                # Look for chromedriver.exe in the same directory or parent
+                # Silent fix attempt first
                 potential_exe = list(path_obj.parent.rglob("chromedriver.exe"))
                 if potential_exe:
                     driver_path = str(potential_exe[0])
-                    self.log(f"✅ Trovato eseguibile corretto: {driver_path}")
                 else:
-                    self.log("❌ Impossibile trovare chromedriver.exe nella cartella.")
+                    self.log(f"⚠️ Path driver anomalo: {driver_path} (Eseguibile non trovato)")
+
+            # Silent success unless debug needed
+            # self.log(f"Driver installato in: {driver_path}")
 
         except Exception as e:
             # WinError 193 means corrupted binary or arch mismatch
             if "WinError 193" in str(e) or "valid Win32" in str(e):
                 self.log("⚠️ Rilevato driver corrotto (WinError 193). Tento pulizia forzata...")
 
-                # Attempt to find the folder and delete it
                 try:
                     wdm_root = Path.home() / ".wdm"
                     if wdm_root.exists():
@@ -203,11 +200,9 @@ class BaseBot(ABC):
                         shutil.rmtree(wdm_root, ignore_errors=True)
                         self.log("Cache eliminata. Riprovo download...")
 
-                        # Retry install
                         time.sleep(2)
                         driver_path = ChromeDriverManager().install()
 
-                        # Apply path fix again
                         path_obj = Path(driver_path)
                         if not driver_path.lower().endswith(".exe"):
                             potential_exe = list(path_obj.parent.rglob("chromedriver.exe"))

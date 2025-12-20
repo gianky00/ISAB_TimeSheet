@@ -14,7 +14,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
 
 from src.core.constants import Timeouts
 from src.bots.timbrature.locators import TimbratureLocators
@@ -122,32 +122,60 @@ class TimbraturePage:
         """Helper to select supplier from dropdown."""
         self.log(f"Seleziono fornitore: {fornitore}")
         try:
+            # Ensure overlay is gone before starting interaction
+            self._wait_for_overlay()
+
             arrow_element = None
-            try:
-                arrow_element = self.wait.until(
-                    EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_SUPPLIER)
-                )
-            except TimeoutException:
-                arrow_element = self.wait.until(
-                    EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_GENERIC)
-                )
+            # Retry mechanism for finding the arrow
+            for attempt in range(3):
+                try:
+                    try:
+                        arrow_element = self.wait.until(
+                            EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_SUPPLIER)
+                        )
+                    except TimeoutException:
+                        arrow_element = self.wait.until(
+                            EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_GENERIC)
+                        )
 
-            ActionChains(self.driver).move_to_element(arrow_element).click().perform()
-            time.sleep(0.5)
+                    if arrow_element:
+                        # Use JS click if mouse interaction is flaky
+                        try:
+                            ActionChains(self.driver).move_to_element(arrow_element).click().perform()
+                        except:
+                            self.driver.execute_script("arguments[0].click();", arrow_element)
+                        break
+                except Exception:
+                    time.sleep(1)
 
-            # Select option
-            option_xpath = f"//li[contains(text(), '{fornitore}')]"
+            if not arrow_element:
+                raise Exception("Impossibile trovare la freccia del fornitore.")
+
+            time.sleep(0.5) # Wait for list animation
+
+            # Select option with retry
             from selenium.webdriver.common.by import By
-            option = self.long_wait.until(
+            option_xpath = f"//li[contains(text(), '{fornitore}')]"
+
+            # Wait specifically for the option to be visible
+            option = WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
+
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
-            time.sleep(0.5)
-            self.driver.execute_script("arguments[0].click();", option)
+            time.sleep(0.3)
+
+            try:
+                option.click()
+            except (ElementClickInterceptedException, Exception):
+                self.driver.execute_script("arguments[0].click();", option)
+
             time.sleep(0.5)
             self._wait_for_overlay()
+
         except Exception as e:
             self.log(f"⚠️ Errore selezione fornitore: {e}")
+            # Non-blocking, might work anyway if default is correct, but logged.
 
     def download_excel(self) -> str:
         """Finds and clicks the Excel download button, returning the file path."""
