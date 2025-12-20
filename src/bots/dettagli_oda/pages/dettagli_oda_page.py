@@ -82,13 +82,22 @@ class DettagliOdAPage:
     def process_oda(self, oda: str, contract: str, date_a: str, download_dir: Path) -> bool:
         try:
             # 1. Fill Form (Sequence: ODA -> TAB -> Date A -> TAB -> Contract -> TAB TAB -> Space)
-            actions = ActionChains(self.driver)
 
-            # Input ODA
+            # Use JS to set ODA to avoid crash on interaction
             field_oda = self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
-            field_oda.clear()
-            field_oda.send_keys(oda)
+
+            js_script = """
+                var el = arguments[0];
+                el.value = arguments[1];
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+                el.focus();
+            """
+            self.driver.execute_script(js_script, field_oda, oda)
             time.sleep(0.5)
+
+            # Proceed with ActionChains for the rest
+            actions = ActionChains(self.driver)
 
             actions.send_keys(Keys.TAB).pause(0.5)
 
@@ -116,6 +125,7 @@ class DettagliOdAPage:
 
         except Exception as e:
             self.log(f"  ✗ Errore processamento: {e}")
+            self.log(f"Stacktrace: {traceback.format_exc()}")
             return False
 
     def _download(self, download_dir: Path, oda: str, contract: str) -> bool:
