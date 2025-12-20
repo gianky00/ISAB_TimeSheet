@@ -250,10 +250,13 @@ class ContabilitaKPIPanel(QWidget):
             "MARGINALITÀ %", "0.0 %", "#20c997",
             subtitle="Su Totale Preventivato"
         )
+
+        # RINOMINATA DA EFFICIENZA DI RESA A UTILE NETTO ORARIO
         self.card_eff_resa = KPIBigCard(
-            "EFFICIENZA DI RESA", "€ 0,00 / h", "#6610f2",
-            subtitle="Resa / Ore Spese"
+            "UTILE NETTO ORARIO", "€ 0,00 / h", "#6610f2",
+            subtitle="Valore Ora - Costo Base"
         )
+
         self.card_val_ora = KPIBigCard(
             "VALORE PER ORA SPESA", "€ 0,00 / h", "#d63384",
             subtitle="Totale Prev / Ore Spese"
@@ -471,8 +474,10 @@ class ContabilitaKPIPanel(QWidget):
             margine_operativo = tot_prev - costo_totale_stimato
 
             marginalita_perc = (margine_operativo / tot_prev * 100) if tot_prev > 0 else 0
-            efficienza_resa = (df['resa'].sum() / tot_ore) if tot_ore > 0 else 0
+            # CORREZIONE: Efficienza Resa NON è somma(resa) / ore se resa è un tasso.
+            # Qui la useremo come UTILE NETTO ORARIO.
             valore_per_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
+            utile_netto_orario = valore_per_ora - HOURLY_COST_STD
 
             # Margine Info
             self.card_margine.lbl_value.setText(f"€ {self._format_currency(margine_operativo)}")
@@ -498,15 +503,16 @@ class ContabilitaKPIPanel(QWidget):
                 f"Per ogni 100€ fatturati, rimangono € {marginalita_perc:.1f} di margine."
             ))
 
-            # Efficienza Resa Info
-            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(efficienza_resa)} / h")
+            # UTILE NETTO ORARIO Info
+            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(utile_netto_orario)} / h")
+            self.card_eff_resa.lbl_value.setStyleSheet(f"color: {'#20c997' if utile_netto_orario >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
             self.card_eff_resa.set_info_callback(lambda: (
                 f"<b>CALCOLO ESEMPIO REALE ({year}):</b><br><br>"
-                f"Resa Totale: {self._format_currency(df['resa'].sum())}<br>"
-                f" / Ore Spese Totali: {self._format_currency(tot_ore)}<br>"
+                f"Valore per Ora Spesa: € {self._format_currency(valore_per_ora)}<br>"
+                f" - Costo Orario Base: € {str(HOURLY_COST_STD).replace('.', ',')}<br>"
                 f"--------------------------------------------------<br>"
-                f"<b>= Efficienza: € {self._format_currency(efficienza_resa)} / h</b><br><br>"
-                f"Valore medio di 'Resa' prodotto per ogni ora lavorata."
+                f"<b>= Utile Netto Orario: € {self._format_currency(utile_netto_orario)} / h</b><br><br>"
+                f"Indica quanto guadagno netto genera ogni singola ora lavorata."
             ))
 
             # Valore per Ora Spesa Info
