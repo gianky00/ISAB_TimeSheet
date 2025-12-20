@@ -32,14 +32,15 @@ if exist "venv" (
     echo    - Nessun ambiente venv trovato.
 )
 
-echo [2/4] Pulizia file cache Python (__pycache__)...
+echo [2/4] Pulizia file cache Python [__pycache__]...
+if exist "__pycache__" rmdir /s /q "__pycache__"
 for /d /r . %%d in (__pycache__) do @if exist "%%d" rd /s /q "%%d"
 echo    - Cache pulita.
 
-echo [3/4] Pulizia Cache WebDriver (Corregge WinError 193)...
+echo [3/4] Pulizia Cache WebDriver [Corregge WinError 193]...
 if exist "%USERPROFILE%\.wdm" (
     rmdir /s /q "%USERPROFILE%\.wdm"
-    echo    - Cache WebDriver (.wdm) rimossa.
+    echo    - Cache WebDriver [.wdm] rimossa.
 ) else (
     echo    - Nessuna cache WebDriver trovata.
 )
