@@ -12,19 +12,38 @@ import numpy as np
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect, QSizePolicy, QGraphicsOpacityEffect
+    QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect, QSizePolicy, QGraphicsOpacityEffect,
+    QToolTip
 )
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QCursor, QFont
 
 from src.core.contabilita_manager import ContabilitaManager
 
 # Costante per il costo orario aziendale standard
 HOURLY_COST_STD = 27.43
 
+class InfoLabel(QLabel):
+    """Etichetta informativa con icona e tooltip."""
+    def __init__(self, tooltip_text, parent=None):
+        super().__init__("ⓘ", parent)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.setToolTip(tooltip_text)
+        self.setStyleSheet("""
+            QLabel {
+                color: #6c757d;
+                font-weight: bold;
+                font-size: 14px;
+                background: transparent;
+            }
+            QLabel:hover {
+                color: #0d6efd;
+            }
+        """)
+
 class KPIBigCard(QFrame):
     """Card per mostrare un KPI numerico principale."""
-    def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None):
+    def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None, tooltip_text=None):
         super().__init__(parent)
         self.setStyleSheet(f"""
             QFrame {{
@@ -48,10 +67,23 @@ class KPIBigCard(QFrame):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(5)
 
+        # Header Layout (Title + Info Icon)
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(5)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+
         lbl_title = QLabel(title)
         lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;")
-        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl_title)
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header_layout.addWidget(lbl_title)
+
+        header_layout.addStretch()
+
+        if tooltip_text:
+            info_icon = InfoLabel(tooltip_text)
+            header_layout.addWidget(info_icon)
+
+        layout.addLayout(header_layout)
 
         self.lbl_value = QLabel(value)
         self.lbl_value.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
@@ -126,10 +158,23 @@ class ContabilitaKPIPanel(QWidget):
 
         self.cards_layout = QHBoxLayout()
         self.cards_layout.setSpacing(20)
-        self.card_totale = KPIBigCard("TOTALE PREVENTIVATO", "€ 0,00", "#198754")
-        self.card_ore = KPIBigCard("ORE SPESE TOTALI", "0", "#0d6efd")
-        self.card_resa = KPIBigCard("RESA MEDIA", "0", "#fd7e14")
-        self.card_count = KPIBigCard("N° COMMESSE", "0", "#6f42c1")
+
+        self.card_totale = KPIBigCard(
+            "TOTALE PREVENTIVATO", "€ 0,00", "#198754",
+            tooltip_text="Somma del valore economico di tutte le commesse (Preventivi)."
+        )
+        self.card_ore = KPIBigCard(
+            "ORE SPESE TOTALI", "0", "#0d6efd",
+            tooltip_text="Somma delle ore lavorate registrate su tutte le commesse."
+        )
+        self.card_resa = KPIBigCard(
+            "RESA MEDIA", "0", "#fd7e14",
+            tooltip_text="Media aritmetica del valore 'Resa' registrato sulle attività."
+        )
+        self.card_count = KPIBigCard(
+            "N° COMMESSE", "0", "#6f42c1",
+            tooltip_text="Numero totale di commesse/attività analizzate."
+        )
 
         self.cards_layout.addWidget(self.card_totale)
         self.cards_layout.addWidget(self.card_ore)
@@ -145,10 +190,26 @@ class ContabilitaKPIPanel(QWidget):
         self.tech_cards_layout = QHBoxLayout()
         self.tech_cards_layout.setSpacing(20)
 
-        self.card_margine = KPIBigCard("MARGINE OPERATIVO STIMATO", "€ 0,00", "#20c997", subtitle=f"Base Costo Orario: € {HOURLY_COST_STD}")
-        self.card_margine_perc = KPIBigCard("MARGINALITÀ %", "0.0 %", "#20c997", subtitle="Su Totale Preventivato")
-        self.card_eff_resa = KPIBigCard("EFFICIENZA DI RESA", "€ 0,00 / h", "#6610f2", subtitle="Resa / Ore Spese")
-        self.card_val_ora = KPIBigCard("VALORE PER ORA SPESA", "€ 0,00 / h", "#d63384", subtitle="Totale Prev / Ore Spese")
+        self.card_margine = KPIBigCard(
+            "MARGINE OPERATIVO STIMATO", "€ 0,00", "#20c997",
+            subtitle=f"Base Costo Orario: € {HOURLY_COST_STD}",
+            tooltip_text=f"Differenza tra Totale Preventivato e Costo Stimato (Ore * € {HOURLY_COST_STD}). Indica l'utile lordo."
+        )
+        self.card_margine_perc = KPIBigCard(
+            "MARGINALITÀ %", "0.0 %", "#20c997",
+            subtitle="Su Totale Preventivato",
+            tooltip_text="Rapporto % tra Margine Operativo e Totale Preventivato. Indica la redditività."
+        )
+        self.card_eff_resa = KPIBigCard(
+            "EFFICIENZA DI RESA", "€ 0,00 / h", "#6610f2",
+            subtitle="Resa / Ore Spese",
+            tooltip_text="Valore medio di 'Resa' per ogni ora lavorata (Resa / Ore Spese)."
+        )
+        self.card_val_ora = KPIBigCard(
+            "VALORE PER ORA SPESA", "€ 0,00 / h", "#d63384",
+            subtitle="Totale Prev / Ore Spese",
+            tooltip_text=f"Fatturato generato per ora lavorata (Totale Prev / Ore Spese). Se > € {HOURLY_COST_STD}, in utile."
+        )
 
         self.tech_cards_layout.addWidget(self.card_margine)
         self.tech_cards_layout.addWidget(self.card_margine_perc)
@@ -168,35 +229,51 @@ class ContabilitaKPIPanel(QWidget):
         self.fig1 = Figure(figsize=(5, 4), dpi=100)
         self.fig1.patch.set_alpha(0)
         self.canvas1 = FigureCanvas(self.fig1)
-        self.container1 = self._create_chart_container(self.canvas1)
+        self.container1 = self._create_chart_container(
+            self.canvas1,
+            tooltip_text="Distribuzione percentuale delle attività per stato (esclusa FORNITURA)."
+        )
         charts_grid.addWidget(self.container1, 0, 0)
 
         # Chart 2: Preventivato vs Ore per Mese (Bar)
         self.fig2 = Figure(figsize=(5, 4), dpi=100)
         self.fig2.patch.set_alpha(0)
         self.canvas2 = FigureCanvas(self.fig2)
-        self.container2 = self._create_chart_container(self.canvas2)
+        self.container2 = self._create_chart_container(
+            self.canvas2,
+            tooltip_text="Confronto mensile tra valore preventivato e ore spese."
+        )
         charts_grid.addWidget(self.container2, 0, 1)
 
         # Chart 3: Analisi Margine per Tipologia (Nuovo Chart)
         self.fig3 = Figure(figsize=(5, 4), dpi=100)
         self.fig3.patch.set_alpha(0)
         self.canvas3 = FigureCanvas(self.fig3)
-        self.container3 = self._create_chart_container(self.canvas3)
+        self.container3 = self._create_chart_container(
+            self.canvas3,
+            tooltip_text="Analisi redditività per tipologia (Verde=Margine, Rosso=Costo)."
+        )
         charts_grid.addWidget(self.container3, 1, 0)
 
         # Chart 4: Andamento Resa Mensile (Line)
         self.fig4 = Figure(figsize=(5, 4), dpi=100)
         self.fig4.patch.set_alpha(0)
         self.canvas4 = FigureCanvas(self.fig4)
-        self.container4 = self._create_chart_container(self.canvas4)
+        self.container4 = self._create_chart_container(
+            self.canvas4,
+            tooltip_text="Andamento mensile del valore medio di Resa."
+        )
         charts_grid.addWidget(self.container4, 1, 1)
 
         # Chart 5: Completamento Attività
         self.fig5 = Figure(figsize=(5, 2), dpi=100)
         self.fig5.patch.set_alpha(0)
         self.canvas5 = FigureCanvas(self.fig5)
-        self.container5 = self._create_chart_container(self.canvas5, height=200)
+        self.container5 = self._create_chart_container(
+            self.canvas5,
+            height=200,
+            tooltip_text="Percentuale di attività contabilizzate rispetto al totale."
+        )
         charts_grid.addWidget(self.container5, 2, 0, 1, 2)
 
         self.content_layout.addLayout(charts_grid)
@@ -210,7 +287,7 @@ class ContabilitaKPIPanel(QWidget):
                       self.card_margine, self.card_margine_perc, self.card_eff_resa, self.card_val_ora]
         self.charts = [self.container1, self.container2, self.container3, self.container4, self.container5]
 
-    def _create_chart_container(self, widget, height=450):
+    def _create_chart_container(self, widget, height=450, tooltip_text=None):
         """Crea un container stilizzato per il grafico."""
         container = QWidget()
         container.setMinimumHeight(height)
@@ -233,6 +310,16 @@ class ContabilitaKPIPanel(QWidget):
 
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
+
+        # Info icon overlay/header
+        if tooltip_text:
+            header_layout = QHBoxLayout()
+            header_layout.setContentsMargins(10, 10, 10, 0)
+            header_layout.addStretch()
+            info_icon = InfoLabel(tooltip_text)
+            header_layout.addWidget(info_icon)
+            layout.addLayout(header_layout)
+
         layout.addWidget(widget)
 
         return container
