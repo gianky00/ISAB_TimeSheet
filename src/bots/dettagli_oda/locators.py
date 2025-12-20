@@ -31,6 +31,7 @@ class DettagliOdALocators:
 
     # Export
     EXPORT_EXCEL_TEXT = (By.XPATH, "//span[contains(text(), 'Esporta in Excel')]")
+    GENERAL_EXPORT_BUTTON = (By.XPATH, "//div[contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]")
 
     # Tabs
     TAB_CLOSE_BTN = (By.XPATH, "//*[contains(@class, 'x-tab-close-btn')]")

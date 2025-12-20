@@ -62,7 +62,7 @@ class DettagliOdABot(BaseBot):
             oda = str(row.get('numero_oda', '')).strip()
             contract = str(row.get('numero_contratto', '')).strip()
             
-            if not oda: continue
+            # Note: ODA can be empty for General List export
             
             self.log("-" * 40)
             self.log(f"Riga {i}: OdA={oda}, Contratto={contract}")
@@ -80,4 +80,5 @@ class DettagliOdABot(BaseBot):
             
             time.sleep(1)
 
+        page.logout()
         return success == len(rows)

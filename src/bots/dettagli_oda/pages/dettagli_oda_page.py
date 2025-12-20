@@ -18,6 +18,7 @@ from selenium.common.exceptions import TimeoutException
 
 from src.core.constants import Timeouts
 from src.bots.dettagli_oda.locators import DettagliOdALocators
+from src.bots.common.locators import LoginLocators, CommonLocators
 
 class DettagliOdAPage:
 
@@ -79,6 +80,22 @@ class DettagliOdAPage:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
 
+    def logout(self):
+        try:
+            self.log("Esecuzione logout...")
+            # Click Settings
+            settings_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON))
+            self.driver.execute_script("arguments[0].click();", settings_btn)
+            time.sleep(0.5)
+
+            # Click Logout
+            logout_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION))
+            self.driver.execute_script("arguments[0].click();", logout_btn)
+            self.log("✓ Logout effettuato.")
+            time.sleep(1)
+        except Exception as e:
+            self.log(f"⚠️ Errore durante logout: {e}")
+
     def process_oda(self, oda: str, contract: str, date_da: str, date_a: str, download_dir: Path) -> bool:
         try:
             # 1. Fill Form
@@ -90,9 +107,10 @@ class DettagliOdAPage:
                 el.blur();
             """
 
-            # ODA
-            field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
-            self.driver.execute_script(js_set_value, field_oda, oda)
+            # ODA - Only fill if provided
+            if oda:
+                field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
+                self.driver.execute_script(js_set_value, field_oda, oda)
 
             # Date From (Clear first by setting value)
             field_date_da = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_FROM_FIELD))
@@ -134,14 +152,26 @@ class DettagliOdAPage:
             except Exception as e:
                 self.log(f"  ⚠️ Errore lettura conteggio: {e}")
 
-            # Click Details Icon
-            self.log("  Apertura dettagli...")
-            details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
-            self.driver.execute_script("arguments[0].click();", details_btn)
-            self._wait_for_overlay()
+            # Decide Export Method based on ODA presence
+            target_filename = ""
+            if oda:
+                # ODA Present: Details Export
+                self.log("  Apertura dettagli (OdA specifico)...")
+                details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
+                self.driver.execute_script("arguments[0].click();", details_btn)
+                self._wait_for_overlay()
+
+                # Wait for Inner Export button
+                export_btn_locator = DettagliOdALocators.EXPORT_EXCEL_TEXT
+                target_filename = f"dettaglio_oda_{oda}.xlsx"
+            else:
+                # ODA Empty: General List Export
+                self.log("  Esportazione lista generale...")
+                export_btn_locator = DettagliOdALocators.GENERAL_EXPORT_BUTTON
+                target_filename = "lista_generale_oda.xlsx"
 
             # Export and Download
-            res = self._download(download_dir, oda, contract)
+            res = self._download(download_dir, target_filename, export_btn_locator)
 
             # Cleanup
             self._close_all_tabs()
@@ -180,11 +210,11 @@ class DettagliOdAPage:
         except Exception as e:
             self.log(f"  ⚠️ Errore chiusura tab: {e}")
 
-    def _download(self, download_dir: Path, oda: str, contract: str) -> bool:
+    def _download(self, download_dir: Path, target_filename: str, button_locator: tuple) -> bool:
         try:
             files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
 
-            btn = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.EXPORT_EXCEL_TEXT))
+            btn = self.wait.until(EC.presence_of_element_located(button_locator))
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             time.sleep(0.5)
             try:
@@ -203,17 +233,23 @@ class DettagliOdAPage:
                 time.sleep(0.5)
 
             if downloaded_file:
-                new_name = f"{oda}_{contract}.xlsx"
-                new_path = download_dir / new_name
+                new_path = download_dir / target_filename
 
-                counter = 1
-                while new_path.exists() and new_path.resolve() != downloaded_file.resolve():
-                    new_path = download_dir / f"{oda}_{contract}_{counter}.xlsx"
-                    counter += 1
+                # Handle overwrite/uniqueness if needed, though user asked for specific name.
+                # If "lista_generale_oda.xlsx" exists, we might overwrite or append counter.
+                # Assuming overwrite is NOT desired for safe automation, adding counter if exists.
+                if new_path.exists():
+                    stem = new_path.stem
+                    suffix = new_path.suffix
+                    counter = 1
+                    while new_path.exists() and new_path.resolve() != downloaded_file.resolve():
+                        new_path = download_dir / f"{stem}_{counter}{suffix}"
+                        counter += 1
 
                 downloaded_file.rename(new_path)
                 self.log(f"  ✓ Scaricato: {new_path.name}")
                 return True
             return False
-        except Exception:
+        except Exception as e:
+            self.log(f"  ✗ Errore download: {e}")
             return False
