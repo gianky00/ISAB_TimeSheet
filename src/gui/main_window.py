@@ -5,12 +5,12 @@ Finestra principale dell'applicazione.
 import sys
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication
+    QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication, QTabWidget
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter
 
-from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbraturePanel
+from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
 from src.gui.settings_panel import SettingsPanel
 from src.core.license_validator import get_license_info
 
@@ -128,18 +128,12 @@ class MainWindow(QMainWindow):
         sidebar_layout.addSpacing(15)
         
         # Pulsanti navigazione
-        self.btn_scarico = SidebarButton("Scarico TS", "📥")
-        self.btn_scarico.setChecked(True)
-        sidebar_layout.addWidget(self.btn_scarico)
+        self.btn_automazioni = SidebarButton("Automazioni", "🤖")
+        self.btn_automazioni.setChecked(True)
+        sidebar_layout.addWidget(self.btn_automazioni)
         
-        self.btn_carico = SidebarButton("Carico TS", "📤")
-        sidebar_layout.addWidget(self.btn_carico)
-        
-        self.btn_dettagli = SidebarButton("Dettagli OdA", "📋")
-        sidebar_layout.addWidget(self.btn_dettagli)
-
-        self.btn_timbrature = SidebarButton("Timbrature", "⏱️")
-        sidebar_layout.addWidget(self.btn_timbrature)
+        self.btn_database = SidebarButton("Database", "🗄️")
+        sidebar_layout.addWidget(self.btn_database)
         
         sidebar_layout.addStretch()
 
@@ -196,22 +190,61 @@ class MainWindow(QMainWindow):
         content_layout = QVBoxLayout(content_area)
         content_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Stack per le pagine
+        # Stack per le pagine principali (Automazioni, Database, Settings)
         self.page_stack = QStackedWidget()
         
-        # Crea i pannelli
+        # Crea i pannelli individuali
         self.scarico_panel = ScaricaTSPanel()
         self.carico_panel = CaricoTSPanel()
         self.dettagli_panel = DettagliOdAPanel()
-        self.timbrature_panel = TimbraturePanel()
+        self.timbrature_bot_panel = TimbratureBotPanel()
+        self.timbrature_db_panel = TimbratureDBPanel()
         self.settings_panel = SettingsPanel()
         
-        # Aggiungi i pannelli allo stack
-        self.page_stack.addWidget(self.scarico_panel)   # Index 0
-        self.page_stack.addWidget(self.carico_panel)    # Index 1
-        self.page_stack.addWidget(self.dettagli_panel)  # Index 2
-        self.page_stack.addWidget(self.timbrature_panel) # Index 3
-        self.page_stack.addWidget(self.settings_panel)  # Index 4
+        # Collega il segnale di update dal bot al database
+        self.timbrature_bot_panel.data_updated.connect(self.timbrature_db_panel.refresh_data)
+
+        # --- Page 0: Automazioni (Tab Widget) ---
+        self.automazioni_widget = QTabWidget()
+        self.automazioni_widget.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                background-color: white;
+            }
+            QTabBar::tab {
+                background: #f1f3f5;
+                border: 1px solid #dee2e6;
+                padding: 10px 20px;
+                margin-right: 2px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                color: #495057;
+                font-weight: bold;
+            }
+            QTabBar::tab:selected {
+                background: white;
+                border-bottom-color: white;
+                color: #0d6efd;
+            }
+            QTabBar::tab:hover {
+                background: #e9ecef;
+            }
+        """)
+        self.automazioni_widget.addTab(self.scarico_panel, "📥 Scarico TS")
+        self.automazioni_widget.addTab(self.carico_panel, "📤 Carico TS")
+        self.automazioni_widget.addTab(self.dettagli_panel, "📋 Dettagli OdA")
+        self.automazioni_widget.addTab(self.timbrature_bot_panel, "⏱️ Timbrature")
+
+        # --- Page 1: Database (Tab Widget) ---
+        self.database_widget = QTabWidget()
+        self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
+        self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
+
+        # Aggiungi le pagine allo stack
+        self.page_stack.addWidget(self.automazioni_widget) # Index 0
+        self.page_stack.addWidget(self.database_widget)    # Index 1
+        self.page_stack.addWidget(self.settings_panel)     # Index 2
         
         content_layout.addWidget(self.page_stack)
         
@@ -219,20 +252,16 @@ class MainWindow(QMainWindow):
         
         # Lista pulsanti per gestione esclusiva
         self.nav_buttons = [
-            self.btn_scarico, 
-            self.btn_carico, 
-            self.btn_dettagli,
-            self.btn_timbrature,
+            self.btn_automazioni,
+            self.btn_database,
             self.btn_settings
         ]
     
     def _connect_signals(self):
         """Collega i segnali."""
-        self.btn_scarico.clicked.connect(lambda: self._navigate_to(0))
-        self.btn_carico.clicked.connect(lambda: self._navigate_to(1))
-        self.btn_dettagli.clicked.connect(lambda: self._navigate_to(2))
-        self.btn_timbrature.clicked.connect(lambda: self._navigate_to(3))
-        self.btn_settings.clicked.connect(lambda: self._navigate_to(4))
+        self.btn_automazioni.clicked.connect(lambda: self._navigate_to(0))
+        self.btn_database.clicked.connect(lambda: self._navigate_to(1))
+        self.btn_settings.clicked.connect(lambda: self._navigate_to(2))
 
         # Aggiornamento live impostazioni
         self.settings_panel.settings_saved.connect(self._on_settings_saved)
@@ -241,7 +270,7 @@ class MainWindow(QMainWindow):
         """Aggiorna i pannelli quando le impostazioni vengono salvate."""
         self.scarico_panel.refresh_fornitori()
         self.dettagli_panel.refresh_fornitori()
-        self.timbrature_panel.refresh_fornitori()
+        self.timbrature_bot_panel.refresh_fornitori()
         # Aggiorna anche eventuali dati di default in futuro
     
     def _navigate_to(self, index: int):
@@ -258,12 +287,12 @@ class MainWindow(QMainWindow):
             return
         
         # Se stiamo lasciando la pagina delle impostazioni, controlla le modifiche
-        if self._current_page_index == 4:  # Settings page is now index 4
+        if self._current_page_index == 2:  # Settings page is now index 2
             if self.settings_panel.has_unsaved_changes():
                 can_proceed = self.settings_panel.prompt_save_if_needed()
                 if not can_proceed:
                     # L'utente ha annullato - rimani sulla pagina corrente
-                    self.nav_buttons[4].setChecked(True)
+                    self.nav_buttons[2].setChecked(True)
                     return
         
         # Procedi con la navigazione
@@ -274,13 +303,14 @@ class MainWindow(QMainWindow):
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
         
-        # Se arriviamo su Scarico TS, aggiorna la lista fornitori
+        # Se arriviamo su Automazioni (Index 0), potremmo voler aggiornare i fornitori,
+        # ma questo è gestito quando si aprono le tab o al salvataggio impostazioni.
         if index == 0:
             self.scarico_panel.refresh_fornitori()
     
     def show_settings(self):
         """Metodo pubblico per navigare alle impostazioni."""
-        self._navigate_to(4)
+        self._navigate_to(2)
     
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra."""
