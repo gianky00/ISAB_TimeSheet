@@ -31,6 +31,12 @@ class ExcelTableWidget(QTableWidget):
         """Copia la selezione negli appunti in formato compatibile con Excel."""
         selection = self.selectedRanges()
         if not selection:
+            # Fallback: se ci sono item selezionati ma non un range completo (es. celle singole)
+            items = self.selectedItems()
+            if not items:
+                return
+            # Se ci sono item selezionati, usiamo una logica diversa o semplicemente copiamo
+            # Per ora supportiamo Ranges (che è il default per selezione utente via mouse/shift)
             return
 
         # Determina i limiti della selezione
@@ -42,6 +48,10 @@ class ExcelTableWidget(QTableWidget):
 
         tsv_rows = []
         for r in rows:
+            # Non copiare le righe nascoste (es. se filtrate)
+            if self.isRowHidden(r):
+                continue
+
             row_data = []
             for c in cols:
                 # Controlla se c'è un widget (es. ComboBox)
@@ -57,8 +67,9 @@ class ExcelTableWidget(QTableWidget):
                 row_data.append(text)
             tsv_rows.append("\t".join(row_data))
 
-        tsv_data = "\n".join(tsv_rows)
-        QApplication.clipboard().setText(tsv_data)
+        if tsv_rows:
+            tsv_data = "\n".join(tsv_rows)
+            QApplication.clipboard().setText(tsv_data)
 
 
 class EditableDataTable(QWidget):
