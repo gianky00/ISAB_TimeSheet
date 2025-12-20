@@ -11,8 +11,10 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter
 
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
+from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.settings_panel import SettingsPanel
 from src.core.license_validator import get_license_info
+from src.core import config_manager
 
 
 class SidebarButton(QPushButton):
@@ -72,6 +74,9 @@ class MainWindow(QMainWindow):
         self._current_page_index = 0
         self._setup_ui()
         self._connect_signals()
+
+        # Avvio automatico importazione contabilità se abilitato
+        QTimer.singleShot(1000, self._check_and_start_contabilita_update)
     
     def _setup_ui(self):
         """Configura l'interfaccia."""
@@ -199,6 +204,7 @@ class MainWindow(QMainWindow):
         self.dettagli_panel = DettagliOdAPanel()
         self.timbrature_bot_panel = TimbratureBotPanel()
         self.timbrature_db_panel = TimbratureDBPanel()
+        self.contabilita_panel = ContabilitaPanel()
         self.settings_panel = SettingsPanel()
         
         # Collega il segnale di update dal bot al database
@@ -240,6 +246,7 @@ class MainWindow(QMainWindow):
         self.database_widget = QTabWidget()
         self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
         self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
+        self.database_widget.addTab(self.contabilita_panel, "Contabilità Strumentale")
 
         # Aggiungi le pagine allo stack
         self.page_stack.addWidget(self.automazioni_widget) # Index 0
@@ -272,6 +279,10 @@ class MainWindow(QMainWindow):
         self.dettagli_panel.refresh_fornitori()
         self.timbrature_bot_panel.refresh_fornitori()
         # Aggiorna anche eventuali dati di default in futuro
+
+        # Se l'utente ha appena attivato l'auto-update, non lo lanciamo subito automaticamente
+        # (potrebbe essere fastidioso), ma verrà lanciato al prossimo riavvio.
+        # Volendo si potrebbe lanciare qui se si desidera feedback immediato.
     
     def _navigate_to(self, index: int):
         """
@@ -307,6 +318,12 @@ class MainWindow(QMainWindow):
         # ma questo è gestito quando si aprono le tab o al salvataggio impostazioni.
         if index == 0:
             self.scarico_panel.refresh_fornitori()
+
+    def _check_and_start_contabilita_update(self):
+        """Controlla la configurazione e avvia l'update contabilità se abilitato."""
+        config = config_manager.load_config()
+        if config.get("enable_auto_update_contabilita", False):
+            self.contabilita_panel.start_import_process()
     
     def show_settings(self):
         """Metodo pubblico per navigare alle impostazioni."""
