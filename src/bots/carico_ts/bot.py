@@ -1,28 +1,14 @@
 """
-Bot TS - Carico Timesheet
-Bot per l'upload dei timesheet sul portale ISAB.
+Bot TS - Carico TS Bot
+Bot for Carico TS using POM.
 """
-from typing import Dict, Any, List
-from src.bots.base import BaseBot, BotStatus
-
+from typing import List, Dict, Any
+from src.bots.base import BaseBot
+from src.bots.carico_ts.pages.carico_ts_page import CaricoTSPage
 
 class CaricoTSBot(BaseBot):
-    """
-    Bot per l'upload dei Timesheet sul portale ISAB.
     
-    Funzionalità:
-    - Login al portale ISAB
-    - Navigazione alla sezione Timesheet
-    - Upload file timesheet per commessa/mese/anno
-    """
-    
-    @property
-    def name(self) -> str:
-        return "Carico TS"
-    
-    @property
-    def description(self) -> str:
-        return "Upload automatico dei Timesheet sul portale ISAB"
+    FORNITORE = "KK10608 - COEMI S.R.L."
     
     @staticmethod
     def get_name() -> str:
@@ -30,58 +16,47 @@ class CaricoTSBot(BaseBot):
     
     @staticmethod
     def get_description() -> str:
-        return "Upload automatico dei Timesheet sul portale ISAB"
-    
-    @staticmethod
-    def get_icon() -> str:
-        return "📤"
+        return "Caricamento automatico timesheet"
     
     @staticmethod
     def get_columns() -> list:
-        """Restituisce la configurazione delle colonne per la tabella dati."""
+        # Full list from original code
         return [
             {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"},
             {"name": "Codice Fiscale", "type": "text"},
-            {"name": "Ingresso", "type": "text"},
-            {"name": "Uscita", "type": "text"},
-            {"name": "Tipo Prestazione", "type": "text"},
-            {"name": "C", "type": "text"},
-            {"name": "M", "type": "text"},
-            {"name": "Str D", "type": "text"},
-            {"name": "Str N", "type": "text"},
-            {"name": "Str F D", "type": "text"},
-            {"name": "Str F N", "type": "text"},
-            {"name": "Sq", "type": "text"},
-            {"name": "Nota D", "type": "text"},
-            {"name": "Nota S", "type": "text"},
-            {"name": "F S", "type": "text"},
+            {"name": "Cognome", "type": "text"},
+            {"name": "Nome", "type": "text"},
+            {"name": "Mese", "type": "text"},
+            {"name": "Anno", "type": "text"},
+            {"name": "G 1", "type": "text"}, {"name": "G 2", "type": "text"}, {"name": "G 3", "type": "text"},
+            {"name": "G 4", "type": "text"}, {"name": "G 5", "type": "text"}, {"name": "G 6", "type": "text"},
+            {"name": "G 7", "type": "text"}, {"name": "G 8", "type": "text"}, {"name": "G 9", "type": "text"},
             {"name": "G T", "type": "text"}
         ]
+
+    @property
+    def name(self) -> str: return "Carico TS"
     
-    @staticmethod
-    def get_config_key() -> str:
-        return "last_carico_ts_data"
-    
+    @property
+    def description(self) -> str: return "Caricamento automatico timesheet"
+
     def run(self, data: List[Dict[str, Any]]) -> bool:
-        """
-        Esegue l'upload dei timesheet.
+        rows = data if isinstance(data, list) else data.get('rows', [])
+        if not rows: return True
         
-        Args:
-            data: Lista di dict con i dati delle righe
+        # Original logic: process ONLY the first row
+        row = rows[0]
+        oda = str(row.get('numero_oda', '')).strip()
         
-        Returns:
-            True se completato con successo
-        """
-        rows = data if isinstance(data, list) else data.get("rows", [])
+        self.log(f"Avvio Carico TS per OdA: {oda}")
         
-        if not rows:
-            self.log("[AVVISO] Nessun dato da processare")
+        page = CaricoTSPage(self.driver, self.log)
+        
+        if not page.navigate(): return False
+        if not page.select_supplier(self.FORNITORE): return False
+        
+        if page.process_oda(oda):
+            self.log("OdA estratta. Bot terminato (come da logica originale).")
             return True
-        
-        self.log(f"[INFO] Trovate {len(rows)} righe da processare")
-        
-        # TODO: Implementare la logica di upload
-        self.log("[INFO] Funzionalità Carico TS in fase di sviluppo...")
-        
-        return True
+
+        return False
