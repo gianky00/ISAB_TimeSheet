@@ -91,7 +91,25 @@ class DettagliOdAPage:
             # Click Logout
             logout_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION))
             self.driver.execute_script("arguments[0].click();", logout_btn)
-            self.log("✓ Logout effettuato.")
+
+            # Handle Confirmation Popup "Attenzione"
+            try:
+                self.log("  Attesa conferma logout...")
+                # Wait for header "Attenzione"
+                self.wait.until(EC.visibility_of_element_located(CommonLocators.POPUP_ATTENTION_HEADER))
+
+                # Click "Si"
+                yes_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_YES_BUTTON))
+                self.driver.execute_script("arguments[0].click();", yes_btn)
+                self.log("  Conferma cliccata.")
+
+                # Wait for Login Screen (logout complete)
+                self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
+                self.log("✓ Logout completato con successo.")
+
+            except TimeoutException:
+                self.log("⚠️ Popup conferma non apparso o timeout.")
+
             time.sleep(1)
         except Exception as e:
             self.log(f"⚠️ Errore durante logout: {e}")

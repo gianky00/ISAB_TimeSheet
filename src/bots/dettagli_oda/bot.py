@@ -17,7 +17,7 @@ class DettagliOdABot(BaseBot):
     
     @staticmethod
     def get_description() -> str:
-        return "Scarica il dettaglio OdA"
+        return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
     
     @staticmethod
     def get_columns() -> list:
@@ -32,7 +32,7 @@ class DettagliOdABot(BaseBot):
     
     @property
     def description(self) -> str:
-        return "Scarica il dettaglio OdA"
+        return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
     
     def __init__(self, data_da: str = "01.01.2024", data_a: str = "31.12.2025", fornitore: str = "KK10608 - COEMI S.R.L.", **kwargs):
         super().__init__(**kwargs)
