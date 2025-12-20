@@ -83,9 +83,19 @@ class DettagliOdAPage:
         try:
             # 1. Fill Form (Sequence: ODA -> TAB -> Date A -> TAB -> Contract -> TAB TAB -> Space)
 
-            # Use JS to set ODA to avoid crash on interaction
-            field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
+            # WORKAROUND: Focus Supplier field and TAB to 'Numero OdA' to avoid locating issues
+            supplier_input = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.SUPPLIER_INPUT))
+            # Focus without clicking (to avoid opening dropdown)
+            self.driver.execute_script("arguments[0].focus();", supplier_input)
 
+            # TAB to Numero OdA
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.TAB).pause(0.2).perform()
+
+            # Get the active element (which should be Numero OdA)
+            field_oda = self.driver.switch_to.active_element
+
+            # Use JS to set ODA safely
             js_script = """
                 var el = arguments[0];
                 el.value = arguments[1];
@@ -96,7 +106,7 @@ class DettagliOdAPage:
             self.driver.execute_script(js_script, field_oda, oda)
             time.sleep(0.5)
 
-            # Proceed with ActionChains for the rest
+            # Proceed with ActionChains for the rest (already focused on ODA, so next TAB goes to next field)
             actions = ActionChains(self.driver)
 
             actions.send_keys(Keys.TAB).pause(0.5)
