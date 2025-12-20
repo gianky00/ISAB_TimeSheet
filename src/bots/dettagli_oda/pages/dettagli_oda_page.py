@@ -84,7 +84,7 @@ class DettagliOdAPage:
             # 1. Fill Form (Sequence: ODA -> TAB -> Date A -> TAB -> Contract -> TAB TAB -> Space)
 
             # Use JS to set ODA to avoid crash on interaction
-            field_oda = self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
+            field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
 
             js_script = """
                 var el = arguments[0];
