@@ -18,7 +18,7 @@ if "%ERRORLEVEL%"=="0" (
     taskkill /F /IM python.exe >nul 2>&1
 )
 
-echo [1/3] Rimozione ambiente virtuale esistente...
+echo [1/4] Rimozione ambiente virtuale esistente...
 if exist "venv" (
     rmdir /s /q "venv"
     if exist "venv" (
@@ -32,13 +32,22 @@ if exist "venv" (
     echo    - Nessun ambiente venv trovato.
 )
 
-echo [2/3] Pulizia file cache Python (__pycache__)...
+echo [2/4] Pulizia file cache Python (__pycache__)...
 for /d /r . %%d in (__pycache__) do @if exist "%%d" rd /s /q "%%d"
 echo    - Cache pulita.
 
-echo [3/3] Riavvio tramite avvio.bat...
+echo [3/4] Pulizia Cache WebDriver (Corregge WinError 193)...
+if exist "%USERPROFILE%\.wdm" (
+    rmdir /s /q "%USERPROFILE%\.wdm"
+    echo    - Cache WebDriver (.wdm) rimossa.
+) else (
+    echo    - Nessuna cache WebDriver trovata.
+)
+
+echo [4/4] Riavvio tramite avvio.bat...
 echo.
-echo Il sistema ora ricostruira' l'ambiente da zero usando le versioni corrette.
+echo Il sistema ora ricostruira' l'ambiente da zero.
+echo Verranno scaricati nuovamente i driver di Chrome.
 echo.
 pause
 
