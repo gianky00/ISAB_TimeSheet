@@ -81,53 +81,41 @@ class DettagliOdAPage:
 
     def process_oda(self, oda: str, contract: str, date_a: str, download_dir: Path) -> bool:
         try:
-            # 1. Fill Form (Sequence: ODA -> TAB -> Date A -> TAB -> Contract -> TAB TAB -> Space)
+            # 1. Fill Form using Direct Locators (Confirmed by HTML)
+            # Sequence: ODA -> Date A -> Contract -> Checkbox
 
-            # WORKAROUND: Focus Supplier field and TAB to 'Numero OdA' to avoid locating issues
-            # Locate input relative to the Arrow (which is reliably found in setup_supplier)
-            supplier_arrow = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
-            supplier_input = supplier_arrow.find_element(By.XPATH, "preceding::input[1]")
-
-            # Focus without clicking (to avoid opening dropdown)
-            self.driver.execute_script("arguments[0].focus();", supplier_input)
-
-            # TAB to Numero OdA
-            actions = ActionChains(self.driver)
-            actions.send_keys(Keys.TAB).pause(0.2).perform()
-
-            # Get the active element (which should be Numero OdA)
-            field_oda = self.driver.switch_to.active_element
-
-            # Use JS to set ODA safely
-            js_script = """
+            # 1. ODA (JS injection for safety)
+            field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
+            js_set_value = """
                 var el = arguments[0];
                 el.value = arguments[1];
                 el.dispatchEvent(new Event('input', { bubbles: true }));
                 el.dispatchEvent(new Event('change', { bubbles: true }));
-                el.focus();
+                el.blur();
             """
-            self.driver.execute_script(js_script, field_oda, oda)
+            self.driver.execute_script(js_set_value, field_oda, oda)
+            time.sleep(0.2)
+
+            # 2. Date A (JS injection)
+            field_date_a = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD))
+            self.driver.execute_script(js_set_value, field_date_a, date_a)
+            time.sleep(0.2)
+
+            # 3. Contract (JS injection)
+            field_contract = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD))
+            self.driver.execute_script(js_set_value, field_contract, contract)
+            time.sleep(0.2)
+
+            # 4. Checkbox "Includi Dettaglio..." (Click)
+            # The user logic previously used TABs + Space.
+            # We can now try direct click if we have the locator, or fallback to TAB logic.
+            # Given we are injecting values directly, focus might be lost.
+            # Safest is to click the checkbox directly using JS.
+            checkbox = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD))
+            if not checkbox.is_selected():
+                 self.driver.execute_script("arguments[0].click();", checkbox)
+
             time.sleep(0.5)
-
-            # Proceed with ActionChains for the rest (already focused on ODA, so next TAB goes to next field)
-            actions = ActionChains(self.driver)
-
-            actions.send_keys(Keys.TAB).pause(0.5)
-
-            # Date A
-            actions.send_keys(date_a).pause(0.5)
-            actions.send_keys(Keys.TAB).pause(0.5)
-
-            # Contract
-            actions.key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).pause(0.2)
-            actions.send_keys(contract).pause(0.5)
-
-            # Flag "Verifica Presenza"
-            actions.send_keys(Keys.TAB).pause(0.2)
-            actions.send_keys(Keys.TAB).pause(0.2)
-            actions.send_keys(Keys.SPACE).pause(0.5)
-
-            actions.perform()
 
             # Click Search
             self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)).click()
