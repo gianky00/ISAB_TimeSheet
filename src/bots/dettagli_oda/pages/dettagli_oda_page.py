@@ -79,13 +79,9 @@ class DettagliOdAPage:
             self.log(f"✗ Selezione fornitore fallita: {e}")
             return False
 
-    def process_oda(self, oda: str, contract: str, date_a: str, download_dir: Path) -> bool:
+    def process_oda(self, oda: str, contract: str, date_da: str, date_a: str, download_dir: Path) -> bool:
         try:
-            # 1. Fill Form using Direct Locators (Confirmed by HTML)
-            # Sequence: ODA -> Date A -> Contract -> Checkbox
-
-            # 1. ODA (JS injection for safety)
-            field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
+            # 1. Fill Form
             js_set_value = """
                 var el = arguments[0];
                 el.value = arguments[1];
@@ -93,24 +89,24 @@ class DettagliOdAPage:
                 el.dispatchEvent(new Event('change', { bubbles: true }));
                 el.blur();
             """
-            self.driver.execute_script(js_set_value, field_oda, oda)
-            time.sleep(0.2)
 
-            # 2. Date A (JS injection)
+            # ODA
+            field_oda = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.ODA_NUMBER_FIELD))
+            self.driver.execute_script(js_set_value, field_oda, oda)
+
+            # Date From (Clear first by setting value)
+            field_date_da = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_FROM_FIELD))
+            self.driver.execute_script(js_set_value, field_date_da, date_da)
+
+            # Date To
             field_date_a = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD))
             self.driver.execute_script(js_set_value, field_date_a, date_a)
-            time.sleep(0.2)
 
-            # 3. Contract (JS injection)
+            # Contract
             field_contract = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CONTRACT_FIELD))
             self.driver.execute_script(js_set_value, field_contract, contract)
-            time.sleep(0.2)
 
-            # 4. Checkbox "Includi Dettaglio..." (Click)
-            # The user logic previously used TABs + Space.
-            # We can now try direct click if we have the locator, or fallback to TAB logic.
-            # Given we are injecting values directly, focus might be lost.
-            # Safest is to click the checkbox directly using JS.
+            # Checkbox
             checkbox = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD))
             if not checkbox.is_selected():
                  self.driver.execute_script("arguments[0].click();", checkbox)
@@ -122,12 +118,67 @@ class DettagliOdAPage:
             self.log("  Cerca cliccato...")
             self._wait_for_overlay()
 
-            return self._download(download_dir, oda, contract)
+            # Check Results Count
+            try:
+                count_label = self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.RESULTS_COUNT_LABEL))
+                count_text = count_label.text.strip() # "Trovati : 676"
+                if ':' in count_text:
+                    count = int(count_text.split(':')[-1].strip())
+                    self.log(f"  Risultati trovati: {count}")
+                    if count == 0:
+                        self.log("  Nessun risultato. Salto esportazione.")
+                        self._close_all_tabs()
+                        return True
+                else:
+                    self.log(f"  ⚠️ Impossibile parsare risultati: {count_text}")
+            except Exception as e:
+                self.log(f"  ⚠️ Errore lettura conteggio: {e}")
+
+            # Click Details Icon
+            self.log("  Apertura dettagli...")
+            details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
+            self.driver.execute_script("arguments[0].click();", details_btn)
+            self._wait_for_overlay()
+
+            # Export and Download
+            res = self._download(download_dir, oda, contract)
+
+            # Cleanup
+            self._close_all_tabs()
+            return res
 
         except Exception as e:
             self.log(f"  ✗ Errore processamento: {e}")
             self.log(f"Stacktrace: {traceback.format_exc()}")
+            # Ensure tabs are closed even on error
+            try:
+                self._close_all_tabs()
+            except:
+                pass
             return False
+
+    def _close_all_tabs(self):
+        """Closes all open tabs using the X button."""
+        try:
+            # Find all close buttons. We might need to iterate or they might be dynamic.
+            # Usually ExtJS tabs have a close tool.
+            # We assume clicking them one by one works.
+            # Warning: clicking one might change the DOM for others.
+            # It's safer to find one, click, wait, repeat until none found.
+            while True:
+                try:
+                    # Find *visible* close buttons only
+                    close_btn = self.driver.find_element(*DettagliOdALocators.TAB_CLOSE_BTN)
+                    if close_btn.is_displayed():
+                        self.driver.execute_script("arguments[0].click();", close_btn)
+                        time.sleep(0.5)
+                    else:
+                        break
+                except Exception:
+                    # No more close buttons found
+                    break
+        except Exception as e:
+            self.log(f"  ⚠️ Errore chiusura tab: {e}")
 
     def _download(self, download_dir: Path, oda: str, contract: str) -> bool:
         try:

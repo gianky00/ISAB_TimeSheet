@@ -18,11 +18,19 @@ class DettagliOdALocators:
     # Input Fields (Based on provided HTML)
     ODA_NUMBER_FIELD = (By.NAME, "NumeroOdA")
     CONTRACT_FIELD = (By.NAME, "NumeroContratto")
+    DATE_FROM_FIELD = (By.NAME, "DataCreazioneDa")
     DATE_A_FIELD = (By.NAME, "DataCreazioneA")
     CHECKBOX_FIELD = (By.NAME, "GetItemServiceInfo") # "Includi Dettaglio Prestazioni ODA"
 
     # Search
     SEARCH_BUTTON = (By.XPATH, "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]]")
 
+    # Results
+    RESULTS_COUNT_LABEL = (By.XPATH, "//label[contains(text(), 'Trovati :')]")
+    DETAILS_ICON = (By.XPATH, "//div[contains(@class, 'fa-info-circle')]")
+
     # Export
-    EXPORT_EXCEL_TEXT = (By.XPATH, "//*[contains(text(), 'Esporta in Excel')]")
+    EXPORT_EXCEL_TEXT = (By.XPATH, "//span[contains(text(), 'Esporta in Excel')]")
+
+    # Tabs
+    TAB_CLOSE_BTN = (By.XPATH, "//*[contains(@class, 'x-tab-close-btn')]")
