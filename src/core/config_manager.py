@@ -25,7 +25,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "last_ts_date": "01.01.2025",
     "last_ts_fornitore": "",
     "last_carico_ts_data": [],
-    "last_oda_data": []
+    "last_oda_data": [],
+    # Contabilità Strumentale
+    "contabilita_file_path": r"C:\Users\Coemi\Desktop\SCRIPT\bilancio strumentale\Bilancio Entrate reparto Strumentale GENERALE.xlsm",
+    "enable_auto_update_contabilita": True
 }
 
 

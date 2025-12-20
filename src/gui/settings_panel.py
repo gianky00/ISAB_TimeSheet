@@ -3,6 +3,7 @@ Bot TS - Settings Panel
 Pannello per la configurazione dell'applicazione.
 Include gestione lista fornitori e tracking modifiche non salvate.
 """
+from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
@@ -256,6 +257,38 @@ class SettingsPanel(QWidget):
         fornitori_layout.addLayout(fornitori_btn_layout)
         
         scroll_layout.addWidget(fornitori_group)
+
+        # --- Sezione Contabilità Strumentale ---
+        contabilita_group = self._create_group_box("📊 Contabilità Strumentale")
+        contabilita_layout = QVBoxLayout(contabilita_group)
+
+        # Path input
+        path_label = QLabel("File Excel di origine:")
+        path_label.setStyleSheet("font-size: 14px; font-weight: normal;")
+        contabilita_layout.addWidget(path_label)
+
+        contabilita_path_layout = QHBoxLayout()
+        self.contabilita_path_edit = QLineEdit()
+        self.contabilita_path_edit.setPlaceholderText("Seleziona il file Excel...")
+        self.contabilita_path_edit.setReadOnly(True)
+        self.contabilita_path_edit.setMinimumHeight(40)
+        self._style_input(self.contabilita_path_edit)
+        contabilita_path_layout.addWidget(self.contabilita_path_edit)
+
+        self.browse_contabilita_btn = QPushButton("📂 Sfoglia")
+        self.browse_contabilita_btn.setMinimumHeight(40)
+        self.browse_contabilita_btn.setMinimumWidth(120)
+        self.browse_contabilita_btn.clicked.connect(self._browse_contabilita_path)
+        self._style_button(self.browse_contabilita_btn)
+        contabilita_path_layout.addWidget(self.browse_contabilita_btn)
+        contabilita_layout.addLayout(contabilita_path_layout)
+
+        # Auto-update checkbox
+        self.auto_update_contabilita_check = QCheckBox("Attiva aggiornamento automatico all'avvio (background)")
+        self.auto_update_contabilita_check.setStyleSheet("padding: 5px; font-size: 15px; font-weight: normal;")
+        contabilita_layout.addWidget(self.auto_update_contabilita_check)
+
+        scroll_layout.addWidget(contabilita_group)
         
         # --- Sezione Browser ---
         browser_group = self._create_group_box("🌐 Impostazioni Browser")
@@ -435,6 +468,8 @@ class SettingsPanel(QWidget):
         self.headless_check.stateChanged.connect(self._on_change)
         self.timeout_spin.valueChanged.connect(self._on_change)
         self.download_path_edit.textChanged.connect(self._on_change)
+        self.contabilita_path_edit.textChanged.connect(self._on_change)
+        self.auto_update_contabilita_check.stateChanged.connect(self._on_change)
         # Liste gestite manualmente
     
     def _on_change(self):
@@ -445,14 +480,25 @@ class SettingsPanel(QWidget):
         self.unsaved_label.setVisible(has_changes)
         self.unsaved_changes.emit(has_changes)
     
-    def has_unsaved_changes(self) -> bool:
-        return self._has_unsaved_changes
-    
     def _browse_download_path(self):
         current_path = self.download_path_edit.text()
         path = QFileDialog.getExistingDirectory(self, "Seleziona cartella download", current_path if current_path else "")
         if path:
             self.download_path_edit.setText(path)
+            self._set_unsaved_changes(True)
+
+    def _browse_contabilita_path(self):
+        current_path = self.contabilita_path_edit.text()
+        directory = str(Path(current_path).parent) if current_path else str(Path.home())
+
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona file Excel Contabilità",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)"
+        )
+        if path:
+            self.contabilita_path_edit.setText(path)
             self._set_unsaved_changes(True)
     
     # --- Gestione Account ---
@@ -581,6 +627,10 @@ class SettingsPanel(QWidget):
         self.timeout_spin.setValue(config.get("browser_timeout", 30))
         self.download_path_edit.setText(config.get("download_path", ""))
         
+        # Contabilita
+        self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
+        self.auto_update_contabilita_check.setChecked(config.get("enable_auto_update_contabilita", True))
+
         # Fornitori
         self.fornitori_list.clear()
         for f in config.get("fornitori", []):
@@ -605,6 +655,9 @@ class SettingsPanel(QWidget):
         config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
         config_manager.set_config_value("browser_timeout", self.timeout_spin.value())
         config_manager.set_config_value("download_path", self.download_path_edit.text())
+
+        config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
+        config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_contabilita_check.isChecked())
 
         config_manager.set_config_value("fornitori", fornitori)
         config_manager.set_config_value("contracts", contracts)
