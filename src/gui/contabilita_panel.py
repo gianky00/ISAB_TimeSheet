@@ -157,7 +157,8 @@ class ContabilitaPanel(QWidget):
                 break
 
         # Aggiorna anche i dati KPI se necessario (passando gli anni disponibili)
-        # La KPI panel caricherà i dati autonomamente o su richiesta
+        if hasattr(self, 'kpi_panel'):
+            self.kpi_panel.refresh_years()
 
     def _on_tab_changed(self, index):
         """Chiamato quando cambia la tab ANNO."""
@@ -253,8 +254,10 @@ class ContabilitaYearTab(QWidget):
         layout.addWidget(self.table)
 
     def _load_data(self):
-        data = ContabilitaManager.get_data_by_year(self.year)
+        # Resetta completamente la tabella prima di popolare
         self.table.setRowCount(0)
+
+        data = ContabilitaManager.get_data_by_year(self.year)
 
         for row_idx, row_data in enumerate(data):
             self.table.insertRow(row_idx)
@@ -281,6 +284,12 @@ class ContabilitaYearTab(QWidget):
 
     def _add_totals_row(self):
         """Aggiunge la riga dei totali in fondo."""
+        # Se l'ultima riga è già TOTALI, non aggiungerne un'altra
+        if self.table.rowCount() > 0:
+            last_item = self.table.item(self.table.rowCount() - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                return
+
         row_idx = self.table.rowCount()
         self.table.insertRow(row_idx)
 
@@ -288,6 +297,8 @@ class ContabilitaYearTab(QWidget):
         item = QTableWidgetItem("TOTALI")
         item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
         item.setBackground(Qt.GlobalColor.lightGray)
+        # Disabilita selezione e modifica per la label (opzionale, ma meglio lasciare select per copia)
+        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.table.setItem(row_idx, 0, item)
 
         # Applica stile background grigio a tutta la riga totali
@@ -295,6 +306,7 @@ class ContabilitaYearTab(QWidget):
             item = QTableWidgetItem("")
             item.setBackground(Qt.GlobalColor.lightGray)
             item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
             # Allineamento numeri
             if c in [self.COL_TOTALE, self.COL_ORE, self.COL_RESA, self.COL_N_PREV]:
@@ -304,8 +316,18 @@ class ContabilitaYearTab(QWidget):
 
     def _update_totals(self):
         """Ricalcola e aggiorna la riga dei totali in base alle righe VISIBILI."""
-        rows = self.table.rowCount() - 1 # Escludi riga totali stessa
-        if rows < 0: return
+        # Trova la riga totali
+        total_row_idx = -1
+        if self.table.rowCount() > 0:
+            last_item = self.table.item(self.table.rowCount() - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                total_row_idx = self.table.rowCount() - 1
+
+        if total_row_idx == -1:
+            return
+
+        # Itera su tutte le righe tranne quella dei totali
+        rows = total_row_idx
 
         count_prev = 0
         sum_totale_prev = 0.0
@@ -338,21 +360,20 @@ class ContabilitaYearTab(QWidget):
                         sum_resa += val
                         count_resa += 1
 
-        # Aggiorna riga totali (ultimo indice)
-        last_row = self.table.rowCount() - 1
+        # Aggiorna riga totali
 
         # N Prev (Conteggio)
-        self.table.item(last_row, self.COL_N_PREV).setText(str(count_prev))
+        self.table.item(total_row_idx, self.COL_N_PREV).setText(str(count_prev))
 
         # Totale Prev (Somma)
-        self.table.item(last_row, self.COL_TOTALE).setText(self._format_currency(sum_totale_prev))
+        self.table.item(total_row_idx, self.COL_TOTALE).setText(self._format_currency(sum_totale_prev))
 
         # Ore SP (Somma)
-        self.table.item(last_row, self.COL_ORE).setText(self._format_number(sum_ore_sp))
+        self.table.item(total_row_idx, self.COL_ORE).setText(self._format_number(sum_ore_sp))
 
         # Resa (Media)
         avg_resa = sum_resa / count_resa if count_resa > 0 else 0.0
-        self.table.item(last_row, self.COL_RESA).setText(self._format_number(avg_resa))
+        self.table.item(total_row_idx, self.COL_RESA).setText(self._format_number(avg_resa))
 
     def _parse_currency(self, text):
         """Converte stringa valuta (€ 1.000,00) in float."""
@@ -416,11 +437,19 @@ class ContabilitaYearTab(QWidget):
 
     def filter_data(self, text):
         """Filtra le righe in base al testo e aggiorna totali."""
-        rows = self.table.rowCount() - 1 # Escludi riga totali
-        cols = self.table.columnCount()
-        search_terms = text.lower().split()
+        # Determina quante righe di dati ci sono (esclusa totali)
+        total_rows = self.table.rowCount()
+        data_rows = total_rows
 
-        for r in range(rows):
+        if total_rows > 0:
+            last_item = self.table.item(total_rows - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                data_rows = total_rows - 1
+
+        search_terms = text.lower().split()
+        cols = self.table.columnCount()
+
+        for r in range(data_rows):
             if not text:
                 self.table.setRowHidden(r, False)
                 continue
@@ -441,7 +470,8 @@ class ContabilitaYearTab(QWidget):
             self.table.setRowHidden(r, not row_visible)
 
         # Assicura che la riga totali sia sempre visibile
-        self.table.setRowHidden(rows, False)
+        if data_rows < total_rows:
+            self.table.setRowHidden(data_rows, False)
 
         # Ricalcola totali sulle righe visibili
         self._update_totals()
@@ -450,8 +480,8 @@ class ContabilitaYearTab(QWidget):
         item = self.table.itemAt(pos)
         if not item: return
 
-        # Non mostrare menu sulla riga totali (ultima riga)
-        if item.row() == self.table.rowCount() - 1:
+        # Non mostrare menu sulla riga totali (ultima riga se presente)
+        if item.text() == "TOTALI" or (self.table.item(item.row(), 0).text() == "TOTALI"):
             return
 
         row = item.row()
