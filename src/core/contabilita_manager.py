@@ -7,6 +7,7 @@ import pandas as pd
 from pathlib import Path
 import re
 import logging
+import warnings
 from typing import List, Dict, Tuple, Optional
 
 class ContabilitaManager:
@@ -86,97 +87,101 @@ class ContabilitaManager:
             return False, f"File non trovato: {file_path}"
 
         try:
-            # Carica il file Excel (tutti i fogli)
-            # engine='openpyxl' è standard per .xlsx/.xlsm
-            xls = pd.ExcelFile(path, engine='openpyxl')
+            # Sopprimi i warning di openpyxl (es. Print area, Unknown extension)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
-            imported_years = []
+                # Carica il file Excel (tutti i fogli)
+                # engine='openpyxl' è standard per .xlsx/.xlsm
+                xls = pd.ExcelFile(path, engine='openpyxl')
 
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
+                imported_years = []
 
-            for sheet_name in xls.sheet_names:
-                # Controlla se il nome del foglio contiene un anno (4 cifre)
-                # Regex: cerca 4 cifre consecutive, es "2024", "Anno 2025"
-                match = re.search(r'(\d{4})', sheet_name)
-                if not match:
-                    continue
+                conn = sqlite3.connect(cls.DB_PATH)
+                cursor = conn.cursor()
 
-                year = int(match.group(1))
-
-                # Validazione base anno (es. tra 2000 e 2100 per evitare falsi positivi)
-                if not (2000 <= year <= 2100):
-                    continue
-
-                try:
-                    # Legge il foglio. Intestazioni alla riga 2 (index 1) -> header=1
-                    df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
-
-                    # Normalizza i nomi delle colonne per il mapping
-                    # Rimuove spazi extra e converte in upper per confronto
-                    df.columns = [str(c).strip().upper() for c in df.columns]
-
-                    # Filtra solo le colonne che ci interessano
-                    # Costruiamo un DataFrame pulito da inserire
-                    data_to_insert = []
-
-                    for _, row in df.iterrows():
-                        # Salta righe vuote (es. se data prev è vuota, spesso la riga è vuota)
-                        # O se tutte sono NaN
-                        if row.isna().all():
-                            continue
-
-                        record = {'year': year}
-
-                        for excel_col, db_col in cls.COLUMNS_MAPPING.items():
-                            # Cerca la colonna nel dataframe
-                            if excel_col in df.columns:
-                                val = row[excel_col]
-                                # Converti in stringa gestendo i NaN
-                                if pd.isna(val):
-                                    val = ""
-                                else:
-                                    # Se è una data, formatta? Per ora stringa
-                                    val = str(val)
-                                record[db_col] = val
-                            else:
-                                record[db_col] = "" # Colonna mancante nel foglio
-
-                        data_to_insert.append(record)
-
-                    if not data_to_insert:
+                for sheet_name in xls.sheet_names:
+                    # Controlla se il nome del foglio contiene un anno (4 cifre)
+                    # Regex: cerca 4 cifre consecutive, es "2024", "Anno 2025"
+                    match = re.search(r'(\d{4})', sheet_name)
+                    if not match:
                         continue
 
-                    # Transazione per anno: Cancella vecchi dati dell'anno e inserisci nuovi
-                    cursor.execute("DELETE FROM contabilita WHERE year = ?", (year,))
+                    year = int(match.group(1))
 
-                    # Prepara query inserimento
-                    columns = ['year'] + list(cls.COLUMNS_MAPPING.values())
-                    placeholders = ', '.join(['?'] * len(columns))
-                    query = f"INSERT INTO contabilita ({', '.join(columns)}) VALUES ({placeholders})"
+                    # Validazione base anno (es. tra 2000 e 2100 per evitare falsi positivi)
+                    if not (2000 <= year <= 2100):
+                        continue
 
-                    # Prepara lista di tuple
-                    values = []
-                    for item in data_to_insert:
-                        row_vals = [item['year']]
-                        for col in cls.COLUMNS_MAPPING.values():
-                            row_vals.append(item.get(col, ""))
-                        values.append(tuple(row_vals))
+                    try:
+                        # Legge il foglio. Intestazioni alla riga 2 (index 1) -> header=1
+                        df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
 
-                    cursor.executemany(query, values)
-                    imported_years.append(year)
+                        # Normalizza i nomi delle colonne per il mapping
+                        # Rimuove spazi extra e converte in upper per confronto
+                        df.columns = [str(c).strip().upper() for c in df.columns]
 
-                except Exception as e:
-                    print(f"Errore importazione foglio {sheet_name}: {e}")
-                    continue
+                        # Filtra solo le colonne che ci interessano
+                        # Costruiamo un DataFrame pulito da inserire
+                        data_to_insert = []
 
-            conn.commit()
-            conn.close()
+                        for _, row in df.iterrows():
+                            # Salta righe vuote (es. se data prev è vuota, spesso la riga è vuota)
+                            # O se tutte sono NaN
+                            if row.isna().all():
+                                continue
 
-            if not imported_years:
-                return False, "Nessun foglio valido (con anno) trovato o dati vuoti."
+                            record = {'year': year}
 
-            return True, f"Importazione completata per gli anni: {sorted(imported_years)}"
+                            for excel_col, db_col in cls.COLUMNS_MAPPING.items():
+                                # Cerca la colonna nel dataframe
+                                if excel_col in df.columns:
+                                    val = row[excel_col]
+                                    # Converti in stringa gestendo i NaN
+                                    if pd.isna(val):
+                                        val = ""
+                                    else:
+                                        # Se è una data, formatta? Per ora stringa
+                                        val = str(val)
+                                    record[db_col] = val
+                                else:
+                                    record[db_col] = "" # Colonna mancante nel foglio
+
+                            data_to_insert.append(record)
+
+                        if not data_to_insert:
+                            continue
+
+                        # Transazione per anno: Cancella vecchi dati dell'anno e inserisci nuovi
+                        cursor.execute("DELETE FROM contabilita WHERE year = ?", (year,))
+
+                        # Prepara query inserimento
+                        columns = ['year'] + list(cls.COLUMNS_MAPPING.values())
+                        placeholders = ', '.join(['?'] * len(columns))
+                        query = f"INSERT INTO contabilita ({', '.join(columns)}) VALUES ({placeholders})"
+
+                        # Prepara lista di tuple
+                        values = []
+                        for item in data_to_insert:
+                            row_vals = [item['year']]
+                            for col in cls.COLUMNS_MAPPING.values():
+                                row_vals.append(item.get(col, ""))
+                            values.append(tuple(row_vals))
+
+                        cursor.executemany(query, values)
+                        imported_years.append(year)
+
+                    except Exception as e:
+                        print(f"Errore importazione foglio {sheet_name}: {e}")
+                        continue
+
+                conn.commit()
+                conn.close()
+
+                if not imported_years:
+                    return False, "Nessun foglio valido (con anno) trovato o dati vuoti."
+
+                return True, f"Importazione completata per gli anni: {sorted(imported_years)}"
 
         except Exception as e:
             return False, f"Errore generale importazione: {e}"
