@@ -61,6 +61,12 @@ class SettingsPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._has_unsaved_changes = False
+
+        # Keep references to prevent GC
+        self.scroll = None
+        self.scroll_content = None
+        self.groups = []  # Store group boxes to prevent premature GC
+
         self._setup_ui()
         self._load_settings()
         self._connect_change_signals()
@@ -93,17 +99,18 @@ class SettingsPanel(QWidget):
         main_layout.addWidget(header)
         
         # Scroll area per il contenuto
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
         
-        scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(self.scroll_content)
         scroll_layout.setSpacing(20)
         
         # --- Sezione Account ---
         account_group = self._create_group_box("🔐 Gestione Account ISAB")
         account_layout = QVBoxLayout(account_group)
+        self.groups.append(account_group)
         
         self.account_list = QListWidget()
         self.account_list.setMinimumHeight(120)
@@ -155,6 +162,7 @@ class SettingsPanel(QWidget):
         # --- Sezione Contratti ---
         contract_group = self._create_group_box("📋 Numeri Contratto")
         contract_layout = QVBoxLayout(contract_group)
+        self.groups.append(contract_group)
         
         contract_hint = QLabel("Gestisci l'elenco dei contratti disponibili nel menu a tendina di Dettagli OdA.")
         contract_hint.setStyleSheet("color: #6c757d; font-size: 14px;")
@@ -206,6 +214,7 @@ class SettingsPanel(QWidget):
         # --- Sezione Fornitori ---
         fornitori_group = self._create_group_box("🏢 Gestione Fornitori")
         fornitori_layout = QVBoxLayout(fornitori_group)
+        self.groups.append(fornitori_group)
         
         fornitori_hint = QLabel(
             "Gestisci l'elenco dei fornitori disponibili nel menu a tendina dello Scarico TS.\n"
@@ -261,6 +270,7 @@ class SettingsPanel(QWidget):
         # --- Sezione Contabilità Strumentale ---
         contabilita_group = self._create_group_box("📊 Contabilità Strumentale")
         contabilita_layout = QVBoxLayout(contabilita_group)
+        self.groups.append(contabilita_group)
 
         # Path input
         path_label = QLabel("File Excel di origine:")
@@ -293,6 +303,7 @@ class SettingsPanel(QWidget):
         # --- Sezione Browser ---
         browser_group = self._create_group_box("🌐 Impostazioni Browser")
         browser_layout = QVBoxLayout(browser_group)
+        self.groups.append(browser_group)
         
         self.headless_check = QCheckBox("Esegui in modalità headless (senza interfaccia grafica)")
         self.headless_check.setStyleSheet("padding: 5px; font-size: 15px;")
@@ -316,6 +327,7 @@ class SettingsPanel(QWidget):
         # --- Sezione Download ---
         download_group = self._create_group_box("📁 Cartella di destinazione")
         download_layout = QVBoxLayout(download_group)
+        self.groups.append(download_group)
         
         path_layout = QHBoxLayout()
         
@@ -342,8 +354,8 @@ class SettingsPanel(QWidget):
         scroll_layout.addWidget(download_group)
         
         scroll_layout.addStretch()
-        scroll.setWidget(scroll_content)
-        main_layout.addWidget(scroll)
+        self.scroll.setWidget(self.scroll_content)
+        main_layout.addWidget(self.scroll)
         
         # --- Pulsanti azione ---
         action_layout = QHBoxLayout()
