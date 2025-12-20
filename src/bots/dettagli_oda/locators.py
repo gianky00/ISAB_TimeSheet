@@ -18,8 +18,8 @@ class DettagliOdALocators:
     DATE_A_FIELD = (By.NAME, "DataOdAA")
 
     # Input
-    ODA_NUMBER_FIELD = (By.NAME, "NumeroOda")
-    CONTRACT_FIELD = (By.NAME, "NumeroContratto")
+    ODA_NUMBER_FIELD = (By.XPATH, "//label[contains(text(), 'Numero OdA')]/following::input[1]")
+    CONTRACT_FIELD = (By.XPATH, "//label[contains(text(), 'Numero Contratto')]/following::input[1]")
 
     # Search
     SEARCH_BUTTON = (By.XPATH, "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]]")
