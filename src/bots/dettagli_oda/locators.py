@@ -14,7 +14,6 @@ class DettagliOdALocators:
 
     # Filters
     SUPPLIER_ARROW = (By.XPATH, "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]")
-    SUPPLIER_INPUT = (By.XPATH, "//label[contains(text(), 'Fornitore')]/following::input[1]")
     # Contract is dynamic
     DATE_A_FIELD = (By.NAME, "DataOdAA")
 

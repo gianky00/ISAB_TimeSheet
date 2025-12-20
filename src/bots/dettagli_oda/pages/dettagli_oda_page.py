@@ -84,7 +84,10 @@ class DettagliOdAPage:
             # 1. Fill Form (Sequence: ODA -> TAB -> Date A -> TAB -> Contract -> TAB TAB -> Space)
 
             # WORKAROUND: Focus Supplier field and TAB to 'Numero OdA' to avoid locating issues
-            supplier_input = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.SUPPLIER_INPUT))
+            # Locate input relative to the Arrow (which is reliably found in setup_supplier)
+            supplier_arrow = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
+            supplier_input = supplier_arrow.find_element(By.XPATH, "preceding::input[1]")
+
             # Focus without clicking (to avoid opening dropdown)
             self.driver.execute_script("arguments[0].focus();", supplier_input)
 
