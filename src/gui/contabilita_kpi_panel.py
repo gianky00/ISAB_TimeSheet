@@ -21,7 +21,7 @@ from PyQt6.QtGui import QColor, QCursor, QFont, QScreen
 from src.core.contabilita_manager import ContabilitaManager
 
 # Costante per il costo orario aziendale standard
-HOURLY_COST_STD = 27.43
+HOURLY_COST_STD = 30.00
 
 class DetailedInfoDialog(QDialog):
     """Dialogo modale per spiegazioni dettagliate KPI."""
@@ -273,7 +273,7 @@ class ContabilitaKPIPanel(QWidget):
 
         self.card_margine = KPIBigCard(
             "MARGINE OPERATIVO STIMATO", "€ 0,00", "#20c997",
-            subtitle=f"Base Costo Orario: € {HOURLY_COST_STD}"
+            subtitle=f"Base Costo Orario: € {HOURLY_COST_STD:.2f}"
         )
         self.card_margine_perc = KPIBigCard(
             "MARGINALITÀ %", "0.0 %", "#20c997",
@@ -332,7 +332,6 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas3 = FigureCanvas(self.fig3)
         self.container3 = self._create_chart_container(
             self.canvas3,
-            # RENAMED
             title="Redditività: Ricavi vs Costi",
             info_callback=lambda: "Confronto diretto tra Ricavi (Preventivato) e Costi Stimati per tipologia."
         )
@@ -480,12 +479,20 @@ class ContabilitaKPIPanel(QWidget):
             # Converti numerici
             df['totale_prev'] = pd.to_numeric(df['totale_prev'], errors='coerce').fillna(0)
             df['ore_sp'] = pd.to_numeric(df['ore_sp'], errors='coerce').fillna(0)
-            df['resa'] = pd.to_numeric(df['resa'], errors='coerce').fillna(0)
+
+            # RESA: Gestione valori non numerici ("INS.ORE SP.")
+            # Convertiamo errors='coerce' per avere NaN sulle stringhe, poi ignoriamo i NaN nel calcolo della media
+            df['resa'] = pd.to_numeric(df['resa'], errors='coerce')
+            # Non facciamo fillna(0) su RESA qui, per non abbassare la media impropriamente se sono dati mancanti
 
             # --- 1. Update General Scorecards ---
             tot_prev = df['totale_prev'].sum()
             tot_ore = df['ore_sp'].sum()
-            avg_resa = df['resa'].mean() if not df.empty else 0
+
+            # Calcolo media Resa ignorando NaN
+            avg_resa = df['resa'].mean()
+            if pd.isna(avg_resa): avg_resa = 0
+
             count = len(df)
 
             self.card_totale.lbl_value.setText(f"€ {self._format_currency(tot_prev)}")
@@ -514,7 +521,7 @@ class ContabilitaKPIPanel(QWidget):
             self.card_margine.set_info_callback(lambda: (
                 f"<b>CALCOLO ESEMPIO REALE ({year}):</b><br><br>"
                 f"Totale Preventivato: € {self._format_currency(tot_prev)}<br>"
-                f" - Costo Stimato: € {self._format_currency(costo_totale_stimato)} (Ore {self._format_currency(tot_ore)} * € {HOURLY_COST_STD})<br>"
+                f" - Costo Stimato: € {self._format_currency(costo_totale_stimato)} (Ore {self._format_currency(tot_ore)} * € {HOURLY_COST_STD:.2f})<br>"
                 f"--------------------------------------------------<br>"
                 f"<b>= Margine Operativo: € {self._format_currency(margine_operativo)}</b><br><br>"
                 f"Indica l'utile lordo stimato dopo aver coperto i costi orari del personale."
@@ -553,7 +560,7 @@ class ContabilitaKPIPanel(QWidget):
                 f"--------------------------------------------------<br>"
                 f"<b>= Valore Orario: € {self._format_currency(valore_per_ora)} / h</b><br><br>"
                 f"Ogni ora lavorata ha generato un fatturato medio di € {self._format_currency(valore_per_ora)}.<br>"
-                f"(Confrontalo con il costo orario base di € {HOURLY_COST_STD})"
+                f"(Confrontalo con il costo orario base di € {HOURLY_COST_STD:.2f})"
             ))
 
             # --- 3. Update Charts ---
@@ -676,7 +683,8 @@ class ContabilitaKPIPanel(QWidget):
 
         lines, labels = ax.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
-        ax2.legend(lines + lines2, labels + labels2, loc='upper left')
+        # LEGEND UPPER RIGHT as requested
+        ax2.legend(lines + lines2, labels + labels2, loc='upper right')
 
         ax.grid(True, axis='y', alpha=0.3)
         ax2.grid(False)
@@ -707,6 +715,7 @@ class ContabilitaKPIPanel(QWidget):
         # Raggruppa e calcola Ricavi (Prev) e Costi
         grouped_sums = filtered_df.groupby('tipologia_upper')[['totale_prev', 'ore_sp']].sum()
         grouped_sums['Costo'] = grouped_sums['ore_sp'] * HOURLY_COST_STD
+        grouped_sums['Margine'] = grouped_sums['totale_prev'] - grouped_sums['Costo']
 
         # Ordina per Ricavi descrescente
         grouped = grouped_sums.sort_values(by='totale_prev', ascending=True)
@@ -729,9 +738,12 @@ class ContabilitaKPIPanel(QWidget):
 
         # Aggiunge etichette numeriche
         for i, (idx, row) in enumerate(grouped.iterrows()):
-            # Etichetta Ricavi
-            ax.text(row['totale_prev'], i + height/2, f" € {row['totale_prev']/1000:.1f}k",
+            # Etichetta Ricavi + Margine
+            margine_k = row['Margine'] / 1000
+            txt_ric = f" € {row['totale_prev']/1000:.1f}k (Margine: {margine_k:+.1f}k)"
+            ax.text(row['totale_prev'], i + height/2, txt_ric,
                     va='center', fontsize=9, color='#198754', fontweight='bold')
+
             # Etichetta Costi
             ax.text(row['Costo'], i - height/2, f" € {row['Costo']/1000:.1f}k",
                     va='center', fontsize=9, color='#dc3545')
@@ -756,6 +768,7 @@ class ContabilitaKPIPanel(QWidget):
         df['mese_lower'] = df['mese'].str.lower().str.strip()
         df['mese_cat'] = pd.Categorical(df['mese_lower'], categories=months_order, ordered=True)
 
+        # Qui usiamo dropna() implicito se ci sono NaN in resa
         df_resa = df[df['resa'] > 0]
         grouped = df_resa.groupby('mese_cat', observed=True)['resa'].mean()
 
@@ -819,13 +832,18 @@ class ContabilitaKPIPanel(QWidget):
         p3 = ax.barh(0, pct_todo, left=pct_completed + pct_tcl, height=0.6, color='#dc3545', label='Da Completare', edgecolor='white')
         p4 = ax.barh(0, pct_other, left=pct_completed + pct_tcl + pct_todo, height=0.6, color='#e9ecef', label='Altro', edgecolor='white')
 
-        # Add labels if segment is large enough
-        if pct_completed > 10:
-            ax.text(pct_completed/2, 0, f"{pct_completed:.1f}%", ha='center', va='center', color='white', fontweight='bold')
-        if pct_tcl > 10:
-            ax.text(pct_completed + pct_tcl/2, 0, f"{pct_tcl:.1f}%", ha='center', va='center', color='black', fontweight='bold')
-        if pct_todo > 10:
-            ax.text(pct_completed + pct_tcl + pct_todo/2, 0, f"{pct_todo:.1f}%", ha='center', va='center', color='white', fontweight='bold')
+        # Label Helper Function to prevent overlap
+        def add_label(pct, current_left, color='white'):
+            # Only show if at least 5% width to avoid clutter
+            if pct > 5:
+                ax.text(current_left + pct/2, 0, f"{pct:.1f}%", ha='center', va='center', color=color, fontweight='bold')
+
+        add_label(pct_completed, 0)
+        add_label(pct_tcl, pct_completed, color='black') # Yellow bg needs black text
+        add_label(pct_todo, pct_completed + pct_tcl)
+
+        # Other might be small, skip if tiny
+        add_label(pct_other, pct_completed + pct_tcl + pct_todo, color='black')
 
         ax.set_xlim(0, 100)
         ax.set_ylim(-0.5, 0.5)

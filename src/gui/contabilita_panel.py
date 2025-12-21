@@ -79,6 +79,7 @@ class ContabilitaPanel(QWidget):
 
         # Main Tab Container (Tabelle vs KPI)
         self.main_tabs = QTabWidget()
+        self.main_tabs.currentChanged.connect(self._on_main_tab_changed) # Connect tab change
         self.main_tabs.setStyleSheet("""
             QTabWidget::pane {
                 border: 1px solid #dee2e6;
@@ -123,7 +124,7 @@ class ContabilitaPanel(QWidget):
         """)
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
 
-        self.main_tabs.addTab(self.year_tabs_widget, "📂 Dati & Tabelle")
+        self.main_tabs.addTab(self.year_tabs_widget, "📂 Dati") # Renamed from Dati Tabelle
 
         # --- TAB 2: KPI ---
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
@@ -131,6 +132,14 @@ class ContabilitaPanel(QWidget):
         self.main_tabs.addTab(self.kpi_panel, "📊 Analisi KPI")
 
         layout.addWidget(self.main_tabs)
+
+    def _on_main_tab_changed(self, index):
+        """Handle visibility of search bar based on main tab."""
+        tab_text = self.main_tabs.tabText(index)
+        if "Analisi KPI" in tab_text:
+            self.search_input.hide()
+        else:
+            self.search_input.show()
 
     def refresh_tabs(self):
         """Ricarica i tab in base agli anni nel DB."""
