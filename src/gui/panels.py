@@ -1288,6 +1288,7 @@ class TimbratureDBPanel(QWidget):
         search_label = QLabel("🔍 Filtra:")
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Cerca per nome, cognome, data...")
+        self.search_input.setClearButtonEnabled(True)
         self.search_input.textChanged.connect(self._filter_data)
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.search_input)
