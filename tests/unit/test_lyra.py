@@ -22,7 +22,7 @@ class TestLyra:
         client = LyraClient()
 
         # Verify URL contains flash model
-        assert "gemini-1.5-flash" in client._url
+        assert "gemini-2.0-flash" in client._url
 
         # Verify context injection
         with patch.object(client, '_get_system_context', return_value="SystemContext"):
