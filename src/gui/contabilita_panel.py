@@ -60,6 +60,7 @@ class ContabilitaPanel(QWidget):
         # Search Bar
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍 Cerca in questa tabella...")
+        self.search_input.setClearButtonEnabled(True)
         self.search_input.setFixedWidth(300)
         self.search_input.setStyleSheet("""
             QLineEdit {

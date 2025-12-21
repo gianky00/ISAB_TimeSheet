@@ -13,3 +13,7 @@
 ## 2024-05-23 - Input Field Sizing
 **Learning:** Default widget sizes can fail when content density changes (e.g., full date strings).
 **Action:** Explicitly set `minimumWidth` for inputs like `QDateEdit` to accommodate the longest expected string (e.g., "DD.MM.YYYY") plus control icons, preventing truncation and usability issues.
+
+## 2024-05-23 - Search Bar Usability
+**Learning:** Users in data-heavy views (Database, Accounting) require rapid filtering capabilities. Standard `QLineEdit` search bars lack a quick reset mechanism, forcing manual text deletion.
+**Action:** Always enable `setClearButtonEnabled(True)` on filtering inputs to provide a native, accessible "X" button for one-click clearing. This improves efficiency for mouse users and aligns with modern OS search patterns.
