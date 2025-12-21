@@ -585,6 +585,7 @@ class SettingsPanel(QWidget):
         menu.addAction(add_action)
         
         if item:
+            self.account_list.setCurrentItem(item)
             menu.addSeparator()
             
             edit_action = QAction("✏️ Modifica", self)
@@ -611,6 +612,7 @@ class SettingsPanel(QWidget):
         menu.addAction(add_action)
         
         if item:
+            list_widget.setCurrentItem(item)
             menu.addSeparator()
             
             edit_action = QAction("✏️ Modifica", self)

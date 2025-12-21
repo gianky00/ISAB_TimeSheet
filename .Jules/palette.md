@@ -5,3 +5,7 @@
 ## 2024-05-23 - Motion as "Liveness" Indicator
 **Learning:** A static "Running" status indicator (just a color change) can be ambiguous—users may think the app has frozen during long operations.
 **Action:** Use subtle motion (like a pulsing animation) to indicate that the application is "alive" and working. A simple opacity pulse on the status dot is less intrusive than a progress bar but effectively communicates ongoing activity.
+
+## 2024-05-23 - Reducing Mouse Travel
+**Learning:** Separating list items from their action buttons (e.g., placing "Edit/Remove" buttons far below a list) forces users to move the mouse back and forth repeatedly, increasing cognitive load and physical effort.
+**Action:** Implement context menus (Right-Click) directly on list items. This keeps the action (Edit/Delete) spatially connected to the object (the list item), creating a faster and more intuitive workflow.
