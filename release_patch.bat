@@ -22,6 +22,9 @@ if not exist "%VENV_DIR%\Scripts\activate.bat" (
 )
 call "%VENV_DIR%\Scripts\activate.bat"
 
+echo Cleaning invalid pip distributions...
+python "admin/clean_venv.py"
+
 echo Updating dependencies...
 pip install --upgrade pip
 pip install -r requirements.txt

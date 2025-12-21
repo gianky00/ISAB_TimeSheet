@@ -23,6 +23,7 @@ class TestCaricoTSPage:
     def test_flow(self, MockActionChains, mock_driver):
         page = CaricoTSPage(mock_driver)
         page.wait = MagicMock()
+        page._wait_overlay = MagicMock() # Mock overlay wait
 
         assert page.navigate() is True
         assert page.select_supplier("Sup") is True

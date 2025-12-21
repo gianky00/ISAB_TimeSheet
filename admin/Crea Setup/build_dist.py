@@ -79,6 +79,7 @@ def run_pyinstaller():
         "webdriver_manager.chrome",
         "cryptography.fernet",
         "packaging.version",
+        "platformdirs",
     ]
     
     for imp in hidden_imports:

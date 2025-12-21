@@ -37,12 +37,14 @@ class TestScaricoTSPage:
         page = ScaricoTSPage(mock_driver)
         page.wait = MagicMock()
         page.long_wait = MagicMock()
+        page._wait_for_overlay = MagicMock()
 
         assert page.setup_filters("Supplier", "01.01.2025") is True
 
     def test_search_download_success(self, mock_driver):
         page = ScaricoTSPage(mock_driver)
         page.wait = MagicMock()
+        page._wait_for_overlay = MagicMock()
         page._download_excel = MagicMock(return_value=True)
 
         assert page.search_and_download("123", "1", Path(".")) is True

@@ -28,6 +28,10 @@ pytest-qt==4.3.1
 pytest-mock==3.12.0
 
 # Data Processing
-openpyxl==3.1.2
+openpyxl>=3.1.5
 pandas==2.2.1
 matplotlib
+
+# Build stability (Fix pkg_resources/PyInstaller issues)
+setuptools==69.5.1
+platformdirs

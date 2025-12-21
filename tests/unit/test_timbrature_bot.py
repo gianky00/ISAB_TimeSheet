@@ -31,6 +31,7 @@ class TestTimbraturePage:
         page = TimbraturePage(mock_driver)
         # Mock wait
         page.wait = MagicMock()
+        page._wait_for_overlay = MagicMock()
         page.wait.until.return_value = MagicMock() # element
 
         # Act
