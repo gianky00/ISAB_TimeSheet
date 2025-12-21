@@ -13,7 +13,12 @@ class LyraClient:
         # Obfuscated API Key (Reconstructed at runtime)
         self._k_parts = [65, 73, 122, 97, 83, 121, 66, 83, 84, 66, 100, 95, 112, 87, 113, 111, 86, 49, 73, 106, 75, 83, 49, 88, 120, 48, 81, 119, 112, 75, 69, 68, 119, 54, 66, 70, 121, 98, 85]
         self._api_key = "".join([chr(c) for c in self._k_parts])
-        self._url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self._api_key}"
+
+        # Models to try in order of preference (Fallback strategy)
+        self.models = [
+            "models/gemini-2.0-flash",
+            "models/gemini-1.5-flash"
+        ]
 
         self.context_prompt = (
             "Sei Lyra, un'esperta contabile e assistente virtuale per l'applicazione 'Bot TS'. "
@@ -119,16 +124,34 @@ class LyraClient:
             }
 
             headers = {'Content-Type': 'application/json'}
-            response = requests.post(self._url, json=payload, headers=headers)
 
-            if response.status_code == 200:
-                result = response.json()
+            last_error = ""
+
+            # Retry loop with different models
+            for model in self.models:
+                url = f"https://generativelanguage.googleapis.com/v1beta/{model}:generateContent?key={self._api_key}"
+
                 try:
-                    return result['candidates'][0]['content']['parts'][0]['text']
-                except (KeyError, IndexError):
-                    return "Non sono riuscita a elaborare la risposta. Riprova."
-            else:
-                return f"Errore API ({response.status_code}): {response.text}"
+                    response = requests.post(url, json=payload, headers=headers)
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        try:
+                            return result['candidates'][0]['content']['parts'][0]['text']
+                        except (KeyError, IndexError):
+                            return "Non sono riuscita a elaborare la risposta. Riprova."
+                    elif response.status_code == 429:
+                        last_error = f"Quota esaurita per {model} (429)."
+                        continue # Try next model
+                    else:
+                        last_error = f"Errore API {model} ({response.status_code}): {response.text}"
+                        continue
+
+                except Exception as e:
+                    last_error = f"Errore connessione: {e}"
+                    continue
+
+            return f"Tutti i modelli AI hanno fallito. Ultimo errore: {last_error}"
 
         except Exception as e:
             return f"Si è verificato un errore critico: {e}"
