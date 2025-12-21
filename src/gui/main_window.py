@@ -17,6 +17,7 @@ from src.gui.toast import ToastOverlay
 from src.gui.help_panel import HelpPanel
 from src.gui.dashboard_panel import DashboardPanel
 from src.gui.lyra_panel import LyraPanel
+from src.core.lyra_sentinel import LyraSentinel
 from src.core.license_validator import get_license_info
 from src.core import config_manager
 
@@ -30,9 +31,17 @@ class SidebarButton(QPushButton):
         self.setCheckable(True)
         self.setMinimumHeight(55)
         self.setMinimumWidth(180)
+        self._original_text = f"{icon} {text}" if icon else text
         self._update_style()
         self.toggled.connect(self._update_style)
     
+    def set_badge(self, count: int):
+        """Imposta un badge di notifica."""
+        if count > 0:
+            self.setText(f"{self._original_text} 🔴 {count}")
+        else:
+            self.setText(self._original_text)
+
     def _update_style(self):
         """Aggiorna lo stile in base allo stato."""
         if self.isChecked():
@@ -86,9 +95,20 @@ class MainWindow(QMainWindow):
         # Toast notification system
         self.toast = ToastOverlay(self)
 
+        # Lyra Sentinel (Monitoraggio Anomalie)
+        self.sentinel = LyraSentinel()
+        self.sentinel.anomalies_found.connect(self._on_anomalies_found)
+        QTimer.singleShot(2000, self.sentinel.start) # Ritarda leggermente l'avvio
+
         # Avvio automatico importazione contabilità se abilitato
         QTimer.singleShot(1000, self._check_and_start_contabilita_update)
     
+    def _on_anomalies_found(self, count):
+        """Gestisce le anomalie trovate da Lyra."""
+        self.btn_lyra.set_badge(count)
+        if count > 0:
+            self.show_toast(f"⚠️ Lyra ha rilevato {count} anomalie")
+
     def show_toast(self, message: str, duration: int = 3000):
         """Mostra una notifica toast."""
         self.toast.show_toast(message, duration)
@@ -419,6 +439,11 @@ class MainWindow(QMainWindow):
     def show_settings(self):
         """Metodo pubblico per navigare alle impostazioni."""
         self._navigate_to(4)
+
+    def analyze_with_lyra(self, context_text: str):
+        """Passa alla vista Lyra e analizza il contesto fornito."""
+        self._navigate_to(2) # Switch to Lyra
+        self.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie o punti di attenzione.", context_text)
     
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra."""

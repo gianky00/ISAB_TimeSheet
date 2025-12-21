@@ -13,7 +13,7 @@ class LyraClient:
         # Obfuscated API Key (Reconstructed at runtime)
         self._k_parts = [65, 73, 122, 97, 83, 121, 66, 83, 84, 66, 100, 95, 112, 87, 113, 111, 86, 49, 73, 106, 75, 83, 49, 88, 120, 48, 81, 119, 112, 75, 69, 68, 119, 54, 66, 70, 121, 98, 85]
         self._api_key = "".join([chr(c) for c in self._k_parts])
-        self._url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={self._api_key}"
+        self._url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self._api_key}"
 
         self.context_prompt = (
             "Sei Lyra, un'esperta contabile e assistente virtuale per l'applicazione 'Bot TS'. "
@@ -101,11 +101,16 @@ class LyraClient:
 
         return "\n".join(context)
 
-    def ask(self, question: str) -> str:
+    def ask(self, question: str, extra_context: str = "") -> str:
         """Invia una domanda a Gemini con il contesto."""
         try:
             system_data = self._get_system_context()
-            full_prompt = f"{self.context_prompt}\n{system_data}\n\nUtente: {question}\nLyra:"
+
+            ctx = ""
+            if extra_context:
+                ctx = f"\n\n[CONTESTO SPECIFICO FORNITO DALL'UTENTE (ANALIZZA QUESTO RECORD)]:\n{extra_context}\n"
+
+            full_prompt = f"{self.context_prompt}\n{system_data}{ctx}\n\nUtente: {question}\nLyra:"
 
             payload = {
                 "contents": [{

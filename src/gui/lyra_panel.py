@@ -11,13 +11,14 @@ from src.core.lyra_client import LyraClient
 class LyraWorker(QThread):
     finished = pyqtSignal(str)
 
-    def __init__(self, question):
+    def __init__(self, question, context=""):
         super().__init__()
         self.question = question
+        self.context = context
         self.client = LyraClient()
 
     def run(self):
-        answer = self.client.ask(self.question)
+        answer = self.client.ask(self.question, self.context)
         self.finished.emit(answer)
 
 class LyraPanel(QWidget):
@@ -103,13 +104,19 @@ class LyraPanel(QWidget):
     def _send_message(self):
         text = self.input_field.text().strip()
         if not text: return
-
-        self._append_message("Tu", text)
+        self.ask_lyra(text)
         self.input_field.clear()
-        self.input_field.setDisabled(True)
-        self.chat_area.setFocus() # Keep focus in window
 
-        self.worker = LyraWorker(text)
+    def ask_lyra(self, question: str, context: str = ""):
+        """Avvia una richiesta a Lyra."""
+        self._append_message("Tu", question)
+        if context:
+            self._append_message("Sistema", "<i>[Dati allegati all'analisi]</i>")
+
+        self.input_field.setDisabled(True)
+        self.chat_area.setFocus()
+
+        self.worker = LyraWorker(question, context)
         self.worker.finished.connect(self._on_answer)
         self.worker.start()
 

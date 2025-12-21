@@ -31,10 +31,39 @@ class ExcelTableWidget(QTableWidget):
     def contextMenuEvent(self, event):
         """Menu contestuale predefinito per copia veloce (per tabelle read-only)."""
         menu = QMenu(self)
+
+        lyra_action = QAction("✨ Analizza con Lyra", self)
+        lyra_action.triggered.connect(self._analyze_selection)
+        menu.addAction(lyra_action)
+
+        menu.addSeparator()
+
         copy_action = QAction("📋 Copia", self)
         copy_action.triggered.connect(self.copy_selection)
         menu.addAction(copy_action)
         menu.exec(event.globalPos())
+
+    def _analyze_selection(self):
+        """Invia la selezione a Lyra."""
+        selection = self.selectedRanges()
+        if not selection: return
+
+        # Estrai testo
+        rows_text = []
+        for r in range(selection[0].topRow(), selection[0].bottomRow() + 1):
+            row_data = []
+            for c in range(self.columnCount()):
+                item = self.item(r, c)
+                if item and not self.isColumnHidden(c):
+                    row_data.append(f"{self.horizontalHeaderItem(c).text()}: {item.text()}")
+            rows_text.append(" | ".join(row_data))
+
+        context = "\n".join(rows_text)
+
+        # Chiamata alla Main Window (metodo dinamico)
+        win = self.window()
+        if hasattr(win, "analyze_with_lyra"):
+            win.analyze_with_lyra(context)
 
     def copy_selection(self):
         """Copia la selezione negli appunti in formato compatibile con Excel."""
@@ -156,6 +185,11 @@ class EditableDataTable(QWidget):
     def _show_context_menu(self, position):
         """Mostra il menu contestuale."""
         menu = QMenu()
+
+        lyra_action = QAction("✨ Analizza con Lyra", self)
+        lyra_action.triggered.connect(self.table._analyze_selection)
+        menu.addAction(lyra_action)
+        menu.addSeparator()
 
         copy_action = QAction("📋 Copia", self)
         copy_action.triggered.connect(self.table.copy_selection)
