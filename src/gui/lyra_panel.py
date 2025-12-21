@@ -128,17 +128,21 @@ class LyraPanel(QWidget):
     def _append_message(self, sender, text):
         color = "#6f42c1" if sender == "Lyra" else "#495057"
         align = "left" if sender == "Lyra" else "right"
-        bg = "#f3f0ff" if sender == "Lyra" else "#e9ecef"
+        # Removed background highlight as requested
+
+        # Converti markdown bold **text** in <b>text</b>
+        import re
+        formatted_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
 
         # Converti newline in <br> per HTML
-        formatted_text = text.replace('\n', '<br>')
+        formatted_text = formatted_text.replace('\n', '<br>')
 
         html = f"""
-        <div style="margin-bottom: 10px; text-align: {align};">
-            <span style="font-weight: bold; color: {color};">{sender}</span><br>
-            <span style="background-color: {bg}; padding: 8px 12px; border-radius: 10px; display: inline-block;">
+        <div style="margin-bottom: 15px; text-align: {align};">
+            <span style="font-weight: bold; color: {color}; font-size: 14px;">{sender}</span><br>
+            <div style="padding: 5px 0; font-size: 15px; line-height: 1.4;">
                 {formatted_text}
-            </span>
+            </div>
         </div>
         """
         self.chat_area.append(html)
