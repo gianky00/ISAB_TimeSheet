@@ -17,6 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 from src.core.constants import Timeouts
+from src.utils.helpers import sanitize_filename
 from src.bots.dettagli_oda.locators import DettagliOdALocators
 from src.bots.common.locators import LoginLocators, CommonLocators
 
@@ -181,7 +182,8 @@ class DettagliOdAPage:
 
                 # Wait for Inner Export button
                 export_btn_locator = DettagliOdALocators.EXPORT_EXCEL_TEXT
-                target_filename = f"dettaglio_oda_{oda}.xlsx"
+                safe_oda = sanitize_filename(oda)
+                target_filename = f"dettaglio_oda_{safe_oda}.xlsx"
             else:
                 # ODA Empty: General List Export
                 self.log("  Esportazione lista generale...")

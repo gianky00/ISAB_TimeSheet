@@ -16,6 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 
 from src.bots.base import BaseBot, BotStatus
+from src.utils.helpers import sanitize_filename
 
 
 class ScaricaTSBot(BaseBot):
@@ -302,8 +303,11 @@ class ScaricaTSBot(BaseBot):
                         pass
 
                 # Costruisci il nuovo nome
-                nome_base_pos = f"-{posizione_oda}" if posizione_oda else ""
-                nuovo_nome_base = f"{numero_oda}{nome_base_pos}"
+                safe_oda = sanitize_filename(numero_oda)
+                safe_pos = sanitize_filename(posizione_oda)
+                
+                nome_base_pos = f"-{safe_pos}" if safe_pos else ""
+                nuovo_nome_base = f"{safe_oda}{nome_base_pos}"
                 nuovo_nome_file = f"{nuovo_nome_base}.xlsx"
                 percorso_finale = dest_dir / nuovo_nome_file
                 

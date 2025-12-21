@@ -5,10 +5,11 @@ Widget personalizzati riutilizzabili.
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
-    QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication
+    QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
+    QToolTip, QGraphicsOpacityEffect
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QAction, QKeySequence
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation
+from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor
 
 
 class ExcelTableWidget(QTableWidget):
@@ -26,6 +27,14 @@ class ExcelTableWidget(QTableWidget):
             self.copy_selection()
         else:
             super().keyPressEvent(event)
+
+    def contextMenuEvent(self, event):
+        """Menu contestuale predefinito per copia veloce (per tabelle read-only)."""
+        menu = QMenu(self)
+        copy_action = QAction("📋 Copia", self)
+        copy_action.triggered.connect(self.copy_selection)
+        menu.addAction(copy_action)
+        menu.exec(event.globalPos())
 
     def copy_selection(self):
         """Copia la selezione negli appunti in formato compatibile con Excel."""
@@ -70,6 +79,8 @@ class ExcelTableWidget(QTableWidget):
         if tsv_rows:
             tsv_data = "\n".join(tsv_rows)
             QApplication.clipboard().setText(tsv_data)
+            # Visual feedback
+            QToolTip.showText(QCursor.pos(), "✨ Copiato!", self)
 
 
 class EditableDataTable(QWidget):
@@ -145,6 +156,11 @@ class EditableDataTable(QWidget):
     def _show_context_menu(self, position):
         """Mostra il menu contestuale."""
         menu = QMenu()
+
+        copy_action = QAction("📋 Copia", self)
+        copy_action.triggered.connect(self.table.copy_selection)
+        menu.addAction(copy_action)
+        menu.addSeparator()
         
         add_action = QAction("➕ Aggiungi riga", self)
         add_action.triggered.connect(self._add_row)
@@ -474,6 +490,24 @@ class StatusIndicator(QWidget):
                 border-radius: 6px;
             }
         """)
+        
+        # Effetto opacità per animazione
+        self.opacity_effect = QGraphicsOpacityEffect(self.indicator)
+        self.opacity_effect.setOpacity(1.0)
+        self.indicator.setGraphicsEffect(self.opacity_effect)
+        
+        # Animazione pulsante
+        self.animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.animation.setDuration(1000)
+        self.animation.setStartValue(1.0)
+        self.animation.setEndValue(0.3)
+        self.animation.setLoopCount(-1)  # Infinito
+        self.animation.setDirection(QAbstractAnimation.Direction.Forward)
+        # Configura per fare avanti e indietro (pulse)
+        self.animation.setKeyValueAt(0.0, 1.0)
+        self.animation.setKeyValueAt(0.5, 0.3)
+        self.animation.setKeyValueAt(1.0, 1.0)
+        
         layout.addWidget(self.indicator)
         
         # Testo stato
@@ -510,3 +544,11 @@ class StatusIndicator(QWidget):
         """)
         self.status_label.setText(text)
         self.status_label.setStyleSheet(f"font-size: 14px; color: {color}; font-weight: bold;")
+        
+        # Gestione animazione
+        if status == "running":
+            if self.animation.state() != QAbstractAnimation.State.Running:
+                self.animation.start()
+        else:
+            self.animation.stop()
+            self.opacity_effect.setOpacity(1.0)

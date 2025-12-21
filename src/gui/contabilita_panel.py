@@ -263,33 +263,47 @@ class ContabilitaYearTab(QWidget):
         layout.addWidget(self.table)
 
     def _load_data(self):
-        # Resetta completamente la tabella prima di popolare
-        self.table.setRowCount(0)
-
         data = ContabilitaManager.get_data_by_year(self.year)
+        
+        # OTTIMIZZAZIONE: Disabilita aggiornamenti visuali e sorting durante il caricamento
+        self.table.setSortingEnabled(False)
+        self.table.blockSignals(True)
+        
+        try:
+            # Pre-alloca le righe
+            self.table.setRowCount(len(data))
+            
+            align_right_flags = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            right_aligned_cols = {self.COL_TOTALE, self.COL_ORE, self.COL_RESA}
+            columns_count = len(self.COLUMNS)
 
-        for row_idx, row_data in enumerate(data):
-            self.table.insertRow(row_idx)
+            for row_idx, row_data in enumerate(data):
+                # Popola colonne visibili
+                for col_idx in range(columns_count):
+                    val = row_data[col_idx]
+                    formatted_val = self._format_value(col_idx, val)
 
-            # Popola colonne visibili
-            for col_idx in range(len(self.COLUMNS)):
-                val = row_data[col_idx]
-                formatted_val = self._format_value(col_idx, val)
+                    item = QTableWidgetItem(formatted_val)
+                    # Allinea a destra i numeri
+                    if col_idx in right_aligned_cols:
+                        item.setTextAlignment(align_right_flags)
 
-                item = QTableWidgetItem(formatted_val)
-                # Allinea a destra i numeri
-                if col_idx in [self.COL_TOTALE, self.COL_ORE, self.COL_RESA]:
-                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                    self.table.setItem(row_idx, col_idx, item)
 
-                self.table.setItem(row_idx, col_idx, item)
+                # Salva dati nascosti (Indirizzo)
+                indirizzo = row_data[self.IDX_INDIRIZZO]
+                # Assicurati che l'item esista (setItem lo crea sopra)
+                if self.table.item(row_idx, 0):
+                    self.table.item(row_idx, 0).setData(Qt.ItemDataRole.UserRole, indirizzo)
 
-            # Salva dati nascosti (Indirizzo)
-            indirizzo = row_data[self.IDX_INDIRIZZO]
-            self.table.item(row_idx, 0).setData(Qt.ItemDataRole.UserRole, indirizzo)
+            # Aggiungi riga totali (Inizialmente vuota/calcolata su tutto)
+            self._add_totals_row()
+            self._update_totals()
 
-        # Aggiungi riga totali (Inizialmente vuota/calcolata su tutto)
-        self._add_totals_row()
-        self._update_totals()
+        finally:
+            # Ripristina segnali e sorting
+            self.table.blockSignals(False)
+            self.table.setSortingEnabled(True)
 
     def _add_totals_row(self):
         """Aggiunge la riga dei totali in fondo."""
@@ -430,9 +444,17 @@ class ContabilitaYearTab(QWidget):
             try:
                 dt = None
                 if ' ' in str_val: str_val = str_val.split(' ')[0]
-                for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
-                    try: dt = datetime.strptime(str_val, fmt); break
-                    except ValueError: continue
+                
+                # OTTIMIZZAZIONE: Tenta prima il formato standard DB (YYYY-MM-DD)
+                # Evita il loop se il formato è corretto
+                try:
+                    dt = datetime.strptime(str_val, "%Y-%m-%d")
+                except ValueError:
+                    # Fallback per altri formati
+                    for fmt in ("%d/%m/%Y", "%Y/%m/%d"):
+                        try: dt = datetime.strptime(str_val, fmt); break
+                        except ValueError: continue
+                
                 if dt: return dt.strftime("%d/%m/%Y")
             except: pass
 

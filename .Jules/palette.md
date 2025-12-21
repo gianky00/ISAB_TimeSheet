@@ -1,0 +1,7 @@
+## 2024-05-23 - Visual Feedback for Silent Interactions
+**Learning:** Users often distrust silent actions like "Copy to Clipboard". Even when the action works perfectly, the lack of feedback causes uncertainty and repetitive clicking.
+**Action:** Always provide immediate, fleeting visual feedback (like a tooltip or toast) for invisible actions. In this case, `QToolTip.showText(cursor_pos, "✨ Copiato!")` provides instant reassurance without interrupting the workflow. Additionally, exposing keyboard shortcuts (like Ctrl+C) via a visible context menu aids discoverability for mouse-first users.
+
+## 2024-05-23 - Motion as "Liveness" Indicator
+**Learning:** A static "Running" status indicator (just a color change) can be ambiguous—users may think the app has frozen during long operations.
+**Action:** Use subtle motion (like a pulsing animation) to indicate that the application is "alive" and working. A simple opacity pulse on the status dot is less intrusive than a progress bar but effectively communicates ongoing activity.

@@ -4,8 +4,10 @@ Gestione della configurazione dell'applicazione.
 """
 import os
 import json
+import copy
 from pathlib import Path
 from typing import Any, Dict, Optional, List
+from src.utils.security import password_manager
 
 
 # Path del file di configurazione
@@ -40,7 +42,7 @@ def ensure_config_dir():
 def load_config() -> Dict[str, Any]:
     """
     Carica la configurazione dal file.
-    Gestisce la migrazione automatica dalle vecchie chiavi.
+    Gestisce la migrazione automatica dalle vecchie chiavi e la decifratura delle password.
     
     Returns:
         Dict con la configurazione
@@ -58,11 +60,18 @@ def load_config() -> Dict[str, Any]:
             for key, value in loaded_config.items():
                 config[key] = value
 
+            # Decrypt passwords
+            if "accounts" in config:
+                for acc in config["accounts"]:
+                    if "password" in acc and acc["password"]:
+                        acc["password"] = password_manager.decrypt(acc["password"])
+
             # --- MIGRAZIONE ---
             migrated = False
 
             # 1. Migrazione Account
             if "isab_username" in config and config["isab_username"] and not config["accounts"]:
+                # Nota: la vecchia password è plaintext
                 config["accounts"].append({
                     "username": config["isab_username"],
                     "password": config.get("isab_password", ""),
@@ -95,16 +104,25 @@ def load_config() -> Dict[str, Any]:
 
 def save_config(config: Dict[str, Any]):
     """
-    Salva la configurazione su file.
+    Salva la configurazione su file. Encrypts passwords before saving.
     
     Args:
         config: Dict con la configurazione da salvare
     """
     ensure_config_dir()
     
+    # Crea una copia per non modificare la configurazione in memoria (che serve plaintext)
+    config_to_save = copy.deepcopy(config)
+
+    # Cifra le password
+    if "accounts" in config_to_save:
+        for acc in config_to_save["accounts"]:
+            if "password" in acc and acc["password"]:
+                acc["password"] = password_manager.encrypt(acc["password"])
+
     try:
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
+            json.dump(config_to_save, f, indent=2, ensure_ascii=False)
     except IOError as e:
         print(f"Errore salvataggio configurazione: {e}")
 

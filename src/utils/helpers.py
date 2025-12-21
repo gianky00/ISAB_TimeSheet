@@ -5,6 +5,7 @@ Funzioni di utilità generali.
 import os
 import sys
 import logging
+import re
 from datetime import datetime
 from typing import Optional, List
 
@@ -167,3 +168,42 @@ def truncate_string(text: str, max_length: int = 50, suffix: str = "...") -> str
         return text
     
     return text[:max_length - len(suffix)] + suffix
+
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitizes a string to be safe for use as a filename.
+    Removes path traversal characters and other unsafe symbols.
+    
+    Args:
+        filename: The input string (e.g., user input).
+    
+    Returns:
+        A safe filename string.
+    """
+    if not filename:
+        return "unnamed_file"
+
+    # 1. Strip null bytes
+    filename = str(filename).replace('\0', '')
+    
+    # 2. Replace forbidden characters with underscore
+    # We use a whitelist approach for maximum security: 
+    # Alphanumeric, underscore, hyphen, dot, space, parenthesis, square brackets.
+    # Excludes: / \ : * ? " < > |
+    safe_filename = re.sub(r'[^a-zA-Z0-9_\-\.\(\)\[\] ]', '_', filename)
+    
+    # 3. Collapse multiple underscores
+    safe_filename = re.sub(r'_+', '_', safe_filename)
+
+    # 4. Collapse multiple dots (prevent ".." traversal patterns)
+    safe_filename = re.sub(r'\.+', '.', safe_filename)
+    
+    # 5. Trim spaces and dots from ends (Windows doesn't like them)
+    safe_filename = safe_filename.strip(' .')
+    
+    # 6. Ensure not empty after sanitization
+    if not safe_filename:
+        return "unnamed_file"
+        
+    return safe_filename

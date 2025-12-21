@@ -8,8 +8,9 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
     QMessageBox, QListWidget, QListWidgetItem, QInputDialog,
-    QFrame, QScrollArea, QDialog, QFormLayout
+    QFrame, QScrollArea, QDialog, QFormLayout, QMenu
 )
+from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from src.core import config_manager
@@ -130,6 +131,8 @@ class SettingsPanel(QWidget):
                 color: #0d6efd;
             }
         """)
+        self.account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.account_list.customContextMenuRequested.connect(lambda pos: self._show_account_context_menu(pos))
         account_layout.addWidget(self.account_list)
         
         acc_btns = QHBoxLayout()
@@ -187,6 +190,8 @@ class SettingsPanel(QWidget):
                 color: #0d6efd;
             }
         """)
+        self.contract_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.contract_list.customContextMenuRequested.connect(lambda pos: self._show_generic_list_menu(pos, self.contract_list, self._add_contract, self._edit_contract, self._remove_contract))
         contract_layout.addWidget(self.contract_list)
 
         contract_btns = QHBoxLayout()
@@ -243,6 +248,8 @@ class SettingsPanel(QWidget):
                 color: #0d6efd;
             }
         """)
+        self.fornitori_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.fornitori_list.customContextMenuRequested.connect(lambda pos: self._show_generic_list_menu(pos, self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore))
         fornitori_layout.addWidget(self.fornitori_list)
         
         fornitori_btn_layout = QHBoxLayout()
@@ -566,6 +573,55 @@ class SettingsPanel(QWidget):
                     accounts[0]['default'] = True
                     self._render_accounts(accounts)
                 self._set_unsaved_changes(True)
+
+    def _show_account_context_menu(self, position):
+        """Mostra menu contestuale per lista account."""
+        menu = QMenu()
+        item = self.account_list.itemAt(position)
+        
+        # Action Aggiungi sempre visibile
+        add_action = QAction("➕ Aggiungi account", self)
+        add_action.triggered.connect(self._add_account)
+        menu.addAction(add_action)
+        
+        if item:
+            menu.addSeparator()
+            
+            edit_action = QAction("✏️ Modifica", self)
+            edit_action.triggered.connect(self._edit_account)
+            menu.addAction(edit_action)
+            
+            default_action = QAction("⭐ Imposta come Default", self)
+            default_action.triggered.connect(self._set_default_account)
+            menu.addAction(default_action)
+            
+            remove_action = QAction("🗑️ Rimuovi", self)
+            remove_action.triggered.connect(self._remove_account)
+            menu.addAction(remove_action)
+            
+        menu.exec(self.account_list.viewport().mapToGlobal(position))
+
+    def _show_generic_list_menu(self, position, list_widget, add_cb, edit_cb, remove_cb):
+        """Menu generico per liste semplici (contratti, fornitori)."""
+        menu = QMenu()
+        item = list_widget.itemAt(position)
+        
+        add_action = QAction("➕ Aggiungi", self)
+        add_action.triggered.connect(add_cb)
+        menu.addAction(add_action)
+        
+        if item:
+            menu.addSeparator()
+            
+            edit_action = QAction("✏️ Modifica", self)
+            edit_action.triggered.connect(edit_cb)
+            menu.addAction(edit_action)
+            
+            remove_action = QAction("🗑️ Rimuovi", self)
+            remove_action.triggered.connect(remove_cb)
+            menu.addAction(remove_action)
+            
+        menu.exec(list_widget.viewport().mapToGlobal(position))
 
     def _set_default_account(self):
         row = self.account_list.currentRow()

@@ -89,7 +89,7 @@ class ContabilitaManager:
         try:
             # Sopprimi i warning di openpyxl (es. Print area, Unknown extension)
             with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+                warnings.simplefilter("ignore")
 
                 # Carica il file Excel (tutti i fogli)
                 # engine='openpyxl' è standard per .xlsx/.xlsm
@@ -125,52 +125,45 @@ class ContabilitaManager:
                         # Rimuove spazi extra e converte in upper per confronto
                         df.columns = [str(c).strip().upper() for c in df.columns]
 
-                        # Filtra solo le colonne che ci interessano
-                        # Costruiamo un DataFrame pulito da inserire
-                        data_to_insert = []
-
-                        for _, row in df.iterrows():
-                            # Salta righe vuote (es. se data prev è vuota, spesso la riga è vuota)
-                            # O se tutte sono NaN
-                            if row.isna().all():
-                                continue
-
-                            record = {'year': year}
-
-                            for excel_col, db_col in cls.COLUMNS_MAPPING.items():
-                                # Cerca la colonna nel dataframe
-                                if excel_col in df.columns:
-                                    val = row[excel_col]
-                                    # Converti in stringa gestendo i NaN
-                                    if pd.isna(val):
-                                        val = ""
-                                    else:
-                                        # Se è una data, formatta? Per ora stringa
-                                        val = str(val)
-                                    record[db_col] = val
-                                else:
-                                    record[db_col] = "" # Colonna mancante nel foglio
-
-                            data_to_insert.append(record)
-
-                        if not data_to_insert:
+                        # 1. Rimuovi righe completamente vuote
+                        df.dropna(how='all', inplace=True)
+                        if df.empty:
                             continue
+
+                        # 2. Aggiungi colonna anno
+                        df['year'] = year
+
+                        # 3. Gestione Mapping e Colonne mancanti
+                        # Mappa le colonne presenti nel DF ai nomi DB
+                        rename_map = {k: v for k, v in cls.COLUMNS_MAPPING.items() if k in df.columns}
+                        df.rename(columns=rename_map, inplace=True)
+
+                        # Aggiungi le colonne DB mancanti come stringhe vuote
+                        for db_col in cls.COLUMNS_MAPPING.values():
+                            if db_col not in df.columns:
+                                df[db_col] = ""
+
+                        # 4. Seleziona e ordina le colonne per l'inserimento
+                        target_columns = ['year'] + list(cls.COLUMNS_MAPPING.values())
+                        df = df[target_columns]
+
+                        # 5. Pulizia dati e conversione stringhe
+                        # fillna("") converte NaN in stringa vuota
+                        df = df.fillna("")
+                        
+                        # Converti colonne tranne 'year' in stringa
+                        cols_to_str = [c for c in df.columns if c != 'year']
+                        df[cols_to_str] = df[cols_to_str].astype(str)
 
                         # Transazione per anno: Cancella vecchi dati dell'anno e inserisci nuovi
                         cursor.execute("DELETE FROM contabilita WHERE year = ?", (year,))
 
                         # Prepara query inserimento
-                        columns = ['year'] + list(cls.COLUMNS_MAPPING.values())
-                        placeholders = ', '.join(['?'] * len(columns))
-                        query = f"INSERT INTO contabilita ({', '.join(columns)}) VALUES ({placeholders})"
+                        placeholders = ', '.join(['?'] * len(target_columns))
+                        query = f"INSERT INTO contabilita ({', '.join(target_columns)}) VALUES ({placeholders})"
 
-                        # Prepara lista di tuple
-                        values = []
-                        for item in data_to_insert:
-                            row_vals = [item['year']]
-                            for col in cls.COLUMNS_MAPPING.values():
-                                row_vals.append(item.get(col, ""))
-                            values.append(tuple(row_vals))
+                        # Prepara lista di tuple (molto più veloce del loop manuale)
+                        values = list(df.itertuples(index=False, name=None))
 
                         cursor.executemany(query, values)
                         imported_years.append(year)
