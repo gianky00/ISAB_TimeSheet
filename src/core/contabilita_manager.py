@@ -227,3 +227,56 @@ class ContabilitaManager:
             return rows
         except:
             return []
+
+    @classmethod
+    def get_year_stats(cls, year: int) -> Dict:
+        """Calcola statistiche avanzate per l'anno specificato."""
+        data = cls.get_data_by_year(year)
+        if not data:
+            return {}
+
+        stats = {
+            "total_prev": 0.0,
+            "total_ore": 0.0,
+            "count_total": len(data),
+            "status_counts": {},
+            "top_commesse": []
+        }
+
+        commesse = []
+
+        for row in data:
+            # row indexes based on get_data_by_year cols:
+            # 0: data_prev, 1: mese, 2: n_prev, 3: totale_prev, 4: attivita,
+            # 5: tcl, 6: odc, 7: stato, 8: tipologia, 9: ore_sp, 10: resa...
+
+            # Parse Totale Prev
+            try:
+                t_str = str(row[3]).replace('.','').replace(',','.').replace('€','').strip()
+                val_prev = float(t_str) if t_str else 0.0
+            except: val_prev = 0.0
+
+            # Parse Ore Sp
+            try:
+                o_str = str(row[9]).replace(',','.').strip()
+                val_ore = float(o_str) if o_str else 0.0
+            except: val_ore = 0.0
+
+            stats["total_prev"] += val_prev
+            stats["total_ore"] += val_ore
+
+            # Status Count
+            status = str(row[7]).strip().upper()
+            if status:
+                stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
+
+            # For Top Commesse
+            if val_prev > 0:
+                attivita = str(row[4]).strip() or "N/D"
+                commesse.append((attivita, val_prev))
+
+        # Top 5 Commesse
+        commesse.sort(key=lambda x: x[1], reverse=True)
+        stats["top_commesse"] = commesse[:5]
+
+        return stats

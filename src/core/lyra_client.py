@@ -17,54 +17,87 @@ class LyraClient:
 
         self.context_prompt = (
             "Sei Lyra, un'esperta contabile e assistente virtuale per l'applicazione 'Bot TS'. "
-            "Il tuo obiettivo è analizzare i dati aziendali e fornire insight utili. "
-            "Rispondi sempre in italiano, in modo professionale ma amichevole. "
-            "Sii concisa."
-            "Ecco i dati attuali del sistema (aggiornati in tempo reale):\n"
+            "Hai accesso ai dati in tempo reale su Contabilità e Timbrature. "
+            "Analizza i dati forniti qui sotto per rispondere alle domande. "
+            "Se noti margini negativi o timbrature mancanti, segnalalo proattivamente. "
+            "Rispondi in italiano, con tono professionale ma cordiale. Sii sintetica.\n"
+            "DATI SISTEMA:\n"
         )
 
     def _get_system_context(self) -> str:
-        """Raccoglie i dati dai database locali."""
+        """Raccoglie i dati dai database locali per il contesto AI."""
         context = []
 
-        # 1. Contabilità
+        # --- 1. Contabilità Strumentale ---
         try:
             years = ContabilitaManager.get_available_years()
             if years:
                 latest_year = max(years)
-                data = ContabilitaManager.get_data_by_year(latest_year)
-                # Calcolo sommario veloce
-                tot_prev = 0.0
-                for row in data:
-                    try:
-                        # Colonna 3 è Totale Prev
-                        if len(row) > 3 and row[3]:
-                            val = float(str(row[3]).replace('.','').replace(',','.').replace('€','').strip())
-                            tot_prev += val
-                    except: pass
+                stats = ContabilitaManager.get_year_stats(latest_year)
 
-                context.append(f"- Contabilità {latest_year}: {len(data)} commesse registrate. Valore Totale Preventivato: € {tot_prev:,.2f}.")
+                # Calcoli derivati
+                margine = stats['total_prev'] - (stats['total_ore'] * 30.0) # Costo std 30
+                marginalita = (margine / stats['total_prev'] * 100) if stats['total_prev'] > 0 else 0
+
+                context.append(f"=== REPORT CONTABILITÀ ({latest_year}) ===")
+                context.append(f"- Valore Totale Preventivato: € {stats['total_prev']:,.2f}")
+                context.append(f"- Ore Spese Totali: {stats['total_ore']:,.1f} h")
+                context.append(f"- Margine Operativo Stimato (vs Costo €30/h): € {margine:,.2f} ({marginalita:.1f}%)")
+                context.append(f"- Totale Commesse: {stats['count_total']}")
+
+                context.append("- Stato Avanzamento:")
+                for status, count in stats.get('status_counts', {}).items():
+                    if count > 0:
+                        context.append(f"  • {status}: {count}")
+
+                context.append("- Top 5 Commesse (per Valore):")
+                for name, val in stats.get('top_commesse', []):
+                    # Tronca nomi troppo lunghi
+                    short_name = (name[:35] + '..') if len(name) > 35 else name
+                    context.append(f"  • {short_name}: € {val:,.0f}")
             else:
-                context.append("- Contabilità: Nessun dato disponibile.")
+                context.append("=== CONTABILITÀ ===\nNessun dato disponibile.")
         except Exception as e:
-            context.append(f"- Errore lettura Contabilità: {e}")
+            context.append(f"Errore lettura Contabilità: {e}")
 
-        # 2. Timbrature
+        # --- 2. Timbrature ---
         try:
             db_path = Path("data/timbrature_Isab.db")
             if db_path.exists():
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*), MAX(data) FROM timbrature")
-                res = cursor.fetchone()
-                if res:
-                    count, last_date = res
-                    context.append(f"- Timbrature: {count} record totali nel database. Ultima timbratura registrata il: {last_date}.")
+
+                # Totali
+                cursor.execute("SELECT COUNT(*) FROM timbrature")
+                total_count = cursor.fetchone()[0]
+
+                # Ultime attività
+                cursor.execute("SELECT data, nome, cognome, ingresso, uscita FROM timbrature ORDER BY data DESC, ingresso DESC LIMIT 5")
+                last_entries = cursor.fetchall()
+
+                # Anomalie (es. Uscita mancante negli ultimi 30gg)
+                # Semplice check: se uscita è vuota o null e data < oggi
+                cursor.execute("SELECT COUNT(*) FROM timbrature WHERE (uscita IS NULL OR uscita = '') AND data < date('now')")
+                missing_out = cursor.fetchone()[0]
+
                 conn.close()
+
+                context.append(f"\n=== REPORT TIMBRATURE ===")
+                context.append(f"- Record Totali: {total_count}")
+                if missing_out > 0:
+                    context.append(f"- ⚠️ ATTENZIONE: Rilevate {missing_out} timbrature con uscita mancante (anomalie).")
+                else:
+                    context.append("- Nessuna anomalia (uscite mancanti) rilevata.")
+
+                context.append("- Ultime 5 Attività Registrate:")
+                for entry in last_entries:
+                    d, n, c, i, u = entry
+                    u_str = u if u else "---"
+                    context.append(f"  • {d}: {n} {c} ({i} -> {u_str})")
             else:
-                context.append("- Timbrature: Database non trovato.")
+                context.append("\n=== TIMBRATURE ===\nDatabase non trovato.")
         except Exception as e:
-            context.append(f"- Errore lettura Timbrature: {e}")
+            context.append(f"Errore lettura Timbrature: {e}")
 
         return "\n".join(context)
 
