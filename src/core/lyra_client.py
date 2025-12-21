@@ -17,7 +17,8 @@ class LyraClient:
         # Models to try in order of preference (Fallback strategy)
         self.models = [
             "models/gemini-2.0-flash",
-            "models/gemini-1.5-flash"
+            "models/gemini-2.0-flash-lite-preview-02-05",
+            "models/gemini-flash-latest"
         ]
 
         self.context_prompt = (

@@ -63,6 +63,6 @@ class TestLyra:
             args1, _ = mock_post.call_args_list[0]
             assert "gemini-2.0-flash" in args1[0]
 
-            # Verify second call was 1.5-flash
+            # Verify second call was lite preview
             args2, _ = mock_post.call_args_list[1]
-            assert "gemini-1.5-flash" in args2[0]
+            assert "gemini-2.0-flash-lite-preview-02-05" in args2[0]
