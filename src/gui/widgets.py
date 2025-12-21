@@ -6,9 +6,9 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
     QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
-    QToolTip, QGraphicsOpacityEffect, QDateEdit
+    QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint
 from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor
 
 
@@ -415,6 +415,170 @@ class LogWidget(QWidget):
                 background-color: #5a6268;
             }
         """)
+
+
+class DetailedInfoDialog(QDialog):
+    """Dialogo modale per spiegazioni dettagliate KPI."""
+    def __init__(self, title, content, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Dettaglio KPI")
+        self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
+        self.setFixedWidth(400)
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #ffffff;
+                border: 2px solid #0d6efd;
+                border-radius: 8px;
+            }
+            QLabel {
+                color: #212529;
+                font-size: 14px;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+
+        # Title
+        lbl_title = QLabel(title)
+        lbl_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;")
+        layout.addWidget(lbl_title)
+
+        # Content (HTML)
+        lbl_content = QLabel(content)
+        lbl_content.setWordWrap(True)
+        lbl_content.setTextFormat(Qt.TextFormat.RichText)
+        layout.addWidget(lbl_content)
+
+        # Close info
+        lbl_close = QLabel("\n(Clicca per chiudere)")
+        lbl_close.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_close.setStyleSheet("color: #adb5bd; font-size: 11px;")
+        layout.addWidget(lbl_close)
+
+    def mousePressEvent(self, event):
+        self.accept()
+
+
+class InfoLabel(QLabel):
+    """Etichetta informativa con icona che apre un popup al click."""
+    def __init__(self, title, get_text_callback, parent=None):
+        super().__init__("ⓘ", parent)
+        self.title = title
+        self.get_text_callback = get_text_callback # Funzione che restituisce il testo aggiornato
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.setStyleSheet("""
+            QLabel {
+                color: #6c757d;
+                font-weight: bold;
+                font-size: 16px;
+                background: transparent;
+                padding: 0px 5px;
+            }
+            QLabel:hover {
+                color: #0d6efd;
+            }
+        """)
+
+    def mousePressEvent(self, event):
+        """Mostra il dialog con il testo aggiornato, posizionato in modo intelligente."""
+        content = self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
+        dlg = DetailedInfoDialog(self.title, content, self.window())
+
+        # Smart Positioning Logic
+        cursor_pos = event.globalPosition().toPoint()
+        screen = QApplication.screenAt(cursor_pos)
+
+        if screen:
+            screen_geo = screen.availableGeometry()
+            dlg_width = dlg.width()
+            dlg_height = dlg.sizeHint().height() # approssimato, il layout non è ancora calcolato
+
+            # Calcola posizione X
+            x = cursor_pos.x()
+            # Se il dialog esce a destra dello schermo, spostalo a sinistra del cursore
+            if x + dlg_width > screen_geo.right():
+                x = cursor_pos.x() - dlg_width - 10 # 10px di margine
+            else:
+                x = cursor_pos.x() + 10 # 10px offset standard
+
+            # Calcola posizione Y (evita di uscire sotto)
+            y = cursor_pos.y()
+            if y + dlg_height > screen_geo.bottom():
+                y = cursor_pos.y() - dlg_height - 10
+            else:
+                y = cursor_pos.y() + 10
+
+            dlg.move(x, y)
+        else:
+            # Fallback se screen non trovato
+            dlg.move(cursor_pos)
+
+        dlg.exec()
+
+
+class KPIBigCard(QFrame):
+    """Card per mostrare un KPI numerico principale."""
+    def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None):
+        super().__init__(parent)
+        self.info_content_callback = lambda: "Nessuna informazione disponibile."
+
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: white;
+                border-radius: 12px;
+                border: 1px solid #e9ecef;
+            }}
+        """)
+        self.setMinimumWidth(200)
+        self.setMinimumHeight(120)
+
+        # Effetto ombra
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setXOffset(0)
+        shadow.setYOffset(4)
+        shadow.setColor(QColor(0, 0, 0, 30))
+        self.setGraphicsEffect(shadow)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(5)
+
+        # Header Layout (Title + Info Icon)
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(5)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+
+        lbl_title = QLabel(title)
+        lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;")
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header_layout.addWidget(lbl_title)
+
+        header_layout.addStretch()
+
+        # Info Icon che chiama self.get_info_content
+        self.info_icon = InfoLabel(title, self._get_info_content)
+        header_layout.addWidget(self.info_icon)
+
+        layout.addLayout(header_layout)
+
+        self.lbl_value = QLabel(value)
+        self.lbl_value.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
+        self.lbl_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.lbl_value)
+
+        if subtitle:
+            lbl_sub = QLabel(subtitle)
+            lbl_sub.setStyleSheet("color: #adb5bd; font-size: 11px; border: none; background: transparent;")
+            lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(lbl_sub)
+
+    def set_info_callback(self, callback):
+        """Imposta la funzione per generare il testo informativo."""
+        self.info_content_callback = callback
+
+    def _get_info_content(self):
+        return self.info_content_callback()
         clear_btn.clicked.connect(self.clear)
         header_layout.addWidget(clear_btn)
         

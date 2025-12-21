@@ -10,9 +10,10 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
-    QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView
+    QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
+    QCheckBox, QTimeEdit
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
 
 from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget, CalendarDateEdit
 from src.core import config_manager
@@ -1068,6 +1069,52 @@ class TimbratureBotPanel(BaseBotPanel):
         params_layout.addLayout(date_layout)
 
         self.content_layout.addWidget(params_group)
+
+        # --- Sezione Scheduler (Autopilot) ---
+        sched_group = QGroupBox("📅 Autopilot (Pianificatore)")
+        sched_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-size: 16px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+            }
+        """)
+        sched_layout = QHBoxLayout(sched_group)
+
+        self.autopilot_check = QCheckBox("Abilita download automatico")
+        self.autopilot_check.setStyleSheet("font-size: 15px;")
+        sched_layout.addWidget(self.autopilot_check)
+
+        sched_layout.addSpacing(20)
+
+        lbl_time = QLabel("Alle ore:")
+        lbl_time.setStyleSheet("font-size: 15px;")
+        sched_layout.addWidget(lbl_time)
+
+        self.time_edit = QTimeEdit()
+        self.time_edit.setTime(QTime(9, 0))
+        self.time_edit.setDisplayFormat("HH:mm")
+        self.time_edit.setMinimumHeight(35)
+        self.time_edit.setStyleSheet("""
+            QTimeEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 5px;
+                background-color: white;
+            }
+        """)
+        sched_layout.addWidget(self.time_edit)
+
+        sched_layout.addStretch()
+        self.content_layout.addWidget(sched_group)
 
     def _open_settings(self):
         main_window = self.window()

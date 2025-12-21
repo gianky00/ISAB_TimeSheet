@@ -15,6 +15,8 @@ from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.settings_panel import SettingsPanel
 from src.gui.toast import ToastOverlay
 from src.gui.help_panel import HelpPanel
+from src.gui.dashboard_panel import DashboardPanel
+from src.gui.lyra_panel import LyraPanel
 from src.core.license_validator import get_license_info
 from src.core import config_manager
 
@@ -73,6 +75,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Bot TS - ISAB Timesheet Manager")
         self.setMinimumSize(1200, 800)
         
+        # Abilita Drag & Drop
+        self.setAcceptDrops(True)
+
         self._current_page_index = 0
         self._setup_ui()
         self._connect_signals()
@@ -106,8 +111,11 @@ class MainWindow(QMainWindow):
         """Gestisce F5 in base alla vista corrente."""
         idx = self.page_stack.currentIndex()
 
-        # Database Page
-        if idx == 1:
+        if idx == 0: # Dashboard
+            self.dashboard_panel.refresh_data()
+            self.show_toast("Dashboard aggiornata")
+        # Database Page (Index 3)
+        elif idx == 3:
             tab_idx = self.database_widget.currentIndex()
             if tab_idx == 0: # Timbrature
                 self.timbrature_db_panel.refresh_data()
@@ -121,7 +129,7 @@ class MainWindow(QMainWindow):
         idx = self.page_stack.currentIndex()
 
         # Database Page
-        if idx == 1:
+        if idx == 3:
             tab_idx = self.database_widget.currentIndex()
             if tab_idx == 0: # Timbrature
                 self.timbrature_db_panel.search_input.setFocus()
@@ -134,9 +142,7 @@ class MainWindow(QMainWindow):
 
     def _handle_ctrl_s(self):
         """Gestisce Ctrl+S per salvare le impostazioni."""
-        # Se siamo nella pagina settings (2) o se vogliamo salvare comunque?
-        # Meglio solo se siamo in settings per evitare confusione
-        if self.page_stack.currentIndex() == 2:
+        if self.page_stack.currentIndex() == 4:
             self.settings_panel.save_btn.click()
 
     def _setup_ui(self):
@@ -194,10 +200,16 @@ class MainWindow(QMainWindow):
         sidebar_layout.addSpacing(15)
         
         # Pulsanti navigazione
+        self.btn_home = SidebarButton("Home", "🏠")
+        self.btn_home.setChecked(True)
+        sidebar_layout.addWidget(self.btn_home)
+
         self.btn_automazioni = SidebarButton("Automazioni", "🤖")
-        self.btn_automazioni.setChecked(True)
         sidebar_layout.addWidget(self.btn_automazioni)
         
+        self.btn_lyra = SidebarButton("Lyra AI", "✨")
+        sidebar_layout.addWidget(self.btn_lyra)
+
         self.btn_database = SidebarButton("Database", "🗄️")
         sidebar_layout.addWidget(self.btn_database)
         
@@ -263,6 +275,7 @@ class MainWindow(QMainWindow):
         self.page_stack = QStackedWidget()
         
         # Crea i pannelli individuali
+        self.dashboard_panel = DashboardPanel()
         self.scarico_panel = ScaricaTSPanel()
         self.carico_panel = CaricoTSPanel()
         self.dettagli_panel = DettagliOdAPanel()
@@ -271,11 +284,12 @@ class MainWindow(QMainWindow):
         self.contabilita_panel = ContabilitaPanel()
         self.settings_panel = SettingsPanel()
         self.help_panel = HelpPanel()
+        self.lyra_panel = LyraPanel()
         
         # Collega il segnale di update dal bot al database
         self.timbrature_bot_panel.data_updated.connect(self.timbrature_db_panel.refresh_data)
 
-        # --- Page 0: Automazioni (Tab Widget) ---
+        # --- Page 1: Automazioni (Tab Widget) ---
         self.automazioni_widget = QTabWidget()
         self.automazioni_widget.setStyleSheet("""
             QTabWidget::pane {
@@ -307,17 +321,25 @@ class MainWindow(QMainWindow):
         self.automazioni_widget.addTab(self.dettagli_panel, "📋 Dettagli OdA")
         self.automazioni_widget.addTab(self.timbrature_bot_panel, "⏱️ Timbrature")
 
-        # --- Page 1: Database (Tab Widget) ---
+        # --- Page 3: Database (Tab Widget) ---
         self.database_widget = QTabWidget()
         self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
         self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
         self.database_widget.addTab(self.contabilita_panel, "Contabilità Strumentale")
 
         # Aggiungi le pagine allo stack
-        self.page_stack.addWidget(self.automazioni_widget) # Index 0
-        self.page_stack.addWidget(self.database_widget)    # Index 1
-        self.page_stack.addWidget(self.settings_panel)     # Index 2
-        self.page_stack.addWidget(self.help_panel)         # Index 3
+        # 0: Dashboard
+        # 1: Automazioni
+        # 2: Lyra
+        # 3: Database
+        # 4: Settings
+        # 5: Help
+        self.page_stack.addWidget(self.dashboard_panel)    # Index 0
+        self.page_stack.addWidget(self.automazioni_widget) # Index 1
+        self.page_stack.addWidget(self.lyra_panel)         # Index 2
+        self.page_stack.addWidget(self.database_widget)    # Index 3
+        self.page_stack.addWidget(self.settings_panel)     # Index 4
+        self.page_stack.addWidget(self.help_panel)         # Index 5
         
         content_layout.addWidget(self.page_stack)
         
@@ -325,7 +347,9 @@ class MainWindow(QMainWindow):
         
         # Lista pulsanti per gestione esclusiva
         self.nav_buttons = [
+            self.btn_home,
             self.btn_automazioni,
+            self.btn_lyra,
             self.btn_database,
             self.btn_settings,
             self.btn_help
@@ -333,10 +357,12 @@ class MainWindow(QMainWindow):
     
     def _connect_signals(self):
         """Collega i segnali."""
-        self.btn_automazioni.clicked.connect(lambda: self._navigate_to(0))
-        self.btn_database.clicked.connect(lambda: self._navigate_to(1))
-        self.btn_settings.clicked.connect(lambda: self._navigate_to(2))
-        self.btn_help.clicked.connect(lambda: self._navigate_to(3))
+        self.btn_home.clicked.connect(lambda: self._navigate_to(0))
+        self.btn_automazioni.clicked.connect(lambda: self._navigate_to(1))
+        self.btn_lyra.clicked.connect(lambda: self._navigate_to(2))
+        self.btn_database.clicked.connect(lambda: self._navigate_to(3))
+        self.btn_settings.clicked.connect(lambda: self._navigate_to(4))
+        self.btn_help.clicked.connect(lambda: self._navigate_to(5))
 
         # Aggiornamento live impostazioni
         self.settings_panel.settings_saved.connect(self._on_settings_saved)
@@ -364,12 +390,12 @@ class MainWindow(QMainWindow):
             return
         
         # Se stiamo lasciando la pagina delle impostazioni, controlla le modifiche
-        if self._current_page_index == 2:  # Settings page is now index 2
+        if self._current_page_index == 4:  # Settings page is now index 4
             if self.settings_panel.has_unsaved_changes():
                 can_proceed = self.settings_panel.prompt_save_if_needed()
                 if not can_proceed:
                     # L'utente ha annullato - rimani sulla pagina corrente
-                    self.nav_buttons[2].setChecked(True)
+                    self.nav_buttons[4].setChecked(True)
                     return
         
         # Procedi con la navigazione
@@ -380,9 +406,8 @@ class MainWindow(QMainWindow):
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
         
-        # Se arriviamo su Automazioni (Index 0), potremmo voler aggiornare i fornitori,
-        # ma questo è gestito quando si aprono le tab o al salvataggio impostazioni.
-        if index == 0:
+        # Se arriviamo su Automazioni (Index 1), potremmo voler aggiornare i fornitori
+        if index == 1:
             self.scarico_panel.refresh_fornitori()
 
     def _check_and_start_contabilita_update(self):
@@ -393,7 +418,7 @@ class MainWindow(QMainWindow):
     
     def show_settings(self):
         """Metodo pubblico per navigare alle impostazioni."""
-        self._navigate_to(2)
+        self._navigate_to(4)
     
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra."""
@@ -405,6 +430,60 @@ class MainWindow(QMainWindow):
                 return
         
         event.accept()
+
+    # --- Drag & Drop ---
+    def dragEnterEvent(self, event):
+        """Accetta file Excel trascinati."""
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            if urls and urls[0].toLocalFile().endswith(('.xlsx', '.xls')):
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        """Gestisce il drop del file."""
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            file_path = urls[0].toLocalFile()
+
+            lower_path = file_path.lower()
+            if "timbrature" in lower_path:
+                self._import_timbrature(file_path)
+            elif "contabilita" in lower_path or "consuntivo" in lower_path:
+                self._import_contabilita(file_path)
+            else:
+                self.show_toast("Tipo file non riconosciuto. Rinominare con 'Timbrature' o 'Contabilita'.")
+
+    def _import_timbrature(self, path):
+        # Usa il metodo statico del bot timbrature
+        try:
+            from src.bots.timbrature.bot import TimbratureBot
+            from pathlib import Path as PPath
+
+            success = TimbratureBot.import_to_db_static(path, PPath("data/timbrature_Isab.db"), lambda x: None)
+            if success:
+                self.timbrature_db_panel.refresh_data()
+                self.show_toast("Timbrature importate con successo!")
+            else:
+                self.show_toast("Errore importazione Timbrature.")
+        except Exception as e:
+            self.show_toast(f"Errore: {e}")
+
+    def _import_contabilita(self, path):
+        # Usa il manager contabilità
+        try:
+            from src.core.contabilita_manager import ContabilitaManager
+            success, msg = ContabilitaManager.import_data_from_excel(path)
+            if success:
+                self.contabilita_panel.refresh_tabs()
+                self.show_toast("Contabilità importata con successo!")
+            else:
+                self.show_toast(f"Errore: {msg}")
+        except Exception as e:
+            self.show_toast(f"Errore: {e}")
 
 
 def create_splash_screen() -> QSplashScreen:
