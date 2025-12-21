@@ -253,15 +253,6 @@ class ContabilitaManager:
                             # Processamento Righe
                             rows_to_insert = []
 
-                            # Cache per lookup ODC da Dati per velocizzare
-                            cursor.execute("SELECT n_prev, odc FROM contabilita WHERE year = ?", (year,))
-                            dati_rows = cursor.fetchall()
-                            # Mappa 1: N_PREV -> ODC
-                            dati_odc_map = {row['n_prev'].strip(): row['odc'].strip() for row in dati_rows if row['n_prev'] and row['odc']}
-                            # Mappa 2: ODC -> N_PREV (Reverse Lookup)
-                            # Nota: se ci sono duplicati, vince l'ultimo processato. Accettabile.
-                            dati_nprev_map = {row['odc'].strip(): row['n_prev'].strip() for row in dati_rows if row['n_prev'] and row['odc']}
-
                             for _, row in df.iterrows():
                                 # 1. Pulisci ODC (Estrai 5400...)
                                 raw_odc = str(row.get('odc', '')).strip()
@@ -272,26 +263,12 @@ class ContabilitaManager:
                                 n_prev = str(row.get('n_prev', '')).strip()
                                 if n_prev.lower() == 'nan': n_prev = ""
 
-                                # 2. Lookup Incrociato
-                                # Caso A: Manca ODC, c'è N_PREV
-                                if not final_odc and n_prev:
-                                    lookup_odc = dati_odc_map.get(n_prev)
-                                    if lookup_odc:
-                                        match_lookup = re.search(r'(5400\d+)', lookup_odc)
-                                        final_odc = match_lookup.group(1) if match_lookup else lookup_odc
-
-                                # Caso B: Manca N_PREV, c'è ODC
-                                if final_odc and not n_prev:
-                                    # Prima prova a cercare con l'ODC pulito (5400...)
-                                    lookup_nprev = dati_nprev_map.get(final_odc)
-                                    if not lookup_nprev:
-                                        # Se non trova, prova a cercare usando il raw ODC (se diverso)
-                                        # Magari nel DB Dati è salvato sporco
-                                        if raw_odc != final_odc:
-                                            lookup_nprev = dati_nprev_map.get(raw_odc)
-
-                                    if lookup_nprev:
-                                        n_prev = lookup_nprev
+                                # 2. Regola Importazione ODC (Aggiornata)
+                                # "Importerai comunque tutto tranne il valore di N°PREV per evitare duplicazioni"
+                                # Significa: Nessun lookup incrociato per riempire i buchi.
+                                # Se l'ODC è presente (5400...), lo prendiamo.
+                                # Se N_PREV è presente, lo prendiamo.
+                                # Non copiamo l'uno nell'altro.
 
                                 # Prepara riga
                                 new_row = (
