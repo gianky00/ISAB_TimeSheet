@@ -348,21 +348,29 @@ class ContabilitaYearTab(QWidget):
             if not self.table.isRowHidden(r):
                 count_prev += 1
 
-                # Totale Prev
-                t_item = self.table.item(r, self.COL_TOTALE)
-                if t_item:
-                    val = self._parse_currency(t_item.text())
-                    sum_totale_prev += val
+                # Verifica RESA per esclusione (INS.ORE SP)
+                is_excluded = False
+                r_item = self.table.item(r, self.COL_RESA)
+                if r_item:
+                    resa_text = r_item.text().strip()
+                    if "INS.ORE SP" in resa_text.upper():
+                        is_excluded = True
 
-                # Ore Sp
+                # Totale Prev (Escludi se RESA è INS.ORE SP)
+                if not is_excluded:
+                    t_item = self.table.item(r, self.COL_TOTALE)
+                    if t_item:
+                        val = self._parse_currency(t_item.text())
+                        sum_totale_prev += val
+
+                # Ore Sp (Includi sempre)
                 o_item = self.table.item(r, self.COL_ORE)
                 if o_item:
                     val = self._parse_float(o_item.text())
                     sum_ore_sp += val
 
                 # Resa
-                r_item = self.table.item(r, self.COL_RESA)
-                if r_item:
+                if not is_excluded and r_item:
                     val = self._parse_float(r_item.text())
                     # Se vuoto o zero non contare? Assumiamo media aritmetica dei valori presenti
                     if val != 0 or r_item.text().strip() != "":

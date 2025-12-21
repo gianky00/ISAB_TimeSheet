@@ -476,9 +476,17 @@ class ContabilitaKPIPanel(QWidget):
             ]
             df = pd.DataFrame(data, columns=cols)
 
+            # Pre-processing: Identifica righe da escludere (RESA = "INS.ORE SP")
+            # Usa una copia della colonna resa per il controllo stringa prima della conversione
+            resa_str = df['resa'].astype(str)
+            mask_exclude = resa_str.str.contains("INS.ORE SP", case=False, na=False)
+
             # Converti numerici
             df['totale_prev'] = pd.to_numeric(df['totale_prev'], errors='coerce').fillna(0)
             df['ore_sp'] = pd.to_numeric(df['ore_sp'], errors='coerce').fillna(0)
+
+            # Applica esclusione: Se RESA è "INS.ORE SP", TOTALE PREV diventa 0
+            df.loc[mask_exclude, 'totale_prev'] = 0
 
             # RESA: Gestione valori non numerici ("INS.ORE SP.")
             # Convertiamo errors='coerce' per avere NaN sulle stringhe, poi ignoriamo i NaN nel calcolo della media
@@ -734,7 +742,8 @@ class ContabilitaKPIPanel(QWidget):
 
         ax.set_yticks(y)
         ax.set_yticklabels(grouped.index)
-        ax.legend(loc='lower right')
+        # Legenda posizionata in basso a destra con frame semi-trasparente
+        ax.legend(loc='lower right', framealpha=0.8)
 
         # Aggiunge etichette numeriche
         for i, (idx, row) in enumerate(grouped.iterrows()):
@@ -750,7 +759,9 @@ class ContabilitaKPIPanel(QWidget):
 
         ax.grid(axis='x', linestyle='--', alpha=0.5)
 
-        self.fig3.tight_layout()
+        # Ottimizzazione spazi: riduce i margini per riempire la card
+        # Lascia spazio a sinistra per le etichette (tipologie)
+        self.fig3.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.1)
         self.canvas3.draw()
 
     def _plot_andamento_resa(self, df):
@@ -834,8 +845,8 @@ class ContabilitaKPIPanel(QWidget):
 
         # Label Helper Function to prevent overlap
         def add_label(pct, current_left, color='white'):
-            # Only show if at least 5% width to avoid clutter
-            if pct > 5:
+            # Only show if at least 2% width to avoid clutter (reduced from 5% to show TCL)
+            if pct > 2:
                 ax.text(current_left + pct/2, 0, f"{pct:.1f}%", ha='center', va='center', color=color, fontweight='bold')
 
         add_label(pct_completed, 0)
