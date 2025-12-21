@@ -17,3 +17,11 @@
 ## 2024-05-23 - Search Bar Usability
 **Learning:** Users in data-heavy views (Database, Accounting) require rapid filtering capabilities. Standard `QLineEdit` search bars lack a quick reset mechanism, forcing manual text deletion.
 **Action:** Always enable `setClearButtonEnabled(True)` on filtering inputs to provide a native, accessible "X" button for one-click clearing. This improves efficiency for mouse users and aligns with modern OS search patterns.
+
+## 2024-05-23 - Notification Hierarchy
+**Learning:** Frequent success messages via modal dialogs (`QMessageBox`) interrupt user flow.
+**Action:** Use "Toast" notifications (translucent overlays) for non-critical feedback (e.g., "Settings saved"), reserving modals only for errors or critical confirmations.
+
+## 2024-05-23 - Self-Contained UI Assets
+**Learning:** Relying on external image files for small UI icons (like calendar toggles) complicates deployment and asset management.
+**Action:** Embed small UI assets as Base64 strings directly in Python/CSS code. This ensures components like `CalendarDateEdit` are self-contained and render consistently without missing file errors.

@@ -8,11 +8,13 @@ from PyQt6.QtWidgets import (
     QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication, QTabWidget
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter
+from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
 
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
 from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.settings_panel import SettingsPanel
+from src.gui.toast import ToastOverlay
+from src.gui.help_panel import HelpPanel
 from src.core.license_validator import get_license_info
 from src.core import config_manager
 
@@ -74,10 +76,69 @@ class MainWindow(QMainWindow):
         self._current_page_index = 0
         self._setup_ui()
         self._connect_signals()
+        self._setup_shortcuts()
+
+        # Toast notification system
+        self.toast = ToastOverlay(self)
 
         # Avvio automatico importazione contabilità se abilitato
         QTimer.singleShot(1000, self._check_and_start_contabilita_update)
     
+    def show_toast(self, message: str, duration: int = 3000):
+        """Mostra una notifica toast."""
+        self.toast.show_toast(message, duration)
+
+    def _setup_shortcuts(self):
+        """Configura le scorciatoie da tastiera globali."""
+        # F5 - Aggiorna / Avvia
+        self.shortcut_f5 = QShortcut(QKeySequence(Qt.Key.Key_F5), self)
+        self.shortcut_f5.activated.connect(self._handle_f5)
+
+        # Ctrl+F - Cerca
+        self.shortcut_search = QShortcut(QKeySequence("Ctrl+F"), self)
+        self.shortcut_search.activated.connect(self._handle_ctrl_f)
+
+        # Ctrl+S - Salva Impostazioni
+        self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.shortcut_save.activated.connect(self._handle_ctrl_s)
+
+    def _handle_f5(self):
+        """Gestisce F5 in base alla vista corrente."""
+        idx = self.page_stack.currentIndex()
+
+        # Database Page
+        if idx == 1:
+            tab_idx = self.database_widget.currentIndex()
+            if tab_idx == 0: # Timbrature
+                self.timbrature_db_panel.refresh_data()
+                self.show_toast("Dati aggiornati")
+            elif tab_idx == 1: # Contabilità
+                self.contabilita_panel.refresh_tabs()
+                self.show_toast("Contabilità aggiornata")
+
+    def _handle_ctrl_f(self):
+        """Gestisce Ctrl+F per il focus sulla ricerca."""
+        idx = self.page_stack.currentIndex()
+
+        # Database Page
+        if idx == 1:
+            tab_idx = self.database_widget.currentIndex()
+            if tab_idx == 0: # Timbrature
+                self.timbrature_db_panel.search_input.setFocus()
+                self.timbrature_db_panel.search_input.selectAll()
+            elif tab_idx == 1: # Contabilità
+                # Contabilità ha search input visibile solo in tab Dati
+                if self.contabilita_panel.search_input.isVisible():
+                    self.contabilita_panel.search_input.setFocus()
+                    self.contabilita_panel.search_input.selectAll()
+
+    def _handle_ctrl_s(self):
+        """Gestisce Ctrl+S per salvare le impostazioni."""
+        # Se siamo nella pagina settings (2) o se vogliamo salvare comunque?
+        # Meglio solo se siamo in settings per evitare confusione
+        if self.page_stack.currentIndex() == 2:
+            self.settings_panel.save_btn.click()
+
     def _setup_ui(self):
         """Configura l'interfaccia."""
         # Widget centrale
@@ -140,6 +201,9 @@ class MainWindow(QMainWindow):
         self.btn_database = SidebarButton("Database", "🗄️")
         sidebar_layout.addWidget(self.btn_database)
         
+        self.btn_help = SidebarButton("Guida", "❓")
+        sidebar_layout.addWidget(self.btn_help)
+
         sidebar_layout.addStretch()
 
         # License Info
@@ -206,6 +270,7 @@ class MainWindow(QMainWindow):
         self.timbrature_db_panel = TimbratureDBPanel()
         self.contabilita_panel = ContabilitaPanel()
         self.settings_panel = SettingsPanel()
+        self.help_panel = HelpPanel()
         
         # Collega il segnale di update dal bot al database
         self.timbrature_bot_panel.data_updated.connect(self.timbrature_db_panel.refresh_data)
@@ -252,6 +317,7 @@ class MainWindow(QMainWindow):
         self.page_stack.addWidget(self.automazioni_widget) # Index 0
         self.page_stack.addWidget(self.database_widget)    # Index 1
         self.page_stack.addWidget(self.settings_panel)     # Index 2
+        self.page_stack.addWidget(self.help_panel)         # Index 3
         
         content_layout.addWidget(self.page_stack)
         
@@ -261,7 +327,8 @@ class MainWindow(QMainWindow):
         self.nav_buttons = [
             self.btn_automazioni,
             self.btn_database,
-            self.btn_settings
+            self.btn_settings,
+            self.btn_help
         ]
     
     def _connect_signals(self):
@@ -269,6 +336,7 @@ class MainWindow(QMainWindow):
         self.btn_automazioni.clicked.connect(lambda: self._navigate_to(0))
         self.btn_database.clicked.connect(lambda: self._navigate_to(1))
         self.btn_settings.clicked.connect(lambda: self._navigate_to(2))
+        self.btn_help.clicked.connect(lambda: self._navigate_to(3))
 
         # Aggiornamento live impostazioni
         self.settings_panel.settings_saved.connect(self._on_settings_saved)
@@ -278,11 +346,9 @@ class MainWindow(QMainWindow):
         self.scarico_panel.refresh_fornitori()
         self.dettagli_panel.refresh_fornitori()
         self.timbrature_bot_panel.refresh_fornitori()
-        # Aggiorna anche eventuali dati di default in futuro
 
-        # Se l'utente ha appena attivato l'auto-update, non lo lanciamo subito automaticamente
-        # (potrebbe essere fastidioso), ma verrà lanciato al prossimo riavvio.
-        # Volendo si potrebbe lanciare qui se si desidera feedback immediato.
+        # Feedback Toast
+        self.show_toast("Impostazioni salvate con successo!")
     
     def _navigate_to(self, index: int):
         """

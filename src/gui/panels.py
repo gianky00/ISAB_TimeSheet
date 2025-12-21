@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate
 
-from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget
+from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget, CalendarDateEdit
 from src.core import config_manager
 
 
@@ -300,29 +300,9 @@ class ScaricaTSPanel(BaseBotPanel):
         date_label.setMinimumWidth(80)
         date_layout.addWidget(date_label)
         
-        self.date_edit = QDateEdit()
-        self.date_edit.setCalendarPopup(True)
-        self.date_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_edit = CalendarDateEdit()
         # Default: 01.01.2025
         self.date_edit.setDate(QDate(2025, 1, 1))
-        self.date_edit.setMinimumWidth(150)
-        self.date_edit.setMinimumHeight(40)
-        self.date_edit.setStyleSheet("""
-            QDateEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QDateEdit:focus {
-                border-color: #0d6efd;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                width: 30px;
-            }
-        """)
         date_layout.addWidget(self.date_edit)
         
         date_hint = QLabel("(Formato: gg.mm.aaaa)")
@@ -625,12 +605,8 @@ class DettagliOdAPanel(BaseBotPanel):
         date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_da_label)
 
-        self.date_da_edit = QDateEdit()
-        self.date_da_edit.setCalendarPopup(True)
-        self.date_da_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_da_edit = CalendarDateEdit()
         self.date_da_edit.setDate(QDate(2025, 1, 1))
-        self.date_da_edit.setMinimumHeight(40)
-        self.date_da_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_da_edit)
 
         date_layout.addSpacing(15)
@@ -640,12 +616,8 @@ class DettagliOdAPanel(BaseBotPanel):
         date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_a_label)
 
-        self.date_a_edit = QDateEdit()
-        self.date_a_edit.setCalendarPopup(True)
-        self.date_a_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_a_edit = CalendarDateEdit()
         self.date_a_edit.setDate(QDate.currentDate())
-        self.date_a_edit.setMinimumHeight(40)
-        self.date_a_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_a_edit)
 
         date_layout.addStretch()
@@ -701,24 +673,6 @@ class DettagliOdAPanel(BaseBotPanel):
         
         self.content_layout.addWidget(group)
     
-    def _get_date_style(self):
-        return """
-            QDateEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QDateEdit:focus {
-                border-color: #0d6efd;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                width: 30px;
-            }
-        """
-
     def _open_settings(self):
         """Emette un segnale per aprire le impostazioni."""
         main_window = self.window()
@@ -1095,12 +1049,8 @@ class TimbratureBotPanel(BaseBotPanel):
         date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_da_label)
 
-        self.date_da_edit = QDateEdit()
-        self.date_da_edit.setCalendarPopup(True)
-        self.date_da_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_da_edit = CalendarDateEdit()
         self.date_da_edit.setDate(QDate(2025, 1, 1))
-        self.date_da_edit.setMinimumHeight(40)
-        self.date_da_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_da_edit)
 
         date_layout.addSpacing(15)
@@ -1110,36 +1060,14 @@ class TimbratureBotPanel(BaseBotPanel):
         date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_a_label)
 
-        self.date_a_edit = QDateEdit()
-        self.date_a_edit.setCalendarPopup(True)
-        self.date_a_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_a_edit = CalendarDateEdit()
         self.date_a_edit.setDate(QDate.currentDate())
-        self.date_a_edit.setMinimumHeight(40)
-        self.date_a_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_a_edit)
 
         date_layout.addStretch()
         params_layout.addLayout(date_layout)
 
         self.content_layout.addWidget(params_group)
-
-    def _get_date_style(self):
-        return """
-            QDateEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QDateEdit:focus {
-                border-color: #0d6efd;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                width: 30px;
-            }
-        """
 
     def _open_settings(self):
         main_window = self.window()

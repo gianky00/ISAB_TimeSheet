@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
     QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
-    QToolTip, QGraphicsOpacityEffect
+    QToolTip, QGraphicsOpacityEffect, QDateEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor
@@ -552,3 +552,44 @@ class StatusIndicator(QWidget):
         else:
             self.animation.stop()
             self.opacity_effect.setOpacity(1.0)
+
+
+class CalendarDateEdit(QDateEdit):
+    """QDateEdit con larghezza estesa e icona calendario."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCalendarPopup(True)
+        self.setMinimumWidth(160)
+        self.setMinimumHeight(40)
+        self.setDisplayFormat("dd.MM.yyyy")
+
+        # Base64 Calendar Icon (Simple dark gray)
+        # Icona SVG convertita in base64
+        icon_b64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAADdSURBVDjL7ZM9C4MwEIbfyyWDLs51CDqU/gBdO0t/hS79K7p069KlUKEgS6HQwSjo4iCIn8HBvZAiFhxn4uF47u5iAnjN2/0AA2xN2/0AA2xN2/0AA2xN2/0AA2xN2/0AA+y/gBGl1G4Yhg9Jkvz+C1prpyzLrm3brz/BGGPM0rKsn4IgCILvB2itx7ZtP4Msy/Zaa1dKqaN/gR5jzA14A29KqV2v97+CIPhKkuR9GIYPxpibv9+A9bXWzvlz7H2f/tV1vdFaO0opHaxn2O2+AA7W11r7/tX/uN1v8AOMN2/0AA2xN2/0AA2xN2/0AA2xN2/0AA2xN2/0AAAAASUVORK5CYII="
+
+        self.setStyleSheet(f"""
+            QDateEdit {{
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px 35px 8px 8px; /* Spazio a destra per icona */
+                font-size: 15px;
+                background-color: white;
+            }}
+            QDateEdit:focus {{
+                border-color: #0d6efd;
+            }}
+            QDateEdit::drop-down {{
+                subcontrol-origin: padding;
+                subcontrol-position: center right;
+                width: 30px;
+                border-left: 1px solid #ced4da;
+                image: url({icon_b64});
+                background-color: #f8f9fa;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
+            }}
+            QDateEdit::drop-down:hover {{
+                background-color: #e9ecef;
+            }}
+        """)
