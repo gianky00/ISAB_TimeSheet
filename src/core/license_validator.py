@@ -11,6 +11,7 @@ import uuid
 from datetime import date
 from cryptography.fernet import Fernet
 from enum import Enum
+from src.core.time_manager import get_trusted_time
 
 # Chiave segreta per decifratura licenza
 LICENSE_SECRET_KEY = b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
@@ -42,9 +43,9 @@ def get_hardware_id():
     if system == 'Windows':
         # 1. Try WMIC (Legacy)
         try:
-            cmd = 'wmic diskdrive get serialnumber'
+            cmd = ["wmic", "diskdrive", "get", "serialnumber"]
             output = subprocess.check_output(
-                cmd, shell=True, stderr=subprocess.DEVNULL
+                cmd, shell=False, stderr=subprocess.DEVNULL
             ).decode()
             parts = output.strip().split('\n')
             if len(parts) > 1:
@@ -95,15 +96,17 @@ def get_hardware_id():
     elif system == 'Linux':
         # Try lsblk
         try:
-            cmd = (
-                "lsblk --nodeps -o name,serial | "
-                "grep -v 'NAME' | head -n 1 | awk '{print $2}'"
-            )
+            # Avoid complex pipes with shell=True, execute basic lsblk and parse in python
+            cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
             output = subprocess.check_output(
-                cmd, shell=True, stderr=subprocess.DEVNULL
+                cmd, shell=False, stderr=subprocess.DEVNULL
             ).decode().strip()
+            
+            # Take the first line if multiple disks
+            first_line = output.split('\n')[0].strip()
 
-            if output:
+            if first_line:
+                return first_line
                 return output
         except Exception:
             pass
@@ -231,8 +234,15 @@ def get_detailed_license_status():
                 day, month, year = map(int, expiry_str.split('/'))
                 expiry_date = date(year, month, day)
 
-                if date.today() > expiry_date:
-                    return LicenseStatus.EXPIRED, f"Licenza SCADUTA il {expiry_str}"
+                # Utilizzo orario fidato (Network Time)
+                trusted_now_dt, is_trusted = get_trusted_time()
+                trusted_date = trusted_now_dt.date()
+
+                if trusted_date > expiry_date:
+                    msg = f"Licenza SCADUTA il {expiry_str}"
+                    if not is_trusted:
+                        msg += " (Verifica orario di sistema)"
+                    return LicenseStatus.EXPIRED, msg
             except ValueError:
                 return LicenseStatus.INVALID, "Formato data scadenza non valido"
 

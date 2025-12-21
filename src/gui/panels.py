@@ -3,6 +3,7 @@ Bot TS - Bot Panels
 Pannelli specifici per ogni bot.
 """
 import sqlite3
+import traceback
 from pathlib import Path
 from datetime import datetime
 
@@ -39,7 +40,8 @@ class BotWorker(QThread):
             result = self.bot.execute(self.data)
             self.finished_signal.emit(result)
         except Exception as e:
-            self.log_signal.emit(f"[ERRORE] {e}")
+            error_trace = traceback.format_exc()
+            self.log_signal.emit(f"[ERRORE CRITICO] {e}\n{error_trace}")
             self.finished_signal.emit(False)
     
     def stop(self):
@@ -1385,8 +1387,9 @@ class TimbratureDBPanel(QWidget):
 
             self._update_table(rows)
         except Exception as e:
-            # Qui non abbiamo un log widget, usiamo print o potremmo aggiungere un piccolo status bar
             print(f"Errore caricamento DB: {e}")
+            traceback.print_exc()
+            QMessageBox.critical(self, "Errore Database", f"Impossibile caricare i dati:\n{e}")
 
     def _update_table(self, rows):
         """Aggiorna la tabella con i dati forniti."""
@@ -1513,3 +1516,4 @@ class TimbratureDBPanel(QWidget):
 
         except Exception as e:
             print(f"Errore filtro: {e}")
+            traceback.print_exc()

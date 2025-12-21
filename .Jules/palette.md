@@ -9,3 +9,7 @@
 ## 2024-05-23 - Reducing Mouse Travel
 **Learning:** Separating list items from their action buttons (e.g., placing "Edit/Remove" buttons far below a list) forces users to move the mouse back and forth repeatedly, increasing cognitive load and physical effort.
 **Action:** Implement context menus (Right-Click) directly on list items. This keeps the action (Edit/Delete) spatially connected to the object (the list item), creating a faster and more intuitive workflow.
+
+## 2024-05-23 - Input Field Sizing
+**Learning:** Default widget sizes can fail when content density changes (e.g., full date strings).
+**Action:** Explicitly set `minimumWidth` for inputs like `QDateEdit` to accommodate the longest expected string (e.g., "DD.MM.YYYY") plus control icons, preventing truncation and usability issues.
