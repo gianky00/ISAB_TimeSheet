@@ -211,6 +211,10 @@ class ContabilitaManager:
                             # Normalizza colonne
                             df.columns = [str(c).strip() for c in df.columns]
 
+                            # Rimuovi l'ultima riga (Totale file Excel)
+                            if not df.empty:
+                                df = df.iloc[:-1]
+
                             # Filtra colonne interessanti
                             rename_map = {}
                             available_cols = []
@@ -231,8 +235,14 @@ class ContabilitaManager:
 
                             df.rename(columns=rename_map, inplace=True)
 
-                            # Rimuovi righe vuote
-                            df.dropna(how='all', inplace=True)
+                            # Rimuovi righe "quasi" vuote:
+                            # Se tutte le colonne tranne 'data' sono vuote, skip.
+                            # Colonne da controllare: tutte quelle mappate tranne 'data'
+                            check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != 'data']
+                            if check_cols:
+                                df.dropna(how='all', subset=check_cols, inplace=True)
+
+                            if df.empty: continue
 
                             # Aggiungi colonne mancanti
                             for db_col in cls.GIORNALIERE_MAPPING.values():
@@ -244,35 +254,44 @@ class ContabilitaManager:
                             rows_to_insert = []
 
                             # Cache per lookup ODC da Dati per velocizzare
-                            # Carichiamo mappa n_prev -> odc dalla tabella contabilita per l'anno corrente
                             cursor.execute("SELECT n_prev, odc FROM contabilita WHERE year = ?", (year,))
-                            dati_odc_map = {row['n_prev'].strip(): row['odc'].strip() for row in cursor.fetchall() if row['n_prev'] and row['odc']}
+                            dati_rows = cursor.fetchall()
+                            # Mappa 1: N_PREV -> ODC
+                            dati_odc_map = {row['n_prev'].strip(): row['odc'].strip() for row in dati_rows if row['n_prev'] and row['odc']}
+                            # Mappa 2: ODC -> N_PREV (Reverse Lookup)
+                            # Nota: se ci sono duplicati, vince l'ultimo processato. Accettabile.
+                            dati_nprev_map = {row['odc'].strip(): row['n_prev'].strip() for row in dati_rows if row['n_prev'] and row['odc']}
 
                             for _, row in df.iterrows():
                                 # 1. Pulisci ODC (Estrai 5400...)
                                 raw_odc = str(row.get('odc', '')).strip()
+                                if raw_odc.lower() == 'nan': raw_odc = ""
                                 match_odc = re.search(r'(5400\d+)', raw_odc)
                                 final_odc = match_odc.group(1) if match_odc else ""
 
                                 n_prev = str(row.get('n_prev', '')).strip()
+                                if n_prev.lower() == 'nan': n_prev = ""
 
-                                # 2. Se ODC vuoto, cerca in Dati tramite n_prev (consuntivo)
+                                # 2. Lookup Incrociato
+                                # Caso A: Manca ODC, c'è N_PREV
                                 if not final_odc and n_prev:
-                                    # Lookup nella cache
                                     lookup_odc = dati_odc_map.get(n_prev)
                                     if lookup_odc:
-                                        # Pulisci anche questo ODC se necessario o prendi raw
                                         match_lookup = re.search(r'(5400\d+)', lookup_odc)
-                                        if match_lookup:
-                                            final_odc = match_lookup.group(1)
-                                        else:
-                                            # Se in dati c'è ma non è 5400..., prendiamo comunque?
-                                            # La richiesta dice: "estrapolare solo... 5400".
-                                            # Se manca, "verificare in Dati... se lo contiene puoi copiarlo".
-                                            # Assumiamo di copiare solo se conforme o se non specificato diversamente.
-                                            # Copiamo raw se non troviamo pattern, oppure lasciamo vuoto?
-                                            # Meglio copiare quello che c'è se trovato.
-                                            final_odc = lookup_odc
+                                        final_odc = match_lookup.group(1) if match_lookup else lookup_odc
+
+                                # Caso B: Manca N_PREV, c'è ODC
+                                if final_odc and not n_prev:
+                                    # Prima prova a cercare con l'ODC pulito (5400...)
+                                    lookup_nprev = dati_nprev_map.get(final_odc)
+                                    if not lookup_nprev:
+                                        # Se non trova, prova a cercare usando il raw ODC (se diverso)
+                                        # Magari nel DB Dati è salvato sporco
+                                        if raw_odc != final_odc:
+                                            lookup_nprev = dati_nprev_map.get(raw_odc)
+
+                                    if lookup_nprev:
+                                        n_prev = lookup_nprev
 
                                 # Prepara riga
                                 new_row = (
@@ -353,10 +372,9 @@ class ContabilitaManager:
         try:
             conn = sqlite3.connect(cls.DB_PATH)
             cursor = conn.cursor()
-            # Ordine richiesto UI: data, personale, descrizione, n_prev, odc, pdl, inizio, fine, ore
-            # Ma qui ritorniamo tutto, l'ordine lo decide la UI.
-            # Ritorno DB order o struct:
-            cols = ['data', 'personale', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'tcl']
+            # Ordine richiesto UI aggiornato:
+            # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
+            cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore']
             query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY id"
             cursor.execute(query, (year,))
             rows = cursor.fetchall()

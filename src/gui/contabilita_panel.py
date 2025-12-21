@@ -188,12 +188,6 @@ class ContabilitaPanel(QWidget):
             self.year_tabs_widget.addTab(tab_dati, str(year))
 
             # Giornaliere
-            # Nota: mostriamo il tab Giornaliere per tutti gli anni o solo >= 2025?
-            # Se nel DB ci sono dati (perchè importati), li mostriamo.
-            # Se l'utente ha importato dati vecchi per sbaglio, li vedrà.
-            # Controlliamo se ci sono dati giornaliere per l'anno
-            # Ma get_available_years fa UNION, quindi se l'anno esiste in uno dei due, creiamo il tab.
-            # Se la tabella è vuota, mostrerà vuoto.
             tab_giorn = GiornaliereYearTab(year)
             self.giornaliere_tabs_widget.addTab(tab_giorn, str(year))
 
@@ -529,19 +523,17 @@ class ContabilitaYearTab(QWidget):
 class GiornaliereYearTab(QWidget):
     """Tab per un singolo anno (Giornaliere)."""
 
-    # data, personale, descrizione, n_prev, odc, pdl, inizio, fine, ore
+    # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
     COLUMNS = [
-        'DATA', 'PERSONALE', 'DESCRIZIONE ATTIVITA', 'N°PREV.', 'ODC',
+        'DATA', 'PERSONALE', 'TCL', 'DESCRIZIONE ATTIVITA', 'N°PREV.', 'ODC',
         'PDL', 'INIZIO', 'FINE', 'ORE'
     ]
 
     # Mappatura indici basata sulla query get_giornaliere_by_year
-    # Query: data, personale, descrizione, n_prev, odc, pdl, inizio, fine, ore, tcl
-    # UI:    0      1           2           3       4    5    6       7     8
-    # TCL (idx 9) è nascosto/non mostrato in tabella
+    # Query: data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
 
     COL_DATA = 0
-    COL_ORE = 8
+    COL_ORE = 9
 
     def __init__(self, year: int, parent=None):
         super().__init__(parent)
@@ -556,6 +548,7 @@ class GiornaliereYearTab(QWidget):
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
+        self.table.setWordWrap(True) # Abilita testo a capo
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -563,15 +556,16 @@ class GiornaliereYearTab(QWidget):
         # Dimensioni
         self.table.setColumnWidth(0, 100)  # Data
         self.table.setColumnWidth(1, 200)  # Personale
-        self.table.setColumnWidth(2, 300)  # Descrizione
-        self.table.setColumnWidth(3, 80)   # N Prev
-        self.table.setColumnWidth(4, 120)  # ODC
-        self.table.setColumnWidth(5, 80)   # PDL
-        self.table.setColumnWidth(6, 80)   # Inizio
-        self.table.setColumnWidth(7, 80)   # Fine
-        self.table.setColumnWidth(8, 80)   # Ore
+        self.table.setColumnWidth(2, 100)  # TCL (added)
+        self.table.setColumnWidth(3, 300)  # Descrizione
+        self.table.setColumnWidth(4, 80)   # N Prev
+        self.table.setColumnWidth(5, 120)  # ODC
+        self.table.setColumnWidth(6, 80)   # PDL
+        self.table.setColumnWidth(7, 80)   # Inizio
+        self.table.setColumnWidth(8, 80)   # Fine
+        self.table.setColumnWidth(9, 80)   # Ore
 
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch) # Descrizione elastica
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch) # Descrizione elastica
 
         layout.addWidget(self.table)
 
@@ -589,8 +583,7 @@ class GiornaliereYearTab(QWidget):
             right_cols = {self.COL_ORE}
 
             for row_idx, row_data in enumerate(data):
-                # row_data length 10 (includes tcl at end)
-                # Display only first 9
+                # row_data includes all columns
                 for col_idx in range(len(self.COLUMNS)):
                     val = row_data[col_idx]
                     formatted_val = self._format_value(col_idx, val)
@@ -601,13 +594,77 @@ class GiornaliereYearTab(QWidget):
 
                     self.table.setItem(row_idx, col_idx, item)
 
+            # Resize per contenuto multiriga
+            self.table.resizeRowsToContents()
+
+            # Totali
+            self._add_totals_row()
+            self._update_totals()
+
         finally:
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)
 
+    def _add_totals_row(self):
+        """Aggiunge la riga dei totali in fondo."""
+        if self.table.rowCount() > 0:
+            last_item = self.table.item(self.table.rowCount() - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                return
+
+        row_idx = self.table.rowCount()
+        self.table.insertRow(row_idx)
+
+        item = QTableWidgetItem("TOTALI")
+        item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        item.setBackground(Qt.GlobalColor.lightGray)
+        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.table.setItem(row_idx, 0, item)
+
+        for c in range(1, self.table.columnCount()):
+            item = QTableWidgetItem("")
+            item.setBackground(Qt.GlobalColor.lightGray)
+            item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
+            if c == self.COL_ORE:
+                item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+            self.table.setItem(row_idx, c, item)
+
+    def _update_totals(self):
+        """Ricalcola totali sulle righe visibili."""
+        total_row_idx = -1
+        if self.table.rowCount() > 0:
+            last_item = self.table.item(self.table.rowCount() - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                total_row_idx = self.table.rowCount() - 1
+
+        if total_row_idx == -1: return
+
+        rows = total_row_idx
+        sum_ore = 0.0
+
+        for r in range(rows):
+            if not self.table.isRowHidden(r):
+                item = self.table.item(r, self.COL_ORE)
+                if item:
+                    sum_ore += self._parse_float(item.text())
+
+        self.table.item(total_row_idx, self.COL_ORE).setText(self._format_number(sum_ore))
+
+    def _parse_float(self, text):
+        try: return float(text)
+        except: return 0.0
+
+    def _format_number(self, val):
+        if val.is_integer(): return f"{int(val)}"
+        else: return f"{val:.2f}"
+
     def _format_value(self, col_idx, val):
         if not val: return ""
         str_val = str(val).strip()
+        if str_val.lower() == 'nan': return ""
 
         # Data
         if col_idx == self.COL_DATA:
@@ -625,10 +682,17 @@ class GiornaliereYearTab(QWidget):
         return str_val
 
     def filter_data(self, text):
+        total_rows = self.table.rowCount()
+        data_rows = total_rows
+        if total_rows > 0:
+            last_item = self.table.item(total_rows - 1, 0)
+            if last_item and last_item.text() == "TOTALI":
+                data_rows = total_rows - 1
+
         search_terms = text.lower().split()
         cols = self.table.columnCount()
 
-        for r in range(self.table.rowCount()):
+        for r in range(data_rows):
             if not text:
                 self.table.setRowHidden(r, False)
                 continue
@@ -647,3 +711,7 @@ class GiornaliereYearTab(QWidget):
                     row_visible = True
 
             self.table.setRowHidden(r, not row_visible)
+
+        if data_rows < total_rows:
+            self.table.setRowHidden(data_rows, False)
+        self._update_totals()
