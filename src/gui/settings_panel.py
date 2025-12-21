@@ -305,6 +305,27 @@ class SettingsPanel(QWidget):
         self.auto_update_contabilita_check.setStyleSheet("padding: 5px; font-size: 15px; font-weight: normal;")
         contabilita_layout.addWidget(self.auto_update_contabilita_check)
 
+        # Giornaliere Path input
+        giornaliere_label = QLabel("Cartella Giornaliere (Root):")
+        giornaliere_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
+        contabilita_layout.addWidget(giornaliere_label)
+
+        giornaliere_path_layout = QHBoxLayout()
+        self.giornaliere_path_edit = QLineEdit()
+        self.giornaliere_path_edit.setPlaceholderText("Seleziona la cartella root delle Giornaliere...")
+        self.giornaliere_path_edit.setReadOnly(True)
+        self.giornaliere_path_edit.setMinimumHeight(40)
+        self._style_input(self.giornaliere_path_edit)
+        giornaliere_path_layout.addWidget(self.giornaliere_path_edit)
+
+        self.browse_giornaliere_btn = QPushButton("📂 Sfoglia")
+        self.browse_giornaliere_btn.setMinimumHeight(40)
+        self.browse_giornaliere_btn.setMinimumWidth(120)
+        self.browse_giornaliere_btn.clicked.connect(self._browse_giornaliere_path)
+        self._style_button(self.browse_giornaliere_btn)
+        giornaliere_path_layout.addWidget(self.browse_giornaliere_btn)
+        contabilita_layout.addLayout(giornaliere_path_layout)
+
         scroll_layout.addWidget(contabilita_group)
         
         # --- Sezione Browser ---
@@ -486,6 +507,7 @@ class SettingsPanel(QWidget):
         self.timeout_spin.valueChanged.connect(self._on_change)
         self.download_path_edit.textChanged.connect(self._on_change)
         self.contabilita_path_edit.textChanged.connect(self._on_change)
+        self.giornaliere_path_edit.textChanged.connect(self._on_change)
         self.auto_update_contabilita_check.stateChanged.connect(self._on_change)
         # Liste gestite manualmente
     
@@ -520,6 +542,17 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.contabilita_path_edit.setText(path)
+            self._set_unsaved_changes(True)
+
+    def _browse_giornaliere_path(self):
+        current_path = self.giornaliere_path_edit.text()
+        path = QFileDialog.getExistingDirectory(
+            self,
+            "Seleziona Cartella Root Giornaliere",
+            current_path if current_path else str(Path.home())
+        )
+        if path:
+            self.giornaliere_path_edit.setText(path)
             self._set_unsaved_changes(True)
     
     # --- Gestione Account ---
@@ -701,6 +734,7 @@ class SettingsPanel(QWidget):
         
         # Contabilita
         self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
+        self.giornaliere_path_edit.setText(config.get("giornaliere_path", ""))
         self.auto_update_contabilita_check.setChecked(config.get("enable_auto_update_contabilita", True))
 
         # Fornitori
@@ -729,6 +763,7 @@ class SettingsPanel(QWidget):
         config_manager.set_config_value("download_path", self.download_path_edit.text())
 
         config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
+        config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
         config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_contabilita_check.isChecked())
 
         config_manager.set_config_value("fornitori", fornitori)
