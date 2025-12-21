@@ -13,10 +13,10 @@ import numpy as np
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect, QSizePolicy, QGraphicsOpacityEffect,
-    QToolTip, QDialog, QPushButton
+    QToolTip, QDialog, QPushButton, QApplication
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation
-from PyQt6.QtGui import QColor, QCursor, QFont
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation, QPoint
+from PyQt6.QtGui import QColor, QCursor, QFont, QScreen
 
 from src.core.contabilita_manager import ContabilitaManager
 
@@ -85,11 +85,39 @@ class InfoLabel(QLabel):
         """)
 
     def mousePressEvent(self, event):
-        """Mostra il dialog con il testo aggiornato."""
+        """Mostra il dialog con il testo aggiornato, posizionato in modo intelligente."""
         content = self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
         dlg = DetailedInfoDialog(self.title, content, self.window())
-        # Posiziona il dialog vicino al mouse
-        dlg.move(event.globalPosition().toPoint())
+
+        # Smart Positioning Logic
+        cursor_pos = event.globalPosition().toPoint()
+        screen = QApplication.screenAt(cursor_pos)
+
+        if screen:
+            screen_geo = screen.availableGeometry()
+            dlg_width = dlg.width()
+            dlg_height = dlg.sizeHint().height() # approssimato, il layout non è ancora calcolato
+
+            # Calcola posizione X
+            x = cursor_pos.x()
+            # Se il dialog esce a destra dello schermo, spostalo a sinistra del cursore
+            if x + dlg_width > screen_geo.right():
+                x = cursor_pos.x() - dlg_width - 10 # 10px di margine
+            else:
+                x = cursor_pos.x() + 10 # 10px offset standard
+
+            # Calcola posizione Y (evita di uscire sotto)
+            y = cursor_pos.y()
+            if y + dlg_height > screen_geo.bottom():
+                y = cursor_pos.y() - dlg_height - 10
+            else:
+                y = cursor_pos.y() + 10
+
+            dlg.move(x, y)
+        else:
+            # Fallback se screen non trovato
+            dlg.move(cursor_pos)
+
         dlg.exec()
 
     def enterEvent(self, event):
