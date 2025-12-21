@@ -10,11 +10,12 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
-    QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView
+    QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
+    QCheckBox, QTimeEdit
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
 
-from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget
+from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget, CalendarDateEdit
 from src.core import config_manager
 
 
@@ -300,29 +301,9 @@ class ScaricaTSPanel(BaseBotPanel):
         date_label.setMinimumWidth(80)
         date_layout.addWidget(date_label)
         
-        self.date_edit = QDateEdit()
-        self.date_edit.setCalendarPopup(True)
-        self.date_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_edit = CalendarDateEdit()
         # Default: 01.01.2025
         self.date_edit.setDate(QDate(2025, 1, 1))
-        self.date_edit.setMinimumWidth(150)
-        self.date_edit.setMinimumHeight(40)
-        self.date_edit.setStyleSheet("""
-            QDateEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QDateEdit:focus {
-                border-color: #0d6efd;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                width: 30px;
-            }
-        """)
         date_layout.addWidget(self.date_edit)
         
         date_hint = QLabel("(Formato: gg.mm.aaaa)")
@@ -625,12 +606,8 @@ class DettagliOdAPanel(BaseBotPanel):
         date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_da_label)
 
-        self.date_da_edit = QDateEdit()
-        self.date_da_edit.setCalendarPopup(True)
-        self.date_da_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_da_edit = CalendarDateEdit()
         self.date_da_edit.setDate(QDate(2025, 1, 1))
-        self.date_da_edit.setMinimumHeight(40)
-        self.date_da_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_da_edit)
 
         date_layout.addSpacing(15)
@@ -640,12 +617,8 @@ class DettagliOdAPanel(BaseBotPanel):
         date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_a_label)
 
-        self.date_a_edit = QDateEdit()
-        self.date_a_edit.setCalendarPopup(True)
-        self.date_a_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_a_edit = CalendarDateEdit()
         self.date_a_edit.setDate(QDate.currentDate())
-        self.date_a_edit.setMinimumHeight(40)
-        self.date_a_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_a_edit)
 
         date_layout.addStretch()
@@ -701,24 +674,6 @@ class DettagliOdAPanel(BaseBotPanel):
         
         self.content_layout.addWidget(group)
     
-    def _get_date_style(self):
-        return """
-            QDateEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QDateEdit:focus {
-                border-color: #0d6efd;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                width: 30px;
-            }
-        """
-
     def _open_settings(self):
         """Emette un segnale per aprire le impostazioni."""
         main_window = self.window()
@@ -1095,12 +1050,8 @@ class TimbratureBotPanel(BaseBotPanel):
         date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_da_label)
 
-        self.date_da_edit = QDateEdit()
-        self.date_da_edit.setCalendarPopup(True)
-        self.date_da_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_da_edit = CalendarDateEdit()
         self.date_da_edit.setDate(QDate(2025, 1, 1))
-        self.date_da_edit.setMinimumHeight(40)
-        self.date_da_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_da_edit)
 
         date_layout.addSpacing(15)
@@ -1110,12 +1061,8 @@ class TimbratureBotPanel(BaseBotPanel):
         date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_a_label)
 
-        self.date_a_edit = QDateEdit()
-        self.date_a_edit.setCalendarPopup(True)
-        self.date_a_edit.setDisplayFormat("dd.MM.yyyy")
+        self.date_a_edit = CalendarDateEdit()
         self.date_a_edit.setDate(QDate.currentDate())
-        self.date_a_edit.setMinimumHeight(40)
-        self.date_a_edit.setStyleSheet(self._get_date_style())
         date_layout.addWidget(self.date_a_edit)
 
         date_layout.addStretch()
@@ -1123,23 +1070,51 @@ class TimbratureBotPanel(BaseBotPanel):
 
         self.content_layout.addWidget(params_group)
 
-    def _get_date_style(self):
-        return """
-            QDateEdit {
+        # --- Sezione Scheduler (Autopilot) ---
+        sched_group = QGroupBox("📅 Autopilot (Pianificatore)")
+        sched_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-size: 16px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+            }
+        """)
+        sched_layout = QHBoxLayout(sched_group)
+
+        self.autopilot_check = QCheckBox("Abilita download automatico")
+        self.autopilot_check.setStyleSheet("font-size: 15px;")
+        sched_layout.addWidget(self.autopilot_check)
+
+        sched_layout.addSpacing(20)
+
+        lbl_time = QLabel("Alle ore:")
+        lbl_time.setStyleSheet("font-size: 15px;")
+        sched_layout.addWidget(lbl_time)
+
+        self.time_edit = QTimeEdit()
+        self.time_edit.setTime(QTime(9, 0))
+        self.time_edit.setDisplayFormat("HH:mm")
+        self.time_edit.setMinimumHeight(35)
+        self.time_edit.setStyleSheet("""
+            QTimeEdit {
                 border: 1px solid #ced4da;
                 border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
+                padding: 5px;
                 background-color: white;
             }
-            QDateEdit:focus {
-                border-color: #0d6efd;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                width: 30px;
-            }
-        """
+        """)
+        sched_layout.addWidget(self.time_edit)
+
+        sched_layout.addStretch()
+        self.content_layout.addWidget(sched_group)
 
     def _open_settings(self):
         main_window = self.window()
