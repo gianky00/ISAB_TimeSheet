@@ -3,10 +3,9 @@ Tests for Timbrature module.
 """
 import pytest
 import sqlite3
-import os
 import pandas as pd
 from pathlib import Path
-from src.bots.timbrature.bot import TimbratureBot
+from src.bots.timbrature.storage import TimbratureStorage
 
 @pytest.fixture
 def temp_db(tmp_path):
@@ -15,18 +14,12 @@ def temp_db(tmp_path):
     return db_file
 
 @pytest.fixture
-def mock_bot(temp_db):
-    """Fixture per creare un bot con DB temporaneo."""
-    # Mocking initialization to avoid selenium driver setup
-    bot = TimbratureBot.__new__(TimbratureBot)
-    bot.db_path = temp_db
-    bot.log = lambda x: None  # Mock log
+def storage(temp_db):
+    """Fixture per creare uno storage con DB temporaneo."""
+    storage = TimbratureStorage(temp_db)
+    return storage
 
-    # Initialize DB
-    bot._ensure_db_exists()
-    return bot
-
-def test_db_creation(temp_db, mock_bot):
+def test_db_creation(temp_db, storage):
     """Test che il database venga creato correttamente."""
     assert temp_db.exists()
 
@@ -38,7 +31,7 @@ def test_db_creation(temp_db, mock_bot):
 
     assert table is not None
 
-def test_import_logic(temp_db, mock_bot, tmp_path):
+def test_import_logic(temp_db, storage, tmp_path):
     """Test dell'importazione dati da Excel e prevenzione duplicati."""
 
     # 1. Crea un Excel di test
@@ -57,7 +50,7 @@ def test_import_logic(temp_db, mock_bot, tmp_path):
     df.to_excel(excel_file, index=False)
 
     # 2. Esegui import
-    mock_bot._import_to_db(str(excel_file))
+    storage.import_excel(str(excel_file))
 
     # 3. Verifica DB
     conn = sqlite3.connect(temp_db)
@@ -69,11 +62,14 @@ def test_import_logic(temp_db, mock_bot, tmp_path):
     # Dovremmo avere 2 righe
     # id, data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura
     assert len(rows) == 2
+    # Check index 4 (nome)
+    # The order by nome means Luigi comes before Mario?
+    # Luigi L, Mario M. Yes.
     assert rows[0][4] == "Luigi" # nome
     assert rows[1][4] == "Mario" # nome
 
     # 4. Test Duplicati: Importa lo stesso file
-    mock_bot._import_to_db(str(excel_file))
+    storage.import_excel(str(excel_file))
 
     conn = sqlite3.connect(temp_db)
     cursor = conn.cursor()
@@ -84,7 +80,7 @@ def test_import_logic(temp_db, mock_bot, tmp_path):
     # Il numero di righe non deve essere cambiato
     assert count == 2
 
-def test_import_new_data(temp_db, mock_bot, tmp_path):
+def test_import_new_data(temp_db, storage, tmp_path):
     """Test che nuovi dati vengano aggiunti correttamente."""
 
     # Import iniziale
@@ -100,7 +96,7 @@ def test_import_new_data(temp_db, mock_bot, tmp_path):
     df1 = pd.DataFrame(data1)
     file1 = tmp_path / "test1.xlsx"
     df1.to_excel(file1, index=False)
-    mock_bot._import_to_db(str(file1))
+    storage.import_excel(str(file1))
 
     # Import nuovi dati (uno duplicato, uno nuovo)
     data2 = {
@@ -115,7 +111,7 @@ def test_import_new_data(temp_db, mock_bot, tmp_path):
     df2 = pd.DataFrame(data2)
     file2 = tmp_path / "test2.xlsx"
     df2.to_excel(file2, index=False)
-    mock_bot._import_to_db(str(file2))
+    storage.import_excel(str(file2))
 
     conn = sqlite3.connect(temp_db)
     cursor = conn.cursor()

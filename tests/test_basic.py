@@ -150,10 +150,11 @@ class TestDettagliOdABot:
         from src.bots.dettagli_oda import DettagliOdABot
         
         columns = DettagliOdABot.get_columns()
-        assert len(columns) == 1
+        assert len(columns) == 2
         
         column_names = [col['name'] for col in columns]
         assert 'Numero OdA' in column_names
+        assert 'Numero Contratto' in column_names
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
@@ -171,7 +172,7 @@ class TestCaricoTSBot:
         from src.bots.carico_ts import CaricoTSBot
         
         columns = CaricoTSBot.get_columns()
-        assert len(columns) == 17
+        assert len(columns) == 16
         
         column_names = [col['name'] for col in columns]
         assert 'Numero OdA' in column_names
