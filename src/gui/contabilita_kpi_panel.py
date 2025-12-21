@@ -13,10 +13,10 @@ import numpy as np
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect, QSizePolicy, QGraphicsOpacityEffect,
-    QToolTip, QDialog, QPushButton
+    QToolTip, QDialog, QPushButton, QApplication
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation
-from PyQt6.QtGui import QColor, QCursor, QFont
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QAbstractAnimation, QPoint
+from PyQt6.QtGui import QColor, QCursor, QFont, QScreen
 
 from src.core.contabilita_manager import ContabilitaManager
 
@@ -85,11 +85,39 @@ class InfoLabel(QLabel):
         """)
 
     def mousePressEvent(self, event):
-        """Mostra il dialog con il testo aggiornato."""
+        """Mostra il dialog con il testo aggiornato, posizionato in modo intelligente."""
         content = self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
         dlg = DetailedInfoDialog(self.title, content, self.window())
-        # Posiziona il dialog vicino al mouse
-        dlg.move(event.globalPosition().toPoint())
+
+        # Smart Positioning Logic
+        cursor_pos = event.globalPosition().toPoint()
+        screen = QApplication.screenAt(cursor_pos)
+
+        if screen:
+            screen_geo = screen.availableGeometry()
+            dlg_width = dlg.width()
+            dlg_height = dlg.sizeHint().height() # approssimato, il layout non è ancora calcolato
+
+            # Calcola posizione X
+            x = cursor_pos.x()
+            # Se il dialog esce a destra dello schermo, spostalo a sinistra del cursore
+            if x + dlg_width > screen_geo.right():
+                x = cursor_pos.x() - dlg_width - 10 # 10px di margine
+            else:
+                x = cursor_pos.x() + 10 # 10px offset standard
+
+            # Calcola posizione Y (evita di uscire sotto)
+            y = cursor_pos.y()
+            if y + dlg_height > screen_geo.bottom():
+                y = cursor_pos.y() - dlg_height - 10
+            else:
+                y = cursor_pos.y() + 10
+
+            dlg.move(x, y)
+        else:
+            # Fallback se screen non trovato
+            dlg.move(cursor_pos)
+
         dlg.exec()
 
     def enterEvent(self, event):
@@ -235,7 +263,8 @@ class ContabilitaKPIPanel(QWidget):
         self.content_layout.addLayout(self.cards_layout)
 
         # --- ROW 2: Deep Technical Analysis ---
-        lbl_sect2 = QLabel("ANALISI TECNICA PROFONDA")
+        # RENAMED from "ANALISI TECNICA PROFONDA"
+        lbl_sect2 = QLabel("ANALISI REDDITIVITÀ E EFFICIENZA")
         lbl_sect2.setStyleSheet("color: #495057; font-weight: bold; font-size: 16px; margin-top: 20px; margin-bottom: 10px;")
         self.content_layout.addWidget(lbl_sect2)
 
@@ -250,10 +279,12 @@ class ContabilitaKPIPanel(QWidget):
             "MARGINALITÀ %", "0.0 %", "#20c997",
             subtitle="Su Totale Preventivato"
         )
+
         self.card_eff_resa = KPIBigCard(
-            "EFFICIENZA DI RESA", "€ 0,00 / h", "#6610f2",
-            subtitle="Resa / Ore Spese"
+            "UTILE NETTO ORARIO", "€ 0,00 / h", "#6610f2",
+            subtitle="Valore Ora - Costo Base"
         )
+
         self.card_val_ora = KPIBigCard(
             "VALORE PER ORA SPESA", "€ 0,00 / h", "#d63384",
             subtitle="Totale Prev / Ore Spese"
@@ -301,8 +332,9 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas3 = FigureCanvas(self.fig3)
         self.container3 = self._create_chart_container(
             self.canvas3,
-            title="Margine Operativo vs Costo",
-            info_callback=lambda: "Analisi redditività per tipologia (Verde=Margine, Rosso=Costo)."
+            # RENAMED
+            title="Redditività: Ricavi vs Costi",
+            info_callback=lambda: "Confronto diretto tra Ricavi (Preventivato) e Costi Stimati per tipologia."
         )
         charts_grid.addWidget(self.container3, 1, 0)
 
@@ -325,7 +357,7 @@ class ContabilitaKPIPanel(QWidget):
             self.canvas5,
             height=200,
             title="Stato Avanzamento Globale",
-            info_callback=lambda: "Percentuale di attività contabilizzate rispetto al totale."
+            info_callback=lambda: "Dettaglio avanzamento: Contabilizzate vs In Attesa/Da Completare."
         )
         charts_grid.addWidget(self.container5, 2, 0, 1, 2)
 
@@ -471,8 +503,10 @@ class ContabilitaKPIPanel(QWidget):
             margine_operativo = tot_prev - costo_totale_stimato
 
             marginalita_perc = (margine_operativo / tot_prev * 100) if tot_prev > 0 else 0
-            efficienza_resa = (df['resa'].sum() / tot_ore) if tot_ore > 0 else 0
+            # CORREZIONE: Efficienza Resa NON è somma(resa) / ore se resa è un tasso.
+            # Qui la useremo come UTILE NETTO ORARIO.
             valore_per_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
+            utile_netto_orario = valore_per_ora - HOURLY_COST_STD
 
             # Margine Info
             self.card_margine.lbl_value.setText(f"€ {self._format_currency(margine_operativo)}")
@@ -498,15 +532,16 @@ class ContabilitaKPIPanel(QWidget):
                 f"Per ogni 100€ fatturati, rimangono € {marginalita_perc:.1f} di margine."
             ))
 
-            # Efficienza Resa Info
-            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(efficienza_resa)} / h")
+            # UTILE NETTO ORARIO Info
+            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(utile_netto_orario)} / h")
+            self.card_eff_resa.lbl_value.setStyleSheet(f"color: {'#20c997' if utile_netto_orario >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
             self.card_eff_resa.set_info_callback(lambda: (
                 f"<b>CALCOLO ESEMPIO REALE ({year}):</b><br><br>"
-                f"Resa Totale: {self._format_currency(df['resa'].sum())}<br>"
-                f" / Ore Spese Totali: {self._format_currency(tot_ore)}<br>"
+                f"Valore per Ora Spesa: € {self._format_currency(valore_per_ora)}<br>"
+                f" - Costo Orario Base: € {str(HOURLY_COST_STD).replace('.', ',')}<br>"
                 f"--------------------------------------------------<br>"
-                f"<b>= Efficienza: € {self._format_currency(efficienza_resa)} / h</b><br><br>"
-                f"Valore medio di 'Resa' prodotto per ogni ora lavorata."
+                f"<b>= Utile Netto Orario: € {self._format_currency(utile_netto_orario)} / h</b><br><br>"
+                f"Indica quanto guadagno netto genera ogni singola ora lavorata."
             ))
 
             # Valore per Ora Spesa Info
@@ -650,7 +685,7 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas2.draw()
 
     def _plot_margine_tipologia(self, df):
-        """Grafico a Barre: Margine Operativo vs Costo per Tipologia."""
+        """Grafico a Barre: Ricavi vs Costi per Tipologia."""
         self.fig3.clear()
         ax = self.fig3.add_subplot(111)
 
@@ -669,19 +704,12 @@ class ContabilitaKPIPanel(QWidget):
             self.canvas3.draw()
             return
 
-        # Raggruppa e calcola Margine e Costo
-        # Margine = Prev - (Ore * Costo_Std)
-        # Costo = Ore * Costo_Std
-
-        # FIX: Evita FutureWarning su groupby().apply() con colonne di raggruppamento
-        # Raggruppiamo esplicitamente solo le colonne numeriche necessarie o usiamo include_groups=False se pandas > 2.2
-        # Un modo robusto è calcolare le somme prima
-
+        # Raggruppa e calcola Ricavi (Prev) e Costi
         grouped_sums = filtered_df.groupby('tipologia_upper')[['totale_prev', 'ore_sp']].sum()
-        grouped_sums['Margine'] = grouped_sums['totale_prev'] - (grouped_sums['ore_sp'] * HOURLY_COST_STD)
         grouped_sums['Costo'] = grouped_sums['ore_sp'] * HOURLY_COST_STD
 
-        grouped = grouped_sums.sort_values(by='Margine', ascending=True)
+        # Ordina per Ricavi descrescente
+        grouped = grouped_sums.sort_values(by='totale_prev', ascending=True)
 
         if grouped.empty:
             return
@@ -689,14 +717,25 @@ class ContabilitaKPIPanel(QWidget):
         y = np.arange(len(grouped))
         height = 0.35
 
-        ax.barh(y - height/2, grouped['Margine'], height, label='Margine Operativo', color='#20c997', alpha=0.9)
-        ax.barh(y + height/2, grouped['Costo'], height, label='Costo Stimato', color='#dc3545', alpha=0.6)
+        # Bar 1: Ricavi (Totale Preventivato) - Green/Teal
+        ax.barh(y + height/2, grouped['totale_prev'], height, label='Totale Preventivato (Ricavi)', color='#20c997', alpha=0.9)
+
+        # Bar 2: Costi (Ore * Standard) - Red
+        ax.barh(y - height/2, grouped['Costo'], height, label='Costo Stimato', color='#dc3545', alpha=0.8)
 
         ax.set_yticks(y)
         ax.set_yticklabels(grouped.index)
-        ax.legend()
+        ax.legend(loc='lower right')
 
-        # ax.set_title('Margine Operativo vs Costo per Tipologia', fontsize=14, fontweight='bold', color='#495057', pad=20)
+        # Aggiunge etichette numeriche
+        for i, (idx, row) in enumerate(grouped.iterrows()):
+            # Etichetta Ricavi
+            ax.text(row['totale_prev'], i + height/2, f" € {row['totale_prev']/1000:.1f}k",
+                    va='center', fontsize=9, color='#198754', fontweight='bold')
+            # Etichetta Costi
+            ax.text(row['Costo'], i - height/2, f" € {row['Costo']/1000:.1f}k",
+                    va='center', fontsize=9, color='#dc3545')
+
         ax.grid(axis='x', linestyle='--', alpha=0.5)
 
         self.fig3.tight_layout()
@@ -743,28 +782,56 @@ class ContabilitaKPIPanel(QWidget):
         self.canvas4.draw()
 
     def _plot_completamento(self, df):
+        """Barra di avanzamento impilata."""
         self.fig5.clear()
-        ax = self.fig5.add_axes([0.05, 0.3, 0.9, 0.4])
+        ax = self.fig5.add_axes([0.05, 0.4, 0.9, 0.3]) # Adjust layout
 
         if df.empty:
             self.canvas5.draw()
             return
 
         total = len(df)
-        contabilizzate = len(df[df['stato_attivita'].str.contains('CONTABILIZZA', case=False, na=False)])
-        percent = (contabilizzate / total * 100) if total > 0 else 0
+        if total == 0:
+            return
 
-        ax.barh(0, 100, height=0.5, color='#e9ecef', edgecolor='none')
-        ax.barh(0, percent, height=0.5, color='#198754', edgecolor='none')
+        # Definisci categorie
+        completed = df[df['stato_attivita'].str.contains('CONTABILIZZA|CHIUSA', case=False, na=False)]
+        pending_tcl = df[df['stato_attivita'].str.contains('IN ATTESA TCL', case=False, na=False)]
+        to_complete = df[df['stato_attivita'].str.contains('DA COMPLETARE', case=False, na=False)]
 
-        ax.text(50, 0, f"{percent:.1f}% ATTIVITÀ CONTABILIZZATE", ha='center', va='center',
-                color='white' if percent > 50 and percent < 60 else ('black' if percent < 50 else 'white'),
-                fontweight='bold', fontsize=12)
+        count_completed = len(completed)
+        count_tcl = len(pending_tcl)
+        count_todo = len(to_complete)
+        # Il resto sono "Altro" o "Aperta" generica
+        count_other = total - count_completed - count_tcl - count_todo
+
+        # Percentuali
+        pct_completed = (count_completed / total) * 100
+        pct_tcl = (count_tcl / total) * 100
+        pct_todo = (count_todo / total) * 100
+        pct_other = (count_other / total) * 100
+
+        # Plot Stacked Bar
+        # Order: Completed (Green), TCL (Yellow), Todo (Red), Other (Gray)
+
+        p1 = ax.barh(0, pct_completed, height=0.6, color='#198754', label='Contabilizzate', edgecolor='white')
+        p2 = ax.barh(0, pct_tcl, left=pct_completed, height=0.6, color='#ffc107', label='In Attesa TCL', edgecolor='white')
+        p3 = ax.barh(0, pct_todo, left=pct_completed + pct_tcl, height=0.6, color='#dc3545', label='Da Completare', edgecolor='white')
+        p4 = ax.barh(0, pct_other, left=pct_completed + pct_tcl + pct_todo, height=0.6, color='#e9ecef', label='Altro', edgecolor='white')
+
+        # Add labels if segment is large enough
+        if pct_completed > 10:
+            ax.text(pct_completed/2, 0, f"{pct_completed:.1f}%", ha='center', va='center', color='white', fontweight='bold')
+        if pct_tcl > 10:
+            ax.text(pct_completed + pct_tcl/2, 0, f"{pct_tcl:.1f}%", ha='center', va='center', color='black', fontweight='bold')
+        if pct_todo > 10:
+            ax.text(pct_completed + pct_tcl + pct_todo/2, 0, f"{pct_todo:.1f}%", ha='center', va='center', color='white', fontweight='bold')
 
         ax.set_xlim(0, 100)
         ax.set_ylim(-0.5, 0.5)
         ax.axis('off')
 
-        # ax.set_title('Stato Avanzamento Globale', fontsize=14, fontweight='bold', color='#495057', pad=10)
+        # Legend below
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), ncol=4, frameon=False, fontsize=9)
 
         self.canvas5.draw()
