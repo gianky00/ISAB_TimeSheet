@@ -79,11 +79,7 @@ def run_pyinstaller():
         "webdriver_manager.chrome",
         "cryptography.fernet",
         "packaging.version",
-        "jaraco.text",
-        "jaraco.classes",
-        "jaraco.context",
-        "jaraco.functools",
-        "more_itertools",
+        "platformdirs",
     ]
     
     for imp in hidden_imports:
