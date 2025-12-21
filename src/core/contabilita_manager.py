@@ -358,7 +358,8 @@ class ContabilitaManager:
                 'stato_attivita', 'tipologia', 'ore_sp', 'resa', 'annotazioni',
                 'indirizzo_consuntivo', 'nome_file'
             ]
-            query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY id"
+            # Ordinamento richiesto: N°PREV. (n_prev) dal più recente (DESC)
+            query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"
             cursor.execute(query, (year,))
             rows = cursor.fetchall()
             conn.close()
@@ -375,7 +376,8 @@ class ContabilitaManager:
             # Ordine richiesto UI aggiornato:
             # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
             cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore']
-            query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY id"
+            # Ordinamento richiesto: Data dal più recente (DESC)
+            query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
             cursor.execute(query, (year,))
             rows = cursor.fetchall()
             conn.close()

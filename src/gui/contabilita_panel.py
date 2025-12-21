@@ -287,6 +287,7 @@ class ContabilitaYearTab(QWidget):
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
+        self.table.setWordWrap(True)  # Enable word wrap for multiline text
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -337,6 +338,8 @@ class ContabilitaYearTab(QWidget):
                 indirizzo = row_data[self.IDX_INDIRIZZO]
                 if self.table.item(row_idx, 0):
                     self.table.item(row_idx, 0).setData(Qt.ItemDataRole.UserRole, indirizzo)
+
+            self.table.resizeRowsToContents()  # Ensure full content is visible
 
             self._add_totals_row()
             self._update_totals()
