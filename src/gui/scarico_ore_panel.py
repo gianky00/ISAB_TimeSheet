@@ -5,14 +5,15 @@ Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableView, QLineEdit, QMessageBox, QHeaderView
+    QTableView, QLineEdit, QMessageBox, QHeaderView, QFrame
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont, QCursor
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtGui import QFont, QCursor, QKeySequence
 
 from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
 from src.gui.scarico_ore_components import ScaricoOreTableModel, ScaricoOreFilterProxy, FilterHeaderView
+from src.utils.parsing import parse_currency
 
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background (solo Scarico Ore)."""
@@ -35,7 +36,8 @@ class ScaricoOrePanel(QWidget):
         super().__init__(parent)
         self.worker = None
         self._setup_ui()
-        self._load_data()
+        # Delay load to allow UI to show up first (optimization)
+        QTimer.singleShot(100, self._load_data)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -68,7 +70,7 @@ class ScaricoOrePanel(QWidget):
         toolbar.addStretch()
 
         # Status Label
-        self.status_label = QLabel("Pronto")
+        self.status_label = QLabel("Inizializzazione...")
         self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
         toolbar.addWidget(self.status_label)
 
@@ -103,12 +105,19 @@ class ScaricoOrePanel(QWidget):
         self.table_view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QTableView.SelectionMode.ExtendedSelection)
         self.table_view.setShowGrid(True)
+        self.table_view.setWordWrap(False) # Optimization: Disable word wrap for 130k rows performance
 
         # Models
         self.source_model = ScaricoOreTableModel([])
         self.proxy_model = ScaricoOreFilterProxy(self)
         self.proxy_model.setSourceModel(self.source_model)
         self.table_view.setModel(self.proxy_model)
+
+        # Connect signals for totals update
+        self.proxy_model.layoutChanged.connect(self._update_totals)
+        self.proxy_model.rowsInserted.connect(lambda p, f, l: self._update_totals())
+        self.proxy_model.rowsRemoved.connect(lambda p, f, l: self._update_totals())
+        self.proxy_model.modelReset.connect(self._update_totals)
 
         # Custom Header
         header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
@@ -130,16 +139,92 @@ class ScaricoOrePanel(QWidget):
                 border: none;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
-                /* Add a visual hint for filter? */
             }
         """)
 
         layout.addWidget(self.table_view)
 
+        # --- Footer Bar for Totals (Option B) ---
+        self.footer_frame = QFrame()
+        self.footer_frame.setStyleSheet("""
+            QFrame {
+                background-color: #e9ecef;
+                border-top: 2px solid #dee2e6;
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+            }
+            QLabel {
+                font-weight: bold;
+                font-size: 14px;
+                color: #212529;
+            }
+        """)
+        footer_layout = QHBoxLayout(self.footer_frame)
+        footer_layout.setContentsMargins(15, 10, 15, 10)
+
+        self.lbl_count = QLabel("Righe: 0")
+        self.lbl_total_hours = QLabel("Totale Ore: 0.00")
+        self.lbl_total_hours.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+        footer_layout.addWidget(self.lbl_count)
+        footer_layout.addStretch()
+        footer_layout.addWidget(self.lbl_total_hours)
+
+        layout.addWidget(self.footer_frame)
+
         # Info label
-        self.info_label = QLabel("Visualizzazione completa. Clicca sulle intestazioni per filtrare.")
+        self.info_label = QLabel("Visualizzazione completa. Clicca sulle intestazioni per filtrare. Copia con Ctrl+C.")
         self.info_label.setStyleSheet("color: #adb5bd; font-size: 11px; margin-top: 5px;")
         layout.addWidget(self.info_label)
+
+    def _update_totals(self):
+        """Calculates totals based on visible rows."""
+        # This can be heavy if run on main thread for 130k rows.
+        # But FilterProxy handles filtering fast.
+        # We need to iterate over indices.
+
+        # Optimization: Only count rows, and sum 'Totale Ore' (Col 7)
+        row_count = self.proxy_model.rowCount()
+        self.lbl_count.setText(f"Righe visibili: {row_count}")
+
+        # Summing 130k floats in python loop might freeze GUI for 0.5s.
+        # We can do it in a timer or worker if needed.
+        # Let's try direct first.
+        # We only need to sum if row_count < some limit? No, user wants totals.
+        # Optimization: If no filter, use pre-calculated total from source?
+
+        if row_count > 50000:
+             self.lbl_total_hours.setText("Totale Ore: Calcolo... (filtrando)")
+             QTimer.singleShot(100, self._calculate_sum_heavy)
+        else:
+             self._calculate_sum_heavy()
+
+    def _calculate_sum_heavy(self):
+        total = 0.0
+        # Iterate source rows? No, filtered rows.
+        # proxy.data(index) is slow.
+        # Fast path: Get source rows that are accepted.
+        # QSortFilterProxyModel doesn't expose list of accepted rows easily.
+        # Standard iteration:
+        rows = self.proxy_model.rowCount()
+        # Optimization: if rows == source.rows (no filter), sum source data directly (fast)
+        if rows == self.source_model.rowCount():
+             # Sum column 7 of source data
+             # Source data is list of tuples. Col 7 is TOTALE ORE.
+             # self.source_model._data is accessible
+             try:
+                 total = sum(parse_currency(str(r[7])) for r in self.source_model._data)
+             except: total = 0
+        else:
+             # Iterate proxy
+             for r in range(rows):
+                 idx = self.proxy_model.index(r, 7) # Col 7 is Totale Ore
+                 val_str = self.proxy_model.data(idx, Qt.ItemDataRole.DisplayRole)
+                 try:
+                     total += parse_currency(val_str)
+                 except: pass
+
+        self.lbl_total_hours.setText(f"Totale Ore: {total:,.2f}")
 
     def _start_update(self):
         """Avvia l'aggiornamento specifico per Scarico Ore."""
@@ -181,6 +266,7 @@ class ScaricoOrePanel(QWidget):
     def _load_data(self):
         """Carica TUTTI i dati in memoria (molto veloce in RAM)."""
         if not ContabilitaManager.DB_PATH.exists():
+            self.status_label.setText("Database non trovato.")
             return
 
         try:
@@ -191,34 +277,43 @@ class ScaricoOrePanel(QWidget):
             # Reset view properties
             self.table_view.resizeColumnsToContents()
 
-            # Default widths adjustments
-            # 'DATA'(0), 'PERS1'(1), 'PERS2'(2), 'ODC'(3), 'POS'(4), 'DALLE'(5), 'ALLE'(6),
-            # 'TOTALE ORE'(7), 'DESCRIZIONE'(8), 'FINITO'(9), 'COMMESSA'(10)
+            # Adjust column widths as requested:
+            # "sum of widths must equal view size" -> Stretch Last Section?
+            # "Descrizione (Col 8) must be wider"
 
-            self.table_view.setColumnWidth(0, 90) # Data
-            self.table_view.setColumnWidth(1, 150) # Pers1
-            self.table_view.setColumnWidth(2, 150) # Pers2
-            self.table_view.setColumnWidth(8, 300) # Descrizione
-            self.table_view.setColumnWidth(10, 150) # Commessa
+            header = self.table_view.horizontalHeader()
 
-            self.status_label.setText(f"Caricati {len(rows)} record.")
+            # Strategy: Set interactive for most, Stretch for Description
+            # Reset to interactive first
+            for i in range(11):
+                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+
+            # DATA (0), PERS1 (1), PERS2 (2), ODC (3), POS (4), DALLE (5), ALLE (6), TOT (7) -> Fixed/Interactive
+            self.table_view.setColumnWidth(0, 90)  # Data
+            self.table_view.setColumnWidth(1, 130) # Pers1
+            self.table_view.setColumnWidth(2, 130) # Pers2
+            self.table_view.setColumnWidth(3, 80)  # ODC
+            self.table_view.setColumnWidth(4, 50)  # POS
+            self.table_view.setColumnWidth(5, 50)  # Dalle
+            self.table_view.setColumnWidth(6, 50)  # Alle
+            self.table_view.setColumnWidth(7, 80)  # Tot
+            self.table_view.setColumnWidth(9, 60)  # Finito
+            self.table_view.setColumnWidth(10, 100)# Commessa
+
+            # Description (8) Stretch to fill
+            header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
+
+            count = len(rows)
+            self.status_label.setText(f"Caricati {count} record.")
+            self._update_totals()
 
         except Exception as e:
             self.status_label.setText(f"Errore caricamento: {e}")
             print(f"DB Error: {e}")
 
-    # Context Menu for Table View is slightly different than Table Widget
-    # but the generic one in Widgets uses generic events.
-    # If we need context menu (Lyra, Copy), we need to implement it for QTableView.
-    # Currently user didn't explicitly demand context menu for this panel,
-    # but "Scarico TS" usually has it.
-    # The requirement focused on Filters and View All.
-    # We'll skip complex context menu re-implementation for now unless requested.
-    # Standard Copy (Ctrl+C) logic needs to be added to TableView if desired.
-
     def keyPressEvent(self, event):
         # Implement Ctrl+C for QTableView
-        if event.matches(Qt.Key.Key_Copy):
+        if event.matches(QKeySequence.StandardKey.Copy):
             self._copy_selection()
         else:
             super().keyPressEvent(event)
@@ -243,7 +338,6 @@ class ScaricoOrePanel(QWidget):
         # Format TSV
         tsv_lines = []
         for r in sorted(rows_text.keys()):
-            # We need to handle gaps if selection is disjoint?
             # Simple approach: join by tab
             line = "\t".join([x[1] for x in sorted(rows_text[r], key=lambda y: y[0])])
             tsv_lines.append(line)
