@@ -10,7 +10,7 @@ import logging
 import warnings
 import io
 import json
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Callable
 from datetime import datetime
 from src.utils.parsing import parse_currency
 from src.core.config_manager import CONFIG_DIR
@@ -323,7 +323,7 @@ class ContabilitaManager:
             return False, f"Errore importazione Giornaliere: {e}"
 
     @classmethod
-    def import_scarico_ore(cls, file_path: str) -> Tuple[bool, str]:
+    def import_scarico_ore(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str]:
         """Importa il file Scarico Ore Cantiere con supporto a stili e gestione zeri."""
         path = Path(file_path)
         if not path.exists():
@@ -384,8 +384,12 @@ class ContabilitaManager:
 
             # Pre-calc column keys for JSON styles
             col_keys = list(col_indices.keys())
+            total_rows = ws_data.max_row
 
             for row_idx, row in enumerate(ws_data.iter_rows(min_row=start_row, min_col=2, max_col=12), start=start_row):
+                if progress_callback and row_idx % 200 == 0:
+                    progress_callback(row_idx, total_rows)
+
                 # row is a tuple of Cells
                 # Index in tuple: 0=B, 1=C, ... 10=L
 
