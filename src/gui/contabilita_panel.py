@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QAction, QFont
+import time
 
 from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
@@ -20,23 +21,44 @@ from src.gui.widgets import ExcelTableWidget, StatusIndicator
 class ContabilitaWorker(QThread):
     """Worker per l'importazione in background."""
     finished_signal = pyqtSignal(bool, str)
+    progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str, giornaliere_path: str = ""):
         super().__init__()
         self.file_path = file_path
         self.giornaliere_path = giornaliere_path
+        self.start_time = 0
+
+    def _progress_cb(self, current, total, prefix="Importazione"):
+        elapsed = time.time() - self.start_time
+        if current > 0 and elapsed > 0:
+            rate = current / elapsed
+            remaining = total - current
+            eta_seconds = remaining / rate if rate > 0 else 0
+
+            m, s = divmod(int(eta_seconds), 60)
+            percent = int((current / total) * 100) if total > 0 else 0
+
+            self.progress_signal.emit(f"⏳ {prefix}: {percent}% - {current}/{total} - ETA: {m}m {s}s")
 
     def run(self):
         # Inizializza DB se necessario
         ContabilitaManager.init_db()
+        self.start_time = time.time()
 
         # 1. Import Contabilità (Dati)
-        success, msg = ContabilitaManager.import_data_from_excel(self.file_path)
+        # Use lambda to inject prefix
+        dati_cb = lambda c, t: self._progress_cb(c, t, "Contabilità")
+        success, msg = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
 
         # 2. Import Giornaliere (se configurato)
         msg_giornaliere = ""
         if success and self.giornaliere_path:
-            g_success, g_msg = ContabilitaManager.import_giornaliere(self.giornaliere_path)
+            # Reset timer for next phase for accurate ETA
+            self.start_time = time.time()
+            giorn_cb = lambda c, t: self._progress_cb(c, t, "Giornaliere")
+
+            g_success, g_msg = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
             msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
 
         # Nota: Scarico Ore Cantiere ora è gestito separatamente nel suo pannello dedicato.
@@ -269,6 +291,7 @@ class ContabilitaPanel(QWidget):
 
         self.worker = ContabilitaWorker(path, giornaliere_path)
         self.worker.finished_signal.connect(self._on_import_finished)
+        self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
 
     def _on_import_finished(self, success: bool, msg: str):

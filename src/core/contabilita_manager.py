@@ -164,7 +164,7 @@ class ContabilitaManager:
         conn.close()
 
     @classmethod
-    def import_data_from_excel(cls, file_path: str) -> Tuple[bool, str]:
+    def import_data_from_excel(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str]:
         """Importa i dati dal file Excel specificato (Tabella Dati)."""
         path = Path(file_path)
         if not path.exists():
@@ -177,6 +177,11 @@ class ContabilitaManager:
                 imported_years = []
                 conn = sqlite3.connect(cls.DB_PATH)
                 cursor = conn.cursor()
+
+                # Count valid sheets first for progress
+                valid_sheets = [s for s in xls.sheet_names if re.search(r'(\d{4})', s)]
+                total_sheets = len(valid_sheets)
+                processed_sheets = 0
 
                 for sheet_name in xls.sheet_names:
                     match = re.search(r'(\d{4})', sheet_name)
@@ -211,6 +216,10 @@ class ContabilitaManager:
                         cursor.executemany(query, values)
                         imported_years.append(year)
 
+                        processed_sheets += 1
+                        if progress_callback:
+                            progress_callback(processed_sheets, total_sheets)
+
                     except Exception as e:
                         print(f"Errore importazione Dati foglio {sheet_name}: {e}")
                         continue
@@ -224,19 +233,21 @@ class ContabilitaManager:
             return False, f"Errore: {e}"
 
     @classmethod
-    def import_giornaliere(cls, root_path: str) -> Tuple[bool, str]:
+    def import_giornaliere(cls, root_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str]:
         root = Path(root_path)
         if not root.exists():
             return False, "Directory Giornaliere non trovata."
 
         current_year = datetime.now().year
-        imported_years = []
+        imported_years = set()
 
         try:
             conn = sqlite3.connect(cls.DB_PATH)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
+            # 1. Scan and collect files (Flattened loop for progress)
+            tasks = []
             for folder in root.iterdir():
                 if not folder.is_dir(): continue
                 match = re.match(r'Giornaliere\s+(\d{4})', folder.name, re.IGNORECASE)
@@ -245,38 +256,52 @@ class ContabilitaManager:
                 year = int(match.group(1))
                 if year < current_year: continue
 
+                # Collect files
+                for file_path in folder.glob("*.xls*"):
+                    if not file_path.name.startswith("~$"):
+                        tasks.append((year, file_path))
+
+            total_tasks = len(tasks)
+            processed_count = 0
+
+            # Pre-clear years involved
+            years_to_clear = set(t[0] for t in tasks)
+            for year in years_to_clear:
                 cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
-                excel_files = list(folder.glob("*.xls*"))
 
-                for file_path in excel_files:
-                    if file_path.name.startswith("~$"): continue
+            # 2. Process Files
+            for year, file_path in tasks:
+                try:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        try:
+                            df = pd.read_excel(file_path, sheet_name='RIASSUNTO', engine='openpyxl')
+                        except ValueError:
+                            # Skip if sheet not found
+                            processed_count += 1
+                            if progress_callback: progress_callback(processed_count, total_tasks)
+                            continue
 
-                    try:
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore")
-                            try:
-                                df = pd.read_excel(file_path, sheet_name='RIASSUNTO', engine='openpyxl')
-                            except ValueError:
-                                continue
+                        df.columns = [str(c).strip() for c in df.columns]
+                        if not df.empty: df = df.iloc[:-1]
 
-                            df.columns = [str(c).strip() for c in df.columns]
-                            if not df.empty: df = df.iloc[:-1]
+                        rename_map = {}
+                        for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
+                            for c in df.columns:
+                                if c.upper() == excel_col.upper():
+                                    rename_map[c] = db_col
+                                    break
 
-                            rename_map = {}
-                            for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
-                                found = False
-                                for c in df.columns:
-                                    if c.upper() == excel_col.upper():
-                                        rename_map[c] = db_col
-                                        found = True
-                                        break
-                            if not rename_map: continue
+                        if not rename_map:
+                            processed_count += 1
+                            if progress_callback: progress_callback(processed_count, total_tasks)
+                            continue
 
-                            df.rename(columns=rename_map, inplace=True)
-                            check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != 'data']
-                            if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
-                            if df.empty: continue
+                        df.rename(columns=rename_map, inplace=True)
+                        check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != 'data']
+                        if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
 
+                        if not df.empty:
                             for db_col in cls.GIORNALIERE_MAPPING.values():
                                 if db_col not in df.columns: df[db_col] = ""
 
@@ -307,17 +332,20 @@ class ContabilitaManager:
                                 query = f"INSERT INTO giornaliere ({', '.join(cols)}) VALUES ({placeholders})"
                                 cursor.executemany(query, rows_to_insert)
 
-                    except Exception as e:
-                        print(f"Errore lettura file {file_path}: {e}")
-                        continue
+                        imported_years.add(year)
 
-                imported_years.append(year)
+                except Exception as e:
+                    print(f"Errore lettura file {file_path}: {e}")
+
+                processed_count += 1
+                if progress_callback: progress_callback(processed_count, total_tasks)
 
             conn.commit()
             conn.close()
-            if not imported_years:
+
+            if not imported_years and total_tasks == 0:
                 return True, "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ")."
-            return True, f"Importate Giornaliere: {sorted(imported_years)}"
+            return True, f"Importate Giornaliere: {sorted(list(imported_years))}"
 
         except Exception as e:
             return False, f"Errore importazione Giornaliere: {e}"
