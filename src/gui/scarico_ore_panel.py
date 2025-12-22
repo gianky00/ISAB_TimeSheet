@@ -110,6 +110,9 @@ class ScaricoOrePanel(QWidget):
 
         # Models
         self.source_model = ScaricoOreTableModel([])
+        self.source_model.cache_loaded.connect(self._on_cache_loaded)
+        self.source_model.loading_progress.connect(self._on_loading_progress)
+
         self.proxy_model = ScaricoOreFilterProxy(self)
         self.proxy_model.setSourceModel(self.source_model)
         self.table_view.setModel(self.proxy_model)
@@ -278,37 +281,64 @@ class ScaricoOrePanel(QWidget):
         count = self.proxy_model.rowCount()
         self.status_label.setText(f"Righe visibili: {count}")
 
+    def _set_ui_loading(self, loading: bool):
+        """Disable/Enable UI during heavy loads."""
+        self.search_input.setEnabled(not loading)
+        self.update_btn.setEnabled(not loading)
+        if loading:
+            self.table_view.setDisabled(True)
+            self.table_view.setStyleSheet("QTableView { background-color: #f8f9fa; }")
+        else:
+            self.table_view.setDisabled(False)
+            self.table_view.setStyleSheet("""
+            QTableView {
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                background-color: white;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+            }
+            """)
+
+    def _on_loading_progress(self, msg):
+        self.status_label.setText(f"⏳ {msg}")
+
+    def _on_cache_loaded(self):
+        """Called when background loading finishes."""
+        count = self.source_model.rowCount()
+        self.status_label.setText(f"✅ Pronti ({count} record)")
+        self._set_ui_loading(False)
+        self._resize_columns()
+        self._update_totals()
+
     def _load_data(self):
         """Carica TUTTI i dati in memoria (molto veloce in RAM)."""
         if not ContabilitaManager.DB_PATH.exists():
             self.status_label.setText("Database non trovato.")
             return
 
-        # 1. Try Load from Cache first
-        if self.source_model.load_cache():
-            count = self.source_model.rowCount()
-            self.status_label.setText(f"Caricati {count} record (da Cache).")
-            self._update_totals()
+        self._set_ui_loading(True)
 
-            # Ensure columns are sized correctly (even from cache)
-            self._resize_columns()
-            return
+        # ⚡ BOLT OPTIMIZATION:
+        # Check if cache exists. If not, we must load from DB.
+        # The Model handles both scenarios via load_data_async.
 
-        # 2. Fallback to DB Load
-        try:
-            # Fetch ALL rows (tuples)
-            rows = ContabilitaManager.get_scarico_ore_data()
-            self.source_model.update_data(rows) # This also saves cache
-
-            self._resize_columns()
-
-            count = len(rows)
-            self.status_label.setText(f"Caricati {count} record.")
-            self._update_totals()
-
-        except Exception as e:
-            self.status_label.setText(f"Errore caricamento: {e}")
-            print(f"DB Error: {e}")
+        # If cache file exists, tell model to load it async
+        if ScaricoOreTableModel.CACHE_PATH.exists():
+            self.source_model.load_data_async(raw_data=None)
+        else:
+            # If no cache, we must load from DB first (main thread DB access is fast enough usually,
+            # but converting to objects is slow? DB fetch for 130k rows is 1-2s.
+            # Let's fetch data here and pass to worker to build cache.
+            # Ideally fetch should also be async but let's stick to fixing the "processing" lag first.
+            try:
+                # Fetch ALL rows (tuples) - SQLite is fast
+                rows = ContabilitaManager.get_scarico_ore_data()
+                # Pass rows to model to build cache in background
+                self.source_model.load_data_async(raw_data=rows)
+            except Exception as e:
+                self.status_label.setText(f"Errore caricamento: {e}")
+                self._set_ui_loading(False)
 
     def _resize_columns(self):
         # Reset view properties

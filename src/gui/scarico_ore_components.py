@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, pyqtSignal, QModelIndex, QSortFilterProxyModel
+from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, pyqtSignal, QModelIndex, QSortFilterProxyModel, QThread
 from PyQt6.QtGui import QColor, QBrush, QAction, QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import (
     QHeaderView, QMenu, QWidgetAction, QCheckBox,
@@ -9,6 +9,115 @@ import pickle
 from pathlib import Path
 from datetime import datetime
 from src.utils.parsing import parse_currency
+
+class CacheWorker(QThread):
+    """
+    ⚡ BOLT OPTIMIZATION: Background worker for heavy cache operations.
+    Handles file I/O (pickle) and data processing (string index construction)
+    to prevent UI freezing.
+    """
+    finished = pyqtSignal(object, object, object) # data, search_index, float_totals
+    progress = pyqtSignal(str)
+
+    def __init__(self, cache_path, data_source=None):
+        super().__init__()
+        self.cache_path = cache_path
+        self.data_source = data_source # If provided, we build cache from this data. If None, we load from file.
+
+    def run(self):
+        if self.data_source:
+            # Build cache from raw data (e.g. from DB)
+            self.progress.emit("Elaborazione dati...")
+            search_index, float_totals = self._build_caches(self.data_source)
+            # Save to disk
+            self.progress.emit("Salvataggio cache...")
+            self._save_cache(self.data_source, search_index, float_totals)
+            self.finished.emit(self.data_source, search_index, float_totals)
+        else:
+            # Load from file
+            if not self.cache_path.exists():
+                self.finished.emit([], [], [])
+                return
+
+            try:
+                self.progress.emit("Caricamento cache...")
+                with open(self.cache_path, 'rb') as f:
+                    data, search, totals = pickle.load(f)
+                self.finished.emit(data, search, totals)
+            except Exception as e:
+                print(f"Error loading cache: {e}")
+                self.finished.emit([], [], [])
+
+    def _build_caches(self, data):
+        """
+        Pre-computa le stringhe di ricerca e i totali numerici.
+        Optimized for speed.
+        """
+        search_index = []
+        float_totals = []
+
+        append_search = search_index.append
+        append_total = float_totals.append
+
+        # Pre-compile useful methods
+        str_converter = str
+
+        for row in data:
+            # --- 1. Search Index Construction ---
+            # Date formatting (Col 0) - Optimized
+            val_0 = row[0]
+            str_0 = ""
+            if val_0:
+                s_val = str_converter(val_0)
+                # Fast path for 'YYYY-MM-DD' -> 'DD/MM/YYYY'
+                if '-' in s_val:
+                    try:
+                        # Assuming 'YYYY-MM-DD ...'
+                        # Fixed slice is faster than split
+                        # YYYY-MM-DD is 10 chars
+                        if s_val[4] == '-' and s_val[7] == '-':
+                             str_0 = f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
+                        else:
+                             # Fallback to robust parsing
+                             parts = s_val.split(' ')[0].split('-')
+                             if len(parts) == 3:
+                                 str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}"
+                             else:
+                                 str_0 = s_val
+                    except:
+                        str_0 = s_val
+                else:
+                    str_0 = s_val
+
+            # Other columns (1 to 10) - Optimized string join
+            # Skip col 11 (styles)
+            parts = [str_0]
+            # Unroll loop slightly or use list comp
+            parts.extend([str_converter(val) for val in row[1:11] if val is not None])
+
+            # Join and lower once
+            append_search(" ".join(parts).lower())
+
+            # --- 2. Float Totals Construction ---
+            val_7 = row[7]
+            try:
+                if isinstance(val_7, (int, float)):
+                    append_total(float(val_7))
+                else:
+                    # parse_currency is relatively slow, but unavoidable for string currencies
+                    append_total(parse_currency(val_7))
+            except:
+                append_total(0.0)
+
+        return search_index, float_totals
+
+    def _save_cache(self, data, search, totals):
+        try:
+            self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.cache_path, 'wb') as f:
+                pickle.dump((data, search, totals), f)
+        except Exception as e:
+            print(f"Error saving cache: {e}")
 
 class ScaricoOreTableModel(QAbstractTableModel):
     """
@@ -25,111 +134,55 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     CACHE_PATH = Path("data/scarico_ore_cache.pkl")
 
+    # Signals to notify UI
+    cache_loaded = pyqtSignal()
+    loading_progress = pyqtSignal(str)
+
     def __init__(self, data=None):
         super().__init__()
         self._data = []
         self._search_index = []
         self._float_totals = []
+        self._worker = None
+        self.is_loading = False
+
+        # If data is provided initially, we might process it synchronously
+        # but typically this is called with []
         if data:
             self.update_data(data)
 
-    def update_data(self, new_data):
+    def load_data_async(self, raw_data=None):
+        """
+        Loads data in background.
+        If raw_data is provided, builds cache from it.
+        If None, loads from disk cache.
+        """
+        if self.is_loading:
+            return
+
+        self.is_loading = True
+        self.loading_progress.emit("Avvio..." if raw_data else "Caricamento Cache...")
+
+        self._worker = CacheWorker(self.CACHE_PATH, raw_data)
+        self._worker.progress.connect(self.loading_progress.emit)
+        self._worker.finished.connect(self._on_worker_finished)
+        self._worker.start()
+
+    def _on_worker_finished(self, data, search, totals):
         self.beginResetModel()
-        self._data = new_data
-        self._build_caches()
+        self._data = data
+        self._search_index = search
+        self._float_totals = totals
         self.endResetModel()
-        self.save_cache()
 
-    def _build_caches(self):
-        """
-        Pre-computa le stringhe di ricerca e i totali numerici
-        per evitare conversioni durante il filtering/summing.
-        """
-        self._search_index = []
-        self._float_totals = []
+        self.is_loading = False
+        self._worker = None
+        self.cache_loaded.emit()
 
-        # Pre-allocate lists for speed if possible, but append is fine for 100k
-        # Optimization: Local variable lookup
-        append_search = self._search_index.append
-        append_total = self._float_totals.append
-
-        for row in self._data:
-            # --- 1. Search Index Construction ---
-            # Extract values. Row has 11 data cols + 1 styles col
-            # We want to match what is displayed.
-
-            # Date formatting (Col 0)
-            val_0 = row[0]
-            str_0 = ""
-            if val_0:
-                s_val = str(val_0)
-                if '-' in s_val:
-                    try:
-                        parts = s_val.split(' ')[0].split('-')
-                        if len(parts) == 3:
-                            str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}" # DD/MM/YYYY
-                        else:
-                            str_0 = s_val
-                    except:
-                        str_0 = s_val
-                else:
-                    str_0 = s_val
-
-            # Other columns (1 to 10)
-            # Create a single lowercase string space-separated
-            # Optimization: List comprehension is faster than loop
-            # Note: We skip the styles column (index 11)
-
-            # Handle None values efficiently
-            search_parts = [str_0]
-            for i in range(1, 11):
-                val = row[i]
-                if val is not None:
-                    search_parts.append(str(val))
-
-            full_search_str = " ".join(search_parts).lower()
-            append_search(full_search_str)
-
-            # --- 2. Float Totals Construction ---
-            # Col 7 is 'TOTALE ORE'
-            val_7 = row[7]
-            try:
-                # Use cached float conversion or fast parse
-                # If it's already float (from openpyxl), use it
-                if isinstance(val_7, (int, float)):
-                    append_total(float(val_7))
-                else:
-                    append_total(parse_currency(val_7))
-            except:
-                append_total(0.0)
-
-    def save_cache(self):
-        """Salva lo stato corrente su disco."""
-        try:
-            self.CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.CACHE_PATH, 'wb') as f:
-                pickle.dump((self._data, self._search_index, self._float_totals), f)
-        except Exception as e:
-            print(f"Errore salvataggio cache: {e}")
-
-    def load_cache(self) -> bool:
-        """Carica lo stato da disco se esiste."""
-        if not self.CACHE_PATH.exists():
-            return False
-
-        try:
-            with open(self.CACHE_PATH, 'rb') as f:
-                data, search, totals = pickle.load(f)
-
-            self.beginResetModel()
-            self._data = data
-            self._search_index = search
-            self._float_totals = totals
-            self.endResetModel()
-            return True
-        except Exception as e:
-            print(f"Errore caricamento cache: {e}")
-            return False
+    def update_data(self, new_data):
+        """Synchronous update (legacy compatibility, avoid using for large datasets if possible)."""
+        # For backward compatibility or small updates, but better to use async
+        self.load_data_async(new_data)
 
     def get_search_text(self, row_index):
         """Ritorna la stringa di ricerca pre-calcolata per la riga."""
@@ -157,7 +210,6 @@ class ScaricoOreTableModel(QAbstractTableModel):
         col = index.column()
 
         # _data row structure: 0..10 are data cols, 11 is 'styles' (JSON)
-        # Boundary check logic handled by PyQt usually, but good to be safe
         if row >= len(self._data): return None
         row_data = self._data[row]
 
@@ -167,13 +219,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
             # Format Data DD/MM/YYYY for display if it's column 0
             if col == 0 and val:
-                # Assuming val is YYYY-MM-DD or similar
-                if '-' in str(val):
+                s_val = str(val)
+                # Optimized display formatting
+                if '-' in s_val:
                     try:
-                        # Simple string slice for speed YYYY-MM-DD
-                        parts = str(val).split(' ')[0].split('-')
-                        if len(parts) == 3:
-                            return f"{parts[2]}/{parts[1]}/{parts[0]}"
+                         # Assume YYYY-MM-DD
+                         if len(s_val) >= 10:
+                            return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
                     except: pass
 
             return str(val)
@@ -202,7 +254,6 @@ class ScaricoOreTableModel(QAbstractTableModel):
     def _get_style(self, row, col, style_type):
         """Helper to extract style safely."""
         try:
-            # Optimization: check length before access
             if len(self._data[row]) <= 11: return None
 
             style_json = self._data[row][11]
@@ -233,10 +284,13 @@ class ScaricoOreFilterProxy(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.filter_text = ""
+        self.filter_terms = [] # ⚡ Optimized: pre-split terms
         self.column_filters = {} # {col_index: {set of allowed values}}
 
     def set_filter_text(self, text):
         self.filter_text = text.lower().strip()
+        # ⚡ Optimization: Split once here, not in loop
+        self.filter_terms = self.filter_text.split() if self.filter_text else []
         self.invalidateFilter()
 
     def set_column_filter(self, col, values):
@@ -255,12 +309,12 @@ class ScaricoOreFilterProxy(QSortFilterProxyModel):
         model = self.sourceModel()
 
         # 1. Global Text Filter (OPTIMIZED)
-        if self.filter_text:
+        if self.filter_terms: # Check list instead of string
             # Use pre-computed search string
             row_text = model.get_search_text(source_row)
 
-            terms = self.filter_text.split()
-            for term in terms:
+            # Loop over pre-split terms
+            for term in self.filter_terms:
                 if term not in row_text:
                     return False
 
