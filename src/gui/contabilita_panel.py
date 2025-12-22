@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QMessageBox, QMenu, QTableWidget,
-    QHeaderView, QTableWidgetItem, QLabel, QLineEdit
+    QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QAction, QFont
@@ -61,13 +61,7 @@ class ContabilitaPanel(QWidget):
         # Header / Status / Search
         top_layout = QHBoxLayout()
 
-        self.status_label = QLabel("Pronto")
-        self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
-        top_layout.addWidget(self.status_label)
-
-        top_layout.addStretch()
-
-        # Search Bar
+        # 1. Search Bar (Left)
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍 Cerca in questa tabella...")
         self.search_input.setClearButtonEnabled(True)
@@ -85,6 +79,36 @@ class ContabilitaPanel(QWidget):
         """)
         self.search_input.textChanged.connect(self._filter_current_tab)
         top_layout.addWidget(self.search_input)
+
+        top_layout.addStretch()
+
+        # 2. Status Label (Center)
+        self.status_label = QLabel("Pronto")
+        self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        top_layout.addWidget(self.status_label)
+
+        top_layout.addStretch()
+
+        # 3. Refresh Button (Right)
+        self.refresh_btn = QPushButton("🔄 Aggiorna")
+        self.refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.refresh_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+        """)
+        self.refresh_btn.clicked.connect(self.start_import_process)
+        top_layout.addWidget(self.refresh_btn)
 
         layout.addLayout(top_layout)
 
@@ -238,6 +262,7 @@ class ContabilitaPanel(QWidget):
             return
 
         self.status_label.setText("🔄 Aggiornamento contabilità e giornaliere in corso...")
+        self.refresh_btn.setDisabled(True) # Disable button during update
 
         self.worker = ContabilitaWorker(path, giornaliere_path)
         self.worker.finished_signal.connect(self._on_import_finished)
@@ -251,6 +276,7 @@ class ContabilitaPanel(QWidget):
             self.status_label.setText(f"❌ Errore aggiornamento: {msg}")
 
         self.worker = None
+        self.refresh_btn.setDisabled(False) # Re-enable button
 
 
 class ContabilitaYearTab(QWidget):
@@ -770,9 +796,12 @@ class GiornaliereYearTab(QWidget):
         """Tenta di aprire la giornaliera cercando nella root configurata."""
         config = config_manager.load_config()
         root_path = config.get("giornaliere_path", "")
-        if not root_path or not os.path.exists(root_path):
+        if not root_path:
             QMessageBox.warning(self, "Attenzione", "Cartella Giornaliere non configurata o non trovata.")
             return
+
+        # Normalize the root path to handle mixed slashes
+        root_path = os.path.normpath(root_path)
 
         # Ricerca ricorsiva del file
         # Ottimizzazione: Cerca in "Giornaliere YYYY"
@@ -793,9 +822,11 @@ class GiornaliereYearTab(QWidget):
                     break
 
         if found_path:
+            # Ensure final path is strictly Windows-compliant for os.startfile
+            found_path = os.path.normpath(found_path)
             try:
                 os.startfile(found_path)
             except Exception as e:
-                QMessageBox.warning(self, "Errore", f"Impossibile aprire il file: {e}")
+                QMessageBox.warning(self, "Errore", f"Impossibile aprire il file: {e}\nPath: {found_path}")
         else:
             QMessageBox.warning(self, "File non trovato", f"Non riesco a trovare '{filename}' nella cartella giornaliere.")

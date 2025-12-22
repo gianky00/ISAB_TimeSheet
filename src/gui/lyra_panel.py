@@ -314,11 +314,17 @@ class LyraPanel(QWidget):
 
     def _export_excel(self):
         """Exports the last table found in the chat history to Excel."""
-        text = self.chat_area.toPlainText()
+        # FIX: Use self.last_table_data which stores the raw Markdown
+        if not self.last_table_data:
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
+            return
+
+        text = self.last_table_data
         lines = text.split('\n')
         table_lines = []
 
-        # Capture the LAST table block
+        # Capture the table block from the stored markdown
+        # Assuming the stored text IS mostly the table or contains it
         current_block = []
         for line in lines:
             if line.strip().startswith('|'):
@@ -327,22 +333,27 @@ class LyraPanel(QWidget):
                 if current_block:
                     if len(current_block) >= 2:
                         table_lines = current_block
+                        # We found a table, might be multiple, take the last one or all?
+                        # Taking the last one found in the text chunk
                     current_block = []
 
-        if current_block: # End of file case
+        if current_block:
              if len(current_block) >= 2:
                 table_lines = current_block
 
         if not table_lines:
-            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio.")
             return
 
         try:
             cleaned_lines = [l for l in table_lines if '---' not in l]
 
             data = StringIO("\n".join(cleaned_lines))
+            # Use pandas read_csv with sep='|'
+            # Markdown tables often have leading/trailing pipes
             df = pd.read_csv(data, sep='|', header=0, engine='python')
 
+            # Clean empty columns from pipes
             df = df.dropna(axis=1, how='all')
             df.columns = df.columns.str.strip()
             df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)

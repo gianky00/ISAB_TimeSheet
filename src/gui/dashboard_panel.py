@@ -174,14 +174,14 @@ class DashboardPanel(QWidget):
             years = ContabilitaManager.get_available_years()
             if years:
                 latest_year = max(years)
+                # FIX: Verify column indexes before access.
+                # get_data_by_year returns:
+                # 0: data_prev, 1: mese, 2: n_prev, 3: totale_prev, 4: attivita, 5: tcl, 6: odc,
+                # 7: stato_attivita, 8: tipologia, 9: ore_sp, 10: resa, ..., 13: nome_file (added recently)
                 data = ContabilitaManager.get_data_by_year(latest_year)
 
                 tot_prev = 0.0
                 tot_ore = 0.0
-
-                # Data structure based on ContabilitaManager.get_data_by_year columns:
-                # 0: data_prev, 1: mese, 2: n_prev, 3: totale_prev, 4: attivita, 5: tcl, 6: odc,
-                # 7: stato_attivita, 8: tipologia, 9: ore_sp, 10: resa, ...
 
                 for row in data:
                     try:
