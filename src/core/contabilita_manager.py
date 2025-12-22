@@ -9,6 +9,7 @@ import re
 import logging
 import warnings
 import io
+import json
 from typing import List, Dict, Tuple, Optional
 from datetime import datetime
 from src.utils.parsing import parse_currency
@@ -18,6 +19,13 @@ try:
     import msoffcrypto
 except ImportError:
     msoffcrypto = None
+
+# Tentativo di importare openpyxl
+try:
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+except ImportError:
+    openpyxl = None
 
 class ContabilitaManager:
     """Manager per la gestione del database e dell'importazione Excel."""
@@ -57,21 +65,10 @@ class ContabilitaManager:
     }
 
     # Mapping Scarico Ore Cantiere
-    # Header riga 5, Col B-L
-    # Colonne target: Data, PERS1, PERS2, ODC, POS, DALLE, ALLE, TOTALE ORE, Descrizione Attività, FINITO, COMMESSA
-    SCARICO_ORE_MAPPING = {
-        'DATA': 'data',
-        'PERS1': 'pers1',
-        'PERS2': 'pers2',
-        'ODC': 'odc',
-        'POS': 'pos',
-        'DALLE': 'dalle',
-        'ALLE': 'alle',
-        'TOTALE ORE': 'totale_ore',
-        'DESCRIZIONE ATTIVITÀ': 'descrizione',
-        'FINITO': 'finito',
-        'COMMESSA': 'commessa'
-    }
+    SCARICO_ORE_COLS = [
+        'data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle',
+        'totale_ore', 'descrizione', 'finito', 'commessa', 'styles'
+    ]
 
     @classmethod
     def init_db(cls):
@@ -129,7 +126,7 @@ class ContabilitaManager:
         except sqlite3.OperationalError:
             pass
 
-        # Tabella Scarico Ore Cantiere (Nuova)
+        # Tabella Scarico Ore Cantiere (Nuova con styles)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS scarico_ore (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -144,9 +141,16 @@ class ContabilitaManager:
                 descrizione TEXT,
                 finito TEXT,
                 commessa TEXT,
+                styles TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Migrazione schema scarico_ore: Aggiungi colonna styles se non esiste
+        try:
+            cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
+        except sqlite3.OperationalError:
+            pass
 
         conn.commit()
         conn.close()
@@ -154,11 +158,6 @@ class ContabilitaManager:
     @classmethod
     def import_data_from_excel(cls, file_path: str) -> Tuple[bool, str]:
         """Importa i dati dal file Excel specificato (Tabella Dati)."""
-        # ... (Existing implementation unchanged) ...
-        # Copied for brevity, assuming standard implementation if not modified
-        # If I need to modify it, I will paste full content.
-        # Since I am using overwrite_file_with_block, I MUST Provide FULL Content of the class
-        # Re-using the existing logic for this method.
         path = Path(file_path)
         if not path.exists():
             return False, f"File non trovato: {file_path}"
@@ -218,7 +217,6 @@ class ContabilitaManager:
 
     @classmethod
     def import_giornaliere(cls, root_path: str) -> Tuple[bool, str]:
-        # ... (Existing logic for Giornaliere) ...
         root = Path(root_path)
         if not root.exists():
             return False, "Directory Giornaliere non trovata."
@@ -318,141 +316,154 @@ class ContabilitaManager:
 
     @classmethod
     def import_scarico_ore(cls, file_path: str) -> Tuple[bool, str]:
-        """Importa il file Scarico Ore Cantiere (DataEase) protetto da password."""
+        """Importa il file Scarico Ore Cantiere con supporto a stili e gestione zeri."""
         path = Path(file_path)
         if not path.exists():
             return False, f"File Scarico Ore non trovato: {file_path}"
 
-        try:
-            # 1. Decrypt file in memory
-            decrypted_workbook = io.BytesIO()
+        if not openpyxl:
+            return False, "Modulo 'openpyxl' mancante."
 
-            try:
-                if msoffcrypto:
+        try:
+            # 1. Decrypt/Load Workbook
+            wb_file = io.BytesIO()
+            is_encrypted = False
+
+            # Try to check if encrypted using msoffcrypto
+            if msoffcrypto:
+                try:
                     with open(path, "rb") as f:
                         office_file = msoffcrypto.OfficeFile(f)
                         office_file.load_key(password="coemi")
-                        office_file.decrypt(decrypted_workbook)
-                else:
-                    return False, "Modulo 'msoffcrypto-tool' mancante. Impossibile aprire file protetto."
-            except Exception as e:
-                # Fallback: maybe it's not encrypted? Try reading directly
-                print(f"Errore decrittazione (o file non criptato?): {e}")
-                # Reset stream is pointless if we failed, but let's try direct read just in case
-                # Actually, if it fails here, we likely can't proceed unless user provided wrong path or non-excel.
-                return False, f"Errore decrittazione file: {e}"
+                        office_file.decrypt(wb_file)
+                        is_encrypted = True
+                except Exception:
+                    # Likely not encrypted or msoffcrypto failed on non-OLE file
+                    pass
 
-            # 2. Read with Pandas
-            # Header riga 5 (index 4)
-            # Colonne B:L -> usecols="B:L"
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                try:
-                    df = pd.read_excel(
-                        decrypted_workbook,
-                        sheet_name="SCARICO ORE",
-                        header=4, # Row 5 is header (0-based index 4)
-                        usecols="B:L",
-                        engine='openpyxl'
-                    )
-                except ValueError:
-                    return False, "Foglio 'SCARICO ORE' non trovato o struttura errata."
+            if not is_encrypted:
+                with open(path, "rb") as f:
+                    wb_file.write(f.read())
 
-            # 3. Clean and Filter
-            # Colonne attese: Data, PERS1, PERS2, ODC, POS, DALLE, ALLE, TOTALE ORE, Descrizione Attività, FINITO, COMMESSA
-            # Normalizza nomi colonne
-            df.columns = [str(c).strip().upper() for c in df.columns]
+            wb_file.seek(0)
 
-            # Filter: Check Columns C to I (PERS2 to FINITO approx)
-            # C (2) to I (8) in Excel terms relative to A?
-            # Input said: "non importare nulla se da cella C a cella I sono vuote."
-            # Our DF starts at Col B.
-            # B=0 (DATA), C=1 (PERS1), D=2 (PERS2)...
-            # Excel Cols: A B C D E F G H I J K L
-            # DF Cols Idx:   0 1 2 3 4 5 6 7 8 9 10
-            # DF Cols Names: DATA, PERS1, PERS2, ODC, POS, DALLE, ALLE, TOTALE ORE, DESCRIZIONE, FINITO, COMMESSA
-            # Check range C:I (Excel) -> PERS1(C) to Descrizione(I)? Wait.
-            # Let's map explicitly:
-            # A=None
-            # B=DATA
-            # C=PERS1
-            # D=PERS2
-            # E=ODC
-            # F=POS
-            # G=DALLE
-            # H=ALLE
-            # I=TOTALE ORE
-            # J=DESCRIZIONE ATTIVITA
-            # K=FINITO
-            # L=COMMESSA
+            # Load with data_only=True first to get values.
+            # Performance Note: read_only=False is required for style extraction.
+            # This will consume more memory/time for 130k rows but is necessary for the requirement.
+            wb_data = openpyxl.load_workbook(wb_file, data_only=True, read_only=False)
+            if "SCARICO ORE" not in wb_data.sheetnames:
+                 return False, "Foglio 'SCARICO ORE' non trovato."
+            ws_data = wb_data["SCARICO ORE"]
 
-            # User said: "non importare nulla se da cella C a cella I sono vuote."
-            # C=PERS1, I=TOTALE ORE.
-            # So if subset [PERS1, PERS2, ODC, POS, DALLE, ALLE, TOTALE ORE] are ALL empty? Or ANY?
-            # Usually "sono vuote" implies all of them in that range.
-            # Let's verify mapping against user list "Data,PERS1,PERS2,ODC,POS,DALLE,ALLE,TOTALE ORE,Descrizione Attività,FINITO,COMMESSA"
-            # B=Data
-            # C=PERS1
-            # ...
-            # I=TOTALE ORE
+            # 2. Iterate and Extract
+            rows_to_insert = []
 
-            # Subset to check for emptiness:
-            cols_to_check = ['PERS1', 'PERS2', 'ODC', 'POS', 'DALLE', 'ALLE', 'TOTALE ORE']
-            # Find actual names in DF
-            df_cols_map = {}
-            for col in df.columns:
-                for key in cols_to_check:
-                    if key in col: # Loose match
-                        df_cols_map[key] = col
+            # Header is at row 5 (1-based), data starts at row 6
+            start_row = 6
 
-            check_list = list(df_cols_map.values())
+            # Column Mapping (0-based relative to row array or explicit indices)
+            # Excel Cols: B=Data, C=Pers1, D=Pers2, E=ODC, F=POS, G=Dalle, H=Alle, I=TotOre, J=Desc, K=Finito, L=Commessa
+            # openpyxl cols (1-based): B=2, C=3, ..., L=12
+            col_indices = {
+                'data': 2, 'pers1': 3, 'pers2': 4, 'odc': 5, 'pos': 6,
+                'dalle': 7, 'alle': 8, 'totale_ore': 9, 'descrizione': 10,
+                'finito': 11, 'commessa': 12
+            }
 
-            if check_list:
-                df.dropna(how='all', subset=check_list, inplace=True)
+            # Pre-calc column keys for JSON styles
+            col_keys = list(col_indices.keys())
 
-            if df.empty:
-                return True, "Nessun dato valido trovato nel file Scarico Ore."
+            for row_idx, row in enumerate(ws_data.iter_rows(min_row=start_row, min_col=2, max_col=12), start=start_row):
+                # row is a tuple of Cells
+                # Index in tuple: 0=B, 1=C, ... 10=L
 
-            # 4. Insert into DB
+                # Check empty row (logic: if Pers1...TotOre are empty)
+                # Tuple indices: 1(Pers1) to 7(TotOre)
+                # Check if all None/Empty
+                subset_vals = [c.value for i, c in enumerate(row) if 1 <= i <= 7]
+                if all(v is None or str(v).strip() == "" for v in subset_vals):
+                    continue
+
+                row_vals = {}
+                row_styles = {}
+
+                for i, key in enumerate(col_keys):
+                    cell = row[i]
+                    val = cell.value
+
+                    # --- Zero Logic ---
+                    # ODC (idx 3 in tuple, col 5), POS (idx 4 in tuple, col 6)
+                    # COMMESSA (idx 10 in tuple, col 12)
+
+                    if key in ['odc', 'pos']:
+                        if val == 0 or str(val).strip() == "0":
+                            val = ""
+                    elif key == 'commessa':
+                        if val == 0: # Numerical 0
+                            val = "0" # Force string "0"
+                        # If None/Empty, remains None
+
+                    # Convert to string safely
+                    val_str = str(val).strip() if val is not None else ""
+                    row_vals[key] = val_str
+
+                    # --- Style Logic ---
+                    # Extract FG/BG color
+                    fg_color = None
+                    bg_color = None
+
+                    # Font Color
+                    if cell.font and cell.font.color:
+                        # rgb can be ARGB hex string or Theme index
+                        if cell.font.color.type == 'rgb':
+                             # '00000000' or 'FFFFFFFF'
+                             # Often 'FF000000' (ARGB). We need RGB.
+                             c = str(cell.font.color.rgb)
+                             if len(c) > 6: c = "#" + c[2:] # Strip alpha
+                             else: c = "#" + c
+                             fg_color = c
+
+                    # Fill Color
+                    if cell.fill and cell.fill.patternType == 'solid':
+                         if cell.fill.start_color:
+                             if cell.fill.start_color.type == 'rgb':
+                                 c = str(cell.fill.start_color.rgb)
+                                 if len(c) > 6: c = "#" + c[2:]
+                                 else: c = "#" + c
+                                 bg_color = c
+
+                    if fg_color or bg_color:
+                        style_entry = {}
+                        if fg_color: style_entry['fg'] = fg_color
+                        if bg_color: style_entry['bg'] = bg_color
+                        # Key index matches column index (0-based in output tuple)
+                        row_styles[key] = style_entry
+
+                # Prepare DB Row
+                db_row = (
+                    row_vals['data'],
+                    row_vals['pers1'],
+                    row_vals['pers2'],
+                    row_vals['odc'],
+                    row_vals['pos'],
+                    row_vals['dalle'],
+                    row_vals['alle'],
+                    row_vals['totale_ore'],
+                    row_vals['descrizione'],
+                    row_vals['finito'],
+                    row_vals['commessa'],
+                    json.dumps(row_styles) if row_styles else ""
+                )
+                rows_to_insert.append(db_row)
+
+            # 3. Update DB
             conn = sqlite3.connect(cls.DB_PATH)
             cursor = conn.cursor()
 
-            # Clear old data? Or append? Usually "Database per il file" implies refresh content of that file.
-            # Since it's a single file configured, likely refresh full table.
-            cursor.execute("DELETE FROM scarico_ore") # Full wipe
-
-            rows_to_insert = []
-
-            # Map DF to DB columns
-            # DB: data, pers1, pers2, odc, pos, dalle, alle, totale_ore, descrizione, finito, commessa
-
-            for _, row in df.iterrows():
-                # Helper to safely get value
-                def get_val(excel_col_name_part):
-                    for c in df.columns:
-                        if excel_col_name_part in c:
-                            val = row[c]
-                            if pd.isna(val): return ""
-                            return str(val).strip()
-                    return ""
-
-                new_row = (
-                    get_val('DATA'),
-                    get_val('PERS1'),
-                    get_val('PERS2'),
-                    get_val('ODC'),
-                    get_val('POS'),
-                    get_val('DALLE'),
-                    get_val('ALLE'),
-                    get_val('TOTALE ORE'),
-                    get_val('DESCRIZIONE'),
-                    get_val('FINITO'),
-                    get_val('COMMESSA')
-                )
-                rows_to_insert.append(new_row)
+            cursor.execute("DELETE FROM scarico_ore") # Full refresh
 
             if rows_to_insert:
-                cols = ['data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle', 'totale_ore', 'descrizione', 'finito', 'commessa']
+                cols = cls.SCARICO_ORE_COLS
                 placeholders = ', '.join(['?'] * len(cols))
                 query = f"INSERT INTO scarico_ore ({', '.join(cols)}) VALUES ({placeholders})"
                 cursor.executemany(query, rows_to_insert)
@@ -519,12 +530,12 @@ class ContabilitaManager:
 
     @classmethod
     def get_scarico_ore_data(cls) -> List[Tuple]:
-        """Restituisce tutti i dati della tabella scarico_ore."""
+        """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
         if not cls.DB_PATH.exists(): return []
         try:
             conn = sqlite3.connect(cls.DB_PATH)
             cursor = conn.cursor()
-            cols = ['data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle', 'totale_ore', 'descrizione', 'finito', 'commessa']
+            cols = cls.SCARICO_ORE_COLS
             # Order by Data Desc
             query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"
             cursor.execute(query)

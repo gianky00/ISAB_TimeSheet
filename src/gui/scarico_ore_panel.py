@@ -1,18 +1,18 @@
 """
 Bot TS - Scarico Ore Panel
 Pannello dedicato per lo Scarico Ore Cantiere.
+Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidgetItem, QHeaderView, QMenu, QLineEdit, QMessageBox
+    QTableView, QLineEdit, QMessageBox, QHeaderView, QFrame
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QAction, QFont, QCursor
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtGui import QFont, QCursor, QKeySequence
 
-from src.gui.widgets import ExcelTableWidget, StatusIndicator
 from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
-from datetime import datetime
+from src.gui.scarico_ore_components import ScaricoOreTableModel, ScaricoOreFilterProxy, FilterHeaderView
 from src.utils.parsing import parse_currency
 
 class ScaricoOreWorker(QThread):
@@ -32,26 +32,12 @@ class ScaricoOreWorker(QThread):
 class ScaricoOrePanel(QWidget):
     """Pannello per la visualizzazione e gestione dello Scarico Ore Cantiere."""
 
-    COLUMNS = [
-        'DATA', 'PERS1', 'PERS2', 'ODC', 'POS', 'DALLE', 'ALLE',
-        'TOTALE ORE', 'DESCRIZIONE', 'FINITO', 'COMMESSA'
-    ]
-
-    # Mappatura indici colonne (0-based)
-    COL_DATA = 0
-    COL_ODC = 3
-    COL_POS = 4
-    COL_DALLE = 5
-    COL_ALLE = 6
-    COL_TOTALE_ORE = 7
-    COL_DESCRIZIONE = 8
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.worker = None
         self._setup_ui()
-        # Initial load limited for speed
-        self._load_data()
+        # Delay load to allow UI to show up first (optimization)
+        QTimer.singleShot(100, self._load_data)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -62,9 +48,9 @@ class ScaricoOrePanel(QWidget):
 
         # Search Bar
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Cerca (es. ODC, Commessa, Data)...")
+        self.search_input.setPlaceholderText("🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)")
         self.search_input.setClearButtonEnabled(True)
-        self.search_input.setFixedWidth(300)
+        self.search_input.setFixedWidth(400)
         self.search_input.setStyleSheet("""
             QLineEdit {
                 border: 1px solid #ced4da;
@@ -76,28 +62,22 @@ class ScaricoOrePanel(QWidget):
                 border-color: #0d6efd;
             }
         """)
-        # Usa returnPressed per evitare freeze durante digitazione veloce su 130k righe
-        # O un timer. Per ora usiamo returnPressed per SQL search.
+        # Ricerca su Invio
         self.search_input.returnPressed.connect(self._perform_search)
-        # Aggiungi bottone cerca per chiarezza
-        search_btn = QPushButton("Cerca")
-        search_btn.clicked.connect(self._perform_search)
-        search_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         toolbar.addWidget(self.search_input)
-        toolbar.addWidget(search_btn)
 
         toolbar.addStretch()
 
         # Status Label
-        self.status_label = QLabel("Pronto")
+        self.status_label = QLabel("Inizializzazione...")
         self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
         toolbar.addWidget(self.status_label)
 
         toolbar.addStretch()
 
         # Update Button
-        self.update_btn = QPushButton("🔄 Aggiorna")
+        self.update_btn = QPushButton("🔄 Aggiorna Dati")
         self.update_btn.setToolTip("Aggiorna solo lo Scarico Ore Cantiere dal file configurato")
         self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_btn.setStyleSheet("""
@@ -119,15 +99,34 @@ class ScaricoOrePanel(QWidget):
 
         layout.addLayout(toolbar)
 
-        # --- Table ---
-        self.table = ExcelTableWidget()
-        self.table.setColumnCount(len(self.COLUMNS))
-        self.table.setHorizontalHeaderLabels(self.COLUMNS)
-        self.table.setWordWrap(True) # Multiline support
+        # --- Virtual Table View ---
+        self.table_view = QTableView()
+        self.table_view.setAlternatingRowColors(False) # Colors are from Excel
+        self.table_view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+        self.table_view.setSelectionMode(QTableView.SelectionMode.ExtendedSelection)
+        self.table_view.setShowGrid(True)
+        self.table_view.setWordWrap(False) # Optimization: Disable word wrap for 130k rows performance
 
-        # Stile tabella
-        self.table.setStyleSheet("""
-            QTableWidget {
+        # Models
+        self.source_model = ScaricoOreTableModel([])
+        self.proxy_model = ScaricoOreFilterProxy(self)
+        self.proxy_model.setSourceModel(self.source_model)
+        self.table_view.setModel(self.proxy_model)
+
+        # Connect signals for totals update
+        self.proxy_model.layoutChanged.connect(self._update_totals)
+        self.proxy_model.rowsInserted.connect(lambda p, f, l: self._update_totals())
+        self.proxy_model.rowsRemoved.connect(lambda p, f, l: self._update_totals())
+        self.proxy_model.modelReset.connect(self._update_totals)
+
+        # Custom Header
+        header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
+        self.table_view.setHorizontalHeader(header)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+
+        # Styles
+        self.table_view.setStyleSheet("""
+            QTableView {
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 background-color: white;
@@ -143,42 +142,102 @@ class ScaricoOrePanel(QWidget):
             }
         """)
 
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        header.setSectionResizeMode(self.COL_DESCRIZIONE, QHeaderView.ResizeMode.Stretch) # Descrizione elastica
+        layout.addWidget(self.table_view)
 
-        # Default widths
-        self.table.setColumnWidth(self.COL_DATA, 100)
-        self.table.setColumnWidth(1, 150) # PERS1
-        self.table.setColumnWidth(2, 150) # PERS2
-        self.table.setColumnWidth(self.COL_ODC, 100)
-        self.table.setColumnWidth(self.COL_POS, 60)
-        self.table.setColumnWidth(self.COL_DALLE, 60)
-        self.table.setColumnWidth(self.COL_ALLE, 60)
-        self.table.setColumnWidth(self.COL_TOTALE_ORE, 100)
+        # --- Footer Bar for Totals (Option B) ---
+        self.footer_frame = QFrame()
+        self.footer_frame.setStyleSheet("""
+            QFrame {
+                background-color: #e9ecef;
+                border-top: 2px solid #dee2e6;
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+            }
+            QLabel {
+                font-weight: bold;
+                font-size: 14px;
+                color: #212529;
+            }
+        """)
+        footer_layout = QHBoxLayout(self.footer_frame)
+        footer_layout.setContentsMargins(15, 10, 15, 10)
 
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self._show_context_menu)
+        self.lbl_count = QLabel("Righe: 0")
+        self.lbl_total_hours = QLabel("Totale Ore: 0.00")
+        self.lbl_total_hours.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        layout.addWidget(self.table)
+        footer_layout.addWidget(self.lbl_count)
+        footer_layout.addStretch()
+        footer_layout.addWidget(self.lbl_total_hours)
 
-        # Info label for limited view
-        self.info_label = QLabel("Visualizzazione limitata alle prime 500 righe. Usa la ricerca per trovare dati specifici.")
+        layout.addWidget(self.footer_frame)
+
+        # Info label
+        self.info_label = QLabel("Visualizzazione completa. Clicca sulle intestazioni per filtrare. Copia con Ctrl+C.")
         self.info_label.setStyleSheet("color: #adb5bd; font-size: 11px; margin-top: 5px;")
         layout.addWidget(self.info_label)
+
+    def _update_totals(self):
+        """Calculates totals based on visible rows."""
+        # This can be heavy if run on main thread for 130k rows.
+        # But FilterProxy handles filtering fast.
+        # We need to iterate over indices.
+
+        # Optimization: Only count rows, and sum 'Totale Ore' (Col 7)
+        row_count = self.proxy_model.rowCount()
+        self.lbl_count.setText(f"Righe visibili: {row_count}")
+
+        # Summing 130k floats in python loop might freeze GUI for 0.5s.
+        # We can do it in a timer or worker if needed.
+        # Let's try direct first.
+        # We only need to sum if row_count < some limit? No, user wants totals.
+        # Optimization: If no filter, use pre-calculated total from source?
+
+        if row_count > 50000:
+             self.lbl_total_hours.setText("Totale Ore: Calcolo... (filtrando)")
+             QTimer.singleShot(100, self._calculate_sum_heavy)
+        else:
+             self._calculate_sum_heavy()
+
+    def _calculate_sum_heavy(self):
+        total = 0.0
+        # Iterate source rows? No, filtered rows.
+        # proxy.data(index) is slow.
+        # Fast path: Get source rows that are accepted.
+        # QSortFilterProxyModel doesn't expose list of accepted rows easily.
+        # Standard iteration:
+        rows = self.proxy_model.rowCount()
+        # Optimization: if rows == source.rows (no filter), sum source data directly (fast)
+        if rows == self.source_model.rowCount():
+             # Sum column 7 of source data
+             # Source data is list of tuples. Col 7 is TOTALE ORE.
+             # self.source_model._data is accessible
+             try:
+                 total = sum(parse_currency(str(r[7])) for r in self.source_model._data)
+             except: total = 0
+        else:
+             # Iterate proxy
+             for r in range(rows):
+                 idx = self.proxy_model.index(r, 7) # Col 7 is Totale Ore
+                 val_str = self.proxy_model.data(idx, Qt.ItemDataRole.DisplayRole)
+                 try:
+                     total += parse_currency(val_str)
+                 except: pass
+
+        self.lbl_total_hours.setText(f"Totale Ore: {total:,.2f}")
 
     def _start_update(self):
         """Avvia l'aggiornamento specifico per Scarico Ore."""
         config = config_manager.load_config()
-        path = config.get("dataease_path", "") # Usa la chiave per Scarico Ore
+        path = config.get("dataease_path", "")
 
         if not path:
             QMessageBox.warning(self, "Configurazione Mancante", "Configura il percorso 'File Scarico Ore' nelle Impostazioni.")
             return
 
-        self.status_label.setText("⏳ Aggiornamento in corso...")
+        self.status_label.setText("⏳ Aggiornamento in corso (può richiedere tempo per file grandi)...")
         self.update_btn.setEnabled(False)
-        self.table.setEnabled(False)
+        self.table_view.setEnabled(False)
 
         self.worker = ScaricoOreWorker(path)
         self.worker.finished_signal.connect(self._on_update_finished)
@@ -186,7 +245,7 @@ class ScaricoOrePanel(QWidget):
 
     def _on_update_finished(self, success: bool, msg: str):
         self.update_btn.setEnabled(True)
-        self.table.setEnabled(True)
+        self.table_view.setEnabled(True)
 
         if success:
             self.status_label.setText("✅ Aggiornato")
@@ -197,156 +256,91 @@ class ScaricoOrePanel(QWidget):
             QMessageBox.critical(self, "Errore Aggiornamento", msg)
 
     def _perform_search(self):
-        """Esegue la ricerca tramite query SQL per velocità."""
-        text = self.search_input.text().strip()
-        self._load_data(filter_text=text)
+        """Aggiorna il filtro testuale del proxy."""
+        text = self.search_input.text()
+        self.proxy_model.set_filter_text(text)
 
-    def _load_data(self, filter_text: str = ""):
-        """Carica i dati dal DB con limite e filtro opzionale."""
-        # Usa il manager per ottenere i dati (ma dobbiamo aggiungere supporto filtro/limit al manager o farlo qui)
-        # Per performance su 130k righe, meglio farlo in SQL.
-        # Estendiamo la logica qui accedendo al DB direttamente o aggiungendo metodo al manager.
-        # Per pulizia, meglio aggiungere metodo al manager. Ma per rapidità (piano step 5), facciamo una query diretta qui o chiamiamo un nuovo metodo manager.
-        # Creiamo un metodo ad-hoc nel manager è meglio. Ma ContabilitaManager è in `src/core`.
-        # Per ora userò `ContabilitaManager.get_scarico_ore_data` che ritorna TUTTO, il che è male.
-        # Modifichiamo il Manager per supportare limit e search.
+        count = self.proxy_model.rowCount()
+        self.status_label.setText(f"Righe visibili: {count}")
 
-        # Tuttavia, per ora simuliamo accesso diretto ottimizzato o limitato.
-        # Se chiamo get_scarico_ore_data() scarica 130k righe in RAM (ok per python) ma poi inserirle in QTable è lento.
-        # Quindi slice in Python prima di UI update.
-
-        import sqlite3
-        from src.core.contabilita_manager import ContabilitaManager
-
+    def _load_data(self):
+        """Carica TUTTI i dati in memoria (molto veloce in RAM)."""
         if not ContabilitaManager.DB_PATH.exists():
+            self.status_label.setText("Database non trovato.")
             return
 
         try:
-            conn = sqlite3.connect(ContabilitaManager.DB_PATH)
-            cursor = conn.cursor()
+            # Fetch ALL rows (tuples)
+            rows = ContabilitaManager.get_scarico_ore_data()
+            self.source_model.update_data(rows)
 
-            cols = ['data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle', 'totale_ore', 'descrizione', 'finito', 'commessa']
-            query = f"SELECT {', '.join(cols)} FROM scarico_ore"
-            params = []
+            # Reset view properties
+            self.table_view.resizeColumnsToContents()
 
-            if filter_text:
-                # Basic search on multiple columns
-                conditions = []
-                # Cerca su Data, Pers1, ODC, Descrizione, Commessa
-                for col in ['data', 'pers1', 'odc', 'descrizione', 'commessa']:
-                    conditions.append(f"{col} LIKE ?")
-                    params.append(f"%{filter_text}%")
-                query += " WHERE " + " OR ".join(conditions)
+            # Adjust column widths as requested:
+            # "sum of widths must equal view size" -> Stretch Last Section?
+            # "Descrizione (Col 8) must be wider"
 
-            query += " ORDER BY id DESC LIMIT 500" # Hard limit for UI performance
+            header = self.table_view.horizontalHeader()
 
-            cursor.execute(query, params)
-            rows = cursor.fetchall()
-            conn.close()
+            # Strategy: Set interactive for most, Stretch for Description
+            # Reset to interactive first
+            for i in range(11):
+                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
-            self._update_table(rows)
+            # DATA (0), PERS1 (1), PERS2 (2), ODC (3), POS (4), DALLE (5), ALLE (6), TOT (7) -> Fixed/Interactive
+            self.table_view.setColumnWidth(0, 90)  # Data
+            self.table_view.setColumnWidth(1, 130) # Pers1
+            self.table_view.setColumnWidth(2, 130) # Pers2
+            self.table_view.setColumnWidth(3, 80)  # ODC
+            self.table_view.setColumnWidth(4, 50)  # POS
+            self.table_view.setColumnWidth(5, 50)  # Dalle
+            self.table_view.setColumnWidth(6, 50)  # Alle
+            self.table_view.setColumnWidth(7, 80)  # Tot
+            self.table_view.setColumnWidth(9, 60)  # Finito
+            self.table_view.setColumnWidth(10, 100)# Commessa
 
-            if filter_text and len(rows) == 0:
-                self.status_label.setText("Nessun risultato trovato.")
-            elif filter_text:
-                self.status_label.setText(f"Trovati {len(rows)} risultati (limitati a 500).")
-            else:
-                self.status_label.setText("Pronto (Ultimi 500 record).")
+            # Description (8) Stretch to fill
+            header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
+
+            count = len(rows)
+            self.status_label.setText(f"Caricati {count} record.")
+            self._update_totals()
 
         except Exception as e:
             self.status_label.setText(f"Errore caricamento: {e}")
             print(f"DB Error: {e}")
 
-    def _update_table(self, rows):
-        """Aggiorna la UI con i dati raw dal DB."""
-        self.table.setSortingEnabled(False)
-        self.table.blockSignals(True)
-        self.table.setRowCount(0) # Clear
+    def keyPressEvent(self, event):
+        # Implement Ctrl+C for QTableView
+        if event.matches(QKeySequence.StandardKey.Copy):
+            self._copy_selection()
+        else:
+            super().keyPressEvent(event)
 
-        align_right = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-        align_center = Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
+    def _copy_selection(self):
+        selection = self.table_view.selectionModel()
+        indexes = selection.selectedIndexes()
+        if not indexes: return
 
-        # Setup row count
-        self.table.setRowCount(len(rows))
+        # Sort by row then col
+        indexes.sort(key=lambda x: (x.row(), x.column()))
 
-        # Colonne numeriche da formattare e allineare
-        numeric_cols = [self.COL_ODC, self.COL_POS, self.COL_DALLE, self.COL_ALLE, self.COL_TOTALE_ORE]
+        # Build text
+        rows_text = {} # row_idx -> list of (col_idx, text)
+        for idx in indexes:
+            r = idx.row()
+            c = idx.column()
+            data = self.table_view.model().data(idx)
+            if r not in rows_text: rows_text[r] = []
+            rows_text[r].append((c, str(data)))
 
-        total_ore_sum = 0.0
+        # Format TSV
+        tsv_lines = []
+        for r in sorted(rows_text.keys()):
+            # Simple approach: join by tab
+            line = "\t".join([x[1] for x in sorted(rows_text[r], key=lambda y: y[0])])
+            tsv_lines.append(line)
 
-        for r, row_data in enumerate(rows):
-            # row_data: tuple of strings
-            for c, val in enumerate(row_data):
-                str_val = str(val) if val is not None else ""
-
-                # Formatting
-                if c == self.COL_DATA:
-                    # Input YYYY-MM-DD -> DD/MM/YYYY
-                    if '-' in str_val:
-                        try:
-                            dt = datetime.strptime(str_val.split()[0], "%Y-%m-%d")
-                            str_val = dt.strftime("%d/%m/%Y")
-                        except: pass
-
-                elif c in numeric_cols:
-                    # Int/Float formatting
-                    try:
-                        f_val = parse_currency(str_val)
-                        if c == self.COL_TOTALE_ORE:
-                            total_ore_sum += f_val
-
-                        # "Se interi senza decimale, altrimenti max 2"
-                        if f_val.is_integer():
-                            str_val = str(int(f_val))
-                        else:
-                            str_val = f"{f_val:.2f}".replace('.', ',')
-                    except:
-                        pass
-
-                item = QTableWidgetItem(str_val)
-
-                # Alignment
-                if c in numeric_cols:
-                    item.setTextAlignment(align_right)
-                elif c == self.COL_DATA:
-                    item.setTextAlignment(align_center)
-
-                self.table.setItem(r, c, item)
-
-        self.table.resizeRowsToContents()
-        self.table.blockSignals(False)
-        self.table.setSortingEnabled(True)
-
-        # Add Footer Total Row
-        self._add_total_row(total_ore_sum)
-
-    def _add_total_row(self, total_ore):
-        row = self.table.rowCount()
-        self.table.insertRow(row)
-
-        lbl_item = QTableWidgetItem("TOTALI (Visibili)")
-        lbl_item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-        lbl_item.setBackground(Qt.GlobalColor.lightGray)
-        lbl_item.setFlags(Qt.ItemFlag.NoItemFlags)
-        self.table.setItem(row, 0, lbl_item)
-
-        # Fill grey
-        for c in range(1, self.table.columnCount()):
-            item = QTableWidgetItem("")
-            item.setBackground(Qt.GlobalColor.lightGray)
-            item.setFlags(Qt.ItemFlag.NoItemFlags)
-
-            if c == self.COL_TOTALE_ORE:
-                # Format total
-                val_str = f"{total_ore:.2f}".replace('.', ',')
-                if total_ore.is_integer():
-                    val_str = str(int(total_ore))
-
-                item.setText(val_str)
-                item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-                item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-
-            self.table.setItem(row, c, item)
-
-    def _show_context_menu(self, pos):
-        self.table.contextMenuEvent(type('DummyEvent', (object,), {'globalPos': lambda: self.table.viewport().mapToGlobal(pos), 'pos': lambda: pos})())
+        from PyQt6.QtWidgets import QApplication
+        QApplication.clipboard().setText("\n".join(tsv_lines))
