@@ -5,7 +5,7 @@ Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableView, QLineEdit, QMessageBox
+    QTableView, QLineEdit, QMessageBox, QHeaderView
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QCursor
