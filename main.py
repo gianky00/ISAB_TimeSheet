@@ -33,6 +33,10 @@ def setup_crash_logging():
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
 
+    # Riduci verbosità per librerie rumorose
+    for lib in ["matplotlib", "PIL", "urllib3", "selenium"]:
+        logging.getLogger(lib).setLevel(logging.WARNING)
+
     logger = logging.getLogger("CrashLogger")
     logger.info(f"Crash Logger inizializzato. File: {log_file}")
     logger.info(f"Python: {sys.version}")
