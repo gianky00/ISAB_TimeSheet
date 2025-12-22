@@ -7,11 +7,12 @@ import sqlite3
 import pandas as pd
 from pathlib import Path
 from typing import Optional, List, Dict, Callable
+from src.core.config_manager import CONFIG_DIR
 
 class TimbratureStorage:
     """Manages SQLite database for Timbrature."""
 
-    DB_PATH = Path("data/timbrature_Isab.db")
+    DB_PATH = CONFIG_DIR / "data" / "timbrature_Isab.db"
 
     COLUMNS_MAP = {
         "Data Timbratura": "data",

@@ -1229,7 +1229,7 @@ class TimbratureDBPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.db_path = Path("data/timbrature_Isab.db")
+        self.db_path = config_manager.CONFIG_DIR / "data" / "timbrature_Isab.db"
         self._setup_ui()
         self.refresh_data()
 

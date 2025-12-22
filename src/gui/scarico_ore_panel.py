@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QCursor, QKeySequence
+import time
 
 from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
@@ -19,15 +20,31 @@ from pathlib import Path
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background (solo Scarico Ore)."""
     finished_signal = pyqtSignal(bool, str)
+    progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
+        self.start_time = 0
 
     def run(self):
         # Inizializza DB se necessario (sicurezza)
         ContabilitaManager.init_db()
-        success, msg = ContabilitaManager.import_scarico_ore(self.file_path)
+        self.start_time = time.time()
+
+        def progress_cb(current, total):
+            elapsed = time.time() - self.start_time
+            if current > 0 and elapsed > 0:
+                rate = current / elapsed
+                remaining = total - current
+                eta_seconds = remaining / rate if rate > 0 else 0
+
+                m, s = divmod(int(eta_seconds), 60)
+                percent = int((current / total) * 100) if total > 0 else 0
+
+                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{total}) • Tempo stimato: {m}m {s}s")
+
+        success, msg = ContabilitaManager.import_scarico_ore(self.file_path, progress_callback=progress_cb)
         self.finished_signal.emit(success, msg)
 
 class ScaricoOrePanel(QWidget):
@@ -81,7 +98,17 @@ class ScaricoOrePanel(QWidget):
 
         # Status Label
         self.status_label = QLabel("Inizializzazione...")
-        self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
+        self.status_label.setStyleSheet("""
+            QLabel {
+                color: #495057;
+                font-size: 14px;
+                font-weight: 500;
+                padding: 5px 10px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                border: 1px solid #dee2e6;
+            }
+        """)
         toolbar.addWidget(self.status_label)
 
         toolbar.addStretch()
@@ -251,12 +278,13 @@ class ScaricoOrePanel(QWidget):
             QMessageBox.warning(self, "Configurazione Mancante", "Configura il percorso 'File Scarico Ore' nelle Impostazioni.")
             return
 
-        self.status_label.setText("⏳ Aggiornamento in corso (può richiedere tempo per file grandi)...")
+        self.status_label.setText("⏳ Inizializzazione aggiornamento...")
         self.update_btn.setEnabled(False)
         self.table_view.setEnabled(False)
 
         self.worker = ScaricoOreWorker(path)
         self.worker.finished_signal.connect(self._on_update_finished)
+        self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
 
     def _on_update_finished(self, success: bool, msg: str):

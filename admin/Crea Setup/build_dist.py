@@ -126,8 +126,12 @@ def run_inno_setup():
     if not os.path.exists(SETUP_OUTPUT_DIR):
         os.makedirs(SETUP_OUTPUT_DIR)
     
+    # Get version for Inno Setup
+    version = get_version()
+    print(f"[BUILD] Building installer for version: {version}")
+
     # Run ISCC
-    cmd = [iscc, ISS_SCRIPT]
+    cmd = [iscc, f"/DMyAppVersion={version}", ISS_SCRIPT]
     result = subprocess.run(cmd, cwd=SCRIPT_DIR)
     
     if result.returncode != 0:
