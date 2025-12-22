@@ -326,6 +326,27 @@ class SettingsPanel(QWidget):
         giornaliere_path_layout.addWidget(self.browse_giornaliere_btn)
         contabilita_layout.addLayout(giornaliere_path_layout)
 
+        # Scarico Ore Cantiere File
+        dataease_label = QLabel("File Scarico Ore Cantiere (DataEase):")
+        dataease_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
+        contabilita_layout.addWidget(dataease_label)
+
+        dataease_path_layout = QHBoxLayout()
+        self.dataease_path_edit = QLineEdit()
+        self.dataease_path_edit.setPlaceholderText("Seleziona file Excel scarico ore...")
+        self.dataease_path_edit.setReadOnly(True)
+        self.dataease_path_edit.setMinimumHeight(40)
+        self._style_input(self.dataease_path_edit)
+        dataease_path_layout.addWidget(self.dataease_path_edit)
+
+        self.browse_dataease_btn = QPushButton("📂 Sfoglia")
+        self.browse_dataease_btn.setMinimumHeight(40)
+        self.browse_dataease_btn.setMinimumWidth(120)
+        self.browse_dataease_btn.clicked.connect(self._browse_dataease_path)
+        self._style_button(self.browse_dataease_btn)
+        dataease_path_layout.addWidget(self.browse_dataease_btn)
+        contabilita_layout.addLayout(dataease_path_layout)
+
         scroll_layout.addWidget(contabilita_group)
         
         # --- Sezione Browser ---
@@ -509,6 +530,7 @@ class SettingsPanel(QWidget):
         self.contabilita_path_edit.textChanged.connect(self._on_change)
         self.giornaliere_path_edit.textChanged.connect(self._on_change)
         self.auto_update_contabilita_check.stateChanged.connect(self._on_change)
+        self.dataease_path_edit.textChanged.connect(self._on_change)
         # Liste gestite manualmente
     
     def _on_change(self):
@@ -553,6 +575,20 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.giornaliere_path_edit.setText(path)
+            self._set_unsaved_changes(True)
+
+    def _browse_dataease_path(self):
+        current_path = self.dataease_path_edit.text()
+        directory = str(Path(current_path).parent) if current_path else str(Path.home())
+
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona file DataEase (Scarico Ore)",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)"
+        )
+        if path:
+            self.dataease_path_edit.setText(path)
             self._set_unsaved_changes(True)
     
     # --- Gestione Account ---
@@ -735,6 +771,7 @@ class SettingsPanel(QWidget):
         # Contabilita
         self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
         self.giornaliere_path_edit.setText(config.get("giornaliere_path", ""))
+        self.dataease_path_edit.setText(config.get("dataease_path", "")) # New
         self.auto_update_contabilita_check.setChecked(config.get("enable_auto_update_contabilita", True))
 
         # Fornitori
@@ -764,6 +801,7 @@ class SettingsPanel(QWidget):
 
         config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
         config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
+        config_manager.set_config_value("dataease_path", self.dataease_path_edit.text()) # New
         config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_contabilita_check.isChecked())
 
         config_manager.set_config_value("fornitori", fornitori)

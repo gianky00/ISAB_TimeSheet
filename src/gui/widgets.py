@@ -9,7 +9,110 @@ from PyQt6.QtWidgets import (
     QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint
-from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor
+from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush
+
+
+class StatusIndicator(QWidget):
+    """
+    Indicatore di stato circolare con animazione di pulsazione.
+    Stati supportati: 'idle', 'running', 'success', 'error'.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(20, 20)
+
+        # Configurazione animazione pulsazione (opacità)
+        self.opacity_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.opacity_effect)
+
+        self.animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.animation.setDuration(1000)  # 1 secondo per ciclo
+        self.animation.setStartValue(1.0)
+        self.animation.setEndValue(0.4)
+        self.animation.setLoopCount(-1)  # Infinito
+        # Effetto yo-yo: 1.0 -> 0.4 -> 1.0
+        self.animation.setKeyValueAt(0.0, 1.0)
+        self.animation.setKeyValueAt(0.5, 0.4)
+        self.animation.setKeyValueAt(1.0, 1.0)
+
+        self.current_color = QColor("#6c757d")  # Grigio (Idle)
+        self.setToolTip("Pronto")
+
+    def set_status(self, status: str, message: str = ""):
+        """
+        Imposta lo stato e il tooltip.
+
+        Args:
+            status: 'idle', 'running', 'success', 'error'
+            message: Messaggio per il tooltip
+        """
+        self.setToolTip(message)
+
+        if status == 'running':
+            self.current_color = QColor("#0d6efd")  # Blu
+            if self.animation.state() == QAbstractAnimation.State.Stopped:
+                self.animation.start()
+        elif status == 'success':
+            self.current_color = QColor("#198754")  # Verde
+            self.animation.stop()
+            self.opacity_effect.setOpacity(1.0)
+        elif status == 'error':
+            self.current_color = QColor("#dc3545")  # Rosso
+            self.animation.stop()
+            self.opacity_effect.setOpacity(1.0)
+        else:  # idle
+            self.current_color = QColor("#6c757d")  # Grigio
+            self.animation.stop()
+            self.opacity_effect.setOpacity(1.0)
+
+        self.update()  # Forza repaint
+
+    def paintEvent(self, event):
+        """Disegna il cerchio colorato."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(QBrush(self.current_color))
+        painter.setPen(Qt.PenStyle.NoPen)
+
+        # Disegna cerchio centrato con margine
+        rect = self.rect().adjusted(2, 2, -2, -2)
+        painter.drawEllipse(rect)
+
+
+class CalendarDateEdit(QDateEdit):
+    """QDateEdit con popup calendario e stile personalizzato."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCalendarPopup(True)
+        self.setDisplayFormat("dd.MM.yyyy")
+        self.setMinimumWidth(150)
+        self.setStyleSheet("""
+            QDateEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QDateEdit:focus {
+                border-color: #0d6efd;
+            }
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 30px;
+                border-left-width: 1px;
+                border-left-color: #ced4da;
+                border-left-style: solid;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+            QDateEdit::down-arrow {
+                image: none; /* Fallback to standard arrow */
+                width: 16px;
+                height: 16px;
+            }
+        """)
 
 
 class ExcelTableWidget(QTableWidget):
@@ -32,9 +135,15 @@ class ExcelTableWidget(QTableWidget):
         """Menu contestuale predefinito per copia veloce (per tabelle read-only)."""
         menu = QMenu(self)
 
-        lyra_action = QAction("✨ Analizza con Lyra", self)
-        lyra_action.triggered.connect(self._analyze_selection)
-        menu.addAction(lyra_action)
+        # Action: Analyze ROW with Lyra
+        # This is context-aware for the specific row clicked
+        lyra_row_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_row_action.triggered.connect(lambda: self._analyze_row_at(event.pos()))
+        menu.addAction(lyra_row_action)
+
+        lyra_selection_action = QAction("✨ Analizza Selezione con Lyra", self)
+        lyra_selection_action.triggered.connect(self._analyze_selection)
+        menu.addAction(lyra_selection_action)
 
         menu.addSeparator()
 
@@ -42,6 +151,33 @@ class ExcelTableWidget(QTableWidget):
         copy_action.triggered.connect(self.copy_selection)
         menu.addAction(copy_action)
         menu.exec(event.globalPos())
+
+    def _analyze_row_at(self, pos):
+        """Analizza la riga specifica sotto il cursore."""
+        item = self.itemAt(pos)
+        if not item: return
+        row = item.row()
+
+        row_data = []
+        for c in range(self.columnCount()):
+            if not self.isColumnHidden(c):
+                header = self.horizontalHeaderItem(c).text() if self.horizontalHeaderItem(c) else f"Col {c}"
+                # Handle cell widgets (combos) or text items
+                widget = self.cellWidget(row, c)
+                if isinstance(widget, QComboBox):
+                    text = widget.currentText()
+                else:
+                    it = self.item(row, c)
+                    text = it.text() if it else ""
+
+                row_data.append(f"**{header}**: {text}")
+
+        context = " | ".join(row_data)
+
+        # Call Main Window
+        win = self.window()
+        if hasattr(win, "analyze_with_lyra"):
+            win.analyze_with_lyra(context)
 
     def _analyze_selection(self):
         """Invia la selezione a Lyra."""
@@ -449,6 +585,57 @@ class LogWidget(QWidget):
                 background-color: #5a6268;
             }
         """)
+        clear_btn.clicked.connect(self.clear)
+        header_layout.addWidget(clear_btn)
+
+        layout.addLayout(header_layout)
+
+        # Text area per i log
+        self.log_text = QTextEdit()
+        self.log_text.setReadOnly(True)
+        self.log_text.setMinimumHeight(150)
+        self.log_text.setMaximumHeight(200)
+        self.log_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                border: 1px solid #333;
+                border-radius: 4px;
+                padding: 10px;
+                font-family: 'Consolas', 'Monaco', monospace;
+                font-size: 14px;
+            }
+        """)
+        layout.addWidget(self.log_text)
+
+    def append(self, message: str):
+        """
+        Aggiunge un messaggio al log.
+
+        Args:
+            message: Messaggio da aggiungere
+        """
+        # Colora in base al tipo di messaggio
+        if "✓" in message or "successo" in message.lower():
+            color = "#4ec9b0"  # Verde
+        elif "✗" in message or "errore" in message.lower():
+            color = "#f14c4c"  # Rosso
+        elif "⚠" in message or "avviso" in message.lower():
+            color = "#dcdcaa"  # Giallo
+        elif "▶" in message:
+            color = "#569cd6"  # Blu
+        else:
+            color = "#d4d4d4"  # Default
+
+        self.log_text.append(f'<span style="color: {color};">{message}</span>')
+
+        # Scroll automatico
+        scrollbar = self.log_text.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+
+    def clear(self):
+        """Pulisce il log."""
+        self.log_text.clear()
 
 
 class DetailedInfoDialog(QDialog):
@@ -613,181 +800,3 @@ class KPIBigCard(QFrame):
 
     def _get_info_content(self):
         return self.info_content_callback()
-        clear_btn.clicked.connect(self.clear)
-        header_layout.addWidget(clear_btn)
-        
-        layout.addLayout(header_layout)
-        
-        # Text area per i log
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        self.log_text.setMinimumHeight(150)
-        self.log_text.setMaximumHeight(200)
-        self.log_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #1e1e1e;
-                color: #d4d4d4;
-                border: 1px solid #333;
-                border-radius: 4px;
-                padding: 10px;
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: 14px;
-            }
-        """)
-        layout.addWidget(self.log_text)
-    
-    def append(self, message: str):
-        """
-        Aggiunge un messaggio al log.
-        
-        Args:
-            message: Messaggio da aggiungere
-        """
-        # Colora in base al tipo di messaggio
-        if "✓" in message or "successo" in message.lower():
-            color = "#4ec9b0"  # Verde
-        elif "✗" in message or "errore" in message.lower():
-            color = "#f14c4c"  # Rosso
-        elif "⚠" in message or "avviso" in message.lower():
-            color = "#dcdcaa"  # Giallo
-        elif "▶" in message:
-            color = "#569cd6"  # Blu
-        else:
-            color = "#d4d4d4"  # Default
-        
-        self.log_text.append(f'<span style="color: {color};">{message}</span>')
-        
-        # Scroll automatico
-        scrollbar = self.log_text.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
-    
-    def clear(self):
-        """Pulisce il log."""
-        self.log_text.clear()
-
-
-class StatusIndicator(QWidget):
-    """Indicatore di stato con animazione."""
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._status = "idle"
-        self._setup_ui()
-    
-    def _setup_ui(self):
-        """Configura l'interfaccia."""
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 5, 10, 5)
-        
-        # Indicatore colorato
-        self.indicator = QFrame()
-        self.indicator.setFixedSize(12, 12)
-        self.indicator.setStyleSheet("""
-            QFrame {
-                background-color: #6c757d;
-                border-radius: 6px;
-            }
-        """)
-        
-        # Effetto opacità per animazione
-        self.opacity_effect = QGraphicsOpacityEffect(self.indicator)
-        self.opacity_effect.setOpacity(1.0)
-        self.indicator.setGraphicsEffect(self.opacity_effect)
-        
-        # Animazione pulsante
-        self.animation = QPropertyAnimation(self.opacity_effect, b"opacity")
-        self.animation.setDuration(1000)
-        self.animation.setStartValue(1.0)
-        self.animation.setEndValue(0.3)
-        self.animation.setLoopCount(-1)  # Infinito
-        self.animation.setDirection(QAbstractAnimation.Direction.Forward)
-        # Configura per fare avanti e indietro (pulse)
-        self.animation.setKeyValueAt(0.0, 1.0)
-        self.animation.setKeyValueAt(0.5, 0.3)
-        self.animation.setKeyValueAt(1.0, 1.0)
-        
-        layout.addWidget(self.indicator)
-        
-        # Testo stato
-        self.status_label = QLabel("In attesa")
-        self.status_label.setStyleSheet("font-size: 14px; color: #6c757d;")
-        layout.addWidget(self.status_label)
-        
-        layout.addStretch()
-    
-    def set_status(self, status: str):
-        """
-        Imposta lo stato.
-        
-        Args:
-            status: idle, running, completed, error, stopped
-        """
-        self._status = status
-        
-        status_config = {
-            "idle": ("#6c757d", "In attesa"),
-            "running": ("#ffc107", "In esecuzione..."),
-            "completed": ("#28a745", "Completato"),
-            "error": ("#dc3545", "Errore"),
-            "stopped": ("#fd7e14", "Interrotto")
-        }
-        
-        color, text = status_config.get(status, ("#6c757d", "Sconosciuto"))
-        
-        self.indicator.setStyleSheet(f"""
-            QFrame {{
-                background-color: {color};
-                border-radius: 6px;
-            }}
-        """)
-        self.status_label.setText(text)
-        self.status_label.setStyleSheet(f"font-size: 14px; color: {color}; font-weight: bold;")
-        
-        # Gestione animazione
-        if status == "running":
-            if self.animation.state() != QAbstractAnimation.State.Running:
-                self.animation.start()
-        else:
-            self.animation.stop()
-            self.opacity_effect.setOpacity(1.0)
-
-
-class CalendarDateEdit(QDateEdit):
-    """QDateEdit con larghezza estesa e icona calendario."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setCalendarPopup(True)
-        self.setMinimumWidth(160)
-        self.setMinimumHeight(40)
-        self.setDisplayFormat("dd.MM.yyyy")
-
-        # Base64 Calendar Icon (Simple dark gray)
-        # Icona SVG convertita in base64
-        icon_b64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAADdSURBVDjL7ZM9C4MwEIbfyyWDLs51CDqU/gBdO0t/hS79K7p069KlUKEgS6HQwSjo4iCIn8HBvZAiFhxn4uF47u5iAnjN2/0AA2xN2/0AA2xN2/0AA2xN2/0AA2xN2/0AA+y/gBGl1G4Yhg9Jkvz+C1prpyzLrm3brz/BGGPM0rKsn4IgCILvB2itx7ZtP4Msy/Zaa1dKqaN/gR5jzA14A29KqV2v97+CIPhKkuR9GIYPxpibv9+A9bXWzvlz7H2f/tV1vdFaO0opHaxn2O2+AA7W11r7/tX/uN1v8AOMN2/0AA2xN2/0AA2xN2/0AA2xN2/0AA2xN2/0AAAAASUVORK5CYII="
-
-        self.setStyleSheet(f"""
-            QDateEdit {{
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px 35px 8px 8px; /* Spazio a destra per icona */
-                font-size: 15px;
-                background-color: white;
-            }}
-            QDateEdit:focus {{
-                border-color: #0d6efd;
-            }}
-            QDateEdit::drop-down {{
-                subcontrol-origin: padding;
-                subcontrol-position: center right;
-                width: 30px;
-                border-left: 1px solid #ced4da;
-                image: url({icon_b64});
-                background-color: #f8f9fa;
-                border-top-right-radius: 4px;
-                border-bottom-right-radius: 4px;
-            }}
-            QDateEdit::drop-down:hover {{
-                background-color: #e9ecef;
-            }}
-        """)

@@ -21,10 +21,11 @@ class ContabilitaWorker(QThread):
     """Worker per l'importazione in background."""
     finished_signal = pyqtSignal(bool, str)
 
-    def __init__(self, file_path: str, giornaliere_path: str = ""):
+    def __init__(self, file_path: str, giornaliere_path: str = "", scarico_ore_path: str = ""):
         super().__init__()
         self.file_path = file_path
         self.giornaliere_path = giornaliere_path
+        self.scarico_ore_path = scarico_ore_path
 
     def run(self):
         # Inizializza DB se necessario
@@ -39,7 +40,13 @@ class ContabilitaWorker(QThread):
             g_success, g_msg = ContabilitaManager.import_giornaliere(self.giornaliere_path)
             msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
 
-        self.finished_signal.emit(success, msg + msg_giornaliere)
+        # 3. Import Scarico Ore (se configurato)
+        msg_scarico = ""
+        if success and self.scarico_ore_path:
+            s_success, s_msg = ContabilitaManager.import_scarico_ore(self.scarico_ore_path)
+            msg_scarico = f" | Scarico Ore: {s_msg}" if s_success else f" | Err Scarico Ore: {s_msg}"
+
+        self.finished_signal.emit(success, msg + msg_giornaliere + msg_scarico)
 
 
 class ContabilitaPanel(QWidget):
@@ -155,7 +162,11 @@ class ContabilitaPanel(QWidget):
 
         self.main_tabs.addTab(self.giornaliere_tabs_widget, "📂 Giornaliere")
 
-        # --- TAB 3: KPI ---
+        # --- TAB 3: SCARICO ORE CANTIERE (New) ---
+        self.scarico_ore_tab = ScaricoOreCantiereTab()
+        self.main_tabs.addTab(self.scarico_ore_tab, "🏗️ Scarico Ore Cantiere")
+
+        # --- TAB 4: KPI ---
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(self.kpi_panel, "📊 Analisi KPI")
@@ -227,6 +238,10 @@ class ContabilitaPanel(QWidget):
                 self.giornaliere_tabs_widget.setCurrentIndex(i)
                 break
 
+        # Aggiorna Scarico Ore Tab
+        if hasattr(self, 'scarico_ore_tab'):
+            self.scarico_ore_tab._load_data()
+
         # Aggiorna anche i dati KPI
         if hasattr(self, 'kpi_panel'):
             self.kpi_panel.refresh_years()
@@ -247,6 +262,8 @@ class ContabilitaPanel(QWidget):
             target_widget = self.year_tabs_widget.currentWidget()
         elif current_main_widget == self.giornaliere_tabs_widget:
             target_widget = self.giornaliere_tabs_widget.currentWidget()
+        elif current_main_widget == self.scarico_ore_tab:
+            target_widget = self.scarico_ore_tab
 
         if target_widget and hasattr(target_widget, 'filter_data'):
             target_widget.filter_data(text)
@@ -256,24 +273,26 @@ class ContabilitaPanel(QWidget):
         config = config_manager.load_config()
         path = config.get("contabilita_file_path", "")
         giornaliere_path = config.get("giornaliere_path", "")
+        dataease_path = config.get("dataease_path", "")
 
         if not path or not os.path.exists(path):
             self.status_label.setText("⚠️ File contabilità non configurato o non trovato.")
             return
 
-        self.status_label.setText("🔄 Aggiornamento contabilità e giornaliere in corso...")
+        self.status_label.setText("🔄 Aggiornamento in corso (Contabilità, Giornaliere, Scarico Ore)...")
         self.refresh_btn.setDisabled(True) # Disable button during update
 
-        self.worker = ContabilitaWorker(path, giornaliere_path)
+        self.worker = ContabilitaWorker(path, giornaliere_path, dataease_path)
         self.worker.finished_signal.connect(self._on_import_finished)
         self.worker.start()
 
     def _on_import_finished(self, success: bool, msg: str):
         if success:
-            self.status_label.setText(f"✅ Aggiornamento completato: {msg}")
+            self.status_label.setText(f"✅ Aggiornamento completato")
             self.refresh_tabs()
         else:
             self.status_label.setText(f"❌ Errore aggiornamento: {msg}")
+            QMessageBox.warning(self, "Esito Importazione", msg) # Show details in popup if error
 
         self.worker = None
         self.refresh_btn.setDisabled(False) # Re-enable button
@@ -533,6 +552,14 @@ class ContabilitaYearTab(QWidget):
         file_path = first_item.data(Qt.ItemDataRole.UserRole)
 
         menu = QMenu(self)
+
+        # Lyra Action
+        lyra_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
+        menu.addAction(lyra_action)
+
+        menu.addSeparator()
+
         action_open = QAction("📂 Apri File", self)
         if file_path:
              action_open.triggered.connect(lambda: self._open_file(file_path))
@@ -781,6 +808,14 @@ class GiornaliereYearTab(QWidget):
         filename = first_item.data(Qt.ItemDataRole.UserRole)
 
         menu = QMenu(self)
+
+        # Lyra Action
+        lyra_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
+        menu.addAction(lyra_action)
+
+        menu.addSeparator()
+
         if filename:
              action_open = QAction(f"📂 Apri {filename}", self)
              action_open.triggered.connect(lambda: self._open_giornaliera(filename))
@@ -830,3 +865,84 @@ class GiornaliereYearTab(QWidget):
                 QMessageBox.warning(self, "Errore", f"Impossibile aprire il file: {e}\nPath: {found_path}")
         else:
             QMessageBox.warning(self, "File non trovato", f"Non riesco a trovare '{filename}' nella cartella giornaliere.")
+
+
+class ScaricoOreCantiereTab(QWidget):
+    """Tab per Scarico Ore Cantiere."""
+
+    COLUMNS = [
+        'DATA', 'PERS1', 'PERS2', 'ODC', 'POS', 'DALLE', 'ALLE',
+        'TOTALE ORE', 'DESCRIZIONE', 'FINITO', 'COMMESSA'
+    ]
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+        # Non caricare automaticamente, aspetta che sia chiamato o refresh
+        # Ma un refresh iniziale è buono se ci sono dati
+        self._load_data()
+
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 10, 0, 0)
+
+        self.table = ExcelTableWidget()
+        self.table.setColumnCount(len(self.COLUMNS))
+        self.table.setHorizontalHeaderLabels(self.COLUMNS)
+        self.table.setWordWrap(True)
+
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+
+        # Stretch descrizione
+        header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
+
+        # Lyra Context Menu
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+
+        layout.addWidget(self.table)
+
+    def _load_data(self):
+        data = ContabilitaManager.get_scarico_ore_data()
+
+        self.table.setSortingEnabled(False)
+        self.table.blockSignals(True)
+
+        try:
+            self.table.setRowCount(len(data))
+
+            for row_idx, row_data in enumerate(data):
+                for col_idx, val in enumerate(row_data):
+                    item = QTableWidgetItem(str(val) if val else "")
+                    self.table.setItem(row_idx, col_idx, item)
+
+            self.table.resizeRowsToContents()
+        finally:
+            self.table.blockSignals(False)
+            self.table.setSortingEnabled(True)
+
+    def filter_data(self, text):
+        # Filtro base
+        rows = self.table.rowCount()
+        cols = self.table.columnCount()
+        search_terms = text.lower().split()
+
+        for r in range(rows):
+            if not text:
+                self.table.setRowHidden(r, False)
+                continue
+
+            row_text = ""
+            for c in range(cols):
+                it = self.table.item(r, c)
+                if it: row_text += it.text().lower() + " "
+
+            if all(term in row_text for term in search_terms):
+                self.table.setRowHidden(r, False)
+            else:
+                self.table.setRowHidden(r, True)
+
+    def _show_context_menu(self, pos):
+        # Use default context menu which includes Lyra Analysis
+        self.table.contextMenuEvent(type('DummyEvent', (object,), {'globalPos': lambda: self.table.viewport().mapToGlobal(pos), 'pos': lambda: pos})())
