@@ -10,6 +10,7 @@ import logging
 import warnings
 import io
 import json
+import zipfile
 from typing import List, Dict, Tuple, Optional, Callable
 from datetime import datetime
 from src.utils.parsing import parse_currency
@@ -70,6 +71,39 @@ class ContabilitaManager:
         'data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle',
         'totale_ore', 'descrizione', 'finito', 'commessa', 'styles'
     ]
+
+    @classmethod
+    def scan_workload(cls, file_path: str, giornaliere_path: str) -> Tuple[int, int]:
+        """Scansiona rapidamente il carico di lavoro (fogli e file) per stima ETA."""
+        sheets = 0
+        files = 0
+
+        # 1. Scan Excel Sheets (Fast via ZipFile)
+        p_file = Path(file_path)
+        if file_path and p_file.exists():
+            try:
+                with zipfile.ZipFile(p_file, 'r') as z:
+                    if 'xl/workbook.xml' in z.namelist():
+                        wb_xml = z.read('xl/workbook.xml').decode('utf-8')
+                        # Estrai nomi fogli e filtra per anno
+                        sheet_names = re.findall(r'name="([^"]+)"', wb_xml)
+                        sheets = len([s for s in sheet_names if re.search(r'(\d{4})', s)])
+            except Exception:
+                sheets = 1
+
+        # 2. Scan Giornaliere (Files)
+        p_giorn = Path(giornaliere_path)
+        if giornaliere_path and p_giorn.exists():
+             current_year = datetime.now().year
+             for folder in p_giorn.iterdir():
+                 if folder.is_dir():
+                     match = re.match(r'Giornaliere\s+(\d{4})', folder.name, re.IGNORECASE)
+                     if match:
+                         year = int(match.group(1))
+                         if year >= current_year:
+                             files += len([f for f in folder.glob("*.xls*") if not f.name.startswith("~$")])
+
+        return sheets, files
 
     @classmethod
     def init_db(cls):
