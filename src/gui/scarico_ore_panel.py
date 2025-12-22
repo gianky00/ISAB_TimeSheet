@@ -172,11 +172,18 @@ class ScaricoOrePanel(QWidget):
         footer_layout.setContentsMargins(15, 10, 15, 10)
 
         self.lbl_count = QLabel("Righe: 0")
-        self.lbl_total_hours = QLabel("Totale Ore: 0.00")
+        self.lbl_total_hours = QLabel("Totale Ore: 0")
         self.lbl_total_hours.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+        # New Selection Label
+        self.lbl_selection_total = QLabel("Totale selezionato: 0")
+        self.lbl_selection_total.setStyleSheet("color: #0d6efd;")
+        self.lbl_selection_total.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         footer_layout.addWidget(self.lbl_count)
         footer_layout.addStretch()
+        footer_layout.addWidget(self.lbl_selection_total)
+        footer_layout.addSpacing(20)
         footer_layout.addWidget(self.lbl_total_hours)
 
         layout.addWidget(self.footer_frame)
@@ -186,6 +193,15 @@ class ScaricoOrePanel(QWidget):
         self.info_label.setStyleSheet("color: #adb5bd; font-size: 11px; margin-top: 5px;")
         layout.addWidget(self.info_label)
 
+        # Connect selection changes
+        self.table_view.selectionModel().selectionChanged.connect(self._update_selection_totals)
+
+    def _format_number(self, value: float) -> str:
+        """Formats number: integer if no decimals, else 2 decimals."""
+        if value % 1 == 0:
+            return f"{int(value)}"
+        return f"{value:.2f}"
+
     def _update_totals(self):
         """Calculates totals based on visible rows."""
         # ⚡ BOLT: Use Model's fast counter
@@ -193,13 +209,38 @@ class ScaricoOrePanel(QWidget):
         self.lbl_count.setText(f"Righe visibili: {row_count}")
 
         if row_count > 0:
-             # Use the model's optimized sum (it uses indices)
-             # Ideally run in background if > 50k rows?
-             # Python sum of 130k floats is ~5ms. Safe for main thread.
              total = self.source_model.get_float_total_for_visible()
-             self.lbl_total_hours.setText(f"Totale Ore: {total:,.2f}")
+             formatted = self._format_number(total)
+             self.lbl_total_hours.setText(f"Totale Ore: {formatted}")
         else:
-             self.lbl_total_hours.setText("Totale Ore: 0.00")
+             self.lbl_total_hours.setText("Totale Ore: 0")
+
+    def _update_selection_totals(self):
+        """Calculates total of selected 'TOTALE ORE' cells."""
+        indexes = self.table_view.selectionModel().selectedIndexes()
+        if not indexes:
+            self.lbl_selection_total.setText("Totale selezionato: 0")
+            return
+
+        total_selected = 0.0
+        # Column 7 is 'TOTALE ORE'
+        target_col = 7
+
+        # Optimization: Filter indexes for col 7 only
+        for idx in indexes:
+            if idx.column() == target_col:
+                try:
+                    val_str = str(idx.data(Qt.ItemDataRole.DisplayRole))
+                    # Parse float (handles comma/dot via parse_currency or float)
+                    if val_str:
+                        # Handle comma just in case
+                        val_str = val_str.replace(',', '.')
+                        total_selected += float(val_str)
+                except:
+                    pass
+
+        formatted = self._format_number(total_selected)
+        self.lbl_selection_total.setText(f"Totale selezionato: {formatted}")
 
     def _start_update(self):
         """Avvia l'aggiornamento specifico per Scarico Ore."""

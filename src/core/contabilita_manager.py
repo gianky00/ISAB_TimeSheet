@@ -72,10 +72,17 @@ class ContabilitaManager:
 
     @classmethod
     def init_db(cls):
-        """Inizializza il database creando le tabelle se non esistono."""
+        """Inizializza il database creando le tabelle se non esistono e abilita WAL."""
         cls.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
         conn = sqlite3.connect(cls.DB_PATH)
+        # Enable WAL mode for concurrency
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute("PRAGMA synchronous=NORMAL;")
+        except Exception as e:
+            print(f"Warning: Could not set WAL mode: {e}")
+
         cursor = conn.cursor()
 
         # Tabella Contabilita (Dati)
@@ -533,7 +540,11 @@ class ContabilitaManager:
         """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
         if not cls.DB_PATH.exists(): return []
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
+            # Use Read-Only URI if possible, but fallback to standard if not supported by sqlite ver
+            # Python's sqlite3 supports URI by default in recent versions
+            uri_path = f"file:{cls.DB_PATH.absolute()}?mode=ro"
+            conn = sqlite3.connect(uri_path, uri=True)
+
             cursor = conn.cursor()
             cols = cls.SCARICO_ORE_COLS
             # Order by Data Desc
@@ -542,7 +553,19 @@ class ContabilitaManager:
             rows = cursor.fetchall()
             conn.close()
             return rows
-        except: return []
+        except Exception as e:
+            # Fallback to standard connection if URI fails
+            try:
+                conn = sqlite3.connect(cls.DB_PATH)
+                cursor = conn.cursor()
+                cols = cls.SCARICO_ORE_COLS
+                query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                conn.close()
+                return rows
+            except:
+                return []
 
     @classmethod
     def get_year_stats(cls, year: int) -> Dict:
