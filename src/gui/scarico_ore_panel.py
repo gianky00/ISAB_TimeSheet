@@ -5,14 +5,14 @@ Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableView, QLineEdit, QMessageBox, QHeaderView, QFrame
+    QTableView, QLineEdit, QMessageBox, QHeaderView, QFrame, QApplication
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QCursor, QKeySequence
 
 from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
-from src.gui.scarico_ore_components import ScaricoOreTableModel, ScaricoOreFilterProxy, FilterHeaderView
+from src.gui.scarico_ore_components import ScaricoOreTableModel, FilterHeaderView
 from src.utils.parsing import parse_currency
 from pathlib import Path
 
@@ -38,7 +38,10 @@ class ScaricoOrePanel(QWidget):
         self.worker = None
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
-        QTimer.singleShot(100, self._load_data)
+        # ⚡ BOLT: Set loading text immediately before first paint
+        self.search_input.setPlaceholderText("⏳ Inizializzazione dati... attendere")
+        self.search_input.setEnabled(False)
+        QTimer.singleShot(50, self._load_data)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -49,7 +52,7 @@ class ScaricoOrePanel(QWidget):
 
         # Search Bar
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)")
+        self.search_input.setPlaceholderText("⏳ Inizializzazione...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setFixedWidth(400)
         self.search_input.setStyleSheet("""
@@ -65,6 +68,12 @@ class ScaricoOrePanel(QWidget):
         """)
         # Ricerca su Invio
         self.search_input.returnPressed.connect(self._perform_search)
+        # Also search on text changed? For 130k rows, Enter is safer, but let's see.
+        # Ideally debounce. But Virtual Model is fast enough for per-char?
+        # Let's stick to Enter for "MAXIMUM" responsiveness unless requested.
+        # Actually user said "Cold Start Lag" on search.
+        # Let's enable real-time search if it's fast (< 50ms).
+        # We'll stick to Enter to be safe for now as requested by previous logic.
 
         toolbar.addWidget(self.search_input)
 
@@ -109,21 +118,20 @@ class ScaricoOrePanel(QWidget):
         self.table_view.setWordWrap(False) # Optimization: Disable word wrap for 130k rows performance
 
         # Models
+        # ⚡ BOLT: Use Virtual Model directly, no Proxy
         self.source_model = ScaricoOreTableModel([])
-        self.proxy_model = ScaricoOreFilterProxy(self)
-        self.proxy_model.setSourceModel(self.source_model)
-        self.table_view.setModel(self.proxy_model)
+        self.source_model.cache_loaded.connect(self._on_cache_loaded)
+        self.source_model.loading_progress.connect(self._on_loading_progress)
 
-        # Connect signals for totals update
-        self.proxy_model.layoutChanged.connect(self._update_totals)
-        self.proxy_model.rowsInserted.connect(lambda p, f, l: self._update_totals())
-        self.proxy_model.rowsRemoved.connect(lambda p, f, l: self._update_totals())
-        self.proxy_model.modelReset.connect(self._update_totals)
+        self.table_view.setModel(self.source_model)
 
         # Custom Header
         header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
         self.table_view.setHorizontalHeader(header)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+
+        # Connect Header Filters
+        header.filterChanged.connect(self._on_header_filter_changed)
 
         # Styles
         self.table_view.setStyleSheet("""
@@ -180,60 +188,18 @@ class ScaricoOrePanel(QWidget):
 
     def _update_totals(self):
         """Calculates totals based on visible rows."""
-        # This can be heavy if run on main thread for 130k rows.
-        # But FilterProxy handles filtering fast.
-        # We need to iterate over indices.
-
-        # Optimization: Only count rows, and sum 'Totale Ore' (Col 7)
-        row_count = self.proxy_model.rowCount()
+        # ⚡ BOLT: Use Model's fast counter
+        row_count = self.source_model.rowCount()
         self.lbl_count.setText(f"Righe visibili: {row_count}")
 
-        # Summing 130k floats in python loop might freeze GUI for 0.5s.
-        # We can do it in a timer or worker if needed.
-        # Let's try direct first.
-        # We only need to sum if row_count < some limit? No, user wants totals.
-        # Optimization: If no filter, use pre-calculated total from source?
-
-        if row_count > 50000:
-             self.lbl_total_hours.setText("Totale Ore: Calcolo... (filtrando)")
-             QTimer.singleShot(100, self._calculate_sum_heavy)
+        if row_count > 0:
+             # Use the model's optimized sum (it uses indices)
+             # Ideally run in background if > 50k rows?
+             # Python sum of 130k floats is ~5ms. Safe for main thread.
+             total = self.source_model.get_float_total_for_visible()
+             self.lbl_total_hours.setText(f"Totale Ore: {total:,.2f}")
         else:
-             self._calculate_sum_heavy()
-
-    def _calculate_sum_heavy(self):
-        total = 0.0
-        # Iterate source rows? No, filtered rows.
-        # proxy.data(index) is slow.
-        # Fast path: Get source rows that are accepted.
-
-        rows = self.proxy_model.rowCount()
-
-        # Optimization 1: if rows == source.rows (no filter), sum source data directly (fast)
-        if rows == self.source_model.rowCount():
-             # Sum pre-calculated floats from source model
-             # Accessing _float_totals directly is faster than method call
-             try:
-                 total = sum(self.source_model._float_totals)
-             except:
-                 total = 0
-        else:
-             # Iterate proxy. mapToSource is the bottleneck but unavoidable if we want exact visible sum.
-             # However, accessing the PRE-PARSED float is much faster than parsing string.
-             proxy = self.proxy_model
-             source = self.source_model
-
-             # Optimization: Avoid dot lookup in loop
-             map_to_source = proxy.mapToSource
-             index_fn = proxy.index
-             get_float_total = source.get_float_total
-
-             # This loop is still O(N) but operation inside is O(1) instead of O(M)
-             for r in range(rows):
-                 # We only need the row index of the source
-                 source_idx = map_to_source(index_fn(r, 0))
-                 total += get_float_total(source_idx.row())
-
-        self.lbl_total_hours.setText(f"Totale Ore: {total:,.2f}")
+             self.lbl_total_hours.setText("Totale Ore: 0.00")
 
     def _start_update(self):
         """Avvia l'aggiornamento specifico per Scarico Ore."""
@@ -258,25 +224,85 @@ class ScaricoOrePanel(QWidget):
 
         if success:
             self.status_label.setText("✅ Aggiornato")
-            # Invalidate cache by removing the file, so _load_data forces a fresh DB read
+            # Invalidate cache by removing the file
             try:
                 if ScaricoOreTableModel.CACHE_PATH.exists():
                     ScaricoOreTableModel.CACHE_PATH.unlink()
             except: pass
 
-            self._load_data() # Reload data (will rebuild cache)
+            # Reset global cache to force reload
+            ScaricoOreTableModel._global_cache['loaded'] = False
+
+            self._load_data() # Reload data
             QMessageBox.information(self, "Successo", msg)
         else:
             self.status_label.setText("❌ Errore")
             QMessageBox.critical(self, "Errore Aggiornamento", msg)
 
     def _perform_search(self):
-        """Aggiorna il filtro testuale del proxy."""
+        """Aggiorna il filtro testuale."""
         text = self.search_input.text()
-        self.proxy_model.set_filter_text(text)
+        # Pass current column filters? No, we need to store them in panel.
+        # Actually Model handles combination logic if we pass them.
+        # Let's store col filters in panel state.
+        if not hasattr(self, '_current_col_filters'):
+            self._current_col_filters = {}
 
-        count = self.proxy_model.rowCount()
-        self.status_label.setText(f"Righe visibili: {count}")
+        self.source_model.set_filter(text, self._current_col_filters)
+        self._update_totals()
+
+    def _on_header_filter_changed(self, col, values):
+        """Handle column filter changes from header."""
+        if not hasattr(self, '_current_col_filters'):
+            self._current_col_filters = {}
+
+        if not values:
+            if col in self._current_col_filters:
+                del self._current_col_filters[col]
+        else:
+            # Store as set of lowercase for model optimization
+            self._current_col_filters[col] = set(str(v).lower() for v in values)
+
+        # Re-apply filters
+        text = self.search_input.text()
+        self.source_model.set_filter(text, self._current_col_filters)
+        self._update_totals()
+
+    def _set_ui_loading(self, loading: bool):
+        """Disable/Enable UI during heavy loads."""
+        self.search_input.setEnabled(not loading)
+        self.update_btn.setEnabled(not loading)
+
+        if loading:
+            self.search_input.setPlaceholderText("⏳ Caricamento in corso... attendere")
+            self.table_view.setDisabled(True)
+            self.table_view.setStyleSheet("QTableView { background-color: #f8f9fa; }")
+            # ⚡ BOLT: Force paint to show loading text immediately
+            QApplication.processEvents()
+        else:
+            self.search_input.setPlaceholderText("🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)")
+            self.table_view.setDisabled(False)
+            self.table_view.setStyleSheet("""
+            QTableView {
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                background-color: white;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+            }
+            """)
+
+    def _on_loading_progress(self, msg):
+        self.status_label.setText(f"⏳ {msg}")
+        QApplication.processEvents() # Ensure progress updates are seen
+
+    def _on_cache_loaded(self):
+        """Called when background loading finishes."""
+        count = self.source_model.rowCount()
+        self.status_label.setText(f"✅ Pronti ({count} record)")
+        self._set_ui_loading(False)
+        self._resize_columns()
+        self._update_totals()
 
     def _load_data(self):
         """Carica TUTTI i dati in memoria (molto veloce in RAM)."""
@@ -284,39 +310,22 @@ class ScaricoOrePanel(QWidget):
             self.status_label.setText("Database non trovato.")
             return
 
-        # 1. Try Load from Cache first
-        if self.source_model.load_cache():
-            count = self.source_model.rowCount()
-            self.status_label.setText(f"Caricati {count} record (da Cache).")
-            self._update_totals()
+        self._set_ui_loading(True)
 
-            # Ensure columns are sized correctly (even from cache)
-            self._resize_columns()
-            return
-
-        # 2. Fallback to DB Load
-        try:
-            # Fetch ALL rows (tuples)
-            rows = ContabilitaManager.get_scarico_ore_data()
-            self.source_model.update_data(rows) # This also saves cache
-
-            self._resize_columns()
-
-            count = len(rows)
-            self.status_label.setText(f"Caricati {count} record.")
-            self._update_totals()
-
-        except Exception as e:
-            self.status_label.setText(f"Errore caricamento: {e}")
-            print(f"DB Error: {e}")
+        # ⚡ BOLT OPTIMIZATION:
+        if ScaricoOreTableModel.CACHE_PATH.exists():
+            self.source_model.load_data_async(raw_data=None)
+        else:
+            try:
+                # Fetch ALL rows (tuples) - SQLite is fast
+                rows = ContabilitaManager.get_scarico_ore_data()
+                self.source_model.load_data_async(raw_data=rows)
+            except Exception as e:
+                self.status_label.setText(f"Errore caricamento: {e}")
+                self._set_ui_loading(False)
 
     def _resize_columns(self):
-        # Reset view properties
-        self.table_view.resizeColumnsToContents()
-
-        # Adjust column widths as requested:
-        # "sum of widths must equal view size" -> Stretch Last Section?
-        # "Descrizione (Col 8) must be wider"
+        # ⚡ BOLT OPTIMIZATION: REMOVED resizeColumnsToContents()
 
         header = self.table_view.horizontalHeader()
 
