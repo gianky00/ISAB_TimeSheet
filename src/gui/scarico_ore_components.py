@@ -5,6 +5,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget, QPushButton, QHBoxLayout, QLabel, QScrollArea, QListView, QLineEdit, QTreeView
 )
 import json
+import pickle
+from pathlib import Path
 from datetime import datetime
 from src.utils.parsing import parse_currency
 
@@ -13,12 +15,15 @@ class ScaricoOreTableModel(QAbstractTableModel):
     Modello virtuale per Scarico Ore Cantiere (130k+ righe).
     Gestisce dati e stili (colori) in sola lettura.
     Implementa cache per ricerca e totali per massime prestazioni.
+    Supporta persistenza su disco per avvio istantaneo.
     """
 
     COLUMNS = [
         'DATA', 'PERS1', 'PERS2', 'ODC', 'POS', 'DALLE', 'ALLE',
         'TOTALE ORE', 'DESCRIZIONE', 'FINITO', 'COMMESSA'
     ]
+
+    CACHE_PATH = Path("data/scarico_ore_cache.pkl")
 
     def __init__(self, data=None):
         super().__init__()
@@ -33,6 +38,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._data = new_data
         self._build_caches()
         self.endResetModel()
+        self.save_cache()
 
     def _build_caches(self):
         """
@@ -96,6 +102,34 @@ class ScaricoOreTableModel(QAbstractTableModel):
                     append_total(parse_currency(val_7))
             except:
                 append_total(0.0)
+
+    def save_cache(self):
+        """Salva lo stato corrente su disco."""
+        try:
+            self.CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.CACHE_PATH, 'wb') as f:
+                pickle.dump((self._data, self._search_index, self._float_totals), f)
+        except Exception as e:
+            print(f"Errore salvataggio cache: {e}")
+
+    def load_cache(self) -> bool:
+        """Carica lo stato da disco se esiste."""
+        if not self.CACHE_PATH.exists():
+            return False
+
+        try:
+            with open(self.CACHE_PATH, 'rb') as f:
+                data, search, totals = pickle.load(f)
+
+            self.beginResetModel()
+            self._data = data
+            self._search_index = search
+            self._float_totals = totals
+            self.endResetModel()
+            return True
+        except Exception as e:
+            print(f"Errore caricamento cache: {e}")
+            return False
 
     def get_search_text(self, row_index):
         """Ritorna la stringa di ricerca pre-calcolata per la riga."""
