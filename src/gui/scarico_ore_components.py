@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, pyqtSignal, QModelIndex, QSortFilterProxyModel, QThread
+from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, pyqtSignal, QModelIndex, QThread
 from PyQt6.QtGui import QColor, QBrush, QAction, QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import (
     QHeaderView, QMenu, QWidgetAction, QCheckBox,
@@ -16,7 +16,7 @@ class CacheWorker(QThread):
     Handles file I/O (pickle) and data processing (string index construction)
     to prevent UI freezing.
     """
-    finished = pyqtSignal(object, object, object) # data, search_index, float_totals
+    finished = pyqtSignal(object, object, object, object) # data, search_index, float_totals, style_cache
     progress = pyqtSignal(str)
 
     def __init__(self, cache_path, data_source=None):
@@ -28,36 +28,66 @@ class CacheWorker(QThread):
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
-            search_index, float_totals = self._build_caches(self.data_source)
+            search_index, float_totals, style_cache = self._build_caches(self.data_source)
             # Save to disk
             self.progress.emit("Salvataggio cache...")
-            self._save_cache(self.data_source, search_index, float_totals)
-            self.finished.emit(self.data_source, search_index, float_totals)
+            self._save_cache(self.data_source, search_index, float_totals, style_cache)
+            self.finished.emit(self.data_source, search_index, float_totals, style_cache)
         else:
             # Load from file
             if not self.cache_path.exists():
-                self.finished.emit([], [], [])
+                self.finished.emit([], [], [], [])
                 return
 
             try:
                 self.progress.emit("Caricamento cache...")
                 with open(self.cache_path, 'rb') as f:
-                    data, search, totals = pickle.load(f)
-                self.finished.emit(data, search, totals)
+                    # Legacy support: check pickle structure
+                    loaded = pickle.load(f)
+                    if len(loaded) == 3:
+                        # Old format without style cache
+                        data, search, totals = loaded
+                        # Optimization: Just build style cache
+                        style_cache = self._build_style_cache_only(data)
+                    else:
+                        data, search, totals, style_cache = loaded
+
+                self.finished.emit(data, search, totals, style_cache)
             except Exception as e:
                 print(f"Error loading cache: {e}")
-                self.finished.emit([], [], [])
+                self.finished.emit([], [], [], [])
+
+    def _build_style_cache_only(self, data):
+        """Helper to build only style cache from data."""
+        style_cache = []
+        append_style = style_cache.append
+
+        for row in data:
+            if len(row) > 11:
+                style_json = row[11]
+                if style_json:
+                    try:
+                        append_style(json.loads(style_json))
+                    except:
+                        append_style(None)
+                else:
+                    append_style(None)
+            else:
+                append_style(None)
+        return style_cache
 
     def _build_caches(self, data):
         """
-        Pre-computa le stringhe di ricerca e i totali numerici.
+        Pre-computa le stringhe di ricerca, i totali numerici e gli stili.
         Optimized for speed.
         """
         search_index = []
         float_totals = []
+        style_cache = []
 
         append_search = search_index.append
         append_total = float_totals.append
+        append_style = style_cache.append
 
         # Pre-compile useful methods
         str_converter = str
@@ -75,7 +105,7 @@ class CacheWorker(QThread):
                         # Assuming 'YYYY-MM-DD ...'
                         # Fixed slice is faster than split
                         # YYYY-MM-DD is 10 chars
-                        if s_val[4] == '-' and s_val[7] == '-':
+                        if len(s_val) >= 10 and s_val[4] == '-' and s_val[7] == '-':
                              str_0 = f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
                         else:
                              # Fallback to robust parsing
@@ -109,13 +139,26 @@ class CacheWorker(QThread):
             except:
                 append_total(0.0)
 
-        return search_index, float_totals
+            # --- 3. Style Cache (Pre-parse JSON) ---
+            if len(row) > 11:
+                style_json = row[11]
+                if style_json:
+                    try:
+                        append_style(json.loads(style_json))
+                    except:
+                        append_style(None)
+                else:
+                    append_style(None)
+            else:
+                append_style(None)
 
-    def _save_cache(self, data, search, totals):
+        return search_index, float_totals, style_cache
+
+    def _save_cache(self, data, search, totals, style_cache):
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.cache_path, 'wb') as f:
-                pickle.dump((data, search, totals), f)
+                pickle.dump((data, search, totals, style_cache), f)
         except Exception as e:
             print(f"Error saving cache: {e}")
 
@@ -134,6 +177,15 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     CACHE_PATH = Path("data/scarico_ore_cache.pkl")
 
+    # ⚡ SINGLETON CACHE to persist data across view switches
+    _global_cache = {
+        'data': [],
+        'search': [],
+        'totals': [],
+        'styles': [],
+        'loaded': False
+    }
+
     # Signals to notify UI
     cache_loaded = pyqtSignal()
     loading_progress = pyqtSignal(str)
@@ -143,11 +195,18 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._data = []
         self._search_index = []
         self._float_totals = []
+        self._styles_cache = []
         self._worker = None
         self.is_loading = False
 
-        # If data is provided initially, we might process it synchronously
-        # but typically this is called with []
+        # If global cache is loaded, use it immediately
+        if self._global_cache['loaded']:
+            self._data = self._global_cache['data']
+            self._search_index = self._global_cache['search']
+            self._float_totals = self._global_cache['totals']
+            self._styles_cache = self._global_cache['styles']
+
+        # If data is provided initially (legacy), update
         if data:
             self.update_data(data)
 
@@ -155,8 +214,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
         """
         Loads data in background.
         If raw_data is provided, builds cache from it.
-        If None, loads from disk cache.
+        If None, loads from disk cache (unless global cache is ready).
         """
+        if self._global_cache['loaded'] and raw_data is None:
+            # Already loaded in memory, no need to go to disk
+            self.cache_loaded.emit()
+            return
+
         if self.is_loading:
             return
 
@@ -168,12 +232,20 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
 
-    def _on_worker_finished(self, data, search, totals):
+    def _on_worker_finished(self, data, search, totals, style_cache):
         self.beginResetModel()
         self._data = data
         self._search_index = search
         self._float_totals = totals
+        self._styles_cache = style_cache
         self.endResetModel()
+
+        # Update Singleton
+        self._global_cache['data'] = data
+        self._global_cache['search'] = search
+        self._global_cache['totals'] = totals
+        self._global_cache['styles'] = style_cache
+        self._global_cache['loaded'] = True
 
         self.is_loading = False
         self._worker = None
@@ -252,15 +324,15 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return None
 
     def _get_style(self, row, col, style_type):
-        """Helper to extract style safely."""
+        """Helper to extract style safely using Pre-Parsed Cache."""
         try:
-            if len(self._data[row]) <= 11: return None
+            if row >= len(self._styles_cache): return None
 
-            style_json = self._data[row][11]
-            if not style_json:
+            # ⚡ OPTIMIZED: Use pre-parsed dict, avoid json.loads
+            styles = self._styles_cache[row]
+            if not styles:
                 return None
 
-            styles = json.loads(style_json)
             keys = [
                 'data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle',
                 'totale_ore', 'descrizione', 'finito', 'commessa'

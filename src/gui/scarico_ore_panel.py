@@ -285,10 +285,13 @@ class ScaricoOrePanel(QWidget):
         """Disable/Enable UI during heavy loads."""
         self.search_input.setEnabled(not loading)
         self.update_btn.setEnabled(not loading)
+
         if loading:
+            self.search_input.setPlaceholderText("⏳ Caricamento in corso... attendere")
             self.table_view.setDisabled(True)
             self.table_view.setStyleSheet("QTableView { background-color: #f8f9fa; }")
         else:
+            self.search_input.setPlaceholderText("🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)")
             self.table_view.setDisabled(False)
             self.table_view.setStyleSheet("""
             QTableView {
@@ -341,8 +344,9 @@ class ScaricoOrePanel(QWidget):
                 self._set_ui_loading(False)
 
     def _resize_columns(self):
-        # Reset view properties
-        self.table_view.resizeColumnsToContents()
+        # ⚡ BOLT OPTIMIZATION: REMOVED resizeColumnsToContents()
+        # It scans 130k rows and causes massive lag.
+        # self.table_view.resizeColumnsToContents()
 
         # Adjust column widths as requested:
         # "sum of widths must equal view size" -> Stretch Last Section?
