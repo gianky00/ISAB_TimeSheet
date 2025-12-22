@@ -17,6 +17,7 @@ import numpy as np
 
 from src.gui.widgets import KPIBigCard, StatusIndicator, InfoLabel
 from src.core.contabilita_manager import ContabilitaManager
+from src.utils.parsing import parse_currency
 
 # Standard constants
 HOURLY_COST_STD = 30.00
@@ -201,25 +202,11 @@ class DashboardPanel(QWidget):
                                 # Assuming standard logic: valid Prev has a valid N_PREV.
                                 pass
 
-                            # Parse Totale Prev (col 3)
-                            p_str = str(row[3]).replace('€', '').strip()
-                            p = 0.0
-                            if p_str:
-                                p_str_clean = p_str.replace('.', '').replace(',', '.')
-                                try:
-                                    p = float(p_str_clean)
-                                except ValueError:
-                                    p = 0.0
+                            # Parse Totale Prev (col 3) using robust logic
+                            p = parse_currency(row[3])
 
-                            # Parse Ore (col 9)
-                            o_str = str(row[9]).strip()
-                            o = 0.0
-                            if o_str:
-                                o_str_clean = o_str.replace(',', '.')
-                                try:
-                                    o = float(o_str_clean)
-                                except ValueError:
-                                    o = 0.0
+                            # Parse Ore (col 9) using robust logic
+                            o = parse_currency(row[9])
 
                             tot_prev += p
                             tot_ore += o
