@@ -1,12 +1,13 @@
 import sqlite3
 from pathlib import Path
+from src.core.config_manager import CONFIG_DIR
 
-DATA_DIR = Path(__file__).parent.parent / "data"
+DATA_DIR = CONFIG_DIR / "data"
 DB_FILE = DATA_DIR / "database.db"
 
 def get_connection():
     if not DATA_DIR.exists():
-        DATA_DIR.mkdir(parents=True)
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     return conn

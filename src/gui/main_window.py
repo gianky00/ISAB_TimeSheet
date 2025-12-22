@@ -493,9 +493,9 @@ class MainWindow(QMainWindow):
         # Usa il metodo statico del bot timbrature
         try:
             from src.bots.timbrature.bot import TimbratureBot
-            from pathlib import Path as PPath
 
-            success = TimbratureBot.import_to_db_static(path, PPath("data/timbrature_Isab.db"), lambda x: None)
+            db_path = config_manager.CONFIG_DIR / "data" / "timbrature_Isab.db"
+            success = TimbratureBot.import_to_db_static(path, db_path, lambda x: None)
             if success:
                 self.timbrature_db_panel.refresh_data()
                 self.show_toast("Timbrature importate con successo!")

@@ -13,6 +13,7 @@ import json
 from typing import List, Dict, Tuple, Optional
 from datetime import datetime
 from src.utils.parsing import parse_currency
+from src.core.config_manager import CONFIG_DIR
 
 # Tentativo di importare msoffcrypto
 try:
@@ -30,7 +31,7 @@ except ImportError:
 class ContabilitaManager:
     """Manager per la gestione del database e dell'importazione Excel."""
 
-    DB_PATH = Path("data/contabilita.db")
+    DB_PATH = CONFIG_DIR / "data" / "contabilita.db"
 
     # Mapping colonne Excel -> DB (Contabilità / Dati)
     COLUMNS_MAPPING = {
