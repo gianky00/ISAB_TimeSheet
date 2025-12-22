@@ -7,7 +7,9 @@
 #define MyAppExeName "BotTS.exe"
 
 ; Read version from version.py (manually update or use preprocessor)
-#define MyAppVersion "1.0.0"
+#ifndef MyAppVersion
+  #define MyAppVersion "1.0.0"
+#endif
 
 ; Paths (relative to this script location)
 #define SourcePath "..\..\dist\BotTS"
