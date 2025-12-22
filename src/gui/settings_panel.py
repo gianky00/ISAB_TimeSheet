@@ -326,10 +326,16 @@ class SettingsPanel(QWidget):
         giornaliere_path_layout.addWidget(self.browse_giornaliere_btn)
         contabilita_layout.addLayout(giornaliere_path_layout)
 
-        # Scarico Ore Cantiere File
+        scroll_layout.addWidget(contabilita_group)
+
+        # --- Sezione Scarico Ore Cantiere (DataEase) ---
+        dataease_group = self._create_group_box("🏗️ Scarico Ore Cantiere (DataEase)")
+        dataease_layout = QVBoxLayout(dataease_group)
+        self.groups.append(dataease_group)
+
         dataease_label = QLabel("File Scarico Ore Cantiere (DataEase):")
-        dataease_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
-        contabilita_layout.addWidget(dataease_label)
+        dataease_label.setStyleSheet("font-size: 14px; font-weight: normal;")
+        dataease_layout.addWidget(dataease_label)
 
         dataease_path_layout = QHBoxLayout()
         self.dataease_path_edit = QLineEdit()
@@ -345,9 +351,9 @@ class SettingsPanel(QWidget):
         self.browse_dataease_btn.clicked.connect(self._browse_dataease_path)
         self._style_button(self.browse_dataease_btn)
         dataease_path_layout.addWidget(self.browse_dataease_btn)
-        contabilita_layout.addLayout(dataease_path_layout)
+        dataease_layout.addLayout(dataease_path_layout)
 
-        scroll_layout.addWidget(contabilita_group)
+        scroll_layout.addWidget(dataease_group)
         
         # --- Sezione Browser ---
         browser_group = self._create_group_box("🌐 Impostazioni Browser")
@@ -401,6 +407,19 @@ class SettingsPanel(QWidget):
         download_layout.addLayout(path_layout)
         
         scroll_layout.addWidget(download_group)
+
+        # --- Sezione Diagnostica ---
+        diag_group = self._create_group_box("🛠️ Diagnostica & Licenza")
+        diag_layout = QVBoxLayout(diag_group)
+        self.groups.append(diag_group)
+
+        open_folder_btn = QPushButton("📂 Apri cartella Logs e Licenza")
+        open_folder_btn.setMinimumHeight(45)
+        open_folder_btn.clicked.connect(self._open_data_folder)
+        self._style_button(open_folder_btn)
+        diag_layout.addWidget(open_folder_btn)
+
+        scroll_layout.addWidget(diag_group)
         
         scroll_layout.addStretch()
         self.scroll.setWidget(self.scroll_content)
@@ -544,6 +563,13 @@ class SettingsPanel(QWidget):
     def has_unsaved_changes(self) -> bool:
         """Restituisce True se ci sono modifiche non salvate."""
         return self._has_unsaved_changes
+
+    def _open_data_folder(self):
+        """Apre la cartella dei dati (logs, config, licenza)."""
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
+        folder = config_manager.CONFIG_DIR
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     def _browse_download_path(self):
         current_path = self.download_path_edit.text()
