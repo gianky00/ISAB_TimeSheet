@@ -10,6 +10,7 @@ import logging
 import warnings
 from typing import List, Dict, Tuple, Optional
 from datetime import datetime
+from src.utils.parsing import parse_currency
 
 class ContabilitaManager:
     """Manager per la gestione del database e dell'importazione Excel."""
@@ -370,32 +371,50 @@ class ContabilitaManager:
         stats = {
             "total_prev": 0.0,
             "total_ore": 0.0,
-            "count_total": len(data),
+            "count_total": 0, # Was len(data), now depends on filtered count
             "status_counts": {},
             "top_commesse": []
         }
         commesse = []
+
+        # NOTE: Apply Strict Filtering logic same as DashboardPanel
+        valid_rows_count = 0
+
         for row in data:
             try:
-                t_str = str(row[3]).replace('.','').replace(',','.').replace('€','').strip()
-                val_prev = float(t_str) if t_str else 0.0
-            except: val_prev = 0.0
-            try:
-                o_str = str(row[9]).replace(',','.').strip()
-                val_ore = float(o_str) if o_str else 0.0
-            except: val_ore = 0.0
+                # row indices: 2=n_prev, 3=totale_prev, 4=attivita, 7=stato, 9=ore_sp, 10=resa
+                n_prev = str(row[2]).strip()
+                if not n_prev:
+                    continue
+                if "totale" in n_prev.lower():
+                    continue
 
-            stats["total_prev"] += val_prev
-            stats["total_ore"] += val_ore
+                resa_val = str(row[10]).strip().upper()
+                # Skip aggregation if "INS.ORE SP" - logic depends on if we want hours or not.
+                # Dashboard includes hours for these rows, but assumes Prev is 0.
+                # We will parse values safely.
 
-            status = str(row[7]).strip().upper()
-            if status:
-                stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
+                # Robust Parsing using new utility
+                val_prev = parse_currency(row[3])
+                val_ore = parse_currency(row[9])
 
-            if val_prev > 0:
-                attivita = str(row[4]).strip() or "N/D"
-                commesse.append((attivita, val_prev))
+                stats["total_prev"] += val_prev
+                stats["total_ore"] += val_ore
+                valid_rows_count += 1
 
+                status = str(row[7]).strip().upper()
+                if status:
+                    stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
+
+                if val_prev > 0:
+                    attivita = str(row[4]).strip() or "N/D"
+                    commesse.append((attivita, val_prev))
+
+            except Exception as e:
+                # Skip row on error
+                pass
+
+        stats["count_total"] = valid_rows_count
         commesse.sort(key=lambda x: x[1], reverse=True)
         stats["top_commesse"] = commesse[:5]
         return stats

@@ -88,6 +88,28 @@ class LyraPanel(QWidget):
         """)
         layout.addWidget(self.chat_area)
 
+        # Tool Bar for Table Actions (Initially Hidden or Dynamic?)
+        # Let's add a persistent toolbar below chat for "Last Table" actions
+        self.table_actions_layout = QHBoxLayout()
+        self.table_actions_layout.setContentsMargins(0, 5, 0, 5)
+        self.btn_export_last_table = QPushButton("📊 Esporta Ultima Tabella Excel")
+        self.btn_export_last_table.setVisible(False)
+        self.btn_export_last_table.setStyleSheet("""
+            QPushButton {
+                background-color: #198754;
+                color: white;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #157347; }
+        """)
+        self.btn_export_last_table.clicked.connect(self._export_excel)
+        self.table_actions_layout.addWidget(self.btn_export_last_table)
+        self.table_actions_layout.addStretch()
+
+        layout.addLayout(self.table_actions_layout)
+
         # Quick Actions Scroll Area
         scroll_container = QWidget()
         scroll_layout = QHBoxLayout(scroll_container)
@@ -211,8 +233,7 @@ class LyraPanel(QWidget):
             # Enable 'tables' and 'fenced_code' extensions
             html = markdown.markdown(text, extensions=['tables', 'fenced_code'])
 
-            # Post-process for styling (since we can't inject CSS classes easily into the lib output)
-            # Add basic style to tables
+            # Post-process for styling
             style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 10px; border-color: #dee2e6;"'
             style_th = 'style="background-color: #f8f9fa; color: #495057; font-weight: bold; padding: 8px;"'
             style_td = 'style="padding: 8px;"'
@@ -221,9 +242,10 @@ class LyraPanel(QWidget):
             html = html.replace('<th>', f'<th {style_th}>')
             html = html.replace('<td>', f'<td {style_td}>')
 
-            # Detect tables for export context (simple heuristic)
+            # Detect tables for export context
             if '<table>' in html:
-                self.last_table_data = text # Store original MD for parsing or just flag it
+                self.last_table_data = text
+                self.btn_export_last_table.setVisible(True)
 
             return html
         except Exception as e:
@@ -263,23 +285,18 @@ class LyraPanel(QWidget):
         excel_action.triggered.connect(self._export_excel)
         menu.addAction(excel_action)
 
-        # Show menu at cursor position relative to the button
-        # But button logic is internal to this method call? No, it's called by button click.
-        # We need the button position or just show under mouse.
-        menu.exec(QAction.staticMetaObject.cast(self.sender()).parentWidget().mapToGlobal(self.sender().pos()))
+        # FIXED: Use sender directly instead of casting
+        sender = self.sender()
+        if sender:
+             # Calculate position below the button
+             pos = sender.mapToGlobal(sender.rect().bottomLeft())
+             menu.exec(pos)
 
 
     def _export_pdf(self):
         filename, _ = QFileDialog.getSaveFileName(self, "Salva Chat PDF", "chat_lyra.pdf", "PDF Files (*.pdf)")
         if filename:
             try:
-                printer = self.chat_area.document()
-                # Qt6 printing requires QPrinter, but QTextDocument has print method? No.
-                # Simplified: Save HTML?
-                # Better: Use QPdfWriter or simple print to pdf if available.
-                # Since dependencies are minimal, let's use a simpler approach: Print to PDF using QPrinter if available
-                # or just save HTML.
-
                 # Using QPrinter (requires PyQt6.QtPrintSupport)
                 from PyQt6.QtPrintSupport import QPrinter
                 printer = QPrinter(QPrinter.PrinterMode.HighResolution)
@@ -297,21 +314,9 @@ class LyraPanel(QWidget):
 
     def _export_excel(self):
         """Exports the last table found in the chat history to Excel."""
-        # Retrieve full text or just inspect self.last_table_data
-        # Parsing Markdown table is tricky without regex or dedicated lib.
-        # Let's try to extract tables from the entire Markdown history if possible?
-        # Actually, self.last_table_data stores the markdown chunk of the last message if it contained a table.
-        # But we need the clean markdown table.
-
-        # Simpler: Ask user to paste the table? No.
-        # Robust: Parse self.chat_area.toPlainText() looking for Markdown table patterns.
-
         text = self.chat_area.toPlainText()
-        # Find last occurrence of a markdown table pattern
-        # Lines starting with |
         lines = text.split('\n')
         table_lines = []
-        capturing = False
 
         # Capture the LAST table block
         current_block = []
@@ -320,9 +325,8 @@ class LyraPanel(QWidget):
                 current_block.append(line)
             else:
                 if current_block:
-                    # Check if it looks like a table (at least 2 lines)
                     if len(current_block) >= 2:
-                        table_lines = current_block # Keep replacing to get the last one
+                        table_lines = current_block
                     current_block = []
 
         if current_block: # End of file case
@@ -334,18 +338,12 @@ class LyraPanel(QWidget):
             return
 
         try:
-            # Convert markdown table lines to dataframe
-            # Remove separator line (e.g., |---|---|)
             cleaned_lines = [l for l in table_lines if '---' not in l]
 
             data = StringIO("\n".join(cleaned_lines))
-            # Use pandas read_csv with sep='|'
-            # Note: Markdown tables often have leading/trailing pipes which create empty cols
             df = pd.read_csv(data, sep='|', header=0, engine='python')
 
-            # Clean up empty columns (first and last usually)
             df = df.dropna(axis=1, how='all')
-            # Clean whitespace from headers and cells
             df.columns = df.columns.str.strip()
             df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
 
