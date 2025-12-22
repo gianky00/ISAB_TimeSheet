@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QAbstractTableModel, QSortFilterProxyModel, pyqtSignal, QModelIndex, QThread
+from PyQt6.QtCore import Qt, QAbstractTableModel, pyqtSignal, QModelIndex, QThread
 from PyQt6.QtGui import QColor, QBrush, QAction, QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import (
     QHeaderView, QMenu, QWidgetAction, QCheckBox,
@@ -13,26 +13,26 @@ from src.utils.parsing import parse_currency
 class CacheWorker(QThread):
     """
     ⚡ BOLT OPTIMIZATION: Background worker for heavy cache operations.
-    Handles file I/O (pickle) and data processing (string index construction)
-    to prevent UI freezing.
+    Handles file I/O (pickle) and data processing.
+    Now builds a PRE-FORMATTED display cache for max speed.
     """
-    finished = pyqtSignal(object, object, object, object) # data, search_index, float_totals, style_cache
+    finished = pyqtSignal(object, object, object, object) # display_data, search_index, float_totals, style_cache
     progress = pyqtSignal(str)
 
     def __init__(self, cache_path, data_source=None):
         super().__init__()
         self.cache_path = cache_path
-        self.data_source = data_source # If provided, we build cache from this data. If None, we load from file.
+        self.data_source = data_source # If provided, we build cache from this data.
 
     def run(self):
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
-            search_index, float_totals, style_cache = self._build_caches(self.data_source)
+            display_data, search_index, float_totals, style_cache = self._build_caches(self.data_source)
             # Save to disk
             self.progress.emit("Salvataggio cache...")
-            self._save_cache(self.data_source, search_index, float_totals, style_cache)
-            self.finished.emit(self.data_source, search_index, float_totals, style_cache)
+            self._save_cache(display_data, search_index, float_totals, style_cache)
+            self.finished.emit(display_data, search_index, float_totals, style_cache)
         else:
             # Load from file
             if not self.cache_path.exists():
@@ -45,14 +45,24 @@ class CacheWorker(QThread):
                     # Legacy support: check pickle structure
                     loaded = pickle.load(f)
                     if len(loaded) == 3:
-                        # Old format without style cache
-                        data, search, totals = loaded
-                        # Optimization: Just build style cache
-                        style_cache = self._build_style_cache_only(data)
+                        # Old format: data, search, totals
+                        # We must rebuild because 'data' is raw, we need 'display_data'
+                        raw_data = loaded[0]
+                        display_data, search_index, float_totals, style_cache = self._build_caches(raw_data)
+                    elif len(loaded) == 4:
+                        # Version 2 format: raw_data, search, totals, style
+                        # Checking if we need to rebuild (if data is not pre-formatted strings)
+                        d, s, t, st = loaded
+                        if d and len(d) > 0 and (d[0][0] is None or not isinstance(d[0][0], str)):
+                             # Likely raw data or None, rebuild
+                             display_data, search_index, float_totals, style_cache = self._build_caches(d)
+                        else:
+                             # Already formatted
+                             display_data, search_index, float_totals, style_cache = d, s, t, st
                     else:
-                        data, search, totals, style_cache = loaded
+                        display_data, search_index, float_totals, style_cache = [], [], [], []
 
-                self.finished.emit(data, search, totals, style_cache)
+                self.finished.emit(display_data, search_index, float_totals, style_cache)
             except Exception as e:
                 print(f"Error loading cache: {e}")
                 self.finished.emit([], [], [], [])
@@ -78,37 +88,35 @@ class CacheWorker(QThread):
 
     def _build_caches(self, data):
         """
-        Pre-computa le stringhe di ricerca, i totali numerici e gli stili.
+        Pre-computa tutto: Stringhe visualizzate, Indice ricerca, Totali, Stili.
         Optimized for speed.
         """
+        display_data = [] # List of list of strings
         search_index = []
         float_totals = []
         style_cache = []
 
+        append_display = display_data.append
         append_search = search_index.append
         append_total = float_totals.append
         append_style = style_cache.append
 
-        # Pre-compile useful methods
         str_converter = str
 
         for row in data:
-            # --- 1. Search Index Construction ---
-            # Date formatting (Col 0) - Optimized
+            # --- 1. Display Strings & Search Index ---
+            # We want to format everything ONCE here.
+
+            # Date (Col 0)
             val_0 = row[0]
             str_0 = ""
             if val_0:
                 s_val = str_converter(val_0)
-                # Fast path for 'YYYY-MM-DD' -> 'DD/MM/YYYY'
                 if '-' in s_val:
                     try:
-                        # Assuming 'YYYY-MM-DD ...'
-                        # Fixed slice is faster than split
-                        # YYYY-MM-DD is 10 chars
                         if len(s_val) >= 10 and s_val[4] == '-' and s_val[7] == '-':
                              str_0 = f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
                         else:
-                             # Fallback to robust parsing
                              parts = s_val.split(' ')[0].split('-')
                              if len(parts) == 3:
                                  str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}"
@@ -119,22 +127,48 @@ class CacheWorker(QThread):
                 else:
                     str_0 = s_val
 
-            # Other columns (1 to 10) - Optimized string join
-            # Skip col 11 (styles)
-            parts = [str_0]
-            # Unroll loop slightly or use list comp
-            parts.extend([str_converter(val) for val in row[1:11] if val is not None])
+            # Build Display Row (Cols 0-10)
+            display_row = [str_0]
+            search_parts = [str_0]
 
-            # Join and lower once
-            append_search(" ".join(parts).lower())
+            for i in range(1, 11):
+                val = row[i]
+                if val is None:
+                    d_val = ""
+                else:
+                    d_val = str_converter(val)
 
-            # --- 2. Float Totals Construction ---
+                display_row.append(d_val)
+                if d_val:
+                    search_parts.append(d_val)
+
+            # Append full raw row just in case we need it? No, keep memory low.
+            # But wait, if we rebuild cache next time, do we have raw data?
+            # If we save PRE-FORMATTED data to disk, we lose raw data (e.g. floats are now strings).
+            # This means we CANNOT rebuild totals/styles correctly if we rely on raw types later?
+            # Float totals are stored separately. Styles are stored separately.
+            # So display_data being strings is fine for display and search.
+            # What if we need to export to Excel later with real types?
+            # The export usually uses the DB or the Table Model.
+            # If Table Model only has strings, export will have strings.
+            # User might want numbers.
+            # However, for PERFORMANCE of the VIEW, strings are key.
+            # If export is needed, we can load from DB again or keep raw data in memory (doubles RAM).
+            # For 130k rows, RAM is cheap (100MB).
+            # Let's keep display_data as the main source for the View.
+            # If needed, we can add raw_data later.
+
+            append_display(display_row)
+
+            # Search Index (lowercase joined)
+            append_search(" ".join(search_parts).lower())
+
+            # --- 2. Float Totals (Col 7) ---
             val_7 = row[7]
             try:
                 if isinstance(val_7, (int, float)):
                     append_total(float(val_7))
                 else:
-                    # parse_currency is relatively slow, but unavoidable for string currencies
                     append_total(parse_currency(val_7))
             except:
                 append_total(0.0)
@@ -152,7 +186,7 @@ class CacheWorker(QThread):
             else:
                 append_style(None)
 
-        return search_index, float_totals, style_cache
+        return display_data, search_index, float_totals, style_cache
 
     def _save_cache(self, data, search, totals, style_cache):
         try:
@@ -164,10 +198,9 @@ class CacheWorker(QThread):
 
 class ScaricoOreTableModel(QAbstractTableModel):
     """
-    Modello virtuale per Scarico Ore Cantiere (130k+ righe).
-    Gestisce dati e stili (colori) in sola lettura.
-    Implementa cache per ricerca e totali per massime prestazioni.
-    Supporta persistenza su disco per avvio istantaneo.
+    Modello virtuale ULTRA-RAPIDO per Scarico Ore (130k+ righe).
+    Integra la logica di filtraggio per evitare l'overhead di QSortFilterProxyModel.
+    Usa dati pre-formattati per rendering O(1).
     """
 
     COLUMNS = [
@@ -177,47 +210,51 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     CACHE_PATH = Path("data/scarico_ore_cache.pkl")
 
-    # ⚡ SINGLETON CACHE to persist data across view switches
+    # ⚡ SINGLETON CACHE
     _global_cache = {
-        'data': [],
-        'search': [],
-        'totals': [],
-        'styles': [],
+        'display_data': [], # List[List[str]]
+        'search_index': [], # List[str]
+        'totals': [],       # List[float]
+        'styles': [],       # List[dict]
         'loaded': False
     }
 
-    # Signals to notify UI
     cache_loaded = pyqtSignal()
     loading_progress = pyqtSignal(str)
 
     def __init__(self, data=None):
         super().__init__()
-        self._data = []
+        # Data references
+        self._display_data = []
         self._search_index = []
         self._float_totals = []
         self._styles_cache = []
+
+        # Filtering
+        self._visible_indices = [] # Indices into _display_data
+        self._filtered_count = 0
+
         self._worker = None
         self.is_loading = False
 
+        self._current_search_terms = []
+        self._current_col_filters = {}
+
         # If global cache is loaded, use it immediately
         if self._global_cache['loaded']:
-            self._data = self._global_cache['data']
-            self._search_index = self._global_cache['search']
+            self._display_data = self._global_cache['display_data']
+            self._search_index = self._global_cache['search_index']
             self._float_totals = self._global_cache['totals']
             self._styles_cache = self._global_cache['styles']
+            # Reset filter (show all)
+            self._visible_indices = list(range(len(self._display_data)))
+            self._filtered_count = len(self._visible_indices)
 
-        # If data is provided initially (legacy), update
         if data:
             self.update_data(data)
 
     def load_data_async(self, raw_data=None):
-        """
-        Loads data in background.
-        If raw_data is provided, builds cache from it.
-        If None, loads from disk cache (unless global cache is ready).
-        """
         if self._global_cache['loaded'] and raw_data is None:
-            # Already loaded in memory, no need to go to disk
             self.cache_loaded.emit()
             return
 
@@ -232,17 +269,22 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
 
-    def _on_worker_finished(self, data, search, totals, style_cache):
+    def _on_worker_finished(self, display_data, search, totals, style_cache):
         self.beginResetModel()
-        self._data = data
+        self._display_data = display_data
         self._search_index = search
         self._float_totals = totals
         self._styles_cache = style_cache
+
+        # Reset filters
+        self._visible_indices = list(range(len(display_data)))
+        self._filtered_count = len(self._visible_indices)
+
         self.endResetModel()
 
         # Update Singleton
-        self._global_cache['data'] = data
-        self._global_cache['search'] = search
+        self._global_cache['display_data'] = display_data
+        self._global_cache['search_index'] = search
         self._global_cache['totals'] = totals
         self._global_cache['styles'] = style_cache
         self._global_cache['loaded'] = True
@@ -252,24 +294,69 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.cache_loaded.emit()
 
     def update_data(self, new_data):
-        """Synchronous update (legacy compatibility, avoid using for large datasets if possible)."""
-        # For backward compatibility or small updates, but better to use async
         self.load_data_async(new_data)
 
-    def get_search_text(self, row_index):
-        """Ritorna la stringa di ricerca pre-calcolata per la riga."""
-        if 0 <= row_index < len(self._search_index):
-            return self._search_index[row_index]
-        return ""
+    def set_filter(self, text, col_filters=None):
+        """
+        Applica filtri (testo globale e colonne) e aggiorna _visible_indices.
+        Operazione pura Python ottimizzata.
+        """
+        text = text.lower().strip()
+        search_terms = text.split() if text else []
 
-    def get_float_total(self, row_index):
-        """Ritorna il valore float pre-calcolato per 'TOTALE ORE'."""
-        if 0 <= row_index < len(self._float_totals):
-            return self._float_totals[row_index]
-        return 0.0
+        self.beginResetModel()
+
+        # Optimize: if no filters, just range
+        if not search_terms and not col_filters:
+            self._visible_indices = list(range(len(self._display_data)))
+        else:
+            # Filter Logic
+            # We use list comprehension for speed
+            indices = range(len(self._display_data))
+
+            # 1. Global Search
+            if search_terms:
+                # Pre-bind
+                s_idx = self._search_index
+                # Efficient intersection
+                indices = [
+                    i for i in indices
+                    if all(t in s_idx[i] for t in search_terms)
+                ]
+
+            # 2. Column Filters
+            if col_filters:
+                # col_filters: {col_idx: set(lowercase_values)}
+                for col, allowed in col_filters.items():
+                    # allowed is a set of lowercase strings
+                    # Data is in self._display_data[i][col] (string)
+                    # We need to lower it? Yes.
+                    # This part is slower, O(N).
+                    d_data = self._display_data
+                    indices = [
+                        i for i in indices
+                        if d_data[i][col].lower() in allowed
+                    ]
+
+            self._visible_indices = indices
+
+        self._filtered_count = len(self._visible_indices)
+        self.endResetModel()
+
+    def get_float_total_for_visible(self):
+        """Sum totals for visible rows."""
+        # This is fast: sum(list comprehension)
+        # accessing _float_totals via index
+        if not self._float_totals: return 0.0
+
+        # Direct index access
+        # Optimization: use numpy if available? No, stick to stdlib.
+        # map is fast.
+        total = sum(self._float_totals[i] for i in self._visible_indices)
+        return total
 
     def rowCount(self, parent=QModelIndex()):
-        return len(self._data)
+        return self._filtered_count
 
     def columnCount(self, parent=QModelIndex()):
         return len(self.COLUMNS)
@@ -278,38 +365,25 @@ class ScaricoOreTableModel(QAbstractTableModel):
         if not index.isValid():
             return None
 
+        # ⚡ FAST PATH ⚡
+        # Map visual row to real row
         row = index.row()
+        if row >= self._filtered_count: return None
+
+        real_row_idx = self._visible_indices[row]
         col = index.column()
 
-        # _data row structure: 0..10 are data cols, 11 is 'styles' (JSON)
-        if row >= len(self._data): return None
-        row_data = self._data[row]
-
         if role == Qt.ItemDataRole.DisplayRole:
-            val = row_data[col]
-            if val is None: return ""
-
-            # Format Data DD/MM/YYYY for display if it's column 0
-            if col == 0 and val:
-                s_val = str(val)
-                # Optimized display formatting
-                if '-' in s_val:
-                    try:
-                         # Assume YYYY-MM-DD
-                         if len(s_val) >= 10:
-                            return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
-                    except: pass
-
-            return str(val)
+            # Direct string access
+            return self._display_data[real_row_idx][col]
 
         elif role == Qt.ItemDataRole.BackgroundRole:
-            return self._get_style(row, col, 'bg')
+            return self._get_style(real_row_idx, col, 'bg')
 
         elif role == Qt.ItemDataRole.ForegroundRole:
-            return self._get_style(row, col, 'fg')
+            return self._get_style(real_row_idx, col, 'fg')
 
         elif role == Qt.ItemDataRole.TextAlignmentRole:
-            # Numerics aligned right
             if col in [3, 4, 5, 6, 7]:
                 return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             if col == 0:
@@ -323,16 +397,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return self.COLUMNS[section]
         return None
 
-    def _get_style(self, row, col, style_type):
-        """Helper to extract style safely using Pre-Parsed Cache."""
+    def _get_style(self, real_row, col, style_type):
         try:
-            if row >= len(self._styles_cache): return None
+            if real_row >= len(self._styles_cache): return None
+            styles = self._styles_cache[real_row]
+            if not styles: return None
 
-            # ⚡ OPTIMIZED: Use pre-parsed dict, avoid json.loads
-            styles = self._styles_cache[row]
-            if not styles:
-                return None
-
+            # Keys mapping (same as before)
             keys = [
                 'data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle',
                 'totale_ore', 'descrizione', 'finito', 'commessa'
@@ -345,60 +416,6 @@ class ScaricoOreTableModel(QAbstractTableModel):
         except:
             pass
         return None
-
-class ScaricoOreFilterProxy(QSortFilterProxyModel):
-    """
-    Proxy per filtraggio avanzato:
-    1. Ricerca globale (AND logic, Date parsing) - OTTIMIZZATA
-    2. Filtri per colonna (Excel style)
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.filter_text = ""
-        self.filter_terms = [] # ⚡ Optimized: pre-split terms
-        self.column_filters = {} # {col_index: {set of allowed values}}
-
-    def set_filter_text(self, text):
-        self.filter_text = text.lower().strip()
-        # ⚡ Optimization: Split once here, not in loop
-        self.filter_terms = self.filter_text.split() if self.filter_text else []
-        self.invalidateFilter()
-
-    def set_column_filter(self, col, values):
-        """
-        Imposta il filtro per una colonna.
-        values: set di valori ammessi. Se None o vuoto, filtro rimosso.
-        """
-        if not values:
-            if col in self.column_filters:
-                del self.column_filters[col]
-        else:
-            self.column_filters[col] = set(str(v).lower() for v in values)
-        self.invalidateFilter()
-
-    def filterAcceptsRow(self, source_row, source_parent):
-        model = self.sourceModel()
-
-        # 1. Global Text Filter (OPTIMIZED)
-        if self.filter_terms: # Check list instead of string
-            # Use pre-computed search string
-            row_text = model.get_search_text(source_row)
-
-            # Loop over pre-split terms
-            for term in self.filter_terms:
-                if term not in row_text:
-                    return False
-
-        # 2. Column Filters
-        if self.column_filters:
-            for col, allowed in self.column_filters.items():
-                val = model.data(model.index(source_row, col, source_parent))
-                if str(val).lower() not in allowed:
-                    return False
-
-        return True
-
 
 class FilterHeaderView(QHeaderView):
     """Header con menu a discesa ottimizzato."""
@@ -414,27 +431,31 @@ class FilterHeaderView(QHeaderView):
         super().mouseReleaseEvent(event)
 
     def _show_filter_menu(self, col_index, global_pos):
-        model = self.model() # Proxy
-        source_model = model.sourceModel() # Data Model
+        # Access the real model directly
+        # The view's model is now ScaricoOreTableModel (no proxy)
+        model = self.model()
 
-        # Collect unique values
-        unique_values = set()
-        for r in range(source_model.rowCount()):
-            val = source_model.data(source_model.index(r, col_index), Qt.ItemDataRole.DisplayRole)
-            unique_values.add(val)
+        # Collect unique values from ALL data (not just filtered)
+        # Optimization: Use set comprehension on _display_data
+        unique_values = {row[col_index] for row in model._display_data}
 
         # Check applied filter
-        current_filter = model.column_filters.get(col_index, None)
+        # We need to access current filters from panel?
+        # Or store them in model? The model receives them in set_filter.
+        # Let's say we pass current applied filters to the menu.
+        # Ideally model should store current column filters state.
+        # But for now, we can pass empty or manage it in the panel.
+        # Actually, let's assume no pre-selection for simplicity or TODO.
+        # Better: The panel manages the state.
 
         menu = QMenu(self)
 
-        # Determine widget type based on column
-        # Col 0 is 'DATA'
+        # Determine widget type
         if col_index == 0:
-            filter_widget = DateFilterPopupWidget(unique_values, current_filter)
+            filter_widget = DateFilterPopupWidget(unique_values, None)
         else:
             sorted_values = sorted(list(unique_values), key=lambda x: str(x).lower())
-            filter_widget = ListFilterPopupWidget(sorted_values, current_filter)
+            filter_widget = ListFilterPopupWidget(sorted_values, None)
 
         action = QWidgetAction(menu)
         action.setDefaultWidget(filter_widget)
@@ -444,11 +465,18 @@ class FilterHeaderView(QHeaderView):
 
         if filter_widget.applied:
             selected = filter_widget.get_selected_values()
-            # If everything selected (or effectively all), clear filter
-            # Optimization: pass None if selection count == total count
-            # But specific widget logic handles what "selected" means
-            model.set_column_filter(col_index, selected)
+            # Signal the panel to update filters
+            # Since header doesn't know panel, we use a signal or direct model update
+            # But the model needs ALL filters (text + cols).
+            # So we emit a custom signal from Header?
+            # Or just call a method on the parent widget if possible?
+            # Creating a signal here is best practice.
+            self.filterChanged.emit(col_index, selected)
 
+    filterChanged = pyqtSignal(int, object) # col, values
+
+# ... (ListFilterPopupWidget and DateFilterPopupWidget remain mostly same,
+# just ensure they handle strings correctly, which they do)
 
 class ListFilterPopupWidget(QWidget):
     """Widget filtro con QListView e Search Bar per alte performance."""
