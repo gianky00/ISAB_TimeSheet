@@ -39,6 +39,8 @@ class ContabilitaWorker(QThread):
             g_success, g_msg = ContabilitaManager.import_giornaliere(self.giornaliere_path)
             msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
 
+        # Nota: Scarico Ore Cantiere ora è gestito separatamente nel suo pannello dedicato.
+
         self.finished_signal.emit(success, msg + msg_giornaliere)
 
 
@@ -92,6 +94,7 @@ class ContabilitaPanel(QWidget):
 
         # 3. Refresh Button (Right)
         self.refresh_btn = QPushButton("🔄 Aggiorna")
+        self.refresh_btn.setToolTip("Aggiorna solo Contabilità e Giornaliere")
         self.refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.refresh_btn.setStyleSheet("""
             QPushButton {
@@ -261,7 +264,7 @@ class ContabilitaPanel(QWidget):
             self.status_label.setText("⚠️ File contabilità non configurato o non trovato.")
             return
 
-        self.status_label.setText("🔄 Aggiornamento contabilità e giornaliere in corso...")
+        self.status_label.setText("🔄 Aggiornamento in corso (Contabilità, Giornaliere)...")
         self.refresh_btn.setDisabled(True) # Disable button during update
 
         self.worker = ContabilitaWorker(path, giornaliere_path)
@@ -270,10 +273,11 @@ class ContabilitaPanel(QWidget):
 
     def _on_import_finished(self, success: bool, msg: str):
         if success:
-            self.status_label.setText(f"✅ Aggiornamento completato: {msg}")
+            self.status_label.setText(f"✅ Aggiornamento completato")
             self.refresh_tabs()
         else:
             self.status_label.setText(f"❌ Errore aggiornamento: {msg}")
+            QMessageBox.warning(self, "Esito Importazione", msg) # Show details in popup if error
 
         self.worker = None
         self.refresh_btn.setDisabled(False) # Re-enable button
@@ -533,6 +537,14 @@ class ContabilitaYearTab(QWidget):
         file_path = first_item.data(Qt.ItemDataRole.UserRole)
 
         menu = QMenu(self)
+
+        # Lyra Action
+        lyra_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
+        menu.addAction(lyra_action)
+
+        menu.addSeparator()
+
         action_open = QAction("📂 Apri File", self)
         if file_path:
              action_open.triggered.connect(lambda: self._open_file(file_path))
@@ -781,6 +793,14 @@ class GiornaliereYearTab(QWidget):
         filename = first_item.data(Qt.ItemDataRole.UserRole)
 
         menu = QMenu(self)
+
+        # Lyra Action
+        lyra_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
+        menu.addAction(lyra_action)
+
+        menu.addSeparator()
+
         if filename:
              action_open = QAction(f"📂 Apri {filename}", self)
              action_open.triggered.connect(lambda: self._open_giornaliera(filename))

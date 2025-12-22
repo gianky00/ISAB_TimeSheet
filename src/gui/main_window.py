@@ -12,6 +12,7 @@ from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcu
 
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
 from src.gui.contabilita_panel import ContabilitaPanel
+from src.gui.scarico_ore_panel import ScaricoOrePanel
 from src.gui.settings_panel import SettingsPanel
 from src.gui.toast import ToastOverlay
 from src.gui.help_panel import HelpPanel
@@ -101,9 +102,7 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(2000, self.sentinel.start) # Ritarda leggermente l'avvio
 
         # Avvio automatico importazione contabilità se abilitato
-        # User requested: "All'avvio dell'applicazione non aggiornare"
-        # We disable this automatic check/trigger by default or remove it.
-        # QTimer.singleShot(1000, self._check_and_start_contabilita_update)
+        QTimer.singleShot(1000, self._check_and_start_contabilita_update)
     
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
@@ -143,10 +142,10 @@ class MainWindow(QMainWindow):
                 self.timbrature_db_panel.refresh_data()
                 self.show_toast("Dati aggiornati")
             elif tab_idx == 1: # Contabilità
-                # Instead of just refreshing tabs (DB reload), F5 could trigger full import?
-                # For now keep it light (DB reload), use the new Button for heavy update.
                 self.contabilita_panel.refresh_tabs()
                 self.show_toast("Contabilità aggiornata (Vista)")
+            elif tab_idx == 2: # Scarico Ore
+                self.scarico_ore_panel._start_update()
 
     def _handle_ctrl_f(self):
         """Gestisce Ctrl+F per il focus sulla ricerca."""
@@ -159,10 +158,12 @@ class MainWindow(QMainWindow):
                 self.timbrature_db_panel.search_input.setFocus()
                 self.timbrature_db_panel.search_input.selectAll()
             elif tab_idx == 1: # Contabilità
-                # Contabilità ha search input visibile solo in tab Dati
                 if self.contabilita_panel.search_input.isVisible():
                     self.contabilita_panel.search_input.setFocus()
                     self.contabilita_panel.search_input.selectAll()
+            elif tab_idx == 2: # Scarico Ore
+                self.scarico_ore_panel.search_input.setFocus()
+                self.scarico_ore_panel.search_input.selectAll()
 
     def _handle_ctrl_s(self):
         """Gestisce Ctrl+S per salvare le impostazioni."""
@@ -306,6 +307,7 @@ class MainWindow(QMainWindow):
         self.timbrature_bot_panel = TimbratureBotPanel()
         self.timbrature_db_panel = TimbratureDBPanel()
         self.contabilita_panel = ContabilitaPanel()
+        self.scarico_ore_panel = ScaricoOrePanel() # NEW: Scarico Ore Panel
         self.settings_panel = SettingsPanel()
         self.help_panel = HelpPanel()
         self.lyra_panel = LyraPanel()
@@ -350,6 +352,7 @@ class MainWindow(QMainWindow):
         self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
         self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
         self.database_widget.addTab(self.contabilita_panel, "Contabilità Strumentale")
+        self.database_widget.addTab(self.scarico_ore_panel, "Scarico Ore Cantiere") # ADDED here as requested
 
         # Aggiungi le pagine allo stack
         # 0: Dashboard

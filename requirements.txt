@@ -35,3 +35,5 @@ matplotlib
 # Build stability (Fix pkg_resources/PyInstaller issues)
 setuptools==69.5.1
 platformdirs
+msoffcrypto-tool
+markdown
