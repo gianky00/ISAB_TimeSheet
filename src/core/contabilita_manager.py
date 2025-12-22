@@ -99,6 +99,13 @@ class ContabilitaManager:
             )
         """)
 
+        # Migrazione schema: Aggiungi colonna nome_file se non esiste
+        try:
+            cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
+        except sqlite3.OperationalError:
+            # Colonna già esistente
+            pass
+
         conn.commit()
         conn.close()
 
@@ -251,6 +258,9 @@ class ContabilitaManager:
 
                             df['year'] = year
 
+                            # Aggiungi nome file (solo nome, non path completo per privacy/spazio)
+                            filename = file_path.name
+
                             # Processamento Righe
                             rows_to_insert = []
 
@@ -264,13 +274,6 @@ class ContabilitaManager:
                                 n_prev = str(row.get('n_prev', '')).strip()
                                 if n_prev.lower() == 'nan': n_prev = ""
 
-                                # 2. Regola Importazione ODC (Aggiornata)
-                                # "Importerai comunque tutto tranne il valore di N°PREV per evitare duplicazioni"
-                                # Significa: Nessun lookup incrociato per riempire i buchi.
-                                # Se l'ODC è presente (5400...), lo prendiamo.
-                                # Se N_PREV è presente, lo prendiamo.
-                                # Non copiamo l'uno nell'altro.
-
                                 # Prepara riga
                                 new_row = (
                                     year,
@@ -283,13 +286,14 @@ class ContabilitaManager:
                                     str(row.get('inizio', '')),
                                     str(row.get('fine', '')),
                                     str(row.get('ore', '')),
-                                    n_prev
+                                    n_prev,
+                                    filename
                                 )
                                 rows_to_insert.append(new_row)
 
                             # Inserimento bulk per il file
                             if rows_to_insert:
-                                cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev']
+                                cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
                                 placeholders = ', '.join(['?'] * len(cols))
                                 query = f"INSERT INTO giornaliere ({', '.join(cols)}) VALUES ({placeholders})"
                                 cursor.executemany(query, rows_to_insert)
@@ -353,7 +357,8 @@ class ContabilitaManager:
             cursor = conn.cursor()
             # Ordine richiesto UI aggiornato:
             # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
-            cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore']
+            # Aggiunto nome_file in coda
+            cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'nome_file']
             # Ordinamento richiesto: Data dal più recente (DESC)
             query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
             cursor.execute(query, (year,))
