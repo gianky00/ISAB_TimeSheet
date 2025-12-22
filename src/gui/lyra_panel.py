@@ -3,10 +3,11 @@ Bot TS - Lyra AI Panel
 Interfaccia di chat per l'assistente IA.
 """
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QLabel, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QLabel, QFrame, QScrollArea
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from src.core.lyra_client import LyraClient
+import re
 
 class LyraWorker(QThread):
     finished = pyqtSignal(str)
@@ -60,6 +61,54 @@ class LyraPanel(QWidget):
         """)
         layout.addWidget(self.chat_area)
 
+        # Quick Actions Scroll Area
+        scroll_container = QWidget()
+        scroll_layout = QHBoxLayout(scroll_container)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(10)
+
+        # Define Quick Actions
+        actions = [
+            ("Analisi Margini", "Analizza i margini operativi per l'anno corrente evidenziando le criticità."),
+            ("Riepilogo Costi", "Dammi un riepilogo dettagliato dei costi stimati rispetto al preventivato."),
+            ("Stato Commesse", "Qual è lo stato di avanzamento globale delle commesse? Ci sono blocchi?"),
+            ("Top 5 Performance", "Quali sono le 5 commesse con la resa migliore?"),
+            ("Errori Comuni", "Verifica se ci sono incongruenze nei dati (es. ODC mancanti, rese anomale).")
+        ]
+
+        for btn_text, prompt_text in actions:
+            btn = QPushButton(btn_text)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #e9ecef;
+                    color: #495057;
+                    border: 1px solid #ced4da;
+                    border-radius: 15px;
+                    padding: 5px 15px;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: #dee2e6;
+                    border-color: #adb5bd;
+                    color: #212529;
+                }
+            """)
+            # Use default param in lambda to capture value
+            btn.clicked.connect(lambda checked, t=prompt_text: self._set_input(t))
+            scroll_layout.addWidget(btn)
+
+        scroll_layout.addStretch()
+
+        quick_scroll = QScrollArea()
+        quick_scroll.setWidget(scroll_container)
+        quick_scroll.setWidgetResizable(True)
+        quick_scroll.setFixedHeight(50)
+        quick_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        quick_scroll.setStyleSheet("background: transparent;")
+
+        layout.addWidget(quick_scroll)
+
         # Input Area
         input_layout = QHBoxLayout()
         self.input_field = QLineEdit()
@@ -101,6 +150,11 @@ class LyraPanel(QWidget):
         # Welcome message
         self._append_message("Lyra", "Ciao! Sono pronta ad analizzare i tuoi dati. Cosa vuoi sapere oggi?")
 
+    def _set_input(self, text):
+        """Imposta il testo nell'input field."""
+        self.input_field.setText(text)
+        self.input_field.setFocus()
+
     def _send_message(self):
         text = self.input_field.text().strip()
         if not text: return
@@ -125,17 +179,57 @@ class LyraPanel(QWidget):
         self.input_field.setDisabled(False)
         self.input_field.setFocus()
 
+    def _format_markdown_to_html(self, text: str) -> str:
+        """Converte Markdown di base in HTML."""
+        # 1. Bold: **text** -> <b>text</b>
+        text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+
+        # 2. Lists:
+        # Unordered: - item or * item
+        lines = text.split('\n')
+        new_lines = []
+        in_list = False
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith('- ') or line.startswith('* '):
+                content = line[2:]
+                if not in_list:
+                    new_lines.append("<ul>")
+                    in_list = True
+                new_lines.append(f"<li>{content}</li>")
+            else:
+                if in_list:
+                    new_lines.append("</ul>")
+                    in_list = False
+                new_lines.append(line)
+
+        if in_list:
+            new_lines.append("</ul>")
+
+        text = "\n".join(new_lines)
+
+        # 3. Newlines to <br> (only for non-list lines to avoid double spacing)
+        # Replacing \n with <br> globally might break list HTML structure
+        # Simplified approach: Just use replace, but <ul>/<li> handle their own spacing usually.
+        # However, we need to handle paragraphs.
+
+        # Better strategy: if line is not HTML tag, append <br>
+        final_lines = []
+        for line in text.split('\n'):
+            if line.strip().startswith('<'):
+                final_lines.append(line)
+            else:
+                final_lines.append(line + "<br>")
+
+        return "".join(final_lines)
+
     def _append_message(self, sender, text):
         color = "#6f42c1" if sender == "Lyra" else "#495057"
-        align = "left" if sender == "Lyra" else "right"
-        # Removed background highlight as requested
+        # Force ALL messages to be Left Aligned
+        align = "left"
 
-        # Converti markdown bold **text** in <b>text</b>
-        import re
-        formatted_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-
-        # Converti newline in <br> per HTML
-        formatted_text = formatted_text.replace('\n', '<br>')
+        formatted_text = self._format_markdown_to_html(text)
 
         html = f"""
         <div style="margin-bottom: 15px; text-align: {align};">
