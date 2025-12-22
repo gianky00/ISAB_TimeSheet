@@ -357,7 +357,11 @@ class ContabilitaManager:
             # Load with data_only=True first to get values.
             # Performance Note: read_only=False is required for style extraction.
             # This will consume more memory/time for 130k rows but is necessary for the requirement.
-            wb_data = openpyxl.load_workbook(wb_file, data_only=True, read_only=False)
+            # ⚡ Fix: Suppress UserWarning about Data Validation
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+                wb_data = openpyxl.load_workbook(wb_file, data_only=True, read_only=False)
+
             if "SCARICO ORE" not in wb_data.sheetnames:
                  return False, "Foglio 'SCARICO ORE' non trovato."
             ws_data = wb_data["SCARICO ORE"]
