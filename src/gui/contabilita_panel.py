@@ -54,7 +54,7 @@ class ContabilitaWorker(QThread):
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current_total / total_ops) * 100)
 
-                self.progress_signal.emit(f"⏳ {phase_name}: {percent}% - {current_total}/{total_ops} - ETA: {m}m {s}s")
+                self.progress_signal.emit(f"⏳ {phase_name}: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
 
         # 1. Import Contabilità (Dati)
         dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
@@ -115,7 +115,17 @@ class ContabilitaPanel(QWidget):
 
         # 2. Status Label (Center)
         self.status_label = QLabel("Pronto")
-        self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
+        self.status_label.setStyleSheet("""
+            QLabel {
+                color: #495057;
+                font-size: 14px;
+                font-weight: 500;
+                padding: 5px 10px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                border: 1px solid #dee2e6;
+            }
+        """)
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         top_layout.addWidget(self.status_label)
 

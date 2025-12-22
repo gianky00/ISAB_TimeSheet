@@ -42,7 +42,7 @@ class ScaricoOreWorker(QThread):
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current / total) * 100) if total > 0 else 0
 
-                self.progress_signal.emit(f"⏳ Importazione: {percent}% - Righe: {current}/{total} - ETA: {m}m {s}s")
+                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{total}) • Tempo stimato: {m}m {s}s")
 
         success, msg = ContabilitaManager.import_scarico_ore(self.file_path, progress_callback=progress_cb)
         self.finished_signal.emit(success, msg)
@@ -98,7 +98,17 @@ class ScaricoOrePanel(QWidget):
 
         # Status Label
         self.status_label = QLabel("Inizializzazione...")
-        self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
+        self.status_label.setStyleSheet("""
+            QLabel {
+                color: #495057;
+                font-size: 14px;
+                font-weight: 500;
+                padding: 5px 10px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                border: 1px solid #dee2e6;
+            }
+        """)
         toolbar.addWidget(self.status_label)
 
         toolbar.addStretch()
