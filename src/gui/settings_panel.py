@@ -839,7 +839,7 @@ class SettingsPanel(QWidget):
         config_manager.set_config_value("accounts", accounts)
         
         self._set_unsaved_changes(False)
-        QMessageBox.information(self, "Salvataggio", "Impostazioni salvate.")
+        # QMessageBox.information(self, "Salvataggio", "Impostazioni salvate.") # Suppresso, usa Toast
         
         # Emetti segnale
         self.settings_saved.emit()
