@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QMessageBox, QMenu, QTableWidget,
-    QHeaderView, QTableWidgetItem, QLabel, QLineEdit
+    QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QAction, QFont
@@ -61,13 +61,7 @@ class ContabilitaPanel(QWidget):
         # Header / Status / Search
         top_layout = QHBoxLayout()
 
-        self.status_label = QLabel("Pronto")
-        self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
-        top_layout.addWidget(self.status_label)
-
-        top_layout.addStretch()
-
-        # Search Bar
+        # 1. Search Bar (Left)
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍 Cerca in questa tabella...")
         self.search_input.setClearButtonEnabled(True)
@@ -85,6 +79,36 @@ class ContabilitaPanel(QWidget):
         """)
         self.search_input.textChanged.connect(self._filter_current_tab)
         top_layout.addWidget(self.search_input)
+
+        top_layout.addStretch()
+
+        # 2. Status Label (Center)
+        self.status_label = QLabel("Pronto")
+        self.status_label.setStyleSheet("color: #6c757d; font-size: 13px;")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        top_layout.addWidget(self.status_label)
+
+        top_layout.addStretch()
+
+        # 3. Refresh Button (Right)
+        self.refresh_btn = QPushButton("🔄 Aggiorna")
+        self.refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.refresh_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+        """)
+        self.refresh_btn.clicked.connect(self.start_import_process)
+        top_layout.addWidget(self.refresh_btn)
 
         layout.addLayout(top_layout)
 
@@ -238,6 +262,7 @@ class ContabilitaPanel(QWidget):
             return
 
         self.status_label.setText("🔄 Aggiornamento contabilità e giornaliere in corso...")
+        self.refresh_btn.setDisabled(True) # Disable button during update
 
         self.worker = ContabilitaWorker(path, giornaliere_path)
         self.worker.finished_signal.connect(self._on_import_finished)
@@ -251,6 +276,7 @@ class ContabilitaPanel(QWidget):
             self.status_label.setText(f"❌ Errore aggiornamento: {msg}")
 
         self.worker = None
+        self.refresh_btn.setDisabled(False) # Re-enable button
 
 
 class ContabilitaYearTab(QWidget):
@@ -533,10 +559,11 @@ class GiornaliereYearTab(QWidget):
     ]
 
     # Mappatura indici basata sulla query get_giornaliere_by_year
-    # Query: data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
+    # Query: data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore, nome_file
 
     COL_DATA = 0
     COL_ORE = 9
+    IDX_NOMEFILE = 10
 
     def __init__(self, year: int, parent=None):
         super().__init__(parent)
@@ -570,6 +597,10 @@ class GiornaliereYearTab(QWidget):
 
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch) # Descrizione elastica
 
+        # Context Menu
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+
         layout.addWidget(self.table)
 
     def _load_data(self):
@@ -586,7 +617,7 @@ class GiornaliereYearTab(QWidget):
             right_cols = {self.COL_ORE}
 
             for row_idx, row_data in enumerate(data):
-                # row_data includes all columns
+                # row_data includes all columns + nome_file
                 for col_idx in range(len(self.COLUMNS)):
                     val = row_data[col_idx]
                     formatted_val = self._format_value(col_idx, val)
@@ -596,6 +627,12 @@ class GiornaliereYearTab(QWidget):
                         item.setTextAlignment(align_right_flags)
 
                     self.table.setItem(row_idx, col_idx, item)
+
+                # Store filename in first column's user data
+                if len(row_data) > self.IDX_NOMEFILE:
+                    filename = row_data[self.IDX_NOMEFILE]
+                    if self.table.item(row_idx, 0):
+                        self.table.item(row_idx, 0).setData(Qt.ItemDataRole.UserRole, filename)
 
             # Resize per contenuto multiriga
             self.table.resizeRowsToContents()
@@ -652,8 +689,11 @@ class GiornaliereYearTab(QWidget):
             if not self.table.isRowHidden(r):
                 item = self.table.item(r, self.COL_ORE)
                 if item:
-                    sum_ore += self._parse_float(item.text())
+                    # Parse localizing the comma back to dot for float calc
+                    text_val = item.text().replace(',', '.')
+                    sum_ore += self._parse_float(text_val)
 
+        # Format total with the same helper
         self.table.item(total_row_idx, self.COL_ORE).setText(self._format_number(sum_ore))
 
     def _parse_float(self, text):
@@ -661,8 +701,16 @@ class GiornaliereYearTab(QWidget):
         except: return 0.0
 
     def _format_number(self, val):
-        if val.is_integer(): return f"{int(val)}"
-        else: return f"{val:.2f}"
+        """Formatta ORE: max 2 decimali, virgola, niente .0 finale."""
+        try:
+            val_f = float(val)
+            val_f = round(val_f, 2)
+            if val_f.is_integer():
+                return f"{int(val_f)}"
+            else:
+                return f"{val_f}".replace('.', ',')
+        except:
+            return str(val)
 
     def _format_value(self, col_idx, val):
         if not val: return ""
@@ -681,6 +729,10 @@ class GiornaliereYearTab(QWidget):
                         except ValueError: continue
                 if dt: return dt.strftime("%d/%m/%Y")
             except: pass
+
+        # Ore formatting
+        if col_idx == self.COL_ORE:
+            return self._format_number(val)
 
         return str_val
 
@@ -718,3 +770,63 @@ class GiornaliereYearTab(QWidget):
         if data_rows < total_rows:
             self.table.setRowHidden(data_rows, False)
         self._update_totals()
+
+    def _show_context_menu(self, pos):
+        item = self.table.itemAt(pos)
+        if not item: return
+        if item.text() == "TOTALI" or (self.table.item(item.row(), 0).text() == "TOTALI"): return
+
+        row = item.row()
+        first_item = self.table.item(row, 0)
+        filename = first_item.data(Qt.ItemDataRole.UserRole)
+
+        menu = QMenu(self)
+        if filename:
+             action_open = QAction(f"📂 Apri {filename}", self)
+             action_open.triggered.connect(lambda: self._open_giornaliera(filename))
+             menu.addAction(action_open)
+        else:
+            action_dummy = QAction("Nessun file associato", self)
+            action_dummy.setEnabled(False)
+            menu.addAction(action_dummy)
+
+        menu.exec(self.table.viewport().mapToGlobal(pos))
+
+    def _open_giornaliera(self, filename):
+        """Tenta di aprire la giornaliera cercando nella root configurata."""
+        config = config_manager.load_config()
+        root_path = config.get("giornaliere_path", "")
+        if not root_path:
+            QMessageBox.warning(self, "Attenzione", "Cartella Giornaliere non configurata o non trovata.")
+            return
+
+        # Normalize the root path to handle mixed slashes
+        root_path = os.path.normpath(root_path)
+
+        # Ricerca ricorsiva del file
+        # Ottimizzazione: Cerca in "Giornaliere YYYY"
+        found_path = None
+
+        # Cerca prima nella cartella dell'anno specifico
+        year_folder = os.path.join(root_path, f"Giornaliere {self.year}")
+        if os.path.exists(year_folder):
+             potential_path = os.path.join(year_folder, filename)
+             if os.path.exists(potential_path):
+                 found_path = potential_path
+
+        # Se non trovato, cerca ovunque
+        if not found_path:
+            for root, dirs, files in os.walk(root_path):
+                if filename in files:
+                    found_path = os.path.join(root, filename)
+                    break
+
+        if found_path:
+            # Ensure final path is strictly Windows-compliant for os.startfile
+            found_path = os.path.normpath(found_path)
+            try:
+                os.startfile(found_path)
+            except Exception as e:
+                QMessageBox.warning(self, "Errore", f"Impossibile aprire il file: {e}\nPath: {found_path}")
+        else:
+            QMessageBox.warning(self, "File non trovato", f"Non riesco a trovare '{filename}' nella cartella giornaliere.")

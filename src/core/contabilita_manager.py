@@ -10,6 +10,7 @@ import logging
 import warnings
 from typing import List, Dict, Tuple, Optional
 from datetime import datetime
+from src.utils.parsing import parse_currency
 
 class ContabilitaManager:
     """Manager per la gestione del database e dell'importazione Excel."""
@@ -97,6 +98,13 @@ class ContabilitaManager:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Migrazione schema: Aggiungi colonna nome_file se non esiste
+        try:
+            cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
+        except sqlite3.OperationalError:
+            # Colonna già esistente
+            pass
 
         conn.commit()
         conn.close()
@@ -250,6 +258,9 @@ class ContabilitaManager:
 
                             df['year'] = year
 
+                            # Aggiungi nome file (solo nome, non path completo per privacy/spazio)
+                            filename = file_path.name
+
                             # Processamento Righe
                             rows_to_insert = []
 
@@ -263,13 +274,6 @@ class ContabilitaManager:
                                 n_prev = str(row.get('n_prev', '')).strip()
                                 if n_prev.lower() == 'nan': n_prev = ""
 
-                                # 2. Regola Importazione ODC (Aggiornata)
-                                # "Importerai comunque tutto tranne il valore di N°PREV per evitare duplicazioni"
-                                # Significa: Nessun lookup incrociato per riempire i buchi.
-                                # Se l'ODC è presente (5400...), lo prendiamo.
-                                # Se N_PREV è presente, lo prendiamo.
-                                # Non copiamo l'uno nell'altro.
-
                                 # Prepara riga
                                 new_row = (
                                     year,
@@ -282,13 +286,14 @@ class ContabilitaManager:
                                     str(row.get('inizio', '')),
                                     str(row.get('fine', '')),
                                     str(row.get('ore', '')),
-                                    n_prev
+                                    n_prev,
+                                    filename
                                 )
                                 rows_to_insert.append(new_row)
 
                             # Inserimento bulk per il file
                             if rows_to_insert:
-                                cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev']
+                                cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
                                 placeholders = ', '.join(['?'] * len(cols))
                                 query = f"INSERT INTO giornaliere ({', '.join(cols)}) VALUES ({placeholders})"
                                 cursor.executemany(query, rows_to_insert)
@@ -352,7 +357,8 @@ class ContabilitaManager:
             cursor = conn.cursor()
             # Ordine richiesto UI aggiornato:
             # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
-            cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore']
+            # Aggiunto nome_file in coda
+            cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'nome_file']
             # Ordinamento richiesto: Data dal più recente (DESC)
             query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
             cursor.execute(query, (year,))
@@ -370,32 +376,50 @@ class ContabilitaManager:
         stats = {
             "total_prev": 0.0,
             "total_ore": 0.0,
-            "count_total": len(data),
+            "count_total": 0, # Was len(data), now depends on filtered count
             "status_counts": {},
             "top_commesse": []
         }
         commesse = []
+
+        # NOTE: Apply Strict Filtering logic same as DashboardPanel
+        valid_rows_count = 0
+
         for row in data:
             try:
-                t_str = str(row[3]).replace('.','').replace(',','.').replace('€','').strip()
-                val_prev = float(t_str) if t_str else 0.0
-            except: val_prev = 0.0
-            try:
-                o_str = str(row[9]).replace(',','.').strip()
-                val_ore = float(o_str) if o_str else 0.0
-            except: val_ore = 0.0
+                # row indices: 2=n_prev, 3=totale_prev, 4=attivita, 7=stato, 9=ore_sp, 10=resa
+                n_prev = str(row[2]).strip()
+                if not n_prev:
+                    continue
+                if "totale" in n_prev.lower():
+                    continue
 
-            stats["total_prev"] += val_prev
-            stats["total_ore"] += val_ore
+                resa_val = str(row[10]).strip().upper()
+                # Skip aggregation if "INS.ORE SP" - logic depends on if we want hours or not.
+                # Dashboard includes hours for these rows, but assumes Prev is 0.
+                # We will parse values safely.
 
-            status = str(row[7]).strip().upper()
-            if status:
-                stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
+                # Robust Parsing using new utility
+                val_prev = parse_currency(row[3])
+                val_ore = parse_currency(row[9])
 
-            if val_prev > 0:
-                attivita = str(row[4]).strip() or "N/D"
-                commesse.append((attivita, val_prev))
+                stats["total_prev"] += val_prev
+                stats["total_ore"] += val_ore
+                valid_rows_count += 1
 
+                status = str(row[7]).strip().upper()
+                if status:
+                    stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
+
+                if val_prev > 0:
+                    attivita = str(row[4]).strip() or "N/D"
+                    commesse.append((attivita, val_prev))
+
+            except Exception as e:
+                # Skip row on error
+                pass
+
+        stats["count_total"] = valid_rows_count
         commesse.sort(key=lambda x: x[1], reverse=True)
         stats["top_commesse"] = commesse[:5]
         return stats

@@ -3,10 +3,16 @@ Bot TS - Lyra AI Panel
 Interfaccia di chat per l'assistente IA.
 """
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QLabel, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QLabel,
+    QFrame, QScrollArea, QFileDialog, QMenu, QMessageBox
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QMargins
+from PyQt6.QtGui import QAction, QTextDocument
 from src.core.lyra_client import LyraClient
+import markdown
+import pandas as pd
+from io import StringIO
+import re
 
 class LyraWorker(QThread):
     finished = pyqtSignal(str)
@@ -24,6 +30,7 @@ class LyraWorker(QThread):
 class LyraPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.last_table_data = None # Store latest table for export
         self._setup_ui()
         self.worker = None
 
@@ -32,8 +39,9 @@ class LyraPanel(QWidget):
 
         # Header
         header = QFrame()
-        header.setStyleSheet("background-color: #6f42c1; border-radius: 8px; padding: 15px;")
+        header.setStyleSheet("background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;")
         h_layout = QHBoxLayout(header)
+        h_layout.setContentsMargins(0,0,0,0)
 
         title = QLabel("✨ Lyra AI")
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
@@ -42,13 +50,33 @@ class LyraPanel(QWidget):
         sub = QLabel("Esperta Contabile")
         sub.setStyleSheet("color: rgba(255,255,255,0.8);")
         h_layout.addWidget(sub)
+
         h_layout.addStretch()
+
+        # Export Button in Header
+        export_btn = QPushButton("Esporta Chat")
+        export_btn.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255,255,255,0.2);
+                color: white;
+                border: 1px solid rgba(255,255,255,0.5);
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255,255,255,0.3);
+            }
+        """)
+        export_btn.clicked.connect(self._export_chat)
+        h_layout.addWidget(export_btn)
 
         layout.addWidget(header)
 
         # Chat History
         self.chat_area = QTextEdit()
         self.chat_area.setReadOnly(True)
+        # Custom CSS for Tables within QTextEdit
         self.chat_area.setStyleSheet("""
             QTextEdit {
                 background-color: white;
@@ -59,6 +87,75 @@ class LyraPanel(QWidget):
             }
         """)
         layout.addWidget(self.chat_area)
+
+        # Tool Bar for Table Actions (Initially Hidden or Dynamic?)
+        # Let's add a persistent toolbar below chat for "Last Table" actions
+        self.table_actions_layout = QHBoxLayout()
+        self.table_actions_layout.setContentsMargins(0, 5, 0, 5)
+        self.btn_export_last_table = QPushButton("📊 Esporta Ultima Tabella Excel")
+        self.btn_export_last_table.setVisible(False)
+        self.btn_export_last_table.setStyleSheet("""
+            QPushButton {
+                background-color: #198754;
+                color: white;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #157347; }
+        """)
+        self.btn_export_last_table.clicked.connect(self._export_excel)
+        self.table_actions_layout.addWidget(self.btn_export_last_table)
+        self.table_actions_layout.addStretch()
+
+        layout.addLayout(self.table_actions_layout)
+
+        # Quick Actions Scroll Area
+        scroll_container = QWidget()
+        scroll_layout = QHBoxLayout(scroll_container)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(10)
+
+        # Define Quick Actions
+        actions = [
+            ("Analisi Margini", "Analizza i margini operativi per l'anno corrente evidenziando le criticità."),
+            ("Riepilogo Costi", "Dammi un riepilogo dettagliato dei costi stimati rispetto al preventivato."),
+            ("Stato Commesse", "Qual è lo stato di avanzamento globale delle commesse? Ci sono blocchi?"),
+            ("Top 5 Performance", "Quali sono le 5 commesse con la resa migliore?"),
+            ("Errori Comuni", "Verifica se ci sono incongruenze nei dati (es. ODC mancanti, rese anomale).")
+        ]
+
+        for btn_text, prompt_text in actions:
+            btn = QPushButton(btn_text)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #e9ecef;
+                    color: #495057;
+                    border: 1px solid #ced4da;
+                    border-radius: 15px;
+                    padding: 5px 15px;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: #dee2e6;
+                    border-color: #adb5bd;
+                    color: #212529;
+                }
+            """)
+            btn.clicked.connect(lambda checked, t=prompt_text: self._set_input(t))
+            scroll_layout.addWidget(btn)
+
+        scroll_layout.addStretch()
+
+        quick_scroll = QScrollArea()
+        quick_scroll.setWidget(scroll_container)
+        quick_scroll.setWidgetResizable(True)
+        quick_scroll.setFixedHeight(50)
+        quick_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        quick_scroll.setStyleSheet("background: transparent;")
+
+        layout.addWidget(quick_scroll)
 
         # Input Area
         input_layout = QHBoxLayout()
@@ -101,6 +198,11 @@ class LyraPanel(QWidget):
         # Welcome message
         self._append_message("Lyra", "Ciao! Sono pronta ad analizzare i tuoi dati. Cosa vuoi sapere oggi?")
 
+    def _set_input(self, text):
+        """Imposta il testo nell'input field."""
+        self.input_field.setText(text)
+        self.input_field.setFocus()
+
     def _send_message(self):
         text = self.input_field.text().strip()
         if not text: return
@@ -125,27 +227,141 @@ class LyraPanel(QWidget):
         self.input_field.setDisabled(False)
         self.input_field.setFocus()
 
+    def _format_markdown(self, text: str) -> str:
+        """Uses 'markdown' library to convert MD to HTML with table extension."""
+        try:
+            # Enable 'tables' and 'fenced_code' extensions
+            html = markdown.markdown(text, extensions=['tables', 'fenced_code'])
+
+            # Post-process for styling
+            style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 10px; border-color: #dee2e6;"'
+            style_th = 'style="background-color: #f8f9fa; color: #495057; font-weight: bold; padding: 8px;"'
+            style_td = 'style="padding: 8px;"'
+
+            html = html.replace('<table>', f'<table {style_table}>')
+            html = html.replace('<th>', f'<th {style_th}>')
+            html = html.replace('<td>', f'<td {style_td}>')
+
+            # Detect tables for export context
+            if '<table>' in html:
+                self.last_table_data = text
+                self.btn_export_last_table.setVisible(True)
+
+            return html
+        except Exception as e:
+            print(f"Markdown error: {e}")
+            return text
+
     def _append_message(self, sender, text):
         color = "#6f42c1" if sender == "Lyra" else "#495057"
-        align = "left" if sender == "Lyra" else "right"
-        # Removed background highlight as requested
+        align = "left"
 
-        # Converti markdown bold **text** in <b>text</b>
-        import re
-        formatted_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+        formatted_html = self._format_markdown(text)
 
-        # Converti newline in <br> per HTML
-        formatted_text = formatted_text.replace('\n', '<br>')
-
+        # Reduced margin-bottom from 15px to 5px to compact the view
         html = f"""
-        <div style="margin-bottom: 15px; text-align: {align};">
-            <span style="font-weight: bold; color: {color}; font-size: 14px;">{sender}</span><br>
-            <div style="padding: 5px 0; font-size: 15px; line-height: 1.4;">
-                {formatted_text}
+        <div style="margin-bottom: 20px; text-align: {align};">
+            <div style="font-weight: bold; color: {color}; font-size: 13px; margin-bottom: 2px;">{sender}</div>
+            <div style="font-size: 15px; line-height: 1.5; color: #212529;">
+                {formatted_html}
             </div>
         </div>
         """
         self.chat_area.append(html)
+
         # Scroll to bottom
         sb = self.chat_area.verticalScrollBar()
         sb.setValue(sb.maximum())
+
+    def _export_chat(self):
+        """Esporta la chat in PDF o l'ultima tabella in Excel."""
+        menu = QMenu(self)
+
+        pdf_action = QAction("📄 Esporta come PDF", self)
+        pdf_action.triggered.connect(self._export_pdf)
+        menu.addAction(pdf_action)
+
+        excel_action = QAction("📊 Esporta ultima tabella (Excel)", self)
+        excel_action.triggered.connect(self._export_excel)
+        menu.addAction(excel_action)
+
+        # FIXED: Use sender directly instead of casting
+        sender = self.sender()
+        if sender:
+             # Calculate position below the button
+             pos = sender.mapToGlobal(sender.rect().bottomLeft())
+             menu.exec(pos)
+
+
+    def _export_pdf(self):
+        filename, _ = QFileDialog.getSaveFileName(self, "Salva Chat PDF", "chat_lyra.pdf", "PDF Files (*.pdf)")
+        if filename:
+            try:
+                # Using QPrinter (requires PyQt6.QtPrintSupport)
+                from PyQt6.QtPrintSupport import QPrinter
+                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
+                printer.setOutputFileName(filename)
+
+                self.chat_area.document().print(printer)
+                QMessageBox.information(self, "Successo", "Chat esportata correttamente!")
+            except Exception as e:
+                # Fallback: Save as HTML
+                html_file = filename.replace('.pdf', '.html')
+                with open(html_file, 'w', encoding='utf-8') as f:
+                    f.write(self.chat_area.toHtml())
+                QMessageBox.warning(self, "Info", f"PDF driver non trovato. Salvato come HTML: {html_file}\nErr: {e}")
+
+    def _export_excel(self):
+        """Exports the last table found in the chat history to Excel."""
+        # FIX: Use self.last_table_data which stores the raw Markdown
+        if not self.last_table_data:
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
+            return
+
+        text = self.last_table_data
+        lines = text.split('\n')
+        table_lines = []
+
+        # Capture the table block from the stored markdown
+        # Assuming the stored text IS mostly the table or contains it
+        current_block = []
+        for line in lines:
+            if line.strip().startswith('|'):
+                current_block.append(line)
+            else:
+                if current_block:
+                    if len(current_block) >= 2:
+                        table_lines = current_block
+                        # We found a table, might be multiple, take the last one or all?
+                        # Taking the last one found in the text chunk
+                    current_block = []
+
+        if current_block:
+             if len(current_block) >= 2:
+                table_lines = current_block
+
+        if not table_lines:
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio.")
+            return
+
+        try:
+            cleaned_lines = [l for l in table_lines if '---' not in l]
+
+            data = StringIO("\n".join(cleaned_lines))
+            # Use pandas read_csv with sep='|'
+            # Markdown tables often have leading/trailing pipes
+            df = pd.read_csv(data, sep='|', header=0, engine='python')
+
+            # Clean empty columns from pipes
+            df = df.dropna(axis=1, how='all')
+            df.columns = df.columns.str.strip()
+            df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+
+            filename, _ = QFileDialog.getSaveFileName(self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)")
+            if filename:
+                df.to_excel(filename, index=False)
+                QMessageBox.information(self, "Successo", "Tabella esportata correttamente!")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Errore", f"Impossibile esportare la tabella: {e}")

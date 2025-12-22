@@ -101,7 +101,9 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(2000, self.sentinel.start) # Ritarda leggermente l'avvio
 
         # Avvio automatico importazione contabilità se abilitato
-        QTimer.singleShot(1000, self._check_and_start_contabilita_update)
+        # User requested: "All'avvio dell'applicazione non aggiornare"
+        # We disable this automatic check/trigger by default or remove it.
+        # QTimer.singleShot(1000, self._check_and_start_contabilita_update)
     
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
@@ -141,8 +143,10 @@ class MainWindow(QMainWindow):
                 self.timbrature_db_panel.refresh_data()
                 self.show_toast("Dati aggiornati")
             elif tab_idx == 1: # Contabilità
+                # Instead of just refreshing tabs (DB reload), F5 could trigger full import?
+                # For now keep it light (DB reload), use the new Button for heavy update.
                 self.contabilita_panel.refresh_tabs()
-                self.show_toast("Contabilità aggiornata")
+                self.show_toast("Contabilità aggiornata (Vista)")
 
     def _handle_ctrl_f(self):
         """Gestisce Ctrl+F per il focus sulla ricerca."""
@@ -539,4 +543,5 @@ def create_splash_screen() -> QSplashScreen:
     splash = QSplashScreen(splash_pixmap)
     splash.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
     
+    splash.show() # Ensure it's shown if created
     return splash
