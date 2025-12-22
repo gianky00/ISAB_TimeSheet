@@ -14,6 +14,7 @@ from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
 from src.gui.scarico_ore_components import ScaricoOreTableModel, ScaricoOreFilterProxy, FilterHeaderView
 from src.utils.parsing import parse_currency
+from pathlib import Path
 
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background (solo Scarico Ore)."""
@@ -204,25 +205,33 @@ class ScaricoOrePanel(QWidget):
         # Iterate source rows? No, filtered rows.
         # proxy.data(index) is slow.
         # Fast path: Get source rows that are accepted.
-        # QSortFilterProxyModel doesn't expose list of accepted rows easily.
-        # Standard iteration:
+
         rows = self.proxy_model.rowCount()
-        # Optimization: if rows == source.rows (no filter), sum source data directly (fast)
+
+        # Optimization 1: if rows == source.rows (no filter), sum source data directly (fast)
         if rows == self.source_model.rowCount():
-             # Sum column 7 of source data
-             # Source data is list of tuples. Col 7 is TOTALE ORE.
-             # self.source_model._data is accessible
+             # Sum pre-calculated floats from source model
+             # Accessing _float_totals directly is faster than method call
              try:
-                 total = sum(parse_currency(str(r[7])) for r in self.source_model._data)
-             except: total = 0
+                 total = sum(self.source_model._float_totals)
+             except:
+                 total = 0
         else:
-             # Iterate proxy
+             # Iterate proxy. mapToSource is the bottleneck but unavoidable if we want exact visible sum.
+             # However, accessing the PRE-PARSED float is much faster than parsing string.
+             proxy = self.proxy_model
+             source = self.source_model
+
+             # Optimization: Avoid dot lookup in loop
+             map_to_source = proxy.mapToSource
+             index_fn = proxy.index
+             get_float_total = source.get_float_total
+
+             # This loop is still O(N) but operation inside is O(1) instead of O(M)
              for r in range(rows):
-                 idx = self.proxy_model.index(r, 7) # Col 7 is Totale Ore
-                 val_str = self.proxy_model.data(idx, Qt.ItemDataRole.DisplayRole)
-                 try:
-                     total += parse_currency(val_str)
-                 except: pass
+                 # We only need the row index of the source
+                 source_idx = map_to_source(index_fn(r, 0))
+                 total += get_float_total(source_idx.row())
 
         self.lbl_total_hours.setText(f"Totale Ore: {total:,.2f}")
 
@@ -249,7 +258,13 @@ class ScaricoOrePanel(QWidget):
 
         if success:
             self.status_label.setText("✅ Aggiornato")
-            self._load_data() # Reload data
+            # Invalidate cache by removing the file, so _load_data forces a fresh DB read
+            try:
+                if ScaricoOreTableModel.CACHE_PATH.exists():
+                    ScaricoOreTableModel.CACHE_PATH.unlink()
+            except: pass
+
+            self._load_data() # Reload data (will rebuild cache)
             QMessageBox.information(self, "Successo", msg)
         else:
             self.status_label.setText("❌ Errore")
@@ -269,39 +284,23 @@ class ScaricoOrePanel(QWidget):
             self.status_label.setText("Database non trovato.")
             return
 
+        # 1. Try Load from Cache first
+        if self.source_model.load_cache():
+            count = self.source_model.rowCount()
+            self.status_label.setText(f"Caricati {count} record (da Cache).")
+            self._update_totals()
+
+            # Ensure columns are sized correctly (even from cache)
+            self._resize_columns()
+            return
+
+        # 2. Fallback to DB Load
         try:
             # Fetch ALL rows (tuples)
             rows = ContabilitaManager.get_scarico_ore_data()
-            self.source_model.update_data(rows)
+            self.source_model.update_data(rows) # This also saves cache
 
-            # Reset view properties
-            self.table_view.resizeColumnsToContents()
-
-            # Adjust column widths as requested:
-            # "sum of widths must equal view size" -> Stretch Last Section?
-            # "Descrizione (Col 8) must be wider"
-
-            header = self.table_view.horizontalHeader()
-
-            # Strategy: Set interactive for most, Stretch for Description
-            # Reset to interactive first
-            for i in range(11):
-                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
-
-            # DATA (0), PERS1 (1), PERS2 (2), ODC (3), POS (4), DALLE (5), ALLE (6), TOT (7) -> Fixed/Interactive
-            self.table_view.setColumnWidth(0, 90)  # Data
-            self.table_view.setColumnWidth(1, 130) # Pers1
-            self.table_view.setColumnWidth(2, 130) # Pers2
-            self.table_view.setColumnWidth(3, 80)  # ODC
-            self.table_view.setColumnWidth(4, 50)  # POS
-            self.table_view.setColumnWidth(5, 50)  # Dalle
-            self.table_view.setColumnWidth(6, 50)  # Alle
-            self.table_view.setColumnWidth(7, 80)  # Tot
-            self.table_view.setColumnWidth(9, 60)  # Finito
-            self.table_view.setColumnWidth(10, 100)# Commessa
-
-            # Description (8) Stretch to fill
-            header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
+            self._resize_columns()
 
             count = len(rows)
             self.status_label.setText(f"Caricati {count} record.")
@@ -310,6 +309,36 @@ class ScaricoOrePanel(QWidget):
         except Exception as e:
             self.status_label.setText(f"Errore caricamento: {e}")
             print(f"DB Error: {e}")
+
+    def _resize_columns(self):
+        # Reset view properties
+        self.table_view.resizeColumnsToContents()
+
+        # Adjust column widths as requested:
+        # "sum of widths must equal view size" -> Stretch Last Section?
+        # "Descrizione (Col 8) must be wider"
+
+        header = self.table_view.horizontalHeader()
+
+        # Strategy: Set interactive for most, Stretch for Description
+        # Reset to interactive first
+        for i in range(11):
+            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+
+        # DATA (0), PERS1 (1), PERS2 (2), ODC (3), POS (4), DALLE (5), ALLE (6), TOT (7) -> Fixed/Interactive
+        self.table_view.setColumnWidth(0, 90)  # Data
+        self.table_view.setColumnWidth(1, 130) # Pers1
+        self.table_view.setColumnWidth(2, 130) # Pers2
+        self.table_view.setColumnWidth(3, 80)  # ODC
+        self.table_view.setColumnWidth(4, 50)  # POS
+        self.table_view.setColumnWidth(5, 50)  # Dalle
+        self.table_view.setColumnWidth(6, 50)  # Alle
+        self.table_view.setColumnWidth(7, 80)  # Tot
+        self.table_view.setColumnWidth(9, 60)  # Finito
+        self.table_view.setColumnWidth(10, 100)# Commessa
+
+        # Description (8) Stretch to fill
+        header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
 
     def keyPressEvent(self, event):
         # Implement Ctrl+C for QTableView
