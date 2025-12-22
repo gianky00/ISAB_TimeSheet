@@ -204,25 +204,33 @@ class ScaricoOrePanel(QWidget):
         # Iterate source rows? No, filtered rows.
         # proxy.data(index) is slow.
         # Fast path: Get source rows that are accepted.
-        # QSortFilterProxyModel doesn't expose list of accepted rows easily.
-        # Standard iteration:
+
         rows = self.proxy_model.rowCount()
-        # Optimization: if rows == source.rows (no filter), sum source data directly (fast)
+
+        # Optimization 1: if rows == source.rows (no filter), sum source data directly (fast)
         if rows == self.source_model.rowCount():
-             # Sum column 7 of source data
-             # Source data is list of tuples. Col 7 is TOTALE ORE.
-             # self.source_model._data is accessible
+             # Sum pre-calculated floats from source model
+             # Accessing _float_totals directly is faster than method call
              try:
-                 total = sum(parse_currency(str(r[7])) for r in self.source_model._data)
-             except: total = 0
+                 total = sum(self.source_model._float_totals)
+             except:
+                 total = 0
         else:
-             # Iterate proxy
+             # Iterate proxy. mapToSource is the bottleneck but unavoidable if we want exact visible sum.
+             # However, accessing the PRE-PARSED float is much faster than parsing string.
+             proxy = self.proxy_model
+             source = self.source_model
+
+             # Optimization: Avoid dot lookup in loop
+             map_to_source = proxy.mapToSource
+             index_fn = proxy.index
+             get_float_total = source.get_float_total
+
+             # This loop is still O(N) but operation inside is O(1) instead of O(M)
              for r in range(rows):
-                 idx = self.proxy_model.index(r, 7) # Col 7 is Totale Ore
-                 val_str = self.proxy_model.data(idx, Qt.ItemDataRole.DisplayRole)
-                 try:
-                     total += parse_currency(val_str)
-                 except: pass
+                 # We only need the row index of the source
+                 source_idx = map_to_source(index_fn(r, 0))
+                 total += get_float_total(source_idx.row())
 
         self.lbl_total_hours.setText(f"Totale Ore: {total:,.2f}")
 

@@ -6,11 +6,13 @@ from PyQt6.QtWidgets import (
 )
 import json
 from datetime import datetime
+from src.utils.parsing import parse_currency
 
 class ScaricoOreTableModel(QAbstractTableModel):
     """
     Modello virtuale per Scarico Ore Cantiere (130k+ righe).
     Gestisce dati e stili (colori) in sola lettura.
+    Implementa cache per ricerca e totali per massime prestazioni.
     """
 
     COLUMNS = [
@@ -20,12 +22,92 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     def __init__(self, data=None):
         super().__init__()
-        self._data = data if data else []
+        self._data = []
+        self._search_index = []
+        self._float_totals = []
+        if data:
+            self.update_data(data)
 
     def update_data(self, new_data):
         self.beginResetModel()
         self._data = new_data
+        self._build_caches()
         self.endResetModel()
+
+    def _build_caches(self):
+        """
+        Pre-computa le stringhe di ricerca e i totali numerici
+        per evitare conversioni durante il filtering/summing.
+        """
+        self._search_index = []
+        self._float_totals = []
+
+        # Pre-allocate lists for speed if possible, but append is fine for 100k
+        # Optimization: Local variable lookup
+        append_search = self._search_index.append
+        append_total = self._float_totals.append
+
+        for row in self._data:
+            # --- 1. Search Index Construction ---
+            # Extract values. Row has 11 data cols + 1 styles col
+            # We want to match what is displayed.
+
+            # Date formatting (Col 0)
+            val_0 = row[0]
+            str_0 = ""
+            if val_0:
+                s_val = str(val_0)
+                if '-' in s_val:
+                    try:
+                        parts = s_val.split(' ')[0].split('-')
+                        if len(parts) == 3:
+                            str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}" # DD/MM/YYYY
+                        else:
+                            str_0 = s_val
+                    except:
+                        str_0 = s_val
+                else:
+                    str_0 = s_val
+
+            # Other columns (1 to 10)
+            # Create a single lowercase string space-separated
+            # Optimization: List comprehension is faster than loop
+            # Note: We skip the styles column (index 11)
+
+            # Handle None values efficiently
+            search_parts = [str_0]
+            for i in range(1, 11):
+                val = row[i]
+                if val is not None:
+                    search_parts.append(str(val))
+
+            full_search_str = " ".join(search_parts).lower()
+            append_search(full_search_str)
+
+            # --- 2. Float Totals Construction ---
+            # Col 7 is 'TOTALE ORE'
+            val_7 = row[7]
+            try:
+                # Use cached float conversion or fast parse
+                # If it's already float (from openpyxl), use it
+                if isinstance(val_7, (int, float)):
+                    append_total(float(val_7))
+                else:
+                    append_total(parse_currency(val_7))
+            except:
+                append_total(0.0)
+
+    def get_search_text(self, row_index):
+        """Ritorna la stringa di ricerca pre-calcolata per la riga."""
+        if 0 <= row_index < len(self._search_index):
+            return self._search_index[row_index]
+        return ""
+
+    def get_float_total(self, row_index):
+        """Ritorna il valore float pre-calcolato per 'TOTALE ORE'."""
+        if 0 <= row_index < len(self._float_totals):
+            return self._float_totals[row_index]
+        return 0.0
 
     def rowCount(self, parent=QModelIndex()):
         return len(self._data)
@@ -41,6 +123,8 @@ class ScaricoOreTableModel(QAbstractTableModel):
         col = index.column()
 
         # _data row structure: 0..10 are data cols, 11 is 'styles' (JSON)
+        # Boundary check logic handled by PyQt usually, but good to be safe
+        if row >= len(self._data): return None
         row_data = self._data[row]
 
         if role == Qt.ItemDataRole.DisplayRole:
@@ -83,10 +167,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     def _get_style(self, row, col, style_type):
         """Helper to extract style safely."""
-        style_json = self._data[row][11]
-        if not style_json:
-            return None
         try:
+            # Optimization: check length before access
+            if len(self._data[row]) <= 11: return None
+
+            style_json = self._data[row][11]
+            if not style_json:
+                return None
+
             styles = json.loads(style_json)
             keys = [
                 'data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle',
@@ -104,7 +192,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 class ScaricoOreFilterProxy(QSortFilterProxyModel):
     """
     Proxy per filtraggio avanzato:
-    1. Ricerca globale (AND logic, Date parsing)
+    1. Ricerca globale (AND logic, Date parsing) - OTTIMIZZATA
     2. Filtri per colonna (Excel style)
     """
 
@@ -132,11 +220,12 @@ class ScaricoOreFilterProxy(QSortFilterProxyModel):
     def filterAcceptsRow(self, source_row, source_parent):
         model = self.sourceModel()
 
-        # 1. Global Text Filter
+        # 1. Global Text Filter (OPTIMIZED)
         if self.filter_text:
-            terms = self.filter_text.split()
-            row_text = " ".join([str(model.data(model.index(source_row, c, source_parent))).lower() for c in range(model.columnCount())])
+            # Use pre-computed search string
+            row_text = model.get_search_text(source_row)
 
+            terms = self.filter_text.split()
             for term in terms:
                 if term not in row_text:
                     return False
