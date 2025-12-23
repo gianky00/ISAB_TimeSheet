@@ -9,10 +9,17 @@ from PyQt6.QtWidgets import (
     QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect,
     QListWidget, QListWidgetItem
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint, QSize
-from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush, QIcon, QFont
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint, QSize, QUrl
+from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush, QIcon, QFont, QDesktopServices
 from datetime import datetime
+import re
+from pathlib import Path
 from src.utils.log_humanizer import SmartLogTranslator
+
+try:
+    import winsound
+except ImportError:
+    winsound = None
 
 
 class TimelineItemWidget(QWidget):
@@ -23,11 +30,24 @@ class TimelineItemWidget(QWidget):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(10)
 
-        # Icon/Dot Area (Custom Paint needed for line?)
-        # For simplicity, we use a colored Label circle
-        self.category = category
+        # Process Tags from tech_msg
+        snapshot_path = None
+        fixit_action = None
 
-        # Icon mapping
+        if "[IMG:" in tech_msg:
+            match = re.search(r"\[IMG:(.*?)\]", tech_msg)
+            if match:
+                snapshot_path = match.group(1)
+                tech_msg = tech_msg.replace(match.group(0), "").strip()
+
+        if "[FIXIT:" in tech_msg:
+            match = re.search(r"\[FIXIT:(.*?)\]", tech_msg)
+            if match:
+                fixit_action = match.group(1)
+                tech_msg = tech_msg.replace(match.group(0), "").strip()
+
+        # Icon/Dot Area
+        self.category = category
         icons = {
             "start": "🚀", "login": "🔐", "search": "🔍",
             "download": "📥", "success": "✅", "error": "❌",
@@ -67,7 +87,61 @@ class TimelineItemWidget(QWidget):
             lbl_tech.setWordWrap(True)
             text_layout.addWidget(lbl_tech)
 
+        # Rich Actions Area
+        actions_layout = QHBoxLayout()
+        actions_layout.setSpacing(5)
+
+        # 1. Snapshot
+        if snapshot_path:
+            btn_snap = QPushButton("📷 Screenshot")
+            btn_snap.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn_snap.setStyleSheet("background-color: #dc3545; color: white; border-radius: 4px; padding: 2px 8px; font-size: 11px;")
+            btn_snap.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
+            actions_layout.addWidget(btn_snap)
+
+        # 2. Fix It
+        if fixit_action == "ACCOUNT":
+            btn_fix = QPushButton("🔧 Configura Account")
+            btn_fix.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn_fix.setStyleSheet("background-color: #ffc107; color: black; border-radius: 4px; padding: 2px 8px; font-size: 11px;")
+            btn_fix.clicked.connect(self._open_settings)
+            actions_layout.addWidget(btn_fix)
+
+        # 3. Path Detection (Folders/Files)
+        # Refined Regex: Match typical windows absolute paths or unix paths, avoiding URLs
+        # (?:[a-zA-Z]:\\|(?:/|\\)) -> Drive letter or root
+        # (?:[^\\/:*?"<>|\r\n]+[\\/])* -> Subfolders
+        # [^\\/:*?"<>|\r\n]* -> Filename
+        path_matches = re.findall(r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg)
+
+        seen_paths = set()
+        for path in path_matches:
+            # Clean path
+            path = path.rstrip(".,';)]}").strip()
+
+            # Heuristic: skip short paths or common non-paths
+            if len(path) < 4 or "http" in path or path in seen_paths:
+                continue
+
+            seen_paths.add(path)
+
+            btn_open = QPushButton(f"📂 Apri: {Path(path).name}")
+            btn_open.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn_open.setStyleSheet("background-color: #17a2b8; color: white; border-radius: 4px; padding: 2px 8px; font-size: 11px;")
+            btn_open.clicked.connect(lambda checked, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
+            actions_layout.addWidget(btn_open)
+
+        if actions_layout.count() > 0:
+            actions_layout.addStretch()
+            text_layout.addLayout(actions_layout)
+
         layout.addLayout(text_layout)
+
+    def _open_settings(self):
+        # Trick: Find main window via parent walk
+        parent = self.window()
+        if hasattr(parent, "show_settings"):
+            parent.show_settings()
 
 
 class TimelineLogWidget(QListWidget):
@@ -91,6 +165,33 @@ class TimelineLogWidget(QListWidget):
     def add_log(self, message: str):
         human, tech, cat = SmartLogTranslator.humanize(message)
         timestamp = datetime.now().strftime("%H:%M:%S")
+
+        # PROGRESS BAR LOGIC (Idea #3)
+        # If this log contains "%" (e.g. "10%"), check if last item was also progress
+        is_progress = "%" in message and cat == "download" # Use 'download' or relevant category
+
+        if is_progress and self.count() > 0:
+            last_item = self.item(self.count() - 1)
+            last_widget = self.itemWidget(last_item)
+
+            # If last widget exists and is also a progress/download type
+            if last_widget and last_widget.category == cat:
+                # Update existing widget instead of adding new
+                # We need to expose a method in TimelineItemWidget to update text
+                # Re-creating widget is easier for now to refresh layout
+                new_widget = TimelineItemWidget(human, tech, cat, timestamp)
+                last_item.setSizeHint(new_widget.sizeHint())
+                self.setItemWidget(last_item, new_widget)
+                return
+
+        # Sound Feedback
+        if winsound:
+            if cat == "success":
+                try: winsound.MessageBeep(winsound.MB_ICONASTERISK)
+                except: pass
+            elif cat == "error":
+                try: winsound.MessageBeep(winsound.MB_ICONHAND)
+                except: pass
 
         item = QListWidgetItem(self)
         # Create widget

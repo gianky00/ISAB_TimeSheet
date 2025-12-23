@@ -33,3 +33,7 @@
 ## 2024-05-23 - Human-Centric Logging
 **Learning:** Technical logs (e.g., "GET /api/v1/auth 200 OK") are alienating for non-technical users and increase cognitive load when checking status.
 **Action:** Implement a "Smart Translator" layer that converts technical events into conversational, human-like phrases (e.g., "🔐 Sto effettuando l'accesso..."). Presenting this in a structured visual timeline (Icon + Human Text + Timestamp) instead of a raw text block makes the process feel more friendly and understandable.
+
+## 2024-05-23 - Actionable Logs (Deep Linking)
+**Learning:** Forcing users to manually copy file paths from logs to File Explorer is a friction point.
+**Action:** Detect file paths using Regex within the log text and render them as "Open Folder" buttons directly in the timeline. Similarly, for known errors (like "Credentials"), provide a "Fix It" button that navigates directly to the relevant settings page.

@@ -80,4 +80,8 @@ class SmartLogTranslator:
         if category in SmartLogTranslator.TEMPLATES:
             human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])
 
+        # Rich Tags Injection
+        if "credenziali" in lower_msg or "login" in lower_msg and category == "error":
+            message += " [FIXIT:ACCOUNT]"
+
         return human_msg, message, category
