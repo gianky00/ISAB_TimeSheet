@@ -15,15 +15,19 @@ class ToastOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        # Stile
+        # Stile (Explicit colors for dark/light mode compatibility)
         self.setStyleSheet("""
             QWidget {
                 background-color: #333333;
-                color: white;
+                color: white; /* Explicit white text */
                 border-radius: 4px;
-                padding: 10px 20px;
+                border: 1px solid #555555;
+            }
+            QLabel {
+                color: white; /* Force label text color */
                 font-size: 14px;
                 font-weight: bold;
+                background-color: transparent;
             }
         """)
 

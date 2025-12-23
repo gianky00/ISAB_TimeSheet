@@ -93,6 +93,7 @@ class CalendarDateEdit(QDateEdit):
                 padding: 5px 10px;
                 font-size: 14px;
                 background-color: white;
+                color: black; /* Force black text */
             }
             QDateEdit:focus {
                 border-color: #0d6efd;
@@ -601,7 +602,7 @@ class LogWidget(QWidget):
         self.log_text.setStyleSheet("""
             QTextEdit {
                 background-color: #1e1e1e;
-                color: #d4d4d4;
+                color: #d4d4d4; /* Explicit light text */
                 border: 1px solid #333;
                 border-radius: 4px;
                 padding: 10px;

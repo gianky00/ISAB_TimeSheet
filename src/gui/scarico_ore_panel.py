@@ -118,6 +118,8 @@ class ScaricoOrePanel(QWidget):
                 border-radius: 4px;
                 padding: 6px 12px;
                 font-size: 14px;
+                background-color: white;
+                color: black;
             }
             QLineEdit:focus {
                 border-color: #0d6efd;
@@ -317,12 +319,15 @@ class ScaricoOrePanel(QWidget):
             QMessageBox.warning(self, "Configurazione Mancante", "Configura il percorso 'File Scarico Ore' nelle Impostazioni.")
             return
 
-        self.status_label.setText("⏳ Inizializzazione aggiornamento...")
+        self.status_label.setText("⏳ Calcolo stima tempi...")
         self.update_btn.setEnabled(False)
         self.table_view.setEnabled(False)
 
         self.worker = ScaricoOreWorker(path)
         self.worker.finished_signal.connect(self._on_update_finished)
+        # Connect to _on_loading_progress to handle the message format correctly if needed,
+        # but ScaricoOreWorker emits the full formatted string now.
+        # Direct connection to setText is fine as worker formats it.
         self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
 
@@ -401,7 +406,9 @@ class ScaricoOrePanel(QWidget):
             """)
 
     def _on_loading_progress(self, msg):
-        self.status_label.setText(f"⏳ {msg}")
+        # Update text. If format matches worker (contains "Tempo stimato"), it's handled.
+        # Ensure we don't have "Inizializzazione..." stuck if progress message comes.
+        self.status_label.setText(f"{msg}") # Worker sends full formatted string with icon
         QApplication.processEvents() # Ensure progress updates are seen
 
     def _on_cache_loaded(self):

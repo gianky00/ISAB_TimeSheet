@@ -226,11 +226,13 @@ class ScaricaTSPanel(BaseBotPanel):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         params_layout = QVBoxLayout(params_group)
@@ -238,7 +240,7 @@ class ScaricaTSPanel(BaseBotPanel):
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
         
@@ -252,6 +254,7 @@ class ScaricaTSPanel(BaseBotPanel):
                 padding: 8px;
                 font-size: 15px;
                 background-color: white;
+                color: black; /* Force black text */
             }
             QComboBox:focus {
                 border-color: #0d6efd;
@@ -269,6 +272,8 @@ class ScaricaTSPanel(BaseBotPanel):
                 selection-background-color: #e7f1ff;
                 selection-color: #0d6efd;
                 font-size: 15px;
+                background-color: white;
+                color: black; /* Force black text in list */
             }
         """)
         fornitore_layout.addWidget(self.fornitore_combo)
@@ -297,7 +302,7 @@ class ScaricaTSPanel(BaseBotPanel):
         # Riga 2: Data
         date_layout = QHBoxLayout()
         date_label = QLabel("Data Da:")
-        date_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        date_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         date_label.setMinimumWidth(80)
         date_layout.addWidget(date_label)
         
@@ -326,11 +331,13 @@ class ScaricaTSPanel(BaseBotPanel):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         group_layout = QVBoxLayout(group)
@@ -530,11 +537,13 @@ class DettagliOdAPanel(BaseBotPanel):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         params_layout = QVBoxLayout(params_group)
@@ -542,7 +551,7 @@ class DettagliOdAPanel(BaseBotPanel):
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
 
@@ -556,6 +565,7 @@ class DettagliOdAPanel(BaseBotPanel):
                 padding: 8px;
                 font-size: 15px;
                 background-color: white;
+                color: black; /* Force black text */
             }
             QComboBox:focus {
                 border-color: #0d6efd;
@@ -573,6 +583,8 @@ class DettagliOdAPanel(BaseBotPanel):
                 selection-background-color: #e7f1ff;
                 selection-color: #0d6efd;
                 font-size: 15px;
+                background-color: white;
+                color: black; /* Force black text in list */
             }
         """)
         fornitore_layout.addWidget(self.fornitore_combo)
@@ -603,7 +615,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Data Da
         date_da_label = QLabel("Data Da:")
-        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         date_layout.addWidget(date_da_label)
 
         self.date_da_edit = CalendarDateEdit()
@@ -614,7 +626,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Data A
         date_a_label = QLabel("Data A:")
-        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         date_layout.addWidget(date_a_label)
 
         self.date_a_edit = CalendarDateEdit()
@@ -636,11 +648,13 @@ class DettagliOdAPanel(BaseBotPanel):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         group_layout = QVBoxLayout(group)
@@ -838,11 +852,13 @@ class CaricoTSPanel(BaseBotPanel):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         group_layout = QVBoxLayout(group)
@@ -974,11 +990,13 @@ class TimbratureBotPanel(BaseBotPanel):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         params_layout = QVBoxLayout(params_group)
@@ -986,7 +1004,7 @@ class TimbratureBotPanel(BaseBotPanel):
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
 
@@ -1000,6 +1018,7 @@ class TimbratureBotPanel(BaseBotPanel):
                 padding: 8px;
                 font-size: 15px;
                 background-color: white;
+                color: black; /* Force black text */
             }
             QComboBox:focus {
                 border-color: #0d6efd;
@@ -1017,6 +1036,8 @@ class TimbratureBotPanel(BaseBotPanel):
                 selection-background-color: #e7f1ff;
                 selection-color: #0d6efd;
                 font-size: 15px;
+                background-color: white;
+                color: black; /* Force black text in list */
             }
         """)
         fornitore_layout.addWidget(self.fornitore_combo)
@@ -1047,7 +1068,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
         # Data Da
         date_da_label = QLabel("Data Da:")
-        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         date_layout.addWidget(date_da_label)
 
         self.date_da_edit = CalendarDateEdit()
@@ -1058,7 +1079,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
         # Data A
         date_a_label = QLabel("Data A:")
-        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px; color: black;")
         date_layout.addWidget(date_a_label)
 
         self.date_a_edit = CalendarDateEdit()
@@ -1080,23 +1101,25 @@ class TimbratureBotPanel(BaseBotPanel):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         sched_layout = QHBoxLayout(sched_group)
 
         self.autopilot_check = QCheckBox("Abilita download automatico")
-        self.autopilot_check.setStyleSheet("font-size: 15px;")
+        self.autopilot_check.setStyleSheet("font-size: 15px; color: black;")
         sched_layout.addWidget(self.autopilot_check)
 
         sched_layout.addSpacing(20)
 
         lbl_time = QLabel("Alle ore:")
-        lbl_time.setStyleSheet("font-size: 15px;")
+        lbl_time.setStyleSheet("font-size: 15px; color: black;")
         sched_layout.addWidget(lbl_time)
 
         self.time_edit = QTimeEdit()
@@ -1109,6 +1132,7 @@ class TimbratureBotPanel(BaseBotPanel):
                 border-radius: 4px;
                 padding: 5px;
                 background-color: white;
+                color: black; /* Force black text */
             }
         """)
         sched_layout.addWidget(self.time_edit)
@@ -1249,11 +1273,13 @@ class TimbratureDBPanel(QWidget):
                 margin-top: 10px;
                 padding-top: 10px;
                 font-size: 16px;
+                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
+                color: black;
             }
         """)
         db_layout = QVBoxLayout(db_group)
@@ -1261,10 +1287,21 @@ class TimbratureDBPanel(QWidget):
         # Search bar
         search_layout = QHBoxLayout()
         search_label = QLabel("🔍 Filtra:")
+        search_label.setStyleSheet("color: black;")
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Cerca per nome, cognome, data...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.textChanged.connect(self._filter_data)
+        self.search_input.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-size: 14px;
+                background-color: white;
+                color: black;
+            }
+        """)
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.search_input)
 
@@ -1325,14 +1362,17 @@ class TimbratureDBPanel(QWidget):
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 background-color: white;
+                color: black;
                 gridline-color: #e9ecef;
                 font-size: 13px;
             }
             QTableWidget::item {
                 padding: 5px;
+                color: black;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
+                color: black;
                 padding: 8px;
                 border: none;
                 border-bottom: 2px solid #dee2e6;

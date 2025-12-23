@@ -108,6 +108,8 @@ class ContabilitaPanel(QWidget):
                 border-radius: 4px;
                 padding: 6px 12px;
                 font-size: 14px;
+                background-color: white;
+                color: black;
             }
             QLineEdit:focus {
                 border-color: #0d6efd;

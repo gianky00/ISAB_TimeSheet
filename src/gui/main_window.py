@@ -174,6 +174,8 @@ class MainWindow(QMainWindow):
         """Configura l'interfaccia."""
         # Widget centrale
         central_widget = QWidget()
+        # Force light theme for the main window content area if needed, or rely on specific widgets
+        central_widget.setStyleSheet("background-color: #f8f9fa; color: #212529;")
         self.setCentralWidget(central_widget)
         
         # Layout principale orizzontale
