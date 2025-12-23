@@ -17,6 +17,7 @@ from selenium.common.exceptions import TimeoutException
 
 from src.bots.base import BaseBot, BotStatus
 from src.utils.helpers import sanitize_filename
+from src.core import config_manager
 
 
 class ScaricaTSBot(BaseBot):
@@ -93,12 +94,10 @@ class ScaricaTSBot(BaseBot):
             rows = data
         
         if not rows:
-            self.log("Nessun dato da processare")
+            self.log("ℹ️ Nessun dato da processare.")
             return True
         
-        self.log(f"Processamento {len(rows)} righe...")
-        self.log(f"Data inizio: {self.data_da}")
-        self.log(f"Fornitore: {self.fornitore}")
+        self.log(f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
         
         try:
             # 1. Naviga a Report -> Timesheet
@@ -115,25 +114,7 @@ class ScaricaTSBot(BaseBot):
             # Usa directory download di sistema (browser default)
             source_dir = Path.home() / "Downloads"
 
-            # Se elabora_ts è attivo, scarichiamo in Downloads e poi elaboriamo.
-            # Se elabora_ts è spento, usiamo download_path per la destinazione finale (o Downloads se vuoto)
-            # Ma la logica corrente di _download_excel fa già tutto in uno step.
-            # Dobbiamo separare:
-            # - Se elabora_ts=True: Scarica in Downloads -> Aggiungi a lista -> A fine ciclo processa lista -> Sposta in download_path
-            # - Se elabora_ts=False: Scarica in Downloads -> Sposta direttamente in download_path con rinomina standard (TS_oda-pos)
-
-            # Per mantenere coerenza col codice VBA richiesto:
-            # "Se l'utente flagga Elabora TS... esegui un codice... alla fine"
-            # Quindi raccogliamo i file scaricati e li processiamo alla fine.
-
             downloaded_files_list = [] # Per Elabora TS logic
-
-            # La destinazione immediata dipende dal flag?
-            # Se Elabora TS è attivo, la rinomina "standard" (TS_oda-pos) potrebbe non essere voluta?
-            # Il codice VBA prende file con nome originale (es "Export.xlsx" o simile?) e li rinomina se c'è collisione?
-            # Il codice VBA fornito fa: "Ottieni lista file... Se excel... Sposta con nome originale verso destinazione... Se esiste chiedi suffisso"
-            # Ma _download_excel oggi fa già una rinomina a "TS_{oda}-{pos}.xlsx".
-            # Modifichiamo _download_excel per restituire il path del file finale.
 
             dest_dir = Path(self.download_path) if self.download_path else source_dir
             
@@ -154,9 +135,6 @@ class ScaricaTSBot(BaseBot):
                     self.log(f"Riga {i}: Numero OdA mancante, saltata")
                     continue
                 
-                self.log("-" * 40)
-                self.log(f"Riga {i}/{len(rows)}: OdA='{numero_oda}', Pos='{posizione_oda}'")
-                
                 try:
                     # Inserisci Numero OdA
                     campo_numero_oda = self.wait.until(
@@ -164,7 +142,6 @@ class ScaricaTSBot(BaseBot):
                     )
                     self.driver.execute_script("arguments[0].value = arguments[1];", campo_numero_oda, numero_oda)
                     self.driver.execute_script(js_dispatch_events, campo_numero_oda)
-                    # self.log(f"  Valore '{numero_oda}' impostato in 'NumeroOda'.")
                     
                     # Inserisci Posizione OdA
                     campo_posizione_oda = self.wait.until(
@@ -173,12 +150,10 @@ class ScaricaTSBot(BaseBot):
                     self.driver.execute_script("arguments[0].value = '';", campo_posizione_oda)
                     self.driver.execute_script("arguments[0].value = arguments[1];", campo_posizione_oda, posizione_oda)
                     self.driver.execute_script(js_dispatch_events, campo_posizione_oda)
-                    # self.log(f"  Valore '{posizione_oda}' impostato in 'PosizioneOda'.")
                     
                     # Click su Cerca
                     pulsante_cerca_xpath = "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]]"
                     self.wait.until(EC.element_to_be_clickable((By.XPATH, pulsante_cerca_xpath))).click()
-                    # self.log("  Pulsante 'Cerca' cliccato. Attesa risultati...")
                     
                     # Attendi risultati
                     self._attendi_scomparsa_overlay(90)
@@ -190,17 +165,16 @@ class ScaricaTSBot(BaseBot):
                         downloaded_files_list.append(str(final_path))
                     
                 except Exception as e:
-                    self.log(f"  ✗ Errore elaborazione riga {i}: {e}")
+                    self.log(f"❌ Errore OdA {numero_oda}: {e}")
                     continue
                 
                 time.sleep(1)
             
-            self.log("-" * 40)
-            self.log(f"Completato: {success_count}/{len(rows)} download riusciti")
+            self.log(f"✨ Operazione completata. {success_count}/{len(rows)} file scaricati.")
             
             # 4. Elaborazione TS (VBA Logic) se richiesto
             if self.elabora_ts and downloaded_files_list:
-                self.log("Avvio elaborazione TS (controllo collisioni)...")
+                self.log("🤖 Controllo duplicati e rinomina in corso...")
                 self._process_downloaded_files_vba_style(downloaded_files_list, dest_dir)
 
             # 5. Logout
@@ -209,55 +183,46 @@ class ScaricaTSBot(BaseBot):
             return success_count == len(rows)
             
         except Exception as e:
-            self.log(f"✗ Errore durante l'esecuzione: {e}")
+            self.log(f"❌ Errore imprevisto: {e}")
             return False
     
     def _navigate_to_timesheet(self) -> bool:
         """Naviga a Report -> Timesheet."""
         self._check_stop()
-        self.log("Navigazione menu Report -> Timesheet...")
         
         try:
             # Click su "Report"
-            self.log("Click su 'Report'...")
             self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Report']"))
             ).click()
-            self.log("'Report' cliccato.")
             self._attendi_scomparsa_overlay()
             
             # Click su "Timesheet"
-            self.log("Click su 'Timesheet'...")
             timesheet_menu_xpath = "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Timesheet']]"
             self.wait.until(EC.element_to_be_clickable((By.XPATH, timesheet_menu_xpath))).click()
-            self.log("'Timesheet' cliccato.")
             
             # Attendi che il dropdown Fornitore sia visibile
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             self.wait.until(EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath)))
-            self.log("✓ Pagina Timesheet caricata.")
             self._attendi_scomparsa_overlay()
             
             return True
             
         except Exception as e:
-            self.log(f"✗ Errore navigazione menu: {e}")
+            self.log(f"❌ Impossibile navigare al menu Timesheet: {e}")
             return False
     
     def _setup_filters(self) -> bool:
         """Imposta Fornitore e Data Da."""
         self._check_stop()
-        self.log("Impostazione filtri (Fornitore, Data)...")
         
         try:
             # Seleziona Fornitore
-            self.log(f"  Selezione fornitore: '{self.fornitore}'...")
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
             fornitore_arrow_element = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
             )
             ActionChains(self.driver).move_to_element(fornitore_arrow_element).click().perform()
-            self.log("  Click sulla freccia del dropdown Fornitore eseguito.")
             
             # Seleziona l'opzione fornitore
             fornitore_option_xpath = f"//li[normalize-space(text())='{self.fornitore}']"
@@ -267,24 +232,20 @@ class ScaricaTSBot(BaseBot):
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option)
             time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", fornitore_option)
-            self.log(f"  ✓ Fornitore '{self.fornitore}' selezionato.")
             
             self._attendi_scomparsa_overlay()
             
             # Inserisci Data Da
-            self.log(f"  Inserimento data '{self.data_da}'...")
             campo_data_da = self.wait.until(
                 EC.visibility_of_element_located((By.NAME, "DataTimesheetDa"))
             )
             campo_data_da.clear()
             campo_data_da.send_keys(self.data_da)
-            self.log(f"  ✓ Data '{self.data_da}' inserita.")
             
-            self.log("✓ Filtri impostati.")
             return True
             
         except Exception as e:
-            self.log(f"✗ Errore impostazione filtri: {e}")
+            self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
             return False
     
     def _download_excel(self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str) -> Path:
@@ -358,45 +319,57 @@ class ScaricaTSBot(BaseBot):
                 # Se facciamo lo spostamento qui in _download_excel, non c'è più nulla da spostare "alla fine".
 
                 # SOLUZIONE:
-                # Se elabora_ts è True: Lasciamo il file nella cartella Downloads (source_dir) o lo spostiamo in una cartella temporanea interna.
-                # E restituiamo quel path temporaneo.
-                # Alla fine, chiamiamo _process... che prende dalla temp e mette nella finale chiedendo all'utente.
+                # Indipendentemente dal flag, spostiamo il file nella destinazione.
+                # Se elabora_ts è True: Spostiamo in una cartella temporanea per poi elaborare.
+                # Se elabora_ts è False: Spostiamo direttamente nella destinazione (con rinomina standard silenziosa).
+
+                # La richiesta utente dice:
+                # "il flag Elabora TS deve solo rinominare ed elaborare all'interno il file e non spostarlo
+                # visto che non inserendo il flag l'utente deve comunque avere la possibilità di spostarlo
+                # se modifica il percorso di destinazione"
+
+                # Interpretazione:
+                # 1. Se Elabora TS = False: Scarica -> Sposta in dest_dir (gestione conflitti automatica/silenziosa).
+                # 2. Se Elabora TS = True: Scarica -> Sposta in Temp -> Processa (rinomina + richiesta utente) -> Sposta in dest_dir.
 
                 if self.elabora_ts:
-                    # Lasciamo in source_dir (Downloads) ma rinominiamo per evitare conflitti con altri download?
-                    # Meglio spostare in una cartella temp dell'app.
+                    # Usiamo temp dir per la fase di "Elaborazione"
                     temp_dir = config_manager.CONFIG_DIR / "temp_ts_downloads"
                     if not temp_dir.exists():
                         temp_dir.mkdir(parents=True, exist_ok=True)
 
                     temp_path = temp_dir / nuovo_nome_file
-                    # Se esiste in temp, sovrascrivi (è temp nostra)
+
+                    # Se esiste in temp, sovrascrivi
                     import shutil
                     if temp_path.exists():
-                        temp_path.unlink()
+                        try: temp_path.unlink()
+                        except: pass
+
                     shutil.move(str(downloaded_file), str(temp_path))
-                    self.log(f"  ✓ Scaricato (Temp): {temp_path.name}")
+                    self.log(f"  ✓ Scaricato (Temp per elaborazione): {temp_path.name}")
                     return temp_path
                 else:
-                    # Comportamento standard: sposta in dest_dir gestendo conflitti silenziosamente
+                    # Comportamento standard: sposta direttamente in dest_dir
                     if percorso_finale.exists():
                         try:
                             percorso_finale.unlink()
                         except:
+                            # Se non riesco a cancellare (es aperto), rinomino con timestamp
                             timestamp = time.strftime("%Y%m%d-%H%M%S")
                             nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
                             percorso_finale = dest_dir / nuovo_nome_file
 
                     import shutil
                     shutil.move(str(downloaded_file), str(percorso_finale))
-                    self.log(f"  ✓ Scaricato: {percorso_finale.name}")
+                    self.log(f"✅ Scaricato: {percorso_finale.name}")
                     return percorso_finale
             else:
-                self.log("  ✗ File non trovato.")
+                self.log("⚠️ File non trovato dopo il download.")
                 return None
                 
         except Exception as e:
-            self.log(f"  ✗ Errore download: {e}")
+            self.log(f"❌ Problema durante il download: {e}")
             return None
 
     def _process_downloaded_files_vba_style(self, files: List[str], dest_dir: Path):

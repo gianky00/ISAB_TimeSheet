@@ -51,7 +51,7 @@ class DettagliOdABot(BaseBot):
             
         if not rows: return True
         
-        self.log(f"Processamento {len(rows)} righe...")
+        self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
         page = DettagliOdAPage(self.driver, self.log)
         
         # Define source (System Downloads) and destination (Configured Path)
@@ -67,16 +67,16 @@ class DettagliOdABot(BaseBot):
             
             # Note: ODA can be empty for General List export
             
-            self.log("-" * 40)
-            self.log(f"Riga {i}: OdA={oda}, Contratto={contract}")
+            # self.log("-" * 40)
+            # self.log(f"Riga {i}: OdA={oda}, Contratto={contract}")
 
             # Navigate and Setup for each row as required by the workflow (resetting tabs)
             # Pass (i==1) to let the page know if it's the first row
             if not page.navigate_to_dettagli(is_first_row=(i==1)):
-                self.log("✗ Fallita navigazione iniziale per la riga.")
+                self.log("❌ Problema nella navigazione.")
                 continue
             if not page.setup_supplier(self.fornitore):
-                self.log("✗ Fallita selezione fornitore.")
+                self.log("❌ Fornitore non selezionabile.")
                 continue
 
             if page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir):
@@ -85,4 +85,5 @@ class DettagliOdABot(BaseBot):
             time.sleep(1)
 
         page.logout()
+        self.log("✨ Procedura conclusa.")
         return success == len(rows)

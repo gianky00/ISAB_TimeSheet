@@ -47,42 +47,42 @@ class TimbratureBot(BaseBot):
             self.data_a = data.get('data_a', self.data_a)
             self.fornitore = data.get('fornitore', self.fornitore)
 
-        self.log(f"Avvio elaborazione Timbrature: Fornitore='{self.fornitore}', Periodo={self.data_da}-{self.data_a}")
+        self.log(f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})...")
 
         page = TimbraturePage(self.driver, self.log)
 
         # 1. Navigation
         if not page.navigate_to_timbrature():
-            self.log("❌ Navigazione non riuscita.")
+            self.log("❌ Non riesco a raggiungere la sezione Timbrature.")
             return False
 
         # 2. Filter & Download
         if not page.set_filters(self.fornitore, self.data_da, self.data_a):
-            self.log("❌ Impostazione filtri non riuscita.")
+            self.log("❌ Filtri non applicati correttamente.")
             return False
 
         excel_path = page.download_excel()
 
         # 3. Process File
         if excel_path:
-            self.log("✅ File Excel scaricato. Elaborazione dati in corso...")
+            self.log("✅ Report scaricato! Sto analizzando i dati...")
             try:
                 self.storage.import_excel(excel_path, self.log)
-                self.log("✅ Importazione nel database completata.")
+                self.log("💾 Dati salvati nel database con successo.")
             except Exception as e:
-                self.log(f"❌ Errore durante l'importazione nel DB: {e}")
+                self.log(f"❌ Errore durante il salvataggio: {e}")
             finally:
                 # Cleanup
                 if os.path.exists(excel_path):
                     try:
                         os.remove(excel_path)
-                        self.log("🗑️ File Excel eliminato.")
+                        # self.log("🗑️ File Excel eliminato.")
                     except Exception as e:
-                        self.log(f"⚠️ Impossibile eliminare il file Excel: {e}")
+                        pass
         else:
-            self.log("⚠️ Nessun file scaricato o nessun dato trovato.")
+            self.log("⚠️ Non ho trovato dati o il download non è partito.")
 
-        self.log("Processo completato.")
+        self.log("✨ Procedura conclusa.")
         return True
 
     @staticmethod
