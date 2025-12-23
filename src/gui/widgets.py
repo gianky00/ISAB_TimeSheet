@@ -16,11 +16,6 @@ import re
 from pathlib import Path
 from src.utils.log_humanizer import SmartLogTranslator
 
-try:
-    import winsound
-except ImportError:
-    winsound = None
-
 
 class HorizontalLogItem(QWidget):
     """Widget per singolo elemento della timeline log orizzontale."""
@@ -86,13 +81,13 @@ class HorizontalLogItem(QWidget):
 
         # Time
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 10px; font-family: monospace;")
+        lbl_time.setStyleSheet("color: #adb5bd; font-size: 14px; font-family: monospace;")
         lbl_time.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_time)
 
         # Text
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 12px; color: #212529;")
+        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 16px; color: #212529;")
         self.lbl_human.setWordWrap(True)
         self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.lbl_human)
