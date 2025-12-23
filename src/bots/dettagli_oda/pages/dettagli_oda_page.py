@@ -44,6 +44,7 @@ class DettagliOdAPage:
 
     def navigate_to_dettagli(self) -> bool:
         try:
+            self.expand_sidebar_if_collapsed()
             self.log("Navigazione menu Report -> Oda...")
             time.sleep(1) # Ensure UI is idle
 
@@ -130,7 +131,22 @@ class DettagliOdAPage:
         except Exception as e:
             self.log(f"⚠️ Errore durante logout: {e}")
 
-    def process_oda(self, oda: str, contract: str, date_da: str, date_a: str, download_dir: Path) -> bool:
+    def expand_sidebar_if_collapsed(self):
+        """Espande la sidebar se collassata per rendere visibile il menu Report."""
+        try:
+            # Cerca l'elemento di espansione
+            expand_btn = self.driver.find_element(*DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
+            if expand_btn.is_displayed():
+                self.log("  Menu laterale collassato, espansione in corso...")
+                # Usa JS click per robustezza
+                self.driver.execute_script("arguments[0].click();", expand_btn)
+                time.sleep(0.5)
+                self.log("  Menu espanso.")
+        except Exception:
+            # Se l'elemento non c'è o non è visibile, assumiamo sia già espanso
+            pass
+
+    def process_oda(self, oda: str, contract: str, date_da: str, date_a: str, source_dir: Path, dest_dir: Path) -> bool:
         try:
             # 1. Fill Form
             js_set_value = """
@@ -203,10 +219,12 @@ class DettagliOdAPage:
                 # ODA Empty: General List Export
                 self.log("  Esportazione lista generale...")
                 export_btn_locator = DettagliOdALocators.GENERAL_EXPORT_BUTTON
-                target_filename = "lista_generale_oda.xlsx"
+                # Normalizza la data per il filename: GG.MM.AAAA -> GG-MM-AAAA
+                safe_date_a = date_a.replace('.', '-').replace('/', '-')
+                target_filename = f"ODA_Generale_al_{safe_date_a}.xlsx"
 
-            # Export and Download
-            res = self._download(download_dir, target_filename, export_btn_locator)
+            # Export and Download (using source and dest dirs)
+            res = self._download(source_dir, dest_dir, target_filename, export_btn_locator)
 
             # Cleanup
             self._close_all_tabs()
@@ -245,9 +263,9 @@ class DettagliOdAPage:
         except Exception as e:
             self.log(f"  ⚠️ Errore chiusura tab: {e}")
 
-    def _download(self, download_dir: Path, target_filename: str, button_locator: tuple) -> bool:
+    def _download(self, source_dir: Path, dest_dir: Path, target_filename: str, button_locator: tuple) -> bool:
         try:
-            files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
+            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
 
             btn = self.wait.until(EC.presence_of_element_located(button_locator))
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
@@ -260,31 +278,40 @@ class DettagliOdAPage:
             downloaded_file = None
             start_time = time.time()
             while time.time() - start_time < Timeouts.DOWNLOAD:
-                current_files = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
+                current_files = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
                 new_files = current_files - files_before
                 if new_files:
                     downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
                     break
                 time.sleep(0.5)
 
-            if downloaded_file:
-                new_path = download_dir / target_filename
+            if downloaded_file and downloaded_file.exists():
+                # Assicura dest dir
+                if not dest_dir.exists():
+                    try:
+                        dest_dir.mkdir(parents=True, exist_ok=True)
+                    except:
+                        pass
 
-                # Handle overwrite/uniqueness if needed, though user asked for specific name.
-                # If "lista_generale_oda.xlsx" exists, we might overwrite or append counter.
-                # Assuming overwrite is NOT desired for safe automation, adding counter if exists.
-                if new_path.exists():
-                    stem = new_path.stem
-                    suffix = new_path.suffix
-                    counter = 1
-                    while new_path.exists() and new_path.resolve() != downloaded_file.resolve():
-                        new_path = download_dir / f"{stem}_{counter}{suffix}"
-                        counter += 1
+                target_path = dest_dir / target_filename
 
-                downloaded_file.rename(new_path)
-                self.log(f"  ✓ Scaricato: {new_path.name}")
+                # Sovrascrittura o gestione duplicati?
+                # La richiesta specifica un nome tassativo, quindi sovrascriviamo se necessario,
+                # ma per sicurezza cancelliamo prima l'esistente.
+                if target_path.exists():
+                    try:
+                        target_path.unlink()
+                    except:
+                         pass
+
+                import shutil
+                shutil.move(str(downloaded_file), str(target_path))
+
+                self.log(f"  ✓ Scaricato: {target_path.name}")
                 return True
-            return False
+            else:
+                self.log("  ✗ File non trovato nella cartella Download.")
+                return False
         except Exception as e:
             self.log(f"  ✗ Errore download: {e}")
             return False

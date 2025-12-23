@@ -54,7 +54,10 @@ class DettagliOdABot(BaseBot):
         self.log(f"Processamento {len(rows)} righe...")
         page = DettagliOdAPage(self.driver, self.log)
         
-        download_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
+        # Define source (System Downloads) and destination (Configured Path)
+        source_dir = Path.home() / "Downloads"
+        dest_dir = Path(self.download_path) if self.download_path else source_dir
+
         success = 0
         
         for i, row in enumerate(rows, 1):
@@ -75,7 +78,7 @@ class DettagliOdABot(BaseBot):
                 self.log("✗ Fallita selezione fornitore.")
                 continue
 
-            if page.process_oda(oda, contract, self.data_da, self.data_a, download_dir):
+            if page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir):
                 success += 1
             
             time.sleep(1)
