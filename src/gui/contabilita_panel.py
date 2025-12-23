@@ -426,6 +426,27 @@ class ContabilitaYearTab(QWidget):
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True)  # Enable word wrap for multiline text
 
+        # Force text color for Dark Mode compatibility
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+            }
+            QTableWidget::item {
+                color: black;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: black;
+                padding: 4px;
+                border: 1px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
+
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
@@ -698,6 +719,27 @@ class GiornaliereYearTab(QWidget):
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True) # Abilita testo a capo
+
+        # Force text color for Dark Mode compatibility
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+            }
+            QTableWidget::item {
+                color: black;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: black;
+                padding: 4px;
+                border: 1px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)

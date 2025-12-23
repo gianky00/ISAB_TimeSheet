@@ -200,11 +200,13 @@ class ScaricoOrePanel(QWidget):
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 background-color: white;
+                color: black;  /* Force black text */
                 gridline-color: #e9ecef;
                 font-size: 13px;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
+                color: black;  /* Force black text */
                 padding: 8px;
                 border: none;
                 border-bottom: 2px solid #dee2e6;

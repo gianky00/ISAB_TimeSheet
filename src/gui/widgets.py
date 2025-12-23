@@ -280,11 +280,13 @@ class EditableDataTable(QWidget):
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 background-color: white;
+                color: black;  /* Force black text for high contrast */
                 gridline-color: #e9ecef;
                 font-size: 14px;
             }
             QTableWidget::item {
                 padding: 8px;
+                color: black;  /* Force black text */
             }
             QTableWidget::item:selected {
                 background-color: #e7f1ff;
@@ -292,6 +294,7 @@ class EditableDataTable(QWidget):
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
+                color: black;  /* Force black text in header */
                 padding: 8px;
                 padding-left: 5px;
                 border: none;
