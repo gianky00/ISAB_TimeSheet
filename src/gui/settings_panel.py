@@ -388,35 +388,6 @@ class SettingsPanel(QWidget):
         timeout_layout.addStretch()
         browser_layout.addLayout(timeout_layout)
         
-        # --- Sezione Download ---
-        download_group = self._create_group_box("📁 Cartella di destinazione")
-        download_layout = QVBoxLayout(download_group)
-        self.groups.append(download_group)
-        
-        path_layout = QHBoxLayout()
-        
-        self.download_path_edit = QLineEdit()
-        self.download_path_edit.setPlaceholderText("Seleziona cartella di destinazione per i file scaricati")
-        self.download_path_edit.setReadOnly(True)
-        self.download_path_edit.setMinimumHeight(40)
-        self._style_input(self.download_path_edit)
-        path_layout.addWidget(self.download_path_edit)
-        
-        self.browse_btn = QPushButton("📂 Sfoglia")
-        self.browse_btn.setMinimumHeight(40)
-        self.browse_btn.setMinimumWidth(120)
-        self.browse_btn.clicked.connect(self._browse_download_path)
-        self._style_button(self.browse_btn)
-        path_layout.addWidget(self.browse_btn)
-        
-        note_dl = QLabel("Nota: I file verranno scaricati nella cartella Download predefinita e poi spostati qui.")
-        note_dl.setStyleSheet("color: #6c757d; font-size: 13px; margin-top: 5px;")
-        download_layout.addWidget(note_dl)
-
-        download_layout.addLayout(path_layout)
-        
-        scroll_layout.addWidget(download_group)
-
         # --- Sezione Diagnostica ---
         diag_group = self._create_group_box("🛠️ Diagnostica & Licenza")
         diag_layout = QVBoxLayout(diag_group)
@@ -554,7 +525,6 @@ class SettingsPanel(QWidget):
     def _connect_change_signals(self):
         self.headless_check.stateChanged.connect(self._on_change)
         self.timeout_spin.valueChanged.connect(self._on_change)
-        self.download_path_edit.textChanged.connect(self._on_change)
         self.contabilita_path_edit.textChanged.connect(self._on_change)
         self.giornaliere_path_edit.textChanged.connect(self._on_change)
         self.auto_update_contabilita_check.stateChanged.connect(self._on_change)
@@ -579,13 +549,6 @@ class SettingsPanel(QWidget):
         from PyQt6.QtCore import QUrl
         folder = config_manager.CONFIG_DIR
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
-
-    def _browse_download_path(self):
-        current_path = self.download_path_edit.text()
-        path = QFileDialog.getExistingDirectory(self, "Seleziona cartella download", current_path if current_path else "")
-        if path:
-            self.download_path_edit.setText(path)
-            self._set_unsaved_changes(True)
 
     def _browse_contabilita_path(self):
         current_path = self.contabilita_path_edit.text()
@@ -801,7 +764,6 @@ class SettingsPanel(QWidget):
         # Browser
         self.headless_check.setChecked(config.get("browser_headless", False))
         self.timeout_spin.setValue(config.get("browser_timeout", 30))
-        self.download_path_edit.setText(config.get("download_path", ""))
         
         # Contabilita
         self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
@@ -832,7 +794,6 @@ class SettingsPanel(QWidget):
         
         config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
         config_manager.set_config_value("browser_timeout", self.timeout_spin.value())
-        config_manager.set_config_value("download_path", self.download_path_edit.text())
 
         config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
         config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())

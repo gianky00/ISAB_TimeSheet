@@ -124,6 +124,8 @@ class ExcelTableWidget(QTableWidget):
         # Abilita la selezione di intere righe ma permettendo selezioni multiple
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        # Assicura che il click selezioni la riga anche se clicco su una cella non editabile
+        self.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
 
     def keyPressEvent(self, event):
         """Gestisce la pressione dei tasti, in particolare CTRL+C."""
@@ -284,14 +286,23 @@ class EditableDataTable(QWidget):
                 color: black;  /* Force black text for high contrast */
                 gridline-color: #e9ecef;
                 font-size: 14px;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
             }
             QTableWidget::item {
                 padding: 8px;
                 color: black;  /* Force black text */
+                border: none;
             }
             QTableWidget::item:selected {
                 background-color: #e7f1ff;
                 color: #0d6efd;
+            }
+            /* Gestione focus cella (current item) per evitare il "solo una cella colorata" */
+            QTableWidget::item:focus {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+                border: none; /* Rimuove il bordo tratteggiato di default */
             }
             QHeaderView::section {
                 background-color: #f8f9fa;

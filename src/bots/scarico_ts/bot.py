@@ -57,18 +57,20 @@ class ScaricaTSBot(BaseBot):
     def description(self) -> str:
         return "Scarica i timesheet dal portale ISAB"
     
-    def __init__(self, data_da: str = "01.01.2025", fornitore: str = "", **kwargs):
+    def __init__(self, data_da: str = "01.01.2025", fornitore: str = "", elabora_ts: bool = False, **kwargs):
         """
         Inizializza il bot.
         
         Args:
             data_da: Data inizio timesheet (formato dd.mm.yyyy)
             fornitore: Nome fornitore da selezionare (obbligatorio)
+            elabora_ts: Se True, esegue la rinomina e lo spostamento post-download
             **kwargs: Altri parametri per BaseBot
         """
         super().__init__(**kwargs)
         self.data_da = data_da
         self.fornitore = fornitore
+        self.elabora_ts = elabora_ts
     
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """
@@ -110,8 +112,29 @@ class ScaricaTSBot(BaseBot):
             # 3. Processa ogni riga
             success_count = 0
 
-            # Usa directory download di sistema, poi sposteremo i file
+            # Usa directory download di sistema (browser default)
             source_dir = Path.home() / "Downloads"
+
+            # Se elabora_ts è attivo, scarichiamo in Downloads e poi elaboriamo.
+            # Se elabora_ts è spento, usiamo download_path per la destinazione finale (o Downloads se vuoto)
+            # Ma la logica corrente di _download_excel fa già tutto in uno step.
+            # Dobbiamo separare:
+            # - Se elabora_ts=True: Scarica in Downloads -> Aggiungi a lista -> A fine ciclo processa lista -> Sposta in download_path
+            # - Se elabora_ts=False: Scarica in Downloads -> Sposta direttamente in download_path con rinomina standard (TS_oda-pos)
+
+            # Per mantenere coerenza col codice VBA richiesto:
+            # "Se l'utente flagga Elabora TS... esegui un codice... alla fine"
+            # Quindi raccogliamo i file scaricati e li processiamo alla fine.
+
+            downloaded_files_list = [] # Per Elabora TS logic
+
+            # La destinazione immediata dipende dal flag?
+            # Se Elabora TS è attivo, la rinomina "standard" (TS_oda-pos) potrebbe non essere voluta?
+            # Il codice VBA prende file con nome originale (es "Export.xlsx" o simile?) e li rinomina se c'è collisione?
+            # Il codice VBA fornito fa: "Ottieni lista file... Se excel... Sposta con nome originale verso destinazione... Se esiste chiedi suffisso"
+            # Ma _download_excel oggi fa già una rinomina a "TS_{oda}-{pos}.xlsx".
+            # Modifichiamo _download_excel per restituire il path del file finale.
+
             dest_dir = Path(self.download_path) if self.download_path else source_dir
             
             # JS per dispatch eventi su input ExtJS
@@ -160,9 +183,11 @@ class ScaricaTSBot(BaseBot):
                     # Attendi risultati
                     self._attendi_scomparsa_overlay(90)
                     
-                    # Download file Excel (usa source_dir e poi sposta in dest_dir)
-                    if self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda):
+                    # Download file Excel
+                    final_path = self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda)
+                    if final_path:
                         success_count += 1
+                        downloaded_files_list.append(str(final_path))
                     
                 except Exception as e:
                     self.log(f"  ✗ Errore elaborazione riga {i}: {e}")
@@ -173,7 +198,12 @@ class ScaricaTSBot(BaseBot):
             self.log("-" * 40)
             self.log(f"Completato: {success_count}/{len(rows)} download riusciti")
             
-            # 4. Logout
+            # 4. Elaborazione TS (VBA Logic) se richiesto
+            if self.elabora_ts and downloaded_files_list:
+                self.log("Avvio elaborazione TS (controllo collisioni)...")
+                self._process_downloaded_files_vba_style(downloaded_files_list, dest_dir)
+
+            # 5. Logout
             self._logout()
             
             return success_count == len(rows)
@@ -257,28 +287,17 @@ class ScaricaTSBot(BaseBot):
             self.log(f"✗ Errore impostazione filtri: {e}")
             return False
     
-    def _download_excel(self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str) -> bool:
+    def _download_excel(self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str) -> Path:
         """
         Scarica il file Excel, lo rinomina e lo sposta.
-        
-        Args:
-            source_dir: Directory di download (es. ~/Downloads)
-            dest_dir: Directory di destinazione finale
-            numero_oda: Numero OdA
-            posizione_oda: Posizione OdA
+        Restituisce il path finale del file o None.
         """
-        # self.log("  Tentativo di download del file Excel...")
-        
         try:
-            # File esistenti prima del download
             files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
             
-            # Click sul pulsante Excel
             excel_button_xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
             self.wait.until(EC.element_to_be_clickable((By.XPATH, excel_button_xpath))).click()
-            # self.log("  Icona Excel cliccata...")
             
-            # Attendi il download
             downloaded_file = None
             download_start_time = time.time()
             
@@ -288,26 +307,21 @@ class ScaricaTSBot(BaseBot):
                     new_files = current_files - files_before
                     if new_files:
                         downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
-                        # self.log(f"  File rilevato: {downloaded_file.name}")
                         break
                 except:
                     pass
                 time.sleep(0.5)
             
             if downloaded_file and downloaded_file.exists():
-                # Assicura dest dir
                 if not dest_dir.exists():
                     try:
                         dest_dir.mkdir(parents=True, exist_ok=True)
                     except:
                         pass
 
-                # Costruisci il nuovo nome: TS_<NumeroOdA>-<Posizione>.xlsx
                 safe_oda = sanitize_filename(numero_oda)
                 safe_pos = sanitize_filename(posizione_oda)
                 
-                # Formato richiesto: TS_{oda}-{pos}.xlsx
-                # sanitize_filename returns "unnamed_file" for empty strings, so we check for that too
                 if safe_pos and safe_pos != "unnamed_file":
                     nuovo_nome_base = f"TS_{safe_oda}-{safe_pos}"
                 else:
@@ -316,28 +330,135 @@ class ScaricaTSBot(BaseBot):
                 nuovo_nome_file = f"{nuovo_nome_base}.xlsx"
                 percorso_finale = dest_dir / nuovo_nome_file
                 
-                # Gestisci duplicati
-                if percorso_finale.exists():
-                    try:
-                        percorso_finale.unlink()
-                    except:
-                        timestamp = time.strftime("%Y%m%d-%H%M%S")
-                        nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
-                        percorso_finale = dest_dir / nuovo_nome_file
+                # Se "Elabora TS" è attivo, NON gestiamo qui i conflitti con timestamp o cancellazione,
+                # ma spostiamo comunque qui per avere un nome base coerente (o temp).
+                # Tuttavia, se Elabora TS è attivo, la logica VBA implica che dobbiamo gestire i conflitti POI.
+                # Per ora, manteniamo la logica di rename standard qui.
+                # Se esiste già, _download_excel standard lo sovrascrive o rinomina con timestamp.
+                # Per supportare la logica VBA che CHIEDE all'utente, se Elabora TS è True,
+                # dovremmo forse evitare di sovrascrivere qui se vogliamo chiedere?
+                # Ma qui stiamo creando il file per la prima volta in questa sessione.
 
-                # Sposta e rinomina
-                import shutil
-                shutil.move(str(downloaded_file), str(percorso_finale))
+                # Se Elabora TS è True, lasciamo gestire il conflitto alla funzione _process_downloaded_files_vba_style?
+                # No, perché quella funzione itera sui file già scaricati.
+                # Se il file esiste già da una sessione PRECEDENTE, qui lo sovrascriviamo o rinominiamo.
 
-                self.log(f"  ✓ Scaricato: {percorso_finale.name}")
-                return True
+                # Modifica per Elabora TS:
+                # Se il file esiste già, e siamo in modalità Elabora TS, NON lo sovrascriviamo brutalmente qui?
+                # Oppure lo spostiamo con un nome temporaneo e poi lo rinominiamo?
+
+                # Approccio: Spostiamo sempre qui nel path finale con nome standard.
+                # Se esiste già, aggiungiamo timestamp automatico per evitare perdita dati.
+                # POI, in _process_downloaded_files_vba_style, controlliamo se ci sono conflitti "logici"?
+                # No, la richiesta dice: "Esegui un codice... alla fine... Controlla se le cartelle esistono... Cicla file origine... Se destinazione esiste chiedi".
+
+                # REVISIONE LOGICA RICHIESTA:
+                # Il codice VBA sposta da Origine (C2) a Destinazione (C3).
+                # Qui Origine = Downloads, Destinazione = dest_dir.
+                # Se facciamo lo spostamento qui in _download_excel, non c'è più nulla da spostare "alla fine".
+
+                # SOLUZIONE:
+                # Se elabora_ts è True: Lasciamo il file nella cartella Downloads (source_dir) o lo spostiamo in una cartella temporanea interna.
+                # E restituiamo quel path temporaneo.
+                # Alla fine, chiamiamo _process... che prende dalla temp e mette nella finale chiedendo all'utente.
+
+                if self.elabora_ts:
+                    # Lasciamo in source_dir (Downloads) ma rinominiamo per evitare conflitti con altri download?
+                    # Meglio spostare in una cartella temp dell'app.
+                    temp_dir = config_manager.CONFIG_DIR / "temp_ts_downloads"
+                    if not temp_dir.exists():
+                        temp_dir.mkdir(parents=True, exist_ok=True)
+
+                    temp_path = temp_dir / nuovo_nome_file
+                    # Se esiste in temp, sovrascrivi (è temp nostra)
+                    import shutil
+                    if temp_path.exists():
+                        temp_path.unlink()
+                    shutil.move(str(downloaded_file), str(temp_path))
+                    self.log(f"  ✓ Scaricato (Temp): {temp_path.name}")
+                    return temp_path
+                else:
+                    # Comportamento standard: sposta in dest_dir gestendo conflitti silenziosamente
+                    if percorso_finale.exists():
+                        try:
+                            percorso_finale.unlink()
+                        except:
+                            timestamp = time.strftime("%Y%m%d-%H%M%S")
+                            nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
+                            percorso_finale = dest_dir / nuovo_nome_file
+
+                    import shutil
+                    shutil.move(str(downloaded_file), str(percorso_finale))
+                    self.log(f"  ✓ Scaricato: {percorso_finale.name}")
+                    return percorso_finale
             else:
                 self.log("  ✗ File non trovato.")
-                return False
+                return None
                 
         except Exception as e:
             self.log(f"  ✗ Errore download: {e}")
-            return False
+            return None
+
+    def _process_downloaded_files_vba_style(self, files: List[str], dest_dir: Path):
+        """
+        Implementa la logica VBA: sposta file e chiede all'utente in caso di conflitto.
+        """
+        import shutil
+
+        if not dest_dir.exists():
+             self.log(f"  Creazione cartella destinazione: {dest_dir}")
+             dest_dir.mkdir(parents=True, exist_ok=True)
+
+        for file_path_str in files:
+            self._check_stop()
+            src_file = Path(file_path_str)
+            if not src_file.exists():
+                continue
+
+            # Nome file base (es TS_12345.xlsx)
+            filename = src_file.name
+            dest_file = dest_dir / filename
+
+            base_name = src_file.stem
+            extension = src_file.suffix
+
+            # Loop finché c'è conflitto
+            while dest_file.exists():
+                self.log(f"⚠ Conflitto: '{filename}' esiste già.")
+
+                prompt = (
+                    f"ATTENZIONE: Il file '{filename}' esiste già.\n\n"
+                    f"Per rinominare e spostare, inserisci un testo da aggiungere al nome originale ('{base_name}').\n\n"
+                    "Per SALTARE questo file, premi Annulla o lascia il campo vuoto."
+                )
+
+                # Chiedi all'utente (tramite callback GUI)
+                suffix = self._ask_user(prompt)
+
+                if not suffix or not suffix.strip():
+                    self.log(f"⏭️ File '{filename}' saltato dall'utente.")
+                    break # Break loop, dest_file esiste ancora, quindi if sotto fallirà
+
+                # Nuovo tentativo
+                new_filename = f"{base_name} {suffix}{extension}"
+                dest_file = dest_dir / new_filename
+                filename = new_filename
+
+            # Se non esiste (conflitto risolto o non c'era), sposta
+            if not dest_file.exists():
+                try:
+                    shutil.move(str(src_file), str(dest_file))
+                    self.log(f"✓ Spostato: {src_file.name} -> {dest_file.name}")
+                except Exception as e:
+                    self.log(f"✗ Errore spostamento {src_file.name}: {e}")
+            else:
+                # Caso saltato: cancelliamo il temp?
+                # Sì, per pulizia.
+                try:
+                    src_file.unlink()
+                    self.log(f"  (Temp eliminato)")
+                except:
+                    pass
     
     def execute(self, data: List[Dict[str, Any]]) -> bool:
         """
