@@ -307,7 +307,8 @@ class ScaricaTSBot(BaseBot):
                 safe_pos = sanitize_filename(posizione_oda)
                 
                 # Formato richiesto: TS_{oda}-{pos}.xlsx
-                if safe_pos:
+                # sanitize_filename returns "unnamed_file" for empty strings, so we check for that too
+                if safe_pos and safe_pos != "unnamed_file":
                     nuovo_nome_base = f"TS_{safe_oda}-{safe_pos}"
                 else:
                     nuovo_nome_base = f"TS_{safe_oda}"
