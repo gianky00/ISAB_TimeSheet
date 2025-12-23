@@ -22,23 +22,7 @@ class AccountDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Account ISAB")
         self.setFixedWidth(350)
-        self.setStyleSheet("""
-            QDialog {
-                background-color: white;
-                color: black;
-            }
-            QLabel {
-                color: black;
-                font-size: 15px;
-            }
-            QLineEdit {
-                background-color: white;
-                color: black;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 5px;
-            }
-        """)
+        self.setStyleSheet("font-size: 15px;")
 
         layout = QFormLayout(self)
 
@@ -137,13 +121,10 @@ class SettingsPanel(QWidget):
                 border-radius: 4px;
                 padding: 5px;
                 font-size: 15px;
-                background-color: white;
-                color: black; /* Force black text */
             }
             QListWidget::item {
                 padding: 8px;
                 border-bottom: 1px solid #f0f0f0;
-                color: black;
             }
             QListWidget::item:selected {
                 background-color: #e7f1ff;
@@ -199,13 +180,10 @@ class SettingsPanel(QWidget):
                 border-radius: 4px;
                 padding: 5px;
                 font-size: 15px;
-                background-color: white;
-                color: black; /* Force black text */
             }
             QListWidget::item {
                 padding: 8px;
                 border-bottom: 1px solid #f0f0f0;
-                color: black;
             }
             QListWidget::item:selected {
                 background-color: #e7f1ff;
@@ -258,14 +236,12 @@ class SettingsPanel(QWidget):
                 border: 1px solid #ced4da;
                 border-radius: 4px;
                 background-color: white;
-                color: black; /* Force black text */
                 padding: 5px;
                 font-size: 15px;
             }
             QListWidget::item {
                 padding: 8px;
                 border-bottom: 1px solid #f0f0f0;
-                color: black;
             }
             QListWidget::item:selected {
                 background-color: #e7f1ff;
@@ -305,7 +281,7 @@ class SettingsPanel(QWidget):
 
         # Path input
         path_label = QLabel("File Excel di origine:")
-        path_label.setStyleSheet("font-size: 14px; font-weight: normal; color: black;")
+        path_label.setStyleSheet("font-size: 14px; font-weight: normal;")
         contabilita_layout.addWidget(path_label)
 
         contabilita_path_layout = QHBoxLayout()
@@ -326,12 +302,12 @@ class SettingsPanel(QWidget):
 
         # Auto-update checkbox
         self.auto_update_contabilita_check = QCheckBox("Attiva aggiornamento automatico all'avvio (background)")
-        self.auto_update_contabilita_check.setStyleSheet("padding: 5px; font-size: 15px; font-weight: normal; color: black;")
+        self.auto_update_contabilita_check.setStyleSheet("padding: 5px; font-size: 15px; font-weight: normal;")
         contabilita_layout.addWidget(self.auto_update_contabilita_check)
 
         # Giornaliere Path input
         giornaliere_label = QLabel("Cartella Giornaliere (Root):")
-        giornaliere_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px; color: black;")
+        giornaliere_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
         contabilita_layout.addWidget(giornaliere_label)
 
         giornaliere_path_layout = QHBoxLayout()
@@ -358,7 +334,7 @@ class SettingsPanel(QWidget):
         self.groups.append(dataease_group)
 
         dataease_label = QLabel("File Scarico Ore Cantiere (DataEase):")
-        dataease_label.setStyleSheet("font-size: 14px; font-weight: normal; color: black;")
+        dataease_label.setStyleSheet("font-size: 14px; font-weight: normal;")
         dataease_layout.addWidget(dataease_label)
 
         dataease_path_layout = QHBoxLayout()
@@ -385,12 +361,12 @@ class SettingsPanel(QWidget):
         self.groups.append(browser_group)
         
         self.headless_check = QCheckBox("Esegui in modalità headless (senza interfaccia grafica)")
-        self.headless_check.setStyleSheet("padding: 5px; font-size: 15px; color: black;")
+        self.headless_check.setStyleSheet("padding: 5px; font-size: 15px;")
         browser_layout.addWidget(self.headless_check)
         
         timeout_layout = QHBoxLayout()
         timeout_label = QLabel("Timeout (secondi):")
-        timeout_label.setStyleSheet("font-size: 15px; color: black;")
+        timeout_label.setStyleSheet("font-size: 15px;")
         timeout_layout.addWidget(timeout_label)
         
         self.timeout_spin = QSpinBox()
@@ -508,13 +484,11 @@ class SettingsPanel(QWidget):
                 margin-top: 15px;
                 padding-top: 15px;
                 font-size: 16px;
-                color: black;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
                 padding: 0 5px;
-                color: black;
             }
         """)
         return group
@@ -527,7 +501,6 @@ class SettingsPanel(QWidget):
                 padding: 10px;
                 font-size: 15px;
                 background-color: white;
-                color: black; /* Force black text */
             }
             QLineEdit:focus, QSpinBox:focus {
                 border-color: #0d6efd;
