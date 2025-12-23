@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
     QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
     QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect,
-    QListWidget, QListWidgetItem
+    QListWidget, QListWidgetItem, QScrollArea, QScrollBar
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint, QSize, QUrl
-from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush, QIcon, QFont, QDesktopServices
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint, QSize, QUrl, QEasingCurve, QRect
+from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush, QIcon, QFont, QDesktopServices, QPen
 from datetime import datetime
 import re
 from pathlib import Path
@@ -22,15 +22,31 @@ except ImportError:
     winsound = None
 
 
-class TimelineItemWidget(QWidget):
-    """Widget per singolo elemento della timeline log."""
+class HorizontalLogItem(QWidget):
+    """Widget per singolo elemento della timeline log orizzontale."""
     def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
         super().__init__(parent)
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(10)
+        self.setFixedSize(180, 160) # Card Size
 
-        # Process Tags from tech_msg
+        # Main Layout
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 15, 10, 10)
+        layout.setSpacing(5)
+
+        # Style
+        self.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+            }
+            QLabel {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+
+        # Process Tags
         snapshot_path = None
         fixit_action = None
 
@@ -46,8 +62,7 @@ class TimelineItemWidget(QWidget):
                 fixit_action = match.group(1)
                 tech_msg = tech_msg.replace(match.group(0), "").strip()
 
-        # Icon/Dot Area
-        self.category = category
+        # Icon Mapping
         icons = {
             "start": "🚀", "login": "🔐", "search": "🔍",
             "download": "📥", "success": "✅", "error": "❌",
@@ -59,318 +74,195 @@ class TimelineItemWidget(QWidget):
             "wait": "#ffc107", "info": "#6c757d"
         }
 
+        self.category_color = colors.get(category, "#6c757d")
+
+        # Top: Icon centered
+        icon_layout = QHBoxLayout()
+        lbl_icon = QLabel(icons.get(category, "•"))
+        lbl_icon.setStyleSheet(f"font-size: 24px; color: {self.category_color};")
+        lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_layout.addWidget(lbl_icon)
+        layout.addLayout(icon_layout)
+
         # Time
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 11px; font-family: monospace;")
-        lbl_time.setFixedWidth(50)
+        lbl_time.setStyleSheet("color: #adb5bd; font-size: 10px; font-family: monospace;")
+        lbl_time.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_time)
 
-        # Dot
-        lbl_dot = QLabel(icons.get(category, "•"))
-        lbl_dot.setStyleSheet(f"color: {colors.get(category, 'black')}; font-size: 16px;")
-        lbl_dot.setFixedWidth(25)
-        lbl_dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl_dot)
+        # Text
+        self.lbl_human = QLabel(human_msg)
+        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 12px; color: #212529;")
+        self.lbl_human.setWordWrap(True)
+        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.lbl_human)
 
-        # Text Area
-        text_layout = QVBoxLayout()
-        text_layout.setSpacing(2)
+        layout.addStretch()
 
-        lbl_human = QLabel(human_msg)
-        lbl_human.setStyleSheet("font-weight: bold; font-size: 14px; color: #212529;")
-        lbl_human.setWordWrap(True)
-        text_layout.addWidget(lbl_human)
-
-        if tech_msg and tech_msg != human_msg:
-            lbl_tech = QLabel(tech_msg)
-            lbl_tech.setStyleSheet("color: #6c757d; font-size: 12px;")
-            lbl_tech.setWordWrap(True)
-            text_layout.addWidget(lbl_tech)
-
-        # Rich Actions Area
-        actions_layout = QHBoxLayout()
-        actions_layout.setSpacing(5)
-
-        # 1. Snapshot
+        # Action Buttons (Compact)
         if snapshot_path:
-            btn_snap = QPushButton("📷 Screenshot")
-            btn_snap.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn_snap.setStyleSheet("background-color: #dc3545; color: white; border-radius: 4px; padding: 2px 8px; font-size: 11px;")
-            btn_snap.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
-            actions_layout.addWidget(btn_snap)
+            btn = QPushButton("📷")
+            btn.setToolTip("Apri Screenshot")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet(f"background-color: #dc3545; color: white; border-radius: 4px;")
+            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
+            layout.addWidget(btn)
 
-        # 2. Fix It
         if fixit_action == "ACCOUNT":
-            btn_fix = QPushButton("🔧 Configura Account")
-            btn_fix.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn_fix.setStyleSheet("background-color: #ffc107; color: black; border-radius: 4px; padding: 2px 8px; font-size: 11px;")
-            btn_fix.clicked.connect(self._open_settings)
-            actions_layout.addWidget(btn_fix)
+            btn = QPushButton("🔧 Fix")
+            btn.setToolTip("Configura Account")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet(f"background-color: #ffc107; color: black; border-radius: 4px;")
+            btn.clicked.connect(self._open_settings)
+            layout.addWidget(btn)
 
-        # 3. Path Detection (Folders/Files)
-        # Refined Regex: Match typical windows absolute paths or unix paths, avoiding URLs
-        # (?:[a-zA-Z]:\\|(?:/|\\)) -> Drive letter or root
-        # (?:[^\\/:*?"<>|\r\n]+[\\/])* -> Subfolders
-        # [^\\/:*?"<>|\r\n]* -> Filename
+        # Path Detection
         path_matches = re.findall(r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg)
-
-        seen_paths = set()
+        seen = set()
         for path in path_matches:
-            # Clean path
             path = path.rstrip(".,';)]}").strip()
+            if len(path) > 4 and "http" not in path and path not in seen:
+                seen.add(path)
+                btn = QPushButton("📂")
+                btn.setToolTip(f"Apri: {Path(path).name}")
+                btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn.setStyleSheet(f"background-color: #17a2b8; color: white; border-radius: 4px;")
+                btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
+                layout.addWidget(btn)
 
-            # Heuristic: skip short paths or common non-paths
-            if len(path) < 4 or "http" in path or path in seen_paths:
-                continue
-
-            seen_paths.add(path)
-
-            btn_open = QPushButton(f"📂 Apri: {Path(path).name}")
-            btn_open.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn_open.setStyleSheet("background-color: #17a2b8; color: white; border-radius: 4px; padding: 2px 8px; font-size: 11px;")
-            btn_open.clicked.connect(lambda checked, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
-            actions_layout.addWidget(btn_open)
-
-        if actions_layout.count() > 0:
-            actions_layout.addStretch()
-            text_layout.addLayout(actions_layout)
-
-        layout.addLayout(text_layout)
+    def set_count(self, count):
+        """Update the message to show grouped count."""
+        # Using self.lbl_human stored in init
+        current = self.lbl_human.text()
+        base = current.split(" (x")[0]
+        self.lbl_human.setText(f"{base} (x{count})")
 
     def _open_settings(self):
-        # Trick: Find main window via parent walk
         parent = self.window()
         if hasattr(parent, "show_settings"):
             parent.show_settings()
 
 
-class GroupedTimelineItemWidget(QWidget):
-    """Widget per gruppo di log (Accordion)."""
-    def __init__(self, human_msg, category, count, parent=None):
-        super().__init__(parent)
-        self.category = category
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(10)
-
-        # Style based on category
-        bg_colors = {
-            "download": "#e7f5ff", "search": "#fff3cd", "info": "#f8f9fa"
-        }
-        bg = bg_colors.get(category, "#f8f9fa")
-        self.setStyleSheet(f"background-color: {bg}; border-radius: 4px;")
-
-        # Icon
-        lbl_icon = QLabel("📦")
-        layout.addWidget(lbl_icon)
-
-        # Text
-        self.lbl_text = QLabel(f"{human_msg} (x{count})")
-        self.lbl_text.setStyleSheet("font-weight: bold; color: #495057;")
-        layout.addWidget(self.lbl_text)
-
-        layout.addStretch()
-
-        # Expand hint
-        lbl_hint = QLabel("▼")
-        lbl_hint.setStyleSheet("color: #adb5bd; font-size: 10px;")
-        layout.addWidget(lbl_hint)
-
-    def update_count(self, count):
-        current_text = self.lbl_text.text().split(' (x')[0]
-        self.lbl_text.setText(f"{current_text} (x{count})")
-
-
-class TimelineLogWidget(QListWidget):
-    """Widget Log visuale a timeline con Ambient UX e Grouping."""
-
+class HorizontalTimelineContainer(QWidget):
+    """Container interno che disegna la linea di connessione."""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
-        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.setStyleSheet("""
-            QListWidget {
-                background-color: white;
-                border: 2px solid #dee2e6; /* Start neutral */
-                border-radius: 6px;
-                padding: 5px;
-            }
-            QListWidget::item {
-                border-bottom: 1px solid #f0f0f0;
-            }
-        """)
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(20, 10, 20, 10)
+        self.layout.setSpacing(15)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        # Ensure minimal height
+        self.setMinimumHeight(180)
 
-        # For Focus Mode (#5)
+    def paintEvent(self, event):
+        """Disegna la linea 'metro map' dietro gli elementi."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Line Y position: center of the icon roughly (top margin 15 + icon half height ~15 = 30)
+        # Fixed Y relative to top
+        line_y = 40
+
+        pen = QPen(QColor("#dee2e6"))
+        pen.setWidth(4)
+        painter.setPen(pen)
+
+        # Draw line from first item center to last item center
+        if self.layout.count() > 0:
+            first = self.layout.itemAt(0).widget()
+            last = self.layout.itemAt(self.layout.count() - 1).widget()
+            if first and last:
+                start_x = first.geometry().center().x()
+                end_x = last.geometry().center().x()
+                painter.drawLine(start_x, line_y, end_x, line_y)
+
+
+class HorizontalTimelineWidget(QScrollArea):
+    """Widget Timeline Orizzontale con animazioni."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setFixedHeight(200) # Fixed height strip
+        self.setStyleSheet("border: none; background-color: transparent;")
+
+        self.container = HorizontalTimelineContainer()
+        self.setWidget(self.container)
+
+        # For focus mode logic
         self.last_category = None
         self.consecutive_count = 0
-        self.group_threshold = 3
-        self.current_group_item = None
 
-    def set_mood(self, mood: str):
-        """
-        Ambient UX (#2): Changes border color based on state.
-        mood: 'running' (blue), 'error' (red), 'success' (green), 'idle' (gray)
-        """
-        colors = {
-            "running": "#0d6efd", # Blue
-            "error": "#dc3545",   # Red
-            "success": "#198754", # Green
-            "idle": "#dee2e6"     # Gray
-        }
-        color = colors.get(mood, "#dee2e6")
+    def add_widget(self, widget: QWidget):
+        """Adds a generic widget to the timeline (e.g. MissionReport)."""
+        # Setup Animation
+        effect = QGraphicsOpacityEffect(widget)
+        widget.setGraphicsEffect(effect)
 
-        # Apply transition effect via QGraphicsEffect or just stylesheet update
-        # Simple stylesheet update for stability
-        self.setStyleSheet(f"""
-            QListWidget {{
-                background-color: white;
-                border: 2px solid {color};
-                border-radius: 6px;
-                padding: 5px;
-            }}
-            QListWidget::item {{
-                border-bottom: 1px solid #f0f0f0;
-            }}
-        """)
+        self.container.layout.addWidget(widget)
+
+        self.anim = QPropertyAnimation(effect, b"opacity")
+        self.anim.setDuration(500)
+        self.anim.setStartValue(0)
+        self.anim.setEndValue(1)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        self.anim.start()
+
+        QApplication.processEvents()
+        self._smooth_scroll_to_end()
+        self.container.update()
 
     def add_log(self, message: str):
         human, tech, cat = SmartLogTranslator.humanize(message)
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.now().strftime("%H:%M")
 
-        # PROGRESS BAR / UPDATE LOGIC (#3 Refined)
-        # If message contains %, update previous item if it was same category
-        if "%" in message and self.count() > 0:
-            last_item = self.item(self.count() - 1)
-            last_widget = self.itemWidget(last_item)
-            if isinstance(last_widget, TimelineItemWidget) and last_widget.category == cat:
-                # Update in place (replace widget)
-                new_widget = TimelineItemWidget(human, tech, cat, timestamp)
-                last_item.setSizeHint(new_widget.sizeHint())
-                self.setItemWidget(last_item, new_widget)
-                return
-
-        # FOCUS MODE / ACCORDION LOGIC (#5)
-        # Check if we should group
-        if cat == self.last_category and cat in ["download", "search", "info"]: # Groupable categories
+        # Focus Mode (Grouping)
+        if cat == self.last_category and cat in ["download", "search"]:
             self.consecutive_count += 1
+            # Update last item text
+            if self.container.layout.count() > 0:
+                last_widget = self.container.layout.itemAt(self.container.layout.count() - 1).widget()
+                if isinstance(last_widget, HorizontalLogItem):
+                    last_widget.set_count(self.consecutive_count)
+                    return
         else:
             self.consecutive_count = 1
             self.last_category = cat
-            self.current_group_item = None # Reset group
 
-        # If threshold reached, convert to group or update group
-        if self.consecutive_count > self.group_threshold:
-            if self.current_group_item:
-                # Update existing group widget
-                group_widget = self.itemWidget(self.current_group_item)
-                if group_widget:
-                    group_widget.update_count(self.consecutive_count)
-                return
-            else:
-                # Start grouping: Remove last (threshold-1) items and replace with group?
-                # Complex to remove past items.
-                # Strategy: Just start grouping NEW items?
-                # Or easier: Grouping only happens for strictly identical "Activity" types?
-                # Let's simplify: If > threshold, just Add a Group Item and keep updating it.
-                # But we want to hide the noise.
-                # Implementation: Upon reaching threshold+1, we remove the previous item?
-                # No, let's just add normal items until threshold, then add a "And X more..." group item.
+        item = HorizontalLogItem(human, tech, cat, timestamp)
+        self.add_widget(item)
 
-                # Create group item
-                self.current_group_item = QListWidgetItem(self)
-                group_widget = GroupedTimelineItemWidget(human, cat, self.consecutive_count)
-                self.current_group_item.setSizeHint(group_widget.sizeHint())
-                self.addItem(self.current_group_item)
-                self.setItemWidget(self.current_group_item, group_widget)
-                self.scrollToBottom()
-                return
+    def _smooth_scroll_to_end(self):
+        sb = self.horizontalScrollBar()
+        start_val = sb.value()
+        end_val = sb.maximum()
 
-        # Standard Add
-        item = QListWidgetItem(self)
-        widget = TimelineItemWidget(human, tech, cat, timestamp)
-        item.setSizeHint(widget.sizeHint())
-        self.addItem(item)
-        self.setItemWidget(item, widget)
-        self.scrollToBottom()
+        self.scroll_anim = QPropertyAnimation(sb, b"value")
+        self.scroll_anim.setDuration(400)
+        self.scroll_anim.setStartValue(start_val)
+        self.scroll_anim.setEndValue(end_val)
+        self.scroll_anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        self.scroll_anim.start()
 
-        # Update Mood based on category
-        if cat == "error":
-            self.set_mood("error")
-        elif cat == "success":
-            self.set_mood("success")
-        elif cat == "start":
-            self.set_mood("running")
+    def clear(self):
+        # Remove all widgets
+        while self.container.layout.count():
+            item = self.container.layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.container.update()
 
-        # Sound Feedback
-        if winsound:
-            if cat == "success":
-                try: winsound.MessageBeep(winsound.MB_ICONASTERISK)
-                except: pass
-            elif cat == "error":
-                try: winsound.MessageBeep(winsound.MB_ICONHAND)
-                except: pass
-
-
-class MissionReportCard(QFrame):
-    """
-    Card riepilogativa stile 'Mission Complete' (#3).
-    Mostra statistiche finali con design curato.
-    """
-    def __init__(self, duration_str, status, parent=None):
-        super().__init__(parent)
-        self.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef);
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                margin: 10px 5px;
-            }
-        """)
-
-        layout = QVBoxLayout(self)
-
-        # Title
-        title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
-        title_color = "#198754" if status else "#dc3545"
-        lbl_title = QLabel(title_text)
-        lbl_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {title_color};")
-        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl_title)
-
-        # Stats Grid
-        stats_layout = QHBoxLayout()
-
-        # Time
-        self._add_stat(stats_layout, "⏱️ Tempo", duration_str)
-        # Status
-        self._add_stat(stats_layout, "📊 Esito", "Successo" if status else "Errore")
-
-        layout.addLayout(stats_layout)
-
-        # Fun hint
-        if status:
-            lbl_hint = QLabel("Ottimo lavoro! 🚀")
-            lbl_hint.setStyleSheet("color: #6c757d; font-style: italic; margin-top: 5px;")
-            lbl_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            layout.addWidget(lbl_hint)
-
-    def _add_stat(self, layout, label, value):
-        container = QWidget()
-        v_layout = QVBoxLayout(container)
-        v_layout.setContentsMargins(0,0,0,0)
-
-        lbl_l = QLabel(label)
-        lbl_l.setStyleSheet("font-size: 12px; color: #6c757d;")
-        lbl_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        lbl_v = QLabel(value)
-        lbl_v.setStyleSheet("font-size: 16px; font-weight: bold; color: #212529;")
-        lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        v_layout.addWidget(lbl_l)
-        v_layout.addWidget(lbl_v)
-        layout.addWidget(container)
+    def set_mood(self, mood):
+        # Could change background of scroll area slightly?
+        colors = {
+            "running": "#f0f8ff", # AliceBlue
+            "error": "#fff5f5",   # Light Red
+            "success": "#f0fff4", # Honeydew
+            "idle": "transparent"
+        }
+        col = colors.get(mood, "transparent")
+        self.setStyleSheet(f"border: none; background-color: {col};")
 
 
 class StatusIndicator(QWidget):
@@ -926,24 +818,21 @@ class EditableDataTable(QWidget):
 
 
 class LogWidget(QWidget):
-    """Widget per visualizzare i log."""
+    """Widget per visualizzare i log (Horizontal Wrapper)."""
     
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
     
     def _setup_ui(self):
-        """Configura l'interfaccia."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Header
         header_layout = QHBoxLayout()
-        
-        label = QLabel("📋 Attività")
+        label = QLabel("📋 Timeline Attività")
         label.setStyleSheet("font-weight: bold; font-size: 13px;")
         header_layout.addWidget(label)
-        
         header_layout.addStretch()
         
         clear_btn = QPushButton("🧹 Pulisci")
@@ -954,35 +843,23 @@ class LogWidget(QWidget):
                 color: white;
                 border: none;
                 border-radius: 4px;
-                padding: 5px 10px;
+                padding: 2px 8px;
                 font-size: 11px;
             }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
+            QPushButton:hover { background-color: #5a6268; }
         """)
         clear_btn.clicked.connect(self.clear)
         header_layout.addWidget(clear_btn)
-
         layout.addLayout(header_layout)
 
-        # Timeline Widget
-        self.timeline = TimelineLogWidget()
-        self.timeline.setMinimumHeight(150)
-        self.timeline.setMaximumHeight(300) # Slightly taller for better view
+        # Horizontal Timeline
+        self.timeline = HorizontalTimelineWidget()
         layout.addWidget(self.timeline)
 
     def append(self, message: str):
-        """
-        Aggiunge un messaggio al log.
-
-        Args:
-            message: Messaggio da aggiungere
-        """
         self.timeline.add_log(message)
 
     def clear(self):
-        """Pulisce il log."""
         self.timeline.clear()
 
 
@@ -1148,3 +1025,64 @@ class KPIBigCard(QFrame):
 
     def _get_info_content(self):
         return self.info_content_callback()
+
+
+class MissionReportCard(QFrame):
+    """
+    Card riepilogativa stile 'Mission Complete' (#3).
+    Mostra statistiche finali con design curato.
+    """
+    def __init__(self, duration_str, status, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef);
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin: 10px 5px;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+
+        # Title
+        title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
+        title_color = "#198754" if status else "#dc3545"
+        lbl_title = QLabel(title_text)
+        lbl_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {title_color};")
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl_title)
+
+        # Stats Grid
+        stats_layout = QHBoxLayout()
+
+        # Time
+        self._add_stat(stats_layout, "⏱️ Tempo", duration_str)
+        # Status
+        self._add_stat(stats_layout, "📊 Esito", "Successo" if status else "Errore")
+
+        layout.addLayout(stats_layout)
+
+        # Fun hint
+        if status:
+            lbl_hint = QLabel("Ottimo lavoro! 🚀")
+            lbl_hint.setStyleSheet("color: #6c757d; font-style: italic; margin-top: 5px;")
+            lbl_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(lbl_hint)
+
+    def _add_stat(self, layout, label, value):
+        container = QWidget()
+        v_layout = QVBoxLayout(container)
+        v_layout.setContentsMargins(0,0,0,0)
+
+        lbl_l = QLabel(label)
+        lbl_l.setStyleSheet("font-size: 12px; color: #6c757d;")
+        lbl_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        lbl_v = QLabel(value)
+        lbl_v.setStyleSheet("font-size: 16px; font-weight: bold; color: #212529;")
+        lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        v_layout.addWidget(lbl_l)
+        v_layout.addWidget(lbl_v)
+        layout.addWidget(container)

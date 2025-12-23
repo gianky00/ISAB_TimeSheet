@@ -204,11 +204,7 @@ class BaseBotPanel(QWidget):
         # Mission Report (#3)
         # Using the timeline widget exposed via log_widget
         report = MissionReportCard(duration_str, success)
-        item = QListWidgetItem()
-        item.setSizeHint(report.sizeHint())
-        self.log_widget.timeline.addItem(item)
-        self.log_widget.timeline.setItemWidget(item, report)
-        self.log_widget.timeline.scrollToBottom()
+        self.log_widget.timeline.add_widget(report)
 
         if success:
             self.status_indicator.set_status("success")
