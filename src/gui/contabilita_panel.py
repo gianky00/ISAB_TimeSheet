@@ -46,6 +46,9 @@ class ContabilitaWorker(QThread):
             current_total = phase_offset + processed_in_phase
             elapsed = time.time() - self.start_time
 
+            # Update status only every 5 items or if complete, to reduce UI jitter
+            # But "DataEase" style wants clear feedback.
+
             if current_total > 0 and elapsed > 0:
                 rate = current_total / elapsed
                 remaining = total_ops - current_total
@@ -54,21 +57,23 @@ class ContabilitaWorker(QThread):
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current_total / total_ops) * 100)
 
-                self.progress_signal.emit(f"⏳ {phase_name}: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
+                # Use a single, unified message format
+                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
 
         # 1. Import Contabilità (Dati)
+        # We pass total_sheets to the callback to keep logic inside manager clean,
+        # but here we use the wrapper to unify progress.
         dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
         success, msg = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
 
         # 2. Import Giornaliere (se configurato)
         msg_giornaliere = ""
         if success and self.giornaliere_path:
+            # phase_offset = sheets (number of sheets processed in step 1)
             giorn_cb = lambda c, t: global_progress(c, sheets, "Giornaliere")
 
             g_success, g_msg = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
             msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
-
-        # Nota: Scarico Ore Cantiere ora è gestito separatamente nel suo pannello dedicato.
 
         self.finished_signal.emit(success, msg + msg_giornaliere)
 
@@ -103,6 +108,8 @@ class ContabilitaPanel(QWidget):
                 border-radius: 4px;
                 padding: 6px 12px;
                 font-size: 14px;
+                background-color: white;
+                color: black;
             }
             QLineEdit:focus {
                 border-color: #0d6efd;
@@ -153,6 +160,12 @@ class ContabilitaPanel(QWidget):
         top_layout.addWidget(self.refresh_btn)
 
         layout.addLayout(top_layout)
+
+        # --- Totale Selezionato Label (Global for this panel) ---
+        self.selection_label = QLabel("Totale selezionato: 0")
+        self.selection_label.setStyleSheet("color: #0d6efd; font-weight: bold; margin-bottom: 5px;")
+        self.selection_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self.selection_label)
 
         # Main Tab Container (Tabelle vs KPI)
         self.main_tabs = QTabWidget()
@@ -226,10 +239,13 @@ class ContabilitaPanel(QWidget):
         tab_text = self.main_tabs.tabText(index)
         if "Analisi KPI" in tab_text:
             self.search_input.hide()
+            self.selection_label.hide()
         else:
             self.search_input.show()
+            self.selection_label.show()
             # Trigger filter update for the new active tab
             self._filter_current_tab(self.search_input.text())
+            self._connect_selection_signal()
 
     def refresh_tabs(self):
         """Ricarica i tab in base agli anni nel DB."""
@@ -269,6 +285,9 @@ class ContabilitaPanel(QWidget):
                 self.giornaliere_tabs_widget.setCurrentIndex(i)
                 break
 
+        # Connect signals for initial tabs
+        self._connect_selection_signal()
+
         # Aggiorna anche i dati KPI
         if hasattr(self, 'kpi_panel'):
             self.kpi_panel.refresh_years()
@@ -276,6 +295,56 @@ class ContabilitaPanel(QWidget):
     def _on_tab_changed(self, index):
         """Chiamato quando cambia la tab ANNO (in uno dei sub-tabwidget)."""
         self._filter_current_tab(self.search_input.text())
+        self._connect_selection_signal() # Connect new tab table
+
+    def _connect_selection_signal(self):
+        """Connects the selection change signal of the current table to update totals."""
+        current_main_idx = self.main_tabs.currentIndex()
+        current_main_widget = self.main_tabs.widget(current_main_idx)
+
+        target_widget = None
+        if current_main_widget == self.year_tabs_widget:
+            target_widget = self.year_tabs_widget.currentWidget()
+        elif current_main_widget == self.giornaliere_tabs_widget:
+            target_widget = self.giornaliere_tabs_widget.currentWidget()
+
+        if target_widget and hasattr(target_widget, 'table'):
+            try:
+                # Disconnect all first to avoid duplicates (safe pattern)
+                try: target_widget.table.selectionModel().selectionChanged.disconnect()
+                except: pass
+
+                target_widget.table.selectionModel().selectionChanged.connect(
+                    lambda s, d: self._update_selection_total(target_widget.table)
+                )
+            except Exception: pass
+
+    def _update_selection_total(self, table_widget):
+        """Calculates total of selected numerical cells."""
+        indexes = table_widget.selectionModel().selectedIndexes()
+        if not indexes:
+            self.selection_label.setText("Totale selezionato: 0")
+            return
+
+        total = 0.0
+        for idx in indexes:
+            try:
+                text = idx.data(Qt.ItemDataRole.DisplayRole)
+                if text:
+                    # Clean currency/number format
+                    clean = str(text).replace("€", "").replace(".", "").replace(",", ".").strip()
+                    val = float(clean)
+                    total += val
+            except:
+                pass
+
+        # Format
+        if total % 1 == 0:
+            fmt = f"{int(total)}"
+        else:
+            fmt = f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+        self.selection_label.setText(f"Totale selezionato: {fmt}")
 
     def _filter_current_tab(self, text):
         """Filtra la tabella nella tab corrente attiva."""
@@ -359,6 +428,27 @@ class ContabilitaYearTab(QWidget):
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True)  # Enable word wrap for multiline text
 
+        # Force text color for Dark Mode compatibility
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+            }
+            QTableWidget::item {
+                color: black;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: black;
+                padding: 4px;
+                border: 1px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
+
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
@@ -383,13 +473,13 @@ class ContabilitaYearTab(QWidget):
 
     def _load_data(self):
         data = ContabilitaManager.get_data_by_year(self.year)
-        
+
         self.table.setSortingEnabled(False)
         self.table.blockSignals(True)
-        
+
         try:
             self.table.setRowCount(len(data))
-            
+
             align_right_flags = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             right_aligned_cols = {self.COL_TOTALE, self.COL_ORE, self.COL_RESA}
             columns_count = len(self.COLUMNS)
@@ -457,6 +547,7 @@ class ContabilitaYearTab(QWidget):
         count_prev = 0
         sum_totale_prev = 0.0
         sum_ore_sp = 0.0
+        # Variabili per calcolo media (ora usate solo per compatibilità futura se richiesto)
         sum_resa = 0.0
         count_resa = 0
 
@@ -470,26 +561,28 @@ class ContabilitaYearTab(QWidget):
                     if "INS.ORE SP" in resa_text.upper():
                         is_excluded = True
 
+                # Totale Prev (solo righe valide)
                 if not is_excluded:
                     t_item = self.table.item(r, self.COL_TOTALE)
                     if t_item:
                         sum_totale_prev += self._parse_currency(t_item.text())
 
+                # Ore Spese (TUTTE le righe, incluse INS.ORE SP per il costo totale)
                 o_item = self.table.item(r, self.COL_ORE)
                 if o_item:
                     sum_ore_sp += self._parse_float(o_item.text())
 
-                if not is_excluded and r_item:
-                    val = self._parse_float(r_item.text())
-                    if val != 0 or r_item.text().strip() != "":
-                        sum_resa += val
-                        count_resa += 1
-
         self.table.item(total_row_idx, self.COL_N_PREV).setText(str(count_prev))
         self.table.item(total_row_idx, self.COL_TOTALE).setText(self._format_currency(sum_totale_prev))
         self.table.item(total_row_idx, self.COL_ORE).setText(self._format_number(sum_ore_sp))
-        avg_resa = sum_resa / count_resa if count_resa > 0 else 0.0
-        self.table.item(total_row_idx, self.COL_RESA).setText(self._format_number(avg_resa))
+
+        # Calcolo Resa Ponderata (Globale): Totale Preventivato / Ore Spese Totali
+        # Sostituisce la media aritmetica precedente
+        weighted_resa = 0.0
+        if sum_ore_sp > 0:
+            weighted_resa = sum_totale_prev / sum_ore_sp
+
+        self.table.item(total_row_idx, self.COL_RESA).setText(self._format_number(weighted_resa))
 
     def _parse_currency(self, text):
         try:
@@ -631,6 +724,27 @@ class GiornaliereYearTab(QWidget):
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True) # Abilita testo a capo
+
+        # Force text color for Dark Mode compatibility
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+            }
+            QTableWidget::item {
+                color: black;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: black;
+                padding: 4px;
+                border: 1px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)

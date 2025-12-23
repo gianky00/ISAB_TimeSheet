@@ -93,6 +93,7 @@ class CalendarDateEdit(QDateEdit):
                 padding: 5px 10px;
                 font-size: 14px;
                 background-color: white;
+                color: black; /* Force black text */
             }
             QDateEdit:focus {
                 border-color: #0d6efd;
@@ -280,11 +281,13 @@ class EditableDataTable(QWidget):
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 background-color: white;
+                color: black;  /* Force black text for high contrast */
                 gridline-color: #e9ecef;
                 font-size: 14px;
             }
             QTableWidget::item {
                 padding: 8px;
+                color: black;  /* Force black text */
             }
             QTableWidget::item:selected {
                 background-color: #e7f1ff;
@@ -292,6 +295,7 @@ class EditableDataTable(QWidget):
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
+                color: black;  /* Force black text in header */
                 padding: 8px;
                 padding-left: 5px;
                 border: none;
@@ -598,7 +602,7 @@ class LogWidget(QWidget):
         self.log_text.setStyleSheet("""
             QTextEdit {
                 background-color: #1e1e1e;
-                color: #d4d4d4;
+                color: #d4d4d4; /* Explicit light text */
                 border: 1px solid #333;
                 border-radius: 4px;
                 padding: 10px;

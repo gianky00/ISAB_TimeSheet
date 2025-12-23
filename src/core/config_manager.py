@@ -81,6 +81,18 @@ def load_config() -> Dict[str, Any]:
                 if "isab_password" in config: del config["isab_password"]
                 migrated = True
 
+            # 1b. Migrazione Account (Simple JSON format)
+            # Gestisce il caso in cui il file contenga solo username/password alla radice
+            if "username" in config and config["username"] and not config["accounts"]:
+                config["accounts"].append({
+                    "username": config["username"],
+                    "password": config.get("password", ""),
+                    "default": True
+                })
+                if "username" in config: del config["username"]
+                if "password" in config: del config["password"]
+                migrated = True
+
             # 2. Migrazione Contratti
             if "default_contract_number" in config and config["default_contract_number"]:
                 if config["default_contract_number"] not in config["contracts"]:

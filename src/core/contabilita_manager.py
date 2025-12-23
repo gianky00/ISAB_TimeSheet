@@ -73,6 +73,37 @@ class ContabilitaManager:
     ]
 
     @classmethod
+    def scan_scarico_ore_rows(cls, file_path: str) -> int:
+        """Stima rapida delle righe per Scarico Ore (DataEase) per calcolo ETA."""
+        path = Path(file_path)
+        if not path.exists(): return 0
+
+        # Use zipfile to read dimension from xml without full load
+        try:
+            with zipfile.ZipFile(path, 'r') as z:
+                # Try to find the sheet. Usually sheet1 if it's the only one, or lookup in workbook.xml
+                # For speed, assume "SCARICO ORE" is likely one of the first few sheets or search largest xml.
+
+                # Check worksheet rels or just check dimensions in all worksheets and take the largest?
+                # Faster: Parse xl/worksheets/sheetX.xml and look for <dimension ref="A1:L130000"/>
+
+                # Let's try to find the sheet "SCARICO ORE" via workbook.xml if possible, but
+                # iterating all sheet xmls is fast enough.
+                max_rows = 0
+                for name in z.namelist():
+                    if name.startswith("xl/worksheets/sheet"):
+                        with z.open(name) as f:
+                            # Read first 1024 bytes which usually contain <dimension>
+                            head = f.read(1024).decode('utf-8', errors='ignore')
+                            match = re.search(r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head)
+                            if match:
+                                r = int(match.group(1))
+                                if r > max_rows: max_rows = r
+                return max_rows
+        except Exception:
+            return 0
+
+    @classmethod
     def scan_workload(cls, file_path: str, giornaliere_path: str) -> Tuple[int, int]:
         """Scansiona rapidamente il carico di lavoro (fogli e file) per stima ETA."""
         sheets = 0
@@ -336,32 +367,75 @@ class ContabilitaManager:
                         if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
 
                         if not df.empty:
+                            # Ensure all expected DB columns exist
                             for db_col in cls.GIORNALIERE_MAPPING.values():
                                 if db_col not in df.columns: df[db_col] = ""
 
+                            # --- ⚡ Bolt Optimization: Vectorized Processing ---
+                            # Clean string columns (vectorized)
+                            cols_to_clean = ['odc', 'n_prev', 'data', 'personale', 'descrizione', 'tcl', 'pdl', 'inizio', 'fine', 'ore']
+                            # Convert to string and strip whitespace
+                            df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
+                            # Replace 'nan' (case insensitive) with empty string
+                            df[cols_to_clean] = df[cols_to_clean].replace(r'(?i)^nan$', '', regex=True)
+
+                            # --- Dynamic ODC Lookup (Feature 4) ---
+                            # Create a lookup map from Contabilita (Dati) table {n_prev: odc}
+                            # We fetch this once per import to avoid repeat DB hits, or fetch just what we need.
+                            # For speed, we'll fetch all non-empty ODCs from 'contabilita' table.
+                            # NOTE: To avoid heavy query every file, we could cache this outside the loop if manager state allowed,
+                            # but here we do it per file which is acceptable given SQLite speed vs Import speed.
+
+                            try:
+                                # Fetch N_PREV -> ODC map
+                                lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
+                                lookup_df = pd.read_sql_query(lookup_query, conn)
+                                # Remove duplicates, keeping first or last? Usually same n_prev has same ODC.
+                                lookup_df = lookup_df.drop_duplicates(subset=['n_prev'])
+                                lookup_map = dict(zip(lookup_df['n_prev'], lookup_df['odc']))
+
+                                # Apply Lookup: Fill empty ODC where N_PREV match exists
+                                # Ensure we match clean n_prev strings
+                                mask_empty_odc = df['odc'] == ""
+                                if mask_empty_odc.any():
+                                    # We can map using the dictionary.
+                                    # map() in pandas returns NaN if not found, so we combine.
+                                    mapped_values = df.loc[mask_empty_odc, 'n_prev'].map(lookup_map)
+                                    # Fill only where we found a match (not NaN)
+                                    df.loc[mask_empty_odc, 'odc'] = mapped_values.fillna("")
+                            except Exception as e:
+                                print(f"Warning: ODC Lookup failed: {e}")
+
+                            # --- "Canone" & Regex Logic (Feature 5) ---
+                            # 1. Identify "Canone" rows (case-insensitive) -> Keep original text
+                            mask_canone = df['odc'].str.contains('canone', case=False, na=False)
+
+                            # 2. Identify "Standard" rows (not Canone) -> Apply Regex
+                            mask_standard = ~mask_canone
+
+                            # Apply Regex extraction only to standard rows
+                            # We use temporary series to hold extracted values
+                            extracted = df.loc[mask_standard, 'odc'].str.extract(r'(5400\d+)', expand=False)
+
+                            # Update DataFrame:
+                            # For standard rows: use extracted value (or "" if no match)
+                            # For Canone rows: keep as is (already cleaned strings)
+                            df.loc[mask_standard, 'odc'] = extracted.fillna("")
+
+                            # Add Metadata
                             df['year'] = year
-                            filename = file_path.name
-                            rows_to_insert = []
+                            df['nome_file'] = file_path.name
 
-                            for _, row in df.iterrows():
-                                raw_odc = str(row.get('odc', '')).strip()
-                                if raw_odc.lower() == 'nan': raw_odc = ""
-                                match_odc = re.search(r'(5400\d+)', raw_odc)
-                                final_odc = match_odc.group(1) if match_odc else ""
+                            # Select and Order Columns for DB
+                            target_cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
+                            df_final = df[target_cols]
 
-                                n_prev = str(row.get('n_prev', '')).strip()
-                                if n_prev.lower() == 'nan': n_prev = ""
-
-                                new_row = (
-                                    year, str(row.get('data', '')), str(row.get('personale', '')),
-                                    str(row.get('descrizione', '')), str(row.get('tcl', '')),
-                                    final_odc, str(row.get('pdl', '')), str(row.get('inizio', '')),
-                                    str(row.get('fine', '')), str(row.get('ore', '')), n_prev, filename
-                                )
-                                rows_to_insert.append(new_row)
+                            # Convert to list of tuples (High speed export)
+                            rows_to_insert = list(df_final.itertuples(index=False, name=None))
+                            # --------------------------------------------------
 
                             if rows_to_insert:
-                                cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
+                                cols = target_cols
                                 placeholders = ', '.join(['?'] * len(cols))
                                 query = f"INSERT INTO giornaliere ({', '.join(cols)}) VALUES ({placeholders})"
                                 cursor.executemany(query, rows_to_insert)

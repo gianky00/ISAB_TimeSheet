@@ -174,6 +174,8 @@ class MainWindow(QMainWindow):
         """Configura l'interfaccia."""
         # Widget centrale
         central_widget = QWidget()
+        # Force light theme for the main window content area if needed, or rely on specific widgets
+        central_widget.setStyleSheet("background-color: #f8f9fa; color: #212529;")
         self.setCentralWidget(central_widget)
         
         # Layout principale orizzontale
@@ -352,7 +354,7 @@ class MainWindow(QMainWindow):
         self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
         self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
         self.database_widget.addTab(self.contabilita_panel, "Contabilità Strumentale")
-        self.database_widget.addTab(self.scarico_ore_panel, "Scarico Ore Cantiere") # ADDED here as requested
+        self.database_widget.addTab(self.scarico_ore_panel, "DataEase") # Renamed from "Scarico Ore Cantiere"
 
         # Aggiungi le pagine allo stack
         # 0: Dashboard
