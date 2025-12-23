@@ -323,74 +323,78 @@ class ContabilitaPanel(QWidget):
             try:
                 # Disconnect all first to avoid duplicates (safe pattern)
                 try: target_widget.table.selectionModel().selectionChanged.disconnect()
-                except: pass
+                except Exception: pass
 
                 target_widget.table.selectionModel().selectionChanged.connect(
                     lambda s, d: self._update_selection_total(target_widget.table)
                 )
-            except Exception: pass
+            except Exception as e:
+                print(f"Errore connessione segnali selezione: {e}")
 
     def _update_selection_total(self, table_widget):
         """Calculates total of selected ORE SP column and row count."""
-        selection_model = table_widget.selectionModel()
-        indexes = selection_model.selectedIndexes()
+        try:
+            selection_model = table_widget.selectionModel()
+            indexes = selection_model.selectedIndexes()
 
-        if not indexes:
-            self.selection_count_label.setText("Righe: 0")
-            self.selection_sum_label.setText("Totale ORE SP: 0")
-            return
+            if not indexes:
+                self.selection_count_label.setText("Righe: 0")
+                self.selection_sum_label.setText("Totale ORE SP: 0")
+                return
 
-        # Identifica la colonna "ORE" o "ORE SP" per la tabella corrente
-        target_col_idx = -1
-        # Controlla header per trovare la colonna corretta dinamicamente
-        for c in range(table_widget.columnCount()):
-            header_item = table_widget.horizontalHeaderItem(c)
-            if header_item:
-                header_text = header_item.text().upper()
-                if "ORE SP" in header_text or header_text == "ORE":
-                    target_col_idx = c
-                    break
+            # Identifica la colonna "ORE" o "ORE SP" per la tabella corrente
+            target_col_idx = -1
+            # Controlla header per trovare la colonna corretta dinamicamente
+            for c in range(table_widget.columnCount()):
+                header_item = table_widget.horizontalHeaderItem(c)
+                if header_item:
+                    header_text = header_item.text().upper()
+                    if "ORE SP" in header_text or header_text == "ORE":
+                        target_col_idx = c
+                        break
 
-        selected_rows = set()
-        total_ore = 0.0
+            selected_rows = set()
+            total_ore = 0.0
 
-        for idx in indexes:
-            row = idx.row()
+            for idx in indexes:
+                row = idx.row()
 
-            # Skip se la riga è nascosta (filtrata)
-            if table_widget.isRowHidden(row):
-                continue
+                # Skip se la riga è nascosta (filtrata)
+                if table_widget.isRowHidden(row):
+                    continue
 
-            # Skip se è la riga TOTALI
-            item_first = table_widget.item(row, 0)
-            if item_first and item_first.text() == "TOTALI":
-                continue
+                # Skip se è la riga TOTALI
+                item_first = table_widget.item(row, 0)
+                if item_first and item_first.text() == "TOTALI":
+                    continue
 
-            selected_rows.add(row)
+                selected_rows.add(row)
 
-        # Calcola somma Ore solo per le righe uniche selezionate
-        for row in selected_rows:
-            if target_col_idx != -1:
-                item = table_widget.item(row, target_col_idx)
-                if item:
-                    text = item.text()
-                    try:
-                        # Clean number format (Italian)
-                        clean = str(text).replace(".", "").replace(",", ".").strip()
-                        if clean:
-                            val = float(clean)
-                            total_ore += val
-                    except:
-                        pass
+            # Calcola somma Ore solo per le righe uniche selezionate
+            for row in selected_rows:
+                if target_col_idx != -1:
+                    item = table_widget.item(row, target_col_idx)
+                    if item:
+                        text = item.text()
+                        try:
+                            # Clean number format (Italian)
+                            clean = str(text).replace(".", "").replace(",", ".").strip()
+                            if clean:
+                                val = float(clean)
+                                total_ore += val
+                        except ValueError:
+                            pass # Ignora errori di parsing numerico (es. celle vuote)
 
-        # Format
-        if total_ore % 1 == 0:
-            fmt_ore = f"{int(total_ore)}"
-        else:
-            fmt_ore = f"{total_ore:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            # Format
+            if total_ore % 1 == 0:
+                fmt_ore = f"{int(total_ore)}"
+            else:
+                fmt_ore = f"{total_ore:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-        self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
-        self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
+            self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
+            self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
+        except Exception as e:
+            print(f"Errore calcolo selezione: {e}")
 
     def _filter_current_tab(self, text):
         """Filtra la tabella nella tab corrente attiva."""
@@ -670,13 +674,13 @@ class ContabilitaYearTab(QWidget):
                         try: dt = datetime.strptime(str_val, fmt); break
                         except ValueError: continue
                 if dt: return dt.strftime("%d/%m/%Y")
-            except: pass
+            except Exception: pass
         elif col_idx == self.COL_TOTALE:
             try: return self._format_currency(float(str_val))
-            except: pass
+            except Exception: pass
         elif col_idx in [self.COL_ORE, self.COL_RESA]:
             try: return self._format_number(float(str_val))
-            except: pass
+            except Exception: pass
         elif col_idx == self.COL_ODC:
             return str_val.replace("-", "/")
 

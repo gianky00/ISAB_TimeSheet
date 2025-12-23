@@ -107,7 +107,6 @@ def get_hardware_id():
 
             if first_line:
                 return first_line
-                return output
         except Exception:
             pass
 

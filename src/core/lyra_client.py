@@ -7,6 +7,7 @@ import sqlite3
 import json
 from pathlib import Path
 from src.core.contabilita_manager import ContabilitaManager
+from src.core.config_manager import CONFIG_DIR
 
 class LyraClient:
     def __init__(self):
@@ -68,7 +69,7 @@ class LyraClient:
 
         # --- 2. Timbrature ---
         try:
-            db_path = Path("data/timbrature_Isab.db")
+            db_path = CONFIG_DIR / "data" / "timbrature_Isab.db"
             if db_path.exists():
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()

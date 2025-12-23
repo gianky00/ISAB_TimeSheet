@@ -25,7 +25,10 @@ class CaricoTSPage:
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
             time.sleep(0.3)
-        except: pass
+        except Exception:
+            # Overlay timeout is common if overlay didn't appear fast enough or stuck.
+            # We ignore it to proceed, but debug log could be useful.
+            pass
 
     def navigate(self) -> bool:
         try:
