@@ -16,15 +16,16 @@ class ToastOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # Stile (Explicit colors for dark/light mode compatibility)
+        # Forced black text on white background as requested
         self.setStyleSheet("""
             QWidget {
-                background-color: #333333;
-                color: white; /* Explicit white text */
-                border-radius: 4px;
-                border: 1px solid #555555;
+                background-color: #ffffff;
+                color: #000000;
+                border-radius: 6px;
+                border: 1px solid #ced4da;
             }
             QLabel {
-                color: white; /* Force label text color */
+                color: #000000;
                 font-size: 14px;
                 font-weight: bold;
                 background-color: transparent;
