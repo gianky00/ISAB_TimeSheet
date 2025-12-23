@@ -352,7 +352,7 @@ class MainWindow(QMainWindow):
         self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
         self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
         self.database_widget.addTab(self.contabilita_panel, "Contabilità Strumentale")
-        self.database_widget.addTab(self.scarico_ore_panel, "Scarico Ore Cantiere") # ADDED here as requested
+        self.database_widget.addTab(self.scarico_ore_panel, "DataEase") # Renamed from "Scarico Ore Cantiere"
 
         # Aggiungi le pagine allo stack
         # 0: Dashboard

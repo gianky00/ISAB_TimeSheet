@@ -46,6 +46,9 @@ class ContabilitaWorker(QThread):
             current_total = phase_offset + processed_in_phase
             elapsed = time.time() - self.start_time
 
+            # Update status only every 5 items or if complete, to reduce UI jitter
+            # But "DataEase" style wants clear feedback.
+
             if current_total > 0 and elapsed > 0:
                 rate = current_total / elapsed
                 remaining = total_ops - current_total
@@ -54,21 +57,23 @@ class ContabilitaWorker(QThread):
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current_total / total_ops) * 100)
 
-                self.progress_signal.emit(f"⏳ {phase_name}: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
+                # Use a single, unified message format
+                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
 
         # 1. Import Contabilità (Dati)
+        # We pass total_sheets to the callback to keep logic inside manager clean,
+        # but here we use the wrapper to unify progress.
         dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
         success, msg = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
 
         # 2. Import Giornaliere (se configurato)
         msg_giornaliere = ""
         if success and self.giornaliere_path:
+            # phase_offset = sheets (number of sheets processed in step 1)
             giorn_cb = lambda c, t: global_progress(c, sheets, "Giornaliere")
 
             g_success, g_msg = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
             msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
-
-        # Nota: Scarico Ore Cantiere ora è gestito separatamente nel suo pannello dedicato.
 
         self.finished_signal.emit(success, msg + msg_giornaliere)
 
@@ -154,6 +159,12 @@ class ContabilitaPanel(QWidget):
 
         layout.addLayout(top_layout)
 
+        # --- Totale Selezionato Label (Global for this panel) ---
+        self.selection_label = QLabel("Totale selezionato: 0")
+        self.selection_label.setStyleSheet("color: #0d6efd; font-weight: bold; margin-bottom: 5px;")
+        self.selection_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self.selection_label)
+
         # Main Tab Container (Tabelle vs KPI)
         self.main_tabs = QTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed) # Connect tab change
@@ -226,10 +237,13 @@ class ContabilitaPanel(QWidget):
         tab_text = self.main_tabs.tabText(index)
         if "Analisi KPI" in tab_text:
             self.search_input.hide()
+            self.selection_label.hide()
         else:
             self.search_input.show()
+            self.selection_label.show()
             # Trigger filter update for the new active tab
             self._filter_current_tab(self.search_input.text())
+            self._connect_selection_signal()
 
     def refresh_tabs(self):
         """Ricarica i tab in base agli anni nel DB."""
@@ -269,6 +283,9 @@ class ContabilitaPanel(QWidget):
                 self.giornaliere_tabs_widget.setCurrentIndex(i)
                 break
 
+        # Connect signals for initial tabs
+        self._connect_selection_signal()
+
         # Aggiorna anche i dati KPI
         if hasattr(self, 'kpi_panel'):
             self.kpi_panel.refresh_years()
@@ -276,6 +293,56 @@ class ContabilitaPanel(QWidget):
     def _on_tab_changed(self, index):
         """Chiamato quando cambia la tab ANNO (in uno dei sub-tabwidget)."""
         self._filter_current_tab(self.search_input.text())
+        self._connect_selection_signal() # Connect new tab table
+
+    def _connect_selection_signal(self):
+        """Connects the selection change signal of the current table to update totals."""
+        current_main_idx = self.main_tabs.currentIndex()
+        current_main_widget = self.main_tabs.widget(current_main_idx)
+
+        target_widget = None
+        if current_main_widget == self.year_tabs_widget:
+            target_widget = self.year_tabs_widget.currentWidget()
+        elif current_main_widget == self.giornaliere_tabs_widget:
+            target_widget = self.giornaliere_tabs_widget.currentWidget()
+
+        if target_widget and hasattr(target_widget, 'table'):
+            try:
+                # Disconnect all first to avoid duplicates (safe pattern)
+                try: target_widget.table.selectionModel().selectionChanged.disconnect()
+                except: pass
+
+                target_widget.table.selectionModel().selectionChanged.connect(
+                    lambda s, d: self._update_selection_total(target_widget.table)
+                )
+            except Exception: pass
+
+    def _update_selection_total(self, table_widget):
+        """Calculates total of selected numerical cells."""
+        indexes = table_widget.selectionModel().selectedIndexes()
+        if not indexes:
+            self.selection_label.setText("Totale selezionato: 0")
+            return
+
+        total = 0.0
+        for idx in indexes:
+            try:
+                text = idx.data(Qt.ItemDataRole.DisplayRole)
+                if text:
+                    # Clean currency/number format
+                    clean = str(text).replace("€", "").replace(".", "").replace(",", ".").strip()
+                    val = float(clean)
+                    total += val
+            except:
+                pass
+
+        # Format
+        if total % 1 == 0:
+            fmt = f"{int(total)}"
+        else:
+            fmt = f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+        self.selection_label.setText(f"Totale selezionato: {fmt}")
 
     def _filter_current_tab(self, text):
         """Filtra la tabella nella tab corrente attiva."""

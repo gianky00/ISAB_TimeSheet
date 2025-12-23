@@ -5,7 +5,7 @@ Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableView, QLineEdit, QMessageBox, QHeaderView, QFrame, QApplication
+    QTableView, QLineEdit, QMessageBox, QHeaderView, QFrame, QApplication, QTabWidget
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QCursor, QKeySequence
@@ -32,17 +32,31 @@ class ScaricoOreWorker(QThread):
         ContabilitaManager.init_db()
         self.start_time = time.time()
 
+        # Pre-scan for total rows to enable accurate progress/ETA
+        # We need to open the file to count rows first.
+        # This adds a small overhead but allows for the requested feature.
+        try:
+            total_rows = ContabilitaManager.scan_scarico_ore_rows(self.file_path)
+        except:
+            total_rows = 1000 # Fallback
+
         def progress_cb(current, total):
+            # If total passed by callback is widely different (e.g. chunk based), ignore or adapt.
+            # But import_scarico_ore passes row_idx vs total_rows (if known)
+
+            # Use the more accurate total from scan if available
+            real_total = total if total > 0 else total_rows
+
             elapsed = time.time() - self.start_time
             if current > 0 and elapsed > 0:
                 rate = current / elapsed
-                remaining = total - current
+                remaining = real_total - current
                 eta_seconds = remaining / rate if rate > 0 else 0
 
                 m, s = divmod(int(eta_seconds), 60)
-                percent = int((current / total) * 100) if total > 0 else 0
+                percent = int((current / real_total) * 100) if real_total > 0 else 0
 
-                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{total}) • Tempo stimato: {m}m {s}s")
+                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s")
 
         success, msg = ContabilitaManager.import_scarico_ore(self.file_path, progress_callback=progress_cb)
         self.finished_signal.emit(success, msg)
@@ -61,8 +75,34 @@ class ScaricoOrePanel(QWidget):
         QTimer.singleShot(50, self._load_data)
 
     def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(15, 15, 15, 15)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+
+        # 1. Create Tabs (DataEase Wrapper)
+        self.tabs = QTabWidget()
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane { border: 1px solid #dee2e6; border-radius: 6px; background-color: white; }
+            QTabBar::tab {
+                background: #f1f3f5;
+                padding: 8px 16px;
+                margin-right: 2px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                color: #495057;
+                font-weight: bold;
+            }
+            QTabBar::tab:selected {
+                background: white;
+                color: #0d6efd;
+                border-bottom: 2px solid #0d6efd;
+            }
+        """)
+        main_layout.addWidget(self.tabs)
+
+        # 2. "Scarico Ore" Tab
+        self.scarico_tab = QWidget()
+        scarico_layout = QVBoxLayout(self.scarico_tab)
+        scarico_layout.setContentsMargins(10, 10, 10, 10)
 
         # --- Toolbar ---
         toolbar = QHBoxLayout()
@@ -85,12 +125,6 @@ class ScaricoOrePanel(QWidget):
         """)
         # Ricerca su Invio
         self.search_input.returnPressed.connect(self._perform_search)
-        # Also search on text changed? For 130k rows, Enter is safer, but let's see.
-        # Ideally debounce. But Virtual Model is fast enough for per-char?
-        # Let's stick to Enter for "MAXIMUM" responsiveness unless requested.
-        # Actually user said "Cold Start Lag" on search.
-        # Let's enable real-time search if it's fast (< 50ms).
-        # We'll stick to Enter to be safe for now as requested by previous logic.
 
         toolbar.addWidget(self.search_input)
 
@@ -134,7 +168,7 @@ class ScaricoOrePanel(QWidget):
         self.update_btn.clicked.connect(self._start_update)
         toolbar.addWidget(self.update_btn)
 
-        layout.addLayout(toolbar)
+        scarico_layout.addLayout(toolbar)
 
         # --- Virtual Table View ---
         self.table_view = QTableView()
@@ -178,7 +212,7 @@ class ScaricoOrePanel(QWidget):
             }
         """)
 
-        layout.addWidget(self.table_view)
+        scarico_layout.addWidget(self.table_view)
 
         # --- Footer Bar for Totals (Option B) ---
         self.footer_frame = QFrame()
@@ -213,12 +247,15 @@ class ScaricoOrePanel(QWidget):
         footer_layout.addSpacing(20)
         footer_layout.addWidget(self.lbl_total_hours)
 
-        layout.addWidget(self.footer_frame)
+        scarico_layout.addWidget(self.footer_frame)
 
         # Info label
         self.info_label = QLabel("Visualizzazione completa. Clicca sulle intestazioni per filtrare. Copia con Ctrl+C.")
         self.info_label.setStyleSheet("color: #adb5bd; font-size: 11px; margin-top: 5px;")
-        layout.addWidget(self.info_label)
+        scarico_layout.addWidget(self.info_label)
+
+        # Add Tab
+        self.tabs.addTab(self.scarico_tab, "Scarico Ore")
 
         # Connect selection changes
         self.table_view.selectionModel().selectionChanged.connect(self._update_selection_totals)
