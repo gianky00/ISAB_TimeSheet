@@ -36,3 +36,7 @@ class DettagliOdALocators:
 
     # Tabs
     TAB_CLOSE_BTN = (By.XPATH, "//*[contains(@class, 'x-tab-close-btn')]")
+
+    # Logout Specifics
+    LOGOUT_SETTINGS_BUTTON = (By.ID, "user-info-settings")
+    LOGOUT_CONFIRM_YES = (By.XPATH, "//span[text()='Si' and contains(@class, 'x-btn-inner')]")

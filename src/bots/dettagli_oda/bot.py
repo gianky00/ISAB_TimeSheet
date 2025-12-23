@@ -71,7 +71,8 @@ class DettagliOdABot(BaseBot):
             self.log(f"Riga {i}: OdA={oda}, Contratto={contract}")
 
             # Navigate and Setup for each row as required by the workflow (resetting tabs)
-            if not page.navigate_to_dettagli():
+            # Pass (i==1) to let the page know if it's the first row
+            if not page.navigate_to_dettagli(is_first_row=(i==1)):
                 self.log("✗ Fallita navigazione iniziale per la riga.")
                 continue
             if not page.setup_supplier(self.fornitore):
