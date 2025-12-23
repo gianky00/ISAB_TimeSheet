@@ -211,7 +211,7 @@ class ContabilitaPanel(QWidget):
         self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
 
-        self.main_tabs.addTab(self.year_tabs_widget, "📂 Dati")
+        self.main_tabs.addTab(self.year_tabs_widget, "📂 Preventivi")
 
         # --- TAB 2: GIORNALIERE (Years) ---
         self.giornaliere_tabs_widget = QTabWidget()

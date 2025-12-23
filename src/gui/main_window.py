@@ -234,16 +234,18 @@ class MainWindow(QMainWindow):
         self.btn_automazioni = SidebarButton("Automazioni", "🤖")
         sidebar_layout.addWidget(self.btn_automazioni)
         
-        self.btn_lyra = SidebarButton("Lyra AI", "✨")
-        sidebar_layout.addWidget(self.btn_lyra)
-
         self.btn_database = SidebarButton("Database", "🗄️")
         sidebar_layout.addWidget(self.btn_database)
         
+        sidebar_layout.addStretch()
+
+        self.btn_lyra = SidebarButton("Lyra AI", "✨")
+        sidebar_layout.addWidget(self.btn_lyra)
+
         self.btn_help = SidebarButton("Guida", "❓")
         sidebar_layout.addWidget(self.btn_help)
 
-        sidebar_layout.addStretch()
+        sidebar_layout.addSpacing(10)
 
         # License Info
         license_info = get_license_info()
@@ -344,10 +346,11 @@ class MainWindow(QMainWindow):
                 background: #e9ecef;
             }
         """)
-        self.automazioni_widget.addTab(self.scarico_panel, "📥 Scarico TS")
-        self.automazioni_widget.addTab(self.carico_panel, "📤 Carico TS")
+        # Order: Dettagli OdA, Scarico TS, Timbrature, Carico TS
         self.automazioni_widget.addTab(self.dettagli_panel, "📋 Dettagli OdA")
+        self.automazioni_widget.addTab(self.scarico_panel, "📥 Scarico TS")
         self.automazioni_widget.addTab(self.timbrature_bot_panel, "⏱️ Timbrature")
+        self.automazioni_widget.addTab(self.carico_panel, "📤 Carico TS")
 
         # --- Page 3: Database (Tab Widget) ---
         self.database_widget = QTabWidget()
