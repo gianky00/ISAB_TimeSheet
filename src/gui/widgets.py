@@ -144,8 +144,47 @@ class TimelineItemWidget(QWidget):
             parent.show_settings()
 
 
+class GroupedTimelineItemWidget(QWidget):
+    """Widget per gruppo di log (Accordion)."""
+    def __init__(self, human_msg, category, count, parent=None):
+        super().__init__(parent)
+        self.category = category
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(10)
+
+        # Style based on category
+        bg_colors = {
+            "download": "#e7f5ff", "search": "#fff3cd", "info": "#f8f9fa"
+        }
+        bg = bg_colors.get(category, "#f8f9fa")
+        self.setStyleSheet(f"background-color: {bg}; border-radius: 4px;")
+
+        # Icon
+        lbl_icon = QLabel("📦")
+        layout.addWidget(lbl_icon)
+
+        # Text
+        self.lbl_text = QLabel(f"{human_msg} (x{count})")
+        self.lbl_text.setStyleSheet("font-weight: bold; color: #495057;")
+        layout.addWidget(self.lbl_text)
+
+        layout.addStretch()
+
+        # Expand hint
+        lbl_hint = QLabel("▼")
+        lbl_hint.setStyleSheet("color: #adb5bd; font-size: 10px;")
+        layout.addWidget(lbl_hint)
+
+    def update_count(self, count):
+        current_text = self.lbl_text.text().split(' (x')[0]
+        self.lbl_text.setText(f"{current_text} (x{count})")
+
+
 class TimelineLogWidget(QListWidget):
-    """Widget Log visuale a timeline."""
+    """Widget Log visuale a timeline con Ambient UX e Grouping."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
@@ -153,8 +192,8 @@ class TimelineLogWidget(QListWidget):
         self.setStyleSheet("""
             QListWidget {
                 background-color: white;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
+                border: 2px solid #dee2e6; /* Start neutral */
+                border-radius: 6px;
                 padding: 5px;
             }
             QListWidget::item {
@@ -162,27 +201,106 @@ class TimelineLogWidget(QListWidget):
             }
         """)
 
+        # For Focus Mode (#5)
+        self.last_category = None
+        self.consecutive_count = 0
+        self.group_threshold = 3
+        self.current_group_item = None
+
+    def set_mood(self, mood: str):
+        """
+        Ambient UX (#2): Changes border color based on state.
+        mood: 'running' (blue), 'error' (red), 'success' (green), 'idle' (gray)
+        """
+        colors = {
+            "running": "#0d6efd", # Blue
+            "error": "#dc3545",   # Red
+            "success": "#198754", # Green
+            "idle": "#dee2e6"     # Gray
+        }
+        color = colors.get(mood, "#dee2e6")
+
+        # Apply transition effect via QGraphicsEffect or just stylesheet update
+        # Simple stylesheet update for stability
+        self.setStyleSheet(f"""
+            QListWidget {{
+                background-color: white;
+                border: 2px solid {color};
+                border-radius: 6px;
+                padding: 5px;
+            }}
+            QListWidget::item {{
+                border-bottom: 1px solid #f0f0f0;
+            }}
+        """)
+
     def add_log(self, message: str):
         human, tech, cat = SmartLogTranslator.humanize(message)
         timestamp = datetime.now().strftime("%H:%M:%S")
 
-        # PROGRESS BAR LOGIC (Idea #3)
-        # If this log contains "%" (e.g. "10%"), check if last item was also progress
-        is_progress = "%" in message and cat == "download" # Use 'download' or relevant category
-
-        if is_progress and self.count() > 0:
+        # PROGRESS BAR / UPDATE LOGIC (#3 Refined)
+        # If message contains %, update previous item if it was same category
+        if "%" in message and self.count() > 0:
             last_item = self.item(self.count() - 1)
             last_widget = self.itemWidget(last_item)
-
-            # If last widget exists and is also a progress/download type
-            if last_widget and last_widget.category == cat:
-                # Update existing widget instead of adding new
-                # We need to expose a method in TimelineItemWidget to update text
-                # Re-creating widget is easier for now to refresh layout
+            if isinstance(last_widget, TimelineItemWidget) and last_widget.category == cat:
+                # Update in place (replace widget)
                 new_widget = TimelineItemWidget(human, tech, cat, timestamp)
                 last_item.setSizeHint(new_widget.sizeHint())
                 self.setItemWidget(last_item, new_widget)
                 return
+
+        # FOCUS MODE / ACCORDION LOGIC (#5)
+        # Check if we should group
+        if cat == self.last_category and cat in ["download", "search", "info"]: # Groupable categories
+            self.consecutive_count += 1
+        else:
+            self.consecutive_count = 1
+            self.last_category = cat
+            self.current_group_item = None # Reset group
+
+        # If threshold reached, convert to group or update group
+        if self.consecutive_count > self.group_threshold:
+            if self.current_group_item:
+                # Update existing group widget
+                group_widget = self.itemWidget(self.current_group_item)
+                if group_widget:
+                    group_widget.update_count(self.consecutive_count)
+                return
+            else:
+                # Start grouping: Remove last (threshold-1) items and replace with group?
+                # Complex to remove past items.
+                # Strategy: Just start grouping NEW items?
+                # Or easier: Grouping only happens for strictly identical "Activity" types?
+                # Let's simplify: If > threshold, just Add a Group Item and keep updating it.
+                # But we want to hide the noise.
+                # Implementation: Upon reaching threshold+1, we remove the previous item?
+                # No, let's just add normal items until threshold, then add a "And X more..." group item.
+
+                # Create group item
+                self.current_group_item = QListWidgetItem(self)
+                group_widget = GroupedTimelineItemWidget(human, cat, self.consecutive_count)
+                self.current_group_item.setSizeHint(group_widget.sizeHint())
+                self.addItem(self.current_group_item)
+                self.setItemWidget(self.current_group_item, group_widget)
+                self.scrollToBottom()
+                return
+
+        # Standard Add
+        item = QListWidgetItem(self)
+        widget = TimelineItemWidget(human, tech, cat, timestamp)
+        item.setSizeHint(widget.sizeHint())
+        self.addItem(item)
+        self.setItemWidget(item, widget)
+        self.scrollToBottom()
+
+        # Update Mood based on category
+        if cat == "error":
+            self.set_mood("error")
+        elif cat == "success":
+            self.set_mood("success")
+        elif cat == "start":
+            self.set_mood("running")
 
         # Sound Feedback
         if winsound:
@@ -193,15 +311,66 @@ class TimelineLogWidget(QListWidget):
                 try: winsound.MessageBeep(winsound.MB_ICONHAND)
                 except: pass
 
-        item = QListWidgetItem(self)
-        # Create widget
-        widget = TimelineItemWidget(human, tech, cat, timestamp)
 
-        item.setSizeHint(widget.sizeHint())
-        self.addItem(item)
-        self.setItemWidget(item, widget)
+class MissionReportCard(QFrame):
+    """
+    Card riepilogativa stile 'Mission Complete' (#3).
+    Mostra statistiche finali con design curato.
+    """
+    def __init__(self, duration_str, status, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef);
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin: 10px 5px;
+            }
+        """)
 
-        self.scrollToBottom()
+        layout = QVBoxLayout(self)
+
+        # Title
+        title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
+        title_color = "#198754" if status else "#dc3545"
+        lbl_title = QLabel(title_text)
+        lbl_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {title_color};")
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl_title)
+
+        # Stats Grid
+        stats_layout = QHBoxLayout()
+
+        # Time
+        self._add_stat(stats_layout, "⏱️ Tempo", duration_str)
+        # Status
+        self._add_stat(stats_layout, "📊 Esito", "Successo" if status else "Errore")
+
+        layout.addLayout(stats_layout)
+
+        # Fun hint
+        if status:
+            lbl_hint = QLabel("Ottimo lavoro! 🚀")
+            lbl_hint.setStyleSheet("color: #6c757d; font-style: italic; margin-top: 5px;")
+            lbl_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(lbl_hint)
+
+    def _add_stat(self, layout, label, value):
+        container = QWidget()
+        v_layout = QVBoxLayout(container)
+        v_layout.setContentsMargins(0,0,0,0)
+
+        lbl_l = QLabel(label)
+        lbl_l.setStyleSheet("font-size: 12px; color: #6c757d;")
+        lbl_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        lbl_v = QLabel(value)
+        lbl_v.setStyleSheet("font-size: 16px; font-weight: bold; color: #212529;")
+        lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        v_layout.addWidget(lbl_l)
+        v_layout.addWidget(lbl_v)
+        layout.addWidget(container)
 
 
 class StatusIndicator(QWidget):

@@ -12,11 +12,15 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
     QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QCheckBox, QTimeEdit, QInputDialog
+    QCheckBox, QTimeEdit, QInputDialog, QApplication, QListWidgetItem
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
+from datetime import datetime
 
-from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget, CalendarDateEdit
+from src.gui.widgets import (
+    EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget,
+    CalendarDateEdit, MissionReportCard
+)
 from src.core import config_manager
 
 
@@ -78,6 +82,7 @@ class BaseBotPanel(QWidget):
         self.bot_name = bot_name
         self.bot_description = bot_description
         self.worker = None
+        self.start_time = None
         self._setup_base_ui()
     
     def _setup_base_ui(self):
@@ -174,7 +179,8 @@ class BaseBotPanel(QWidget):
     
     def _on_start(self):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
-        pass
+        self.start_time = datetime.now()
+        self.log_widget.timeline.set_mood("running")
     
     def _on_stop(self):
         """Gestisce lo stop del bot."""
@@ -187,13 +193,34 @@ class BaseBotPanel(QWidget):
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         
+        # Calculate duration
+        duration_str = "--:--"
+        if self.start_time:
+            delta = datetime.now() - self.start_time
+            total_seconds = int(delta.total_seconds())
+            m, s = divmod(total_seconds, 60)
+            duration_str = f"{m}m {s}s"
+
+        # Mission Report (#3)
+        # Using the timeline widget exposed via log_widget
+        report = MissionReportCard(duration_str, success)
+        item = QListWidgetItem()
+        item.setSizeHint(report.sizeHint())
+        self.log_widget.timeline.addItem(item)
+        self.log_widget.timeline.setItemWidget(item, report)
+        self.log_widget.timeline.scrollToBottom()
+
         if success:
-            self.status_indicator.set_status("completed")
-            self.log_widget.append("✓ Operazione completata con successo!")
+            self.status_indicator.set_status("success")
+            self.log_widget.timeline.set_mood("success")
         else:
             self.status_indicator.set_status("error")
+            self.log_widget.timeline.set_mood("error")
         
         self.bot_finished.emit(success)
+
+        # Taskbar Flash (#4)
+        QApplication.alert(self, 0) # 0 = infinite flash until focused
 
         # Attendi che il thread sia effettivamente terminato per evitare crash
         if self.worker:

@@ -37,3 +37,11 @@
 ## 2024-05-23 - Actionable Logs (Deep Linking)
 **Learning:** Forcing users to manually copy file paths from logs to File Explorer is a friction point.
 **Action:** Detect file paths using Regex within the log text and render them as "Open Folder" buttons directly in the timeline. Similarly, for known errors (like "Credentials"), provide a "Fix It" button that navigates directly to the relevant settings page.
+
+## 2024-05-23 - Ambient UX (Mood Lighting)
+**Learning:** Users monitor long-running processes via peripheral vision. Reading text to know if an error occurred is slow.
+**Action:** Use broad visual cues, such as changing the border color of the entire log container (Blue=Run, Red=Error, Green=Success). This allows users to understand the system state instantly from across the room or while focusing on another window.
+
+## 2024-05-23 - Gamification (Mission Report)
+**Learning:** Completing a task should feel rewarding. A simple "Done" text is anticlimactic.
+**Action:** Display a "Mission Report" card at the end of a workflow, summarizing stats (Time, Files) with positive reinforcement ("Mission Accomplished!"). This provides closure and a small dopamine hit.
