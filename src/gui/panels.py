@@ -4,6 +4,7 @@ Pannelli specifici per ogni bot.
 """
 import sqlite3
 import traceback
+import threading
 from pathlib import Path
 from datetime import datetime
 
@@ -11,7 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
     QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QCheckBox, QTimeEdit
+    QCheckBox, QTimeEdit, QInputDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
 
@@ -25,6 +26,7 @@ class BotWorker(QThread):
     log_signal = pyqtSignal(str)
     status_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(bool)
+    request_input_signal = pyqtSignal(str, dict, threading.Event)
     
     def __init__(self, bot, data):
         super().__init__()
@@ -38,12 +40,24 @@ class BotWorker(QThread):
             # Collega i callback
             self.bot.set_log_callback(self.log_signal.emit)
             
+            # Setup input callback se supportato dal bot
+            if hasattr(self.bot, 'set_input_callback'):
+                self.bot.set_input_callback(self._request_input_wrapper)
+
             result = self.bot.execute(self.data)
             self.finished_signal.emit(result)
         except Exception as e:
             error_trace = traceback.format_exc()
             self.log_signal.emit(f"[ERRORE CRITICO] {e}\n{error_trace}")
             self.finished_signal.emit(False)
+
+    def _request_input_wrapper(self, prompt: str) -> str:
+        """Wrapper thread-safe per chiedere input alla GUI."""
+        result_container = {}
+        event = threading.Event()
+        self.request_input_signal.emit(prompt, result_container, event)
+        event.wait()
+        return result_container.get('value', '')
     
     def stop(self):
         """Richiede lo stop del bot."""
@@ -314,6 +328,33 @@ class ScaricaTSPanel(BaseBotPanel):
         
         params_layout.addLayout(date_layout)
         
+        # Riga 3: Percorso destinazione
+        dest_layout = QHBoxLayout()
+        dest_label = QLabel("Destinazione:")
+        dest_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        dest_label.setMinimumWidth(80)
+        dest_layout.addWidget(dest_label)
+
+        self.dest_path_edit = QLineEdit()
+        self.dest_path_edit.setPlaceholderText("Download utente (default)")
+        self.dest_path_edit.setReadOnly(True)
+        dest_layout.addWidget(self.dest_path_edit)
+
+        browse_btn = QPushButton("📂")
+        browse_btn.setFixedSize(35, 35)
+        browse_btn.clicked.connect(self._browse_dest_path)
+        dest_layout.addWidget(browse_btn)
+
+        params_layout.addLayout(dest_layout)
+
+        # Riga 4: Flag Elabora TS
+        self.elabora_ts_check = QCheckBox("Elabora TS (Rinomina e Sposta)")
+        self.elabora_ts_check.setStyleSheet("font-size: 15px; margin-top: 5px;")
+        # Auto-save settings on change
+        self.elabora_ts_check.stateChanged.connect(self._save_data)
+        self.dest_path_edit.textChanged.connect(self._save_data)
+        params_layout.addWidget(self.elabora_ts_check)
+
         self.content_layout.addWidget(params_group)
         
         # --- Sezione Tabella Dati ---
@@ -406,6 +447,11 @@ class ScaricaTSPanel(BaseBotPanel):
                 # Seleziona il primo elemento
                 self.fornitore_combo.setCurrentIndex(0)
     
+    def _browse_dest_path(self):
+        path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
+        if path:
+            self.dest_path_edit.setText(path)
+
     def _load_saved_data(self):
         """Carica i dati salvati."""
         config = config_manager.load_config()
@@ -434,6 +480,10 @@ class ScaricaTSPanel(BaseBotPanel):
                 self.date_edit.setDate(QDate(year, month, day))
         except:
             pass
+
+        # Carica path e flag
+        self.dest_path_edit.setText(config.get("path_scarico_ts", ""))
+        self.elabora_ts_check.setChecked(config.get("elabora_ts", False))
     
     def _clear_table(self):
         """Pulisce la tabella."""
@@ -454,6 +504,24 @@ class ScaricaTSPanel(BaseBotPanel):
         fornitore = self.fornitore_combo.currentText()
         if fornitore:
             config_manager.set_config_value("last_ts_fornitore", fornitore)
+
+        # Salva path e flag
+        config_manager.set_config_value("path_scarico_ts", self.dest_path_edit.text())
+        config_manager.set_config_value("elabora_ts", self.elabora_ts_check.isChecked())
+
+    def _ask_user_input(self, prompt: str, result_container: dict, event: threading.Event):
+        """Callback per chiedere input all'utente (chiamato dal thread GUI)."""
+        try:
+            text, ok = QInputDialog.getText(self, "Conflitto File", prompt)
+            if ok:
+                result_container['value'] = text
+            else:
+                result_container['value'] = ""
+        except Exception as e:
+            print(f"Errore input dialog: {e}")
+            result_container['value'] = ""
+        finally:
+            event.set()
     
     def _on_start(self):
         """Avvia il bot Scarico TS."""
@@ -492,6 +560,11 @@ class ScaricaTSPanel(BaseBotPanel):
         # Ottieni la data selezionata
         data_da = self.date_edit.date().toString("dd.MM.yyyy")
         
+        # Ottieni path specifico o default
+        download_path = self.dest_path_edit.text()
+        if not download_path:
+            download_path = str(Path.home() / "Downloads")
+
         # Crea e avvia il worker
         from src.bots import create_bot
         
@@ -502,9 +575,10 @@ class ScaricaTSPanel(BaseBotPanel):
             password=password,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path(),
+            download_path=download_path,
             data_da=data_da,
-            fornitore=fornitore
+            fornitore=fornitore,
+            elabora_ts=self.elabora_ts_check.isChecked()
         )
         
         if not bot:
@@ -515,13 +589,15 @@ class ScaricaTSPanel(BaseBotPanel):
         bot_data = {
             "rows": data,
             "data_da": data_da,
-            "fornitore": fornitore
+            "fornitore": fornitore,
+            "elabora_ts": self.elabora_ts_check.isChecked()
         }
         
         self.worker = BotWorker(bot, bot_data)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
+        self.worker.request_input_signal.connect(self._ask_user_input)
         
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
@@ -531,6 +607,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.log_widget.append(f"▶ Avvio bot Scarico TS")
         self.log_widget.append(f"  Fornitore: {fornitore}")
         self.log_widget.append(f"  Data: {data_da}")
+        self.log_widget.append(f"  Elaborazione file: {'Sì' if self.elabora_ts_check.isChecked() else 'No'}")
         
         self.worker.start()
         self.bot_started.emit()
@@ -654,6 +731,25 @@ class DettagliOdAPanel(BaseBotPanel):
         date_layout.addStretch()
         params_layout.addLayout(date_layout)
 
+        # Riga 3: Percorso destinazione
+        dest_layout = QHBoxLayout()
+        dest_label = QLabel("Destinazione:")
+        dest_label.setStyleSheet("font-weight: normal; font-size: 15px;")
+        dest_label.setMinimumWidth(80)
+        dest_layout.addWidget(dest_label)
+
+        self.dest_path_edit = QLineEdit()
+        self.dest_path_edit.setPlaceholderText("Download utente (default)")
+        self.dest_path_edit.setReadOnly(True)
+        dest_layout.addWidget(self.dest_path_edit)
+
+        browse_btn = QPushButton("📂")
+        browse_btn.setFixedSize(35, 35)
+        browse_btn.clicked.connect(self._browse_dest_path)
+        dest_layout.addWidget(browse_btn)
+
+        params_layout.addLayout(dest_layout)
+
         self.content_layout.addWidget(params_group)
 
         # Form dati OdA
@@ -734,6 +830,11 @@ class DettagliOdAPanel(BaseBotPanel):
         if hasattr(main_window, 'show_settings'):
             main_window.show_settings()
 
+    def _browse_dest_path(self):
+        path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
+        if path:
+            self.dest_path_edit.setText(path)
+
     def refresh_fornitori(self):
         """Ricarica l'elenco dei fornitori e contratti."""
         config = config_manager.load_config()
@@ -796,6 +897,9 @@ class DettagliOdAPanel(BaseBotPanel):
                 }
                 cleaned_data.append(cleaned_row)
             self.data_table.set_data(cleaned_data)
+
+        # Carica path
+        self.dest_path_edit.setText(config.get("path_dettagli_oda", ""))
     
     def _clear_table(self):
         """Pulisce la tabella."""
@@ -811,6 +915,8 @@ class DettagliOdAPanel(BaseBotPanel):
         config_manager.set_config_value("last_oda_fornitore", self.fornitore_combo.currentText())
         config_manager.set_config_value("last_oda_date_da", self.date_da_edit.date().toString("dd.MM.yyyy"))
         config_manager.set_config_value("last_oda_date_a", self.date_a_edit.date().toString("dd.MM.yyyy"))
+
+        config_manager.set_config_value("path_dettagli_oda", self.dest_path_edit.text())
     
     def _on_start(self):
         """Avvia il bot Dettagli OdA."""
@@ -832,6 +938,11 @@ class DettagliOdAPanel(BaseBotPanel):
         data_da = self.date_da_edit.date().toString("dd.MM.yyyy")
         data_a = self.date_a_edit.date().toString("dd.MM.yyyy")
         
+        # Ottieni path specifico o default
+        download_path = self.dest_path_edit.text()
+        if not download_path:
+            download_path = str(Path.home() / "Downloads")
+
         from src.bots import create_bot
         config = config_manager.load_config()
 
@@ -841,7 +952,7 @@ class DettagliOdAPanel(BaseBotPanel):
             password=password,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path(),
+            download_path=download_path,
             fornitore=fornitore,
             data_da=data_da,
             data_a=data_a

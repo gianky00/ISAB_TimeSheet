@@ -75,6 +75,7 @@ class BaseBot(ABC):
         self.status = BotStatus.IDLE
         self._stop_requested = False
         self._log_callback: Optional[Callable[[str], None]] = None
+        self._input_callback: Optional[Callable[[str], str]] = None
     
     @property
     @abstractmethod
@@ -91,12 +92,23 @@ class BaseBot(ABC):
     def set_log_callback(self, callback: Callable[[str], None]):
         """Set the logging callback."""
         self._log_callback = callback
+
+    def set_input_callback(self, callback: Callable[[str], str]):
+        """Set the input callback for user interaction."""
+        self._input_callback = callback
     
     def log(self, message: str):
         """Log a message."""
         print(f"[{self.name}] {message}")
         if self._log_callback:
             self._log_callback(message)
+
+    def _ask_user(self, prompt: str) -> str:
+        """Ask user for input via callback."""
+        if self._input_callback:
+            return self._input_callback(prompt)
+        self.log(f"⚠️ Input richiesto ma nessuna callback configurata: {prompt}")
+        return ""
     
     def request_stop(self):
         """Request bot interruption."""
