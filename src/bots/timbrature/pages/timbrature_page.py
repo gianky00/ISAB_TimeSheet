@@ -251,8 +251,9 @@ class TimbraturePage:
     def _rename_latest_download(self, new_name_base: str) -> str:
         """Finds latest download in system Downloads and moves it to temp folder."""
         source_dir = Path.home() / "Downloads"
-        dest_dir = Path("temp_downloads")
-        dest_dir.mkdir(exist_ok=True)
+        from src.core.config_manager import CONFIG_DIR
+        dest_dir = CONFIG_DIR / "temp"
+        dest_dir.mkdir(parents=True, exist_ok=True)
 
         timeout = Timeouts.DOWNLOAD
         start_time = time.time()

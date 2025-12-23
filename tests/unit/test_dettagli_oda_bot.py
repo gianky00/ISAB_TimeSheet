@@ -48,7 +48,7 @@ class TestDettagliOdAPage:
 
         mock_driver.find_element.side_effect = side_effect
 
-        assert page.process_oda("123", "C1", "01.01.2024", "01.01.2025", Path(".")) is True
+        assert page.process_oda("123", "C1", "01.01.2024", "01.01.2025", Path("."), Path(".")) is True
 
 class TestDettagliOdABot:
     @patch('src.bots.dettagli_oda.bot.DettagliOdAPage')

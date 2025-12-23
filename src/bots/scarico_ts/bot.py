@@ -302,12 +302,16 @@ class ScaricaTSBot(BaseBot):
                     except:
                         pass
 
-                # Costruisci il nuovo nome
+                # Costruisci il nuovo nome: TS_<NumeroOdA>-<Posizione>.xlsx
                 safe_oda = sanitize_filename(numero_oda)
                 safe_pos = sanitize_filename(posizione_oda)
                 
-                nome_base_pos = f"-{safe_pos}" if safe_pos else ""
-                nuovo_nome_base = f"{safe_oda}{nome_base_pos}"
+                # Formato richiesto: TS_{oda}-{pos}.xlsx
+                if safe_pos:
+                    nuovo_nome_base = f"TS_{safe_oda}-{safe_pos}"
+                else:
+                    nuovo_nome_base = f"TS_{safe_oda}"
+
                 nuovo_nome_file = f"{nuovo_nome_base}.xlsx"
                 percorso_finale = dest_dir / nuovo_nome_file
                 

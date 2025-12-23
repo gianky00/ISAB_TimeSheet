@@ -9,6 +9,7 @@ class DettagliOdALocators:
     """Locators for Dettagli OdA."""
 
     # Navigation
+    SIDEBAR_EXPAND_BUTTON = (By.CSS_SELECTOR, ".x-tool-expand-right")
     REPORT_MENU = (By.XPATH, "//*[normalize-space(text())='Report']")
     DETTAGLI_MENU = (By.XPATH, "//span[contains(@class, 'x-btn-inner') and normalize-space(text())='Oda']")
 

@@ -574,8 +574,8 @@ class LogWidget(QWidget):
         
         header_layout.addStretch()
         
-        clear_btn = QPushButton("🧹 Pulisci")
-        clear_btn.setMaximumWidth(80)
+        clear_btn = QPushButton("🧹 Pulisci Log")
+        clear_btn.setMaximumWidth(90)
         clear_btn.setStyleSheet("""
             QPushButton {
                 background-color: #6c757d;
