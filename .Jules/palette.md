@@ -29,3 +29,7 @@
 ## 2024-05-23 - Sensitive Data Visibility
 **Learning:** Forcing users to type complex passwords blindly increases error rates and frustration.
 **Action:** Implement a toggle (👁️/🔒) for sensitive fields. This gives control back to the user, allowing them to verify input in private environments while maintaining security in public ones.
+
+## 2024-05-23 - Human-Centric Logging
+**Learning:** Technical logs (e.g., "GET /api/v1/auth 200 OK") are alienating for non-technical users and increase cognitive load when checking status.
+**Action:** Implement a "Smart Translator" layer that converts technical events into conversational, human-like phrases (e.g., "🔐 Sto effettuando l'accesso..."). Presenting this in a structured visual timeline (Icon + Human Text + Timestamp) instead of a raw text block makes the process feel more friendly and understandable.

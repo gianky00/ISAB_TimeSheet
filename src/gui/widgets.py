@@ -6,10 +6,101 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
     QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
-    QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect
+    QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect,
+    QListWidget, QListWidgetItem
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint
-from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint, QSize
+from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush, QIcon, QFont
+from datetime import datetime
+from src.utils.log_humanizer import SmartLogTranslator
+
+
+class TimelineItemWidget(QWidget):
+    """Widget per singolo elemento della timeline log."""
+    def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
+        super().__init__(parent)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(10)
+
+        # Icon/Dot Area (Custom Paint needed for line?)
+        # For simplicity, we use a colored Label circle
+        self.category = category
+
+        # Icon mapping
+        icons = {
+            "start": "🚀", "login": "🔐", "search": "🔍",
+            "download": "📥", "success": "✅", "error": "❌",
+            "wait": "⏳", "info": "ℹ️"
+        }
+        colors = {
+            "start": "#0d6efd", "login": "#6f42c1", "search": "#fd7e14",
+            "download": "#0dcaf0", "success": "#198754", "error": "#dc3545",
+            "wait": "#ffc107", "info": "#6c757d"
+        }
+
+        # Time
+        lbl_time = QLabel(timestamp)
+        lbl_time.setStyleSheet("color: #adb5bd; font-size: 11px; font-family: monospace;")
+        lbl_time.setFixedWidth(50)
+        layout.addWidget(lbl_time)
+
+        # Dot
+        lbl_dot = QLabel(icons.get(category, "•"))
+        lbl_dot.setStyleSheet(f"color: {colors.get(category, 'black')}; font-size: 16px;")
+        lbl_dot.setFixedWidth(25)
+        lbl_dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl_dot)
+
+        # Text Area
+        text_layout = QVBoxLayout()
+        text_layout.setSpacing(2)
+
+        lbl_human = QLabel(human_msg)
+        lbl_human.setStyleSheet("font-weight: bold; font-size: 14px; color: #212529;")
+        lbl_human.setWordWrap(True)
+        text_layout.addWidget(lbl_human)
+
+        if tech_msg and tech_msg != human_msg:
+            lbl_tech = QLabel(tech_msg)
+            lbl_tech.setStyleSheet("color: #6c757d; font-size: 12px;")
+            lbl_tech.setWordWrap(True)
+            text_layout.addWidget(lbl_tech)
+
+        layout.addLayout(text_layout)
+
+
+class TimelineLogWidget(QListWidget):
+    """Widget Log visuale a timeline."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setStyleSheet("""
+            QListWidget {
+                background-color: white;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QListWidget::item {
+                border-bottom: 1px solid #f0f0f0;
+            }
+        """)
+
+    def add_log(self, message: str):
+        human, tech, cat = SmartLogTranslator.humanize(message)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+
+        item = QListWidgetItem(self)
+        # Create widget
+        widget = TimelineItemWidget(human, tech, cat, timestamp)
+
+        item.setSizeHint(widget.sizeHint())
+        self.addItem(item)
+        self.setItemWidget(item, widget)
+
+        self.scrollToBottom()
 
 
 class StatusIndicator(QWidget):
@@ -579,13 +670,13 @@ class LogWidget(QWidget):
         # Header
         header_layout = QHBoxLayout()
         
-        label = QLabel("📋 Log")
+        label = QLabel("📋 Attività")
         label.setStyleSheet("font-weight: bold; font-size: 13px;")
         header_layout.addWidget(label)
         
         header_layout.addStretch()
         
-        clear_btn = QPushButton("🧹 Pulisci Log")
+        clear_btn = QPushButton("🧹 Pulisci")
         clear_btn.setMaximumWidth(90)
         clear_btn.setStyleSheet("""
             QPushButton {
@@ -605,23 +696,11 @@ class LogWidget(QWidget):
 
         layout.addLayout(header_layout)
 
-        # Text area per i log
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        self.log_text.setMinimumHeight(150)
-        self.log_text.setMaximumHeight(200)
-        self.log_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #1e1e1e;
-                color: #d4d4d4; /* Explicit light text */
-                border: 1px solid #333;
-                border-radius: 4px;
-                padding: 10px;
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: 14px;
-            }
-        """)
-        layout.addWidget(self.log_text)
+        # Timeline Widget
+        self.timeline = TimelineLogWidget()
+        self.timeline.setMinimumHeight(150)
+        self.timeline.setMaximumHeight(300) # Slightly taller for better view
+        layout.addWidget(self.timeline)
 
     def append(self, message: str):
         """
@@ -630,27 +709,11 @@ class LogWidget(QWidget):
         Args:
             message: Messaggio da aggiungere
         """
-        # Colora in base al tipo di messaggio
-        if "✓" in message or "successo" in message.lower():
-            color = "#4ec9b0"  # Verde
-        elif "✗" in message or "errore" in message.lower():
-            color = "#f14c4c"  # Rosso
-        elif "⚠" in message or "avviso" in message.lower():
-            color = "#dcdcaa"  # Giallo
-        elif "▶" in message:
-            color = "#569cd6"  # Blu
-        else:
-            color = "#d4d4d4"  # Default
-
-        self.log_text.append(f'<span style="color: {color};">{message}</span>')
-
-        # Scroll automatico
-        scrollbar = self.log_text.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        self.timeline.add_log(message)
 
     def clear(self):
         """Pulisce il log."""
-        self.log_text.clear()
+        self.timeline.clear()
 
 
 class DetailedInfoDialog(QDialog):
