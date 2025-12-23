@@ -26,6 +26,7 @@ from selenium.common.exceptions import (
 from webdriver_manager.chrome import ChromeDriverManager
 
 from src.core.constants import URLs, Timeouts, BotStatus, BrowserConfig
+from src.core import config_manager
 from src.bots.common.locators import LoginLocators, CommonLocators
 
 class BaseBot(ABC):
@@ -144,7 +145,8 @@ class BaseBot(ABC):
         options.page_load_strategy = 'eager'
 
         # --- 4. CACHING & PERSISTENT PROFILE ---
-        profile_dir = Path(f"data/{BrowserConfig.CACHE_DIR_NAME}").absolute()
+        # Use user config directory to ensure write permissions (fixes Program Files issue)
+        profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
         options.add_argument(f"user-data-dir={profile_dir}")
         self.log(f"Cache profilo attiva: {profile_dir}")
 

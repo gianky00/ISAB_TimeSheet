@@ -37,6 +37,12 @@ class TestBaseBotLogic:
         assert "--disable-notifications" in args
         assert "--no-restore-session-state" in args
 
+        # Verify user-data-dir uses config_manager path (not CWD)
+        user_data_arg = next((arg for arg in args if arg.startswith("user-data-dir=")), None)
+        assert user_data_arg is not None
+        # It should contain bot_ts (part of the config dir path)
+        assert "bot_ts" in user_data_arg
+
     def test_check_stop_raises(self, base_bot):
         """Should raise InterruptedError if stop requested."""
         base_bot.request_stop()
