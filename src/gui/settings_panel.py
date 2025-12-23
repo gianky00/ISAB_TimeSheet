@@ -360,8 +360,10 @@ class SettingsPanel(QWidget):
         browser_layout = QVBoxLayout(browser_group)
         self.groups.append(browser_group)
         
-        self.headless_check = QCheckBox("Esegui in modalità headless (senza interfaccia grafica)")
-        self.headless_check.setStyleSheet("padding: 5px; font-size: 15px;")
+        # HEADLESS MODE CHECKBOX - Explicitly ensure visibility and styling
+        self.headless_check = QCheckBox("Esegui in modalità Headless (Nascosta)")
+        self.headless_check.setToolTip("Se attivato, il browser verrà eseguito in background senza mostrare la finestra.")
+        self.headless_check.setStyleSheet("QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }") # Pink/Bold to highlight
         browser_layout.addWidget(self.headless_check)
         
         timeout_layout = QHBoxLayout()
