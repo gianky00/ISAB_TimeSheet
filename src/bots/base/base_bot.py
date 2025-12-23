@@ -137,6 +137,17 @@ class BaseBot(ABC):
         options.add_argument("--proxy-bypass-list=*")
         options.add_argument("--start-maximized")
         
+        # Check config for global headless setting, overriding init argument if needed
+        # Prioritize constructor argument if explicitly True? No, user wants a global flag.
+        # But if passed in constructor, we should respect it?
+        # The Settings Panel sets the config 'browser_headless'.
+        # The Bot Factory reads that config and passes it to __init__.
+        # So self.headless should already be correct.
+        # However, to be extra safe and dynamic (if config changes):
+        config = config_manager.load_config()
+        if config.get("browser_headless", False):
+            self.headless = True
+
         if self.headless:
             options.add_argument("--headless=new")
             options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")

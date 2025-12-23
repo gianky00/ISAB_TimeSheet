@@ -554,6 +554,7 @@ class ListFilterPopupWidget(QWidget):
             if not self.list_view.isRowHidden(i):
                 self.model.item(i).setCheckState(Qt.CheckState.Checked)
         self.model.blockSignals(False)
+        self.model.layoutChanged.emit()
 
     def select_none(self):
         self.model.blockSignals(True)
@@ -561,6 +562,7 @@ class ListFilterPopupWidget(QWidget):
             if not self.list_view.isRowHidden(i):
                 self.model.item(i).setCheckState(Qt.CheckState.Unchecked)
         self.model.blockSignals(False)
+        self.model.layoutChanged.emit()
 
     def _on_item_changed(self, item):
         pass
@@ -777,12 +779,14 @@ class DateFilterPopupWidget(QWidget):
         root = self.model.invisibleRootItem()
         self._set_children_state(root, Qt.CheckState.Checked)
         self.model.blockSignals(False)
+        self.model.layoutChanged.emit()
 
     def select_none(self):
         self.model.blockSignals(True)
         root = self.model.invisibleRootItem()
         self._set_children_state(root, Qt.CheckState.Unchecked)
         self.model.blockSignals(False)
+        self.model.layoutChanged.emit()
 
     def apply_filter(self):
         self.applied = True

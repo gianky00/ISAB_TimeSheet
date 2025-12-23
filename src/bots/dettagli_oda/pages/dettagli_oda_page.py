@@ -84,16 +84,31 @@ class DettagliOdAPage:
     def logout(self):
         try:
             self.log("Esecuzione logout...")
-            # Click Settings
-            settings_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON))
-            self.driver.execute_script("arguments[0].click();", settings_btn)
-            time.sleep(0.5)
+            # 1. Click Settings with retry and visibility check
+            settings_btn = None
+            try:
+                 settings_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON))
+            except TimeoutException:
+                 self.log("  ⚠️ Pulsante Settings non trovabile, provo strategia alternativa...")
+                 settings_btn = self.driver.find_element(*CommonLocators.SETTINGS_BUTTON) # Fallback to find without wait if blocked
 
-            # Click Logout
-            logout_btn = self.wait.until(EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION))
-            self.driver.execute_script("arguments[0].click();", logout_btn)
+            if settings_btn:
+                self.driver.execute_script("arguments[0].click();", settings_btn)
+                time.sleep(0.5)
+            else:
+                self.log("  ✗ Pulsante Settings non trovato.")
+                return
 
-            # Handle Confirmation Popup "Attenzione"
+            # 2. Click Logout
+            try:
+                logout_btn = self.wait.until(EC.visibility_of_element_located(CommonLocators.LOGOUT_OPTION))
+                # Using JS click is safer for menus
+                self.driver.execute_script("arguments[0].click();", logout_btn)
+            except TimeoutException:
+                 self.log("  ✗ Opzione Logout non apparsa nel menu.")
+                 return
+
+            # 3. Handle Confirmation Popup "Attenzione"
             try:
                 self.log("  Attesa conferma logout...")
                 # Wait for header "Attenzione"

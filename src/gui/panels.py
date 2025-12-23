@@ -343,6 +343,30 @@ class ScaricaTSPanel(BaseBotPanel):
         instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
+
+        # Toolbar per la tabella
+        table_toolbar = QHBoxLayout()
+        table_toolbar.addStretch()
+
+        self.clear_btn = QPushButton("🗑️ Pulisci Tabella")
+        self.clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+        """)
+        self.clear_btn.clicked.connect(self._clear_table)
+        table_toolbar.addWidget(self.clear_btn)
+
+        group_layout.addLayout(table_toolbar)
         
         # Tabella con colonne: Numero OdA
         self.data_table = EditableDataTable([
@@ -411,6 +435,12 @@ class ScaricaTSPanel(BaseBotPanel):
         except:
             pass
     
+    def _clear_table(self):
+        """Pulisce la tabella."""
+        if QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?") == QMessageBox.StandardButton.Yes:
+            self.data_table.set_data([])
+            self._save_data()
+
     def _save_data(self):
         """Salva i dati correnti."""
         data = self.data_table.get_data()
@@ -653,6 +683,30 @@ class DettagliOdAPanel(BaseBotPanel):
         instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
+
+        # Toolbar per la tabella
+        table_toolbar = QHBoxLayout()
+        table_toolbar.addStretch()
+
+        self.clear_btn = QPushButton("🗑️ Pulisci Tabella")
+        self.clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+        """)
+        self.clear_btn.clicked.connect(self._clear_table)
+        table_toolbar.addWidget(self.clear_btn)
+
+        group_layout.addLayout(table_toolbar)
         
         # Tabella con colonne: Numero OdA e Numero Contratto
         # Recupera default da config per le nuove righe
@@ -743,6 +797,12 @@ class DettagliOdAPanel(BaseBotPanel):
                 cleaned_data.append(cleaned_row)
             self.data_table.set_data(cleaned_data)
     
+    def _clear_table(self):
+        """Pulisce la tabella."""
+        if QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?") == QMessageBox.StandardButton.Yes:
+            self.data_table.set_data([])
+            self._save_data()
+
     def _save_data(self):
         """Salva i dati correnti."""
         data = self.data_table.get_data()
@@ -855,6 +915,30 @@ class CaricoTSPanel(BaseBotPanel):
         instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
+
+        # Toolbar per la tabella
+        table_toolbar = QHBoxLayout()
+        table_toolbar.addStretch()
+
+        self.clear_btn = QPushButton("🗑️ Pulisci Tabella")
+        self.clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+        """)
+        self.clear_btn.clicked.connect(self._clear_table)
+        table_toolbar.addWidget(self.clear_btn)
+
+        group_layout.addLayout(table_toolbar)
         
         # Tabella con tutte le colonne del database Carico TS
         self.data_table = EditableDataTable([
@@ -888,6 +972,12 @@ class CaricoTSPanel(BaseBotPanel):
         if saved_data:
             self.data_table.set_data(saved_data)
     
+    def _clear_table(self):
+        """Pulisce la tabella."""
+        if QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?") == QMessageBox.StandardButton.Yes:
+            self.data_table.set_data([])
+            self._save_data()
+
     def _save_data(self):
         """Salva i dati correnti."""
         data = self.data_table.get_data()
