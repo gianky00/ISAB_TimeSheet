@@ -108,6 +108,19 @@ class SettingsPanel(QWidget):
         scroll_layout = QVBoxLayout(self.scroll_content)
         scroll_layout.setSpacing(20)
         
+        # --- Sezione Generale (Top Level) ---
+        general_group = self._create_group_box("⚙️ Generale")
+        general_layout = QVBoxLayout(general_group)
+        self.groups.append(general_group)
+
+        # HEADLESS MODE CHECKBOX - Explicitly ensure visibility and styling
+        self.headless_check = QCheckBox("Esegui in modalità Headless (Nascosta)")
+        self.headless_check.setToolTip("Se attivato, il browser verrà eseguito in background senza mostrare la finestra.")
+        self.headless_check.setStyleSheet("QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }") # Pink/Bold to highlight
+        general_layout.addWidget(self.headless_check)
+
+        scroll_layout.addWidget(general_group)
+
         # --- Sezione Account ---
         account_group = self._create_group_box("🔐 Gestione Account ISAB")
         account_layout = QVBoxLayout(account_group)
@@ -359,12 +372,6 @@ class SettingsPanel(QWidget):
         browser_group = self._create_group_box("🌐 Impostazioni Browser")
         browser_layout = QVBoxLayout(browser_group)
         self.groups.append(browser_group)
-        
-        # HEADLESS MODE CHECKBOX - Explicitly ensure visibility and styling
-        self.headless_check = QCheckBox("Esegui in modalità Headless (Nascosta)")
-        self.headless_check.setToolTip("Se attivato, il browser verrà eseguito in background senza mostrare la finestra.")
-        self.headless_check.setStyleSheet("QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }") # Pink/Bold to highlight
-        browser_layout.addWidget(self.headless_check)
         
         timeout_layout = QHBoxLayout()
         timeout_label = QLabel("Timeout (secondi):")
