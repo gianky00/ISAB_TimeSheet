@@ -132,9 +132,9 @@ class HorizontalLogItem(QWidget):
 
     def set_count(self, count):
         """Update the message to show grouped count."""
-        # Using self.lbl_human stored in init
-        current = self.lbl_human.text()
-        base = current.split(" (x")[0]
+        # Use direct reference
+        current_text = self.lbl_human.text()
+        base = current_text.split(" (x")[0]
         self.lbl_human.setText(f"{base} (x{count})")
 
     def _open_settings(self):
