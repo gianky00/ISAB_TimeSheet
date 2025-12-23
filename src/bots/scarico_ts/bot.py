@@ -17,6 +17,7 @@ from selenium.common.exceptions import TimeoutException
 
 from src.bots.base import BaseBot, BotStatus
 from src.utils.helpers import sanitize_filename
+from src.core import config_manager
 
 
 class ScaricaTSBot(BaseBot):
@@ -358,38 +359,50 @@ class ScaricaTSBot(BaseBot):
                 # Se facciamo lo spostamento qui in _download_excel, non c'è più nulla da spostare "alla fine".
 
                 # SOLUZIONE:
-                # Se elabora_ts è True: Lasciamo il file nella cartella Downloads (source_dir) o lo spostiamo in una cartella temporanea interna.
-                # E restituiamo quel path temporaneo.
-                # Alla fine, chiamiamo _process... che prende dalla temp e mette nella finale chiedendo all'utente.
+                # Indipendentemente dal flag, spostiamo il file nella destinazione.
+                # Se elabora_ts è True: Spostiamo in una cartella temporanea per poi elaborare.
+                # Se elabora_ts è False: Spostiamo direttamente nella destinazione (con rinomina standard silenziosa).
+
+                # La richiesta utente dice:
+                # "il flag Elabora TS deve solo rinominare ed elaborare all'interno il file e non spostarlo
+                # visto che non inserendo il flag l'utente deve comunque avere la possibilità di spostarlo
+                # se modifica il percorso di destinazione"
+
+                # Interpretazione:
+                # 1. Se Elabora TS = False: Scarica -> Sposta in dest_dir (gestione conflitti automatica/silenziosa).
+                # 2. Se Elabora TS = True: Scarica -> Sposta in Temp -> Processa (rinomina + richiesta utente) -> Sposta in dest_dir.
 
                 if self.elabora_ts:
-                    # Lasciamo in source_dir (Downloads) ma rinominiamo per evitare conflitti con altri download?
-                    # Meglio spostare in una cartella temp dell'app.
+                    # Usiamo temp dir per la fase di "Elaborazione"
                     temp_dir = config_manager.CONFIG_DIR / "temp_ts_downloads"
                     if not temp_dir.exists():
                         temp_dir.mkdir(parents=True, exist_ok=True)
 
                     temp_path = temp_dir / nuovo_nome_file
-                    # Se esiste in temp, sovrascrivi (è temp nostra)
+
+                    # Se esiste in temp, sovrascrivi
                     import shutil
                     if temp_path.exists():
-                        temp_path.unlink()
+                        try: temp_path.unlink()
+                        except: pass
+
                     shutil.move(str(downloaded_file), str(temp_path))
-                    self.log(f"  ✓ Scaricato (Temp): {temp_path.name}")
+                    self.log(f"  ✓ Scaricato (Temp per elaborazione): {temp_path.name}")
                     return temp_path
                 else:
-                    # Comportamento standard: sposta in dest_dir gestendo conflitti silenziosamente
+                    # Comportamento standard: sposta direttamente in dest_dir
                     if percorso_finale.exists():
                         try:
                             percorso_finale.unlink()
                         except:
+                            # Se non riesco a cancellare (es aperto), rinomino con timestamp
                             timestamp = time.strftime("%Y%m%d-%H%M%S")
                             nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
                             percorso_finale = dest_dir / nuovo_nome_file
 
                     import shutil
                     shutil.move(str(downloaded_file), str(percorso_finale))
-                    self.log(f"  ✓ Scaricato: {percorso_finale.name}")
+                    self.log(f"  ✓ Scaricato e Spostato: {percorso_finale.name}")
                     return percorso_finale
             else:
                 self.log("  ✗ File non trovato.")

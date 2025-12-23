@@ -162,10 +162,21 @@ class ContabilitaPanel(QWidget):
         layout.addLayout(top_layout)
 
         # --- Totale Selezionato Label (Global for this panel) ---
-        self.selection_label = QLabel("Totale selezionato: 0")
-        self.selection_label.setStyleSheet("color: #0d6efd; font-weight: bold; margin-bottom: 5px;")
-        self.selection_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(self.selection_label)
+        self.selection_container = QWidget()
+        selection_layout = QHBoxLayout(self.selection_container)
+        selection_layout.setContentsMargins(0, 0, 0, 5)
+        selection_layout.addStretch() # Push to right
+
+        self.selection_count_label = QLabel("Righe: 0")
+        self.selection_count_label.setStyleSheet("color: #6c757d; font-weight: bold; margin-right: 15px;")
+
+        self.selection_sum_label = QLabel("Totale ORE SP: 0")
+        self.selection_sum_label.setStyleSheet("color: #0d6efd; font-weight: bold;")
+
+        selection_layout.addWidget(self.selection_count_label)
+        selection_layout.addWidget(self.selection_sum_label)
+
+        layout.addWidget(self.selection_container)
 
         # Main Tab Container (Tabelle vs KPI)
         self.main_tabs = QTabWidget()
@@ -239,10 +250,10 @@ class ContabilitaPanel(QWidget):
         tab_text = self.main_tabs.tabText(index)
         if "Analisi KPI" in tab_text:
             self.search_input.hide()
-            self.selection_label.hide()
+            self.selection_container.hide()
         else:
             self.search_input.show()
-            self.selection_label.show()
+            self.selection_container.show()
             # Trigger filter update for the new active tab
             self._filter_current_tab(self.search_input.text())
             self._connect_selection_signal()
@@ -320,31 +331,66 @@ class ContabilitaPanel(QWidget):
             except Exception: pass
 
     def _update_selection_total(self, table_widget):
-        """Calculates total of selected numerical cells."""
-        indexes = table_widget.selectionModel().selectedIndexes()
+        """Calculates total of selected ORE SP column and row count."""
+        selection_model = table_widget.selectionModel()
+        indexes = selection_model.selectedIndexes()
+
         if not indexes:
-            self.selection_label.setText("Totale selezionato: 0")
+            self.selection_count_label.setText("Righe: 0")
+            self.selection_sum_label.setText("Totale ORE SP: 0")
             return
 
-        total = 0.0
+        # Identifica la colonna "ORE" o "ORE SP" per la tabella corrente
+        target_col_idx = -1
+        # Controlla header per trovare la colonna corretta dinamicamente
+        for c in range(table_widget.columnCount()):
+            header_item = table_widget.horizontalHeaderItem(c)
+            if header_item:
+                header_text = header_item.text().upper()
+                if "ORE SP" in header_text or header_text == "ORE":
+                    target_col_idx = c
+                    break
+
+        selected_rows = set()
+        total_ore = 0.0
+
         for idx in indexes:
-            try:
-                text = idx.data(Qt.ItemDataRole.DisplayRole)
-                if text:
-                    # Clean currency/number format
-                    clean = str(text).replace("€", "").replace(".", "").replace(",", ".").strip()
-                    val = float(clean)
-                    total += val
-            except:
-                pass
+            row = idx.row()
+
+            # Skip se la riga è nascosta (filtrata)
+            if table_widget.isRowHidden(row):
+                continue
+
+            # Skip se è la riga TOTALI
+            item_first = table_widget.item(row, 0)
+            if item_first and item_first.text() == "TOTALI":
+                continue
+
+            selected_rows.add(row)
+
+        # Calcola somma Ore solo per le righe uniche selezionate
+        for row in selected_rows:
+            if target_col_idx != -1:
+                item = table_widget.item(row, target_col_idx)
+                if item:
+                    text = item.text()
+                    try:
+                        # Clean number format (Italian)
+                        clean = str(text).replace(".", "").replace(",", ".").strip()
+                        if clean:
+                            val = float(clean)
+                            total_ore += val
+                    except:
+                        pass
 
         # Format
-        if total % 1 == 0:
-            fmt = f"{int(total)}"
+        if total_ore % 1 == 0:
+            fmt_ore = f"{int(total_ore)}"
         else:
-            fmt = f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            fmt_ore = f"{total_ore:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-        self.selection_label.setText(f"Totale selezionato: {fmt}")
+        self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
+        self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
 
     def _filter_current_tab(self, text):
         """Filtra la tabella nella tab corrente attiva."""
