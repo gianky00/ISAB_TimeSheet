@@ -25,3 +25,7 @@
 ## 2024-05-23 - Self-Contained UI Assets
 **Learning:** Relying on external image files for small UI icons (like calendar toggles) complicates deployment and asset management.
 **Action:** Embed small UI assets as Base64 strings directly in Python/CSS code. This ensures components like `CalendarDateEdit` are self-contained and render consistently without missing file errors.
+
+## 2024-05-23 - Sensitive Data Visibility
+**Learning:** Forcing users to type complex passwords blindly increases error rates and frustration.
+**Action:** Implement a toggle (👁️/🔒) for sensitive fields. This gives control back to the user, allowing them to verify input in private environments while maintaining security in public ones.

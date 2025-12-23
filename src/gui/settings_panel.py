@@ -33,7 +33,34 @@ class AccountDialog(QDialog):
         self.password_edit = QLineEdit(password)
         self.password_edit.setMinimumHeight(35)
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        layout.addRow("Password:", self.password_edit)
+
+        # Password layout with toggle
+        pass_layout = QHBoxLayout()
+        pass_layout.setContentsMargins(0, 0, 0, 0)
+        pass_layout.setSpacing(5)
+
+        pass_layout.addWidget(self.password_edit)
+
+        self.toggle_pass_btn = QPushButton("👁️")
+        self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
+        self.toggle_pass_btn.setFixedSize(35, 35)
+        self.toggle_pass_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.toggle_pass_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #f8f9fa;
+                border-color: #adb5bd;
+            }
+        """)
+        self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
+        pass_layout.addWidget(self.toggle_pass_btn)
+
+        layout.addRow("Password:", pass_layout)
 
         btns = QHBoxLayout()
         ok_btn = QPushButton("Salva")
@@ -46,6 +73,16 @@ class AccountDialog(QDialog):
         btns.addWidget(cancel_btn)
 
         layout.addRow(btns)
+
+    def _toggle_password_visibility(self):
+        if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:
+            self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.toggle_pass_btn.setText("🔒")
+            self.toggle_pass_btn.setToolTip("Nascondi password")
+        else:
+            self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
+            self.toggle_pass_btn.setText("👁️")
+            self.toggle_pass_btn.setToolTip("Mostra password")
 
     def get_data(self):
         return self.username_edit.text(), self.password_edit.text()
