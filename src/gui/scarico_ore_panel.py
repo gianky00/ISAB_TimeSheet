@@ -285,30 +285,33 @@ class ScaricoOrePanel(QWidget):
 
     def _update_selection_totals(self):
         """Calculates total of selected 'TOTALE ORE' cells."""
-        indexes = self.table_view.selectionModel().selectedIndexes()
-        if not indexes:
-            self.lbl_selection_total.setText("Totale selezionato: 0")
-            return
+        try:
+            indexes = self.table_view.selectionModel().selectedIndexes()
+            if not indexes:
+                self.lbl_selection_total.setText("Totale selezionato: 0")
+                return
 
-        total_selected = 0.0
-        # Column 7 is 'TOTALE ORE'
-        target_col = 7
+            total_selected = 0.0
+            # Column 7 is 'TOTALE ORE'
+            target_col = 7
 
-        # Optimization: Filter indexes for col 7 only
-        for idx in indexes:
-            if idx.column() == target_col:
-                try:
-                    val_str = str(idx.data(Qt.ItemDataRole.DisplayRole))
-                    # Parse float (handles comma/dot via parse_currency or float)
-                    if val_str:
-                        # Handle comma just in case
-                        val_str = val_str.replace(',', '.')
-                        total_selected += float(val_str)
-                except:
-                    pass
+            # Optimization: Filter indexes for col 7 only
+            for idx in indexes:
+                if idx.column() == target_col:
+                    try:
+                        val_str = str(idx.data(Qt.ItemDataRole.DisplayRole))
+                        # Parse float (handles comma/dot via parse_currency or float)
+                        if val_str:
+                            # Handle comma just in case
+                            val_str = val_str.replace(',', '.')
+                            total_selected += float(val_str)
+                    except ValueError:
+                        pass # Ignore parsing errors
 
-        formatted = self._format_number(total_selected)
-        self.lbl_selection_total.setText(f"Totale selezionato: {formatted}")
+            formatted = self._format_number(total_selected)
+            self.lbl_selection_total.setText(f"Totale selezionato: {formatted}")
+        except Exception as e:
+            print(f"Errore selezione: {e}")
 
     def _start_update(self):
         """Avvia l'aggiornamento specifico per Scarico Ore."""

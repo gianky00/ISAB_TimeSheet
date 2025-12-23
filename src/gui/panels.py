@@ -1556,11 +1556,10 @@ class TimbratureDBPanel(QWidget):
             return
 
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature ORDER BY id DESC")
-            rows = cursor.fetchall()
-            conn.close()
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature ORDER BY id DESC")
+                rows = cursor.fetchall()
 
             self._update_table(rows)
         except Exception as e:
@@ -1633,61 +1632,60 @@ class TimbratureDBPanel(QWidget):
             return
 
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
 
-            query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
-            params = []
+                query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
+                params = []
 
-            if text:
-                # Cerca corrispondenza di TUTTE le parole cercate in QUALSIASI colonna rilevante
-                search_terms = text.lower().split()
-                conditions = []
+                if text:
+                    # Cerca corrispondenza di TUTTE le parole cercate in QUALSIASI colonna rilevante
+                    search_terms = text.lower().split()
+                    conditions = []
 
-                columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
+                    columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
 
-                for term in search_terms:
-                    # Converti formato data italiano in formato DB (YYYY-MM-DD) per permettere la ricerca
-                    search_term = term
-                    if '/' in term:
-                        try:
-                            parts = term.split('/')
+                    for term in search_terms:
+                        # Converti formato data italiano in formato DB (YYYY-MM-DD) per permettere la ricerca
+                        search_term = term
+                        if '/' in term:
+                            try:
+                                parts = term.split('/')
 
-                            # Caso 1: Data completa DD/MM/YYYY -> YYYY-MM-DD
-                            if len(parts) == 3:
-                                d, m, y = parts
-                                if len(d) <= 2 and len(m) <= 2 and len(y) == 4:
-                                     search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+                                # Caso 1: Data completa DD/MM/YYYY -> YYYY-MM-DD
+                                if len(parts) == 3:
+                                    d, m, y = parts
+                                    if len(d) <= 2 and len(m) <= 2 and len(y) == 4:
+                                         search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
 
-                            # Caso 2: Parziale MM/YYYY -> YYYY-MM
-                            elif len(parts) == 2:
-                                p1, p2 = parts
-                                # Se il secondo pezzo è anno (4 cifre) -> MM/YYYY
-                                if len(p2) == 4:
-                                    search_term = f"{p2}-{p1.zfill(2)}"
-                                # Se il secondo pezzo è mese/giorno (2 cifre) e primo anche -> DD/MM
-                                # Cerchiamo nel DB (YYYY-MM-DD) la sequenza -MM-DD
-                                elif len(p2) <= 2:
-                                    # Attenzione: DD/MM (es. 17/12) diventa -12-17
-                                    search_term = f"-{p2.zfill(2)}-{p1.zfill(2)}"
-                        except:
-                            pass
+                                # Caso 2: Parziale MM/YYYY -> YYYY-MM
+                                elif len(parts) == 2:
+                                    p1, p2 = parts
+                                    # Se il secondo pezzo è anno (4 cifre) -> MM/YYYY
+                                    if len(p2) == 4:
+                                        search_term = f"{p2}-{p1.zfill(2)}"
+                                    # Se il secondo pezzo è mese/giorno (2 cifre) e primo anche -> DD/MM
+                                    # Cerchiamo nel DB (YYYY-MM-DD) la sequenza -MM-DD
+                                    elif len(p2) <= 2:
+                                        # Attenzione: DD/MM (es. 17/12) diventa -12-17
+                                        search_term = f"-{p2.zfill(2)}-{p1.zfill(2)}"
+                            except Exception:
+                                pass
 
-                    term_conditions = []
-                    for col in columns_to_search:
-                        term_conditions.append(f"{col} LIKE ?")
-                        params.append(f"%{search_term}%")
-                    # Unisci le condizioni per questo termine con OR (il termine deve apparire in almeno una colonna)
-                    conditions.append(f"({' OR '.join(term_conditions)})")
+                        term_conditions = []
+                        for col in columns_to_search:
+                            term_conditions.append(f"{col} LIKE ?")
+                            params.append(f"%{search_term}%")
+                        # Unisci le condizioni per questo termine con OR (il termine deve apparire in almeno una colonna)
+                        conditions.append(f"({' OR '.join(term_conditions)})")
 
-                if conditions:
-                    query += " WHERE " + " AND ".join(conditions)
+                    if conditions:
+                        query += " WHERE " + " AND ".join(conditions)
 
-            query += " ORDER BY id DESC LIMIT 500" # Limita a 500 risultati per performance
+                query += " ORDER BY id DESC LIMIT 500" # Limita a 500 risultati per performance
 
-            cursor.execute(query, params)
-            rows = cursor.fetchall()
-            conn.close()
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
 
             self._update_table(rows)
 
