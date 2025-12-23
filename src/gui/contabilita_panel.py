@@ -644,8 +644,16 @@ class ContabilitaYearTab(QWidget):
         return f"€ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     def _format_number(self, val):
-        if val.is_integer(): return f"{int(val)}"
-        else: return f"{val:.2f}"
+        """Formatta ORE: max 2 decimali, virgola, niente .0 finale (Italiano)."""
+        try:
+            val_f = float(val)
+            val_f = round(val_f, 2)
+            if val_f.is_integer():
+                return f"{int(val_f)}"
+            else:
+                return f"{val_f:.2f}".replace('.', ',')
+        except:
+            return str(val)
 
     def _format_value(self, col_idx, val):
         if not val and val != 0: return ""
