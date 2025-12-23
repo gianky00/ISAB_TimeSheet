@@ -25,3 +25,23 @@
 ## 2024-05-23 - Self-Contained UI Assets
 **Learning:** Relying on external image files for small UI icons (like calendar toggles) complicates deployment and asset management.
 **Action:** Embed small UI assets as Base64 strings directly in Python/CSS code. This ensures components like `CalendarDateEdit` are self-contained and render consistently without missing file errors.
+
+## 2024-05-23 - Sensitive Data Visibility
+**Learning:** Forcing users to type complex passwords blindly increases error rates and frustration.
+**Action:** Implement a toggle (👁️/🔒) for sensitive fields. This gives control back to the user, allowing them to verify input in private environments while maintaining security in public ones.
+
+## 2024-05-23 - Human-Centric Logging
+**Learning:** Technical logs (e.g., "GET /api/v1/auth 200 OK") are alienating for non-technical users and increase cognitive load when checking status.
+**Action:** Implement a "Smart Translator" layer that converts technical events into conversational, human-like phrases (e.g., "🔐 Sto effettuando l'accesso..."). Presenting this in a structured visual timeline (Icon + Human Text + Timestamp) instead of a raw text block makes the process feel more friendly and understandable.
+
+## 2024-05-23 - Actionable Logs (Deep Linking)
+**Learning:** Forcing users to manually copy file paths from logs to File Explorer is a friction point.
+**Action:** Detect file paths using Regex within the log text and render them as "Open Folder" buttons directly in the timeline. Similarly, for known errors (like "Credentials"), provide a "Fix It" button that navigates directly to the relevant settings page.
+
+## 2024-05-23 - Ambient UX (Mood Lighting)
+**Learning:** Users monitor long-running processes via peripheral vision. Reading text to know if an error occurred is slow.
+**Action:** Use broad visual cues, such as changing the border color of the entire log container (Blue=Run, Red=Error, Green=Success). This allows users to understand the system state instantly from across the room or while focusing on another window.
+
+## 2024-05-23 - Gamification (Mission Report)
+**Learning:** Completing a task should feel rewarding. A simple "Done" text is anticlimactic.
+**Action:** Display a "Mission Report" card at the end of a workflow, summarizing stats (Time, Files) with positive reinforcement ("Mission Accomplished!"). This provides closure and a small dopamine hit.

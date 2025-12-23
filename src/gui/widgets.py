@@ -6,10 +6,258 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
     QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
-    QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect
+    QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect,
+    QListWidget, QListWidgetItem, QScrollArea, QScrollBar
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint
-from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint, QSize, QUrl, QEasingCurve, QRect
+from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush, QIcon, QFont, QDesktopServices, QPen
+from datetime import datetime
+import re
+from pathlib import Path
+from src.utils.log_humanizer import SmartLogTranslator
+
+
+class HorizontalLogItem(QWidget):
+    """Widget per singolo elemento della timeline log orizzontale."""
+    def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(180, 160) # Card Size
+
+        # Main Layout
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 15, 10, 10)
+        layout.setSpacing(5)
+
+        # Style
+        self.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+            }
+            QLabel {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+
+        # Process Tags
+        snapshot_path = None
+        fixit_action = None
+
+        if "[IMG:" in tech_msg:
+            match = re.search(r"\[IMG:(.*?)\]", tech_msg)
+            if match:
+                snapshot_path = match.group(1)
+                tech_msg = tech_msg.replace(match.group(0), "").strip()
+
+        if "[FIXIT:" in tech_msg:
+            match = re.search(r"\[FIXIT:(.*?)\]", tech_msg)
+            if match:
+                fixit_action = match.group(1)
+                tech_msg = tech_msg.replace(match.group(0), "").strip()
+
+        # Icon Mapping
+        icons = {
+            "start": "🚀", "login": "🔐", "search": "🔍",
+            "download": "📥", "success": "✅", "error": "❌",
+            "wait": "⏳", "info": "ℹ️"
+        }
+        colors = {
+            "start": "#0d6efd", "login": "#6f42c1", "search": "#fd7e14",
+            "download": "#0dcaf0", "success": "#198754", "error": "#dc3545",
+            "wait": "#ffc107", "info": "#6c757d"
+        }
+
+        self.category_color = colors.get(category, "#6c757d")
+
+        # Top: Icon centered
+        icon_layout = QHBoxLayout()
+        lbl_icon = QLabel(icons.get(category, "•"))
+        lbl_icon.setStyleSheet(f"font-size: 24px; color: {self.category_color};")
+        lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_layout.addWidget(lbl_icon)
+        layout.addLayout(icon_layout)
+
+        # Time
+        lbl_time = QLabel(timestamp)
+        lbl_time.setStyleSheet("color: #adb5bd; font-size: 14px; font-family: monospace;")
+        lbl_time.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl_time)
+
+        # Text
+        self.lbl_human = QLabel(human_msg)
+        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 16px; color: #212529;")
+        self.lbl_human.setWordWrap(True)
+        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.lbl_human)
+
+        layout.addStretch()
+
+        # Action Buttons (Compact)
+        if snapshot_path:
+            btn = QPushButton("📷")
+            btn.setToolTip("Apri Screenshot")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet(f"background-color: #dc3545; color: white; border-radius: 4px;")
+            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
+            layout.addWidget(btn)
+
+        if fixit_action == "ACCOUNT":
+            btn = QPushButton("🔧 Fix")
+            btn.setToolTip("Configura Account")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet(f"background-color: #ffc107; color: black; border-radius: 4px;")
+            btn.clicked.connect(self._open_settings)
+            layout.addWidget(btn)
+
+        # Path Detection
+        path_matches = re.findall(r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg)
+        seen = set()
+        for path in path_matches:
+            path = path.rstrip(".,';)]}").strip()
+            if len(path) > 4 and "http" not in path and path not in seen:
+                seen.add(path)
+                btn = QPushButton("📂")
+                btn.setToolTip(f"Apri: {Path(path).name}")
+                btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn.setStyleSheet(f"background-color: #17a2b8; color: white; border-radius: 4px;")
+                btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
+                layout.addWidget(btn)
+
+    def set_count(self, count):
+        """Update the message to show grouped count."""
+        # Use direct reference
+        current_text = self.lbl_human.text()
+        base = current_text.split(" (x")[0]
+        self.lbl_human.setText(f"{base} (x{count})")
+
+    def _open_settings(self):
+        parent = self.window()
+        if hasattr(parent, "show_settings"):
+            parent.show_settings()
+
+
+class HorizontalTimelineContainer(QWidget):
+    """Container interno che disegna la linea di connessione."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(20, 10, 20, 10)
+        self.layout.setSpacing(15)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        # Ensure minimal height
+        self.setMinimumHeight(180)
+
+    def paintEvent(self, event):
+        """Disegna la linea 'metro map' dietro gli elementi."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Line Y position: center of the icon roughly (top margin 15 + icon half height ~15 = 30)
+        # Fixed Y relative to top
+        line_y = 40
+
+        pen = QPen(QColor("#dee2e6"))
+        pen.setWidth(4)
+        painter.setPen(pen)
+
+        # Draw line from first item center to last item center
+        if self.layout.count() > 0:
+            first = self.layout.itemAt(0).widget()
+            last = self.layout.itemAt(self.layout.count() - 1).widget()
+            if first and last:
+                start_x = first.geometry().center().x()
+                end_x = last.geometry().center().x()
+                painter.drawLine(start_x, line_y, end_x, line_y)
+
+
+class HorizontalTimelineWidget(QScrollArea):
+    """Widget Timeline Orizzontale con animazioni."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setFixedHeight(200) # Fixed height strip
+        self.setStyleSheet("border: none; background-color: transparent;")
+
+        self.container = HorizontalTimelineContainer()
+        self.setWidget(self.container)
+
+        # For focus mode logic
+        self.last_category = None
+        self.consecutive_count = 0
+
+    def add_widget(self, widget: QWidget):
+        """Adds a generic widget to the timeline (e.g. MissionReport)."""
+        # Setup Animation
+        effect = QGraphicsOpacityEffect(widget)
+        widget.setGraphicsEffect(effect)
+
+        self.container.layout.addWidget(widget)
+
+        self.anim = QPropertyAnimation(effect, b"opacity")
+        self.anim.setDuration(500)
+        self.anim.setStartValue(0)
+        self.anim.setEndValue(1)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        self.anim.start()
+
+        QApplication.processEvents()
+        self._smooth_scroll_to_end()
+        self.container.update()
+
+    def add_log(self, message: str):
+        human, tech, cat = SmartLogTranslator.humanize(message)
+        timestamp = datetime.now().strftime("%H:%M")
+
+        # Focus Mode (Grouping)
+        if cat == self.last_category and cat in ["download", "search"]:
+            self.consecutive_count += 1
+            # Update last item text
+            if self.container.layout.count() > 0:
+                last_widget = self.container.layout.itemAt(self.container.layout.count() - 1).widget()
+                if isinstance(last_widget, HorizontalLogItem):
+                    last_widget.set_count(self.consecutive_count)
+                    return
+        else:
+            self.consecutive_count = 1
+            self.last_category = cat
+
+        item = HorizontalLogItem(human, tech, cat, timestamp)
+        self.add_widget(item)
+
+    def _smooth_scroll_to_end(self):
+        sb = self.horizontalScrollBar()
+        start_val = sb.value()
+        end_val = sb.maximum()
+
+        self.scroll_anim = QPropertyAnimation(sb, b"value")
+        self.scroll_anim.setDuration(400)
+        self.scroll_anim.setStartValue(start_val)
+        self.scroll_anim.setEndValue(end_val)
+        self.scroll_anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        self.scroll_anim.start()
+
+    def clear(self):
+        # Remove all widgets
+        while self.container.layout.count():
+            item = self.container.layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.container.update()
+
+    def set_mood(self, mood):
+        # Could change background of scroll area slightly?
+        colors = {
+            "running": "#f0f8ff", # AliceBlue
+            "error": "#fff5f5",   # Light Red
+            "success": "#f0fff4", # Honeydew
+            "idle": "transparent"
+        }
+        col = colors.get(mood, "transparent")
+        self.setStyleSheet(f"border: none; background-color: {col};")
 
 
 class StatusIndicator(QWidget):
@@ -565,27 +813,24 @@ class EditableDataTable(QWidget):
 
 
 class LogWidget(QWidget):
-    """Widget per visualizzare i log."""
+    """Widget per visualizzare i log (Horizontal Wrapper)."""
     
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
     
     def _setup_ui(self):
-        """Configura l'interfaccia."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Header
         header_layout = QHBoxLayout()
-        
-        label = QLabel("📋 Log")
+        label = QLabel("📋 Timeline Attività")
         label.setStyleSheet("font-weight: bold; font-size: 13px;")
         header_layout.addWidget(label)
-        
         header_layout.addStretch()
         
-        clear_btn = QPushButton("🧹 Pulisci Log")
+        clear_btn = QPushButton("🧹 Pulisci")
         clear_btn.setMaximumWidth(90)
         clear_btn.setStyleSheet("""
             QPushButton {
@@ -593,64 +838,24 @@ class LogWidget(QWidget):
                 color: white;
                 border: none;
                 border-radius: 4px;
-                padding: 5px 10px;
+                padding: 2px 8px;
                 font-size: 11px;
             }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
+            QPushButton:hover { background-color: #5a6268; }
         """)
         clear_btn.clicked.connect(self.clear)
         header_layout.addWidget(clear_btn)
-
         layout.addLayout(header_layout)
 
-        # Text area per i log
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        self.log_text.setMinimumHeight(150)
-        self.log_text.setMaximumHeight(200)
-        self.log_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #1e1e1e;
-                color: #d4d4d4; /* Explicit light text */
-                border: 1px solid #333;
-                border-radius: 4px;
-                padding: 10px;
-                font-family: 'Consolas', 'Monaco', monospace;
-                font-size: 14px;
-            }
-        """)
-        layout.addWidget(self.log_text)
+        # Horizontal Timeline
+        self.timeline = HorizontalTimelineWidget()
+        layout.addWidget(self.timeline)
 
     def append(self, message: str):
-        """
-        Aggiunge un messaggio al log.
-
-        Args:
-            message: Messaggio da aggiungere
-        """
-        # Colora in base al tipo di messaggio
-        if "✓" in message or "successo" in message.lower():
-            color = "#4ec9b0"  # Verde
-        elif "✗" in message or "errore" in message.lower():
-            color = "#f14c4c"  # Rosso
-        elif "⚠" in message or "avviso" in message.lower():
-            color = "#dcdcaa"  # Giallo
-        elif "▶" in message:
-            color = "#569cd6"  # Blu
-        else:
-            color = "#d4d4d4"  # Default
-
-        self.log_text.append(f'<span style="color: {color};">{message}</span>')
-
-        # Scroll automatico
-        scrollbar = self.log_text.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        self.timeline.add_log(message)
 
     def clear(self):
-        """Pulisce il log."""
-        self.log_text.clear()
+        self.timeline.clear()
 
 
 class DetailedInfoDialog(QDialog):
@@ -815,3 +1020,64 @@ class KPIBigCard(QFrame):
 
     def _get_info_content(self):
         return self.info_content_callback()
+
+
+class MissionReportCard(QFrame):
+    """
+    Card riepilogativa stile 'Mission Complete' (#3).
+    Mostra statistiche finali con design curato.
+    """
+    def __init__(self, duration_str, status, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef);
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin: 10px 5px;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+
+        # Title
+        title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
+        title_color = "#198754" if status else "#dc3545"
+        lbl_title = QLabel(title_text)
+        lbl_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {title_color};")
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl_title)
+
+        # Stats Grid
+        stats_layout = QHBoxLayout()
+
+        # Time
+        self._add_stat(stats_layout, "⏱️ Tempo", duration_str)
+        # Status
+        self._add_stat(stats_layout, "📊 Esito", "Successo" if status else "Errore")
+
+        layout.addLayout(stats_layout)
+
+        # Fun hint
+        if status:
+            lbl_hint = QLabel("Ottimo lavoro! 🚀")
+            lbl_hint.setStyleSheet("color: #6c757d; font-style: italic; margin-top: 5px;")
+            lbl_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(lbl_hint)
+
+    def _add_stat(self, layout, label, value):
+        container = QWidget()
+        v_layout = QVBoxLayout(container)
+        v_layout.setContentsMargins(0,0,0,0)
+
+        lbl_l = QLabel(label)
+        lbl_l.setStyleSheet("font-size: 12px; color: #6c757d;")
+        lbl_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        lbl_v = QLabel(value)
+        lbl_v.setStyleSheet("font-size: 16px; font-weight: bold; color: #212529;")
+        lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        v_layout.addWidget(lbl_l)
+        v_layout.addWidget(lbl_v)
+        layout.addWidget(container)

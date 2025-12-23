@@ -570,6 +570,19 @@ class BaseBot(ABC):
         self.log("✗ Tutti i tentativi di login sono falliti.")
         return False
 
+    def _capture_error_snapshot(self) -> str:
+        """Captures a screenshot and returns the path."""
+        try:
+            if not self.driver: return ""
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"error_{timestamp}.png"
+            path = config_manager.CONFIG_DIR / "logs" / "snapshots" / filename
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self.driver.save_screenshot(str(path))
+            return str(path)
+        except Exception:
+            return ""
+
     def execute(self, data: List[Dict[str, Any]]) -> bool:
         """Executes full bot workflow."""
         self._stop_requested = False
@@ -590,7 +603,11 @@ class BaseBot(ABC):
             self.status = BotStatus.STOPPED
             return False
         except Exception as e:
-            self.log(f"✗ Errore esecuzione: {e}")
+            snapshot = self._capture_error_snapshot()
+            msg = f"✗ Errore esecuzione: {e}"
+            if snapshot:
+                msg += f" [IMG:{snapshot}]"
+            self.log(msg)
             self.status = BotStatus.ERROR
             return False
         finally:
