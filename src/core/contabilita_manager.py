@@ -336,32 +336,36 @@ class ContabilitaManager:
                         if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
 
                         if not df.empty:
+                            # Ensure all expected DB columns exist
                             for db_col in cls.GIORNALIERE_MAPPING.values():
                                 if db_col not in df.columns: df[db_col] = ""
 
+                            # --- ⚡ Bolt Optimization: Vectorized Processing ---
+                            # Clean string columns (vectorized)
+                            cols_to_clean = ['odc', 'n_prev', 'data', 'personale', 'descrizione', 'tcl', 'pdl', 'inizio', 'fine', 'ore']
+                            # Convert to string and strip whitespace
+                            df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
+                            # Replace 'nan' (case insensitive) with empty string
+                            df[cols_to_clean] = df[cols_to_clean].replace(r'(?i)^nan$', '', regex=True)
+
+                            # Vectorized Regex for ODC: Extract '5400...' pattern
+                            # If no match, it returns NaN, which we fill with ""
+                            df['odc'] = df['odc'].str.extract(r'(5400\d+)', expand=False).fillna("")
+
+                            # Add Metadata
                             df['year'] = year
-                            filename = file_path.name
-                            rows_to_insert = []
+                            df['nome_file'] = file_path.name
 
-                            for _, row in df.iterrows():
-                                raw_odc = str(row.get('odc', '')).strip()
-                                if raw_odc.lower() == 'nan': raw_odc = ""
-                                match_odc = re.search(r'(5400\d+)', raw_odc)
-                                final_odc = match_odc.group(1) if match_odc else ""
+                            # Select and Order Columns for DB
+                            target_cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
+                            df_final = df[target_cols]
 
-                                n_prev = str(row.get('n_prev', '')).strip()
-                                if n_prev.lower() == 'nan': n_prev = ""
-
-                                new_row = (
-                                    year, str(row.get('data', '')), str(row.get('personale', '')),
-                                    str(row.get('descrizione', '')), str(row.get('tcl', '')),
-                                    final_odc, str(row.get('pdl', '')), str(row.get('inizio', '')),
-                                    str(row.get('fine', '')), str(row.get('ore', '')), n_prev, filename
-                                )
-                                rows_to_insert.append(new_row)
+                            # Convert to list of tuples (High speed export)
+                            rows_to_insert = list(df_final.itertuples(index=False, name=None))
+                            # --------------------------------------------------
 
                             if rows_to_insert:
-                                cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
+                                cols = target_cols
                                 placeholders = ', '.join(['?'] * len(cols))
                                 query = f"INSERT INTO giornaliere ({', '.join(cols)}) VALUES ({placeholders})"
                                 cursor.executemany(query, rows_to_insert)
