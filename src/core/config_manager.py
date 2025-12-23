@@ -29,7 +29,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "last_carico_ts_data": [],
     "last_oda_data": [],
     # Contabilità Strumentale
-    "contabilita_file_path": r"C:\Users\Coemi\Desktop\SCRIPT\bilancio strumentale\Bilancio Entrate reparto Strumentale GENERALE.xlsm",
+    "contabilita_file_path": "",
     "enable_auto_update_contabilita": True
 }
 
