@@ -189,6 +189,17 @@ class HorizontalTimelineWidget(QScrollArea):
         self.last_category = None
         self.consecutive_count = 0
 
+    def wheelEvent(self, event):
+        """Reindirizza lo scroll della rotellina allo scorrimento orizzontale."""
+        delta = event.angleDelta().y()
+        if delta != 0:
+            scrollbar = self.horizontalScrollBar()
+            # Scorri: delta positivo (su) -> sinistra, negativo (giù) -> destra
+            # Invertiamo il segno per UX naturale (rotella giù -> vai avanti nel tempo/destra)
+            scrollbar.setValue(scrollbar.value() - delta)
+        else:
+            super().wheelEvent(event)
+
     def add_widget(self, widget: QWidget):
         """Adds a generic widget to the timeline (e.g. MissionReport)."""
         # Setup Animation
@@ -844,8 +855,8 @@ class LogWidget(QWidget):
         header_layout.addWidget(label)
         header_layout.addStretch()
         
-        clear_btn = QPushButton("🧹 Pulisci")
-        clear_btn.setMaximumWidth(90)
+        clear_btn = QPushButton("🧹 Pulisci Log")
+        clear_btn.setMaximumWidth(120)
         clear_btn.setStyleSheet("""
             QPushButton {
                 background-color: #6c757d;

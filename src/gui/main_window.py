@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
+from datetime import datetime
 
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
 from src.gui.contabilita_panel import ContabilitaPanel
@@ -257,6 +258,10 @@ class MainWindow(QMainWindow):
             config = config_manager.load_config()
             last_login = config.get("last_login_date", "N/D")
 
+            # Update last login date to NOW for next time
+            now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+            config_manager.set_config_value("last_login_date", now_str)
+
             license_text = f"Licenza: {client}\nScadenza: {expiry}\nLogin: {last_login}"
         else:
             license_text = "Licenza non trovata"
@@ -361,7 +366,7 @@ class MainWindow(QMainWindow):
         self.database_widget = QTabWidget()
         self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
         self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
-        self.database_widget.addTab(self.contabilita_panel, "Contabilità Strumentale")
+        self.database_widget.addTab(self.contabilita_panel, "Strumentale")
         self.database_widget.addTab(self.scarico_ore_panel, "DataEase") # Renamed from "Scarico Ore Cantiere"
 
         # Aggiungi le pagine allo stack

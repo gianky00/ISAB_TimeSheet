@@ -72,6 +72,29 @@ class ContabilitaManager:
         'totale_ore', 'descrizione', 'finito', 'commessa', 'styles'
     ]
 
+    # Mapping Attività Programmate
+    # Header: PS, AREA, PdL, IMP., DESCRIZIONE ATTIVITA', LUN, MAR, MER, GIO, VEN, STATO PdL, STATO ATTIVITA', DATA CONTROLLO, PERSONALE IMPIEGATO, PO, AVVISO
+    ATTIVITA_PROGRAMMATE_MAPPING = {
+        'PS': 'ps',
+        'AREA ': 'area', # Note space
+        'PdL': 'pdl',
+        'IMP.': 'imp',
+        "DESCRIZIONE\nATTIVITA'": 'descrizione',
+        'LUN': 'lun',
+        'MAR': 'mar',
+        'MER': 'mer',
+        'GIO': 'gio',
+        'VEN': 'ven',
+        "STATO\nPdL": 'stato_pdl',
+        "STATO\nATTIVITA'": 'stato_attivita',
+        "DATA\nCONTROLLO": 'data_controllo',
+        "PERSONALE\nIMPIEGATO": 'personale',
+        'PO': 'po',
+        'AVVISO': 'avviso'
+    }
+
+    ATTIVITA_PROGRAMMATE_COLS = list(ATTIVITA_PROGRAMMATE_MAPPING.values())
+
     @classmethod
     def scan_scarico_ore_rows(cls, file_path: str) -> int:
         """Stima rapida delle righe per Scarico Ore (DataEase) per calcolo ETA."""
@@ -224,6 +247,30 @@ class ContabilitaManager:
             cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
         except sqlite3.OperationalError:
             pass
+
+        # Tabella Attività Programmate
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS attivita_programmate (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ps TEXT,
+                area TEXT,
+                pdl TEXT,
+                imp TEXT,
+                descrizione TEXT,
+                lun TEXT,
+                mar TEXT,
+                mer TEXT,
+                gio TEXT,
+                ven TEXT,
+                stato_pdl TEXT,
+                stato_attivita TEXT,
+                data_controllo TEXT,
+                personale TEXT,
+                po TEXT,
+                avviso TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
         conn.commit()
         conn.close()
@@ -489,6 +536,131 @@ class ContabilitaManager:
             return False, f"Errore importazione Giornaliere: {e}", 0, 0
 
     @classmethod
+    def import_attivita_programmate(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
+        """Importa il file Attività Programmate."""
+        path = Path(file_path)
+        if not path.exists():
+            return False, f"File Attività Programmate non trovato: {file_path}", 0, 0
+
+        total_added = 0
+        total_removed = 0
+
+        try:
+            # Load Excel, sheet "Riepilogo", header at row 3 (index 2)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                try:
+                    df = pd.read_excel(path, sheet_name="Riepilogo", header=2, engine='openpyxl')
+                except Exception as e:
+                    return False, f"Errore lettura file: {e}", 0, 0
+
+                if df.empty:
+                    return False, "Foglio vuoto.", 0, 0
+
+                # Clean DF columns (handle newlines)
+                df.columns = [str(c).strip() for c in df.columns]
+
+                # Map Columns
+                rename_map = {}
+                for excel_col, db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
+                    # Excel col might have newlines which we stripped or not?
+                    # read_excel might keep \n.
+                    # We look for exact match or match with \n replaced by space?
+                    # Let's try direct match first, then robust matching.
+                    found = False
+                    for c in df.columns:
+                        if c == excel_col.strip() or c.replace('\n', '') == excel_col.replace('\n', ''):
+                             rename_map[c] = db_col
+                             found = True
+                             break
+                    if not found:
+                         # Try 'startswith' logic or relaxed check
+                         pass
+
+                # Force rename if possible
+                # If exact mapping fails, let's try to map by index? No, risky.
+                # Let's trust the user requirement.
+                # Re-reading headers might have cleaned newlines if not handled.
+                # Let's inspect known columns logic.
+
+                # Simpler: Filter only columns we want
+                valid_cols = []
+                for col in df.columns:
+                    # Clean the column name from the DF for matching
+                    clean_col = col.replace('\n', '\\n') # Revert to literal \n representation for mapping check?
+                    # No, mapping has literal \n.
+
+                    # Check against mapping keys
+                    mapped_col = None
+                    for k, v in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
+                        # Compare k and col. k has \n. col might have \n (real newline).
+                        if k == col:
+                            mapped_col = v
+                            break
+
+                    if mapped_col:
+                        df.rename(columns={col: mapped_col}, inplace=True)
+                        valid_cols.append(mapped_col)
+
+                # Keep only valid cols
+                if not valid_cols:
+                    # Fallback: maybe header is not at row 2?
+                    return False, "Colonne non trovate. Controlla che il foglio sia 'Riepilogo' e l'intestazione alla riga 3.", 0, 0
+
+                # Drop rows where critical fields are empty? Or just drop full empty rows
+                df.dropna(how='all', inplace=True)
+
+                # Add missing columns as empty
+                for db_col in cls.ATTIVITA_PROGRAMMATE_COLS:
+                    if db_col not in df.columns:
+                        df[db_col] = ""
+
+                # Select and order
+                df = df[cls.ATTIVITA_PROGRAMMATE_COLS]
+
+                # Fill NaNs
+                df = df.fillna("")
+
+                # Convert all to string
+                df = df.astype(str)
+
+                # Prepare Rows
+                new_rows = list(df.itertuples(index=False, name=None))
+                new_rows_set = set(new_rows)
+
+                # DB Operations
+                conn = sqlite3.connect(cls.DB_PATH)
+                cursor = conn.cursor()
+
+                # Get existing
+                cols = cls.ATTIVITA_PROGRAMMATE_COLS
+                cursor.execute(f"SELECT {', '.join(cols)} FROM attivita_programmate")
+                existing_rows = cursor.fetchall()
+                # Normalize existing to match DF strings
+                existing_rows_set = set()
+                for row in existing_rows:
+                     existing_rows_set.add(tuple(str(x) if x is not None else "" for x in row))
+
+                total_added = len(new_rows_set - existing_rows_set)
+                total_removed = len(existing_rows_set - new_rows_set)
+
+                # Full Refresh (simplest for now, as no incremental key)
+                cursor.execute("DELETE FROM attivita_programmate")
+
+                if new_rows:
+                    placeholders = ', '.join(['?'] * len(cols))
+                    query = f"INSERT INTO attivita_programmate ({', '.join(cols)}) VALUES ({placeholders})"
+                    cursor.executemany(query, new_rows)
+
+                conn.commit()
+                conn.close()
+
+                return True, f"Importate {len(new_rows)} righe in Attività Programmate.", total_added, total_removed
+
+        except Exception as e:
+            return False, f"Errore importazione Attività Programmate: {e}", 0, 0
+
+    @classmethod
     def import_scarico_ore(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
         """Importa il file Scarico Ore Cantiere con supporto a stili e gestione zeri."""
         path = Path(file_path)
@@ -717,6 +889,21 @@ class ContabilitaManager:
             # Ordinamento richiesto: Data dal più recente (DESC)
             query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
             cursor.execute(query, (year,))
+            rows = cursor.fetchall()
+            conn.close()
+            return rows
+        except: return []
+
+    @classmethod
+    def get_attivita_programmate_data(cls) -> List[Tuple]:
+        """Restituisce i dati Attività Programmate."""
+        if not cls.DB_PATH.exists(): return []
+        try:
+            conn = sqlite3.connect(cls.DB_PATH)
+            cursor = conn.cursor()
+            cols = cls.ATTIVITA_PROGRAMMATE_COLS
+            query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"
+            cursor.execute(query)
             rows = cursor.fetchall()
             conn.close()
             return rows

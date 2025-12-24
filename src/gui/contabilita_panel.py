@@ -23,10 +23,11 @@ class ContabilitaWorker(QThread):
     finished_signal = pyqtSignal(bool, str, int, int)
     progress_signal = pyqtSignal(str)
 
-    def __init__(self, file_path: str, giornaliere_path: str = ""):
+    def __init__(self, file_path: str, giornaliere_path: str = "", attivita_path: str = ""):
         super().__init__()
         self.file_path = file_path
         self.giornaliere_path = giornaliere_path
+        self.attivita_path = attivita_path
         self.start_time = 0
 
     def run(self):
@@ -37,7 +38,11 @@ class ContabilitaWorker(QThread):
 
         # Scan workload for Global ETA
         sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
-        total_ops = sheets + files
+
+        # Attività Programmate counts as 1 task if configured
+        attivita_task = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
+
+        total_ops = sheets + files + attivita_task
         if total_ops == 0: total_ops = 1
 
         self.start_time = time.time()
@@ -45,9 +50,6 @@ class ContabilitaWorker(QThread):
         def global_progress(processed_in_phase, phase_offset, phase_name):
             current_total = phase_offset + processed_in_phase
             elapsed = time.time() - self.start_time
-
-            # Update status only every 5 items or if complete, to reduce UI jitter
-            # But "DataEase" style wants clear feedback.
 
             if current_total > 0 and elapsed > 0:
                 rate = current_total / elapsed
@@ -57,7 +59,6 @@ class ContabilitaWorker(QThread):
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current_total / total_ops) * 100)
 
-                # Use a single, unified message format
                 self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
 
         total_added = 0
@@ -72,19 +73,28 @@ class ContabilitaWorker(QThread):
         # 2. Import Giornaliere (se configurato)
         msg_giornaliere = ""
         if success and self.giornaliere_path:
-            # phase_offset = sheets (number of sheets processed in step 1)
             giorn_cb = lambda c, t: global_progress(c, sheets, "Giornaliere")
-
             g_success, g_msg, g_added, g_removed = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
             msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
             total_added += g_added
             total_removed += g_removed
 
-        self.finished_signal.emit(success, msg + msg_giornaliere, total_added, total_removed)
+        # 3. Import Attività Programmate (se configurato)
+        msg_attivita = ""
+        if success and self.attivita_path:
+            att_cb = lambda c, t: global_progress(c, sheets + files, "Attività Programmate")
+            att_success, att_msg, att_added, att_removed = ContabilitaManager.import_attivita_programmate(self.attivita_path)
+            # Call progress once
+            att_cb(1, 1)
+            msg_attivita = f" | Att. Prog: {att_msg}" if att_success else f" | Err Att. Prog: {att_msg}"
+            total_added += att_added
+            total_removed += att_removed
+
+        self.finished_signal.emit(success, msg + msg_giornaliere + msg_attivita, total_added, total_removed)
 
 
 class ContabilitaPanel(QWidget):
-    """Pannello principale Contabilità Strumentale."""
+    """Pannello principale Strumentale."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -226,7 +236,11 @@ class ContabilitaPanel(QWidget):
 
         self.main_tabs.addTab(self.giornaliere_tabs_widget, "📂 Giornaliere")
 
-        # --- TAB 3: KPI ---
+        # --- TAB 3: Attività Programmate ---
+        self.attivita_widget = AttivitaProgrammateTab()
+        self.main_tabs.addTab(self.attivita_widget, "📅 Attività Programmate")
+
+        # --- TAB 4: KPI ---
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(self.kpi_panel, "📊 Analisi KPI")
@@ -308,6 +322,10 @@ class ContabilitaPanel(QWidget):
         if hasattr(self, 'kpi_panel'):
             self.kpi_panel.refresh_years()
 
+        # Aggiorna Attività Programmate
+        if hasattr(self, 'attivita_widget'):
+            self.attivita_widget.refresh_data()
+
     def _on_tab_changed(self, index):
         """Chiamato quando cambia la tab ANNO (in uno dei sub-tabwidget)."""
         self._filter_current_tab(self.search_input.text())
@@ -323,6 +341,8 @@ class ContabilitaPanel(QWidget):
             target_widget = self.year_tabs_widget.currentWidget()
         elif current_main_widget == self.giornaliere_tabs_widget:
             target_widget = self.giornaliere_tabs_widget.currentWidget()
+        elif current_main_widget == getattr(self, 'attivita_widget', None):
+            target_widget = self.attivita_widget
 
         if target_widget and hasattr(target_widget, 'table'):
             try:
@@ -413,6 +433,8 @@ class ContabilitaPanel(QWidget):
             target_widget = self.year_tabs_widget.currentWidget()
         elif current_main_widget == self.giornaliere_tabs_widget:
             target_widget = self.giornaliere_tabs_widget.currentWidget()
+        elif current_main_widget == getattr(self, 'attivita_widget', None):
+            target_widget = self.attivita_widget
 
         if target_widget and hasattr(target_widget, 'filter_data'):
             target_widget.filter_data(text)
@@ -422,15 +444,16 @@ class ContabilitaPanel(QWidget):
         config = config_manager.load_config()
         path = config.get("contabilita_file_path", "")
         giornaliere_path = config.get("giornaliere_path", "")
+        attivita_path = config.get("attivita_programmate_path", "")
 
         if not path or not os.path.exists(path):
             self.status_label.setText("⚠️ File contabilità non configurato o non trovato.")
             return
 
-        self.status_label.setText("🔄 Aggiornamento in corso (Contabilità, Giornaliere)...")
+        self.status_label.setText("🔄 Aggiornamento in corso...")
         self.refresh_btn.setDisabled(True) # Disable button during update
 
-        self.worker = ContabilitaWorker(path, giornaliere_path)
+        self.worker = ContabilitaWorker(path, giornaliere_path, attivita_path)
         self.worker.finished_signal.connect(self._on_import_finished)
         self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
@@ -1099,3 +1122,133 @@ class GiornaliereYearTab(QWidget):
                 QMessageBox.warning(self, "Errore", f"Impossibile aprire il file: {e}\nPath: {found_path}")
         else:
             QMessageBox.warning(self, "File non trovato", f"Non riesco a trovare '{filename}' nella cartella giornaliere.")
+
+
+class AttivitaProgrammateTab(QWidget):
+    """Tab per Attività Programmate."""
+
+    COLUMNS = [
+        'PS', 'AREA', 'PdL', 'IMP.', 'DESCRIZIONE ATTIVITA', 'LUN', 'MAR', 'MER',
+        'GIO', 'VEN', 'STATO PdL', 'STATO ATTIVITA', 'DATA CONTROLLO',
+        'PERSONALE IMPIEGATO', 'PO', 'AVVISO'
+    ]
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+        self._load_data()
+
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 10, 0, 0)
+
+        self.table = ExcelTableWidget()
+        self.table.setColumnCount(len(self.COLUMNS))
+        self.table.setHorizontalHeaderLabels(self.COLUMNS)
+        self.table.setWordWrap(True)
+
+        # Style (Light/Black)
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
+            }
+            QTableWidget::item { color: black; }
+            QTableWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: black;
+                padding: 4px;
+                border: 1px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
+
+        self.table.auto_copy_headers = True
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+
+        # Basic Sizing
+        for i in range(len(self.COLUMNS)):
+            self.table.setColumnWidth(i, 100)
+
+        # Descrizione Larger
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch) # Descrizione
+
+        # Context Menu
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+
+        layout.addWidget(self.table)
+
+    def refresh_data(self):
+        """Metodo pubblico per ricaricare i dati."""
+        self._load_data()
+
+    def _load_data(self):
+        """Carica i dati dal database."""
+        data = ContabilitaManager.get_attivita_programmate_data()
+
+        self.table.setSortingEnabled(False)
+        self.table.blockSignals(True)
+        self.table.setRowCount(0)
+
+        try:
+            self.table.setRowCount(len(data))
+
+            for row_idx, row_data in enumerate(data):
+                # row_data is a tuple of values in order of columns (except ID if skipped in SQL)
+                # ContabilitaManager returns exactly the mapped columns
+                for col_idx in range(len(self.COLUMNS)):
+                    val = row_data[col_idx]
+                    val_str = str(val).strip() if val is not None else ""
+                    if val_str == "nan": val_str = ""
+
+                    item = QTableWidgetItem(val_str)
+                    self.table.setItem(row_idx, col_idx, item)
+
+            self.table.resizeRowsToContents()
+
+        finally:
+            self.table.blockSignals(False)
+            self.table.setSortingEnabled(True)
+
+    def filter_data(self, text):
+        """Filtra la tabella."""
+        if not text:
+            for r in range(self.table.rowCount()):
+                self.table.setRowHidden(r, False)
+            return
+
+        search_terms = text.lower().split()
+        cols = self.table.columnCount()
+
+        for r in range(self.table.rowCount()):
+            row_visible = False
+            for c in range(cols):
+                item = self.table.item(r, c)
+                if item and item.text():
+                    if text.lower() in item.text().lower():
+                        row_visible = True
+                        break
+
+            if not row_visible:
+                # Check all terms present
+                row_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
+                if all(term in row_text for term in search_terms):
+                    row_visible = True
+
+            self.table.setRowHidden(r, not row_visible)
+
+    def _show_context_menu(self, pos):
+        """Menu contestuale."""
+        menu = QMenu(self)
+        lyra_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
+        menu.addAction(lyra_action)
+        menu.exec(self.table.viewport().mapToGlobal(pos))
