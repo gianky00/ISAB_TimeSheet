@@ -3,7 +3,9 @@ from src.gui.widgets import LogWidget, HorizontalTimelineWidget
 import sys
 
 def test_horizontal_magic():
-    app = QApplication(sys.argv)
+    app = QApplication.instance()
+    if not app:
+        app = QApplication(sys.argv)
     widget = LogWidget()
 
     # Verify widget structure

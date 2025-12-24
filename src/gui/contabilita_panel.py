@@ -20,7 +20,7 @@ from src.gui.widgets import ExcelTableWidget, StatusIndicator
 
 class ContabilitaWorker(QThread):
     """Worker per l'importazione in background."""
-    finished_signal = pyqtSignal(bool, str)
+    finished_signal = pyqtSignal(bool, str, int, int)
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str, giornaliere_path: str = ""):
@@ -60,11 +60,14 @@ class ContabilitaWorker(QThread):
                 # Use a single, unified message format
                 self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
 
+        total_added = 0
+        total_removed = 0
+
         # 1. Import Contabilità (Dati)
-        # We pass total_sheets to the callback to keep logic inside manager clean,
-        # but here we use the wrapper to unify progress.
         dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
-        success, msg = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
+        success, msg, added, removed = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
+        total_added += added
+        total_removed += removed
 
         # 2. Import Giornaliere (se configurato)
         msg_giornaliere = ""
@@ -72,10 +75,12 @@ class ContabilitaWorker(QThread):
             # phase_offset = sheets (number of sheets processed in step 1)
             giorn_cb = lambda c, t: global_progress(c, sheets, "Giornaliere")
 
-            g_success, g_msg = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
+            g_success, g_msg, g_added, g_removed = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
             msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
+            total_added += g_added
+            total_removed += g_removed
 
-        self.finished_signal.emit(success, msg + msg_giornaliere)
+        self.finished_signal.emit(success, msg + msg_giornaliere, total_added, total_removed)
 
 
 class ContabilitaPanel(QWidget):
@@ -430,9 +435,15 @@ class ContabilitaPanel(QWidget):
         self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
 
-    def _on_import_finished(self, success: bool, msg: str):
+    def _on_import_finished(self, success: bool, msg: str, added: int, removed: int):
         if success:
-            self.status_label.setText(f"✅ Aggiornamento completato")
+            now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+            # Format text with colors
+            added_text = f"<font color='green'><b>+{added}</b></font>"
+            removed_text = f"<font color='red'><b>-{removed}</b></font>"
+            status_html = f"Pronto, ultimo aggiornamento: {now_str} {added_text} {removed_text}"
+
+            self.status_label.setText(status_html)
             self.refresh_tabs()
         else:
             self.status_label.setText(f"❌ Errore aggiornamento: {msg}")
@@ -486,9 +497,20 @@ class ContabilitaYearTab(QWidget):
                 gridline-color: #e9ecef;
                 font-size: 13px;
                 border: 1px solid #dee2e6;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
             }
             QTableWidget::item {
                 color: black;
+            }
+            QTableWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
+            QTableWidget::item:focus {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+                border: none;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
@@ -498,6 +520,8 @@ class ContabilitaYearTab(QWidget):
                 font-weight: bold;
             }
         """)
+
+        self.table.auto_copy_headers = True
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -791,9 +815,20 @@ class GiornaliereYearTab(QWidget):
                 gridline-color: #e9ecef;
                 font-size: 13px;
                 border: 1px solid #dee2e6;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
             }
             QTableWidget::item {
                 color: black;
+            }
+            QTableWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
+            QTableWidget::item:focus {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+                border: none;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
@@ -803,6 +838,8 @@ class GiornaliereYearTab(QWidget):
                 font-weight: bold;
             }
         """)
+
+        self.table.auto_copy_headers = True
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)

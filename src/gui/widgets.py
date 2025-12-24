@@ -369,6 +369,8 @@ class ExcelTableWidget(QTableWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
+
         # Abilita la selezione di intere righe ma permettendo selezioni multiple
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -472,6 +474,18 @@ class ExcelTableWidget(QTableWidget):
             return
 
         tsv_rows = []
+
+        # Header Copy Logic
+        # Copia headers se abilitato E se la selezione non è una singola cella (euristica UX)
+        if self.auto_copy_headers and len(self.selectedItems()) > 1:
+            header_row = []
+            for c in cols:
+                if not self.isColumnHidden(c):
+                    header_item = self.horizontalHeaderItem(c)
+                    header_text = header_item.text() if header_item else ""
+                    header_row.append(header_text)
+            tsv_rows.append("\t".join(header_row))
+
         for r in rows:
             # Non copiare le righe nascoste (es. se filtrate)
             if self.isRowHidden(r):

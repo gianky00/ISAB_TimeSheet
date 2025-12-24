@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Bot TS - ISAB Timesheet Manager")
+        self.setWindowTitle("Bot TS - Timesheet Manager")
         self.setMinimumSize(1200, 800)
         
         # Abilita Drag & Drop
@@ -208,7 +208,7 @@ class MainWindow(QMainWindow):
         """)
         sidebar_layout.addWidget(logo_label)
         
-        subtitle = QLabel("ISAB Timesheet Manager")
+        subtitle = QLabel("Timesheet Manager")
         subtitle.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.7);
@@ -252,7 +252,12 @@ class MainWindow(QMainWindow):
         if license_info:
             client = license_info.get("Cliente", "N/D")
             expiry = license_info.get("Scadenza Licenza", "N/D")
-            license_text = f"Licenza: {client}\nScadenza: {expiry}"
+
+            # Get last login from config
+            config = config_manager.load_config()
+            last_login = config.get("last_login_date", "N/D")
+
+            license_text = f"Licenza: {client}\nScadenza: {expiry}\nLogin: {last_login}"
         else:
             license_text = "Licenza non trovata"
 
