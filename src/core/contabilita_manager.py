@@ -229,11 +229,14 @@ class ContabilitaManager:
         conn.close()
 
     @classmethod
-    def import_data_from_excel(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str]:
+    def import_data_from_excel(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
         """Importa i dati dal file Excel specificato (Tabella Dati)."""
         path = Path(file_path)
         if not path.exists():
-            return False, f"File non trovato: {file_path}"
+            return False, f"File non trovato: {file_path}", 0, 0
+
+        total_added = 0
+        total_removed = 0
 
         try:
             with warnings.catch_warnings():
@@ -274,11 +277,38 @@ class ContabilitaManager:
                         cols_to_str = [c for c in df.columns if c != 'year']
                         df[cols_to_str] = df[cols_to_str].astype(str)
 
+                        # --- Diff Logic ---
+                        # Fetch existing rows for this year (excluding ID/timestamp)
+                        # We use the exact same columns as target_columns
+                        cursor.execute(f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?", (year,))
+                        # Convert to set of tuples
+                        # Note: DB returns tuples. Pandas iterrows/itertuples also produces tuples.
+                        # Types must match (we coerced df to str except year). DB might return int/str.
+                        # We convert DB result to str where needed to match df.
+                        # Actually we cast df[cols_to_str] to str. 'year' is int.
+
+                        existing_rows = set()
+                        for row in cursor.fetchall():
+                            # row[0] is year (int), others are strings or None.
+                            # We force strings for non-year cols to match DF preparation.
+                            cleaned_row = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
+                            existing_rows.add(tuple(cleaned_row))
+
+                        # New rows from DF
+                        new_rows_list = list(df.itertuples(index=False, name=None))
+                        new_rows_set = set(new_rows_list)
+
+                        added = len(new_rows_set - existing_rows)
+                        removed = len(existing_rows - new_rows_set)
+
+                        total_added += added
+                        total_removed += removed
+                        # ------------------
+
                         cursor.execute("DELETE FROM contabilita WHERE year = ?", (year,))
                         placeholders = ', '.join(['?'] * len(target_columns))
                         query = f"INSERT INTO contabilita ({', '.join(target_columns)}) VALUES ({placeholders})"
-                        values = list(df.itertuples(index=False, name=None))
-                        cursor.executemany(query, values)
+                        cursor.executemany(query, new_rows_list)
                         imported_years.append(year)
 
                         processed_sheets += 1
@@ -291,20 +321,23 @@ class ContabilitaManager:
 
                 conn.commit()
                 conn.close()
-                if not imported_years: return False, "Nessun anno importato."
-                return True, f"Anni importati: {sorted(imported_years)}"
+                if not imported_years: return False, "Nessun anno importato.", 0, 0
+                return True, f"Anni importati: {sorted(imported_years)}", total_added, total_removed
 
         except Exception as e:
-            return False, f"Errore: {e}"
+            return False, f"Errore: {e}", 0, 0
 
     @classmethod
-    def import_giornaliere(cls, root_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str]:
+    def import_giornaliere(cls, root_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
         root = Path(root_path)
         if not root.exists():
-            return False, "Directory Giornaliere non trovata."
+            return False, "Directory Giornaliere non trovata.", 0, 0
 
         current_year = datetime.now().year
         imported_years = set()
+
+        total_added = 0
+        total_removed = 0
 
         try:
             conn = sqlite3.connect(cls.DB_PATH)
@@ -329,20 +362,36 @@ class ContabilitaManager:
             total_tasks = len(tasks)
             processed_count = 0
 
-            # Pre-clear years involved
-            years_to_clear = set(t[0] for t in tasks)
-            for year in years_to_clear:
-                cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
+            # 1.1 Diff Logic Preparation
+            # Collect all new rows in memory first to compare against DB
+            all_new_rows = [] # List of tuples matching DB schema
 
-            # 2. Process Files
+            # Columns definition for consistent ordering
+            target_cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
+
+            # Lookup map cache
+            lookup_map = {}
+            try:
+                lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
+                lookup_df = pd.read_sql_query(lookup_query, conn)
+                lookup_df = lookup_df.drop_duplicates(subset=['n_prev'])
+                lookup_map = dict(zip(lookup_df['n_prev'], lookup_df['odc']))
+            except: pass
+
+            # 2. Process Files (Read and Accumulate)
+            # We process files first to build the "New State", then we diff, then write.
+            # This differs slightly from original loop but is safer for diffing.
+
+            years_encountered = set()
+
             for year, file_path in tasks:
+                years_encountered.add(year)
                 try:
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
                         try:
                             df = pd.read_excel(file_path, sheet_name='RIASSUNTO', engine='openpyxl')
                         except ValueError:
-                            # Skip if sheet not found
                             processed_count += 1
                             if progress_callback: progress_callback(processed_count, total_tasks)
                             continue
@@ -367,78 +416,31 @@ class ContabilitaManager:
                         if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
 
                         if not df.empty:
-                            # Ensure all expected DB columns exist
                             for db_col in cls.GIORNALIERE_MAPPING.values():
                                 if db_col not in df.columns: df[db_col] = ""
 
-                            # --- ⚡ Bolt Optimization: Vectorized Processing ---
-                            # Clean string columns (vectorized)
                             cols_to_clean = ['odc', 'n_prev', 'data', 'personale', 'descrizione', 'tcl', 'pdl', 'inizio', 'fine', 'ore']
-                            # Convert to string and strip whitespace
                             df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
-                            # Replace 'nan' (case insensitive) with empty string
                             df[cols_to_clean] = df[cols_to_clean].replace(r'(?i)^nan$', '', regex=True)
 
-                            # --- Dynamic ODC Lookup (Feature 4) ---
-                            # Create a lookup map from Contabilita (Dati) table {n_prev: odc}
-                            # We fetch this once per import to avoid repeat DB hits, or fetch just what we need.
-                            # For speed, we'll fetch all non-empty ODCs from 'contabilita' table.
-                            # NOTE: To avoid heavy query every file, we could cache this outside the loop if manager state allowed,
-                            # but here we do it per file which is acceptable given SQLite speed vs Import speed.
+                            # Apply Lookup
+                            mask_empty_odc = df['odc'] == ""
+                            if mask_empty_odc.any() and lookup_map:
+                                mapped_values = df.loc[mask_empty_odc, 'n_prev'].map(lookup_map)
+                                df.loc[mask_empty_odc, 'odc'] = mapped_values.fillna("")
 
-                            try:
-                                # Fetch N_PREV -> ODC map
-                                lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
-                                lookup_df = pd.read_sql_query(lookup_query, conn)
-                                # Remove duplicates, keeping first or last? Usually same n_prev has same ODC.
-                                lookup_df = lookup_df.drop_duplicates(subset=['n_prev'])
-                                lookup_map = dict(zip(lookup_df['n_prev'], lookup_df['odc']))
-
-                                # Apply Lookup: Fill empty ODC where N_PREV match exists
-                                # Ensure we match clean n_prev strings
-                                mask_empty_odc = df['odc'] == ""
-                                if mask_empty_odc.any():
-                                    # We can map using the dictionary.
-                                    # map() in pandas returns NaN if not found, so we combine.
-                                    mapped_values = df.loc[mask_empty_odc, 'n_prev'].map(lookup_map)
-                                    # Fill only where we found a match (not NaN)
-                                    df.loc[mask_empty_odc, 'odc'] = mapped_values.fillna("")
-                            except Exception as e:
-                                print(f"Warning: ODC Lookup failed: {e}")
-
-                            # --- "Canone" & Regex Logic (Feature 5) ---
-                            # 1. Identify "Canone" rows (case-insensitive) -> Keep original text
+                            # Regex
                             mask_canone = df['odc'].str.contains('canone', case=False, na=False)
-
-                            # 2. Identify "Standard" rows (not Canone) -> Apply Regex
                             mask_standard = ~mask_canone
-
-                            # Apply Regex extraction only to standard rows
-                            # We use temporary series to hold extracted values
                             extracted = df.loc[mask_standard, 'odc'].str.extract(r'(5400\d+)', expand=False)
-
-                            # Update DataFrame:
-                            # For standard rows: use extracted value (or "" if no match)
-                            # For Canone rows: keep as is (already cleaned strings)
                             df.loc[mask_standard, 'odc'] = extracted.fillna("")
 
-                            # Add Metadata
                             df['year'] = year
                             df['nome_file'] = file_path.name
 
-                            # Select and Order Columns for DB
-                            target_cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
                             df_final = df[target_cols]
-
-                            # Convert to list of tuples (High speed export)
-                            rows_to_insert = list(df_final.itertuples(index=False, name=None))
-                            # --------------------------------------------------
-
-                            if rows_to_insert:
-                                cols = target_cols
-                                placeholders = ', '.join(['?'] * len(cols))
-                                query = f"INSERT INTO giornaliere ({', '.join(cols)}) VALUES ({placeholders})"
-                                cursor.executemany(query, rows_to_insert)
+                            rows = list(df_final.itertuples(index=False, name=None))
+                            all_new_rows.extend(rows)
 
                         imported_years.add(year)
 
@@ -448,15 +450,43 @@ class ContabilitaManager:
                 processed_count += 1
                 if progress_callback: progress_callback(processed_count, total_tasks)
 
+            # 3. Diff and Commit
+            years_to_clear = years_encountered # Only clear years we touched
+
+            # Fetch Existing
+            existing_rows_set = set()
+            for year in years_to_clear:
+                cursor.execute(f"SELECT {', '.join(target_cols)} FROM giornaliere WHERE year = ?", (year,))
+                for row in cursor.fetchall():
+                    # Ensure types match (year is int, others strings)
+                    row_list = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
+                    existing_rows_set.add(tuple(row_list))
+
+            new_rows_set = set(all_new_rows)
+
+            total_added = len(new_rows_set - existing_rows_set)
+            total_removed = len(existing_rows_set - new_rows_set)
+
+            # Delete old
+            for year in years_to_clear:
+                cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
+
+            # Insert new
+            if all_new_rows:
+                placeholders = ', '.join(['?'] * len(target_cols))
+                query = f"INSERT INTO giornaliere ({', '.join(target_cols)}) VALUES ({placeholders})"
+                # Batch insert is efficient
+                cursor.executemany(query, all_new_rows)
+
             conn.commit()
             conn.close()
 
             if not imported_years and total_tasks == 0:
-                return True, "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ")."
-            return True, f"Importate Giornaliere: {sorted(list(imported_years))}"
+                return True, "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ").", 0, 0
+            return True, f"Importate Giornaliere: {sorted(list(imported_years))}", total_added, total_removed
 
         except Exception as e:
-            return False, f"Errore importazione Giornaliere: {e}"
+            return False, f"Errore importazione Giornaliere: {e}", 0, 0
 
     @classmethod
     def import_scarico_ore(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str]:
