@@ -1128,9 +1128,9 @@ class AttivitaProgrammateTab(QWidget):
     """Tab per Attività Programmate."""
 
     COLUMNS = [
-        'PS', 'AREA', 'PdL', 'IMP.', 'DESCRIZIONE ATTIVITA', 'LUN', 'MAR', 'MER',
-        'GIO', 'VEN', 'STATO PdL', 'STATO ATTIVITA', 'DATA CONTROLLO',
-        'PERSONALE IMPIEGATO', 'PO', 'AVVISO'
+        'PS', 'AREA', 'PdL', 'IMP.', "DESCRIZIONE\nATTIVITA'", 'LUN', 'MAR', 'MER',
+        'GIO', 'VEN', "STATO\nPdL", "STATO\nATTIVITA'", "DATA\nCONTROLLO",
+        "PERSONALE\nIMPIEGATO", 'PO', 'AVVISO'
     ]
 
     def __init__(self, parent=None):
@@ -1277,6 +1277,16 @@ class AttivitaProgrammateTab(QWidget):
                     val = row_data[col_idx]
                     val_str = str(val).strip() if val is not None else ""
                     if val_str.lower() == "nan": val_str = ""
+
+                    # Format Data Controllo (Index 12)
+                    if col_idx == 12 and val_str:
+                         try:
+                             # Try parsing YYYY-MM-DD HH:MM:SS or YYYY-MM-DD
+                             if ' ' in val_str: val_str = val_str.split(' ')[0]
+                             dt = datetime.strptime(val_str, "%Y-%m-%d")
+                             val_str = dt.strftime("%d/%m/%Y")
+                         except ValueError:
+                             pass
 
                     item = QTableWidgetItem(val_str)
                     self.table.setItem(row_idx, col_idx, item)

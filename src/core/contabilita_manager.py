@@ -557,27 +557,32 @@ class ContabilitaManager:
                 if df.empty:
                     return False, "Foglio vuoto.", 0, 0
 
-                # Clean DF columns (handle newlines)
-                df.columns = [str(c).strip() for c in df.columns]
-
                 # Simpler: Filter only columns we want
                 valid_cols = []
-                for col in df.columns:
-                    # Clean the column name from the DF for matching
-                    clean_col = col.replace('\n', '\\n') # Revert to literal \n representation for mapping check?
-                    # No, mapping has literal \n.
+                # Don't strip columns globally to preserve original headers (including newlines/spaces)
 
-                    # Check against mapping keys
+                # Create a renaming map first to avoid modifying df.columns while iterating
+                renaming_map = {}
+
+                for col in df.columns:
+                    col_str = str(col)
                     mapped_col = None
+
                     for k, v in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
-                        # Compare k and col. k has \n. col might have \n (real newline).
-                        if k == col:
+                        k_str = str(k)
+                        # Robust matching:
+                        # 1. Exact match
+                        # 2. Strip match (ignoring leading/trailing spaces)
+                        if k_str == col_str or k_str.strip() == col_str.strip():
                             mapped_col = v
                             break
 
                     if mapped_col:
-                        df.rename(columns={col: mapped_col}, inplace=True)
+                        renaming_map[col] = mapped_col
                         valid_cols.append(mapped_col)
+
+                if renaming_map:
+                    df.rename(columns=renaming_map, inplace=True)
 
                 # Keep only valid cols
                 if not valid_cols:
