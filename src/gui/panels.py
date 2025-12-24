@@ -22,6 +22,7 @@ from src.gui.widgets import (
     CalendarDateEdit, MissionReportCard
 )
 from src.core import config_manager
+from src.bots.timbrature.storage import TimbratureStorage
 
 
 class BotWorker(QThread):
@@ -371,7 +372,7 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.addLayout(dest_layout)
 
         # Riga 4: Flag Elabora TS
-        self.elabora_ts_check = QCheckBox("Elabora TS (Rinomina e Sposta)")
+        self.elabora_ts_check = QCheckBox("Elabora TS")
         self.elabora_ts_check.setStyleSheet("font-size: 15px; margin-top: 5px;")
         # Auto-save settings on change
         self.elabora_ts_check.stateChanged.connect(self._save_data)
@@ -635,7 +636,7 @@ class DettagliOdAPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_name="📋 Dettagli OdA",
-            bot_description="Questo bot effettua l'accesso, accede alla sezione Dettagli OdA, applica i filtri necessari e sospende l'attività per consentire la consultazione manuale.",
+            bot_description="Scarica automaticamente i dettagli degli Ordini d'Acquisto dal portale ISAB.",
             parent=parent
         )
         self._setup_content()
@@ -1355,16 +1356,27 @@ class TimbratureBotPanel(BaseBotPanel):
             if index >= 0:
                 self.fornitore_combo.setCurrentIndex(index)
 
-        try:
-            date_da = config.get("last_timbrature_date_da", "01.01.2025")
-            d, m, y = map(int, date_da.split("."))
-            self.date_da_edit.setDate(QDate(y, m, d))
+        # Default dates: Yesterday
+        yesterday = QDate.currentDate().addDays(-1)
 
-            date_a = config.get("last_timbrature_date_a", QDate.currentDate().toString("dd.MM.yyyy"))
-            d, m, y = map(int, date_a.split("."))
-            self.date_a_edit.setDate(QDate(y, m, d))
+        try:
+            # Try load saved, fallback to yesterday if not present or default
+            saved_date_da = config.get("last_timbrature_date_da", "")
+            if saved_date_da and saved_date_da != "01.01.2025":
+                d, m, y = map(int, saved_date_da.split("."))
+                self.date_da_edit.setDate(QDate(y, m, d))
+            else:
+                self.date_da_edit.setDate(yesterday)
+
+            saved_date_a = config.get("last_timbrature_date_a", "")
+            if saved_date_a:
+                d, m, y = map(int, saved_date_a.split("."))
+                self.date_a_edit.setDate(QDate(y, m, d))
+            else:
+                self.date_a_edit.setDate(yesterday)
         except:
-            pass
+            self.date_da_edit.setDate(yesterday)
+            self.date_a_edit.setDate(yesterday)
 
     def _save_data(self):
         config_manager.set_config_value("last_timbrature_fornitore", self.fornitore_combo.currentText())
@@ -1435,50 +1447,92 @@ class TimbratureBotPanel(BaseBotPanel):
 class TimbratureDBPanel(QWidget):
     """Pannello per la visualizzazione del Database Timbrature Isab."""
 
+    REPARTI = ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.db_path = config_manager.CONFIG_DIR / "data" / "timbrature_Isab.db"
+        self.storage = TimbratureStorage(self.db_path)
         self._setup_ui()
         self.refresh_data()
 
     def _setup_ui(self):
         """Configura l'interfaccia utente."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(15, 15, 15, 15)
+        self.main_layout.setContentsMargins(10, 10, 10, 10)
         self.main_layout.setSpacing(15)
 
-        # --- Sezione Database ---
-        db_group = QGroupBox("🗄️ Database Timbrature")
-        db_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
+        # Tab Widget
+        self.tabs = QTabWidget()
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane {
                 border: 1px solid #dee2e6;
                 border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
+                background-color: white;
             }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
+            QTabBar::tab {
+                background: #f1f3f5;
+                padding: 10px 20px;
+                margin-right: 2px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                color: #495057;
+                font-weight: bold;
+            }
+            QTabBar::tab:selected {
+                background: white;
+                border-bottom-color: white;
+                color: #0d6efd;
             }
         """)
-        db_layout = QVBoxLayout(db_group)
 
-        # Search bar
+        # --- TAB 1: Database (Timbrature) ---
+        self.tab_database = QWidget()
+        self._setup_database_tab(self.tab_database)
+        self.tabs.addTab(self.tab_database, "🗄️ Database")
+
+        # --- TAB 2: Impostazioni (Dipendenti) ---
+        self.tab_settings = QWidget()
+        self._setup_settings_tab(self.tab_settings)
+        self.tabs.addTab(self.tab_settings, "⚙️ Impostazioni")
+
+        # Connect tab change to refresh settings list if needed
+        self.tabs.currentChanged.connect(self._on_tab_changed)
+
+        self.main_layout.addWidget(self.tabs)
+
+    def _setup_database_tab(self, parent_widget):
+        layout = QVBoxLayout(parent_widget)
+
+        # Search & Filter bar
         search_layout = QHBoxLayout()
-        search_label = QLabel("🔍 Filtra:")
+
+        # Text Search
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca per nome, cognome, data...")
+        self.search_input.setPlaceholderText("🔍 Cerca per nome, cognome, data...")
         self.search_input.setClearButtonEnabled(True)
-        self.search_input.textChanged.connect(self._filter_data)
-        search_layout.addWidget(search_label)
+        self.search_input.textChanged.connect(lambda: self._filter_data())
         search_layout.addWidget(self.search_input)
+
+        # Reparto Filter
+        self.reparto_filter = QComboBox()
+        self.reparto_filter.addItem("Tutti i reparti", "Tutti")
+        for rep in self.REPARTI:
+            self.reparto_filter.addItem(rep, rep)
+        self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
+        self.reparto_filter.setFixedWidth(150)
+        self.reparto_filter.setStyleSheet("""
+            QComboBox {
+                padding: 5px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                background-color: white;
+            }
+        """)
+        search_layout.addWidget(self.reparto_filter)
 
         # Import Button
         import_btn = QPushButton("📥 Importa Excel")
-        import_btn.setToolTip("Importa manualmente un file Excel di timbrature")
         import_btn.setStyleSheet("""
             QPushButton {
                 background-color: #17a2b8;
@@ -1487,18 +1541,14 @@ class TimbratureDBPanel(QWidget):
                 border-radius: 4px;
                 padding: 6px 12px;
                 font-weight: bold;
-                font-size: 13px;
             }
-            QPushButton:hover {
-                background-color: #138496;
-            }
+            QPushButton:hover { background-color: #138496; }
         """)
         import_btn.clicked.connect(self._import_excel_manually)
         search_layout.addWidget(import_btn)
 
         # Refresh Button
         refresh_btn = QPushButton("🔄 Aggiorna")
-        refresh_btn.setToolTip("Ricarica i dati dal database")
         refresh_btn.setStyleSheet("""
             QPushButton {
                 background-color: #6c757d;
@@ -1507,22 +1557,20 @@ class TimbratureDBPanel(QWidget):
                 border-radius: 4px;
                 padding: 6px 12px;
                 font-weight: bold;
-                font-size: 13px;
             }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
+            QPushButton:hover { background-color: #5a6268; }
         """)
         refresh_btn.clicked.connect(self.refresh_data)
         search_layout.addWidget(refresh_btn)
 
-        db_layout.addLayout(search_layout)
+        layout.addLayout(search_layout)
 
         # Table
         self.db_table = ExcelTableWidget()
-        self.db_table.setColumnCount(7)
+        # Cols: Data, Ingresso, Uscita, Nome, Cognome, Presenza TS, Sito, Reparto
+        self.db_table.setColumnCount(8)
         self.db_table.setHorizontalHeaderLabels([
-            "Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito Timbratura"
+            "Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito", "Reparto"
         ])
 
         header = self.db_table.horizontalHeader()
@@ -1538,19 +1586,9 @@ class TimbratureDBPanel(QWidget):
                 selection-background-color: #e7f1ff;
                 selection-color: #0d6efd;
             }
-            QTableWidget::item {
-                padding: 5px;
-                color: black;
-            }
-            QTableWidget::item:selected {
-                background-color: #e7f1ff;
-                color: #0d6efd;
-            }
-            QTableWidget::item:focus {
-                background-color: #e7f1ff;
-                color: #0d6efd;
-                border: none;
-            }
+            QTableWidget::item { padding: 5px; color: black; }
+            QTableWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
+            QTableWidget::item:focus { background-color: #e7f1ff; color: #0d6efd; border: none; }
             QHeaderView::section {
                 background-color: #f8f9fa;
                 padding: 8px;
@@ -1561,35 +1599,97 @@ class TimbratureDBPanel(QWidget):
             }
         """)
         self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-
-        # Abilita copia header automatica e selezione celle
         self.db_table.auto_copy_headers = True
         self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
 
-        db_layout.addWidget(self.db_table)
+        layout.addWidget(self.db_table)
 
-        self.main_layout.addWidget(db_group)
+    def _setup_settings_tab(self, parent_widget):
+        layout = QVBoxLayout(parent_widget)
+
+        info = QLabel("Gestione Dipendenti e Reparti")
+        info.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 5px;")
+        layout.addWidget(info)
+
+        sub = QLabel("Assegna il reparto ai dipendenti. Le modifiche vengono salvate automaticamente.")
+        sub.setStyleSheet("color: #6c757d; margin-bottom: 10px;")
+        layout.addWidget(sub)
+
+        # Table
+        self.settings_table = QTableWidget()
+        self.settings_table.setColumnCount(3)
+        self.settings_table.setHorizontalHeaderLabels(["Nome", "Cognome", "Reparto"])
+
+        header = self.settings_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+        self.settings_table.setStyleSheet(self.db_table.styleSheet())
+        layout.addWidget(self.settings_table)
+
+        # Load data immediately
+        self._load_settings_data()
+
+    def _on_tab_changed(self, index):
+        # Refresh settings data when switching to settings tab
+        if index == 1:
+            self._load_settings_data()
+        elif index == 0:
+            self.refresh_data()
+
+    def _load_settings_data(self):
+        """Carica i dipendenti unici nella tabella impostazioni."""
+        employees = self.storage.get_employees()
+
+        self.settings_table.blockSignals(True)
+        self.settings_table.setRowCount(0)
+
+        for i, emp in enumerate(employees):
+            self.settings_table.insertRow(i)
+
+            # Nome (Read only)
+            item_nome = QTableWidgetItem(emp['nome'])
+            item_nome.setFlags(item_nome.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.settings_table.setItem(i, 0, item_nome)
+
+            # Cognome (Read only)
+            item_cognome = QTableWidgetItem(emp['cognome'])
+            item_cognome.setFlags(item_cognome.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.settings_table.setItem(i, 1, item_cognome)
+
+            # Reparto (ComboBox)
+            combo = QComboBox()
+            combo.addItems([""] + self.REPARTI)
+            combo.setCurrentText(emp['reparto'])
+
+            # Style combo
+            combo.setStyleSheet("QComboBox { border: none; background: transparent; }")
+
+            # Connect signal
+            # Use a closure to capture row specific data
+            nome = emp['nome']
+            cognome = emp['cognome']
+
+            combo.currentTextChanged.connect(lambda text, n=nome, c=cognome: self.storage.update_employee_reparto(n, c, text))
+
+            self.settings_table.setCellWidget(i, 2, combo)
+
+        self.settings_table.blockSignals(False)
 
     def refresh_data(self):
         """Metodo pubblico per ricaricare i dati."""
-        self._load_db_data()
+        self._filter_data()
 
-    def _load_db_data(self):
-        """Carica i dati dal database nella tabella."""
-        if not self.db_path.exists():
-            return
+    def _filter_data(self):
+        """Filtra la tabella usando SQL."""
+        text = self.search_input.text()
+        reparto = self.reparto_filter.currentData()
 
-        try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature ORDER BY id DESC")
-                rows = cursor.fetchall()
-
-            self._update_table(rows)
-        except Exception as e:
-            print(f"Errore caricamento DB: {e}")
-            traceback.print_exc()
-            QMessageBox.critical(self, "Errore Database", f"Impossibile caricare i dati:\n{e}")
+        rows = self.storage.get_timbrature_with_reparto(
+            limit=500,
+            filter_text=text,
+            filter_reparto=reparto
+        )
+        self._update_table(rows)
 
     def _update_table(self, rows):
         """Aggiorna la tabella con i dati forniti."""
@@ -1597,27 +1697,24 @@ class TimbratureDBPanel(QWidget):
         for row_idx, row_data in enumerate(rows):
             self.db_table.insertRow(row_idx)
 
-            # Format date (column 0) if necessary
+            # row_data includes: data, ingresso, uscita, nome, cognome, presenza_ts, sito, reparto
             formatted_row = list(row_data)
+
+            # Format Data
             try:
                 date_str = str(formatted_row[0])
                 if date_str:
-                    # Rimuovi l'eventuale parte oraria per pulizia
                     date_part = date_str.split(' ')[0] if ' ' in date_str else date_str
-
-                    # Prova il parsing formato ISO standard (YYYY-MM-DD)
                     try:
                         dt = datetime.strptime(date_part, "%Y-%m-%d")
                         formatted_row[0] = dt.strftime("%d/%m/%Y")
                     except ValueError:
-                        pass # Se non è YYYY-MM-DD, lascia com'è (potrebbe essere già DD/MM/YYYY)
-
-            except Exception:
-                # In caso di errore generico, mantieni il valore originale
-                pass
+                        pass
+            except Exception: pass
 
             for col_idx, value in enumerate(formatted_row):
-                self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
+                val_str = str(value) if value is not None else ""
+                self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(val_str))
 
     def _import_excel_manually(self):
         """Importa manualmente un file Excel nel database."""
@@ -1632,87 +1729,19 @@ class TimbratureDBPanel(QWidget):
             return
 
         try:
-            from src.bots.timbrature.bot import TimbratureBot
-
-            # Callback per loggare (in questo caso useremo print o QMessageBox poiché non abbiamo log widget)
+            # Callback per loggare
             def gui_log(msg):
-                print(msg)
+                print(msg) # O eventuale toast
 
-            # Usa il metodo statico del bot
-            success = TimbratureBot.import_to_db_static(file_path, self.db_path, gui_log)
+            success = self.storage.import_excel(file_path, gui_log)
 
             if success:
-                self._load_db_data() # Ricarica la tabella
+                self.refresh_data()
                 QMessageBox.information(self, "Successo", "Dati importati correttamente nel database.")
+                # Reload settings too if new employees appeared
+                self._load_settings_data()
             else:
                 QMessageBox.warning(self, "Errore", "Impossibile importare il file. Controlla la console per i dettagli.")
 
         except Exception as e:
             QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
-
-    def _filter_data(self, text):
-        """Filtra la tabella in base al testo usando SQL."""
-        if not self.db_path.exists():
-            return
-
-        try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-
-                query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
-                params = []
-
-                if text:
-                    # Cerca corrispondenza di TUTTE le parole cercate in QUALSIASI colonna rilevante
-                    search_terms = text.lower().split()
-                    conditions = []
-
-                    columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
-
-                    for term in search_terms:
-                        # Converti formato data italiano in formato DB (YYYY-MM-DD) per permettere la ricerca
-                        search_term = term
-                        if '/' in term:
-                            try:
-                                parts = term.split('/')
-
-                                # Caso 1: Data completa DD/MM/YYYY -> YYYY-MM-DD
-                                if len(parts) == 3:
-                                    d, m, y = parts
-                                    if len(d) <= 2 and len(m) <= 2 and len(y) == 4:
-                                         search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
-
-                                # Caso 2: Parziale MM/YYYY -> YYYY-MM
-                                elif len(parts) == 2:
-                                    p1, p2 = parts
-                                    # Se il secondo pezzo è anno (4 cifre) -> MM/YYYY
-                                    if len(p2) == 4:
-                                        search_term = f"{p2}-{p1.zfill(2)}"
-                                    # Se il secondo pezzo è mese/giorno (2 cifre) e primo anche -> DD/MM
-                                    # Cerchiamo nel DB (YYYY-MM-DD) la sequenza -MM-DD
-                                    elif len(p2) <= 2:
-                                        # Attenzione: DD/MM (es. 17/12) diventa -12-17
-                                        search_term = f"-{p2.zfill(2)}-{p1.zfill(2)}"
-                            except Exception:
-                                pass
-
-                        term_conditions = []
-                        for col in columns_to_search:
-                            term_conditions.append(f"{col} LIKE ?")
-                            params.append(f"%{search_term}%")
-                        # Unisci le condizioni per questo termine con OR (il termine deve apparire in almeno una colonna)
-                        conditions.append(f"({' OR '.join(term_conditions)})")
-
-                    if conditions:
-                        query += " WHERE " + " AND ".join(conditions)
-
-                query += " ORDER BY id DESC LIMIT 500" # Limita a 500 risultati per performance
-
-                cursor.execute(query, params)
-                rows = cursor.fetchall()
-
-            self._update_table(rows)
-
-        except Exception as e:
-            print(f"Errore filtro: {e}")
-            traceback.print_exc()

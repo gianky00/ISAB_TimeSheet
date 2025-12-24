@@ -46,7 +46,117 @@ class TimbratureStorage:
                     UNIQUE(data, ingresso, uscita, nome, cognome)
                 )
             ''')
+
+            # Tabella Dipendenti per associazione Reparto
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS dipendenti (
+                    nome TEXT,
+                    cognome TEXT,
+                    reparto TEXT,
+                    PRIMARY KEY (nome, cognome)
+                )
+            ''')
             conn.commit()
+
+    def get_employees(self) -> List[Dict[str, str]]:
+        """
+        Recupera la lista unica dei dipendenti (da timbrature e dipendenti).
+        Restituisce una lista di dict: {'nome': ..., 'cognome': ..., 'reparto': ...}
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # Ottieni tutti i dipendenti unici dalle timbrature
+            cursor.execute("SELECT DISTINCT nome, cognome FROM timbrature ORDER BY cognome, nome")
+            rows = cursor.fetchall()
+
+            employees = []
+            for row in rows:
+                nome = row['nome']
+                cognome = row['cognome']
+
+                # Cerca reparto salvato
+                cursor.execute("SELECT reparto FROM dipendenti WHERE nome = ? AND cognome = ?", (nome, cognome))
+                res = cursor.fetchone()
+                reparto = res['reparto'] if res else ""
+
+                employees.append({
+                    "nome": nome,
+                    "cognome": cognome,
+                    "reparto": reparto
+                })
+
+            return employees
+
+    def update_employee_reparto(self, nome: str, cognome: str, reparto: str):
+        """Aggiorna il reparto di un dipendente."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO dipendenti (nome, cognome, reparto)
+                VALUES (?, ?, ?)
+                ON CONFLICT(nome, cognome) DO UPDATE SET reparto = excluded.reparto
+            ''', (nome, cognome, reparto))
+            conn.commit()
+
+    def get_timbrature_with_reparto(self, limit: int = 500, filter_text: str = None, filter_reparto: str = None) -> List[tuple]:
+        """
+        Recupera le timbrature con il reparto associato (JOIN).
+        Restituisce lista di tuple (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura, reparto).
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            query = """
+                SELECT
+                    t.data, t.ingresso, t.uscita, t.nome, t.cognome,
+                    t.presenza_ts, t.sito_timbratura, d.reparto
+                FROM timbrature t
+                LEFT JOIN dipendenti d ON t.nome = d.nome AND t.cognome = d.cognome
+            """
+
+            params = []
+            conditions = []
+
+            if filter_text:
+                # Logica di ricerca testuale (multi-term)
+                search_terms = filter_text.lower().split()
+                columns_to_search = ["t.data", "t.nome", "t.cognome", "t.sito_timbratura"]
+
+                for term in search_terms:
+                    # Gestione Date (DD/MM/YYYY -> YYYY-MM-DD o partials)
+                    search_term = term
+                    if '/' in term:
+                        try:
+                            parts = term.split('/')
+                            if len(parts) == 3: # DD/MM/YYYY
+                                d, m, y = parts
+                                if len(d) <= 2 and len(m) <= 2 and len(y) == 4:
+                                     search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+                            elif len(parts) == 2: # MM/YYYY
+                                p1, p2 = parts
+                                if len(p2) == 4:
+                                    search_term = f"{p2}-{p1.zfill(2)}"
+                                elif len(p2) <= 2: # DD/MM -> -MM-DD
+                                    search_term = f"-{p2.zfill(2)}-{p1.zfill(2)}"
+                        except: pass
+
+                    term_conditions = [f"{col} LIKE ?" for col in columns_to_search]
+                    params.extend([f"%{search_term}%"] * len(columns_to_search))
+                    conditions.append(f"({' OR '.join(term_conditions)})")
+
+            if filter_reparto and filter_reparto != "Tutti":
+                conditions.append("d.reparto = ?")
+                params.append(filter_reparto)
+
+            if conditions:
+                query += " WHERE " + " AND ".join(conditions)
+
+            query += f" ORDER BY t.id DESC LIMIT {limit}"
+
+            cursor.execute(query, params)
+            return cursor.fetchall()
 
     def import_excel(self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None) -> bool:
         """
