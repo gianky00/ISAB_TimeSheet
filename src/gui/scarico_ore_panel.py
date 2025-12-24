@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QCursor, QKeySequence
 import time
+from datetime import datetime
 
 from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
@@ -19,7 +20,7 @@ from pathlib import Path
 
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background (solo Scarico Ore)."""
-    finished_signal = pyqtSignal(bool, str)
+    finished_signal = pyqtSignal(bool, str, int, int) # Added args for added/removed
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str):
@@ -58,8 +59,8 @@ class ScaricoOreWorker(QThread):
 
                 self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s")
 
-        success, msg = ContabilitaManager.import_scarico_ore(self.file_path, progress_callback=progress_cb)
-        self.finished_signal.emit(success, msg)
+        success, msg, added, removed = ContabilitaManager.import_scarico_ore(self.file_path, progress_callback=progress_cb)
+        self.finished_signal.emit(success, msg, added, removed)
 
 class ScaricoOrePanel(QWidget):
     """Pannello per la visualizzazione e gestione dello Scarico Ore Cantiere."""
@@ -145,6 +146,7 @@ class ScaricoOrePanel(QWidget):
                 border: 1px solid #dee2e6;
             }
         """)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter) # Center alignment as requested
         toolbar.addWidget(self.status_label)
 
         toolbar.addStretch()
@@ -334,12 +336,20 @@ class ScaricoOrePanel(QWidget):
         self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
 
-    def _on_update_finished(self, success: bool, msg: str):
+    def _on_update_finished(self, success: bool, msg: str, added: int = 0, removed: int = 0):
         self.update_btn.setEnabled(True)
         self.table_view.setEnabled(True)
 
         if success:
-            self.status_label.setText("✅ Aggiornato")
+            timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+            # Match exact format from ContabilitaPanel
+            # Always color
+            added_str = f"<font color='green'><b>+{added}</b></font>"
+            removed_str = f"<font color='red'><b>-{removed}</b></font>"
+
+            final_status = f"Pronto, ultimo aggiornamento: {timestamp} {added_str} {removed_str}"
+            self.status_label.setText(final_status)
+
             # Invalidate cache by removing the file
             try:
                 if ScaricoOreTableModel.CACHE_PATH.exists():
@@ -417,7 +427,11 @@ class ScaricoOrePanel(QWidget):
     def _on_cache_loaded(self):
         """Called when background loading finishes."""
         count = self.source_model.rowCount()
-        self.status_label.setText(f"✅ Pronti ({count} record)")
+        # Only set if not already set by update finished
+        current_text = self.status_label.text()
+        if "ultimo aggiornamento" not in current_text:
+             self.status_label.setText("Pronto")
+
         self._set_ui_loading(False)
         self._resize_columns()
         self._update_totals()

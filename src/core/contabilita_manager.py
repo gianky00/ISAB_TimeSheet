@@ -489,14 +489,17 @@ class ContabilitaManager:
             return False, f"Errore importazione Giornaliere: {e}", 0, 0
 
     @classmethod
-    def import_scarico_ore(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str]:
+    def import_scarico_ore(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
         """Importa il file Scarico Ore Cantiere con supporto a stili e gestione zeri."""
         path = Path(file_path)
         if not path.exists():
-            return False, f"File Scarico Ore non trovato: {file_path}"
+            return False, f"File Scarico Ore non trovato: {file_path}", 0, 0
 
         if not openpyxl:
-            return False, "Modulo 'openpyxl' mancante."
+            return False, "Modulo 'openpyxl' mancante.", 0, 0
+
+        total_added = 0
+        total_removed = 0
 
         try:
             # 1. Decrypt/Load Workbook
@@ -530,7 +533,7 @@ class ContabilitaManager:
                 wb_data = openpyxl.load_workbook(wb_file, data_only=True, read_only=False)
 
             if "SCARICO ORE" not in wb_data.sheetnames:
-                 return False, "Foglio 'SCARICO ORE' non trovato."
+                 return False, "Foglio 'SCARICO ORE' non trovato.", 0, 0
             ws_data = wb_data["SCARICO ORE"]
 
             # 2. Iterate and Extract
@@ -638,14 +641,23 @@ class ContabilitaManager:
                 )
                 rows_to_insert.append(db_row)
 
-            # 3. Update DB
+            # 3. Diff and Update DB
             conn = sqlite3.connect(cls.DB_PATH)
             cursor = conn.cursor()
+
+            # Diff Logic
+            cols = cls.SCARICO_ORE_COLS
+            cursor.execute(f"SELECT {', '.join(cols)} FROM scarico_ore")
+            existing_rows_set = set(cursor.fetchall())
+
+            new_rows_set = set(rows_to_insert)
+
+            total_added = len(new_rows_set - existing_rows_set)
+            total_removed = len(existing_rows_set - new_rows_set)
 
             cursor.execute("DELETE FROM scarico_ore") # Full refresh
 
             if rows_to_insert:
-                cols = cls.SCARICO_ORE_COLS
                 placeholders = ', '.join(['?'] * len(cols))
                 query = f"INSERT INTO scarico_ore ({', '.join(cols)}) VALUES ({placeholders})"
                 cursor.executemany(query, rows_to_insert)
@@ -653,10 +665,10 @@ class ContabilitaManager:
             conn.commit()
             conn.close()
 
-            return True, f"Importate {len(rows_to_insert)} righe da Scarico Ore."
+            return True, f"Importate {len(rows_to_insert)} righe da Scarico Ore.", total_added, total_removed
 
         except Exception as e:
-            return False, f"Errore importazione Scarico Ore: {e}"
+            return False, f"Errore importazione Scarico Ore: {e}", 0, 0
 
     @classmethod
     def get_available_years(cls) -> List[int]:
