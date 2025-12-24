@@ -76,7 +76,7 @@ class ContabilitaManager:
     # Header: PS, AREA, PdL, IMP., DESCRIZIONE ATTIVITA', LUN, MAR, MER, GIO, VEN, STATO PdL, STATO ATTIVITA', DATA CONTROLLO, PERSONALE IMPIEGATO, PO, AVVISO
     ATTIVITA_PROGRAMMATE_MAPPING = {
         'PS': 'ps',
-        'AREA ': 'area', # Note space
+        'AREA': 'area',
         'PdL': 'pdl',
         'IMP.': 'imp',
         "DESCRIZIONE\nATTIVITA'": 'descrizione',
@@ -559,29 +559,6 @@ class ContabilitaManager:
 
                 # Clean DF columns (handle newlines)
                 df.columns = [str(c).strip() for c in df.columns]
-
-                # Map Columns
-                rename_map = {}
-                for excel_col, db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
-                    # Excel col might have newlines which we stripped or not?
-                    # read_excel might keep \n.
-                    # We look for exact match or match with \n replaced by space?
-                    # Let's try direct match first, then robust matching.
-                    found = False
-                    for c in df.columns:
-                        if c == excel_col.strip() or c.replace('\n', '') == excel_col.replace('\n', ''):
-                             rename_map[c] = db_col
-                             found = True
-                             break
-                    if not found:
-                         # Try 'startswith' logic or relaxed check
-                         pass
-
-                # Force rename if possible
-                # If exact mapping fails, let's try to map by index? No, risky.
-                # Let's trust the user requirement.
-                # Re-reading headers might have cleaned newlines if not handled.
-                # Let's inspect known columns logic.
 
                 # Simpler: Filter only columns we want
                 valid_cols = []

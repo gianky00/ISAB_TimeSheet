@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QMessageBox, QMenu, QTableWidget,
-    QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton
+    QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QAbstractItemView
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QAction, QFont
@@ -1142,10 +1142,67 @@ class AttivitaProgrammateTab(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
 
+        # --- Filter Bar ---
+        filter_layout = QHBoxLayout()
+        filter_layout.setContentsMargins(5, 0, 5, 5)
+
+        # PS Flag
+        self.chk_ps = QCheckBox("Filtra PS")
+        self.chk_ps.setStyleSheet("font-weight: bold; color: #495057;")
+        self.chk_ps.stateChanged.connect(self.apply_filters)
+        filter_layout.addWidget(self.chk_ps)
+
+        # PO Flag
+        self.chk_po = QCheckBox("Filtra PO")
+        self.chk_po.setStyleSheet("font-weight: bold; color: #495057;")
+        self.chk_po.stateChanged.connect(self.apply_filters)
+        filter_layout.addWidget(self.chk_po)
+
+        filter_layout.addSpacing(20)
+
+        # AREA Filter
+        filter_layout.addWidget(QLabel("Area:"))
+        self.combo_area = QComboBox()
+        self.combo_area.setMinimumWidth(150)
+        self.combo_area.addItem("Tutte")
+        self.combo_area.currentTextChanged.connect(self.apply_filters)
+        filter_layout.addWidget(self.combo_area)
+
+        filter_layout.addSpacing(15)
+
+        # STATO PdL Filter
+        filter_layout.addWidget(QLabel("Stato PdL:"))
+        self.combo_stato = QComboBox()
+        self.combo_stato.setMinimumWidth(150)
+        self.combo_stato.addItem("Tutti")
+        self.combo_stato.currentTextChanged.connect(self.apply_filters)
+        filter_layout.addWidget(self.combo_stato)
+
+        # Reset Button
+        self.btn_reset = QPushButton("Reset Filtri")
+        self.btn_reset.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d; color: white; border: none;
+                border-radius: 4px; padding: 4px 8px;
+            }
+            QPushButton:hover { background-color: #5a6268; }
+        """)
+        self.btn_reset.clicked.connect(self._reset_filters)
+        filter_layout.addWidget(self.btn_reset)
+
+        filter_layout.addStretch()
+        layout.addLayout(filter_layout)
+
+        # --- Table ---
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True)
+
+        # Change selection behavior to Cells
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        # Connect double click to select row
+        self.table.cellDoubleClicked.connect(self._on_double_click)
 
         # Style (Light/Black)
         self.table.setStyleSheet("""
@@ -1173,12 +1230,26 @@ class AttivitaProgrammateTab(QWidget):
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
-        # Basic Sizing
-        for i in range(len(self.COLUMNS)):
-            self.table.setColumnWidth(i, 100)
+        # Basic Sizing & Visibility
+        # Hide PS (0) and PO (14)
+        self.table.setColumnHidden(0, True)
+        self.table.setColumnHidden(14, True)
 
-        # Descrizione Larger
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch) # Descrizione
+        # Adjust widths
+        # PS(0), AREA(1), PdL(2), IMP(3), DESC(4), LUN..VEN(5-9), STATO P(10), STATO A(11), DATA(12), PERS(13), PO(14), AVVISO(15)
+        self.table.setColumnWidth(1, 80) # Area
+        self.table.setColumnWidth(2, 80) # PdL
+        self.table.setColumnWidth(3, 60) # Imp
+        self.table.setColumnWidth(4, 350) # Descrizione (Wide)
+        # Days
+        for i in range(5, 10):
+            self.table.setColumnWidth(i, 50)
+
+        self.table.setColumnWidth(10, 120) # Stato PdL
+        self.table.setColumnWidth(11, 120) # Stato Att
+        self.table.setColumnWidth(12, 100) # Data
+        self.table.setColumnWidth(13, 150) # Pers
+        self.table.setColumnWidth(15, 250) # Avviso (Wide)
 
         # Context Menu
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -1202,48 +1273,156 @@ class AttivitaProgrammateTab(QWidget):
             self.table.setRowCount(len(data))
 
             for row_idx, row_data in enumerate(data):
-                # row_data is a tuple of values in order of columns (except ID if skipped in SQL)
-                # ContabilitaManager returns exactly the mapped columns
                 for col_idx in range(len(self.COLUMNS)):
                     val = row_data[col_idx]
                     val_str = str(val).strip() if val is not None else ""
-                    if val_str == "nan": val_str = ""
+                    if val_str.lower() == "nan": val_str = ""
 
                     item = QTableWidgetItem(val_str)
                     self.table.setItem(row_idx, col_idx, item)
 
             self.table.resizeRowsToContents()
+            self._populate_filters()
 
         finally:
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)
 
+    def _populate_filters(self):
+        """Popola i combobox con i valori unici."""
+        areas = set()
+        stati = set()
+
+        # Scan table directly (safer than re-querying DB if filtered)
+        # AREA is col 1, STATO PdL is col 10
+        for r in range(self.table.rowCount()):
+            item_area = self.table.item(r, 1)
+            if item_area and item_area.text():
+                areas.add(item_area.text())
+
+            item_stato = self.table.item(r, 10)
+            if item_stato and item_stato.text():
+                stati.add(item_stato.text())
+
+        # Update Area Combo
+        curr_area = self.combo_area.currentText()
+        self.combo_area.blockSignals(True)
+        self.combo_area.clear()
+        self.combo_area.addItem("Tutte")
+        self.combo_area.addItems(sorted(list(areas)))
+        if curr_area in areas: self.combo_area.setCurrentText(curr_area)
+        self.combo_area.blockSignals(False)
+
+        # Update Stato Combo
+        curr_stato = self.combo_stato.currentText()
+        self.combo_stato.blockSignals(True)
+        self.combo_stato.clear()
+        self.combo_stato.addItem("Tutti")
+        self.combo_stato.addItems(sorted(list(stati)))
+        if curr_stato in stati: self.combo_stato.setCurrentText(curr_stato)
+        self.combo_stato.blockSignals(False)
+
+    def apply_filters(self):
+        """Applica i filtri alla tabella."""
+        filter_ps = self.chk_ps.isChecked()
+        filter_po = self.chk_po.isChecked()
+        filter_area = self.combo_area.currentText()
+        filter_stato = self.combo_stato.currentText()
+
+        # Indices: PS=0, AREA=1, STATO PdL=10, PO=14
+        for r in range(self.table.rowCount()):
+            hide = False
+
+            # PS Filter (Show only if PS is NOT empty)
+            if filter_ps:
+                item = self.table.item(r, 0)
+                if not item or not item.text().strip():
+                    hide = True
+
+            # PO Filter (Show only if PO is NOT empty)
+            if not hide and filter_po:
+                item = self.table.item(r, 14)
+                if not item or not item.text().strip():
+                    hide = True
+
+            # Area Filter
+            if not hide and filter_area != "Tutte":
+                item = self.table.item(r, 1)
+                if not item or item.text() != filter_area:
+                    hide = True
+
+            # Stato Filter
+            if not hide and filter_stato != "Tutti":
+                item = self.table.item(r, 10)
+                if not item or item.text() != filter_stato:
+                    hide = True
+
+            self.table.setRowHidden(r, hide)
+
+    def _reset_filters(self):
+        self.chk_ps.setChecked(False)
+        self.chk_po.setChecked(False)
+        self.combo_area.setCurrentIndex(0)
+        self.combo_stato.setCurrentIndex(0)
+        self.apply_filters()
+
+    def _on_double_click(self, row, col):
+        """Doppio click seleziona l'intera riga."""
+        self.table.selectRow(row)
+
     def filter_data(self, text):
-        """Filtra la tabella."""
-        if not text:
-            for r in range(self.table.rowCount()):
-                self.table.setRowHidden(r, False)
-            return
+        """Filtra la tabella (Search Bar globale)."""
+        # Reset specific filters temporarily or apply strictly?
+        # Usually search bar adds to existing filters.
+        # But for simplicity, let's say Search Bar overrides or works with AND.
+        # Let's apply standard text search AND logic.
 
         search_terms = text.lower().split()
         cols = self.table.columnCount()
 
         for r in range(self.table.rowCount()):
-            row_visible = False
-            for c in range(cols):
-                item = self.table.item(r, c)
-                if item and item.text():
-                    if text.lower() in item.text().lower():
-                        row_visible = True
-                        break
+            # First check specific filters by calling logic manually or trusting state?
+            # Re-evaluating filters for every row is expensive if we do full loop.
+            # Efficient way: Check if hidden by filters first?
+            # Actually, `apply_filters` resets visibility.
+            # Let's modify logic: Search bar is "extra".
 
-            if not row_visible:
-                # Check all terms present
-                row_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
-                if all(term in row_text for term in search_terms):
-                    row_visible = True
+            # 1. Check strict filters
+            filter_ps = self.chk_ps.isChecked()
+            filter_po = self.chk_po.isChecked()
+            filter_area = self.combo_area.currentText()
+            filter_stato = self.combo_stato.currentText()
 
-            self.table.setRowHidden(r, not row_visible)
+            hide = False
+            if filter_ps:
+                item = self.table.item(r, 0)
+                if not item or not item.text().strip(): hide = True
+            if not hide and filter_po:
+                item = self.table.item(r, 14)
+                if not item or not item.text().strip(): hide = True
+            if not hide and filter_area != "Tutte":
+                item = self.table.item(r, 1)
+                if not item or item.text() != filter_area: hide = True
+            if not hide and filter_stato != "Tutti":
+                item = self.table.item(r, 10)
+                if not item or item.text() != filter_stato: hide = True
+
+            # 2. Check Search Text
+            if not hide and text:
+                row_visible = False
+                for c in range(cols):
+                    item = self.table.item(r, c)
+                    if item and item.text():
+                        if text.lower() in item.text().lower():
+                            row_visible = True
+                            break
+                if not row_visible:
+                    # Check combined terms
+                    row_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
+                    if not all(term in row_text for term in search_terms):
+                        hide = True
+
+            self.table.setRowHidden(r, hide)
 
     def _show_context_menu(self, pos):
         """Menu contestuale."""
