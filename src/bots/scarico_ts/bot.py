@@ -172,10 +172,11 @@ class ScaricaTSBot(BaseBot):
             
             self.log(f"✨ Operazione completata. {success_count}/{len(rows)} file scaricati.")
             
-            # 4. Elaborazione TS (VBA Logic) se richiesto
-            if self.elabora_ts and downloaded_files_list:
-                self.log("🤖 Controllo duplicati e rinomina in corso...")
-                self._process_downloaded_files_vba_style(downloaded_files_list, dest_dir)
+            # 4. Elaborazione TS
+            # Se elabora_ts è attivo, la logica di rename/sanitize è già stata applicata in _download_excel.
+            # Non è necessario un post-processo di spostamento aggiuntivo (visto che _download_excel già sposta in dest_dir).
+            # La logica "VBA style" (chiedere all'utente) è disabilitata per "Elabora TS" secondo le nuove specifiche
+            # che richiedono solo elaborazione/rinomina senza spostamento (o meglio, spostamento standard).
 
             # 5. Logout
             self._logout()
@@ -323,47 +324,23 @@ class ScaricaTSBot(BaseBot):
                 # Se elabora_ts è True: Spostiamo in una cartella temporanea per poi elaborare.
                 # Se elabora_ts è False: Spostiamo direttamente nella destinazione (con rinomina standard silenziosa).
 
-                # La richiesta utente dice:
-                # "il flag Elabora TS deve solo rinominare ed elaborare all'interno il file e non spostarlo
-                # visto che non inserendo il flag l'utente deve comunque avere la possibilità di spostarlo
-                # se modifica il percorso di destinazione"
+                # Indipendentemente dal flag Elabora TS, spostiamo il file nella destinazione.
+                # Se Elabora TS è attivo, la rinomina (sanitize) è già avvenuta sopra.
+                # La gestione conflitti è standard (timestamp se bloccato, sovrascrittura se possibile).
 
-                # Interpretazione:
-                # 1. Se Elabora TS = False: Scarica -> Sposta in dest_dir (gestione conflitti automatica/silenziosa).
-                # 2. Se Elabora TS = True: Scarica -> Sposta in Temp -> Processa (rinomina + richiesta utente) -> Sposta in dest_dir.
+                if percorso_finale.exists():
+                    try:
+                        percorso_finale.unlink()
+                    except:
+                        # Se non riesco a cancellare (es aperto), rinomino con timestamp
+                        timestamp = time.strftime("%Y%m%d-%H%M%S")
+                        nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
+                        percorso_finale = dest_dir / nuovo_nome_file
 
-                if self.elabora_ts:
-                    # Usiamo temp dir per la fase di "Elaborazione"
-                    temp_dir = config_manager.CONFIG_DIR / "temp_ts_downloads"
-                    if not temp_dir.exists():
-                        temp_dir.mkdir(parents=True, exist_ok=True)
-
-                    temp_path = temp_dir / nuovo_nome_file
-
-                    # Se esiste in temp, sovrascrivi
-                    import shutil
-                    if temp_path.exists():
-                        try: temp_path.unlink()
-                        except: pass
-
-                    shutil.move(str(downloaded_file), str(temp_path))
-                    self.log(f"  ✓ Scaricato (Temp per elaborazione): {temp_path.name}")
-                    return temp_path
-                else:
-                    # Comportamento standard: sposta direttamente in dest_dir
-                    if percorso_finale.exists():
-                        try:
-                            percorso_finale.unlink()
-                        except:
-                            # Se non riesco a cancellare (es aperto), rinomino con timestamp
-                            timestamp = time.strftime("%Y%m%d-%H%M%S")
-                            nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
-                            percorso_finale = dest_dir / nuovo_nome_file
-
-                    import shutil
-                    shutil.move(str(downloaded_file), str(percorso_finale))
-                    self.log(f"✅ Scaricato: {percorso_finale.name}")
-                    return percorso_finale
+                import shutil
+                shutil.move(str(downloaded_file), str(percorso_finale))
+                self.log(f"✅ Scaricato: {percorso_finale.name}")
+                return percorso_finale
             else:
                 self.log("⚠️ File non trovato dopo il download.")
                 return None

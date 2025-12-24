@@ -26,6 +26,7 @@ echo [INFO] Attivazione ambiente virtuale...
 call venv\Scripts\activate.bat
 
 echo [INFO] Verifica dipendenze...
+python.exe -m pip install --upgrade pip
 pip install -r requirements.txt -q
 
 echo.

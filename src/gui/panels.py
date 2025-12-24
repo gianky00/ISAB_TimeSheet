@@ -245,7 +245,7 @@ class ScaricaTSPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_name="📥 Scarico TS",
-            bot_description="Download automatico dei Timesheet dal portale ISAB",
+            bot_description="Tasto destro per aggiungere/rimuovere righe. Modifica i valori direttamente nelle celle.",
             parent=parent
         )
         self._setup_content()
@@ -399,15 +399,6 @@ class ScaricaTSPanel(BaseBotPanel):
         """)
         group_layout = QVBoxLayout(group)
         
-        # Istruzioni
-        instructions = QLabel(
-            "💡 Tasto destro per aggiungere/rimuovere righe. "
-            "Modifica i valori direttamente nelle celle."
-        )
-        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
-        instructions.setWordWrap(True)
-        group_layout.addWidget(instructions)
-
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
@@ -436,6 +427,8 @@ class ScaricaTSPanel(BaseBotPanel):
         self.data_table = EditableDataTable([
             {"name": "Numero OdA", "type": "text"}
         ])
+        # Increase minimum height to show at least 3 rows + header
+        self.data_table.setMinimumHeight(200)
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
@@ -642,7 +635,7 @@ class DettagliOdAPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_name="📋 Dettagli OdA",
-            bot_description="Accesso rapido ai dettagli degli Ordini d'Acquisto",
+            bot_description="Questo bot effettua l'accesso, accede alla sezione Dettagli OdA, applica i filtri necessari e sospende l'attività per consentire la consultazione manuale.",
             parent=parent
         )
         self._setup_content()
@@ -794,15 +787,6 @@ class DettagliOdAPanel(BaseBotPanel):
         """)
         group_layout = QVBoxLayout(group)
         
-        # Istruzioni
-        instructions = QLabel(
-            "💡 Questo bot esegue il login, naviga a Dettagli OdA, imposta i filtri "
-            "e si ferma per la consultazione manuale."
-        )
-        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
-        instructions.setWordWrap(True)
-        group_layout.addWidget(instructions)
-
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
