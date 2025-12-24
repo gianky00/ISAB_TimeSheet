@@ -68,6 +68,7 @@ class ScaricoOrePanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.worker = None
+        self._last_update_status = None # Store the status string to persist after reload
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
         # ⚡ BOLT: Set loading text immediately before first paint
@@ -349,6 +350,7 @@ class ScaricoOrePanel(QWidget):
 
             final_status = f"Pronto, ultimo aggiornamento: {timestamp} {added_str} {removed_str}"
             self.status_label.setText(final_status)
+            self._last_update_status = final_status # Store to persist after reload
 
             # Invalidate cache by removing the file
             try:
@@ -360,7 +362,7 @@ class ScaricoOrePanel(QWidget):
             ScaricoOreTableModel._global_cache['loaded'] = False
 
             self._load_data() # Reload data
-            QMessageBox.information(self, "Successo", msg)
+            # REMOVED: QMessageBox.information(self, "Successo", msg)
         else:
             self.status_label.setText("❌ Errore")
             QMessageBox.critical(self, "Errore Aggiornamento", msg)
@@ -427,10 +429,15 @@ class ScaricoOrePanel(QWidget):
     def _on_cache_loaded(self):
         """Called when background loading finishes."""
         count = self.source_model.rowCount()
-        # Only set if not already set by update finished
-        current_text = self.status_label.text()
-        if "ultimo aggiornamento" not in current_text:
-             self.status_label.setText("Pronto")
+
+        # Restore last update status if exists, otherwise show default "Pronto"
+        if self._last_update_status:
+            self.status_label.setText(self._last_update_status)
+        else:
+            # Only set if not already set by something else (unlikely in this flow, but safe)
+            current_text = self.status_label.text()
+            if "ultimo aggiornamento" not in current_text:
+                self.status_label.setText("Pronto")
 
         self._set_ui_loading(False)
         self._resize_columns()
