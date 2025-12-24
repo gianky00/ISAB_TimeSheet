@@ -182,6 +182,7 @@ class ScaricoOrePanel(QWidget):
         self.table_view.setSelectionMode(QTableView.SelectionMode.ExtendedSelection)
         self.table_view.setShowGrid(True)
         self.table_view.setWordWrap(False) # Optimization: Disable word wrap for 130k rows performance
+        self.table_view.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
 
         # Models
         # ⚡ BOLT: Use Virtual Model directly, no Proxy
