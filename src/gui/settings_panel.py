@@ -324,8 +324,8 @@ class SettingsPanel(QWidget):
         
         scroll_layout.addWidget(fornitori_group)
 
-        # --- Sezione Contabilità Strumentale ---
-        contabilita_group = self._create_group_box("📊 Contabilità Strumentale")
+        # --- Sezione Strumentale ---
+        contabilita_group = self._create_group_box("📊 Strumentale")
         contabilita_layout = QVBoxLayout(contabilita_group)
         self.groups.append(contabilita_group)
 
@@ -375,6 +375,48 @@ class SettingsPanel(QWidget):
         self._style_button(self.browse_giornaliere_btn)
         giornaliere_path_layout.addWidget(self.browse_giornaliere_btn)
         contabilita_layout.addLayout(giornaliere_path_layout)
+
+        # Attività Programmate Input
+        attivita_label = QLabel("File Attività Programmate (Riepilogo):")
+        attivita_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
+        contabilita_layout.addWidget(attivita_label)
+
+        attivita_path_layout = QHBoxLayout()
+        self.attivita_path_edit = QLineEdit()
+        self.attivita_path_edit.setPlaceholderText("Seleziona file Attività Programmate...")
+        self.attivita_path_edit.setReadOnly(True)
+        self.attivita_path_edit.setMinimumHeight(40)
+        self._style_input(self.attivita_path_edit)
+        attivita_path_layout.addWidget(self.attivita_path_edit)
+
+        self.browse_attivita_btn = QPushButton("📂 Sfoglia")
+        self.browse_attivita_btn.setMinimumHeight(40)
+        self.browse_attivita_btn.setMinimumWidth(120)
+        self.browse_attivita_btn.clicked.connect(self._browse_attivita_path)
+        self._style_button(self.browse_attivita_btn)
+        attivita_path_layout.addWidget(self.browse_attivita_btn)
+        contabilita_layout.addLayout(attivita_path_layout)
+
+        # Certificati Campione Input
+        certificati_label = QLabel("File Certificati Campione:")
+        certificati_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
+        contabilita_layout.addWidget(certificati_label)
+
+        certificati_path_layout = QHBoxLayout()
+        self.certificati_path_edit = QLineEdit()
+        self.certificati_path_edit.setPlaceholderText("Seleziona file Certificati Campione...")
+        self.certificati_path_edit.setReadOnly(True)
+        self.certificati_path_edit.setMinimumHeight(40)
+        self._style_input(self.certificati_path_edit)
+        certificati_path_layout.addWidget(self.certificati_path_edit)
+
+        self.browse_certificati_btn = QPushButton("📂 Sfoglia")
+        self.browse_certificati_btn.setMinimumHeight(40)
+        self.browse_certificati_btn.setMinimumWidth(120)
+        self.browse_certificati_btn.clicked.connect(self._browse_certificati_path)
+        self._style_button(self.browse_certificati_btn)
+        certificati_path_layout.addWidget(self.browse_certificati_btn)
+        contabilita_layout.addLayout(certificati_path_layout)
 
         scroll_layout.addWidget(contabilita_group)
 
@@ -564,6 +606,8 @@ class SettingsPanel(QWidget):
         self.timeout_spin.valueChanged.connect(self._on_change)
         self.contabilita_path_edit.textChanged.connect(self._on_change)
         self.giornaliere_path_edit.textChanged.connect(self._on_change)
+        self.attivita_path_edit.textChanged.connect(self._on_change)
+        self.certificati_path_edit.textChanged.connect(self._on_change)
         self.auto_update_contabilita_check.stateChanged.connect(self._on_change)
         self.dataease_path_edit.textChanged.connect(self._on_change)
         # Liste gestite manualmente
@@ -610,6 +654,34 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.giornaliere_path_edit.setText(path)
+            self._set_unsaved_changes(True)
+
+    def _browse_attivita_path(self):
+        current_path = self.attivita_path_edit.text()
+        directory = str(Path(current_path).parent) if current_path else str(Path.home())
+
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona file Attività Programmate",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)"
+        )
+        if path:
+            self.attivita_path_edit.setText(path)
+            self._set_unsaved_changes(True)
+
+    def _browse_certificati_path(self):
+        current_path = self.certificati_path_edit.text()
+        directory = str(Path(current_path).parent) if current_path else str(Path.home())
+
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona file Certificati Campione",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)"
+        )
+        if path:
+            self.certificati_path_edit.setText(path)
             self._set_unsaved_changes(True)
 
     def _browse_dataease_path(self):
@@ -805,6 +877,8 @@ class SettingsPanel(QWidget):
         # Contabilita
         self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
         self.giornaliere_path_edit.setText(config.get("giornaliere_path", ""))
+        self.attivita_path_edit.setText(config.get("attivita_programmate_path", ""))
+        self.certificati_path_edit.setText(config.get("certificati_campione_path", ""))
         self.dataease_path_edit.setText(config.get("dataease_path", "")) # New
         self.auto_update_contabilita_check.setChecked(config.get("enable_auto_update_contabilita", True))
 
@@ -834,6 +908,8 @@ class SettingsPanel(QWidget):
 
         config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
         config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
+        config_manager.set_config_value("attivita_programmate_path", self.attivita_path_edit.text())
+        config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
         config_manager.set_config_value("dataease_path", self.dataease_path_edit.text()) # New
         config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_contabilita_check.isChecked())
 

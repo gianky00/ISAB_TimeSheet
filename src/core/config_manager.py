@@ -30,7 +30,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "last_oda_data": [],
     # Contabilità Strumentale
     "contabilita_file_path": "",
-    "enable_auto_update_contabilita": True
+    "enable_auto_update_contabilita": True,
+    "certificati_campione_path": r"C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm"
 }
 
 

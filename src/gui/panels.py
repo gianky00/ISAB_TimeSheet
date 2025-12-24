@@ -201,6 +201,9 @@ class BaseBotPanel(QWidget):
             total_seconds = int(delta.total_seconds())
             m, s = divmod(total_seconds, 60)
             duration_str = f"{m}m {s}s"
+        else:
+            # Fallback if start_time was reset or not set
+            duration_str = "N/D"
 
         # Mission Report (#3)
         # Using the timeline widget exposed via log_widget
@@ -1026,12 +1029,11 @@ class CaricoTSPanel(BaseBotPanel):
         """)
         group_layout = QVBoxLayout(group)
         
-        # Istruzioni
+        # Sottotitolo Istruzioni
         instructions = QLabel(
-            "💡 Tasto destro per aggiungere/rimuovere righe. "
-            "Modifica i valori direttamente nelle celle."
+            "💡 Tasto destro per aggiungere/rimuovere righe. Modifica i valori direttamente nelle celle."
         )
-        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding: 5px;")
+        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding-bottom: 5px;")
         instructions.setWordWrap(True)
         group_layout.addWidget(instructions)
 
@@ -1356,27 +1358,10 @@ class TimbratureBotPanel(BaseBotPanel):
             if index >= 0:
                 self.fornitore_combo.setCurrentIndex(index)
 
-        # Default dates: Yesterday
+        # Default dates: ALWAYS Yesterday (ignore saved config)
         yesterday = QDate.currentDate().addDays(-1)
-
-        try:
-            # Try load saved, fallback to yesterday if not present or default
-            saved_date_da = config.get("last_timbrature_date_da", "")
-            if saved_date_da and saved_date_da != "01.01.2025":
-                d, m, y = map(int, saved_date_da.split("."))
-                self.date_da_edit.setDate(QDate(y, m, d))
-            else:
-                self.date_da_edit.setDate(yesterday)
-
-            saved_date_a = config.get("last_timbrature_date_a", "")
-            if saved_date_a:
-                d, m, y = map(int, saved_date_a.split("."))
-                self.date_a_edit.setDate(QDate(y, m, d))
-            else:
-                self.date_a_edit.setDate(yesterday)
-        except:
-            self.date_da_edit.setDate(yesterday)
-            self.date_a_edit.setDate(yesterday)
+        self.date_da_edit.setDate(yesterday)
+        self.date_a_edit.setDate(yesterday)
 
     def _save_data(self):
         config_manager.set_config_value("last_timbrature_fornitore", self.fornitore_combo.currentText())
