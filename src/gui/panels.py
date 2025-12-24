@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
     QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QCheckBox, QTimeEdit, QInputDialog, QApplication, QListWidgetItem
+    QCheckBox, QTimeEdit, QInputDialog, QApplication, QListWidgetItem, QTabWidget
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
 from datetime import datetime
