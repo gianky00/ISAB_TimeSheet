@@ -93,7 +93,23 @@ class ContabilitaManager:
         'AVVISO': 'avviso'
     }
 
-    ATTIVITA_PROGRAMMATE_COLS = list(ATTIVITA_PROGRAMMATE_MAPPING.values())
+    ATTIVITA_PROGRAMMATE_COLS = list(ATTIVITA_PROGRAMMATE_MAPPING.values()) + ['styles'] # Added styles
+
+    # Mapping Certificati Campione
+    CERTIFICATI_CAMPIONE_MAPPING = {
+        'Modello / Tipo': 'modello',
+        'Costruttore': 'costruttore',
+        'Matricola': 'matricola',
+        'Range Strumento': 'range_strumento',
+        'Errore max %': 'errore_max',
+        'Certificato Taratura': 'certificato',
+        'Scadenza Certificato': 'scadenza',
+        'Emissione Certificato': 'emissione',
+        'ID-COEMI': 'id_coemi',
+        'Stato Certificato': 'stato'
+    }
+
+    CERTIFICATI_CAMPIONE_COLS = list(CERTIFICATI_CAMPIONE_MAPPING.values())
 
     @classmethod
     def scan_scarico_ore_rows(cls, file_path: str) -> int:
@@ -268,6 +284,31 @@ class ContabilitaManager:
                 personale TEXT,
                 po TEXT,
                 avviso TEXT,
+                styles TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Migrazione Attività Programmate: Aggiungi colonna styles se non esiste
+        try:
+            cursor.execute("ALTER TABLE attivita_programmate ADD COLUMN styles TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+        # Tabella Certificati Campione
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS certificati_campione (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                modello TEXT,
+                costruttore TEXT,
+                matricola TEXT,
+                range_strumento TEXT,
+                errore_max TEXT,
+                certificato TEXT,
+                scadenza TEXT,
+                emissione TEXT,
+                id_coemi TEXT,
+                stato TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -537,107 +578,142 @@ class ContabilitaManager:
 
     @classmethod
     def import_attivita_programmate(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
-        """Importa il file Attività Programmate."""
+        """Importa il file Attività Programmate con stili (colori)."""
         path = Path(file_path)
         if not path.exists():
             return False, f"File Attività Programmate non trovato: {file_path}", 0, 0
+
+        if not openpyxl:
+            return False, "Modulo 'openpyxl' mancante.", 0, 0
 
         total_added = 0
         total_removed = 0
 
         try:
-            # Load Excel, sheet "Riepilogo", header at row 3 (index 2)
+            # Load Workbook with styles
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                try:
-                    df = pd.read_excel(path, sheet_name="Riepilogo", header=2, engine='openpyxl')
-                except Exception as e:
-                    return False, f"Errore lettura file: {e}", 0, 0
+                warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+                # read_only=False required for style extraction
+                wb = openpyxl.load_workbook(path, data_only=True, read_only=False)
 
-                if df.empty:
-                    return False, "Foglio vuoto.", 0, 0
+            if "Riepilogo" not in wb.sheetnames:
+                return False, "Foglio 'Riepilogo' non trovato.", 0, 0
 
-                # Simpler: Filter only columns we want
-                valid_cols = []
-                # Don't strip columns globally to preserve original headers (including newlines/spaces)
+            ws = wb["Riepilogo"]
 
-                # Create a renaming map first to avoid modifying df.columns while iterating
-                renaming_map = {}
+            # Header is at row 3 (1-based)
+            header_row_idx = 3
+            data_start_row = 4
 
-                for col in df.columns:
-                    col_str = str(col)
-                    mapped_col = None
+            # Map columns
+            # We iterate headers to find indices
+            col_map = {} # db_col -> 1-based index
 
-                    for k, v in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
-                        k_str = str(k)
-                        # Robust matching:
-                        # 1. Exact match
-                        # 2. Strip match (ignoring leading/trailing spaces)
-                        if k_str == col_str or k_str.strip() == col_str.strip():
-                            mapped_col = v
+            for cell in ws[header_row_idx]:
+                if not cell.value: continue
+                val_str = str(cell.value)
+
+                mapped_col = None
+                for k, v in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
+                    if str(k) == val_str or str(k).strip() == val_str.strip():
+                        mapped_col = v
+                        break
+
+                if mapped_col:
+                    col_map[mapped_col] = cell.column # 1-based index
+
+            if not col_map:
+                 return False, "Colonne non trovate. Controlla intestazione riga 3.", 0, 0
+
+            # Cols to insert (including styles)
+            db_cols = list(cls.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ['styles']
+
+            rows_to_insert = []
+
+            # Iterate rows
+            for row in ws.iter_rows(min_row=data_start_row):
+                # Basic check if empty (check first few mapped cols)
+                is_empty = True
+                for db_key in ['ps', 'area', 'descrizione']:
+                    if db_key in col_map:
+                        idx = col_map[db_key] - 1 # tuple index
+                        if idx < len(row) and row[idx].value:
+                            is_empty = False
                             break
+                if is_empty: continue
 
-                    if mapped_col:
-                        renaming_map[col] = mapped_col
-                        valid_cols.append(mapped_col)
+                row_data = {}
+                row_styles = {}
 
-                if renaming_map:
-                    df.rename(columns=renaming_map, inplace=True)
+                for db_col, col_idx in col_map.items():
+                    # col_idx is 1-based, tuple is 0-based relative to row?
+                    # iter_rows returns tuple of cells.
+                    # If min_col not specified, it returns from col 1.
+                    # So tuple index = col_idx - 1
+                    cell_idx = col_idx - 1
+                    if cell_idx < len(row):
+                        cell = row[cell_idx]
+                        val = cell.value
+                        val_str = str(val).strip() if val is not None else ""
+                        if val_str.lower() == 'nan': val_str = ""
+                        row_data[db_col] = val_str
 
-                # Keep only valid cols
-                if not valid_cols:
-                    # Fallback: maybe header is not at row 2?
-                    return False, "Colonne non trovate. Controlla che il foglio sia 'Riepilogo' e l'intestazione alla riga 3.", 0, 0
+                        # Extract Styles
+                        fg_color = None
+                        bg_color = None
 
-                # Drop rows where critical fields are empty? Or just drop full empty rows
-                df.dropna(how='all', inplace=True)
+                        if cell.font and cell.font.color:
+                            if cell.font.color.type == 'rgb':
+                                 c = str(cell.font.color.rgb)
+                                 if len(c) > 6: c = "#" + c[2:]
+                                 else: c = "#" + c
+                                 fg_color = c
 
-                # Add missing columns as empty
-                for db_col in cls.ATTIVITA_PROGRAMMATE_COLS:
-                    if db_col not in df.columns:
-                        df[db_col] = ""
+                        if cell.fill and cell.fill.patternType == 'solid':
+                             if cell.fill.start_color:
+                                 if cell.fill.start_color.type == 'rgb':
+                                     c = str(cell.fill.start_color.rgb)
+                                     if len(c) > 6: c = "#" + c[2:]
+                                     else: c = "#" + c
+                                     bg_color = c
 
-                # Select and order
-                df = df[cls.ATTIVITA_PROGRAMMATE_COLS]
+                        if fg_color or bg_color:
+                            style_entry = {}
+                            if fg_color: style_entry['fg'] = fg_color
+                            if bg_color: style_entry['bg'] = bg_color
+                            row_styles[db_col] = style_entry
 
-                # Fill NaNs
-                df = df.fillna("")
+                # Fill missing cols with empty string
+                final_row = []
+                for col in cls.ATTIVITA_PROGRAMMATE_MAPPING.values():
+                    final_row.append(row_data.get(col, ""))
 
-                # Convert all to string
-                df = df.astype(str)
+                final_row.append(json.dumps(row_styles) if row_styles else "")
+                rows_to_insert.append(tuple(final_row))
 
-                # Prepare Rows
-                new_rows = list(df.itertuples(index=False, name=None))
-                new_rows_set = set(new_rows)
+            # DB Update
+            conn = sqlite3.connect(cls.DB_PATH)
+            cursor = conn.cursor()
 
-                # DB Operations
-                conn = sqlite3.connect(cls.DB_PATH)
-                cursor = conn.cursor()
+            # Diff Logic (Simple count)
+            cursor.execute(f"SELECT COUNT(*) FROM attivita_programmate")
+            prev_count = cursor.fetchone()[0]
 
-                # Get existing
-                cols = cls.ATTIVITA_PROGRAMMATE_COLS
-                cursor.execute(f"SELECT {', '.join(cols)} FROM attivita_programmate")
-                existing_rows = cursor.fetchall()
-                # Normalize existing to match DF strings
-                existing_rows_set = set()
-                for row in existing_rows:
-                     existing_rows_set.add(tuple(str(x) if x is not None else "" for x in row))
+            cursor.execute("DELETE FROM attivita_programmate")
 
-                total_added = len(new_rows_set - existing_rows_set)
-                total_removed = len(existing_rows_set - new_rows_set)
+            if rows_to_insert:
+                placeholders = ', '.join(['?'] * len(db_cols))
+                query = f"INSERT INTO attivita_programmate ({', '.join(db_cols)}) VALUES ({placeholders})"
+                cursor.executemany(query, rows_to_insert)
 
-                # Full Refresh (simplest for now, as no incremental key)
-                cursor.execute("DELETE FROM attivita_programmate")
+            conn.commit()
+            conn.close()
 
-                if new_rows:
-                    placeholders = ', '.join(['?'] * len(cols))
-                    query = f"INSERT INTO attivita_programmate ({', '.join(cols)}) VALUES ({placeholders})"
-                    cursor.executemany(query, new_rows)
+            new_count = len(rows_to_insert)
+            total_added = max(0, new_count - prev_count)
+            total_removed = max(0, prev_count - new_count)
 
-                conn.commit()
-                conn.close()
-
-                return True, f"Importate {len(new_rows)} righe in Attività Programmate.", total_added, total_removed
+            return True, f"Importate {len(rows_to_insert)} righe in Attività Programmate.", total_added, total_removed
 
         except Exception as e:
             return False, f"Errore importazione Attività Programmate: {e}", 0, 0
@@ -878,13 +954,118 @@ class ContabilitaManager:
 
     @classmethod
     def get_attivita_programmate_data(cls) -> List[Tuple]:
-        """Restituisce i dati Attività Programmate."""
+        """Restituisce i dati Attività Programmate (inclusi stili)."""
         if not cls.DB_PATH.exists(): return []
         try:
             conn = sqlite3.connect(cls.DB_PATH)
             cursor = conn.cursor()
+            # Ensure styles column is included
             cols = cls.ATTIVITA_PROGRAMMATE_COLS
             query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            conn.close()
+            return rows
+        except: return []
+
+    @classmethod
+    def import_certificati_campione(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
+        """Importa il file Certificati Campione."""
+        path = Path(file_path)
+        if not path.exists():
+            return False, f"File Certificati Campione non trovato: {file_path}", 0, 0
+
+        total_added = 0
+        total_removed = 0
+
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Sheet: strumenti campione ISAB SUD
+                # Header row: 6 (index 5)
+                try:
+                    df = pd.read_excel(path, sheet_name="strumenti campione ISAB SUD", header=5, engine='openpyxl')
+                except Exception as e:
+                     return False, f"Errore lettura file Certificati: {e}", 0, 0
+
+                if df.empty: return False, "Foglio vuoto.", 0, 0
+
+                # Rename columns
+                df.columns = [str(c).strip() for c in df.columns]
+
+                # Check mapping
+                rename_map = {}
+                for excel_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
+                    if excel_col in df.columns:
+                        rename_map[excel_col] = db_col
+
+                if not rename_map:
+                     return False, "Nessuna colonna valida trovata per Certificati Campione.", 0, 0
+
+                df.rename(columns=rename_map, inplace=True)
+
+                # Filter cols
+                target_cols = list(cls.CERTIFICATI_CAMPIONE_MAPPING.values())
+                # Add missing
+                for c in target_cols:
+                    if c not in df.columns: df[c] = ""
+
+                df = df[target_cols]
+
+                # Filter empty rows (mandatory check on matricola or id_coemi?)
+                df.dropna(how='all', inplace=True)
+
+                # Format Dates: scadenza, emissione -> DD/MM/YYYY (Request says convert to this format without time)
+                # But DB usually stores YYYY-MM-DD for sorting.
+                # Request: "converti le date in Scadenza Certificato,Emissione Certificato nel formato GG/MM/AAAA senza orario solo data."
+                # I will store as DD/MM/YYYY text as requested to strictly follow the requirement for the DB content?
+                # Usually better to store ISO and format in UI, but if user wants "convert", I'll convert text.
+
+                def format_date_it(val):
+                    if pd.isna(val) or val == "": return ""
+                    try:
+                        dt = pd.to_datetime(val)
+                        return dt.strftime("%d/%m/%Y")
+                    except:
+                        return str(val)
+
+                df['scadenza'] = df['scadenza'].apply(format_date_it)
+                df['emissione'] = df['emissione'].apply(format_date_it)
+
+                # Fill N/A and convert to str
+                df = df.fillna("")
+                df = df.astype(str)
+
+                rows = list(df.itertuples(index=False, name=None))
+
+                # DB Ops
+                conn = sqlite3.connect(cls.DB_PATH)
+                cursor = conn.cursor()
+
+                cursor.execute("DELETE FROM certificati_campione")
+
+                if rows:
+                    placeholders = ', '.join(['?'] * len(target_cols))
+                    query = f"INSERT INTO certificati_campione ({', '.join(target_cols)}) VALUES ({placeholders})"
+                    cursor.executemany(query, rows)
+
+                conn.commit()
+                conn.close()
+
+                return True, f"Importate {len(rows)} righe in Certificati Campione.", len(rows), 0
+
+        except Exception as e:
+            return False, f"Errore importazione Certificati Campione: {e}", 0, 0
+
+    @classmethod
+    def get_certificati_campione_data(cls) -> List[Tuple]:
+        """Restituisce i dati Certificati Campione."""
+        if not cls.DB_PATH.exists(): return []
+        try:
+            conn = sqlite3.connect(cls.DB_PATH)
+            cursor = conn.cursor()
+            cols = cls.CERTIFICATI_CAMPIONE_COLS
+            query = f"SELECT {', '.join(cols)} FROM certificati_campione ORDER BY id ASC"
             cursor.execute(query)
             rows = cursor.fetchall()
             conn.close()

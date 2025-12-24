@@ -262,7 +262,7 @@ class MainWindow(QMainWindow):
             now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
 
-            license_text = f"Licenza: {client}\nScadenza: {expiry}\nLogin: {last_login}"
+            license_text = f"Licenza: {client}\nScadenza: {expiry}\nUltimo accesso: {last_login}"
         else:
             license_text = "Licenza non trovata"
 
