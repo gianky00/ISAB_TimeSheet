@@ -10,8 +10,11 @@ from PyQt6.QtWidgets import (
     QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QAbstractItemView
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtGui import QAction, QFont, QColor
 import time
+import json
+import tempfile
+import subprocess
 
 from src.core.contabilita_manager import ContabilitaManager
 from src.core import config_manager
@@ -1568,15 +1571,15 @@ class CertificatiCampioneTab(QWidget):
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
-        # Widths
-        self.table.setColumnWidth(0, 150) # Modello
+        # Optimized Widths
+        self.table.setColumnWidth(0, 200) # Modello (Widened)
         self.table.setColumnWidth(1, 120) # Costruttore
-        self.table.setColumnWidth(2, 100) # Matricola
-        self.table.setColumnWidth(3, 100) # Range
-        self.table.setColumnWidth(4, 80)  # Errore
-        self.table.setColumnWidth(5, 120) # Certificato
-        self.table.setColumnWidth(6, 100) # Scadenza
-        self.table.setColumnWidth(7, 100) # Emissione
+        self.table.setColumnWidth(2, 120) # Matricola (Widened)
+        self.table.setColumnWidth(3, 120) # Range (Widened)
+        self.table.setColumnWidth(4, 100) # Errore (Widened)
+        self.table.setColumnWidth(5, 140) # Certificato (Widened)
+        self.table.setColumnWidth(6, 120) # Scadenza (Widened)
+        self.table.setColumnWidth(7, 120) # Emissione (Widened)
         self.table.setColumnWidth(8, 100) # ID
         header.setSectionResizeMode(9, QHeaderView.ResizeMode.Stretch) # Stato
 

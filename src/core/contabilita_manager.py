@@ -1015,12 +1015,7 @@ class ContabilitaManager:
                 # Filter empty rows (mandatory check on matricola or id_coemi?)
                 df.dropna(how='all', inplace=True)
 
-                # Format Dates: scadenza, emissione -> DD/MM/YYYY (Request says convert to this format without time)
-                # But DB usually stores YYYY-MM-DD for sorting.
-                # Request: "converti le date in Scadenza Certificato,Emissione Certificato nel formato GG/MM/AAAA senza orario solo data."
-                # I will store as DD/MM/YYYY text as requested to strictly follow the requirement for the DB content?
-                # Usually better to store ISO and format in UI, but if user wants "convert", I'll convert text.
-
+                # Format Dates: scadenza, emissione -> DD/MM/YYYY
                 def format_date_it(val):
                     if pd.isna(val) or val == "": return ""
                     try:
@@ -1031,6 +1026,27 @@ class ContabilitaManager:
 
                 df['scadenza'] = df['scadenza'].apply(format_date_it)
                 df['emissione'] = df['emissione'].apply(format_date_it)
+
+                # Format Stato: Transform numeric values (days diff) to user-friendly string
+                # If Excel formula returns a number like 133 or -985, we format it.
+                def format_stato(val):
+                    if pd.isna(val) or val == "": return ""
+                    try:
+                        # Try parsing as float first
+                        num = float(val)
+                        days = int(round(num))
+                        if days > 0:
+                            return f"Scade tra {days} giorni"
+                        elif days < 0:
+                            return f"Scaduto da {abs(days)} giorni"
+                        else:
+                            return "Scade oggi"
+                    except ValueError:
+                        # Not a number, maybe already text or invalid
+                        return str(val)
+
+                if 'stato' in df.columns:
+                    df['stato'] = df['stato'].apply(format_stato)
 
                 # Fill N/A and convert to str
                 df = df.fillna("")
