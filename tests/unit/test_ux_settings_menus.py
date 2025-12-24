@@ -5,7 +5,9 @@ from PyQt6.QtWidgets import QApplication, QListWidget, QListWidgetItem
 from PyQt6.QtCore import Qt, QPoint
 
 # Use a dummy QApplication
-app = QApplication(sys.argv)
+app = QApplication.instance()
+if not app:
+    app = QApplication(sys.argv)
 
 from src.gui.settings_panel import SettingsPanel
 
