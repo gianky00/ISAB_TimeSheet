@@ -1551,9 +1551,21 @@ class TimbratureDBPanel(QWidget):
                 background-color: white;
                 gridline-color: #e9ecef;
                 font-size: 13px;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
             }
             QTableWidget::item {
                 padding: 5px;
+                color: black;
+            }
+            QTableWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
+            QTableWidget::item:focus {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+                border: none;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
@@ -1561,9 +1573,14 @@ class TimbratureDBPanel(QWidget):
                 border: none;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
+                color: black;
             }
         """)
         self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+
+        # Abilita copia header automatica e selezione celle
+        self.db_table.auto_copy_headers = True
+        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
 
         db_layout.addWidget(self.db_table)
 

@@ -486,9 +486,20 @@ class ContabilitaYearTab(QWidget):
                 gridline-color: #e9ecef;
                 font-size: 13px;
                 border: 1px solid #dee2e6;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
             }
             QTableWidget::item {
                 color: black;
+            }
+            QTableWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
+            QTableWidget::item:focus {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+                border: none;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
@@ -498,6 +509,8 @@ class ContabilitaYearTab(QWidget):
                 font-weight: bold;
             }
         """)
+
+        self.table.auto_copy_headers = True
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -791,9 +804,20 @@ class GiornaliereYearTab(QWidget):
                 gridline-color: #e9ecef;
                 font-size: 13px;
                 border: 1px solid #dee2e6;
+                selection-background-color: #e7f1ff;
+                selection-color: #0d6efd;
             }
             QTableWidget::item {
                 color: black;
+            }
+            QTableWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
+            QTableWidget::item:focus {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+                border: none;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
@@ -803,6 +827,8 @@ class GiornaliereYearTab(QWidget):
                 font-weight: bold;
             }
         """)
+
+        self.table.auto_copy_headers = True
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
