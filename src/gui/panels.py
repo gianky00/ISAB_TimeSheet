@@ -22,6 +22,7 @@ from src.gui.widgets import (
     CalendarDateEdit, MissionReportCard
 )
 from src.core import config_manager
+from src.core.stats_manager import StatsManager
 from src.bots.timbrature.storage import TimbratureStorage
 
 
@@ -182,6 +183,9 @@ class BaseBotPanel(QWidget):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
         self.log_widget.timeline.set_mood("running")
+
+        # Track usage
+        StatsManager().increment_usage(self.bot_name)
     
     def _on_stop(self):
         """Gestisce lo stop del bot."""
@@ -216,6 +220,8 @@ class BaseBotPanel(QWidget):
         else:
             self.status_indicator.set_status("error")
             self.log_widget.timeline.set_mood("error")
+            # Track error
+            StatsManager().increment_error(self.bot_name)
         
         self.bot_finished.emit(success)
 

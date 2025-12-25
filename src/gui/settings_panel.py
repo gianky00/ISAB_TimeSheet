@@ -1,19 +1,20 @@
 """
 Bot TS - Settings Panel
 Pannello per la configurazione dell'applicazione.
-Include gestione lista fornitori e tracking modifiche non salvate.
+Include gestione lista fornitori, tracking modifiche non salvate e statistiche.
 """
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
     QMessageBox, QListWidget, QListWidgetItem, QInputDialog,
-    QFrame, QScrollArea, QDialog, QFormLayout, QMenu
+    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from src.core import config_manager
+from src.core.stats_manager import StatsManager
 
 
 class AccountDialog(QDialog):
@@ -88,6 +89,85 @@ class AccountDialog(QDialog):
         return self.username_edit.text(), self.password_edit.text()
 
 
+class StatisticsWidget(QWidget):
+    """Widget per visualizzare le statistiche di utilizzo."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+
+        info = QLabel("Statistiche di Utilizzo Globale")
+        info.setStyleSheet("font-size: 18px; font-weight: bold; color: #495057;")
+        layout.addWidget(info)
+
+        self.table = QTableWidget()
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["Bot", "Esecuzioni", "Errori"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.setStyleSheet("""
+            QTableWidget {
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                padding: 8px;
+                border-bottom: 2px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
+        layout.addWidget(self.table)
+
+        refresh_btn = QPushButton("🔄 Aggiorna Statistiche")
+        refresh_btn.setFixedWidth(180)
+        refresh_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #5a6268; }
+        """)
+        refresh_btn.clicked.connect(self.refresh)
+        layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignRight)
+
+        self.refresh()
+
+    def refresh(self):
+        """Ricarica le statistiche."""
+        stats = StatsManager().get_all_stats()
+        self.table.setRowCount(0)
+
+        bot_names = {
+            "timbrature": "⏱️ Timbrature",
+            "scarico_ts": "📥 Scarico TS",
+            "carico_ts": "📤 Carico TS",
+            "dettagli_oda": "📋 Dettagli OdA"
+        }
+
+        for bot_id, data in stats.items():
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+
+            name = bot_names.get(bot_id, bot_id.capitalize())
+            runs = str(data.get("runs", 0))
+            errors = str(data.get("errors", 0))
+
+            self.table.setItem(row, 0, QTableWidgetItem(name))
+            self.table.setItem(row, 1, QTableWidgetItem(runs))
+
+            err_item = QTableWidgetItem(errors)
+            if int(errors) > 0:
+                err_item.setForeground(Qt.GlobalColor.red)
+            self.table.setItem(row, 2, err_item)
+
+
 class SettingsPanel(QWidget):
     """Pannello per le impostazioni dell'applicazione."""
     
@@ -136,7 +216,34 @@ class SettingsPanel(QWidget):
         
         main_layout.addWidget(header)
         
-        # Scroll area per il contenuto
+        # Tabs
+        self.tabs = QTabWidget()
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #dee2e6;
+                background-color: white;
+            }
+            QTabBar::tab {
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                padding: 8px 20px;
+                margin-right: 2px;
+                color: #495057;
+                font-weight: bold;
+            }
+            QTabBar::tab:selected {
+                background: white;
+                border-bottom-color: white;
+                color: #0d6efd;
+            }
+        """)
+        main_layout.addWidget(self.tabs)
+
+        # --- TAB 1: Configurazione ---
+        config_tab = QWidget()
+        config_layout = QVBoxLayout(config_tab)
+
+        # Scroll area per il contenuto config
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -150,179 +257,123 @@ class SettingsPanel(QWidget):
         general_layout = QVBoxLayout(general_group)
         self.groups.append(general_group)
 
-        # HEADLESS MODE CHECKBOX - Explicitly ensure visibility and styling
         self.headless_check = QCheckBox("Esegui in modalità Headless (Nascosta)")
         self.headless_check.setToolTip("Se attivato, il browser verrà eseguito in background senza mostrare la finestra.")
-        self.headless_check.setStyleSheet("QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }") # Pink/Bold to highlight
+        self.headless_check.setStyleSheet("QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }")
         general_layout.addWidget(self.headless_check)
 
         scroll_layout.addWidget(general_group)
 
-        # --- Sezione Account ---
-        account_group = self._create_group_box("🔐 Gestione Account ISAB")
+        # --- CONTAINER ORIZZONTALE PER LISTE ---
+        lists_container = QHBoxLayout()
+        lists_container.setSpacing(15)
+
+        # 1. Sezione Account
+        account_group = self._create_group_box("🔐 Account ISAB")
         account_layout = QVBoxLayout(account_group)
         self.groups.append(account_group)
         
         self.account_list = QListWidget()
-        self.account_list.setMaximumHeight(100) # Circa 3 righe
-        self.account_list.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 5px;
-                font-size: 15px;
-            }
-            QListWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            QListWidget::item:selected {
-                background-color: #e7f1ff;
-                color: #0d6efd;
-            }
-        """)
+        self.account_list.setMaximumHeight(100)
+        self.account_list.setStyleSheet(self._list_style())
         self.account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.account_list.customContextMenuRequested.connect(lambda pos: self._show_account_context_menu(pos))
         account_layout.addWidget(self.account_list)
         
         acc_btns = QHBoxLayout()
-        
-        add_acc_btn = QPushButton("➕ Aggiungi")
+        add_acc_btn = QPushButton("➕")
+        add_acc_btn.setToolTip("Aggiungi Account")
         add_acc_btn.clicked.connect(self._add_account)
-        self._style_small_button(add_acc_btn, "#28a745")
+        self._style_mini_button(add_acc_btn, "#28a745")
         acc_btns.addWidget(add_acc_btn)
         
-        edit_acc_btn = QPushButton("✏️ Modifica")
+        edit_acc_btn = QPushButton("✏️")
+        edit_acc_btn.setToolTip("Modifica Account")
         edit_acc_btn.clicked.connect(self._edit_account)
-        self._style_small_button(edit_acc_btn, "#0d6efd")
+        self._style_mini_button(edit_acc_btn, "#0d6efd")
         acc_btns.addWidget(edit_acc_btn)
 
-        remove_acc_btn = QPushButton("🗑️ Rimuovi")
+        remove_acc_btn = QPushButton("🗑️")
+        remove_acc_btn.setToolTip("Rimuovi Account")
         remove_acc_btn.clicked.connect(self._remove_account)
-        self._style_small_button(remove_acc_btn, "#dc3545")
+        self._style_mini_button(remove_acc_btn, "#dc3545")
         acc_btns.addWidget(remove_acc_btn)
 
-        set_def_btn = QPushButton("⭐ Imposta Default")
+        set_def_btn = QPushButton("⭐")
+        set_def_btn.setToolTip("Imposta Default")
         set_def_btn.clicked.connect(self._set_default_account)
-        self._style_small_button(set_def_btn, "#ffc107", text_color="black")
+        self._style_mini_button(set_def_btn, "#ffc107", text_color="black")
         acc_btns.addWidget(set_def_btn)
-
         acc_btns.addStretch()
         account_layout.addLayout(acc_btns)
-
-        scroll_layout.addWidget(account_group)
         
-        # --- Sezione Contratti ---
-        contract_group = self._create_group_box("📋 Numeri Contratto")
+        lists_container.addWidget(account_group)
+
+        # 2. Sezione Contratti
+        contract_group = self._create_group_box("📋 Contratti")
         contract_layout = QVBoxLayout(contract_group)
         self.groups.append(contract_group)
         
-        contract_hint = QLabel("Gestisci l'elenco dei contratti disponibili nel menu a tendina di Dettagli OdA.")
-        contract_hint.setStyleSheet("color: #6c757d; font-size: 14px;")
-        contract_hint.setWordWrap(True)
-        contract_layout.addWidget(contract_hint)
-
         self.contract_list = QListWidget()
-        self.contract_list.setMaximumHeight(130) # Circa 4 righe
-        self.contract_list.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 5px;
-                font-size: 15px;
-            }
-            QListWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            QListWidget::item:selected {
-                background-color: #e7f1ff;
-                color: #0d6efd;
-            }
-        """)
+        self.contract_list.setMaximumHeight(130)
+        self.contract_list.setStyleSheet(self._list_style())
         self.contract_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.contract_list.customContextMenuRequested.connect(lambda pos: self._show_generic_list_menu(pos, self.contract_list, self._add_contract, self._edit_contract, self._remove_contract))
         contract_layout.addWidget(self.contract_list)
 
         contract_btns = QHBoxLayout()
-
-        add_contract_btn = QPushButton("➕ Aggiungi")
+        add_contract_btn = QPushButton("➕")
         add_contract_btn.clicked.connect(self._add_contract)
-        self._style_small_button(add_contract_btn, "#28a745")
+        self._style_mini_button(add_contract_btn, "#28a745")
         contract_btns.addWidget(add_contract_btn)
 
-        edit_contract_btn = QPushButton("✏️ Modifica")
+        edit_contract_btn = QPushButton("✏️")
         edit_contract_btn.clicked.connect(self._edit_contract)
-        self._style_small_button(edit_contract_btn, "#0d6efd")
+        self._style_mini_button(edit_contract_btn, "#0d6efd")
         contract_btns.addWidget(edit_contract_btn)
 
-        remove_contract_btn = QPushButton("🗑️ Rimuovi")
+        remove_contract_btn = QPushButton("🗑️")
         remove_contract_btn.clicked.connect(self._remove_contract)
-        self._style_small_button(remove_contract_btn, "#dc3545")
+        self._style_mini_button(remove_contract_btn, "#dc3545")
         contract_btns.addWidget(remove_contract_btn)
-
         contract_btns.addStretch()
         contract_layout.addLayout(contract_btns)
 
-        scroll_layout.addWidget(contract_group)
+        lists_container.addWidget(contract_group)
         
-        # --- Sezione Fornitori ---
-        fornitori_group = self._create_group_box("🏢 Gestione Fornitori")
+        # 3. Sezione Fornitori
+        fornitori_group = self._create_group_box("🏢 Fornitori")
         fornitori_layout = QVBoxLayout(fornitori_group)
         self.groups.append(fornitori_group)
         
-        fornitori_hint = QLabel(
-            "Gestisci l'elenco dei fornitori disponibili nel menu a tendina dello Scarico TS.\n"
-            "Formato consigliato: CODICE - NOME (es: KK10608 - COEMI S.R.L.)"
-        )
-        fornitori_hint.setStyleSheet("color: #6c757d; font-size: 14px;")
-        fornitori_hint.setWordWrap(True)
-        fornitori_layout.addWidget(fornitori_hint)
-        
         self.fornitori_list = QListWidget()
-        self.fornitori_list.setMaximumHeight(100) # Circa 3 righe
-        self.fornitori_list.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                background-color: white;
-                padding: 5px;
-                font-size: 15px;
-            }
-            QListWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            QListWidget::item:selected {
-                background-color: #e7f1ff;
-                color: #0d6efd;
-            }
-        """)
+        self.fornitori_list.setMaximumHeight(100)
+        self.fornitori_list.setStyleSheet(self._list_style())
         self.fornitori_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.fornitori_list.customContextMenuRequested.connect(lambda pos: self._show_generic_list_menu(pos, self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore))
         fornitori_layout.addWidget(self.fornitori_list)
         
         fornitori_btn_layout = QHBoxLayout()
-        
-        add_forn_btn = QPushButton("➕ Aggiungi")
+        add_forn_btn = QPushButton("➕")
         add_forn_btn.clicked.connect(self._add_fornitore)
-        self._style_small_button(add_forn_btn, "#28a745")
+        self._style_mini_button(add_forn_btn, "#28a745")
         fornitori_btn_layout.addWidget(add_forn_btn)
         
-        edit_forn_btn = QPushButton("✏️ Modifica")
+        edit_forn_btn = QPushButton("✏️")
         edit_forn_btn.clicked.connect(self._edit_fornitore)
-        self._style_small_button(edit_forn_btn, "#0d6efd")
+        self._style_mini_button(edit_forn_btn, "#0d6efd")
         fornitori_btn_layout.addWidget(edit_forn_btn)
         
-        rem_forn_btn = QPushButton("🗑️ Rimuovi")
+        rem_forn_btn = QPushButton("🗑️")
         rem_forn_btn.clicked.connect(self._remove_fornitore)
-        self._style_small_button(rem_forn_btn, "#dc3545")
+        self._style_mini_button(rem_forn_btn, "#dc3545")
         fornitori_btn_layout.addWidget(rem_forn_btn)
-        
         fornitori_btn_layout.addStretch()
         fornitori_layout.addLayout(fornitori_btn_layout)
         
-        scroll_layout.addWidget(fornitori_group)
+        lists_container.addWidget(fornitori_group)
+
+        scroll_layout.addLayout(lists_container)
 
         # --- Sezione Strumentale ---
         contabilita_group = self._create_group_box("📊 Strumentale")
@@ -486,9 +537,9 @@ class SettingsPanel(QWidget):
         
         scroll_layout.addStretch()
         self.scroll.setWidget(self.scroll_content)
-        main_layout.addWidget(self.scroll)
+        config_layout.addWidget(self.scroll)
         
-        # --- Pulsanti azione ---
+        # --- Pulsanti azione (Config Tab) ---
         action_layout = QHBoxLayout()
         action_layout.addStretch()
         
@@ -497,8 +548,8 @@ class SettingsPanel(QWidget):
         self.unsaved_label.setVisible(False)
         action_layout.addWidget(self.unsaved_label)
         
-        self.reset_btn = QPushButton("↩️ Annulla modifiche")
-        self.reset_btn.setMinimumWidth(160)
+        self.reset_btn = QPushButton("↩️ Annulla")
+        self.reset_btn.setMinimumWidth(120)
         self.reset_btn.setMinimumHeight(45)
         self.reset_btn.clicked.connect(self._reset_settings)
         self.reset_btn.setStyleSheet("""
@@ -535,8 +586,22 @@ class SettingsPanel(QWidget):
         """)
         action_layout.addWidget(self.save_btn)
         
-        main_layout.addLayout(action_layout)
-    
+        config_layout.addLayout(action_layout)
+
+        # Add Config Tab
+        self.tabs.addTab(config_tab, "Configurazione")
+
+        # --- TAB 2: Statistiche ---
+        self.stats_widget = StatisticsWidget()
+        self.tabs.addTab(self.stats_widget, "Statistiche")
+
+        # Refresh stats when tab is clicked
+        self.tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _on_tab_changed(self, index):
+        if self.tabs.tabText(index) == "Statistiche":
+            self.stats_widget.refresh()
+
     def _create_group_box(self, title: str) -> QGroupBox:
         group = QGroupBox(title)
         group.setStyleSheet("""
@@ -556,6 +621,24 @@ class SettingsPanel(QWidget):
         """)
         return group
     
+    def _list_style(self):
+        return """
+            QListWidget {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 5px;
+                font-size: 14px;
+            }
+            QListWidget::item {
+                padding: 5px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            QListWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
+        """
+
     def _style_input(self, widget):
         widget.setStyleSheet("""
             QLineEdit, QSpinBox {
@@ -589,14 +672,14 @@ class SettingsPanel(QWidget):
             }
         """)
     
-    def _style_small_button(self, button, color, text_color="white"):
+    def _style_mini_button(self, button, color, text_color="white"):
+        button.setFixedSize(30, 30)
         button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {color};
                 color: {text_color};
                 border: none;
                 border-radius: 4px;
-                padding: 6px 16px;
                 font-weight: bold;
                 font-size: 14px;
             }}
