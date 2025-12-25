@@ -1617,7 +1617,63 @@ class CertificatiCampioneTab(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
 
-        # Toolbar
+        # 1. Create Tree Widget First (Fix Attribute Error)
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels(self.HEADERS)
+        self.tree.setWordWrap(True)
+        self.tree.setAlternatingRowColors(True)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        # FORCE READ ONLY
+        self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+
+        # Styling
+        self.tree.setStyleSheet("""
+            QTreeWidget {
+                background-color: white;
+                color: black;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+            }
+            QTreeWidget::item {
+                color: black;
+                padding: 4px;
+            }
+            QTreeWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
+            QHeaderView::section {
+                background-color: #f8f9fa;
+                color: black;
+                padding: 4px;
+                border: 1px solid #dee2e6;
+                font-weight: bold;
+            }
+        """)
+
+        header = self.tree.header()
+        # Set interactive generally
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        # Dimensions & Stretch
+        self.tree.setColumnWidth(self.IDX_MODELLO, 200) # Modello
+        self.tree.setColumnWidth(self.IDX_COSTRUTTORE, 120) # Costruttore
+        self.tree.setColumnWidth(self.IDX_MATRICOLA, 120) # Matricola
+        self.tree.setColumnWidth(self.IDX_RANGE, 120) # Range
+        self.tree.setColumnWidth(self.IDX_ERRORE, 80) # Errore
+        self.tree.setColumnWidth(self.IDX_CERTIFICATO, 140) # Certificato
+        self.tree.setColumnWidth(self.IDX_SCADENZA, 120) # Scadenza
+        self.tree.setColumnWidth(self.IDX_EMISSIONE, 120) # Emissione
+        self.tree.setColumnWidth(self.IDX_ID, 100) # ID
+
+        # Stretch Status Column to fill space
+        header.setSectionResizeMode(self.IDX_STATO, QHeaderView.ResizeMode.Stretch)
+
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._show_context_menu)
+
+        # 2. Toolbar (Now safe to connect)
         toolbar = QHBoxLayout()
 
         self.btn_expand = QPushButton("Espandi Tutto")
@@ -1656,59 +1712,6 @@ class CertificatiCampioneTab(QWidget):
         toolbar.addWidget(self.btn_analyze)
 
         layout.addLayout(toolbar)
-
-        # Tree Widget
-        self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(self.HEADERS)
-        self.tree.setWordWrap(True)
-        self.tree.setAlternatingRowColors(True)
-        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        # FORCE READ ONLY
-        self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-
-        # Styling
-        self.tree.setStyleSheet("""
-            QTreeWidget {
-                background-color: white;
-                color: black;
-                font-size: 13px;
-                border: 1px solid #dee2e6;
-            }
-            QTreeWidget::item {
-                color: black;
-                padding: 4px;
-            }
-            QTreeWidget::item:selected {
-                background-color: #e7f1ff;
-                color: #0d6efd;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                color: black;
-                padding: 4px;
-                border: 1px solid #dee2e6;
-                font-weight: bold;
-            }
-        """)
-
-        header = self.tree.header()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-        # Dimensions
-        self.tree.setColumnWidth(0, 200) # Modello
-        self.tree.setColumnWidth(1, 120) # Costruttore
-        self.tree.setColumnWidth(2, 120) # Matricola
-        self.tree.setColumnWidth(3, 120) # Range
-        self.tree.setColumnWidth(4, 100) # Errore
-        self.tree.setColumnWidth(5, 140) # Certificato
-        self.tree.setColumnWidth(6, 120) # Scadenza
-        self.tree.setColumnWidth(7, 120) # Emissione
-        self.tree.setColumnWidth(8, 100) # ID
-
-        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.tree.customContextMenuRequested.connect(self._show_context_menu)
-
         layout.addWidget(self.tree)
 
     def refresh_data(self):
