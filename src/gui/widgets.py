@@ -925,59 +925,95 @@ class DetailedInfoDialog(QDialog):
         self.accept()
 
 
-class InfoLabel(QLabel):
-    """Etichetta informativa con icona che apre un popup al click."""
+class InfoLabel(QPushButton):
+    """
+    Bottone informativo accessibile (icona ⓘ) che apre un popup al click.
+    Accessibile via tastiera (Tab + Enter/Space).
+    """
     def __init__(self, title, get_text_callback, parent=None):
         super().__init__("ⓘ", parent)
         self.title = title
-        self.get_text_callback = get_text_callback # Funzione che restituisce il testo aggiornato
+        self.get_text_callback = get_text_callback  # Funzione che restituisce il testo aggiornato
+
+        # Accessibility settings
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.setAccessibleName(f"Info: {title}")
+        self.setAccessibleDescription("Mostra dettagli aggiuntivi")
+        self.setToolTip("Mostra dettagli")
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        # Connect click signal (works for Mouse and Keyboard)
+        self.clicked.connect(self._show_info)
+
         self.setStyleSheet("""
-            QLabel {
+            QPushButton {
                 color: #6c757d;
                 font-weight: bold;
                 font-size: 16px;
                 background: transparent;
+                border: none;
                 padding: 0px 5px;
+                text-align: center;
             }
-            QLabel:hover {
+            QPushButton:hover {
                 color: #0d6efd;
+            }
+            QPushButton:focus {
+                color: #0d6efd;
+                border: 1px dotted #0d6efd;
+                border-radius: 4px;
             }
         """)
 
-    def mousePressEvent(self, event):
+    def _show_info(self):
         """Mostra il dialog con il testo aggiornato, posizionato in modo intelligente."""
         content = self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
         dlg = DetailedInfoDialog(self.title, content, self.window())
 
         # Smart Positioning Logic
-        cursor_pos = event.globalPosition().toPoint()
-        screen = QApplication.screenAt(cursor_pos)
+        # Se attivato via mouse (cursore sopra il widget), usa la posizione del cursore
+        # Se attivato via tastiera, usa la posizione del widget
+        cursor_pos = QCursor.pos()
+
+        # Calculate global geometry manually since globalGeometry() doesn't exist
+        top_left = self.mapToGlobal(QPoint(0, 0))
+        widget_rect = QRect(top_left, self.size())
+
+        if widget_rect.contains(cursor_pos):
+            # Mouse activation
+            target_pos = cursor_pos
+        else:
+            # Keyboard activation: center of widget
+            target_pos = widget_rect.center()
+
+        screen = QApplication.screenAt(target_pos)
 
         if screen:
             screen_geo = screen.availableGeometry()
+            # Forza il calcolo della dimensione prima di muovere
+            dlg.adjustSize()
             dlg_width = dlg.width()
-            dlg_height = dlg.sizeHint().height() # approssimato, il layout non è ancora calcolato
+            dlg_height = dlg.height()
 
             # Calcola posizione X
-            x = cursor_pos.x()
-            # Se il dialog esce a destra dello schermo, spostalo a sinistra del cursore
+            x = target_pos.x()
+            # Se il dialog esce a destra dello schermo, spostalo a sinistra del punto target
             if x + dlg_width > screen_geo.right():
-                x = cursor_pos.x() - dlg_width - 10 # 10px di margine
+                x = target_pos.x() - dlg_width - 10  # 10px di margine
             else:
-                x = cursor_pos.x() + 10 # 10px offset standard
+                x = target_pos.x() + 10  # 10px offset standard
 
             # Calcola posizione Y (evita di uscire sotto)
-            y = cursor_pos.y()
+            y = target_pos.y()
             if y + dlg_height > screen_geo.bottom():
-                y = cursor_pos.y() - dlg_height - 10
+                y = target_pos.y() - dlg_height - 10
             else:
-                y = cursor_pos.y() + 10
+                y = target_pos.y() + 10
 
             dlg.move(x, y)
         else:
             # Fallback se screen non trovato
-            dlg.move(cursor_pos)
+            dlg.move(target_pos)
 
         dlg.exec()
 
