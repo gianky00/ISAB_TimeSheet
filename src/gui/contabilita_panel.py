@@ -1595,6 +1595,29 @@ class CertificatiCampioneTab(QWidget):
 
         # Toolbar
         toolbar = QHBoxLayout()
+
+        self.btn_expand = QPushButton("Espandi Tutto")
+        self.btn_expand.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d; color: white; border: none;
+                border-radius: 4px; padding: 6px 12px; font-weight: bold;
+            }
+            QPushButton:hover { background-color: #5a6268; }
+        """)
+        self.btn_expand.clicked.connect(self.tree.expandAll)
+        toolbar.addWidget(self.btn_expand)
+
+        self.btn_collapse = QPushButton("Comprimi Tutto")
+        self.btn_collapse.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d; color: white; border: none;
+                border-radius: 4px; padding: 6px 12px; font-weight: bold;
+            }
+            QPushButton:hover { background-color: #5a6268; }
+        """)
+        self.btn_collapse.clicked.connect(self.tree.collapseAll)
+        toolbar.addWidget(self.btn_collapse)
+
         toolbar.addStretch()
 
         self.btn_analyze = QPushButton("📊 Analizza")
@@ -1733,20 +1756,17 @@ class CertificatiCampioneTab(QWidget):
 
         # Apply Color Logic based on "Stato" column (IDX_STATO)
         stato_text = strings[self.IDX_STATO].lower()
+        icon = "🟢" # Default Green
+
+        is_red = False
+        is_orange = False
+
         if "scaduto" in stato_text:
-            # Red for expired
-            item.setForeground(self.IDX_STATO, QColor("#dc3545"))
-            item.setForeground(self.IDX_SCADENZA, QColor("#dc3545"))
-            font = item.font(self.IDX_STATO)
-            font.setBold(True)
-            item.setFont(self.IDX_STATO, font)
+            is_red = True
+            icon = "🔴"
         elif "scade oggi" in stato_text:
-             # Orange for today
-            item.setForeground(self.IDX_STATO, QColor("#fd7e14"))
-            item.setForeground(self.IDX_SCADENZA, QColor("#fd7e14"))
-            font = item.font(self.IDX_STATO)
-            font.setBold(True)
-            item.setFont(self.IDX_STATO, font)
+            is_orange = True
+            icon = "🟠"
         elif "scade tra" in stato_text:
             # Check days
             try:
@@ -1754,14 +1774,32 @@ class CertificatiCampioneTab(QWidget):
                 days_str = stato_text.split("tra")[1].split("giorni")[0].strip()
                 days = int(days_str)
                 if days <= 3:
-                     # Orange for imminent (<= 3 days)
-                    item.setForeground(self.IDX_STATO, QColor("#fd7e14"))
-                    item.setForeground(self.IDX_SCADENZA, QColor("#fd7e14"))
-                    font = item.font(self.IDX_STATO)
-                    font.setBold(True)
-                    item.setFont(self.IDX_STATO, font)
+                    is_orange = True
+                    icon = "🟠"
             except:
                 pass
+
+        # Apply Styles
+        if is_red:
+            item.setForeground(self.IDX_STATO, QColor("#dc3545"))
+            item.setForeground(self.IDX_SCADENZA, QColor("#dc3545"))
+            font = item.font(self.IDX_STATO)
+            font.setBold(True)
+            item.setFont(self.IDX_STATO, font)
+        elif is_orange:
+            item.setForeground(self.IDX_STATO, QColor("#fd7e14"))
+            item.setForeground(self.IDX_SCADENZA, QColor("#fd7e14"))
+            font = item.font(self.IDX_STATO)
+            font.setBold(True)
+            item.setFont(self.IDX_STATO, font)
+        else:
+            # Valid (Green)
+            item.setForeground(self.IDX_STATO, QColor("#198754"))
+
+        # Prepend Icon
+        current_text = strings[self.IDX_STATO]
+        if current_text:
+            item.setText(self.IDX_STATO, f"{icon} {current_text}")
 
         return item
 
