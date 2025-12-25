@@ -1011,7 +1011,7 @@ class CaricoTSPanel(BaseBotPanel):
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
         # Tabella dati
-        group = QGroupBox("Dati Timesheet da Caricare")
+        group = QGroupBox("Parametri")
         group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -1029,14 +1029,6 @@ class CaricoTSPanel(BaseBotPanel):
         """)
         group_layout = QVBoxLayout(group)
         
-        # Sottotitolo Istruzioni
-        instructions = QLabel(
-            "💡 Tasto destro per aggiungere/rimuovere righe. Modifica i valori direttamente nelle celle."
-        )
-        instructions.setStyleSheet("color: #6c757d; font-size: 14px; padding-bottom: 5px;")
-        instructions.setWordWrap(True)
-        group_layout.addWidget(instructions)
-
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()

@@ -164,7 +164,7 @@ class SettingsPanel(QWidget):
         self.groups.append(account_group)
         
         self.account_list = QListWidget()
-        self.account_list.setMinimumHeight(120)
+        self.account_list.setMaximumHeight(100) # Circa 3 righe
         self.account_list.setStyleSheet("""
             QListWidget {
                 border: 1px solid #ced4da;
@@ -223,7 +223,7 @@ class SettingsPanel(QWidget):
         contract_layout.addWidget(contract_hint)
 
         self.contract_list = QListWidget()
-        self.contract_list.setMinimumHeight(120)
+        self.contract_list.setMaximumHeight(130) # Circa 4 righe
         self.contract_list.setStyleSheet("""
             QListWidget {
                 border: 1px solid #ced4da;
@@ -280,7 +280,7 @@ class SettingsPanel(QWidget):
         fornitori_layout.addWidget(fornitori_hint)
         
         self.fornitori_list = QListWidget()
-        self.fornitori_list.setMinimumHeight(150)
+        self.fornitori_list.setMaximumHeight(100) # Circa 3 righe
         self.fornitori_list.setStyleSheet("""
             QListWidget {
                 border: 1px solid #ced4da;
@@ -469,11 +469,15 @@ class SettingsPanel(QWidget):
         
         # --- Sezione Diagnostica ---
         diag_group = self._create_group_box("🛠️ Diagnostica & Licenza")
-        diag_layout = QVBoxLayout(diag_group)
+        diag_layout = QHBoxLayout(diag_group) # Horizontal layout
         self.groups.append(diag_group)
 
+        diag_label = QLabel("Gestione file di log e licenza:")
+        diag_label.setStyleSheet("font-size: 15px;")
+        diag_layout.addWidget(diag_label)
+
         open_folder_btn = QPushButton("📂 Apri cartella Logs e Licenza")
-        open_folder_btn.setMinimumHeight(45)
+        open_folder_btn.setMinimumHeight(40)
         open_folder_btn.clicked.connect(self._open_data_folder)
         self._style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)
