@@ -7,7 +7,8 @@ import re
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QMessageBox, QMenu, QTableWidget,
-    QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QAbstractItemView
+    QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QAbstractItemView,
+    QTreeWidget, QTreeWidgetItem
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QAction, QFont, QColor
@@ -510,8 +511,8 @@ class ContabilitaYearTab(QWidget):
     """Tab per un singolo anno (Tabella Dati)."""
 
     COLUMNS = [
-        'DATA PREV.', 'MESE', 'N°PREV.', 'TOTALE PREV.', "ATTIVITA'",
-        'TCL', 'ODC', "STATO ATTIVITA'", 'TIPOLOGIA', 'ORE SP', 'RESA', 'ANNOTAZIONI'
+        "DATA\nPREV.", "MESE", "N°\nPREV.", "TOTALE\nPREV.", "ATTIVITA'",
+        "TCL", "ODC", "STATO\nATTIVITA'", "TIPOLOGIA", "ORE\nSP", "RESA", "ANNOTAZIONI"
     ]
 
     # Indici colonne nascoste nei dati ritornati dal manager
@@ -595,6 +596,9 @@ class ContabilitaYearTab(QWidget):
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
+
+        # Force Read-Only
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
         layout.addWidget(self.table)
 
@@ -834,8 +838,8 @@ class GiornaliereYearTab(QWidget):
 
     # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
     COLUMNS = [
-        'DATA', 'PERSONALE', 'TCL', 'DESCRIZIONE ATTIVITA', 'N°PREV.', 'ODC',
-        'PDL', 'INIZIO', 'FINE', 'ORE'
+        "DATA", "PERSONALE", "TCL", "DESCRIZIONE\nATTIVITA'", "N°\nPREV.", "ODC",
+        "PDL", "INIZIO", "FINE", "ORE"
     ]
 
     # Mappatura indici basata sulla query get_giornaliere_by_year
@@ -914,6 +918,9 @@ class GiornaliereYearTab(QWidget):
         # Context Menu
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
+
+        # Force Read-Only
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
         layout.addWidget(self.table)
 
@@ -1285,6 +1292,9 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
 
+        # Force Read-Only
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+
         layout.addWidget(self.table)
 
     def refresh_data(self):
@@ -1506,11 +1516,11 @@ class AttivitaProgrammateTab(QWidget):
 
 
 class CertificatiCampioneTab(QWidget):
-    """Tab per Certificati Campione."""
+    """Tab per Certificati Campione (Tree View)."""
 
-    COLUMNS = [
-        'Modello / Tipo', 'Costruttore', 'Matricola', 'Range Strumento', 'Errore max %',
-        'Certificato Taratura', 'Scadenza Certificato', 'Emissione Certificato', 'ID-COEMI', 'Stato Certificato'
+    HEADERS = [
+        "Modello /\nTipo", "Costruttore", "Matricola", "Range\nStrumento", "Errore\nmax %",
+        "Certificato\nTaratura", "Scadenza\nCertificato", "Emissione\nCertificato", "ID-COEMI", "Stato\nCertificato"
     ]
 
     def __init__(self, parent=None):
@@ -1539,25 +1549,31 @@ class CertificatiCampioneTab(QWidget):
 
         layout.addLayout(toolbar)
 
-        # Table
-        self.table = ExcelTableWidget()
-        self.table.setColumnCount(len(self.COLUMNS))
-        self.table.setHorizontalHeaderLabels(self.COLUMNS)
-        self.table.setWordWrap(True)
+        # Tree Widget
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels(self.HEADERS)
+        self.tree.setWordWrap(True)
+        self.tree.setAlternatingRowColors(True)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        # FORCE READ ONLY
+        self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
         # Styling
-        self.table.setStyleSheet("""
-            QTableWidget {
+        self.tree.setStyleSheet("""
+            QTreeWidget {
                 background-color: white;
                 color: black;
-                gridline-color: #e9ecef;
                 font-size: 13px;
                 border: 1px solid #dee2e6;
-                selection-background-color: #e7f1ff;
-                selection-color: #0d6efd;
             }
-            QTableWidget::item { color: black; }
-            QTableWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
+            QTreeWidget::item {
+                color: black;
+                padding: 4px;
+            }
+            QTreeWidget::item:selected {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+            }
             QHeaderView::section {
                 background-color: #f8f9fa;
                 color: black;
@@ -1567,81 +1583,171 @@ class CertificatiCampioneTab(QWidget):
             }
         """)
 
-        self.table.auto_copy_headers = True
-        header = self.table.horizontalHeader()
+        header = self.tree.header()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        # Optimized Widths
-        self.table.setColumnWidth(0, 200) # Modello (Widened)
-        self.table.setColumnWidth(1, 120) # Costruttore
-        self.table.setColumnWidth(2, 120) # Matricola (Widened)
-        self.table.setColumnWidth(3, 120) # Range (Widened)
-        self.table.setColumnWidth(4, 100) # Errore (Widened)
-        self.table.setColumnWidth(5, 140) # Certificato (Widened)
-        self.table.setColumnWidth(6, 120) # Scadenza (Widened)
-        self.table.setColumnWidth(7, 120) # Emissione (Widened)
-        self.table.setColumnWidth(8, 100) # ID
-        header.setSectionResizeMode(9, QHeaderView.ResizeMode.Stretch) # Stato
+        # Dimensions
+        self.tree.setColumnWidth(0, 200) # Modello
+        self.tree.setColumnWidth(1, 120) # Costruttore
+        self.tree.setColumnWidth(2, 120) # Matricola
+        self.tree.setColumnWidth(3, 120) # Range
+        self.tree.setColumnWidth(4, 100) # Errore
+        self.tree.setColumnWidth(5, 140) # Certificato
+        self.tree.setColumnWidth(6, 120) # Scadenza
+        self.tree.setColumnWidth(7, 120) # Emissione
+        self.tree.setColumnWidth(8, 100) # ID
 
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self._show_context_menu)
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._show_context_menu)
 
-        layout.addWidget(self.table)
+        layout.addWidget(self.tree)
 
     def refresh_data(self):
         self._load_data()
 
     def _load_data(self):
         data = ContabilitaManager.get_certificati_campione_data()
-        self.table.setSortingEnabled(False)
-        self.table.blockSignals(True)
-        self.table.setRowCount(0)
+        self.tree.clear()
+        self.tree.setSortingEnabled(False)
 
+        # Groups: Key -> List of rows
+        groups = {}
+
+        # Column Indices (based on HEADERS order which matches DB)
+        # 0: Modello, 1: Costruttore, 2: Matricola, 3: Range
+        # 4: Errore, 5: Certificato, 6: Scadenza, 7: Emissione, 8: ID, 9: Stato
+
+        for row_data in data:
+            # Key: (Modello, Costruttore, Matricola, Range)
+            k0 = str(row_data[0]).strip() if row_data[0] else ""
+            k1 = str(row_data[1]).strip() if row_data[1] else ""
+            k2 = str(row_data[2]).strip() if row_data[2] else ""
+            k3 = str(row_data[3]).strip() if row_data[3] else ""
+
+            key = (k0, k1, k2, k3)
+
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(row_data)
+
+        for key, rows in groups.items():
+            # Sort rows by Emissione (Index 7) Descending
+            def parse_date(r):
+                val = r[7]
+                if not val: return datetime.min
+                s = str(val).strip()
+                # Try common formats
+                for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+                    try: return datetime.strptime(s, fmt)
+                    except: continue
+                return datetime.min
+
+            rows.sort(key=parse_date, reverse=True)
+
+            # Latest is rows[0]
+            latest = rows[0]
+
+            # Create Top Item
+            top_item = self._create_item(latest)
+
+            # Add Children (History)
+            if len(rows) > 1:
+                for i in range(1, len(rows)):
+                     child = self._create_item(rows[i])
+                     top_item.addChild(child)
+
+            self.tree.addTopLevelItem(top_item)
+
+        self.tree.setSortingEnabled(True)
+
+    def _create_item(self, row_data):
+        strings = []
+        for i, val in enumerate(row_data):
+            # Format Errore max % (Index 4)
+            if i == 4:
+                strings.append(self._format_percentage(val))
+            else:
+                s = str(val).strip() if val is not None else ""
+                if s.lower() == 'nan': s = ""
+                strings.append(s)
+
+        item = QTreeWidgetItem(strings)
+        return item
+
+    def _format_percentage(self, val):
+        """Formats 0.0005 -> 0,05%, 0.01 -> 1%."""
+        if val is None or str(val).strip() == "": return ""
         try:
-            self.table.setRowCount(len(data))
-            for row_idx, row_data in enumerate(data):
-                for col_idx in range(len(self.COLUMNS)):
-                    # DB Order matches MAPPING values order which matches COLUMNS order
-                    val = row_data[col_idx]
-                    val_str = str(val).strip() if val is not None else ""
-                    if val_str.lower() == 'nan': val_str = ""
+            # Handle comma decimal input if present
+            s_val = str(val).replace(",", ".")
+            f = float(s_val)
+            pct = f * 100
 
-                    item = QTableWidgetItem(val_str)
-                    self.table.setItem(row_idx, col_idx, item)
-
-            self.table.resizeRowsToContents()
-        finally:
-            self.table.blockSignals(False)
-            self.table.setSortingEnabled(True)
+            # Format avoiding scientific notation
+            # Use 'f' but strip zeros? Or 'g'?
+            # 'g' is good but switches to sci notation for large/small numbers.
+            # 15.5 -> 15.5. 0.05 -> 0.05.
+            s = "{0:g}".format(pct)
+            return s.replace(".", ",") + "%"
+        except:
+            return str(val)
 
     def filter_data(self, text):
         search_terms = text.lower().split()
-        cols = self.table.columnCount()
-        for r in range(self.table.rowCount()):
-            if not text:
-                self.table.setRowHidden(r, False)
-                continue
+        root = self.tree.invisibleRootItem()
+        child_count = root.childCount()
 
-            row_visible = False
-            for c in range(cols):
-                item = self.table.item(r, c)
-                if item and item.text() and text.lower() in item.text().lower():
-                    row_visible = True
-                    break
+        for i in range(child_count):
+            item = root.child(i)
+            # Check Item
+            match = self._item_matches(item, search_terms)
 
-            if not row_visible:
-                 row_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
-                 if all(term in row_text for term in search_terms):
-                     row_visible = True
+            # Check children
+            child_match = False
+            for j in range(item.childCount()):
+                sub = item.child(j)
+                if self._item_matches(sub, search_terms):
+                    child_match = True
+                    sub.setHidden(False)
+                else:
+                    sub.setHidden(True)
 
-            self.table.setRowHidden(r, not row_visible)
+            # Logic: Show if item matches OR any child matches
+            if match or child_match:
+                item.setHidden(False)
+                if child_match and not match:
+                    item.setExpanded(True)
+            else:
+                item.setHidden(True)
+
+    def _item_matches(self, item, search_terms):
+        if not search_terms: return True
+        # Join all column text
+        row_text = " ".join([item.text(c).lower() for c in range(self.tree.columnCount())])
+        return all(term in row_text for term in search_terms)
 
     def _show_context_menu(self, pos):
+        item = self.tree.itemAt(pos)
+        if not item: return
+
         menu = QMenu(self)
         lyra = QAction("✨ Analizza Riga con Lyra", self)
-        lyra.triggered.connect(lambda: self.table._analyze_row_at(pos))
+        lyra.triggered.connect(lambda: self._analyze_item(item))
         menu.addAction(lyra)
-        menu.exec(self.table.viewport().mapToGlobal(pos))
+        menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def _analyze_item(self, item):
+        row_data = []
+        for c in range(self.tree.columnCount()):
+            header = self.tree.headerItem().text(c).replace('\n', ' ')
+            row_data.append(f"**{header}**: {item.text(c)}")
+
+        context = " | ".join(row_data)
+
+        win = self.window()
+        if hasattr(win, "analyze_with_lyra"):
+            win.analyze_with_lyra(context)
 
     def _run_analysis(self):
         """Esegue lo script PowerShell di analisi."""
