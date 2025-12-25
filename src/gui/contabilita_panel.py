@@ -1515,6 +1515,55 @@ class AttivitaProgrammateTab(QWidget):
         menu.exec(self.table.viewport().mapToGlobal(pos))
 
 
+class SortableTreeWidgetItem(QTreeWidgetItem):
+    """Custom QTreeWidgetItem che implementa l'ordinamento numerico e per data."""
+
+    def __lt__(self, other):
+        column = self.treeWidget().sortColumn()
+        text1 = self.text(column).strip()
+        text2 = other.text(column).strip()
+
+        # Date Sorting (Colonne Scadenza o Emissione)
+        # Identifichiamo le colonne data dai nomi nel parent (o hardcoded logicamente)
+        # Per semplicità, proviamo a parsare se sembra una data
+        if "/" in text1 and "/" in text2 and len(text1) <= 10:
+            try:
+                # Prova vari formati data comuni in Italia
+                for fmt in ("%d/%m/%Y", "%Y/%m/%d"):
+                    try:
+                        dt1 = datetime.strptime(text1, fmt)
+                        dt2 = datetime.strptime(text2, fmt)
+                        return dt1 < dt2
+                    except ValueError:
+                        continue
+            except:
+                pass
+
+        # Percentage Sorting (es. "0,05%")
+        if "%" in text1 and "%" in text2:
+            try:
+                # Rimuovi % e converte , in .
+                v1 = float(text1.replace("%", "").replace(",", ".").strip())
+                v2 = float(text2.replace("%", "").replace(",", ".").strip())
+                return v1 < v2
+            except:
+                pass
+
+        # Numeric Sorting (es. ID o valori puri)
+        # Se entrambi sono numeri (con o senza virgola)
+        if text1 and text2:
+            try:
+                # Tenta float puro (con . o ,)
+                v1 = float(text1.replace(",", "."))
+                v2 = float(text2.replace(",", "."))
+                return v1 < v2
+            except:
+                pass
+
+        # Fallback String Sorting
+        return text1.lower() < text2.lower()
+
+
 class CertificatiCampioneTab(QWidget):
     """Tab per Certificati Campione (Tree View)."""
 
@@ -1522,6 +1571,18 @@ class CertificatiCampioneTab(QWidget):
         "Modello /\nTipo", "Costruttore", "Matricola", "Range\nStrumento", "Errore\nmax %",
         "Certificato\nTaratura", "Scadenza\nCertificato", "Emissione\nCertificato", "ID-COEMI", "Stato\nCertificato"
     ]
+
+    # Column Index Constants
+    IDX_MODELLO = 0
+    IDX_COSTRUTTORE = 1
+    IDX_MATRICOLA = 2
+    IDX_RANGE = 3
+    IDX_ERRORE = 4
+    IDX_CERTIFICATO = 5
+    IDX_SCADENZA = 6
+    IDX_EMISSIONE = 7
+    IDX_ID = 8
+    IDX_STATO = 9
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1614,16 +1675,12 @@ class CertificatiCampioneTab(QWidget):
         # Groups: Key -> List of rows
         groups = {}
 
-        # Column Indices (based on HEADERS order which matches DB)
-        # 0: Modello, 1: Costruttore, 2: Matricola, 3: Range
-        # 4: Errore, 5: Certificato, 6: Scadenza, 7: Emissione, 8: ID, 9: Stato
-
         for row_data in data:
             # Key: (Modello, Costruttore, Matricola, Range)
-            k0 = str(row_data[0]).strip() if row_data[0] else ""
-            k1 = str(row_data[1]).strip() if row_data[1] else ""
-            k2 = str(row_data[2]).strip() if row_data[2] else ""
-            k3 = str(row_data[3]).strip() if row_data[3] else ""
+            k0 = str(row_data[self.IDX_MODELLO]).strip() if row_data[self.IDX_MODELLO] else ""
+            k1 = str(row_data[self.IDX_COSTRUTTORE]).strip() if row_data[self.IDX_COSTRUTTORE] else ""
+            k2 = str(row_data[self.IDX_MATRICOLA]).strip() if row_data[self.IDX_MATRICOLA] else ""
+            k3 = str(row_data[self.IDX_RANGE]).strip() if row_data[self.IDX_RANGE] else ""
 
             key = (k0, k1, k2, k3)
 
@@ -1632,9 +1689,9 @@ class CertificatiCampioneTab(QWidget):
             groups[key].append(row_data)
 
         for key, rows in groups.items():
-            # Sort rows by Emissione (Index 7) Descending
+            # Sort rows by Emissione Descending
             def parse_date(r):
-                val = r[7]
+                val = r[self.IDX_EMISSIONE]
                 if not val: return datetime.min
                 s = str(val).strip()
                 # Try common formats
@@ -1664,15 +1721,48 @@ class CertificatiCampioneTab(QWidget):
     def _create_item(self, row_data):
         strings = []
         for i, val in enumerate(row_data):
-            # Format Errore max % (Index 4)
-            if i == 4:
+            # Format Errore max %
+            if i == self.IDX_ERRORE:
                 strings.append(self._format_percentage(val))
             else:
                 s = str(val).strip() if val is not None else ""
                 if s.lower() == 'nan': s = ""
                 strings.append(s)
 
-        item = QTreeWidgetItem(strings)
+        item = SortableTreeWidgetItem(strings)
+
+        # Apply Color Logic based on "Stato" column (IDX_STATO)
+        stato_text = strings[self.IDX_STATO].lower()
+        if "scaduto" in stato_text:
+            # Red for expired
+            item.setForeground(self.IDX_STATO, QColor("#dc3545"))
+            item.setForeground(self.IDX_SCADENZA, QColor("#dc3545"))
+            font = item.font(self.IDX_STATO)
+            font.setBold(True)
+            item.setFont(self.IDX_STATO, font)
+        elif "scade oggi" in stato_text:
+             # Orange for today
+            item.setForeground(self.IDX_STATO, QColor("#fd7e14"))
+            item.setForeground(self.IDX_SCADENZA, QColor("#fd7e14"))
+            font = item.font(self.IDX_STATO)
+            font.setBold(True)
+            item.setFont(self.IDX_STATO, font)
+        elif "scade tra" in stato_text:
+            # Check days
+            try:
+                # "Scade tra X giorni"
+                days_str = stato_text.split("tra")[1].split("giorni")[0].strip()
+                days = int(days_str)
+                if days <= 3:
+                     # Orange for imminent (<= 3 days)
+                    item.setForeground(self.IDX_STATO, QColor("#fd7e14"))
+                    item.setForeground(self.IDX_SCADENZA, QColor("#fd7e14"))
+                    font = item.font(self.IDX_STATO)
+                    font.setBold(True)
+                    item.setFont(self.IDX_STATO, font)
+            except:
+                pass
+
         return item
 
     def _format_percentage(self, val):
