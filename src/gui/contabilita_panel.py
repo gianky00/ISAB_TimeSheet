@@ -372,21 +372,45 @@ class ContabilitaPanel(QWidget):
         elif current_main_widget == getattr(self, 'certificati_widget', None):
             target_widget = self.certificati_widget
 
-        if target_widget and hasattr(target_widget, 'table'):
-            try:
-                # Disconnect all first to avoid duplicates (safe pattern)
-                try: target_widget.table.selectionModel().selectionChanged.disconnect()
-                except Exception: pass
+        if target_widget:
+            # Table-based widgets
+            if hasattr(target_widget, 'table'):
+                try:
+                    # Disconnect
+                    try: target_widget.table.selectionModel().selectionChanged.disconnect()
+                    except Exception: pass
+                    # Connect
+                    target_widget.table.selectionModel().selectionChanged.connect(
+                        lambda s, d: self._update_selection_total(target_widget.table)
+                    )
+                except Exception as e:
+                    print(f"Errore connessione segnali selezione (Table): {e}")
 
-                target_widget.table.selectionModel().selectionChanged.connect(
-                    lambda s, d: self._update_selection_total(target_widget.table)
-                )
-            except Exception as e:
-                print(f"Errore connessione segnali selezione: {e}")
+            # Tree-based widgets (Certificati)
+            elif hasattr(target_widget, 'tree'):
+                try:
+                    try: target_widget.tree.itemSelectionChanged.disconnect()
+                    except Exception: pass
 
-    def _update_selection_total(self, table_widget):
+                    target_widget.tree.itemSelectionChanged.connect(
+                        lambda: self._update_selection_total(target_widget.tree)
+                    )
+                except Exception as e:
+                    print(f"Errore connessione segnali selezione (Tree): {e}")
+
+    def _update_selection_total(self, widget):
         """Calculates total of selected ORE SP column and row count."""
         try:
+            # Handle QTreeWidget (Certificati)
+            if isinstance(widget, QTreeWidget):
+                selected_items = widget.selectedItems()
+                count = len(selected_items)
+                self.selection_count_label.setText(f"Selezionati: {count}")
+                self.selection_sum_label.setText("") # No sum for certificates
+                return
+
+            # Handle QTableWidget
+            table_widget = widget
             selection_model = table_widget.selectionModel()
             indexes = selection_model.selectedIndexes()
 
