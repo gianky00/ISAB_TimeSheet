@@ -1,15 +1,54 @@
 """
 Bot TS - Help Panel
-Pannello Guida e Scorciatoie.
+Pannello Guida rivisitato con stile moderno e coinvolgente.
 """
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QTabWidget, QTableWidget, QHeaderView,
-    QTableWidgetItem, QLabel, QFrame
+    QWidget, QVBoxLayout, QScrollArea, QLabel, QFrame, QGridLayout, QHBoxLayout
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QColor, QPalette
+
+class HelpCard(QFrame):
+    """Card stilizzata per sezioni della guida."""
+    def __init__(self, title, icon, content_html, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #dee2e6;
+                border-radius: 10px;
+            }
+            QFrame:hover {
+                border-color: #0d6efd;
+                background-color: #f8f9fa;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+
+        # Header
+        header_layout = QHBoxLayout()
+        icon_lbl = QLabel(icon)
+        icon_lbl.setStyleSheet("font-size: 24px; border: none; background: transparent;")
+        header_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel(title)
+        title_lbl.setStyleSheet("font-size: 18px; font-weight: bold; color: #495057; border: none; background: transparent;")
+        header_layout.addWidget(title_lbl)
+        header_layout.addStretch()
+
+        layout.addLayout(header_layout)
+
+        # Content
+        content_lbl = QLabel(content_html)
+        content_lbl.setWordWrap(True)
+        content_lbl.setTextFormat(Qt.TextFormat.RichText)
+        content_lbl.setStyleSheet("color: #6c757d; font-size: 14px; border: none; background: transparent;")
+        layout.addWidget(content_lbl)
 
 class HelpPanel(QWidget):
-    """Pannello principale per la Guida."""
+    """Pannello Guida moderno."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -19,111 +58,82 @@ class HelpPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Header
+        # Header Hero Section
         header = QFrame()
         header.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
-                padding: 20px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #667eea, stop:1 #764ba2);
+                border-bottom-left-radius: 15px;
+                border-bottom-right-radius: 15px;
             }
         """)
         header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(30, 30, 30, 30)
 
-        title = QLabel("📚 Guida")
-        title.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
+        title = QLabel("📚 Centro Assistenza")
+        title.setStyleSheet("color: white; font-size: 28px; font-weight: 800;")
         header_layout.addWidget(title)
 
-        desc = QLabel("Manuale utente e riferimenti rapidi")
-        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 16px;")
+        desc = QLabel("Scopri come ottenere il massimo dal tuo assistente digitale.")
+        desc.setStyleSheet("color: rgba(255,255,255,0.9); font-size: 16px;")
         header_layout.addWidget(desc)
 
         layout.addWidget(header)
 
-        # Tabs
-        self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #dee2e6;
-                background-color: white;
-            }
-            QTabBar::tab {
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                padding: 10px 20px;
-                margin-right: 2px;
-                color: #495057;
-                font-weight: bold;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom-color: white;
-                color: #0d6efd;
-            }
-        """)
+        # Scroll Area per le card
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("background-color: transparent;")
 
-        # Tab Scorciatoie
-        self.shortcuts_tab = self._create_shortcuts_tab()
-        self.tabs.addTab(self.shortcuts_tab, "⌨️ Scorciatoie")
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(20)
+        content_layout.setContentsMargins(20, 20, 20, 20)
 
-        layout.addWidget(self.tabs)
+        # Grid per le card
+        grid = QGridLayout()
+        grid.setSpacing(20)
 
-    def _create_shortcuts_tab(self) -> QWidget:
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
+        # Card 1: Scorciatoie
+        shortcuts_html = """
+        <ul style="margin-left: -20px;">
+            <li><b>F5</b>: Aggiorna / Avvia</li>
+            <li><b>Ctrl + F</b>: Cerca nel database</li>
+            <li><b>Ctrl + S</b>: Salva impostazioni</li>
+            <li><b>Ctrl + C</b>: Copia righe</li>
+        </ul>
+        """
+        grid.addWidget(HelpCard("Scorciatoie Rapide", "⚡", shortcuts_html), 0, 0)
 
-        table = QTableWidget()
-        table.setColumnCount(2)
-        table.setHorizontalHeaderLabels(["Tasto / Combinazione", "Azione"])
-        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        table.verticalHeader().setVisible(False)
-        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
-        table.setStyleSheet("""
-            QTableWidget {
-                border: none;
-                gridline-color: #e9ecef;
-                font-size: 14px;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                padding: 10px;
-                border: none;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-            }
-            QTableWidget::item {
-                padding: 10px;
-            }
-        """)
+        # Card 2: Modules
+        modules_html = """
+        <p>I moduli sono indipendenti:</p>
+        <ul style="margin-left: -20px;">
+            <li><b>Dettagli OdA</b>: Analisi ordini</li>
+            <li><b>Scarico TS</b>: Download dati</li>
+            <li><b>Timbrature</b>: Gestione presenze</li>
+            <li><b>Carico TS</b>: Upload portale</li>
+        </ul>
+        """
+        grid.addWidget(HelpCard("Moduli Indipendenti", "🧩", modules_html), 0, 1)
 
-        shortcuts = [
-            ("F5", "Aggiorna i dati o avvia l'operazione corrente"),
-            ("Ctrl + F", "Attiva la barra di ricerca (se disponibile)"),
-            ("Ctrl + S", "Salva le impostazioni (se nel pannello Impostazioni)"),
-            ("Ctrl + C", "Copia le righe selezionate nelle tabelle"),
-            ("Ctrl + A", "Seleziona tutte le righe nelle tabelle")
-        ]
+        # Card 3: Lyra AI
+        lyra_html = """
+        <p>Chiedi a <b>Lyra</b> di analizzare i dati per te.</p>
+        <p>Usa il tasto destro su una riga e seleziona <i>"Analizza con Lyra"</i> per ottenere insight immediati.</p>
+        """
+        grid.addWidget(HelpCard("Intelligenza Artificiale", "✨", lyra_html), 1, 0)
 
-        table.setRowCount(len(shortcuts))
-        for i, (keys, desc) in enumerate(shortcuts):
-            k_item = QTableWidgetItem(keys)
-            k_item.setFont(self.font()) # Reset font
-            k_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            k_item.setBackground(Qt.GlobalColor.white)
+        # Card 4: Supporto
+        support_html = """
+        <p>Hai bisogno di aiuto?</p>
+        <p>Controlla la sezione <b>Impostazioni > Diagnostica</b> per visualizzare i log dettagliati e verificare la licenza.</p>
+        """
+        grid.addWidget(HelpCard("Supporto Tecnico", "🛠️", support_html), 1, 1)
 
-            # Badge style for keys
-            # Can't style single item easily with CSS badge, so just text for now.
-            # Maybe bold?
-            f = k_item.font()
-            f.setBold(True)
-            k_item.setFont(f)
+        content_layout.addLayout(grid)
+        content_layout.addStretch()
 
-            d_item = QTableWidgetItem(desc)
-
-            table.setItem(i, 0, k_item)
-            table.setItem(i, 1, d_item)
-
-        layout.addWidget(table)
-        return widget
+        scroll.setWidget(content_widget)
+        layout.addWidget(scroll)

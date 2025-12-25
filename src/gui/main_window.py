@@ -462,6 +462,25 @@ class MainWindow(QMainWindow):
         """Metodo pubblico per navigare alle impostazioni."""
         self._navigate_to(4)
 
+    def navigate_to_panel(self, panel_key: str):
+        """
+        Naviga a un pannello specifico (usato dalla Dashboard).
+        Keys: 'dettagli_oda', 'scarico_ts', 'timbrature', 'carico_ts'
+        """
+        # 1. Switch to Automazioni Page (Index 1)
+        self._navigate_to(1)
+
+        # 2. Switch to specific Tab
+        key_map = {
+            "dettagli_oda": 0,
+            "scarico_ts": 1,
+            "timbrature": 2,
+            "carico_ts": 3
+        }
+
+        if panel_key in key_map:
+            self.automazioni_widget.setCurrentIndex(key_map[panel_key])
+
     def analyze_with_lyra(self, context_text: str):
         """Passa alla vista Lyra e analizza il contesto fornito."""
         self._navigate_to(2) # Switch to Lyra
