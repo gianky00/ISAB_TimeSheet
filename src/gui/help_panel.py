@@ -106,17 +106,17 @@ class HelpPanel(QWidget):
         """
         grid.addWidget(HelpCard("Scorciatoie Rapide", "⚡", shortcuts_html), 0, 0)
 
-        # Card 2: Workflow
-        workflow_html = """
-        <p>Il flusso di lavoro ideale:</p>
-        <ol style="margin-left: -20px;">
-            <li>Scarica i <b>Dettagli OdA</b>.</li>
-            <li>Esegui lo <b>Scarico TS</b>.</li>
-            <li>Verifica le <b>Timbrature</b>.</li>
-            <li>Effettua il <b>Carico TS</b>.</li>
-        </ol>
+        # Card 2: Modules
+        modules_html = """
+        <p>I moduli sono indipendenti:</p>
+        <ul style="margin-left: -20px;">
+            <li><b>Dettagli OdA</b>: Analisi ordini</li>
+            <li><b>Scarico TS</b>: Download dati</li>
+            <li><b>Timbrature</b>: Gestione presenze</li>
+            <li><b>Carico TS</b>: Upload portale</li>
+        </ul>
         """
-        grid.addWidget(HelpCard("Workflow Ottimizzato", "🔄", workflow_html), 0, 1)
+        grid.addWidget(HelpCard("Moduli Indipendenti", "🧩", modules_html), 0, 1)
 
         # Card 3: Lyra AI
         lyra_html = """
