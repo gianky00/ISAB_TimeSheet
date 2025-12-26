@@ -8,31 +8,28 @@ import time
 
 from src.bots.base import BaseBot
 from src.bots.dettagli_oda.pages.dettagli_oda_page import DettagliOdAPage
+from src.bots import register_bot
 
+@register_bot('dettagli_oda')
 class DettagliOdABot(BaseBot):
     
-    @staticmethod
-    def get_name() -> str:
-        return "Dettagli OdA"
-    
-    @staticmethod
-    def get_description() -> str:
-        return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
-    
-    @staticmethod
-    def get_columns() -> list:
-        return [
+    METADATA = {
+        "name": "Dettagli OdA",
+        "description": "Accede ai Dettagli OdA - browser rimane aperto",
+        "icon": "📋",
+        "columns": [
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": []}
-        ]
+        ],
+        "config_key": "last_oda_data",
+        "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione"
+    }
     
     @property
-    def name(self) -> str:
-        return "Dettagli OdA"
+    def name(self) -> str: return self.METADATA["name"]
     
     @property
-    def description(self) -> str:
-        return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
+    def description(self) -> str: return self.METADATA["description"]
     
     def __init__(self, data_da: str = "01.01.2024", data_a: str = "31.12.2025", fornitore: str = "KK10608 - COEMI S.R.L.", **kwargs):
         super().__init__(**kwargs)

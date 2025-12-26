@@ -5,40 +5,44 @@ Bot for Carico TS using POM.
 from typing import List, Dict, Any
 from src.bots.base import BaseBot
 from src.bots.carico_ts.pages.carico_ts_page import CaricoTSPage
+from src.bots import register_bot
 
+@register_bot('carico_ts')
 class CaricoTSBot(BaseBot):
     
     FORNITORE = "KK10608 - COEMI S.R.L."
     
-    @staticmethod
-    def get_name() -> str:
-        return "Carico TS"
-    
-    @staticmethod
-    def get_description() -> str:
-        return "Caricamento automatico timesheet"
-    
-    @staticmethod
-    def get_columns() -> list:
-        # Full list from original code
-        return [
+    METADATA = {
+        "name": "Carico TS",
+        "description": "Carica i timesheet sul portale ISAB",
+        "icon": "📤",
+        "columns": [
             {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"},
             {"name": "Codice Fiscale", "type": "text"},
-            {"name": "Cognome", "type": "text"},
-            {"name": "Nome", "type": "text"},
-            {"name": "Mese", "type": "text"},
-            {"name": "Anno", "type": "text"},
-            {"name": "G 1", "type": "text"}, {"name": "G 2", "type": "text"}, {"name": "G 3", "type": "text"},
-            {"name": "G 4", "type": "text"}, {"name": "G 5", "type": "text"}, {"name": "G 6", "type": "text"},
-            {"name": "G 7", "type": "text"}, {"name": "G 8", "type": "text"}, {"name": "G 9", "type": "text"},
+            {"name": "Ingresso", "type": "text"},
+            {"name": "Uscita", "type": "text"},
+            {"name": "Tipo Prestazione", "type": "text"},
+            {"name": "C", "type": "text"},
+            {"name": "M", "type": "text"},
+            {"name": "Str D", "type": "text"},
+            {"name": "Str N", "type": "text"},
+            {"name": "Str F D", "type": "text"},
+            {"name": "Str F N", "type": "text"},
+            {"name": "Sq", "type": "text"},
+            {"name": "Nota D", "type": "text"},
+            {"name": "Nota S", "type": "text"},
+            {"name": "F S", "type": "text"},
             {"name": "G T", "type": "text"}
-        ]
+        ],
+        "config_key": "last_carico_ts_data"
+    }
 
     @property
-    def name(self) -> str: return "Carico TS"
+    def name(self) -> str: return self.METADATA["name"]
     
     @property
-    def description(self) -> str: return "Caricamento automatico timesheet"
+    def description(self) -> str: return self.METADATA["description"]
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
         rows = data if isinstance(data, list) else data.get('rows', [])

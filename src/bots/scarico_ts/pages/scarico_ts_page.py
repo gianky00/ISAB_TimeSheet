@@ -7,38 +7,18 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.webdriver.common.by import By
 
 from src.core.constants import Timeouts
+from src.bots.base.base_page import BasePage
 from src.bots.scarico_ts.locators import ScaricoTSLocators
-from selenium.webdriver.common.by import By # Explicit import for internal use
 
-class ScaricoTSPage:
+class ScaricoTSPage(BasePage):
     """Encapsulates interactions with the Scarico TS page."""
 
-    def __init__(self, driver: WebDriver, log_callback: Optional[callable] = None):
-        self.driver = driver
-        self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
-        self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
-        self._log = log_callback or print
-
-    def log(self, msg: str):
-        self._log(msg)
-
-    def _wait_for_overlay(self):
-        """Waits for loading overlay to disappear."""
-        try:
-            xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
-            WebDriverWait(self.driver, Timeouts.OVERLAY).until(
-                EC.invisibility_of_element_located((By.XPATH, xpath))
-            )
-            time.sleep(0.3)
-        except TimeoutException:
-            self.log("⚠️ Timeout attesa overlay.")
+    # Note: __init__ is inherited from BasePage
 
     def navigate_to_timesheet(self) -> bool:
         """Navigates to Report -> Timesheet."""
@@ -46,21 +26,15 @@ class ScaricoTSPage:
             self.log("Navigazione menu Report -> Timesheet...")
 
             # Click Report
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.REPORT_MENU)
-            ).click()
-            self._wait_for_overlay()
+            self.find_clickable(ScaricoTSLocators.REPORT_MENU).click()
+            self.wait_for_overlay()
 
             # Click Timesheet
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.TIMESHEET_MENU)
-            ).click()
+            self.find_clickable(ScaricoTSLocators.TIMESHEET_MENU).click()
 
             # Wait for page load (check for supplier arrow)
-            self.wait.until(
-                EC.visibility_of_element_located(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
-            )
-            self._wait_for_overlay()
+            self.find(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
+            self.wait_for_overlay()
             return True
 
         except Exception as e:
@@ -72,26 +46,24 @@ class ScaricoTSPage:
         try:
             # Select Supplier
             self.log(f"  Selezione fornitore: '{supplier}'...")
-            arrow = self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
-            )
+            arrow = self.find_clickable(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
             ActionChains(self.driver).move_to_element(arrow).click().perform()
 
             # Click Option
             option_xpath = f"//li[normalize-space(text())='{supplier}']"
+            # Using long_wait from BasePage logic via inherited wait or custom find logic
+            # We can use self.long_wait directly as it's initialized in BasePage
             option = self.long_wait.until(
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
             time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", option)
-            self._wait_for_overlay()
+            self.wait_for_overlay()
 
             # Set Date
             self.log(f"  Inserimento data '{date_from}'...")
-            date_field = self.wait.until(
-                EC.visibility_of_element_located(ScaricoTSLocators.DATE_FROM_FIELD)
-            )
+            date_field = self.find(ScaricoTSLocators.DATE_FROM_FIELD)
             date_field.clear()
             date_field.send_keys(date_from)
 
@@ -111,20 +83,20 @@ class ScaricoTSPage:
             """
 
             # Input OdA
-            field_oda = self.wait.until(EC.presence_of_element_located(ScaricoTSLocators.ODA_NUMBER_FIELD))
+            field_oda = self.find(ScaricoTSLocators.ODA_NUMBER_FIELD)
             self.driver.execute_script("arguments[0].value = arguments[1];", field_oda, oda_number)
             self.driver.execute_script(js_dispatch_events, field_oda)
 
             # Input Position
-            field_pos = self.wait.until(EC.presence_of_element_located(ScaricoTSLocators.ODA_POSITION_FIELD))
+            field_pos = self.find(ScaricoTSLocators.ODA_POSITION_FIELD)
             self.driver.execute_script("arguments[0].value = '';", field_pos)
             self.driver.execute_script("arguments[0].value = arguments[1];", field_pos, oda_position)
             self.driver.execute_script(js_dispatch_events, field_pos)
 
             # Search
-            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)).click()
+            self.find_clickable(ScaricoTSLocators.SEARCH_BUTTON).click()
             self.log("  Pulsante 'Cerca' cliccato. Attesa risultati...")
-            self._wait_for_overlay() # Wait for loading
+            self.wait_for_overlay() # Wait for loading
 
             # Download
             return self._download_excel(download_dir, oda_number, oda_position)
@@ -139,9 +111,7 @@ class ScaricoTSPage:
             files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
 
             # Click Export
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)
-            ).click()
+            self.find_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON).click()
 
             # Wait for file
             downloaded_file = None

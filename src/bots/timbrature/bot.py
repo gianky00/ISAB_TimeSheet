@@ -9,27 +9,27 @@ from typing import Dict, Any
 from src.bots.base import BaseBot
 from src.bots.timbrature.pages.timbrature_page import TimbraturePage
 from src.bots.timbrature.storage import TimbratureStorage
+from src.bots import register_bot
 
+@register_bot('timbrature')
 class TimbratureBot(BaseBot):
     """
     Bot for downloading and archiving Timbrature data.
     """
 
-    @property
-    def name(self) -> str:
-        return "Timbrature"
+    METADATA = {
+        "name": "Timbrature",
+        "description": "Scarica e archivia le timbrature dal portale ISAB",
+        "icon": "⏱️",
+        "columns": [],
+        "config_key": "last_timbrature_data"
+    }
 
     @property
-    def description(self) -> str:
-        return "Scarica e archivia le timbrature dal portale ISAB"
+    def name(self) -> str: return self.METADATA["name"]
 
-    @staticmethod
-    def get_name() -> str:
-        return "Timbrature"
-
-    @staticmethod
-    def get_description() -> str:
-        return "Scarica e archivia le timbrature dal portale ISAB"
+    @property
+    def description(self) -> str: return self.METADATA["description"]
 
     def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):
         super().__init__(**kwargs)
