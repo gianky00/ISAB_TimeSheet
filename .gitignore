@@ -15,3 +15,6 @@ venv/
 # Coverage reports
 .coverage
 htmlcov/
+
+# Log files
+*.log
