@@ -8,6 +8,7 @@ from src.bots.scarico_ts import ScaricaTSBot
 from src.bots.carico_ts import CaricoTSBot
 from src.bots.dettagli_oda import DettagliOdABot
 from src.bots.timbrature import TimbratureBot
+from src.bots.hello_bot.bot import HelloBot
 
 
 # Registry dei bot disponibili
@@ -68,6 +69,14 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "icon": "⏱️",
         "columns": [],
         "config_key": "last_timbrature_data"
+    },
+    "hello_bot": {
+        "class": HelloBot,
+        "name": "Ciao Bot",
+        "description": "Un semplice bot che saluta.",
+        "icon": "👋",
+        "columns": [],
+        "config_key": "last_hello_data"
     }
 }
 
@@ -115,6 +124,7 @@ __all__ = [
     'CaricoTSBot',
     'DettagliOdABot',
     'TimbratureBot',
+    'HelloBot',
     'BOT_REGISTRY',
     'get_available_bots',
     'get_bot_info',

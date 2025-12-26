@@ -11,7 +11,7 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
 from datetime import datetime
 
-from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
+from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel, HelloBotPanel
 from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.scarico_ore_panel import ScaricoOrePanel
 from src.gui.settings_panel import SettingsPanel
@@ -319,6 +319,7 @@ class MainWindow(QMainWindow):
         self.carico_panel = CaricoTSPanel()
         self.dettagli_panel = DettagliOdAPanel()
         self.timbrature_bot_panel = TimbratureBotPanel()
+        self.hello_bot_panel = HelloBotPanel()
         self.timbrature_db_panel = TimbratureDBPanel()
         self.contabilita_panel = ContabilitaPanel()
         self.scarico_ore_panel = ScaricoOrePanel() # NEW: Scarico Ore Panel
@@ -361,6 +362,7 @@ class MainWindow(QMainWindow):
         self.automazioni_widget.addTab(self.scarico_panel, "📥 Scarico TS")
         self.automazioni_widget.addTab(self.timbrature_bot_panel, "⏱️ Timbrature")
         self.automazioni_widget.addTab(self.carico_panel, "📤 Carico TS")
+        self.automazioni_widget.addTab(self.hello_bot_panel, "👋 Hello Bot")
 
         # --- Page 3: Database (Tab Widget) ---
         self.database_widget = QTabWidget()

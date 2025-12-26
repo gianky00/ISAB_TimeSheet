@@ -24,6 +24,7 @@ from src.gui.widgets import (
 from src.core import config_manager
 from src.core.stats_manager import StatsManager
 from src.bots.timbrature.storage import TimbratureStorage
+from src.bots import create_bot
 
 
 class BotWorker(QThread):
@@ -1422,6 +1423,43 @@ class TimbratureBotPanel(BaseBotPanel):
         self.log_widget.append("▶ Avvio bot Timbrature...")
         self.log_widget.append(f"  Fornitore: {fornitore}")
         self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
+
+        self.worker.start()
+        self.bot_started.emit()
+
+
+class HelloBotPanel(BaseBotPanel):
+    """Pannello per il bot Hello."""
+
+    def __init__(self, parent=None):
+        super().__init__(
+            bot_name="👋 Hello Bot",
+            bot_description="Un semplice bot che saluta.",
+            parent=parent
+        )
+        # Non sono necessari contenuti specifici, il BaseBotPanel ha già tutto
+
+    def _on_start(self):
+        """Avvia il bot Hello."""
+        self.log_widget.clear()
+        self.log_widget.append("▶ Avvio bot Hello...")
+
+        # Non servono credenziali per questo bot
+
+        bot = create_bot("hello_bot", username="", password="")
+
+        if not bot:
+            QMessageBox.critical(self, "Errore", "Impossibile creare il bot 'hello_bot'.")
+            return
+
+        self.worker = BotWorker(bot, []) # Nessun dato necessario
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.status_indicator.set_status("running")
 
         self.worker.start()
         self.bot_started.emit()
