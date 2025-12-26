@@ -2,7 +2,7 @@ name: Jules Auto-Fix on CI Failure
 
 on:
   workflow_run:
-    workflows: ["Python CI"]
+    workflows: ["Python Tests"]
     types:
       - completed
 
