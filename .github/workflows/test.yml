@@ -1,6 +1,10 @@
 name: Python CI
 
-on: [push]
+on:
+  push:
+
+permissions:
+  issues: write
 
 jobs:
   build:
@@ -20,5 +24,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Test with pytest
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           pytest
+      - name: Report failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create --title "🚨 CI Failed" --body "CI failed. Please investigate: @google-labs-jules ${RUN_URL}"

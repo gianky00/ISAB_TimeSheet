@@ -111,6 +111,7 @@ def main():
     from PyQt6.QtCore import Qt
     from PyQt6.QtGui import QFont, QIcon
     from src.gui.styles import apply_theme
+    import src.resources_rc
     
     # Create application first to allow message boxes
     app = QApplication(sys.argv)

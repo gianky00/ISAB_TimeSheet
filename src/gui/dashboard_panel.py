@@ -126,7 +126,7 @@ class DashboardPanel(QWidget):
         self.anim.setDuration(800)
         self.anim.setStartValue(0)
         self.anim.setEndValue(1)
-        self.anim.setEasingCurve(QEasingCurve.OutQuad)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutQuad)
         self.anim.start()
 
     def _create_module_card(self, title, desc, icon, color, action_key, runs, errors):
@@ -154,6 +154,9 @@ class DashboardPanel(QWidget):
             QFrame:hover {{
                 background-color: #f8f9fa;
                 margin-top: -3px;
+            }}
+            QFrame:hover QLabel {{
+                background-color: transparent;
             }}
         """)
 

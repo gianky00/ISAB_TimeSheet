@@ -47,7 +47,7 @@ class ToastOverlay(QWidget):
         # Animazione
         self.anim = QPropertyAnimation(self.opacity_effect, b"opacity")
         self.anim.setDuration(300)
-        self.anim.setEasingCurve(QEasingCurve.OutQuad)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutQuad)
 
         self.timer = QTimer()
         self.timer.setSingleShot(True)

@@ -39,3 +39,4 @@ platformdirs
 msoffcrypto-tool
 markdown
 python-dotenv
+stdlib-list
