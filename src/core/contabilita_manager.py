@@ -15,6 +15,7 @@ from typing import List, Dict, Tuple, Optional, Callable
 from datetime import datetime
 from src.utils.parsing import parse_currency
 from src.core.config_manager import CONFIG_DIR
+from src.core.database import db_manager
 
 # Tentativo di importare msoffcrypto
 try:
@@ -177,144 +178,8 @@ class ContabilitaManager:
 
     @classmethod
     def init_db(cls):
-        """Inizializza il database creando le tabelle se non esistono e abilita WAL."""
-        cls.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-        conn = sqlite3.connect(cls.DB_PATH)
-        # Enable WAL mode for concurrency
-        try:
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute("PRAGMA synchronous=NORMAL;")
-        except Exception as e:
-            print(f"Warning: Could not set WAL mode: {e}")
-
-        cursor = conn.cursor()
-
-        # Tabella Contabilita (Dati)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS contabilita (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                year INTEGER NOT NULL,
-                data_prev TEXT,
-                mese TEXT,
-                n_prev TEXT,
-                totale_prev TEXT,
-                attivita TEXT,
-                tcl TEXT,
-                odc TEXT,
-                stato_attivita TEXT,
-                tipologia TEXT,
-                ore_sp TEXT,
-                resa TEXT,
-                annotazioni TEXT,
-                indirizzo_consuntivo TEXT,
-                nome_file TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        # Tabella Giornaliere
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS giornaliere (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                year INTEGER NOT NULL,
-                data TEXT,
-                personale TEXT,
-                descrizione TEXT,
-                tcl TEXT,
-                odc TEXT,
-                pdl TEXT,
-                inizio TEXT,
-                fine TEXT,
-                ore TEXT,
-                n_prev TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        # Migrazione schema Giornaliere: Aggiungi colonna nome_file se non esiste
-        try:
-            cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
-        except sqlite3.OperationalError:
-            pass
-
-        # Tabella Scarico Ore Cantiere (Nuova con styles)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS scarico_ore (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                data TEXT,
-                pers1 TEXT,
-                pers2 TEXT,
-                odc TEXT,
-                pos TEXT,
-                dalle TEXT,
-                alle TEXT,
-                totale_ore TEXT,
-                descrizione TEXT,
-                finito TEXT,
-                commessa TEXT,
-                styles TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        # Migrazione schema scarico_ore: Aggiungi colonna styles se non esiste
-        try:
-            cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
-        except sqlite3.OperationalError:
-            pass
-
-        # Tabella Attività Programmate
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS attivita_programmate (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ps TEXT,
-                area TEXT,
-                pdl TEXT,
-                imp TEXT,
-                descrizione TEXT,
-                lun TEXT,
-                mar TEXT,
-                mer TEXT,
-                gio TEXT,
-                ven TEXT,
-                stato_pdl TEXT,
-                stato_attivita TEXT,
-                data_controllo TEXT,
-                personale TEXT,
-                po TEXT,
-                avviso TEXT,
-                styles TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        # Migrazione Attività Programmate: Aggiungi colonna styles se non esiste
-        try:
-            cursor.execute("ALTER TABLE attivita_programmate ADD COLUMN styles TEXT")
-        except sqlite3.OperationalError:
-            pass
-
-        # Tabella Certificati Campione
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS certificati_campione (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                modello TEXT,
-                costruttore TEXT,
-                matricola TEXT,
-                range_strumento TEXT,
-                errore_max TEXT,
-                certificato TEXT,
-                scadenza TEXT,
-                emissione TEXT,
-                id_coemi TEXT,
-                stato TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        conn.commit()
-        conn.close()
+        """Inizializza il database tramite DatabaseManager."""
+        db_manager.init_db()
 
     @classmethod
     def import_data_from_excel(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
@@ -331,10 +196,12 @@ class ContabilitaManager:
                 warnings.simplefilter("ignore")
                 xls = pd.ExcelFile(path, engine='openpyxl')
                 imported_years = []
-                conn = sqlite3.connect(cls.DB_PATH)
-                cursor = conn.cursor()
 
-                # Count valid sheets first for progress
+                # Use Manager Connection
+                with db_manager.get_connection(cls.DB_PATH) as conn:
+                    cursor = conn.cursor()
+
+                    # Count valid sheets first for progress
                 valid_sheets = [s for s in xls.sheet_names if re.search(r'(\d{4})', s)]
                 total_sheets = len(valid_sheets)
                 processed_sheets = 0
@@ -407,8 +274,8 @@ class ContabilitaManager:
                         print(f"Errore importazione Dati foglio {sheet_name}: {e}")
                         continue
 
-                conn.commit()
-                conn.close()
+                    conn.commit()
+
                 if not imported_years: return False, "Nessun anno importato.", 0, 0
                 return True, f"Anni importati: {sorted(imported_years)}", total_added, total_removed
 
@@ -428,10 +295,6 @@ class ContabilitaManager:
         total_removed = 0
 
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-
             # 1. Scan and collect files (Flattened loop for progress)
             tasks = []
             for folder in root.iterdir():
@@ -460,10 +323,11 @@ class ContabilitaManager:
             # Lookup map cache
             lookup_map = {}
             try:
-                lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
-                lookup_df = pd.read_sql_query(lookup_query, conn)
-                lookup_df = lookup_df.drop_duplicates(subset=['n_prev'])
-                lookup_map = dict(zip(lookup_df['n_prev'], lookup_df['odc']))
+                with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
+                    lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
+                    lookup_df = pd.read_sql_query(lookup_query, conn)
+                    lookup_df = lookup_df.drop_duplicates(subset=['n_prev'])
+                    lookup_map = dict(zip(lookup_df['n_prev'], lookup_df['odc']))
             except: pass
 
             # 2. Process Files (Read and Accumulate)
@@ -539,35 +403,38 @@ class ContabilitaManager:
                 if progress_callback: progress_callback(processed_count, total_tasks)
 
             # 3. Diff and Commit
-            years_to_clear = years_encountered # Only clear years we touched
+            with db_manager.get_connection(cls.DB_PATH) as conn:
+                conn.row_factory = sqlite3.Row # Temp setting
+                cursor = conn.cursor()
 
-            # Fetch Existing
-            existing_rows_set = set()
-            for year in years_to_clear:
-                cursor.execute(f"SELECT {', '.join(target_cols)} FROM giornaliere WHERE year = ?", (year,))
-                for row in cursor.fetchall():
-                    # Ensure types match (year is int, others strings)
-                    row_list = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
-                    existing_rows_set.add(tuple(row_list))
+                years_to_clear = years_encountered # Only clear years we touched
 
-            new_rows_set = set(all_new_rows)
+                # Fetch Existing
+                existing_rows_set = set()
+                for year in years_to_clear:
+                    cursor.execute(f"SELECT {', '.join(target_cols)} FROM giornaliere WHERE year = ?", (year,))
+                    for row in cursor.fetchall():
+                        # Ensure types match (year is int, others strings)
+                        row_list = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
+                        existing_rows_set.add(tuple(row_list))
 
-            total_added = len(new_rows_set - existing_rows_set)
-            total_removed = len(existing_rows_set - new_rows_set)
+                new_rows_set = set(all_new_rows)
 
-            # Delete old
-            for year in years_to_clear:
-                cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
+                total_added = len(new_rows_set - existing_rows_set)
+                total_removed = len(existing_rows_set - new_rows_set)
 
-            # Insert new
-            if all_new_rows:
-                placeholders = ', '.join(['?'] * len(target_cols))
-                query = f"INSERT INTO giornaliere ({', '.join(target_cols)}) VALUES ({placeholders})"
-                # Batch insert is efficient
-                cursor.executemany(query, all_new_rows)
+                # Delete old
+                for year in years_to_clear:
+                    cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
 
-            conn.commit()
-            conn.close()
+                # Insert new
+                if all_new_rows:
+                    placeholders = ', '.join(['?'] * len(target_cols))
+                    query = f"INSERT INTO giornaliere ({', '.join(target_cols)}) VALUES ({placeholders})"
+                    # Batch insert is efficient
+                    cursor.executemany(query, all_new_rows)
+
+                conn.commit()
 
             if not imported_years and total_tasks == 0:
                 return True, "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ").", 0, 0
@@ -692,22 +559,21 @@ class ContabilitaManager:
                 rows_to_insert.append(tuple(final_row))
 
             # DB Update
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
+            with db_manager.get_connection(cls.DB_PATH) as conn:
+                cursor = conn.cursor()
 
-            # Diff Logic (Simple count)
-            cursor.execute(f"SELECT COUNT(*) FROM attivita_programmate")
-            prev_count = cursor.fetchone()[0]
+                # Diff Logic (Simple count)
+                cursor.execute(f"SELECT COUNT(*) FROM attivita_programmate")
+                prev_count = cursor.fetchone()[0]
 
-            cursor.execute("DELETE FROM attivita_programmate")
+                cursor.execute("DELETE FROM attivita_programmate")
 
-            if rows_to_insert:
-                placeholders = ', '.join(['?'] * len(db_cols))
-                query = f"INSERT INTO attivita_programmate ({', '.join(db_cols)}) VALUES ({placeholders})"
-                cursor.executemany(query, rows_to_insert)
+                if rows_to_insert:
+                    placeholders = ', '.join(['?'] * len(db_cols))
+                    query = f"INSERT INTO attivita_programmate ({', '.join(db_cols)}) VALUES ({placeholders})"
+                    cursor.executemany(query, rows_to_insert)
 
-            conn.commit()
-            conn.close()
+                conn.commit()
 
             new_count = len(rows_to_insert)
             total_added = max(0, new_count - prev_count)
@@ -872,28 +738,27 @@ class ContabilitaManager:
                 rows_to_insert.append(db_row)
 
             # 3. Diff and Update DB
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
+            with db_manager.get_connection(cls.DB_PATH) as conn:
+                cursor = conn.cursor()
 
-            # Diff Logic
-            cols = cls.SCARICO_ORE_COLS
-            cursor.execute(f"SELECT {', '.join(cols)} FROM scarico_ore")
-            existing_rows_set = set(cursor.fetchall())
+                # Diff Logic
+                cols = cls.SCARICO_ORE_COLS
+                cursor.execute(f"SELECT {', '.join(cols)} FROM scarico_ore")
+                existing_rows_set = set(cursor.fetchall())
 
-            new_rows_set = set(rows_to_insert)
+                new_rows_set = set(rows_to_insert)
 
-            total_added = len(new_rows_set - existing_rows_set)
-            total_removed = len(existing_rows_set - new_rows_set)
+                total_added = len(new_rows_set - existing_rows_set)
+                total_removed = len(existing_rows_set - new_rows_set)
 
-            cursor.execute("DELETE FROM scarico_ore") # Full refresh
+                cursor.execute("DELETE FROM scarico_ore") # Full refresh
 
-            if rows_to_insert:
-                placeholders = ', '.join(['?'] * len(cols))
-                query = f"INSERT INTO scarico_ore ({', '.join(cols)}) VALUES ({placeholders})"
-                cursor.executemany(query, rows_to_insert)
+                if rows_to_insert:
+                    placeholders = ', '.join(['?'] * len(cols))
+                    query = f"INSERT INTO scarico_ore ({', '.join(cols)}) VALUES ({placeholders})"
+                    cursor.executemany(query, rows_to_insert)
 
-            conn.commit()
-            conn.close()
+                conn.commit()
 
             return True, f"Importate {len(rows_to_insert)} righe da Scarico Ore.", total_added, total_removed
 
@@ -905,12 +770,11 @@ class ContabilitaManager:
         """Restituisce la lista degli anni presenti nel DB (unione di Dati e Giornaliere)."""
         if not cls.DB_PATH.exists(): return []
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
-            cursor.execute("SELECT DISTINCT year FROM contabilita UNION SELECT DISTINCT year FROM giornaliere ORDER BY 1 DESC")
-            years = [row[0] for row in cursor.fetchall()]
-            conn.close()
-            return years
+            with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT DISTINCT year FROM contabilita UNION SELECT DISTINCT year FROM giornaliere ORDER BY 1 DESC")
+                years = [row[0] for row in cursor.fetchall()]
+                return years
         except: return []
 
     @classmethod
@@ -918,19 +782,17 @@ class ContabilitaManager:
         """Restituisce i dati tabella Dati per un anno specifico."""
         if not cls.DB_PATH.exists(): return []
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
-            cols = [
-                'data_prev', 'mese', 'n_prev', 'totale_prev', 'attivita', 'tcl', 'odc',
-                'stato_attivita', 'tipologia', 'ore_sp', 'resa', 'annotazioni',
-                'indirizzo_consuntivo', 'nome_file'
-            ]
-            # Ordinamento richiesto: N°PREV. (n_prev) dal più recente (DESC)
-            query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"
-            cursor.execute(query, (year,))
-            rows = cursor.fetchall()
-            conn.close()
-            return rows
+            with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
+                cursor = conn.cursor()
+                cols = [
+                    'data_prev', 'mese', 'n_prev', 'totale_prev', 'attivita', 'tcl', 'odc',
+                    'stato_attivita', 'tipologia', 'ore_sp', 'resa', 'annotazioni',
+                    'indirizzo_consuntivo', 'nome_file'
+                ]
+                query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"
+                cursor.execute(query, (year,))
+                rows = cursor.fetchall()
+                return rows
         except: return []
 
     @classmethod
@@ -938,18 +800,13 @@ class ContabilitaManager:
         """Restituisce i dati Giornaliere per un anno specifico."""
         if not cls.DB_PATH.exists(): return []
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
-            # Ordine richiesto UI aggiornato:
-            # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
-            # Aggiunto nome_file in coda
-            cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'nome_file']
-            # Ordinamento richiesto: Data dal più recente (DESC)
-            query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
-            cursor.execute(query, (year,))
-            rows = cursor.fetchall()
-            conn.close()
-            return rows
+            with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
+                cursor = conn.cursor()
+                cols = ['data', 'personale', 'tcl', 'descrizione', 'n_prev', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'nome_file']
+                query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
+                cursor.execute(query, (year,))
+                rows = cursor.fetchall()
+                return rows
         except: return []
 
     @classmethod
@@ -957,15 +814,13 @@ class ContabilitaManager:
         """Restituisce i dati Attività Programmate (inclusi stili)."""
         if not cls.DB_PATH.exists(): return []
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
-            # Ensure styles column is included
-            cols = cls.ATTIVITA_PROGRAMMATE_COLS
-            query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            conn.close()
-            return rows
+            with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
+                cursor = conn.cursor()
+                cols = cls.ATTIVITA_PROGRAMMATE_COLS
+                query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                return rows
         except: return []
 
     @classmethod
@@ -1055,18 +910,17 @@ class ContabilitaManager:
                 rows = list(df.itertuples(index=False, name=None))
 
                 # DB Ops
-                conn = sqlite3.connect(cls.DB_PATH)
-                cursor = conn.cursor()
+                with db_manager.get_connection(cls.DB_PATH) as conn:
+                    cursor = conn.cursor()
 
-                cursor.execute("DELETE FROM certificati_campione")
+                    cursor.execute("DELETE FROM certificati_campione")
 
-                if rows:
-                    placeholders = ', '.join(['?'] * len(target_cols))
-                    query = f"INSERT INTO certificati_campione ({', '.join(target_cols)}) VALUES ({placeholders})"
-                    cursor.executemany(query, rows)
+                    if rows:
+                        placeholders = ', '.join(['?'] * len(target_cols))
+                        query = f"INSERT INTO certificati_campione ({', '.join(target_cols)}) VALUES ({placeholders})"
+                        cursor.executemany(query, rows)
 
-                conn.commit()
-                conn.close()
+                    conn.commit()
 
                 return True, f"Importate {len(rows)} righe in Certificati Campione.", len(rows), 0
 
@@ -1078,14 +932,13 @@ class ContabilitaManager:
         """Restituisce i dati Certificati Campione."""
         if not cls.DB_PATH.exists(): return []
         try:
-            conn = sqlite3.connect(cls.DB_PATH)
-            cursor = conn.cursor()
-            cols = cls.CERTIFICATI_CAMPIONE_COLS
-            query = f"SELECT {', '.join(cols)} FROM certificati_campione ORDER BY id ASC"
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            conn.close()
-            return rows
+            with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
+                cursor = conn.cursor()
+                cols = cls.CERTIFICATI_CAMPIONE_COLS
+                query = f"SELECT {', '.join(cols)} FROM certificati_campione ORDER BY id ASC"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                return rows
         except: return []
 
     @classmethod
@@ -1093,32 +946,15 @@ class ContabilitaManager:
         """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
         if not cls.DB_PATH.exists(): return []
         try:
-            # Use Read-Only URI if possible, but fallback to standard if not supported by sqlite ver
-            # Python's sqlite3 supports URI by default in recent versions
-            uri_path = f"file:{cls.DB_PATH.absolute()}?mode=ro"
-            conn = sqlite3.connect(uri_path, uri=True)
-
-            cursor = conn.cursor()
-            cols = cls.SCARICO_ORE_COLS
-            # Order by Data Desc
-            query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            conn.close()
-            return rows
-        except Exception as e:
-            # Fallback to standard connection if URI fails
-            try:
-                conn = sqlite3.connect(cls.DB_PATH)
+            with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = cls.SCARICO_ORE_COLS
                 query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"
                 cursor.execute(query)
                 rows = cursor.fetchall()
-                conn.close()
                 return rows
-            except:
-                return []
+        except:
+            return []
 
     @classmethod
     def get_year_stats(cls, year: int) -> Dict:

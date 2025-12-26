@@ -5,7 +5,8 @@ Finestra principale dell'applicazione.
 import sys
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication, QTabWidget
+    QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication, QTabWidget,
+    QProgressBar, QStatusBar
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
@@ -173,6 +174,29 @@ class MainWindow(QMainWindow):
 
     def _setup_ui(self):
         """Configura l'interfaccia."""
+        # Status Bar
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        # Global Progress Bar
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setMaximumWidth(200)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                text-align: center;
+                color: black;
+            }
+            QProgressBar::chunk {
+                background-color: #0d6efd;
+            }
+        """)
+        self.status_bar.addPermanentWidget(self.progress_bar)
+
         # Widget centrale
         central_widget = QWidget()
         # Force light theme for the main window content area if needed, or rely on specific widgets

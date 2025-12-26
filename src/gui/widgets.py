@@ -388,6 +388,26 @@ class ExcelTableWidget(QTableWidget):
         # Assicura che il click selezioni la riga anche se clicco su una cella non editabile
         self.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
 
+    def set_row_status(self, row, status):
+        """
+        Imposta il colore di sfondo della riga in base allo stato.
+        Status: 'completato', 'errore', 'in_corso', 'da_processare'
+        """
+        colors = {
+            "completato": QColor("#C8E6C9"),      # Verde chiaro
+            "errore": QColor("#FFCDD2"),          # Rosso chiaro
+            "in_corso": QColor("#FFF9C4"),        # Giallo chiaro
+            "da_processare": QColor("#FFFFFF")    # Bianco
+        }
+        color = colors.get(status, QColor("white"))
+
+        for col in range(self.columnCount()):
+            item = self.item(row, col)
+            if item:
+                item.setBackground(QBrush(color))
+                # Restore black text for contrast
+                item.setForeground(QBrush(QColor("black")))
+
     def keyPressEvent(self, event):
         """Gestisce la pressione dei tasti, in particolare CTRL+C."""
         if event.matches(QKeySequence.StandardKey.Copy):
