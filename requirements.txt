@@ -12,6 +12,7 @@ requests==2.31.0
  
 # Encryption
 cryptography==42.0.5
+keyring>=24.3.0
 
 # Version comparison
 packaging==23.2
