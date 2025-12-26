@@ -1,0 +1,25 @@
+name: Test Jules Manual
+
+on:
+  workflow_dispatch:  # Attivazione manuale
+
+jobs:
+  test-jules:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+          
+      - name: Test Jules Connection
+        uses: google-labs-code/jules-invoke@v1
+        with:
+          prompt: |
+            Questo è un test di connessione.
+            
+            Per favore:
+            1. Analizza brevemente la struttura del repository
+            2. Crea una PR che aggiunge un commento "# Jules test OK" in cima al file main.py
+            
+            Non fare altre modifiche.
+          jules_api_key: ${{ secrets.JULES_API_KEY }}
+          include_last_commit: true
