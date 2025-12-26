@@ -27,5 +27,5 @@ jobs:
       - name: Run Tests on Xvfb
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb herbstluftwm libgl1-mesa-glx qt6-qpa-plugins
+          sudo apt-get install -y xvfb herbstluftwm libgl1 qt6-qpa-plugins libxcb-cursor-dev libxcb-xinerama0 libxcb-xkb-dev libxkbcommon-x11-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-shape0-dev
           xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" pytest -v
