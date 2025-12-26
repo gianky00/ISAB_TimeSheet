@@ -86,14 +86,20 @@ class PasswordManager:
         """Genera entropia basata sulla macchina."""
         import platform
         import uuid
+        import getpass
+
+        try:
+            username = getpass.getuser()
+        except Exception:
+            username = "unknown"
 
         components = [
             platform.node(),
             str(uuid.getnode()),  # MAC address
             platform.machine(),
-            os.getlogin() if hasattr(os, 'getlogin') else 'unknown',
+            username,
         ]
-        return '|'.join(components).encode()
+        return "|".join(components).encode()
 
     def encrypt(self, plaintext: str) -> str:
         """Cripta una stringa."""
