@@ -18,15 +18,20 @@ class TestConfigSecurity(unittest.TestCase):
         self.test_dir = Path("tests/temp_config")
         self.test_dir.mkdir(parents=True, exist_ok=True)
 
-        # Monkey patch config_manager
-        self.original_config_dir = config_manager.CONFIG_DIR
-        self.original_config_file = config_manager.CONFIG_FILE
+        # Monkey patch the singleton instance for isolated testing
+        self.instance = config_manager._instance
+        self.original_config_dir = self.instance._config_dir
+        self.original_config_file = self.instance._config_file
         
+        self.instance._config_dir = self.test_dir
+        self.instance._config_file = self.test_dir / "config.json"
+
+        # Also patch module-level vars for any code that might use them
         config_manager.CONFIG_DIR = self.test_dir
         config_manager.CONFIG_FILE = self.test_dir / "config.json"
-        
+
         # Reset config cache to ensure tests are isolated
-        config_manager._config_cache = None
+        self.instance._config_cache = None
 
         # Patch password_manager to use temp dir
         self.original_key_file = password_manager._KEY_FILE
@@ -40,18 +45,21 @@ class TestConfigSecurity(unittest.TestCase):
         password_manager._cipher = Fernet(password_manager._key)
 
     def tearDown(self):
+        # Restore singleton instance
+        self.instance._config_dir = self.original_config_dir
+        self.instance._config_file = self.original_config_file
+        self.instance._config_cache = None # Clear cache
+
+        # Restore module-level vars
         config_manager.CONFIG_DIR = self.original_config_dir
         config_manager.CONFIG_FILE = self.original_config_file
+
+        # Restore password manager
         password_manager._KEY_FILE = self.original_key_file
         password_manager._KEY_DIR = self.original_key_dir
+        password_manager._key = None # Force key reload
         
-        # Restore original cipher (best effort, though it was singleton)
-        # Ideally we should reload it from original file but that's complex.
-        # This test runs in isolation usually.
-        
-        if config_manager.CONFIG_FILE.exists():
-            os.remove(config_manager.CONFIG_FILE)
-
+        # Cleanup temp directory
         if self.test_dir.exists():
             shutil.rmtree(self.test_dir)
 

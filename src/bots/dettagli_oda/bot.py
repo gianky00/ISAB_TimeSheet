@@ -30,6 +30,9 @@ class DettagliOdABot(BaseBot):
     
     @property
     def description(self) -> str: return self.METADATA["description"]
+
+    @property
+    def columns(self) -> list: return self.METADATA["columns"]
     
     def __init__(self, data_da: str = "01.01.2024", data_a: str = "31.12.2025", fornitore: str = "KK10608 - COEMI S.R.L.", **kwargs):
         super().__init__(**kwargs)
