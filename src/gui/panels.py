@@ -1,3 +1,4 @@
+from PyQt6.QtGui import QIcon
 """
 Bot TS - Bot Panels
 Pannelli specifici per ogni bot.
