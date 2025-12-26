@@ -29,12 +29,39 @@ class TimbratureStorage:
         self.db_path = db_path
         self._ensure_db_exists()
 
+    def _init_schema(self):
+        """Initializes the database schema for timbrature."""
+        with db_manager.get_connection(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS timbrature (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    data TEXT,
+                    ingresso TEXT,
+                    uscita TEXT,
+                    nome TEXT,
+                    cognome TEXT,
+                    presenza_ts TEXT,
+                    sito_timbratura TEXT,
+                    UNIQUE(data, ingresso, uscita, nome, cognome)
+                )
+            ''')
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS dipendenti (
+                    nome TEXT,
+                    cognome TEXT,
+                    reparto TEXT,
+                    PRIMARY KEY (nome, cognome)
+                )
+            ''')
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
+            conn.commit()
+
     def _ensure_db_exists(self):
         """Creates database and table if they don't exist."""
-        # Delegated to DatabaseManager via init_db logic if unified,
-        # but here we ensure schema exists locally or rely on db_manager.
-        # Since db_manager now handles schema init, we can call it.
-        db_manager.init_db()
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._init_schema()
 
     def get_employees(self) -> List[Dict[str, str]]:
         """

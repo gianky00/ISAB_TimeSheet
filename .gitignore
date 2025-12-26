@@ -11,3 +11,10 @@ venv/
 /admin/Crea Setup/Setup
 /admin/Crea Setup/Setup
 .env
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Log files
+*.log
