@@ -17,7 +17,7 @@ class TestConfigSecurity(unittest.TestCase):
         # Use a temporary config dir
         self.test_dir = Path("tests/temp_config")
         self.test_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Monkey patch config_manager
         self.original_config_dir = config_manager.CONFIG_DIR
         self.original_config_file = config_manager.CONFIG_FILE
@@ -25,6 +25,9 @@ class TestConfigSecurity(unittest.TestCase):
         config_manager.CONFIG_DIR = self.test_dir
         config_manager.CONFIG_FILE = self.test_dir / "config.json"
         
+        # Reset config cache to ensure tests are isolated
+        config_manager._config_cache = None
+
         # Patch password_manager to use temp dir
         self.original_key_file = password_manager._KEY_FILE
         self.original_key_dir = password_manager._KEY_DIR
@@ -46,6 +49,9 @@ class TestConfigSecurity(unittest.TestCase):
         # Ideally we should reload it from original file but that's complex.
         # This test runs in isolation usually.
         
+        if config_manager.CONFIG_FILE.exists():
+            os.remove(config_manager.CONFIG_FILE)
+
         if self.test_dir.exists():
             shutil.rmtree(self.test_dir)
 

@@ -23,6 +23,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            xvfb \
+            libgl1 \
             libegl1 \
             libxkbcommon-x11-0 \
             libxcb-icccm4 \
@@ -42,10 +44,8 @@ jobs:
           
       - name: Run tests
         id: tests
-        env:
-          QT_QPA_PLATFORM: offscreen
         run: |
-          pytest -v > test_output.txt 2>&1 || true
+          xvfb-run -a pytest -v > test_output.txt 2>&1 || true
           cat test_output.txt
           
           if grep -qE "FAILED |ERROR | failed,| errors" test_output.txt; then
