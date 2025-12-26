@@ -1,0 +1,91 @@
+name: Jules Auto-Fix on CI Failure
+
+on:
+  workflow_run:
+    workflows: ["Python Tests"]
+    types:
+      - completed
+
+jobs:
+  fix-with-jules:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          
+      - name: Get failed workflow logs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run view ${{ github.event.workflow_run.id }} --log-failed > failed_logs.txt 2>&1 || true
+          # Tronca a 2000 caratteri per stare nel limite API
+          head -c 2000 failed_logs.txt > failed_logs_truncated.txt
+          
+      - name: Invoke Jules via API
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+        run: |
+          LOGS=$(cat failed_logs_truncated.txt | jq -Rs .)
+          
+          # Trova il source name del repo
+          SOURCE_RESPONSE=$(curl -s 'https://jules.googleapis.com/v1alpha/sources' \
+            -H "X-Goog-Api-Key: $JULES_API_KEY")
+          
+          echo "Sources disponibili:"
+          echo "$SOURCE_RESPONSE" | jq .
+          
+          # Estrai il source name per questo repo
+          REPO_NAME="${{ github.repository }}"
+          SOURCE_NAME=$(echo "$SOURCE_RESPONSE" | jq -r ".sources[] | select(.id | contains(\"$REPO_NAME\")) | .name" | head -1)
+          
+          if [ -z "$SOURCE_NAME" ] || [ "$SOURCE_NAME" = "null" ]; then
+            echo "❌ Repo non trovato in Jules. Assicurati di aver collegato il repo su jules.google"
+            exit 1
+          fi
+          
+          echo "✅ Source trovato: $SOURCE_NAME"
+          
+          # Crea la sessione Jules
+          PROMPT="Il workflow CI 'Python Tests' è fallito. 
+          
+          Log errore:
+          $(cat failed_logs_truncated.txt)
+          
+          Branch: ${{ github.event.workflow_run.head_branch }}
+          
+          Istruzioni:
+          1. Analizza l'errore
+          2. Se mancano dipendenze Qt di sistema, aggiungi lo step nel workflow
+          3. Se sono test falliti, correggi il codice
+          4. Crea una PR con la fix"
+          
+          RESPONSE=$(curl -s 'https://jules.googleapis.com/v1alpha/sessions' \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Goog-Api-Key: $JULES_API_KEY" \
+            -d "{
+              \"prompt\": $(echo "$PROMPT" | jq -Rs .),
+              \"sourceContext\": {
+                \"source\": \"$SOURCE_NAME\",
+                \"githubRepoContext\": {
+                  \"startingBranch\": \"${{ github.event.workflow_run.head_branch }}\"
+                }
+              },
+              \"automationMode\": \"AUTO_CREATE_PR\",
+              \"title\": \"Fix CI failure\"
+            }")
+          
+          echo "Risposta Jules:"
+          echo "$RESPONSE" | jq .
+          
+          SESSION_ID=$(echo "$RESPONSE" | jq -r '.id')
+          if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "null" ]; then
+            echo "✅ Sessione Jules creata: $SESSION_ID"
+            echo "🔗 Controlla su https://jules.google per vedere il progresso"
+          else
+            echo "❌ Errore nella creazione della sessione"
+            exit 1
+          fi
