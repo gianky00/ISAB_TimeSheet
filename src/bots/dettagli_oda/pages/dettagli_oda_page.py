@@ -271,6 +271,11 @@ class DettagliOdAPage:
             downloaded_file = None
             start_time = time.time()
             while time.time() - start_time < Timeouts.DOWNLOAD:
+                # Check for active downloads
+                if any(f.suffix == '.crdownload' for f in source_dir.iterdir()):
+                    time.sleep(0.5)
+                    continue
+
                 current_files = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
                 new_files = current_files - files_before
                 if new_files:
