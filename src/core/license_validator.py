@@ -123,12 +123,31 @@ def get_hardware_id():
 
 
 def _get_license_paths():
-    """Restituisce i percorsi dei file di licenza."""
+    """
+    Restituisce i percorsi dei file di licenza, cercando in più posizioni.
+    Priorità:
+    1. User config directory (produzione/installato)
+    2. Project root (sviluppo/locale)
+    """
     from src.core import config_manager
-    # Use standard data path via platformdirs (user data dir)
-    base_dir = config_manager.CONFIG_DIR
 
-    license_dir = os.path.join(base_dir, "Licenza")
+    # Percorso 1: Directory di configurazione utente (es. AppData)
+    user_config_dir = config_manager.CONFIG_DIR
+    user_license_dir = os.path.join(user_config_dir, "Licenza")
+
+    if os.path.exists(os.path.join(user_license_dir, "config.dat")):
+        license_dir = user_license_dir
+    else:
+        # Percorso 2: Root del progetto (per sviluppo)
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        project_license_dir = os.path.join(project_root, "Licenza")
+
+        if os.path.exists(os.path.join(project_license_dir, "config.dat")):
+            license_dir = project_license_dir
+        else:
+            # Fallback alla directory utente se non trovato altrove
+            license_dir = user_license_dir
+
     return {
         "dir": license_dir,
         "config": os.path.join(license_dir, "config.dat"),
