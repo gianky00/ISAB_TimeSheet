@@ -5,9 +5,10 @@ Pannello "Mappa Applicazione" interattiva e modulare.
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QGridLayout,
-    QScrollArea, QPushButton, QSizePolicy, QGraphicsDropShadowEffect
+    QScrollArea, QPushButton, QSizePolicy, QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect
 )
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QPropertyAnimation
 from PyQt6.QtGui import QCursor, QIcon, QColor
 
 from src.core.stats_manager import StatsManager
@@ -24,19 +25,22 @@ class DashboardPanel(QWidget):
 
     def refresh_data(self):
         """Ricostruisce la UI per aggiornare statistiche e saluto."""
-        # Pulisce il layout esistente
-        while self.layout.count():
-            item = self.layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-            elif item.layout():
-                # Recursively clear layout if needed, but here we just have layouts
-                # Actually takeAt removes it from layout but doesn't delete layout object easily
-                # Simpler: just recreate the whole content
-                pass
+        # Pulisce ricorsivamente il layout esistente
+        self._clear_layout(self.layout)
 
         # Rebuild UI
         self._setup_ui()
+
+    def _clear_layout(self, layout):
+        """Rimuove ricorsivamente tutti gli elementi da un layout."""
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self._clear_layout(item.layout())
 
     def _setup_ui(self):
         # Dynamic Greeting
@@ -55,65 +59,75 @@ class DashboardPanel(QWidget):
 
         self.layout.addLayout(header_layout)
 
-        # Map Container
-        map_layout = QGridLayout()
-        map_layout.setSpacing(30)
-
         # Retrieve Stats
         stats = StatsManager().get_all_stats()
 
-        # --- Moduli Automazione ---
+        # Single Unified Grid
+        grid_layout = QGridLayout()
+        grid_layout.setSpacing(30)
 
-        # Dettagli OdA
+        # --- Row 0: Bots ---
+
+        # 1. Dettagli OdA
         s_oda = stats.get("dettagli_oda", {})
-        map_layout.addWidget(self._create_module_card(
-            "Dettagli OdA",
-            "Scarica i dettagli degli ordini d'acquisto.",
-            "📋",
-            "#6f42c1",
-            "dettagli_oda",
-            s_oda.get("runs", 0),
-            s_oda.get("errors", 0)
+        grid_layout.addWidget(self._create_module_card(
+            "Dettagli OdA", "Scarica dettagli ordini.", "📋", "#6f42c1", "dettagli_oda",
+            s_oda.get("runs", 0), s_oda.get("errors", 0)
         ), 0, 0)
 
-        # Scarico TS
+        # 2. Scarico TS
         s_sts = stats.get("scarico_ts", {})
-        map_layout.addWidget(self._create_module_card(
-            "Scarico TS",
-            "Scarica i timesheet dal portale.",
-            "📥",
-            "#0d6efd",
-            "scarico_ts",
-            s_sts.get("runs", 0),
-            s_sts.get("errors", 0)
+        grid_layout.addWidget(self._create_module_card(
+            "Scarico TS", "Scarica timesheet.", "📥", "#0d6efd", "scarico_ts",
+            s_sts.get("runs", 0), s_sts.get("errors", 0)
         ), 0, 1)
 
-        # Timbrature
+        # 3. Timbrature
         s_tmb = stats.get("timbrature", {})
-        map_layout.addWidget(self._create_module_card(
-            "Timbrature",
-            "Controlla e valida le timbrature.",
-            "⏱️",
-            "#fd7e14",
-            "timbrature",
-            s_tmb.get("runs", 0),
-            s_tmb.get("errors", 0)
+        grid_layout.addWidget(self._create_module_card(
+            "Timbrature", "Valida timbrature.", "⏱️", "#fd7e14", "timbrature",
+            s_tmb.get("runs", 0), s_tmb.get("errors", 0)
+        ), 0, 2)
+
+        # 4. Carico TS
+        s_cts = stats.get("carico_ts", {})
+        grid_layout.addWidget(self._create_module_card(
+            "Carico TS", "Upload finale.", "📤", "#198754", "carico_ts",
+            s_cts.get("runs", 0), s_cts.get("errors", 0)
+        ), 0, 3)
+
+        # --- Row 1: Databases ---
+
+        # 5. Timbrature DB
+        grid_layout.addWidget(self._create_module_card(
+            "Timbrature Isab", "Database storico.", "🗃️", "#20c997", "db_timbrature",
+            None, None
         ), 1, 0)
 
-        # Carico TS
-        s_cts = stats.get("carico_ts", {})
-        map_layout.addWidget(self._create_module_card(
-            "Carico TS",
-            "Carica i dati finali sul portale.",
-            "📤",
-            "#198754",
-            "carico_ts",
-            s_cts.get("runs", 0),
-            s_cts.get("errors", 0)
+        # 6. Strumentale DB
+        grid_layout.addWidget(self._create_module_card(
+            "Strumentale", "Contabilità & KPI.", "📊", "#ffc107", "db_strumentale",
+            None, None
         ), 1, 1)
 
-        self.layout.addLayout(map_layout)
+        # 7. DataEase DB
+        grid_layout.addWidget(self._create_module_card(
+            "DataEase", "Scarico ore cantiere.", "🏗️", "#0dcaf0", "db_dataease",
+            None, None
+        ), 1, 2)
+
+        self.layout.addLayout(grid_layout)
         self.layout.addStretch()
+
+        # Simple Entry Animation (Fade In)
+        self.opacity_eff = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.opacity_eff)
+        self.anim = QPropertyAnimation(self.opacity_eff, b"opacity")
+        self.anim.setDuration(800)
+        self.anim.setStartValue(0)
+        self.anim.setEndValue(1)
+        self.anim.setEasingCurve(Qt.EasingCurve.OutQuad)
+        self.anim.start()
 
     def _create_module_card(self, title, desc, icon, color, action_key, runs, errors):
         """Crea una card cliccabile ricca per un singolo modulo."""
@@ -171,42 +185,51 @@ class DashboardPanel(QWidget):
         card_layout.addStretch()
 
         # Stats Row
-        stats_row = QHBoxLayout()
+        if runs is not None:
+            stats_row = QHBoxLayout()
 
-        # Runs Badge
-        runs_lbl = QLabel(f"🚀 {runs} Esecuzioni")
-        runs_lbl.setStyleSheet("""
-            background-color: #e9ecef;
-            color: #495057;
-            border-radius: 12px;
-            padding: 4px 10px;
-            font-size: 12px;
-            font-weight: bold;
-            border: none;
-        """)
-        stats_row.addWidget(runs_lbl)
-
-        if errors > 0:
-            err_lbl = QLabel(f"⚠️ {errors}")
-            err_lbl.setStyleSheet("""
-                background-color: #f8d7da;
-                color: #721c24;
+            # Runs Badge
+            runs_lbl = QLabel(f"🚀 {runs} Esecuzioni")
+            runs_lbl.setStyleSheet("""
+                background-color: #e9ecef;
+                color: #495057;
                 border-radius: 12px;
                 padding: 4px 10px;
                 font-size: 12px;
                 font-weight: bold;
                 border: none;
             """)
-            stats_row.addWidget(err_lbl)
+            stats_row.addWidget(runs_lbl)
 
-        stats_row.addStretch()
+            if errors is not None and errors > 0:
+                err_lbl = QLabel(f"⚠️ {errors}")
+                err_lbl.setStyleSheet("""
+                    background-color: #f8d7da;
+                    color: #721c24;
+                    border-radius: 12px;
+                    padding: 4px 10px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    border: none;
+                """)
+                stats_row.addWidget(err_lbl)
 
-        # Action Arrow
-        arrow_lbl = QLabel("➜")
-        arrow_lbl.setStyleSheet(f"font-size: 18px; color: {color}; font-weight: bold; border: none;")
-        stats_row.addWidget(arrow_lbl)
+            stats_row.addStretch()
 
-        card_layout.addLayout(stats_row)
+            # Action Arrow
+            arrow_lbl = QLabel("➜")
+            arrow_lbl.setStyleSheet(f"font-size: 18px; color: {color}; font-weight: bold; border: none;")
+            stats_row.addWidget(arrow_lbl)
+
+            card_layout.addLayout(stats_row)
+        else:
+            # For Databases (No stats), just show arrow at bottom right
+            stats_row = QHBoxLayout()
+            stats_row.addStretch()
+            arrow_lbl = QLabel("➜")
+            arrow_lbl.setStyleSheet(f"font-size: 18px; color: {color}; font-weight: bold; border: none;")
+            stats_row.addWidget(arrow_lbl)
+            card_layout.addLayout(stats_row)
 
         # Full Card Click Button Overlay
         btn = QPushButton(card)

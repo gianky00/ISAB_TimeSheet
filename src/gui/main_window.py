@@ -466,20 +466,32 @@ class MainWindow(QMainWindow):
         """
         Naviga a un pannello specifico (usato dalla Dashboard).
         Keys: 'dettagli_oda', 'scarico_ts', 'timbrature', 'carico_ts'
+              'db_timbrature', 'db_strumentale', 'db_dataease'
         """
-        # 1. Switch to Automazioni Page (Index 1)
-        self._navigate_to(1)
-
-        # 2. Switch to specific Tab
-        key_map = {
+        # --- Automazioni (Index 1) ---
+        bot_map = {
             "dettagli_oda": 0,
             "scarico_ts": 1,
             "timbrature": 2,
             "carico_ts": 3
         }
 
-        if panel_key in key_map:
-            self.automazioni_widget.setCurrentIndex(key_map[panel_key])
+        if panel_key in bot_map:
+            self._navigate_to(1)
+            self.automazioni_widget.setCurrentIndex(bot_map[panel_key])
+            return
+
+        # --- Database (Index 3) ---
+        db_map = {
+            "db_timbrature": 0,
+            "db_strumentale": 1,
+            "db_dataease": 2
+        }
+
+        if panel_key in db_map:
+            self._navigate_to(3)
+            self.database_widget.setCurrentIndex(db_map[panel_key])
+            return
 
     def analyze_with_lyra(self, context_text: str):
         """Passa alla vista Lyra e analizza il contesto fornito."""
