@@ -8,10 +8,21 @@ import shutil
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+import keyring
+from keyring.backends.null import Keyring as NullKeyring
+
+# Set a null keyring for tests to avoid OS credential store interaction
+keyring.set_keyring(NullKeyring())
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src'))
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_os_getlogin():
+    """Mock os.getlogin() to prevent OSError in headless CI environments."""
+    with patch('os.getlogin', return_value='testuser') as mock:
+        yield mock
 
 @pytest.fixture
 def temp_dir():
