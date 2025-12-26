@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          
+      - name: Install Qt system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xfixes0 \
+            libxcb-shape0 \
+            libxcb-cursor0
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run tests
+        id: tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        continue-on-error: true
+        run: |
+          pytest -v 2>&1 | tee test_output.txt
+          
+      - name: Call Jules if tests failed
+        if: |
+          steps.tests.outcome == 'failure' &&
+          !startsWith(github.ref_name, 'fix/') &&
+          !startsWith(github.ref_name, 'fix-') &&
+          !contains(github.actor, 'bot') &&
+          !contains(github.actor, 'jules')
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          REPO_NAME: ${{ github.repository }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          SOURCE_RESPONSE=$(curl -s 'https://jules.googleapis.com/v1alpha/sources' \
+            -H "X-Goog-Api-Key: $JULES_API_KEY")
+          
+          SOURCE_NAME=$(echo "$SOURCE_RESPONSE" | jq -r ".sources[] | select(.id | contains(\"$REPO_NAME\")) | .name" | head -1)
+          
+          if [ -z "$SOURCE_NAME" ] || [ "$SOURCE_NAME" = "null" ]; then
+            echo "Repo non trovato in Jules"
+            exit 1
+          fi
+          
+          LOGS=$(tail -c 4000 test_output.txt)
+          
+          jq -n \
+            --arg logs "$LOGS" \
+            --arg source "$SOURCE_NAME" \
+            --arg branch "$BRANCH_NAME" \
+            '{
+              prompt: ("I test sono falliti. Analizza e correggi.\n\nLog:\n" + $logs + "\n\nBranch: " + $branch + "\n\nAnalizza i log, identifica la causa, correggi il problema, verifica che i test passino, crea una PR."),
+              sourceContext: {
+                source: $source,
+                githubRepoContext: {
+                  startingBranch: $branch
+                }
+              },
+              automationMode: "AUTO_CREATE_PR",
+              title: "Fix test failure"
+            }' > request.json
+          
+          RESPONSE=$(curl -s 'https://jules.googleapis.com/v1alpha/sessions' \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Goog-Api-Key: $JULES_API_KEY" \
+            -d @request.json)
+          
+          echo "$RESPONSE" | jq .
+          
+      - name: Fail if tests failed
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
