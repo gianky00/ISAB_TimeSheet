@@ -9,7 +9,7 @@ webdriver-manager==4.0.1
 
 # HTTP Requests
 requests==2.31.0
-
+ 
 # Encryption
 cryptography==42.0.5
 
