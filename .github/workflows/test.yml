@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.11"
           
-      - name: Install Qt system dependencies
+      - name: Install system dependencies (Qt & Keyring)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -33,7 +33,10 @@ jobs:
             libxcb-xinerama0 \
             libxcb-xfixes0 \
             libxcb-shape0 \
-            libxcb-cursor0
+            libxcb-cursor0 \
+            # Dependencies for Keyring Secret Service backend
+            libsecret-1-dev \
+            libdbus-glib-1-dev
           
       - name: Install dependencies
         run: |
@@ -43,5 +46,7 @@ jobs:
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
+          # Use a null backend for keyring in CI to avoid OS errors
+          PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
         run: |
           pytest -v
