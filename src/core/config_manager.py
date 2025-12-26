@@ -114,16 +114,22 @@ def save_config(config: Dict[str, Any]):
 
     # Gestione Account: salva password in keyring e rimuovi da config_to_save
     if "accounts" in config_to_save:
+        from src.utils.security import password_manager
         for acc in config_to_save["accounts"]:
             username = acc.get("username")
             password = acc.get("password")
 
             if username and password:
-                # Salva in keyring
-                SecretsManager.store_credential('isab_portal', username, password)
-                # Rimuovi da file
-                if "password" in acc:
-                    del acc["password"]
+                # Tenta di salvare in keyring
+                stored_in_keyring = SecretsManager.store_credential('isab_portal', username, password)
+
+                # Se keyring fallisce, salva password criptata nel file come fallback
+                if not stored_in_keyring:
+                    acc["password"] = password_manager.encrypt(password)
+                else:
+                    # Se keyring ha successo, rimuovi password dal file
+                    if "password" in acc:
+                        del acc["password"]
 
     try:
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
