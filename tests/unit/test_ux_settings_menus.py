@@ -1,31 +1,29 @@
 
 import sys
-import unittest
+import pytest
 from PyQt6.QtWidgets import QApplication, QListWidget, QListWidgetItem
 from PyQt6.QtCore import Qt, QPoint
 
-# Use a dummy QApplication
-app = QApplication.instance()
-if not app:
-    app = QApplication(sys.argv)
-
+# Ensure QApplication is handled by pytest fixture
 from src.gui.settings_panel import SettingsPanel
 
-class TestSettingsContextMenus(unittest.TestCase):
-    def test_context_menu_setup(self):
+class TestSettingsContextMenus:
+    """Test suite for context menus in the SettingsPanel."""
+
+    def test_context_menu_setup(self, qapp):
         """Test that list widgets have context menu policy set correctly."""
         panel = SettingsPanel()
         
         # Check Account List
-        self.assertEqual(panel.account_list.contextMenuPolicy(), Qt.ContextMenuPolicy.CustomContextMenu)
+        assert panel.account_list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
         
         # Check Contract List
-        self.assertEqual(panel.contract_list.contextMenuPolicy(), Qt.ContextMenuPolicy.CustomContextMenu)
+        assert panel.contract_list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
         
         # Check Fornitori List
-        self.assertEqual(panel.fornitori_list.contextMenuPolicy(), Qt.ContextMenuPolicy.CustomContextMenu)
+        assert panel.fornitori_list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
 
-    def test_generic_menu_callback(self):
+    def test_generic_menu_callback(self, qapp):
         """Test that the generic menu callback structure is valid."""
         panel = SettingsPanel()
         
@@ -44,8 +42,9 @@ class TestSettingsContextMenus(unittest.TestCase):
         
         # Call the method (it will try to exec menu, which might block or fail in headless without correct QPoint mapping)
         # However, checking existence is a good first step.
-        self.assertTrue(hasattr(panel, '_show_generic_list_menu'))
-        self.assertTrue(hasattr(panel, '_show_account_context_menu'))
+        assert hasattr(panel, '_show_generic_list_menu')
+        assert hasattr(panel, '_show_account_context_menu')
 
+# The __main__ block is not needed for pytest discovery, but can be kept for standalone runs.
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main([__file__])

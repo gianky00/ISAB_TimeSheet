@@ -24,7 +24,7 @@ class TestSearchUX:
              patch('pathlib.Path.exists', return_value=True):
             yield mock_sql
 
-    def test_timbrature_search_has_clear_button(self, qtbot, mock_db):
+    def test_timbrature_search_has_clear_button(self, qapp, qtbot, mock_db):
         """TimbratureDBPanel search bar should have clear button enabled."""
         from src.gui.panels import TimbratureDBPanel
 
@@ -34,7 +34,7 @@ class TestSearchUX:
         assert isinstance(panel.search_input, QLineEdit)
         assert panel.search_input.isClearButtonEnabled() is True
 
-    def test_contabilita_search_has_clear_button(self, qtbot, mock_db):
+    def test_contabilita_search_has_clear_button(self, qapp, qtbot, mock_db):
         """ContabilitaPanel search bar should have clear button enabled."""
         from src.gui.contabilita_panel import ContabilitaPanel
 
