@@ -9,14 +9,34 @@ import os
 import shutil
 import json
 import hashlib
+import sys
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
+
+# Add project root to sys.path to allow importing src modules
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+sys.path.insert(0, project_root)
+
+from src.core.secrets_manager import SecretsManager
 
 # Carica variabili d'ambiente
 load_dotenv()
 
-# Chiave segreta condivisa con il validatore
-LICENSE_SECRET_KEY = os.getenv("LICENSE_SECRET_KEY", "").encode()
+def get_signing_key():
+    """Recupera la chiave di firma/cifratura in modo sicuro."""
+    # 1. Environment Variable
+    env_key = os.getenv("LICENSE_SECRET_KEY")
+    if env_key:
+        return env_key.encode()
+
+    # 2. SecretsManager (se configurato localmente per admin)
+    try:
+        return SecretsManager.get_license_key()
+    except Exception:
+        pass
+
+    return b""
 
 
 def _calculate_sha256(filepath):
@@ -154,6 +174,11 @@ class LicenseAdminApp:
         if not client_name:
             client_name = disk_serial[:20]  # Fallback
         
+        license_key = get_signing_key()
+        if not license_key:
+             messagebox.showerror("Errore Crittografia", "Chiave segreta LICENSE_SECRET_KEY non trovata!\nImposta la variabile d'ambiente o il .env.")
+             return
+
         # Pulisci nome per cartella
         folder_name = "".join(
             c for c in client_name 
@@ -191,7 +216,7 @@ class LicenseAdminApp:
             
             # Cifra payload
             json_payload = json.dumps(payload, indent=2).encode('utf-8')
-            cipher = Fernet(LICENSE_SECRET_KEY)
+            cipher = Fernet(license_key)
             encrypted_data = cipher.encrypt(json_payload)
             
             # Scrivi config.dat

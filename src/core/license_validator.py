@@ -12,10 +12,7 @@ from datetime import date
 from cryptography.fernet import Fernet
 from enum import Enum
 from src.core.time_manager import get_trusted_time
-
-# Chiave segreta per decifratura licenza
-LICENSE_SECRET_KEY = b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
-
+from src.core.secrets_manager import SecretsManager  # Use SecretsManager
 
 class LicenseStatus(Enum):
     VALID = "Valid"
@@ -128,7 +125,8 @@ def get_hardware_id():
 def _get_license_paths():
     """Restituisce i percorsi dei file di licenza."""
     from src.core import config_manager
-    base_dir = config_manager.get_data_path()
+    # Use standard data path via platformdirs (user data dir)
+    base_dir = config_manager.CONFIG_DIR
 
     license_dir = os.path.join(base_dir, "Licenza")
     return {
@@ -155,7 +153,9 @@ def get_license_info():
         with open(config_path, "rb") as f:
             encrypted_data = f.read()
 
-        cipher = Fernet(LICENSE_SECRET_KEY)
+        # Retrieve key securely
+        key = SecretsManager.get_license_key()
+        cipher = Fernet(key)
         decrypted_data = cipher.decrypt(encrypted_data)
         return json.loads(decrypted_data.decode('utf-8'))
     except Exception:
