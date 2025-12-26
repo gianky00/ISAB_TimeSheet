@@ -44,9 +44,15 @@ jobs:
         id: tests
         env:
           QT_QPA_PLATFORM: offscreen
-        continue-on-error: true
         run: |
-          pytest -v 2>&1 | tee test_output.txt
+          pytest -v > test_output.txt 2>&1 || true
+          cat test_output.txt
+          
+          if grep -qE "FAILED |ERROR | failed,| errors" test_output.txt; then
+            echo "::error::Tests failed"
+            exit 1
+          fi
+        continue-on-error: true
           
       - name: Call Jules if tests failed
         if: |
