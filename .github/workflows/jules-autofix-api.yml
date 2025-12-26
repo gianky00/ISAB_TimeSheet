@@ -25,7 +25,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh run view ${{ github.event.workflow_run.id }} --log-failed > failed_logs.txt 2>&1 || true
-          head -c 3000 failed_logs.txt > failed_logs_truncated.txt
+          # TAIL prende gli ULTIMI 4000 caratteri dove ci sono gli errori
+          tail -c 4000 failed_logs.txt > failed_logs_truncated.txt
           
       - name: Invoke Jules via API
         env:
@@ -45,14 +46,12 @@ jobs:
           
           echo "Source: $SOURCE_NAME"
           
-          LOGS_CONTENT=$(cat failed_logs_truncated.txt | jq -Rs .)
-          
           jq -n \
             --arg logs "$(<failed_logs_truncated.txt)" \
             --arg branch "$BRANCH_NAME" \
             --arg source "$SOURCE_NAME" \
             '{
-              prompt: ("Il workflow CI e fallito. Analizza i log e correggi il problema.\n\nLog errore:\n" + $logs + "\n\nBranch: " + $branch + "\n\nIstruzioni: Analizza i log, identifica la causa del fallimento, correggi il problema (codice, test, dipendenze o config), verifica che i test passino, crea una PR."),
+              prompt: ("Il workflow CI e fallito. Analizza i log e correggi il problema.\n\nLog errore (ultimi 4000 caratteri):\n" + $logs + "\n\nBranch: " + $branch + "\n\nIstruzioni: Analizza i log, identifica la causa del fallimento, correggi il problema (codice, test, dipendenze o config), verifica che i test passino, crea una PR."),
               sourceContext: {
                 source: $source,
                 githubRepoContext: {
