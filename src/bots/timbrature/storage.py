@@ -31,10 +31,8 @@ class TimbratureStorage:
 
     def _ensure_db_exists(self):
         """Creates database and table if they don't exist."""
-        # Delegated to DatabaseManager via init_db logic if unified,
-        # but here we ensure schema exists locally or rely on db_manager.
-        # Since db_manager now handles schema init, we can call it.
-        db_manager.init_db()
+        # For testing, we can pass the specific db_path. In production, it's None.
+        db_manager._init_timbrature(db_path=self.db_path if "test" in str(self.db_path) else None)
 
     def get_employees(self) -> List[Dict[str, str]]:
         """

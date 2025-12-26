@@ -284,7 +284,7 @@ class ContabilitaKPIPanel(QWidget):
             anim.setDuration(600 + (i * 100)) # Staggered
             anim.setStartValue(0)
             anim.setEndValue(1)
-            anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+            anim.setEasingCurve(QEasingCurve(QEasingCurve.Type.OutQuad))
 
             self.anim_group.addAnimation(anim)
 

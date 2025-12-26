@@ -16,7 +16,8 @@ def temp_db(tmp_path):
 @pytest.fixture
 def storage(temp_db):
     """Fixture per creare uno storage con DB temporaneo."""
-    storage = TimbratureStorage(temp_db)
+    storage = TimbratureStorage(db_path=temp_db)
+    storage._ensure_db_exists() # Questo ora passa il db_path corretto
     return storage
 
 def test_db_creation(temp_db, storage):

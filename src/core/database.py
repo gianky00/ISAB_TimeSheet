@@ -209,8 +209,8 @@ class DatabaseManager:
 
             conn.commit()
 
-    def _init_timbrature(self):
-        with self.get_connection(self.DB_TIMBRATURE) as conn:
+    def _init_timbrature(self, db_path: Optional[Path] = None):
+        with self.get_connection(db_path or self.DB_TIMBRATURE) as conn:
             cursor = conn.cursor()
 
             cursor.execute('''

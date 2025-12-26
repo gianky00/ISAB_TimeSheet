@@ -212,7 +212,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.anim.setDuration(500)
         self.anim.setStartValue(0)
         self.anim.setEndValue(1)
-        self.anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        self.anim.setEasingCurve(QEasingCurve(QEasingCurve.Type.OutQuad))
         self.anim.start()
 
         QApplication.processEvents()
@@ -248,7 +248,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.scroll_anim.setDuration(400)
         self.scroll_anim.setStartValue(start_val)
         self.scroll_anim.setEndValue(end_val)
-        self.scroll_anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        self.scroll_anim.setEasingCurve(QEasingCurve(QEasingCurve.Type.OutQuad))
         self.scroll_anim.start()
 
     def clear(self):
