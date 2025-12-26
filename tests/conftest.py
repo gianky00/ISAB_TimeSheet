@@ -18,11 +18,14 @@ keyring.set_keyring(NullKeyring())
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src'))
 
-@pytest.fixture(scope="session", autouse=True)
-def mock_os_getlogin():
-    """Mock os.getlogin() to prevent OSError in headless CI environments."""
-    with patch('os.getlogin', return_value='testuser') as mock:
-        yield mock
+def pytest_configure(config):
+    """Mock os.getlogin() before test collection to prevent OSError in CI."""
+    # This patch is applied before any tests are collected or run.
+    patcher = patch('os.getlogin', return_value='testuser')
+    patcher.start()
+
+    # Ensure the patch is stopped when pytest exits.
+    config.add_cleanup(patcher.stop)
 
 @pytest.fixture
 def temp_dir():
