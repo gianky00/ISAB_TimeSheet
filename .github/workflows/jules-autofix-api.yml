@@ -6,7 +6,6 @@ on:
     types:
       - completed
 
-# UN SOLO TASK ALLA VOLTA per branch - evita task paralleli
 concurrency:
   group: jules-autofix-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: false
@@ -31,63 +30,52 @@ jobs:
       - name: Invoke Jules via API
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch }}
+          REPO_NAME: ${{ github.repository }}
         run: |
           SOURCE_RESPONSE=$(curl -s 'https://jules.googleapis.com/v1alpha/sources' \
             -H "X-Goog-Api-Key: $JULES_API_KEY")
           
-          REPO_NAME="${{ github.repository }}"
           SOURCE_NAME=$(echo "$SOURCE_RESPONSE" | jq -r ".sources[] | select(.id | contains(\"$REPO_NAME\")) | .name" | head -1)
           
           if [ -z "$SOURCE_NAME" ] || [ "$SOURCE_NAME" = "null" ]; then
-            echo "❌ Repo non trovato in Jules. Collegalo su jules.google"
+            echo "Repo non trovato in Jules. Collegalo su jules.google"
             exit 1
           fi
           
-          echo "✅ Source: $SOURCE_NAME"
+          echo "Source: $SOURCE_NAME"
           
-          LOGS_CONTENT=$(cat failed_logs_truncated.txt)
+          LOGS_CONTENT=$(cat failed_logs_truncated.txt | jq -Rs .)
           
-          PROMPT="Il workflow CI è fallito. Analizza i log e correggi il problema.
-
-## Log dell'errore:
-$LOGS_CONTENT
-
-## Branch: ${{ github.event.workflow_run.head_branch }}
-
-## Istruzioni:
-Analizza attentamente i log e identifica la causa esatta del fallimento.
-Correggi il problema, che sia nel codice sorgente, nei test, nelle dipendenze, nella configurazione o in qualsiasi altro file.
-Esegui i test per verificare che la correzione funzioni.
-Crea una PR con la fix."
+          jq -n \
+            --arg logs "$(<failed_logs_truncated.txt)" \
+            --arg branch "$BRANCH_NAME" \
+            --arg source "$SOURCE_NAME" \
+            '{
+              prompt: ("Il workflow CI e fallito. Analizza i log e correggi il problema.\n\nLog errore:\n" + $logs + "\n\nBranch: " + $branch + "\n\nIstruzioni: Analizza i log, identifica la causa del fallimento, correggi il problema (codice, test, dipendenze o config), verifica che i test passino, crea una PR."),
+              sourceContext: {
+                source: $source,
+                githubRepoContext: {
+                  startingBranch: $branch
+                }
+              },
+              automationMode: "AUTO_CREATE_PR",
+              title: "Fix CI failure"
+            }' > request.json
           
           RESPONSE=$(curl -s 'https://jules.googleapis.com/v1alpha/sessions' \
             -X POST \
             -H "Content-Type: application/json" \
             -H "X-Goog-Api-Key: $JULES_API_KEY" \
-            -d "$(jq -n \
-              --arg prompt "$PROMPT" \
-              --arg source "$SOURCE_NAME" \
-              --arg branch "${{ github.event.workflow_run.head_branch }}" \
-              '{
-                prompt: $prompt,
-                sourceContext: {
-                  source: $source,
-                  githubRepoContext: {
-                    startingBranch: $branch
-                  }
-                },
-                automationMode: "AUTO_CREATE_PR",
-                title: "Fix CI failure"
-              }')")
+            -d @request.json)
           
           echo "Risposta Jules:"
           echo "$RESPONSE" | jq .
           
           SESSION_ID=$(echo "$RESPONSE" | jq -r '.id')
           if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "null" ]; then
-            echo "✅ Sessione Jules creata: $SESSION_ID"
-            echo "🔗 https://jules.google"
+            echo "Sessione Jules creata: $SESSION_ID"
           else
-            echo "❌ Errore creazione sessione"
+            echo "Errore creazione sessione"
             exit 1
           fi
