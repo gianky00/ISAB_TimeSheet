@@ -26,7 +26,3 @@ def test_horizontal_magic(qapp):  # Inject the qapp fixture
     assert count == 5
     print("Test Finished - Horizontal Logic OK")
 
-if __name__ == "__main__":
-    # This part is for standalone execution, it's fine to leave as is.
-    app = QApplication(sys.argv)
-    test_horizontal_magic(app)

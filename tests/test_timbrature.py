@@ -4,8 +4,10 @@ Tests for Timbrature module.
 import pytest
 import sqlite3
 import pandas as pd
+from unittest.mock import patch
 from pathlib import Path
 from src.bots.timbrature.storage import TimbratureStorage
+from src.core.database import db_manager
 
 @pytest.fixture
 def temp_db(tmp_path):
@@ -15,9 +17,14 @@ def temp_db(tmp_path):
 
 @pytest.fixture
 def storage(temp_db):
-    """Fixture per creare uno storage con DB temporaneo."""
-    storage = TimbratureStorage(temp_db)
-    return storage
+    """
+    Fixture per creare uno storage con DB temporaneo.
+    Usa patch per forzare db_manager a usare il DB di test.
+    """
+    with patch.object(db_manager, 'DB_TIMBRATURE', temp_db):
+        # L'init_db chiamato da TimbratureStorage ora userà il temp_db
+        storage_instance = TimbratureStorage(db_path=temp_db)
+        yield storage_instance
 
 def test_db_creation(temp_db, storage):
     """Test che il database venga creato correttamente."""
