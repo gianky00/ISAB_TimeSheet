@@ -119,16 +119,6 @@ class DashboardPanel(QWidget):
         self.layout.addLayout(grid_layout)
         self.layout.addStretch()
 
-        # Simple Entry Animation (Fade In)
-        self.opacity_eff = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity_eff)
-        self.anim = QPropertyAnimation(self.opacity_eff, b"opacity")
-        self.anim.setDuration(800)
-        self.anim.setStartValue(0)
-        self.anim.setEndValue(1)
-        self.anim.setEasingCurve(QEasingCurve.Type.OutQuad)
-        self.anim.start()
-
     def _create_module_card(self, title, desc, icon, color, action_key, runs, errors):
         """Crea una card cliccabile ricca per un singolo modulo."""
         card = QFrame()
