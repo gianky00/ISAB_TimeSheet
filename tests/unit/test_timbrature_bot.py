@@ -57,9 +57,9 @@ class TestTimbraturePage:
 class TestTimbratureStorage:
     """Test Database logic."""
 
-    @patch('sqlite3.connect')
+    @patch('src.core.database.DatabaseManager.get_connection')
     @patch('pandas.read_excel')
-    def test_import_excel_success(self, mock_read_excel, mock_connect):
+    def test_import_excel_success(self, mock_read_excel, mock_get_conn):
         """Should import valid Excel data."""
         # Setup Mock DataFrame
         mock_df = MagicMock()
@@ -81,10 +81,12 @@ class TestTimbratureStorage:
         # Setup DB Mock
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
-        mock_connect.return_value.__enter__.return_value = mock_conn
+        mock_get_conn.return_value.__enter__.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
 
-        storage = TimbratureStorage(Path(":memory:"))
+        # Mock db_manager.init_db to avoid real init during init
+        with patch('src.core.database.db_manager.init_db'):
+            storage = TimbratureStorage(Path(":memory:"))
         # Override columns map for test simplicity
         storage.COLUMNS_MAP = {"Data Timbratura": "data", "Ora Ingresso": "ingresso"}
 

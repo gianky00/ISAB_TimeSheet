@@ -110,10 +110,12 @@ def main():
     from PyQt6.QtWidgets import QApplication, QMessageBox
     from PyQt6.QtCore import Qt
     from PyQt6.QtGui import QFont, QIcon
+    from src.gui.styles import apply_theme
     
     # Create application first to allow message boxes
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
+    apply_theme(app, "light") # Default to light theme for now
     
     # Set default font
     font = QFont("Segoe UI", 10)

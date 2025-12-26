@@ -10,9 +10,13 @@ import shutil
 import json
 import hashlib
 from cryptography.fernet import Fernet
+from dotenv import load_dotenv
+
+# Carica variabili d'ambiente
+load_dotenv()
 
 # Chiave segreta condivisa con il validatore
-LICENSE_SECRET_KEY = b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
+LICENSE_SECRET_KEY = os.getenv("LICENSE_SECRET_KEY", "").encode()
 
 
 def _calculate_sha256(filepath):

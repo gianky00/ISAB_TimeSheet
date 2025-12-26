@@ -8,6 +8,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Optional, List, Dict, Callable
 from src.core.config_manager import CONFIG_DIR
+from src.core.database import db_manager
 
 class TimbratureStorage:
     """Manages SQLite database for Timbrature."""
@@ -30,40 +31,17 @@ class TimbratureStorage:
 
     def _ensure_db_exists(self):
         """Creates database and table if they don't exist."""
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS timbrature (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    data TEXT,
-                    ingresso TEXT,
-                    uscita TEXT,
-                    nome TEXT,
-                    cognome TEXT,
-                    presenza_ts TEXT,
-                    sito_timbratura TEXT,
-                    UNIQUE(data, ingresso, uscita, nome, cognome)
-                )
-            ''')
-
-            # Tabella Dipendenti per associazione Reparto
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS dipendenti (
-                    nome TEXT,
-                    cognome TEXT,
-                    reparto TEXT,
-                    PRIMARY KEY (nome, cognome)
-                )
-            ''')
-            conn.commit()
+        # Delegated to DatabaseManager via init_db logic if unified,
+        # but here we ensure schema exists locally or rely on db_manager.
+        # Since db_manager now handles schema init, we can call it.
+        db_manager.init_db()
 
     def get_employees(self) -> List[Dict[str, str]]:
         """
         Recupera la lista unica dei dipendenti (da timbrature e dipendenti).
         Restituisce una lista di dict: {'nome': ..., 'cognome': ..., 'reparto': ...}
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with db_manager.get_connection(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
@@ -91,7 +69,7 @@ class TimbratureStorage:
 
     def update_employee_reparto(self, nome: str, cognome: str, reparto: str):
         """Aggiorna il reparto di un dipendente."""
-        with sqlite3.connect(self.db_path) as conn:
+        with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO dipendenti (nome, cognome, reparto)
@@ -105,7 +83,7 @@ class TimbratureStorage:
         Recupera le timbrature con il reparto associato (JOIN).
         Restituisce lista di tuple (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura, reparto).
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
 
             query = """
@@ -194,7 +172,7 @@ class TimbratureStorage:
             added_count = 0
             skipped_count = 0
 
-            with sqlite3.connect(self.db_path) as conn:
+            with db_manager.get_connection(self.db_path) as conn:
                 cursor = conn.cursor()
 
                 for _, row in df_filtered.iterrows():

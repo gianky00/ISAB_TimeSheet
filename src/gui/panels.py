@@ -135,6 +135,7 @@ class BaseBotPanel(QWidget):
         self.start_btn = QPushButton("▶ Avvia")
         self.start_btn.setMinimumWidth(120)
         self.start_btn.setMinimumHeight(40)
+        self.start_btn.setIcon(QIcon("assets/icons/play.svg")) # Fallback to text if missing
         self.start_btn.setStyleSheet("""
             QPushButton {
                 background-color: #28a745;
@@ -158,6 +159,7 @@ class BaseBotPanel(QWidget):
         self.stop_btn.setMinimumWidth(100)
         self.stop_btn.setMinimumHeight(40)
         self.stop_btn.setEnabled(False)
+        self.stop_btn.setIcon(QIcon("assets/icons/stop.svg"))
         self.stop_btn.setStyleSheet("""
             QPushButton {
                 background-color: #dc3545;
