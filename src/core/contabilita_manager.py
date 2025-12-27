@@ -281,7 +281,7 @@ class ContabilitaManager:
                             if df.empty: continue
 
                             df['year'] = year
-                        rename_map = {k: v for k, v in cls.COLUMNS_MAPPING.items() if k in df.columns}
+
                         # Normalizzazione più robusta per il mapping delle colonne
                         # Prepara mappa normalizzata: "N° PREV." -> "N°PREV." -> "n_prev"
                         normalized_map = {}
