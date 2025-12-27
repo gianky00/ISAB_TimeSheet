@@ -621,8 +621,9 @@ class EditableDataTable(QWidget):
         # Traccia modifiche
         self.table.itemChanged.connect(self._on_item_changed)
 
-        # Aggiungi una riga vuota iniziale
-        self._add_row()
+        # Aggiungi righe vuote iniziali (almeno 3)
+        for _ in range(3):
+            self._add_row()
 
         layout.addWidget(self.table)
 
@@ -816,8 +817,8 @@ class EditableDataTable(QWidget):
                     if item:
                         item.setText(str(value))
 
-        # Se non ci sono dati, aggiungi una riga vuota
-        if self.table.rowCount() == 0:
+        # Se ci sono meno di 3 righe, aggiungine finché non sono 3
+        while self.table.rowCount() < 3:
             self._add_row()
 
         self.table.blockSignals(False)

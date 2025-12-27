@@ -229,7 +229,27 @@ class ContabilitaManager:
                         continue
 
                     try:
-                        df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
+                        # Rilevamento dinamico dell'header
+                        # Leggiamo le prime righe per trovare quella che contiene le colonne attese
+                        preview_df = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=10)
+
+                        header_row_idx = 1 # Default legacy (riga 2)
+
+                        # Cerchiamo colonne chiave
+                        key_cols = ["DATA PREV.", "MESE", "N°PREV.", "TOTALE PREV."]
+
+                        for i, row in preview_df.iterrows():
+                            # Converte riga in stringa upper per check
+                            row_str = [str(val).strip().upper() for val in row.values]
+                            # Se troviamo almeno 2 colonne chiave, assumiamo sia l'header
+                            matches = sum(1 for col in key_cols if col in row_str)
+                            if matches >= 2:
+                                header_row_idx = i
+                                break
+
+                        # Leggi con header corretto
+                        df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
+
                         if not df.empty: df = df.iloc[:-1]
                         df.columns = [str(c).strip().upper() for c in df.columns]
                         df.dropna(how='all', inplace=True)
