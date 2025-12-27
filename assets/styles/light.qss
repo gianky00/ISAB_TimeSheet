@@ -1,0 +1,232 @@
+/* Bot TS Light Theme Stylesheet */
+
+/* === GLOBAL === */
+* {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 14px;
+}
+
+QMainWindow {
+    background-color: #FAFAFA;
+}
+
+QWidget {
+    color: #212121;
+}
+
+/* === BUTTONS === */
+QPushButton {
+    background-color: #009688;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background-color: #00897B;
+}
+
+QPushButton:pressed {
+    background-color: #00796B;
+}
+
+QPushButton:disabled {
+    background-color: #BDBDBD;
+    color: #757575;
+}
+
+QPushButton:focus {
+    outline: 2px solid #00968866;
+    outline-offset: 2px;
+}
+
+/* Secondary Button */
+QPushButton[variant="secondary"] {
+    background-color: #673AB7;
+}
+
+QPushButton[variant="secondary"]:hover {
+    background-color: #5E35B1;
+}
+
+/* Ghost Button */
+QPushButton[variant="ghost"] {
+    background-color: transparent;
+    color: #009688;
+    border: 1px solid #009688;
+}
+
+QPushButton[variant="ghost"]:hover {
+    background-color: #00968811;
+}
+
+/* === INPUTS === */
+QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+    background-color: #FFFFFF;
+    color: #212121; /* Force Text Color */
+    border: 1px solid #E0E0E0;
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+
+QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, QComboBox:focus {
+    border-color: #009688;
+    outline: none;
+    background-color: #FFFFFF; /* Ensure background stays white */
+    color: #000000; /* Force Black Text on Focus */
+}
+
+/* Specific fix for QTableWidget Inputs to prevent shrinking/disappearing text */
+QTableWidget QLineEdit, QTableWidget QComboBox {
+    color: #000000;
+    background-color: #FFFFFF;
+    font-size: 14px; /* Ensure font size is consistent */
+    padding: 2px; /* Reduce padding inside cells to prevent size jumping */
+    border: none; /* Often cleaner in cells */
+}
+
+QLineEdit:disabled {
+    background-color: #F5F5F5;
+    color: #9E9E9E;
+}
+
+/* === TABLES === */
+QTableWidget {
+    background-color: #FFFFFF;
+    alternate-background-color: #FAFAFA;
+    gridline-color: #EEEEEE;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    selection-background-color: #00968833; /* Semi-transparent Primary */
+    selection-color: #212121;
+}
+
+QTableWidget::item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #F5F5F5;
+}
+
+QTableWidget::item:selected {
+    background-color: #00968833;
+    color: #212121;
+}
+
+QTableWidget::item:focus {
+    background-color: #00968833; /* Maintain consistency */
+    color: #212121;
+    border: none;
+}
+
+QHeaderView::section {
+    background-color: #F5F5F5;
+    color: #424242;
+    padding: 12px;
+    border: none;
+    border-bottom: 2px solid #009688;
+    font-weight: 600;
+}
+
+/* === TABS === */
+QTabWidget::pane {
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+}
+
+QTabBar::tab {
+    background-color: #F5F5F5;
+    color: #757575;
+    padding: 12px 24px;
+    margin-right: 4px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+QTabBar::tab:selected {
+    background-color: #FFFFFF;
+    color: #009688;
+    border-bottom: 2px solid #009688;
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #EEEEEE;
+}
+
+/* === SCROLLBARS === */
+QScrollBar:vertical {
+    background-color: #F5F5F5;
+    width: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #BDBDBD;
+    border-radius: 6px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #9E9E9E;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* === PROGRESS BAR === */
+QProgressBar {
+    background-color: #E0E0E0;
+    border: none;
+    border-radius: 4px;
+    height: 8px;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #009688;
+    border-radius: 4px;
+}
+
+/* === TOOLTIPS === */
+QToolTip {
+    background-color: #424242;
+    color: #FFFFFF;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+/* === GROUP BOX === */
+QGroupBox {
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding-top: 20px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 4px 12px;
+    color: #009688;
+    font-weight: 600;
+}
+
+/* === STATUS COLORS (Generic Classes) === */
+.status-success {
+    background-color: #C8E6C9;
+}
+
+.status-error {
+    background-color: #FFCDD2;
+}
+
+.status-warning {
+    background-color: #FFF9C4;
+}
+
+.status-pending {
+    background-color: #E3F2FD;
+}

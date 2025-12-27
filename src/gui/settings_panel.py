@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
     QMessageBox, QListWidget, QListWidgetItem, QInputDialog,
-    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView
+    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView, QTableWidgetItem
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -1031,4 +1031,3 @@ class SettingsPanel(QWidget):
         elif reply == QMessageBox.StandardButton.Discard:
             self._load_settings()
             return True
-        return False

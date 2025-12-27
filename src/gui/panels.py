@@ -1,4 +1,3 @@
-from PyQt6.QtGui import QIcon
 """
 Bot TS - Bot Panels
 Pannelli specifici per ogni bot.
@@ -18,10 +17,15 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
 from datetime import datetime
 
+# Import UI Components
 from src.gui.widgets import (
     EditableDataTable, LogWidget, StatusIndicator, ExcelTableWidget,
     CalendarDateEdit, MissionReportCard
 )
+from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.status_card import StatusCard
+from src.gui.widgets.toast import ToastManager
+
 from src.core import config_manager
 from src.core.stats_manager import StatsManager
 from src.bots.timbrature.storage import TimbratureStorage
@@ -93,7 +97,7 @@ class BaseBotPanel(QWidget):
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setSpacing(15)
         
-        # Header
+        # Header (Now handled by QSS/Theme but keeping structure)
         header = QFrame()
         header.setStyleSheet("""
             QFrame {
@@ -106,18 +110,18 @@ class BaseBotPanel(QWidget):
         header_layout = QVBoxLayout(header)
         
         title = QLabel(self.bot_name)
-        title.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
+        title.setStyleSheet("color: white; font-size: 24px; font-weight: bold; background: transparent;")
         header_layout.addWidget(title)
         
         desc = QLabel(self.bot_description)
-        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 16px;")
+        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 16px; background: transparent;")
         header_layout.addWidget(desc)
         
         self.main_layout.addWidget(header)
         
-        # Status
-        self.status_indicator = StatusIndicator()
-        self.main_layout.addWidget(self.status_indicator)
+        # Status Card (New Design)
+        self.status_card = StatusCard("Stato Attività")
+        self.main_layout.addWidget(self.status_card)
         
         # Content area (da sovrascrivere nelle sottoclassi)
         self.content_widget = QWidget()
@@ -133,50 +137,14 @@ class BaseBotPanel(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         
-        self.start_btn = QPushButton("▶ Avvia")
+        self.start_btn = ModernButton("Avvia", variant=ModernButton.Variant.SUCCESS, size=ModernButton.Size.LARGE, icon="assets/icons/play.svg")
         self.start_btn.setMinimumWidth(120)
-        self.start_btn.setMinimumHeight(40)
-        self.start_btn.setIcon(QIcon("assets/icons/play.svg")) # Fallback to text if missing
-        self.start_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #28a745;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #218838;
-            }
-            QPushButton:disabled {
-                background-color: #6c757d;
-            }
-        """)
         self.start_btn.clicked.connect(self._on_start)
         btn_layout.addWidget(self.start_btn)
         
-        self.stop_btn = QPushButton("⏹ Stop")
+        self.stop_btn = ModernButton("Stop", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.LARGE, icon="assets/icons/stop.svg")
         self.stop_btn.setMinimumWidth(100)
-        self.stop_btn.setMinimumHeight(40)
         self.stop_btn.setEnabled(False)
-        self.stop_btn.setIcon(QIcon("assets/icons/stop.svg"))
-        self.stop_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-            QPushButton:disabled {
-                background-color: #6c757d;
-            }
-        """)
         self.stop_btn.clicked.connect(self._on_stop)
         btn_layout.addWidget(self.stop_btn)
         
@@ -186,6 +154,7 @@ class BaseBotPanel(QWidget):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
         self.log_widget.timeline.set_mood("running")
+        self.status_card.setStatus(StatusCard.Status.RUNNING)
 
         # Track usage
         StatsManager().increment_usage(self.bot_name)
@@ -195,6 +164,7 @@ class BaseBotPanel(QWidget):
         if self.worker:
             self.worker.stop()
             self.log_widget.append("[AVVISO] Stop richiesto...")
+            self.status_card.setStatus(StatusCard.Status.WARNING, "Arresto richiesto...")
     
     def _on_worker_finished(self, success: bool):
         """Gestisce il completamento del worker."""
@@ -209,29 +179,25 @@ class BaseBotPanel(QWidget):
             m, s = divmod(total_seconds, 60)
             duration_str = f"{m}m {s}s"
         else:
-            # Fallback if start_time was reset or not set
             duration_str = "N/D"
 
         # Mission Report (#3)
-        # Using the timeline widget exposed via log_widget
         report = MissionReportCard(duration_str, success)
         self.log_widget.timeline.add_widget(report)
 
         if success:
-            self.status_indicator.set_status("success")
+            self.status_card.setStatus(StatusCard.Status.SUCCESS)
             self.log_widget.timeline.set_mood("success")
         else:
-            self.status_indicator.set_status("error")
+            self.status_card.setStatus(StatusCard.Status.ERROR)
             self.log_widget.timeline.set_mood("error")
-            # Track error
             StatsManager().increment_error(self.bot_name)
         
         self.bot_finished.emit(success)
 
         # Taskbar Flash (#4)
-        QApplication.alert(self, 0) # 0 = infinite flash until focused
+        QApplication.alert(self, 0)
 
-        # Attendi che il thread sia effettivamente terminato per evitare crash
         if self.worker:
             self.worker.wait()
             self.worker = None
@@ -241,8 +207,11 @@ class BaseBotPanel(QWidget):
         self.log_widget.append(message)
     
     def _on_status(self, status: str):
-        """Aggiorna lo stato."""
-        self.status_indicator.set_status(status)
+        """Aggiorna lo stato (messaggio custom)."""
+        # Map string status to StatusCard if possible, or just update message
+        # Often bots send generic strings like "Downloading..."
+        # We keep the icon based on general state (RUNNING) but update text
+        self.status_card._update_status_display(status)
     
     def get_credentials(self) -> tuple:
         """Ottiene le credenziali dall'account di default."""
@@ -268,77 +237,24 @@ class ScaricaTSPanel(BaseBotPanel):
         """Configura il contenuto specifico del pannello."""
         # --- Sezione Parametri ---
         params_group = QGroupBox("⚙️ Parametri")
-        params_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
+        # Style handled by QSS
         params_layout = QVBoxLayout(params_group)
         
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
         
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
-        self.fornitore_combo.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QComboBox:focus {
-                border-color: #0d6efd;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 30px;
-            }
-            QComboBox::down-arrow {
-                width: 12px;
-                height: 12px;
-            }
-            QComboBox QAbstractItemView {
-                border: 1px solid #ced4da;
-                selection-background-color: #e7f1ff;
-                selection-color: #0d6efd;
-                font-size: 15px;
-            }
-        """)
         fornitore_layout.addWidget(self.fornitore_combo)
         
         # Pulsante per aprire impostazioni
         self.open_settings_btn = QPushButton("⚙️")
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(35, 35)
-        self.open_settings_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
-        """)
         self.open_settings_btn.clicked.connect(self._open_settings)
         fornitore_layout.addWidget(self.open_settings_btn)
         
@@ -347,7 +263,6 @@ class ScaricaTSPanel(BaseBotPanel):
         # Riga 2: Data
         date_layout = QHBoxLayout()
         date_label = QLabel("Data Da:")
-        date_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_label.setMinimumWidth(80)
         date_layout.addWidget(date_label)
         
@@ -357,7 +272,7 @@ class ScaricaTSPanel(BaseBotPanel):
         date_layout.addWidget(self.date_edit)
         
         date_hint = QLabel("(Formato: gg.mm.aaaa)")
-        date_hint.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: normal;")
+        date_hint.setStyleSheet("color: #6c757d; font-size: 13px;")
         date_layout.addWidget(date_hint)
         
         date_layout.addStretch()
@@ -367,7 +282,6 @@ class ScaricaTSPanel(BaseBotPanel):
         # Riga 3: Percorso destinazione
         dest_layout = QHBoxLayout()
         dest_label = QLabel("Destinazione:")
-        dest_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         dest_label.setMinimumWidth(80)
         dest_layout.addWidget(dest_label)
 
@@ -385,7 +299,6 @@ class ScaricaTSPanel(BaseBotPanel):
 
         # Riga 4: Flag Elabora TS
         self.elabora_ts_check = QCheckBox("Elabora TS")
-        self.elabora_ts_check.setStyleSheet("font-size: 15px; margin-top: 5px;")
         # Auto-save settings on change
         self.elabora_ts_check.stateChanged.connect(self._save_data)
         self.dest_path_edit.textChanged.connect(self._save_data)
@@ -395,42 +308,13 @@ class ScaricaTSPanel(BaseBotPanel):
         
         # --- Sezione Tabella Dati ---
         group = QGroupBox("📋 Dati Timesheet")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
         group_layout = QVBoxLayout(group)
         
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
 
-        self.clear_btn = QPushButton("🗑️ Pulisci Tabella")
-        self.clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 5px 10px;
-                font-weight: bold;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """)
+        self.clear_btn = ModernButton("Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
@@ -440,8 +324,8 @@ class ScaricaTSPanel(BaseBotPanel):
         self.data_table = EditableDataTable([
             {"name": "Numero OdA", "type": "text"}
         ])
-        # Increase minimum height to show at least 3 rows + header
-        self.data_table.setMinimumHeight(200)
+        # Increase minimum height to show at least 4 rows + header (approx 250px)
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
@@ -449,7 +333,6 @@ class ScaricaTSPanel(BaseBotPanel):
     
     def _open_settings(self):
         """Emette un segnale per aprire le impostazioni (gestito dalla main window)."""
-        # Trova la main window e cambia pagina
         main_window = self.window()
         if hasattr(main_window, 'show_settings'):
             main_window.show_settings()
@@ -473,7 +356,6 @@ class ScaricaTSPanel(BaseBotPanel):
             if index >= 0:
                 self.fornitore_combo.setCurrentIndex(index)
             else:
-                # Seleziona il primo elemento
                 self.fornitore_combo.setCurrentIndex(0)
     
     def _browse_dest_path(self):
@@ -554,33 +436,32 @@ class ScaricaTSPanel(BaseBotPanel):
     
     def _on_start(self):
         """Avvia il bot Scarico TS."""
+        # Use super()._on_start() to handle generic UI updates (StatusCard, etc)
+        super()._on_start()
+
         username, password = self.get_credentials()
         
         if not username or not password:
-            QMessageBox.warning(
-                self,
-                "Credenziali mancanti",
-                "Configura le credenziali ISAB nelle Impostazioni."
-            )
+            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
         
         data = self.data_table.get_data()
         if not data:
-            QMessageBox.warning(
-                self,
-                "Dati mancanti",
-                "Inserisci almeno una riga con i dati del Timesheet."
-            )
+            ToastManager.instance().show("Inserisci almeno una riga con i dati del Timesheet.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Dati mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
         
         fornitore = self.fornitore_combo.currentText()
         if not fornitore:
-            QMessageBox.warning(
-                self,
-                "Fornitore mancante",
-                "Seleziona un fornitore dal menu a tendina.\n\n"
-                "Puoi gestire i fornitori nelle Impostazioni."
-            )
+            ToastManager.instance().show("Seleziona un fornitore.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Fornitore mancante")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
         
         # Salva i dati correnti
@@ -611,7 +492,7 @@ class ScaricaTSPanel(BaseBotPanel):
         )
         
         if not bot:
-            QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
+            ToastManager.instance().show("Impossibile creare il bot.", "error")
             return
         
         # Prepara i dati con la data e il fornitore
@@ -630,7 +511,6 @@ class ScaricaTSPanel(BaseBotPanel):
         
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
-        self.status_indicator.set_status("running")
         
         self.log_widget.clear()
         self.log_widget.append(f"▶ Avvio bot Scarico TS")
@@ -658,77 +538,23 @@ class DettagliOdAPanel(BaseBotPanel):
         """Configura il contenuto specifico del pannello."""
         # --- Sezione Parametri ---
         params_group = QGroupBox("⚙️ Parametri")
-        params_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
         params_layout = QVBoxLayout(params_group)
 
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
 
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
-        self.fornitore_combo.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QComboBox:focus {
-                border-color: #0d6efd;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 30px;
-            }
-            QComboBox::down-arrow {
-                width: 12px;
-                height: 12px;
-            }
-            QComboBox QAbstractItemView {
-                border: 1px solid #ced4da;
-                selection-background-color: #e7f1ff;
-                selection-color: #0d6efd;
-                font-size: 15px;
-            }
-        """)
         fornitore_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
         self.open_settings_btn = QPushButton("⚙️")
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(35, 35)
-        self.open_settings_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
-        """)
         self.open_settings_btn.clicked.connect(self._open_settings)
         fornitore_layout.addWidget(self.open_settings_btn)
 
@@ -739,7 +565,6 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Data Da
         date_da_label = QLabel("Data Da:")
-        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_da_label)
 
         self.date_da_edit = CalendarDateEdit()
@@ -750,7 +575,6 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Data A
         date_a_label = QLabel("Data A:")
-        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_a_label)
 
         self.date_a_edit = CalendarDateEdit()
@@ -763,7 +587,6 @@ class DettagliOdAPanel(BaseBotPanel):
         # Riga 3: Percorso destinazione
         dest_layout = QHBoxLayout()
         dest_label = QLabel("Destinazione:")
-        dest_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         dest_label.setMinimumWidth(80)
         dest_layout.addWidget(dest_label)
 
@@ -783,42 +606,13 @@ class DettagliOdAPanel(BaseBotPanel):
 
         # Form dati OdA
         group = QGroupBox("Dati Ordine d'Acquisto")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
         group_layout = QVBoxLayout(group)
         
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
 
-        self.clear_btn = QPushButton("🗑️ Pulisci Tabella")
-        self.clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 5px 10px;
-                font-weight: bold;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """)
+        self.clear_btn = ModernButton("Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
@@ -838,6 +632,8 @@ class DettagliOdAPanel(BaseBotPanel):
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": contracts, "default": default_contract}
         ])
+        # Increase minimum height here as well
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
@@ -940,15 +736,22 @@ class DettagliOdAPanel(BaseBotPanel):
     
     def _on_start(self):
         """Avvia il bot Dettagli OdA."""
+        super()._on_start()
         username, password = self.get_credentials()
         
         if not username or not password:
-            QMessageBox.warning(self, "Credenziali mancanti", "Configura le credenziali ISAB nelle Impostazioni.")
+            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
 
         fornitore = self.fornitore_combo.currentText()
         if not fornitore:
-            QMessageBox.warning(self, "Fornitore mancante", "Seleziona un fornitore.")
+            ToastManager.instance().show("Seleziona un fornitore.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Fornitore mancante")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
 
         # Salva dati
@@ -979,7 +782,7 @@ class DettagliOdAPanel(BaseBotPanel):
         )
         
         if not bot:
-            QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
+            ToastManager.instance().show("Impossibile creare il bot.", "error")
             return
         
         self.worker = BotWorker(bot, {
@@ -994,7 +797,6 @@ class DettagliOdAPanel(BaseBotPanel):
         
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
-        self.status_indicator.set_status("running")
         
         self.log_widget.clear()
         self.log_widget.append("▶ Avvio bot Dettagli OdA...")
@@ -1021,42 +823,13 @@ class CaricoTSPanel(BaseBotPanel):
         """Configura il contenuto specifico del pannello."""
         # Tabella dati
         group = QGroupBox("Parametri")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
         group_layout = QVBoxLayout(group)
         
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
 
-        self.clear_btn = QPushButton("🗑️ Pulisci Tabella")
-        self.clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 5px 10px;
-                font-weight: bold;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """)
+        self.clear_btn = ModernButton("Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
@@ -1107,23 +880,22 @@ class CaricoTSPanel(BaseBotPanel):
     
     def _on_start(self):
         """Avvia il bot Carico TS."""
+        super()._on_start()
         username, password = self.get_credentials()
         
         if not username or not password:
-            QMessageBox.warning(
-                self,
-                "Credenziali mancanti",
-                "Configura le credenziali ISAB nelle Impostazioni."
-            )
+            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
         
         data = self.data_table.get_data()
         if not data:
-            QMessageBox.warning(
-                self,
-                "Dati mancanti",
-                "Inserisci almeno una riga con i dati del Timesheet da caricare."
-            )
+            ToastManager.instance().show("Inserisci almeno una riga con i dati del Timesheet da caricare.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Dati mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
         
         # Crea e avvia il worker
@@ -1140,7 +912,7 @@ class CaricoTSPanel(BaseBotPanel):
         )
         
         if not bot:
-            QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
+            ToastManager.instance().show("Impossibile creare il bot.", "error")
             return
         
         self.worker = BotWorker(bot, {"rows": data})
@@ -1150,7 +922,6 @@ class CaricoTSPanel(BaseBotPanel):
         
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
-        self.status_indicator.set_status("running")
         
         self.log_widget.clear()
         self.log_widget.append("▶ Avvio bot Carico TS...")
@@ -1178,77 +949,23 @@ class TimbratureBotPanel(BaseBotPanel):
         """Configura il contenuto specifico del pannello."""
         # --- Sezione Parametri ---
         params_group = QGroupBox("⚙️ Parametri")
-        params_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
         params_layout = QVBoxLayout(params_group)
 
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         fornitore_label.setMinimumWidth(80)
         fornitore_layout.addWidget(fornitore_label)
 
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
-        self.fornitore_combo.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 15px;
-                background-color: white;
-            }
-            QComboBox:focus {
-                border-color: #0d6efd;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 30px;
-            }
-            QComboBox::down-arrow {
-                width: 12px;
-                height: 12px;
-            }
-            QComboBox QAbstractItemView {
-                border: 1px solid #ced4da;
-                selection-background-color: #e7f1ff;
-                selection-color: #0d6efd;
-                font-size: 15px;
-            }
-        """)
         fornitore_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
         self.open_settings_btn = QPushButton("⚙️")
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(35, 35)
-        self.open_settings_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
-        """)
         self.open_settings_btn.clicked.connect(self._open_settings)
         fornitore_layout.addWidget(self.open_settings_btn)
 
@@ -1259,7 +976,6 @@ class TimbratureBotPanel(BaseBotPanel):
 
         # Data Da
         date_da_label = QLabel("Data Da:")
-        date_da_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_da_label)
 
         self.date_da_edit = CalendarDateEdit()
@@ -1270,7 +986,6 @@ class TimbratureBotPanel(BaseBotPanel):
 
         # Data A
         date_a_label = QLabel("Data A:")
-        date_a_label.setStyleSheet("font-weight: normal; font-size: 15px;")
         date_layout.addWidget(date_a_label)
 
         self.date_a_edit = CalendarDateEdit()
@@ -1284,21 +999,6 @@ class TimbratureBotPanel(BaseBotPanel):
 
         # --- Sezione Scheduler (Autopilot) ---
         sched_group = QGroupBox("📅 Autopilot (Pianificatore)")
-        sched_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                margin-top: 10px;
-                padding-top: 10px;
-                font-size: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """)
         sched_layout = QHBoxLayout(sched_group)
 
         self.autopilot_check = QCheckBox("Abilita download automatico")
@@ -1315,14 +1015,6 @@ class TimbratureBotPanel(BaseBotPanel):
         self.time_edit.setTime(QTime(9, 0))
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.setMinimumHeight(35)
-        self.time_edit.setStyleSheet("""
-            QTimeEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 5px;
-                background-color: white;
-            }
-        """)
         sched_layout.addWidget(self.time_edit)
 
         sched_layout.addStretch()
@@ -1370,15 +1062,23 @@ class TimbratureBotPanel(BaseBotPanel):
         config_manager.set_config_value("last_timbrature_date_a", self.date_a_edit.date().toString("dd.MM.yyyy"))
 
     def _on_start(self):
+        """Avvia il bot Timbrature."""
+        super()._on_start()
         username, password = self.get_credentials()
 
         if not username or not password:
-            QMessageBox.warning(self, "Credenziali mancanti", "Configura le credenziali ISAB nelle Impostazioni.")
+            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
 
         fornitore = self.fornitore_combo.currentText()
         if not fornitore:
-            QMessageBox.warning(self, "Fornitore mancante", "Seleziona un fornitore.")
+            ToastManager.instance().show("Seleziona un fornitore.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Fornitore mancante")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
 
         self._save_data()
@@ -1402,7 +1102,7 @@ class TimbratureBotPanel(BaseBotPanel):
         )
 
         if not bot:
-            QMessageBox.critical(self, "Errore", "Impossibile creare il bot.")
+            ToastManager.instance().show("Impossibile creare il bot.", "error")
             return
 
         self.worker = BotWorker(bot, {
@@ -1419,7 +1119,6 @@ class TimbratureBotPanel(BaseBotPanel):
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
-        self.status_indicator.set_status("running")
 
         self.log_widget.clear()
         self.log_widget.append("▶ Avvio bot Timbrature...")
@@ -1450,27 +1149,7 @@ class TimbratureDBPanel(QWidget):
 
         # Tab Widget
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                background-color: white;
-            }
-            QTabBar::tab {
-                background: #f1f3f5;
-                padding: 10px 20px;
-                margin-right: 2px;
-                border-top-left-radius: 6px;
-                border-top-right-radius: 6px;
-                color: #495057;
-                font-weight: bold;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom-color: white;
-                color: #0d6efd;
-            }
-        """)
+        # Style mostly handled by QSS, keeping minimal inline for tabs
 
         # --- TAB 1: Database (Timbrature) ---
         self.tab_database = QWidget()
@@ -1507,45 +1186,15 @@ class TimbratureDBPanel(QWidget):
             self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
         self.reparto_filter.setFixedWidth(150)
-        self.reparto_filter.setStyleSheet("""
-            QComboBox {
-                padding: 5px;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                background-color: white;
-            }
-        """)
         search_layout.addWidget(self.reparto_filter)
 
         # Import Button
-        import_btn = QPushButton("📥 Importa Excel")
-        import_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #17a2b8;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover { background-color: #138496; }
-        """)
+        import_btn = ModernButton("Importa Excel", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL)
         import_btn.clicked.connect(self._import_excel_manually)
         search_layout.addWidget(import_btn)
 
         # Refresh Button
-        refresh_btn = QPushButton("🔄 Aggiorna")
-        refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover { background-color: #5a6268; }
-        """)
+        refresh_btn = ModernButton("Aggiorna", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
         refresh_btn.clicked.connect(self.refresh_data)
         search_layout.addWidget(refresh_btn)
 
@@ -1562,28 +1211,7 @@ class TimbratureDBPanel(QWidget):
         header = self.db_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
-        self.db_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                background-color: white;
-                gridline-color: #e9ecef;
-                font-size: 13px;
-                selection-background-color: #e7f1ff;
-                selection-color: #0d6efd;
-            }
-            QTableWidget::item { padding: 5px; color: black; }
-            QTableWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
-            QTableWidget::item:focus { background-color: #e7f1ff; color: #0d6efd; border: none; }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                padding: 8px;
-                border: none;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-                color: black;
-            }
-        """)
+        # Use style from QSS for tables (removed hardcoded style)
         self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.db_table.auto_copy_headers = True
         self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
@@ -1609,7 +1237,6 @@ class TimbratureDBPanel(QWidget):
         header = self.settings_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
-        self.settings_table.setStyleSheet(self.db_table.styleSheet())
         layout.addWidget(self.settings_table)
 
         # Load data immediately
@@ -1723,11 +1350,11 @@ class TimbratureDBPanel(QWidget):
 
             if success:
                 self.refresh_data()
-                QMessageBox.information(self, "Successo", "Dati importati correttamente nel database.")
+                ToastManager.instance().show("Dati importati correttamente nel database.", "success")
                 # Reload settings too if new employees appeared
                 self._load_settings_data()
             else:
-                QMessageBox.warning(self, "Errore", "Impossibile importare il file. Controlla la console per i dettagli.")
+                ToastManager.instance().show("Impossibile importare il file.", "error")
 
         except Exception as e:
-            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
+            ToastManager.instance().show(f"Errore durante l'importazione: {e}", "error")

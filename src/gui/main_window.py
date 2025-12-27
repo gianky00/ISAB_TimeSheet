@@ -12,17 +12,23 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
 from datetime import datetime
 
+# Import Panels
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
 from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.scarico_ore_panel import ScaricoOrePanel
 from src.gui.settings_panel import SettingsPanel
-from src.gui.toast import ToastOverlay
 from src.gui.help_panel import HelpPanel
 from src.gui.dashboard_panel import DashboardPanel
 from src.gui.lyra_panel import LyraPanel
+
+# Import Core
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.license_validator import get_license_info
 from src.core import config_manager
+
+# Import UI/UX Components
+from src.gui.widgets.toast import ToastManager
+from src.gui.styles import apply_theme
 
 
 class SidebarButton(QPushButton):
@@ -87,6 +93,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Bot TS - Timesheet Manager")
         self.setMinimumSize(1200, 800)
         
+        # Apply Global Theme
+        apply_theme(QApplication.instance(), "light")
+
         # Abilita Drag & Drop
         self.setAcceptDrops(True)
 
@@ -95,8 +104,8 @@ class MainWindow(QMainWindow):
         self._connect_signals()
         self._setup_shortcuts()
 
-        # Toast notification system
-        self.toast = ToastOverlay(self)
+        # Toast notification system is now global via ToastManager
+        # We can still expose a helper if needed, but components use ToastManager directly.
 
         # Lyra Sentinel (Monitoraggio Anomalie)
         self.sentinel = LyraSentinel()
@@ -110,11 +119,11 @@ class MainWindow(QMainWindow):
         """Gestisce le anomalie trovate da Lyra."""
         self.btn_lyra.set_badge(count)
         if count > 0:
-            self.show_toast(f"⚠️ Lyra ha rilevato {count} anomalie")
+            ToastManager.instance().show(f"⚠️ Lyra ha rilevato {count} anomalie", "warning")
 
     def show_toast(self, message: str, duration: int = 3000):
-        """Mostra una notifica toast."""
-        self.toast.show_toast(message, duration)
+        """Mostra una notifica toast (Wrapper for backward compatibility)."""
+        ToastManager.instance().show(message, "info", duration)
 
     def _setup_shortcuts(self):
         """Configura le scorciatoie da tastiera globali."""
@@ -200,7 +209,8 @@ class MainWindow(QMainWindow):
         # Widget centrale
         central_widget = QWidget()
         # Force light theme for the main window content area if needed, or rely on specific widgets
-        central_widget.setStyleSheet("background-color: #f8f9fa; color: #212529;")
+        # central_widget.setStyleSheet("background-color: #f8f9fa; color: #212529;")
+        # Removed explicit style to let QSS handle it
         self.setCentralWidget(central_widget)
         
         # Layout principale orizzontale
@@ -229,6 +239,7 @@ class MainWindow(QMainWindow):
                 font-size: 28px;
                 font-weight: bold;
                 padding: 10px 0;
+                background: transparent;
             }
         """)
         sidebar_layout.addWidget(logo_label)
@@ -239,6 +250,7 @@ class MainWindow(QMainWindow):
                 color: rgba(255, 255, 255, 0.7);
                 font-size: 13px;
                 padding-bottom: 20px;
+                background: transparent;
             }
         """)
         sidebar_layout.addWidget(subtitle)
@@ -297,6 +309,7 @@ class MainWindow(QMainWindow):
                 color: rgba(255, 255, 255, 0.6);
                 font-size: 13px;
                 padding: 5px;
+                background: transparent;
             }
         """)
         sidebar_layout.addWidget(license_label)
@@ -321,6 +334,7 @@ class MainWindow(QMainWindow):
                 color: rgba(255, 255, 255, 0.5);
                 font-size: 13px;
                 padding-top: 10px;
+                background: transparent;
             }
         """)
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -330,7 +344,7 @@ class MainWindow(QMainWindow):
         
         # === CONTENT AREA ===
         content_area = QWidget()
-        content_area.setStyleSheet("background-color: #f8f9fa;")
+        # content_area.setStyleSheet("background-color: #f8f9fa;") # Let QSS
         content_layout = QVBoxLayout(content_area)
         content_layout.setContentsMargins(20, 20, 20, 20)
         
@@ -355,32 +369,7 @@ class MainWindow(QMainWindow):
 
         # --- Page 1: Automazioni (Tab Widget) ---
         self.automazioni_widget = QTabWidget()
-        self.automazioni_widget.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #dee2e6;
-                border-radius: 6px;
-                background-color: white;
-            }
-            QTabBar::tab {
-                background: #f1f3f5;
-                border: 1px solid #dee2e6;
-                padding: 10px 20px;
-                margin-right: 2px;
-                border-top-left-radius: 6px;
-                border-top-right-radius: 6px;
-                color: #495057;
-                font-weight: bold;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom-color: white;
-                color: #0d6efd;
-            }
-            QTabBar::tab:hover {
-                background: #e9ecef;
-            }
-        """)
-        # Order: Dettagli OdA, Scarico TS, Timbrature, Carico TS
+        # Style moved to QSS or kept minimal for specific needs
         self.automazioni_widget.addTab(self.dettagli_panel, "📋 Dettagli OdA")
         self.automazioni_widget.addTab(self.scarico_panel, "📥 Scarico TS")
         self.automazioni_widget.addTab(self.timbrature_bot_panel, "⏱️ Timbrature")
@@ -388,7 +377,6 @@ class MainWindow(QMainWindow):
 
         # --- Page 3: Database (Tab Widget) ---
         self.database_widget = QTabWidget()
-        self.database_widget.setStyleSheet(self.automazioni_widget.styleSheet()) # Same style
         self.database_widget.addTab(self.timbrature_db_panel, "Timbrature Isab")
         self.database_widget.addTab(self.contabilita_panel, "Strumentale")
         self.database_widget.addTab(self.scarico_ore_panel, "DataEase") # Renamed from "Scarico Ore Cantiere"
@@ -440,7 +428,7 @@ class MainWindow(QMainWindow):
         self.timbrature_bot_panel.refresh_fornitori()
 
         # Feedback Toast
-        self.show_toast("Impostazioni salvate con successo!")
+        ToastManager.instance().show("Impostazioni salvate con successo!", "success")
     
     def _navigate_to(self, index: int):
         """
@@ -557,7 +545,7 @@ class MainWindow(QMainWindow):
             elif "contabilita" in lower_path or "consuntivo" in lower_path:
                 self._import_contabilita(file_path)
             else:
-                self.show_toast("Tipo file non riconosciuto. Rinominare con 'Timbrature' o 'Contabilita'.")
+                ToastManager.instance().show("Tipo file non riconosciuto. Rinominare con 'Timbrature' o 'Contabilita'.", "warning")
 
     def _import_timbrature(self, path):
         # Usa il metodo statico del bot timbrature
@@ -568,11 +556,11 @@ class MainWindow(QMainWindow):
             success = TimbratureBot.import_to_db_static(path, db_path, lambda x: None)
             if success:
                 self.timbrature_db_panel.refresh_data()
-                self.show_toast("Timbrature importate con successo!")
+                ToastManager.instance().show("Timbrature importate con successo!", "success")
             else:
-                self.show_toast("Errore importazione Timbrature.")
+                ToastManager.instance().show("Errore importazione Timbrature.", "error")
         except Exception as e:
-            self.show_toast(f"Errore: {e}")
+            ToastManager.instance().show(f"Errore: {e}", "error")
 
     def _import_contabilita(self, path):
         # Usa il manager contabilità
@@ -581,11 +569,11 @@ class MainWindow(QMainWindow):
             success, msg = ContabilitaManager.import_data_from_excel(path)
             if success:
                 self.contabilita_panel.refresh_tabs()
-                self.show_toast("Contabilità importata con successo!")
+                ToastManager.instance().show("Contabilità importata con successo!", "success")
             else:
-                self.show_toast(f"Errore: {msg}")
+                ToastManager.instance().show(f"Errore: {msg}", "error")
         except Exception as e:
-            self.show_toast(f"Errore: {e}")
+            ToastManager.instance().show(f"Errore: {e}", "error")
 
 
 def create_splash_screen() -> QSplashScreen:
