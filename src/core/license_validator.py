@@ -123,12 +123,16 @@ def get_hardware_id():
 
 
 def _get_license_paths():
-    """Restituisce i percorsi dei file di licenza."""
+    """
+    Restituisce il percorso standardizzato per i file di licenza.
+    Utilizza sempre .../BotTS/data/Licenza.
+    """
     from src.core import config_manager
-    # Use standard data path via platformdirs (user data dir)
-    base_dir = config_manager.CONFIG_DIR
 
-    license_dir = os.path.join(base_dir, "Licenza")
+    # Percorso standardizzato e univoco per tutti i dati, inclusa la licenza.
+    data_dir = config_manager.get_data_path()
+    license_dir = os.path.join(data_dir, "Licenza")
+
     return {
         "dir": license_dir,
         "config": os.path.join(license_dir, "config.dat"),

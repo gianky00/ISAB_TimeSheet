@@ -44,12 +44,23 @@ QHeaderView::section {
     border: 1px solid #BDBDBD;
     font-weight: bold;
 }
-QLineEdit, QDateEdit, QComboBox {
+QLineEdit, QDateEdit, QComboBox, QSpinBox, QTimeEdit, QListView {
     padding: 6px;
     border: 1px solid #BDBDBD;
     border-radius: 4px;
     background-color: white;
+    color: black;
     selection-background-color: #2196F3;
+    selection-color: white;
+}
+QComboBox QAbstractItemView {
+    background-color: white;
+    color: black;
+    selection-background-color: #2196F3;
+}
+QTableWidget QLineEdit, QTableWidget QComboBox {
+    background-color: white;
+    color: black;
 }
 QLineEdit:focus, QDateEdit:focus, QComboBox:focus {
     border: 2px solid #2196F3;

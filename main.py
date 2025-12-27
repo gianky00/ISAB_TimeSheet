@@ -182,8 +182,12 @@ def main():
 
     # === START APP ===
     from src.gui.main_window import MainWindow
+    from src.core.license_validator import get_license_info
     
-    window = MainWindow()
+    # Passa i dati della licenza alla finestra principale per evitare query multiple
+    license_data = get_license_info()
+
+    window = MainWindow(license_data=license_data)
     window.showMaximized()
     
     # Run event loop

@@ -82,7 +82,7 @@ class SidebarButton(QPushButton):
 class MainWindow(QMainWindow):
     """Finestra principale dell'applicazione Bot TS."""
     
-    def __init__(self):
+    def __init__(self, license_data: dict = None):
         super().__init__()
         self.setWindowTitle("Bot TS - Timesheet Manager")
         self.setMinimumSize(1200, 800)
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         self.setAcceptDrops(True)
 
         self._current_page_index = 0
-        self._setup_ui()
+        self._setup_ui(license_data)
         self._connect_signals()
         self._setup_shortcuts()
 
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
         if self.page_stack.currentIndex() == 4:
             self.settings_panel.save_btn.click()
 
-    def _setup_ui(self):
+    def _setup_ui(self, license_data: dict = None):
         """Configura l'interfaccia."""
         # Status Bar
         self.status_bar = QStatusBar()
@@ -273,10 +273,9 @@ class MainWindow(QMainWindow):
         sidebar_layout.addSpacing(10)
 
         # License Info
-        license_info = get_license_info()
-        if license_info:
-            client = license_info.get("Cliente", "N/D")
-            expiry = license_info.get("Scadenza Licenza", "N/D")
+        if license_data:
+            client = license_data.get("Cliente", "N/D")
+            expiry = license_data.get("Scadenza Licenza", "N/D")
 
             # Get last login from config
             config = config_manager.load_config()

@@ -584,7 +584,6 @@ class EditableDataTable(QWidget):
             }
             QTableWidget::item {
                 padding: 8px;
-                color: black;  /* Force black text */
                 border: none;
             }
             QTableWidget::item:selected {
@@ -690,8 +689,7 @@ class EditableDataTable(QWidget):
                     QComboBox {
                         border: none;
                         background: transparent;
-                        color: black;
-                        padding-left: 5px;
+                        padding: 8px;
                     }
                     QComboBox QAbstractItemView {
                         background-color: white;

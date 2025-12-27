@@ -1,20 +1,15 @@
 """
 Bot TS - Configuration Manager
-Gestione della configurazione dell'applicazione.
+Gestione della configurazione dell'applicazione (Singleton Pattern).
 """
-import os
 import json
 import copy
 import traceback
 from pathlib import Path
 from typing import Any, Dict, Optional, List
-from src.core.secrets_manager import SecretsManager
 from platformdirs import user_data_dir
 
-# Path del file di configurazione
-CONFIG_DIR = Path(user_data_dir("BotTS", "GiancarloAllegretti"))
-CONFIG_FILE = CONFIG_DIR / "config.json"
-_config_cache: Optional[Dict[str, Any]] = None
+from src.core.secrets_manager import SecretsManager
 
 # Configurazione di default
 DEFAULT_CONFIG: Dict[str, Any] = {
@@ -35,129 +30,187 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "certificati_campione_path": r"C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm"
 }
 
-def ensure_config_dir():
-    """Assicura che la directory di configurazione esista."""
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+class ConfigManager:
+    """Gestisce la configurazione dell'applicazione (Singleton)."""
+
+    _instance: Optional['ConfigManager'] = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ConfigManager, cls).__new__(cls)
+            cls._instance._initialize()
+        return cls._instance
+
+    def _initialize(self):
+        self.app_name = "BotTS"
+        self.app_author = "GiancarloAllegretti"
+        self._config_dir = Path(user_data_dir(self.app_name, self.app_author))
+        self._config_file = self._config_dir / "config.json"
+        self._config_cache: Optional[Dict[str, Any]] = None
+        self._ensure_config_dir()
+
+    @property
+    def config_dir(self) -> Path:
+        return self._config_dir
+
+    @property
+    def config_file(self) -> Path:
+        return self._config_file
+
+    def _ensure_config_dir(self):
+        """Assicura che la directory di configurazione esista."""
+        self._config_dir.mkdir(parents=True, exist_ok=True)
+
+    def load(self) -> Dict[str, Any]:
+        """
+        Carica la configurazione, la decripta e la mette in cache.
+        """
+        if self._config_cache is not None:
+            return copy.deepcopy(self._config_cache)
+
+        self._ensure_config_dir()
+        config = DEFAULT_CONFIG.copy()
+
+        if self._config_file.exists():
+            try:
+                with open(self._config_file, 'r', encoding='utf-8') as f:
+                    loaded_config = json.load(f)
+                config.update(loaded_config)
+            except (json.JSONDecodeError, IOError):
+                pass
+
+        # Decripta e recupera password
+        if "accounts" in config:
+            from src.utils.security import password_manager
+            for acc in config["accounts"]:
+                username = acc.get("username")
+                if not username:
+                    continue
+
+                # Priorità 1: Keyring
+                password_from_keyring = SecretsManager.get_credential('isab_portal', username)
+                if password_from_keyring:
+                    acc["password"] = password_from_keyring
+                    continue
+
+                # Priorità 2: File di configurazione (fallback)
+                password_from_file = acc.get("password")
+                if password_from_file:
+                    acc["password"] = password_manager.decrypt(password_from_file)
+
+        # Migrazione Legacy
+        if "isab_username" in config and config.get("isab_username"):
+            if not any(a.get("username") == config["isab_username"] for a in config["accounts"]):
+                config["accounts"].append({
+                    "username": config["isab_username"],
+                    "password": config.get("isab_password", ""),
+                    "default": True
+                })
+            del config["isab_username"]
+            if "isab_password" in config:
+                del config["isab_password"]
+            self.save(config) # Salva subito la configurazione migrata
+
+        self._config_cache = copy.deepcopy(config)
+        return config
+
+    def save(self, config: Dict[str, Any]):
+        """
+        Salva la configurazione. Tenta di usare keyring, altrimenti cripta nel file.
+        Aggiorna la cache con la versione decriptata.
+        """
+        self._ensure_config_dir()
+
+        config_to_process = copy.deepcopy(config)
+
+        if "accounts" in config_to_process:
+            from src.utils.security import password_manager
+            for acc in config_to_process["accounts"]:
+                username = acc.get("username")
+                password = acc.get("password")
+
+                if not (username and password):
+                    continue
+
+                try:
+                    if SecretsManager.is_available():
+                        SecretsManager.store_credential('isab_portal', username, password)
+                        acc.pop("password", None)
+                        continue
+                except Exception as e:
+                    print(f"Keyring non disponibile, uso fallback: {e}")
+
+                acc["password"] = password_manager.encrypt(password)
+
+        try:
+            with open(self._config_file, 'w', encoding='utf-8') as f:
+                json.dump(config_to_process, f, indent=2, ensure_ascii=False)
+
+            # Update cache with original (unencrypted) config
+            self._config_cache = copy.deepcopy(config)
+        except IOError as e:
+            print(f"Errore salvataggio configurazione: {e}")
+        except Exception:
+            print(f"Errore critico durante il salvataggio:\n{traceback.format_exc()}")
+
+    def get_value(self, key: str, default: Any = None) -> Any:
+        return self.load().get(key, default)
+
+    def set_value(self, key: str, value: Any):
+        config = self.load()
+        config[key] = value
+        self.save(config)
+
+    def get_data_path(self) -> str:
+        data_dir = self._config_dir / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        return str(data_dir)
+
+    def get_download_path(self) -> str:
+        path = self.get_value("download_path", "")
+        if path and Path(path).is_dir():
+            return path
+
+        # Fallback to standard Downloads
+        try:
+            # Try to get system download dir, else fallback to home/Downloads or home
+            from pathlib import Path
+            home = Path.home()
+            downloads = home / "Downloads"
+            return str(downloads) if downloads.exists() else str(home)
+        except:
+            return str(Path.home())
+
+
+# --- Module-Level Wrappers (Backward Compatibility) ---
+
+_instance = ConfigManager()
+
+CONFIG_DIR = _instance.config_dir
+CONFIG_FILE = _instance.config_file
 
 def load_config() -> Dict[str, Any]:
-    """
-    Carica la configurazione dal file, la decripta e la mette in cache.
-    Se la cache è piena, restituisce la cache.
-    """
-    global _config_cache
-    if _config_cache is not None:
-        return copy.deepcopy(_config_cache)
-
-    ensure_config_dir()
-    config = DEFAULT_CONFIG.copy()
-
-    if CONFIG_FILE.exists():
-        try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                loaded_config = json.load(f)
-            config.update(loaded_config)
-        except (json.JSONDecodeError, IOError):
-            pass # Usa i default
-
-    # Decripta e recupera password
-    if "accounts" in config:
-        from src.utils.security import password_manager
-        for acc in config["accounts"]:
-            username = acc.get("username")
-            if not username:
-                continue
-
-            # Priorità 1: Keyring
-            password_from_keyring = SecretsManager.get_credential('isab_portal', username)
-            if password_from_keyring:
-                acc["password"] = password_from_keyring
-                continue
-
-            # Priorità 2: File di configurazione (fallback)
-            password_from_file = acc.get("password")
-            if password_from_file:
-                acc["password"] = password_manager.decrypt(password_from_file)
-
-    # Migrazione Legacy
-    if "isab_username" in config and config.get("isab_username"):
-        if not any(a.get("username") == config["isab_username"] for a in config["accounts"]):
-            config["accounts"].append({
-                "username": config["isab_username"],
-                "password": config.get("isab_password", ""),
-                "default": True
-            })
-        del config["isab_username"]
-        if "isab_password" in config:
-            del config["isab_password"]
-        save_config(config) # Salva subito la configurazione migrata
-
-    _config_cache = copy.deepcopy(config)
-    return config
+    return _instance.load()
 
 def save_config(config: Dict[str, Any]):
-    """
-    Salva la configurazione. Tenta di usare keyring, altrimenti cripta nel file.
-    Aggiorna la cache con la versione decriptata.
-    """
-    global _config_cache
-    ensure_config_dir()
-    
-    # Lavora su una copia per non modificare l'input
-    config_to_process = copy.deepcopy(config)
-
-    # Logica di salvataggio password
-    if "accounts" in config_to_process:
-        from src.utils.security import password_manager
-        for acc in config_to_process["accounts"]:
-            username = acc.get("username")
-            password = acc.get("password")
-
-            if not (username and password):
-                continue
-
-            # Tenta di salvare nel keyring
-            try:
-                if SecretsManager.is_available():
-                    SecretsManager.store_credential('isab_portal', username, password)
-                    # Se ha successo, rimuovi la password dal file
-                    acc.pop("password", None)
-                    continue
-            except Exception as e:
-                print(f"Keyring non disponibile, uso fallback: {e}")
-
-            # Fallback: cripta la password nel file
-            acc["password"] = password_manager.encrypt(password)
-
-    try:
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(config_to_process, f, indent=2, ensure_ascii=False)
-
-        # Invalida e aggiorna la cache con i dati decriptati originali
-        _config_cache = copy.deepcopy(config)
-    except IOError as e:
-        print(f"Errore salvataggio configurazione: {e}")
-        # Se il salvataggio fallisce, la cache non viene aggiornata per sicurezza
-    except Exception:
-        print(f"Errore critico durante il salvataggio:\n{traceback.format_exc()}")
-
+    _instance.save(config)
 
 def get_config_value(key: str, default: Any = None) -> Any:
-    """Ottiene un valore dalla configurazione."""
-    config = load_config()
-    return config.get(key, default)
+    return _instance.get_value(key, default)
 
 def set_config_value(key: str, value: Any):
-    """Imposta un valore nella configurazione."""
-    config = load_config()
-    config[key] = value
-    save_config(config)
+    _instance.set_value(key, value)
+
+def get_data_path() -> str:
+    return _instance.get_data_path()
+
+def get_download_path() -> str:
+    return _instance.get_download_path()
 
 def get_accounts() -> List[Dict[str, Any]]:
-    """Restituisce la lista degli account configurati."""
     return get_config_value("accounts", [])
 
 def add_account(username: str, password: str, is_default: bool = False):
-    """Aggiunge o aggiorna un account."""
     config = load_config()
     accounts = config.get("accounts", [])
 
@@ -180,7 +233,6 @@ def add_account(username: str, password: str, is_default: bool = False):
     save_config(config)
 
 def remove_account(username: str):
-    """Rimuove un account e le credenziali associate."""
     config = load_config()
     accounts = config.get("accounts", [])
     config["accounts"] = [a for a in accounts if a.get("username") != username]
@@ -197,7 +249,6 @@ def remove_account(username: str):
     save_config(config)
 
 def set_default_account(username: str):
-    """Imposta un account come default."""
     config = load_config()
     accounts = config.get("accounts", [])
     found = False
@@ -211,28 +262,10 @@ def set_default_account(username: str):
         save_config(config)
 
 def get_default_account() -> Optional[Dict[str, str]]:
-    """Restituisce l'account di default."""
     accounts = get_accounts()
     if not accounts:
         return None
-
     return next((acc for acc in accounts if acc.get("default")), accounts[0])
 
-def get_data_path() -> str:
-    """Restituisce il percorso base per i dati."""
-    data_dir = CONFIG_DIR / "data"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    return str(data_dir)
-
-def get_download_path() -> str:
-    """Restituisce il path di download configurato."""
-    path = get_config_value("download_path", "")
-    if path and os.path.isdir(path):
-        return path
-    
-    default_download = Path.home() / "Downloads"
-    return str(default_download) if default_download.exists() else str(Path.home())
-
 def get_fornitori() -> list:
-    """Restituisce la lista dei fornitori configurati."""
     return get_config_value("fornitori", [])
