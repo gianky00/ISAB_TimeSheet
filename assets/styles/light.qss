@@ -82,9 +82,11 @@ QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, QComboBox:focus {
 QTableWidget QLineEdit, QTableWidget QComboBox {
     color: #000000;
     background-color: #FFFFFF;
-    font-size: 14px; /* Ensure font size is consistent */
-    padding: 2px; /* Reduce padding inside cells to prevent size jumping */
-    border: none; /* Often cleaner in cells */
+    font-size: 14px;
+    padding: 0px 4px; /* Reduced padding */
+    margin: 0px;      /* Reset margin */
+    border: none;
+    min-height: 24px; /* Ensure minimum height matching font */
 }
 
 QLineEdit:disabled {
@@ -104,7 +106,7 @@ QTableWidget {
 }
 
 QTableWidget::item {
-    padding: 8px 12px;
+    padding: 4px 8px; /* Reduced padding to give more space to content/editor */
     border-bottom: 1px solid #F5F5F5;
 }
 
@@ -122,7 +124,7 @@ QTableWidget::item:focus {
 QHeaderView::section {
     background-color: #F5F5F5;
     color: #424242;
-    padding: 12px;
+    padding: 8px 12px; /* Adjusted */
     border: none;
     border-bottom: 2px solid #009688;
     font-weight: 600;
