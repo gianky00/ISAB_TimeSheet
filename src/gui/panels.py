@@ -235,11 +235,12 @@ class ScaricaTSPanel(BaseBotPanel):
     
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        # --- Sezione Parametri ---
-        params_group = QGroupBox("⚙️ Parametri")
-        # Style handled by QSS
+        # --- Sezione Parametri Unificata ---
+        params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
+        params_layout.setSpacing(10)
         
+        # 1. Inputs (Fornitore, Data, Path)
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
@@ -304,12 +305,9 @@ class ScaricaTSPanel(BaseBotPanel):
         self.dest_path_edit.textChanged.connect(self._save_data)
         params_layout.addWidget(self.elabora_ts_check)
 
-        self.content_layout.addWidget(params_group)
+        params_layout.addSpacing(10)
         
-        # --- Sezione Tabella Dati ---
-        group = QGroupBox("📋 Dati Timesheet")
-        group_layout = QVBoxLayout(group)
-        
+        # 2. Tabella (Inside Parametri)
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
@@ -318,18 +316,16 @@ class ScaricaTSPanel(BaseBotPanel):
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
-        group_layout.addLayout(table_toolbar)
+        params_layout.addLayout(table_toolbar)
         
         # Tabella con colonne: Numero OdA
         self.data_table = EditableDataTable([
             {"name": "Numero OdA", "type": "text"}
         ])
-        # Increase minimum height to show at least 4 rows + header (approx 250px)
-        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
-        group_layout.addWidget(self.data_table)
+        params_layout.addWidget(self.data_table)
         
-        self.content_layout.addWidget(group)
+        self.content_layout.addWidget(params_group)
     
     def _open_settings(self):
         """Emette un segnale per aprire le impostazioni (gestito dalla main window)."""
@@ -536,10 +532,12 @@ class DettagliOdAPanel(BaseBotPanel):
     
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        # --- Sezione Parametri ---
-        params_group = QGroupBox("⚙️ Parametri")
+        # --- Sezione Parametri Unificata ---
+        params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
+        params_layout.setSpacing(10)
 
+        # 1. Inputs (Fornitore, Date, Path)
         # Riga 1: Fornitore (ComboBox)
         fornitore_layout = QHBoxLayout()
         fornitore_label = QLabel("Fornitore:")
@@ -602,12 +600,9 @@ class DettagliOdAPanel(BaseBotPanel):
 
         params_layout.addLayout(dest_layout)
 
-        self.content_layout.addWidget(params_group)
+        params_layout.addSpacing(10)
 
-        # Form dati OdA
-        group = QGroupBox("Dati Ordine d'Acquisto")
-        group_layout = QVBoxLayout(group)
-        
+        # 2. Tabella
         # Toolbar per la tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
@@ -616,10 +611,9 @@ class DettagliOdAPanel(BaseBotPanel):
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
 
-        group_layout.addLayout(table_toolbar)
+        params_layout.addLayout(table_toolbar)
         
         # Tabella con colonne: Numero OdA e Numero Contratto
-        # Recupera default da config per le nuove righe
         config = config_manager.load_config()
         contracts = config.get("contracts", [])
         default_contract = config.get("default_contract", "")
@@ -632,13 +626,10 @@ class DettagliOdAPanel(BaseBotPanel):
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": contracts, "default": default_contract}
         ])
-        # Increase minimum height here as well
-        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
-        group_layout.addWidget(self.data_table)
+        params_layout.addWidget(self.data_table)
         
-        
-        self.content_layout.addWidget(group)
+        self.content_layout.addWidget(params_group)
     
     def _open_settings(self):
         """Emette un segnale per aprire le impostazioni."""

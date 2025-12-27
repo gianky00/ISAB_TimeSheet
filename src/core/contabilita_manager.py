@@ -192,9 +192,26 @@ class ContabilitaManager:
         total_removed = 0
 
         try:
+            # Gestione file cifrati (Tentativo Decryption)
+            file_obj = path
+            temp_decrypted = None
+
+            if msoffcrypto:
+                try:
+                    with open(path, "rb") as f:
+                        office_file = msoffcrypto.OfficeFile(f)
+                        office_file.load_key(password="coemi")
+                        temp_decrypted = io.BytesIO()
+                        office_file.decrypt(temp_decrypted)
+                        temp_decrypted.seek(0)
+                        file_obj = temp_decrypted
+                except Exception:
+                    # Non cifrato o errore msoffcrypto, procediamo col file originale
+                    file_obj = path
+
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                xls = pd.ExcelFile(path, engine='openpyxl')
+                xls = pd.ExcelFile(file_obj, engine='openpyxl')
                 imported_years = []
 
                 # Use Manager Connection
@@ -202,42 +219,98 @@ class ContabilitaManager:
                     cursor = conn.cursor()
 
                     # Count valid sheets first for progress
-                valid_sheets = [s for s in xls.sheet_names if re.search(r'(\d{4})', s)]
-                total_sheets = len(valid_sheets)
-                # If no explicit year sheets found, we treat common sheets as current year
-                if total_sheets == 0:
-                    fallback_sheets = [s for s in xls.sheet_names if s.lower() in ["dati", "preventivi", "riepilogo"]]
-                    if fallback_sheets:
-                        total_sheets = len(fallback_sheets)
-                        # We will process these later
+                    valid_sheets = [s for s in xls.sheet_names if re.search(r'(\d{4})', s)]
+                    total_sheets = len(valid_sheets)
+                    # If no explicit year sheets found, we treat common sheets as current year
+                    if total_sheets == 0:
+                        fallback_sheets = [s for s in xls.sheet_names if s.lower() in ["dati", "preventivi", "riepilogo"]]
+                        if fallback_sheets:
+                            total_sheets = len(fallback_sheets)
 
-                processed_sheets = 0
+                    processed_sheets = 0
 
-                for sheet_name in xls.sheet_names:
-                    # Logic: Year Detection
-                    year = None
-                    match = re.search(r'(\d{4})', sheet_name)
+                    for sheet_name in xls.sheet_names:
+                        # Logic: Year Detection
+                        year = None
+                        match = re.search(r'(\d{4})', sheet_name)
 
-                    if match:
-                        year = int(match.group(1))
-                        if not (2000 <= year <= 2100):
+                        if match:
+                            year = int(match.group(1))
+                            if not (2000 <= year <= 2100):
+                                continue
+                        elif sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
+                            # Fallback to current year if name matches common defaults
+                            year = datetime.now().year
+                        else:
                             continue
-                    elif sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
-                        # Fallback to current year if name matches common defaults
-                        year = datetime.now().year
-                    else:
-                        continue
 
-                    try:
-                        df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
-                        if not df.empty: df = df.iloc[:-1]
-                        df.columns = [str(c).strip().upper() for c in df.columns]
-                        df.dropna(how='all', inplace=True)
-                        if df.empty: continue
+                        try:
+                            # Rilevamento dinamico dell'header (con normalizzazione)
+                            preview_df = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=10)
 
-                        df['year'] = year
-                        rename_map = {k: v for k, v in cls.COLUMNS_MAPPING.items() if k in df.columns}
-                        df.rename(columns=rename_map, inplace=True)
+                            header_row_idx = 1 # Default legacy (riga 2)
+
+                            # Colonne chiave normalizzate (senza spazi/punti)
+                            key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
+
+                            for i, row in preview_df.iterrows():
+                                # Converte riga in stringa upper e normalizza
+                                row_norm = []
+                                for val in row.values:
+                                    s = str(val).strip().upper()
+                                    s = s.replace(" ", "").replace(".", "").replace("°", "")
+                                    row_norm.append(s)
+
+                                # Se troviamo almeno 2 match
+                                matches = sum(1 for k in key_cols_norm if k in row_norm)
+                                if matches >= 2:
+                                    header_row_idx = i
+                                    break
+
+                            # Leggi con header corretto
+                            df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
+
+                            # Normalizza colonne DF subito
+                            df.columns = [str(c).strip().upper() for c in df.columns]
+
+                            if not df.empty: df = df.iloc[:-1] # Drop last row (Total) if exists
+
+                            # Drop full empty rows
+                            df.dropna(how='all', inplace=True)
+
+                            if df.empty: continue
+
+                            df['year'] = year
+
+                            # Normalizzazione più robusta per il mapping delle colonne
+                            # Prepara mappa normalizzata: "N° PREV." -> "N°PREV." -> "n_prev"
+                            normalized_map = {}
+                            for k, v in cls.COLUMNS_MAPPING.items():
+                                norm_k = k.upper().replace(" ", "").replace(".", "").replace("°", "")
+                                normalized_map[norm_k] = v
+
+                            # Mappa effettiva trovata nel DF
+                            rename_map = {}
+                            for col in df.columns:
+                                col_str = str(col).strip().upper()
+                                norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
+
+                                # Cerca match
+                                if norm_col in normalized_map:
+                                    rename_map[col] = normalized_map[norm_col]
+                                else:
+                                    # Fallback per match parziale o specifico
+                                    if "PREV" in norm_col and "DATA" in norm_col:
+                                        rename_map[col] = "data_prev"
+                                    elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
+                                        rename_map[col] = "n_prev"
+
+                            df.rename(columns=rename_map, inplace=True)
+
+                        except Exception as e:
+                            # Log warning but continue with other sheets
+                            # print(f"Warning processing sheet {sheet_name}: {e}")
+                            pass
 
                         for db_col in cls.COLUMNS_MAPPING.values():
                             if db_col not in df.columns: df[db_col] = ""
@@ -280,10 +353,6 @@ class ContabilitaManager:
                         processed_sheets += 1
                         if progress_callback:
                             progress_callback(processed_sheets, total_sheets)
-
-                    except Exception as e:
-                        print(f"Errore importazione Dati foglio {sheet_name}: {e}")
-                        continue
 
                     conn.commit()
 

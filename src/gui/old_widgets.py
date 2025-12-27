@@ -21,19 +21,19 @@ class HorizontalLogItem(QWidget):
     """Widget per singolo elemento della timeline log orizzontale."""
     def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
         super().__init__(parent)
-        self.setFixedSize(180, 160) # Card Size
+        self.setFixedSize(160, 90) # Reduced Height (approx 50%)
 
         # Main Layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 15, 10, 10)
-        layout.setSpacing(5)
+        layout.setContentsMargins(5, 5, 5, 5) # Compact margins
+        layout.setSpacing(2)
 
         # Style
         self.setStyleSheet("""
             QWidget {
                 background-color: white;
                 border: 1px solid #dee2e6;
-                border-radius: 8px;
+                border-radius: 6px;
             }
             QLabel {
                 background-color: transparent;
@@ -71,45 +71,51 @@ class HorizontalLogItem(QWidget):
 
         self.category_color = colors.get(category, "#6c757d")
 
-        # Top: Icon centered
-        icon_layout = QHBoxLayout()
+        # Top Row: Icon + Time
+        top_row = QHBoxLayout()
+        top_row.setSpacing(5)
+
         lbl_icon = QLabel(icons.get(category, "•"))
-        lbl_icon.setStyleSheet(f"font-size: 24px; color: {self.category_color};")
-        lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_layout.addWidget(lbl_icon)
-        layout.addLayout(icon_layout)
+        lbl_icon.setStyleSheet(f"font-size: 20px; color: {self.category_color};") # Smaller Icon
+        top_row.addWidget(lbl_icon)
 
-        # Time
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 14px; font-family: monospace;")
-        lbl_time.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl_time)
+        lbl_time.setStyleSheet("color: #adb5bd; font-size: 11px; font-family: monospace;") # Smaller time
+        top_row.addWidget(lbl_time)
 
-        # Text
+        top_row.addStretch()
+        layout.addLayout(top_row)
+
+        # Text (Compact)
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 16px; color: #212529;")
+        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 12px; color: #212529;") # Smaller text
         self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(self.lbl_human)
 
         layout.addStretch()
 
         # Action Buttons (Compact)
+        action_layout = QHBoxLayout()
+        action_layout.setSpacing(2)
+
         if snapshot_path:
             btn = QPushButton("📷")
+            btn.setFixedSize(24, 20)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(f"background-color: #dc3545; color: white; border-radius: 4px;")
+            btn.setStyleSheet(f"background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;")
             btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
-            layout.addWidget(btn)
+            action_layout.addWidget(btn)
 
         if fixit_action == "ACCOUNT":
-            btn = QPushButton("🔧 Fix")
+            btn = QPushButton("🔧")
+            btn.setFixedSize(24, 20)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(f"background-color: #ffc107; color: black; border-radius: 4px;")
+            btn.setStyleSheet(f"background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;")
             btn.clicked.connect(self._open_settings)
-            layout.addWidget(btn)
+            action_layout.addWidget(btn)
 
         # Path Detection
         path_matches = re.findall(r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg)
@@ -119,11 +125,16 @@ class HorizontalLogItem(QWidget):
             if len(path) > 4 and "http" not in path and path not in seen:
                 seen.add(path)
                 btn = QPushButton("📂")
+                btn.setFixedSize(24, 20)
                 btn.setToolTip(f"Apri: {Path(path).name}")
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet(f"background-color: #17a2b8; color: white; border-radius: 4px;")
+                btn.setStyleSheet(f"background-color: #17a2b8; color: white; border-radius: 3px; font-size: 10px;")
                 btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
-                layout.addWidget(btn)
+                action_layout.addWidget(btn)
+
+        action_layout.addStretch()
+        if action_layout.count() > 1: # >1 because stretch is 1
+             layout.addLayout(action_layout)
 
     def set_count(self, count):
         """Update the message to show grouped count."""
@@ -143,23 +154,25 @@ class HorizontalTimelineContainer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(20, 10, 20, 10)
-        self.layout.setSpacing(15)
+        self.layout.setContentsMargins(10, 5, 10, 5)
+        self.layout.setSpacing(10)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         # Ensure minimal height
-        self.setMinimumHeight(180)
+        self.setMinimumHeight(90) # Reduced
 
     def paintEvent(self, event):
         """Disegna la linea 'metro map' dietro gli elementi."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Line Y position: center of the icon roughly (top margin 15 + icon half height ~15 = 30)
-        # Fixed Y relative to top
-        line_y = 40
+        # Line Y position: roughly through the icons
+        # Top margin 5 + Icon area ~20-25 -> approx 15-18px down?
+        # Actually in new layout icon is top left.
+        # Let's draw it at Y=20px
+        line_y = 20
 
         pen = QPen(QColor("#dee2e6"))
-        pen.setWidth(4)
+        pen.setWidth(2) # Thinner line
         painter.setPen(pen)
 
         # Draw line from first item center to last item center
@@ -179,7 +192,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setFixedHeight(200) # Fixed height strip
+        self.setFixedHeight(110) # Reduced Height (approx 50% of 200)
         self.setStyleSheet("border: none; background-color: transparent;")
 
         self.container = HorizontalTimelineContainer()
@@ -621,8 +634,9 @@ class EditableDataTable(QWidget):
         # Traccia modifiche
         self.table.itemChanged.connect(self._on_item_changed)
 
-        # Aggiungi una riga vuota iniziale
-        self._add_row()
+        # Aggiungi righe vuote iniziali (almeno 3)
+        for _ in range(3):
+            self._add_row()
 
         layout.addWidget(self.table)
 
@@ -816,8 +830,8 @@ class EditableDataTable(QWidget):
                     if item:
                         item.setText(str(value))
 
-        # Se non ci sono dati, aggiungi una riga vuota
-        if self.table.rowCount() == 0:
+        # Se ci sono meno di 3 righe, aggiungine finché non sono 3
+        while self.table.rowCount() < 3:
             self._add_row()
 
         self.table.blockSignals(False)

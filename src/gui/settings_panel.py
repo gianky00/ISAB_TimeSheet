@@ -381,7 +381,7 @@ class SettingsPanel(QWidget):
         self.groups.append(contabilita_group)
 
         # Path input
-        path_label = QLabel("File Excel di origine:")
+        path_label = QLabel("File bilancio strumentale:")
         path_label.setStyleSheet("font-size: 14px; font-weight: normal;")
         contabilita_layout.addWidget(path_label)
 
