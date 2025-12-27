@@ -57,6 +57,17 @@ class SecretsManager:
         return b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
 
     @classmethod
+    def is_available(cls) -> bool:
+        """Verifica se il servizio di keyring è disponibile."""
+        try:
+            # Prova a recuperare una chiave dummy per vedere se il backend risponde
+            # Non salviamo nulla per evitare sporcizia, solo get
+            keyring.get_password("test_backend_availability", "test")
+            return True
+        except Exception:
+            return False
+
+    @classmethod
     def store_credential(cls, service: str, username: str, password: str):
         """Salva credenziali nel keyring di sistema."""
         try:

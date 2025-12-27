@@ -204,13 +204,29 @@ class ContabilitaManager:
                     # Count valid sheets first for progress
                 valid_sheets = [s for s in xls.sheet_names if re.search(r'(\d{4})', s)]
                 total_sheets = len(valid_sheets)
+                # If no explicit year sheets found, we treat common sheets as current year
+                if total_sheets == 0:
+                    fallback_sheets = [s for s in xls.sheet_names if s.lower() in ["dati", "preventivi", "riepilogo"]]
+                    if fallback_sheets:
+                        total_sheets = len(fallback_sheets)
+                        # We will process these later
+
                 processed_sheets = 0
 
                 for sheet_name in xls.sheet_names:
+                    # Logic: Year Detection
+                    year = None
                     match = re.search(r'(\d{4})', sheet_name)
-                    if not match: continue
-                    year = int(match.group(1))
-                    if not (2000 <= year <= 2100): continue
+
+                    if match:
+                        year = int(match.group(1))
+                        if not (2000 <= year <= 2100):
+                            continue
+                    elif sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
+                        # Fallback to current year if name matches common defaults
+                        year = datetime.now().year
+                    else:
+                        continue
 
                     try:
                         df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
@@ -237,11 +253,6 @@ class ContabilitaManager:
                         # We use the exact same columns as target_columns
                         cursor.execute(f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?", (year,))
                         # Convert to set of tuples
-                        # Note: DB returns tuples. Pandas iterrows/itertuples also produces tuples.
-                        # Types must match (we coerced df to str except year). DB might return int/str.
-                        # We convert DB result to str where needed to match df.
-                        # Actually we cast df[cols_to_str] to str. 'year' is int.
-
                         existing_rows = set()
                         for row in cursor.fetchall():
                             # row[0] is year (int), others are strings or None.
@@ -276,8 +287,8 @@ class ContabilitaManager:
 
                     conn.commit()
 
-                if not imported_years: return False, "Nessun anno importato.", 0, 0
-                return True, f"Anni importati: {sorted(imported_years)}", total_added, total_removed
+                if not imported_years: return False, "Nessun anno importato (Controlla nomi fogli: YYYY o 'Dati/Preventivi').", 0, 0
+                return True, f"Anni importati: {sorted(list(set(imported_years)))}", total_added, total_removed
 
         except Exception as e:
             return False, f"Errore: {e}", 0, 0

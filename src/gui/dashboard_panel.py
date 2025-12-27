@@ -1,6 +1,7 @@
 """
 Bot TS - Dashboard Panel
 Pannello "Mappa Applicazione" interattiva e modulare.
+Updated to use ResponsiveContainer.
 """
 from datetime import datetime
 from PyQt6.QtWidgets import (
@@ -12,23 +13,36 @@ from PyQt6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QCursor, QIcon, QColor
 
 from src.core.stats_manager import StatsManager
+from src.gui.layouts.responsive import ResponsiveContainer
 
 class DashboardPanel(QWidget):
-    """Pannello Home con Mappa Modulare Interattiva."""
+    """Pannello Home con Mappa Modulare Interattiva Responsiva."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(40, 40, 40, 40)
         self.layout.setSpacing(30)
+
+        # Scroll Area for responsive content if it overflows
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setStyleSheet("background: transparent;")
+
+        self.content_widget = QWidget()
+        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(30)
+
+        self.scroll_area.setWidget(self.content_widget)
+        self.layout.addWidget(self.scroll_area)
+
         self.refresh_data()
 
     def refresh_data(self):
         """Ricostruisce la UI per aggiornare statistiche e saluto."""
-        # Pulisce ricorsivamente il layout esistente
-        self._clear_layout(self.layout)
-
-        # Rebuild UI
+        self._clear_layout(self.content_layout)
         self._setup_ui()
 
     def _clear_layout(self, layout):
@@ -57,73 +71,72 @@ class DashboardPanel(QWidget):
         subtitle.setStyleSheet("font-size: 18px; color: #6c757d;")
         header_layout.addWidget(subtitle)
 
-        self.layout.addLayout(header_layout)
+        self.content_layout.addLayout(header_layout)
 
         # Retrieve Stats
         stats = StatsManager().get_all_stats()
 
-        # Single Unified Grid
-        grid_layout = QGridLayout()
-        grid_layout.setSpacing(30)
+        # Responsive Grid Container
+        responsive_grid = ResponsiveContainer()
 
-        # --- Row 0: Bots ---
-
+        # --- Bots ---
         # 1. Dettagli OdA
         s_oda = stats.get("dettagli_oda", {})
-        grid_layout.addWidget(self._create_module_card(
+        responsive_grid.addWidget(self._create_module_card(
             "Dettagli OdA", "Scarica dettagli ordini.", "📋", "#6f42c1", "dettagli_oda",
             s_oda.get("runs", 0), s_oda.get("errors", 0)
-        ), 0, 0)
+        ))
 
         # 2. Scarico TS
         s_sts = stats.get("scarico_ts", {})
-        grid_layout.addWidget(self._create_module_card(
+        responsive_grid.addWidget(self._create_module_card(
             "Scarico TS", "Scarica timesheet.", "📥", "#0d6efd", "scarico_ts",
             s_sts.get("runs", 0), s_sts.get("errors", 0)
-        ), 0, 1)
+        ))
 
         # 3. Timbrature
         s_tmb = stats.get("timbrature", {})
-        grid_layout.addWidget(self._create_module_card(
+        responsive_grid.addWidget(self._create_module_card(
             "Timbrature", "Valida timbrature.", "⏱️", "#fd7e14", "timbrature",
             s_tmb.get("runs", 0), s_tmb.get("errors", 0)
-        ), 0, 2)
+        ))
 
         # 4. Carico TS
         s_cts = stats.get("carico_ts", {})
-        grid_layout.addWidget(self._create_module_card(
+        responsive_grid.addWidget(self._create_module_card(
             "Carico TS", "Upload finale.", "📤", "#198754", "carico_ts",
             s_cts.get("runs", 0), s_cts.get("errors", 0)
-        ), 0, 3)
+        ))
 
-        # --- Row 1: Databases ---
+        # --- Databases ---
 
         # 5. Timbrature DB
-        grid_layout.addWidget(self._create_module_card(
+        responsive_grid.addWidget(self._create_module_card(
             "Timbrature Isab", "Database storico.", "🗃️", "#20c997", "db_timbrature",
             None, None
-        ), 1, 0)
+        ))
 
         # 6. Strumentale DB
-        grid_layout.addWidget(self._create_module_card(
+        responsive_grid.addWidget(self._create_module_card(
             "Strumentale", "Contabilità & KPI.", "📊", "#ffc107", "db_strumentale",
             None, None
-        ), 1, 1)
+        ))
 
         # 7. DataEase DB
-        grid_layout.addWidget(self._create_module_card(
+        responsive_grid.addWidget(self._create_module_card(
             "DataEase", "Scarico ore cantiere.", "🏗️", "#0dcaf0", "db_dataease",
             None, None
-        ), 1, 2)
+        ))
 
-        self.layout.addLayout(grid_layout)
-        self.layout.addStretch()
+        self.content_layout.addWidget(responsive_grid)
+        self.content_layout.addStretch()
 
     def _create_module_card(self, title, desc, icon, color, action_key, runs, errors):
         """Crea una card cliccabile ricca per un singolo modulo."""
         card = QFrame()
-        card.setMinimumSize(320, 220)
-        card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # Responsive height fix?
+        card.setMinimumSize(250, 200)
+        card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         card.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         # Shadow
@@ -143,25 +156,24 @@ class DashboardPanel(QWidget):
             }}
             QFrame:hover {{
                 background-color: #f8f9fa;
-                margin-top: -3px;
             }}
         """)
 
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(25, 25, 25, 25)
+        card_layout.setContentsMargins(20, 20, 20, 20)
         card_layout.setSpacing(10)
 
         # Header Row: Title & Icon
         header_row = QHBoxLayout()
 
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("font-size: 20px; font-weight: 800; color: #212529; border: none;")
+        title_lbl.setStyleSheet("font-size: 18px; font-weight: 800; color: #212529; border: none;")
         header_row.addWidget(title_lbl)
 
         header_row.addStretch()
 
         icon_lbl = QLabel(icon)
-        icon_lbl.setStyleSheet(f"font-size: 32px; color: {color}; border: none;")
+        icon_lbl.setStyleSheet(f"font-size: 28px; color: {color}; border: none;")
         header_row.addWidget(icon_lbl)
 
         card_layout.addLayout(header_row)
@@ -169,7 +181,7 @@ class DashboardPanel(QWidget):
         # Description
         desc_lbl = QLabel(desc)
         desc_lbl.setWordWrap(True)
-        desc_lbl.setStyleSheet("font-size: 14px; color: #6c757d; border: none; margin-bottom: 10px;")
+        desc_lbl.setStyleSheet("font-size: 13px; color: #6c757d; border: none; margin-bottom: 5px;")
         card_layout.addWidget(desc_lbl)
 
         card_layout.addStretch()
@@ -179,13 +191,14 @@ class DashboardPanel(QWidget):
             stats_row = QHBoxLayout()
 
             # Runs Badge
-            runs_lbl = QLabel(f"🚀 {runs} Esecuzioni")
+            runs_lbl = QLabel(f"🚀 {runs}")
+            runs_lbl.setToolTip("Esecuzioni")
             runs_lbl.setStyleSheet("""
                 background-color: #e9ecef;
                 color: #495057;
-                border-radius: 12px;
-                padding: 4px 10px;
-                font-size: 12px;
+                border-radius: 10px;
+                padding: 2px 8px;
+                font-size: 11px;
                 font-weight: bold;
                 border: none;
             """)
@@ -193,12 +206,13 @@ class DashboardPanel(QWidget):
 
             if errors is not None and errors > 0:
                 err_lbl = QLabel(f"⚠️ {errors}")
+                err_lbl.setToolTip("Errori")
                 err_lbl.setStyleSheet("""
                     background-color: #f8d7da;
                     color: #721c24;
-                    border-radius: 12px;
-                    padding: 4px 10px;
-                    font-size: 12px;
+                    border-radius: 10px;
+                    padding: 2px 8px;
+                    font-size: 11px;
                     font-weight: bold;
                     border: none;
                 """)
@@ -208,7 +222,7 @@ class DashboardPanel(QWidget):
 
             # Action Arrow
             arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(f"font-size: 18px; color: {color}; font-weight: bold; border: none;")
+            arrow_lbl.setStyleSheet(f"font-size: 16px; color: {color}; font-weight: bold; border: none;")
             stats_row.addWidget(arrow_lbl)
 
             card_layout.addLayout(stats_row)
@@ -217,7 +231,7 @@ class DashboardPanel(QWidget):
             stats_row = QHBoxLayout()
             stats_row.addStretch()
             arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(f"font-size: 18px; color: {color}; font-weight: bold; border: none;")
+            arrow_lbl.setStyleSheet(f"font-size: 16px; color: {color}; font-weight: bold; border: none;")
             stats_row.addWidget(arrow_lbl)
             card_layout.addLayout(stats_row)
 

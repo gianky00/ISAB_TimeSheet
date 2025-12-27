@@ -8,7 +8,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QMessageBox, QMenu, QTableWidget,
     QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QAbstractItemView,
-    QTreeWidget, QTreeWidgetItem
+    QTreeWidget, QTreeWidgetItem, QSizePolicy
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QAction, QFont, QColor
@@ -72,43 +72,65 @@ class ContabilitaWorker(QThread):
         total_added = 0
         total_removed = 0
 
+        # Accumulate messages instead of blocking
+        messages = []
+        overall_success = False
+
         # 1. Import Contabilità (Dati)
-        dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
-        success, msg, added, removed = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
-        total_added += added
-        total_removed += removed
+        if self.file_path and os.path.exists(self.file_path):
+            dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
+            success, msg, added, removed = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
+            total_added += added
+            total_removed += removed
+            if success:
+                messages.append(f"Contabilità: OK (+{added}/-{removed})")
+                overall_success = True
+            else:
+                messages.append(f"Err Contabilità: {msg}")
+        else:
+            messages.append("Contabilità: File non trovato o non configurato.")
 
         # 2. Import Giornaliere (se configurato)
-        msg_giornaliere = ""
-        if success and self.giornaliere_path:
+        if self.giornaliere_path:
             giorn_cb = lambda c, t: global_progress(c, sheets, "Giornaliere")
             g_success, g_msg, g_added, g_removed = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
-            msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
             total_added += g_added
             total_removed += g_removed
+            if g_success:
+                messages.append(f"Giornaliere: OK (+{g_added}/-{g_removed})")
+                overall_success = True # Consider successful if at least one part works
+            else:
+                messages.append(f"Err Giornaliere: {g_msg}")
 
         # 3. Import Attività Programmate (se configurato)
-        msg_attivita = ""
-        if success and self.attivita_path:
+        if self.attivita_path:
             att_cb = lambda c, t: global_progress(c, sheets + files, "Attività Programmate")
             att_success, att_msg, att_added, att_removed = ContabilitaManager.import_attivita_programmate(self.attivita_path)
             # Call progress once
             att_cb(1, 1)
-            msg_attivita = f" | Att. Prog: {att_msg}" if att_success else f" | Err Att. Prog: {att_msg}"
             total_added += att_added
             total_removed += att_removed
+            if att_success:
+                messages.append(f"Att. Prog: OK")
+                overall_success = True
+            else:
+                messages.append(f"Err Att. Prog: {att_msg}")
 
         # 4. Import Certificati Campione (se configurato)
-        msg_certificati = ""
-        if success and self.certificati_path:
+        if self.certificati_path:
             cert_cb = lambda c, t: global_progress(c, sheets + files + attivita_task, "Certificati Campione")
             cert_success, cert_msg, cert_added, cert_removed = ContabilitaManager.import_certificati_campione(self.certificati_path)
             cert_cb(1, 1)
-            msg_certificati = f" | Certificati: {cert_msg}" if cert_success else f" | Err Certificati: {cert_msg}"
             total_added += cert_added
             total_removed += cert_removed
+            if cert_success:
+                messages.append(f"Certificati: OK")
+                overall_success = True
+            else:
+                messages.append(f"Err Certificati: {cert_msg}")
 
-        self.finished_signal.emit(success, msg + msg_giornaliere + msg_attivita + msg_certificati, total_added, total_removed)
+        final_msg = " | ".join(messages)
+        self.finished_signal.emit(overall_success, final_msg, total_added, total_removed)
 
 
 class ContabilitaPanel(QWidget):
@@ -524,6 +546,9 @@ class ContabilitaPanel(QWidget):
             self.status_label.setText(status_html)
             self.refresh_tabs()
         else:
+            # If partial success (overall_success was False but some messages exist), maybe check msg
+            # But the worker logic now sets success=True if at least one works.
+            # If it comes here as False, it means something critical failed or nothing worked.
             self.status_label.setText(f"❌ Errore aggiornamento: {msg}")
             QMessageBox.warning(self, "Esito Importazione", msg) # Show details in popup if error
 

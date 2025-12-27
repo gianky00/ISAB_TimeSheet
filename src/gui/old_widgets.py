@@ -4,7 +4,7 @@ Widget personalizzati riutilizzabili.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QMenu, 
+    QTableWidget, QTableWidgetItem, QHeaderView, QMenu,
     QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
     QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect,
     QListWidget, QListWidgetItem, QScrollArea, QScrollBar
@@ -546,30 +546,30 @@ class ExcelTableWidget(QTableWidget):
 
 class EditableDataTable(QWidget):
     """Tabella editabile con menu contestuale."""
-    
+
     data_changed = pyqtSignal()
-    
+
     def __init__(self, columns: list, parent=None):
         """
         Inizializza la tabella.
-        
+
         Args:
             columns: Lista di dict con 'name' e 'type' per ogni colonna
         """
         super().__init__(parent)
         self.columns = columns
         self._setup_ui()
-    
+
     def _setup_ui(self):
         """Configura l'interfaccia."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # Tabella (Usa ExcelTableWidget invece di QTableWidget)
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.columns))
         self.table.setHorizontalHeaderLabels([c['name'] for c in self.columns])
-        
+
         # Stile
         self.table.setStyleSheet("""
             QTableWidget {
@@ -608,24 +608,24 @@ class EditableDataTable(QWidget):
                 font-size: 14px;
             }
         """)
-        
+
         # Configurazione header
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        
+
         # Menu contestuale
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
-        
+
         # Traccia modifiche
         self.table.itemChanged.connect(self._on_item_changed)
-        
+
         # Aggiungi una riga vuota iniziale
         self._add_row()
-        
+
         layout.addWidget(self.table)
-    
+
     def _show_context_menu(self, position):
         """Mostra il menu contestuale."""
         menu = QMenu()
@@ -639,40 +639,40 @@ class EditableDataTable(QWidget):
         copy_action.triggered.connect(self.table.copy_selection)
         menu.addAction(copy_action)
         menu.addSeparator()
-        
+
         add_action = QAction("➕ Aggiungi riga", self)
         add_action.triggered.connect(self._add_row)
         menu.addAction(add_action)
-        
+
         add_above_action = QAction("⬆️ Aggiungi riga sopra", self)
         add_above_action.triggered.connect(self._add_row_above)
         menu.addAction(add_above_action)
-        
+
         menu.addSeparator()
-        
+
         remove_action = QAction("🗑️ Rimuovi riga", self)
         remove_action.triggered.connect(self._remove_row)
         menu.addAction(remove_action)
-        
+
         clear_action = QAction("🧹 Pulisci tutto", self)
         clear_action.triggered.connect(self._clear_all)
         menu.addAction(clear_action)
-        
+
         menu.exec(self.table.viewport().mapToGlobal(position))
-    
+
     def _add_row(self):
         """Aggiunge una riga alla fine."""
         row = self.table.rowCount()
         self.table.insertRow(row)
         self._populate_row(row)
         self.data_changed.emit()
-    
+
     def _add_row_above(self):
         """Aggiunge una riga sopra quella selezionata."""
         current_row = self.table.currentRow()
         if current_row < 0:
             current_row = 0
-        
+
         self.table.insertRow(current_row)
         self._populate_row(current_row)
         self.data_changed.emit()
@@ -726,28 +726,28 @@ class EditableDataTable(QWidget):
                 default_val = column.get('default', "")
                 item = QTableWidgetItem(str(default_val))
                 self.table.setItem(row, col, item)
-    
+
     def _remove_row(self):
         """Rimuove la riga selezionata."""
         current_row = self.table.currentRow()
         if current_row >= 0:
             self.table.removeRow(current_row)
             self.data_changed.emit()
-    
+
     def _clear_all(self):
         """Pulisce tutte le righe."""
         self.table.setRowCount(0)
         self._add_row()  # Mantieni almeno una riga
         self.data_changed.emit()
-    
+
     def _on_item_changed(self, item):
         """Chiamato quando un item viene modificato."""
         self.data_changed.emit()
-    
+
     def get_data(self) -> list:
         """
         Restituisce i dati della tabella.
-        
+
         Returns:
             Lista di dict con i dati di ogni riga
         """
@@ -755,7 +755,7 @@ class EditableDataTable(QWidget):
         for row in range(self.table.rowCount()):
             row_data = {}
             has_data = False
-            
+
             for col, column in enumerate(self.columns):
                 key = column['name'].lower().replace(' ', '_')
 
@@ -768,33 +768,33 @@ class EditableDataTable(QWidget):
                     value = item.text() if item else ""
 
                 row_data[key] = value
-                
+
                 if value:
                     has_data = True
-            
+
             # Aggiungi solo righe con almeno un dato
             if has_data:
                 data.append(row_data)
-        
+
         return data
-    
+
     def set_data(self, data: list):
         """
         Imposta i dati della tabella.
-        
+
         Args:
             data: Lista di dict con i dati
         """
         # Blocca segnali durante il caricamento
         self.table.blockSignals(True)
-        
+
         self.table.setRowCount(0)
-        
+
         for row_data in data:
             row = self.table.rowCount()
             self.table.insertRow(row)
             self._populate_row(row) # Crea i widget se necessario
-            
+
             for col, column in enumerate(self.columns):
                 key = column['name'].lower().replace(' ', '_')
                 value = row_data.get(key, "")
@@ -815,11 +815,11 @@ class EditableDataTable(QWidget):
                     item = self.table.item(row, col)
                     if item:
                         item.setText(str(value))
-        
+
         # Se non ci sono dati, aggiungi una riga vuota
         if self.table.rowCount() == 0:
             self._add_row()
-        
+
         self.table.blockSignals(False)
 
     def update_column_options(self, column_name: str, new_options: list):
@@ -859,22 +859,22 @@ class EditableDataTable(QWidget):
 
 class LogWidget(QWidget):
     """Widget per visualizzare i log (Horizontal Wrapper)."""
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
-    
+
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # Header
         header_layout = QHBoxLayout()
         label = QLabel("📋 Timeline Attività")
         label.setStyleSheet("font-weight: bold; font-size: 13px;")
         header_layout.addWidget(label)
         header_layout.addStretch()
-        
+
         clear_btn = QPushButton("🧹 Pulisci Log")
         clear_btn.setMaximumWidth(120)
         clear_btn.setStyleSheet("""
