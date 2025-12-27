@@ -257,6 +257,29 @@ class ContabilitaManager:
 
                         df['year'] = year
                         rename_map = {k: v for k, v in cls.COLUMNS_MAPPING.items() if k in df.columns}
+                        # Normalizzazione più robusta per il mapping delle colonne
+                        # Prepara mappa normalizzata: "N° PREV." -> "N°PREV." -> "n_prev"
+                        normalized_map = {}
+                        for k, v in cls.COLUMNS_MAPPING.items():
+                            norm_k = k.upper().replace(" ", "").replace(".", "").replace("°", "")
+                            normalized_map[norm_k] = v
+
+                        # Mappa effettiva trovata nel DF
+                        rename_map = {}
+                        for col in df.columns:
+                            col_str = str(col).strip().upper()
+                            norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
+
+                            # Cerca match
+                            if norm_col in normalized_map:
+                                rename_map[col] = normalized_map[norm_col]
+                            else:
+                                # Fallback per match parziale o specifico
+                                if "PREV" in norm_col and "DATA" in norm_col:
+                                    rename_map[col] = "data_prev"
+                                elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
+                                    rename_map[col] = "n_prev"
+
                         df.rename(columns=rename_map, inplace=True)
 
                         for db_col in cls.COLUMNS_MAPPING.values():
