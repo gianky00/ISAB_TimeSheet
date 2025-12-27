@@ -51,7 +51,8 @@ class ContabilitaWorker(QThread):
         certificati_task = 1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
 
         total_ops = sheets + files + attivita_task + certificati_task
-        if total_ops == 0: total_ops = 1
+        if total_ops == 0:
+            total_ops = 1
 
         self.start_time = time.time()
 
@@ -71,44 +72,54 @@ class ContabilitaWorker(QThread):
 
         total_added = 0
         total_removed = 0
+        results = []
 
         # 1. Import Contabilità (Dati)
         dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
-        success, msg, added, removed = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
-        total_added += added
-        total_removed += removed
+        c_success, c_msg, c_added, c_removed = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
+        total_added += c_added
+        total_removed += c_removed
+        results.append(("Contabilità", c_success, c_msg))
 
         # 2. Import Giornaliere (se configurato)
-        msg_giornaliere = ""
-        if success and self.giornaliere_path:
+        if self.giornaliere_path:
             giorn_cb = lambda c, t: global_progress(c, sheets, "Giornaliere")
             g_success, g_msg, g_added, g_removed = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
-            msg_giornaliere = f" | Giornaliere: {g_msg}" if g_success else f" | Err Giornaliere: {g_msg}"
             total_added += g_added
             total_removed += g_removed
+            results.append(("Giornaliere", g_success, g_msg))
 
         # 3. Import Attività Programmate (se configurato)
-        msg_attivita = ""
-        if success and self.attivita_path:
+        if self.attivita_path:
             att_cb = lambda c, t: global_progress(c, sheets + files, "Attività Programmate")
             att_success, att_msg, att_added, att_removed = ContabilitaManager.import_attivita_programmate(self.attivita_path)
             # Call progress once
             att_cb(1, 1)
-            msg_attivita = f" | Att. Prog: {att_msg}" if att_success else f" | Err Att. Prog: {att_msg}"
             total_added += att_added
             total_removed += att_removed
+            results.append(("Att. Prog", att_success, att_msg))
 
         # 4. Import Certificati Campione (se configurato)
-        msg_certificati = ""
-        if success and self.certificati_path:
+        if self.certificati_path:
             cert_cb = lambda c, t: global_progress(c, sheets + files + attivita_task, "Certificati Campione")
             cert_success, cert_msg, cert_added, cert_removed = ContabilitaManager.import_certificati_campione(self.certificati_path)
             cert_cb(1, 1)
-            msg_certificati = f" | Certificati: {cert_msg}" if cert_success else f" | Err Certificati: {cert_msg}"
             total_added += cert_added
             total_removed += cert_removed
+            results.append(("Certificati", cert_success, cert_msg))
 
-        self.finished_signal.emit(success, msg + msg_giornaliere + msg_attivita + msg_certificati, total_added, total_removed)
+        final_messages = []
+        overall_success = False
+        for name, success, msg in results:
+            if success:
+                overall_success = True
+                final_messages.append(f"{name}: {msg}")
+            else:
+                final_messages.append(f"Err {name}: {msg}")
+
+        final_msg_str = " | ".join(final_messages)
+
+        self.finished_signal.emit(overall_success, final_msg_str, total_added, total_removed)
 
 
 class ContabilitaPanel(QWidget):
