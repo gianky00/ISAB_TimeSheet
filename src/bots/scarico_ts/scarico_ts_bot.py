@@ -17,21 +17,6 @@ class ScaricaTSBot(BaseBot):
     # Default supplier
     FORNITORE = "KK10608 - COEMI S.R.L."
     
-    @staticmethod
-    def get_name() -> str:
-        return "Scarico TS"
-    
-    @staticmethod
-    def get_description() -> str:
-        return "Scarica i timesheet dal portale ISAB"
-    
-    @staticmethod
-    def get_columns() -> list:
-        return [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"}
-        ]
-    
     @property
     def name(self) -> str:
         return "Scarico TS"
@@ -40,6 +25,13 @@ class ScaricaTSBot(BaseBot):
     def description(self) -> str:
         return "Scarica i timesheet dal portale ISAB"
     
+    @property
+    def columns(self) -> list:
+        return [
+            {"name": "Numero OdA", "type": "text", "default": ""},
+            {"name": "Posizione OdA", "type": "text", "default": ""}
+        ]
+
     def __init__(self, data_da: str = "01.01.2025", **kwargs):
         # Clean kwargs for BaseBot
         kwargs.pop('fornitore', None)

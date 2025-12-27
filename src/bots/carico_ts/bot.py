@@ -44,6 +44,9 @@ class CaricoTSBot(BaseBot):
     @property
     def description(self) -> str: return self.METADATA["description"]
 
+    @property
+    def columns(self) -> list: return self.METADATA["columns"]
+
     def run(self, data: List[Dict[str, Any]]) -> bool:
         rows = data if isinstance(data, list) else data.get('rows', [])
         if not rows: return True

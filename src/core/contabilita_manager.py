@@ -184,8 +184,10 @@ class ContabilitaManager:
     @classmethod
     def import_data_from_excel(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
         """Importa i dati dal file Excel specificato (Tabella Dati)."""
+        logging.info(f"Avvio importazione Dati da: {file_path}")
         path = Path(file_path)
         if not path.exists():
+            logging.error(f"File non trovato: {file_path}")
             return False, f"File non trovato: {file_path}", 0, 0
 
         total_added = 0
@@ -195,91 +197,115 @@ class ContabilitaManager:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 xls = pd.ExcelFile(path, engine='openpyxl')
+                all_sheets = xls.sheet_names
+                logging.info(f"Fogli trovati nel file: {all_sheets}")
                 imported_years = []
 
                 # Use Manager Connection
                 with db_manager.get_connection(cls.DB_PATH) as conn:
                     cursor = conn.cursor()
 
-                    # Count valid sheets first for progress
-                valid_sheets = [s for s in xls.sheet_names if re.search(r'(\d{4})', s)]
-                total_sheets = len(valid_sheets)
-                processed_sheets = 0
+                    # --- Logica di selezione fogli migliorata ---
+                    sheets_to_process = [] # Lista di tuple (sheet_name, year)
 
-                for sheet_name in xls.sheet_names:
-                    match = re.search(r'(\d{4})', sheet_name)
-                    if not match: continue
-                    year = int(match.group(1))
-                    if not (2000 <= year <= 2100): continue
+                    # 1. Cerca fogli con anno nel nome (logica standard)
+                    year_sheets = {s: int(re.search(r'(\d{4})', s).group(1)) for s in all_sheets if re.search(r'(\d{4})', s)}
+                    if year_sheets:
+                        logging.info(f"Trovati fogli con anno nel nome: {year_sheets.keys()}")
+                        for name, year in year_sheets.items():
+                            if 2000 <= year <= 2100:
+                                sheets_to_process.append((name, year))
+                            else:
+                                logging.warning(f"Foglio '{name}' saltato: anno '{year}' fuori range.")
+                    else:
+                        # 2. Fallback: Cerca nomi comuni se non trova fogli con anno
+                        logging.info("Nessun foglio con anno trovato. Tentativo di fallback con nomi comuni.")
+                        fallback_names = ["dati", "preventivi", "riepilogo"]
+                        current_year = datetime.now().year
+                        found_fallback = False
+                        for sheet_name in all_sheets:
+                            for name in fallback_names:
+                                if name in sheet_name.lower():
+                                    logging.info(f"Trovato foglio di fallback '{sheet_name}'. Associo l'anno corrente: {current_year}")
+                                    sheets_to_process.append((sheet_name, current_year))
+                                    found_fallback = True
+                                    break
+                            if found_fallback: break
 
-                    try:
-                        df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
-                        if not df.empty: df = df.iloc[:-1]
-                        df.columns = [str(c).strip().upper() for c in df.columns]
-                        df.dropna(how='all', inplace=True)
-                        if df.empty: continue
+                    if not sheets_to_process:
+                        logging.error("Nessun foglio di lavoro valido trovato per l'importazione.")
+                        return False, "Nessun foglio di lavoro valido trovato.", 0, 0
 
-                        df['year'] = year
-                        rename_map = {k: v for k, v in cls.COLUMNS_MAPPING.items() if k in df.columns}
-                        df.rename(columns=rename_map, inplace=True)
+                    total_sheets = len(sheets_to_process)
+                    processed_sheets = 0
 
-                        for db_col in cls.COLUMNS_MAPPING.values():
-                            if db_col not in df.columns: df[db_col] = ""
+                    for sheet_name, year in sheets_to_process:
+                        logging.info(f"Elaborazione foglio: '{sheet_name}' per l'anno {year}")
+                        try:
+                            df = pd.read_excel(xls, sheet_name=sheet_name, header=1)
+                            if not df.empty: df = df.iloc[:-1]
+                            df.columns = [str(c).strip().upper() for c in df.columns]
+                            df.dropna(how='all', inplace=True)
+                            if df.empty:
+                                logging.info(f"Foglio '{sheet_name}' è vuoto o contiene solo N/A. Saltato.")
+                                continue
 
-                        target_columns = ['year'] + list(cls.COLUMNS_MAPPING.values())
-                        df = df[target_columns]
-                        df = df.fillna("")
-                        cols_to_str = [c for c in df.columns if c != 'year']
-                        df[cols_to_str] = df[cols_to_str].astype(str)
+                            df['year'] = year
+                            rename_map = {k: v for k, v in cls.COLUMNS_MAPPING.items() if k in df.columns}
+                            df.rename(columns=rename_map, inplace=True)
 
-                        # --- Diff Logic ---
-                        # Fetch existing rows for this year (excluding ID/timestamp)
-                        # We use the exact same columns as target_columns
-                        cursor.execute(f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?", (year,))
-                        # Convert to set of tuples
-                        # Note: DB returns tuples. Pandas iterrows/itertuples also produces tuples.
-                        # Types must match (we coerced df to str except year). DB might return int/str.
-                        # We convert DB result to str where needed to match df.
-                        # Actually we cast df[cols_to_str] to str. 'year' is int.
+                            for db_col in cls.COLUMNS_MAPPING.values():
+                                if db_col not in df.columns: df[db_col] = ""
 
-                        existing_rows = set()
-                        for row in cursor.fetchall():
-                            # row[0] is year (int), others are strings or None.
-                            # We force strings for non-year cols to match DF preparation.
-                            cleaned_row = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
-                            existing_rows.add(tuple(cleaned_row))
+                            target_columns = ['year'] + list(cls.COLUMNS_MAPPING.values())
+                            df = df[target_columns]
+                            df = df.fillna("")
+                            cols_to_str = [c for c in df.columns if c != 'year']
+                            df[cols_to_str] = df[cols_to_str].astype(str)
 
-                        # New rows from DF
-                        new_rows_list = list(df.itertuples(index=False, name=None))
-                        new_rows_set = set(new_rows_list)
+                            # --- Diff Logic ---
+                            cursor.execute(f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?", (year,))
+                            existing_rows = set()
+                            for row in cursor.fetchall():
+                                cleaned_row = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
+                                existing_rows.add(tuple(cleaned_row))
 
-                        added = len(new_rows_set - existing_rows)
-                        removed = len(existing_rows - new_rows_set)
+                            new_rows_list = list(df.itertuples(index=False, name=None))
+                            new_rows_set = set(new_rows_list)
 
-                        total_added += added
-                        total_removed += removed
-                        # ------------------
+                            added = len(new_rows_set - existing_rows)
+                            removed = len(existing_rows - new_rows_set)
+                            logging.info(f"Foglio '{sheet_name}': Aggiunte {added} righe, Rimosse {removed} righe.")
 
-                        cursor.execute("DELETE FROM contabilita WHERE year = ?", (year,))
-                        placeholders = ', '.join(['?'] * len(target_columns))
-                        query = f"INSERT INTO contabilita ({', '.join(target_columns)}) VALUES ({placeholders})"
-                        cursor.executemany(query, new_rows_list)
-                        imported_years.append(year)
+                            total_added += added
+                            total_removed += removed
+                            # ------------------
 
-                        processed_sheets += 1
-                        if progress_callback:
-                            progress_callback(processed_sheets, total_sheets)
+                            cursor.execute("DELETE FROM contabilita WHERE year = ?", (year,))
+                            placeholders = ', '.join(['?'] * len(target_columns))
+                            query = f"INSERT INTO contabilita ({', '.join(target_columns)}) VALUES ({placeholders})"
+                            cursor.executemany(query, new_rows_list)
+                            imported_years.append(year)
 
-                    except Exception as e:
-                        print(f"Errore importazione Dati foglio {sheet_name}: {e}")
-                        continue
+                            processed_sheets += 1
+                            if progress_callback:
+                                progress_callback(processed_sheets, total_sheets)
+
+                        except Exception as e:
+                            logging.error(f"Errore importazione Dati foglio {sheet_name}: {e}", exc_info=True)
+                            continue
 
                     conn.commit()
 
-                if not imported_years: return False, "Nessun anno importato.", 0, 0
+                if not imported_years:
+                    logging.error("Importazione completata ma nessun anno è stato importato.")
+                    return False, "Nessun anno importato.", 0, 0
+
+                logging.info(f"Importazione completata con successo. Anni importati: {sorted(imported_years)}")
                 return True, f"Anni importati: {sorted(imported_years)}", total_added, total_removed
 
         except Exception as e:
+            logging.critical(f"Errore critico durante l'importazione del file Excel: {e}", exc_info=True)
             return False, f"Errore: {e}", 0, 0
 
     @classmethod
@@ -297,8 +323,9 @@ class ContabilitaManager:
         try:
             # 1. Scan and collect files (Flattened loop for progress)
             tasks = []
-            for folder in root.iterdir():
-                if not folder.is_dir(): continue
+            import os
+            for dirpath, dirnames, filenames in os.walk(root):
+                folder = Path(dirpath)
                 match = re.match(r'Giornaliere\s+(\d{4})', folder.name, re.IGNORECASE)
                 if not match: continue
 
@@ -306,9 +333,9 @@ class ContabilitaManager:
                 if year < current_year: continue
 
                 # Collect files
-                for file_path in folder.glob("*.xls*"):
-                    if not file_path.name.startswith("~$"):
-                        tasks.append((year, file_path))
+                for filename in filenames:
+                    if filename.endswith(('.xlsx', '.xlsm', '.xls')) and not filename.startswith("~$"):
+                        tasks.append((year, folder / filename))
 
             total_tasks = len(tasks)
             processed_count = 0

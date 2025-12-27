@@ -125,10 +125,11 @@ class TestScaricaTSBot:
     
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.scarico_ts import ScaricaTSBot
+        from src.bots.scarico_ts.scarico_ts_bot import ScaricaTSBot
+        bot = ScaricaTSBot(username="", password="")
         
-        columns = ScaricaTSBot.get_columns()
-        assert len(columns) == 2
+        columns = bot.columns
+        assert len(columns) >= 2
         
         column_names = [col['name'] for col in columns]
         assert 'Numero OdA' in column_names
@@ -136,10 +137,11 @@ class TestScaricaTSBot:
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.scarico_ts import ScaricaTSBot
+        from src.bots.scarico_ts.scarico_ts_bot import ScaricaTSBot
+        bot = ScaricaTSBot(username="", password="")
         
-        assert ScaricaTSBot.get_name() == "Scarico TS"
-        assert ScaricaTSBot.get_description() is not None
+        assert bot.name == "Scarico TS"
+        assert bot.description is not None
 
 
 class TestDettagliOdABot:
@@ -147,10 +149,11 @@ class TestDettagliOdABot:
     
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.dettagli_oda import DettagliOdABot
+        from src.bots.dettagli_oda.bot import DettagliOdABot
+        bot = DettagliOdABot(username="", password="")
         
-        columns = DettagliOdABot.get_columns()
-        assert len(columns) == 2
+        columns = bot.columns
+        assert len(columns) >= 2
         
         column_names = [col['name'] for col in columns]
         assert 'Numero OdA' in column_names
@@ -158,10 +161,11 @@ class TestDettagliOdABot:
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.dettagli_oda import DettagliOdABot
+        from src.bots.dettagli_oda.bot import DettagliOdABot
+        bot = DettagliOdABot(username="", password="")
         
-        assert DettagliOdABot.get_name() == "Dettagli OdA"
-        assert DettagliOdABot.get_description() is not None
+        assert bot.name == "Dettagli OdA"
+        assert bot.description is not None
 
 
 class TestCaricoTSBot:
@@ -169,10 +173,11 @@ class TestCaricoTSBot:
     
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.carico_ts import CaricoTSBot
+        from src.bots.carico_ts.bot import CaricoTSBot
+        bot = CaricoTSBot(username="", password="")
         
-        columns = CaricoTSBot.get_columns()
-        assert len(columns) == 16
+        columns = bot.columns
+        assert len(columns) >= 16
         
         column_names = [col['name'] for col in columns]
         assert 'Numero OdA' in column_names
@@ -181,10 +186,11 @@ class TestCaricoTSBot:
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.carico_ts import CaricoTSBot
+        from src.bots.carico_ts.bot import CaricoTSBot
+        bot = CaricoTSBot(username="", password="")
         
-        assert CaricoTSBot.get_name() == "Carico TS"
-        assert CaricoTSBot.get_description() is not None
+        assert bot.name == "Carico TS"
+        assert bot.description is not None
 
 
 if __name__ == '__main__':

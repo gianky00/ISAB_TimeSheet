@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
     QMessageBox, QListWidget, QListWidgetItem, QInputDialog,
-    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView
+    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView, QStyle
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -281,25 +281,29 @@ class SettingsPanel(QWidget):
         account_layout.addWidget(self.account_list)
         
         acc_btns = QHBoxLayout()
-        add_acc_btn = QPushButton("➕")
+        add_acc_btn = QPushButton("")
+        add_acc_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
         add_acc_btn.setToolTip("Aggiungi Account")
         add_acc_btn.clicked.connect(self._add_account)
         self._style_mini_button(add_acc_btn, "#28a745")
         acc_btns.addWidget(add_acc_btn)
         
-        edit_acc_btn = QPushButton("✏️")
+        edit_acc_btn = QPushButton("")
+        edit_acc_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOkButton))
         edit_acc_btn.setToolTip("Modifica Account")
         edit_acc_btn.clicked.connect(self._edit_account)
         self._style_mini_button(edit_acc_btn, "#0d6efd")
         acc_btns.addWidget(edit_acc_btn)
 
-        remove_acc_btn = QPushButton("🗑️")
+        remove_acc_btn = QPushButton("")
+        remove_acc_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
         remove_acc_btn.setToolTip("Rimuovi Account")
         remove_acc_btn.clicked.connect(self._remove_account)
         self._style_mini_button(remove_acc_btn, "#dc3545")
         acc_btns.addWidget(remove_acc_btn)
 
-        set_def_btn = QPushButton("⭐")
+        set_def_btn = QPushButton("")
+        set_def_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton))
         set_def_btn.setToolTip("Imposta Default")
         set_def_btn.clicked.connect(self._set_default_account)
         self._style_mini_button(set_def_btn, "#ffc107", text_color="black")
@@ -322,17 +326,20 @@ class SettingsPanel(QWidget):
         contract_layout.addWidget(self.contract_list)
 
         contract_btns = QHBoxLayout()
-        add_contract_btn = QPushButton("➕")
+        add_contract_btn = QPushButton("")
+        add_contract_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
         add_contract_btn.clicked.connect(self._add_contract)
         self._style_mini_button(add_contract_btn, "#28a745")
         contract_btns.addWidget(add_contract_btn)
 
-        edit_contract_btn = QPushButton("✏️")
+        edit_contract_btn = QPushButton("")
+        edit_contract_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOkButton))
         edit_contract_btn.clicked.connect(self._edit_contract)
         self._style_mini_button(edit_contract_btn, "#0d6efd")
         contract_btns.addWidget(edit_contract_btn)
 
-        remove_contract_btn = QPushButton("🗑️")
+        remove_contract_btn = QPushButton("")
+        remove_contract_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
         remove_contract_btn.clicked.connect(self._remove_contract)
         self._style_mini_button(remove_contract_btn, "#dc3545")
         contract_btns.addWidget(remove_contract_btn)
@@ -354,17 +361,20 @@ class SettingsPanel(QWidget):
         fornitori_layout.addWidget(self.fornitori_list)
         
         fornitori_btn_layout = QHBoxLayout()
-        add_forn_btn = QPushButton("➕")
+        add_forn_btn = QPushButton("")
+        add_forn_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
         add_forn_btn.clicked.connect(self._add_fornitore)
         self._style_mini_button(add_forn_btn, "#28a745")
         fornitori_btn_layout.addWidget(add_forn_btn)
         
-        edit_forn_btn = QPushButton("✏️")
+        edit_forn_btn = QPushButton("")
+        edit_forn_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOkButton))
         edit_forn_btn.clicked.connect(self._edit_fornitore)
         self._style_mini_button(edit_forn_btn, "#0d6efd")
         fornitori_btn_layout.addWidget(edit_forn_btn)
         
-        rem_forn_btn = QPushButton("🗑️")
+        rem_forn_btn = QPushButton("")
+        rem_forn_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
         rem_forn_btn.clicked.connect(self._remove_fornitore)
         self._style_mini_button(rem_forn_btn, "#dc3545")
         fornitori_btn_layout.addWidget(rem_forn_btn)
