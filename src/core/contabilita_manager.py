@@ -297,8 +297,9 @@ class ContabilitaManager:
         try:
             # 1. Scan and collect files (Flattened loop for progress)
             tasks = []
-            for folder in root.iterdir():
-                if not folder.is_dir(): continue
+            import os
+            for dirpath, dirnames, filenames in os.walk(root):
+                folder = Path(dirpath)
                 match = re.match(r'Giornaliere\s+(\d{4})', folder.name, re.IGNORECASE)
                 if not match: continue
 
@@ -306,9 +307,9 @@ class ContabilitaManager:
                 if year < current_year: continue
 
                 # Collect files
-                for file_path in folder.glob("*.xls*"):
-                    if not file_path.name.startswith("~$"):
-                        tasks.append((year, file_path))
+                for filename in filenames:
+                    if filename.endswith(('.xlsx', '.xlsm', '.xls')) and not filename.startswith("~$"):
+                        tasks.append((year, folder / filename))
 
             total_tasks = len(tasks)
             processed_count = 0

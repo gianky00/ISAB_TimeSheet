@@ -583,8 +583,8 @@ class EditableDataTable(QWidget):
                 selection-color: #0d6efd;
             }
             QTableWidget::item {
-                padding: 8px;
-                color: black;  /* Force black text */
+                padding: 0px;
+                color: black;
                 border: none;
             }
             QTableWidget::item:selected {
@@ -691,7 +691,7 @@ class EditableDataTable(QWidget):
                         border: none;
                         background: transparent;
                         color: black;
-                        padding-left: 5px;
+                        padding: 8px;
                     }
                     QComboBox QAbstractItemView {
                         background-color: white;
@@ -725,6 +725,7 @@ class EditableDataTable(QWidget):
                 # Standard Text Item
                 default_val = column.get('default', "")
                 item = QTableWidgetItem(str(default_val))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
                 self.table.setItem(row, col, item)
     
     def _remove_row(self):
