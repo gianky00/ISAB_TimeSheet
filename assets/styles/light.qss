@@ -65,6 +65,7 @@ QPushButton[variant="ghost"]:hover {
 /* === INPUTS === */
 QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
     background-color: #FFFFFF;
+    color: #212121; /* Force Text Color */
     border: 1px solid #E0E0E0;
     border-radius: 6px;
     padding: 10px 12px;
@@ -73,6 +74,17 @@ QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
 QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, QComboBox:focus {
     border-color: #009688;
     outline: none;
+    background-color: #FFFFFF; /* Ensure background stays white */
+    color: #000000; /* Force Black Text on Focus */
+}
+
+/* Specific fix for QTableWidget Inputs to prevent shrinking/disappearing text */
+QTableWidget QLineEdit, QTableWidget QComboBox {
+    color: #000000;
+    background-color: #FFFFFF;
+    font-size: 14px; /* Ensure font size is consistent */
+    padding: 2px; /* Reduce padding inside cells to prevent size jumping */
+    border: none; /* Often cleaner in cells */
 }
 
 QLineEdit:disabled {

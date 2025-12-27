@@ -324,8 +324,8 @@ class ScaricaTSPanel(BaseBotPanel):
         self.data_table = EditableDataTable([
             {"name": "Numero OdA", "type": "text"}
         ])
-        # Increase minimum height to show at least 3 rows + header
-        self.data_table.setMinimumHeight(200)
+        # Increase minimum height to show at least 4 rows + header (approx 250px)
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
@@ -632,6 +632,8 @@ class DettagliOdAPanel(BaseBotPanel):
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": contracts, "default": default_contract}
         ])
+        # Increase minimum height here as well
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
