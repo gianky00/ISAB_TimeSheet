@@ -58,6 +58,10 @@ QComboBox QAbstractItemView {
     color: black;
     selection-background-color: #2196F3;
 }
+QTableWidget QLineEdit, QTableWidget QComboBox {
+    background-color: white;
+    color: black;
+}
 QLineEdit:focus, QDateEdit:focus, QComboBox:focus {
     border: 2px solid #2196F3;
 }
