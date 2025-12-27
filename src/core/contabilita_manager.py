@@ -282,30 +282,35 @@ class ContabilitaManager:
 
                             df['year'] = year
 
-                        # Normalizzazione più robusta per il mapping delle colonne
-                        # Prepara mappa normalizzata: "N° PREV." -> "N°PREV." -> "n_prev"
-                        normalized_map = {}
-                        for k, v in cls.COLUMNS_MAPPING.items():
-                            norm_k = k.upper().replace(" ", "").replace(".", "").replace("°", "")
-                            normalized_map[norm_k] = v
+                            # Normalizzazione più robusta per il mapping delle colonne
+                            # Prepara mappa normalizzata: "N° PREV." -> "N°PREV." -> "n_prev"
+                            normalized_map = {}
+                            for k, v in cls.COLUMNS_MAPPING.items():
+                                norm_k = k.upper().replace(" ", "").replace(".", "").replace("°", "")
+                                normalized_map[norm_k] = v
 
-                        # Mappa effettiva trovata nel DF
-                        rename_map = {}
-                        for col in df.columns:
-                            col_str = str(col).strip().upper()
-                            norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
+                            # Mappa effettiva trovata nel DF
+                            rename_map = {}
+                            for col in df.columns:
+                                col_str = str(col).strip().upper()
+                                norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
 
-                            # Cerca match
-                            if norm_col in normalized_map:
-                                rename_map[col] = normalized_map[norm_col]
-                            else:
-                                # Fallback per match parziale o specifico
-                                if "PREV" in norm_col and "DATA" in norm_col:
-                                    rename_map[col] = "data_prev"
-                                elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
-                                    rename_map[col] = "n_prev"
+                                # Cerca match
+                                if norm_col in normalized_map:
+                                    rename_map[col] = normalized_map[norm_col]
+                                else:
+                                    # Fallback per match parziale o specifico
+                                    if "PREV" in norm_col and "DATA" in norm_col:
+                                        rename_map[col] = "data_prev"
+                                    elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
+                                        rename_map[col] = "n_prev"
 
-                        df.rename(columns=rename_map, inplace=True)
+                            df.rename(columns=rename_map, inplace=True)
+
+                        except Exception as e:
+                            # Log warning but continue with other sheets
+                            # print(f"Warning processing sheet {sheet_name}: {e}")
+                            pass
 
                         for db_col in cls.COLUMNS_MAPPING.values():
                             if db_col not in df.columns: df[db_col] = ""
@@ -348,10 +353,6 @@ class ContabilitaManager:
                         processed_sheets += 1
                         if progress_callback:
                             progress_callback(processed_sheets, total_sheets)
-
-                    except Exception as e:
-                        print(f"Errore importazione Dati foglio {sheet_name}: {e}")
-                        continue
 
                     conn.commit()
 
