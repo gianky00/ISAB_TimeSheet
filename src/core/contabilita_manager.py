@@ -320,18 +320,24 @@ class ContabilitaManager:
                         df = df.fillna("")
                         cols_to_str = [c for c in df.columns if c != 'year']
                         df[cols_to_str] = df[cols_to_str].astype(str)
+                        # Strip whitespace from all string columns
+                        df[cols_to_str] = df[cols_to_str].apply(lambda x: x.str.strip())
 
                         # --- Diff Logic ---
-                        # Fetch existing rows for this year (excluding ID/timestamp)
-                        # We use the exact same columns as target_columns
-                        cursor.execute(f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?", (year,))
-                        # Convert to set of tuples
-                        existing_rows = set()
-                        for row in cursor.fetchall():
-                            # row[0] is year (int), others are strings or None.
-                            # We force strings for non-year cols to match DF preparation.
-                            cleaned_row = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
-                            existing_rows.add(tuple(cleaned_row))
+                        # Fetch existing rows for this year using pandas to ensure identical type/format handling
+                        existing_df = pd.read_sql(
+                            f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?",
+                            conn,
+                            params=(year,)
+                        )
+                        
+                        # Apply EXACT SAME cleaning to existing data
+                        existing_df = existing_df.fillna("")
+                        cols_to_str_ex = [c for c in existing_df.columns if c != 'year']
+                        existing_df[cols_to_str_ex] = existing_df[cols_to_str_ex].astype(str)
+                        existing_df[cols_to_str_ex] = existing_df[cols_to_str_ex].apply(lambda x: x.str.strip())
+
+                        existing_rows = set(list(existing_df.itertuples(index=False, name=None)))
 
                         # New rows from DF
                         new_rows_list = list(df.itertuples(index=False, name=None))
@@ -487,18 +493,34 @@ class ContabilitaManager:
                 conn.row_factory = sqlite3.Row # Temp setting
                 cursor = conn.cursor()
 
-                years_to_clear = years_encountered # Only clear years we touched
+                years_to_clear = list(years_encountered) # Only clear years we touched
 
-                # Fetch Existing
+                # Fetch Existing using pandas for consistent type handling
                 existing_rows_set = set()
-                for year in years_to_clear:
-                    cursor.execute(f"SELECT {', '.join(target_cols)} FROM giornaliere WHERE year = ?", (year,))
-                    for row in cursor.fetchall():
-                        # Ensure types match (year is int, others strings)
-                        row_list = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
-                        existing_rows_set.add(tuple(row_list))
+                if years_to_clear:
+                    placeholders = ','.join(['?'] * len(years_to_clear))
+                    query = f"SELECT {', '.join(target_cols)} FROM giornaliere WHERE year IN ({placeholders})"
+                    
+                    existing_df = pd.read_sql(query, conn, params=tuple(years_to_clear))
+                    
+                    # Clean Existing
+                    existing_df = existing_df.fillna("")
+                    cols_str_ex = [c for c in existing_df.columns if c != 'year']
+                    existing_df[cols_str_ex] = existing_df[cols_str_ex].astype(str).apply(lambda x: x.str.strip())
+                    
+                    existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
 
-                new_rows_set = set(all_new_rows)
+                # Prepare New Rows for Diff (Convert back to DF to ensure identical processing)
+                if all_new_rows:
+                    new_df = pd.DataFrame(all_new_rows, columns=target_cols)
+                else:
+                    new_df = pd.DataFrame(columns=target_cols)
+
+                new_df = new_df.fillna("")
+                cols_str_new = [c for c in new_df.columns if c != 'year']
+                new_df[cols_str_new] = new_df[cols_str_new].astype(str).apply(lambda x: x.str.strip())
+
+                new_rows_set = set(list(new_df.itertuples(index=False, name=None)))
 
                 total_added = len(new_rows_set - existing_rows_set)
                 total_removed = len(existing_rows_set - new_rows_set)
@@ -507,12 +529,17 @@ class ContabilitaManager:
                 for year in years_to_clear:
                     cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
 
-                # Insert new
-                if all_new_rows:
+                # Insert new (Use original all_new_rows or cleaned? Better to use cleaned to match diff)
+                # But we must ensure types are correct for SQLite. 
+                # all_new_rows was built carefully. new_df is string-ified.
+                # Actually, SQLite is flexible. Inserting cleaned strings is safer.
+                # Let's use new_df converted back to list of tuples.
+                final_rows_to_insert = list(new_df.itertuples(index=False, name=None))
+
+                if final_rows_to_insert:
                     placeholders = ', '.join(['?'] * len(target_cols))
                     query = f"INSERT INTO giornaliere ({', '.join(target_cols)}) VALUES ({placeholders})"
-                    # Batch insert is efficient
-                    cursor.executemany(query, all_new_rows)
+                    cursor.executemany(query, final_rows_to_insert)
 
                 conn.commit()
 
@@ -642,9 +669,21 @@ class ContabilitaManager:
             with db_manager.get_connection(cls.DB_PATH) as conn:
                 cursor = conn.cursor()
 
-                # Diff Logic (Simple count)
-                cursor.execute(f"SELECT COUNT(*) FROM attivita_programmate")
-                prev_count = cursor.fetchone()[0]
+                # Diff Logic
+                # 1. Fetch Existing
+                existing_df = pd.read_sql(f"SELECT {', '.join(db_cols)} FROM attivita_programmate", conn)
+                existing_df = existing_df.fillna("")
+                existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
+                existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
+
+                # 2. Prepare New
+                new_df = pd.DataFrame(rows_to_insert, columns=db_cols)
+                new_df = new_df.fillna("")
+                new_df = new_df.astype(str).apply(lambda x: x.str.strip())
+                new_rows_set = set(list(new_df.itertuples(index=False, name=None)))
+
+                total_added = len(new_rows_set - existing_rows_set)
+                total_removed = len(existing_rows_set - new_rows_set)
 
                 cursor.execute("DELETE FROM attivita_programmate")
 
@@ -654,10 +693,6 @@ class ContabilitaManager:
                     cursor.executemany(query, rows_to_insert)
 
                 conn.commit()
-
-            new_count = len(rows_to_insert)
-            total_added = max(0, new_count - prev_count)
-            total_removed = max(0, prev_count - new_count)
 
             return True, f"Importate {len(rows_to_insert)} righe in Attività Programmate.", total_added, total_removed
 
@@ -986,13 +1021,25 @@ class ContabilitaManager:
                 # Fill N/A and convert to str
                 df = df.fillna("")
                 df = df.astype(str)
+                # Apply strip to ensure clean comparison
+                df = df.apply(lambda x: x.str.strip())
 
                 rows = list(df.itertuples(index=False, name=None))
+                new_rows_set = set(rows)
 
                 # DB Ops
                 with db_manager.get_connection(cls.DB_PATH) as conn:
-                    cursor = conn.cursor()
+                    # 1. Fetch Existing for Diff
+                    existing_df = pd.read_sql(f"SELECT {', '.join(target_cols)} FROM certificati_campione", conn)
+                    existing_df = existing_df.fillna("")
+                    existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
+                    existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
 
+                    # 2. Calc Diff
+                    added = len(new_rows_set - existing_rows_set)
+                    removed = len(existing_rows_set - new_rows_set)
+
+                    cursor = conn.cursor()
                     cursor.execute("DELETE FROM certificati_campione")
 
                     if rows:
@@ -1002,7 +1049,7 @@ class ContabilitaManager:
 
                     conn.commit()
 
-                return True, f"Importate {len(rows)} righe in Certificati Campione.", len(rows), 0
+                return True, f"Importate {len(rows)} righe in Certificati Campione.", added, removed
 
         except Exception as e:
             return False, f"Errore importazione Certificati Campione: {e}", 0, 0
