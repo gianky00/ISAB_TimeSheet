@@ -205,7 +205,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     COLUMNS = [
         'DATA', 'PERS1', 'PERS2', 'ODC', 'POS', 'DALLE', 'ALLE',
-        'TOTALE ORE', 'DESCRIZIONE', 'FINITO', 'COMMESSA'
+        'TOTALE\nORE', 'DESCRIZIONE', 'FINITO', 'COMMESSA'
     ]
 
     CACHE_PATH = Path("data/scarico_ore_cache.pkl")

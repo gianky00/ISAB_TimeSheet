@@ -13,6 +13,7 @@ import json
 import zipfile
 from typing import List, Dict, Tuple, Optional, Callable
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 from src.utils.parsing import parse_currency
 from src.core.config_manager import CONFIG_DIR
 from src.core.database import db_manager
@@ -211,7 +212,13 @@ class ContabilitaManager:
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                xls = pd.ExcelFile(file_obj, engine='openpyxl')
+                # Use calamine for faster reading
+                try:
+                    xls = pd.ExcelFile(file_obj, engine='calamine')
+                except Exception:
+                    # Fallback if calamine fails (e.g. strict format issues)
+                    xls = pd.ExcelFile(file_obj, engine='openpyxl')
+                
                 imported_years = []
 
                 # Use Manager Connection
@@ -320,18 +327,24 @@ class ContabilitaManager:
                         df = df.fillna("")
                         cols_to_str = [c for c in df.columns if c != 'year']
                         df[cols_to_str] = df[cols_to_str].astype(str)
+                        # Strip whitespace from all string columns
+                        df[cols_to_str] = df[cols_to_str].apply(lambda x: x.str.strip())
 
                         # --- Diff Logic ---
-                        # Fetch existing rows for this year (excluding ID/timestamp)
-                        # We use the exact same columns as target_columns
-                        cursor.execute(f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?", (year,))
-                        # Convert to set of tuples
-                        existing_rows = set()
-                        for row in cursor.fetchall():
-                            # row[0] is year (int), others are strings or None.
-                            # We force strings for non-year cols to match DF preparation.
-                            cleaned_row = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
-                            existing_rows.add(tuple(cleaned_row))
+                        # Fetch existing rows for this year using pandas to ensure identical type/format handling
+                        existing_df = pd.read_sql(
+                            f"SELECT {', '.join(target_columns)} FROM contabilita WHERE year = ?",
+                            conn,
+                            params=(year,)
+                        )
+                        
+                        # Apply EXACT SAME cleaning to existing data
+                        existing_df = existing_df.fillna("")
+                        cols_to_str_ex = [c for c in existing_df.columns if c != 'year']
+                        existing_df[cols_to_str_ex] = existing_df[cols_to_str_ex].astype(str)
+                        existing_df[cols_to_str_ex] = existing_df[cols_to_str_ex].apply(lambda x: x.str.strip())
+
+                        existing_rows = set(list(existing_df.itertuples(index=False, name=None)))
 
                         # New rows from DF
                         new_rows_list = list(df.itertuples(index=False, name=None))
@@ -363,6 +376,72 @@ class ContabilitaManager:
             return False, f"Errore: {e}", 0, 0
 
     @classmethod
+    def _process_single_giornaliera(cls, args):
+        """Helper per processare un singolo file giornaliera in parallelo."""
+        year, file_path, lookup_map = args
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                try:
+                    df = pd.read_excel(file_path, sheet_name='RIASSUNTO', engine='calamine')
+                except ValueError:
+                    return (year, [], None) # Sheet not found
+                except Exception:
+                    # Fallback to openpyxl
+                    try:
+                        df = pd.read_excel(file_path, sheet_name='RIASSUNTO', engine='openpyxl')
+                    except:
+                        return (year, [], None)
+
+                df.columns = [str(c).strip() for c in df.columns]
+                if not df.empty: df = df.iloc[:-1]
+
+                rename_map = {}
+                for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
+                    for c in df.columns:
+                        if c.upper() == excel_col.upper():
+                            rename_map[c] = db_col
+                            break
+
+                if not rename_map: return (year, [], None)
+
+                df.rename(columns=rename_map, inplace=True)
+                check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != 'data']
+                if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
+
+                if not df.empty:
+                    for db_col in cls.GIORNALIERE_MAPPING.values():
+                        if db_col not in df.columns: df[db_col] = ""
+
+                    cols_to_clean = ['odc', 'n_prev', 'data', 'personale', 'descrizione', 'tcl', 'pdl', 'inizio', 'fine', 'ore']
+                    df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
+                    df[cols_to_clean] = df[cols_to_clean].replace(r'(?i)^nan$', '', regex=True)
+
+                    # Apply Lookup
+                    mask_empty_odc = df['odc'] == ""
+                    if mask_empty_odc.any() and lookup_map:
+                        mapped_values = df.loc[mask_empty_odc, 'n_prev'].map(lookup_map)
+                        df.loc[mask_empty_odc, 'odc'] = mapped_values.fillna("")
+
+                    # Regex
+                    mask_canone = df['odc'].str.contains('canone', case=False, na=False)
+                    mask_standard = ~mask_canone
+                    extracted = df.loc[mask_standard, 'odc'].str.extract(r'(5400\d+)', expand=False)
+                    df.loc[mask_standard, 'odc'] = extracted.fillna("")
+
+                    df['year'] = year
+                    df['nome_file'] = file_path.name
+                    
+                    target_cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
+                    df_final = df[target_cols]
+                    rows = list(df_final.itertuples(index=False, name=None))
+                    return (year, rows, None)
+
+                return (year, [], None)
+        except Exception as e:
+            return (year, [], str(e))
+
+    @classmethod
     def import_giornaliere(cls, root_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
         root = Path(root_path)
         if not root.exists():
@@ -375,32 +454,7 @@ class ContabilitaManager:
         total_removed = 0
 
         try:
-            # 1. Scan and collect files (Flattened loop for progress)
-            tasks = []
-            for folder in root.iterdir():
-                if not folder.is_dir(): continue
-                match = re.match(r'Giornaliere\s+(\d{4})', folder.name, re.IGNORECASE)
-                if not match: continue
-
-                year = int(match.group(1))
-                if year < current_year: continue
-
-                # Collect files
-                for file_path in folder.glob("*.xls*"):
-                    if not file_path.name.startswith("~$"):
-                        tasks.append((year, file_path))
-
-            total_tasks = len(tasks)
-            processed_count = 0
-
-            # 1.1 Diff Logic Preparation
-            # Collect all new rows in memory first to compare against DB
-            all_new_rows = [] # List of tuples matching DB schema
-
-            # Columns definition for consistent ordering
-            target_cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
-
-            # Lookup map cache
+            # 1. Lookup Map Preparation
             lookup_map = {}
             try:
                 with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
@@ -410,95 +464,75 @@ class ContabilitaManager:
                     lookup_map = dict(zip(lookup_df['n_prev'], lookup_df['odc']))
             except: pass
 
-            # 2. Process Files (Read and Accumulate)
-            # We process files first to build the "New State", then we diff, then write.
-            # This differs slightly from original loop but is safer for diffing.
+            # 2. Collect Tasks
+            tasks_args = []
+            for folder in root.iterdir():
+                if not folder.is_dir(): continue
+                match = re.match(r'Giornaliere\s+(\d{4})', folder.name, re.IGNORECASE)
+                if not match: continue
 
+                year = int(match.group(1))
+                if year < current_year: continue
+
+                for file_path in folder.glob("*.xls*"):
+                    if not file_path.name.startswith("~$"):
+                        tasks_args.append((year, file_path, lookup_map))
+
+            total_tasks = len(tasks_args)
+            processed_count = 0
+            
+            all_new_rows = [] 
+            target_cols = ['year', 'data', 'personale', 'descrizione', 'tcl', 'odc', 'pdl', 'inizio', 'fine', 'ore', 'n_prev', 'nome_file']
             years_encountered = set()
 
-            for year, file_path in tasks:
-                years_encountered.add(year)
-                try:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        try:
-                            df = pd.read_excel(file_path, sheet_name='RIASSUNTO', engine='openpyxl')
-                        except ValueError:
-                            processed_count += 1
-                            if progress_callback: progress_callback(processed_count, total_tasks)
-                            continue
+            # 3. Parallel Execution
+            if total_tasks > 0:
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    for result in executor.map(cls._process_single_giornaliera, tasks_args):
+                        processed_count += 1
+                        if progress_callback: progress_callback(processed_count, total_tasks)
 
-                        df.columns = [str(c).strip() for c in df.columns]
-                        if not df.empty: df = df.iloc[:-1]
-
-                        rename_map = {}
-                        for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
-                            for c in df.columns:
-                                if c.upper() == excel_col.upper():
-                                    rename_map[c] = db_col
-                                    break
-
-                        if not rename_map:
-                            processed_count += 1
-                            if progress_callback: progress_callback(processed_count, total_tasks)
-                            continue
-
-                        df.rename(columns=rename_map, inplace=True)
-                        check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != 'data']
-                        if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
-
-                        if not df.empty:
-                            for db_col in cls.GIORNALIERE_MAPPING.values():
-                                if db_col not in df.columns: df[db_col] = ""
-
-                            cols_to_clean = ['odc', 'n_prev', 'data', 'personale', 'descrizione', 'tcl', 'pdl', 'inizio', 'fine', 'ore']
-                            df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
-                            df[cols_to_clean] = df[cols_to_clean].replace(r'(?i)^nan$', '', regex=True)
-
-                            # Apply Lookup
-                            mask_empty_odc = df['odc'] == ""
-                            if mask_empty_odc.any() and lookup_map:
-                                mapped_values = df.loc[mask_empty_odc, 'n_prev'].map(lookup_map)
-                                df.loc[mask_empty_odc, 'odc'] = mapped_values.fillna("")
-
-                            # Regex
-                            mask_canone = df['odc'].str.contains('canone', case=False, na=False)
-                            mask_standard = ~mask_canone
-                            extracted = df.loc[mask_standard, 'odc'].str.extract(r'(5400\d+)', expand=False)
-                            df.loc[mask_standard, 'odc'] = extracted.fillna("")
-
-                            df['year'] = year
-                            df['nome_file'] = file_path.name
-
-                            df_final = df[target_cols]
-                            rows = list(df_final.itertuples(index=False, name=None))
-                            all_new_rows.extend(rows)
-
-                        imported_years.add(year)
-
-                except Exception as e:
-                    print(f"Errore lettura file {file_path}: {e}")
-
-                processed_count += 1
-                if progress_callback: progress_callback(processed_count, total_tasks)
+                        r_year, r_rows, r_err = result
+                        if r_rows:
+                            all_new_rows.extend(r_rows)
+                            years_encountered.add(r_year)
+                            imported_years.add(r_year)
+                        if r_err:
+                            print(f"Errore lettura file (Year {r_year}): {r_err}")
 
             # 3. Diff and Commit
             with db_manager.get_connection(cls.DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row # Temp setting
                 cursor = conn.cursor()
 
-                years_to_clear = years_encountered # Only clear years we touched
+                years_to_clear = list(years_encountered) # Only clear years we touched
 
-                # Fetch Existing
+                # Fetch Existing using pandas for consistent type handling
                 existing_rows_set = set()
-                for year in years_to_clear:
-                    cursor.execute(f"SELECT {', '.join(target_cols)} FROM giornaliere WHERE year = ?", (year,))
-                    for row in cursor.fetchall():
-                        # Ensure types match (year is int, others strings)
-                        row_list = [row[0]] + [str(x) if x is not None else "" for x in row[1:]]
-                        existing_rows_set.add(tuple(row_list))
+                if years_to_clear:
+                    placeholders = ','.join(['?'] * len(years_to_clear))
+                    query = f"SELECT {', '.join(target_cols)} FROM giornaliere WHERE year IN ({placeholders})"
+                    
+                    existing_df = pd.read_sql(query, conn, params=tuple(years_to_clear))
+                    
+                    # Clean Existing
+                    existing_df = existing_df.fillna("")
+                    cols_str_ex = [c for c in existing_df.columns if c != 'year']
+                    existing_df[cols_str_ex] = existing_df[cols_str_ex].astype(str).apply(lambda x: x.str.strip())
+                    
+                    existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
 
-                new_rows_set = set(all_new_rows)
+                # Prepare New Rows for Diff (Convert back to DF to ensure identical processing)
+                if all_new_rows:
+                    new_df = pd.DataFrame(all_new_rows, columns=target_cols)
+                else:
+                    new_df = pd.DataFrame(columns=target_cols)
+
+                new_df = new_df.fillna("")
+                cols_str_new = [c for c in new_df.columns if c != 'year']
+                new_df[cols_str_new] = new_df[cols_str_new].astype(str).apply(lambda x: x.str.strip())
+
+                new_rows_set = set(list(new_df.itertuples(index=False, name=None)))
 
                 total_added = len(new_rows_set - existing_rows_set)
                 total_removed = len(existing_rows_set - new_rows_set)
@@ -507,12 +541,17 @@ class ContabilitaManager:
                 for year in years_to_clear:
                     cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
 
-                # Insert new
-                if all_new_rows:
+                # Insert new (Use original all_new_rows or cleaned? Better to use cleaned to match diff)
+                # But we must ensure types are correct for SQLite. 
+                # all_new_rows was built carefully. new_df is string-ified.
+                # Actually, SQLite is flexible. Inserting cleaned strings is safer.
+                # Let's use new_df converted back to list of tuples.
+                final_rows_to_insert = list(new_df.itertuples(index=False, name=None))
+
+                if final_rows_to_insert:
                     placeholders = ', '.join(['?'] * len(target_cols))
                     query = f"INSERT INTO giornaliere ({', '.join(target_cols)}) VALUES ({placeholders})"
-                    # Batch insert is efficient
-                    cursor.executemany(query, all_new_rows)
+                    cursor.executemany(query, final_rows_to_insert)
 
                 conn.commit()
 
@@ -525,126 +564,94 @@ class ContabilitaManager:
 
     @classmethod
     def import_attivita_programmate(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
-        """Importa il file Attività Programmate con stili (colori)."""
+        """Importa il file Attività Programmate (veloce, senza colori)."""
         path = Path(file_path)
         if not path.exists():
             return False, f"File Attività Programmate non trovato: {file_path}", 0, 0
-
-        if not openpyxl:
-            return False, "Modulo 'openpyxl' mancante.", 0, 0
 
         total_added = 0
         total_removed = 0
 
         try:
-            # Load Workbook with styles
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
-                # read_only=False required for style extraction
-                wb = openpyxl.load_workbook(path, data_only=True, read_only=False)
-
-            if "Riepilogo" not in wb.sheetnames:
+            # Use calamine for maximum speed
+            # Header is at row 3 (0-based index 2)
+            try:
+                df = pd.read_excel(path, sheet_name="Riepilogo", header=2, engine='calamine')
+            except ValueError:
                 return False, "Foglio 'Riepilogo' non trovato.", 0, 0
+            except Exception as e:
+                # Fallback
+                try:
+                    df = pd.read_excel(path, sheet_name="Riepilogo", header=2, engine='openpyxl')
+                except Exception as e2:
+                    return False, f"Errore lettura file: {e2}", 0, 0
 
-            ws = wb["Riepilogo"]
+            # Normalize columns
+            df.columns = [str(c).strip() for c in df.columns]
 
-            # Header is at row 3 (1-based)
-            header_row_idx = 3
-            data_start_row = 4
-
-            # Map columns
-            # We iterate headers to find indices
-            col_map = {} # db_col -> 1-based index
-
-            for cell in ws[header_row_idx]:
-                if not cell.value: continue
-                val_str = str(cell.value)
-
-                mapped_col = None
-                for k, v in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
-                    if str(k) == val_str or str(k).strip() == val_str.strip():
-                        mapped_col = v
-                        break
-
-                if mapped_col:
-                    col_map[mapped_col] = cell.column # 1-based index
-
-            if not col_map:
+            # Map Columns
+            rename_map = {}
+            for excel_col, db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
+                # Try exact match or normalized
+                if excel_col in df.columns:
+                    rename_map[excel_col] = db_col
+                else:
+                    # Search ignoring newlines or spaces
+                    for col in df.columns:
+                        if excel_col.replace("\n", " ").strip() == col.replace("\n", " ").strip():
+                            rename_map[col] = db_col
+                            break
+            
+            if not rename_map:
                  return False, "Colonne non trovate. Controlla intestazione riga 3.", 0, 0
 
-            # Cols to insert (including styles)
+            df.rename(columns=rename_map, inplace=True)
+            
+            # Fill missing mapped columns with empty
+            for db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.values():
+                if db_col not in df.columns: df[db_col] = ""
+
+            # Filter rows (basic validity check)
+            # Check if PS or Area or Desc are present
+            check_cols = [c for c in ['ps', 'area', 'descrizione'] if c in df.columns]
+            if check_cols:
+                df.dropna(how='all', subset=check_cols, inplace=True)
+
+            # Convert to strings and strip
+            df = df.fillna("")
+            df = df.astype(str)
+            df = df.apply(lambda x: x.str.strip())
+            
+            # Add 'styles' column (Empty for optimization)
+            df['styles'] = ""
+            
+            # Select Final Columns in Order
             db_cols = list(cls.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ['styles']
-
-            rows_to_insert = []
-
-            # Iterate rows
-            for row in ws.iter_rows(min_row=data_start_row):
-                # Basic check if empty (check first few mapped cols)
-                is_empty = True
-                for db_key in ['ps', 'area', 'descrizione']:
-                    if db_key in col_map:
-                        idx = col_map[db_key] - 1 # tuple index
-                        if idx < len(row) and row[idx].value:
-                            is_empty = False
-                            break
-                if is_empty: continue
-
-                row_data = {}
-                row_styles = {}
-
-                for db_col, col_idx in col_map.items():
-                    # col_idx is 1-based, tuple is 0-based relative to row?
-                    # iter_rows returns tuple of cells.
-                    # If min_col not specified, it returns from col 1.
-                    # So tuple index = col_idx - 1
-                    cell_idx = col_idx - 1
-                    if cell_idx < len(row):
-                        cell = row[cell_idx]
-                        val = cell.value
-                        val_str = str(val).strip() if val is not None else ""
-                        if val_str.lower() == 'nan': val_str = ""
-                        row_data[db_col] = val_str
-
-                        # Extract Styles
-                        fg_color = None
-                        bg_color = None
-
-                        if cell.font and cell.font.color:
-                            if cell.font.color.type == 'rgb':
-                                 c = str(cell.font.color.rgb)
-                                 if len(c) > 6: c = "#" + c[2:]
-                                 else: c = "#" + c
-                                 fg_color = c
-
-                        if cell.fill and cell.fill.patternType == 'solid':
-                             if cell.fill.start_color:
-                                 if cell.fill.start_color.type == 'rgb':
-                                     c = str(cell.fill.start_color.rgb)
-                                     if len(c) > 6: c = "#" + c[2:]
-                                     else: c = "#" + c
-                                     bg_color = c
-
-                        if fg_color or bg_color:
-                            style_entry = {}
-                            if fg_color: style_entry['fg'] = fg_color
-                            if bg_color: style_entry['bg'] = bg_color
-                            row_styles[db_col] = style_entry
-
-                # Fill missing cols with empty string
-                final_row = []
-                for col in cls.ATTIVITA_PROGRAMMATE_MAPPING.values():
-                    final_row.append(row_data.get(col, ""))
-
-                final_row.append(json.dumps(row_styles) if row_styles else "")
-                rows_to_insert.append(tuple(final_row))
+            
+            # Ensure all db_cols exist
+            for c in db_cols:
+                if c not in df.columns: df[c] = ""
+            
+            df = df[db_cols]
+            
+            rows_to_insert = list(df.itertuples(index=False, name=None))
 
             # DB Update
             with db_manager.get_connection(cls.DB_PATH) as conn:
                 cursor = conn.cursor()
 
-                # Diff Logic (Simple count)
-                cursor.execute(f"SELECT COUNT(*) FROM attivita_programmate")
-                prev_count = cursor.fetchone()[0]
+                # Diff Logic
+                # 1. Fetch Existing
+                existing_df = pd.read_sql(f"SELECT {', '.join(db_cols)} FROM attivita_programmate", conn)
+                existing_df = existing_df.fillna("")
+                existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
+                existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
+
+                # 2. Prepare New (Already cleaned via DF)
+                new_rows_set = set(rows_to_insert)
+
+                total_added = len(new_rows_set - existing_rows_set)
+                total_removed = len(existing_rows_set - new_rows_set)
 
                 cursor.execute("DELETE FROM attivita_programmate")
 
@@ -655,18 +662,17 @@ class ContabilitaManager:
 
                 conn.commit()
 
-            new_count = len(rows_to_insert)
-            total_added = max(0, new_count - prev_count)
-            total_removed = max(0, prev_count - new_count)
-
             return True, f"Importate {len(rows_to_insert)} righe in Attività Programmate.", total_added, total_removed
+
+        except Exception as e:
+            return False, f"Errore importazione Attività Programmate: {e}", 0, 0
 
         except Exception as e:
             return False, f"Errore importazione Attività Programmate: {e}", 0, 0
 
     @classmethod
     def import_scarico_ore(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
-        """Importa il file Scarico Ore Cantiere con supporto a stili e gestione zeri."""
+        """Importa il file Scarico Ore Cantiere (OpenPyXL per colori + Diff Logic)."""
         path = Path(file_path)
         if not path.exists():
             return False, f"File Scarico Ore non trovato: {file_path}", 0, 0
@@ -678,11 +684,10 @@ class ContabilitaManager:
         total_removed = 0
 
         try:
-            # 1. Decrypt/Load Workbook
+            # 1. Decrypt/Load Workbook (OpenPyXL needed for Styles)
             wb_file = io.BytesIO()
             is_encrypted = False
 
-            # Try to check if encrypted using msoffcrypto
             if msoffcrypto:
                 try:
                     with open(path, "rb") as f:
@@ -691,7 +696,6 @@ class ContabilitaManager:
                         office_file.decrypt(wb_file)
                         is_encrypted = True
                 except Exception:
-                    # Likely not encrypted or msoffcrypto failed on non-OLE file
                     pass
 
             if not is_encrypted:
@@ -700,48 +704,36 @@ class ContabilitaManager:
 
             wb_file.seek(0)
 
-            # Load with data_only=True first to get values.
-            # Performance Note: read_only=False is required for style extraction.
-            # This will consume more memory/time for 130k rows but is necessary for the requirement.
-            # ⚡ Fix: Suppress UserWarning about Data Validation
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+                # read_only=False required for styles
                 wb_data = openpyxl.load_workbook(wb_file, data_only=True, read_only=False)
 
             if "SCARICO ORE" not in wb_data.sheetnames:
                  return False, "Foglio 'SCARICO ORE' non trovato.", 0, 0
             ws_data = wb_data["SCARICO ORE"]
 
-            # 2. Iterate and Extract
             rows_to_insert = []
+            start_row = 6 # Data starts row 6 (1-based)
 
-            # Header is at row 5 (1-based), data starts at row 6
-            start_row = 6
-
-            # Column Mapping (0-based relative to row array or explicit indices)
+            # Map Columns (0-based indices for array access if using iter_rows values, but here we use Cells)
             # Excel Cols: B=Data, C=Pers1, D=Pers2, E=ODC, F=POS, G=Dalle, H=Alle, I=TotOre, J=Desc, K=Finito, L=Commessa
-            # openpyxl cols (1-based): B=2, C=3, ..., L=12
-            col_indices = {
-                'data': 2, 'pers1': 3, 'pers2': 4, 'odc': 5, 'pos': 6,
-                'dalle': 7, 'alle': 8, 'totale_ore': 9, 'descrizione': 10,
-                'finito': 11, 'commessa': 12
-            }
+            # 1-based indices for openpyxl: B=2 ... L=12
+            col_keys = ['data', 'pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle', 'totale_ore', 'descrizione', 'finito', 'commessa']
+            col_indices = {k: i + 2 for i, k in enumerate(col_keys)} # data -> 2, pers1 -> 3 ...
 
-            # Pre-calc column keys for JSON styles
-            col_keys = list(col_indices.keys())
             total_rows = ws_data.max_row
 
             for row_idx, row in enumerate(ws_data.iter_rows(min_row=start_row, min_col=2, max_col=12), start=start_row):
                 if progress_callback and row_idx % 200 == 0:
                     progress_callback(row_idx, total_rows)
 
-                # row is a tuple of Cells
-                # Index in tuple: 0=B, 1=C, ... 10=L
-
-                # Check empty row (logic: if Pers1...TotOre are empty)
-                # Tuple indices: 1(Pers1) to 7(TotOre)
-                # Check if all None/Empty
-                subset_vals = [c.value for i, c in enumerate(row) if 1 <= i <= 7]
+                # Row is tuple of cells. Index 0 corresponds to min_col (B=2)
+                # keys map: 'data' is at index 0 of the tuple
+                
+                # Check empty row (check vital cols)
+                # indices 0(data) to 7(totale_ore)
+                subset_vals = [c.value for i, c in enumerate(row) if i <= 7]
                 if all(v is None or str(v).strip() == "" for v in subset_vals):
                     continue
 
@@ -752,39 +744,27 @@ class ContabilitaManager:
                     cell = row[i]
                     val = cell.value
 
-                    # --- Zero Logic ---
-                    # ODC (idx 3 in tuple, col 5), POS (idx 4 in tuple, col 6)
-                    # COMMESSA (idx 10 in tuple, col 12)
-
+                    # Cleaning
                     if key in ['odc', 'pos']:
-                        if val == 0 or str(val).strip() == "0":
-                            val = ""
+                        if val == 0 or str(val).strip() in ["0", "0.0"]: val = ""
                     elif key == 'commessa':
-                        if val == 0: # Numerical 0
-                            val = "0" # Force string "0"
-                        # If None/Empty, remains None
+                        if val == 0: val = "0"
 
-                    # Convert to string safely
                     val_str = str(val).strip() if val is not None else ""
+                    val_str = val_str.replace('\n', ' ') # Remove newlines in data? Optional.
                     row_vals[key] = val_str
 
-                    # --- Style Logic ---
-                    # Extract FG/BG color
+                    # Styles
                     fg_color = None
                     bg_color = None
 
-                    # Font Color
                     if cell.font and cell.font.color:
-                        # rgb can be ARGB hex string or Theme index
                         if cell.font.color.type == 'rgb':
-                             # '00000000' or 'FFFFFFFF'
-                             # Often 'FF000000' (ARGB). We need RGB.
                              c = str(cell.font.color.rgb)
-                             if len(c) > 6: c = "#" + c[2:] # Strip alpha
+                             if len(c) > 6: c = "#" + c[2:]
                              else: c = "#" + c
                              fg_color = c
 
-                    # Fill Color
                     if cell.fill and cell.fill.patternType == 'solid':
                          if cell.fill.start_color:
                              if cell.fill.start_color.type == 'rgb':
@@ -797,10 +777,25 @@ class ContabilitaManager:
                         style_entry = {}
                         if fg_color: style_entry['fg'] = fg_color
                         if bg_color: style_entry['bg'] = bg_color
-                        # Key index matches column index (0-based in output tuple)
                         row_styles[key] = style_entry
 
-                # Prepare DB Row
+                # Validation Logic
+                
+                # 1. Empty Row Check (if all relevant fields are empty)
+                check_all_empty = ['pers1', 'pers2', 'odc', 'pos', 'dalle', 'alle', 'totale_ore']
+                if all(row_vals.get(k, "") == "" for k in check_all_empty):
+                    continue
+
+                # 2. Key Fields Integrity Check
+                # Skip if ODC OR POS OR TOTALE_ORE is missing
+                if not row_vals.get('odc') or not row_vals.get('pos') or not row_vals.get('totale_ore'):
+                    continue
+                
+                # 3. Personnel Check (At least one person)
+                if not row_vals.get('pers1') and not row_vals.get('pers2'):
+                    continue
+
+                # Build Row Tuple
                 db_row = (
                     row_vals['data'],
                     row_vals['pers1'],
@@ -817,30 +812,43 @@ class ContabilitaManager:
                 )
                 rows_to_insert.append(db_row)
 
-            # 3. Diff and Update DB
+            # 3. Diff and Update (Standardized)
             with db_manager.get_connection(cls.DB_PATH) as conn:
-                cursor = conn.cursor()
-
-                # Diff Logic
-                cols = cls.SCARICO_ORE_COLS
-                cursor.execute(f"SELECT {', '.join(cols)} FROM scarico_ore")
-                existing_rows_set = set(cursor.fetchall())
-
-                new_rows_set = set(rows_to_insert)
+                db_cols = cls.SCARICO_ORE_COLS
+                
+                # Fetch Existing
+                existing_df = pd.read_sql(f"SELECT {', '.join(db_cols)} FROM scarico_ore", conn)
+                existing_df = existing_df.fillna("")
+                existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
+                existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
+                
+                # Prepare New (Already mostly clean, but strictly cast to match DF)
+                # To be safe, create DF from new rows and clean it exactly same way
+                if rows_to_insert:
+                    new_df = pd.DataFrame(rows_to_insert, columns=db_cols)
+                    new_df = new_df.fillna("")
+                    new_df = new_df.astype(str).apply(lambda x: x.str.strip())
+                    new_rows_set = set(list(new_df.itertuples(index=False, name=None)))
+                else:
+                    new_rows_set = set()
 
                 total_added = len(new_rows_set - existing_rows_set)
                 total_removed = len(existing_rows_set - new_rows_set)
 
-                cursor.execute("DELETE FROM scarico_ore") # Full refresh
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM scarico_ore")
 
                 if rows_to_insert:
-                    placeholders = ', '.join(['?'] * len(cols))
-                    query = f"INSERT INTO scarico_ore ({', '.join(cols)}) VALUES ({placeholders})"
+                    placeholders = ', '.join(['?'] * len(db_cols))
+                    query = f"INSERT INTO scarico_ore ({', '.join(db_cols)}) VALUES ({placeholders})"
                     cursor.executemany(query, rows_to_insert)
 
                 conn.commit()
 
             return True, f"Importate {len(rows_to_insert)} righe da Scarico Ore.", total_added, total_removed
+
+        except Exception as e:
+            return False, f"Errore importazione Scarico Ore: {e}", 0, 0
 
         except Exception as e:
             return False, f"Errore importazione Scarico Ore: {e}", 0, 0
@@ -919,7 +927,7 @@ class ContabilitaManager:
                 # Sheet: strumenti campione ISAB SUD
                 # Header row: 6 (index 5)
                 try:
-                    df = pd.read_excel(path, sheet_name="strumenti campione ISAB SUD", header=5, engine='openpyxl')
+                    df = pd.read_excel(path, sheet_name="strumenti campione ISAB SUD", header=5, engine='calamine')
                 except Exception as e:
                      return False, f"Errore lettura file Certificati: {e}", 0, 0
 
@@ -986,13 +994,25 @@ class ContabilitaManager:
                 # Fill N/A and convert to str
                 df = df.fillna("")
                 df = df.astype(str)
+                # Apply strip to ensure clean comparison
+                df = df.apply(lambda x: x.str.strip())
 
                 rows = list(df.itertuples(index=False, name=None))
+                new_rows_set = set(rows)
 
                 # DB Ops
                 with db_manager.get_connection(cls.DB_PATH) as conn:
-                    cursor = conn.cursor()
+                    # 1. Fetch Existing for Diff
+                    existing_df = pd.read_sql(f"SELECT {', '.join(target_cols)} FROM certificati_campione", conn)
+                    existing_df = existing_df.fillna("")
+                    existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
+                    existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
 
+                    # 2. Calc Diff
+                    added = len(new_rows_set - existing_rows_set)
+                    removed = len(existing_rows_set - new_rows_set)
+
+                    cursor = conn.cursor()
                     cursor.execute("DELETE FROM certificati_campione")
 
                     if rows:
@@ -1002,7 +1022,7 @@ class ContabilitaManager:
 
                     conn.commit()
 
-                return True, f"Importate {len(rows)} righe in Certificati Campione.", len(rows), 0
+                return True, f"Importate {len(rows)} righe in Certificati Campione.", added, removed
 
         except Exception as e:
             return False, f"Errore importazione Certificati Campione: {e}", 0, 0

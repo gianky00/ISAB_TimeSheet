@@ -24,7 +24,7 @@ from src.gui.widgets import ExcelTableWidget, StatusIndicator
 
 class ContabilitaWorker(QThread):
     """Worker per l'importazione in background."""
-    finished_signal = pyqtSignal(bool, str, int, int)
+    finished_signal = pyqtSignal(bool, str, int, int, float)
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str, giornaliere_path: str = "", attivita_path: str = "", certificati_path: str = ""):
@@ -129,8 +129,9 @@ class ContabilitaWorker(QThread):
             else:
                 messages.append(f"Err Certificati: {cert_msg}")
 
+        total_duration = time.time() - self.start_time
         final_msg = " | ".join(messages)
-        self.finished_signal.emit(overall_success, final_msg, total_added, total_removed)
+        self.finished_signal.emit(overall_success, final_msg, total_added, total_removed, total_duration)
 
 
 class ContabilitaPanel(QWidget):
@@ -139,6 +140,9 @@ class ContabilitaPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.worker = None
+        self.status_labels = [] # Sync all status labels
+        self.update_buttons = [] # Sync all update buttons
+        self._last_status_html = "Pronto"
         self._setup_ui()
 
         # Carica i dati iniziali
@@ -149,74 +153,9 @@ class ContabilitaPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
 
-        # Header / Status / Search
-        top_layout = QHBoxLayout()
+        # Global Header Removed (Moved inside tabs)
 
-        # 1. Search Bar (Left)
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Cerca in questa tabella...")
-        self.search_input.setClearButtonEnabled(True)
-        self.search_input.setFixedWidth(300)
-        self.search_input.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-size: 14px;
-                background-color: white;
-                color: black;
-            }
-            QLineEdit:focus {
-                border-color: #0d6efd;
-            }
-        """)
-        self.search_input.textChanged.connect(self._filter_current_tab)
-        top_layout.addWidget(self.search_input)
-
-        top_layout.addStretch()
-
-        # 2. Status Label (Center)
-        self.status_label = QLabel("Pronto")
-        self.status_label.setStyleSheet("""
-            QLabel {
-                color: #495057;
-                font-size: 14px;
-                font-weight: 500;
-                padding: 5px 10px;
-                background-color: #f8f9fa;
-                border-radius: 4px;
-                border: 1px solid #dee2e6;
-            }
-        """)
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        top_layout.addWidget(self.status_label)
-
-        top_layout.addStretch()
-
-        # 3. Refresh Button (Right)
-        self.refresh_btn = QPushButton("🔄 Aggiorna")
-        self.refresh_btn.setToolTip("Aggiorna solo Contabilità e Giornaliere")
-        self.refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #0d6efd;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-weight: bold;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #0b5ed7;
-            }
-        """)
-        self.refresh_btn.clicked.connect(self.start_import_process)
-        top_layout.addWidget(self.refresh_btn)
-
-        layout.addLayout(top_layout)
-
-        # --- Totale Selezionato Label (Global for this panel) ---
+        # --- Totale Selezionato Label (Global) ---
         self.selection_container = QWidget()
         selection_layout = QHBoxLayout(self.selection_container)
         selection_layout.setContentsMargins(0, 0, 0, 5)
@@ -233,9 +172,9 @@ class ContabilitaPanel(QWidget):
 
         layout.addWidget(self.selection_container)
 
-        # Main Tab Container (Tabelle vs KPI)
+        # Main Tab Container
         self.main_tabs = QTabWidget()
-        self.main_tabs.currentChanged.connect(self._on_main_tab_changed) # Connect tab change
+        self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
         self.main_tabs.setStyleSheet("""
             QTabWidget::pane {
                 border: 1px solid #dee2e6;
@@ -262,11 +201,12 @@ class ContabilitaPanel(QWidget):
 
         # --- TAB 1: DATI (Years) ---
         self.year_tabs_widget = QTabWidget()
-        self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.South) # Tabs at bottom for years
+        self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
         self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
-
-        self.main_tabs.addTab(self.year_tabs_widget, "📂 Preventivi")
+        
+        self.tab_preventivi = self._create_tab_wrapper(self.year_tabs_widget, "🔍 Cerca preventivi...")
+        self.main_tabs.addTab(self.tab_preventivi, "📂 Preventivi")
 
         # --- TAB 2: GIORNALIERE (Years) ---
         self.giornaliere_tabs_widget = QTabWidget()
@@ -274,15 +214,18 @@ class ContabilitaPanel(QWidget):
         self.giornaliere_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
 
-        self.main_tabs.addTab(self.giornaliere_tabs_widget, "📂 Giornaliere")
+        self.tab_giornaliere = self._create_tab_wrapper(self.giornaliere_tabs_widget, "🔍 Cerca giornaliere...")
+        self.main_tabs.addTab(self.tab_giornaliere, "📂 Giornaliere")
 
         # --- TAB 3: Attività Programmate ---
         self.attivita_widget = AttivitaProgrammateTab()
-        self.main_tabs.addTab(self.attivita_widget, "📅 Attività Programmate")
+        self.tab_attivita = self._create_tab_wrapper(self.attivita_widget, "🔍 Cerca attività...")
+        self.main_tabs.addTab(self.tab_attivita, "📅 Attività Programmate")
 
         # --- TAB 4: Certificati Campione ---
         self.certificati_widget = CertificatiCampioneTab()
-        self.main_tabs.addTab(self.certificati_widget, "📜 Certificati Campione")
+        self.tab_certificati = self._create_tab_wrapper(self.certificati_widget, "🔍 Cerca certificati...")
+        self.main_tabs.addTab(self.tab_certificati, "📜 Certificati Campione")
 
         # --- TAB 5: KPI ---
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
@@ -290,6 +233,97 @@ class ContabilitaPanel(QWidget):
         self.main_tabs.addTab(self.kpi_panel, "📊 Analisi KPI")
 
         layout.addWidget(self.main_tabs)
+
+    def _create_tab_wrapper(self, content_widget, placeholder_text):
+        """Creates a wrapper widget with DataEase-style layout: Search | Spacer | Status | Spacer | Update."""
+        wrapper = QWidget()
+        layout = QVBoxLayout(wrapper)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        toolbar = QHBoxLayout()
+        
+        # 1. Search (Left)
+        search_input = QLineEdit()
+        search_input.setPlaceholderText(placeholder_text)
+        search_input.setClearButtonEnabled(True)
+        search_input.setFixedWidth(400) # Matched to DataEase
+        search_input.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-size: 14px;
+                background-color: white;
+                color: black;
+            }
+            QLineEdit:focus {
+                border-color: #0d6efd;
+            }
+        """)
+        
+        # Filter Logic
+        search_input.textChanged.connect(lambda t: self._proxy_filter(content_widget, t))
+        if isinstance(content_widget, QTabWidget):
+            content_widget.currentChanged.connect(lambda: self._proxy_filter(content_widget, search_input.text()))
+            
+        toolbar.addWidget(search_input)
+        
+        toolbar.addStretch()
+        
+        # 2. Status Label (Center)
+        status_lbl = QLabel(self._last_status_html)
+        status_lbl.setStyleSheet("""
+            QLabel {
+                color: #495057;
+                font-size: 14px;
+                font-weight: 500;
+                padding: 5px 10px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                border: 1px solid #dee2e6;
+            }
+        """)
+        status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_labels.append(status_lbl)
+        toolbar.addWidget(status_lbl)
+        
+        toolbar.addStretch()
+        
+        # 3. Update Button (Right)
+        update_btn = QPushButton("🔄 Aggiorna Dati")
+        update_btn.setToolTip("Aggiorna solo Contabilità e Giornaliere")
+        update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        update_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+        """)
+        update_btn.clicked.connect(self.start_import_process)
+        self.update_buttons.append(update_btn)
+        toolbar.addWidget(update_btn)
+        
+        layout.addLayout(toolbar)
+        layout.addWidget(content_widget)
+        
+        return wrapper
+
+    def _proxy_filter(self, widget, text):
+        """Relays filter text to the active sub-widget."""
+        target = widget
+        if isinstance(widget, QTabWidget):
+            target = widget.currentWidget()
+        
+        if hasattr(target, 'filter_data'):
+            target.filter_data(text)
 
     def _get_subtab_style(self):
         return """
@@ -309,16 +343,12 @@ class ContabilitaPanel(QWidget):
         """
 
     def _on_main_tab_changed(self, index):
-        """Handle visibility of search bar based on main tab."""
+        """Handle visibility of selection bar based on main tab."""
         tab_text = self.main_tabs.tabText(index)
         if "Analisi KPI" in tab_text:
-            self.search_input.hide()
             self.selection_container.hide()
         else:
-            self.search_input.show()
             self.selection_container.show()
-            # Trigger filter update for the new active tab
-            self._filter_current_tab(self.search_input.text())
             self._connect_selection_signal()
 
     def refresh_tabs(self):
@@ -376,7 +406,7 @@ class ContabilitaPanel(QWidget):
 
     def _on_tab_changed(self, index):
         """Chiamato quando cambia la tab ANNO (in uno dei sub-tabwidget)."""
-        self._filter_current_tab(self.search_input.text())
+        # Search filter is now handled by _proxy_filter connected to local search bar
         self._connect_selection_signal() # Connect new tab table
 
     def _connect_selection_signal(self):
@@ -385,13 +415,13 @@ class ContabilitaPanel(QWidget):
         current_main_widget = self.main_tabs.widget(current_main_idx)
 
         target_widget = None
-        if current_main_widget == self.year_tabs_widget:
+        if current_main_widget == self.tab_preventivi:
             target_widget = self.year_tabs_widget.currentWidget()
-        elif current_main_widget == self.giornaliere_tabs_widget:
+        elif current_main_widget == self.tab_giornaliere:
             target_widget = self.giornaliere_tabs_widget.currentWidget()
-        elif current_main_widget == getattr(self, 'attivita_widget', None):
+        elif current_main_widget == self.tab_attivita:
             target_widget = self.attivita_widget
-        elif current_main_widget == getattr(self, 'certificati_widget', None):
+        elif current_main_widget == self.tab_certificati:
             target_widget = self.certificati_widget
 
         if target_widget:
@@ -495,26 +525,6 @@ class ContabilitaPanel(QWidget):
         except Exception as e:
             print(f"Errore calcolo selezione: {e}")
 
-    def _filter_current_tab(self, text):
-        """Filtra la tabella nella tab corrente attiva."""
-        # Trova quale sub-tabwidget è visibile
-        current_main_idx = self.main_tabs.currentIndex()
-        current_main_widget = self.main_tabs.widget(current_main_idx)
-
-        target_widget = None
-
-        if current_main_widget == self.year_tabs_widget:
-            target_widget = self.year_tabs_widget.currentWidget()
-        elif current_main_widget == self.giornaliere_tabs_widget:
-            target_widget = self.giornaliere_tabs_widget.currentWidget()
-        elif current_main_widget == getattr(self, 'attivita_widget', None):
-            target_widget = self.attivita_widget
-        elif current_main_widget == getattr(self, 'certificati_widget', None):
-            target_widget = self.certificati_widget
-
-        if target_widget and hasattr(target_widget, 'filter_data'):
-            target_widget.filter_data(text)
-
     def start_import_process(self):
         """Avvia il processo di importazione (chiamato dall'esterno o init)."""
         config = config_manager.load_config()
@@ -524,36 +534,63 @@ class ContabilitaPanel(QWidget):
         certificati_path = config.get("certificati_campione_path", "")
 
         if not path or not os.path.exists(path):
-            self.status_label.setText("⚠️ File contabilità non configurato o non trovato.")
+            # Update all status labels
+            for lbl in self.status_labels:
+                lbl.setText("⚠️ File contabilità non configurato o non trovato.")
             return
 
-        self.status_label.setText("🔄 Aggiornamento in corso...")
-        self.refresh_btn.setDisabled(True) # Disable button during update
+        # Disable all buttons
+        for btn in self.update_buttons:
+            btn.setDisabled(True)
+            
+        for lbl in self.status_labels:
+            lbl.setText("🔄 Aggiornamento in corso...")
 
         self.worker = ContabilitaWorker(path, giornaliere_path, attivita_path, certificati_path)
         self.worker.finished_signal.connect(self._on_import_finished)
-        self.worker.progress_signal.connect(self.status_label.setText)
+        # Connect progress to all status labels
+        self.worker.progress_signal.connect(self._update_all_status_labels)
         self.worker.start()
+        
+    def _update_all_status_labels(self, text):
+        for lbl in self.status_labels:
+            lbl.setText(text)
 
-    def _on_import_finished(self, success: bool, msg: str, added: int, removed: int):
+    def _on_import_finished(self, success: bool, msg: str, added: int, removed: int, duration: float):
         if success:
             now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
             # Format text with colors
             added_text = f"<font color='green'><b>+{added}</b></font>"
             removed_text = f"<font color='red'><b>-{removed}</b></font>"
-            status_html = f"Pronto, ultimo aggiornamento: {now_str} {added_text} {removed_text}"
+            
+            # Format duration
+            if duration < 60:
+                time_str = f"{duration:.1f}s"
+            else:
+                m, s = divmod(int(duration), 60)
+                time_str = f"{m}m {s}s"
+            
+            # Use Check Icon ✅
+            status_html = f"✅ {now_str} {added_text} {removed_text} (Tempo: {time_str})"
+            self._last_status_html = status_html
 
-            self.status_label.setText(status_html)
+            for lbl in self.status_labels:
+                lbl.setText(status_html)
+                
             self.refresh_tabs()
         else:
             # If partial success (overall_success was False but some messages exist), maybe check msg
             # But the worker logic now sets success=True if at least one works.
             # If it comes here as False, it means something critical failed or nothing worked.
-            self.status_label.setText(f"❌ Errore aggiornamento: {msg}")
+            error_msg = f"❌ Errore aggiornamento: {msg}"
+            for lbl in self.status_labels:
+                lbl.setText(error_msg)
             QMessageBox.warning(self, "Esito Importazione", msg) # Show details in popup if error
 
         self.worker = None
-        self.refresh_btn.setDisabled(False) # Re-enable button
+        # Enable buttons
+        for btn in self.update_buttons:
+            btn.setDisabled(False)
 
 
 class ContabilitaYearTab(QWidget):
