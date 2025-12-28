@@ -20,7 +20,7 @@ from pathlib import Path
 
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background (solo Scarico Ore)."""
-    finished_signal = pyqtSignal(bool, str, int, int) # Added args for added/removed
+    finished_signal = pyqtSignal(bool, str, int, int, float) # Added float duration
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str):
@@ -60,7 +60,8 @@ class ScaricoOreWorker(QThread):
                 self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s")
 
         success, msg, added, removed = ContabilitaManager.import_scarico_ore(self.file_path, progress_callback=progress_cb)
-        self.finished_signal.emit(success, msg, added, removed)
+        total_duration = time.time() - self.start_time
+        self.finished_signal.emit(success, msg, added, removed, total_duration)
 
 class ScaricoOrePanel(QWidget):
     """Pannello per la visualizzazione e gestione dello Scarico Ore Cantiere."""
@@ -181,7 +182,7 @@ class ScaricoOrePanel(QWidget):
         self.table_view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QTableView.SelectionMode.ExtendedSelection)
         self.table_view.setShowGrid(True)
-        self.table_view.setWordWrap(False) # Optimization: Disable word wrap for 130k rows performance
+        self.table_view.setWordWrap(True) # Enabled word wrap
         self.table_view.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
 
         # Models
@@ -338,7 +339,7 @@ class ScaricoOrePanel(QWidget):
         self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
 
-    def _on_update_finished(self, success: bool, msg: str, added: int = 0, removed: int = 0):
+    def _on_update_finished(self, success: bool, msg: str, added: int = 0, removed: int = 0, duration: float = 0.0):
         self.update_btn.setEnabled(True)
         self.table_view.setEnabled(True)
 
@@ -348,8 +349,15 @@ class ScaricoOrePanel(QWidget):
             # Always color
             added_str = f"<font color='green'><b>+{added}</b></font>"
             removed_str = f"<font color='red'><b>-{removed}</b></font>"
+            
+            # Format duration
+            if duration < 60:
+                time_str = f"{duration:.1f}s"
+            else:
+                m, s = divmod(int(duration), 60)
+                time_str = f"{m}m {s}s"
 
-            final_status = f"Pronto, ultimo aggiornamento: {timestamp} {added_str} {removed_str}"
+            final_status = f"✅ {timestamp} {added_str} {removed_str} (Tempo: {time_str})"
             self.status_label.setText(final_status)
             self._last_update_status = final_status # Store to persist after reload
 
@@ -468,8 +476,12 @@ class ScaricoOrePanel(QWidget):
         # ⚡ BOLT OPTIMIZATION: REMOVED resizeColumnsToContents()
 
         header = self.table_view.horizontalHeader()
+        # Enable multiline by setting height
+        header.setMinimumHeight(50)
 
-        # Strategy: Set interactive for most, Stretch for Description
+        # Strategy: Most columns are fixed/interactive. DESCRIPTION stretches to fill space.
+        header.setStretchLastSection(False) 
+
         # Reset to interactive first
         for i in range(11):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
@@ -482,12 +494,13 @@ class ScaricoOrePanel(QWidget):
         self.table_view.setColumnWidth(4, 50)  # POS
         self.table_view.setColumnWidth(5, 50)  # Dalle
         self.table_view.setColumnWidth(6, 50)  # Alle
-        self.table_view.setColumnWidth(7, 80)  # Tot
-        self.table_view.setColumnWidth(9, 60)  # Finito
-        self.table_view.setColumnWidth(10, 100)# Commessa
-
-        # Description (8) Stretch to fill
+        self.table_view.setColumnWidth(7, 65)  # Totale Ore
+        
+        # DESCRIZIONE (8) -> STRETCH (Fills all remaining space)
         header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
+        
+        self.table_view.setColumnWidth(9, 60)  # Finito
+        self.table_view.setColumnWidth(10, 80) # Commessa
 
     def keyPressEvent(self, event):
         # Implement Ctrl+C for QTableView
