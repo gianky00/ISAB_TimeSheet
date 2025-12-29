@@ -26,7 +26,7 @@ ICON_PATH = os.path.join(ASSETS_DIR, "app.ico")
 ISS_SCRIPT = os.path.join(SCRIPT_DIR, "setup_script.iss")
 
 # Netlify config
-NETLIFY_SITE_ID = "bot-ts"  # Update with actual site ID
+NETLIFY_SITE_ID = "2b481f10-fbd1-44d4-81ed-1a15b15c315b"  # Updated with correct API ID
 
 
 def get_version():

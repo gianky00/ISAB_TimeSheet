@@ -11,6 +11,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 
 from src.core import config_manager
 from src.utils.security import password_manager
+from src.core.secrets_manager import SecretsManager
+from unittest.mock import patch
 
 class TestConfigSecurity(unittest.TestCase):
     def setUp(self):
@@ -39,7 +41,12 @@ class TestConfigSecurity(unittest.TestCase):
         password_manager._key = password_manager._load_or_create_key()
         password_manager._cipher = Fernet(password_manager._key)
 
+        # Mock SecretsManager to be unavailable by default in tests
+        self.patcher = patch.object(SecretsManager, 'is_available', return_value=False)
+        self.patcher.start()
+
     def tearDown(self):
+        self.patcher.stop()
         config_manager.CONFIG_DIR = self.original_config_dir
         config_manager.CONFIG_FILE = self.original_config_file
         password_manager._KEY_FILE = self.original_key_file

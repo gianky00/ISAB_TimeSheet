@@ -25,6 +25,7 @@ from src.gui.lyra_panel import LyraPanel
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.license_validator import get_license_info
 from src.core import config_manager
+from src.core.app_updater import check_for_updates
 
 # Import UI/UX Components
 from src.gui.widgets.toast import ToastManager
@@ -114,6 +115,14 @@ class MainWindow(QMainWindow):
 
         # Avvio automatico importazione contabilità se abilitato
         QTimer.singleShot(1000, self._check_and_start_contabilita_update)
+
+        # Controllo aggiornamenti applicazione (dopo 3 secondi)
+        QTimer.singleShot(3000, self._check_updates)
+    
+    def _check_updates(self):
+        """Avvia il controllo aggiornamenti in background."""
+        # silent=True significa che mostra popup SOLO se trova un aggiornamento
+        check_for_updates(parent=self, silent=True)
     
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
