@@ -924,12 +924,57 @@ class ContabilitaManager:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                # Sheet: strumenti campione ISAB SUD
-                # Header row: 6 (index 5)
+
+                # 1. Identify Sheet
                 try:
-                    df = pd.read_excel(path, sheet_name="strumenti campione ISAB SUD", header=5, engine='calamine')
+                    xls = pd.ExcelFile(path, engine='calamine')
+                    sheet_name = None
+                    
+                    # Try to find specific sheet (case-insensitive partial match)
+                    for name in xls.sheet_names:
+                        name_lower = name.lower()
+                        if "strumenti campione" in name_lower or "isab sud" in name_lower:
+                            sheet_name = name
+                            break
+                    
+                    # Fallback to first sheet if not found
+                    if not sheet_name and xls.sheet_names:
+                        sheet_name = xls.sheet_names[0]
+                        
+                    if not sheet_name:
+                        return False, "Nessun foglio trovato nel file Excel.", 0, 0
+
                 except Exception as e:
-                     return False, f"Errore lettura file Certificati: {e}", 0, 0
+                     return False, f"Errore apertura file Excel: {e}", 0, 0
+
+                # 2. Find Header Row
+                try:
+                    # Read first 20 rows to find header
+                    df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=20, engine='calamine')
+                    
+                    header_row_idx = -1
+                    max_matches = 0
+                    
+                    target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
+                    
+                    for i, row in df_preview.iterrows():
+                        row_values = [str(val).strip() for val in row.values]
+                        matches = sum(1 for col in target_columns if col in row_values)
+                        
+                        # We expect at least a few columns to match (e.g. Matricola, Costruttore, ecc.)
+                        if matches > max_matches:
+                            max_matches = matches
+                            header_row_idx = i
+                    
+                    if header_row_idx == -1 or max_matches < 3: # Require at least 3 matching columns
+                        # Fallback: try hardcoded index 5 if search fails
+                        header_row_idx = 5
+                        
+                    # 3. Read Data with correct header
+                    df = pd.read_excel(path, sheet_name=sheet_name, header=header_row_idx, engine='calamine')
+
+                except Exception as e:
+                     return False, f"Errore lettura file Certificati (sheet: {sheet_name}): {e}", 0, 0
 
                 if df.empty: return False, "Foglio vuoto.", 0, 0
 
@@ -943,7 +988,7 @@ class ContabilitaManager:
                         rename_map[excel_col] = db_col
 
                 if not rename_map:
-                     return False, "Nessuna colonna valida trovata per Certificati Campione.", 0, 0
+                     return False, f"Nessuna colonna valida trovata per Certificati Campione (Sheet: {sheet_name}, Row: {header_row_idx}).", 0, 0
 
                 df.rename(columns=rename_map, inplace=True)
 
