@@ -212,11 +212,11 @@ class ContabilitaManager:
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                # Use calamine for faster reading
+                # Use standard engine (openpyxl) since calamine is missing
                 try:
-                    xls = pd.ExcelFile(file_obj, engine='calamine')
+                    xls = pd.ExcelFile(file_obj)
                 except Exception:
-                    # Fallback if calamine fails (e.g. strict format issues)
+                    # Fallback if standard fails (e.g. strict format issues)
                     xls = pd.ExcelFile(file_obj, engine='openpyxl')
                 
                 imported_years = []
@@ -383,7 +383,7 @@ class ContabilitaManager:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 try:
-                    df = pd.read_excel(file_path, sheet_name='RIASSUNTO', engine='calamine')
+                    df = pd.read_excel(file_path, sheet_name='RIASSUNTO')
                 except ValueError:
                     return (year, [], None) # Sheet not found
                 except Exception:
@@ -573,10 +573,10 @@ class ContabilitaManager:
         total_removed = 0
 
         try:
-            # Use calamine for maximum speed
+            # Use standard engine (openpyxl) since calamine is missing
             # Header is at row 3 (0-based index 2)
             try:
-                df = pd.read_excel(path, sheet_name="Riepilogo", header=2, engine='calamine')
+                df = pd.read_excel(path, sheet_name="Riepilogo", header=2)
             except ValueError:
                 return False, "Foglio 'Riepilogo' non trovato.", 0, 0
             except Exception as e:
@@ -927,7 +927,8 @@ class ContabilitaManager:
 
                 # 1. Identify Sheet
                 try:
-                    xls = pd.ExcelFile(path, engine='calamine')
+                    # Remove engine='calamine' to use default (openpyxl)
+                    xls = pd.ExcelFile(path)
                     sheet_name = None
                     
                     # Try to find specific sheet (case-insensitive partial match)
@@ -950,7 +951,7 @@ class ContabilitaManager:
                 # 2. Find Header Row
                 try:
                     # Read first 20 rows to find header
-                    df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=20, engine='calamine')
+                    df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=20)
                     
                     header_row_idx = -1
                     max_matches = 0
@@ -971,7 +972,7 @@ class ContabilitaManager:
                         header_row_idx = 5
                         
                     # 3. Read Data with correct header
-                    df = pd.read_excel(path, sheet_name=sheet_name, header=header_row_idx, engine='calamine')
+                    df = pd.read_excel(path, sheet_name=sheet_name, header=header_row_idx)
 
                 except Exception as e:
                      return False, f"Errore lettura file Certificati (sheet: {sheet_name}): {e}", 0, 0
@@ -988,7 +989,8 @@ class ContabilitaManager:
                         rename_map[excel_col] = db_col
 
                 if not rename_map:
-                     return False, f"Nessuna colonna valida trovata per Certificati Campione (Sheet: {sheet_name}, Row: {header_row_idx}).", 0, 0
+                     found_cols = ", ".join(list(df.columns)[:5]) + "..." # Show first 5 cols for context
+                     return False, f"Nessuna colonna valida trovata. Sheet: {sheet_name}, Row: {header_row_idx}. Trovate: {found_cols}", 0, 0
 
                 df.rename(columns=rename_map, inplace=True)
 
