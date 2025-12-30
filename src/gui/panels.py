@@ -1238,11 +1238,11 @@ class TimbratureDBPanel(QWidget):
         header_layout.addStretch()
         
         # Manage Lists Buttons
-        manage_rep_btn = ModernButton("Gestisci Reparti", variant=ModernButton.Variant.OUTLINE, size=ModernButton.Size.SMALL)
+        manage_rep_btn = ModernButton("Gestisci Reparti", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL)
         manage_rep_btn.clicked.connect(lambda: self._manage_list("reparti", "Gestione Reparti"))
         header_layout.addWidget(manage_rep_btn)
         
-        manage_cant_btn = ModernButton("Gestisci Cantieri", variant=ModernButton.Variant.OUTLINE, size=ModernButton.Size.SMALL)
+        manage_cant_btn = ModernButton("Gestisci Cantieri", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL)
         manage_cant_btn.clicked.connect(lambda: self._manage_list("cantieri", "Gestione Cantieri"))
         header_layout.addWidget(manage_cant_btn)
         
