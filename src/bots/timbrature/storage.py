@@ -267,8 +267,22 @@ class TimbratureStorage:
             raise e
 
     def get_lists(self) -> Dict[str, List[str]]:
-        """Recupera le liste configurate (Reparti, Cantieri) da config.json."""
+        """Recupera le liste configurate (Reparti, Cantieri) da config.json con migrazione automatica."""
         config = config_manager.load_config()
+        
+        # Logica di migrazione se mancano i dati nel config ma esiste il vecchio file
+        if "reparti" not in config or (not config.get("reparti") and not config.get("cantieri")):
+            old_path = self.db_path.parent / "timbrature_lists.json"
+            if old_path.exists():
+                try:
+                    import json
+                    with open(old_path, 'r', encoding='utf-8') as f:
+                        old_data = json.load(f)
+                        if old_data:
+                            self.save_lists(old_data)
+                            return old_data
+                except: pass
+
         return {
             "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),
             "cantieri": config.get("cantieri", [])
