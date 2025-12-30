@@ -81,8 +81,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; Clean up application data on uninstall (optional - commented out to preserve user data)
-; Type: filesandordirs; Name: "{localappdata}\Programs\Bot TS"
+; Non eliminiamo nulla automaticamente per preservare i dati tra versioni.
 
 [Code]
 // Custom code for installation logic
@@ -90,31 +89,21 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 function InitializeSetup(): Boolean;
 begin
   Result := True;
-  // Add any pre-installation checks here
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-  if CurStep = ssPostInstall then
-  begin
-    // Post-installation actions
-    // e.g., create license directory
-    ForceDirectories(ExpandConstant('{localappdata}\Programs\Bot TS\Licenza'));
-  end;
 end;
 
 function InitializeUninstall(): Boolean;
 var
   MsgResult: Integer;
 begin
-  // Ask about keeping configuration
-  MsgResult := MsgBox('Vuoi mantenere le impostazioni e la licenza per un''eventuale reinstallazione?', 
+  // Chiedi all'utente se vuole pulire TUTTO (Config, Database, Licenza)
+  MsgResult := MsgBox('Vuoi eliminare anche tutte le impostazioni, i database e la licenza?' + #13#10 + 
+                      'ATTENZIONE: Questa operazione è irreversibile.', 
                       mbConfirmation, MB_YESNO);
   
-  if MsgResult = IDNO then
+  if MsgResult = IDYES then
   begin
-    // User chose to delete everything
-    DelTree(ExpandConstant('{localappdata}\Programs\Bot TS'), True, True, True);
+    // Elimina la cartella in Roaming (GiancarloAllegretti\BotTS)
+    DelTree(ExpandConstant('{userroaming}\GiancarloAllegretti\BotTS'), True, True, True);
   end;
   
   Result := True;
