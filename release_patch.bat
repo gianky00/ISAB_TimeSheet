@@ -87,6 +87,6 @@ if %errorlevel% neq 0 (
 echo.
 echo [5/5] Release Process Completed!
 echo.
-echo New version is live on Netlify.
-echo URL: https://bot-ts.netlify.app
+echo Setup available in: admin\Crea Setup\Setup
+start "" "admin\Crea Setup\Setup"
 pause

@@ -85,5 +85,5 @@ echo.
 echo [5/5] Release Process Completed!
 echo.
 echo Setup available in: admin\Crea Setup\Setup
-explorer "admin\Crea Setup\Setup"
+start "" "admin\Crea Setup\Setup"
 pause
