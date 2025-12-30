@@ -1297,6 +1297,12 @@ class TimbratureDBPanel(QWidget):
         elif index == 0:
             self.refresh_data()
 
+    def _open_settings(self):
+        """Naviga verso il pannello impostazioni della finestra principale."""
+        main_window = self.window()
+        if hasattr(main_window, 'show_settings'):
+            main_window.show_settings()
+
     def _manage_list(self, list_key, title):
         """Dialog generico per gestire liste di stringhe."""
         current_list = self.lists.get(list_key, [])
