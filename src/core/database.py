@@ -232,9 +232,13 @@ class DatabaseManager:
                     nome TEXT,
                     cognome TEXT,
                     reparto TEXT,
+                    cantiere TEXT,
                     PRIMARY KEY (nome, cognome)
                 )
             ''')
+            # Migration for existing databases
+            try: cursor.execute("ALTER TABLE dipendenti ADD COLUMN cantiere TEXT")
+            except: pass
 
             # --- Indexes ---
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")

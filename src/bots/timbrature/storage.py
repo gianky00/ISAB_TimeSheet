@@ -5,6 +5,7 @@ Handles database operations for Timbrature.
 
 import sqlite3
 import pandas as pd
+import json
 from pathlib import Path
 from typing import Optional, List, Dict, Callable
 from src.core.config_manager import CONFIG_DIR
@@ -51,6 +52,7 @@ class TimbratureStorage:
                     nome TEXT,
                     cognome TEXT,
                     reparto TEXT,
+                    cantiere TEXT,
                     PRIMARY KEY (nome, cognome)
                 )
             ''')
@@ -66,7 +68,7 @@ class TimbratureStorage:
     def get_employees(self) -> List[Dict[str, str]]:
         """
         Recupera la lista unica dei dipendenti (da timbrature e dipendenti).
-        Restituisce una lista di dict: {'nome': ..., 'cognome': ..., 'reparto': ...}
+        Restituisce una lista di dict: {'nome': ..., 'cognome': ..., 'reparto': ..., 'cantiere': ...}
         """
         with db_manager.get_connection(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -81,34 +83,57 @@ class TimbratureStorage:
                 nome = row['nome']
                 cognome = row['cognome']
 
-                # Cerca reparto salvato
-                cursor.execute("SELECT reparto FROM dipendenti WHERE nome = ? AND cognome = ?", (nome, cognome))
-                res = cursor.fetchone()
-                reparto = res['reparto'] if res else ""
+                # Cerca dati salvati
+                # Usa try/except per colonna mancante in caso di race condition durante update schema
+                try:
+                    cursor.execute("SELECT reparto, cantiere FROM dipendenti WHERE nome = ? AND cognome = ?", (nome, cognome))
+                    res = cursor.fetchone()
+                    reparto = res['reparto'] if res else ""
+                    cantiere = res['cantiere'] if res else ""
+                except sqlite3.OperationalError:
+                    # Fallback se colonna cantiere non esiste ancora (raro qui, ma sicuro)
+                    cursor.execute("SELECT reparto FROM dipendenti WHERE nome = ? AND cognome = ?", (nome, cognome))
+                    res = cursor.fetchone()
+                    reparto = res['reparto'] if res else ""
+                    cantiere = ""
 
                 employees.append({
                     "nome": nome,
                     "cognome": cognome,
-                    "reparto": reparto
+                    "reparto": reparto,
+                    "cantiere": cantiere
                 })
 
             return employees
 
-    def update_employee_reparto(self, nome: str, cognome: str, reparto: str):
-        """Aggiorna il reparto di un dipendente."""
+    def update_employee_details(self, nome: str, cognome: str, reparto: str = None, cantiere: str = None):
+        """Aggiorna reparto e/o cantiere di un dipendente."""
         with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
+            
+            # Recupera valori attuali se uno dei due è None
+            cursor.execute("SELECT reparto, cantiere FROM dipendenti WHERE nome = ? AND cognome = ?", (nome, cognome))
+            current = cursor.fetchone()
+            
+            curr_rep = current[0] if current else ""
+            curr_cant = current[1] if current and len(current) > 1 else "" # len check for migration safety
+            
+            new_reparto = reparto if reparto is not None else curr_rep
+            new_cantiere = cantiere if cantiere is not None else curr_cant
+            
             cursor.execute('''
-                INSERT INTO dipendenti (nome, cognome, reparto)
-                VALUES (?, ?, ?)
-                ON CONFLICT(nome, cognome) DO UPDATE SET reparto = excluded.reparto
-            ''', (nome, cognome, reparto))
+                INSERT INTO dipendenti (nome, cognome, reparto, cantiere)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(nome, cognome) DO UPDATE SET 
+                    reparto = excluded.reparto,
+                    cantiere = excluded.cantiere
+            ''', (nome, cognome, new_reparto, new_cantiere))
             conn.commit()
 
-    def get_timbrature_with_reparto(self, limit: int = 500, filter_text: str = None, filter_reparto: str = None) -> List[tuple]:
+    def get_timbrature_with_reparto(self, limit: int = 500, filter_text: str = None, filter_reparto: str = None, filter_cantiere: str = None) -> List[tuple]:
         """
-        Recupera le timbrature con il reparto associato (JOIN).
-        Restituisce lista di tuple (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura, reparto).
+        Recupera le timbrature con reparto e cantiere associati (JOIN).
+        Restituisce lista di tuple (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura, reparto, cantiere).
         """
         with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
@@ -116,7 +141,7 @@ class TimbratureStorage:
             query = """
                 SELECT
                     t.data, t.ingresso, t.uscita, t.nome, t.cognome,
-                    t.presenza_ts, t.sito_timbratura, d.reparto
+                    t.presenza_ts, t.sito_timbratura, d.reparto, d.cantiere
                 FROM timbrature t
                 LEFT JOIN dipendenti d ON t.nome = d.nome AND t.cognome = d.cognome
             """
@@ -154,6 +179,10 @@ class TimbratureStorage:
             if filter_reparto and filter_reparto != "Tutti":
                 conditions.append("d.reparto = ?")
                 params.append(filter_reparto)
+                
+            if filter_cantiere and filter_cantiere != "Tutti":
+                conditions.append("d.cantiere = ?")
+                params.append(filter_cantiere)
 
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)
@@ -235,3 +264,34 @@ class TimbratureStorage:
         except Exception as e:
             log(f"Errore lettura Excel: {e}")
             raise e
+
+    def get_lists(self) -> Dict[str, List[str]]:
+        """Recupera le liste configurate (Reparti, Cantieri)."""
+        lists_path = self.db_path.parent / "timbrature_lists.json"
+        defaults = {
+            "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
+            "cantieri": []
+        }
+        
+        if not lists_path.exists():
+            return defaults
+            
+        try:
+            with open(lists_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # Merge with defaults if missing keys
+                for k, v in defaults.items():
+                    if k not in data:
+                        data[k] = v
+                return data
+        except Exception:
+            return defaults
+
+    def save_lists(self, data: Dict[str, List[str]]):
+        """Salva le liste configurate."""
+        lists_path = self.db_path.parent / "timbrature_lists.json"
+        try:
+            with open(lists_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4)
+        except Exception:
+            pass
