@@ -407,8 +407,11 @@ class ContabilitaManager:
 
                 df.rename(columns=rename_map, inplace=True)
                 
-                # Exclude 'Totale' rows
-                if 'personale' in df.columns:
+                # Exclude 'Totale' rows and always drop the last row (Total)
+                if not df.empty:
+                    df = df.iloc[:-1] # Always drop last row as requested
+                
+                if 'personale' in df.columns and not df.empty:
                     df = df[~df['personale'].str.contains("Totale", na=False, case=False)]
 
                 check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != 'data']
@@ -467,6 +470,12 @@ class ContabilitaManager:
         total_removed = 0
 
         try:
+            # Cleanup: ensure no data from 2026+ exists (fix for bug)
+            with db_manager.get_connection(cls.DB_PATH) as conn:
+                conn.execute("DELETE FROM giornaliere WHERE year >= 2026")
+                conn.execute("DELETE FROM contabilita WHERE year >= 2026")
+                conn.commit()
+
             # 1. Lookup Map Preparation
             lookup_map = {}
             try:

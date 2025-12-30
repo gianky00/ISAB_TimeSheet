@@ -122,28 +122,27 @@ QTableWidget::item:focus {
 }
 
 QHeaderView::section {
-    background-color: #00796B; /* Darker Primary */
-    color: white;
+    background-color: #E1F5FE; /* Light Celeste */
+    color: #333333; /* Dark Gray for contrast */
     padding: 12px 15px;
     border: none;
-    border-right: 1px solid #00695C;
-    border-bottom: 2px solid #004D40;
+    border-right: 1px solid #B3E5FC;
+    border-bottom: 2px solid #81D4FA;
     font-weight: bold;
     text-transform: uppercase;
     font-size: 13px;
 }
 
-QHeaderView::section:first {
-    border-top-left-radius: 4px;
-}
-
-QHeaderView::section:last {
-    border-top-right-radius: 4px;
-    border-right: none;
+QHeaderView::section:vertical {
+    background-color: #F5F5F5;
+    color: #9E9E9E;
+    font-size: 10px; /* Smaller row numbers */
+    padding: 0px 5px;
+    border-right: 1px solid #E0E0E0;
 }
 
 QHeaderView::section:hover {
-    background-color: #00897B; /* Slightly lighter on hover */
+    background-color: #B3E5FC; /* Slightly darker blue on hover */
 }
 
 /* === TABS === */

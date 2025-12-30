@@ -653,15 +653,19 @@ class ContabilitaYearTab(QWidget):
                 border: none;
             }
             QHeaderView::section {
-                background-color: #00796B;
-                color: white;
+                background-color: #E1F5FE;
+                color: #333333;
                 padding: 10px 5px;
                 border: none;
-                border-right: 1px solid #00695C;
-                border-bottom: 3px solid #004D40;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
                 text-transform: uppercase;
                 font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
@@ -978,15 +982,19 @@ class GiornaliereYearTab(QWidget):
                 border: none;
             }
             QHeaderView::section {
-                background-color: #00796B;
-                color: white;
+                background-color: #E1F5FE;
+                color: #333333;
                 padding: 10px 5px;
                 border: none;
-                border-right: 1px solid #00695C;
-                border-bottom: 3px solid #004D40;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
                 text-transform: uppercase;
                 font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
@@ -1349,15 +1357,19 @@ class AttivitaProgrammateTab(QWidget):
             QTableWidget::item { color: black; }
             QTableWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
             QHeaderView::section {
-                background-color: #00796B;
-                color: white;
+                background-color: #E1F5FE;
+                color: #333333;
                 padding: 10px 5px;
                 border: none;
-                border-right: 1px solid #00695C;
-                border-bottom: 3px solid #004D40;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
                 text-transform: uppercase;
                 font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
@@ -1717,15 +1729,19 @@ class CertificatiCampioneTab(QWidget):
                 color: #0d6efd;
             }
             QHeaderView::section {
-                background-color: #00796B;
-                color: white;
+                background-color: #E1F5FE;
+                color: #333333;
                 padding: 10px 5px;
                 border: none;
-                border-right: 1px solid #00695C;
-                border-bottom: 3px solid #004D40;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
                 text-transform: uppercase;
                 font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 

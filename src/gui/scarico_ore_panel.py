@@ -212,12 +212,19 @@ class ScaricoOrePanel(QWidget):
                 font-size: 13px;
             }
             QHeaderView::section {
-                background-color: #f8f9fa;
-                color: black;  /* Force black text */
-                padding: 8px;
+                background-color: #E1F5FE;
+                color: #333333;
+                padding: 10px 5px;
                 border: none;
-                border-bottom: 2px solid #dee2e6;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
