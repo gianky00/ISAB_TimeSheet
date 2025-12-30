@@ -1184,6 +1184,7 @@ class TimbratureDBPanel(QWidget):
         self.reparto_filter.setPlaceholderText("Filtra Reparto")
         self.reparto_filter.addItem("Tutti i reparti", "Tutti")
         self.reparto_filter.addItems(self.reparti)
+        # Connect to _filter_data to apply filter immediately upon selection change
         self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
         self.reparto_filter.setFixedWidth(150)
         search_layout.addWidget(self.reparto_filter)
@@ -1193,6 +1194,7 @@ class TimbratureDBPanel(QWidget):
         self.cantiere_filter.setPlaceholderText("Filtra Cantiere")
         self.cantiere_filter.addItem("Tutti i cantieri", "Tutti")
         self.cantiere_filter.addItems(self.cantieri)
+        # Connect to _filter_data to apply filter immediately upon selection change
         self.cantiere_filter.currentIndexChanged.connect(lambda: self._filter_data())
         self.cantiere_filter.setFixedWidth(150)
         search_layout.addWidget(self.cantiere_filter)

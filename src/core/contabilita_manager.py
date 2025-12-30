@@ -394,7 +394,7 @@ class ContabilitaManager:
                         return (year, [], None)
 
                 df.columns = [str(c).strip() for c in df.columns]
-                if not df.empty: df = df.iloc[:-1]
+
 
                 rename_map = {}
                 for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
@@ -406,6 +406,11 @@ class ContabilitaManager:
                 if not rename_map: return (year, [], None)
 
                 df.rename(columns=rename_map, inplace=True)
+                
+                # Exclude 'Totale' rows
+                if 'personale' in df.columns:
+                    df = df[~df['personale'].str.contains("Totale", na=False, case=False)]
+
                 check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != 'data']
                 if check_cols: df.dropna(how='all', subset=check_cols, inplace=True)
 
@@ -423,9 +428,17 @@ class ContabilitaManager:
                         mapped_values = df.loc[mask_empty_odc, 'n_prev'].map(lookup_map)
                         df.loc[mask_empty_odc, 'odc'] = mapped_values.fillna("")
 
-                    # Regex
+                    # Se ODC è ancora vuoto, cerca il formato 'commessa' (es. 12/345) nella descrizione
+                    mask_still_empty_odc = df['odc'] == ""
+                    if mask_still_empty_odc.any():
+                        commessa_pattern = r'\b(\d{2}/\d{3})\b'
+                        extracted_commessa = df.loc[mask_still_empty_odc, 'descrizione'].str.extract(commessa_pattern, expand=False)
+                        df.loc[mask_still_empty_odc, 'odc'] = extracted_commessa.fillna("")
+                    
+                    # Regex for '5400xxx' format and other cleaning
                     mask_canone = df['odc'].str.contains('canone', case=False, na=False)
-                    mask_standard = ~mask_canone
+                    mask_commessa = df['odc'].str.match(r'^\d{2}/\d{3}$', na=False) # Exclude already valid commessa
+                    mask_standard = ~mask_canone & ~mask_commessa
                     extracted = df.loc[mask_standard, 'odc'].str.extract(r'(5400\d+)', expand=False)
                     df.loc[mask_standard, 'odc'] = extracted.fillna("")
 
@@ -472,7 +485,7 @@ class ContabilitaManager:
                 if not match: continue
 
                 year = int(match.group(1))
-                if year < current_year: continue
+                if year > current_year: continue # Skip future years
 
                 for file_path in folder.glob("*.xls*"):
                     if not file_path.name.startswith("~$"):
@@ -536,6 +549,7 @@ class ContabilitaManager:
 
                 total_added = len(new_rows_set - existing_rows_set)
                 total_removed = len(existing_rows_set - new_rows_set)
+
 
                 # Delete old
                 for year in years_to_clear:
