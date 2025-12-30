@@ -161,10 +161,10 @@ pytest tests/ -v
 - Google Chrome (per automazione Selenium)
 - Windows 10/11 (target principale)
 
-## 📄 Licenza
+## Licenza
 
 Software proprietario - Giancarlo Allegretti
 
-## 👤 Autore
+## Contatti
 
 Giancarlo Allegretti

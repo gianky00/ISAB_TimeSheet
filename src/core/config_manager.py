@@ -12,11 +12,10 @@ from src.core.secrets_manager import SecretsManager
 from platformdirs import user_data_dir
 
 # Path del file di configurazione
-# Utilizziamo nomi senza spazi per evitare discrepanze tra Windows/Linux e versioni installer
+# STANDARD DEFINITIVO: %LOCALAPPDATA%\BotTS
 APP_NAME = "BotTS"
-ORG_NAME = "GiancarloAllegretti"
 
-CONFIG_DIR = Path(user_data_dir(APP_NAME, ORG_NAME))
+CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 _config_cache: Optional[Dict[str, Any]] = None
 

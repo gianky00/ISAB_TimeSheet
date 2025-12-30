@@ -122,7 +122,7 @@ def main():
     app.setFont(font)
     
     # Set application metadata
-    app.setApplicationName("Bot TS")
+    app.setApplicationName("BotTS")
     app.setOrganizationName("Giancarlo Allegretti")
     app.setApplicationVersion("1.0.0")
 

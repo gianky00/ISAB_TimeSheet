@@ -2,7 +2,7 @@
 ; Installer configuration for Bot TS application
 
 #define MyAppName "BotTS"
-#define MyAppPublisher "GiancarloAllegretti"
+#define MyAppPublisher "Giancarlo Allegretti"
 #define MyAppURL "https://bot-ts.netlify.app"
 #define MyAppExeName "BotTS.exe"
 
@@ -102,8 +102,8 @@ begin
   
   if MsgResult = IDYES then
   begin
-    // Elimina la cartella in Local (GiancarloAllegretti\BotTS) per coerenza con il codice Python
-    DelTree(ExpandConstant('{localappdata}\GiancarloAllegretti\BotTS'), True, True, True);
+    // Elimina la cartella in Local (BotTS) per coerenza con il codice Python
+    DelTree(ExpandConstant('{localappdata}\BotTS'), True, True, True);
   end;
   
   Result := True;
