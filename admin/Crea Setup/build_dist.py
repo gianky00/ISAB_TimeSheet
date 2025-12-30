@@ -80,6 +80,8 @@ def run_pyinstaller():
         "cryptography.fernet",
         "packaging.version",
         "platformdirs",
+        "keyring",
+        "keyring.backends",
     ]
     
     for imp in hidden_imports:

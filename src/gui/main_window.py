@@ -438,9 +438,9 @@ class MainWindow(QMainWindow):
         self.btn_notifications.clicked.connect(lambda: self._navigate_to(6))
 
         # Notification Badge
-        NotificationManager().unread_count_changed.connect(self.btn_notifications.set_badge)
+        NotificationManager.instance().unread_count_changed.connect(self.btn_notifications.set_badge)
         # Init badge
-        self.btn_notifications.set_badge(NotificationManager().get_unread_count())
+        self.btn_notifications.set_badge(NotificationManager.instance().get_unread_count())
 
         # Aggiornamento live impostazioni
         self.settings_panel.settings_saved.connect(self._on_settings_saved)

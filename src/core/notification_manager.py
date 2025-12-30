@@ -17,14 +17,13 @@ class NotificationManager(QObject):
     notifications_updated = pyqtSignal()
     unread_count_changed = pyqtSignal(int)
 
-    def __new__(cls):
+    @classmethod
+    def instance(cls):
         if cls._instance is None:
-            cls._instance = super(NotificationManager, cls).__new__(cls)
-            cls._instance._init()
+            cls._instance = NotificationManager()
         return cls._instance
 
-    def _init(self):
-        """Inizializza il manager caricando i dati."""
+    def __init__(self):
         super().__init__()
         self.notifications_file = config_manager.CONFIG_DIR / "notifications.json"
         self.notifications = self._load_notifications()

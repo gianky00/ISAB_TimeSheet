@@ -118,7 +118,7 @@ class NotificationItem(QFrame):
             """)
 
     def _mark_as_read(self):
-        NotificationManager().mark_as_read(self.notification_id)
+        NotificationManager.instance().mark_as_read(self.notification_id)
 
 
 class NotificationsPanel(QWidget):
@@ -131,7 +131,7 @@ class NotificationsPanel(QWidget):
         self._setup_ui()
         
         # Connect signals
-        self.manager = NotificationManager()
+        self.manager = NotificationManager.instance()
         self.manager.notifications_updated.connect(self.refresh)
         
         self.refresh()
