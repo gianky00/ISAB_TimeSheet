@@ -125,11 +125,14 @@ class DataTable(QWidget):
                 color: {p.on_surface};
             }}
             QHeaderView::section {{
-                background-color: {p.surface_variant};
-                padding: 10px;
+                background-color: {p.primary_variant};
+                color: white;
+                padding: 12px;
                 border: none;
-                border-bottom: 2px solid {p.primary};
-                font-weight: 600;
+                border-right: 1px solid {p.primary};
+                border-bottom: 3px solid {p.primary};
+                font-weight: bold;
+                text-transform: uppercase;
             }}
         """)
 
