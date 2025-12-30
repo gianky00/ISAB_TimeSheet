@@ -1,8 +1,8 @@
 ; Bot TS - Inno Setup Script
 ; Installer configuration for Bot TS application
 
-#define MyAppName "Bot TS"
-#define MyAppPublisher "Giancarlo Allegretti"
+#define MyAppName "BotTS"
+#define MyAppPublisher "GiancarloAllegretti"
 #define MyAppURL "https://bot-ts.netlify.app"
 #define MyAppExeName "BotTS.exe"
 
@@ -28,8 +28,8 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 
 ; Installation paths
-DefaultDirName={autopf}\{#MyAppName}
-DefaultGroupName={#MyAppName}
+DefaultDirName={autopf}\Bot TS
+DefaultGroupName=Bot TS
 DisableProgramGroupPage=yes
 
 ; Output configuration
@@ -102,8 +102,8 @@ begin
   
   if MsgResult = IDYES then
   begin
-    // Elimina la cartella in Roaming (GiancarloAllegretti\BotTS)
-    DelTree(ExpandConstant('{userroaming}\GiancarloAllegretti\BotTS'), True, True, True);
+    // Elimina la cartella in Local (GiancarloAllegretti\BotTS) per coerenza con il codice Python
+    DelTree(ExpandConstant('{localappdata}\GiancarloAllegretti\BotTS'), True, True, True);
   end;
   
   Result := True;
