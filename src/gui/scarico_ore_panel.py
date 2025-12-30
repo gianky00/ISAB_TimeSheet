@@ -47,6 +47,7 @@ class ScaricoOreWorker(QThread):
 
             # Use the more accurate total from scan if available
             real_total = total if total > 0 else total_rows
+            if current > real_total: real_total = current # Dynamic update to prevent > 100%
 
             elapsed = time.time() - self.start_time
             if current > 0 and elapsed > 0:
@@ -56,6 +57,7 @@ class ScaricoOreWorker(QThread):
 
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current / real_total) * 100) if real_total > 0 else 0
+                if percent > 99: percent = 99 # Cap until actually finished
 
                 self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s")
 
@@ -212,12 +214,19 @@ class ScaricoOrePanel(QWidget):
                 font-size: 13px;
             }
             QHeaderView::section {
-                background-color: #f8f9fa;
-                color: black;  /* Force black text */
-                padding: 8px;
+                background-color: #E1F5FE;
+                color: #333333;
+                padding: 10px 5px;
                 border: none;
-                border-bottom: 2px solid #dee2e6;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
@@ -242,6 +251,7 @@ class ScaricoOrePanel(QWidget):
         footer_layout.setContentsMargins(15, 10, 15, 10)
 
         self.lbl_count = QLabel("Righe: 0")
+        self.lbl_count.setStyleSheet("font-size: 16px; font-weight: bold; color: #0d6efd;")
         self.lbl_total_hours = QLabel("Totale Ore: 0")
         self.lbl_total_hours.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 

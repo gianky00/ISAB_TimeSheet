@@ -12,7 +12,8 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QFrame, QMessageBox, QSizePolicy, QFileDialog,
     QDateEdit, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QCheckBox, QTimeEdit, QInputDialog, QApplication, QListWidgetItem, QTabWidget
+    QCheckBox, QTimeEdit, QInputDialog, QApplication, QListWidgetItem, QTabWidget,
+    QDialog, QDialogButtonBox, QListWidget
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
 from datetime import datetime
@@ -999,6 +1000,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
         self.autopilot_check = QCheckBox("Abilita download automatico")
         self.autopilot_check.setStyleSheet("font-size: 15px;")
+        self.autopilot_check.stateChanged.connect(self._save_data)
         sched_layout.addWidget(self.autopilot_check)
 
         sched_layout.addSpacing(20)
@@ -1011,6 +1013,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.time_edit.setTime(QTime(9, 0))
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.setMinimumHeight(35)
+        self.time_edit.timeChanged.connect(self._save_data)
         sched_layout.addWidget(self.time_edit)
 
         sched_layout.addStretch()
@@ -1047,6 +1050,11 @@ class TimbratureBotPanel(BaseBotPanel):
             if index >= 0:
                 self.fornitore_combo.setCurrentIndex(index)
 
+        # Autopilot settings
+        self.autopilot_check.setChecked(config.get("timbrature_autopilot_enabled", False))
+        saved_time = config.get("timbrature_autopilot_time", "09:00")
+        self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
+
         # Default dates: ALWAYS Yesterday (ignore saved config)
         yesterday = QDate.currentDate().addDays(-1)
         self.date_da_edit.setDate(yesterday)
@@ -1056,6 +1064,10 @@ class TimbratureBotPanel(BaseBotPanel):
         config_manager.set_config_value("last_timbrature_fornitore", self.fornitore_combo.currentText())
         config_manager.set_config_value("last_timbrature_date_da", self.date_da_edit.date().toString("dd.MM.yyyy"))
         config_manager.set_config_value("last_timbrature_date_a", self.date_a_edit.date().toString("dd.MM.yyyy"))
+        
+        # Save Autopilot settings
+        config_manager.set_config_value("timbrature_autopilot_enabled", self.autopilot_check.isChecked())
+        config_manager.set_config_value("timbrature_autopilot_time", self.time_edit.time().toString("HH:mm"))
 
     def _on_start(self):
         """Avvia il bot Timbrature."""
@@ -1128,12 +1140,16 @@ class TimbratureBotPanel(BaseBotPanel):
 class TimbratureDBPanel(QWidget):
     """Pannello per la visualizzazione del Database Timbrature Isab."""
 
-    REPARTI = ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.db_path = config_manager.CONFIG_DIR / "data" / "timbrature_Isab.db"
         self.storage = TimbratureStorage(self.db_path)
+        
+        # Load configurable lists
+        self.lists = self.storage.get_lists()
+        self.reparti = self.lists.get("reparti", [])
+        self.cantieri = self.lists.get("cantieri", [])
+        
         self._setup_ui()
         self.refresh_data()
 
@@ -1145,8 +1161,7 @@ class TimbratureDBPanel(QWidget):
 
         # Tab Widget
         self.tabs = QTabWidget()
-        # Style mostly handled by QSS, keeping minimal inline for tabs
-
+        
         # --- TAB 1: Database (Timbrature) ---
         self.tab_database = QWidget()
         self._setup_database_tab(self.tab_database)
@@ -1157,7 +1172,7 @@ class TimbratureDBPanel(QWidget):
         self._setup_settings_tab(self.tab_settings)
         self.tabs.addTab(self.tab_settings, "⚙️ Impostazioni")
 
-        # Connect tab change to refresh settings list if needed
+        # Connect tab change
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
         self.main_layout.addWidget(self.tabs)
@@ -1178,11 +1193,20 @@ class TimbratureDBPanel(QWidget):
         # Reparto Filter
         self.reparto_filter = QComboBox()
         self.reparto_filter.addItem("Tutti i reparti", "Tutti")
-        for rep in self.REPARTI:
+        for rep in self.reparti:
             self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
         self.reparto_filter.setFixedWidth(150)
         search_layout.addWidget(self.reparto_filter)
+        
+        # Cantiere Filter
+        self.cantiere_filter = QComboBox()
+        self.cantiere_filter.addItem("Tutti i cantieri", "Tutti")
+        for cant in self.cantieri:
+            self.cantiere_filter.addItem(cant, cant)
+        self.cantiere_filter.currentIndexChanged.connect(lambda: self._filter_data())
+        self.cantiere_filter.setFixedWidth(150)
+        search_layout.addWidget(self.cantiere_filter)
 
         # Import Button
         import_btn = ModernButton("Importa Excel", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL)
@@ -1198,16 +1222,14 @@ class TimbratureDBPanel(QWidget):
 
         # Table
         self.db_table = ExcelTableWidget()
-        # Cols: Data, Ingresso, Uscita, Nome, Cognome, Presenza TS, Sito, Reparto
-        self.db_table.setColumnCount(8)
-        self.db_table.setHorizontalHeaderLabels([
-            "Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito", "Reparto"
-        ])
+        # Cols: Data, Ingresso, Uscita, Nome, Cognome, Presenza TS, Sito, Reparto, Cantiere
+        cols = ["Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito", "Reparto", "Cantiere"]
+        self.db_table.setColumnCount(len(cols))
+        self.db_table.setHorizontalHeaderLabels(cols)
 
         header = self.db_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
-        # Use style from QSS for tables (removed hardcoded style)
         self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.db_table.auto_copy_headers = True
         self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
@@ -1216,19 +1238,45 @@ class TimbratureDBPanel(QWidget):
 
     def _setup_settings_tab(self, parent_widget):
         layout = QVBoxLayout(parent_widget)
+        
+        # Header Controls
+        header_layout = QHBoxLayout()
+        
+        info = QLabel("Gestione Dipendenti")
+        info.setStyleSheet("font-size: 16px; font-weight: bold;")
+        header_layout.addWidget(info)
+        
+        header_layout.addStretch()
+        
+        # Open Settings Button
+        open_settings_btn = ModernButton("Gestisci Liste", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL)
+        open_settings_btn.setToolTip("Gestisci reparti e cantieri nelle Impostazioni")
+        open_settings_btn.clicked.connect(self._open_settings)
+        header_layout.addWidget(open_settings_btn)
+        
+        layout.addLayout(header_layout)
 
-        info = QLabel("Gestione Dipendenti e Reparti")
-        info.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 5px;")
-        layout.addWidget(info)
-
-        sub = QLabel("Assegna il reparto ai dipendenti. Le modifiche vengono salvate automaticamente.")
-        sub.setStyleSheet("color: #6c757d; margin-bottom: 10px;")
+        sub = QLabel("Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente.")
+        sub.setStyleSheet("color: #6c757d; margin-bottom: 5px;")
         layout.addWidget(sub)
+        
+        # Filters for Settings
+        filter_layout = QHBoxLayout()
+        self.filter_empty_cb = QCheckBox("Mostra solo dati mancanti (Vuoti)")
+        
+        # Load saved state
+        config = config_manager.load_config()
+        self.filter_empty_cb.setChecked(config.get("timbrature_filter_empty_only", False))
+        
+        self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
+        filter_layout.addWidget(self.filter_empty_cb)
+        filter_layout.addStretch()
+        layout.addLayout(filter_layout)
 
         # Table
         self.settings_table = QTableWidget()
-        self.settings_table.setColumnCount(3)
-        self.settings_table.setHorizontalHeaderLabels(["Nome", "Cognome", "Reparto"])
+        self.settings_table.setColumnCount(4)
+        self.settings_table.setHorizontalHeaderLabels(["Nome", "Cognome", "Reparto", "Cantiere"])
 
         header = self.settings_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -1238,78 +1286,177 @@ class TimbratureDBPanel(QWidget):
         # Load data immediately
         self._load_settings_data()
 
+    def _on_filter_empty_changed(self, state):
+        """Save preference and reload settings table."""
+        config_manager.set_config_value("timbrature_filter_empty_only", self.filter_empty_cb.isChecked())
+        self._load_settings_data()
+
     def _on_tab_changed(self, index):
-        # Refresh settings data when switching to settings tab
         if index == 1:
             self._load_settings_data()
         elif index == 0:
             self.refresh_data()
 
+    def _open_settings(self):
+        """Naviga verso il pannello impostazioni della finestra principale."""
+        main_window = self.window()
+        if hasattr(main_window, 'show_settings'):
+            main_window.show_settings()
+
+    def _manage_list(self, list_key, title):
+        """Dialog generico per gestire liste di stringhe."""
+        current_list = self.lists.get(list_key, [])
+        
+        d = QDialog(self)
+        d.setWindowTitle(title)
+        d.setMinimumWidth(300)
+        l = QVBoxLayout(d)
+        
+        list_widget = QListWidget()
+        list_widget.addItems(current_list)
+        l.addWidget(list_widget)
+        
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Aggiungi")
+        del_btn = QPushButton("Rimuovi")
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(del_btn)
+        l.addLayout(btn_layout)
+        
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        button_box.rejected.connect(d.accept)
+        l.addWidget(button_box)
+        
+        def add_item():
+            text, ok = QInputDialog.getText(d, "Aggiungi", "Nome:")
+            if ok and text:
+                text = text.upper()
+                if text not in current_list:
+                    current_list.append(text)
+                    list_widget.addItem(text)
+                    self.storage.save_lists(self.lists)
+                    self._update_combo_boxes()
+
+        def del_item():
+            row = list_widget.currentRow()
+            if row >= 0:
+                item = list_widget.takeItem(row)
+                val = item.text()
+                if val in current_list:
+                    current_list.remove(val)
+                    self.storage.save_lists(self.lists)
+                    self._update_combo_boxes()
+                    
+        add_btn.clicked.connect(add_item)
+        del_btn.clicked.connect(del_item)
+        
+        d.exec()
+        
+    def _update_combo_boxes(self):
+        """Aggiorna i filtri e le combo nella tabella."""
+        # Refresh local cache
+        self.reparti = self.lists.get("reparti", [])
+        self.cantieri = self.lists.get("cantieri", [])
+        
+        # Update Main Filters
+        self.reparto_filter.blockSignals(True)
+        self.reparto_filter.clear()
+        self.reparto_filter.addItem("Tutti i reparti", "Tutti")
+        for rep in self.reparti:
+            self.reparto_filter.addItem(rep, rep)
+        self.reparto_filter.blockSignals(False)
+        
+        self.cantiere_filter.blockSignals(True)
+        self.cantiere_filter.clear()
+        self.cantiere_filter.addItem("Tutti i cantieri", "Tutti")
+        for cant in self.cantieri:
+            self.cantiere_filter.addItem(cant, cant)
+        self.cantiere_filter.blockSignals(False)
+        
+        # Refresh Settings Table Combos (Reload data)
+        self._load_settings_data()
+
     def _load_settings_data(self):
         """Carica i dipendenti unici nella tabella impostazioni."""
         employees = self.storage.get_employees()
+        show_empty_only = self.filter_empty_cb.isChecked()
 
         self.settings_table.blockSignals(True)
         self.settings_table.setRowCount(0)
+        
+        # Filter list first
+        filtered_employees = []
+        for emp in employees:
+            if show_empty_only:
+                # Se entrambi sono pieni, salta
+                if emp['reparto'] and emp['cantiere']:
+                    continue
+            filtered_employees.append(emp)
 
-        for i, emp in enumerate(employees):
+        for i, emp in enumerate(filtered_employees):
             self.settings_table.insertRow(i)
 
-            # Nome (Read only)
+            # Nome
             item_nome = QTableWidgetItem(emp['nome'])
             item_nome.setFlags(item_nome.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.settings_table.setItem(i, 0, item_nome)
 
-            # Cognome (Read only)
+            # Cognome
             item_cognome = QTableWidgetItem(emp['cognome'])
             item_cognome.setFlags(item_cognome.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.settings_table.setItem(i, 1, item_cognome)
 
             # Reparto (ComboBox)
-            combo = QComboBox()
-            combo.addItems([""] + self.REPARTI)
-            combo.setCurrentText(emp['reparto'])
+            combo_rep = QComboBox()
+            combo_rep.addItems([""] + self.reparti)
+            combo_rep.setCurrentText(emp['reparto'])
+            combo_rep.setStyleSheet("QComboBox { border: none; background: transparent; }")
+            
+            # Cantiere (ComboBox)
+            combo_cant = QComboBox()
+            combo_cant.addItems([""] + self.cantieri)
+            combo_cant.setCurrentText(emp['cantiere'])
+            combo_cant.setStyleSheet("QComboBox { border: none; background: transparent; }")
 
-            # Style combo
-            combo.setStyleSheet("QComboBox { border: none; background: transparent; }")
-
-            # Connect signal
-            # Use a closure to capture row specific data
+            # Connect signals with closures
             nome = emp['nome']
             cognome = emp['cognome']
 
-            combo.currentTextChanged.connect(lambda text, n=nome, c=cognome: self.storage.update_employee_reparto(n, c, text))
+            # Update Reparto
+            combo_rep.currentTextChanged.connect(lambda text, n=nome, c=cognome: self.storage.update_employee_details(n, c, reparto=text))
+            
+            # Update Cantiere
+            combo_cant.currentTextChanged.connect(lambda text, n=nome, c=cognome: self.storage.update_employee_details(n, c, cantiere=text))
 
-            self.settings_table.setCellWidget(i, 2, combo)
+            self.settings_table.setCellWidget(i, 2, combo_rep)
+            self.settings_table.setCellWidget(i, 3, combo_cant)
 
         self.settings_table.blockSignals(False)
 
     def refresh_data(self):
-        """Metodo pubblico per ricaricare i dati."""
         self._filter_data()
 
     def _filter_data(self):
-        """Filtra la tabella usando SQL."""
         text = self.search_input.text()
         reparto = self.reparto_filter.currentData()
+        cantiere = self.cantiere_filter.currentData()
 
         rows = self.storage.get_timbrature_with_reparto(
             limit=500,
             filter_text=text,
-            filter_reparto=reparto
+            filter_reparto=reparto,
+            filter_cantiere=cantiere
         )
         self._update_table(rows)
 
     def _update_table(self, rows):
-        """Aggiorna la tabella con i dati forniti."""
         self.db_table.setRowCount(0)
         for row_idx, row_data in enumerate(rows):
             self.db_table.insertRow(row_idx)
-
-            # row_data includes: data, ingresso, uscita, nome, cognome, presenza_ts, sito, reparto
+            # row_data: data, ingresso, uscita, nome, cognome, presenza_ts, sito, reparto, cantiere
+            
             formatted_row = list(row_data)
-
-            # Format Data
+            # Format Date
             try:
                 date_str = str(formatted_row[0])
                 if date_str:
@@ -1317,8 +1464,7 @@ class TimbratureDBPanel(QWidget):
                     try:
                         dt = datetime.strptime(date_part, "%Y-%m-%d")
                         formatted_row[0] = dt.strftime("%d/%m/%Y")
-                    except ValueError:
-                        pass
+                    except ValueError: pass
             except Exception: pass
 
             for col_idx, value in enumerate(formatted_row):
@@ -1326,7 +1472,6 @@ class TimbratureDBPanel(QWidget):
                 self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(val_str))
 
     def _import_excel_manually(self):
-        """Importa manualmente un file Excel nel database."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Seleziona File Excel Timbrature",
@@ -1338,16 +1483,14 @@ class TimbratureDBPanel(QWidget):
             return
 
         try:
-            # Callback per loggare
             def gui_log(msg):
-                print(msg) # O eventuale toast
+                print(msg) 
 
             success = self.storage.import_excel(file_path, gui_log)
 
             if success:
                 self.refresh_data()
                 ToastManager.instance().show("Dati importati correttamente nel database.", "success")
-                # Reload settings too if new employees appeared
                 self._load_settings_data()
             else:
                 ToastManager.instance().show("Impossibile importare il file.", "error")

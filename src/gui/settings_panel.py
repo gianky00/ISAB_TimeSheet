@@ -482,6 +482,76 @@ class SettingsPanel(QWidget):
 
         scroll_layout.addLayout(lists_container)
 
+        # --- CONTAINER ORIZZONTALE PER LISTE TIMBRATURE ---
+        timbrature_lists_container = QHBoxLayout()
+        timbrature_lists_container.setSpacing(15)
+
+        # 4. Sezione Reparti
+        reparti_group = self._create_group_box("🏢 Reparti (Timbrature)")
+        reparti_layout = QVBoxLayout(reparti_group)
+        self.groups.append(reparti_group)
+        
+        self.reparti_list = QListWidget()
+        self.reparti_list.setMaximumHeight(100)
+        self.reparti_list.setStyleSheet(self._list_style())
+        self.reparti_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.reparti_list.customContextMenuRequested.connect(lambda pos: self._show_generic_list_menu(pos, self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto))
+        reparti_layout.addWidget(self.reparti_list)
+        
+        reparti_btn_layout = QHBoxLayout()
+        add_rep_btn = QPushButton("➕")
+        add_rep_btn.clicked.connect(self._add_reparto)
+        self._style_mini_button(add_rep_btn, "#28a745")
+        reparti_btn_layout.addWidget(add_rep_btn)
+        
+        edit_rep_btn = QPushButton("✏️")
+        edit_rep_btn.clicked.connect(self._edit_reparto)
+        self._style_mini_button(edit_rep_btn, "#0d6efd")
+        reparti_btn_layout.addWidget(edit_rep_btn)
+        
+        rem_rep_btn = QPushButton("🗑️")
+        rem_rep_btn.clicked.connect(self._remove_reparto)
+        self._style_mini_button(rem_rep_btn, "#dc3545")
+        reparti_btn_layout.addWidget(rem_rep_btn)
+        reparti_btn_layout.addStretch()
+        reparti_layout.addLayout(reparti_btn_layout)
+        
+        timbrature_lists_container.addWidget(reparti_group)
+
+        # 5. Sezione Cantieri
+        cantieri_group = self._create_group_box("🏗️ Cantieri (Timbrature)")
+        cantieri_layout = QVBoxLayout(cantieri_group)
+        self.groups.append(cantieri_group)
+        
+        self.cantieri_list = QListWidget()
+        self.cantieri_list.setMaximumHeight(100)
+        self.cantieri_list.setStyleSheet(self._list_style())
+        self.cantieri_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.cantieri_list.customContextMenuRequested.connect(lambda pos: self._show_generic_list_menu(pos, self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere))
+        cantieri_layout.addWidget(self.cantieri_list)
+        
+        cantieri_btn_layout = QHBoxLayout()
+        add_cant_btn = QPushButton("➕")
+        add_cant_btn.clicked.connect(self._add_cantiere)
+        self._style_mini_button(add_cant_btn, "#28a745")
+        cantieri_btn_layout.addWidget(add_cant_btn)
+        
+        edit_cant_btn = QPushButton("✏️")
+        edit_cant_btn.clicked.connect(self._edit_cantiere)
+        self._style_mini_button(edit_cant_btn, "#0d6efd")
+        cantieri_btn_layout.addWidget(edit_cant_btn)
+        
+        rem_cant_btn = QPushButton("🗑️")
+        rem_cant_btn.clicked.connect(self._remove_cantiere)
+        self._style_mini_button(rem_cant_btn, "#dc3545")
+        cantieri_btn_layout.addWidget(rem_cant_btn)
+        cantieri_btn_layout.addStretch()
+        cantieri_layout.addLayout(cantieri_btn_layout)
+        
+        timbrature_lists_container.addWidget(cantieri_group)
+
+        scroll_layout.addLayout(timbrature_lists_container)
+
         # --- Sezione Strumentale ---
         contabilita_group = self._create_group_box("📊 Strumentale")
         contabilita_layout = QVBoxLayout(contabilita_group)
@@ -1060,6 +1130,54 @@ class SettingsPanel(QWidget):
                 self.fornitori_list.takeItem(row)
                 self._set_unsaved_changes(True)
 
+    # --- Gestione Reparti ---
+    def _add_reparto(self):
+        text, ok = QInputDialog.getText(self, "Aggiungi Reparto", "Nome:")
+        if ok and text.strip():
+            text = text.strip().upper()
+            if not self.reparti_list.findItems(text, Qt.MatchFlag.MatchExactly):
+                self.reparti_list.addItem(text)
+                self._set_unsaved_changes(True)
+
+    def _edit_reparto(self):
+        item = self.reparti_list.currentItem()
+        if item:
+            text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
+            if ok and text.strip():
+                item.setText(text.strip().upper())
+                self._set_unsaved_changes(True)
+
+    def _remove_reparto(self):
+        row = self.reparti_list.currentRow()
+        if row >= 0:
+            if QMessageBox.question(self, "Conferma", "Rimuovere reparto?") == QMessageBox.StandardButton.Yes:
+                self.reparti_list.takeItem(row)
+                self._set_unsaved_changes(True)
+
+    # --- Gestione Cantieri ---
+    def _add_cantiere(self):
+        text, ok = QInputDialog.getText(self, "Aggiungi Cantiere", "Nome:")
+        if ok and text.strip():
+            text = text.strip().upper()
+            if not self.cantieri_list.findItems(text, Qt.MatchFlag.MatchExactly):
+                self.cantieri_list.addItem(text)
+                self._set_unsaved_changes(True)
+
+    def _edit_cantiere(self):
+        item = self.cantieri_list.currentItem()
+        if item:
+            text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
+            if ok and text.strip():
+                item.setText(text.strip().upper())
+                self._set_unsaved_changes(True)
+
+    def _remove_cantiere(self):
+        row = self.cantieri_list.currentRow()
+        if row >= 0:
+            if QMessageBox.question(self, "Conferma", "Rimuovere cantiere?") == QMessageBox.StandardButton.Yes:
+                self.cantieri_list.takeItem(row)
+                self._set_unsaved_changes(True)
+
     # --- Load & Save ---
     def _load_settings(self):
         config = config_manager.load_config()
@@ -1086,6 +1204,16 @@ class SettingsPanel(QWidget):
         for c in config.get("contracts", []):
             self.contract_list.addItem(c)
 
+        # Reparti
+        self.reparti_list.clear()
+        for r in config.get("reparti", []):
+            self.reparti_list.addItem(r)
+
+        # Cantieri
+        self.cantieri_list.clear()
+        for c in config.get("cantieri", []):
+            self.cantieri_list.addItem(c)
+
         # Accounts
         self._render_accounts(config.get("accounts", []))
         
@@ -1095,6 +1223,8 @@ class SettingsPanel(QWidget):
         # Raccogli dati
         fornitori = [self.fornitori_list.item(i).text() for i in range(self.fornitori_list.count())]
         contracts = [self.contract_list.item(i).text() for i in range(self.contract_list.count())]
+        reparti = [self.reparti_list.item(i).text() for i in range(self.reparti_list.count())]
+        cantieri = [self.cantieri_list.item(i).text() for i in range(self.cantieri_list.count())]
         accounts = self._get_current_accounts()
         
         config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
@@ -1109,6 +1239,9 @@ class SettingsPanel(QWidget):
 
         config_manager.set_config_value("fornitori", fornitori)
         config_manager.set_config_value("contracts", contracts)
+        config_manager.set_config_value("reparti", reparti)
+        config_manager.set_config_value("cantieri", cantieri)
+        
         # Il primo della lista diventa default se esiste
         if contracts:
             config_manager.set_config_value("default_contract", contracts[0])

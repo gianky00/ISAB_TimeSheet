@@ -32,7 +32,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "last_oda_data": [],
     "contabilita_file_path": "",
     "enable_auto_update_contabilita": True,
-    "certificati_campione_path": r"C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm"
+    "certificati_campione_path": r"C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm",
+    "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
+    "cantieri": []
 }
 
 def ensure_config_dir():

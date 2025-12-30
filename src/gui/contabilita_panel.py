@@ -56,7 +56,10 @@ class ContabilitaWorker(QThread):
         self.start_time = time.time()
 
         def global_progress(processed_in_phase, phase_offset, phase_name):
+            nonlocal total_ops
             current_total = phase_offset + processed_in_phase
+            if current_total > total_ops: total_ops = current_total # Dynamic adjustment
+            
             elapsed = time.time() - self.start_time
 
             if current_total > 0 and elapsed > 0:
@@ -66,6 +69,7 @@ class ContabilitaWorker(QThread):
 
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current_total / total_ops) * 100)
+                if percent > 99: percent = 99 # Cap until actually finished
 
                 self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
 
@@ -653,11 +657,19 @@ class ContabilitaYearTab(QWidget):
                 border: none;
             }
             QHeaderView::section {
-                background-color: #f8f9fa;
-                color: black;
-                padding: 4px;
-                border: 1px solid #dee2e6;
+                background-color: #E1F5FE;
+                color: #333333;
+                padding: 10px 5px;
+                border: none;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
@@ -974,11 +986,19 @@ class GiornaliereYearTab(QWidget):
                 border: none;
             }
             QHeaderView::section {
-                background-color: #f8f9fa;
-                color: black;
-                padding: 4px;
-                border: 1px solid #dee2e6;
+                background-color: #E1F5FE;
+                color: #333333;
+                padding: 10px 5px;
+                border: none;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
@@ -1341,11 +1361,19 @@ class AttivitaProgrammateTab(QWidget):
             QTableWidget::item { color: black; }
             QTableWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
             QHeaderView::section {
-                background-color: #f8f9fa;
-                color: black;
-                padding: 4px;
-                border: 1px solid #dee2e6;
+                background-color: #E1F5FE;
+                color: #333333;
+                padding: 10px 5px;
+                border: none;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 
@@ -1705,11 +1733,19 @@ class CertificatiCampioneTab(QWidget):
                 color: #0d6efd;
             }
             QHeaderView::section {
-                background-color: #f8f9fa;
-                color: black;
-                padding: 4px;
-                border: 1px solid #dee2e6;
+                background-color: #E1F5FE;
+                color: #333333;
+                padding: 10px 5px;
+                border: none;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 3px solid #81D4FA;
                 font-weight: bold;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+            QHeaderView::section:vertical {
+                font-size: 10px;
+                color: #9E9E9E;
             }
         """)
 

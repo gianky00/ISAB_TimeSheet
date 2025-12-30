@@ -122,12 +122,27 @@ QTableWidget::item:focus {
 }
 
 QHeaderView::section {
-    background-color: #F5F5F5;
-    color: #424242;
-    padding: 8px 12px; /* Adjusted */
+    background-color: #E1F5FE; /* Light Celeste */
+    color: #333333; /* Dark Gray for contrast */
+    padding: 12px 15px;
     border: none;
-    border-bottom: 2px solid #009688;
-    font-weight: 600;
+    border-right: 1px solid #B3E5FC;
+    border-bottom: 2px solid #81D4FA;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+QHeaderView::section:vertical {
+    background-color: #F5F5F5;
+    color: #9E9E9E;
+    font-size: 10px; /* Smaller row numbers */
+    padding: 0px 5px;
+    border-right: 1px solid #E0E0E0;
+}
+
+QHeaderView::section:hover {
+    background-color: #B3E5FC; /* Slightly darker blue on hover */
 }
 
 /* === TABS === */
