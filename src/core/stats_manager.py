@@ -17,28 +17,31 @@ class StatsManager:
         return cls._instance
 
     def _init(self):
-        """Inizializza il manager caricando i dati."""
-        self.stats_file = config_manager.CONFIG_DIR / "statistics.json"
+        """Inizializza il manager caricando i dati da config.json."""
         self.stats = self._load_stats()
 
     def _load_stats(self) -> dict:
-        """Carica le statistiche dal file JSON."""
-        if not self.stats_file.exists():
+        """Carica le statistiche dal config_manager con migrazione automatica."""
+        config = config_manager.load_config()
+        
+        # Se non ci sono statistiche nel config, prova a migrare dal vecchio file
+        if not config.get("statistics"):
+            old_file = config_manager.CONFIG_DIR / "statistics.json"
+            if old_file.exists():
+                try:
+                    with open(old_file, 'r', encoding='utf-8') as f:
+                        old_stats = json.load(f)
+                        if old_stats:
+                            config_manager.set_config_value("statistics", old_stats)
+                            return old_stats
+                except: pass
             return {}
-        try:
-            with open(self.stats_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Errore caricamento statistiche: {e}")
-            return {}
+            
+        return config.get("statistics", {})
 
     def _save_stats(self):
-        """Salva le statistiche su file."""
-        try:
-            with open(self.stats_file, 'w', encoding='utf-8') as f:
-                json.dump(self.stats, f, indent=4)
-        except Exception as e:
-            print(f"Errore salvataggio statistiche: {e}")
+        """Salva le statistiche nel config_manager."""
+        config_manager.set_config_value("statistics", self.stats)
 
     def increment_usage(self, bot_id: str):
         """Incrementa il contatore di utilizzo per un bot e aggiorna l'ultimo avvio."""
