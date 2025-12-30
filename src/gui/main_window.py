@@ -281,17 +281,17 @@ class MainWindow(QMainWindow):
 
         self.btn_automazioni = SidebarButton("Automazioni", "🤖")
         sidebar_layout.addWidget(self.btn_automazioni)
-        
+
         self.btn_database = SidebarButton("Database", "🗄️")
         sidebar_layout.addWidget(self.btn_database)
-
-        self.btn_notifications = SidebarButton("Notifiche", "🔔")
-        sidebar_layout.addWidget(self.btn_notifications)
         
         sidebar_layout.addStretch()
 
         self.btn_lyra = SidebarButton("Lyra AI", "✨")
         sidebar_layout.addWidget(self.btn_lyra)
+
+        self.btn_notifications = SidebarButton("Notifiche", "🔔")
+        sidebar_layout.addWidget(self.btn_notifications)
 
         self.btn_help = SidebarButton("Guida", "❓")
         sidebar_layout.addWidget(self.btn_help)

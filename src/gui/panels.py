@@ -1000,6 +1000,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
         self.autopilot_check = QCheckBox("Abilita download automatico")
         self.autopilot_check.setStyleSheet("font-size: 15px;")
+        self.autopilot_check.stateChanged.connect(self._save_data)
         sched_layout.addWidget(self.autopilot_check)
 
         sched_layout.addSpacing(20)
@@ -1012,6 +1013,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.time_edit.setTime(QTime(9, 0))
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.setMinimumHeight(35)
+        self.time_edit.timeChanged.connect(self._save_data)
         sched_layout.addWidget(self.time_edit)
 
         sched_layout.addStretch()
@@ -1048,6 +1050,11 @@ class TimbratureBotPanel(BaseBotPanel):
             if index >= 0:
                 self.fornitore_combo.setCurrentIndex(index)
 
+        # Autopilot settings
+        self.autopilot_check.setChecked(config.get("timbrature_autopilot_enabled", False))
+        saved_time = config.get("timbrature_autopilot_time", "09:00")
+        self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
+
         # Default dates: ALWAYS Yesterday (ignore saved config)
         yesterday = QDate.currentDate().addDays(-1)
         self.date_da_edit.setDate(yesterday)
@@ -1057,6 +1064,10 @@ class TimbratureBotPanel(BaseBotPanel):
         config_manager.set_config_value("last_timbrature_fornitore", self.fornitore_combo.currentText())
         config_manager.set_config_value("last_timbrature_date_da", self.date_da_edit.date().toString("dd.MM.yyyy"))
         config_manager.set_config_value("last_timbrature_date_a", self.date_a_edit.date().toString("dd.MM.yyyy"))
+        
+        # Save Autopilot settings
+        config_manager.set_config_value("timbrature_autopilot_enabled", self.autopilot_check.isChecked())
+        config_manager.set_config_value("timbrature_autopilot_time", self.time_edit.time().toString("HH:mm"))
 
     def _on_start(self):
         """Avvia il bot Timbrature."""
@@ -1181,20 +1192,18 @@ class TimbratureDBPanel(QWidget):
 
         # Reparto Filter
         self.reparto_filter = QComboBox()
-        self.reparto_filter.setPlaceholderText("Filtra Reparto")
         self.reparto_filter.addItem("Tutti i reparti", "Tutti")
-        self.reparto_filter.addItems(self.reparti)
-        # Connect to _filter_data to apply filter immediately upon selection change
+        for rep in self.reparti:
+            self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
         self.reparto_filter.setFixedWidth(150)
         search_layout.addWidget(self.reparto_filter)
         
         # Cantiere Filter
         self.cantiere_filter = QComboBox()
-        self.cantiere_filter.setPlaceholderText("Filtra Cantiere")
         self.cantiere_filter.addItem("Tutti i cantieri", "Tutti")
-        self.cantiere_filter.addItems(self.cantieri)
-        # Connect to _filter_data to apply filter immediately upon selection change
+        for cant in self.cantieri:
+            self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.currentIndexChanged.connect(lambda: self._filter_data())
         self.cantiere_filter.setFixedWidth(150)
         search_layout.addWidget(self.cantiere_filter)
@@ -1257,7 +1266,12 @@ class TimbratureDBPanel(QWidget):
         # Filters for Settings
         filter_layout = QHBoxLayout()
         self.filter_empty_cb = QCheckBox("Mostra solo dati mancanti (Vuoti)")
-        self.filter_empty_cb.stateChanged.connect(self._load_settings_data)
+        
+        # Load saved state
+        config = config_manager.load_config()
+        self.filter_empty_cb.setChecked(config.get("timbrature_filter_empty_only", False))
+        
+        self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
         filter_layout.addWidget(self.filter_empty_cb)
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
@@ -1273,6 +1287,11 @@ class TimbratureDBPanel(QWidget):
         layout.addWidget(self.settings_table)
 
         # Load data immediately
+        self._load_settings_data()
+
+    def _on_filter_empty_changed(self, state):
+        """Save preference and reload settings table."""
+        config_manager.set_config_value("timbrature_filter_empty_only", self.filter_empty_cb.isChecked())
         self._load_settings_data()
 
     def _on_tab_changed(self, index):
@@ -1340,13 +1359,15 @@ class TimbratureDBPanel(QWidget):
         self.reparto_filter.blockSignals(True)
         self.reparto_filter.clear()
         self.reparto_filter.addItem("Tutti i reparti", "Tutti")
-        self.reparto_filter.addItems(self.reparti)
+        for rep in self.reparti:
+            self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.blockSignals(False)
         
         self.cantiere_filter.blockSignals(True)
         self.cantiere_filter.clear()
         self.cantiere_filter.addItem("Tutti i cantieri", "Tutti")
-        self.cantiere_filter.addItems(self.cantieri)
+        for cant in self.cantieri:
+            self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.blockSignals(False)
         
         # Refresh Settings Table Combos (Reload data)

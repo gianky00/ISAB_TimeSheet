@@ -56,7 +56,10 @@ class ContabilitaWorker(QThread):
         self.start_time = time.time()
 
         def global_progress(processed_in_phase, phase_offset, phase_name):
+            nonlocal total_ops
             current_total = phase_offset + processed_in_phase
+            if current_total > total_ops: total_ops = current_total # Dynamic adjustment
+            
             elapsed = time.time() - self.start_time
 
             if current_total > 0 and elapsed > 0:
@@ -66,6 +69,7 @@ class ContabilitaWorker(QThread):
 
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current_total / total_ops) * 100)
+                if percent > 99: percent = 99 # Cap until actually finished
 
                 self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
 

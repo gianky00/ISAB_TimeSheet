@@ -8,6 +8,7 @@ import pandas as pd
 import json
 from pathlib import Path
 from typing import Optional, List, Dict, Callable
+from src.core import config_manager
 from src.core.config_manager import CONFIG_DIR
 from src.core.database import db_manager
 
@@ -266,32 +267,14 @@ class TimbratureStorage:
             raise e
 
     def get_lists(self) -> Dict[str, List[str]]:
-        """Recupera le liste configurate (Reparti, Cantieri)."""
-        lists_path = self.db_path.parent / "timbrature_lists.json"
-        defaults = {
-            "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
-            "cantieri": []
+        """Recupera le liste configurate (Reparti, Cantieri) da config.json."""
+        config = config_manager.load_config()
+        return {
+            "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),
+            "cantieri": config.get("cantieri", [])
         }
-        
-        if not lists_path.exists():
-            return defaults
-            
-        try:
-            with open(lists_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                # Merge with defaults if missing keys
-                for k, v in defaults.items():
-                    if k not in data:
-                        data[k] = v
-                return data
-        except Exception:
-            return defaults
 
     def save_lists(self, data: Dict[str, List[str]]):
-        """Salva le liste configurate."""
-        lists_path = self.db_path.parent / "timbrature_lists.json"
-        try:
-            with open(lists_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=4)
-        except Exception:
-            pass
+        """Salva le liste configurate in config.json."""
+        config_manager.set_config_value("reparti", data.get("reparti", []))
+        config_manager.set_config_value("cantieri", data.get("cantieri", []))
