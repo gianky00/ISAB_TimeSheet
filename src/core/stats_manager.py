@@ -4,6 +4,7 @@ Gestisce il salvataggio persistente delle statistiche di utilizzo.
 """
 import json
 from pathlib import Path
+from datetime import datetime
 from src.core import config_manager
 
 class StatsManager:
@@ -40,17 +41,25 @@ class StatsManager:
             print(f"Errore salvataggio statistiche: {e}")
 
     def increment_usage(self, bot_id: str):
-        """Incrementa il contatore di utilizzo per un bot."""
+        """Incrementa il contatore di utilizzo per un bot e aggiorna l'ultimo avvio."""
         if bot_id not in self.stats:
-            self.stats[bot_id] = {"runs": 0, "errors": 0}
+            self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
+        
+        # Ensure structure integrity for old stats
+        if "runs" not in self.stats[bot_id]: self.stats[bot_id]["runs"] = 0
+        if "errors" not in self.stats[bot_id]: self.stats[bot_id]["errors"] = 0
 
         self.stats[bot_id]["runs"] += 1
+        self.stats[bot_id]["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self._save_stats()
 
     def increment_error(self, bot_id: str):
         """Incrementa il contatore di errori per un bot."""
         if bot_id not in self.stats:
-            self.stats[bot_id] = {"runs": 0, "errors": 0}
+            self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
+            
+        # Ensure structure integrity
+        if "errors" not in self.stats[bot_id]: self.stats[bot_id]["errors"] = 0
 
         self.stats[bot_id]["errors"] += 1
         self._save_stats()
