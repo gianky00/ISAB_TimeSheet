@@ -20,12 +20,14 @@ from src.gui.settings_panel import SettingsPanel
 from src.gui.help_panel import HelpPanel
 from src.gui.dashboard_panel import DashboardPanel
 from src.gui.lyra_panel import LyraPanel
+from src.gui.notifications_panel import NotificationsPanel
 
 # Import Core
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.license_validator import get_license_info
 from src.core import config_manager
 from src.core.app_updater import check_for_updates
+from src.core.notification_manager import NotificationManager
 
 # Import UI/UX Components
 from src.gui.widgets.toast import ToastManager
@@ -282,6 +284,9 @@ class MainWindow(QMainWindow):
         
         self.btn_database = SidebarButton("Database", "🗄️")
         sidebar_layout.addWidget(self.btn_database)
+
+        self.btn_notifications = SidebarButton("Notifiche", "🔔")
+        sidebar_layout.addWidget(self.btn_notifications)
         
         sidebar_layout.addStretch()
 
@@ -372,6 +377,7 @@ class MainWindow(QMainWindow):
         self.settings_panel = SettingsPanel()
         self.help_panel = HelpPanel()
         self.lyra_panel = LyraPanel()
+        self.notifications_panel = NotificationsPanel()
         
         # Collega il segnale di update dal bot al database
         self.timbrature_bot_panel.data_updated.connect(self.timbrature_db_panel.refresh_data)
@@ -397,12 +403,14 @@ class MainWindow(QMainWindow):
         # 3: Database
         # 4: Settings
         # 5: Help
+        # 6: Notifications
         self.page_stack.addWidget(self.dashboard_panel)    # Index 0
         self.page_stack.addWidget(self.automazioni_widget) # Index 1
         self.page_stack.addWidget(self.lyra_panel)         # Index 2
         self.page_stack.addWidget(self.database_widget)    # Index 3
         self.page_stack.addWidget(self.settings_panel)     # Index 4
         self.page_stack.addWidget(self.help_panel)         # Index 5
+        self.page_stack.addWidget(self.notifications_panel) # Index 6
         
         content_layout.addWidget(self.page_stack)
         
@@ -415,7 +423,8 @@ class MainWindow(QMainWindow):
             self.btn_lyra,
             self.btn_database,
             self.btn_settings,
-            self.btn_help
+            self.btn_help,
+            self.btn_notifications
         ]
     
     def _connect_signals(self):
@@ -426,6 +435,12 @@ class MainWindow(QMainWindow):
         self.btn_database.clicked.connect(lambda: self._navigate_to(3))
         self.btn_settings.clicked.connect(lambda: self._navigate_to(4))
         self.btn_help.clicked.connect(lambda: self._navigate_to(5))
+        self.btn_notifications.clicked.connect(lambda: self._navigate_to(6))
+
+        # Notification Badge
+        NotificationManager().unread_count_changed.connect(self.btn_notifications.set_badge)
+        # Init badge
+        self.btn_notifications.set_badge(NotificationManager().get_unread_count())
 
         # Aggiornamento live impostazioni
         self.settings_panel.settings_saved.connect(self._on_settings_saved)

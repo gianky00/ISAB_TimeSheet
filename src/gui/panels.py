@@ -84,8 +84,9 @@ class BaseBotPanel(QWidget):
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
     
-    def __init__(self, bot_name: str, bot_description: str, parent=None):
+    def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
         super().__init__(parent)
+        self.bot_id = bot_id
         self.bot_name = bot_name
         self.bot_description = bot_description
         self.worker = None
@@ -157,7 +158,7 @@ class BaseBotPanel(QWidget):
         self.status_card.setStatus(StatusCard.Status.RUNNING)
 
         # Track usage
-        StatsManager().increment_usage(self.bot_name)
+        StatsManager().increment_usage(self.bot_id)
     
     def _on_stop(self):
         """Gestisce lo stop del bot."""
@@ -191,7 +192,7 @@ class BaseBotPanel(QWidget):
         else:
             self.status_card.setStatus(StatusCard.Status.ERROR)
             self.log_widget.timeline.set_mood("error")
-            StatsManager().increment_error(self.bot_name)
+            StatsManager().increment_error(self.bot_id)
         
         self.bot_finished.emit(success)
 
@@ -226,6 +227,7 @@ class ScaricaTSPanel(BaseBotPanel):
     
     def __init__(self, parent=None):
         super().__init__(
+            bot_id="scarico_ts",
             bot_name="📥 Scarico TS",
             bot_description="Tasto destro per aggiungere/rimuovere righe. Modifica i valori direttamente nelle celle.",
             parent=parent
@@ -523,6 +525,7 @@ class DettagliOdAPanel(BaseBotPanel):
     
     def __init__(self, parent=None):
         super().__init__(
+            bot_id="dettagli_oda",
             bot_name="📋 Dettagli OdA",
             bot_description="Scarica automaticamente i dettagli degli Ordini d'Acquisto dal portale ISAB.",
             parent=parent
@@ -803,6 +806,7 @@ class CaricoTSPanel(BaseBotPanel):
     
     def __init__(self, parent=None):
         super().__init__(
+            bot_id="carico_ts",
             bot_name="📤 Carico TS",
             bot_description="Upload automatico dei Timesheet sul portale ISAB",
             parent=parent
@@ -929,6 +933,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def __init__(self, parent=None):
         super().__init__(
+            bot_id="timbrature",
             bot_name="⏱️ Timbrature",
             bot_description="Scarica e gestisci le timbrature del personale",
             parent=parent

@@ -8,9 +8,9 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
     QMessageBox, QListWidget, QListWidgetItem, QInputDialog,
-    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView, QTableWidgetItem
+    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView, QTableWidgetItem, QProgressBar
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QFont
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from src.core import config_manager
@@ -97,40 +97,64 @@ class StatisticsWidget(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setSpacing(20)
 
+        # Header
         info = QLabel("Statistiche di Utilizzo Globale")
-        info.setStyleSheet("font-size: 18px; font-weight: bold; color: #495057;")
+        info.setStyleSheet("font-size: 20px; font-weight: bold; color: #212529;")
         layout.addWidget(info)
 
+        # Summary Cards Container
+        self.cards_layout = QHBoxLayout()
+        self.cards_layout.setSpacing(15)
+        layout.addLayout(self.cards_layout)
+        
+        # Table Title
+        table_title = QLabel("Dettaglio Attività")
+        table_title.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 10px; color: #495057;")
+        layout.addWidget(table_title)
+
+        # Table
         self.table = QTableWidget()
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Bot", "Esecuzioni", "Errori"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["Bot", "Esecuzioni", "Errori", "Successo", "Ultima Esecuzione"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setStyleSheet("""
             QTableWidget {
                 border: 1px solid #dee2e6;
-                border-radius: 4px;
+                border-radius: 8px;
+                background-color: white;
                 font-size: 14px;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
-                padding: 8px;
+                padding: 12px;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
+                color: #495057;
+            }
+            QTableWidget::item {
+                padding: 10px;
+                border-bottom: 1px solid #f0f0f0;
             }
         """)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         layout.addWidget(self.table)
 
+        # Refresh Button
         refresh_btn = QPushButton("🔄 Aggiorna Statistiche")
-        refresh_btn.setFixedWidth(180)
+        refresh_btn.setFixedWidth(200)
+        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         refresh_btn.setStyleSheet("""
             QPushButton {
                 background-color: #6c757d;
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
+                border-radius: 6px;
+                padding: 10px 20px;
                 font-weight: bold;
+                font-size: 14px;
             }
             QPushButton:hover { background-color: #5a6268; }
         """)
@@ -139,33 +163,116 @@ class StatisticsWidget(QWidget):
 
         self.refresh()
 
+    def _create_summary_card(self, title, value, color, icon=""):
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: white;
+                border: 1px solid #dee2e6;
+                border-left: 5px solid {color};
+                border-radius: 8px;
+            }}
+        """)
+        l = QVBoxLayout(card)
+        l.setContentsMargins(20, 15, 20, 15)
+        
+        lbl_title = QLabel(f"{icon} {title}")
+        lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none;")
+        l.addWidget(lbl_title)
+        
+        lbl_val = QLabel(str(value))
+        lbl_val.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none;")
+        l.addWidget(lbl_val)
+        
+        return card
+
     def refresh(self):
         """Ricarica le statistiche."""
         stats = StatsManager().get_all_stats()
+        
+        # 1. Update Cards
+        # Clear previous cards
+        while self.cards_layout.count():
+            item = self.cards_layout.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+            
+        total_runs = sum(d.get("runs", 0) for d in stats.values())
+        total_errors = sum(d.get("errors", 0) for d in stats.values())
+        success_rate = 0
+        if total_runs > 0:
+            success_rate = ((total_runs - total_errors) / total_runs) * 100
+            
+        self.cards_layout.addWidget(self._create_summary_card("Esecuzioni Totali", total_runs, "#0d6efd", "🚀"))
+        self.cards_layout.addWidget(self._create_summary_card("Errori Totali", total_errors, "#dc3545", "⚠️"))
+        self.cards_layout.addWidget(self._create_summary_card("Tasso Successo", f"{success_rate:.1f}%", "#198754", "📈"))
+        
+        # 2. Update Table
         self.table.setRowCount(0)
-
+        
         bot_names = {
             "timbrature": "⏱️ Timbrature",
             "scarico_ts": "📥 Scarico TS",
             "carico_ts": "📤 Carico TS",
             "dettagli_oda": "📋 Dettagli OdA"
         }
+        
+        sorted_keys = sorted(stats.keys())
 
-        for bot_id, data in stats.items():
+        for bot_id in sorted_keys:
+            data = stats[bot_id]
             row = self.table.rowCount()
             self.table.insertRow(row)
 
             name = bot_names.get(bot_id, bot_id.capitalize())
-            runs = str(data.get("runs", 0))
-            errors = str(data.get("errors", 0))
+            runs = data.get("runs", 0)
+            errors = data.get("errors", 0)
+            last_run = data.get("last_run", "")
+            
+            # Calc rate
+            rate = 0
+            if runs > 0:
+                rate = ((runs - errors) / runs) * 100
+            
+            # Format date
+            last_run_display = "Mai"
+            if last_run:
+                try:
+                    from datetime import datetime
+                    dt = datetime.fromisoformat(last_run)
+                    last_run_display = dt.strftime("%d/%m/%Y %H:%M")
+                except:
+                    last_run_display = last_run
 
             self.table.setItem(row, 0, QTableWidgetItem(name))
-            self.table.setItem(row, 1, QTableWidgetItem(runs))
-
-            err_item = QTableWidgetItem(errors)
-            if int(errors) > 0:
+            self.table.setItem(row, 1, QTableWidgetItem(str(runs)))
+            
+            err_item = QTableWidgetItem(str(errors))
+            if errors > 0:
                 err_item.setForeground(Qt.GlobalColor.red)
+                err_item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             self.table.setItem(row, 2, err_item)
+            
+            # Success Bar (Custom Widget inside Cell)
+            progress = QProgressBar()
+            progress.setRange(0, 100)
+            progress.setValue(int(rate))
+            progress.setTextVisible(True)
+            progress.setFormat(f"{rate:.1f}%")
+            progress.setStyleSheet(f"""
+                QProgressBar {{
+                    border: 1px solid #dee2e6;
+                    border-radius: 4px;
+                    text-align: center;
+                    background-color: #f8f9fa;
+                    color: black;
+                }}
+                QProgressBar::chunk {{
+                    background-color: {'#198754' if rate > 80 else '#ffc107' if rate > 50 else '#dc3545'};
+                }}
+            """)
+            self.table.setCellWidget(row, 3, progress)
+            
+            self.table.setItem(row, 4, QTableWidgetItem(last_run_display))
 
 
 class SettingsPanel(QWidget):
