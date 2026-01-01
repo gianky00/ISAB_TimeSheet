@@ -1211,8 +1211,8 @@ class ContabilitaManager:
 
                 # 3. Certificati (Cerca Matricola, Costruttore, Modello)
                 sql_c = """SELECT DISTINCT modello, costruttore, matricola FROM certificati_campione 
-                           WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? LIMIT 20"""
-                cursor.execute(sql_c, (like_query, like_query))
+                           WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT 20"""
+                cursor.execute(sql_c, (like_query, like_query, like_query))
                 for r in cursor.fetchall():
                     out["CERTIFICATI"].append({"modello": r[0], "costruttore": r[1], "matricola": r[2]})
                     

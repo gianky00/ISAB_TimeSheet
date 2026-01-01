@@ -51,8 +51,9 @@ class DatabaseManager:
 
         try:
             # Optimize Performance
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute("PRAGMA synchronous=NORMAL;")
+            if not read_only:
+                conn.execute("PRAGMA journal_mode=WAL;")
+                conn.execute("PRAGMA synchronous=NORMAL;")
 
             # Row Factory for dict-like access if desired, but many legacy queries expect tuples.
             # We keep default (tuples) here, but consumers can change it.
