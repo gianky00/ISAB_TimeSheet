@@ -1,134 +1,124 @@
-"""
-Tests for ContabilitaManager logic.
-"""
 import pytest
-import sqlite3
 import pandas as pd
-from pathlib import Path
-from src.core.contabilita_manager import ContabilitaManager
-from src.core.database import db_manager
-
-@pytest.fixture
-def test_db_path(tmp_path):
-    """Overrides the real DB path with a temp one."""
-    db = tmp_path / "contabilita_test.db"
-    # We patch the DB_PATH class attribute for the test duration
-    original = ContabilitaManager.DB_PATH
-    ContabilitaManager.DB_PATH = db
-    
-    # Init Schema via db_manager helper
-    db_manager.init_db() # Initializes ALL dbs, including the one at config_dir.
-    # To be safe, let's manually init this specific file
-    with sqlite3.connect(db) as conn:
-        # Minimal Schema for Contabilita
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS contabilita (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                year INTEGER,
-                data_prev TEXT,
-                totale_prev TEXT,
-                annotazioni TEXT,
-                nome_file TEXT,
-                n_prev TEXT,
-                created_at TIMESTAMP
-            )
-        """)
-    
-    yield db
-    ContabilitaManager.DB_PATH = original
-
-@pytest.fixture
-def manager(test_db_path):
-    return ContabilitaManager()
-
-def test_insert_and_get_data(manager, test_db_path):
-    # Test manual insertion logic (simulating what import_excel does internally)
-    with sqlite3.connect(test_db_path) as conn:
-        conn.execute("""
-            INSERT INTO contabilita (year, data_prev, totale_prev, annotazioni)
-            VALUES (2025, '2025-01-01', '1000', 'Test Note')
-        """)
-        conn.commit()
-    
-    # Test retrieval methods if they exist, or raw query
-    with sqlite3.connect(test_db_path) as conn:
-        rows = conn.execute("SELECT * FROM contabilita").fetchall()
-        assert len(rows) == 1
-        assert rows[0][1] == 2025
-
-def test_column_mapping(manager):
-    # Verify mappings exist
-    assert "DATA PREV." in manager.COLUMNS_MAPPING
-    assert "MESE" in manager.COLUMNS_MAPPING
-    
-    # Verify DB column names match schema
-    db_cols = list(manager.COLUMNS_MAPPING.values())
-    assert "data_prev" in db_cols
-    assert "mese" in db_cols
-
-def test_year_extraction(manager):
-    # If there is a helper method for year, test it.
-    # Assuming standard behavior, let's test a potential utility if exposed
-    pass
-
-def test_scarico_ore_schema(test_db_path):
-    # Verify scarico_ore table creation
-    with sqlite3.connect(test_db_path) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS scarico_ore (
-                id INTEGER PRIMARY KEY,
-                data TEXT,
-                totale_ore TEXT,
-                styles TEXT
-            )
-        """)
-        conn.execute("INSERT INTO scarico_ore (data, totale_ore) VALUES ('2025-01-01', '8')")
-        conn.commit()
-        
-        row = conn.execute("SELECT * FROM scarico_ore").fetchone()
-        assert row[2] == '8'
-
+import os
 from unittest.mock import MagicMock, patch
+from src.core.contabilita_manager import ContabilitaManager
 
-def test_import_attivita_programmate_logic(manager, test_db_path, tmp_path):
-    # Create a dummy excel logic mock
-    mock_df = pd.DataFrame({
-        "PS": ["PS1"],
-        "AREA": ["Area1"],
-        "PdL": ["PDL1"],
-        "IMP.": ["IMP1"],
-        "DESCRIZIONE\nATTIVITA'": ["Desc"],
-        # Add other required mapped cols with dummy values to match mapping logic
-        "LUN": [""], "MAR": [""], "MER": [""], "GIO": [""], "VEN": [""],
-        "STATO\nPdL": [""], "STATO\nATTIVITA'": [""], "DATA\nCONTROLLO": [""],
-        "PERSONALE\nIMPIEGATO": [""], "PO": [""], "AVVISO": [""]
-    })
-    
-    dummy_path = tmp_path / "dummy_attivita.xlsx"
-    dummy_path.touch() # Create file so os.path.exists passes
-    
-    # PATCH db_manager.DB_CONTABILITA to point to our test DB!
-    with patch("pandas.read_excel", return_value=mock_df) as mock_read, \
-         patch("src.core.database.DatabaseManager.DB_CONTABILITA", test_db_path):
+class TestContabilitaLogic:
+
+    @pytest.fixture
+    def mock_db(self):
+        with patch('src.core.contabilita_manager.db_manager') as mock:
+            mock_conn = MagicMock()
+            mock_cursor = MagicMock()
+            mock_conn.cursor.return_value = mock_cursor
+            mock.get_connection.return_value.__enter__.return_value = mock_conn
+            mock.get_connection.return_value.__exit__.return_value = None
+            yield mock
+
+    @patch('src.core.contabilita_manager.pd.read_excel')
+    @patch('src.core.contabilita_manager.pd.ExcelFile')
+    def test_import_data_success(self, mock_excel_file, mock_read_excel, mock_db):
+        # Setup ExcelFile
+        mock_xl_instance = MagicMock()
+        mock_xl_instance.sheet_names = ['2023']
+        mock_excel_file.return_value = mock_xl_instance
         
-        # Init schema on the TEST DB (since we patched the path class attribute)
-        # Note: DatabaseManager singleton is already instantiated. 
-        # But we patched the class attribute, so accessing self.DB_CONTABILITA *might* work if accessed via self.
-        # Let's verify usage in DatabaseManager: self.DB_CONTABILITA. 
-        # Since it's an instance attribute usually set from class, patching Class attribute might be tricky if instance already exists.
-        # Let's patch the INSTANCE attribute.
+        # Prepare Data
+        columns = [
+            'DATA PREV.', 'MESE', 'N°PREV.', 'TOTALE PREV.', "ATTIVITA'", 'TCL', 'ODC',
+            "STATO ATTIVITA'", 'TIPOLOGIA', 'ORE SP', 'RESA', 'ANNOTAZIONI',
+            'INDIRIZZO CONSUNTIVO', 'NOME FILE'
+        ]
+        row_data = [
+            '2023-01-01', 'Gennaio', '100', 1000.50, 'Activity', 'TCL1', 'ODC1',
+            'Aperta', 'Tipo1', 10.0, 100.0, 'Note', 'path', 'file.pdf'
+        ]
         
-        db_manager.DB_CONTABILITA = test_db_path
-        db_manager.init_db() 
+        # 1. Preview DF (header detection)
+        # Needs to contain the headers in the body to be detected by iterrows
+        preview_data = [columns] + [row_data]
+        preview_df = pd.DataFrame(preview_data)
         
-        success, msg, added, removed = manager.import_attivita_programmate(str(dummy_path))
+        # 2. Full DF (actual data)
+        full_df = pd.DataFrame([row_data], columns=columns)
         
-        assert success is True, f"Failed: {msg}"
+        # Side effect for read_excel calls
+        mock_read_excel.side_effect = [preview_df, full_df]
+        
+        with patch('src.core.contabilita_manager.Path.exists', return_value=True):
+             success, msg, added, removed = ContabilitaManager.import_data_from_excel("dummy.xlsx")
+        
+        if not success:
+            print(f"Import failed with: {msg}")
+            
+        assert success is True
         assert added == 1
+
+    @patch('src.core.contabilita_manager.pd.read_sql_query') # Patch read_sql_query for lookup
+    @patch('src.core.contabilita_manager.pd.read_excel')
+    def test_import_giornaliere(self, mock_read_excel, mock_read_sql, mock_db):
+        # Mock Lookup DF (prevents DB error)
+        mock_read_sql.return_value = pd.DataFrame(columns=['n_prev', 'odc'])
+
+        # Mock DataFrame
+        data = {
+            'DATA': ['2023-01-01'],
+            'PERSONALE': ['Mario Rossi'],
+            "DESCRIZIONE ATTIVITA'": ['Lavoro'],
+            'TCL': ['TCL1'],
+            'ODC': ['ODC1'],
+            'N° PDL': ['PDL1'],
+            'INIZIO': ['08:00'],
+            'FINE': ['17:00'],
+            'ORE': [8],
+            'consuntivo': ['100']
+        }
+        df = pd.DataFrame(data)
+        mock_read_excel.return_value = df
+
+        # Mock scan_workload
+        with patch('src.core.contabilita_manager.ContabilitaManager.scan_workload', return_value=(1, 1)):
+             # Mock Path.iterdir by creating real temp structure or strict mocking
+             # Let's use strict mocking of Path
+             with patch('src.core.contabilita_manager.Path') as MockPath:
+                 # Instance for giornaliere_path
+                 mock_path_inst = MockPath.return_value
+                 mock_path_inst.exists.return_value = True
+                 
+                 # Mock Year Dir
+                 mock_year_dir = MagicMock()
+                 mock_year_dir.is_dir.return_value = True
+                 mock_year_dir.name = "Giornaliere 2023"
+                 
+                 # Mock File
+                 mock_file = MagicMock()
+                 mock_file.name = "file.xlsx"
+                 
+                 mock_year_dir.glob.return_value = [mock_file]
+                 
+                 mock_path_inst.iterdir.return_value = [mock_year_dir]
+                 
+                 success, msg, added, removed = ContabilitaManager.import_giornaliere("dummy_folder")
+                 
+        assert success is True
+        assert added == 1
+
+    def test_scan_workload(self, tmp_path):
+        # Use real temporary directory
+        d = tmp_path / "dummy_dir"
+        d.mkdir()
         
-        # Verify DB
-        with sqlite3.connect(test_db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            row = conn.execute("SELECT * FROM attivita_programmate").fetchone()
-            assert row is not None
-            assert row['ps'] == "PS1"
+        f = tmp_path / "dummy_file.xlsx"
+        f.touch()
+        
+        with patch('zipfile.ZipFile') as MockZip:
+            z = MockZip.return_value
+            z.__enter__.return_value = z
+            z.namelist.return_value = ['xl/workbook.xml']
+            z.read.return_value = b'name="Sheet1" name="2023" name="Dati"'
+            
+            sheets, files = ContabilitaManager.scan_workload(str(f), str(d))
+            
+            assert sheets == 1
+            assert files == 0 # No files in empty dir
