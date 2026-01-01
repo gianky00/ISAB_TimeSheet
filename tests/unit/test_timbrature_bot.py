@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch, ANY, PropertyMock
 from pathlib import Path
 import pandas as pd
 
-from src.bots.timbrature.bot import TimbratureBot
-from src.bots.timbrature.storage import TimbratureStorage
-from src.bots.timbrature.pages.timbrature_page import TimbraturePage
+from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
+from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
 
 @pytest.fixture
 def mock_driver():
@@ -99,10 +99,9 @@ class TestTimbratureStorage:
         assert mock_cursor.execute.call_count >= 1 # Create table + Insert
 
 class TestTimbratureBot:
-    """Test Main Bot Orchestration."""
 
-    @patch('src.bots.timbrature.bot.TimbraturePage')
-    @patch('src.bots.timbrature.bot.TimbratureStorage')
+    @patch('src.bots.portale_fornitori.timbrature.bot.TimbraturePage')
+    @patch('src.bots.portale_fornitori.timbrature.bot.TimbratureStorage')
     def test_run_success(self, MockStorage, MockPage, timbrature_bot):
         """Should run full workflow successfully."""
         # Setup Mocks

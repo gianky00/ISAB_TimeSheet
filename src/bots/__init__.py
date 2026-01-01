@@ -4,10 +4,11 @@ Registry e factory per tutti i bot disponibili.
 """
 from typing import Dict, Any, Optional
 from src.bots.base import BaseBot, BotStatus
-from src.bots.scarico_ts import ScaricaTSBot
-from src.bots.carico_ts import CaricoTSBot
-from src.bots.dettagli_oda import DettagliOdABot
-from src.bots.timbrature import TimbratureBot
+from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
+from src.bots.portale_fornitori.carico_ts import CaricoTSBot
+from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
+from src.bots.portale_fornitori.timbrature import TimbratureBot
+from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 
 # Registry dei bot disponibili
@@ -68,6 +69,14 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "icon": "⏱️",
         "columns": [],
         "config_key": "last_timbrature_data"
+    },
+    "scarico_pdl": {
+        "class": SafeWorkPDLBot,
+        "name": "Scarico PDL",
+        "description": "Scarica e stampa Permessi di Lavoro da SafeWork",
+        "icon": "🛡️",
+        "columns": [{"name": "NUMERO PDL", "type": "text"}],
+        "config_key": "last_pdl_data"
     }
 }
 
@@ -115,6 +124,7 @@ __all__ = [
     'CaricoTSBot',
     'DettagliOdABot',
     'TimbratureBot',
+    'SafeWorkPDLBot',
     'BOT_REGISTRY',
     'get_available_bots',
     'get_bot_info',

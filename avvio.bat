@@ -16,14 +16,14 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Controlla e installa dipendenze se necessario
-if not exist "venv" (
-    echo [INFO] Creazione ambiente virtuale...
-    python -m venv venv
+:: Controllo se esiste l'ambiente virtuale
+if not exist ".venv" (
+    echo [INFO] Ambiente virtuale non trovato. Creazione in corso...
+    python -m venv .venv
 )
 
-echo [INFO] Attivazione ambiente virtuale...
-call venv\Scripts\activate.bat
+:: Attivazione ambiente virtuale
+call .venv\Scripts\activate.bat
 
 echo [INFO] Verifica dipendenze...
 python.exe -m pip install --upgrade pip

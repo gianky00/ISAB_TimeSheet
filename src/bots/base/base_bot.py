@@ -27,7 +27,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from src.core.constants import URLs, Timeouts, BotStatus, BrowserConfig
 from src.core import config_manager
-from src.bots.common.locators import LoginLocators, CommonLocators
+from src.bots.portale_fornitori.common.locators import LoginLocators, CommonLocators
 
 class BaseBot(ABC):
     """

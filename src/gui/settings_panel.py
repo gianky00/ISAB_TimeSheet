@@ -8,13 +8,15 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
     QMessageBox, QListWidget, QListWidgetItem, QInputDialog,
-    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView, QTableWidgetItem, QProgressBar
+    QFrame, QScrollArea, QDialog, QFormLayout, QMenu, QTabWidget, QTableWidget, QHeaderView, QTableWidgetItem, QProgressBar, QComboBox
 )
 from PyQt6.QtGui import QAction, QFont
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from src.core import config_manager
 from src.core.stats_manager import StatsManager
+from src.core.audit_manager import AuditManager
+from src.core.backup_manager import BackupManager
 
 
 class AccountDialog(QDialog):
@@ -416,6 +418,47 @@ class SettingsPanel(QWidget):
         
         lists_container.addWidget(account_group)
 
+        # 1.5 Sezione Account SafeWork (Nuova)
+        sw_account_group = self._create_group_box("🛡️ Account SafeWork")
+        sw_account_layout = QVBoxLayout(sw_account_group)
+        self.groups.append(sw_account_group)
+
+        self.sw_account_list = QListWidget()
+        self.sw_account_list.setMaximumHeight(100)
+        self.sw_account_list.setStyleSheet(self._list_style())
+        self.sw_account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.sw_account_list.customContextMenuRequested.connect(lambda pos: self._show_sw_account_context_menu(pos))
+        sw_account_layout.addWidget(self.sw_account_list)
+
+        sw_acc_btns = QHBoxLayout()
+        add_sw_btn = QPushButton("➕")
+        add_sw_btn.setToolTip("Aggiungi Account SafeWork")
+        add_sw_btn.clicked.connect(self._add_sw_account)
+        self._style_mini_button(add_sw_btn, "#28a745")
+        sw_acc_btns.addWidget(add_sw_btn)
+
+        edit_sw_btn = QPushButton("✏️")
+        edit_sw_btn.setToolTip("Modifica Account")
+        edit_sw_btn.clicked.connect(self._edit_sw_account)
+        self._style_mini_button(edit_sw_btn, "#0d6efd")
+        sw_acc_btns.addWidget(edit_sw_btn)
+
+        rem_sw_btn = QPushButton("🗑️")
+        rem_sw_btn.setToolTip("Rimuovi Account")
+        rem_sw_btn.clicked.connect(self._remove_sw_account)
+        self._style_mini_button(rem_sw_btn, "#dc3545")
+        sw_acc_btns.addWidget(rem_sw_btn)
+
+        def_sw_btn = QPushButton("⭐")
+        def_sw_btn.setToolTip("Imposta Default")
+        def_sw_btn.clicked.connect(self._set_default_sw_account)
+        self._style_mini_button(def_sw_btn, "#ffc107", text_color="black")
+        sw_acc_btns.addWidget(def_sw_btn)
+        sw_acc_btns.addStretch()
+        sw_account_layout.addLayout(sw_acc_btns)
+
+        lists_container.addWidget(sw_account_group)
+
         # 2. Sezione Contratti
         contract_group = self._create_group_box("📋 Contratti")
         contract_layout = QVBoxLayout(contract_group)
@@ -768,12 +811,132 @@ class SettingsPanel(QWidget):
         # Add Config Tab
         self.tabs.addTab(config_tab, "Configurazione")
 
-        # --- TAB 2: Statistiche ---
+        # --- TAB 2: Backup ---
+        self.backup_tab = QWidget()
+        self._setup_backup_tab(self.backup_tab)
+        self.tabs.addTab(self.backup_tab, "☁️ Backup Cloud")
+
+        # --- TAB 3: Statistiche ---
         self.stats_widget = StatisticsWidget()
         self.tabs.addTab(self.stats_widget, "Statistiche")
 
         # Refresh stats when tab is clicked
         self.tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _setup_backup_tab(self, parent_widget):
+        layout = QVBoxLayout(parent_widget)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        # Header
+        info = QLabel("Salvataggio Dati in Cloud")
+        info.setStyleSheet("font-size: 20px; font-weight: bold; color: #212529;")
+        layout.addWidget(info)
+        
+        desc = QLabel("Il sistema rileva automaticamente OneDrive, Google Drive, Dropbox o MEGA per salvare i tuoi dati al sicuro.")
+        desc.setStyleSheet("color: #6c757d; font-size: 14px;")
+        layout.addWidget(desc)
+
+        # Detection Status & Selection
+        clouds = BackupManager.detect_cloud_paths()
+        status_group = QGroupBox("Destinazione Cloud")
+        status_layout = QVBoxLayout(status_group)
+        
+        status_layout.addWidget(QLabel("Seleziona il servizio Cloud da utilizzare:"))
+        
+        self.cloud_combo = QComboBox()
+        self.cloud_combo.setMinimumHeight(40)
+        self.cloud_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: white;
+            }
+        """)
+        
+        # Populate
+        # Always add Local option first
+        self.cloud_combo.addItem("📂 Locale (Documenti)", "Local")
+        
+        # Add detected clouds
+        if clouds:
+            for name, path in clouds.items():
+                self.cloud_combo.addItem(f"☁️ {name} ({path})", name)
+            
+        # Load selection
+        config = config_manager.load_config()
+        saved_cloud = config.get("backup_cloud_provider")
+        if saved_cloud:
+            index = self.cloud_combo.findData(saved_cloud)
+            if index >= 0:
+                self.cloud_combo.setCurrentIndex(index)
+        
+        # Save on change
+        self.cloud_combo.currentIndexChanged.connect(self._save_cloud_preference)
+        
+        status_layout.addWidget(self.cloud_combo)
+        layout.addWidget(status_group)
+
+        # Settings
+        sett_group = QGroupBox("Impostazioni")
+        sett_layout = QVBoxLayout(sett_group)
+        
+        self.auto_backup_check = QCheckBox("Esegui backup automatico alla chiusura")
+        config = config_manager.load_config()
+        self.auto_backup_check.setChecked(config.get("auto_backup", True))
+        self.auto_backup_check.stateChanged.connect(lambda: config_manager.set_config_value("auto_backup", self.auto_backup_check.isChecked()))
+        sett_layout.addWidget(self.auto_backup_check)
+        
+        layout.addWidget(sett_group)
+
+        # Actions
+        btn_layout = QHBoxLayout()
+        
+        backup_btn = QPushButton("☁️ Esegui Backup Ora")
+        backup_btn.setMinimumHeight(45)
+        backup_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0d6efd; color: white; border-radius: 6px; font-weight: bold; font-size: 14px;
+            }
+            QPushButton:hover { background-color: #0b5ed7; }
+        """)
+        backup_btn.clicked.connect(self._run_manual_backup)
+        btn_layout.addWidget(backup_btn)
+        
+        open_folder_btn = QPushButton("📂 Apri Cartella Backup")
+        open_folder_btn.setMinimumHeight(45)
+        open_folder_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d; color: white; border-radius: 6px; font-weight: bold; font-size: 14px;
+            }
+            QPushButton:hover { background-color: #5a6268; }
+        """)
+        open_folder_btn.clicked.connect(self._open_backup_folder)
+        btn_layout.addWidget(open_folder_btn)
+        
+        layout.addLayout(btn_layout)
+        layout.addStretch()
+
+    def _save_cloud_preference(self):
+        """Salva il provider cloud selezionato."""
+        provider = self.cloud_combo.currentData()
+        if provider:
+            config_manager.set_config_value("backup_cloud_provider", provider)
+
+    def _run_manual_backup(self):
+        success, msg = BackupManager.create_backup()
+        if success:
+            from src.gui.widgets.toast import ToastManager
+            ToastManager.instance().show(f"Backup completato!\n{msg}", "success")
+        else:
+            QMessageBox.warning(self, "Errore Backup", msg)
+
+    def _open_backup_folder(self):
+        path = BackupManager.get_backup_dir()
+        from src.utils.helpers import open_folder
+        open_folder(str(path))
 
     def _on_tab_changed(self, index):
         if self.tabs.tabText(index) == "Statistiche":
@@ -1081,6 +1244,89 @@ class SettingsPanel(QWidget):
             accounts.append(item.data(Qt.ItemDataRole.UserRole))
         return accounts
 
+    # --- Gestione Account SafeWork ---
+    def _render_sw_accounts(self, accounts):
+        self.sw_account_list.clear()
+        for acc in accounts:
+            label = acc['username']
+            if acc.get('default'):
+                label += " (⭐ Default)"
+            item = QListWidgetItem(label)
+            item.setData(Qt.ItemDataRole.UserRole, acc)
+            self.sw_account_list.addItem(item)
+
+    def _add_sw_account(self):
+        dlg = AccountDialog(self)
+        dlg.setWindowTitle("Account SafeWork")
+        if dlg.exec():
+            u, p = dlg.get_data()
+            if u:
+                is_default = self.sw_account_list.count() == 0
+                acc = {"username": u, "password": p, "default": is_default}
+                self._render_sw_accounts(self._get_current_sw_accounts() + [acc])
+                self._set_unsaved_changes(True)
+
+    def _edit_sw_account(self):
+        item = self.sw_account_list.currentItem()
+        if not item: return
+        acc_data = item.data(Qt.ItemDataRole.UserRole)
+        dlg = AccountDialog(self, username=acc_data["username"], password=acc_data["password"])
+        dlg.setWindowTitle("Modifica SafeWork")
+        if dlg.exec():
+            u, p = dlg.get_data()
+            if u:
+                acc_data["username"] = u
+                acc_data["password"] = p
+                self._render_sw_accounts(self._get_current_sw_accounts())
+                self._set_unsaved_changes(True)
+
+    def _remove_sw_account(self):
+        row = self.sw_account_list.currentRow()
+        if row >= 0:
+            if QMessageBox.question(self, "Conferma", "Rimuovere account SafeWork?") == QMessageBox.StandardButton.Yes:
+                self.sw_account_list.takeItem(row)
+                accounts = self._get_current_sw_accounts()
+                if accounts and not any(a['default'] for a in accounts):
+                    accounts[0]['default'] = True
+                    self._render_sw_accounts(accounts)
+                self._set_unsaved_changes(True)
+
+    def _set_default_sw_account(self):
+        row = self.sw_account_list.currentRow()
+        if row >= 0:
+            accounts = self._get_current_sw_accounts()
+            for i, acc in enumerate(accounts):
+                acc['default'] = (i == row)
+            self._render_sw_accounts(accounts)
+            self._set_unsaved_changes(True)
+
+    def _get_current_sw_accounts(self):
+        accounts = []
+        for i in range(self.sw_account_list.count()):
+            item = self.sw_account_list.item(i)
+            accounts.append(item.data(Qt.ItemDataRole.UserRole))
+        return accounts
+
+    def _show_sw_account_context_menu(self, position):
+        menu = QMenu()
+        item = self.sw_account_list.itemAt(position)
+        add_action = QAction("➕ Aggiungi account", self)
+        add_action.triggered.connect(self._add_sw_account)
+        menu.addAction(add_action)
+        if item:
+            self.sw_account_list.setCurrentItem(item)
+            menu.addSeparator()
+            edit_action = QAction("✏️ Modifica", self)
+            edit_action.triggered.connect(self._edit_sw_account)
+            menu.addAction(edit_action)
+            default_action = QAction("⭐ Imposta Default", self)
+            default_action.triggered.connect(self._set_default_sw_account)
+            menu.addAction(default_action)
+            remove_action = QAction("🗑️ Rimuovi", self)
+            remove_action.triggered.connect(self._remove_sw_account)
+            menu.addAction(remove_action)
+        menu.exec(self.sw_account_list.viewport().mapToGlobal(position))
+
     # --- Gestione Contratti ---
     def _add_contract(self):
         text, ok = QInputDialog.getText(self, "Aggiungi Contratto", "Inserisci il numero di contratto:")
@@ -1216,6 +1462,7 @@ class SettingsPanel(QWidget):
 
         # Accounts
         self._render_accounts(config.get("accounts", []))
+        self._render_sw_accounts(config.get("safework_accounts", []))
         
         self._set_unsaved_changes(False)
     
@@ -1226,6 +1473,7 @@ class SettingsPanel(QWidget):
         reparti = [self.reparti_list.item(i).text() for i in range(self.reparti_list.count())]
         cantieri = [self.cantieri_list.item(i).text() for i in range(self.cantieri_list.count())]
         accounts = self._get_current_accounts()
+        sw_accounts = self._get_current_sw_accounts()
         
         config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
         config_manager.set_config_value("browser_timeout", self.timeout_spin.value())
@@ -1247,7 +1495,20 @@ class SettingsPanel(QWidget):
             config_manager.set_config_value("default_contract", contracts[0])
 
         config_manager.set_config_value("accounts", accounts)
+        config_manager.set_config_value("safework_accounts", sw_accounts)
         
+        # Audit Log Dettagliato
+        AuditManager().log_action(
+            action="Modifica Configurazione",
+            category="impostazioni",
+            entity="Sistema",
+            params={
+                "timeout": self.timeout_spin.value(),
+                "headless": self.headless_check.isChecked(),
+                "num_fornitori": len(fornitori),
+                "num_accounts": len(accounts) + len(sw_accounts)
+            }
+        )
         self._set_unsaved_changes(False)
         # QMessageBox.information(self, "Salvataggio", "Impostazioni salvate.") # Suppresso, usa Toast
         

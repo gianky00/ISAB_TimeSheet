@@ -22,12 +22,16 @@ if not exist "%VENV_DIR%\Scripts\activate.bat" (
 )
 call "%VENV_DIR%\Scripts\activate.bat"
 
+:: Start Timer
+set START_TIME=%TIME%
+
 echo Cleaning invalid pip distributions...
 python "admin/clean_venv.py"
 
 echo Updating dependencies...
-pip install --upgrade pip
-pip install -r requirements.txt
+echo (This step shows progress for each package installation)
+python -m pip install --upgrade pip
+pip install -r requirements.txt --progress-bar on
 if %errorlevel% neq 0 (
     echo Error installing dependencies!
     pause
@@ -37,6 +41,7 @@ if %errorlevel% neq 0 (
 :: 2. Run Tests
 echo.
 echo [2/5] Running Unit Tests...
+echo (Wait for completion to see general progress)
 pytest tests/ -v --tb=short
 if %errorlevel% neq 0 (
     echo TESTS FAILED! Aborting release.
@@ -86,6 +91,9 @@ if %errorlevel% neq 0 (
 :: 5. Finalizing
 echo.
 echo [5/5] Release Process Completed!
+echo.
+echo Execution started at %START_TIME%
+echo Execution finished at %TIME%
 echo.
 echo Setup available in: admin\Crea Setup\Setup
 start "" "admin\Crea Setup\Setup"

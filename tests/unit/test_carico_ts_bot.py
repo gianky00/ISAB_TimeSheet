@@ -3,8 +3,8 @@ Unit tests for CaricoTSBot.
 """
 import pytest
 from unittest.mock import MagicMock, patch
-from src.bots.carico_ts.bot import CaricoTSBot
-from src.bots.carico_ts.pages.carico_ts_page import CaricoTSPage
+from src.bots.portale_fornitori.carico_ts.bot import CaricoTSBot
+from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPage
 
 @pytest.fixture
 def mock_driver(): return MagicMock()
@@ -19,7 +19,7 @@ def carico_bot(mock_driver):
         return bot
 
 class TestCaricoTSPage:
-    @patch('src.bots.carico_ts.pages.carico_ts_page.ActionChains')
+    @patch('src.bots.portale_fornitori.carico_ts.pages.carico_ts_page.ActionChains')
     def test_flow(self, MockActionChains, mock_driver):
         page = CaricoTSPage(mock_driver)
         page.wait = MagicMock()
@@ -30,7 +30,7 @@ class TestCaricoTSPage:
         assert page.process_oda("123") is True
 
 class TestCaricoTSBot:
-    @patch('src.bots.carico_ts.bot.CaricoTSPage')
+    @patch('src.bots.portale_fornitori.carico_ts.bot.CaricoTSPage')
     def test_run(self, MockPage, carico_bot):
         page = MockPage.return_value
         page.navigate.return_value = True

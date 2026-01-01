@@ -29,7 +29,9 @@ from src.gui.widgets.toast import ToastManager
 
 from src.core import config_manager
 from src.core.stats_manager import StatsManager
-from src.bots.timbrature.storage import TimbratureStorage
+from src.core.audit_manager import AuditManager
+from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+from src.utils.printing import get_installed_printers
 
 
 class BotWorker(QThread):
@@ -158,7 +160,13 @@ class BaseBotPanel(QWidget):
         self.log_widget.timeline.set_mood("running")
         self.status_card.setStatus(StatusCard.Status.RUNNING)
 
-        # Track usage
+        # Audit & Stats
+        AuditManager().log_action(
+            action="Avvio Automazione",
+            category="automazione",
+            entity=self.bot_name,
+            params={"bot_id": self.bot_id}
+        )
         StatsManager().increment_usage(self.bot_id)
     
     def _on_stop(self):
@@ -186,6 +194,17 @@ class BaseBotPanel(QWidget):
         # Mission Report (#3)
         report = MissionReportCard(duration_str, success)
         self.log_widget.timeline.add_widget(report)
+
+        # Audit & Notifica Esito
+        status = "success" if success else "error"
+        AuditManager().log_action(
+            action="Completamento Automazione",
+            category="automazione",
+            entity=self.bot_name,
+            params={"durata": duration_str},
+            status=status,
+            notify=True # Genera automaticamente la notifica utente
+        )
 
         if success:
             self.status_card.setStatus(StatusCard.Status.SUCCESS)
@@ -501,6 +520,14 @@ class ScaricaTSPanel(BaseBotPanel):
             "fornitore": fornitore,
             "elabora_ts": self.elabora_ts_check.isChecked()
         }
+        
+        # Audit dettagliato
+        AuditManager().log_action(
+            action="Configurazione Esecuzione",
+            category="automazione",
+            entity="Scarico TS",
+            params={"fornitore": fornitore, "data_da": data_da, "righe": len(data)}
+        )
         
         self.worker = BotWorker(bot, bot_data)
         self.worker.log_signal.connect(self._on_log)
@@ -922,6 +949,220 @@ class CaricoTSPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append("▶ Avvio bot Carico TS...")
         
+        self.worker.start()
+        self.bot_started.emit()
+
+
+class ScaricoPDLPanel(BaseBotPanel):
+    """Pannello per il bot Scarico PDL (SafeWork)."""
+    
+    def __init__(self, parent=None):
+        super().__init__(
+            bot_id="scarico_pdl",
+            bot_name="🛡️ Scarico PDL",
+            bot_description="Scarica e stampa i Permessi di Lavoro da SafeWork.",
+            parent=parent
+        )
+        self._setup_content()
+        self._load_saved_data()
+    
+    def _setup_content(self):
+        """Configura il contenuto specifico del pannello."""
+        params_group = QGroupBox("Parametri")
+        params_layout = QVBoxLayout(params_group)
+        params_layout.setSpacing(10)
+
+        # 1. Opzioni Stampa
+        print_group = QGroupBox("Opzioni Stampa")
+        print_layout = QHBoxLayout(print_group)
+        
+        self.print_check = QCheckBox("Al termine stampa")
+        self.print_check.stateChanged.connect(self._toggle_printer_combo)
+        self.print_check.stateChanged.connect(self._save_data)
+        print_layout.addWidget(self.print_check)
+        
+        self.printer_combo = QComboBox()
+        self.printer_combo.setEnabled(False)
+        self.printer_combo.setMinimumWidth(250)
+        # Popola stampanti
+        printers = get_installed_printers()
+        if printers:
+            self.printer_combo.addItems(printers)
+        else:
+            self.printer_combo.addItem("Nessuna stampante trovata")
+            self.printer_combo.setEnabled(False)
+        
+        self.printer_combo.currentTextChanged.connect(self._save_data)
+        print_layout.addWidget(self.printer_combo)
+        
+        # Refresh printers button
+        refresh_print_btn = QPushButton("🔄")
+        refresh_print_btn.setToolTip("Aggiorna lista stampanti")
+        refresh_print_btn.setFixedSize(30, 30)
+        refresh_print_btn.clicked.connect(self._refresh_printers)
+        print_layout.addWidget(refresh_print_btn)
+        
+        print_layout.addStretch()
+        params_layout.addWidget(print_group)
+
+        # 2. Percorso destinazione (opzionale, ma utile)
+        dest_layout = QHBoxLayout()
+        dest_label = QLabel("Destinazione:")
+        dest_label.setMinimumWidth(80)
+        dest_layout.addWidget(dest_label)
+
+        self.dest_path_edit = QLineEdit()
+        self.dest_path_edit.setPlaceholderText("Download utente (default)")
+        self.dest_path_edit.setReadOnly(True)
+        dest_layout.addWidget(self.dest_path_edit)
+
+        browse_btn = QPushButton("📂")
+        browse_btn.setFixedSize(35, 35)
+        browse_btn.clicked.connect(self._browse_dest_path)
+        dest_layout.addWidget(browse_btn)
+
+        params_layout.addLayout(dest_layout)
+        
+        # 3. Tabella Input
+        table_toolbar = QHBoxLayout()
+        table_toolbar.addStretch()
+        self.clear_btn = ModernButton("Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
+        self.clear_btn.clicked.connect(self._clear_table)
+        table_toolbar.addWidget(self.clear_btn)
+        params_layout.addLayout(table_toolbar)
+        
+        self.data_table = EditableDataTable([
+            {"name": "NUMERO PDL", "type": "text"}
+        ])
+        self.data_table.data_changed.connect(self._save_data)
+        params_layout.addWidget(self.data_table)
+        
+        self.content_layout.addWidget(params_group)
+
+    def _toggle_printer_combo(self, state):
+        self.printer_combo.setEnabled(self.print_check.isChecked())
+
+    def _refresh_printers(self):
+        current = self.printer_combo.currentText()
+        self.printer_combo.clear()
+        printers = get_installed_printers()
+        if printers:
+            self.printer_combo.addItems(printers)
+            if current in printers:
+                self.printer_combo.setCurrentText(current)
+        else:
+            self.printer_combo.addItem("Nessuna stampante trovata")
+    
+    def _browse_dest_path(self):
+        path = QFileDialog.getExistingDirectory(self, "Seleziona cartella destinazione")
+        if path:
+            self.dest_path_edit.setText(path)
+            self._save_data()
+
+    def _load_saved_data(self):
+        config = config_manager.load_config()
+        saved_data = config.get("last_pdl_data", [])
+        if saved_data:
+            self.data_table.set_data(saved_data)
+        
+        self.print_check.setChecked(config.get("pdl_print_enabled", False))
+        saved_printer = config.get("pdl_printer_name", "")
+        if saved_printer:
+            index = self.printer_combo.findText(saved_printer)
+            if index >= 0:
+                self.printer_combo.setCurrentIndex(index)
+        
+        self.dest_path_edit.setText(config.get("path_scarico_pdl", ""))
+
+    def _save_data(self):
+        data = self.data_table.get_data()
+        config_manager.set_config_value("last_pdl_data", data)
+        config_manager.set_config_value("pdl_print_enabled", self.print_check.isChecked())
+        config_manager.set_config_value("pdl_printer_name", self.printer_combo.currentText())
+        config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
+
+    def _clear_table(self):
+        if QMessageBox.question(self, "Conferma", "Cancellare tutti i PDL?", QMessageBox.StandardButton.Yes) == QMessageBox.StandardButton.Yes:
+            self.data_table.set_data([])
+            self._save_data()
+            
+    def get_credentials(self) -> tuple:
+        """Override: Recupera credenziali SafeWork."""
+        # Prende il default da safework_accounts
+        config = config_manager.load_config()
+        accounts = config.get("safework_accounts", [])
+        if not accounts: return "", ""
+        
+        # Cerca il default
+        default_acc = next((a for a in accounts if a.get("default")), accounts[0])
+        return default_acc.get("username", ""), default_acc.get("password", "")
+
+    def _on_start(self):
+        super()._on_start()
+        username, password = self.get_credentials()
+        
+        if not username or not password:
+            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
+            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali SafeWork mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
+        
+        raw_data = self.data_table.get_data()
+        if not raw_data:
+            ToastManager.instance().show("Inserisci almeno un PDL.", "warning")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
+
+        # Prepare data for bot
+        print_enabled = self.print_check.isChecked()
+        printer_name = self.printer_combo.currentText()
+        
+        bot_data = []
+        for row in raw_data:
+            # EditableDataTable normalizes keys to lowercase and replaces spaces with underscores
+            pdl_val = row.get("numero_pdl", "")
+            if pdl_val:
+                bot_data.append({
+                    "pdl_number": pdl_val,
+                    "print_enabled": print_enabled,
+                    "printer_name": printer_name
+                })
+            
+        # Get paths/config
+        download_path = self.dest_path_edit.text()
+        if not download_path:
+            download_path = config_manager.get_download_path()
+            
+        from src.bots import create_bot
+        config = config_manager.load_config()
+        
+        bot = create_bot(
+            "scarico_pdl",
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=download_path
+        )
+        
+        if not bot:
+            ToastManager.instance().show("Errore creazione bot.", "error")
+            return
+            
+        self.worker = BotWorker(bot, bot_data)
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+        
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.log_widget.clear()
+        self.log_widget.append("▶ Avvio Scarico PDL SafeWork...")
+        if print_enabled:
+            self.log_widget.append(f"🖨️ Stampa attiva su: {printer_name}")
+            
         self.worker.start()
         self.bot_started.emit()
 
@@ -1489,6 +1730,7 @@ class TimbratureDBPanel(QWidget):
             success = self.storage.import_excel(file_path, gui_log)
 
             if success:
+                AuditManager().log_action("Importazione Manuale Timbrature", category="database", details=f"File: {Path(file_path).name}")
                 self.refresh_data()
                 ToastManager.instance().show("Dati importati correttamente nel database.", "success")
                 self._load_settings_data()

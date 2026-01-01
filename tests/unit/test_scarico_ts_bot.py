@@ -5,8 +5,8 @@ import pytest
 from unittest.mock import MagicMock, patch, ANY
 from pathlib import Path
 
-from src.bots.scarico_ts.scarico_ts_bot import ScaricaTSBot
-from src.bots.scarico_ts.pages.scarico_ts_page import ScaricoTSPage
+from src.bots.portale_fornitori.scarico_ts.scarico_ts_bot import ScaricaTSBot
+from src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page import ScaricoTSPage
 
 @pytest.fixture
 def mock_driver():
@@ -32,7 +32,7 @@ class TestScaricoTSPage:
         assert page.navigate_to_timesheet() is True
         assert page.wait.until.call_count >= 2 # Report + Timesheet
 
-    @patch('src.bots.scarico_ts.pages.scarico_ts_page.ActionChains')
+    @patch('src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains')
     def test_setup_filters_success(self, MockActionChains, mock_driver):
         page = ScaricoTSPage(mock_driver)
         page.wait = MagicMock()
@@ -52,7 +52,7 @@ class TestScaricoTSPage:
 
 class TestScaricoTSBot:
 
-    @patch('src.bots.scarico_ts.scarico_ts_bot.ScaricoTSPage')
+    @patch('src.bots.portale_fornitori.scarico_ts.scarico_ts_bot.ScaricoTSPage')
     def test_run_success(self, MockPage, scarico_bot):
         page_instance = MockPage.return_value
         page_instance.navigate_to_timesheet.return_value = True

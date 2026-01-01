@@ -10,18 +10,20 @@ from src.core import config_manager
 from src.core.database import DatabaseManager
 
 # --- CONFIG MANAGER ---
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_config(tmp_path):
-    """Mocks the config file location."""
+    """Mocks the config file location and ensures clean state."""
+    config_manager._config_cache = None # Force reset BEFORE test
     fake_dir = tmp_path / "config"
-    fake_dir.mkdir()
+    fake_dir.mkdir(parents=True, exist_ok=True)
     fake_file = fake_dir / "config.json"
     
     # Patch both the DIR and FILE constants in the module
     with patch("src.core.config_manager.CONFIG_DIR", fake_dir), \
-         patch("src.core.config_manager.CONFIG_FILE", fake_file), \
-         patch("src.core.config_manager._config_cache", None): # Reset cache
+         patch("src.core.config_manager.CONFIG_FILE", fake_file):
         yield fake_file
+    
+    config_manager._config_cache = None # Force reset AFTER test
 
 def test_config_manager_defaults(mock_config):
     # Test default retrieval
