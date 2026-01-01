@@ -43,13 +43,23 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         for index, item in enumerate(data):
             self._check_stop()
-            # Support both keys for robustness
+            
+            # Ricerca robusta della chiave PDL
             pdl_num = item.get("numero_pdl") or item.get("pdl_number")
+            
+            if not pdl_num:
+                # Fallback: cerca qualsiasi chiave che contenga 'pdl' o 'numero'
+                for k, v in item.items():
+                    k_lower = k.lower()
+                    if ('pdl' in k_lower or 'numero' in k_lower) and v:
+                        pdl_num = v
+                        break
+            
             print_enabled = item.get("print_enabled", False)
             printer_name = item.get("printer_name", "")
 
             if not pdl_num:
-                self.log(f"⚠️ Riga {index+1}: Numero PDL mancante, salto.")
+                self.log(f"⚠️ Riga {index+1}: Numero PDL mancante. Chiavi disponibili: {list(item.keys())}, Valori: {item}")
                 continue
 
             self.log(f"--- Elaborazione PDL: {pdl_num} ({index+1}/{total}) ---")
