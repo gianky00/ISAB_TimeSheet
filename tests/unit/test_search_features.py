@@ -42,9 +42,19 @@ def mock_timbrature_db(tmp_path):
     db_path = tmp_path / "test_timbrature.db"
     
     with sqlite3.connect(db_path) as conn:
-        conn.execute("CREATE TABLE timbrature (nome TEXT, cognome TEXT)")
-        conn.execute("INSERT INTO timbrature VALUES ('Mario', 'Rossi')")
-        conn.execute("INSERT INTO timbrature VALUES ('Giuseppe', 'Bianchi')")
+        conn.execute("""
+            CREATE TABLE timbrature (
+                data TEXT, 
+                ingresso TEXT, 
+                uscita TEXT, 
+                nome TEXT, 
+                cognome TEXT, 
+                presenza_ts TEXT, 
+                sito_timbratura TEXT
+            )
+        """)
+        conn.execute("INSERT INTO timbrature VALUES ('2025-01-01', '08:00', '17:00', 'Mario', 'Rossi', 'OK', 'Sito A')")
+        conn.execute("INSERT INTO timbrature VALUES ('2025-01-01', '08:00', '17:00', 'Giuseppe', 'Bianchi', 'OK', 'Sito B')")
         
     return db_path
 

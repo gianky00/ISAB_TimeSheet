@@ -19,12 +19,46 @@ class TestContabilitaLogic:
             mock_cursor.fetchall.return_value = []
             yield mock
 
+    @patch('src.core.contabilita_manager.pd.read_sql')
     @patch('src.core.contabilita_manager.pd.read_excel')
     @patch('src.core.contabilita_manager.pd.ExcelFile')
-    def test_import_data_success(self, mock_excel_file, mock_read_excel, mock_db):
-        # This test is currently failing due to complex internal year detection.
-        # We skip it for now to ensure CI is green, or we fix the mock.
-        pytest.skip("Requires complex Excel mock structure")
+    def test_import_data_success(self, mock_excel_file, mock_read_excel, mock_read_sql, mock_db):
+        """Test importazione contabilità con successo."""
+        # 1. Mock Excel File structure
+        mock_file_instance = MagicMock()
+        mock_file_instance.sheet_names = ['Dati 2024']
+        # Fix: The code uses ExcelFile as a constructor, not context manager
+        mock_excel_file.return_value = mock_file_instance
+        
+        # 2. Mock DataFrame content
+        cols = [
+            "Data Prev", "Mese", "N° Prev", "Totale Prev", "Descrizione Attività", 
+            "TCL", "ODC", "Stato Attività", "Tipologia", "Ore SP", "Resa", 
+            "Annotazioni", "Indirizzo Consuntivo"
+        ]
+        # Create valid rows (Need at least 2 rows because logic drops last row as Total)
+        data = {c: ['val', 'val_total'] for c in cols}
+        data["Data Prev"] = ["2024-01-01", "Totale"]
+        data["N° Prev"] = ["100/2024", ""]
+        df = pd.DataFrame(data)
+        
+        mock_read_excel.return_value = df
+
+        # 3. Mock SQL return (Empty existing data)
+        db_cols = ['year'] + [
+            'data_prev', 'mese', 'n_prev', 'totale_prev', 'attivita', 'tcl', 'odc',
+            'stato_attivita', 'tipologia', 'ore_sp', 'resa', 'annotazioni',
+            'indirizzo_consuntivo', 'nome_file'
+        ]
+        mock_read_sql.return_value = pd.DataFrame(columns=db_cols)
+
+        # 4. Call import
+        with patch("pathlib.Path.exists", return_value=True):
+             success, msg, added, removed = ContabilitaManager.import_data_from_excel("C:/Fake/Contabilita_2024.xlsx")
+
+        assert success is True
+        assert "importati" in msg.lower()
+        assert "2024" in msg
 
     @patch('src.core.contabilita_manager.pd.read_sql_query')
     @patch('src.core.contabilita_manager.pd.read_excel')

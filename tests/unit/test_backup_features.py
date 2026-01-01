@@ -47,7 +47,12 @@ def test_get_backup_dir_user_preference(mock_home):
     """Test user preference override."""
     with patch("pathlib.Path.home", return_value=mock_home):
         # User prefers Google Drive
-        with patch("src.core.backup_manager.load_config", return_value={"backup_cloud_provider": "Google Drive"}):
+        # MOCK detect_cloud_paths to return only our mocked paths, preventing real G: drive detection
+        mock_clouds = {"Google Drive": mock_home / "Google Drive"}
+        
+        with patch("src.core.backup_manager.load_config", return_value={"backup_cloud_provider": "Google Drive"}), \
+             patch("src.core.backup_manager.BackupManager.detect_cloud_paths", return_value=mock_clouds):
+            
             backup_dir = BackupManager.get_backup_dir()
             expected = mock_home / "Google Drive" / "BotTS_Backups"
             assert backup_dir == expected
@@ -61,7 +66,10 @@ def test_get_backup_dir_local_fallback(tmp_path):
     with patch("pathlib.Path.home", return_value=empty_home), \
          patch.dict(os.environ, {"OneDrive": ""}):
          
-        with patch("src.core.backup_manager.load_config", return_value={}):
+        # Ensure detect_cloud_paths finds nothing
+        with patch("src.core.backup_manager.load_config", return_value={}), \
+             patch("src.core.backup_manager.BackupManager.detect_cloud_paths", return_value={}):
+             
             backup_dir = BackupManager.get_backup_dir()
             expected = empty_home / "Documents" / "BotTS_Backups"
             assert backup_dir == expected
@@ -94,13 +102,18 @@ def test_cleanup_old_backups(tmp_path):
     target_dir = tmp_path / "rotation"
     target_dir.mkdir()
     
-    # Create 10 dummy backups
+    # Create 10 dummy backups with DIFFERENT mtimes
+    import time
     for i in range(10):
-        (target_dir / f"BotTS_Backup_2025010{i}.zip").touch()
+        p = target_dir / f"BotTS_Backup_2025010{i}.zip"
+        p.touch()
+        # Set mtime explicitly (files created earlier have smaller timestamp)
+        # We want 09 to be newest -> highest timestamp
+        os.utime(p, (time.time() + i*10, time.time() + i*10))
         
     BackupManager._cleanup_old_backups(target_dir, keep=5)
     
     remaining = list(target_dir.glob("*.zip"))
     assert len(remaining) == 5
-    # Ensure newest remains (lexicographically 09 is newest here)
+    # Ensure newest remains (09 has highest mtime)
     assert (target_dir / "BotTS_Backup_20250109.zip").exists()
