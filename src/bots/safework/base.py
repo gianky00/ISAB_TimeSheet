@@ -70,22 +70,37 @@ class SafeworkBaseBot(BaseBot):
             return False
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = 120) -> bool:
-        """Attende la scomparsa dell'overlay specifico di SafeWork (#GISWaitOverlay)."""
+        """Attende la scomparsa dell'overlay (#GISWaitOverlay) e del testo 'Caricamento...'."""
+        xpath_caricamento = "//span[contains(text(), 'Caricamento...')]"
+        xpath_overlay = "//div[@id='GISWaitOverlay']"
+        
         try:
+            # 1. Piccola attesa per dare tempo agli elementi di apparire
+            time.sleep(0.5)
+            
+            # 2. Attendi scomparsa overlay ID
             WebDriverWait(self.driver, timeout_secondi).until(
-                EC.invisibility_of_element_located((By.XPATH, "//div[@id='GISWaitOverlay']"))
+                EC.invisibility_of_element_located((By.ID, "GISWaitOverlay"))
             )
+            
+            # 3. Attendi scomparsa testo "Caricamento..."
+            WebDriverWait(self.driver, timeout_secondi).until(
+                EC.invisibility_of_element_located((By.XPATH, xpath_caricamento))
+            )
+            
             return True
         except TimeoutException:
-            self.log("⏳ Overlay ancora presente (Timeout)")
+            self.log("⏳ Caricamento ancora in corso o overlay persistente (Timeout)")
             return False
         finally:
-            # Gestione modali imprevisti
+            # Gestione modali imprevisti (es. errori o avvisi)
             try:
-                modale = WebDriverWait(self.driver, 1).until(
-                    EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'modal') and contains(@style, 'display: block')]"))
-                )
-                modale.find_element(By.XPATH, ".//button[contains(text(), 'OK') or @data-dismiss='modal']").click()
+                # Cerca pulsanti OK in div che sembrano modali
+                modale_btn = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'OK') or @data-dismiss='modal']")
+                for btn in modale_btn:
+                    if btn.is_displayed():
+                        btn.click()
+                        time.sleep(0.5)
             except: 
                 pass
 

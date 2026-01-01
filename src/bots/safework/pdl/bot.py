@@ -85,6 +85,13 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             time.sleep(0.5)
             campo_ricerca.send_keys(Keys.ENTER)
             
+            # Attendi che inizi il caricamento
+            xpath_caricamento = "//span[contains(text(), 'Caricamento...')]"
+            try:
+                WebDriverWait(self.driver, 5).until(EC.visibility_of_element_located((By.XPATH, xpath_caricamento)))
+            except:
+                pass # Se è troppo veloce, prosegui
+            
             self._gestisci_alert_ricerca()
             self._attendi_scomparsa_overlay()
             self.log("✅ PDL trovato (o ricerca completata)")
