@@ -22,8 +22,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from src.bots.portale_fornitori.dettagli_oda.locators import DettagliOdALocators
+from src.bots.portale_fornitori.common.locators import LoginLocators, CommonLocators
 import time
-from src.bots.common.locators import LoginLocators, CommonLocators
 
 class DettagliOdAPage:
 
