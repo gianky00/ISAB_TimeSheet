@@ -13,7 +13,7 @@ from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcu
 from datetime import datetime
 
 # Import Panels
-from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel
+from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel, ScaricoPDLPanel
 from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.scarico_ore_panel import ScaricoOrePanel
 from src.gui.settings_panel import SettingsPanel
@@ -370,6 +370,7 @@ class MainWindow(QMainWindow):
         self.scarico_panel = ScaricaTSPanel()
         self.carico_panel = CaricoTSPanel()
         self.dettagli_panel = DettagliOdAPanel()
+        self.pdl_panel = ScaricoPDLPanel() # NEW
         self.timbrature_bot_panel = TimbratureBotPanel()
         self.timbrature_db_panel = TimbratureDBPanel()
         self.contabilita_panel = ContabilitaPanel()
@@ -382,13 +383,22 @@ class MainWindow(QMainWindow):
         # Collega il segnale di update dal bot al database
         self.timbrature_bot_panel.data_updated.connect(self.timbrature_db_panel.refresh_data)
 
-        # --- Page 1: Automazioni (Tab Widget) ---
+        # --- Page 1: Automazioni (Main Groups) ---
         self.automazioni_widget = QTabWidget()
-        # Style moved to QSS or kept minimal for specific needs
-        self.automazioni_widget.addTab(self.dettagli_panel, "📋 Dettagli OdA")
-        self.automazioni_widget.addTab(self.scarico_panel, "📥 Scarico TS")
-        self.automazioni_widget.addTab(self.timbrature_bot_panel, "⏱️ Timbrature")
-        self.automazioni_widget.addTab(self.carico_panel, "📤 Carico TS")
+        
+        # Group 1: Portale Fornitori
+        self.tab_fornitori = QTabWidget()
+        self.tab_fornitori.addTab(self.dettagli_panel, "📋 Dettagli OdA")
+        self.tab_fornitori.addTab(self.scarico_panel, "📥 Scarico TS")
+        self.tab_fornitori.addTab(self.timbrature_bot_panel, "⏱️ Timbrature")
+        self.tab_fornitori.addTab(self.carico_panel, "📤 Carico TS")
+        
+        # Group 2: SafeWork
+        self.tab_safework = QTabWidget()
+        self.tab_safework.addTab(self.pdl_panel, "🛡️ Scarico PDL")
+        
+        self.automazioni_widget.addTab(self.tab_fornitori, "Portale Fornitori")
+        self.automazioni_widget.addTab(self.tab_safework, "SafeWork")
 
         # --- Page 3: Database (Tab Widget) ---
         self.database_widget = QTabWidget()
@@ -505,16 +515,26 @@ class MainWindow(QMainWindow):
               'db_timbrature', 'db_strumentale', 'db_dataease'
         """
         # --- Automazioni (Index 1) ---
+        # Map: key -> (MainTab Index, SubTab Index)
+        # MainTab 0: Portale Fornitori
+        # MainTab 1: SafeWork
+        
         bot_map = {
-            "dettagli_oda": 0,
-            "scarico_ts": 1,
-            "timbrature": 2,
-            "carico_ts": 3
+            "dettagli_oda": (0, 0),
+            "scarico_ts": (0, 1),
+            "timbrature": (0, 2),
+            "carico_ts": (0, 3),
+            "scarico_pdl": (1, 0)
         }
 
         if panel_key in bot_map:
+            main_idx, sub_idx = bot_map[panel_key]
             self._navigate_to(1)
-            self.automazioni_widget.setCurrentIndex(bot_map[panel_key])
+            self.automazioni_widget.setCurrentIndex(main_idx)
+            if main_idx == 0:
+                self.tab_fornitori.setCurrentIndex(sub_idx)
+            elif main_idx == 1:
+                self.tab_safework.setCurrentIndex(sub_idx)
             return
 
         # --- Database (Index 3) ---

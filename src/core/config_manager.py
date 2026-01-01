@@ -22,6 +22,7 @@ _config_cache: Optional[Dict[str, Any]] = None
 # Configurazione di default
 DEFAULT_CONFIG: Dict[str, Any] = {
     "accounts": [],
+    "safework_accounts": [],
     "contracts": [],
     "default_contract": "",
     "browser_headless": False,
@@ -85,6 +86,24 @@ def load_config() -> Dict[str, Any]:
             if password_from_file:
                 acc["password"] = password_manager.decrypt(password_from_file)
 
+    # Decripta SafeWork accounts
+    if "safework_accounts" in config:
+        from src.utils.security import password_manager
+        for acc in config["safework_accounts"]:
+            username = acc.get("username")
+            if not username: continue
+            
+            # Keyring (namespace diverso)
+            pw_keyring = SecretsManager.get_credential('safework_portal', username)
+            if pw_keyring:
+                acc["password"] = pw_keyring
+                continue
+            
+            # File fallback
+            pw_file = acc.get("password")
+            if pw_file:
+                acc["password"] = password_manager.decrypt(pw_file)
+
     # Migrazione Legacy
     if "isab_username" in config and config.get("isab_username"):
         if not any(a.get("username") == config["isab_username"] for a in config["accounts"]):
@@ -134,6 +153,23 @@ def save_config(config: Dict[str, Any]):
 
             # Fallback: cripta la password nel file
             acc["password"] = password_manager.encrypt(password)
+
+    # Logica salvataggio SafeWork
+    if "safework_accounts" in config_to_process:
+        from src.utils.security import password_manager
+        for acc in config_to_process["safework_accounts"]:
+            u = acc.get("username")
+            p = acc.get("password")
+            if not (u and p): continue
+            
+            try:
+                if SecretsManager.is_available():
+                    SecretsManager.store_credential('safework_portal', u, p)
+                    acc.pop("password", None)
+                    continue
+            except: pass
+            
+            acc["password"] = password_manager.encrypt(p)
 
     try:
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
