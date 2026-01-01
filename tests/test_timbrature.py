@@ -3,6 +3,8 @@ Tests for Timbrature module.
 """
 import os
 import pytest
+import sqlite3
+import pandas as pd
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 @pytest.fixture
