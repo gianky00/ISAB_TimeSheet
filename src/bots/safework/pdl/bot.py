@@ -172,9 +172,35 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ts_start = time.time()
         
         try:
-            self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
-            time.sleep(0.5)
-            self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
+            # Tenta di gestire eventuali overlay residui
+            self._attendi_scomparsa_overlay(5)
+            
+            # Cerca il pulsante (presence, not clickable yet)
+            print_btn = self.wait.until(EC.presence_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu")))
+            
+            # Prova click standard
+            try:
+                self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
+            except Exception:
+                self.log("⚠️ Click standard P1 fallito, tento JS click...")
+                self.driver.execute_script("arguments[0].click();", print_btn)
+            
+            time.sleep(1)
+            
+            # Clicca "Italiano" nel menu a tendina
+            try:
+                italiano_btn = self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano")))
+                italiano_btn.click()
+            except Exception:
+                # Se il menu non si è aperto, riprova il click sul bottone stampa
+                self.log("⚠️ Menu stampa non aperto, riprovo click...")
+                self.driver.execute_script("arguments[0].click();", print_btn)
+                time.sleep(1)
+                try:
+                    self.driver.find_element(By.ID, "appItaliano").click()
+                except:
+                    self.driver.execute_script("document.getElementById('appItaliano').click();")
+
         except Exception as e:
             self.log(f"Impossibile cliccare stampa P1: {e}")
             return ""
