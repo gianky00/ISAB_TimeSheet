@@ -1,11 +1,9 @@
 """
 Tests for Timbrature module.
 """
+import os
 import pytest
-import sqlite3
-import pandas as pd
-from pathlib import Path
-from src.bots.timbrature.storage import TimbratureStorage
+from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 @pytest.fixture
 def temp_db(tmp_path):

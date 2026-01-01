@@ -4,9 +4,9 @@ Registry e factory per tutti i bot disponibili.
 """
 from typing import Dict, Any, Optional
 from .base import BaseBot, BotStatus
-from .scarico_ts import ScaricaTSBot
-from .carico_ts import CaricoTSBot
-from .dettagli_oda import DettagliOdABot
+from .portale_fornitori.scarico_ts import ScaricaTSBot
+from .portale_fornitori.carico_ts import CaricoTSBot
+from .portale_fornitori.dettagli_oda import DettagliOdABot
 
 
 # Registry dei bot disponibili

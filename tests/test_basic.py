@@ -125,7 +125,7 @@ class TestScaricaTSBot:
     
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.scarico_ts import ScaricaTSBot
+        from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
         
         columns = ScaricaTSBot.get_columns()
         assert len(columns) == 2
@@ -136,7 +136,7 @@ class TestScaricaTSBot:
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.scarico_ts import ScaricaTSBot
+        from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
         
         assert ScaricaTSBot.get_name() == "Scarico TS"
         assert ScaricaTSBot.get_description() is not None
@@ -147,7 +147,7 @@ class TestDettagliOdABot:
     
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.dettagli_oda import DettagliOdABot
+        from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
         
         columns = DettagliOdABot.get_columns()
         assert len(columns) == 2
@@ -158,7 +158,7 @@ class TestDettagliOdABot:
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.dettagli_oda import DettagliOdABot
+        from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
         
         assert DettagliOdABot.get_name() == "Dettagli OdA"
         assert DettagliOdABot.get_description() is not None
@@ -169,7 +169,7 @@ class TestCaricoTSBot:
     
     def test_bot_columns(self):
         """Should have correct column configuration."""
-        from src.bots.carico_ts import CaricoTSBot
+        from src.bots.portale_fornitori.carico_ts import CaricoTSBot
         
         columns = CaricoTSBot.get_columns()
         assert len(columns) == 16
@@ -181,7 +181,7 @@ class TestCaricoTSBot:
     
     def test_bot_metadata(self):
         """Should have correct metadata."""
-        from src.bots.carico_ts import CaricoTSBot
+        from src.bots.portale_fornitori.carico_ts import CaricoTSBot
         
         assert CaricoTSBot.get_name() == "Carico TS"
         assert CaricoTSBot.get_description() is not None

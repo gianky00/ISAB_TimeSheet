@@ -4,10 +4,10 @@ Registry e factory per tutti i bot disponibili.
 """
 from typing import Dict, Any, Optional
 from src.bots.base import BaseBot, BotStatus
-from src.bots.scarico_ts import ScaricaTSBot
-from src.bots.carico_ts import CaricoTSBot
-from src.bots.dettagli_oda import DettagliOdABot
-from src.bots.timbrature import TimbratureBot
+from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
+from src.bots.portale_fornitori.carico_ts import CaricoTSBot
+from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
+from src.bots.portale_fornitori.timbrature import TimbratureBot
 from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 

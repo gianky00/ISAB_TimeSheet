@@ -29,7 +29,7 @@ from src.gui.widgets.toast import ToastManager
 
 from src.core import config_manager
 from src.core.stats_manager import StatsManager
-from src.bots.timbrature.storage import TimbratureStorage
+from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.utils.printing import get_installed_printers
 
 

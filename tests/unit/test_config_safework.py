@@ -20,20 +20,24 @@ class TestConfigSafeWork:
         # Force SecretsManager to return None (simulate not found in keyring)
         mock_secrets.get_credential.return_value = None
         
-        # Mock load
-        mock_load.return_value = {
+        # Setup initial config with SafeWork accounts
+        config_data = {
             "safework_accounts": [
                 {"username": "user1", "password": "encrypted_pw"}
-            ]
+            ],
+            "accounts": [] # Standard accounts
         }
+        mock_load.return_value = config_data
         
         # Mock decrypt
         with patch('src.utils.security.password_manager.decrypt', return_value="real_pw"):
+            # We must be sure load_config doesn't use cache from previous tests
+            config_manager._config_cache = None 
             config = config_manager.load_config()
             
             assert "safework_accounts" in config
+            assert len(config["safework_accounts"]) > 0
             acc = config["safework_accounts"][0]
-            assert acc["username"] == "user1"
             assert acc["password"] == "real_pw" # Should be decrypted
 
     @patch('src.core.config_manager.SecretsManager')

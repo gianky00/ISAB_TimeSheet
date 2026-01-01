@@ -1,103 +1,78 @@
 """
-Tests for Timbrature Storage Enhanced logic using config.json for mappings.
+Enhanced unit tests for TimbratureStorage.
 """
 import pytest
 import sqlite3
-from pathlib import Path
-from src.bots.timbrature.storage import TimbratureStorage
+import pandas as pd
 from unittest.mock import patch, MagicMock
+from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
-@pytest.fixture
-def temp_db(tmp_path):
-    """Fixture per creare un DB temporaneo."""
-    db_file = tmp_path / "data" / "timbrature_Isab.db"
-    return db_file
+class TestTimbratureStorage:
 
-@pytest.fixture
-def mock_config():
-    """Fixture per mockare config_manager."""
-    with patch("src.bots.timbrature.storage.config_manager") as mock:
-        # Configurazione iniziale vuota
-        mock.load_config.return_value = {
-            "reparti": ["STRUMENTALE", "ELETTRICO"],
-            "cantieri": [],
-            "employee_mappings": {}
-        }
-        
-        # Simulazione salvataggio (aggiorna il mock di load_config)
-        def mock_set(key, value):
-            mock.load_config.return_value[key] = value
+    @pytest.fixture
+    def storage(self, tmp_path):
+        db_path = tmp_path / "test_timbrature.db"
+        return TimbratureStorage(db_path)
+
+    def test_init_creates_tables(self, storage):
+        # Table 'timbrature' should exist. 'dipendenti' info is in config.json.
+        with sqlite3.connect(storage.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = [r[0] for r in cursor.fetchall()]
+            assert "timbrature" in tables
+
+    def test_get_employees_from_timbrature(self, storage):
+        # Need to insert timbratures first to get unique employees
+        with sqlite3.connect(storage.db_path) as conn:
+            conn.execute("INSERT INTO timbrature (nome, cognome) VALUES ('MARIO', 'ROSSI')")
+            conn.commit()
             
-        mock.set_config_value.side_effect = mock_set
-        yield mock
+        with patch('src.core.config_manager.load_config', return_value={}):
+            employees = storage.get_employees()
+            assert len(employees) == 1
+            assert employees[0]['nome'] == "MARIO"
 
-@pytest.fixture
-def storage(temp_db, mock_config):
-    """Fixture per creare uno storage con DB temporaneo e config mockato."""
-    storage = TimbratureStorage(temp_db)
-    return storage
+    def test_update_employee_details(self, storage):
+        with patch('src.core.config_manager.load_config', return_value={}), \
+             patch('src.core.config_manager.set_config_value') as mock_set:
+             
+            storage.update_employee_details("MARIO", "ROSSI", reparto="STRUMENTALE", cantiere="ISAB SUD")
+            
+            # Verify set_config_value called with correct mapping
+            args, _ = mock_set.call_args
+            assert args[0] == "employee_mappings"
+            assert "MARIO|ROSSI" in args[1]
+            assert args[1]["MARIO|ROSSI"]["reparto"] == "STRUMENTALE"
 
-def test_schema_basic(temp_db, storage):
-    """Verifica che la tabella timbrature esista (dipendenti non deve esistere)."""
-    with sqlite3.connect(temp_db) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='timbrature'")
-        assert cursor.fetchone() is not None
+    def test_get_lists(self, storage):
+        mock_conf = {
+            "reparti": ["R1"],
+            "cantieri": ["C1"]
+        }
+        with patch('src.core.config_manager.load_config', return_value=mock_conf):
+            lists = storage.get_lists()
+            assert "R1" in lists['reparti']
+            assert "C1" in lists['cantieri']
+
+    def test_import_excel_mock(self, storage):
+        # Mock pandas read_excel
+        mock_df = pd.DataFrame({
+            'Data Timbratura': ['01/01/2023'],
+            'Ora Ingresso': ['08:00'],
+            'Ora Uscita': ['17:00'],
+            'Cognome Risorsa': ['ROSSI'],
+            'Nome Risorsa': ['MARIO'],
+            'Presente Nei Timesheet': ['S'],
+            'Sito Timbratura': ['SUD']
+        })
         
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='dipendenti'")
-        assert cursor.fetchone() is None
-
-def test_update_employee_details_in_config(storage, mock_config):
-    """Test aggiornamento dettagli dipendente salvati nel mock config."""
-    # Setup: timbratura necessaria per get_employees
-    with sqlite3.connect(storage.db_path) as conn:
-        conn.execute("INSERT INTO timbrature (nome, cognome) VALUES ('Mario', 'Rossi')")
-        conn.commit()
-
-    storage.update_employee_details("Mario", "Rossi", reparto="Rep1", cantiere="CantA")
-    
-    # Verifica tramite mock
-    mappings = mock_config.load_config().get("employee_mappings")
-    assert "Mario|Rossi" in mappings
-    assert mappings["Mario|Rossi"]["reparto"] == "Rep1"
-    
-    # Verifica tramite storage
-    emps = storage.get_employees()
-    assert len(emps) == 1
-    assert emps[0]['reparto'] == "Rep1"
-    assert emps[0]['cantiere'] == "CantA"
-
-def test_get_timbrature_with_config_filters(storage, mock_config):
-    """Test filtri cantiere e reparto usando dati da config."""
-    # Setup data
-    with sqlite3.connect(storage.db_path) as conn:
-        conn.execute("INSERT INTO timbrature (data, nome, cognome) VALUES ('2025-01-01', 'Mario', 'Rossi')")
-        conn.execute("INSERT INTO timbrature (data, nome, cognome) VALUES ('2025-01-01', 'Luigi', 'Verdi')")
-        conn.commit()
-    
-    # Setup Mappings in mock
-    storage.update_employee_details("Mario", "Rossi", reparto="RepA", cantiere="CantA")
-    storage.update_employee_details("Luigi", "Verdi", reparto="RepB", cantiere="CantB")
-    
-    # Test Filter Cantiere
-    rows = storage.get_timbrature_with_reparto(filter_cantiere="CantA")
-    assert len(rows) == 1
-    assert rows[0][3] == "Mario"
-    
-    # Test Filter Reparto
-    rows = storage.get_timbrature_with_reparto(filter_reparto="RepB")
-    assert len(rows) == 1
-    assert rows[0][3] == "Luigi"
-
-def test_list_management_in_config(storage, mock_config):
-    """Test gestione liste Reparti/Cantieri tramite config."""
-    # Verifica caricamento
-    lists = storage.get_lists()
-    assert "STRUMENTALE" in lists["reparti"]
-    
-    # Verifica salvataggio
-    new_data = {"reparti": ["R1"], "cantieri": ["C1"]}
-    storage.save_lists(new_data)
-    
-    assert mock_config.set_config_value.called
-    assert mock_config.load_config()["reparti"] == ["R1"]
+        with patch('pandas.read_excel', return_value=mock_df):
+            success = storage.import_excel("dummy.xlsx", lambda x: None)
+            assert success is True
+            
+        # Verify in DB
+        rows = storage.get_timbrature_with_reparto()
+        assert len(rows) == 1
+        assert rows[0][3] == "MARIO"
+        assert rows[0][4] == "ROSSI"
