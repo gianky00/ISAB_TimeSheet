@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.config_manager import CONFIG_DIR
+from src.core.audit_manager import AuditManager
 
 class LyraClient:
     def __init__(self):
@@ -138,6 +139,21 @@ class LyraClient:
 
                     if response.status_code == 200:
                         result = response.json()
+                        
+                        # Audit Token Usage
+                        usage = result.get('usageMetadata', {})
+                        if usage:
+                            AuditManager().log_action(
+                                "Consumo Token AI", 
+                                category="lyra", 
+                                entity=model,
+                                params={
+                                    "prompt": usage.get("promptTokenCount", 0),
+                                    "response": usage.get("candidatesTokenCount", 0),
+                                    "total": usage.get("totalTokenCount", 0)
+                                }
+                            )
+
                         try:
                             return result['candidates'][0]['content']['parts'][0]['text']
                         except (KeyError, IndexError):

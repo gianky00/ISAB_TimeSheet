@@ -27,8 +27,8 @@ set START_TIME=%TIME%
 
 echo Updating dependencies...
 echo (This step shows progress for each package installation)
-pip install --upgrade pip
-pip install -r requirements.txt --progress-bar pretty
+python -m pip install --upgrade pip
+pip install -r requirements.txt --progress-bar on
 if %errorlevel% neq 0 (
     echo Error installing dependencies!
     pause

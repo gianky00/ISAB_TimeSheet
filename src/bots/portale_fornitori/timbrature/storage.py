@@ -57,6 +57,38 @@ class TimbratureStorage:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_schema()
 
+    def search_employees(self, query: str) -> List[Dict]:
+        """
+        Cerca dipendenti per nome/cognome.
+        Returns: Lista di dizionari con info dipendente.
+        """
+        query = query.strip().lower()
+        if len(query) < 2: return []
+
+        results = []
+        try:
+            with db_manager.get_connection(self.db_path, read_only=True) as conn:
+                cursor = conn.cursor()
+                # Cerca dipendenti unici
+                sql = """
+                    SELECT DISTINCT nome, cognome 
+                    FROM timbrature 
+                    WHERE lower(nome) LIKE ? OR lower(cognome) LIKE ?
+                    LIMIT 20
+                """
+                like_query = f"%{query}%"
+                cursor.execute(sql, (like_query, like_query))
+                
+                rows = cursor.fetchall()
+                for row in rows:
+                    results.append({
+                        "nome": row[0],
+                        "cognome": row[1]
+                    })
+        except Exception:
+            pass
+        return results
+
     def get_employees(self) -> List[Dict[str, str]]:
         """
         Recupera la lista unica dei dipendenti incrociando timbrature e mappature in config.json.

@@ -408,6 +408,19 @@ class ContabilitaPanel(QWidget):
         if hasattr(self, 'certificati_widget'):
             self.certificati_widget.refresh_data()
 
+    def set_search_query(self, query):
+        """Imposta programmaticamente la query di ricerca nel tab corrente."""
+        current_widget = self.main_tabs.currentWidget()
+        if not current_widget: return
+        
+        # Cerca la QLineEdit all'interno del widget wrapper
+        # La struttura è: Wrapper (VBoxLayout) -> Toolbar (HBoxLayout) -> QLineEdit (index 0)
+        search_edit = current_widget.findChild(QLineEdit)
+        if search_edit:
+            search_edit.setText(query)
+            search_edit.setFocus()
+            search_edit.selectAll()
+
     def _on_tab_changed(self, index):
         """Chiamato quando cambia la tab ANNO (in uno dei sub-tabwidget)."""
         # Search filter is now handled by _proxy_filter connected to local search bar

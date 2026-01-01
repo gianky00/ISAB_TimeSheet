@@ -29,6 +29,7 @@ from src.gui.widgets.toast import ToastManager
 
 from src.core import config_manager
 from src.core.stats_manager import StatsManager
+from src.core.audit_manager import AuditManager
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.utils.printing import get_installed_printers
 
@@ -159,7 +160,13 @@ class BaseBotPanel(QWidget):
         self.log_widget.timeline.set_mood("running")
         self.status_card.setStatus(StatusCard.Status.RUNNING)
 
-        # Track usage
+        # Audit & Stats
+        AuditManager().log_action(
+            action="Avvio Automazione",
+            category="automazione",
+            entity=self.bot_name,
+            params={"bot_id": self.bot_id}
+        )
         StatsManager().increment_usage(self.bot_id)
     
     def _on_stop(self):
@@ -187,6 +194,17 @@ class BaseBotPanel(QWidget):
         # Mission Report (#3)
         report = MissionReportCard(duration_str, success)
         self.log_widget.timeline.add_widget(report)
+
+        # Audit & Notifica Esito
+        status = "success" if success else "error"
+        AuditManager().log_action(
+            action="Completamento Automazione",
+            category="automazione",
+            entity=self.bot_name,
+            params={"durata": duration_str},
+            status=status,
+            notify=True # Genera automaticamente la notifica utente
+        )
 
         if success:
             self.status_card.setStatus(StatusCard.Status.SUCCESS)
@@ -502,6 +520,14 @@ class ScaricaTSPanel(BaseBotPanel):
             "fornitore": fornitore,
             "elabora_ts": self.elabora_ts_check.isChecked()
         }
+        
+        # Audit dettagliato
+        AuditManager().log_action(
+            action="Configurazione Esecuzione",
+            category="automazione",
+            entity="Scarico TS",
+            params={"fornitore": fornitore, "data_da": data_da, "righe": len(data)}
+        )
         
         self.worker = BotWorker(bot, bot_data)
         self.worker.log_signal.connect(self._on_log)
@@ -1704,6 +1730,7 @@ class TimbratureDBPanel(QWidget):
             success = self.storage.import_excel(file_path, gui_log)
 
             if success:
+                AuditManager().log_action("Importazione Manuale Timbrature", category="database", details=f"File: {Path(file_path).name}")
                 self.refresh_data()
                 ToastManager.instance().show("Dati importati correttamente nel database.", "success")
                 self._load_settings_data()

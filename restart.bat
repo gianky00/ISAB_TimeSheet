@@ -19,17 +19,17 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 echo [1/4] Rimozione ambiente virtuale esistente...
-if exist "venv" (
-    rmdir /s /q "venv"
-    if exist "venv" (
-        echo [ERRORE] Impossibile rimuovere la cartella 'venv'.
+if exist ".venv" (
+    rmdir /s /q ".venv"
+    if exist ".venv" (
+        echo [ERRORE] Impossibile rimuovere la cartella '.venv'.
         echo Qualche file e' bloccato. Riavvia il PC o chiudi tutti i programmi.
         pause
         exit /b 1
     )
-    echo    - Cartella venv rimossa correttamente.
+    echo    - Cartella .venv rimossa correttamente.
 ) else (
-    echo    - Nessun ambiente venv trovato.
+    echo    - Nessun ambiente .venv trovato.
 )
 
 echo [2/4] Pulizia file cache Python [__pycache__]...

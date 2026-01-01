@@ -7,6 +7,7 @@ import webbrowser
 from packaging import version as pkg_version
 from PyQt6.QtWidgets import QMessageBox
 from . import version
+from src.core.audit_manager import AuditManager
 
 
 def check_for_updates(parent=None, silent=True):
@@ -59,6 +60,13 @@ def check_for_updates(parent=None, silent=True):
                     )
 
                     if reply == QMessageBox.StandardButton.Yes:
+                        AuditManager().log_action(
+                            "Download Aggiornamento", 
+                            category="sistema", 
+                            entity="Software", 
+                            params={"vecchia": version.__version__, "nuova": remote_ver_str},
+                            severity="medium"
+                        )
                         if download_url:
                             webbrowser.open(download_url)
                         else:

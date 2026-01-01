@@ -6,9 +6,9 @@ import sys
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication, QTabWidget,
-    QProgressBar, QStatusBar
+    QProgressBar, QStatusBar, QLineEdit, QMenu
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPoint
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
 from datetime import datetime
 
@@ -28,6 +28,8 @@ from src.core.license_validator import get_license_info
 from src.core import config_manager
 from src.core.app_updater import check_for_updates
 from src.core.notification_manager import NotificationManager
+from src.core.backup_manager import BackupManager
+from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 # Import UI/UX Components
 from src.gui.widgets.toast import ToastManager
@@ -358,9 +360,34 @@ class MainWindow(QMainWindow):
         
         # === CONTENT AREA ===
         content_area = QWidget()
-        # content_area.setStyleSheet("background-color: #f8f9fa;") # Let QSS
         content_layout = QVBoxLayout(content_area)
         content_layout.setContentsMargins(20, 20, 20, 20)
+        
+        # --- GLOBAL SEARCH BAR ---
+        search_container = QHBoxLayout()
+        search_container.setContentsMargins(0, 0, 0, 10)
+        
+        self.global_search = QLineEdit()
+        self.global_search.setPlaceholderText("🔍 Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")
+        self.global_search.setMinimumHeight(40)
+        self.global_search.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #ced4da;
+                border-radius: 20px;
+                padding: 5px 20px;
+                background-color: white;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #0d6efd;
+                background-color: #f8f9fa;
+            }
+        """)
+        # Connect search logic
+        self.global_search.returnPressed.connect(self._perform_global_search)
+        
+        search_container.addWidget(self.global_search)
+        content_layout.addLayout(search_container)
         
         # Stack per le pagine principali (Automazioni, Database, Settings)
         self.page_stack = QStackedWidget()
@@ -437,6 +464,129 @@ class MainWindow(QMainWindow):
             self.btn_notifications
         ]
     
+    def _perform_global_search(self):
+        """Esegue la ricerca globale estesa su tutti i moduli."""
+        query = self.global_search.text().strip()
+        if not query or len(query) < 2: return
+
+        results_menu = QMenu(self)
+        results_menu.setStyleSheet("""
+            QMenu { background-color: white; border: 1px solid #dee2e6; padding: 5px; min-width: 450px; }
+            QMenu::item { padding: 8px 25px; font-size: 13px; }
+            QMenu::item:selected { background-color: #0d6efd; color: white; }
+            QMenu::separator { height: 1px; background: #e9ecef; margin: 5px 0; }
+        """)
+
+        found_count = 0
+
+        # --- 1. Contabilità Strumentale (OdA) ---
+        try:
+            from src.core.contabilita_manager import ContabilitaManager
+            oda_matches = ContabilitaManager.search_oda(query)
+            if oda_matches:
+                results_menu.addAction("📊 CONTABILITÀ STRUMENTALE (OdA):").setEnabled(False)
+                for oda in oda_matches[:20]:
+                    text = f"OdA {oda['codice_oda']} - {oda['descrizione'][:50]}..." # Increased trunc limit
+                    action = results_menu.addAction(text)
+                    action.triggered.connect(lambda _, o=oda['codice_oda']: self._navigate_to_oda(o))
+                    found_count += 1
+                results_menu.addSeparator()
+        except: pass
+
+        # --- 2. Contabilità Estesa (Giornaliere, Cantiere, Certificati) ---
+        try:
+            ext_matches = ContabilitaManager.search_extended(query)
+            
+            # Giornaliere
+            if ext_matches.get("GIORNALIERE"):
+                results_menu.addAction("📂 GIORNALIERE:").setEnabled(False)
+                for g in ext_matches["GIORNALIERE"][:20]:
+                    text = f"{g['data']} - {g['personale']} - {g['descrizione'][:40]}..."
+                    action = results_menu.addAction(text)
+                    action.triggered.connect(lambda _, q=query: self._navigate_to_extended(1, q)) # Tab 1 = Giornaliere
+                    found_count += 1
+                results_menu.addSeparator()
+
+            # Cantiere (Scarico Ore)
+            if ext_matches.get("CANTIERE"):
+                results_menu.addAction("🏗️ CANTIERE (Scarico Ore):").setEnabled(False)
+                for c in ext_matches["CANTIERE"][:20]:
+                    text = f"{c['data']} - {c['personale']} - {c['commessa']}"
+                    action = results_menu.addAction(text)
+                    action.triggered.connect(lambda _, q=query: self._navigate_to_dataease(q))
+                    found_count += 1
+                results_menu.addSeparator()
+
+            # Certificati
+            if ext_matches.get("CERTIFICATI"):
+                results_menu.addAction("📜 CERTIFICATI:").setEnabled(False)
+                for c in ext_matches["CERTIFICATI"][:20]:
+                    text = f"{c['matricola']} - {c['modello']} ({c['costruttore']})"
+                    action = results_menu.addAction(text)
+                    action.triggered.connect(lambda _, q=query: self._navigate_to_extended(3, q)) # Tab 3 = Certificati
+                    found_count += 1
+                results_menu.addSeparator()
+
+        except: pass
+
+        # --- 3. Dipendenti (Timbrature) ---
+        try:
+            emp_matches = TimbratureStorage().search_employees(query)
+            if emp_matches:
+                results_menu.addAction("👥 DIPENDENTI:").setEnabled(False)
+                for emp in emp_matches[:20]:
+                    text = f"{emp['cognome']} {emp['nome']}"
+                    action = results_menu.addAction(text)
+                    # Navigate to Timbrature DB and filter
+                    action.triggered.connect(lambda _, q=text: self._navigate_to_timbrature(q))
+                    found_count += 1
+                results_menu.addSeparator()
+        except: pass
+
+        # --- 4. Audit Log ---
+        try:
+            from src.core.audit_manager import AuditManager
+            audit_logs = AuditManager().get_logs(limit=100)
+            matches = [l for l in audit_logs if query.lower() in str(l['action']).lower() or query.lower() in str(l['entity']).lower()]
+            if matches:
+                results_menu.addAction("🛡️ AUDIT LOG:").setEnabled(False)
+                for log in matches[:3]:
+                    action = results_menu.addAction(f"{log['action']} - {log['entity']}")
+                    action.triggered.connect(lambda: self._navigate_to(6))
+                    found_count += 1
+        except: pass
+
+        if found_count == 0:
+            results_menu.addAction("❌ Nessun risultato trovato").setEnabled(False)
+
+        pos = self.global_search.mapToGlobal(QPoint(0, self.global_search.height()))
+        results_menu.exec(pos)
+
+    def _navigate_to_extended(self, tab_idx, query):
+        """Naviga a un tab specifico di Contabilità e imposta il filtro."""
+        self._navigate_to(3) # Database
+        self.database_widget.setCurrentIndex(1) # Contabilità
+        self.contabilita_panel.main_tabs.setCurrentIndex(tab_idx)
+        self.contabilita_panel.set_search_query(query)
+
+    def _navigate_to_dataease(self, query):
+        """Naviga a Scarico Ore (DataEase)."""
+        self._navigate_to(3)
+        self.database_widget.setCurrentIndex(2) # DataEase
+        self.scarico_ore_panel.search_input.setText(query)
+
+    def _navigate_to_timbrature(self, query):
+        """Naviga a Timbrature DB."""
+        self._navigate_to(3)
+        self.database_widget.setCurrentIndex(0) # Timbrature
+        self.timbrature_db_panel.search_input.setText(query)
+
+    def _navigate_to_oda(self, oda_code):
+        """Naviga al pannello contabilità e filtra per OdA."""
+        self._navigate_to(3) # Database
+        self.database_widget.setCurrentIndex(1) # Contabilità
+        self.contabilita_panel.set_search_query(oda_code)
+
     def _connect_signals(self):
         """Collega i segnali."""
         self.btn_home.clicked.connect(lambda: self._navigate_to(0))
@@ -556,6 +706,11 @@ class MainWindow(QMainWindow):
     
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra."""
+        # Auto Backup
+        config = config_manager.load_config()
+        if config.get("auto_backup", True):
+            BackupManager.create_backup()
+
         # Controlla modifiche non salvate nelle impostazioni
         if self.settings_panel.has_unsaved_changes():
             can_close = self.settings_panel.prompt_save_if_needed()

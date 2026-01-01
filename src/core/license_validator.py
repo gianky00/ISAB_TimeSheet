@@ -12,7 +12,8 @@ from datetime import date
 from cryptography.fernet import Fernet
 from enum import Enum
 from src.core.time_manager import get_trusted_time
-from src.core.secrets_manager import SecretsManager  # Use SecretsManager
+from src.core.secrets_manager import SecretsManager 
+from src.core.audit_manager import AuditManager
 
 class LicenseStatus(Enum):
     VALID = "Valid"
@@ -201,7 +202,9 @@ def get_detailed_license_status():
 
         # Verifica hash config.dat
         if _calculate_sha256(paths["config"]) != manifest.get("config.dat"):
-            return LicenseStatus.INVALID, "Integrità licenza compromessa (config.dat)"
+            msg = "Integrità licenza compromessa (config.dat)"
+            AuditManager().log_action("Violazione Licenza", category="sicurezza", entity="File Config", status="error", severity="high")
+            return LicenseStatus.INVALID, msg
 
     except Exception as e:
         return LicenseStatus.ERROR, f"Errore lettura manifest: {e}"
@@ -221,11 +224,9 @@ def get_detailed_license_status():
         norm_license = license_hw_id.strip().rstrip('.')
 
         if norm_current != norm_license and "UNKNOWN" not in current_hw_id:
-            return LicenseStatus.INVALID, (
-                f"Hardware ID non valido\n"
-                f"Atteso: {license_hw_id}\n"
-                f"Rilevato: {current_hw_id}"
-            )
+            msg = f"Hardware ID non valido\nAtteso: {license_hw_id}\nRilevato: {current_hw_id}"
+            AuditManager().log_action("Mismatch Hardware", category="sicurezza", entity="Licenza", params={"atteso": license_hw_id, "rilevato": current_hw_id}, status="error", severity="high")
+            return LicenseStatus.INVALID, msg
 
         # Validazione scadenza
         expiry_str = payload.get("Scadenza Licenza", "")
