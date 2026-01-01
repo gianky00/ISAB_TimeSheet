@@ -43,7 +43,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         for index, item in enumerate(data):
             self._check_stop()
-            pdl_num = item.get("pdl_number")
+            # Support both keys for robustness
+            pdl_num = item.get("numero_pdl") or item.get("pdl_number")
             print_enabled = item.get("print_enabled", False)
             printer_name = item.get("printer_name", "")
 
