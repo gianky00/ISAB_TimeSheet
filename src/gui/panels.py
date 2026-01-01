@@ -1095,11 +1095,14 @@ class ScaricoPDLPanel(BaseBotPanel):
         
         bot_data = []
         for row in raw_data:
-            bot_data.append({
-                "pdl_number": row.get("NUMERO PDL", ""),
-                "print_enabled": print_enabled,
-                "printer_name": printer_name
-            })
+            # EditableDataTable normalizes keys to lowercase and replaces spaces with underscores
+            pdl_val = row.get("numero_pdl", "")
+            if pdl_val:
+                bot_data.append({
+                    "pdl_number": pdl_val,
+                    "print_enabled": print_enabled,
+                    "printer_name": printer_name
+                })
             
         # Get paths/config
         download_path = self.dest_path_edit.text()
