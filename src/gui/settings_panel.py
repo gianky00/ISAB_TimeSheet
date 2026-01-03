@@ -4,6 +4,7 @@ Pannello per la configurazione dell'applicazione.
 Include gestione lista fornitori, tracking modifiche non salvate e statistiche.
 """
 from pathlib import Path
+from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QLineEdit, QCheckBox, QSpinBox, QFileDialog,
@@ -917,6 +918,53 @@ class SettingsPanel(QWidget):
         btn_layout.addWidget(open_folder_btn)
         
         layout.addLayout(btn_layout)
+
+        # Restore Section
+        restore_group = self._create_group_box("Ripristino Backup")
+        restore_layout = QVBoxLayout(restore_group)
+
+        restore_label = QLabel("Seleziona un backup da ripristinare:")
+        restore_layout.addWidget(restore_label)
+
+        restore_controls = QHBoxLayout()
+        
+        self.restore_combo = QComboBox()
+        self.restore_combo.setMinimumHeight(40)
+        self.restore_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: white;
+            }
+        """)
+        restore_controls.addWidget(self.restore_combo)
+
+        self.refresh_backups_btn = QPushButton("🔄")
+        self.refresh_backups_btn.setToolTip("Aggiorna lista backup")
+        self.refresh_backups_btn.setFixedSize(40, 40)
+        self.refresh_backups_btn.clicked.connect(self._refresh_backups_list)
+        self._style_mini_button(self.refresh_backups_btn, "#6c757d")
+        restore_controls.addWidget(self.refresh_backups_btn)
+
+        self.restore_btn = QPushButton("↩️ Ripristina")
+        self.restore_btn.setMinimumHeight(40)
+        self.restore_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545; color: white; border-radius: 6px; font-weight: bold; font-size: 14px;
+            }
+            QPushButton:hover { background-color: #bb2d3b; }
+        """)
+        self.restore_btn.clicked.connect(self._restore_selected_backup)
+        restore_controls.addWidget(self.restore_btn)
+
+        restore_layout.addLayout(restore_controls)
+        layout.addWidget(restore_group)
+        
+        # Initial populate
+        self._refresh_backups_list()
+        
         layout.addStretch()
 
     def _save_cloud_preference(self):
@@ -930,6 +978,7 @@ class SettingsPanel(QWidget):
         if success:
             from src.gui.widgets.toast import ToastManager
             ToastManager.instance().show(f"Backup completato!\n{msg}", "success")
+            self._refresh_backups_list()
         else:
             QMessageBox.warning(self, "Errore Backup", msg)
 
@@ -937,6 +986,55 @@ class SettingsPanel(QWidget):
         path = BackupManager.get_backup_dir()
         from src.utils.helpers import open_folder
         open_folder(str(path))
+
+    def _refresh_backups_list(self):
+        """Aggiorna la lista dei backup disponibili."""
+        self.restore_combo.clear()
+        backups = BackupManager.list_backups()
+        
+        if not backups:
+            self.restore_combo.addItem("Nessun backup trovato")
+            self.restore_btn.setEnabled(False)
+            return
+
+        self.restore_btn.setEnabled(True)
+        for backup_path in backups:
+            try:
+                name = backup_path.name
+                # Extract timestamp from filename: BotTS_Backup_YYYYMMDD_HHMMSS.zip
+                ts_str = name.replace("BotTS_Backup_", "").replace(".zip", "")
+                dt = datetime.strptime(ts_str, "%Y%m%d_%H%M%S")
+                display = dt.strftime("%d/%m/%Y %H:%M:%S")
+                
+                size_kb = backup_path.stat().st_size // 1024
+                display += f" ({size_kb} KB)"
+                
+                self.restore_combo.addItem(display, str(backup_path))
+            except:
+                self.restore_combo.addItem(backup_path.name, str(backup_path))
+
+    def _restore_selected_backup(self):
+        """Esegue il ripristino del backup selezionato."""
+        path = self.restore_combo.currentData()
+        if not path:
+            return
+
+        reply = QMessageBox.question(
+            self, 
+            "Conferma Ripristino",
+            "ATTENZIONE: Il ripristino sovrascriverà le impostazioni e i dati attuali.\n"
+            "L'applicazione potrebbe richiedere un riavvio.\n\n"
+            "Sei sicuro di voler procedere?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            success, msg = BackupManager.restore_backup(path)
+            if success:
+                QMessageBox.information(self, "Ripristino Completato", msg)
+                self._load_settings()
+            else:
+                QMessageBox.critical(self, "Errore Ripristino", msg)
 
     def _on_tab_changed(self, index):
         if self.tabs.tabText(index) == "Statistiche":

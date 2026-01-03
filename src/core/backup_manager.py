@@ -160,6 +160,18 @@ class BackupManager:
         except: pass
 
     @staticmethod
+    def list_backups() -> List[Path]:
+        """Restituisce la lista dei backup disponibili ordinati per data (più recente prima)."""
+        try:
+            target_dir = BackupManager.get_backup_dir()
+            if not target_dir.exists():
+                return []
+            return sorted(target_dir.glob("BotTS_Backup_*.zip"), key=os.path.getmtime, reverse=True)
+        except Exception as e:
+            logger.error(f"Error listing backups: {e}")
+            return []
+
+    @staticmethod
     def restore_backup(zip_path: str) -> Tuple[bool, str]:
         """Ripristina un backup sovrascrivendo i dati attuali."""
         try:
