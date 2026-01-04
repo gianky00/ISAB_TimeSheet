@@ -1030,29 +1030,50 @@ class ScaricoPDLPanel(BaseBotPanel):
         print_layout = QHBoxLayout(print_group)
         
         self.print_check = QCheckBox("Al termine stampa")
-        self.print_check.stateChanged.connect(self._toggle_printer_combo)
         self.print_check.stateChanged.connect(self._save_data)
         print_layout.addWidget(self.print_check)
         
         self.printer_combo = QComboBox()
-        self.printer_combo.setEnabled(False)
+        self.printer_combo.setMinimumHeight(35)
         self.printer_combo.setMinimumWidth(250)
+        self.printer_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid black;
+                border-radius: 4px;
+                padding: 5px;
+                background-color: white;
+                color: black;
+            }
+        """)
+        
         # Popola stampanti
         printers = get_installed_printers()
         if printers:
             self.printer_combo.addItems(printers)
         else:
             self.printer_combo.addItem("Nessuna stampante trovata")
-            self.printer_combo.setEnabled(False)
-        
+            
         self.printer_combo.currentTextChanged.connect(self._save_data)
         print_layout.addWidget(self.printer_combo)
         
         # Refresh printers button
         refresh_print_btn = QPushButton("🔄")
         refresh_print_btn.setToolTip("Aggiorna lista stampanti")
-        refresh_print_btn.setFixedSize(30, 30)
+        refresh_print_btn.setFixedSize(32, 32) # Consistent mini size
         refresh_print_btn.clicked.connect(self._refresh_printers)
+        refresh_print_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid black;
+                border-radius: 4px;
+                font-size: 16px; /* Larger icon */
+                padding: 0px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         print_layout.addWidget(refresh_print_btn)
         
         print_layout.addStretch()
@@ -1104,9 +1125,6 @@ class ScaricoPDLPanel(BaseBotPanel):
         params_layout.addWidget(self.data_table)
         
         self.content_layout.addWidget(params_group)
-
-    def _toggle_printer_combo(self, state):
-        self.printer_combo.setEnabled(self.print_check.isChecked())
 
     def _refresh_printers(self):
         current = self.printer_combo.currentText()
