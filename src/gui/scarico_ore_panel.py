@@ -199,9 +199,14 @@ class ScaricoOrePanel(QWidget):
         header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
         self.table_view.setHorizontalHeader(header)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        # Enable Word Wrap via Alignment
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.TextWordWrap)
 
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
+
+        # Enable Vertical Header (Row Numbers)
+        self.table_view.verticalHeader().setVisible(True)
 
         # Styles
         self.table_view.setStyleSheet("""
@@ -216,7 +221,7 @@ class ScaricoOrePanel(QWidget):
             QHeaderView::section {
                 background-color: #E1F5FE;
                 color: #333333;
-                padding: 10px 5px;
+                padding: 5px;
                 border: none;
                 border-right: 1px solid #B3E5FC;
                 border-bottom: 3px solid #81D4FA;
@@ -227,6 +232,8 @@ class ScaricoOrePanel(QWidget):
             QHeaderView::section:vertical {
                 font-size: 10px;
                 color: #9E9E9E;
+                background-color: #F5F5F5;
+                padding: 0px 5px;
             }
         """)
 
@@ -487,7 +494,7 @@ class ScaricoOrePanel(QWidget):
 
         header = self.table_view.horizontalHeader()
         # Enable multiline by setting height
-        header.setMinimumHeight(50)
+        header.setMinimumHeight(60)
 
         # Strategy: Most columns are fixed/interactive. DESCRIPTION stretches to fill space.
         header.setStretchLastSection(False) 
