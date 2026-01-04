@@ -208,9 +208,9 @@ QProgressBar::chunk {
 
 /* === TOOLTIPS === */
 QToolTip {
-    background-color: #424242;
-    color: #FFFFFF;
-    border: none;
+    background-color: #FFFFFF;
+    color: #000000;
+    border: 1px solid #000000;
     padding: 8px 12px;
     border-radius: 4px;
 }

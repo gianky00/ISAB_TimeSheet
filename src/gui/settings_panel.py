@@ -473,16 +473,19 @@ class SettingsPanel(QWidget):
 
         contract_btns = QHBoxLayout()
         add_contract_btn = QPushButton("➕")
+        add_contract_btn.setToolTip("Aggiungi Contratto")
         add_contract_btn.clicked.connect(self._add_contract)
         self._style_mini_button(add_contract_btn, "#28a745")
         contract_btns.addWidget(add_contract_btn)
 
         edit_contract_btn = QPushButton("✏️")
+        edit_contract_btn.setToolTip("Modifica Contratto")
         edit_contract_btn.clicked.connect(self._edit_contract)
         self._style_mini_button(edit_contract_btn, "#0d6efd")
         contract_btns.addWidget(edit_contract_btn)
 
         remove_contract_btn = QPushButton("🗑️")
+        remove_contract_btn.setToolTip("Rimuovi Contratto")
         remove_contract_btn.clicked.connect(self._remove_contract)
         self._style_mini_button(remove_contract_btn, "#dc3545")
         contract_btns.addWidget(remove_contract_btn)
@@ -505,16 +508,19 @@ class SettingsPanel(QWidget):
         
         fornitori_btn_layout = QHBoxLayout()
         add_forn_btn = QPushButton("➕")
+        add_forn_btn.setToolTip("Aggiungi Fornitore")
         add_forn_btn.clicked.connect(self._add_fornitore)
         self._style_mini_button(add_forn_btn, "#28a745")
         fornitori_btn_layout.addWidget(add_forn_btn)
         
         edit_forn_btn = QPushButton("✏️")
+        edit_forn_btn.setToolTip("Modifica Fornitore")
         edit_forn_btn.clicked.connect(self._edit_fornitore)
         self._style_mini_button(edit_forn_btn, "#0d6efd")
         fornitori_btn_layout.addWidget(edit_forn_btn)
         
         rem_forn_btn = QPushButton("🗑️")
+        rem_forn_btn.setToolTip("Rimuovi Fornitore")
         rem_forn_btn.clicked.connect(self._remove_fornitore)
         self._style_mini_button(rem_forn_btn, "#dc3545")
         fornitori_btn_layout.addWidget(rem_forn_btn)
@@ -543,16 +549,19 @@ class SettingsPanel(QWidget):
         
         reparti_btn_layout = QHBoxLayout()
         add_rep_btn = QPushButton("➕")
+        add_rep_btn.setToolTip("Aggiungi Reparto")
         add_rep_btn.clicked.connect(self._add_reparto)
         self._style_mini_button(add_rep_btn, "#28a745")
         reparti_btn_layout.addWidget(add_rep_btn)
         
         edit_rep_btn = QPushButton("✏️")
+        edit_rep_btn.setToolTip("Modifica Reparto")
         edit_rep_btn.clicked.connect(self._edit_reparto)
         self._style_mini_button(edit_rep_btn, "#0d6efd")
         reparti_btn_layout.addWidget(edit_rep_btn)
         
         rem_rep_btn = QPushButton("🗑️")
+        rem_rep_btn.setToolTip("Rimuovi Reparto")
         rem_rep_btn.clicked.connect(self._remove_reparto)
         self._style_mini_button(rem_rep_btn, "#dc3545")
         reparti_btn_layout.addWidget(rem_rep_btn)
@@ -575,16 +584,19 @@ class SettingsPanel(QWidget):
         
         cantieri_btn_layout = QHBoxLayout()
         add_cant_btn = QPushButton("➕")
+        add_cant_btn.setToolTip("Aggiungi Cantiere")
         add_cant_btn.clicked.connect(self._add_cantiere)
         self._style_mini_button(add_cant_btn, "#28a745")
         cantieri_btn_layout.addWidget(add_cant_btn)
         
         edit_cant_btn = QPushButton("✏️")
+        edit_cant_btn.setToolTip("Modifica Cantiere")
         edit_cant_btn.clicked.connect(self._edit_cantiere)
         self._style_mini_button(edit_cant_btn, "#0d6efd")
         cantieri_btn_layout.addWidget(edit_cant_btn)
         
         rem_cant_btn = QPushButton("🗑️")
+        rem_cant_btn.setToolTip("Rimuovi Cantiere")
         rem_cant_btn.clicked.connect(self._remove_cantiere)
         self._style_mini_button(rem_cant_btn, "#dc3545")
         cantieri_btn_layout.addWidget(rem_cant_btn)
