@@ -294,6 +294,25 @@ class ScaricaTSPanel(BaseBotPanel):
         
         params_layout.addLayout(fornitore_layout)
         
+        # Riga 2: Data
+        date_layout = QHBoxLayout()
+        date_label = QLabel("Data Da:")
+        date_label.setMinimumWidth(80)
+        date_layout.addWidget(date_label)
+        
+        self.date_edit = CalendarDateEdit()
+        # Default: 01.01.2025
+        self.date_edit.setDate(QDate(2025, 1, 1))
+        date_layout.addWidget(self.date_edit)
+        
+        date_hint = QLabel("(Formato: gg.mm.aaaa)")
+        date_hint.setStyleSheet("color: #6c757d; font-size: 13px;")
+        date_layout.addWidget(date_hint)
+        
+        date_layout.addStretch()
+        
+        params_layout.addLayout(date_layout)
+        
         # Riga 3: Percorso destinazione
         dest_layout = QHBoxLayout()
         dest_label = QLabel("Destinazione:")
