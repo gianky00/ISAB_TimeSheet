@@ -294,25 +294,6 @@ class ScaricaTSPanel(BaseBotPanel):
         
         params_layout.addLayout(fornitore_layout)
         
-        # Riga 2: Data
-        date_layout = QHBoxLayout()
-        date_label = QLabel("Data Da:")
-        date_label.setMinimumWidth(80)
-        date_layout.addWidget(date_label)
-        
-        self.date_edit = CalendarDateEdit()
-        # Default: 01.01.2025
-        self.date_edit.setDate(QDate(2025, 1, 1))
-        date_layout.addWidget(self.date_edit)
-        
-        date_hint = QLabel("(Formato: gg.mm.aaaa)")
-        date_hint.setStyleSheet("color: #6c757d; font-size: 13px;")
-        date_layout.addWidget(date_hint)
-        
-        date_layout.addStretch()
-        
-        params_layout.addLayout(date_layout)
-        
         # Riga 3: Percorso destinazione
         dest_layout = QHBoxLayout()
         dest_label = QLabel("Destinazione:")
@@ -322,6 +303,16 @@ class ScaricaTSPanel(BaseBotPanel):
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
+        self.dest_path_edit.setMinimumWidth(350)
+        # Dynamic Width logic
+        def update_width():
+            text = self.dest_path_edit.text() or self.dest_path_edit.placeholderText()
+            w = self.dest_path_edit.fontMetrics().horizontalAdvance(text) + 60
+            self.dest_path_edit.setFixedWidth(max(350, min(w, 600)))
+        
+        self.dest_path_edit.textChanged.connect(update_width)
+        update_width() # Initial call
+
         dest_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton("📂")
@@ -340,6 +331,8 @@ class ScaricaTSPanel(BaseBotPanel):
             }
         """)
         dest_layout.addWidget(browse_btn)
+        
+        dest_layout.addStretch()
 
         params_layout.addLayout(dest_layout)
 
@@ -661,6 +654,16 @@ class DettagliOdAPanel(BaseBotPanel):
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
+        self.dest_path_edit.setMinimumWidth(350)
+        # Dynamic Width logic
+        def update_width_oda():
+            text = self.dest_path_edit.text() or self.dest_path_edit.placeholderText()
+            w = self.dest_path_edit.fontMetrics().horizontalAdvance(text) + 60
+            self.dest_path_edit.setFixedWidth(max(350, min(w, 600)))
+        
+        self.dest_path_edit.textChanged.connect(update_width_oda)
+        update_width_oda()
+
         dest_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton("📂")
@@ -679,6 +682,8 @@ class DettagliOdAPanel(BaseBotPanel):
             }
         """)
         dest_layout.addWidget(browse_btn)
+        
+        dest_layout.addStretch()
 
         params_layout.addLayout(dest_layout)
 
@@ -1088,6 +1093,16 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
+        self.dest_path_edit.setMinimumWidth(350)
+        # Dynamic Width logic
+        def update_width_pdl():
+            text = self.dest_path_edit.text() or self.dest_path_edit.placeholderText()
+            w = self.dest_path_edit.fontMetrics().horizontalAdvance(text) + 60
+            self.dest_path_edit.setFixedWidth(max(350, min(w, 600)))
+        
+        self.dest_path_edit.textChanged.connect(update_width_pdl)
+        update_width_pdl()
+
         dest_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton("📂")
@@ -1106,6 +1121,8 @@ class ScaricoPDLPanel(BaseBotPanel):
             }
         """)
         dest_layout.addWidget(browse_btn)
+        
+        dest_layout.addStretch()
 
         params_layout.addLayout(dest_layout)
         

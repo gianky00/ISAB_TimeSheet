@@ -207,6 +207,8 @@ class ScaricoOrePanel(QWidget):
 
         # Enable Vertical Header (Row Numbers)
         self.table_view.verticalHeader().setVisible(True)
+        self.table_view.verticalHeader().setMinimumWidth(50)
+        self.table_view.verticalHeader().setDefaultSectionSize(28)
 
         # Styles
         self.table_view.setStyleSheet("""
@@ -230,10 +232,13 @@ class ScaricoOrePanel(QWidget):
                 font-size: 11px;
             }
             QHeaderView::section:vertical {
-                font-size: 10px;
-                color: #9E9E9E;
+                font-size: 11px;
+                font-weight: bold;
+                color: #495057;
                 background-color: #F5F5F5;
-                padding: 0px 5px;
+                padding: 0px 8px;
+                border-right: 1px solid #dee2e6;
+                border-bottom: 1px solid #dee2e6;
             }
         """)
 
@@ -494,7 +499,7 @@ class ScaricoOrePanel(QWidget):
 
         header = self.table_view.horizontalHeader()
         # Enable multiline by setting height
-        header.setMinimumHeight(60)
+        header.setMinimumHeight(80)
 
         # Strategy: Most columns are fixed/interactive. DESCRIPTION stretches to fill space.
         header.setStretchLastSection(False) 
@@ -504,20 +509,20 @@ class ScaricoOrePanel(QWidget):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
         # DATA (0), PERS1 (1), PERS2 (2), ODC (3), POS (4), DALLE (5), ALLE (6), TOT (7) -> Fixed/Interactive
-        self.table_view.setColumnWidth(0, 90)  # Data
-        self.table_view.setColumnWidth(1, 130) # Pers1
-        self.table_view.setColumnWidth(2, 130) # Pers2
-        self.table_view.setColumnWidth(3, 80)  # ODC
-        self.table_view.setColumnWidth(4, 50)  # POS
-        self.table_view.setColumnWidth(5, 50)  # Dalle
-        self.table_view.setColumnWidth(6, 50)  # Alle
-        self.table_view.setColumnWidth(7, 65)  # Totale Ore
+        self.table_view.setColumnWidth(0, 100) # Data
+        self.table_view.setColumnWidth(1, 150) # Pers1
+        self.table_view.setColumnWidth(2, 150) # Pers2
+        self.table_view.setColumnWidth(3, 100) # ODC
+        self.table_view.setColumnWidth(4, 60)  # POS
+        self.table_view.setColumnWidth(5, 75)  # Dalle
+        self.table_view.setColumnWidth(6, 75)  # Alle
+        self.table_view.setColumnWidth(7, 90)  # Totale Ore
         
         # DESCRIZIONE (8) -> STRETCH (Fills all remaining space)
         header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
         
-        self.table_view.setColumnWidth(9, 60)  # Finito
-        self.table_view.setColumnWidth(10, 80) # Commessa
+        self.table_view.setColumnWidth(9, 80)  # Finito
+        self.table_view.setColumnWidth(10, 100) # Commessa
 
     def keyPressEvent(self, event):
         # Implement Ctrl+C for QTableView
