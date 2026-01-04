@@ -1002,16 +1002,26 @@ class SettingsPanel(QWidget):
         if not path:
             return
 
-        reply = QMessageBox.question(
-            self, 
-            "Conferma Ripristino",
-            "ATTENZIONE: Il ripristino sovrascriverà le impostazioni e i dati attuali.\n"
-            "L'applicazione potrebbe richiedere un riavvio.\n\n"
-            "Sei sicuro di voler procedere?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Conferma Ripristino")
+        msg_box.setText("ATTENZIONE: Il ripristino sovrascriverà le impostazioni e i dati attuali.\n"\
+                       "L'applicazione potrebbe richiedere un riavvio.\n\n"\
+                       "Sei sicuro di voler procedere?")
+        msg_box.setIcon(QMessageBox.Icon.Question)
+
+        # Add custom buttons for better control over text and styling
+        btn_si = msg_box.addButton("Si", QMessageBox.ButtonRole.YesRole)
+        btn_no = msg_box.addButton("No", QMessageBox.ButtonRole.NoRole)
         
-        if reply == QMessageBox.StandardButton.Yes:
+        # Apply objectNames for specific styling from QSS
+        btn_si.setObjectName("qt_msgbox_buttonbox_yes")
+        btn_no.setObjectName("qt_msgbox_buttonbox_no")
+
+        msg_box.setDefaultButton(btn_si) # Set 'Si' as default
+
+        msg_box.exec()
+        
+        if msg_box.clickedButton() == btn_si:
             success, msg = BackupManager.restore_backup(path)
             if success:
                 QMessageBox.information(self, "Ripristino Completato", msg)

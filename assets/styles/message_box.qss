@@ -1,0 +1,42 @@
+/* assets/styles/message_box.qss */
+
+QMessageBox QPushButton {
+    min-width: 80px;
+    min-height: 30px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+QMessageBox QPushButton#qt_msgbox_buttonbox_yes {
+    background-color: #0d6efd; /* Colore primario */
+    color: white;
+    border: 1px solid #0d6efd;
+}
+
+QMessageBox QPushButton#qt_msgbox_buttonbox_yes:hover {
+    background-color: #0b5ed7;
+    border: 1px solid #0b5ed7;
+}
+
+QMessageBox QPushButton#qt_msgbox_buttonbox_no {
+    background-color: #f8f9fa; /* Sfondo chiaro per 'No' */
+    color: black; /* Testo nero per contrasto */
+    border: 1px solid #ced4da; /* Bordo sottile */
+}
+
+QMessageBox QPushButton#qt_msgbox_buttonbox_no:hover {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+}
+
+QMessageBox QPushButton:default {
+    border: 2px solid #0d6efd;
+}
+
+QMessageBox {
+    background-color: #f8f9fa;
+    color: #212529;
+    font-size: 14px;
+}

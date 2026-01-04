@@ -41,11 +41,15 @@ class TestBaseBot:
         bot.driver.title = "ISAB Portal"
         bot.driver.page_source = "<html></html>"
         bot.driver.current_url = "http://portal/home"
-        
+    
         # Mock waits
         # WebDriverWait(driver, timeout).until(...) -> returns element
         bot.wait.until.return_value = MagicMock()
         
+        # Mock LoginPage
+        bot.login_page = MagicMock()
+        bot.login_page.login.return_value = True
+
         # Mock internal helpers per evitare logica complessa
         with patch.object(bot, '_attendi_scomparsa_overlay', return_value=True), \
              patch.object(bot, '_verify_logged_in_via_ui', return_value=False), \
@@ -55,11 +59,14 @@ class TestBaseBot:
             result = bot._login()
             
             assert result is True
-            bot.driver.get.assert_called()
+            bot.login_page.login.assert_called_with("user", "pass")
 
     def test_login_proxy_error(self, bot):
         bot.driver.title = "Proxy Error"
         bot.driver.page_source = "Proxy Error"
+        
+        bot.login_page = MagicMock()
+        bot.login_page.login.return_value = False # Simula fallimento login
         
         result = bot._login()
         assert result is False

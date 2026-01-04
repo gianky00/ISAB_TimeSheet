@@ -1,0 +1,104 @@
+
+/* assets/styles/main_window.qss */
+
+/* Stili per SidebarButton */
+QPushButton {
+    background-color: transparent;
+    color: #ffffff;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 12px 18px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+}
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+QPushButton:checked {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: bold;
+}
+
+/* Stili per QProgressBar (nella status bar) */
+QProgressBar {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    text-align: center;
+    color: black;
+}
+QProgressBar::chunk {
+    background-color: #0d6efd;
+}
+
+/* Stili per la Sidebar QFrame */
+QFrame#sidebarFrame { /* Utilizziamo un objectName per identificare specificamente la sidebar */
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #667eea, stop:1 #764ba2);
+}
+
+/* Stili per QLabel all'interno della sidebar */
+QLabel#logoLabel { /* objectName per il logo */
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    padding: 10px 0;
+    background: transparent;
+}
+QLabel#subtitleLabel { /* objectName per il sottotitolo */
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    padding-bottom: 20px;
+    background: transparent;
+}
+QLabel#licenseLabel { /* objectName per le info licenza */
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    padding: 5px;
+    background: transparent;
+}
+QLabel#versionLabel { /* objectName per la versione */
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    padding-top: 10px;
+    background: transparent;
+}
+
+/* Separatore nella sidebar */
+QFrame#sidebarSeparator { /* objectName per i separatori */
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Stili per QLineEdit (ricerca globale) */
+QLineEdit#globalSearchInput { /* objectName per la ricerca globale */
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    padding: 5px 20px;
+    background-color: white;
+    font-size: 14px;
+}
+QLineEdit#globalSearchInput:focus {
+    border: 2px solid #0d6efd;
+    background-color: #f8f9fa;
+}
+
+/* Stili per i pulsanti nella AccountDialog */
+AccountDialog QPushButton {
+    min-width: 80px;
+    min-height: 35px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #0d6efd;
+    color: white;
+    border: 1px solid #0d6efd;
+}
+
+AccountDialog QPushButton:hover {
+    background-color: #0b5ed7;
+    border: 1px solid #0b5ed7;
+}

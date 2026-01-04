@@ -60,30 +60,32 @@ class TestContabilitaLogic:
         assert "importati" in msg.lower()
         assert "2024" in msg
 
-    @patch('src.core.contabilita_manager.pd.read_sql_query')
-    @patch('src.core.contabilita_manager.pd.read_excel')
-    def test_import_giornaliere(self, mock_read_excel, mock_read_sql, mock_db):
-        mock_read_sql.return_value = pd.DataFrame(columns=['n_prev', 'odc'])
-        
-        cols = ['DATA', 'PERSONALE', "DESCRIZIONE ATTIVITA'", 'TCL', 'ODC', 'N° PDL', 'INIZIO', 'FINE', 'ORE', 'consuntivo']
-        row = ['2023-01-01', 'U', 'D', 'T', 'O', 'P', '08', '17', 8, '100']
-        mock_read_excel.return_value = pd.DataFrame([row], columns=cols)
+    @patch('src.core.contabilita_manager.DataSynchronizer')
+    @patch('src.core.contabilita_manager.ExcelImporter')
+    def test_import_giornaliere(self, mock_excel_importer, mock_data_synchronizer, mock_db):
+        # Mock ExcelImporter.import_giornaliere
+        imported_rows = [
+            (2023, '2023-01-01', 'U', 'D', 'T', 'O', 'P', '08', '17', 8, '100', 'file.xlsx'),
+        ]
+        imported_years = [2023]
+        mock_excel_importer.import_giornaliere.return_value = (True, "Import successful", imported_rows, imported_years)
 
-        with patch('src.core.contabilita_manager.ContabilitaManager.scan_workload', return_value=(1, 1)):
-             with patch('src.core.contabilita_manager.Path') as MockPath:
-                 path_inst = MockPath.return_value
-                 path_inst.exists.return_value = True
-                 
-                 year_dir = MagicMock()
-                 year_dir.is_dir.return_value = True
-                 year_dir.name = "Giornaliere 2023"
-                 year_dir.glob.return_value = [MagicMock(name="file.xlsx")]
-                 
-                 path_inst.iterdir.return_value = [year_dir]
-                 
-                 success, msg, added, removed = ContabilitaManager.import_giornaliere("dummy_folder")
-                 
+        # Mock DataSynchronizer.sync_giornaliere
+        mock_data_synchronizer.sync_giornaliere.return_value = (1, 0)
+
+        with patch('src.core.contabilita_manager.Path') as MockPath:
+            path_inst = MockPath.return_value
+            path_inst.exists.return_value = True
+            
+            success, msg, added, removed = ContabilitaManager.import_giornaliere("dummy_folder")
+            
         assert success is True
+        assert added == 1
+        assert removed == 0
+        mock_excel_importer.import_giornaliere.assert_called_once_with("dummy_folder", ANY, ANY)
+        mock_data_synchronizer.sync_giornaliere.assert_called_once_with(
+            ContabilitaManager.DB_PATH, imported_rows, imported_years
+        )
 
     def test_scan_workload(self, tmp_path):
         d = tmp_path / "dummy_dir"

@@ -27,7 +27,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from src.core.constants import URLs, Timeouts, BotStatus, BrowserConfig
 from src.core import config_manager
-from src.bots.portale_fornitori.common.locators import LoginLocators, CommonLocators
+from src.bots.portale_fornitori.common.locators import CommonLocators # LoginLocators non più necessario qui
+from src.bots.base.login_page import LoginPage
 
 class BaseBot(ABC):
     """
@@ -35,7 +36,6 @@ class BaseBot(ABC):
     
     Provides:
     - Selenium/Chrome management with anti-detection
-    - Login to ISAB portal
     - Popup management
     - ExtJS menu navigation
     - Logging callback system
@@ -76,6 +76,7 @@ class BaseBot(ABC):
         self._stop_requested = False
         self._log_callback: Optional[Callable[[str], None]] = None
         self._input_callback: Optional[Callable[[str], str]] = None
+        self.login_page: Optional[LoginPage] = None
     
     @property
     @abstractmethod
@@ -258,6 +259,7 @@ class BaseBot(ABC):
         self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
         
         self.log("✓ Browser inizializzato (Modalità Silenziosa)")
+        self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
     
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = Timeouts.OVERLAY) -> bool:
         """
@@ -275,94 +277,24 @@ class BaseBot(ABC):
         except TimeoutException:
             self.log(f"⚠ Timeout ({timeout_secondi}s) attesa overlay. Proseguo con cautela.")
             return False
-    
-    def _perform_login_form_action(self):
-        """Fills login form and clicks Enter."""
-        username_field = self.wait.until(
-            EC.element_to_be_clickable(LoginLocators.USERNAME_FIELD)
-        )
-        username_field.clear()
-        username_field.send_keys(self.username)
-
-        password_field = self.wait.until(
-            EC.element_to_be_clickable(LoginLocators.PASSWORD_FIELD)
-        )
-        password_field.clear()
-        password_field.send_keys(self.password)
-
-        try:
-            # Standard click
-            accedi_btn = self.wait.until(
-                EC.element_to_be_clickable(LoginLocators.LOGIN_BUTTON)
-            )
-            accedi_btn.click()
-        except (TimeoutException, ElementClickInterceptedException):
-            self.log("⚠️ Click standard intercettato o timeout. Tento click JavaScript...")
-            # Fallback: JavaScript click
-            accedi_element = self.driver.find_element(*LoginLocators.LOGIN_BUTTON_FALLBACK)
-            self.driver.execute_script("arguments[0].click();", accedi_element)
-
-        self.log("Login effettuato. Attendo scomparsa overlay...")
-        self._attendi_scomparsa_overlay(Timeouts.LONG)
 
     def _login(self) -> bool:
         """
-        Performs login to ISAB portal.
-        Returns False if Proxy Error is detected.
+        Performs login to ISAB portal using LoginPage.
+        Returns False if Proxy Error is detected or login fails.
         """
         self._check_stop()
-        self.log(f"Navigazione a: {self.ISAB_URL}")
         self.status = BotStatus.LOGGING_IN
         
-        try:
-            self.driver.get(self.ISAB_URL)
-            
-            # Check Proxy Error
-            if "Proxy Error" in self.driver.title or "Proxy Error" in self.driver.page_source:
-                self.log("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
-                return False
-
-            self.log("Tentativo di login...")
-            self._attendi_scomparsa_overlay(timeout_secondi=10)
-
-            # Check for existing session
-            try:
-                WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
-                )
-                self._perform_login_form_action()
-
-            except TimeoutException:
-                self.log("Campo Username non trovato. Verifico se già loggato...")
-                if self._verify_logged_in_via_ui():
-                    self.log("✓ Rilevata sessione attiva (skip login).")
-                    return True
-                else:
-                    self.log("⚠️ Username assente e sessione invalida/scaduta.")
-                    self.log("🔄 Ricarico la pagina per forzare il form di login...")
-                    self.driver.refresh()
-                    self._attendi_scomparsa_overlay(10)
-
-                    try:
-                        self._perform_login_form_action()
-                        return True
-                    except Exception as e:
-                        self.log(f"✗ Fallito recupero sessione: {e}")
-                        return False
-            
-            self._check_stop()
-            self._handle_session_popup()
-            self._handle_ok_popup()
-            
-            self.log("✓ Login completato con successo")
-            return True
-                
-        except TimeoutException:
-            self.log("✗ Timeout durante il login")
+        if not self.login_page.login(self.username, self.password):
             return False
-        except Exception as e:
-            self.log(f"✗ Errore login: {e}")
-            return False
+
+        self._check_stop()
+        self._handle_session_popup()
+        self._handle_ok_popup()
+        
+        self.log("✓ Login completato con successo")
+        return True
     
     def _handle_session_popup(self):
         """Handles 'Active Session' popup."""
@@ -424,7 +356,7 @@ class BaseBot(ABC):
         return False
     
     def _verify_login(self) -> bool:
-        """Verifies if login was successful."""
+        """Verifies if login was successful (via URL check)."""
         try:
             return "login" not in self.driver.current_url.lower()
         except Exception:
@@ -436,6 +368,215 @@ class BaseBot(ABC):
             WebDriverWait(self.driver, 5).until(EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON))
             return True
         except Exception:
+            return False
+    
+    def _logout(self) -> bool:
+        """
+        Performs logout.
+        """
+        self.log("Tentativo di Logout...")
+        try:
+            settings_button = self.wait.until(
+                EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
+            )
+            settings_button.click()
+            self.log("Pulsante Settings cliccato.")
+            
+            logout_option = self.wait.until(
+                EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
+            )
+            logout_option.click()
+            self.log("Opzione 'Esci' cliccata.")
+            
+            time.sleep(1)
+            self._handle_unsaved_changes_popup()
+            time.sleep(1)
+            
+            # Confirm Logout (Standard 'Si' button)
+            try:
+                yes_button = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located(CommonLocators.POPUP_SESSION_YES)
+                )
+                self.log("Pulsante 'Si' per conferma logout trovato.")
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", yes_button)
+                self.log("Logout confermato.")
+                time.sleep(3)
+                
+            except TimeoutException:
+                self.log("Nessun ulteriore popup di conferma logout.")
+            
+            WebDriverWait(self.driver, 10).until(
+                EC.url_contains(self.ISAB_URL.split("://")[1].split("/")[0])
+            )
+            self.log(f"✓ Logout completato. URL: {self.driver.current_url}")
+            return True
+            
+        except TimeoutException:
+            current_url = self.driver.current_url if self.driver else "N/A"
+            self.log(f"⚠ Timeout durante il logout. URL attuale: {current_url}")
+            try:
+                WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located(CommonLocators.USERNAME_FIELD)
+                )
+                self.log("Campo Username trovato. Logout probabilmente riuscito.")
+                return True
+            except TimeoutException:
+                self.log("⚠ Logout incerto.")
+                return False
+        except Exception as e:
+            self.log(f"✗ Errore durante il logout: {e}")
+            return False
+    
+    def navigate_to_menu(self, menu_path: List[str]) -> bool:
+        """Navigates through ExtJS menus."""
+        self._check_stop()
+        self.log(f"Navigazione: {' > '.join(menu_path)}")
+        
+        try:
+            for menu_item in menu_path:
+                self._check_stop()
+                
+                selectors = [
+                    f"//span[contains(text(), '{menu_item}')]",
+                    f"//div[contains(text(), '{menu_item}')]",
+                    f"//a[contains(text(), '{menu_item}')]",
+                    f"//*[contains(@class, 'x-menu-item')][contains(text(), '{menu_item}')]",
+                    f"//*[normalize-space(text())='{menu_item}']"
+                ]
+                
+                clicked = False
+                for selector in selectors:
+                    try:
+                        element = self.wait.until(
+                            EC.element_to_be_clickable((By.XPATH, selector))
+                        )
+                        element.click()
+                        clicked = True
+                        self._attendi_scomparsa_overlay()
+                        break
+                    except (TimeoutException, ElementClickInterceptedException):
+                        continue
+                
+                if not clicked:
+                    self.log(f"✗ Impossibile cliccare su '{menu_item}'")
+                    return False
+            
+            self.log("✓ Navigazione completata")
+            return True
+            
+        except Exception as e:
+            self.log(f"✗ Errore navigazione: {e}")
+            return False
+    
+    def cleanup(self):
+        """
+        Closes browser and releases resources.
+        """
+        if self.driver:
+            try:
+                self.driver.quit()
+                self.log("Browser chiuso")
+            except Exception:
+                pass
+            self.driver = None
+            self.wait = None
+            self.login_page = None
+    
+    @abstractmethod
+    def run(self, data: List[Dict[str, Any]]) -> bool:
+        """Main execution logic."""
+        pass
+    
+    def _safe_login_with_retry(self, max_retries: int = 3) -> bool:
+        """
+        Initializes driver and login with retry mechanism.
+        """
+        for attempt in range(1, max_retries + 1):
+            self._check_stop()
+            try:
+                self._init_driver()
+                if self._login():
+                    return True
+
+                self.log(f"Tentativo {attempt}/{max_retries} fallito. Riprovo tra 5 secondi...")
+                self.cleanup()
+                time.sleep(5)
+            except Exception as e:
+                self.log(f"Errore inizializzazione (Tentativo {attempt}): {e}")
+                self.cleanup()
+                time.sleep(5)
+
+        self.log("✗ Tutti i tentativi di login sono falliti.")
+        return False
+
+    def _capture_error_snapshot(self) -> str:
+        """Captures a screenshot and returns the path."""
+        try:
+            if not self.driver: return ""
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"error_{timestamp}.png"
+            path = config_manager.CONFIG_DIR / "logs" / "snapshots" / filename
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self.driver.save_screenshot(str(path))
+            return str(path)
+        except Exception:
+            return ""
+
+    def execute(self, data: List[Dict[str, Any]]) -> bool:
+        """
+        Executes full bot workflow.
+        """
+        self._stop_requested = False
+        
+        try:
+            if not self._safe_login_with_retry():
+                self.status = BotStatus.ERROR
+                return False
+            
+            self.status = BotStatus.RUNNING
+            result = self.run(data)
+            
+            self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
+            return result
+            
+        except InterruptedError:
+            self.log("Bot interrotto")
+            self.status = BotStatus.STOPPED
+            return False
+        except Exception as e:
+            snapshot = self._capture_error_snapshot()
+            msg = f"✗ Errore esecuzione: {e}"
+            if snapshot:
+                msg += f" [IMG:{snapshot}]"
+            self.log(msg)
+            self.status = BotStatus.ERROR
+            return False
+        finally:
+            self.cleanup()
+    
+    def execute_login_only(self) -> bool:
+        """Executes only login."""
+        self._stop_requested = False
+        
+        try:
+            self._init_driver()
+            
+            if not self._login():
+                self.status = BotStatus.ERROR
+                return False
+            
+            self.status = BotStatus.COMPLETED
+            return True
+            
+        except InterruptedError:
+            self.log("Bot interrotto")
+            self.status = BotStatus.STOPPED
+            self.cleanup()
+            return False
+        except Exception as e:
+            self.log(f"✗ Errore esecuzione: {e}")
+            self.status = BotStatus.ERROR
+            self.cleanup()
             return False
     
     def _logout(self) -> bool:
@@ -482,7 +623,7 @@ class BaseBot(ABC):
             self.log(f"⚠ Timeout durante il logout. URL attuale: {current_url}")
             try:
                 WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
+                    EC.presence_of_element_located(CommonLocators.USERNAME_FIELD)
                 )
                 self.log("Campo Username trovato. Logout probabilmente riuscito.")
                 return True
