@@ -1,6 +1,6 @@
 @echo off
 echo ========================================================
-echo       BOT TS - LOCAL RELEASE (NO DEPLOY)
+echo       SYNCROJOB - LOCAL RELEASE (NO DEPLOY)
 echo ========================================================
 set VENV_DIR=.venv
 

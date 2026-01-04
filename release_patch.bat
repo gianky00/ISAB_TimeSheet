@@ -1,6 +1,6 @@
 @echo off
 echo ========================================================
-echo           BOT TS - AUTOMATED RELEASE
+echo           SYNCROJOB - AUTOMATED RELEASE
 echo ========================================================
 set VENV_DIR=.venv
 

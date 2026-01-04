@@ -1,9 +1,9 @@
 @echo off
-title Bot TS - Avvio da sorgenti
+title SyncroJob - Avvio da sorgenti
 cd /d "%~dp0"
 
 echo =============================================
-echo    Bot TS - Avvio da codici sorgenti
+echo    SyncroJob - Avvio da codici sorgenti
 echo =============================================
 echo.
 
