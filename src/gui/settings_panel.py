@@ -52,13 +52,12 @@ class AccountDialog(QDialog):
         self.toggle_pass_btn.setStyleSheet("""
             QPushButton {
                 background-color: white;
-                border: 1px solid #ced4da;
+                border: 1px solid black;
                 border-radius: 4px;
                 font-size: 16px;
             }
             QPushButton:hover {
                 background-color: #f8f9fa;
-                border-color: #adb5bd;
             }
         """)
         self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
@@ -151,15 +150,15 @@ class StatisticsWidget(QWidget):
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         refresh_btn.setStyleSheet("""
             QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
+                background-color: white;
+                color: black;
+                border: 1px solid black;
                 border-radius: 6px;
                 padding: 10px 20px;
                 font-weight: bold;
                 font-size: 14px;
             }
-            QPushButton:hover { background-color: #5a6268; }
+            QPushButton:hover { background-color: #f0f0f0; }
         """)
         refresh_btn.clicked.connect(self.refresh)
         layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignRight)
@@ -775,15 +774,15 @@ class SettingsPanel(QWidget):
         self.reset_btn.clicked.connect(self._reset_settings)
         self.reset_btn.setStyleSheet("""
             QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
+                background-color: white;
+                color: black;
+                border: 1px solid black;
                 border-radius: 6px;
                 font-weight: bold;
                 font-size: 15px;
             }
             QPushButton:hover {
-                background-color: #5a6268;
+                background-color: #f0f0f0;
             }
         """)
         action_layout.addWidget(self.reset_btn)
@@ -794,15 +793,15 @@ class SettingsPanel(QWidget):
         self.save_btn.clicked.connect(self._save_settings)
         self.save_btn.setStyleSheet("""
             QPushButton {
-                background-color: #28a745;
-                color: white;
-                border: none;
+                background-color: white;
+                color: black;
+                border: 1px solid black;
                 border-radius: 6px;
                 font-weight: bold;
                 font-size: 15px;
             }
             QPushButton:hover {
-                background-color: #218838;
+                background-color: #f0f0f0;
             }
         """)
         action_layout.addWidget(self.save_btn)
@@ -899,9 +898,9 @@ class SettingsPanel(QWidget):
         backup_btn.setMinimumHeight(45)
         backup_btn.setStyleSheet("""
             QPushButton {
-                background-color: #0d6efd; color: white; border-radius: 6px; font-weight: bold; font-size: 14px;
+                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px;
             }
-            QPushButton:hover { background-color: #0b5ed7; }
+            QPushButton:hover { background-color: #f0f0f0; }
         """)
         backup_btn.clicked.connect(self._run_manual_backup)
         btn_layout.addWidget(backup_btn)
@@ -910,9 +909,9 @@ class SettingsPanel(QWidget):
         open_folder_btn.setMinimumHeight(45)
         open_folder_btn.setStyleSheet("""
             QPushButton {
-                background-color: #6c757d; color: white; border-radius: 6px; font-weight: bold; font-size: 14px;
+                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px;
             }
-            QPushButton:hover { background-color: #5a6268; }
+            QPushButton:hover { background-color: #f0f0f0; }
         """)
         open_folder_btn.clicked.connect(self._open_backup_folder)
         btn_layout.addWidget(open_folder_btn)
@@ -952,9 +951,9 @@ class SettingsPanel(QWidget):
         self.restore_btn.setMinimumHeight(40)
         self.restore_btn.setStyleSheet("""
             QPushButton {
-                background-color: #dc3545; color: white; border-radius: 6px; font-weight: bold; font-size: 14px;
+                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px;
             }
-            QPushButton:hover { background-color: #bb2d3b; }
+            QPushButton:hover { background-color: #f0f0f0; }
         """)
         self.restore_btn.clicked.connect(self._restore_selected_backup)
         restore_controls.addWidget(self.restore_btn)
@@ -1097,32 +1096,33 @@ class SettingsPanel(QWidget):
     def _style_button(self, button):
         button.setStyleSheet("""
             QPushButton {
-                background-color: #0d6efd;
-                color: white;
-                border: none;
+                background-color: white;
+                color: black;
+                border: 1px solid black;
                 border-radius: 4px;
                 padding: 10px 18px;
                 font-weight: bold;
                 font-size: 15px;
             }
             QPushButton:hover {
-                background-color: #0b5ed7;
+                background-color: #f0f0f0;
             }
         """)
     
-    def _style_mini_button(self, button, color, text_color="white"):
+    def _style_mini_button(self, button, color, text_color="black"):
         button.setFixedSize(30, 30)
         button.setStyleSheet(f"""
             QPushButton {{
-                background-color: {color};
-                color: {text_color};
-                border: none;
+                background-color: white;
+                color: black;
+                border: 1px solid black;
                 border-radius: 4px;
                 font-weight: bold;
                 font-size: 14px;
             }}
             QPushButton:hover {{
-                opacity: 0.9;
+                background-color: #f0f0f0;
+                border-color: {color};
             }}
         """)
 
