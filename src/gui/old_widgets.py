@@ -422,11 +422,58 @@ class ExcelTableWidget(QTableWidget):
                 item.setForeground(QBrush(QColor("black")))
 
     def keyPressEvent(self, event):
-        """Gestisce la pressione dei tasti, in particolare CTRL+C."""
+        """Gestisce la pressione dei tasti (Copia/Incolla)."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self.copy_selection()
+        elif event.matches(QKeySequence.StandardKey.Paste):
+            self.paste_selection()
         else:
             super().keyPressEvent(event)
+
+    def paste_selection(self):
+        """Incolla il contenuto degli appunti nella tabella."""
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
+        if not text:
+            return
+
+        rows = text.split('\n')
+        if rows and not rows[-1]:
+            rows.pop()
+
+        current_row = self.currentRow()
+        current_col = self.currentColumn()
+        
+        if current_row < 0: current_row = 0
+        if current_col < 0: current_col = 0
+
+        for r_idx, row_text in enumerate(rows):
+            target_r = current_row + r_idx
+            if target_r >= self.rowCount():
+                break
+
+            cols = row_text.split('\t')
+            for c_idx, cell_text in enumerate(cols):
+                target_c = current_col + c_idx
+                if target_c >= self.columnCount():
+                    break
+                
+                if self.isColumnHidden(target_c):
+                    continue
+
+                cell_text = cell_text.strip()
+                
+                widget = self.cellWidget(target_r, target_c)
+                if isinstance(widget, QComboBox):
+                    index = widget.findText(cell_text)
+                    if index >= 0:
+                        widget.setCurrentIndex(index)
+                else:
+                    item = self.item(target_r, target_c)
+                    if not item:
+                        item = QTableWidgetItem()
+                        self.setItem(target_r, target_c, item)
+                    item.setText(cell_text)
 
     def contextMenuEvent(self, event):
         """Menu contestuale predefinito per copia veloce (per tabelle read-only)."""
@@ -634,8 +681,8 @@ class EditableDataTable(QWidget):
         # Traccia modifiche
         self.table.itemChanged.connect(self._on_item_changed)
 
-        # Aggiungi righe vuote iniziali (almeno 3)
-        for _ in range(3):
+        # Aggiungi righe vuote iniziali (almeno 5)
+        for _ in range(5):
             self._add_row()
 
         layout.addWidget(self.table)
@@ -652,6 +699,11 @@ class EditableDataTable(QWidget):
         copy_action = QAction("📋 Copia", self)
         copy_action.triggered.connect(self.table.copy_selection)
         menu.addAction(copy_action)
+
+        paste_action = QAction("📝 Incolla", self)
+        paste_action.triggered.connect(self.table.paste_selection)
+        menu.addAction(paste_action)
+
         menu.addSeparator()
 
         add_action = QAction("➕ Aggiungi riga", self)

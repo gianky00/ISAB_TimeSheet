@@ -932,20 +932,14 @@ class SettingsPanel(QWidget):
 
         self.refresh_backups_btn = QPushButton("🔄")
         self.refresh_backups_btn.setToolTip("Aggiorna lista backup")
-        self.refresh_backups_btn.setFixedSize(40, 40)
+        self.refresh_backups_btn.setFixedSize(32, 32) # Standard size
         self.refresh_backups_btn.clicked.connect(self._refresh_backups_list)
         self._style_mini_button(self.refresh_backups_btn, "#6c757d")
         restore_controls.addWidget(self.refresh_backups_btn)
 
         self.restore_btn = QPushButton("↩️ Ripristina")
-        self.restore_btn.setMinimumHeight(40)
-        self.restore_btn.setStyleSheet("""
-            QPushButton {
-                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px;
-            }
-            QPushButton:hover { background-color: #f0f0f0; }
-        """)
         self.restore_btn.clicked.connect(self._restore_selected_backup)
+        self._style_button(self.restore_btn) # Use standard button style
         restore_controls.addWidget(self.restore_btn)
 
         restore_layout.addLayout(restore_controls)

@@ -268,6 +268,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
+        self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         fornitore_layout.addWidget(self.fornitore_combo)
         
         # Pulsante per aprire impostazioni
@@ -340,6 +341,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.data_table = EditableDataTable([
             {"name": "Numero OdA", "type": "text"}
         ])
+        self.data_table.setMinimumHeight(220)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
         
@@ -574,6 +576,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
+        self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         fornitore_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
@@ -653,6 +656,7 @@ class DettagliOdAPanel(BaseBotPanel):
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": contracts, "default": default_contract}
         ])
+        self.data_table.setMinimumHeight(220)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
         
@@ -874,6 +878,7 @@ class CaricoTSPanel(BaseBotPanel):
             {"name": "F S", "type": "text"},
             {"name": "G T", "type": "text"}
         ])
+        self.data_table.setMinimumHeight(220)
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
@@ -1030,6 +1035,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.data_table = EditableDataTable([
             {"name": "NUMERO PDL", "type": "text"}
         ])
+        self.data_table.setMinimumHeight(220)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
         
@@ -1194,6 +1200,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
+        self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         fornitore_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
