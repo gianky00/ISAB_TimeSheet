@@ -416,7 +416,7 @@ class MainWindow(QMainWindow):
         
         # Global Status Card (Corner Widget)
         self.global_status_card = StatusCard("Stato Attività")
-        self.global_status_card.setMinimumWidth(220)
+        self.global_status_card.setMinimumWidth(350)
         self.global_status_card.setStyleSheet(self.global_status_card.styleSheet() + "margin-right: 5px; margin-top: 2px;")
         self.automazioni_widget.setCornerWidget(self.global_status_card, Qt.Corner.TopRightCorner)
         
