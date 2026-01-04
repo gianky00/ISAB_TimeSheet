@@ -9,6 +9,7 @@ from .data_table import DataTable
 from .modern_button import ModernButton
 from .status_card import StatusCard
 from .toast import Toast, ToastManager
+from .notification_item import NotificationItem
 
 # Import and re-export old widgets for compatibility during migration
 # (Assuming old_widgets.py contains the original implementation of other widgets like CalendarDateEdit, etc.)

@@ -5,17 +5,18 @@ Pannello per la visualizzazione delle notifiche.
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QScrollArea, QFrame, QSizePolicy, QTabWidget, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QAbstractItemView
+    QTableWidgetItem, QHeaderView, QAbstractItemView, QMessageBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QPalette, QFont
+from datetime import datetime
 
 from src.core.notification_manager import NotificationManager
 from src.core.audit_manager import AuditManager
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.notification_item import NotificationItem
 
-# ... [Manteniamo NotificationItem invariata] ...
-
+# Force file update - Refreshed
 class AuditLogWidget(QWidget):
     """Widget avanzato per l'Audit Log con validazione integrità."""
     
@@ -338,5 +339,3 @@ class NotificationsPanel(QWidget):
             for n in notifications:
                 item = NotificationItem(n)
                 self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, item)
-
-
