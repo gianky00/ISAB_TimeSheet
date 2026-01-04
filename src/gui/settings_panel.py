@@ -730,15 +730,17 @@ class SettingsPanel(QWidget):
         
         # --- Sezione Diagnostica ---
         diag_group = self._create_group_box("🛠️ Diagnostica & Licenza")
-        diag_layout = QHBoxLayout(diag_group) # Horizontal layout
+        diag_layout = QHBoxLayout(diag_group)
+        diag_layout.setSpacing(15)
         self.groups.append(diag_group)
 
         diag_label = QLabel("Gestione file di log e licenza:")
-        diag_label.setStyleSheet("font-size: 15px;")
+        diag_label.setStyleSheet("font-size: 14px;")
         diag_layout.addWidget(diag_label)
+        
+        diag_layout.addStretch()
 
-        open_folder_btn = QPushButton("📂 Apri cartella Logs e Licenza")
-        open_folder_btn.setMinimumHeight(40)
+        open_folder_btn = QPushButton("📂 Apri Cartella Dati")
         open_folder_btn.clicked.connect(self._open_data_folder)
         self._style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)
@@ -1088,9 +1090,9 @@ class SettingsPanel(QWidget):
                 color: black;
                 border: 1px solid black;
                 border-radius: 4px;
-                padding: 10px 18px;
+                padding: 8px 15px;
                 font-weight: bold;
-                font-size: 15px;
+                font-size: 14px;
             }
             QPushButton:hover {
                 background-color: #f0f0f0;
