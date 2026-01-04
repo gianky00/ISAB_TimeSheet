@@ -68,6 +68,9 @@ def setup_crash_logging():
             return
 
         logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+        # Stampa il traceback anche sulla console originale per debug immediato
+        sys.__stderr__.write("".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+
 
         # Mostra Popup (Solo Windows)
         if os.name == 'nt':

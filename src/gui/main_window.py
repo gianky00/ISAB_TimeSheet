@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPoint
 from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
 from datetime import datetime
+from pathlib import Path
 
 # Import Panels
 from src.gui.panels import ScaricaTSPanel, CaricoTSPanel, DettagliOdAPanel, TimbratureBotPanel, TimbratureDBPanel, ScaricoPDLPanel
@@ -99,7 +100,26 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("SyncroJob")
         self.setMinimumSize(1200, 800)
         
-        # Apply Global Theme
+        # Load main_window.qss
+        style_file_path = Path("assets/styles/main_window.qss")
+        if style_file_path.exists():
+            with open(style_file_path, "r", encoding="utf-8") as f:
+                main_window_qss = f.read()
+                self.setStyleSheet(main_window_qss)
+        else:
+            print(f"Warning: {style_file_path} not found.")
+
+        # Load message_box.qss
+        message_box_style_path = Path("assets/styles/message_box.qss")
+        if message_box_style_path.exists():
+            with open(message_box_style_path, "r", encoding="utf-8") as f:
+                message_box_qss = f.read()
+                # Append to existing stylesheet
+                self.setStyleSheet(self.styleSheet() + message_box_qss)
+        else:
+            print(f"Warning: {message_box_style_path} not found.")
+
+        # Apply Global Theme (light.qss)
         apply_theme(QApplication.instance(), "light")
 
         # Abilita Drag & Drop
@@ -203,28 +223,15 @@ class MainWindow(QMainWindow):
 
         # Global Progress Bar
         self.progress_bar = QProgressBar()
+        self.progress_bar.setObjectName("progressBar") # Assegna objectName
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
         self.progress_bar.setVisible(False)
         self.progress_bar.setMaximumWidth(200)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                text-align: center;
-                color: black;
-            }
-            QProgressBar::chunk {
-                background-color: #0d6efd;
-            }
-        """)
         self.status_bar.addPermanentWidget(self.progress_bar)
 
         # Widget centrale
         central_widget = QWidget()
-        # Force light theme for the main window content area if needed, or rely on specific widgets
-        # central_widget.setStyleSheet("background-color: #f8f9fa; color: #212529;")
-        # Removed explicit style to let QSS handle it
         self.setCentralWidget(central_widget)
         
         # Layout principale orizzontale
@@ -234,45 +241,25 @@ class MainWindow(QMainWindow):
         
         # === SIDEBAR ===
         sidebar = QFrame()
+        sidebar.setObjectName("sidebarFrame") # Assegna objectName
         sidebar.setFixedWidth(240)
-        sidebar.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #667eea, stop:1 #764ba2);
-            }
-        """)
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(15, 20, 15, 20)
         sidebar_layout.setSpacing(10)
         
         # Logo/Titolo
         logo_label = QLabel("🚀 SyncroJob")
-        logo_label.setStyleSheet("""
-            QLabel {
-                color: white;
-                font-size: 28px;
-                font-weight: bold;
-                padding: 10px 0;
-                background: transparent;
-            }
-        """)
+        logo_label.setObjectName("logoLabel") # Assegna objectName
         sidebar_layout.addWidget(logo_label)
         
         subtitle = QLabel("Work & Sync Manager")
-        subtitle.setStyleSheet("""
-            QLabel {
-                color: rgba(255, 255, 255, 0.7);
-                font-size: 13px;
-                padding-bottom: 20px;
-                background: transparent;
-            }
-        """)
+        subtitle.setObjectName("subtitleLabel") # Assegna objectName
         sidebar_layout.addWidget(subtitle)
         
         # Separatore
         separator = QFrame()
+        separator.setObjectName("sidebarSeparator") # Assegna objectName
         separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setStyleSheet("background-color: rgba(255, 255, 255, 0.2);")
         sidebar_layout.addWidget(separator)
         
         sidebar_layout.addSpacing(15)
@@ -320,21 +307,14 @@ class MainWindow(QMainWindow):
             license_text = "Licenza non trovata"
 
         license_label = QLabel(license_text)
+        license_label.setObjectName("licenseLabel") # Assegna objectName
         license_label.setWordWrap(True)
-        license_label.setStyleSheet("""
-            QLabel {
-                color: rgba(255, 255, 255, 0.6);
-                font-size: 13px;
-                padding: 5px;
-                background: transparent;
-            }
-        """)
         sidebar_layout.addWidget(license_label)
         
         # Separatore
         separator2 = QFrame()
+        separator2.setObjectName("sidebarSeparator") # Assegna objectName
         separator2.setFrameShape(QFrame.Shape.HLine)
-        separator2.setStyleSheet("background-color: rgba(255, 255, 255, 0.2);")
         sidebar_layout.addWidget(separator2)
         
         sidebar_layout.addSpacing(10)
@@ -346,14 +326,7 @@ class MainWindow(QMainWindow):
         # Versione
         from src.core.version import __version__
         version_label = QLabel(f"v{__version__}")
-        version_label.setStyleSheet("""
-            QLabel {
-                color: rgba(255, 255, 255, 0.5);
-                font-size: 13px;
-                padding-top: 10px;
-                background: transparent;
-            }
-        """)
+        version_label.setObjectName("versionLabel") # Assegna objectName
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sidebar_layout.addWidget(version_label)
         
@@ -369,21 +342,9 @@ class MainWindow(QMainWindow):
         search_container.setContentsMargins(0, 0, 0, 10)
         
         self.global_search = QLineEdit()
+        self.global_search.setObjectName("globalSearchInput") # Assegna objectName
         self.global_search.setPlaceholderText("🔍 Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")
         self.global_search.setMinimumHeight(40)
-        self.global_search.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #ced4da;
-                border-radius: 20px;
-                padding: 5px 20px;
-                background-color: white;
-                font-size: 14px;
-            }
-            QLineEdit:focus {
-                border: 2px solid #0d6efd;
-                background-color: #f8f9fa;
-            }
-        """)
         # Connect search logic
         self.global_search.returnPressed.connect(self._perform_global_search)
         

@@ -18,6 +18,7 @@ import tempfile
 import subprocess
 
 from src.core.contabilita_manager import ContabilitaManager
+from src.core.excel_importer import ExcelImporter
 from src.core import config_manager
 from src.gui.widgets import ExcelTableWidget, StatusIndicator
 
@@ -1481,7 +1482,7 @@ class AttivitaProgrammateTab(QWidget):
                     # which is list(ATTIVITA_PROGRAMMATE_MAPPING.values())
                     # So index matches the list of values
 
-                    db_keys = list(ContabilitaManager.ATTIVITA_PROGRAMMATE_MAPPING.values())
+                    db_keys = list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values())
                     if col_idx < len(db_keys):
                         key = db_keys[col_idx]
                         if key in row_styles:
