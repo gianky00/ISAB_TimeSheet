@@ -710,6 +710,7 @@ class ContabilitaYearTab(QWidget):
 
         # Force Read-Only
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.verticalHeader().setVisible(False)
 
         layout.addWidget(self.table)
 
@@ -1040,6 +1041,7 @@ class GiornaliereYearTab(QWidget):
 
         # Force Read-Only
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.verticalHeader().setVisible(False)
 
         layout.addWidget(self.table)
 
@@ -1421,6 +1423,7 @@ class AttivitaProgrammateTab(QWidget):
 
         # Force Read-Only
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.verticalHeader().setVisible(False)
 
         layout.addWidget(self.table)
 

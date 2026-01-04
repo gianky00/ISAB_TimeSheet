@@ -205,10 +205,8 @@ class ScaricoOrePanel(QWidget):
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
 
-        # Enable Vertical Header (Row Numbers)
-        self.table_view.verticalHeader().setVisible(True)
-        self.table_view.verticalHeader().setMinimumWidth(50)
-        self.table_view.verticalHeader().setDefaultSectionSize(28)
+        # Disable Vertical Header (Row Numbers) as requested
+        self.table_view.verticalHeader().setVisible(False)
 
         # Styles
         self.table_view.setStyleSheet("""
