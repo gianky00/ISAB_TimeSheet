@@ -276,7 +276,21 @@ class ScaricaTSPanel(BaseBotPanel):
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(35, 35)
         self.open_settings_btn.clicked.connect(self._open_settings)
+        self.open_settings_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid black;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         fornitore_layout.addWidget(self.open_settings_btn)
+        
+        fornitore_layout.addStretch()
         
         params_layout.addLayout(fornitore_layout)
         
@@ -313,6 +327,18 @@ class ScaricaTSPanel(BaseBotPanel):
         browse_btn = QPushButton("📂")
         browse_btn.setFixedSize(35, 35)
         browse_btn.clicked.connect(self._browse_dest_path)
+        browse_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid black;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         dest_layout.addWidget(browse_btn)
 
         params_layout.addLayout(dest_layout)
@@ -341,7 +367,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.data_table = EditableDataTable([
             {"name": "Numero OdA", "type": "text"}
         ])
-        self.data_table.setMinimumHeight(220)
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
         
@@ -584,7 +610,21 @@ class DettagliOdAPanel(BaseBotPanel):
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(35, 35)
         self.open_settings_btn.clicked.connect(self._open_settings)
+        self.open_settings_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid black;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         fornitore_layout.addWidget(self.open_settings_btn)
+        
+        fornitore_layout.addStretch()
 
         params_layout.addLayout(fornitore_layout)
 
@@ -626,6 +666,18 @@ class DettagliOdAPanel(BaseBotPanel):
         browse_btn = QPushButton("📂")
         browse_btn.setFixedSize(35, 35)
         browse_btn.clicked.connect(self._browse_dest_path)
+        browse_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid black;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         dest_layout.addWidget(browse_btn)
 
         params_layout.addLayout(dest_layout)
@@ -656,7 +708,7 @@ class DettagliOdAPanel(BaseBotPanel):
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": contracts, "default": default_contract}
         ])
-        self.data_table.setMinimumHeight(220)
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
         
@@ -878,7 +930,7 @@ class CaricoTSPanel(BaseBotPanel):
             {"name": "F S", "type": "text"},
             {"name": "G T", "type": "text"}
         ])
-        self.data_table.setMinimumHeight(220)
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         group_layout.addWidget(self.data_table)
         
@@ -1020,6 +1072,18 @@ class ScaricoPDLPanel(BaseBotPanel):
         browse_btn = QPushButton("📂")
         browse_btn.setFixedSize(35, 35)
         browse_btn.clicked.connect(self._browse_dest_path)
+        browse_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid black;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         dest_layout.addWidget(browse_btn)
 
         params_layout.addLayout(dest_layout)
@@ -1035,7 +1099,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.data_table = EditableDataTable([
             {"name": "NUMERO PDL", "type": "text"}
         ])
-        self.data_table.setMinimumHeight(220)
+        self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
         params_layout.addWidget(self.data_table)
         
@@ -1208,7 +1272,21 @@ class TimbratureBotPanel(BaseBotPanel):
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(35, 35)
         self.open_settings_btn.clicked.connect(self._open_settings)
+        self.open_settings_btn.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                color: black;
+                border: 1px solid black;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
         fornitore_layout.addWidget(self.open_settings_btn)
+        
+        fornitore_layout.addStretch()
 
         params_layout.addLayout(fornitore_layout)
 
