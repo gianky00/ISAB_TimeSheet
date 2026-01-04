@@ -395,8 +395,8 @@ class ExcelTableWidget(QTableWidget):
         super().__init__(*args, **kwargs)
         self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
 
-        # Abilita la selezione di intere righe ma permettendo selezioni multiple
-        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        # Abilita la selezione di celle (non righe intere)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         # Assicura che il click selezioni la riga anche se clicco su una cella non editabile
         self.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
@@ -422,13 +422,21 @@ class ExcelTableWidget(QTableWidget):
                 item.setForeground(QBrush(QColor("black")))
 
     def keyPressEvent(self, event):
-        """Gestisce la pressione dei tasti (Copia/Incolla)."""
+        """Gestisce la pressione dei tasti (Copia/Incolla/Cancella)."""
         if event.matches(QKeySequence.StandardKey.Copy):
             self.copy_selection()
         elif event.matches(QKeySequence.StandardKey.Paste):
             self.paste_selection()
+        elif event.key() == Qt.Key.Key_Delete:
+            self.clear_selection()
         else:
             super().keyPressEvent(event)
+
+    def clear_selection(self):
+        """Cancella il contenuto delle celle selezionate."""
+        for item in self.selectedItems():
+            if item.flags() & Qt.ItemFlag.ItemIsEditable:
+                item.setText("")
 
     def paste_selection(self):
         """Incolla il contenuto degli appunti nella tabella."""

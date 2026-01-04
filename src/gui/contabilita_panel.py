@@ -159,23 +159,6 @@ class ContabilitaPanel(QWidget):
 
         # Global Header Removed (Moved inside tabs)
 
-        # --- Totale Selezionato Label (Global) ---
-        self.selection_container = QWidget()
-        selection_layout = QHBoxLayout(self.selection_container)
-        selection_layout.setContentsMargins(0, 0, 0, 5)
-        selection_layout.addStretch() # Push to right
-
-        self.selection_count_label = QLabel("Righe: 0")
-        self.selection_count_label.setStyleSheet("color: #6c757d; font-weight: bold; margin-right: 15px;")
-
-        self.selection_sum_label = QLabel("Totale ORE SP: 0")
-        self.selection_sum_label.setStyleSheet("color: #0d6efd; font-weight: bold;")
-
-        selection_layout.addWidget(self.selection_count_label)
-        selection_layout.addWidget(self.selection_sum_label)
-
-        layout.addWidget(self.selection_container)
-
         # Main Tab Container
         self.main_tabs = QTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
@@ -202,6 +185,23 @@ class ContabilitaPanel(QWidget):
                 color: #0d6efd;
             }
         """)
+
+        # --- Totale Selezionato Label (Corner Widget) ---
+        self.selection_container = QWidget()
+        selection_layout = QHBoxLayout(self.selection_container)
+        selection_layout.setContentsMargins(0, 0, 10, 0)
+        selection_layout.setSpacing(15)
+
+        self.selection_count_label = QLabel("Righe: 0")
+        self.selection_count_label.setStyleSheet("color: #6c757d; font-weight: bold;")
+
+        self.selection_sum_label = QLabel("Totale ORE SP: 0")
+        self.selection_sum_label.setStyleSheet("color: #0d6efd; font-weight: bold;")
+
+        selection_layout.addWidget(self.selection_count_label)
+        selection_layout.addWidget(self.selection_sum_label)
+
+        self.main_tabs.setCornerWidget(self.selection_container, Qt.Corner.TopRightCorner)
 
         # --- TAB 1: DATI (Years) ---
         self.year_tabs_widget = QTabWidget()
