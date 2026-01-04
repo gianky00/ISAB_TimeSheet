@@ -86,6 +86,7 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
+    status_changed = pyqtSignal(str, str) # status, message
     
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
         super().__init__(parent)
@@ -101,31 +102,11 @@ class BaseBotPanel(QWidget):
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setSpacing(15)
         
-        # Header (Now handled by QSS/Theme but keeping structure)
-        header = QFrame()
-        header.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
-                border-radius: 8px;
-                padding: 15px;
-            }
-        """)
-        header_layout = QVBoxLayout(header)
+        # Header removed as per new design
         
-        title = QLabel(self.bot_name)
-        title.setStyleSheet("color: white; font-size: 24px; font-weight: bold; background: transparent;")
-        header_layout.addWidget(title)
-        
-        desc = QLabel(self.bot_description)
-        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 16px; background: transparent;")
-        header_layout.addWidget(desc)
-        
-        self.main_layout.addWidget(header)
-        
-        # Status Card (New Design)
+        # Status Card (Model only, not in layout)
         self.status_card = StatusCard("Stato Attività")
-        self.main_layout.addWidget(self.status_card)
+        # self.main_layout.addWidget(self.status_card) # Removed from layout
         
         # Content area (da sovrascrivere nelle sottoclassi)
         self.content_widget = QWidget()
@@ -153,12 +134,24 @@ class BaseBotPanel(QWidget):
         btn_layout.addWidget(self.stop_btn)
         
         self.main_layout.addLayout(btn_layout)
+
+    def _update_status(self, status: str, message: str = None):
+        """Aggiorna lo stato locale e emette il segnale."""
+        self.status_card.setStatus(status, message)
+        self.status_changed.emit(status, message if message else "")
+
+    def get_current_status(self):
+        """Ritorna lo stato corrente (status, message)."""
+        # StatusCard doesn't expose getter for message easily but we track status
+        # We can rely on _status from StatusCard if we access it, or just internal tracking
+        msg = self.status_card._status_label.text()
+        return self.status_card._status, msg
     
     def _on_start(self):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
         self.log_widget.timeline.set_mood("running")
-        self.status_card.setStatus(StatusCard.Status.RUNNING)
+        self._update_status(StatusCard.Status.RUNNING)
 
         # Audit & Stats
         AuditManager().log_action(
@@ -174,7 +167,7 @@ class BaseBotPanel(QWidget):
         if self.worker:
             self.worker.stop()
             self.log_widget.append("[AVVISO] Stop richiesto...")
-            self.status_card.setStatus(StatusCard.Status.WARNING, "Arresto richiesto...")
+            self._update_status(StatusCard.Status.WARNING, "Arresto richiesto...")
     
     def _on_worker_finished(self, success: bool):
         """Gestisce il completamento del worker."""
@@ -207,10 +200,10 @@ class BaseBotPanel(QWidget):
         )
 
         if success:
-            self.status_card.setStatus(StatusCard.Status.SUCCESS)
+            self._update_status(StatusCard.Status.SUCCESS)
             self.log_widget.timeline.set_mood("success")
         else:
-            self.status_card.setStatus(StatusCard.Status.ERROR)
+            self._update_status(StatusCard.Status.ERROR)
             self.log_widget.timeline.set_mood("error")
             StatsManager().increment_error(self.bot_id)
         
@@ -233,6 +226,9 @@ class BaseBotPanel(QWidget):
         # Often bots send generic strings like "Downloading..."
         # We keep the icon based on general state (RUNNING) but update text
         self.status_card._update_status_display(status)
+        # We also need to emit the change for the global card
+        # Using current status enum, but updating message
+        self.status_changed.emit(self.status_card._status, status)
     
     def get_credentials(self) -> tuple:
         """Ottiene le credenziali dall'account di default."""
@@ -461,7 +457,7 @@ class ScaricaTSPanel(BaseBotPanel):
         
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self._update_status(StatusCard.Status.ERROR, "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -469,7 +465,7 @@ class ScaricaTSPanel(BaseBotPanel):
         data = self.data_table.get_data()
         if not data:
             ToastManager.instance().show("Inserisci almeno una riga con i dati del Timesheet.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Dati mancanti")
+            self._update_status(StatusCard.Status.ERROR, "Dati mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -477,7 +473,7 @@ class ScaricaTSPanel(BaseBotPanel):
         fornitore = self.fornitore_combo.currentText()
         if not fornitore:
             ToastManager.instance().show("Seleziona un fornitore.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Fornitore mancante")
+            self._update_status(StatusCard.Status.ERROR, "Fornitore mancante")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -763,7 +759,7 @@ class DettagliOdAPanel(BaseBotPanel):
         
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self._update_status(StatusCard.Status.ERROR, "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -771,7 +767,7 @@ class DettagliOdAPanel(BaseBotPanel):
         fornitore = self.fornitore_combo.currentText()
         if not fornitore:
             ToastManager.instance().show("Seleziona un fornitore.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Fornitore mancante")
+            self._update_status(StatusCard.Status.ERROR, "Fornitore mancante")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -908,7 +904,7 @@ class CaricoTSPanel(BaseBotPanel):
         
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self._update_status(StatusCard.Status.ERROR, "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -916,7 +912,7 @@ class CaricoTSPanel(BaseBotPanel):
         data = self.data_table.get_data()
         if not data:
             ToastManager.instance().show("Inserisci almeno una riga con i dati del Timesheet da caricare.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Dati mancanti")
+            self._update_status(StatusCard.Status.ERROR, "Dati mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -1103,7 +1099,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali SafeWork mancanti")
+            self._update_status(StatusCard.Status.ERROR, "Credenziali SafeWork mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -1317,7 +1313,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
         if not username or not password:
             ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Credenziali mancanti")
+            self._update_status(StatusCard.Status.ERROR, "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -1325,7 +1321,7 @@ class TimbratureBotPanel(BaseBotPanel):
         fornitore = self.fornitore_combo.currentText()
         if not fornitore:
             ToastManager.instance().show("Seleziona un fornitore.", "warning")
-            self.status_card.setStatus(StatusCard.Status.ERROR, "Fornitore mancante")
+            self._update_status(StatusCard.Status.ERROR, "Fornitore mancante")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

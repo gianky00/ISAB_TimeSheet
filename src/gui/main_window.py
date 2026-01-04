@@ -33,6 +33,7 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 # Import UI/UX Components
 from src.gui.widgets.toast import ToastManager
+from src.gui.widgets.status_card import StatusCard
 from src.gui.styles import apply_theme
 
 
@@ -413,6 +414,12 @@ class MainWindow(QMainWindow):
         # --- Page 1: Automazioni (Main Groups) ---
         self.automazioni_widget = QTabWidget()
         
+        # Global Status Card (Corner Widget)
+        self.global_status_card = StatusCard("Stato Attività")
+        self.global_status_card.setMinimumWidth(220)
+        self.global_status_card.setStyleSheet(self.global_status_card.styleSheet() + "margin-right: 5px; margin-top: 2px;")
+        self.automazioni_widget.setCornerWidget(self.global_status_card, Qt.Corner.TopRightCorner)
+        
         # Group 1: Portale Fornitori
         self.tab_fornitori = QTabWidget()
         self.tab_fornitori.addTab(self.dettagli_panel, "📋 Dettagli OdA")
@@ -426,6 +433,17 @@ class MainWindow(QMainWindow):
         
         self.automazioni_widget.addTab(self.tab_fornitori, "Portale Fornitori")
         self.automazioni_widget.addTab(self.tab_safework, "SafeWork")
+
+        # Connect signals for Global Status Update
+        self.automazioni_widget.currentChanged.connect(self._update_global_status)
+        self.tab_fornitori.currentChanged.connect(self._update_global_status)
+        self.tab_safework.currentChanged.connect(self._update_global_status)
+        
+        # Connect panel status changes
+        for panel in [self.dettagli_panel, self.scarico_panel, self.timbrature_bot_panel, 
+                      self.carico_panel, self.pdl_panel]:
+            if hasattr(panel, 'status_changed'):
+                panel.status_changed.connect(self._on_panel_status_changed)
 
         # --- Page 3: Database (Tab Widget) ---
         self.database_widget = QTabWidget()
@@ -586,6 +604,38 @@ class MainWindow(QMainWindow):
         self._navigate_to(3) # Database
         self.database_widget.setCurrentIndex(1) # Contabilità
         self.contabilita_panel.set_search_query(oda_code)
+
+    def _get_active_bot_panel(self):
+        """Recupera il pannello bot attualmente visibile."""
+        main_idx = self.automazioni_widget.currentIndex()
+        if main_idx == 0: # Portale Fornitori
+            return self.tab_fornitori.currentWidget()
+        elif main_idx == 1: # SafeWork
+            return self.tab_safework.currentWidget()
+        return None
+
+    def _update_global_status(self):
+        """Aggiorna la card di stato globale in base al pannello attivo."""
+        panel = self._get_active_bot_panel()
+        if panel and hasattr(panel, 'get_current_status'):
+            status, message = panel.get_current_status()
+            self.global_status_card.setStatus(status, message)
+            
+            # Change Global Status Card Title based on Panel Name?
+            # User request: "Stato Attività" title constant.
+            # But maybe we want to know WHICH activity.
+            # "Stato Attività" is generic enough.
+            # self.global_status_card._title_label.setText(f"Stato: {panel.bot_name}") 
+            # Let's keep "Stato Attività" as per request.
+
+    def _on_panel_status_changed(self, status, message):
+        """Callback quando un pannello cambia stato."""
+        sender = self.sender()
+        active_panel = self._get_active_bot_panel()
+        
+        # Aggiorna solo se il segnale arriva dal pannello attivo
+        if sender == active_panel:
+            self.global_status_card.setStatus(status, message)
 
     def _connect_signals(self):
         """Collega i segnali."""
