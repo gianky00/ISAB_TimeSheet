@@ -36,25 +36,25 @@ class StatusCard(QFrame):
 
     def _setup_ui(self, title: str):
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(Spacing.md, Spacing.md, Spacing.md, Spacing.md)
-        layout.setSpacing(Spacing.sm)
+        layout.setContentsMargins(Spacing.sm, Spacing.xxs, Spacing.sm, Spacing.xxs)
+        layout.setSpacing(Spacing.xs)
 
         # Icon
         self._icon_label = QLabel()
-        self._icon_label.setFixedSize(32, 32)
+        self._icon_label.setFixedSize(24, 24)
         self._icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._icon_label.setStyleSheet("font-size: 20px; border: none; background: transparent;")
+        self._icon_label.setStyleSheet("font-size: 16px; border: none; background: transparent;")
         layout.addWidget(self._icon_label)
 
         # Text container
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(2)
+        text_layout.setSpacing(0)
 
         self._title_label = QLabel(title)
-        self._title_label.setStyleSheet(f"font-weight: 600; font-size: 14px; color: {self._palette.on_surface}; border: none; background: transparent;")
+        self._title_label.setStyleSheet(f"font-weight: 600; font-size: 13px; color: {self._palette.on_surface}; border: none; background: transparent;")
 
         self._status_label = QLabel()
-        self._status_label.setStyleSheet(f"font-size: 12px; color: {self._palette.on_surface}; opacity: 0.7; border: none; background: transparent;")
+        self._status_label.setStyleSheet(f"font-size: 11px; color: {self._palette.on_surface}; opacity: 0.7; border: none; background: transparent;")
 
         text_layout.addWidget(self._title_label)
         text_layout.addWidget(self._status_label)
