@@ -92,11 +92,11 @@ class SidebarButton(QPushButton):
 
 
 class MainWindow(QMainWindow):
-    """Finestra principale dell'applicazione Bot TS."""
+    """Finestra principale dell'applicazione SyncroJob."""
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Bot TS - Timesheet Manager")
+        self.setWindowTitle("SyncroJob")
         self.setMinimumSize(1200, 800)
         
         # Apply Global Theme
@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
         sidebar_layout.setSpacing(10)
         
         # Logo/Titolo
-        logo_label = QLabel("🤖 Bot TS")
+        logo_label = QLabel("🚀 SyncroJob")
         logo_label.setStyleSheet("""
             QLabel {
                 color: white;
@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
         """)
         sidebar_layout.addWidget(logo_label)
         
-        subtitle = QLabel("Timesheet Manager")
+        subtitle = QLabel("Work & Sync Manager")
         subtitle.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.7);

@@ -12,8 +12,8 @@ from src.core.secrets_manager import SecretsManager
 from platformdirs import user_data_dir
 
 # Path del file di configurazione
-# STANDARD DEFINITIVO: %LOCALAPPDATA%\BotTS
-APP_NAME = "BotTS"
+# STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob
+APP_NAME = "SyncroJob"
 
 CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
 CONFIG_FILE = CONFIG_DIR / "config.json"

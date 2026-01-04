@@ -14,7 +14,7 @@ import keyring  # Per integrazione con credential manager OS
 class SecretsManager:
     """Gestisce i segreti in modo sicuro."""
 
-    APP_NAME = "BotTS"
+    APP_NAME = "SyncroJob"
 
     @classmethod
     def get_license_key(cls) -> bytes:
@@ -55,6 +55,21 @@ class SecretsManager:
         # Fallback Hardcoded (Legacy - to be removed)
         # Questo serve per mantenere il software funzionante finché la chiave non viene distribuita via env/keyring
         return b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
+
+    @classmethod
+    def get_exa_api_key(cls) -> str:
+        """Recupera Exa API Key dal Keyring."""
+        return cls.get_credential("api", "exa_api_key") or ""
+
+    @classmethod
+    def get_github_token(cls) -> str:
+        """Recupera GitHub Token dal Keyring."""
+        return cls.get_credential("api", "github_api_key") or ""
+
+    @classmethod
+    def get_openai_key(cls) -> str:
+        """Recupera OpenAI Key dal Keyring."""
+        return cls.get_credential("api", "openai_api_key") or ""
 
     @classmethod
     def is_available(cls) -> bool:
