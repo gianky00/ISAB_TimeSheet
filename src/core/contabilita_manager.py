@@ -34,6 +34,7 @@ except ImportError:
 class ContabilitaManager:
     """Manager per la gestione del database e dell'importazione Excel."""
 
+    _instance = None # Inizializza l'attributo _instance per il pattern singleton
     DB_PATH = CONFIG_DIR / "data" / "contabilita.db"
 
     # Mapping colonne Excel -> DB (Contabilità / Dati)

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, patch
+from PyQt6.QtWidgets import QWidget
 from src.gui.contabilita_panel import ContabilitaPanel
 
-@patch('src.gui.contabilita_kpi_panel.ContabilitaKPIPanel', new_callable=MagicMock)
 @patch('src.gui.contabilita_panel.ContabilitaManager')
 class TestContabilitaExtra:
 
@@ -10,7 +10,13 @@ class TestContabilitaExtra:
     def app(self, qapp):
         return qapp
 
-    def test_contabilita_panel_init(self, mock_manager, mock_kpi_panel, app, qtbot):
+    @patch('src.gui.contabilita_kpi_panel.ContabilitaKPIPanel')
+    def test_contabilita_panel_init(self, mock_kpi_class, mock_manager, app, qtbot):
+        # Ensure mock returns a QWidget with the required methods
+        mock_kpi_instance = QWidget()
+        mock_kpi_instance.refresh_years = MagicMock()
+        mock_kpi_class.return_value = mock_kpi_instance
+
         # Mock for ContabilitaPanel's direct calls
         mock_manager.get_available_years.return_value = [2023, 2024]
         mock_manager.get_data_by_year.return_value = []
@@ -22,7 +28,6 @@ class TestContabilitaExtra:
         qtbot.addWidget(panel)
         
         assert panel is not None
-        mock_kpi_panel.assert_called_once()
         assert panel.main_tabs.count() >= 5
         assert panel.kpi_panel is not None
         assert panel.tab_preventivi is not None
@@ -30,8 +35,13 @@ class TestContabilitaExtra:
         assert panel.tab_attivita is not None
         assert panel.tab_certificati is not None
 
-    def test_contabilita_panel_tab_switch(self, mock_manager, mock_kpi_panel, app, qtbot):
-        # Mocks are already applied by the class-level decorators
+    @patch('src.gui.contabilita_kpi_panel.ContabilitaKPIPanel')
+    def test_contabilita_panel_tab_switch(self, mock_kpi_class, mock_manager, app, qtbot):
+        # Ensure mock returns a real QWidget with required methods
+        mock_kpi_instance = QWidget()
+        mock_kpi_instance.refresh_years = MagicMock()
+        mock_kpi_class.return_value = mock_kpi_instance
+
         mock_manager.get_available_years.return_value = [2023, 2024]
         mock_manager.get_data_by_year.return_value = []
         mock_manager.get_giornaliere_by_year.return_value = []

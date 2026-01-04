@@ -40,8 +40,8 @@ class TestBaseBotLogic:
         # Verify user-data-dir uses config_manager path (not CWD)
         user_data_arg = next((arg for arg in args if arg.startswith("user-data-dir=")), None)
         assert user_data_arg is not None
-        # It should contain bot_ts (part of the config dir path)
-        assert "botts" in user_data_arg.lower()
+        # It should contain syncrojob (part of the config dir path)
+        assert "syncrojob" in user_data_arg.lower()
 
     def test_check_stop_raises(self, base_bot):
         """Should raise InterruptedError if stop requested."""
