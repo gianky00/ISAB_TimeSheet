@@ -19,8 +19,8 @@ ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 SETUP_OUTPUT_DIR = os.path.join(SCRIPT_DIR, "Setup")
 
 # Application info
-APP_NAME = "Bot TS"
-APP_EXE_NAME = "BotTS"
+APP_NAME = "SyncroJob"
+APP_EXE_NAME = "SyncroJob"
 MAIN_SCRIPT = os.path.join(ROOT_DIR, "main.py")
 ICON_PATH = os.path.join(ASSETS_DIR, "app.ico")
 ISS_SCRIPT = os.path.join(SCRIPT_DIR, "setup_script.iss")
@@ -157,7 +157,7 @@ def create_version_json():
     
     version_json = {
         "version": version,
-        "url": f"https://bot-ts.netlify.app/BotTS_Setup_{version}.exe"
+        "url": f"https://syncrojob.netlify.app/SyncroJob_Setup_{version}.exe"
     }
     
     # Write version.json
@@ -167,7 +167,7 @@ def create_version_json():
     
     # Copy installer to netlify folder
     version = get_version()
-    installer_name = f"BotTS_Setup_{version}.exe"
+    installer_name = f"SyncroJob_Setup_{version}.exe"
     src_installer = os.path.join(SETUP_OUTPUT_DIR, installer_name)
     
     if os.path.exists(src_installer):
@@ -180,7 +180,7 @@ def create_version_json():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot TS - Download</title>
+    <title>SyncroJob - Download</title>
     <style>
         body {{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -256,7 +256,7 @@ def create_version_json():
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Bot TS</h1>
+        <h1>🚀 SyncroJob</h1>
         <p>Il download inizierà automaticamente tra pochi secondi...</p>
 
         <a href="{installer_name}" class="btn">
@@ -314,7 +314,7 @@ def main():
     args = parser.parse_args()
     
     print("=" * 60)
-    print(f"  BOT TS BUILD SCRIPT - v{get_version()}")
+    print(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")
     print("=" * 60)
     
     # Step 1: Clean
