@@ -890,8 +890,8 @@ class EditableDataTable(QWidget):
                     if item:
                         item.setText(str(value))
 
-        # Se ci sono meno di 3 righe, aggiungine finché non sono 3
-        while self.table.rowCount() < 3:
+        # Se ci sono meno di 5 righe, aggiungine finché non sono 5
+        while self.table.rowCount() < 5:
             self._add_row()
 
         self.table.blockSignals(False)
