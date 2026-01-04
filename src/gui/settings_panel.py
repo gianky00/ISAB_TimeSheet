@@ -303,28 +303,6 @@ class SettingsPanel(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(15)
         
-        # Header
-        header = QFrame()
-        header.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea, stop:1 #764ba2);
-                border-radius: 8px;
-                padding: 15px;
-            }
-        """)
-        header_layout = QVBoxLayout(header)
-        
-        title = QLabel("⚙️ Impostazioni")
-        title.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
-        header_layout.addWidget(title)
-        
-        desc = QLabel("Configurazione credenziali ISAB, browser e fornitori")
-        desc.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 16px;")
-        header_layout.addWidget(desc)
-        
-        main_layout.addWidget(header)
-        
         # Tabs
         self.tabs = QTabWidget()
         self.tabs.setStyleSheet("""
@@ -891,9 +869,10 @@ class SettingsPanel(QWidget):
         status_layout.addWidget(self.cloud_combo)
         layout.addWidget(status_group)
 
-        # Settings
+        # Settings & Actions combined
         sett_group = QGroupBox("Impostazioni")
-        sett_layout = QVBoxLayout(sett_group)
+        sett_layout = QHBoxLayout(sett_group)
+        sett_layout.setSpacing(15)
         
         self.auto_backup_check = QCheckBox("Esegui backup automatico alla chiusura")
         config = config_manager.load_config()
@@ -901,34 +880,31 @@ class SettingsPanel(QWidget):
         self.auto_backup_check.stateChanged.connect(lambda: config_manager.set_config_value("auto_backup", self.auto_backup_check.isChecked()))
         sett_layout.addWidget(self.auto_backup_check)
         
-        layout.addWidget(sett_group)
+        sett_layout.addStretch() # Push buttons to the right
 
-        # Actions
-        btn_layout = QHBoxLayout()
-        
         backup_btn = QPushButton("☁️ Esegui Backup Ora")
-        backup_btn.setMinimumHeight(45)
+        # Removed setMinimumHeight(45) to reduce bulk
         backup_btn.setStyleSheet("""
             QPushButton {
-                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px;
+                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px; padding: 8px 15px;
             }
             QPushButton:hover { background-color: #f0f0f0; }
         """)
         backup_btn.clicked.connect(self._run_manual_backup)
-        btn_layout.addWidget(backup_btn)
+        sett_layout.addWidget(backup_btn)
         
         open_folder_btn = QPushButton("📂 Apri Cartella Backup")
-        open_folder_btn.setMinimumHeight(45)
+        # Removed setMinimumHeight(45)
         open_folder_btn.setStyleSheet("""
             QPushButton {
-                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px;
+                background-color: white; color: black; border: 1px solid black; border-radius: 6px; font-weight: bold; font-size: 14px; padding: 8px 15px;
             }
             QPushButton:hover { background-color: #f0f0f0; }
         """)
         open_folder_btn.clicked.connect(self._open_backup_folder)
-        btn_layout.addWidget(open_folder_btn)
+        sett_layout.addWidget(open_folder_btn)
         
-        layout.addLayout(btn_layout)
+        layout.addWidget(sett_group)
 
         # Restore Section
         restore_group = self._create_group_box("Ripristino Backup")
