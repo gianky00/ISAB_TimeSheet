@@ -1110,7 +1110,7 @@ class SettingsPanel(QWidget):
         """)
     
     def _style_mini_button(self, button, color, text_color="black"):
-        button.setFixedSize(30, 30)
+        button.setFixedSize(32, 32)
         button.setStyleSheet(f"""
             QPushButton {{
                 background-color: white;
@@ -1119,6 +1119,8 @@ class SettingsPanel(QWidget):
                 border-radius: 4px;
                 font-weight: bold;
                 font-size: 14px;
+                padding: 0px;
+                margin: 0px;
             }}
             QPushButton:hover {{
                 background-color: #f0f0f0;
