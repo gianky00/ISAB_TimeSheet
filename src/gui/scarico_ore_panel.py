@@ -199,8 +199,8 @@ class ScaricoOrePanel(QWidget):
         header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
         self.table_view.setHorizontalHeader(header)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        # Enable Word Wrap via Alignment
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.TextWordWrap)
+        # Enable Word Wrap via Alignment (Corrected Flags)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
 
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
