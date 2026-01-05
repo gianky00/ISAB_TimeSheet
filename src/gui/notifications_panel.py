@@ -287,13 +287,53 @@ class NotificationsPanel(QWidget):
 
     def _clear_notifications(self):
         """Elimina tutte le notifiche utente."""
-        if QMessageBox.question(self, "Conferma", "Vuoi svuotare i messaggi? L'Audit Log non verrà toccato.") == QMessageBox.StandardButton.Yes:
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Conferma")
+        msg_box.setText("Vuoi svuotare i messaggi? L'Audit Log non verrà toccato.")
+        msg_box.setIcon(QMessageBox.Icon.Question)
+        
+        # Pulsanti Custom
+        yes_btn = msg_box.addButton("Sì", QMessageBox.ButtonRole.YesRole)
+        no_btn = msg_box.addButton("No", QMessageBox.ButtonRole.NoRole)
+        
+        # Stile leggibile
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: white;
+            }
+            QLabel {
+                color: #212529;
+                font-size: 14px;
+            }
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 15px;
+                font-weight: bold;
+                min-width: 60px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+            QPushButton[text="No"] {
+                background-color: #6c757d;
+            }
+            QPushButton[text="No"]:hover {
+                background-color: #5c636a;
+            }
+        """)
+        
+        msg_box.exec()
+        
+        if msg_box.clickedButton() == yes_btn:
             self.manager.clear_all()
 
     def _style_filter_btn(self, btn):
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setMinimumHeight(35)
-        btn.setMinimumWidth(80)
+        btn.setMinimumWidth(120)
         btn.setStyleSheet("""
             QPushButton {
                 background-color: white;

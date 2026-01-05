@@ -2,27 +2,33 @@ import pytest
 import pandas as pd
 import os
 import io
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, ANY
 from src.core.contabilita_manager import ContabilitaManager
 
 class TestContabilitaLogic:
 
     @pytest.fixture(autouse=True)
     def mock_db(self):
-        with patch('src.core.contabilita_manager.db_manager') as mock:
+        with patch('src.core.contabilita_manager.db_manager') as mock1, \
+             patch('src.core.data_synchronizer.db_manager') as mock2:
             mock_conn = MagicMock()
             mock_cursor = MagicMock()
             mock_conn.cursor.return_value = mock_cursor
-            mock.get_connection.return_value.__enter__.return_value = mock_conn
-            mock.get_connection.return_value.__exit__.return_value = None
+            
+            mock1.get_connection.return_value.__enter__.return_value = mock_conn
+            mock1.get_connection.return_value.__exit__.return_value = None
+            mock2.get_connection.return_value.__enter__.return_value = mock_conn
+            mock2.get_connection.return_value.__exit__.return_value = None
+            
             # Ensure SELECT returns an empty list for existence checks
             mock_cursor.fetchall.return_value = []
-            yield mock
+            yield mock1
 
+    @patch('src.core.data_synchronizer.pd.read_sql')
     @patch('src.core.contabilita_manager.pd.read_sql')
     @patch('src.core.contabilita_manager.pd.read_excel')
     @patch('src.core.contabilita_manager.pd.ExcelFile')
-    def test_import_data_success(self, mock_excel_file, mock_read_excel, mock_read_sql, mock_db):
+    def test_import_data_success(self, mock_excel_file, mock_read_excel, mock_read_sql, mock_sync_read_sql, mock_db):
         """Test importazione contabilità con successo."""
         # 1. Mock Excel File structure
         mock_file_instance = MagicMock()
@@ -51,6 +57,7 @@ class TestContabilitaLogic:
             'indirizzo_consuntivo', 'nome_file'
         ]
         mock_read_sql.return_value = pd.DataFrame(columns=db_cols)
+        mock_sync_read_sql.return_value = pd.DataFrame(columns=db_cols)
 
         # 4. Call import
         with patch("pathlib.Path.exists", return_value=True):

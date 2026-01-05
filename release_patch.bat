@@ -40,16 +40,25 @@ if %errorlevel% neq 0 (
 
 :: 2. Run Tests
 echo.
-echo [2/5] Running Unit Tests...
-echo (Wait for completion to see general progress)
-pytest tests/ -v --tb=short
+echo [2/5] Running Unit Tests (Split Execution to avoid memory overload)...
+
+echo [Phase 1] Running Core/Logic Tests...
+pytest tests/ --ignore=tests/unit/test_gui_contabilita_extra.py --ignore=tests/unit/test_gui_contabilita_logic.py --ignore=tests/unit/test_gui_panels_new.py --ignore=tests/unit/test_gui_panels.py --ignore=tests/unit/test_gui_settings.py --ignore=tests/unit/test_main_window.py --ignore=tests/unit/test_ux_settings_menus.py -v --tb=short
 if %errorlevel% neq 0 (
-    echo TESTS FAILED! Aborting release.
-    echo Please fix the errors before deploying.
+    echo CORE TESTS FAILED! Aborting release.
     pause
     exit /b %errorlevel%
 )
-echo Tests passed.
+
+echo [Phase 2] Running GUI Tests...
+pytest tests/unit/test_gui_contabilita_extra.py tests/unit/test_gui_contabilita_logic.py tests/unit/test_gui_panels_new.py tests/unit/test_gui_panels.py tests/unit/test_gui_settings.py tests/unit/test_main_window.py tests/unit/test_ux_settings_menus.py -v --tb=short
+if %errorlevel% neq 0 (
+    echo GUI TESTS FAILED! Aborting release.
+    pause
+    exit /b %errorlevel%
+)
+
+echo All Tests passed.
 
 :: Clean previous builds
 if exist dist rmdir /s /q dist

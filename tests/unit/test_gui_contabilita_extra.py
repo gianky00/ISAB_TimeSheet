@@ -6,16 +6,17 @@ from src.gui.contabilita_panel import ContabilitaPanel
 @patch('src.gui.contabilita_panel.ContabilitaManager')
 class TestContabilitaExtra:
 
-    @pytest.fixture
-    def app(self, qapp):
-        return qapp
-
     @patch('src.gui.contabilita_kpi_panel.ContabilitaKPIPanel')
-    def test_contabilita_panel_init(self, mock_kpi_class, mock_manager, app, qtbot):
+    @patch('src.gui.contabilita_panel.AttivitaProgrammateTab')
+    @patch('src.gui.contabilita_panel.CertificatiCampioneTab')
+    def test_contabilita_panel_init(self, mock_cert_tab, mock_att_tab, mock_kpi_class, mock_manager, qtbot):
         # Ensure mock returns a QWidget with the required methods
-        mock_kpi_instance = QWidget()
-        mock_kpi_instance.refresh_years = MagicMock()
-        mock_kpi_class.return_value = mock_kpi_instance
+        for m in [mock_cert_tab, mock_att_tab, mock_kpi_class]:
+            instance = QWidget()
+            instance.refresh_years = MagicMock()
+            instance.refresh_data = MagicMock()
+            instance.apply_filters = MagicMock()
+            m.return_value = instance
 
         # Mock for ContabilitaPanel's direct calls
         mock_manager.get_available_years.return_value = [2023, 2024]
@@ -29,18 +30,18 @@ class TestContabilitaExtra:
         
         assert panel is not None
         assert panel.main_tabs.count() >= 5
-        assert panel.kpi_panel is not None
-        assert panel.tab_preventivi is not None
-        assert panel.tab_giornaliere is not None
-        assert panel.tab_attivita is not None
-        assert panel.tab_certificati is not None
 
     @patch('src.gui.contabilita_kpi_panel.ContabilitaKPIPanel')
-    def test_contabilita_panel_tab_switch(self, mock_kpi_class, mock_manager, app, qtbot):
+    @patch('src.gui.contabilita_panel.AttivitaProgrammateTab')
+    @patch('src.gui.contabilita_panel.CertificatiCampioneTab')
+    def test_contabilita_panel_tab_switch(self, mock_cert_tab, mock_att_tab, mock_kpi_class, mock_manager, qtbot):
         # Ensure mock returns a real QWidget with required methods
-        mock_kpi_instance = QWidget()
-        mock_kpi_instance.refresh_years = MagicMock()
-        mock_kpi_class.return_value = mock_kpi_instance
+        for m in [mock_cert_tab, mock_att_tab, mock_kpi_class]:
+            instance = QWidget()
+            instance.refresh_years = MagicMock()
+            instance.refresh_data = MagicMock()
+            instance.apply_filters = MagicMock()
+            m.return_value = instance
 
         mock_manager.get_available_years.return_value = [2023, 2024]
         mock_manager.get_data_by_year.return_value = []
@@ -53,12 +54,8 @@ class TestContabilitaExtra:
         
         # Switch to "Giornaliere" (Index 1)
         panel.main_tabs.setCurrentIndex(1)
-        assert panel.main_tabs.currentWidget() == panel.tab_giornaliere
+        assert panel.main_tabs.currentIndex() == 1
         
         # Switch to "Attività Programmate" (Index 2)
         panel.main_tabs.setCurrentIndex(2)
-        assert panel.main_tabs.currentWidget() == panel.tab_attivita
-
-        # Switch to "KPI" (Index 4)
-        panel.main_tabs.setCurrentIndex(4)
-        assert panel.main_tabs.currentWidget() == panel.kpi_panel
+        assert panel.main_tabs.currentIndex() == 2

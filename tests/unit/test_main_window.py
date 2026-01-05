@@ -19,7 +19,7 @@ class TestMainWindow:
         window = MainWindow()
         qtbot.addWidget(window)
         
-        assert window.windowTitle() == "Bot TS - Timesheet Manager"
+        assert window.windowTitle() == "SyncroJob"
         assert window.page_stack.count() >= 6
         assert window.btn_home.isChecked()
 

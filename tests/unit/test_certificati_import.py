@@ -6,11 +6,12 @@ from src.core.contabilita_manager import ContabilitaManager
 
 class TestCertificatiImport(unittest.TestCase):
 
-    @patch('src.core.contabilita_manager.db_manager')
+    @patch('src.core.data_synchronizer.pd.read_sql')
+    @patch('src.core.data_synchronizer.db_manager')
     @patch('src.core.contabilita_manager.pd.ExcelFile')
     @patch('src.core.contabilita_manager.pd.read_excel')
     @patch('src.core.contabilita_manager.Path.exists')
-    def test_import_certificati_dynamic_header(self, mock_exists, mock_read_excel, mock_excel_file, mock_db_manager):
+    def test_import_certificati_dynamic_header(self, mock_exists, mock_read_excel, mock_excel_file, mock_db_manager, mock_sync_read_sql):
         # Setup mocks
         mock_exists.return_value = True
 
@@ -26,6 +27,8 @@ class TestCertificatiImport(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
 
         # Mock read_sql for existing rows (return empty)
+        mock_sync_read_sql.return_value = pd.DataFrame()
+
         with patch('src.core.contabilita_manager.pd.read_sql') as mock_read_sql:
             mock_read_sql.return_value = pd.DataFrame()
 

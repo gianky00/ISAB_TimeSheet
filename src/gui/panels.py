@@ -15,7 +15,8 @@ from PyQt6.QtWidgets import (
     QCheckBox, QTimeEdit, QInputDialog, QApplication, QListWidgetItem, QTabWidget,
     QDialog, QDialogButtonBox, QListWidget
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QDate, QTime, QSize
+from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut, QIcon
 from datetime import datetime
 
 # Import UI Components
@@ -272,20 +273,24 @@ class ScaricaTSPanel(BaseBotPanel):
         fornitore_layout.addWidget(self.fornitore_combo)
         
         # Pulsante per aprire impostazioni
-        self.open_settings_btn = QPushButton("⚙️")
+        self.open_settings_btn = QPushButton()
+        self.open_settings_btn.setIcon(QIcon("assets/icons/settings.svg"))
+        self.open_settings_btn.setIconSize(QSize(24, 24))
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
-        self.open_settings_btn.setFixedSize(35, 35)
+        self.open_settings_btn.setFixedSize(40, 40)
         self.open_settings_btn.clicked.connect(self._open_settings)
         self.open_settings_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 22px;
+                padding-bottom: 3px;
             }
             QPushButton:hover {
-                background-color: #f0f0f0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         """)
         fornitore_layout.addWidget(self.open_settings_btn)
@@ -334,19 +339,23 @@ class ScaricaTSPanel(BaseBotPanel):
 
         dest_layout.addWidget(self.dest_path_edit)
 
-        browse_btn = QPushButton("📂")
-        browse_btn.setFixedSize(35, 35)
+        browse_btn = QPushButton()
+        browse_btn.setIcon(QIcon("assets/icons/folder.svg"))
+        browse_btn.setIconSize(QSize(24, 24))
+        browse_btn.setFixedSize(40, 40)
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 22px;
+                padding-bottom: 3px;
             }
             QPushButton:hover {
-                background-color: #f0f0f0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         """)
         dest_layout.addWidget(browse_btn)
@@ -618,20 +627,24 @@ class DettagliOdAPanel(BaseBotPanel):
         fornitore_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
-        self.open_settings_btn = QPushButton("⚙️")
+        self.open_settings_btn = QPushButton()
+        self.open_settings_btn.setIcon(QIcon("assets/icons/settings.svg"))
+        self.open_settings_btn.setIconSize(QSize(24, 24))
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
-        self.open_settings_btn.setFixedSize(35, 35)
+        self.open_settings_btn.setFixedSize(40, 40)
         self.open_settings_btn.clicked.connect(self._open_settings)
         self.open_settings_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 22px;
+                padding-bottom: 3px;
             }
             QPushButton:hover {
-                background-color: #f0f0f0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         """)
         fornitore_layout.addWidget(self.open_settings_btn)
@@ -685,19 +698,23 @@ class DettagliOdAPanel(BaseBotPanel):
 
         dest_layout.addWidget(self.dest_path_edit)
 
-        browse_btn = QPushButton("📂")
-        browse_btn.setFixedSize(35, 35)
+        browse_btn = QPushButton()
+        browse_btn.setIcon(QIcon("assets/icons/folder.svg"))
+        browse_btn.setIconSize(QSize(24, 24))
+        browse_btn.setFixedSize(40, 40)
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 22px;
+                padding-bottom: 3px;
             }
             QPushButton:hover {
-                background-color: #f0f0f0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         """)
         dest_layout.addWidget(browse_btn)
@@ -1081,21 +1098,24 @@ class ScaricoPDLPanel(BaseBotPanel):
         print_layout.addWidget(self.printer_combo)
         
         # Refresh printers button
-        refresh_print_btn = QPushButton("🔄")
+        refresh_print_btn = QPushButton()
+        refresh_print_btn.setIcon(QIcon("assets/icons/refresh.svg"))
+        refresh_print_btn.setIconSize(QSize(20, 20))
         refresh_print_btn.setToolTip("Aggiorna lista stampanti")
-        refresh_print_btn.setFixedSize(32, 32) # Consistent mini size
+        refresh_print_btn.setFixedSize(35, 35) # Consistent mini size
         refresh_print_btn.clicked.connect(self._refresh_printers)
         refresh_print_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 16px; /* Larger icon */
-                padding: 0px;
+                font-size: 18px;
+                padding-bottom: 2px;
             }
             QPushButton:hover {
-                background-color: #f0f0f0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         """)
         print_layout.addWidget(refresh_print_btn)
@@ -1124,19 +1144,23 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         dest_layout.addWidget(self.dest_path_edit)
 
-        browse_btn = QPushButton("📂")
-        browse_btn.setFixedSize(35, 35)
+        browse_btn = QPushButton()
+        browse_btn.setIcon(QIcon("assets/icons/folder.svg"))
+        browse_btn.setIconSize(QSize(24, 24))
+        browse_btn.setFixedSize(40, 40)
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 22px;
+                padding-bottom: 3px;
             }
             QPushButton:hover {
-                background-color: #f0f0f0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         """)
         dest_layout.addWidget(browse_btn)
@@ -1322,20 +1346,24 @@ class TimbratureBotPanel(BaseBotPanel):
         fornitore_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
-        self.open_settings_btn = QPushButton("⚙️")
+        self.open_settings_btn = QPushButton()
+        self.open_settings_btn.setIcon(QIcon("assets/icons/settings.svg"))
+        self.open_settings_btn.setIconSize(QSize(24, 24))
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
-        self.open_settings_btn.setFixedSize(35, 35)
+        self.open_settings_btn.setFixedSize(40, 40)
         self.open_settings_btn.clicked.connect(self._open_settings)
         self.open_settings_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 22px;
+                padding-bottom: 3px;
             }
             QPushButton:hover {
-                background-color: #f0f0f0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         """)
         fornitore_layout.addWidget(self.open_settings_btn)

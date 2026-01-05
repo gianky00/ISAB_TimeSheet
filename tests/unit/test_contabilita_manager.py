@@ -1,14 +1,15 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from src.core.contabilita_manager import ContabilitaManager
+from src.core.excel_importer import ExcelImporter
 
 class TestContabilitaManager:
 
     def test_mappings_integrity(self):
         # Verify critical mappings exist
-        assert "DATA PREV." in ContabilitaManager.COLUMNS_MAPPING
-        assert "TOTALE PREV." in ContabilitaManager.COLUMNS_MAPPING
-        assert "consuntivo" in ContabilitaManager.GIORNALIERE_MAPPING
+        assert "DATA PREV." in ExcelImporter.COLUMNS_MAPPING
+        assert "TOTALE PREV." in ExcelImporter.COLUMNS_MAPPING
+        assert "consuntivo" in ExcelImporter.GIORNALIERE_MAPPING
 
     @patch('src.core.contabilita_manager.db_manager')
     def test_delete_year_data(self, mock_db):
