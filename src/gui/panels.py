@@ -33,6 +33,7 @@ from src.core.stats_manager import StatsManager
 from src.core.audit_manager import AuditManager
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.utils.printing import get_installed_printers
+from src.utils.helpers import get_asset_path
 
 
 class BotWorker(QThread):
@@ -123,12 +124,12 @@ class BaseBotPanel(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         
-        self.start_btn = ModernButton("Avvia", variant=ModernButton.Variant.SUCCESS, size=ModernButton.Size.LARGE, icon="assets/icons/play.svg")
+        self.start_btn = ModernButton("Avvia", variant=ModernButton.Variant.SUCCESS, size=ModernButton.Size.LARGE, icon=get_asset_path("assets/icons/play.svg"))
         self.start_btn.setMinimumWidth(120)
         self.start_btn.clicked.connect(self._on_start)
         btn_layout.addWidget(self.start_btn)
         
-        self.stop_btn = ModernButton("Stop", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.LARGE, icon="assets/icons/stop.svg")
+        self.stop_btn = ModernButton("Stop", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.LARGE, icon=get_asset_path("assets/icons/stop.svg"))
         self.stop_btn.setMinimumWidth(100)
         self.stop_btn.setEnabled(False)
         self.stop_btn.clicked.connect(self._on_stop)
@@ -260,21 +261,23 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.setSpacing(10)
         
         # 1. Inputs (Fornitore, Data, Path)
-        # Riga 1: Fornitore (ComboBox)
-        fornitore_layout = QHBoxLayout()
+        # Riga 1: Fornitore e Data
+        row1_layout = QHBoxLayout()
+        
+        # -- Fornitore --
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setMinimumWidth(80)
-        fornitore_layout.addWidget(fornitore_label)
+        fornitore_label.setMinimumWidth(70)
+        row1_layout.addWidget(fornitore_label)
         
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
         self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        fornitore_layout.addWidget(self.fornitore_combo)
+        row1_layout.addWidget(self.fornitore_combo)
         
         # Pulsante per aprire impostazioni
         self.open_settings_btn = QPushButton()
-        self.open_settings_btn.setIcon(QIcon("assets/icons/settings.svg"))
+        self.open_settings_btn.setIcon(QIcon(get_asset_path("assets/icons/settings.svg")))
         self.open_settings_btn.setIconSize(QSize(24, 24))
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(40, 40)
@@ -293,30 +296,22 @@ class ScaricaTSPanel(BaseBotPanel):
                 border-color: #ced4da;
             }
         """)
-        fornitore_layout.addWidget(self.open_settings_btn)
+        row1_layout.addWidget(self.open_settings_btn)
         
-        fornitore_layout.addStretch()
+        row1_layout.addSpacing(20)
         
-        params_layout.addLayout(fornitore_layout)
-        
-        # Riga 2: Data
-        date_layout = QHBoxLayout()
+        # -- Data Da --
         date_label = QLabel("Data Da:")
-        date_label.setMinimumWidth(80)
-        date_layout.addWidget(date_label)
+        row1_layout.addWidget(date_label)
         
         self.date_edit = CalendarDateEdit()
         # Default: 01.01.2025
         self.date_edit.setDate(QDate(2025, 1, 1))
-        date_layout.addWidget(self.date_edit)
+        row1_layout.addWidget(self.date_edit)
         
-        date_hint = QLabel("(Formato: gg.mm.aaaa)")
-        date_hint.setStyleSheet("color: #6c757d; font-size: 13px;")
-        date_layout.addWidget(date_hint)
+        row1_layout.addStretch()
         
-        date_layout.addStretch()
-        
-        params_layout.addLayout(date_layout)
+        params_layout.addLayout(row1_layout)
         
         # Riga 3: Percorso destinazione
         dest_layout = QHBoxLayout()
@@ -340,7 +335,7 @@ class ScaricaTSPanel(BaseBotPanel):
         dest_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(QIcon("assets/icons/folder.svg"))
+        browse_btn.setIcon(QIcon(get_asset_path("assets/icons/folder.svg")))
         browse_btn.setIconSize(QSize(24, 24))
         browse_btn.setFixedSize(40, 40)
         browse_btn.clicked.connect(self._browse_dest_path)
@@ -614,21 +609,23 @@ class DettagliOdAPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # 1. Inputs (Fornitore, Date, Path)
-        # Riga 1: Fornitore (ComboBox)
-        fornitore_layout = QHBoxLayout()
+        # Riga 1: Fornitore e Date
+        row1_layout = QHBoxLayout()
+        
+        # -- Fornitore --
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setMinimumWidth(80)
-        fornitore_layout.addWidget(fornitore_label)
+        fornitore_label.setMinimumWidth(70)
+        row1_layout.addWidget(fornitore_label)
 
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
         self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        fornitore_layout.addWidget(self.fornitore_combo)
+        row1_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
         self.open_settings_btn = QPushButton()
-        self.open_settings_btn.setIcon(QIcon("assets/icons/settings.svg"))
+        self.open_settings_btn.setIcon(QIcon(get_asset_path("assets/icons/settings.svg")))
         self.open_settings_btn.setIconSize(QSize(24, 24))
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(40, 40)
@@ -647,35 +644,30 @@ class DettagliOdAPanel(BaseBotPanel):
                 border-color: #ced4da;
             }
         """)
-        fornitore_layout.addWidget(self.open_settings_btn)
+        row1_layout.addWidget(self.open_settings_btn)
         
-        fornitore_layout.addStretch()
+        row1_layout.addSpacing(20)
 
-        params_layout.addLayout(fornitore_layout)
-
-        # Riga 2: Data Da e Data A
-        date_layout = QHBoxLayout()
-
-        # Data Da
+        # -- Data Da --
         date_da_label = QLabel("Data Da:")
-        date_layout.addWidget(date_da_label)
+        row1_layout.addWidget(date_da_label)
 
         self.date_da_edit = CalendarDateEdit()
         self.date_da_edit.setDate(QDate(2025, 1, 1))
-        date_layout.addWidget(self.date_da_edit)
+        row1_layout.addWidget(self.date_da_edit)
 
-        date_layout.addSpacing(15)
+        row1_layout.addSpacing(15)
 
-        # Data A
+        # -- Data A --
         date_a_label = QLabel("Data A:")
-        date_layout.addWidget(date_a_label)
+        row1_layout.addWidget(date_a_label)
 
         self.date_a_edit = CalendarDateEdit()
         self.date_a_edit.setDate(QDate.currentDate())
-        date_layout.addWidget(self.date_a_edit)
+        row1_layout.addWidget(self.date_a_edit)
 
-        date_layout.addStretch()
-        params_layout.addLayout(date_layout)
+        row1_layout.addStretch()
+        params_layout.addLayout(row1_layout)
 
         # Riga 3: Percorso destinazione
         dest_layout = QHBoxLayout()
@@ -699,7 +691,7 @@ class DettagliOdAPanel(BaseBotPanel):
         dest_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(QIcon("assets/icons/folder.svg"))
+        browse_btn.setIcon(QIcon(get_asset_path("assets/icons/folder.svg")))
         browse_btn.setIconSize(QSize(24, 24))
         browse_btn.setFixedSize(40, 40)
         browse_btn.clicked.connect(self._browse_dest_path)
@@ -1099,7 +1091,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         
         # Refresh printers button
         refresh_print_btn = QPushButton()
-        refresh_print_btn.setIcon(QIcon("assets/icons/refresh.svg"))
+        refresh_print_btn.setIcon(QIcon(get_asset_path("assets/icons/refresh.svg")))
         refresh_print_btn.setIconSize(QSize(20, 20))
         refresh_print_btn.setToolTip("Aggiorna lista stampanti")
         refresh_print_btn.setFixedSize(35, 35) # Consistent mini size
@@ -1145,7 +1137,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         dest_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(QIcon("assets/icons/folder.svg"))
+        browse_btn.setIcon(QIcon(get_asset_path("assets/icons/folder.svg")))
         browse_btn.setIconSize(QSize(24, 24))
         browse_btn.setFixedSize(40, 40)
         browse_btn.clicked.connect(self._browse_dest_path)
@@ -1333,21 +1325,23 @@ class TimbratureBotPanel(BaseBotPanel):
         params_group = QGroupBox("⚙️ Parametri")
         params_layout = QVBoxLayout(params_group)
 
-        # Riga 1: Fornitore (ComboBox)
-        fornitore_layout = QHBoxLayout()
+        # Riga 1: Fornitore e Date
+        row1_layout = QHBoxLayout()
+        
+        # -- Fornitore --
         fornitore_label = QLabel("Fornitore:")
-        fornitore_label.setMinimumWidth(80)
-        fornitore_layout.addWidget(fornitore_label)
+        fornitore_label.setMinimumWidth(70)
+        row1_layout.addWidget(fornitore_label)
 
         self.fornitore_combo = QComboBox()
         self.fornitore_combo.setMinimumHeight(40)
         self.fornitore_combo.setEditable(False)
         self.fornitore_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        fornitore_layout.addWidget(self.fornitore_combo)
+        row1_layout.addWidget(self.fornitore_combo)
 
         # Pulsante per aprire impostazioni
         self.open_settings_btn = QPushButton()
-        self.open_settings_btn.setIcon(QIcon("assets/icons/settings.svg"))
+        self.open_settings_btn.setIcon(QIcon(get_asset_path("assets/icons/settings.svg")))
         self.open_settings_btn.setIconSize(QSize(24, 24))
         self.open_settings_btn.setToolTip("Gestisci fornitori nelle Impostazioni")
         self.open_settings_btn.setFixedSize(40, 40)
@@ -1366,35 +1360,30 @@ class TimbratureBotPanel(BaseBotPanel):
                 border-color: #ced4da;
             }
         """)
-        fornitore_layout.addWidget(self.open_settings_btn)
+        row1_layout.addWidget(self.open_settings_btn)
         
-        fornitore_layout.addStretch()
+        row1_layout.addSpacing(20)
 
-        params_layout.addLayout(fornitore_layout)
-
-        # Riga 2: Data Da e Data A
-        date_layout = QHBoxLayout()
-
-        # Data Da
+        # -- Data Da --
         date_da_label = QLabel("Data Da:")
-        date_layout.addWidget(date_da_label)
+        row1_layout.addWidget(date_da_label)
 
         self.date_da_edit = CalendarDateEdit()
         self.date_da_edit.setDate(QDate(2025, 1, 1))
-        date_layout.addWidget(self.date_da_edit)
+        row1_layout.addWidget(self.date_da_edit)
 
-        date_layout.addSpacing(15)
+        row1_layout.addSpacing(15)
 
-        # Data A
+        # -- Data A --
         date_a_label = QLabel("Data A:")
-        date_layout.addWidget(date_a_label)
+        row1_layout.addWidget(date_a_label)
 
         self.date_a_edit = CalendarDateEdit()
         self.date_a_edit.setDate(QDate.currentDate())
-        date_layout.addWidget(self.date_a_edit)
+        row1_layout.addWidget(self.date_a_edit)
 
-        date_layout.addStretch()
-        params_layout.addLayout(date_layout)
+        row1_layout.addStretch()
+        params_layout.addLayout(row1_layout)
 
         self.content_layout.addWidget(params_group)
 

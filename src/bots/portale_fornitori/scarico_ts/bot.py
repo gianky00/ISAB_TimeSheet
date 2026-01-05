@@ -18,6 +18,7 @@ from selenium.common.exceptions import TimeoutException
 from src.bots.base import BaseBot, BotStatus
 from src.utils.helpers import sanitize_filename
 from src.core import config_manager
+from src.core.timesheet_processor import TimesheetProcessor
 
 
 class ScaricaTSBot(BaseBot):
@@ -162,7 +163,7 @@ class ScaricaTSBot(BaseBot):
                     final_path = self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda)
                     if final_path:
                         success_count += 1
-                        downloaded_files_list.append(str(final_path))
+                        downloaded_files_list.append(final_path)
                     
                 except Exception as e:
                     self.log(f"❌ Errore OdA {numero_oda}: {e}")
@@ -170,14 +171,19 @@ class ScaricaTSBot(BaseBot):
                 
                 time.sleep(1)
             
-            self.log(f"✨ Operazione completata. {success_count}/{len(rows)} file scaricati.")
-            
-            # 4. Elaborazione TS
-            # Se elabora_ts è attivo, la logica di rename/sanitize è già stata applicata in _download_excel.
-            # Non è necessario un post-processo di spostamento aggiuntivo (visto che _download_excel già sposta in dest_dir).
-            # La logica "VBA style" (chiedere all'utente) è disabilitata per "Elabora TS" secondo le nuove specifiche
-            # che richiedono solo elaborazione/rinomina senza spostamento (o meglio, spostamento standard).
+            self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
 
+            # --- NUOVA LOGICA BATCH EX VBA (DOPO IL CICLO) ---
+            if self.elabora_ts and downloaded_files_list:
+                self.log(f"⚙️ Inizio elaborazione batch di {len(downloaded_files_list)} file...")
+                for p in downloaded_files_list:
+                    self.log(f"  Elaborazione: {p.name}...")
+                    proc_success, proc_msg = TimesheetProcessor.process_file(p)
+                    if proc_success:
+                        self.log(f"  ✓ {proc_msg}")
+                    else:
+                        self.log(f"  ✗ Errore: {proc_msg}")
+            
             # 5. Logout
             self._logout()
             

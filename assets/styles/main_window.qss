@@ -78,11 +78,13 @@ QLineEdit#globalSearchInput { /* objectName per la ricerca globale */
     border-radius: 20px;
     padding: 5px 20px;
     background-color: white;
+    color: #212121; /* Force Dark Text */
     font-size: 14px;
 }
 QLineEdit#globalSearchInput:focus {
     border: 2px solid #0d6efd;
     background-color: #f8f9fa;
+    color: #000000;
 }
 
 /* Stili per i pulsanti nella AccountDialog */
@@ -101,4 +103,29 @@ AccountDialog QPushButton {
 AccountDialog QPushButton:hover {
     background-color: #0b5ed7;
     border: 1px solid #0b5ed7;
+}
+
+/* Stili per Update Banner */
+QFrame#updateBanner {
+    background-color: #0d6efd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+QFrame#updateBanner QLabel {
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+QFrame#updateBanner QPushButton {
+    background-color: white;
+    color: #0d6efd;
+    border-radius: 4px;
+    padding: 5px 15px;
+    font-weight: bold;
+    font-size: 13px;
+    min-height: 30px;
+    border: none;
+}
+QFrame#updateBanner QPushButton:hover {
+    background-color: #f8f9fa;
 }

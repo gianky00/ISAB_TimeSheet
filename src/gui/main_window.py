@@ -6,10 +6,10 @@ import sys
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication, QTabWidget,
-    QProgressBar, QStatusBar, QLineEdit, QMenu
+    QProgressBar, QStatusBar, QLineEdit, QMenu, QSystemTrayIcon
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPoint
-from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut
+from PyQt6.QtGui import QPixmap, QFont, QColor, QPainter, QKeySequence, QShortcut, QIcon, QAction
 from datetime import datetime
 from pathlib import Path
 
@@ -31,6 +31,7 @@ from src.core.app_updater import check_for_updates
 from src.core.notification_manager import NotificationManager
 from src.core.backup_manager import BackupManager
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+from src.utils.helpers import get_asset_path, get_app_icon_path
 
 # Import UI/UX Components
 from src.gui.widgets.toast import ToastManager
@@ -126,7 +127,9 @@ class MainWindow(QMainWindow):
         self.setAcceptDrops(True)
 
         self._current_page_index = 0
+        self._force_quit = False # NEW: Controllo chiusura definitiva
         self._setup_ui()
+        self._setup_tray_icon() # NEW: Tray Icon
         self._connect_signals()
         self._setup_shortcuts()
 
@@ -144,10 +147,64 @@ class MainWindow(QMainWindow):
         # Controllo aggiornamenti applicazione (dopo 3 secondi)
         QTimer.singleShot(3000, self._check_updates)
     
+    def _setup_tray_icon(self):
+        """Configura l'icona nella system tray."""
+        self.tray_icon = QSystemTrayIcon(self)
+        
+        icon_path = get_app_icon_path()
+        if icon_path:
+            self.tray_icon.setIcon(QIcon(icon_path))
+        
+        # Tray Menu
+        tray_menu = QMenu()
+        show_action = QAction("🖥️ Mostra SyncroJob", self)
+        show_action.triggered.connect(self.showMaximized)
+        show_action.triggered.connect(self.activateWindow)
+        tray_menu.addAction(show_action)
+        
+        tray_menu.addSeparator()
+        
+        def force_quit_app():
+            self._force_quit = True
+            QApplication.instance().quit()
+
+        quit_action = QAction("❌ Esci", self)
+        quit_action.triggered.connect(force_quit_app)
+        tray_menu.addAction(quit_action)
+        
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.activated.connect(self._handle_tray_activation)
+        self.tray_icon.show()
+
+    def _handle_tray_activation(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            if self.isVisible():
+                self.hide()
+            else:
+                self.showMaximized()
+                self.activateWindow()
+
     def _check_updates(self):
         """Avvia il controllo aggiornamenti in background."""
-        # silent=True significa che mostra popup SOLO se trova un aggiornamento
-        check_for_updates(parent=self, silent=True)
+        # Usa il nuovo sistema a banner invece del popup bloccante
+        check_for_updates(parent=self, silent=True, callback=self._show_update_banner)
+    
+    def _show_update_banner(self, new_version, download_url, changelog):
+        """Mostra un banner informativo per la nuova versione."""
+        self.update_banner.setVisible(True)
+        self.update_label.setText(f"🚀 Nuova versione disponibile: v{new_version}")
+        self.update_label.setToolTip(f"Novità:\n{changelog}" if changelog else "Clicca per scaricare")
+        
+        # Memorizza URL per il click
+        self._update_download_url = download_url
+        
+        # Notifica tray
+        self.tray_icon.showMessage(
+            "Aggiornamento Disponibile",
+            f"È uscita la versione {new_version}. Clicca qui per scaricarla.",
+            QSystemTrayIcon.MessageIcon.Information,
+            5000
+        )
     
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
@@ -243,6 +300,15 @@ class MainWindow(QMainWindow):
         sidebar = QFrame()
         sidebar.setObjectName("sidebarFrame") # Assegna objectName
         sidebar.setFixedWidth(240)
+        # FORCE STYLE TO ENSURE TEXT VISIBILITY
+        sidebar.setStyleSheet("""
+            QFrame#sidebarFrame {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #667eea, stop:1 #764ba2);
+                border-right: 1px solid rgba(0,0,0,0.1);
+            }
+            QLabel { color: white; background: transparent; }
+        """)
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(15, 20, 15, 20)
         sidebar_layout.setSpacing(10)
@@ -336,6 +402,25 @@ class MainWindow(QMainWindow):
         content_area = QWidget()
         content_layout = QVBoxLayout(content_area)
         content_layout.setContentsMargins(20, 20, 20, 20)
+        
+        # --- UPDATE BANNER (Hidden by default) ---
+        self.update_banner = QFrame()
+        self.update_banner.setObjectName("updateBanner")
+        self.update_banner.setVisible(False)
+        banner_layout = QHBoxLayout(self.update_banner)
+        banner_layout.setContentsMargins(15, 10, 15, 10)
+        
+        self.update_label = QLabel("🚀 Nuova versione disponibile!")
+        banner_layout.addWidget(self.update_label)
+        
+        banner_layout.addStretch()
+        
+        self.download_btn = QPushButton("Scarica e Installa")
+        self.download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.download_btn.clicked.connect(self._on_download_update_clicked)
+        banner_layout.addWidget(self.download_btn)
+        
+        content_layout.addWidget(self.update_banner)
         
         # --- GLOBAL SEARCH BAR ---
         search_container = QHBoxLayout()
@@ -715,21 +800,48 @@ class MainWindow(QMainWindow):
         self._navigate_to(2) # Switch to Lyra
         self.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie o punti di attenzione.", context_text)
     
-    def closeEvent(self, event):
-        """Gestisce la chiusura della finestra."""
-        # Auto Backup
-        config = config_manager.load_config()
-        if config.get("auto_backup", True):
-            BackupManager.create_backup()
+    def _on_download_update_clicked(self):
+        """Gestisce il click sul pulsante scarica del banner."""
+        if hasattr(self, '_update_download_url') and self._update_download_url:
+            import webbrowser
+            webbrowser.open(self._update_download_url)
+            self.update_banner.setVisible(False)
+            ToastManager.instance().show("Download avviato nel browser", "success")
 
-        # Controlla modifiche non salvate nelle impostazioni
-        if self.settings_panel.has_unsaved_changes():
-            can_close = self.settings_panel.prompt_save_if_needed()
-            if not can_close:
-                event.ignore()
-                return
-        
-        event.accept()
+    def closeEvent(self, event):
+        """Gestisce la chiusura della finestra: minimizza nella tray se non è force_quit."""
+        if self._force_quit:
+            # Auto Backup
+            config = config_manager.load_config()
+            if config.get("auto_backup", True):
+                BackupManager.create_backup()
+
+            # Controlla modifiche non salvate nelle impostazioni
+            if self.settings_panel.has_unsaved_changes():
+                can_close = self.settings_panel.prompt_save_if_needed()
+                if not can_close:
+                    event.ignore()
+                    return
+            
+            event.accept()
+            return
+
+        # Altrimenti minimizza nella tray
+        if self.isVisible():
+            self.hide()
+            
+            # Mostra messaggio solo la prima volta
+            config = config_manager.load_config()
+            if not config.get("tray_hint_shown", False):
+                self.tray_icon.showMessage(
+                    "SyncroJob è ancora attivo",
+                    "L'applicazione continua a lavorare in background.\nUsa il tasto destro sull'icona per chiudere definitivamente.",
+                    QSystemTrayIcon.MessageIcon.Information,
+                    5000
+                )
+                config_manager.set_config_value("tray_hint_shown", True)
+            
+            event.ignore()
 
     # --- Drag & Drop ---
     def dragEnterEvent(self, event):

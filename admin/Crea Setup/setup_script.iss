@@ -1,10 +1,10 @@
 ; Bot TS - Inno Setup Script
-; Installer configuration for Bot TS application
+; Installer configuration for SyncroJob application
 
-#define MyAppName "BotTS"
+#define MyAppName "SyncroJob"
 #define MyAppPublisher "Giancarlo Allegretti"
 #define MyAppURL "https://bot-ts.netlify.app"
-#define MyAppExeName "BotTS.exe"
+#define MyAppExeName "SyncroJob.exe"
 
 ; Read version from version.py (manually update or use preprocessor)
 #ifndef MyAppVersion
@@ -12,7 +12,7 @@
 #endif
 
 ; Paths (relative to this script location)
-#define SourcePath "..\..\dist\BotTS"
+#define SourcePath "..\..\dist\SyncroJob"
 #define OutputPath "Setup"
 #define AssetsPath "..\..\assets"
 
@@ -28,13 +28,13 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 
 ; Installation paths
-DefaultDirName={autopf}\Bot TS
-DefaultGroupName=Bot TS
+DefaultDirName={autopf}\SyncroJob
+DefaultGroupName=SyncroJob
 DisableProgramGroupPage=yes
 
 ; Output configuration
 OutputDir={#OutputPath}
-OutputBaseFilename=BotTS_Setup_{#MyAppVersion}
+OutputBaseFilename=SyncroJob_Setup_{#MyAppVersion}
 SetupIconFile={#AssetsPath}\setup.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
@@ -69,6 +69,9 @@ Source: "{#SourcePath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 ; Icon file
 Source: "{#AssetsPath}\app.ico"; DestDir: "{app}"; Flags: ignoreversion
 
+; Copy all assets (icons, styles, etc.)
+Source: "{#AssetsPath}\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 [Icons]
 ; Start Menu
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\app.ico"
@@ -102,8 +105,8 @@ begin
   
   if MsgResult = IDYES then
   begin
-    // Elimina la cartella in Local (BotTS) per coerenza con il codice Python
-    DelTree(ExpandConstant('{localappdata}\BotTS'), True, True, True);
+    // Elimina la cartella in Local (SyncroJob) per coerenza con il codice Python
+    DelTree(ExpandConstant('{localappdata}\SyncroJob'), True, True, True);
   end;
   
   Result := True;

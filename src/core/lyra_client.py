@@ -11,26 +11,50 @@ from src.core.config_manager import CONFIG_DIR
 from src.core.audit_manager import AuditManager
 
 class LyraClient:
-    def __init__(self):
-        # Obfuscated API Key (Reconstructed at runtime)
-        self._k_parts = [65, 73, 122, 97, 83, 121, 66, 83, 84, 66, 100, 95, 112, 87, 113, 111, 86, 49, 73, 106, 75, 83, 49, 88, 120, 48, 81, 119, 112, 75, 69, 68, 119, 54, 66, 70, 121, 98, 85]
-        self._api_key = "".join([chr(c) for c in self._k_parts])
+    """Client per interagire con l'API di Google Gemini (Lyra)."""
 
-        # Models to try in order of preference (Fallback strategy)
-        self.models = [
-            "models/gemini-2.0-flash",
-            "models/gemini-2.0-flash-lite-preview-02-05",
-            "models/gemini-flash-latest"
-        ]
+    def __init__(self, api_key: str, model_name: str = "gemini-1.5-pro"):
+        if not api_key:
+            raise ValueError("API Key for Gemini is required.")
+        self.api_key = api_key
+        self.model = model_name
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
+        self.url = f"{self.base_url}/{self.model}:generateContent?key={self.api_key}"
 
-        self.context_prompt = (
-            "Sei Lyra, un'esperta contabile executive per 'Bot TS'. "
-            "NON presentarti mai (es. 'Sono Lyra', 'Ciao'). Vai dritta al punto con i dati. "
-            "Usa SEMPRE tabelle Markdown (| Colonna 1 | Colonna 2 |) per presentare liste, numeri o confronti. "
-            "Formatta i numeri in italiano (es. € 1.234,56). "
-            "Rispondi in modo analitico, evidenziando proattivamente anomalie (es. margini negativi). "
-            "DATI SISTEMA AGGIORNATI:\n"
-        )
+        self.context_prompt = """
+        Sei Lyra, un motore di estrazione dati ultra-professionale basato su Gemini.
+        La tua missione è la digitalizzazione integrale dei Rapportini Giornalieri ISAB.
+
+        REGOLE MANDATORIE PER ESTRAZIONE (PDF/IMMAGINI):
+        1. SOLO LA TABELLA: Se l'utente chiede di estrarre o analizzare un documento, restituisci ESCLUSIVAMENTE la tabella Markdown. 
+        2. NO INTRODUZIONE: Non scrivere mai "Ecco i dati", "Analisi completata" o titoli. Inizia direttamente con la riga intestazione | SC | TS | ...
+        3. NO CONCLUSIONE: Non aggiungere commenti, sintesi o segnalazione anomalie a meno che non venga chiesto esplicitamente.
+        4. COMPLETEZZA TOTALE: Estrai OGNI singola riga. Se nel foglio vedi 6 persone o 6 righe di attività, DEVI riportare 6 righe. Non saltare nessuno.
+        5. PRECISIONE CHIRURGICA:
+           - Colonne: SC, TS, FG, PE, Personale, Descrizione Attività, TCL, ODC, N° PDL, Inizio, Fine, Ore.
+           - Mantieni i nomi e i codici (es. 5400 canone) esattamente come scritti.
+
+        Per domande non legate ai documenti, rispondi in modo tecnico e conciso.
+        """
+
+    def list_models(self) -> list[str]:
+        """Recupera la lista di modelli che supportano 'generateContent'."""
+        try:
+            url = f"{self.base_url}?key={self.api_key}"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                models = response.json().get("models", [])
+                # Filtra per i modelli che sono effettivamente utilizzabili per la chat/analisi
+                compatible_models = [
+                    m.get("name").replace("models/", "") 
+                    for m in models 
+                    if "generateContent" in m.get("supportedGenerationMethods", [])
+                ]
+                return compatible_models
+            return []
+        except Exception:
+            return []
+
 
     def _get_system_context(self) -> str:
         """Raccoglie i dati dai database locali per il contesto AI."""
@@ -109,8 +133,8 @@ class LyraClient:
 
         return "\n".join(context)
 
-    def ask(self, question: str, extra_context: str = "") -> str:
-        """Invia una domanda a Gemini con il contesto."""
+    def ask(self, question: str, extra_context: str = "", images: list = None) -> str:
+        """Invia una domanda a Gemini con il contesto ed eventuali immagini."""
         try:
             system_data = self._get_system_context()
 
@@ -120,9 +144,21 @@ class LyraClient:
 
             full_prompt = f"{self.context_prompt}\n{system_data}{ctx}\n\nUtente: {question}\nLyra:"
 
+            # Costruzione parti del messaggio
+            parts = [{"text": full_prompt}]
+            
+            if images:
+                for img_b64 in images:
+                    parts.append({
+                        "inline_data": {
+                            "mime_type": "image/png",
+                            "data": img_b64
+                        }
+                    })
+
             payload = {
                 "contents": [{
-                    "parts": [{"text": full_prompt}]
+                    "parts": parts
                 }]
             }
 

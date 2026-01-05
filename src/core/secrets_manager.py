@@ -72,6 +72,11 @@ class SecretsManager:
         return cls.get_credential("api", "openai_api_key") or ""
 
     @classmethod
+    def get_gemini_api_key(cls) -> str:
+        """Recupera Gemini API Key dal Keyring."""
+        return cls.get_credential("api", "GEMINI_API_KEY") or ""
+
+    @classmethod
     def is_available(cls) -> bool:
         """Verifica se il servizio di keyring è disponibile."""
         try:

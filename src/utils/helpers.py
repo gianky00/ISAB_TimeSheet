@@ -10,14 +10,25 @@ from datetime import datetime
 from typing import Optional, List
 
 
-def get_app_icon_path() -> Optional[str]:
-    """Restituisce il percorso dell'icona dell'applicazione."""
+def get_asset_path(relative_path: str) -> str:
+    """
+    Restituisce il percorso assoluto di un asset.
+    Funziona sia in sviluppo che nell'app installata.
+    """
     if getattr(sys, 'frozen', False):
+        # Percorso dell'eseguibile
         base_path = os.path.dirname(sys.executable)
     else:
+        # Percorso del sorgente (src/utils/helpers.py -> src -> root)
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
-    icon_path = os.path.join(base_path, "assets", "app.ico")
+    path = os.path.join(base_path, relative_path.replace("/", os.sep))
+    return path
+
+
+def get_app_icon_path() -> Optional[str]:
+    """Restituisce il percorso dell'icona dell'applicazione."""
+    icon_path = get_asset_path("assets/app.ico")
     
     if os.path.exists(icon_path):
         return icon_path

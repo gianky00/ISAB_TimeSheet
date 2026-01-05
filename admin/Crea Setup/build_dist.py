@@ -62,6 +62,7 @@ def run_pyinstaller():
         "--clean",
         # Add data files
         "--add-data", f"{os.path.join(ROOT_DIR, 'src')};src",
+        "--add-data", f"{os.path.join(ROOT_DIR, 'assets')};assets",
     ]
     
     # Add icon if exists
