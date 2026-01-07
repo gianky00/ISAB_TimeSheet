@@ -190,6 +190,7 @@ class BaseBot(ABC):
             "download.directory_upgrade": True,
             "browser.download.manager.showWhenStarting": False,
             "download.manager.showWhenStarting": False,
+            "download.extensions_to_open": "",
         }
 
         options.add_argument("--safebrowsing-disable-download-protection")

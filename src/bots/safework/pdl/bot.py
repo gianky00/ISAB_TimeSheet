@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.base import SafeworkBaseBot
 from src.utils.printing import print_pdf
+from src.core import config_manager
 
 class SafeWorkPDLBot(SafeworkBaseBot):
     """
@@ -22,6 +23,29 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.download_path:
              from src.core.config_manager import get_download_path
              self.download_path = get_download_path()
+        
+        # Setup File Logging
+        try:
+            log_dir = config_manager.CONFIG_DIR / "logs"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            self.log_file = log_dir / "pdl_bot_debug.txt"
+            # Inizializza file con header sessione
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(f"\n\n--- NUOVA SESSIONE: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+        except Exception as e:
+            print(f"Errore setup log file: {e}")
+            self.log_file = None
+
+    def log(self, message: str):
+        """Override log per salvare su file."""
+        super().log(message)
+        if hasattr(self, 'log_file') and self.log_file:
+            try:
+                timestamp = time.strftime("%H:%M:%S")
+                with open(self.log_file, "a", encoding="utf-8") as f:
+                    f.write(f"[{timestamp}] {message}\n")
+            except:
+                pass
 
     @property
     def name(self) -> str:
@@ -39,7 +63,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         try:
             WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//button[@class='ms-choice']"))).click()
             WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'ms-drop')]//span[normalize-space()='ISAB Sud']"))).click()
-        except: pass
+        except Exception as e:
+            self.log(f"⚠️ Selezione sito non necessaria o fallita: {e}")
 
         self.log("🔐 Login...")
         self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente"))).send_keys(self.username)
@@ -49,6 +74,14 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log("⏳ Caricamento sistema...")
         self._attendi_caricamento_sistema()
         return True
+
+    def _safe_remove(self, path):
+        """Rimuove un file ignorando errori se in uso."""
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception as e:
+            self.log(f"⚠️ Impossibile rimuovere file temp (in uso?): {path} - {e}")
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
         success_count = 0
@@ -90,8 +123,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 continue
             
             path_temp_1 = os.path.join(self.download_path, f"temp_p1_{int(ts_1)}.pdf")
-            if os.path.exists(path_temp_1): os.remove(path_temp_1)
-            os.rename(pdf_1, path_temp_1)
+            self._safe_remove(path_temp_1)
+            try:
+                os.rename(pdf_1, path_temp_1)
+            except OSError:
+                time.sleep(2) # Retry once
+                os.rename(pdf_1, path_temp_1)
 
             # --- PARTE SECONDA ---
             try:
@@ -100,7 +137,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     except: self.driver.find_element(By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]").click()
                     time.sleep(1)
                 self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
-            except: pass
+            except Exception as e:
+                self.log(f"⚠️ Errore apertura Parte Seconda: {e}")
 
             self.log("📄 Scarico Parte Seconda")
             self._attendi_scomparsa_overlay()
@@ -124,21 +162,25 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             pdf_2 = self._attendi_e_ritorna_nuovo_pdf(ts_2, timeout=90)
             if not pdf_2:
                 self.log("❌ Timeout Parte 2")
-                if os.path.exists(path_temp_1): os.remove(path_temp_1)
+                self._safe_remove(path_temp_1)
                 continue
 
             path_temp_2 = os.path.join(self.download_path, f"temp_p2_{int(ts_2)}.pdf")
-            if os.path.exists(path_temp_2): os.remove(path_temp_2)
-            os.rename(pdf_2, path_temp_2)
+            self._safe_remove(path_temp_2)
+            try:
+                os.rename(pdf_2, path_temp_2)
+            except OSError:
+                time.sleep(2)
+                os.rename(pdf_2, path_temp_2)
 
             # --- FINE ---
             nome_finale = f"PDL_{pdl_num.replace('/', '-')}.pdf"
             percorso_finale = os.path.join(self.download_path, nome_finale)
-            if os.path.exists(percorso_finale): os.remove(percorso_finale)
+            self._safe_remove(percorso_finale)
 
             if self._unisci_pdf(path_temp_1, path_temp_2, percorso_finale):
-                os.remove(path_temp_1)
-                os.remove(path_temp_2)
+                self._safe_remove(path_temp_1)
+                self._safe_remove(path_temp_2)
                 success_count += 1
                 
                 # Stampa
@@ -178,8 +220,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def _unisci_pdf(self, file1, file2, output_path):
         try:
             result = fitz.open()
-            with fitz.open(file1) as pdf1: result.insert_pdf(pdf1)
-            with fitz.open(file2) as pdf2: result.insert_pdf(pdf2)
+            
+            # FILE 1: Solo la prima pagina (Parte Prima)
+            # "cancella l'eventuale seconda pagina" -> prendiamo solo la pagina 0
+            with fitz.open(file1) as pdf1: 
+                result.insert_pdf(pdf1, from_page=0, to_page=0)
+            
+            # FILE 2: Tutte le pagine (Parte Seconda)
+            with fitz.open(file2) as pdf2: 
+                result.insert_pdf(pdf2)
+                
             result.save(output_path)
             result.close()
             return True

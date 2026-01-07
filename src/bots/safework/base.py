@@ -29,6 +29,7 @@ class SafeworkBaseBot(BaseBot):
                 EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'modal') and contains(@style, 'display: block')]"))
             )
             modale.find_element(By.XPATH, ".//button[contains(text(), 'OK') or @data-dismiss='modal']").click()
+            self.log("ℹ️ Modale gestita (OK/Annulla).")
         except: 
             pass
         
