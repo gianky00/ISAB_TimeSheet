@@ -83,6 +83,7 @@ def run_pyinstaller():
         "platformdirs",
         "keyring",
         "keyring.backends",
+        "pyarrow",
     ]
     
     for imp in hidden_imports:
