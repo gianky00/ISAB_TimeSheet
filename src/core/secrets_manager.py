@@ -20,13 +20,13 @@ class SecretsManager:
     def get_license_key(cls) -> bytes:
         """
         Recupera la chiave di licenza in ordine di priorità:
-        1. Variabile d'ambiente BOT_TS_LICENSE_KEY
+        1. Variabile d'ambiente SYNCROJOB_LICENSE_KEY
         2. File .env nella root del progetto
         3. Keyring di sistema
-        4. Fallback (Temporaneo, per non rompere l'esistente se non configurato, ma DEPRECATO)
+        4. Fallback (Temporaneo, DEPRECATO)
         """
         # 1. Environment variable
-        env_key = os.environ.get('BOT_TS_LICENSE_KEY')
+        env_key = os.environ.get('SYNCROJOB_LICENSE_KEY')
         if env_key:
             return base64.urlsafe_b64decode(env_key)
 
@@ -35,7 +35,7 @@ class SecretsManager:
         if env_file.exists():
             with open(env_file) as f:
                 for line in f:
-                    if line.startswith('BOT_TS_LICENSE_KEY='):
+                    if line.startswith('SYNCROJOB_LICENSE_KEY='):
                         key = line.split('=', 1)[1].strip()
                         # Handle potential quotes
                         key = key.strip('"').strip("'")
@@ -53,7 +53,6 @@ class SecretsManager:
             pass # Keyring might fail in headless/some envs
 
         # Fallback Hardcoded (Legacy - to be removed)
-        # Questo serve per mantenere il software funzionante finché la chiave non viene distribuita via env/keyring
         return b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
 
     @classmethod

@@ -13,16 +13,21 @@ from pathlib import Path
 # --- CRASH LOGGING SETUP ---
 def setup_crash_logging():
     """Configura il logging per intercettare crash all'avvio."""
-    # 1. Definisci percorso log (User Profile per evitare problemi permessi)
-    # Usa .bot_ts come standard
-    log_dir = Path.home() / ".bot_ts"
+    # STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob\logs
+    import os
+    from platformdirs import user_data_dir
+    
+    log_dir = Path(user_data_dir("SyncroJob", appauthor=False)) / "logs"
     log_file = log_dir / "crash.log"
 
     try:
         log_dir.mkdir(parents=True, exist_ok=True)
     except Exception:
-        # Fallback se non si può creare la directory (raro in USERPROFILE)
-        return
+        # Fallback estremo nella home se non si può creare la directory
+        log_dir = Path.home() / ".syncrojob_logs"
+        try: log_dir.mkdir(parents=True, exist_ok=True)
+        except: return
+        log_file = log_dir / "crash.log"
 
     # 2. Configura Logger
     # 'w' mode sovrascrive il file ad ogni avvio come richiesto
@@ -81,8 +86,8 @@ def setup_crash_logging():
 
                 ctypes.windll.user32.MessageBoxW(
                     0,
-                    f"L'applicazione ha riscontrato un errore critico:\n\n...{short_msg}\n\nIl log completo è stato salvato in:\n{log_file}",
-                    "Errore Critico Bot TS",
+                    f"L'applicazione ha riscontrato un errore critico:\n\n...{short_msg}\n\nIl log completo è stato salvato nella cartella logs di SyncroJob.",
+                    "Errore Critico SyncroJob",
                     0x10 | 0x10000 # MB_ICONHAND | MB_SETFOREGROUND
                 )
             except Exception as e:
@@ -184,8 +189,15 @@ def main():
         sys.exit(1)
 
     # === START APP ===
+    from src.core.database import db_manager
     from src.gui.main_window import MainWindow
     
+    # Inizializza schema database (Contabilità, Timbrature, ecc.)
+    try:
+        db_manager.init_db()
+    except Exception as e:
+        print(f"[DATABASE] Errore inizializzazione: {e}")
+
     window = MainWindow()
     window.showMaximized()
     

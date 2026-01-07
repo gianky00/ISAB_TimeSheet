@@ -88,6 +88,7 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
+    bot_results_ready = pyqtSignal(str, list) # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str) # status, message
     
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
@@ -149,6 +150,36 @@ class BaseBotPanel(QWidget):
         msg = self.status_card._status_label.text()
         return self.status_card._status, msg
     
+    def validate_ready(self) -> tuple[bool, str]:
+        """
+        Verifica se il bot è pronto per l'avvio (credenziali, dati, ecc.).
+        Ritorna (Successo, Messaggio Errore).
+        Da implementare nelle sottoclassi.
+        """
+        return True, ""
+
+    def add_rows_simple(self, new_rows: list):
+        """Aggiunge righe alla tabella dati esistente (se presente)."""
+        if hasattr(self, 'data_table'):
+            current_data = self.data_table.get_data()
+            current_data.extend(new_rows)
+            self.data_table.set_data(current_data)
+            if hasattr(self, '_save_data'):
+                self._save_data()
+
+    def clear_rows_simple(self):
+        """Svuota la tabella dati."""
+        if hasattr(self, 'data_table'):
+            self.data_table.set_data([])
+            if hasattr(self, '_save_data'):
+                self._save_data()
+
+    def get_rows_count(self) -> int:
+        """Ritorna il numero di righe nella tabella."""
+        if hasattr(self, 'data_table'):
+            return len(self.data_table.get_data())
+        return 0
+
     def _on_start(self):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
@@ -196,31 +227,58 @@ class BaseBotPanel(QWidget):
             action="Completamento Automazione",
             category="automazione",
             entity=self.bot_name,
-            params={"durata": duration_str},
-            status=status,
-            notify=True # Genera automaticamente la notifica utente
+            params={
+                "durata": duration_str,
+                "dettagli": "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
+            },
+            status=status
         )
 
-        if success:
-            self._update_status(StatusCard.Status.SUCCESS)
-            self.log_widget.timeline.set_mood("success")
-        else:
-            self._update_status(StatusCard.Status.ERROR)
-            self.log_widget.timeline.set_mood("error")
-            StatsManager().increment_error(self.bot_id)
-        
+        # Risultati per Telegram/UI (#2)
+        if hasattr(self.worker.bot, 'downloaded_files') and self.worker.bot.downloaded_files:
+            self.bot_results_ready.emit(self.bot_id, self.worker.bot.downloaded_files)
+
         self.bot_finished.emit(success)
 
-        # Taskbar Flash (#4)
-        QApplication.alert(self, 0)
+
+        # Notifica Background (System Tray + Flash)
+        if hasattr(self.window(), 'show_background_notification'):
+            msg = "Operazione completata con successo." if success else "Si è verificato un errore durante l'esecuzione."
+            title = f"{self.bot_name} - Completato" if success else f"{self.bot_name} - Errore"
+            self.window().show_background_notification(title, msg, is_error=not success)
+        else:
+            # Fallback per sicurezza
+            QApplication.alert(self, 0)
 
         if self.worker:
             self.worker.wait()
             self.worker = None
     
     def _on_log(self, message: str):
-        """Aggiunge un messaggio al log."""
+        """Aggiunge un messaggio al log e lo inoltra a Telegram se importante."""
         self.log_widget.append(message)
+        
+        # --- Streaming Intelligente Telegram ---
+        # Definiamo cosa è "importante" per l'utente mobile
+        important_keywords = [
+            "✅", "❌", "⚠️", "🚀", "▶", "⏹", "Arresto", 
+            "Login effettuato", "Accesso eseguito",
+            "Download completato", "Caricamento completato",
+            "Trovati", "Elaborazione", "Errore", "Attenzione"
+        ]
+        
+        # Se il messaggio contiene una keyword o un'icona rilevante, inoltra
+        if any(key in message for key in important_keywords):
+            win = self.window()
+            if hasattr(win, 'telegram'):
+                # Formattiamo il log per Telegram aggiungendo il nome del bot
+                clean_msg = message.strip()
+                # Rimuoviamo eventuali timestamp se presenti all'inizio (stile [HH:mm:ss])
+                import re
+                clean_msg = re.sub(r'^\[\d{2}:\d{2}:\d{2}\]\s*', '', clean_msg)
+                
+                tg_text = f"🔹 *{self.bot_name}*\n{clean_msg}"
+                win.telegram.send_message_sync(tg_text)
     
     def _on_status(self, status: str):
         """Aggiorna lo stato (messaggio custom)."""
@@ -459,6 +517,21 @@ class ScaricaTSPanel(BaseBotPanel):
         if QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?") == QMessageBox.StandardButton.Yes:
             self.data_table.set_data([])
             self._save_data()
+
+    def validate_ready(self) -> tuple[bool, str]:
+        username, password = self.get_credentials()
+        if not username or not password:
+            return False, "Credenziali ISAB mancanti."
+        
+        data = self.data_table.get_data()
+        if not data:
+            return False, "Nessun dato inserito nella tabella (OdA mancanti)."
+            
+        fornitore = self.fornitore_combo.currentText()
+        if not fornitore:
+            return False, "Nessun fornitore selezionato."
+            
+        return True, ""
 
     def _save_data(self):
         """Salva i dati correnti."""
@@ -830,6 +903,17 @@ class DettagliOdAPanel(BaseBotPanel):
             self.data_table.set_data([])
             self._save_data()
 
+    def validate_ready(self) -> tuple[bool, str]:
+        username, password = self.get_credentials()
+        if not username or not password:
+            return False, "Credenziali ISAB mancanti."
+            
+        fornitore = self.fornitore_combo.currentText()
+        if not fornitore:
+            return False, "Nessun fornitore selezionato."
+            
+        return True, ""
+
     def _save_data(self):
         """Salva i dati correnti."""
         data = self.data_table.get_data()
@@ -981,6 +1065,17 @@ class CaricoTSPanel(BaseBotPanel):
         if QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?") == QMessageBox.StandardButton.Yes:
             self.data_table.set_data([])
             self._save_data()
+
+    def validate_ready(self) -> tuple[bool, str]:
+        username, password = self.get_credentials()
+        if not username or not password:
+            return False, "Credenziali ISAB mancanti."
+            
+        data = self.data_table.get_data()
+        if not data:
+            return False, "Nessuna riga di dati Timesheet inserita."
+            
+        return True, ""
 
     def _save_data(self):
         """Salva i dati correnti."""
@@ -1221,6 +1316,17 @@ class ScaricoPDLPanel(BaseBotPanel):
         if QMessageBox.question(self, "Conferma", "Cancellare tutti i PDL?", QMessageBox.StandardButton.Yes) == QMessageBox.StandardButton.Yes:
             self.data_table.set_data([])
             self._save_data()
+
+    def validate_ready(self) -> tuple[bool, str]:
+        username, password = self.get_credentials()
+        if not username or not password:
+            return False, "Credenziali SafeWork mancanti."
+            
+        data = self.data_table.get_data()
+        if not data:
+            return False, "Nessun PDL inserito."
+            
+        return True, ""
             
     def get_credentials(self) -> tuple:
         """Override: Recupera credenziali SafeWork."""
@@ -1461,6 +1567,17 @@ class TimbratureBotPanel(BaseBotPanel):
         # Save Autopilot settings
         config_manager.set_config_value("timbrature_autopilot_enabled", self.autopilot_check.isChecked())
         config_manager.set_config_value("timbrature_autopilot_time", self.time_edit.time().toString("HH:mm"))
+
+    def validate_ready(self) -> tuple[bool, str]:
+        username, password = self.get_credentials()
+        if not username or not password:
+            return False, "Credenziali ISAB mancanti."
+            
+        fornitore = self.fornitore_combo.currentText()
+        if not fornitore:
+            return False, "Nessun fornitore selezionato."
+            
+        return True, ""
 
     def _on_start(self):
         """Avvia il bot Timbrature."""
@@ -1882,7 +1999,7 @@ class TimbratureDBPanel(QWidget):
             success = self.storage.import_excel(file_path, gui_log)
 
             if success:
-                AuditManager().log_action("Importazione Manuale Timbrature", category="database", details=f"File: {Path(file_path).name}")
+                AuditManager().log_action("Importazione Manuale Timbrature", category="database", params={"file": Path(file_path).name})
                 self.refresh_data()
                 ToastManager.instance().show("Dati importati correttamente nel database.", "success")
                 self._load_settings_data()

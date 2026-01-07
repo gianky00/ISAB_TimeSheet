@@ -3,6 +3,11 @@ Bot TS - Main Window
 Finestra principale dell'applicazione.
 """
 import sys
+import os
+import subprocess
+import requests
+import asyncio
+import threading
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QStackedWidget, QFrame, QSplashScreen, QApplication, QTabWidget,
@@ -26,10 +31,13 @@ from src.gui.notifications_panel import NotificationsPanel
 # Import Core
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.license_validator import get_license_info
+from src.core.secrets_manager import SecretsManager
 from src.core import config_manager
 from src.core.app_updater import check_for_updates
+from src.utils.validators import InputValidator
 from src.core.notification_manager import NotificationManager
 from src.core.backup_manager import BackupManager
+from src.core.telegram_manager import TelegramService
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.utils.helpers import get_asset_path, get_app_icon_path
 
@@ -141,12 +149,474 @@ class MainWindow(QMainWindow):
         self.sentinel.anomalies_found.connect(self._on_anomalies_found)
         QTimer.singleShot(2000, self.sentinel.start) # Ritarda leggermente l'avvio
 
+        # Telegram Service
+        self.telegram = TelegramService()
+        self.telegram.log_signal.connect(lambda m: NotificationManager.instance().add_notification("Telegram", m))
+        self.telegram.command_received.connect(self._handle_telegram_command)
+        self.telegram.data_received.connect(self._handle_telegram_data)
+        self.telegram.status_requested.connect(self._handle_telegram_status)
+        self.telegram.screenshot_requested.connect(self._handle_telegram_screenshot)
+        self.telegram.query_received.connect(self._handle_telegram_ai_query)
+        self.telegram.photo_received.connect(self._handle_telegram_photo)
+        self.telegram.intent_received.connect(self._handle_telegram_intent)
+        QTimer.singleShot(1000, self.telegram.start_service)
+
+        # Inoltro notifiche a Telegram
+        NotificationManager.instance().notification_added.connect(self._forward_notification_to_telegram)
+
         # Avvio automatico importazione contabilità se abilitato
         QTimer.singleShot(1000, self._check_and_start_contabilita_update)
 
         # Controllo aggiornamenti applicazione (dopo 3 secondi)
         QTimer.singleShot(3000, self._check_updates)
     
+    def _handle_bot_results(self, bot_id, results):
+        """Gestisce i risultati prodotti dai bot (es. file scaricati) e li invia a Telegram."""
+        if bot_id == "scarico_pdl":
+            for file_path in results:
+                if os.path.exists(file_path):
+                    self.telegram.send_document_sync(
+                        file_path, 
+                        caption=f"📄 **PDL Scaricato**\nFile: `{os.path.basename(file_path)}`"
+                    )
+
+    def _handle_telegram_intent(self, chat_id, intent):
+        """Gestisce l'intento estratto dall'AI (testo o vocale)."""
+        action = intent.get("action")
+        obj = intent.get("object")
+        items = intent.get("items", [])
+        
+        # 1. Aggiunta Dati (se presenti)
+        if items:
+            if obj == "pdl":
+                # Validazione e aggiunta silenziosa (senza feedback immediato se c'è un'azione dopo)
+                valid_pdl = []
+                for i in items:
+                    res = InputValidator.validate_pdl(i)
+                    if res.valid: valid_pdl.append({"numero_pdl": res.sanitized_value})
+                
+                if valid_pdl:
+                    self.pdl_panel.add_rows_simple(valid_pdl)
+                    self.show_toast(f"Telegram: aggiunti {len(valid_pdl)} PDL via AI")
+            
+            elif obj == "oda":
+                valid_oda = []
+                for i in items:
+                    res = InputValidator.validate_oda(i)
+                    if res.valid: valid_oda.append({"numero_oda": res.sanitized_value})
+                
+                if valid_oda:
+                    self.scarico_panel.add_rows_simple(valid_oda)
+                    self.show_toast(f"Telegram: aggiunti {len(valid_oda)} OdA via AI")
+
+        # 2. Esecuzione Azione
+        if action == "print":
+            if obj == "pdl":
+                # Salva in pending e chiedi stampante
+                self.telegram.pending_data[int(chat_id)] = {"action": "print", "items": items}
+                from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                from src.utils.printing import get_installed_printers
+                printers = get_installed_printers()
+                keyboard = [[InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers[:6]]
+                self.telegram.send_message_sync(f"✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**", 
+                                              # Nota: TelegramService gestisce la tastiera se passata? No, devo aggiungerlo o farlo via callback
+                                              )
+                # Fallback: se non posso mandare la tastiera da qui facilmente, emetto un comando di richiesta stampante
+                self.telegram.send_message_sync("⚠️ Seleziona la stampante dal menu PDL -> Avvia (Stampa ON) oppure usa i bottoni nel menu Impostazioni.")
+                # Implementazione più pulita: chiamiamo un metodo interno di telegram
+                asyncio.run_coroutine_threadsafe(
+                    self.telegram.app.bot.send_message(
+                        chat_id=chat_id, 
+                        text=f"✅ PDL {', '.join(items)} pronti. **Quale stampante uso?**",
+                        reply_markup=InlineKeyboardMarkup(keyboard)
+                    ), 
+                    self.telegram.loop
+                )
+
+        elif action == "download":
+            if obj == "pdl":
+                # Chiedi se vuole stampare
+                from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                keyboard = [[
+                    InlineKeyboardButton("✅ Sì, stampa", callback_data="confirm_print_yes"),
+                    InlineKeyboardButton("❌ No, solo download", callback_data="confirm_print_no")
+                ]]
+                asyncio.run_coroutine_threadsafe(
+                    self.telegram.app.bot.send_message(
+                        chat_id=chat_id, 
+                        text=f"Aggiunti PDL. **Vuoi che li stampi anche?**",
+                        reply_markup=InlineKeyboardMarkup(keyboard)
+                    ), 
+                    self.telegram.loop
+                )
+            elif obj == "oda":
+                self._handle_telegram_command("run_ts", {})
+            elif obj == "timbrature":
+                self._handle_telegram_command("run_timbrature", {"period": "today"})
+
+        elif action == "status":
+            self._handle_telegram_status(chat_id)
+        
+        elif action == "restart":
+            self._handle_telegram_command("restart_app", {})
+
+    def _handle_telegram_command(self, command, params):
+        if command == "run_pdl":
+            self.navigate_to_panel("scarico_pdl")
+            print_enabled = params.get("print", False)
+            self.pdl_panel.print_check.setChecked(print_enabled)
+            ready, msg = self.pdl_panel.validate_ready()
+            if not ready:
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}\nUsa '➕ Inserisci PDL' per aggiungere dati.")
+                return
+            self.pdl_panel.start_btn.click()
+            self.telegram.send_message_sync(f"✅ Comando ricevuto. Avvio Scarico PDL (Stampa={print_enabled})")
+            
+        elif command == "list_pdl":
+            data = self.pdl_panel.data_table.get_data()
+            if not data:
+                self.telegram.send_message_sync("📋 **Lista PDL Vuota**")
+            else:
+                items = [str(row.get("numero_pdl", "")) for row in data]
+                text = "📋 **Lista PDL Corrente:**\n" + "\n".join([f"• `{i}`" for i in items[:20]])
+                if len(items) > 20: text += f"\n...ed altri {len(items)-20}"
+                self.telegram.send_message_sync(text)
+
+        elif command == "clear_pdl":
+            self.pdl_panel.clear_rows_simple()
+            self.telegram.send_message_sync("🗑️ Tabella PDL svuotata.")
+
+        elif command == "run_ts":
+            self.navigate_to_panel("scarico_ts")
+            ready, msg = self.scarico_panel.validate_ready()
+            if not ready:
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico TS.\nMotivo: {msg}\nUsa '➕ Aggiungi OdA' per aggiungere dati.")
+                return
+            self.scarico_panel.start_btn.click()
+            self.telegram.send_message_sync("✅ Comando ricevuto. Avvio Scarico Timesheet.")
+
+        elif command == "list_ts":
+            data = self.scarico_panel.data_table.get_data()
+            if not data:
+                self.telegram.send_message_sync("📋 **Lista OdA Vuota**")
+            else:
+                items = [str(row.get("numero_oda", "")) for row in data]
+                text = "📋 **Lista OdA Corrente:**\n" + "\n".join([f"• `{i}`" for i in items[:20]])
+                if len(items) > 20: text += f"\n...ed altri {len(items)-20}"
+                self.telegram.send_message_sync(text)
+
+        elif command == "clear_ts":
+            self.scarico_panel.clear_rows_simple()
+            self.telegram.send_message_sync("🗑️ Tabella OdA svuotata.")
+
+        elif command == "run_carico":
+            self.navigate_to_panel("carico_ts")
+            ready, msg = self.carico_panel.validate_ready()
+            if not ready:
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Carico TS.\nMotivo: {msg}")
+                return
+            self.carico_panel.start_btn.click()
+            self.telegram.send_message_sync("✅ Comando ricevuto. Avvio Carico Timesheet.")
+
+        elif command == "run_oda_details":
+            self.navigate_to_panel("dettagli_oda")
+            ready, msg = self.dettagli_panel.validate_ready()
+            if not ready:
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Dettagli OdA.\nMotivo: {msg}")
+                return
+            self.dettagli_panel.start_btn.click()
+            self.telegram.send_message_sync("✅ Comando ricevuto. Avvio Scarico Dettagli OdA.")
+
+        elif command == "set_fornitore":
+            fornitore = params.get("fornitore")
+            if fornitore:
+                config_manager.set_config_value("last_ts_fornitore", fornitore)
+                # Forza aggiornamento UI se necessario (i pannelli ricaricano la config all'avvio bot)
+                self.show_toast(f"Telegram: Fornitore impostato su {fornitore}")
+                # Aggiorna anche Lyra se attiva
+                if hasattr(self, 'lyra_panel'):
+                    self.lyra_panel.fornitore_combo.setCurrentText(fornitore)
+
+        elif command == "set_autopilot":
+            enabled = params.get("enabled")
+            time_val = params.get("time")
+            
+            if enabled is not None:
+                config_manager.set_config_value("timbrature_autopilot_enabled", enabled)
+                # Sincronizza UI panel
+                self.timbrature_bot_panel.autopilot_check.setChecked(enabled)
+                status = "ATTIVATO" if enabled else "DISATTIVATO"
+                self.telegram.send_message_sync(f"✅ Autopilot {status} correttamente.")
+            
+            if time_val:
+                config_manager.set_config_value("timbrature_autopilot_time", time_val)
+                # Sincronizza UI panel
+                from PyQt6.QtCore import QTime
+                self.timbrature_bot_panel.time_edit.setTime(QTime.fromString(time_val, "HH:mm"))
+                self.telegram.send_message_sync(f"✅ Orario Autopilot impostato alle: {time_val}")
+
+        elif command == "restart_app":
+            # Avvia avvio.bat in un nuovo processo e chiudi questo
+            try:
+                bat_path = os.path.abspath("avvio.bat")
+                subprocess.Popen(["cmd.exe", "/c", "start", bat_path], shell=True)
+                QApplication.quit()
+            except Exception as e:
+                self.telegram.send_message_sync(f"❌ Errore durante il riavvio: {e}")
+
+        elif command == "test_connectivity":
+            def run_test():
+                urls = {
+                    "Google": "https://www.google.com",
+                    "Portale ISAB": "https://portale-fornitori.isab.com/",
+                    "SafeWork": "https://safework.isab.com/"
+                }
+                report = "🔌 **Test Connettività**\n───────────────────\n"
+                for name, url in urls.items():
+                    try:
+                        res = requests.get(url, timeout=10)
+                        status = "✅ OK" if res.status_code < 400 else f"⚠️ {res.status_code}"
+                        report += f"• {name}: {status}\n"
+                    except:
+                        report += f"• {name}: ❌ NON RAGGIUNGIBILE\n"
+                
+                self.telegram.send_message_sync(report)
+            
+            threading.Thread(target=run_test, daemon=True).start()
+
+        elif command == "set_printer":
+            printer_name = params.get("printer")
+            if printer_name:
+                config_manager.set_config_value("pdl_printer_name", printer_name)
+                # Sincronizza UI panel se caricato
+                if hasattr(self, 'pdl_panel'):
+                    idx = self.pdl_panel.printer_combo.findText(printer_name)
+                    if idx >= 0:
+                        self.pdl_panel.printer_combo.setCurrentIndex(idx)
+                
+                self.show_toast(f"Telegram: Stampante impostata su {printer_name}")
+                self.telegram.send_message_sync(f"✅ Stampante predefinita impostata su: `{printer_name}`")
+        elif command == "run_timbrature":
+            self.navigate_to_panel("timbrature")
+            period = params.get("period", "yesterday")
+            
+            # Imposta le date nel pannello
+            from PyQt6.QtCore import QDate
+            target_date = QDate.currentDate()
+            if period == "yesterday":
+                target_date = target_date.addDays(-1)
+            
+            self.timbrature_bot_panel.date_da_edit.setDate(target_date)
+            self.timbrature_bot_panel.date_a_edit.setDate(target_date)
+            
+            ready, msg = self.timbrature_bot_panel.validate_ready()
+            if not ready:
+                self.telegram.send_message_sync(f"⚠️ Impossibile avviare Timbrature.\nMotivo: {msg}")
+                return
+            self.timbrature_bot_panel.start_btn.click()
+            self.telegram.send_message_sync(f"✅ Comando ricevuto. Avvio Scarico Timbrature ({period}).")
+        elif command == "stop_all":
+            panel = self._get_active_bot_panel()
+            if panel and hasattr(panel, 'stop_btn') and panel.stop_btn.isEnabled():
+                panel.stop_btn.click()
+                self.telegram.send_message_sync("🛑 Stop inviato.")
+            else:
+                self.telegram.send_message_sync("ℹ️ Nessun processo attivo.")
+
+    def _handle_telegram_data(self, data_type, items):
+        """Gestisce l'inserimento di dati grezzi da Telegram con validazione e deduplicazione."""
+        valid_items = []
+        errors = []
+        duplicates = 0
+        
+        if data_type == "pdl":
+            panel = self.pdl_panel
+            field_name = "numero_pdl"
+            validator = InputValidator.validate_pdl
+        else: # oda
+            panel = self.scarico_panel
+            field_name = "numero_oda"
+            validator = InputValidator.validate_oda
+
+        # 1. Recupera dati esistenti per controllo duplicati
+        existing_data = []
+        if hasattr(panel, 'data_table'):
+            existing_data = [str(row.get(field_name, "")) for row in panel.data_table.get_data()]
+
+        # 2. Validazione e Filtro
+        for item in items:
+            res = validator(item)
+            if res.valid:
+                val = res.sanitized_value
+                if val in existing_data or val in valid_items:
+                    duplicates += 1
+                else:
+                    valid_items.append(val)
+            else:
+                errors.append(f"❌ `{item}`: {res.error}")
+
+        # 3. Applicazione
+        if valid_items:
+            new_rows = [{field_name: val} for val in valid_items]
+            panel.add_rows_simple(new_rows)
+            self.navigate_to_panel(panel.bot_id)
+            self.show_toast(f"Telegram: Aggiunti {len(valid_items)} elementi")
+
+        # 4. Feedback via Telegram
+        feedback = []
+        if valid_items:
+            feedback.append(f"✅ **Aggiunti {len(valid_items)} elementi**")
+        if duplicates > 0:
+            feedback.append(f"ℹ️ **{duplicates} duplicati saltati**")
+        if errors:
+            feedback.append(f"⚠️ **Errori ({len(errors)}):**\n" + "\n".join(errors[:5]))
+            if len(errors) > 5: feedback.append(f"...ed altri {len(errors)-5}")
+
+        if not feedback:
+            feedback = ["⚠️ Nessun dato valido inserito."]
+            
+        self.telegram.send_message_sync("\n".join(feedback))
+
+    def _handle_telegram_status(self, chat_id):
+        """Invia lo stato corrente al bot."""
+        panel = self._get_active_bot_panel()
+        if panel and hasattr(panel, 'get_current_status'):
+            status, msg = panel.get_current_status()
+            text = f"📊 **Stato Sistema**\n\nAttività: {panel.bot_name}\nStato: {status}\nDettaglio: {msg}"
+        else:
+            text = "📊 **Stato Sistema**\n\nIl sistema è in attesa (Idle)."
+        
+        self.telegram.send_message_sync(text)
+
+    def _handle_telegram_screenshot(self, mode="app"):
+        """Cattura lo screenshot (App o Intero Desktop) e lo invia a Telegram."""
+        try:
+            from PyQt6.QtCore import QBuffer, QIODevice, QRect
+            from PyQt6.QtGui import QGuiApplication, QScreen
+            
+            if mode == "app":
+                # Cattura solo la finestra dell'applicazione
+                pixmap = self.grab()
+                caption_text = "Solo App"
+            else:
+                # Cattura intero desktop (tutti i monitor)
+                screens = QGuiApplication.screens()
+                if not screens:
+                    raise Exception("Nessun monitor rilevato")
+                
+                # Calcola l'area totale che copre tutti i monitor
+                total_rect = QRect()
+                for screen in screens:
+                    total_rect = total_rect.united(screen.geometry())
+                
+                # Crea una pixmap gigante per contenere tutto
+                combined_pixmap = QPixmap(total_rect.size())
+                combined_pixmap.fill(Qt.GlobalColor.black)
+                painter = QPainter(combined_pixmap)
+                
+                for screen in screens:
+                    screen_pixmap = screen.grabWindow(0)
+                    # Disegna lo screenshot del monitor nella posizione corretta
+                    # traslando le coordinate relative al rettangolo totale
+                    painter.drawPixmap(
+                        screen.geometry().topLeft() - total_rect.topLeft(), 
+                        screen_pixmap
+                    )
+                painter.end()
+                pixmap = combined_pixmap
+                caption_text = f"Desktop Completo ({len(screens)} monitor)"
+            
+            # Converti in bytes (PNG)
+            buffer = QBuffer()
+            buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+            pixmap.save(buffer, "PNG")
+            photo_bytes = buffer.data().data()
+            
+            # Invia
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            self.telegram.send_photo_sync(
+                photo_bytes, 
+                caption=f"📸 **Screenshot: {caption_text}**\nAcquisito alle {timestamp}"
+            )
+        except Exception as e:
+            self.telegram.send_message_sync(f"❌ Errore acquisizione screenshot: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _forward_notification_to_telegram(self, notification):
+        """Inoltra notifiche importanti a Telegram (tranne quelle generate da Telegram stesso)."""
+        if notification.get("title") == "Telegram":
+            return
+            
+        level = notification.get("level", "info")
+        # Inoltriamo solo successi, errori e avvisi (evitiamo spam di info generiche)
+        if level in ["success", "error", "warning"]:
+            title = notification.get("title", "Notifica")
+            msg = notification.get("message", "")
+            icon = "✅" if level == "success" else "❌" if level == "error" else "⚠️"
+            
+            text = f"{icon} *{title}*\n{msg}"
+            self.telegram.send_message_sync(text)
+
+    def _handle_telegram_ai_query(self, chat_id, query):
+        """Gestisce le domande poste tramite Telegram usando Lyra AI."""
+        # Recupera API Key
+        api_key = SecretsManager.get_gemini_api_key()
+        
+        if not api_key:
+            self.telegram.send_message_sync("⚠️ AI Coach non configurato. Inserisci la Gemini API Key nelle impostazioni del PC.")
+            return
+
+        # Funzione di worker da eseguire in thread
+        def run_ai_query():
+            try:
+                from src.core.lyra_client import LyraClient
+                client = LyraClient(api_key=api_key)
+                # Chiedi a Lyra (include automaticamente il contesto del database)
+                response = client.ask(query)
+                self.telegram.send_message_sync(f"🤖 **AI Coach (Lyra)**\n\n{response}")
+            except Exception as e:
+                import traceback
+                err = traceback.format_exc()
+                self.telegram.send_message_sync(f"❌ Errore AI:\n{err}")
+
+        # Esegui in thread per non bloccare la GUI
+        threading.Thread(target=run_ai_query, daemon=True).start()
+
+    def _handle_telegram_photo(self, chat_id, photo_bytes, caption):
+        """Gestisce le immagini inviate tramite Telegram (Rapportini)."""
+        api_key = SecretsManager.get_gemini_api_key()
+        
+        if not api_key:
+            self.telegram.send_message_sync("⚠️ AI Vision non configurata. Inserisci la Gemini API Key.")
+            return
+
+        self.telegram.send_message_sync("🔍 **Analisi Documento in corso...**\nSto leggendo i dati dal rapportino, attendi un istante.")
+
+        def run_vision_query():
+            try:
+                import base64
+                from src.core.lyra_client import LyraClient
+                
+                # Converti bytes in base64
+                img_b64 = base64.b64encode(photo_bytes).decode('utf-8')
+                
+                client = LyraClient(api_key=api_key)
+                # Chiedi a Lyra di estrarre i dati
+                prompt = "Estrai integralmente tutti i dati da questo rapportino giornaliero. Restituisci ESCLUSIVAMENTE una tabella Markdown."
+                if caption:
+                    prompt += f"\nNote aggiuntive dell'utente: {caption}"
+                
+                response = client.ask(prompt, images=[img_b64])
+                
+                self.telegram.send_message_sync(f"📝 **Dati Estratti (Anteprima)**\n\n{response}\n\n_I dati sono stati estratti tramite AI. Controlla la correttezza prima dell'uso._")
+            except Exception as e:
+                import traceback
+                err = traceback.format_exc()
+                self.telegram.send_message_sync(f"❌ Errore AI Vision:\n{err}")
+
+        threading.Thread(target=run_vision_query, daemon=True).start()
+
     def _setup_tray_icon(self):
         """Configura l'icona nella system tray."""
         self.tray_icon = QSystemTrayIcon(self)
@@ -211,6 +681,20 @@ class MainWindow(QMainWindow):
         self.btn_lyra.set_badge(count)
         if count > 0:
             ToastManager.instance().show(f"⚠️ Lyra ha rilevato {count} anomalie", "warning")
+
+    def show_background_notification(self, title: str, message: str, is_error: bool = False):
+        """
+        Mostra una notifica di sistema (Toast) se l'applicazione non è attiva (in background o minimizzata).
+        """
+        # Controlla se l'applicazione è in primo piano
+        is_active = self.isActiveWindow() and not self.isMinimized()
+        
+        if not is_active:
+            icon = QSystemTrayIcon.MessageIcon.Critical if is_error else QSystemTrayIcon.MessageIcon.Information
+            self.tray_icon.showMessage(title, message, icon, 5000)
+            
+            # Flash Taskbar come avviso visivo aggiuntivo
+            QApplication.alert(self, 0)
 
     def show_toast(self, message: str, duration: int = 3000):
         """Mostra una notifica toast (Wrapper for backward compatibility)."""
@@ -445,6 +929,7 @@ class MainWindow(QMainWindow):
         self.carico_panel = CaricoTSPanel()
         self.dettagli_panel = DettagliOdAPanel()
         self.pdl_panel = ScaricoPDLPanel() # NEW
+        self.pdl_panel.bot_results_ready.connect(self._handle_bot_results)
         self.timbrature_bot_panel = TimbratureBotPanel()
         self.timbrature_db_panel = TimbratureDBPanel()
         self.contabilita_panel = ContabilitaPanel()
@@ -700,12 +1185,21 @@ class MainWindow(QMainWindow):
 
         # Aggiornamento live impostazioni
         self.settings_panel.settings_saved.connect(self._on_settings_saved)
+        self.settings_panel.request_help_section.connect(self._on_help_requested)
+
+    def _on_help_requested(self, section_title):
+        """Gestisce la richiesta di apertura di una sezione specifica della guida."""
+        self._navigate_to(5) # Index della pagina Help
+        self.help_panel.open_section(section_title)
 
     def _on_settings_saved(self):
         """Aggiorna i pannelli quando le impostazioni vengono salvate."""
         self.scarico_panel.refresh_fornitori()
         self.dettagli_panel.refresh_fornitori()
         self.timbrature_bot_panel.refresh_fornitori()
+        
+        # Riavvia il servizio Telegram per applicare eventuali nuovi token
+        self.telegram.start_service()
 
         # Feedback Toast
         ToastManager.instance().show("Impostazioni salvate con successo!", "success")
@@ -811,6 +1305,9 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra: minimizza nella tray se non è force_quit."""
         if self._force_quit:
+            # Ferma servizi in background
+            self.telegram.stop_service()
+            
             # Auto Backup
             config = config_manager.load_config()
             if config.get("auto_backup", True):

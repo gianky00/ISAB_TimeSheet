@@ -13,13 +13,21 @@ from src.core.audit_manager import AuditManager
 class LyraClient:
     """Client per interagire con l'API di Google Gemini (Lyra)."""
 
-    def __init__(self, api_key: str, model_name: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: str, model_name: str = None):
         if not api_key:
             raise ValueError("API Key for Gemini is required.")
-        self.api_key = api_key
-        self.model = model_name
+        self._api_key = api_key
+        
+        # Carica modello preferito esclusivamente da config se non specificato
+        from src.core import config_manager
+        config = config_manager.load_config()
+        self.model = model_name or config.get("ai_model", "gemini-1.5-pro")
+        
+        # Nessun fallback: usa solo il modello scelto
+        self.models = [self.model]
+
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
-        self.url = f"{self.base_url}/{self.model}:generateContent?key={self.api_key}"
+        self.url = f"{self.base_url}/{self.model}:generateContent?key={self._api_key}"
 
         self.context_prompt = """
         Sei Lyra, un motore di estrazione dati ultra-professionale basato su Gemini.
@@ -40,7 +48,7 @@ class LyraClient:
     def list_models(self) -> list[str]:
         """Recupera la lista di modelli che supportano 'generateContent'."""
         try:
-            url = f"{self.base_url}?key={self.api_key}"
+            url = f"{self.base_url}?key={self._api_key}"
             response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 models = response.json().get("models", [])
@@ -164,48 +172,77 @@ class LyraClient:
 
             headers = {'Content-Type': 'application/json'}
 
-            last_error = ""
+            # Nessun loop di retry: usa solo il modello impostato
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self._api_key}"
 
-            # Retry loop with different models
-            for model in self.models:
-                url = f"https://generativelanguage.googleapis.com/v1beta/{model}:generateContent?key={self._api_key}"
+            try:
+                response = requests.post(url, json=payload, headers=headers, timeout=60)
 
-                try:
-                    response = requests.post(url, json=payload, headers=headers)
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    # Audit Token Usage
+                    usage = result.get('usageMetadata', {})
+                    if usage:
+                        AuditManager().log_action(
+                            "Consumo Token AI", 
+                            category="lyra", 
+                            entity=self.model,
+                            params={
+                                "prompt": usage.get("promptTokenCount", 0),
+                                "response": usage.get("candidatesTokenCount", 0),
+                                "total": usage.get("totalTokenCount", 0)
+                            }
+                        )
 
-                    if response.status_code == 200:
-                        result = response.json()
-                        
-                        # Audit Token Usage
-                        usage = result.get('usageMetadata', {})
-                        if usage:
-                            AuditManager().log_action(
-                                "Consumo Token AI", 
-                                category="lyra", 
-                                entity=model,
-                                params={
-                                    "prompt": usage.get("promptTokenCount", 0),
-                                    "response": usage.get("candidatesTokenCount", 0),
-                                    "total": usage.get("totalTokenCount", 0)
-                                }
-                            )
+                    try:
+                        return result['candidates'][0]['content']['parts'][0]['text']
+                    except (KeyError, IndexError):
+                        return f"Errore elaborazione risposta AI: {json.dumps(result)}"
+                else:
+                    return f"Errore API {self.model} (Status {response.status_code}): {response.text}"
 
-                        try:
-                            return result['candidates'][0]['content']['parts'][0]['text']
-                        except (KeyError, IndexError):
-                            return "Non sono riuscita a elaborare la risposta. Riprova."
-                    elif response.status_code == 429:
-                        last_error = f"Quota esaurita per {model} (429)."
-                        continue # Try next model
-                    else:
-                        last_error = f"Errore API {model} ({response.status_code}): {response.text}"
-                        continue
-
-                except Exception as e:
-                    last_error = f"Errore connessione: {e}"
-                    continue
-
-            return f"Tutti i modelli AI hanno fallito. Ultimo errore: {last_error}"
+            except Exception as e:
+                return f"Errore connessione AI ({self.model}): {str(e)}"
 
         except Exception as e:
-            return f"Si è verificato un errore critico: {e}"
+            return f"Si è verificato un errore critico: {str(e)}"
+
+    def analyze_media(self, media_bytes: bytes, prompt: str, mime_type: str = "image/png") -> str:
+        """Invia un file multimediale (audio/immagine) a Gemini per analisi."""
+        import base64
+        media_b64 = base64.b64encode(media_bytes).decode('utf-8')
+        
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": media_b64
+                        }
+                    }
+                ]
+            }]
+        }
+        
+        headers = {'Content-Type': 'application/json'}
+        
+        # Usa il modello scelto dall'utente
+        model = self.model
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self._api_key}"
+        
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            if response.status_code == 200:
+                result = response.json()
+                # Audit usage
+                usage = result.get('usageMetadata', {})
+                if usage:
+                    AuditManager().log_action("Consumo Token Media AI", category="lyra", entity=model, params=usage)
+                
+                return result['candidates'][0]['content']['parts'][0]['text']
+            return f"Errore API Media: {response.status_code}"
+        except Exception as e:
+            return f"Errore analisi media: {e}"

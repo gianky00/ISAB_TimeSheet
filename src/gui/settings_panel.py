@@ -14,10 +14,13 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction, QFont
 from PyQt6.QtCore import Qt, pyqtSignal
 
+from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.toast import ToastManager
 from src.core import config_manager
 from src.core.stats_manager import StatsManager
 from src.core.audit_manager import AuditManager
 from src.core.backup_manager import BackupManager
+from src.core.secrets_manager import SecretsManager
 
 
 class AccountDialog(QDialog):
@@ -284,6 +287,8 @@ class SettingsPanel(QWidget):
     unsaved_changes = pyqtSignal(bool)
     # Segnale emesso quando le impostazioni vengono salvate
     settings_saved = pyqtSignal()
+    # Segnale per richiedere l'apertura di una sezione della guida
+    request_help_section = pyqtSignal(str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -812,8 +817,142 @@ class SettingsPanel(QWidget):
         self.stats_widget = StatisticsWidget()
         self.tabs.addTab(self.stats_widget, "Statistiche")
 
+        # --- TAB 4: Telegram ---
+        self.telegram_tab = QWidget()
+        self._setup_telegram_tab(self.telegram_tab)
+        self.tabs.addTab(self.telegram_tab, "✈️ Telegram")
+
         # Refresh stats when tab is clicked
         self.tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _setup_telegram_tab(self, parent_widget):
+        layout = QVBoxLayout(parent_widget)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        # Header
+        header_layout = QHBoxLayout()
+        info = QLabel("Controllo Remoto Telegram")
+        info.setStyleSheet("font-size: 20px; font-weight: bold; color: #212529;")
+        header_layout.addWidget(info)
+        
+        header_layout.addStretch()
+        
+        help_btn = QPushButton("📖 Guida alla configurazione")
+        help_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        help_btn.clicked.connect(lambda: self.request_help_section.emit("Configurazione Telegram"))
+        help_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e7f1ff;
+                color: #0d6efd;
+                border: 1px solid #0d6efd;
+                border-radius: 6px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #cfe2ff;
+            }
+        """)
+        header_layout.addWidget(help_btn)
+        layout.addLayout(header_layout)
+        
+        desc = QLabel("Controlla SyncroJob dal tuo smartphone. Avvia bot, controlla lo stato e ricevi notifiche.")
+        desc.setStyleSheet("color: #6c757d; font-size: 14px;")
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        # Config Group
+        group = self._create_group_box("Configurazione Bot")
+        gl = QFormLayout(group)
+        gl.setSpacing(15)
+
+        self.tg_token_edit = QLineEdit()
+        self.tg_token_edit.setPlaceholderText("Inserisci il Token fornito da @BotFather")
+        self.tg_token_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.tg_token_edit.setMinimumHeight(40)
+        self.tg_token_edit.textChanged.connect(self._on_change)
+        self._style_input(self.tg_token_edit)
+        gl.addRow("API Token:", self.tg_token_edit)
+
+        self.tg_chat_id_edit = QLineEdit()
+        self.tg_chat_id_edit.setPlaceholderText("In attesa del primo messaggio...")
+        self.tg_chat_id_edit.setReadOnly(True)
+        self.tg_chat_id_edit.setMinimumHeight(40)
+        self._style_input(self.tg_chat_id_edit)
+        
+        tg_id_layout = QHBoxLayout()
+        tg_id_layout.addWidget(self.tg_chat_id_edit)
+        
+        self.tg_reset_btn = QPushButton("Scollega")
+        self.tg_reset_btn.setFixedWidth(80)
+        self.tg_reset_btn.setMinimumHeight(40)
+        self.tg_reset_btn.clicked.connect(self._reset_telegram_pairing)
+        self.tg_reset_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                color: #dc3545;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #fff5f5;
+                border-color: #dc3545;
+            }
+        """)
+        tg_id_layout.addWidget(self.tg_reset_btn)
+        
+        gl.addRow("Chat ID Autorizzato:", tg_id_layout)
+
+        # Gemini API Key (Nuova)
+        self.gemini_api_key_edit = QLineEdit()
+        self.gemini_api_key_edit.setPlaceholderText("Inserisci la Gemini API Key per l'AI Coach")
+        self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.gemini_api_key_edit.setMinimumHeight(40)
+        self.gemini_api_key_edit.textChanged.connect(self._on_change)
+        self._style_input(self.gemini_api_key_edit)
+        
+        gemini_layout = QHBoxLayout()
+        gemini_layout.addWidget(self.gemini_api_key_edit)
+        
+        self.gemini_toggle_btn = QPushButton("👁️")
+        self.gemini_toggle_btn.setFixedSize(40, 40)
+        self.gemini_toggle_btn.clicked.connect(self._toggle_gemini_visibility)
+        self.gemini_toggle_btn.setStyleSheet("background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;")
+        gemini_layout.addWidget(self.gemini_toggle_btn)
+        
+        gl.addRow("Gemini API Key:", gemini_layout)
+
+        layout.addWidget(group)
+        layout.addStretch()
+
+    def _reset_telegram_pairing(self):
+        """Cancella l'associazione corrente del bot Telegram."""
+        if not self.tg_chat_id_edit.text():
+            return
+            
+        res = QMessageBox.warning(
+            self, 
+            "Scollega Telegram", 
+            "Vuoi davvero scollegare il dispositivo corrente?\nAl prossimo avvio del bot dovrai inviare di nuovo /start per associarlo.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if res == QMessageBox.StandardButton.Yes:
+            self.tg_chat_id_edit.clear()
+            self._on_change()
+            ToastManager.instance().show("Dispositivo Telegram scollegato. Salva per applicare.", "warning")
+
+    def _toggle_gemini_visibility(self):
+        """Alterna la visibilità della Gemini API Key."""
+        if self.gemini_api_key_edit.echoMode() == QLineEdit.EchoMode.Password:
+            self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.gemini_toggle_btn.setText("🔒")
+        else:
+            self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+            self.gemini_toggle_btn.setText("👁️")
 
     def _setup_backup_tab(self, parent_widget):
         layout = QVBoxLayout(parent_widget)
@@ -1534,6 +1673,13 @@ class SettingsPanel(QWidget):
         self.dataease_path_edit.setText(config.get("dataease_path", "")) # New
         self.auto_update_contabilita_check.setChecked(config.get("enable_auto_update_contabilita", True))
 
+        # Telegram
+        self.tg_token_edit.setText(config.get("telegram_token", ""))
+        self.tg_chat_id_edit.setText(config.get("telegram_chat_id", ""))
+        
+        # Gemini API Key (da SecretsManager)
+        self.gemini_api_key_edit.setText(SecretsManager.get_gemini_api_key())
+
         # Fornitori
         self.fornitori_list.clear()
         for f in config.get("fornitori", []):
@@ -1578,6 +1724,24 @@ class SettingsPanel(QWidget):
         config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
         config_manager.set_config_value("dataease_path", self.dataease_path_edit.text()) # New
         config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_contabilita_check.isChecked())
+
+        config_manager.set_config_value("telegram_token", self.tg_token_edit.text())
+        # Chat ID is read-only in UI, but we preserve it (or user clears it to re-pair)
+        # We don't save the read-only field if it's empty to allow bot to set it?
+        # Actually, let's allow user to clear it via UI if they edit the file, but here we just keep what is loaded unless we make it editable.
+        # But wait, tg_chat_id_edit is ReadOnly. So user can't change it here.
+        # But if we load it, we should save it back? Or just ignore it?
+        # Better: if we reset settings, we reload. If we save, we keep existing unless we implement a "Reset Pairing" button.
+        # For now, let's NOT overwrite it with empty if it's read only, but we display it.
+        # Actually, saving what is in the edit (even if read only) is safe because it reflects config.
+        config_manager.set_config_value("telegram_chat_id", self.tg_chat_id_edit.text())
+
+        # Gemini API Key (Salva in SecretsManager)
+        key_val = self.gemini_api_key_edit.text().strip()
+        if key_val:
+            SecretsManager.store_credential("api", "GEMINI_API_KEY", key_val)
+        else:
+            SecretsManager.delete_credential("api", "GEMINI_API_KEY")
 
         config_manager.set_config_value("fornitori", fornitori)
         config_manager.set_config_value("contracts", contracts)

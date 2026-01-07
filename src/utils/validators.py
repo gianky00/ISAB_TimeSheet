@@ -17,12 +17,36 @@ class InputValidator:
     # Pattern comuni
     PATTERNS = {
         'oda_number': r'^[A-Za-z0-9]{1,20}$',
+        'pdl_number': r'^[0-9]{6}/[CS]$',
         'codice_fiscale': r'^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$',
         'date_it': r'^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[012])\.(19|20)\d\d$',
         'time': r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
         'username': r'^[a-zA-Z0-9_]{3,50}$',
         'email': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     }
+
+    @classmethod
+    def validate_pdl(cls, value: str) -> ValidationResult:
+        """Valida numero PDL (6 cifre + /C o /S)."""
+        if not value:
+            return ValidationResult(False, "Numero PDL obbligatorio")
+
+        # Sanitizzazione: maiuscolo e rimuovi spazi
+        sanitized = value.strip().upper().replace(" ", "")
+
+        # Intelligenza PDL: se sono solo 6 cifre, aggiungi suffisso automatico
+        if sanitized.isdigit() and len(sanitized) == 6:
+            num = int(sanitized)
+            suffix = "/S" if num < 400000 else "/C"
+            sanitized = f"{sanitized}{suffix}"
+
+        if not re.match(cls.PATTERNS['pdl_number'], sanitized):
+            return ValidationResult(
+                False, 
+                f"PDL '{value}' non valido. Formato richiesto: 123456/C o 123456/S (o solo 6 cifre)"
+            )
+
+        return ValidationResult(True, sanitized_value=sanitized)
 
     @classmethod
     def validate_oda(cls, value: str) -> ValidationResult:

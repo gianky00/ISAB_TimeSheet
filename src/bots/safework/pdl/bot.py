@@ -35,6 +35,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         except Exception as e:
             print(f"Errore setup log file: {e}")
             self.log_file = None
+        self.downloaded_files = []
 
     def log(self, message: str):
         """Override log per salvare su file."""
@@ -86,6 +87,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def run(self, data: List[Dict[str, Any]]) -> bool:
         success_count = 0
         total = len(data)
+        self.downloaded_files = []
 
         for index, item in enumerate(data):
             self._check_stop()
@@ -181,6 +183,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             if self._unisci_pdf(path_temp_1, path_temp_2, percorso_finale):
                 self._safe_remove(path_temp_1)
                 self._safe_remove(path_temp_2)
+                self.downloaded_files.append(percorso_finale)
                 success_count += 1
                 
                 # Stampa

@@ -41,3 +41,4 @@ msoffcrypto-tool
 markdown
 pymupdf
 pywin32
+telegram

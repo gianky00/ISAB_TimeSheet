@@ -145,7 +145,7 @@ class BackupManager:
                 
         except Exception as e:
             logger.error(f"Backup Error: {e}")
-            AuditManager().log_action("Errore Backup", category="sistema", status="error", severity="medium", details=str(e))
+            AuditManager().log_action("Errore Backup", category="sistema", status="error", severity="medium", params={"errore": str(e)})
             return False, str(e)
 
     @staticmethod

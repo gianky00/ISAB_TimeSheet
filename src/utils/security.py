@@ -9,12 +9,16 @@ from pathlib import Path
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 import secrets
+import shutil
+from src.core.config_manager import CONFIG_DIR
 
 class PasswordManager:
     """Gestisce encryption/decryption password con best practice moderne."""
     
     _instance = None
-    _KEY_DIR = Path.home() / ".bot_ts"
+    # Percorso standard: %LOCALAPPDATA%\SyncroJob\security
+    _KEY_DIR = CONFIG_DIR / "security"
+    
     _KEY_FILE = _KEY_DIR / "secret.key"
     _SALT_FILE = _KEY_DIR / "encryption.salt"
     

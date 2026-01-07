@@ -6,7 +6,8 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal, QMargins, QSize
 from PyQt6.QtGui import QAction, QTextDocument, QIcon
 
 from src.core.lyra_client import LyraClient
-from src.core.secrets_manager import SecretsManager # Import here
+from src.core.secrets_manager import SecretsManager
+from src.core import config_manager
 from src.utils.document_processor import DocumentProcessor
 from src.utils.helpers import get_asset_path
 from pathlib import Path
@@ -39,10 +40,9 @@ class LyraWorker(QThread):
             self.finished.emit(answer)
 
         except Exception as e:
-            # Questo catturerà qualsiasi errore, inclusi problemi di importazione residui.
             import traceback
             error_details = traceback.format_exc()
-            self.finished.emit(f"⚠️ Errore critico nel Worker di Lyra:\n{str(e)}\n\nTrace:\n{error_details}")
+            self.finished.emit(f"⚠️ Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}")
 
 class ModelListWorker(QThread):
     finished = pyqtSignal(list)
@@ -91,6 +91,7 @@ class LyraPanel(QWidget):
         # Model Selector
         self.model_combo = QComboBox()
         self.model_combo.setMinimumWidth(180)
+        self.model_combo.currentTextChanged.connect(self._on_model_changed)
         self.model_combo.setStyleSheet("""
             QComboBox { 
                 background-color: rgba(255,255,255,0.2); 
@@ -322,7 +323,13 @@ class LyraPanel(QWidget):
         self.model_worker.finished.connect(self._populate_models_dropdown)
         self.model_worker.start()
 
+    def _on_model_changed(self, model_name):
+        """Salva il modello scelto nella configurazione globale."""
+        if model_name and "Caricamento" not in model_name and "mancante" not in model_name:
+            config_manager.set_config_value("ai_model", model_name)
+
     def _populate_models_dropdown(self, models):
+        self.model_combo.blockSignals(True) # Evita loop durante popolamento
         self.model_combo.clear()
         if models:
             # Filtra per i modelli che ci interessano di più
@@ -331,16 +338,20 @@ class LyraPanel(QWidget):
             other_models = sorted([m for m in models if 'pro' not in m and 'flash' not in m])
             
             ordered_models = pro_models + flash_models + other_models
-            
             self.model_combo.addItems(ordered_models)
-            self.model_combo.setEnabled(True)
             
-            # Seleziona di default il primo "pro" se esiste
-            if pro_models:
+            # Carica quello salvato
+            saved_model = config_manager.get_config_value("ai_model", "")
+            if saved_model and saved_model in ordered_models:
+                self.model_combo.setCurrentText(saved_model)
+            elif pro_models:
                 self.model_combo.setCurrentText(pro_models[0])
+                
+            self.model_combo.setEnabled(True)
         else:
             self.model_combo.addItem("Nessun modello trovato")
             self.model_combo.setEnabled(False)
+        self.model_combo.blockSignals(False)
 
     def _attach_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Allega Documento", "", "Documenti (*.pdf *.png *.jpg)")

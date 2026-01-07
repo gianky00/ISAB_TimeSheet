@@ -37,5 +37,27 @@ def mock_config(temp_dir):
     config_file = temp_dir / "config.json"
     return config_file
 
+@pytest.fixture(autouse=True)
+def _isolate_config(tmp_path):
+    """
+    Global isolation for configuration.
+    Ensures NO test ever writes to the real %LOCALAPPDATA% directory.
+    """
+    from src.core import config_manager
+    
+    # Clean cache
+    config_manager._config_cache = None
+    
+    fake_dir = tmp_path / "syncrojob_test_config"
+    fake_dir.mkdir(parents=True, exist_ok=True)
+    fake_file = fake_dir / "config.json"
+    
+    with patch("src.core.config_manager.CONFIG_DIR", fake_dir), \
+         patch("src.core.config_manager.CONFIG_FILE", fake_file):
+        yield fake_file
+        
+    # Clean cache again
+    config_manager._config_cache = None
+
 # The qapp fixture is now provided automatically by the pytest-qt plugin.
 # Defining it here would override the plugin's fixture and cause conflicts.

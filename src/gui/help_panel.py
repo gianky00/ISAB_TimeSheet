@@ -133,6 +133,7 @@ class HelpPanel(QWidget):
         self.sections = [
             ("🚀 Benvenuto", self._get_intro_md()),
             ("🆕 Novità v2.1", self._get_news_md()),
+            ("✈️ Configurazione Telegram", self._get_telegram_md()),
             ("📥 Scarico & Elaborazione", self._get_scarico_md()),
             ("📋 Dettagli OdA", self._get_oda_md()),
             ("⏱️ Timbrature & Autopilot", self._get_timbrature_md()),
@@ -174,6 +175,13 @@ class HelpPanel(QWidget):
         
         if self.index_list.count() > 0:
             self.index_list.setCurrentRow(0)
+
+    def open_section(self, section_title: str):
+        """Naviga programmaticamente a una sezione specifica."""
+        for i in range(self.index_list.count()):
+            if section_title.lower() in self.index_list.item(i).text().lower():
+                self.index_list.setCurrentRow(i)
+                break
 
     def _get_intro_md(self):
         return """
@@ -217,6 +225,34 @@ Abbiamo migrato la logica di calcolo e rinomina dei file Timesheet direttamente 
 ### 🤖 Miglioramenti Bot
 * **Scarico TS Batch**: I file vengono elaborati in blocco solo al termine di tutti i download.
 * **Resilienza**: Migliorata la gestione dei caricamenti infiniti sul portale ISAB.
+"""
+
+    def _get_telegram_md(self):
+        return """
+# ✈️ Configurazione Bot Telegram
+
+Il controllo remoto ti permette di interagire con SyncroJob ovunque tu sia tramite l'app Telegram. Per garantire il corretto funzionamento in ambienti multi-PC, **ogni installazione deve avere il proprio bot dedicato**.
+
+### 1. Creazione del Bot (Uno per ogni PC)
+1. Apri Telegram e cerca **@BotFather**.
+2. Scrivi il comando `/newbot`.
+3. Scegli un **Nome** (es. `SyncroJob Ufficio Luca`).
+4. Scegli uno **Username** univoco che finisca per bot (es. `luca_isab_bot`).
+5. BotFather ti fornirà un **API TOKEN** (una stringa lunga di numeri e lettere).
+
+### 2. Collegamento all'App
+1. Copia il Token e incollalo in **Impostazioni > Telegram** su questo PC.
+2. Clicca su **Salva Impostazioni**.
+3. Il servizio si avvierà automaticamente.
+
+### 3. Autorizzazione (Chat ID)
+Per motivi di sicurezza, il bot risponderà solo a te (il proprietario).
+1. Apri la chat del tuo nuovo bot su Telegram.
+2. Premi il tasto **AVVIA** (o scrivi `/start`).
+3. L'App SyncroJob riconoscerà il tuo ID e lo salverà come "Autorizzato".
+4. Da questo momento, vedrai apparire il menu dei comandi sullo smartphone.
+
+> ⚠️ **Nota Multi-PC**: Non usare lo stesso Token su due PC diversi, altrimenti il bot smetterà di rispondere a causa di conflitti di connessione.
 """
 
     def _get_scarico_md(self):
