@@ -1,34 +1,35 @@
 """
-Bot TS - Audit Manager PRO
+SyncroJob - Audit Manager PRO
 Gestione avanzata e immutabile del log delle attività.
 """
-import sqlite3
+
+import hashlib
+import json
 import logging
 import os
-import json
-import hashlib
+import sqlite3
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
 
 from src.core.config_manager import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 
+
 class AuditManager:
     """
     Manager per l'Audit Log con meccanismi di integrità e severità.
     """
-    
+
     _instance = None
     DB_PATH = CONFIG_DIR / "data" / "audit_log.db"
-    _SALT = "BotTS_Secure_Audit_2026"
+    _SALT = b"SyncroJob_Secure_Audit_2026"
 
     # Livelli di severità
     class Severity:
-        LOW = "low"       # Info, operazioni normali
-        MEDIUM = "medium" # Modifiche config, avvisi
-        HIGH = "high"     # Errori, manomissioni, licenza fallita
+        LOW = "low"  # Info, operazioni normali
+        MEDIUM = "medium"  # Modifiche config, avvisi
+        HIGH = "high"  # Errori, manomissioni, licenza fallita
 
     def __new__(cls):
         if cls._instance is None:
@@ -40,7 +41,8 @@ class AuditManager:
         """Inizializza il database con supporto alla severità e migrazione automatica."""
         self.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.DB_PATH) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS audit_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -53,28 +55,32 @@ class AuditManager:
                     severity TEXT DEFAULT 'low',
                     row_hash TEXT
                 )
-            """)
-            
+            """
+            )
+
             # Migrazione dinamica per database esistenti
             columns_to_add = [
                 ("user_id", "TEXT"),
                 ("entity", "TEXT"),
                 ("params", "TEXT"),
                 ("severity", "TEXT DEFAULT 'low'"),
-                ("row_hash", "TEXT")
+                ("row_hash", "TEXT"),
             ]
-            
+
             for col_name, col_type in columns_to_add:
                 try:
                     conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_type}")
                 except sqlite3.OperationalError:
-                    pass 
-            
+                    pass
+
             # PULIZIA DATI: Corregge eventuali record 'None' o nulli nel database
             try:
-                conn.execute("UPDATE audit_logs SET user_id = 'unknown' WHERE user_id IS NULL OR user_id = 'None' OR user_id = ''")
+                conn.execute(
+                    "UPDATE audit_logs SET user_id = 'unknown' WHERE user_id IS NULL OR user_id = 'None' OR user_id = ''"
+                )
                 conn.commit()
-            except: pass
+            except:
+                pass
 
             conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
             conn.commit()
@@ -82,23 +88,25 @@ class AuditManager:
     def _get_current_user(self) -> str:
         """Recupera l'utente corrente con massima robustezza per EXE e Sorgenti."""
         # Metodo prioritario: Variabile d'ambiente (più veloce e affidabile in EXE)
-        user = os.environ.get('USERNAME') or os.environ.get('USER')
-        if user and user.lower() != 'none':
+        user = os.environ.get("USERNAME") or os.environ.get("USER")
+        if user and user.lower() != "none":
             return user
 
         # Metodo secondario: getpass
         try:
             import getpass
+
             user = getpass.getuser()
-            if user and user.lower() != 'none':
+            if user and user.lower() != "none":
                 return user
         except:
             pass
 
         # Metodo di sistema: WinAPI (solo se necessario)
-        if os.name == 'nt':
+        if os.name == "nt":
             try:
                 import ctypes
+
                 buffer = ctypes.create_unicode_buffer(256)
                 size = ctypes.c_uint(len(buffer))
                 if ctypes.windll.advapi32.GetUserNameW(buffer, ctypes.byref(size)):
@@ -129,16 +137,18 @@ class AuditManager:
         # 1. Tentativo tramite modulo standard
         try:
             import getpass
+
             user = getpass.getuser()
-            if user and user.lower() != 'none':
+            if user and user.lower() != "none":
                 return user
         except:
             pass
 
         # 2. Tentativo tramite Windows API (Win32)
-        if os.name == 'nt':
+        if os.name == "nt":
             try:
                 import ctypes
+
                 advapi32 = ctypes.windll.advapi32
                 buffer = ctypes.create_unicode_buffer(256)
                 size = ctypes.c_uint(len(buffer))
@@ -148,25 +158,36 @@ class AuditManager:
                 pass
 
         # 3. Fallback finale tramite variabili d'ambiente
-        return os.environ.get('USERNAME') or os.environ.get('USER') or "unknown"
+        return os.environ.get("USERNAME") or os.environ.get("USER") or "unknown"
 
-    def log_action(self, action: str, category: str = "general", entity: str = "", params: Any = None, status: str = "success", severity: str = "low", notify: bool = False):
+    def log_action(
+        self,
+        action: str,
+        category: str = "general",
+        entity: str = "",
+        params: Any = None,
+        status: str = "success",
+        severity: str = "low",
+        notify: bool = False,
+    ):
         """
         Registra un'azione dettagliata nell'audit log con hashing.
         Opzionalmente genera una notifica utente.
         """
         try:
             user_id = self._get_current_user()
-            
+
             # Sanificazione Dati
             entity = entity if entity else "-"
             category = category if category else "general"
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now().isoformat()
-            
+
             prev_hash = self._get_last_hash()
             # Include severity in the hash string
-            data_to_hash = f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status}|{severity}"
+            data_to_hash = (
+                f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status}|{severity}"
+            )
             current_hash = self._calculate_hash(data_to_hash, prev_hash)
 
             with sqlite3.connect(self.DB_PATH) as conn:
@@ -174,24 +195,40 @@ class AuditManager:
                     """INSERT INTO audit_logs 
                        (timestamp, user_id, action, category, entity, params, status, severity, row_hash) 
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (timestamp, user_id, action, category, entity, params_json, status, severity, current_hash)
+                    (
+                        timestamp,
+                        user_id,
+                        action,
+                        category,
+                        entity,
+                        params_json,
+                        status,
+                        severity,
+                        current_hash,
+                    ),
                 )
                 conn.commit()
 
             # Notifica utente se richiesto
             if notify:
                 from src.core.notification_manager import NotificationManager
+
                 level = "info"
-                if status == "error" or severity == "high": level = "error"
-                elif status == "warning" or severity == "medium": level = "warning"
-                elif status == "success": level = "success"
-                
+                if status == "error" or severity == "high":
+                    level = "error"
+                elif status == "warning" or severity == "medium":
+                    level = "warning"
+                elif status == "success":
+                    level = "success"
+
                 title = f"{action}: {entity}"
                 # Crea un messaggio leggibile dai parametri
                 msg = f"Operazione completata con esito: {status.upper()}."
                 if params and isinstance(params, dict):
-                    if 'nuova' in params: msg = f"Versione aggiornata a {params['nuova']}"
-                    elif 'righe' in params: msg = f"Elaborate {params['righe']} righe."
+                    if "nuova" in params:
+                        msg = f"Versione aggiornata a {params['nuova']}"
+                    elif "righe" in params:
+                        msg = f"Elaborate {params['righe']} righe."
 
                 NotificationManager.instance().add_notification(title, msg, level=level)
 
@@ -206,20 +243,20 @@ class AuditManager:
                 cursor = conn.cursor()
                 cursor.execute("SELECT * FROM audit_logs ORDER BY id ASC")
                 rows = cursor.fetchall()
-                
+
                 prev_hash = "0" * 64
                 for row in rows:
                     # Se il record non ha hash (legacy), non lo validiamo ma aggiorniamo il prev_hash
                     # per non rompere la catena futura. Se ha un hash, deve essere corretto.
-                    if not row['row_hash']:
+                    if not row["row_hash"]:
                         continue
-                        
+
                     data_to_hash = f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}"
                     expected_hash = self._calculate_hash(data_to_hash, prev_hash)
-                    
-                    if row['row_hash'] != expected_hash:
-                        return False 
-                    prev_hash = row['row_hash']
+
+                    if row["row_hash"] != expected_hash:
+                        return False
+                    prev_hash = row["row_hash"]
                 return True
         except:
             return False

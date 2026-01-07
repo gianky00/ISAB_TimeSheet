@@ -1,29 +1,30 @@
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 # Ensure src can be imported
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 try:
     from src.utils.helpers import sanitize_filename
 except ImportError:
-    # Allow test file to exist before implementation for TDD, 
+    # Allow test file to exist before implementation for TDD,
     # but it will fail if run.
     pass
+
 
 class TestFilenameSanitization(unittest.TestCase):
     def test_path_traversal_attempts(self):
         """Verify that directory traversal sequences are neutralized."""
         unsafe_input = "../../evil.xlsx"
         safe_output = sanitize_filename(unsafe_input)
-        
+
         print(f"Sanitized '{unsafe_input}' -> '{safe_output}'")
-        
+
         self.assertNotIn("..", safe_output)
         self.assertNotIn("/", safe_output)
         self.assertNotIn("\\", safe_output)
-        
+
         # Ensure it resolves to a safe filename
         self.assertNotEqual(safe_output, "")
 
@@ -37,15 +38,16 @@ class TestFilenameSanitization(unittest.TestCase):
         """Verify that forbidden characters are replaced."""
         unsafe = "Oda:123/456*?"
         safe = sanitize_filename(unsafe)
-        
-        for char in [':', '/', '*', '?']:
+
+        for char in [":", "/", "*", "?"]:
             self.assertNotIn(char, safe)
-            
+
     def test_null_bytes(self):
         """Verify null bytes are removed (C-string termination attacks)."""
         unsafe = "file.txt\0.exe"
         safe = sanitize_filename(unsafe)
         self.assertNotIn("\0", safe)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

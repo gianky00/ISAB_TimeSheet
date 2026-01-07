@@ -1,16 +1,19 @@
 """
-Bot TS - Carico TS Page
+SyncroJob - Carico TS Page
 Page Object Model for Carico TS.
 """
-import time
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 
-from src.core.constants import Timeouts
+import time
+
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 from src.bots.portale_fornitori.carico_ts.locators import CaricoTSLocators
+from src.core.constants import Timeouts
+
 
 class CaricoTSPage:
     def __init__(self, driver: WebDriver, log_callback=None):

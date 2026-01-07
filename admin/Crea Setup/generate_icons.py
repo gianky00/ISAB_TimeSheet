@@ -2,7 +2,9 @@
 Bot TS - Icon Generator
 Genera icone moderne per l'applicazione e l'installer.
 """
+
 import os
+
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -10,7 +12,7 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
     """
     Creates a modern flat icon with text and saves it as an ICO file
     containing multiple sizes.
-    
+
     Args:
         text: Text to display on icon
         color_bg: Background color (RGBA tuple)
@@ -24,9 +26,9 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
     # Font paths - try system fonts
     font_paths = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux
-        "C:/Windows/Fonts/arialbd.ttf",   # Windows Arial Bold
-        "C:/Windows/Fonts/seguisb.ttf",   # Windows Segoe UI Semibold
-        "C:/Windows/Fonts/arial.ttf",     # Windows Arial
+        "C:/Windows/Fonts/arialbd.ttf",  # Windows Arial Bold
+        "C:/Windows/Fonts/seguisb.ttf",  # Windows Segoe UI Semibold
+        "C:/Windows/Fonts/arial.ttf",  # Windows Arial
     ]
 
     font_path = None
@@ -39,7 +41,7 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
         width, height = size
 
         # Create image with transparency
-        img = Image.new('RGBA', size, (0, 0, 0, 0))
+        img = Image.new("RGBA", size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
 
         # Rounded rectangle
@@ -55,23 +57,16 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
                 # Create mask for rounded bottom corners
                 accent_top = height - radius * 2
                 if accent_top > 0:
-                    draw.rounded_rectangle(
-                        [0, accent_top, width, height],
-                        radius=radius,
-                        fill=accent_color
-                    )
+                    draw.rounded_rectangle([0, accent_top, width, height], radius=radius, fill=accent_color)
                 # Draw rectangle only if coordinates are valid
                 rect_top = height - stripe_height
                 rect_bottom = height - radius
                 if rect_bottom > rect_top and rect_top > 0:
-                    draw.rectangle(
-                        [0, rect_top, width, rect_bottom],
-                        fill=accent_color
-                    )
+                    draw.rectangle([0, rect_top, width, rect_bottom], fill=accent_color)
 
         # Load font
         font_size = int(height * 0.35) if len(text) <= 2 else int(height * 0.28)
-        
+
         font = None
         if font_path:
             try:
@@ -104,7 +99,7 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
 
         # Add subtle highlight overlay (only for larger sizes)
         if width >= 32:
-            overlay = Image.new('RGBA', size, (255, 255, 255, 0))
+            overlay = Image.new("RGBA", size, (255, 255, 255, 0))
             draw_overlay = ImageDraw.Draw(overlay)
             highlight_radius = max(0, radius - 2)
             highlight_rect = [2, 2, width - 2, height // 2]
@@ -114,7 +109,7 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
 
     # Save as ICO
     try:
-        images[0].save(filename, format='ICO', sizes=sizes, append_images=images[1:])
+        images[0].save(filename, format="ICO", sizes=sizes, append_images=images[1:])
         print(f"✓ Generated: {filename}")
     except OSError as e:
         if e.errno == 22 or e.errno == 13:
@@ -128,7 +123,7 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.dirname(os.path.dirname(script_dir))
     assets_dir = os.path.join(root_dir, "assets")
-    
+
     if not os.path.exists(assets_dir):
         os.makedirs(assets_dir)
         print(f"Created directory: {assets_dir}")
@@ -141,37 +136,37 @@ def main():
     # Using a nice teal/cyan color for "timesheet" association
     create_modern_icon(
         text="TS",
-        color_bg=(0, 150, 136, 255),      # Teal #009688
+        color_bg=(0, 150, 136, 255),  # Teal #009688
         color_text=(255, 255, 255, 255),
         filename=os.path.join(assets_dir, "app.ico"),
-        accent_color=(0, 121, 107, 255)   # Darker teal
+        accent_color=(0, 121, 107, 255),  # Darker teal
     )
 
     # Bot Icon - Purple/violet for automation
     create_modern_icon(
         text="🤖",
-        color_bg=(103, 58, 183, 255),     # Deep Purple #673AB7
+        color_bg=(103, 58, 183, 255),  # Deep Purple #673AB7
         color_text=(255, 255, 255, 255),
         filename=os.path.join(assets_dir, "bot.ico"),
-        accent_color=(81, 45, 168, 255)   # Darker purple
+        accent_color=(81, 45, 168, 255),  # Darker purple
     )
 
     # Setup/Installer Icon - Green for "go/install"
     create_modern_icon(
         text="⚙",
-        color_bg=(76, 175, 80, 255),      # Green #4CAF50
+        color_bg=(76, 175, 80, 255),  # Green #4CAF50
         color_text=(255, 255, 255, 255),
         filename=os.path.join(assets_dir, "setup.ico"),
-        accent_color=(56, 142, 60, 255)   # Darker green
+        accent_color=(56, 142, 60, 255),  # Darker green
     )
 
     # License Icon - Orange/amber for "key/license"
     create_modern_icon(
         text="🔑",
-        color_bg=(255, 152, 0, 255),      # Orange #FF9800
+        color_bg=(255, 152, 0, 255),  # Orange #FF9800
         color_text=(255, 255, 255, 255),
         filename=os.path.join(assets_dir, "license.ico"),
-        accent_color=(245, 124, 0, 255)   # Darker orange
+        accent_color=(245, 124, 0, 255),  # Darker orange
     )
 
     print("\n" + "=" * 50)

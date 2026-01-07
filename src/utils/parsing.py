@@ -1,8 +1,9 @@
 """
-Bot TS - Parsing Utils
+SyncroJob - Parsing Utils
 Utility per il parsing robusto di valute e numeri.
 """
-import re
+
+
 
 def parse_currency(value) -> float:
     """
@@ -27,7 +28,7 @@ def parse_currency(value) -> float:
         return 0.0
 
     # Rimuovi simbolo valuta e spazi
-    s = s.replace('€', '').strip()
+    s = s.replace("€", "").strip()
 
     # Rimuovi eventuali caratteri invisibili
     s = "".join(c for c in s if c.isprintable())
@@ -37,21 +38,21 @@ def parse_currency(value) -> float:
     # Ma prima puliamo.
 
     # Rilevamento formato
-    has_comma = ',' in s
-    has_dot = '.' in s
+    has_comma = "," in s
+    has_dot = "." in s
 
     # 1. Formato chiaramente Italiano: punti e virgola finale
     # Es: 1.234,56
     if has_comma and has_dot:
-        last_comma = s.rfind(',')
-        last_dot = s.rfind('.')
+        last_comma = s.rfind(",")
+        last_dot = s.rfind(".")
 
         if last_comma > last_dot:
             # IT: Punti sono migliaia, virgola è decimale
-            s = s.replace('.', '').replace(',', '.')
+            s = s.replace(".", "").replace(",", ".")
         else:
             # US: Virgole sono migliaia, punto è decimale
-            s = s.replace(',', '')
+            s = s.replace(",", "")
 
     # 2. Solo virgola: "1234,56" (IT) o "1,234" (US migliaia)
     elif has_comma and not has_dot:
@@ -59,7 +60,7 @@ def parse_currency(value) -> float:
         # Se c'è una sola virgola ed è seguita da 1 o 2 cifre -> Decimale (IT)
         # Se seguita da 3 cifre -> Potrebbe essere migliaia (US) o 3 decimali (Gas/Finanza)
         # Assumiamo contesto CONTABILITÀ ITALIANA: Virgola è sempre Decimale.
-        s = s.replace(',', '.')
+        s = s.replace(",", ".")
 
     # 3. Solo punto: "1234.56" (US) o "1.234" (IT migliaia)
     elif has_dot and not has_comma:
@@ -70,20 +71,20 @@ def parse_currency(value) -> float:
         # Se la stringa viene da un `astype(str)` di un float, sarà "123.456".
 
         # Controlliamo il numero di punti
-        dots_count = s.count('.')
+        dots_count = s.count(".")
         if dots_count > 1:
             # "1.234.567" -> Sicuramente migliaia
-            s = s.replace('.', '')
+            s = s.replace(".", "")
         else:
             # Un solo punto.
             # Se ha 3 decimali esatti ("1.234"), è ambiguo (Mille o Uno virgola due..).
             # Se ha 2 decimali ("10.50"), è quasi certamente decimale (US/Python standard).
             # Se ha 1 decimale ("10.5"), è decimale.
 
-            parts = s.split('.')
+            parts = s.split(".")
             if len(parts[1]) != 3:
                 # Non 3 cifre -> Decimale sicuro
-                pass # Lascia il punto
+                pass  # Lascia il punto
             else:
                 # 3 cifre ("1.234").
                 # Qui rischiamo. "50.883" -> 50883 o 50.883?
@@ -108,6 +109,7 @@ def parse_currency(value) -> float:
     except ValueError:
         return 0.0
 
+
 if __name__ == "__main__":
     # Test cases
     tests = [
@@ -115,12 +117,15 @@ if __name__ == "__main__":
         ("1,234.56", 1234.56),
         ("508,83", 508.83),
         ("508.83", 508.83),
-        ("1.000", 1000.0), # Ambiguo, in IT solitamente 1000 se input manuale, ma 1.0 se float. Qui assumiamo float standard se ambiguo? No, parse logic sopra lascia il punto se != 3 cifre.
-                           # "1.000" ha 3 cifre. Se lasciamo punto -> 1.0.
-                           # Se rimuoviamo punto -> 1000.
-                           # Vediamo output script.
+        (
+            "1.000",
+            1000.0,
+        ),  # Ambiguo, in IT solitamente 1000 se input manuale, ma 1.0 se float. Qui assumiamo float standard se ambiguo? No, parse logic sopra lascia il punto se != 3 cifre.
+        # "1.000" ha 3 cifre. Se lasciamo punto -> 1.0.
+        # Se rimuoviamo punto -> 1000.
+        # Vediamo output script.
         ("€ 50,00", 50.0),
-        (50.5, 50.5)
+        (50.5, 50.5),
     ]
     for i, o in tests:
         res = parse_currency(i)

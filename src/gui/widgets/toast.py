@@ -1,10 +1,19 @@
 """
 Sistema di notifiche toast non-blocking.
 """
-from PyQt6.QtWidgets import QLabel, QWidget, QHBoxLayout, QGraphicsOpacityEffect, QApplication
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QPoint
+
+from PyQt6.QtCore import QPropertyAnimation, Qt, QTimer
+from PyQt6.QtWidgets import (
+    QApplication,
+    QGraphicsOpacityEffect,
+    QHBoxLayout,
+    QLabel,
+    QWidget,
+)
+
 from ..design.colors import get_palette
 from ..design.spacing import BorderRadius
+
 
 class Toast(QWidget):
     """Notifica toast animata."""
@@ -29,9 +38,7 @@ class Toast(QWidget):
         self._palette = get_palette()
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.Tool
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -46,14 +53,16 @@ class Toast(QWidget):
         accent = getattr(self._palette, color_key, self._palette.info)
 
         # Container
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             Toast {{
                 background-color: {self._palette.surface};
                 border: 1px solid {self._palette.border};
                 border-left: 4px solid {accent};
                 border-radius: {BorderRadius.md}px;
             }}
-        """)
+        """
+        )
 
         # Icon
         icon_label = QLabel(icon)
@@ -62,12 +71,14 @@ class Toast(QWidget):
 
         # Message
         msg_label = QLabel(message)
-        msg_label.setStyleSheet(f"""
+        msg_label.setStyleSheet(
+            f"""
             color: {self._palette.on_surface};
             font-size: 14px;
             border: none;
             background: transparent;
-        """)
+        """
+        )
         layout.addWidget(msg_label)
 
         self.adjustSize()
@@ -98,6 +109,7 @@ class Toast(QWidget):
 
         # Auto-hide
         QTimer.singleShot(self._duration, self._fade_out.start)
+
 
 class ToastManager:
     """Gestisce posizionamento e stacking toast."""
@@ -136,19 +148,25 @@ class ToastManager:
 
         self._active_toasts.append(toast)
         # Remove from list when destroyed
-        toast.destroyed.connect(lambda: self._active_toasts.remove(toast) if toast in self._active_toasts else None)
+        toast.destroyed.connect(
+            lambda: self._active_toasts.remove(toast) if toast in self._active_toasts else None
+        )
 
         toast.show_at(x, y)
+
 
 # Funzioni helper globali
 def toast_info(message: str, duration: int = 3000):
     ToastManager.instance().show(message, Toast.Type.INFO, duration)
 
+
 def toast_success(message: str, duration: int = 3000):
     ToastManager.instance().show(message, Toast.Type.SUCCESS, duration)
 
+
 def toast_warning(message: str, duration: int = 3000):
     ToastManager.instance().show(message, Toast.Type.WARNING, duration)
+
 
 def toast_error(message: str, duration: int = 5000):
     ToastManager.instance().show(message, Toast.Type.ERROR, duration)

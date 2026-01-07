@@ -1,17 +1,21 @@
-
 import unittest
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
+
 from src.core.contabilita_manager import ContabilitaManager
+
 
 class TestCertificatiImport(unittest.TestCase):
 
-    @patch('src.core.data_synchronizer.pd.read_sql')
-    @patch('src.core.data_synchronizer.db_manager')
-    @patch('src.core.contabilita_manager.pd.ExcelFile')
-    @patch('src.core.contabilita_manager.pd.read_excel')
-    @patch('src.core.contabilita_manager.Path.exists')
-    def test_import_certificati_dynamic_header(self, mock_exists, mock_read_excel, mock_excel_file, mock_db_manager, mock_sync_read_sql):
+    @patch("src.core.data_synchronizer.pd.read_sql")
+    @patch("src.core.data_synchronizer.db_manager")
+    @patch("src.core.contabilita_manager.pd.ExcelFile")
+    @patch("src.core.contabilita_manager.pd.read_excel")
+    @patch("src.core.contabilita_manager.Path.exists")
+    def test_import_certificati_dynamic_header(
+        self, mock_exists, mock_read_excel, mock_excel_file, mock_db_manager, mock_sync_read_sql
+    ):
         # Setup mocks
         mock_exists.return_value = True
 
@@ -29,7 +33,7 @@ class TestCertificatiImport(unittest.TestCase):
         # Mock read_sql for existing rows (return empty)
         mock_sync_read_sql.return_value = pd.DataFrame()
 
-        with patch('src.core.contabilita_manager.pd.read_sql') as mock_read_sql:
+        with patch("src.core.contabilita_manager.pd.read_sql") as mock_read_sql:
             mock_read_sql.return_value = pd.DataFrame()
 
             # 1. Preview DataFrame (simulate header at row 5)
@@ -41,7 +45,7 @@ class TestCertificatiImport(unittest.TestCase):
                 ["Garbage"] * 5,
                 ["Garbage"] * 5,
                 ["Garbage"] * 5,
-                ["Modello / Tipo", "Costruttore", "Matricola", "Range Strumento", "Errore max %"] # Row 5
+                ["Modello / Tipo", "Costruttore", "Matricola", "Range Strumento", "Errore max %"],  # Row 5
             ]
             preview_df = pd.DataFrame(preview_data)
 
@@ -49,8 +53,13 @@ class TestCertificatiImport(unittest.TestCase):
             data_rows = [
                 ["Modello A", "Costruttore B", "12345", "0-100", "1%"],
             ]
-            real_df = pd.DataFrame(data_rows, columns=["Modello / Tipo", "Costruttore", "Matricola", "Range Strumento", "Errore max %"])
-            real_df["Scadenza Certificato"] = "2025-12-31" # Add other cols to satisfy mapping if strictly needed or if they are just optional
+            real_df = pd.DataFrame(
+                data_rows,
+                columns=["Modello / Tipo", "Costruttore", "Matricola", "Range Strumento", "Errore max %"],
+            )
+            real_df["Scadenza Certificato"] = (
+                "2025-12-31"  # Add other cols to satisfy mapping if strictly needed or if they are just optional
+            )
             real_df["Emissione Certificato"] = "2025-01-01"
             real_df["ID-COEMI"] = "ID001"
             real_df["Stato Certificato"] = "Valido"
@@ -60,7 +69,7 @@ class TestCertificatiImport(unittest.TestCase):
             # First call: Preview (nrows=20)
             # Second call: Real read (header=5)
             def read_excel_side_effect(*args, **kwargs):
-                if kwargs.get('nrows') == 20:
+                if kwargs.get("nrows") == 20:
                     return preview_df
                 return real_df
 
@@ -71,14 +80,15 @@ class TestCertificatiImport(unittest.TestCase):
 
             # Assertions
             self.assertTrue(result, f"Import failed: {msg}")
-            self.assertEqual(added, 1) # Should import 1 row
+            self.assertEqual(added, 1)  # Should import 1 row
 
             # Verify that it picked the correct sheet
             # mock_read_excel.call_args_list[0] is preview
             # mock_read_excel.call_args_list[1] is real read
             args, kwargs = mock_read_excel.call_args_list[1]
-            self.assertEqual(kwargs['sheet_name'], "Strumenti Campione ISAB SUD")
-            self.assertEqual(kwargs['header'], 5)
+            self.assertEqual(kwargs["sheet_name"], "Strumenti Campione ISAB SUD")
+            self.assertEqual(kwargs["header"], 5)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

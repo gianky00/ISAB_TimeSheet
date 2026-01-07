@@ -1,26 +1,64 @@
 """
-Bot TS - License Updater
+SyncroJob - LicenseUpdater
 Gestisce l'aggiornamento e la validazione della licenza.
 """
+
 import os
+from datetime import datetime, timedelta
+
 import requests
-from datetime import datetime, timedelta, timezone
 from cryptography.fernet import Fernet
-from . import license_validator
-from . import config_manager
-from . import time_manager
+
+from . import config_manager, license_validator, time_manager
 
 # Chiave per cifratura token grace period
-GRACE_PERIOD_KEY = b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
+GRACE_PERIOD_KEY = b"8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
 
 
 def get_github_token():
     """Ricostruisce il token GitHub offuscato."""
     # Token per accesso al repo gianky00/bot-ts-licenses
     chars = [
-        103, 104, 112, 95, 99, 57, 68, 103, 54, 116, 79, 67, 75, 104, 57, 89,
-        106, 112, 97, 70, 117, 66, 54, 73, 52, 79, 66, 121, 107, 103, 120, 114,
-        113, 98, 49, 85, 106, 106, 65, 105
+        103,
+        104,
+        112,
+        95,
+        99,
+        57,
+        68,
+        103,
+        54,
+        116,
+        79,
+        67,
+        75,
+        104,
+        57,
+        89,
+        106,
+        112,
+        97,
+        70,
+        117,
+        66,
+        54,
+        73,
+        52,
+        79,
+        66,
+        121,
+        107,
+        103,
+        120,
+        114,
+        113,
+        98,
+        49,
+        85,
+        106,
+        106,
+        65,
+        105,
     ]
     return "".join(chr(c) for c in chars)
 
@@ -52,7 +90,7 @@ def update_grace_timestamp():
         # ma questo metodo dovrebbe essere chiamato solo dopo un successo online.
 
         cipher = Fernet(GRACE_PERIOD_KEY)
-        encrypted_time = cipher.encrypt(current_time.isoformat().encode('utf-8'))
+        encrypted_time = cipher.encrypt(current_time.isoformat().encode("utf-8"))
 
         os.makedirs(os.path.dirname(token_path), exist_ok=True)
 
@@ -76,8 +114,7 @@ def check_grace_period():
 
     if not os.path.exists(token_path):
         raise Exception(
-            "Nessuna validazione online precedente.\n"
-            "Connessione internet richiesta per il primo avvio."
+            "Nessuna validazione online precedente.\n" "Connessione internet richiesta per il primo avvio."
         )
 
     try:
@@ -85,7 +122,7 @@ def check_grace_period():
             encrypted_data = f.read()
 
         cipher = Fernet(GRACE_PERIOD_KEY)
-        decrypted_data = cipher.decrypt(encrypted_data).decode('utf-8')
+        decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         last_online = datetime.fromisoformat(decrypted_data)
 
         # Usa time_manager per ottenere l'ora, preferibilmente da rete
@@ -128,7 +165,7 @@ def check_emergency_grace_period():
         try:
             cipher = Fernet(GRACE_PERIOD_KEY)
             # Salviamo l'inizio del periodo
-            encrypted_start = cipher.encrypt(current_time.isoformat().encode('utf-8'))
+            encrypted_start = cipher.encrypt(current_time.isoformat().encode("utf-8"))
 
             os.makedirs(os.path.dirname(token_path), exist_ok=True)
             with open(token_path, "wb") as f:
@@ -144,12 +181,12 @@ def check_emergency_grace_period():
             encrypted_data = f.read()
 
         cipher = Fernet(GRACE_PERIOD_KEY)
-        decrypted_data = cipher.decrypt(encrypted_data).decode('utf-8')
+        decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         start_time = datetime.fromisoformat(decrypted_data)
 
         # Controllo manipolazione orologio (se locale)
-        if current_time < start_time - timedelta(minutes=60): # Tolleranza di 1h
-             return False, "Rilevata manipolazione orologio di sistema", 0
+        if current_time < start_time - timedelta(minutes=60):  # Tolleranza di 1h
+            return False, "Rilevata manipolazione orologio di sistema", 0
 
         elapsed = current_time - start_time
 
@@ -166,20 +203,21 @@ def check_emergency_grace_period():
 def is_running_from_source() -> bool:
     """Verifica se l'applicazione è in esecuzione dai sorgenti."""
     import sys
-    return not getattr(sys, 'frozen', False)
+
+    return not getattr(sys, "frozen", False)
 
 
 def is_license_folder_empty() -> bool:
     """Verifica se la cartella licenza è vuota o non esiste."""
     license_dir = get_license_dir()
-    
+
     if not os.path.exists(license_dir):
         return True
-    
+
     # Controlla se ci sono i file necessari
     config_dat = os.path.join(license_dir, "config.dat")
     manifest_json = os.path.join(license_dir, "manifest.json")
-    
+
     return not (os.path.exists(config_dat) and os.path.exists(manifest_json))
 
 
@@ -188,7 +226,7 @@ def auto_download_license_if_needed():
     Compatibilità backward: wrapper per run_update, ma ora non blocca se cartella piena.
     Lasciato per non rompere import esistenti, ma la logica principale sarà in run_update.
     """
-    pass # Deprecato, logica spostata in main.py che chiama run_update direttamente se serve
+    pass  # Deprecato, logica spostata in main.py che chiama run_update direttamente se serve
 
 
 def run_update():
@@ -199,7 +237,7 @@ def run_update():
     print("[LICENZA] ═══════════════════════════════════════════════")
     print("[LICENZA] Tentativo aggiornamento licenza...")
 
-    hw_id = license_validator.get_hardware_id().strip().rstrip('.')
+    hw_id = license_validator.get_hardware_id().strip().rstrip(".")
     license_dir = get_license_dir()
 
     print(f"[LICENZA] Hardware ID: {hw_id[:20]}...")
@@ -212,19 +250,13 @@ def run_update():
             print(f"[ERRORE] Creazione cartella licenza: {e}")
             return False
 
-    # Repository per Bot TS licenses
+    # Repository per SyncroJob licenses
     base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
     token = get_github_token()
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3.raw"
-    }
+    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3.raw"}
 
     # Solo config.dat e manifest.json (no pyarmor.rkey)
-    files_map = {
-        "config.dat": "config.dat",
-        "manifest.json": "manifest.json"
-    }
+    files_map = {"config.dat": "config.dat", "manifest.json": "manifest.json"}
 
     downloaded_content = {}
     incomplete_update = False

@@ -2,15 +2,16 @@
 Bot TS - Version Bumper
 Incrementa la versione dell'applicazione.
 """
+
 import os
-import sys
 import re
+import sys
 
 
-def bump_version(part='patch'):
+def bump_version(part="patch"):
     """
     Incrementa la versione in src/core/version.py.
-    
+
     Args:
         part: 'major', 'minor', o 'patch'
     """
@@ -35,24 +36,20 @@ def bump_version(part='patch'):
     old_version = f"{major}.{minor}.{patch}"
 
     # Incrementa
-    if part == 'major':
+    if part == "major":
         major += 1
         minor = 0
         patch = 0
-    elif part == 'minor':
+    elif part == "minor":
         minor += 1
         patch = 0
     else:
         patch += 1
 
     new_version = f"{major}.{minor}.{patch}"
-    
+
     # Sostituisci nel contenuto
-    new_content = re.sub(
-        r'__version__\s*=\s*".*"',
-        f'__version__ = "{new_version}"',
-        content
-    )
+    new_content = re.sub(r'__version__\s*=\s*".*"', f'__version__ = "{new_version}"', content)
 
     with open(version_file, "w", encoding="utf-8") as f:
         f.write(new_content)
@@ -63,15 +60,15 @@ def bump_version(part='patch'):
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Incrementa la versione dell'applicazione")
     parser.add_argument(
-        'part',
-        choices=['major', 'minor', 'patch'],
-        default='patch',
-        nargs='?',
-        help='Tipo di incremento (default: patch)'
+        "part",
+        choices=["major", "minor", "patch"],
+        default="patch",
+        nargs="?",
+        help="Tipo di incremento (default: patch)",
     )
-    
+
     args = parser.parse_args()
     bump_version(args.part)

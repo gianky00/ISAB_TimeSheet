@@ -1,15 +1,16 @@
 """
-Bot TS - Bots Module
+SyncroJob - Bots Module
 Registry e factory per tutti i bot disponibili.
 """
-from typing import Dict, Any, Optional
+
+from typing import Any, Dict, Optional
+
 from src.bots.base import BaseBot, BotStatus
-from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
 from src.bots.portale_fornitori.carico_ts import CaricoTSBot
 from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
+from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
 from src.bots.portale_fornitori.timbrature import TimbratureBot
 from src.bots.safework.pdl.bot import SafeWorkPDLBot
-
 
 # Registry dei bot disponibili
 BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
@@ -18,11 +19,8 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "name": "Scarico TS",
         "description": "Scarica i timesheet dal portale ISAB",
         "icon": "📥",
-        "columns": [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"}
-        ],
-        "config_key": "last_ts_data"
+        "columns": [{"name": "Numero OdA", "type": "text"}, {"name": "Posizione OdA", "type": "text"}],
+        "config_key": "last_ts_data",
     },
     "carico_ts": {
         "class": CaricoTSBot,
@@ -46,21 +44,18 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
             {"name": "Nota D", "type": "text"},
             {"name": "Nota S", "type": "text"},
             {"name": "F S", "type": "text"},
-            {"name": "G T", "type": "text"}
+            {"name": "G T", "type": "text"},
         ],
-        "config_key": "last_carico_ts_data"
+        "config_key": "last_carico_ts_data",
     },
     "dettagli_oda": {
         "class": DettagliOdABot,
         "name": "Dettagli OdA",
         "description": "Accede ai Dettagli OdA - browser rimane aperto",
         "icon": "📋",
-        "columns": [
-            {"name": "Numero OdA", "type": "text"},
-            {"name": "Posizione OdA", "type": "text"}
-        ],
+        "columns": [{"name": "Numero OdA", "type": "text"}, {"name": "Posizione OdA", "type": "text"}],
         "config_key": "last_oda_data",
-        "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione"
+        "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione",
     },
     "timbrature": {
         "class": TimbratureBot,
@@ -68,7 +63,7 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "description": "Scarica e archivia le timbrature dal portale ISAB",
         "icon": "⏱️",
         "columns": [],
-        "config_key": "last_timbrature_data"
+        "config_key": "last_timbrature_data",
     },
     "scarico_pdl": {
         "class": SafeWorkPDLBot,
@@ -76,8 +71,8 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "description": "Scarica e stampa Permessi di Lavoro da SafeWork",
         "icon": "🛡️",
         "columns": [{"name": "NUMERO PDL", "type": "text"}],
-        "config_key": "last_pdl_data"
-    }
+        "config_key": "last_pdl_data",
+    },
 }
 
 
@@ -89,10 +84,10 @@ def get_available_bots() -> Dict[str, Dict[str, Any]]:
 def get_bot_info(bot_id: str) -> Optional[Dict[str, Any]]:
     """
     Restituisce le informazioni di un bot specifico.
-    
+
     Args:
         bot_id: ID del bot
-        
+
     Returns:
         Dict con le informazioni del bot o None
     """
@@ -102,11 +97,11 @@ def get_bot_info(bot_id: str) -> Optional[Dict[str, Any]]:
 def create_bot(bot_id: str, **kwargs) -> Optional[BaseBot]:
     """
     Crea un'istanza di un bot.
-    
+
     Args:
         bot_id: ID del bot da creare
         **kwargs: Parametri per il costruttore del bot
-        
+
     Returns:
         Istanza del bot o None se non trovato
     """
@@ -118,15 +113,15 @@ def create_bot(bot_id: str, **kwargs) -> Optional[BaseBot]:
 
 
 __all__ = [
-    'BaseBot',
-    'BotStatus',
-    'ScaricaTSBot',
-    'CaricoTSBot',
-    'DettagliOdABot',
-    'TimbratureBot',
-    'SafeWorkPDLBot',
-    'BOT_REGISTRY',
-    'get_available_bots',
-    'get_bot_info',
-    'create_bot'
+    "BaseBot",
+    "BotStatus",
+    "ScaricaTSBot",
+    "CaricoTSBot",
+    "DettagliOdABot",
+    "TimbratureBot",
+    "SafeWorkPDLBot",
+    "BOT_REGISTRY",
+    "get_available_bots",
+    "get_bot_info",
+    "create_bot",
 ]

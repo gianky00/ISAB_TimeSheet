@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
-Bot TS - Sistema di Automazione Portale ISAB
-Entry point principale dell'applicazione.
+# SyncroJob - Sistema di Automazione Portale ISABEntry point principale dell'applicazione.
 """
-import sys
-import os
-import logging
-import traceback
 import ctypes
+import logging
+import os
+import sys
+import traceback
 from pathlib import Path
+
 
 # --- CRASH LOGGING SETUP ---
 def setup_crash_logging():
     """Configura il logging per intercettare crash all'avvio."""
     # STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob\logs
     import os
+
     from platformdirs import user_data_dir
-    
+
     log_dir = Path(user_data_dir("SyncroJob", appauthor=False)) / "logs"
     log_file = log_dir / "crash.log"
 
@@ -25,17 +26,19 @@ def setup_crash_logging():
     except Exception:
         # Fallback estremo nella home se non si può creare la directory
         log_dir = Path.home() / ".syncrojob_logs"
-        try: log_dir.mkdir(parents=True, exist_ok=True)
-        except: return
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+        except:
+            return
         log_file = log_dir / "crash.log"
 
     # 2. Configura Logger
     # 'w' mode sovrascrive il file ad ogni avvio come richiesto
     logging.basicConfig(
         filename=str(log_file),
-        filemode='w',
+        filemode="w",
         level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(levelname)s - %(message)s",
     )
 
     # Riduci verbosità per librerie rumorose
@@ -53,7 +56,7 @@ def setup_crash_logging():
         def __init__(self, logger, level):
             self.logger = logger
             self.level = level
-            self.linebuf = ''
+            self.linebuf = ""
 
         def write(self, buf):
             for line in buf.rstrip().splitlines():
@@ -76,9 +79,8 @@ def setup_crash_logging():
         # Stampa il traceback anche sulla console originale per debug immediato
         sys.__stderr__.write("".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
 
-
         # Mostra Popup (Solo Windows)
-        if os.name == 'nt':
+        if os.name == "nt":
             try:
                 error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
                 # Tronca messaggio troppo lungo per il popup
@@ -88,7 +90,7 @@ def setup_crash_logging():
                     0,
                     f"L'applicazione ha riscontrato un errore critico:\n\n...{short_msg}\n\nIl log completo è stato salvato nella cartella logs di SyncroJob.",
                     "Errore Critico SyncroJob",
-                    0x10 | 0x10000 # MB_ICONHAND | MB_SETFOREGROUND
+                    0x10 | 0x10000,  # MB_ICONHAND | MB_SETFOREGROUND
                 )
             except Exception as e:
                 logger.error(f"Impossibile mostrare popup errore: {e}")
@@ -96,39 +98,41 @@ def setup_crash_logging():
     sys.excepthook = handle_exception
     logger.info("Exception hook installato.")
 
+
 # Attiva logging immediatamente
 setup_crash_logging()
 
 
 # Ensure src is in path
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     # Running as compiled executable
     base_path = os.path.dirname(sys.executable)
 else:
     # Running as script
     base_path = os.path.dirname(os.path.abspath(__file__))
 
-src_path = os.path.join(base_path, 'src')
+src_path = os.path.join(base_path, "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
+
 
 def main():
     """Main entry point."""
     # Import PyQt6 components
+    from PyQt6.QtGui import QFont
     from PyQt6.QtWidgets import QApplication, QMessageBox
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtGui import QFont, QIcon
+
     from src.gui.styles import apply_theme
-    
+
     # Create application first to allow message boxes
     app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    apply_theme(app, "light") # Default to light theme for now
-    
+    app.setStyle("Fusion")
+    apply_theme(app, "light")  # Default to light theme for now
+
     # Set default font
     font = QFont("Segoe UI", 10)
     app.setFont(font)
-    
+
     # Set application metadata
     app.setApplicationName("SyncroJob")
     app.setOrganizationName("Giancarlo Allegretti")
@@ -136,16 +140,20 @@ def main():
 
     # === LICENSE CHECK FLOW ===
     try:
-        from src.core.license_validator import get_detailed_license_status, LicenseStatus, get_hardware_id
-        from src.core.license_updater import run_update, check_emergency_grace_period
+        from src.core.license_updater import check_emergency_grace_period, run_update
+        from src.core.license_validator import (
+            LicenseStatus,
+            get_detailed_license_status,
+            get_hardware_id,
+        )
 
         status, msg = get_detailed_license_status()
 
         # Se la licenza non è valida, proviamo a scaricarla di nuovo
         if status != LicenseStatus.VALID:
             print(f"[LICENZA] Stato: {status.name} ({msg}). Tentativo aggiornamento...")
-            run_update() # Forza il download
-            status, msg = get_detailed_license_status() # Ricontrolla
+            run_update()  # Forza il download
+            status, msg = get_detailed_license_status()  # Ricontrolla
 
         # Se ancora non valida, gestiamo i casi
         if status != LicenseStatus.VALID:
@@ -164,7 +172,7 @@ def main():
                     f"{grace_msg}\n\n"
                     f"ID Hardware: {hw_id}\n\n"
                     "Contatta l'amministratore per ottenere una licenza valida.\n"
-                    "L'applicazione continuerà a funzionare per il periodo rimanente."
+                    "L'applicazione continuerà a funzionare per il periodo rimanente.",
                 )
             else:
                 # Blocco totale
@@ -174,24 +182,20 @@ def main():
                     f"Licenza non valida e periodo di prova scaduto.\n\n"
                     f"Errore: {msg}\n"
                     f"ID Hardware: {hw_id}\n\n"
-                    "L'applicazione verrà chiusa. Contatta l'amministratore."
+                    "L'applicazione verrà chiusa. Contatta l'amministratore.",
                 )
                 sys.exit(1)
 
     except Exception as e:
         # Fallback di sicurezza in caso di crash del controllo licenza
         # Nota: questo viene catturato qui, ma se crasha prima (es. import) interviene l'excepthook
-        QMessageBox.critical(
-            None,
-            "Errore Critico",
-            f"Impossibile verificare la licenza.\n{e}"
-        )
+        QMessageBox.critical(None, "Errore Critico", f"Impossibile verificare la licenza.\n{e}")
         sys.exit(1)
 
     # === START APP ===
     from src.core.database import db_manager
     from src.gui.main_window import MainWindow
-    
+
     # Inizializza schema database (Contabilità, Timbrature, ecc.)
     try:
         db_manager.init_db()
@@ -200,7 +204,7 @@ def main():
 
     window = MainWindow()
     window.showMaximized()
-    
+
     # Run event loop
     sys.exit(app.exec())
 

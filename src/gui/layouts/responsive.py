@@ -1,8 +1,9 @@
 """
 Layout responsivi che si adattano alle dimensioni finestra.
 """
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from PyQt6.QtCore import QSize
+
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+
 
 class ResponsiveContainer(QWidget):
     """Container che cambia layout in base alla larghezza."""

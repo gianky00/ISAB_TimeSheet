@@ -1,23 +1,26 @@
 """
-Bot TS - Timbrature Page
+SyncroJob - Timbrature Page
 Page Object Model for the Timbrature section of the ISAB portal.
 """
 
-import time
-import os
 import shutil
+import time
 from pathlib import Path
 from typing import Optional
 
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    TimeoutException,
+)
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.webdriver.support.ui import WebDriverWait
 
-from src.core.constants import Timeouts
 from src.bots.portale_fornitori.timbrature.locators import TimbratureLocators
+from src.core.constants import Timeouts
+
 
 class TimbraturePage:
     """Encapsulates interactions with the Timbrature page."""
@@ -37,6 +40,7 @@ class TimbraturePage:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
             # Fix: EC does not contain By. Use By directly.
             from selenium.webdriver.common.by import By
+
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
@@ -44,8 +48,9 @@ class TimbraturePage:
         except TimeoutException:
             self.log("⚠️ Timeout attesa overlay.")
         except AttributeError:
-             # Fallback if EC.By is not available (Selenium version differences or mixup)
+            # Fallback if EC.By is not available (Selenium version differences or mixup)
             from selenium.webdriver.common.by import By
+
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
@@ -55,9 +60,7 @@ class TimbraturePage:
         """Navigates to Report -> Timbrature."""
         try:
             self.log("Navigazione verso pagina Timbrature...")
-            report_element = self.wait.until(
-                EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU)
-            )
+            report_element = self.wait.until(EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU))
             report_element.click()
             time.sleep(1.5)
 
@@ -83,22 +86,22 @@ class TimbraturePage:
                 self._select_supplier(fornitore)
 
             self.log("Imposto filtri data e flag...")
-            
+
             # Explicitly wait for elements instead of blind TABS
-            
+
             # 2. Select Date From
             # Assuming 'Data Da' is the first input after Supplier combo or identified by name/placeholder
-            # Since we don't have the exact ID, we might stick to TABs if we can't find selectors, 
+            # Since we don't have the exact ID, we might stick to TABs if we can't find selectors,
             # BUT we should use waits.
-            # However, looking at the code, it relies on focus order. 
+            # However, looking at the code, it relies on focus order.
             # To improve reliability without selectors, we ensure the previous action is done.
-            
-            # Let's try to improve the interaction with pauses by using Explicit Waits for "active element" 
-            # if we can't find the ID. 
-            # But the best fix is using the locators if available. 
+
+            # Let's try to improve the interaction with pauses by using Explicit Waits for "active element"
+            # if we can't find the ID.
+            # But the best fix is using the locators if available.
             # Since I don't have the HTML source, I will make the ActionChains more robust
             # by adding small waits and checks.
-            
+
             actions = ActionChains(self.driver)
 
             # Focus Date From
@@ -118,7 +121,7 @@ class TimbraturePage:
             # If not, we keep TABs but increase safety.
             for _ in range(5):
                 actions.send_keys(Keys.TAB).pause(0.3)
-            
+
             # Toggle check
             actions.send_keys(Keys.SPACE).pause(0.5)
 
@@ -131,10 +134,10 @@ class TimbraturePage:
 
             self.log("Attendo caricamento risultati...")
             self._wait_for_overlay()
-            
+
             # Wait for results table or empty message
-            time.sleep(1.0) # Grace period for table render
-            
+            time.sleep(1.0)  # Grace period for table render
+
             self.log("Caricamento terminato.")
             return True
 
@@ -175,10 +178,11 @@ class TimbraturePage:
             if not arrow_element:
                 raise Exception("Impossibile trovare la freccia del fornitore.")
 
-            time.sleep(0.5) # Wait for list animation
+            time.sleep(0.5)  # Wait for list animation
 
             # Select option with retry
             from selenium.webdriver.common.by import By
+
             option_xpath = f"//li[contains(text(), '{fornitore}')]"
 
             # Wait specifically for the option to be visible
@@ -236,14 +240,12 @@ class TimbraturePage:
         strategies = [
             TimbratureLocators.DOWNLOAD_BTN_TEXT,
             TimbratureLocators.DOWNLOAD_BTN_ICON,
-            TimbratureLocators.DOWNLOAD_BTN_ARIA
+            TimbratureLocators.DOWNLOAD_BTN_ARIA,
         ]
 
         for locator in strategies:
             try:
-                return WebDriverWait(self.driver, 2).until(
-                    EC.element_to_be_clickable(locator)
-                )
+                return WebDriverWait(self.driver, 2).until(EC.element_to_be_clickable(locator))
             except TimeoutException:
                 continue
         return None
@@ -252,6 +254,7 @@ class TimbraturePage:
         """Finds latest download in system Downloads and moves it to temp folder."""
         source_dir = Path.home() / "Downloads"
         from src.core.config_manager import CONFIG_DIR
+
         dest_dir = CONFIG_DIR / "temp"
         dest_dir.mkdir(parents=True, exist_ok=True)
 
@@ -261,7 +264,7 @@ class TimbraturePage:
 
         while time.time() - start_time < timeout:
             files = list(source_dir.glob("*"))
-            files = [f for f in files if not f.name.endswith(('.crdownload', '.tmp')) and f.is_file()]
+            files = [f for f in files if not f.name.endswith((".crdownload", ".tmp")) and f.is_file()]
 
             if files:
                 latest_file = max(files, key=lambda f: f.stat().st_mtime)

@@ -1,10 +1,13 @@
 """
 Card per visualizzare stato con icona e animazioni.
 """
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel
-from PyQt6.QtCore import Qt, QPropertyAnimation, pyqtProperty
+
+from PyQt6.QtCore import QPropertyAnimation, Qt, pyqtProperty
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+
 from ..design.colors import get_palette
-from ..design.spacing import Spacing, BorderRadius
+from ..design.spacing import BorderRadius, Spacing
+
 
 class StatusCard(QFrame):
     """Card per mostrare stato operazione."""
@@ -51,10 +54,14 @@ class StatusCard(QFrame):
         text_layout.setSpacing(0)
 
         self._title_label = QLabel(title)
-        self._title_label.setStyleSheet(f"font-weight: 600; font-size: 13px; color: {self._palette.on_surface}; border: none; background: transparent;")
+        self._title_label.setStyleSheet(
+            f"font-weight: 600; font-size: 13px; color: {self._palette.on_surface}; border: none; background: transparent;"
+        )
 
         self._status_label = QLabel()
-        self._status_label.setStyleSheet(f"font-size: 11px; color: {self._palette.on_surface}; opacity: 0.7; border: none; background: transparent;")
+        self._status_label.setStyleSheet(
+            f"font-size: 11px; color: {self._palette.on_surface}; opacity: 0.7; border: none; background: transparent;"
+        )
 
         text_layout.addWidget(self._title_label)
         text_layout.addWidget(self._status_label)
@@ -82,9 +89,8 @@ class StatusCard(QFrame):
         # Changing QFrame opacity affects everything.
         # Let's change border-left color alpha or something.
         # Actually, let's just re-apply style with alpha if running.
-        pass # Optimization: don't heavy re-style on loop.
+        pass  # Optimization: don't heavy re-style on loop.
         # Ideally we would use QGraphicsOpacityEffect on the icon.
-
 
     def setStatus(self, status: str, message: str = None):
         """Imposta lo stato della card."""
@@ -106,17 +112,17 @@ class StatusCard(QFrame):
         self._apply_style()
 
     def _apply_style(self):
-        _, _, color_key = self.STATUS_CONFIG.get(
-            self._status, self.STATUS_CONFIG[self.Status.IDLE]
-        )
+        _, _, color_key = self.STATUS_CONFIG.get(self._status, self.STATUS_CONFIG[self.Status.IDLE])
 
         accent = getattr(self._palette, color_key, self._palette.primary)
 
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             StatusCard {{
                 background-color: {self._palette.surface};
                 border: 1px solid {self._palette.border};
                 border-left: 4px solid {accent};
                 border-radius: {BorderRadius.md}px;
             }}
-        """)
+        """
+        )

@@ -1,18 +1,16 @@
 """
-Bot TS - Timbrature Bot
+SyncroJob - Timbrature Bot
 Bot for accessing Timbrature section using Page Object Model.
 """
+
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
-import time
+
 
 class TimbratureBot(BaseBot):
     """
@@ -47,9 +45,9 @@ class TimbratureBot(BaseBot):
         Executes the Timbrature workflow: Navigate -> Filter -> Download -> Import.
         """
         if isinstance(data, dict):
-            self.data_da = data.get('data_da', self.data_da)
-            self.data_a = data.get('data_a', self.data_a)
-            self.fornitore = data.get('fornitore', self.fornitore)
+            self.data_da = data.get("data_da", self.data_da)
+            self.data_a = data.get("data_a", self.data_a)
+            self.fornitore = data.get("fornitore", self.fornitore)
 
         self.log(f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})...")
 
@@ -81,7 +79,7 @@ class TimbratureBot(BaseBot):
                     try:
                         os.remove(excel_path)
                         # self.log("🗑️ File Excel eliminato.")
-                    except Exception as e:
+                    except Exception:
                         pass
         else:
             self.log("⚠️ Non ho trovato dati o il download non è partito.")

@@ -3,10 +3,13 @@ Bot TS - Styles and Themes
 Defines the visual styles for the application.
 Currently enforces Light Theme via QSS file AND QPalette.
 """
+
 from pathlib import Path
-from PyQt6.QtGui import QPalette, QColor
-from PyQt6.QtCore import Qt
+
+from PyQt6.QtGui import QColor, QPalette
+
 from src.utils.helpers import get_asset_path
+
 
 def apply_theme(app, theme_name="light"):
     """
@@ -18,14 +21,14 @@ def apply_theme(app, theme_name="light"):
 
     # --- 1. FORCE LIGHT PALETTE (Overrides System Dark Mode) ---
     palette = QPalette()
-    
+
     # Define Light Colors
     white = QColor(255, 255, 255)
-    off_white = QColor(250, 250, 250) # Very light gray for window background
-    light_gray = QColor(240, 240, 240) # For buttons
-    text_color = QColor(33, 33, 33) # Dark gray for text, softer than pure black
+    off_white = QColor(250, 250, 250)  # Very light gray for window background
+    light_gray = QColor(240, 240, 240)  # For buttons
+    text_color = QColor(33, 33, 33)  # Dark gray for text, softer than pure black
     disabled_text = QColor(127, 127, 127)
-    primary_color = QColor(0, 150, 136) # Teal (matches QSS)
+    primary_color = QColor(0, 150, 136)  # Teal (matches QSS)
 
     # Set Palette Roles
     palette.setColor(QPalette.ColorRole.Window, off_white)
@@ -35,13 +38,13 @@ def apply_theme(app, theme_name="light"):
     palette.setColor(QPalette.ColorRole.ToolTipBase, white)
     palette.setColor(QPalette.ColorRole.ToolTipText, text_color)
     palette.setColor(QPalette.ColorRole.Text, text_color)
-    palette.setColor(QPalette.ColorRole.Button, white) # Fusion buttons are usually white/light
+    palette.setColor(QPalette.ColorRole.Button, white)  # Fusion buttons are usually white/light
     palette.setColor(QPalette.ColorRole.ButtonText, text_color)
     palette.setColor(QPalette.ColorRole.BrightText, white)
     palette.setColor(QPalette.ColorRole.Link, primary_color)
     palette.setColor(QPalette.ColorRole.Highlight, primary_color)
     palette.setColor(QPalette.ColorRole.HighlightedText, white)
-    
+
     # Disabled state adjustments
     palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_text)
     palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_text)
@@ -63,6 +66,7 @@ def apply_theme(app, theme_name="light"):
         # Try to import colors, handle failure gracefully
         try:
             from .design.colors import LIGHT
+
             app.setStyleSheet(f"QMainWindow {{ background-color: {LIGHT.background}; }}")
         except ImportError:
             pass

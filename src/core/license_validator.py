@@ -1,19 +1,23 @@
 """
-Bot TS - License Validator
+SyncroJob - License Validator
 Gestisce la validazione della licenza software.
 """
-import os
-import subprocess
-import json
+
 import hashlib
+import json
+import os
 import platform
+import subprocess
 import uuid
 from datetime import date
-from cryptography.fernet import Fernet
 from enum import Enum
-from src.core.time_manager import get_trusted_time
-from src.core.secrets_manager import SecretsManager 
+
+from cryptography.fernet import Fernet
+
 from src.core.audit_manager import AuditManager
+from src.core.secrets_manager import SecretsManager
+from src.core.time_manager import get_trusted_time
+
 
 class LicenseStatus(Enum):
     VALID = "Valid"
@@ -38,14 +42,12 @@ def get_hardware_id():
     """
     system = platform.system()
 
-    if system == 'Windows':
+    if system == "Windows":
         # 1. Try WMIC (Legacy)
         try:
             cmd = ["wmic", "diskdrive", "get", "serialnumber"]
-            output = subprocess.check_output(
-                cmd, shell=False, stderr=subprocess.DEVNULL
-            ).decode()
-            parts = output.strip().split('\n')
+            output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode()
+            parts = output.strip().split("\n")
             if len(parts) > 1:
                 serial = parts[1].strip()
                 if serial:
@@ -56,16 +58,19 @@ def get_hardware_id():
         # 2. Try PowerShell (Disk Serial)
         try:
             cmd = [
-                "powershell", "-NoProfile", "-Command",
-                "Get-CimInstance -Class Win32_DiskDrive | "
-                "Select-Object -ExpandProperty SerialNumber"
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "Get-CimInstance -Class Win32_DiskDrive | " "Select-Object -ExpandProperty SerialNumber",
             ]
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-            output = subprocess.check_output(
-                cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL
-            ).decode().strip()
+            output = (
+                subprocess.check_output(cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL)
+                .decode()
+                .strip()
+            )
 
             if output:
                 return output.splitlines()[0].strip()
@@ -75,33 +80,34 @@ def get_hardware_id():
         # 3. Try PowerShell (System UUID)
         try:
             cmd = [
-                "powershell", "-NoProfile", "-Command",
-                "Get-CimInstance -Class Win32_ComputerSystemProduct | "
-                "Select-Object -ExpandProperty UUID"
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "Get-CimInstance -Class Win32_ComputerSystemProduct | " "Select-Object -ExpandProperty UUID",
             ]
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-            output = subprocess.check_output(
-                cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL
-            ).decode().strip()
+            output = (
+                subprocess.check_output(cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL)
+                .decode()
+                .strip()
+            )
 
             if output:
                 return output
         except Exception:
             pass
 
-    elif system == 'Linux':
+    elif system == "Linux":
         # Try lsblk
         try:
             # Avoid complex pipes with shell=True, execute basic lsblk and parse in python
             cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
-            output = subprocess.check_output(
-                cmd, shell=False, stderr=subprocess.DEVNULL
-            ).decode().strip()
-            
+            output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode().strip()
+
             # Take the first line if multiple disks
-            first_line = output.split('\n')[0].strip()
+            first_line = output.split("\n")[0].strip()
 
             if first_line:
                 return first_line
@@ -109,9 +115,9 @@ def get_hardware_id():
             pass
 
         # Fallback to machine-id
-        if os.path.exists('/etc/machine-id'):
+        if os.path.exists("/etc/machine-id"):
             try:
-                with open('/etc/machine-id', 'r') as f:
+                with open("/etc/machine-id", "r") as f:
                     return f.read().strip()
             except Exception:
                 pass
@@ -126,6 +132,7 @@ def get_hardware_id():
 def _get_license_paths():
     """Restituisce i percorsi dei file di licenza."""
     from src.core import config_manager
+
     # Use standard data path via config_manager.get_data_path()
     # This ensures alignment with where data (and license) are expected
     base_data_dir = config_manager.get_data_path()
@@ -134,7 +141,7 @@ def _get_license_paths():
     return {
         "dir": license_dir,
         "config": os.path.join(license_dir, "config.dat"),
-        "manifest": os.path.join(license_dir, "manifest.json")
+        "manifest": os.path.join(license_dir, "manifest.json"),
     }
 
 
@@ -159,7 +166,7 @@ def get_license_info():
         key = SecretsManager.get_license_key()
         cipher = Fernet(key)
         decrypted_data = cipher.decrypt(encrypted_data)
-        return json.loads(decrypted_data.decode('utf-8'))
+        return json.loads(decrypted_data.decode("utf-8"))
     except Exception:
         return None
 
@@ -203,7 +210,13 @@ def get_detailed_license_status():
         # Verifica hash config.dat
         if _calculate_sha256(paths["config"]) != manifest.get("config.dat"):
             msg = "Integrità licenza compromessa (config.dat)"
-            AuditManager().log_action("Violazione Licenza", category="sicurezza", entity="File Config", status="error", severity="high")
+            AuditManager().log_action(
+                "Violazione Licenza",
+                category="sicurezza",
+                entity="File Config",
+                status="error",
+                severity="high",
+            )
             return LicenseStatus.INVALID, msg
 
     except Exception as e:
@@ -220,19 +233,26 @@ def get_detailed_license_status():
         license_hw_id = payload.get("Hardware ID", "")
 
         # Normalizzazione ID
-        norm_current = current_hw_id.strip().rstrip('.')
-        norm_license = license_hw_id.strip().rstrip('.')
+        norm_current = current_hw_id.strip().rstrip(".")
+        norm_license = license_hw_id.strip().rstrip(".")
 
         if norm_current != norm_license and "UNKNOWN" not in current_hw_id:
             msg = f"Hardware ID non valido\nAtteso: {license_hw_id}\nRilevato: {current_hw_id}"
-            AuditManager().log_action("Mismatch Hardware", category="sicurezza", entity="Licenza", params={"atteso": license_hw_id, "rilevato": current_hw_id}, status="error", severity="high")
+            AuditManager().log_action(
+                "Mismatch Hardware",
+                category="sicurezza",
+                entity="Licenza",
+                params={"atteso": license_hw_id, "rilevato": current_hw_id},
+                status="error",
+                severity="high",
+            )
             return LicenseStatus.INVALID, msg
 
         # Validazione scadenza
         expiry_str = payload.get("Scadenza Licenza", "")
         if expiry_str:
             try:
-                day, month, year = map(int, expiry_str.split('/'))
+                day, month, year = map(int, expiry_str.split("/"))
                 expiry_date = date(year, month, day)
 
                 # Utilizzo orario fidato (Network Time)
@@ -247,7 +267,7 @@ def get_detailed_license_status():
             except ValueError:
                 return LicenseStatus.INVALID, "Formato data scadenza non valido"
 
-        cliente = payload.get('Cliente', 'Utente')
+        cliente = payload.get("Cliente", "Utente")
         return LicenseStatus.VALID, f"Licenza valida per: {cliente}"
 
     except Exception as e:

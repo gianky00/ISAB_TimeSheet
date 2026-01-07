@@ -1,11 +1,14 @@
 """
 Tests for Timbrature module.
 """
-import os
-import pytest
+
 import sqlite3
+
 import pandas as pd
+import pytest
+
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+
 
 @pytest.fixture
 def temp_db(tmp_path):
@@ -13,11 +16,13 @@ def temp_db(tmp_path):
     db_file = tmp_path / "test_timbrature.db"
     return db_file
 
+
 @pytest.fixture
 def storage(temp_db):
     """Fixture per creare uno storage con DB temporaneo."""
     storage = TimbratureStorage(temp_db)
     return storage
+
 
 def test_db_creation(temp_db, storage):
     """Test che il database venga creato correttamente."""
@@ -31,6 +36,7 @@ def test_db_creation(temp_db, storage):
 
     assert table is not None
 
+
 def test_import_logic(temp_db, storage, tmp_path):
     """Test dell'importazione dati da Excel e prevenzione duplicati."""
 
@@ -43,7 +49,7 @@ def test_import_logic(temp_db, storage, tmp_path):
         "Cognome Risorsa": ["Rossi", "Verdi"],
         "Presente Nei Timesheet": ["SI", "NO"],
         "Sito Timbratura": ["Sito A", "Sito B"],
-        "Extra Column": ["Ignore", "Ignore"]
+        "Extra Column": ["Ignore", "Ignore"],
     }
     df = pd.DataFrame(excel_data)
     excel_file = tmp_path / "test_import.xlsx"
@@ -65,8 +71,8 @@ def test_import_logic(temp_db, storage, tmp_path):
     # Check index 4 (nome)
     # The order by nome means Luigi comes before Mario?
     # Luigi L, Mario M. Yes.
-    assert rows[0][4] == "Luigi" # nome
-    assert rows[1][4] == "Mario" # nome
+    assert rows[0][4] == "Luigi"  # nome
+    assert rows[1][4] == "Mario"  # nome
 
     # 4. Test Duplicati: Importa lo stesso file
     storage.import_excel(str(excel_file))
@@ -80,6 +86,7 @@ def test_import_logic(temp_db, storage, tmp_path):
     # Il numero di righe non deve essere cambiato
     assert count == 2
 
+
 def test_import_new_data(temp_db, storage, tmp_path):
     """Test che nuovi dati vengano aggiunti correttamente."""
 
@@ -91,7 +98,7 @@ def test_import_new_data(temp_db, storage, tmp_path):
         "Nome Risorsa": ["Mario"],
         "Cognome Risorsa": ["Rossi"],
         "Presente Nei Timesheet": ["SI"],
-        "Sito Timbratura": ["Sito A"]
+        "Sito Timbratura": ["Sito A"],
     }
     df1 = pd.DataFrame(data1)
     file1 = tmp_path / "test1.xlsx"
@@ -106,7 +113,7 @@ def test_import_new_data(temp_db, storage, tmp_path):
         "Nome Risorsa": ["Mario", "Mario"],
         "Cognome Risorsa": ["Rossi", "Rossi"],
         "Presente Nei Timesheet": ["SI", "SI"],
-        "Sito Timbratura": ["Sito A", "Sito A"]
+        "Sito Timbratura": ["Sito A", "Sito A"],
     }
     df2 = pd.DataFrame(data2)
     file2 = tmp_path / "test2.xlsx"

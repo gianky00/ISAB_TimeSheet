@@ -1,10 +1,13 @@
 """
-Bot TS - Time Manager
+SyncroJob - Time Manager
 Gestisce il recupero dell'orario da fonti attendibili (Network Time).
 """
-import requests
+
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+
+import requests
+
 
 def get_network_time(timeout=5):
     """
@@ -32,6 +35,7 @@ def get_network_time(timeout=5):
         print(f"[TIME] Errore recupero orario di rete: {e}")
 
     return None
+
 
 def get_trusted_time():
     """

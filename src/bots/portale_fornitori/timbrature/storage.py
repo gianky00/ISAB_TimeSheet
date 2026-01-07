@@ -1,16 +1,18 @@
 """
-Bot TS - Timbrature Storage
+SyncroJob - Timbrature Storage
 Handles database operations for Timbrature.
 """
 
 import sqlite3
-import pandas as pd
-import json
 from pathlib import Path
-from typing import Optional, List, Dict, Callable
+from typing import Callable, Dict, List, Optional
+
+import pandas as pd
+
 from src.core import config_manager
 from src.core.config_manager import CONFIG_DIR
 from src.core.database import db_manager
+
 
 class TimbratureStorage:
     """Manages SQLite database for Timbrature."""
@@ -24,7 +26,7 @@ class TimbratureStorage:
         "Nome Risorsa": "nome",
         "Cognome Risorsa": "cognome",
         "Presente Nei Timesheet": "presenza_ts",
-        "Sito Timbratura": "sito_timbratura"
+        "Sito Timbratura": "sito_timbratura",
     }
 
     def __init__(self, db_path: Path = DB_PATH):
@@ -35,7 +37,8 @@ class TimbratureStorage:
         """Initializes the database schema for timbrature."""
         with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute('''
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS timbrature (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     data TEXT,
@@ -47,7 +50,8 @@ class TimbratureStorage:
                     sito_timbratura TEXT,
                     UNIQUE(data, ingresso, uscita, nome, cognome)
                 )
-            ''')
+            """
+            )
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
             conn.commit()
@@ -63,7 +67,8 @@ class TimbratureStorage:
         Returns: Lista di dizionari con info dipendente.
         """
         query = query.strip().lower()
-        if len(query) < 2: return []
+        if len(query) < 2:
+            return []
 
         results = []
         try:
@@ -78,13 +83,10 @@ class TimbratureStorage:
                 """
                 like_query = f"%{query}%"
                 cursor.execute(sql, (like_query, like_query))
-                
+
                 rows = cursor.fetchall()
                 for row in rows:
-                    results.append({
-                        "nome": row[0],
-                        "cognome": row[1]
-                    })
+                    results.append({"nome": row[0], "cognome": row[1]})
         except Exception:
             pass
         return results
@@ -106,18 +108,20 @@ class TimbratureStorage:
 
             employees = []
             for row in rows:
-                nome = row['nome']
-                cognome = row['cognome']
+                nome = row["nome"]
+                cognome = row["cognome"]
                 key = f"{nome}|{cognome}"
-                
+
                 emp_data = mappings.get(key, {"reparto": "", "cantiere": ""})
 
-                employees.append({
-                    "nome": nome,
-                    "cognome": cognome,
-                    "reparto": emp_data.get("reparto", ""),
-                    "cantiere": emp_data.get("cantiere", "")
-                })
+                employees.append(
+                    {
+                        "nome": nome,
+                        "cognome": cognome,
+                        "reparto": emp_data.get("reparto", ""),
+                        "cantiere": emp_data.get("cantiere", ""),
+                    }
+                )
 
             return employees
 
@@ -125,17 +129,25 @@ class TimbratureStorage:
         """Salva l'assegnazione reparto/cantiere direttamente in config.json."""
         config = config_manager.load_config()
         mappings = config.get("employee_mappings", {})
-        
+
         key = f"{nome}|{cognome}"
         current = mappings.get(key, {"reparto": "", "cantiere": ""})
-        
-        if reparto is not None: current["reparto"] = reparto
-        if cantiere is not None: current["cantiere"] = cantiere
-        
+
+        if reparto is not None:
+            current["reparto"] = reparto
+        if cantiere is not None:
+            current["cantiere"] = cantiere
+
         mappings[key] = current
         config_manager.set_config_value("employee_mappings", mappings)
 
-    def get_timbrature_with_reparto(self, limit: int = 500, filter_text: str = None, filter_reparto: str = None, filter_cantiere: str = None) -> List[tuple]:
+    def get_timbrature_with_reparto(
+        self,
+        limit: int = 500,
+        filter_text: str = None,
+        filter_reparto: str = None,
+        filter_cantiere: str = None,
+    ) -> List[tuple]:
         """
         Recupera le timbrature e le arricchisce con i dati da config.json.
         """
@@ -146,7 +158,9 @@ class TimbratureStorage:
             cursor = conn.cursor()
 
             # Query base (solo sulla tabella timbrature)
-            query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
+            query = (
+                "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
+            )
             params = []
             conditions = []
 
@@ -156,11 +170,14 @@ class TimbratureStorage:
                 for term in search_terms:
                     search_term = term
                     # (Logic date conversion DD/MM/YYYY omitted for brevity, same as before)
-                    if '/' in term:
+                    if "/" in term:
                         try:
-                            parts = term.split('/')
-                            if len(parts) == 3: d, m, y = parts; search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
-                        except: pass
+                            parts = term.split("/")
+                            if len(parts) == 3:
+                                d, m, y = parts
+                                search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+                        except:
+                            pass
                     term_conditions = [f"{col} LIKE ?" for col in columns_to_search]
                     params.extend([f"%{search_term}%"] * len(columns_to_search))
                     conditions.append(f"({' OR '.join(term_conditions)})")
@@ -168,7 +185,7 @@ class TimbratureStorage:
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)
 
-            query += f" ORDER BY id DESC LIMIT {limit * 2}" # Fetch more to allow Python filtering
+            query += f" ORDER BY id DESC LIMIT {limit * 2}"  # Fetch more to allow Python filtering
 
             cursor.execute(query, params)
             raw_rows = cursor.fetchall()
@@ -180,7 +197,7 @@ class TimbratureStorage:
                 nome, cognome = row[3], row[4]
                 key = f"{nome}|{cognome}"
                 emp_data = mappings.get(key, {"reparto": "", "cantiere": ""})
-                
+
                 rep = emp_data.get("reparto", "")
                 cant = emp_data.get("cantiere", "")
 
@@ -191,7 +208,7 @@ class TimbratureStorage:
                     continue
 
                 final_rows.append(row + (rep, cant))
-                
+
                 if len(final_rows) >= limit:
                     break
 
@@ -208,6 +225,7 @@ class TimbratureStorage:
         Returns:
             True if import was successful.
         """
+
         def log(msg):
             if log_callback:
                 log_callback(msg)
@@ -215,7 +233,7 @@ class TimbratureStorage:
                 print(msg)
 
         try:
-            df = pd.read_excel(excel_path, engine='openpyxl')
+            df = pd.read_excel(excel_path, engine="openpyxl")
 
             # Normalize column names
             df.columns = df.columns.str.strip()
@@ -239,22 +257,25 @@ class TimbratureStorage:
                 for _, row in df_filtered.iterrows():
                     try:
                         # Normalize date
-                        if 'data' in row and pd.notna(row['data']):
-                            if isinstance(row['data'], (pd.Timestamp, pd.DatetimeIndex)):
-                                row['data'] = row['data'].strftime('%Y-%m-%d')
+                        if "data" in row and pd.notna(row["data"]):
+                            if isinstance(row["data"], (pd.Timestamp, pd.DatetimeIndex)):
+                                row["data"] = row["data"].strftime("%Y-%m-%d")
                             else:
                                 try:
-                                    ts = pd.to_datetime(row['data'])
-                                    row['data'] = ts.strftime('%Y-%m-%d')
+                                    ts = pd.to_datetime(row["data"])
+                                    row["data"] = ts.strftime("%Y-%m-%d")
                                 except:
-                                    pass # Keep original if parse fails
+                                    pass  # Keep original if parse fails
 
                         vals = row.fillna("").astype(str).to_dict()
 
-                        cursor.execute('''
+                        cursor.execute(
+                            """
                             INSERT INTO timbrature (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura)
                             VALUES (:data, :ingresso, :uscita, :nome, :cognome, :presenza_ts, :sito_timbratura)
-                        ''', vals)
+                        """,
+                            vals,
+                        )
                         added_count += 1
                     except sqlite3.IntegrityError:
                         skipped_count += 1
@@ -273,23 +294,25 @@ class TimbratureStorage:
     def get_lists(self) -> Dict[str, List[str]]:
         """Recupera le liste configurate (Reparti, Cantieri) da config.json con migrazione automatica."""
         config = config_manager.load_config()
-        
+
         # Logica di migrazione se mancano i dati nel config ma esiste il vecchio file
         if "reparti" not in config or (not config.get("reparti") and not config.get("cantieri")):
             old_path = self.db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 try:
                     import json
-                    with open(old_path, 'r', encoding='utf-8') as f:
+
+                    with open(old_path, "r", encoding="utf-8") as f:
                         old_data = json.load(f)
                         if old_data:
                             self.save_lists(old_data)
                             return old_data
-                except: pass
+                except:
+                    pass
 
         return {
             "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),
-            "cantieri": config.get("cantieri", [])
+            "cantieri": config.get("cantieri", []),
         }
 
     def save_lists(self, data: Dict[str, List[str]]):

@@ -3,12 +3,13 @@ Bot TS - Build & Distribution Script
 Compila l'applicazione con PyInstaller, crea l'installer con Inno Setup,
 e opzionalmente deploya su Netlify.
 """
+
+import argparse
+import json
 import os
-import sys
 import shutil
 import subprocess
-import json
-import argparse
+import sys
 
 # Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -51,24 +52,29 @@ def clean_build():
 def run_pyinstaller():
     """Build executable with PyInstaller."""
     print("[BUILD] Running PyInstaller...")
-    
+
     # PyInstaller command
     cmd = [
-        sys.executable, "-m", "PyInstaller",
-        "--name", APP_EXE_NAME,
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--name",
+        APP_EXE_NAME,
         "--onedir",
         "--windowed",
         "--noconfirm",
         "--clean",
         # Add data files
-        "--add-data", f"{os.path.join(ROOT_DIR, 'src')};src",
-        "--add-data", f"{os.path.join(ROOT_DIR, 'assets')};assets",
+        "--add-data",
+        f"{os.path.join(ROOT_DIR, 'src')};src",
+        "--add-data",
+        f"{os.path.join(ROOT_DIR, 'assets')};assets",
     ]
-    
+
     # Add icon if exists
     if os.path.exists(ICON_PATH):
         cmd.extend(["--icon", ICON_PATH])
-    
+
     # Hidden imports for PyQt6 and selenium
     hidden_imports = [
         "PyQt6.QtWidgets",
@@ -85,51 +91,51 @@ def run_pyinstaller():
         "keyring.backends",
         "pyarrow",
     ]
-    
+
     for imp in hidden_imports:
         cmd.extend(["--hidden-import", imp])
-    
+
     # Collect all submodules
     cmd.extend(["--collect-submodules", "selenium"])
     cmd.extend(["--collect-submodules", "webdriver_manager"])
-    
+
     # Main script
     cmd.append(MAIN_SCRIPT)
-    
+
     # Run PyInstaller
     result = subprocess.run(cmd, cwd=ROOT_DIR)
-    
+
     if result.returncode != 0:
         print("[ERROR] PyInstaller failed!")
         sys.exit(1)
-    
+
     print("[BUILD] PyInstaller completed successfully.")
 
 
 def run_inno_setup():
     """Build installer with Inno Setup."""
     print("[BUILD] Running Inno Setup...")
-    
+
     # Find Inno Setup compiler
     inno_paths = [
         r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
         r"C:\Program Files\Inno Setup 6\ISCC.exe",
     ]
-    
+
     iscc = None
     for path in inno_paths:
         if os.path.exists(path):
             iscc = path
             break
-    
+
     if not iscc:
         print("[WARNING] Inno Setup not found. Skipping installer creation.")
         return False
-    
+
     # Create output directory
     if not os.path.exists(SETUP_OUTPUT_DIR):
         os.makedirs(SETUP_OUTPUT_DIR)
-    
+
     # Get version for Inno Setup
     version = get_version()
     print(f"[BUILD] Building installer for version: {version}")
@@ -137,11 +143,11 @@ def run_inno_setup():
     # Run ISCC
     cmd = [iscc, f"/DMyAppVersion={version}", ISS_SCRIPT]
     result = subprocess.run(cmd, cwd=SCRIPT_DIR)
-    
+
     if result.returncode != 0:
         print("[ERROR] Inno Setup failed!")
         return False
-    
+
     print("[BUILD] Installer created successfully.")
     return True
 
@@ -149,33 +155,30 @@ def run_inno_setup():
 def create_version_json():
     """Create version.json for update checking."""
     print("[BUILD] Creating version.json...")
-    
+
     version = get_version()
-    
+
     # Create netlify directory
     netlify_dir = os.path.join(SETUP_OUTPUT_DIR, "netlify")
     if not os.path.exists(netlify_dir):
         os.makedirs(netlify_dir)
-    
-    version_json = {
-        "version": version,
-        "url": f"https://syncrojob.netlify.app/SyncroJob_Setup_{version}.exe"
-    }
-    
+
+    version_json = {"version": version, "url": f"https://syncrojob.netlify.app/SyncroJob_Setup_{version}.exe"}
+
     # Write version.json
     json_path = os.path.join(netlify_dir, "version.json")
     with open(json_path, "w") as f:
         json.dump(version_json, f, indent=2)
-    
+
     # Copy installer to netlify folder
     version = get_version()
     installer_name = f"SyncroJob_Setup_{version}.exe"
     src_installer = os.path.join(SETUP_OUTPUT_DIR, installer_name)
-    
+
     if os.path.exists(src_installer):
         shutil.copy2(src_installer, os.path.join(netlify_dir, installer_name))
-        print(f"  Copied installer to netlify folder")
-    
+        print("  Copied installer to netlify folder")
+
     # Create professional index.html
     index_html = f"""<!DOCTYPE html>
 <html lang="it">
@@ -275,7 +278,7 @@ def create_version_json():
 """
     with open(os.path.join(netlify_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(index_html)
-    
+
     print(f"[BUILD] version.json created: v{version}")
     return netlify_dir
 
@@ -283,28 +286,23 @@ def create_version_json():
 def deploy_netlify(netlify_dir):
     """Deploy to Netlify."""
     print("[BUILD] Deploying to Netlify...")
-    
+
     # Check if netlify CLI is available
     try:
         subprocess.run(["netlify", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli")
         return False
-    
+
     # Deploy
-    cmd = [
-        "netlify", "deploy",
-        "--prod",
-        "--dir", netlify_dir,
-        "--site", NETLIFY_SITE_ID
-    ]
-    
+    cmd = ["netlify", "deploy", "--prod", "--dir", netlify_dir, "--site", NETLIFY_SITE_ID]
+
     result = subprocess.run(cmd)
-    
+
     if result.returncode != 0:
         print("[ERROR] Netlify deploy failed!")
         return False
-    
+
     print("[BUILD] Deployed to Netlify successfully.")
     return True
 
@@ -314,30 +312,30 @@ def main():
     parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify deployment")
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
     args = parser.parse_args()
-    
+
     print("=" * 60)
     print(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")
     print("=" * 60)
-    
+
     # Step 1: Clean
     clean_build()
-    
+
     # Step 2: PyInstaller
     run_pyinstaller()
-    
+
     # Step 3: Inno Setup
     if not args.skip_installer:
         run_inno_setup()
-    
+
     # Step 4: Create version.json
     netlify_dir = create_version_json()
-    
+
     # Step 5: Deploy (optional)
     if not args.no_deploy:
         deploy_netlify(netlify_dir)
     else:
         print("[BUILD] Skipping Netlify deployment (--no-deploy)")
-    
+
     print("=" * 60)
     print("  BUILD COMPLETED!")
     print("=" * 60)

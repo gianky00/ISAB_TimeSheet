@@ -2,26 +2,27 @@
 Password Manager con encryption moderna.
 Usa Argon2/Scrypt per key derivation.
 """
-import os
-import json
+
 import base64
-from pathlib import Path
+import os
+import secrets
+
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-import secrets
-import shutil
+
 from src.core.config_manager import CONFIG_DIR
+
 
 class PasswordManager:
     """Gestisce encryption/decryption password con best practice moderne."""
-    
+
     _instance = None
     # Percorso standard: %LOCALAPPDATA%\SyncroJob\security
     _KEY_DIR = CONFIG_DIR / "security"
-    
+
     _KEY_FILE = _KEY_DIR / "secret.key"
     _SALT_FILE = _KEY_DIR / "encryption.salt"
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -33,7 +34,7 @@ class PasswordManager:
         self._KEY_DIR.mkdir(parents=True, exist_ok=True)
 
         # Imposta permessi restrittivi (solo owner)
-        if os.name != 'nt':  # Unix
+        if os.name != "nt":  # Unix
             try:
                 os.chmod(self._KEY_DIR, 0o700)
             except Exception:
@@ -47,14 +48,14 @@ class PasswordManager:
         if self._KEY_FILE.exists():
             # Se esiste solo la chiave (legacy), usala
             # Se esiste anche il salt (v2), verifica se dobbiamo rigenerare o caricare
-            with open(self._KEY_FILE, 'rb') as f:
+            with open(self._KEY_FILE, "rb") as f:
                 key = f.read()
                 # Verifica validità chiave Fernet (32 url-safe base64-encoded bytes)
                 try:
                     Fernet(key)
                     return key
                 except Exception:
-                    pass # Chiave invalida, rigenera
+                    pass  # Chiave invalida, rigenera
 
         # Genera nuovo salt e chiave
         salt = secrets.token_bytes(32)
@@ -64,20 +65,20 @@ class PasswordManager:
         kdf = Scrypt(
             salt=salt,
             length=32,
-            n=2**14, # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
+            n=2**14,  # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
             r=8,
             p=1,
         )
         key = base64.urlsafe_b64encode(kdf.derive(machine_id))
 
         # Salva
-        with open(self._SALT_FILE, 'wb') as f:
+        with open(self._SALT_FILE, "wb") as f:
             f.write(salt)
-        with open(self._KEY_FILE, 'wb') as f:
+        with open(self._KEY_FILE, "wb") as f:
             f.write(key)
 
         # Permessi restrittivi
-        if os.name != 'nt':
+        if os.name != "nt":
             try:
                 os.chmod(self._KEY_FILE, 0o600)
                 os.chmod(self._SALT_FILE, 0o600)
@@ -95,9 +96,9 @@ class PasswordManager:
             platform.node(),
             str(uuid.getnode()),  # MAC address
             platform.machine(),
-            os.getlogin() if hasattr(os, 'getlogin') else 'unknown',
+            os.getlogin() if hasattr(os, "getlogin") else "unknown",
         ]
-        return '|'.join(components).encode()
+        return "|".join(components).encode()
 
     def encrypt(self, plaintext: str) -> str:
         """Cripta una stringa."""
@@ -112,7 +113,7 @@ class PasswordManager:
         except Exception as e:
             print(f"Encryption error: {e}")
             return ""
-    
+
     def decrypt(self, ciphertext: str) -> str:
         """Decripta una stringa."""
         if not ciphertext:
@@ -138,6 +139,7 @@ class PasswordManager:
 
         # Plaintext legacy (potrebbe essere una vecchia config non criptata)
         return ciphertext
+
 
 # Singleton instance
 password_manager = PasswordManager()

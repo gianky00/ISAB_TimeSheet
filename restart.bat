@@ -1,9 +1,9 @@
 @echo off
-title Bot TS - Reset Ambiente e Avvio
+title SyncroJob - Reset Ambiente e Avvio
 cd /d "%~dp0"
 
 echo =============================================
-echo    Bot TS - Reset Completo Ambiente
+echo    SyncroJob - Reset Completo Ambiente
 echo =============================================
 echo.
 

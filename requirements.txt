@@ -42,4 +42,4 @@ msoffcrypto-tool
 markdown
 pymupdf
 pywin32
-telegram
+python-telegram-bot

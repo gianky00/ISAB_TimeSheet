@@ -1,9 +1,12 @@
 """
 Pulsante moderno con varianti e stati.
 """
+
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty
 from PyQt6.QtWidgets import QPushButton
-from PyQt6.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty
+
 from ..design.colors import get_palette
+
 
 class ModernButton(QPushButton):
     """Pulsante con animazioni e varianti."""
@@ -26,7 +29,7 @@ class ModernButton(QPushButton):
         variant: str = Variant.PRIMARY,
         size: str = Size.MEDIUM,
         icon: str = None,
-        parent=None
+        parent=None,
     ):
         super().__init__(text, parent)
         self._variant = variant
@@ -39,10 +42,10 @@ class ModernButton(QPushButton):
 
         if icon:
             from PyQt6.QtGui import QIcon
+
             self.setIcon(QIcon(icon))
             # Increase padding for icon
             self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
-
 
     def _setup_animation(self):
         self._anim = QPropertyAnimation(self, b"hoverOpacity")

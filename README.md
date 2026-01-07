@@ -1,4 +1,4 @@
-# Bot TS
+# SyncroJob
 
 **Sistema di Automazione per Portale ISAB**
 
@@ -27,8 +27,8 @@ Applicazione desktop per l'automazione delle operazioni sul portale fornitori IS
 
 ### Utente Finale
 
-1. Scarica l'installer da [bot-ts.netlify.app](https://bot-ts.netlify.app)
-2. Esegui `BotTS_Setup_x.x.x.exe`
+1. Scarica l'installer da [syncrojob.netlify.app](https://syncrojob.netlify.app)
+2. Esegui SyncroJob_Setup_x.x.x.exe
 3. Inserisci i file di licenza nella cartella indicata
 4. Avvia l'applicazione
 
@@ -117,7 +117,7 @@ python admin/Crea\ Licenze/admin_license_gui.py
 ### File Licenza
 
 ```
-%LOCALAPPDATA%\Programs\Bot TS\Licenza\
+%LOCALAPPDATA%\Programs\SyncroJob\Licenza\
 ├── config.dat        # Dati licenza cifrati
 └── manifest.json     # Checksum integrità
 ```
@@ -131,8 +131,8 @@ Le licenze vengono distribuite tramite repository GitHub privato:
 
 ### Percorso Dati
 
-- **Windows**: `%LOCALAPPDATA%\Programs\Bot TS\`
-- **Linux**: `~/.local/share/Bot TS/`
+- **Windows**: `%LOCALAPPDATA%\Programs\SyncroJob\`
+- **Linux**: `~/.local/share/SyncroJob/`
 
 ### File Configurazione
 

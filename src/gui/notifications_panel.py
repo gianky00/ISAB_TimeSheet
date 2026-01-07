@@ -1,25 +1,36 @@
 """
-Bot TS - Notifications Panel
+SyncroJob - Notifications Panel
 Pannello per la visualizzazione delle notifiche.
 """
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-    QScrollArea, QFrame, QSizePolicy, QTabWidget, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QAbstractItemView, QMessageBox
-)
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QPalette, QFont
-from datetime import datetime
 
-from src.core.notification_manager import NotificationManager
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QFrame,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
 from src.core.audit_manager import AuditManager
+from src.core.notification_manager import NotificationManager
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.notification_item import NotificationItem
+
 
 # Force file update - Refreshed
 class AuditLogWidget(QWidget):
     """Widget avanzato per l'Audit Log con validazione integrità."""
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.manager = AuditManager()
@@ -33,17 +44,17 @@ class AuditLogWidget(QWidget):
 
         # Toolbar
         toolbar = QHBoxLayout()
-        
+
         info_lbl = QLabel("Registro Operazioni (Audit Trail)")
         info_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #212529;")
         toolbar.addWidget(info_lbl)
-        
+
         self.integrity_lbl = QLabel("🛡️ Verifica in corso...")
         self.integrity_lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold;")
         toolbar.addWidget(self.integrity_lbl)
-        
+
         toolbar.addStretch()
-        
+
         # Retention Info
         retention_lbl = QLabel("Policy: 90 Giorni")
         retention_lbl.setStyleSheet("color: #adb5bd; font-size: 12px; margin-right: 10px;")
@@ -51,7 +62,8 @@ class AuditLogWidget(QWidget):
 
         refresh_btn = QPushButton("🔄 Aggiorna e Valida")
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setStyleSheet("""
+        refresh_btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: #0d6efd;
                 color: white;
@@ -61,18 +73,22 @@ class AuditLogWidget(QWidget):
                 font-weight: bold;
             }
             QPushButton:hover { background-color: #0b5ed7; }
-        """)
+        """
+        )
         refresh_btn.clicked.connect(self.refresh)
         toolbar.addWidget(refresh_btn)
-        
+
         layout.addLayout(toolbar)
 
         # Table
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["Data/Ora", "Utente", "Operazione", "Entità", "Parametri", "Esito"])
-        
-        self.table.setStyleSheet("""
+        self.table.setHorizontalHeaderLabels(
+            ["Data/Ora", "Utente", "Operazione", "Entità", "Parametri", "Esito"]
+        )
+
+        self.table.setStyleSheet(
+            """
             QTableWidget {
                 border: 1px solid #dee2e6;
                 border-radius: 8px;
@@ -88,21 +104,22 @@ class AuditLogWidget(QWidget):
                 font-weight: bold;
                 color: #495057;
             }
-        """)
-        
+        """
+        )
+
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.verticalHeader().setVisible(False)
-        
+
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents) # Timestamp
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents) # User
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents) # Action
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents) # Entity
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)          # Params
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents) # Status
-        
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Timestamp
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # User
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Action
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Entity
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Params
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Status
+
         layout.addWidget(self.table)
 
     def refresh(self):
@@ -119,49 +136,52 @@ class AuditLogWidget(QWidget):
         # 2. Carica dati
         logs = self.manager.get_logs(limit=200)
         self.table.setRowCount(0)
-        
+
         for log in logs:
             row = self.table.rowCount()
             self.table.insertRow(row)
-            
+
             # Helper per evitare stringhe 'None' o vuote
             def clean(val):
                 s = str(val).strip()
-                if not val or s.lower() == 'none' or s == '':
+                if not val or s.lower() == "none" or s == "":
                     return "-"
                 return s
 
             # Colore Severità
-            sev = clean(log.get('severity')).lower()
+            sev = clean(log.get("severity")).lower()
             row_color = None
-            if sev == 'high': row_color = QColor("#fff5f5") 
-            elif sev == 'medium': row_color = QColor("#fff9f0") 
+            if sev == "high":
+                row_color = QColor("#fff5f5")
+            elif sev == "medium":
+                row_color = QColor("#fff9f0")
 
             # Format timestamp
             try:
                 from datetime import datetime
-                dt = datetime.fromisoformat(log['timestamp'])
+
+                dt = datetime.fromisoformat(log["timestamp"])
                 ts_str = dt.strftime("%d/%m/%y %H:%M")
             except:
-                ts_str = clean(log['timestamp'])
+                ts_str = clean(log["timestamp"])
 
             items = [
                 QTableWidgetItem(ts_str),
-                QTableWidgetItem(clean(log.get('user_id'))),
-                QTableWidgetItem(clean(log.get('action'))),
-                QTableWidgetItem(clean(log.get('entity'))),
-                QTableWidgetItem(clean(log.get('params')) if log.get('params') != "{}" else "-"),
-                QTableWidgetItem(clean(log.get('status')).upper())
+                QTableWidgetItem(clean(log.get("user_id"))),
+                QTableWidgetItem(clean(log.get("action"))),
+                QTableWidgetItem(clean(log.get("entity"))),
+                QTableWidgetItem(clean(log.get("params")) if log.get("params") != "{}" else "-"),
+                QTableWidgetItem(clean(log.get("status")).upper()),
             ]
 
             # Applica font bold all'operazione
             items[2].setFont(QFont("Arial", 9, QFont.Weight.Bold))
 
             # Colore Esito
-            status = log['status'].lower()
-            if status == 'error' or sev == 'high':
+            status = log["status"].lower()
+            if status == "error" or sev == "high":
                 items[5].setForeground(QColor("#dc3545"))
-            elif status == 'warning' or sev == 'medium':
+            elif status == "warning" or sev == "medium":
                 items[5].setForeground(QColor("#fd7e14"))
             else:
                 items[5].setForeground(QColor("#198754"))
@@ -173,28 +193,26 @@ class AuditLogWidget(QWidget):
                 self.table.setItem(row, col, item)
 
 
-
-
 class NotificationsPanel(QWidget):
     """Pannello principale delle notifiche con schede Audit."""
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.filter_unread = False
         self.manager = NotificationManager.instance()
-        
+
         self._setup_ui()
-        
+
         # Connect signals
         self.manager.notifications_updated.connect(self.refresh_notifications)
-        
+
         self.refresh_notifications()
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(30, 30, 30, 30)
         main_layout.setSpacing(20)
-        
+
         # Header Area
         header_layout = QHBoxLayout()
         title = QLabel("🔔 Centro Notifiche & Audit")
@@ -202,10 +220,11 @@ class NotificationsPanel(QWidget):
         header_layout.addWidget(title)
         header_layout.addStretch()
         main_layout.addLayout(header_layout)
-        
+
         # Tab Widget
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
+        self.tabs.setStyleSheet(
+            """
             QTabWidget::pane {
                 border: 1px solid #dee2e6;
                 border-radius: 8px;
@@ -225,14 +244,15 @@ class NotificationsPanel(QWidget):
                 border-bottom-color: white;
                 color: #0d6efd;
             }
-        """)
+        """
+        )
         main_layout.addWidget(self.tabs)
 
         # --- TAB 1: MESSAGGI ---
         self.notif_tab = QWidget()
         notif_layout = QVBoxLayout(self.notif_tab)
         notif_layout.setContentsMargins(15, 15, 15, 15)
-        
+
         # Toolbar Notifiche
         notif_toolbar = QHBoxLayout()
         self.btn_all = QPushButton("Tutti")
@@ -241,16 +261,18 @@ class NotificationsPanel(QWidget):
         self.btn_all.clicked.connect(lambda: self._set_filter(False))
         self._style_filter_btn(self.btn_all)
         notif_toolbar.addWidget(self.btn_all)
-        
+
         self.btn_unread = QPushButton("Da leggere")
         self.btn_unread.setCheckable(True)
         self.btn_unread.clicked.connect(lambda: self._set_filter(True))
         self._style_filter_btn(self.btn_unread)
         notif_toolbar.addWidget(self.btn_unread)
-        
+
         notif_toolbar.addStretch()
-        
-        mark_read_btn = ModernButton("Segna letti", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL)
+
+        mark_read_btn = ModernButton(
+            "Segna letti", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
+        )
         mark_read_btn.clicked.connect(self._mark_all_read)
         notif_toolbar.addWidget(mark_read_btn)
 
@@ -260,7 +282,7 @@ class NotificationsPanel(QWidget):
         notif_toolbar.addWidget(clear_btn)
 
         notif_layout.addLayout(notif_toolbar)
-        
+
         # Scroll Area Notifiche
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
@@ -268,16 +290,16 @@ class NotificationsPanel(QWidget):
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setSpacing(10)
-        self.scroll_layout.addStretch() 
+        self.scroll_layout.addStretch()
         self.scroll.setWidget(self.scroll_content)
         notif_layout.addWidget(self.scroll)
-        
+
         self.tabs.addTab(self.notif_tab, "Messaggi Operativi")
 
         # --- TAB 2: AUDIT ---
         self.audit_tab = AuditLogWidget()
         self.tabs.addTab(self.audit_tab, "Registro Attività (Audit)")
-        
+
         # Refresh audit when tab selected
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
@@ -291,13 +313,14 @@ class NotificationsPanel(QWidget):
         msg_box.setWindowTitle("Conferma")
         msg_box.setText("Vuoi svuotare i messaggi? L'Audit Log non verrà toccato.")
         msg_box.setIcon(QMessageBox.Icon.Question)
-        
+
         # Pulsanti Custom
         yes_btn = msg_box.addButton("Sì", QMessageBox.ButtonRole.YesRole)
         no_btn = msg_box.addButton("No", QMessageBox.ButtonRole.NoRole)
-        
+
         # Stile leggibile
-        msg_box.setStyleSheet("""
+        msg_box.setStyleSheet(
+            """
             QMessageBox {
                 background-color: white;
             }
@@ -323,10 +346,11 @@ class NotificationsPanel(QWidget):
             QPushButton[text="No"]:hover {
                 background-color: #5c636a;
             }
-        """)
-        
+        """
+        )
+
         msg_box.exec()
-        
+
         if msg_box.clickedButton() == yes_btn:
             self.manager.clear_all()
 
@@ -334,7 +358,8 @@ class NotificationsPanel(QWidget):
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setMinimumHeight(35)
         btn.setMinimumWidth(120)
-        btn.setStyleSheet("""
+        btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: white;
                 border: 1px solid #ced4da;
@@ -350,7 +375,8 @@ class NotificationsPanel(QWidget):
             QPushButton:hover:!checked {
                 background-color: #e9ecef;
             }
-        """)
+        """
+        )
 
     def _set_filter(self, unread_only):
         self.filter_unread = unread_only
@@ -367,9 +393,9 @@ class NotificationsPanel(QWidget):
             item = self.scroll_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-        
+
         notifications = self.manager.get_notifications(self.filter_unread)
-        
+
         if not notifications:
             empty_lbl = QLabel("Nessuna notifica")
             empty_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)

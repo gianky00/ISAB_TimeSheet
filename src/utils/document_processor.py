@@ -1,15 +1,18 @@
 """
-Bot TS - Document Processor
+SyncroJob - Document Processor
 Gestisce l'estrazione di testo e immagini da file PDF per l'analisi AI.
 """
-import fitz  # PyMuPDF
+
 import base64
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import List
+
+import fitz  # PyMuPDF
+
 
 class DocumentProcessor:
     """Classe per processare documenti PDF e prepararli per Lyra AI."""
-    
+
     @staticmethod
     def extract_text(file_path: Path) -> str:
         """Estrae tutto il testo da un PDF."""
@@ -26,7 +29,7 @@ class DocumentProcessor:
 
     @staticmethod
     def get_pages_as_images(file_path: Path, max_pages: int = 5) -> List[str]:
-        """ Converte le pagine del PDF in immagini base64 per Gemini Vision. """
+        """Converte le pagine del PDF in immagini base64 per Gemini Vision."""
         images_base64 = []
         try:
             doc = fitz.open(file_path)
@@ -41,7 +44,7 @@ class DocumentProcessor:
             doc.close()
         except Exception as e:
             print(f"Errore conversione PDF in immagini: {e}")
-            
+
         return images_base64
 
     @staticmethod

@@ -1,27 +1,32 @@
 """
 Unit tests for TimbratureBot logic (Mocked).
 """
-import pytest
-from unittest.mock import MagicMock, patch, ANY, PropertyMock
+
 from pathlib import Path
+from unittest.mock import ANY, MagicMock, PropertyMock, patch
+
 import pandas as pd
+import pytest
 
 from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
-from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
+from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+
 
 @pytest.fixture
 def mock_driver():
     return MagicMock()
 
+
 @pytest.fixture
 def timbrature_bot(mock_driver):
     # Patch BaseBot init to avoid real browser launch
-    with patch('src.bots.base.BaseBot.__init__') as mock_base_init:
+    with patch("src.bots.base.BaseBot.__init__") as mock_base_init:
         bot = TimbratureBot(username="test", password="pwd")
         bot.driver = mock_driver
         bot.log = MagicMock()
         return bot
+
 
 class TestTimbraturePage:
     """Test Page Object logic."""
@@ -32,7 +37,7 @@ class TestTimbraturePage:
         # Mock wait
         page.wait = MagicMock()
         page._wait_for_overlay = MagicMock()
-        page.wait.until.return_value = MagicMock() # element
+        page.wait.until.return_value = MagicMock()  # element
 
         # Act
         result = page.navigate_to_timbrature()
@@ -54,11 +59,12 @@ class TestTimbraturePage:
         assert result is True
         page._select_supplier.assert_called_with("FornitoreX")
 
+
 class TestTimbratureStorage:
     """Test Database logic."""
 
-    @patch('src.core.database.DatabaseManager.get_connection')
-    @patch('pandas.read_excel')
+    @patch("src.core.database.DatabaseManager.get_connection")
+    @patch("pandas.read_excel")
     def test_import_excel_success(self, mock_read_excel, mock_get_conn):
         """Should import valid Excel data."""
         # Setup Mock DataFrame
@@ -71,9 +77,7 @@ class TestTimbratureStorage:
         type(mock_df).columns = PropertyMock(return_value=mock_cols)
 
         # However, it's easier to just use a real DataFrame for data logic
-        real_df = pd.DataFrame([
-            {'Data Timbratura': '2023-01-01', 'Ora Ingresso': '08:00'}
-        ])
+        real_df = pd.DataFrame([{"Data Timbratura": "2023-01-01", "Ora Ingresso": "08:00"}])
         mock_read_excel.return_value = real_df
 
         # Mock iterrows (removed as we use real_df now)
@@ -85,7 +89,7 @@ class TestTimbratureStorage:
         mock_conn.cursor.return_value = mock_cursor
 
         # Mock db_manager.init_db to avoid real init during init
-        with patch('src.core.database.db_manager.init_db'):
+        with patch("src.core.database.db_manager.init_db"):
             storage = TimbratureStorage(Path(":memory:"))
         # Override columns map for test simplicity
         storage.COLUMNS_MAP = {"Data Timbratura": "data", "Ora Ingresso": "ingresso"}
@@ -96,12 +100,13 @@ class TestTimbratureStorage:
         # Assert
         assert result is True
         mock_cursor.execute.assert_called()
-        assert mock_cursor.execute.call_count >= 1 # Create table + Insert
+        assert mock_cursor.execute.call_count >= 1  # Create table + Insert
+
 
 class TestTimbratureBot:
 
-    @patch('src.bots.portale_fornitori.timbrature.bot.TimbraturePage')
-    @patch('src.bots.portale_fornitori.timbrature.bot.TimbratureStorage')
+    @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
+    @patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
     def test_run_success(self, MockStorage, MockPage, timbrature_bot):
         """Should run full workflow successfully."""
         # Setup Mocks
@@ -114,9 +119,8 @@ class TestTimbratureBot:
         timbrature_bot.storage = storage_instance
 
         # Act
-        data = {'data_da': '01.01.2023'}
-        with patch('os.path.exists', return_value=True), \
-             patch('os.remove') as mock_remove:
+        data = {"data_da": "01.01.2023"}
+        with patch("os.path.exists", return_value=True), patch("os.remove") as mock_remove:
 
             result = timbrature_bot.run(data)
 

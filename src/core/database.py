@@ -1,22 +1,25 @@
 """
-Bot TS - Database Manager
+SyncroJob - Database Manager
 Centralized SQLite database management.
 Provides connection handling, context managers, and common utilities for all application databases.
 """
-import sqlite3
+
 import logging
-from pathlib import Path
+import sqlite3
 from contextlib import contextmanager
-from typing import Generator, Optional, Any, List, Dict
+from pathlib import Path
+from typing import Any, Generator, List
 
 from src.core.config_manager import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseManager:
     """
     Singleton class to manage SQLite connections.
     """
+
     _instance = None
 
     # Predefined Paths
@@ -34,7 +37,9 @@ class DatabaseManager:
         (CONFIG_DIR / "data").mkdir(parents=True, exist_ok=True)
 
     @contextmanager
-    def get_connection(self, db_path: Path, read_only: bool = False) -> Generator[sqlite3.Connection, None, None]:
+    def get_connection(
+        self, db_path: Path, read_only: bool = False
+    ) -> Generator[sqlite3.Connection, None, None]:
         """
         Yields a SQLite connection to the specified database.
         Enables WAL mode and handles closing.
@@ -91,7 +96,8 @@ class DatabaseManager:
             # --- Tables ---
 
             # Contabilita (Dati)
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS contabilita (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     year INTEGER NOT NULL,
@@ -111,10 +117,12 @@ class DatabaseManager:
                     nome_file TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Giornaliere
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS giornaliere (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     year INTEGER NOT NULL,
@@ -130,13 +138,17 @@ class DatabaseManager:
                     n_prev TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
             # Migration
-            try: cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
-            except: pass
+            try:
+                cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
+            except:
+                pass
 
             # Scarico Ore
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS scarico_ore (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     data TEXT,
@@ -153,12 +165,16 @@ class DatabaseManager:
                     styles TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
-            try: cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
-            except: pass
+            """
+            )
+            try:
+                cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
+            except:
+                pass
 
             # Attivita Programmate
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS attivita_programmate (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ps TEXT,
@@ -180,12 +196,16 @@ class DatabaseManager:
                     styles TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
-            try: cursor.execute("ALTER TABLE attivita_programmate ADD COLUMN styles TEXT")
-            except: pass
+            """
+            )
+            try:
+                cursor.execute("ALTER TABLE attivita_programmate ADD COLUMN styles TEXT")
+            except:
+                pass
 
             # Certificati Campione
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS certificati_campione (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     modello TEXT,
@@ -200,7 +220,8 @@ class DatabaseManager:
                     stato TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # --- Indexes (Performance) ---
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)")
@@ -214,7 +235,8 @@ class DatabaseManager:
         with self.get_connection(self.DB_TIMBRATURE) as conn:
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS timbrature (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     data TEXT,
@@ -226,9 +248,11 @@ class DatabaseManager:
                     sito_timbratura TEXT,
                     UNIQUE(data, ingresso, uscita, nome, cognome)
                 )
-            ''')
+            """
+            )
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS dipendenti (
                     nome TEXT,
                     cognome TEXT,
@@ -236,16 +260,20 @@ class DatabaseManager:
                     cantiere TEXT,
                     PRIMARY KEY (nome, cognome)
                 )
-            ''')
+            """
+            )
             # Migration for existing databases
-            try: cursor.execute("ALTER TABLE dipendenti ADD COLUMN cantiere TEXT")
-            except: pass
+            try:
+                cursor.execute("ALTER TABLE dipendenti ADD COLUMN cantiere TEXT")
+            except:
+                pass
 
             # --- Indexes ---
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
 
             conn.commit()
+
 
 # Global Accessor
 db_manager = DatabaseManager()

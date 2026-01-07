@@ -1,7 +1,9 @@
-import pytest
 import sqlite3
-from pathlib import Path
+
+import pytest
+
 from src.core.database import DatabaseManager
+
 
 class TestDatabaseManager:
 
@@ -11,9 +13,9 @@ class TestDatabaseManager:
 
     @pytest.fixture
     def manager(self):
-        # Reset singleton logic? 
+        # Reset singleton logic?
         # Actually DatabaseManager is a singleton, so we need to be careful.
-        # But we can create a fresh instance by bypassing __new__ logic or just 
+        # But we can create a fresh instance by bypassing __new__ logic or just
         # testing the methods on a specific path.
         mgr = DatabaseManager()
         return mgr
@@ -28,19 +30,19 @@ class TestDatabaseManager:
         # We can't easily override DB_CONTABILITA on the class if it's already used.
         # But we can pass the path to get_connection.
         # _init_contabilita uses self.DB_CONTABILITA. Let's patch it.
-        
+
         test_db_cont = tmp_path / "contabilita_test.db"
         test_db_timb = tmp_path / "timbrature_test.db"
-        
+
         # Patch paths
         manager.DB_CONTABILITA = test_db_cont
         manager.DB_TIMBRATURE = test_db_timb
-        
+
         manager.init_db()
-        
+
         assert test_db_cont.exists()
         assert test_db_timb.exists()
-        
+
         # Verify schema
         with sqlite3.connect(test_db_cont) as conn:
             cursor = conn.cursor()
@@ -53,10 +55,10 @@ class TestDatabaseManager:
     def test_execute_query(self, manager, db_path):
         # Create table
         manager.execute_query(db_path, "CREATE TABLE test (id INTEGER PRIMARY KEY, val TEXT)")
-        
+
         # Insert
         manager.execute_query(db_path, "INSERT INTO test (val) VALUES (?)", ("foo",))
-        
+
         # Select
         rows = manager.execute_query(db_path, "SELECT * FROM test")
         assert len(rows) == 1

@@ -1,16 +1,18 @@
-import os
 import glob
+import os
 import time
+from typing import Any, Dict, List
+
 import fitz  # PyMuPDF
-from typing import List, Dict, Any
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.base import SafeworkBaseBot
-from src.utils.printing import print_pdf
 from src.core import config_manager
+from src.utils.printing import print_pdf
+
 
 class SafeWorkPDLBot(SafeworkBaseBot):
     """
@@ -21,9 +23,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def __init__(self, username, password, headless=False, timeout=30, download_path=""):
         super().__init__(username, password, headless, timeout, download_path)
         if not self.download_path:
-             from src.core.config_manager import get_download_path
-             self.download_path = get_download_path()
-        
+            from src.core.config_manager import get_download_path
+
+            self.download_path = get_download_path()
+
         # Setup File Logging
         try:
             log_dir = config_manager.CONFIG_DIR / "logs"
@@ -40,7 +43,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def log(self, message: str):
         """Override log per salvare su file."""
         super().log(message)
-        if hasattr(self, 'log_file') and self.log_file:
+        if hasattr(self, "log_file") and self.log_file:
             try:
                 timestamp = time.strftime("%H:%M:%S")
                 with open(self.log_file, "a", encoding="utf-8") as f:
@@ -58,12 +61,18 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _login(self) -> bool:
         """Login SafeWork ricalcato dall'originale."""
-        self.log(f"🌐 Accesso a Safework...")
+        self.log("🌐 Accesso a Safework...")
         self.driver.get(self.SAFEWORK_URL)
-        
+
         try:
-            WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//button[@class='ms-choice']"))).click()
-            WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'ms-drop')]//span[normalize-space()='ISAB Sud']"))).click()
+            WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[@class='ms-choice']"))
+            ).click()
+            WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//div[contains(@class, 'ms-drop')]//span[normalize-space()='ISAB Sud']")
+                )
+            ).click()
         except Exception as e:
             self.log(f"⚠️ Selezione sito non necessaria o fallita: {e}")
 
@@ -71,7 +80,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente"))).send_keys(self.username)
         self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword"))).send_keys(self.password)
         self.wait.until(EC.element_to_be_clickable((By.ID, "btnLogin"))).click()
-        
+
         self.log("⏳ Caricamento sistema...")
         self._attendi_caricamento_sistema()
         return True
@@ -105,7 +114,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             campo_ricerca.send_keys(pdl_num)
             time.sleep(0.5)
             campo_ricerca.send_keys(Keys.ENTER)
-            
+
             self._gestisci_alert_ricerca()
             self._attendi_scomparsa_overlay()
             self.log("✅ PdL trovato")
@@ -118,25 +127,29 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
             time.sleep(0.5)
             self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
-            
+
             pdf_1 = self._attendi_e_ritorna_nuovo_pdf(ts_1)
-            if not pdf_1: 
+            if not pdf_1:
                 self.log("❌ Timeout Parte 1")
                 continue
-            
+
             path_temp_1 = os.path.join(self.download_path, f"temp_p1_{int(ts_1)}.pdf")
             self._safe_remove(path_temp_1)
             try:
                 os.rename(pdf_1, path_temp_1)
             except OSError:
-                time.sleep(2) # Retry once
+                time.sleep(2)  # Retry once
                 os.rename(pdf_1, path_temp_1)
 
             # --- PARTE SECONDA ---
             try:
                 if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
-                    try: self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
-                    except: self.driver.find_element(By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]").click()
+                    try:
+                        self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
+                    except:
+                        self.driver.find_element(
+                            By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
+                        ).click()
                     time.sleep(1)
                 self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
             except Exception as e:
@@ -146,21 +159,22 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self._attendi_scomparsa_overlay()
             self.driver.execute_script("window.scrollTo(0, 0);")
             ts_2 = time.time()
-            
+
             is_single = False
             try:
                 txt = self.driver.find_element(By.ID, "lblPAFoglio").find_element(By.XPATH, "..").text
                 is_single = "1/1" in txt
-            except: pass
+            except:
+                pass
 
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
-            
+
             if not is_single:
                 time.sleep(1)
                 self.wait.until(EC.element_to_be_clickable((By.ID, "rbStampaTutte"))).click()
                 time.sleep(0.5)
                 self.wait.until(EC.element_to_be_clickable((By.ID, "btnAnteprima"))).click()
-            
+
             pdf_2 = self._attendi_e_ritorna_nuovo_pdf(ts_2, timeout=90)
             if not pdf_2:
                 self.log("❌ Timeout Parte 2")
@@ -185,7 +199,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self._safe_remove(path_temp_2)
                 self.downloaded_files.append(percorso_finale)
                 success_count += 1
-                
+
                 # Stampa
                 if print_enabled and printer_name:
                     self.log(f"🖨️ Stampa su: {printer_name}")
@@ -198,12 +212,15 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         end_time = time.time() + timeout
         while time.time() < end_time:
             try:
-                btn_ok = self.driver.find_element(By.XPATH, "//button[contains(@class, 'btn dialog-btn btn-ok')]")
+                btn_ok = self.driver.find_element(
+                    By.XPATH, "//button[contains(@class, 'btn dialog-btn btn-ok')]"
+                )
                 if btn_ok.is_displayed():
                     btn_ok.click()
                     time.sleep(1)
                     return True
-            except: pass
+            except:
+                pass
             time.sleep(0.5)
         return False
 
@@ -223,16 +240,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def _unisci_pdf(self, file1, file2, output_path):
         try:
             result = fitz.open()
-            
+
             # FILE 1: Solo la prima pagina (Parte Prima)
             # "cancella l'eventuale seconda pagina" -> prendiamo solo la pagina 0
-            with fitz.open(file1) as pdf1: 
+            with fitz.open(file1) as pdf1:
                 result.insert_pdf(pdf1, from_page=0, to_page=0)
-            
+
             # FILE 2: Tutte le pagine (Parte Seconda)
-            with fitz.open(file2) as pdf2: 
+            with fitz.open(file2) as pdf2:
                 result.insert_pdf(pdf2)
-                
+
             result.save(output_path)
             result.close()
             return True

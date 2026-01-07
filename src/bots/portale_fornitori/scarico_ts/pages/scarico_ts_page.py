@@ -7,15 +7,18 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.common.exceptions import (
+    TimeoutException,
+)
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By  # Explicit import for internal use
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.webdriver.support.ui import WebDriverWait
 
-from src.core.constants import Timeouts
 from src.bots.portale_fornitori.scarico_ts.locators import ScaricoTSLocators
-from selenium.webdriver.common.by import By # Explicit import for internal use
+from src.core.constants import Timeouts
+
 
 class ScaricoTSPage:
     """Encapsulates interactions with the Scarico TS page."""
@@ -46,20 +49,14 @@ class ScaricoTSPage:
             self.log("Navigazione menu Report -> Timesheet...")
 
             # Click Report
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.REPORT_MENU)
-            ).click()
+            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.REPORT_MENU)).click()
             self._wait_for_overlay()
 
             # Click Timesheet
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.TIMESHEET_MENU)
-            ).click()
+            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.TIMESHEET_MENU)).click()
 
             # Wait for page load (check for supplier arrow)
-            self.wait.until(
-                EC.visibility_of_element_located(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
-            )
+            self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW))
             self._wait_for_overlay()
             return True
 
@@ -72,16 +69,12 @@ class ScaricoTSPage:
         try:
             # Select Supplier
             self.log(f"  Selezione fornitore: '{supplier}'...")
-            arrow = self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW)
-            )
+            arrow = self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SUPPLIER_DROPDOWN_ARROW))
             ActionChains(self.driver).move_to_element(arrow).click().perform()
 
             # Click Option
             option_xpath = f"//li[normalize-space(text())='{supplier}']"
-            option = self.long_wait.until(
-                EC.presence_of_element_located((By.XPATH, option_xpath))
-            )
+            option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
             time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", option)
@@ -89,9 +82,7 @@ class ScaricoTSPage:
 
             # Set Date
             self.log(f"  Inserimento data '{date_from}'...")
-            date_field = self.wait.until(
-                EC.visibility_of_element_located(ScaricoTSLocators.DATE_FROM_FIELD)
-            )
+            date_field = self.wait.until(EC.visibility_of_element_located(ScaricoTSLocators.DATE_FROM_FIELD))
             date_field.clear()
             date_field.send_keys(date_from)
 
@@ -124,7 +115,7 @@ class ScaricoTSPage:
             # Search
             self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.SEARCH_BUTTON)).click()
             self.log("  Pulsante 'Cerca' cliccato. Attesa risultati...")
-            self._wait_for_overlay() # Wait for loading
+            self._wait_for_overlay()  # Wait for loading
 
             # Download
             return self._download_excel(download_dir, oda_number, oda_position)
@@ -136,18 +127,18 @@ class ScaricoTSPage:
     def _download_excel(self, download_dir: Path, oda_number: str, oda_position: str) -> bool:
         """Handles the file download logic."""
         try:
-            files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
+            files_before = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
 
             # Click Export
-            self.wait.until(
-                EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)
-            ).click()
+            self.wait.until(EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)).click()
 
             # Wait for file
             downloaded_file = None
             start_time = time.time()
             while time.time() - start_time < Timeouts.DOWNLOAD:
-                current_files = {f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == '.xlsx'}
+                current_files = {
+                    f for f in download_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"
+                }
                 new_files = current_files - files_before
                 if new_files:
                     downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)

@@ -1,14 +1,16 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
 from PyQt6.QtWidgets import QWidget
+
 from src.gui.contabilita_panel import ContabilitaPanel
 
-@patch('src.gui.contabilita_panel.ContabilitaManager')
+
+@patch("src.gui.contabilita_panel.ContabilitaManager")
 class TestContabilitaExtra:
 
-    @patch('src.gui.contabilita_kpi_panel.ContabilitaKPIPanel')
-    @patch('src.gui.contabilita_panel.AttivitaProgrammateTab')
-    @patch('src.gui.contabilita_panel.CertificatiCampioneTab')
+    @patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel")
+    @patch("src.gui.contabilita_panel.AttivitaProgrammateTab")
+    @patch("src.gui.contabilita_panel.CertificatiCampioneTab")
     def test_contabilita_panel_init(self, mock_cert_tab, mock_att_tab, mock_kpi_class, mock_manager, qtbot):
         # Ensure mock returns a QWidget with the required methods
         for m in [mock_cert_tab, mock_att_tab, mock_kpi_class]:
@@ -27,14 +29,16 @@ class TestContabilitaExtra:
 
         panel = ContabilitaPanel()
         qtbot.addWidget(panel)
-        
+
         assert panel is not None
         assert panel.main_tabs.count() >= 5
 
-    @patch('src.gui.contabilita_kpi_panel.ContabilitaKPIPanel')
-    @patch('src.gui.contabilita_panel.AttivitaProgrammateTab')
-    @patch('src.gui.contabilita_panel.CertificatiCampioneTab')
-    def test_contabilita_panel_tab_switch(self, mock_cert_tab, mock_att_tab, mock_kpi_class, mock_manager, qtbot):
+    @patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel")
+    @patch("src.gui.contabilita_panel.AttivitaProgrammateTab")
+    @patch("src.gui.contabilita_panel.CertificatiCampioneTab")
+    def test_contabilita_panel_tab_switch(
+        self, mock_cert_tab, mock_att_tab, mock_kpi_class, mock_manager, qtbot
+    ):
         # Ensure mock returns a real QWidget with required methods
         for m in [mock_cert_tab, mock_att_tab, mock_kpi_class]:
             instance = QWidget()
@@ -51,11 +55,11 @@ class TestContabilitaExtra:
 
         panel = ContabilitaPanel()
         qtbot.addWidget(panel)
-        
+
         # Switch to "Giornaliere" (Index 1)
         panel.main_tabs.setCurrentIndex(1)
         assert panel.main_tabs.currentIndex() == 1
-        
+
         # Switch to "Attività Programmate" (Index 2)
         panel.main_tabs.setCurrentIndex(2)
         assert panel.main_tabs.currentIndex() == 2

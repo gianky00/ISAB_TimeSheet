@@ -1,36 +1,73 @@
 """
-Bot TS - GUI Widgets
+SyncroJob - GUI Widgets
 Widget personalizzati riutilizzabili.
 """
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QMenu,
-    QTextEdit, QFrame, QAbstractItemView, QComboBox, QApplication,
-    QToolTip, QGraphicsOpacityEffect, QDateEdit, QDialog, QSizePolicy, QGraphicsDropShadowEffect,
-    QListWidget, QListWidgetItem, QScrollArea, QScrollBar
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QAbstractAnimation, QPoint, QSize, QUrl, QEasingCurve, QRect
-from PyQt6.QtGui import QColor, QAction, QKeySequence, QCursor, QPainter, QBrush, QIcon, QFont, QDesktopServices, QPen
-from datetime import datetime
+
 import re
+from datetime import datetime
 from pathlib import Path
-from src.utils.log_humanizer import SmartLogTranslator
+
+from PyQt6.QtCore import (
+    QAbstractAnimation,
+    QEasingCurve,
+    QPoint,
+    QPropertyAnimation,
+    QRect,
+    Qt,
+    QUrl,
+    pyqtSignal,
+)
+from PyQt6.QtGui import (
+    QAction,
+    QBrush,
+    QColor,
+    QCursor,
+    QDesktopServices,
+    QKeySequence,
+    QPainter,
+    QPen,
+)
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QComboBox,
+    QDateEdit,
+    QDialog,
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMenu,
+    QPushButton,
+    QScrollArea,
+    QTableWidget,
+    QTableWidgetItem,
+    QToolTip,
+    QVBoxLayout,
+    QWidget,
+)
+
 from src.utils.helpers import get_asset_path
+from src.utils.log_humanizer import SmartLogTranslator
 
 
 class HorizontalLogItem(QWidget):
     """Widget per singolo elemento della timeline log orizzontale."""
+
     def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
         super().__init__(parent)
-        self.setFixedSize(160, 90) # Reduced Height (approx 50%)
+        self.setFixedSize(160, 90)  # Reduced Height (approx 50%)
 
         # Main Layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5) # Compact margins
+        layout.setContentsMargins(5, 5, 5, 5)  # Compact margins
         layout.setSpacing(2)
 
         # Style
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QWidget {
                 background-color: white;
                 border: 1px solid #dee2e6;
@@ -40,7 +77,8 @@ class HorizontalLogItem(QWidget):
                 background-color: transparent;
                 border: none;
             }
-        """)
+        """
+        )
 
         # Process Tags
         snapshot_path = None
@@ -60,14 +98,24 @@ class HorizontalLogItem(QWidget):
 
         # Icon Mapping
         icons = {
-            "start": "🚀", "login": "🔐", "search": "🔍",
-            "download": "📥", "success": "✅", "error": "❌",
-            "wait": "⏳", "info": "ℹ️"
+            "start": "🚀",
+            "login": "🔐",
+            "search": "🔍",
+            "download": "📥",
+            "success": "✅",
+            "error": "❌",
+            "wait": "⏳",
+            "info": "ℹ️",
         }
         colors = {
-            "start": "#0d6efd", "login": "#6f42c1", "search": "#fd7e14",
-            "download": "#0dcaf0", "success": "#198754", "error": "#dc3545",
-            "wait": "#ffc107", "info": "#6c757d"
+            "start": "#0d6efd",
+            "login": "#6f42c1",
+            "search": "#fd7e14",
+            "download": "#0dcaf0",
+            "success": "#198754",
+            "error": "#dc3545",
+            "wait": "#ffc107",
+            "info": "#6c757d",
         }
 
         self.category_color = colors.get(category, "#6c757d")
@@ -77,11 +125,11 @@ class HorizontalLogItem(QWidget):
         top_row.setSpacing(5)
 
         lbl_icon = QLabel(icons.get(category, "•"))
-        lbl_icon.setStyleSheet(f"font-size: 20px; color: {self.category_color};") # Smaller Icon
+        lbl_icon.setStyleSheet(f"font-size: 20px; color: {self.category_color};")  # Smaller Icon
         top_row.addWidget(lbl_icon)
 
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 11px; font-family: monospace;") # Smaller time
+        lbl_time.setStyleSheet("color: #adb5bd; font-size: 11px; font-family: monospace;")  # Smaller time
         top_row.addWidget(lbl_time)
 
         top_row.addStretch()
@@ -89,7 +137,7 @@ class HorizontalLogItem(QWidget):
 
         # Text (Compact)
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 12px; color: #212529;") # Smaller text
+        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 12px; color: #212529;")  # Smaller text
         self.lbl_human.setWordWrap(True)
         self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(self.lbl_human)
@@ -105,7 +153,9 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(24, 20)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(f"background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;")
+            btn.setStyleSheet(
+                "background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;"
+            )
             btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
             action_layout.addWidget(btn)
 
@@ -114,12 +164,16 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(24, 20)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(f"background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;")
+            btn.setStyleSheet(
+                "background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;"
+            )
             btn.clicked.connect(self._open_settings)
             action_layout.addWidget(btn)
 
         # Path Detection
-        path_matches = re.findall(r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg)
+        path_matches = re.findall(
+            r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg
+        )
         seen = set()
         for path in path_matches:
             path = path.rstrip(".,';)]}").strip()
@@ -129,13 +183,15 @@ class HorizontalLogItem(QWidget):
                 btn.setFixedSize(24, 20)
                 btn.setToolTip(f"Apri: {Path(path).name}")
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet(f"background-color: #17a2b8; color: white; border-radius: 3px; font-size: 10px;")
+                btn.setStyleSheet(
+                    "background-color: #17a2b8; color: white; border-radius: 3px; font-size: 10px;"
+                )
                 btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
                 action_layout.addWidget(btn)
 
         action_layout.addStretch()
-        if action_layout.count() > 1: # >1 because stretch is 1
-             layout.addLayout(action_layout)
+        if action_layout.count() > 1:  # >1 because stretch is 1
+            layout.addLayout(action_layout)
 
     def set_count(self, count):
         """Update the message to show grouped count."""
@@ -152,6 +208,7 @@ class HorizontalLogItem(QWidget):
 
 class HorizontalTimelineContainer(QWidget):
     """Container interno che disegna la linea di connessione."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
@@ -159,7 +216,7 @@ class HorizontalTimelineContainer(QWidget):
         self.layout.setSpacing(10)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         # Ensure minimal height
-        self.setMinimumHeight(90) # Reduced
+        self.setMinimumHeight(90)  # Reduced
 
     def paintEvent(self, event):
         """Disegna la linea 'metro map' dietro gli elementi."""
@@ -173,7 +230,7 @@ class HorizontalTimelineContainer(QWidget):
         line_y = 20
 
         pen = QPen(QColor("#dee2e6"))
-        pen.setWidth(2) # Thinner line
+        pen.setWidth(2)  # Thinner line
         painter.setPen(pen)
 
         # Draw line from first item center to last item center
@@ -188,12 +245,13 @@ class HorizontalTimelineContainer(QWidget):
 
 class HorizontalTimelineWidget(QScrollArea):
     """Widget Timeline Orizzontale con animazioni."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setFixedHeight(110) # Reduced Height (approx 50% of 200)
+        self.setFixedHeight(110)  # Reduced Height (approx 50% of 200)
         self.setStyleSheet("border: none; background-color: transparent;")
 
         self.container = HorizontalTimelineContainer()
@@ -276,10 +334,10 @@ class HorizontalTimelineWidget(QScrollArea):
     def set_mood(self, mood):
         # Could change background of scroll area slightly?
         colors = {
-            "running": "#f0f8ff", # AliceBlue
-            "error": "#fff5f5",   # Light Red
-            "success": "#f0fff4", # Honeydew
-            "idle": "transparent"
+            "running": "#f0f8ff",  # AliceBlue
+            "error": "#fff5f5",  # Light Red
+            "success": "#f0fff4",  # Honeydew
+            "idle": "transparent",
         }
         col = colors.get(mood, "transparent")
         self.setStyleSheet(f"border: none; background-color: {col};")
@@ -290,6 +348,7 @@ class StatusIndicator(QWidget):
     Indicatore di stato circolare con animazione di pulsazione.
     Stati supportati: 'idle', 'running', 'success', 'error'.
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedSize(20, 20)
@@ -321,15 +380,15 @@ class StatusIndicator(QWidget):
         """
         self.setToolTip(message)
 
-        if status == 'running':
+        if status == "running":
             self.current_color = QColor("#0d6efd")  # Blu
             if self.animation.state() == QAbstractAnimation.State.Stopped:
                 self.animation.start()
-        elif status == 'success':
+        elif status == "success":
             self.current_color = QColor("#198754")  # Verde
             self.animation.stop()
             self.opacity_effect.setOpacity(1.0)
-        elif status == 'error':
+        elif status == "error":
             self.current_color = QColor("#dc3545")  # Rosso
             self.animation.stop()
             self.opacity_effect.setOpacity(1.0)
@@ -354,16 +413,18 @@ class StatusIndicator(QWidget):
 
 class CalendarDateEdit(QDateEdit):
     """QDateEdit con popup calendario e stile personalizzato."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setCalendarPopup(True)
         self.setDisplayFormat("dd.MM.yyyy")
         self.setMinimumWidth(150)
-        
+
         # Resolve absolute icon path
         icon_path = get_asset_path("assets/icons/calendar.svg").replace("\\", "/")
-        
-        self.setStyleSheet(f"""
+
+        self.setStyleSheet(
+            f"""
             QDateEdit {{
                 border: 1px solid #ced4da;
                 border-radius: 4px;
@@ -394,7 +455,8 @@ class CalendarDateEdit(QDateEdit):
             QDateEdit::drop-down:hover {{
                 background-color: #e9ecef;
             }}
-        """)
+        """
+        )
 
 
 class ExcelTableWidget(QTableWidget):
@@ -408,7 +470,11 @@ class ExcelTableWidget(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         # Assicura che il click selezioni la riga anche se clicco su una cella non editabile
-        self.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
+        self.setEditTriggers(
+            QAbstractItemView.EditTrigger.DoubleClicked
+            | QAbstractItemView.EditTrigger.EditKeyPressed
+            | QAbstractItemView.EditTrigger.AnyKeyPressed
+        )
 
     def set_row_status(self, row, status):
         """
@@ -416,10 +482,10 @@ class ExcelTableWidget(QTableWidget):
         Status: 'completato', 'errore', 'in_corso', 'da_processare'
         """
         colors = {
-            "completato": QColor("#C8E6C9"),      # Verde chiaro
-            "errore": QColor("#FFCDD2"),          # Rosso chiaro
-            "in_corso": QColor("#FFF9C4"),        # Giallo chiaro
-            "da_processare": QColor("#FFFFFF")    # Bianco
+            "completato": QColor("#C8E6C9"),  # Verde chiaro
+            "errore": QColor("#FFCDD2"),  # Rosso chiaro
+            "in_corso": QColor("#FFF9C4"),  # Giallo chiaro
+            "da_processare": QColor("#FFFFFF"),  # Bianco
         }
         color = colors.get(status, QColor("white"))
 
@@ -454,32 +520,34 @@ class ExcelTableWidget(QTableWidget):
         if not text:
             return
 
-        rows = text.split('\n')
+        rows = text.split("\n")
         if rows and not rows[-1]:
             rows.pop()
 
         current_row = self.currentRow()
         current_col = self.currentColumn()
-        
-        if current_row < 0: current_row = 0
-        if current_col < 0: current_col = 0
+
+        if current_row < 0:
+            current_row = 0
+        if current_col < 0:
+            current_col = 0
 
         for r_idx, row_text in enumerate(rows):
             target_r = current_row + r_idx
             if target_r >= self.rowCount():
                 break
 
-            cols = row_text.split('\t')
+            cols = row_text.split("\t")
             for c_idx, cell_text in enumerate(cols):
                 target_c = current_col + c_idx
                 if target_c >= self.columnCount():
                     break
-                
+
                 if self.isColumnHidden(target_c):
                     continue
 
                 cell_text = cell_text.strip()
-                
+
                 widget = self.cellWidget(target_r, target_c)
                 if isinstance(widget, QComboBox):
                     index = widget.findText(cell_text)
@@ -516,7 +584,8 @@ class ExcelTableWidget(QTableWidget):
     def _analyze_row_at(self, pos):
         """Analizza la riga specifica sotto il cursore."""
         item = self.itemAt(pos)
-        if not item: return
+        if not item:
+            return
         row = item.row()
 
         row_data = []
@@ -543,7 +612,8 @@ class ExcelTableWidget(QTableWidget):
     def _analyze_selection(self):
         """Invia la selezione a Lyra."""
         selection = self.selectedRanges()
-        if not selection: return
+        if not selection:
+            return
 
         # Estrai testo
         rows_text = []
@@ -575,8 +645,12 @@ class ExcelTableWidget(QTableWidget):
             return
 
         # Determina i limiti della selezione
-        rows = sorted(list(set(r for range_ in selection for r in range(range_.topRow(), range_.bottomRow() + 1))))
-        cols = sorted(list(set(c for range_ in selection for c in range(range_.leftColumn(), range_.rightColumn() + 1))))
+        rows = sorted(
+            list(set(r for range_ in selection for r in range(range_.topRow(), range_.bottomRow() + 1)))
+        )
+        cols = sorted(
+            list(set(c for range_ in selection for c in range(range_.leftColumn(), range_.rightColumn() + 1)))
+        )
 
         if not rows or not cols:
             return
@@ -610,7 +684,7 @@ class ExcelTableWidget(QTableWidget):
                     text = item.text() if item else ""
 
                 # Escape per Excel se necessario (es. tab o newline nel testo)
-                text = text.replace('\t', ' ').replace('\n', ' ')
+                text = text.replace("\t", " ").replace("\n", " ")
                 row_data.append(text)
             tsv_rows.append("\t".join(row_data))
 
@@ -645,10 +719,11 @@ class EditableDataTable(QWidget):
         # Tabella (Usa ExcelTableWidget invece di QTableWidget)
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.columns))
-        self.table.setHorizontalHeaderLabels([c['name'] for c in self.columns])
+        self.table.setHorizontalHeaderLabels([c["name"] for c in self.columns])
 
         # Stile
-        self.table.setStyleSheet("""
+        self.table.setStyleSheet(
+            """
             QTableWidget {
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
@@ -684,7 +759,8 @@ class EditableDataTable(QWidget):
                 font-weight: bold;
                 font-size: 14px;
             }
-        """)
+        """
+        )
 
         # Configurazione header
         header = self.table.horizontalHeader()
@@ -763,13 +839,14 @@ class EditableDataTable(QWidget):
     def _populate_row(self, row: int):
         """Popola una riga con widget o item di default."""
         for col, column in enumerate(self.columns):
-            col_type = column.get('type', 'text')
+            col_type = column.get("type", "text")
 
-            if col_type == 'combo':
+            if col_type == "combo":
                 # Setup ComboBox
                 combo = QComboBox()
                 # Fix colore testo bianco su sfondo bianco
-                combo.setStyleSheet("""
+                combo.setStyleSheet(
+                    """
                     QComboBox {
                         border: none;
                         background: transparent;
@@ -791,12 +868,13 @@ class EditableDataTable(QWidget):
                         background-color: #e7f1ff;
                         color: black;
                     }
-                """)
-                options = column.get('options', [])
+                """
+                )
+                options = column.get("options", [])
                 combo.addItems(options)
 
                 # Seleziona default se presente
-                default_val = column.get('default', "")
+                default_val = column.get("default", "")
                 if default_val and default_val in options:
                     combo.setCurrentText(default_val)
 
@@ -806,7 +884,7 @@ class EditableDataTable(QWidget):
                 self.table.setCellWidget(row, col, combo)
             else:
                 # Standard Text Item
-                default_val = column.get('default', "")
+                default_val = column.get("default", "")
                 item = QTableWidgetItem(str(default_val))
                 self.table.setItem(row, col, item)
 
@@ -840,7 +918,7 @@ class EditableDataTable(QWidget):
             has_data = False
 
             for col, column in enumerate(self.columns):
-                key = column['name'].lower().replace(' ', '_')
+                key = column["name"].lower().replace(" ", "_")
 
                 # Gestione ComboBox vs Item
                 widget = self.table.cellWidget(row, col)
@@ -876,10 +954,10 @@ class EditableDataTable(QWidget):
         for row_data in data:
             row = self.table.rowCount()
             self.table.insertRow(row)
-            self._populate_row(row) # Crea i widget se necessario
+            self._populate_row(row)  # Crea i widget se necessario
 
             for col, column in enumerate(self.columns):
-                key = column['name'].lower().replace(' ', '_')
+                key = column["name"].lower().replace(" ", "_")
                 value = row_data.get(key, "")
 
                 widget = self.table.cellWidget(row, col)
@@ -910,8 +988,8 @@ class EditableDataTable(QWidget):
         # 1. Aggiorna definizione colonna
         target_col_idx = -1
         for i, col in enumerate(self.columns):
-            if col['name'] == column_name:
-                col['options'] = new_options
+            if col["name"] == column_name:
+                col["options"] = new_options
                 target_col_idx = i
                 break
 
@@ -960,7 +1038,8 @@ class LogWidget(QWidget):
 
         clear_btn = QPushButton("🧹 Pulisci Log")
         clear_btn.setMaximumWidth(120)
-        clear_btn.setStyleSheet("""
+        clear_btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: #6c757d;
                 color: white;
@@ -970,7 +1049,8 @@ class LogWidget(QWidget):
                 font-size: 11px;
             }
             QPushButton:hover { background-color: #5a6268; }
-        """)
+        """
+        )
         clear_btn.clicked.connect(self.clear)
         header_layout.addWidget(clear_btn)
         layout.addLayout(header_layout)
@@ -988,12 +1068,14 @@ class LogWidget(QWidget):
 
 class DetailedInfoDialog(QDialog):
     """Dialogo modale per spiegazioni dettagliate KPI."""
+
     def __init__(self, title, content, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Dettaglio KPI")
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setFixedWidth(400)
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QDialog {
                 background-color: #ffffff;
                 border: 2px solid #0d6efd;
@@ -1003,7 +1085,8 @@ class DetailedInfoDialog(QDialog):
                 color: #212529;
                 font-size: 14px;
             }
-        """)
+        """
+        )
 
         layout = QVBoxLayout(self)
 
@@ -1033,6 +1116,7 @@ class InfoLabel(QPushButton):
     Bottone informativo accessibile (icona ⓘ) che apre un popup al click.
     Accessibile via tastiera (Tab + Enter/Space).
     """
+
     def __init__(self, title, get_text_callback, parent=None):
         super().__init__("ⓘ", parent)
         self.title = title
@@ -1048,7 +1132,8 @@ class InfoLabel(QPushButton):
         # Connect click signal (works for Mouse and Keyboard)
         self.clicked.connect(self._show_info)
 
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QPushButton {
                 color: #6c757d;
                 font-weight: bold;
@@ -1066,11 +1151,14 @@ class InfoLabel(QPushButton):
                 border: 1px dotted #0d6efd;
                 border-radius: 4px;
             }
-        """)
+        """
+        )
 
     def _show_info(self):
         """Mostra il dialog con il testo aggiornato, posizionato in modo intelligente."""
-        content = self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
+        content = (
+            self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
+        )
         dlg = DetailedInfoDialog(self.title, content, self.window())
 
         # Smart Positioning Logic
@@ -1123,17 +1211,20 @@ class InfoLabel(QPushButton):
 
 class KPIBigCard(QFrame):
     """Card per mostrare un KPI numerico principale."""
+
     def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None):
         super().__init__(parent)
         self.info_content_callback = lambda: "Nessuna informazione disponibile."
 
-        self.setStyleSheet(f"""
-            QFrame {{
+        self.setStyleSheet(
+            """
+            QFrame {
                 background-color: white;
                 border-radius: 12px;
                 border: 1px solid #e9ecef;
-            }}
-        """)
+            }
+        """
+        )
         self.setMinimumWidth(200)
         self.setMinimumHeight(120)
 
@@ -1155,7 +1246,9 @@ class KPIBigCard(QFrame):
         header_layout.setContentsMargins(0, 0, 0, 0)
 
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;")
+        lbl_title.setStyleSheet(
+            "color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;"
+        )
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         header_layout.addWidget(lbl_title)
 
@@ -1168,7 +1261,9 @@ class KPIBigCard(QFrame):
         layout.addLayout(header_layout)
 
         self.lbl_value = QLabel(value)
-        self.lbl_value.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
+        self.lbl_value.setStyleSheet(
+            f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+        )
         self.lbl_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.lbl_value)
 
@@ -1191,16 +1286,19 @@ class MissionReportCard(QFrame):
     Card riepilogativa stile 'Mission Complete' (#3).
     Mostra statistiche finali con design curato.
     """
+
     def __init__(self, duration_str, status, parent=None):
         super().__init__(parent)
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QFrame {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef);
                 border: 1px solid #dee2e6;
                 border-radius: 8px;
                 margin: 10px 5px;
             }
-        """)
+        """
+        )
 
         layout = QVBoxLayout(self)
 
@@ -1232,7 +1330,7 @@ class MissionReportCard(QFrame):
     def _add_stat(self, layout, label, value):
         container = QWidget()
         v_layout = QVBoxLayout(container)
-        v_layout.setContentsMargins(0,0,0,0)
+        v_layout.setContentsMargins(0, 0, 0, 0)
 
         lbl_l = QLabel(label)
         lbl_l.setStyleSheet("font-size: 12px; color: #6c757d;")

@@ -1,16 +1,25 @@
 """
 Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 """
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QHeaderView, QTableWidgetItem
-)
+
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QBrush
+from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QHeaderView,
+    QLineEdit,
+    QPushButton,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
 # Use explicit import from old_widgets to avoid circular dependency via src.gui.widgets
 from src.gui.old_widgets import ExcelTableWidget
+
 from ..design.colors import get_palette
 from ..design.spacing import Spacing
+
 
 class DataTable(QWidget):
     """Tabella dati con funzionalità avanzate (search, refresh) che wrappa ExcelTableWidget."""
@@ -19,11 +28,11 @@ class DataTable(QWidget):
 
     # Status colors
     STATUS_COLORS = {
-        "completato": "#C8E6C9",    # Green
-        "errore": "#FFCDD2",        # Red
-        "in_corso": "#FFF9C4",      # Yellow
-        "pending": "#E3F2FD",       # Blue
-        "da_processare": "#FFFFFF", # White
+        "completato": "#C8E6C9",  # Green
+        "errore": "#FFCDD2",  # Red
+        "in_corso": "#FFF9C4",  # Yellow
+        "pending": "#E3F2FD",  # Blue
+        "da_processare": "#FFFFFF",  # White
     }
 
     def __init__(self, columns: list[dict], parent=None):
@@ -51,7 +60,8 @@ class DataTable(QWidget):
         self._search_input.setClearButtonEnabled(True)
         self._search_input.textChanged.connect(self._filter_rows)
         # Apply modern style
-        self._search_input.setStyleSheet(f"""
+        self._search_input.setStyleSheet(
+            f"""
             QLineEdit {{
                 border: 1px solid {self._palette.border};
                 border-radius: 6px;
@@ -61,14 +71,16 @@ class DataTable(QWidget):
             QLineEdit:focus {{
                 border: 2px solid {self._palette.primary};
             }}
-        """)
+        """
+        )
         toolbar.addWidget(self._search_input, 1)
 
         # Actions
         self._refresh_btn = QPushButton("↻ Aggiorna")
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(lambda: self.refresh())
-        self._refresh_btn.setStyleSheet(f"""
+        self._refresh_btn.setStyleSheet(
+            f"""
             QPushButton {{
                 background-color: {self._palette.surface};
                 border: 1px solid {self._palette.border};
@@ -79,7 +91,8 @@ class DataTable(QWidget):
             QPushButton:hover {{
                 background-color: {self._palette.hover};
             }}
-        """)
+        """
+        )
         toolbar.addWidget(self._refresh_btn)
 
         layout.addLayout(toolbar)
@@ -87,7 +100,7 @@ class DataTable(QWidget):
         # Table (ExcelTableWidget)
         self._table = ExcelTableWidget()
         self._table.setColumnCount(len(self._columns))
-        self._table.setHorizontalHeaderLabels([c['name'] for c in self._columns])
+        self._table.setHorizontalHeaderLabels([c["name"] for c in self._columns])
         # ExcelTableWidget handles SelectionBehavior and SelectionMode already
         self._table.setAlternatingRowColors(True)
         self._table.setSortingEnabled(True)
@@ -96,8 +109,8 @@ class DataTable(QWidget):
         # Header sizing
         header = self._table.horizontalHeader()
         for i, col in enumerate(self._columns):
-            if 'width' in col:
-                self._table.setColumnWidth(i, col['width'])
+            if "width" in col:
+                self._table.setColumnWidth(i, col["width"])
             else:
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
 
@@ -106,7 +119,8 @@ class DataTable(QWidget):
 
     def _apply_table_style(self):
         p = self._palette
-        self._table.setStyleSheet(f"""
+        self._table.setStyleSheet(
+            f"""
             QTableWidget {{
                 background-color: {p.surface};
                 alternate-background-color: {p.surface_variant};
@@ -139,7 +153,8 @@ class DataTable(QWidget):
                 color: #9E9E9E;
                 background-color: #F5F5F5;
             }}
-        """)
+        """
+        )
 
     def setData(self, data: list[dict]):
         """Popola la tabella con dati."""
@@ -147,28 +162,28 @@ class DataTable(QWidget):
         self._populate_table(data)
 
     def _populate_table(self, data: list[dict]):
-        self._table.setSortingEnabled(False) # Optimization
+        self._table.setSortingEnabled(False)  # Optimization
         self._table.setRowCount(len(data))
 
         for row_idx, row_data in enumerate(data):
             # Determina colore riga basato su stato
-            status = str(row_data.get('stato', '')).lower()
+            status = str(row_data.get("stato", "")).lower()
             row_color = self._get_row_color(status)
 
             for col_idx, col in enumerate(self._columns):
-                key = col.get('key', col['name'].lower())
-                value = str(row_data.get(key, ''))
+                key = col.get("key", col["name"].lower())
+                value = str(row_data.get(key, ""))
 
                 item = QTableWidgetItem(value)
 
                 # Editabilità
-                if not col.get('editable', True):
+                if not col.get("editable", True):
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
                 # Colore sfondo (ExcelTableWidget uses specific logic but we override it here if needed)
                 if row_color:
                     item.setBackground(QBrush(QColor(row_color)))
-                    item.setForeground(QBrush(QColor("black"))) # Force contrast
+                    item.setForeground(QBrush(QColor("black")))  # Force contrast
 
                 self._table.setItem(row_idx, col_idx, item)
 
@@ -215,7 +230,7 @@ class DataTable(QWidget):
             row_dict = {}
             for c, col in enumerate(self._columns):
                 item = self._table.item(r, c)
-                key = col.get('key', col['name'].lower())
+                key = col.get("key", col["name"].lower())
                 row_dict[key] = item.text() if item else ""
             selected_data.append(row_dict)
 

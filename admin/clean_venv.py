@@ -2,17 +2,19 @@
 Script to clean up invalid distributions (directories starting with ~) in site-packages.
 These are leftovers from failed pip operations and cause warnings.
 """
+
 import os
 import shutil
 import sys
-import site
+
 
 def get_site_packages():
     # Attempt to find site-packages directory
     for path in sys.path:
-        if 'site-packages' in path and os.path.isdir(path):
+        if "site-packages" in path and os.path.isdir(path):
             return path
     return None
+
 
 def clean_invalid_dists():
     site_pkg = get_site_packages()
@@ -24,7 +26,7 @@ def clean_invalid_dists():
 
     found = False
     for name in os.listdir(site_pkg):
-        if name.startswith('~'):
+        if name.startswith("~"):
             full_path = os.path.join(site_pkg, name)
             print(f"Found invalid distribution: {name}")
             try:
@@ -39,6 +41,7 @@ def clean_invalid_dists():
 
     if not found:
         print("No invalid distributions found.")
+
 
 if __name__ == "__main__":
     clean_invalid_dists()

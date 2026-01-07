@@ -1,13 +1,14 @@
 """
-Bot TS - Contabilita Stats
+SyncroJob - Contabilita Stats
 Gestisce il calcolo delle statistiche per i dati della Contabilità Strumentale.
 """
-from typing import Dict, List, Tuple
-from pathlib import Path
-from datetime import datetime
 
+from pathlib import Path
+from typing import Dict
+
+from src.core.contabilita_queries import ContabilitaQueries  # Per accedere ai dati
 from src.utils.parsing import parse_currency
-from src.core.contabilita_queries import ContabilitaQueries # Per accedere ai dati
+
 
 class ContabilitaStats:
     """Gestore per il calcolo delle statistiche del database della Contabilità Strumentale."""
@@ -25,7 +26,7 @@ class ContabilitaStats:
             "status_counts": {},
             "top_commesse": [],
             "ore_dirette": 0.0,
-            "ore_indirette": 0.0
+            "ore_indirette": 0.0,
         }
 
         commesse = []
@@ -33,8 +34,10 @@ class ContabilitaStats:
             for row in data:
                 try:
                     n_prev = str(row[2]).strip()
-                    if not n_prev: continue
-                    if "totale" in n_prev.lower(): continue
+                    if not n_prev:
+                        continue
+                    if "totale" in n_prev.lower():
+                        continue
 
                     val_prev = parse_currency(row[3])
                     val_ore = parse_currency(row[9])
@@ -60,8 +63,10 @@ class ContabilitaStats:
                 try:
                     n_prev = str(row[4]).strip()
                     odc = str(row[5]).strip()
-                    if n_prev.lower() == 'nan': n_prev = ""
-                    if odc.lower() == 'nan': odc = ""
+                    if n_prev.lower() == "nan":
+                        n_prev = ""
+                    if odc.lower() == "nan":
+                        odc = ""
 
                     ore = parse_currency(row[9])
 

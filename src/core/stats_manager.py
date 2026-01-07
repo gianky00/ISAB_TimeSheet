@@ -1,11 +1,13 @@
 """
-Bot TS - Statistics Manager
+SyncroJob - Statistics Manager
 Gestisce il salvataggio persistente delle statistiche di utilizzo.
 """
+
 import json
-from pathlib import Path
 from datetime import datetime
+
 from src.core import config_manager
+
 
 class StatsManager:
     _instance = None
@@ -23,20 +25,21 @@ class StatsManager:
     def _load_stats(self) -> dict:
         """Carica le statistiche dal config_manager con migrazione automatica."""
         config = config_manager.load_config()
-        
+
         # Se non ci sono statistiche nel config, prova a migrare dal vecchio file
         if not config.get("statistics"):
             old_file = config_manager.CONFIG_DIR / "statistics.json"
             if old_file.exists():
                 try:
-                    with open(old_file, 'r', encoding='utf-8') as f:
+                    with open(old_file, "r", encoding="utf-8") as f:
                         old_stats = json.load(f)
                         if old_stats:
                             config_manager.set_config_value("statistics", old_stats)
                             return old_stats
-                except: pass
+                except:
+                    pass
             return {}
-            
+
         return config.get("statistics", {})
 
     def _save_stats(self):
@@ -47,10 +50,12 @@ class StatsManager:
         """Incrementa il contatore di utilizzo per un bot e aggiorna l'ultimo avvio."""
         if bot_id not in self.stats:
             self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
-        
+
         # Ensure structure integrity for old stats
-        if "runs" not in self.stats[bot_id]: self.stats[bot_id]["runs"] = 0
-        if "errors" not in self.stats[bot_id]: self.stats[bot_id]["errors"] = 0
+        if "runs" not in self.stats[bot_id]:
+            self.stats[bot_id]["runs"] = 0
+        if "errors" not in self.stats[bot_id]:
+            self.stats[bot_id]["errors"] = 0
 
         self.stats[bot_id]["runs"] += 1
         self.stats[bot_id]["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -60,9 +65,10 @@ class StatsManager:
         """Incrementa il contatore di errori per un bot."""
         if bot_id not in self.stats:
             self.stats[bot_id] = {"runs": 0, "errors": 0, "last_run": None}
-            
+
         # Ensure structure integrity
-        if "errors" not in self.stats[bot_id]: self.stats[bot_id]["errors"] = 0
+        if "errors" not in self.stats[bot_id]:
+            self.stats[bot_id]["errors"] = 0
 
         self.stats[bot_id]["errors"] += 1
         self._save_stats()

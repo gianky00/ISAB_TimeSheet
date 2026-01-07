@@ -2,13 +2,16 @@
 Bot TS - Toast Notifications
 Widget per notifiche non intrusive.
 """
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QPoint
+
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidget
+
 
 class ToastOverlay(QWidget):
     """
     Overlay per mostrare notifiche temporanee (Toast).
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.SubWindow)
@@ -17,7 +20,8 @@ class ToastOverlay(QWidget):
 
         # Stile (Explicit colors for dark/light mode compatibility)
         # Forced black text on white background as requested
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QWidget {
                 background-color: #ffffff;
                 color: #000000;
@@ -30,7 +34,8 @@ class ToastOverlay(QWidget):
                 font-weight: bold;
                 background-color: transparent;
             }
-        """)
+        """
+        )
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 10, 15, 10)

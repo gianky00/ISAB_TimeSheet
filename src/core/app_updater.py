@@ -1,13 +1,15 @@
 """
-Bot TS - App Updater
+SyncroJob - App Updater
 Gestisce il controllo e la notifica di aggiornamenti dell'applicazione.
 """
-import requests
+
 import webbrowser
+
+import requests
 from packaging import version as pkg_version
 from PyQt6.QtWidgets import QMessageBox
+
 from . import version
-from src.core.audit_manager import AuditManager
 
 
 def check_for_updates(parent=None, silent=True, callback=None):
@@ -49,14 +51,14 @@ def check_for_updates(parent=None, silent=True, callback=None):
                     )
                     if changelog:
                         msg += f"\nNovità:\n{changelog}\n"
-                    
+
                     msg += "\nVuoi scaricarla ora?"
 
                     reply = QMessageBox.question(
                         parent,
                         "🔄 Aggiornamento Disponibile",
                         msg,
-                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     )
 
                     if reply == QMessageBox.StandardButton.Yes:
@@ -64,7 +66,11 @@ def check_for_updates(parent=None, silent=True, callback=None):
                             webbrowser.open(download_url)
                 else:
                     if not silent:
-                        QMessageBox.information(parent, "✅ Aggiornamento", f"L'applicazione è aggiornata (v{version.__version__})")
+                        QMessageBox.information(
+                            parent,
+                            "✅ Aggiornamento",
+                            f"L'applicazione è aggiornata (v{version.__version__})",
+                        )
     except Exception as e:
         if not silent:
             print(f"[ERRORE] Aggiornamento: {e}")

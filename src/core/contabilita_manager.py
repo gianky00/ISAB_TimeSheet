@@ -2,28 +2,26 @@
 Bot TS - Contabilita Manager
 Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
 """
-import sqlite3
-import pandas as pd
-from pathlib import Path
-import re
-import logging
-import warnings
-import io
-import json
-from typing import List, Dict, Tuple, Optional, Callable
+
 from datetime import datetime
-from src.utils.parsing import parse_currency
+from pathlib import Path
+from typing import Callable, Dict, List, Optional, Tuple
+
+import pandas as pd
+
 from src.core.config_manager import CONFIG_DIR
-from src.core.database import db_manager
-from src.core.excel_importer import ExcelImporter
-from src.core.data_synchronizer import DataSynchronizer
 from src.core.contabilita_queries import ContabilitaQueries
 from src.core.contabilita_search import ContabilitaSearch
 from src.core.contabilita_stats import ContabilitaStats
+from src.core.data_synchronizer import DataSynchronizer
+from src.core.database import db_manager
+from src.core.excel_importer import ExcelImporter
+
+
 class ContabilitaManager:
     """Manager per la gestione del database e dell'importazione Excel."""
 
-    _instance = None # Inizializza l'attributo _instance per il pattern singleton
+    _instance = None  # Inizializza l'attributo _instance per il pattern singleton
     DB_PATH = CONFIG_DIR / "data" / "contabilita.db"
 
     @classmethod
@@ -42,17 +40,25 @@ class ContabilitaManager:
         db_manager.init_db()
 
     @classmethod
-    def import_data_from_excel(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
+    def import_data_from_excel(
+        cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None
+    ) -> Tuple[bool, str, int, int]:
         """Importa i dati dal file Excel specificato (Tabella Dati)."""
-        success, message, imported_rows, imported_years = ExcelImporter.import_contabilita_dati(file_path, progress_callback)
+        success, message, imported_rows, imported_years = ExcelImporter.import_contabilita_dati(
+            file_path, progress_callback
+        )
         if not success:
             return False, message, 0, 0
-        
-        total_added, total_removed = DataSynchronizer.sync_contabilita_dati(cls.DB_PATH, imported_rows, imported_years)
+
+        total_added, total_removed = DataSynchronizer.sync_contabilita_dati(
+            cls.DB_PATH, imported_rows, imported_years
+        )
         return True, message, total_added, total_removed
 
     @classmethod
-    def import_giornaliere(cls, root_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
+    def import_giornaliere(
+        cls, root_path: str, progress_callback: Optional[Callable[[int, int], None]] = None
+    ) -> Tuple[bool, str, int, int]:
         root = Path(root_path)
         if not root.exists():
             return False, "Directory Giornaliere non trovata.", 0, 0
@@ -73,29 +79,48 @@ class ContabilitaManager:
                 with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
                     lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
                     lookup_df = pd.read_sql_query(lookup_query, conn)
-                    lookup_df = lookup_df.drop_duplicates(subset=['n_prev'])
-                    lookup_map = dict(zip(lookup_df['n_prev'], lookup_df['odc']))
-            except: pass
+                    lookup_df = lookup_df.drop_duplicates(subset=["n_prev"])
+                    lookup_map = dict(zip(lookup_df["n_prev"], lookup_df["odc"]))
+            except:
+                pass
 
             # 2. Import Giornaliere data
-            success, message, all_new_rows, years_encountered = ExcelImporter.import_giornaliere(root_path, lookup_map, progress_callback)
+            success, message, all_new_rows, years_encountered = ExcelImporter.import_giornaliere(
+                root_path, lookup_map, progress_callback
+            )
             if not success:
                 return False, message, 0, 0
-            
+
             # 3. Synchronize with database
-            total_added, total_removed = DataSynchronizer.sync_giornaliere(cls.DB_PATH, all_new_rows, years_encountered)
+            total_added, total_removed = DataSynchronizer.sync_giornaliere(
+                cls.DB_PATH, all_new_rows, years_encountered
+            )
 
             if not years_encountered and len(all_new_rows) == 0:
-                return True, "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ").", 0, 0
-            return True, f"Importate Giornaliere: {sorted(list(set(years_encountered)))}", total_added, total_removed
+                return (
+                    True,
+                    "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ").",
+                    0,
+                    0,
+                )
+            return (
+                True,
+                f"Importate Giornaliere: {sorted(list(set(years_encountered)))}",
+                total_added,
+                total_removed,
+            )
 
         except Exception as e:
             return False, f"Errore importazione Giornaliere: {e}", 0, 0
 
     @classmethod
-    def import_attivita_programmate(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
+    def import_attivita_programmate(
+        cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None
+    ) -> Tuple[bool, str, int, int]:
         """Importa il file Attività Programmate (veloce, senza colori)."""
-        success, message, imported_rows = ExcelImporter.import_attivita_programmate(file_path, progress_callback)
+        success, message, imported_rows = ExcelImporter.import_attivita_programmate(
+            file_path, progress_callback
+        )
         if not success:
             return False, message, 0, 0
 
@@ -103,7 +128,9 @@ class ContabilitaManager:
         return True, message, total_added, total_removed
 
     @classmethod
-    def import_scarico_ore(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
+    def import_scarico_ore(
+        cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None
+    ) -> Tuple[bool, str, int, int]:
         """Importa il file Scarico Ore Cantiere (OpenPyXL per colori + Diff Logic)."""
         success, message, imported_rows = ExcelImporter.import_scarico_ore(file_path, progress_callback)
         if not success:
@@ -113,9 +140,13 @@ class ContabilitaManager:
         return True, message, total_added, total_removed
 
     @classmethod
-    def import_certificati_campione(cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> Tuple[bool, str, int, int]:
+    def import_certificati_campione(
+        cls, file_path: str, progress_callback: Optional[Callable[[int, int], None]] = None
+    ) -> Tuple[bool, str, int, int]:
         """Importa il file Certificati Campione."""
-        success, message, imported_rows = ExcelImporter.import_certificati_campione(file_path, progress_callback)
+        success, message, imported_rows = ExcelImporter.import_certificati_campione(
+            file_path, progress_callback
+        )
         if not success:
             return False, message, 0, 0
 
@@ -136,7 +167,6 @@ class ContabilitaManager:
     def get_giornaliere_by_year(cls, year: int) -> List[Tuple]:
         """Restituisce i dati Giornaliere per un anno specifico."""
         return ContabilitaQueries.get_giornaliere_by_year(cls.DB_PATH, year)
-
 
     @classmethod
     def get_attivita_programmate_data(cls) -> List[Tuple]:

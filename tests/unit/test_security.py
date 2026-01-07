@@ -1,5 +1,5 @@
-import pytest
 from src.utils.security import password_manager
+
 
 class TestSecurity:
 
@@ -7,7 +7,7 @@ class TestSecurity:
         text = "my_secret_password"
         encrypted = password_manager.encrypt(text)
         assert encrypted != text
-        
+
         decrypted = password_manager.decrypt(encrypted)
         assert decrypted == text
 

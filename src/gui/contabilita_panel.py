@@ -2,33 +2,50 @@
 Bot TS - Contabilita Panel
 Pannello per la visualizzazione della Contabilità Strumentale.
 """
-import os
-import re
-from datetime import datetime
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QMessageBox, QMenu, QTableWidget,
-    QHeaderView, QTableWidgetItem, QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QAbstractItemView,
-    QTreeWidget, QTreeWidgetItem, QSizePolicy
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
-from PyQt6.QtGui import QAction, QFont, QColor
-import time
-import json
-import tempfile
-import subprocess
 
+import json
+import os
+import subprocess
+import tempfile
+import time
+from datetime import datetime
+
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QAction, QColor, QFont
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QTableWidgetItem,
+    QTabWidget,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
+from src.core import config_manager
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.excel_importer import ExcelImporter
-from src.core import config_manager
-from src.gui.widgets import ExcelTableWidget, StatusIndicator
+from src.gui.widgets import ExcelTableWidget
 
 
 class ContabilitaWorker(QThread):
     """Worker per l'importazione in background."""
+
     finished_signal = pyqtSignal(bool, str, int, int, float)
     progress_signal = pyqtSignal(str)
 
-    def __init__(self, file_path: str, giornaliere_path: str = "", attivita_path: str = "", certificati_path: str = ""):
+    def __init__(
+        self, file_path: str, giornaliere_path: str = "", attivita_path: str = "", certificati_path: str = ""
+    ):
         super().__init__()
         self.file_path = file_path
         self.giornaliere_path = giornaliere_path
@@ -52,15 +69,17 @@ class ContabilitaWorker(QThread):
         certificati_task = 1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
 
         total_ops = sheets + files + attivita_task + certificati_task
-        if total_ops == 0: total_ops = 1
+        if total_ops == 0:
+            total_ops = 1
 
         self.start_time = time.time()
 
         def global_progress(processed_in_phase, phase_offset, phase_name):
             nonlocal total_ops
             current_total = phase_offset + processed_in_phase
-            if current_total > total_ops: total_ops = current_total # Dynamic adjustment
-            
+            if current_total > total_ops:
+                total_ops = current_total  # Dynamic adjustment
+
             elapsed = time.time() - self.start_time
 
             if current_total > 0 and elapsed > 0:
@@ -70,9 +89,12 @@ class ContabilitaWorker(QThread):
 
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current_total / total_ops) * 100)
-                if percent > 99: percent = 99 # Cap until actually finished
+                if percent > 99:
+                    percent = 99  # Cap until actually finished
 
-                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s")
+                self.progress_signal.emit(
+                    f"⏳ Importazione: {percent}% completato ({current_total}/{total_ops}) • Tempo stimato: {m}m {s}s"
+                )
 
         total_added = 0
         total_removed = 0
@@ -84,7 +106,9 @@ class ContabilitaWorker(QThread):
         # 1. Import Contabilità (Dati)
         if self.file_path and os.path.exists(self.file_path):
             dati_cb = lambda c, t: global_progress(c, 0, "Contabilità")
-            success, msg, added, removed = ContabilitaManager.import_data_from_excel(self.file_path, progress_callback=dati_cb)
+            success, msg, added, removed = ContabilitaManager.import_data_from_excel(
+                self.file_path, progress_callback=dati_cb
+            )
             total_added += added
             total_removed += removed
             if success:
@@ -98,25 +122,29 @@ class ContabilitaWorker(QThread):
         # 2. Import Giornaliere (se configurato)
         if self.giornaliere_path:
             giorn_cb = lambda c, t: global_progress(c, sheets, "Giornaliere")
-            g_success, g_msg, g_added, g_removed = ContabilitaManager.import_giornaliere(self.giornaliere_path, progress_callback=giorn_cb)
+            g_success, g_msg, g_added, g_removed = ContabilitaManager.import_giornaliere(
+                self.giornaliere_path, progress_callback=giorn_cb
+            )
             total_added += g_added
             total_removed += g_removed
             if g_success:
                 messages.append(f"Giornaliere: OK (+{g_added}/-{g_removed})")
-                overall_success = True # Consider successful if at least one part works
+                overall_success = True  # Consider successful if at least one part works
             else:
                 messages.append(f"Err Giornaliere: {g_msg}")
 
         # 3. Import Attività Programmate (se configurato)
         if self.attivita_path:
             att_cb = lambda c, t: global_progress(c, sheets + files, "Attività Programmate")
-            att_success, att_msg, att_added, att_removed = ContabilitaManager.import_attivita_programmate(self.attivita_path)
+            att_success, att_msg, att_added, att_removed = ContabilitaManager.import_attivita_programmate(
+                self.attivita_path
+            )
             # Call progress once
             att_cb(1, 1)
             total_added += att_added
             total_removed += att_removed
             if att_success:
-                messages.append(f"Att. Prog: OK")
+                messages.append("Att. Prog: OK")
                 overall_success = True
             else:
                 messages.append(f"Err Att. Prog: {att_msg}")
@@ -124,12 +152,14 @@ class ContabilitaWorker(QThread):
         # 4. Import Certificati Campione (se configurato)
         if self.certificati_path:
             cert_cb = lambda c, t: global_progress(c, sheets + files + attivita_task, "Certificati Campione")
-            cert_success, cert_msg, cert_added, cert_removed = ContabilitaManager.import_certificati_campione(self.certificati_path)
+            cert_success, cert_msg, cert_added, cert_removed = ContabilitaManager.import_certificati_campione(
+                self.certificati_path
+            )
             cert_cb(1, 1)
             total_added += cert_added
             total_removed += cert_removed
             if cert_success:
-                messages.append(f"Certificati: OK")
+                messages.append("Certificati: OK")
                 overall_success = True
             else:
                 messages.append(f"Err Certificati: {cert_msg}")
@@ -145,8 +175,8 @@ class ContabilitaPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.worker = None
-        self.status_labels = [] # Sync all status labels
-        self.update_buttons = [] # Sync all update buttons
+        self.status_labels = []  # Sync all status labels
+        self.update_buttons = []  # Sync all update buttons
         self._last_status_html = "Pronto"
         self._setup_ui()
 
@@ -163,7 +193,8 @@ class ContabilitaPanel(QWidget):
         # Main Tab Container
         self.main_tabs = QTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
-        self.main_tabs.setStyleSheet("""
+        self.main_tabs.setStyleSheet(
+            """
             QTabWidget::pane {
                 border: 1px solid #dee2e6;
                 border-radius: 6px;
@@ -185,7 +216,8 @@ class ContabilitaPanel(QWidget):
                 border-bottom-color: white;
                 color: #0d6efd;
             }
-        """)
+        """
+        )
 
         # --- Totale Selezionato Label (Corner Widget) ---
         self.selection_container = QWidget()
@@ -209,7 +241,7 @@ class ContabilitaPanel(QWidget):
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
         self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
-        
+
         self.tab_preventivi = self._create_tab_wrapper(self.year_tabs_widget, "🔍 Cerca preventivi...")
         self.main_tabs.addTab(self.tab_preventivi, "📂 Preventivi")
 
@@ -219,7 +251,9 @@ class ContabilitaPanel(QWidget):
         self.giornaliere_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
 
-        self.tab_giornaliere = self._create_tab_wrapper(self.giornaliere_tabs_widget, "🔍 Cerca giornaliere...")
+        self.tab_giornaliere = self._create_tab_wrapper(
+            self.giornaliere_tabs_widget, "🔍 Cerca giornaliere..."
+        )
         self.main_tabs.addTab(self.tab_giornaliere, "📂 Giornaliere")
 
         # --- TAB 3: Attività Programmate ---
@@ -234,6 +268,7 @@ class ContabilitaPanel(QWidget):
 
         # --- TAB 5: KPI ---
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
+
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(self.kpi_panel, "📊 Analisi KPI")
 
@@ -244,15 +279,16 @@ class ContabilitaPanel(QWidget):
         wrapper = QWidget()
         layout = QVBoxLayout(wrapper)
         layout.setContentsMargins(10, 10, 10, 10)
-        
+
         toolbar = QHBoxLayout()
-        
+
         # 1. Search (Left)
         search_input = QLineEdit()
         search_input.setPlaceholderText(placeholder_text)
         search_input.setClearButtonEnabled(True)
-        search_input.setFixedWidth(400) # Matched to DataEase
-        search_input.setStyleSheet("""
+        search_input.setFixedWidth(400)  # Matched to DataEase
+        search_input.setStyleSheet(
+            """
             QLineEdit {
                 border: 1px solid #ced4da;
                 border-radius: 4px;
@@ -264,20 +300,24 @@ class ContabilitaPanel(QWidget):
             QLineEdit:focus {
                 border-color: #0d6efd;
             }
-        """)
-        
+        """
+        )
+
         # Filter Logic
         search_input.textChanged.connect(lambda t: self._proxy_filter(content_widget, t))
         if isinstance(content_widget, QTabWidget):
-            content_widget.currentChanged.connect(lambda: self._proxy_filter(content_widget, search_input.text()))
-            
+            content_widget.currentChanged.connect(
+                lambda: self._proxy_filter(content_widget, search_input.text())
+            )
+
         toolbar.addWidget(search_input)
-        
+
         toolbar.addStretch()
-        
+
         # 2. Status Label (Center)
         status_lbl = QLabel(self._last_status_html)
-        status_lbl.setStyleSheet("""
+        status_lbl.setStyleSheet(
+            """
             QLabel {
                 color: #495057;
                 font-size: 14px;
@@ -287,18 +327,20 @@ class ContabilitaPanel(QWidget):
                 border-radius: 4px;
                 border: 1px solid #dee2e6;
             }
-        """)
+        """
+        )
         status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_labels.append(status_lbl)
         toolbar.addWidget(status_lbl)
-        
+
         toolbar.addStretch()
-        
+
         # 3. Update Button (Right)
         update_btn = QPushButton("🔄 Aggiorna Dati")
         update_btn.setToolTip("Aggiorna solo Contabilità e Giornaliere")
         update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        update_btn.setStyleSheet("""
+        update_btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: #0d6efd;
                 color: white;
@@ -311,14 +353,15 @@ class ContabilitaPanel(QWidget):
             QPushButton:hover {
                 background-color: #0b5ed7;
             }
-        """)
+        """
+        )
         update_btn.clicked.connect(self.start_import_process)
         self.update_buttons.append(update_btn)
         toolbar.addWidget(update_btn)
-        
+
         layout.addLayout(toolbar)
         layout.addWidget(content_widget)
-        
+
         return wrapper
 
     def _proxy_filter(self, widget, text):
@@ -326,8 +369,8 @@ class ContabilitaPanel(QWidget):
         target = widget
         if isinstance(widget, QTabWidget):
             target = widget.currentWidget()
-        
-        if hasattr(target, 'filter_data'):
+
+        if hasattr(target, "filter_data"):
             target.filter_data(text)
 
     def _get_subtab_style(self):
@@ -367,7 +410,9 @@ class ContabilitaPanel(QWidget):
 
         years = ContabilitaManager.get_available_years()
         if not years:
-            no_data = QLabel("Nessun dato disponibile. Configura il file nelle impostazioni e riavvia/aggiorna.")
+            no_data = QLabel(
+                "Nessun dato disponibile. Configura il file nelle impostazioni e riavvia/aggiorna."
+            )
             no_data.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.year_tabs_widget.addTab(no_data, "Info")
             return
@@ -398,22 +443,23 @@ class ContabilitaPanel(QWidget):
         self._connect_selection_signal()
 
         # Aggiorna anche i dati KPI
-        if hasattr(self, 'kpi_panel'):
+        if hasattr(self, "kpi_panel"):
             self.kpi_panel.refresh_years()
 
         # Aggiorna Attività Programmate
-        if hasattr(self, 'attivita_widget'):
+        if hasattr(self, "attivita_widget"):
             self.attivita_widget.refresh_data()
 
         # Aggiorna Certificati Campione
-        if hasattr(self, 'certificati_widget'):
+        if hasattr(self, "certificati_widget"):
             self.certificati_widget.refresh_data()
 
     def set_search_query(self, query):
         """Imposta programmaticamente la query di ricerca nel tab corrente."""
         current_widget = self.main_tabs.currentWidget()
-        if not current_widget: return
-        
+        if not current_widget:
+            return
+
         # Cerca la QLineEdit all'interno del widget wrapper
         # La struttura è: Wrapper (VBoxLayout) -> Toolbar (HBoxLayout) -> QLineEdit (index 0)
         search_edit = current_widget.findChild(QLineEdit)
@@ -425,7 +471,7 @@ class ContabilitaPanel(QWidget):
     def _on_tab_changed(self, index):
         """Chiamato quando cambia la tab ANNO (in uno dei sub-tabwidget)."""
         # Search filter is now handled by _proxy_filter connected to local search bar
-        self._connect_selection_signal() # Connect new tab table
+        self._connect_selection_signal()  # Connect new tab table
 
     def _connect_selection_signal(self):
         """Connects the selection change signal of the current table to update totals."""
@@ -444,11 +490,13 @@ class ContabilitaPanel(QWidget):
 
         if target_widget:
             # Table-based widgets
-            if hasattr(target_widget, 'table'):
+            if hasattr(target_widget, "table"):
                 try:
                     # Disconnect
-                    try: target_widget.table.selectionModel().selectionChanged.disconnect()
-                    except Exception: pass
+                    try:
+                        target_widget.table.selectionModel().selectionChanged.disconnect()
+                    except Exception:
+                        pass
                     # Connect
                     target_widget.table.selectionModel().selectionChanged.connect(
                         lambda s, d: self._update_selection_total(target_widget.table)
@@ -457,10 +505,12 @@ class ContabilitaPanel(QWidget):
                     print(f"Errore connessione segnali selezione (Table): {e}")
 
             # Tree-based widgets (Certificati)
-            elif hasattr(target_widget, 'tree'):
+            elif hasattr(target_widget, "tree"):
                 try:
-                    try: target_widget.tree.itemSelectionChanged.disconnect()
-                    except Exception: pass
+                    try:
+                        target_widget.tree.itemSelectionChanged.disconnect()
+                    except Exception:
+                        pass
 
                     target_widget.tree.itemSelectionChanged.connect(
                         lambda: self._update_selection_total(target_widget.tree)
@@ -476,7 +526,7 @@ class ContabilitaPanel(QWidget):
                 selected_items = widget.selectedItems()
                 count = len(selected_items)
                 self.selection_count_label.setText(f"Selezionati: {count}")
-                self.selection_sum_label.setText("") # No sum for certificates
+                self.selection_sum_label.setText("")  # No sum for certificates
                 return
 
             # Handle QTableWidget
@@ -530,7 +580,7 @@ class ContabilitaPanel(QWidget):
                                 val = float(clean)
                                 total_ore += val
                         except ValueError:
-                            pass # Ignora errori di parsing numerico (es. celle vuote)
+                            pass  # Ignora errori di parsing numerico (es. celle vuote)
 
             # Format
             if total_ore % 1 == 0:
@@ -560,7 +610,7 @@ class ContabilitaPanel(QWidget):
         # Disable all buttons
         for btn in self.update_buttons:
             btn.setDisabled(True)
-            
+
         for lbl in self.status_labels:
             lbl.setText("🔄 Aggiornamento in corso...")
 
@@ -569,7 +619,7 @@ class ContabilitaPanel(QWidget):
         # Connect progress to all status labels
         self.worker.progress_signal.connect(self._update_all_status_labels)
         self.worker.start()
-        
+
     def _update_all_status_labels(self, text):
         for lbl in self.status_labels:
             lbl.setText(text)
@@ -580,21 +630,21 @@ class ContabilitaPanel(QWidget):
             # Format text with colors
             added_text = f"<font color='green'><b>+{added}</b></font>"
             removed_text = f"<font color='red'><b>-{removed}</b></font>"
-            
+
             # Format duration
             if duration < 60:
                 time_str = f"{duration:.1f}s"
             else:
                 m, s = divmod(int(duration), 60)
                 time_str = f"{m}m {s}s"
-            
+
             # Use Check Icon ✅
             status_html = f"✅ {now_str} {added_text} {removed_text} (Tempo: {time_str})"
             self._last_status_html = status_html
 
             for lbl in self.status_labels:
                 lbl.setText(status_html)
-                
+
             self.refresh_tabs()
         else:
             # If partial success (overall_success was False but some messages exist), maybe check msg
@@ -603,7 +653,7 @@ class ContabilitaPanel(QWidget):
             error_msg = f"❌ Errore aggiornamento: {msg}"
             for lbl in self.status_labels:
                 lbl.setText(error_msg)
-            QMessageBox.warning(self, "Esito Importazione", msg) # Show details in popup if error
+            QMessageBox.warning(self, "Esito Importazione", msg)  # Show details in popup if error
 
         self.worker = None
         # Enable buttons
@@ -615,8 +665,18 @@ class ContabilitaYearTab(QWidget):
     """Tab per un singolo anno (Tabella Dati)."""
 
     COLUMNS = [
-        "DATA\nPREV.", "MESE", "N°\nPREV.", "TOTALE\nPREV.", "ATTIVITA'",
-        "TCL", "ODC", "STATO\nATTIVITA'", "TIPOLOGIA", "ORE\nSP", "RESA", "ANNOTAZIONI"
+        "DATA\nPREV.",
+        "MESE",
+        "N°\nPREV.",
+        "TOTALE\nPREV.",
+        "ATTIVITA'",
+        "TCL",
+        "ODC",
+        "STATO\nATTIVITA'",
+        "TIPOLOGIA",
+        "ORE\nSP",
+        "RESA",
+        "ANNOTAZIONI",
     ]
 
     # Indici colonne nascoste nei dati ritornati dal manager
@@ -626,7 +686,7 @@ class ContabilitaYearTab(QWidget):
 
     # Indici colonne per formattazione (basati su COLUMNS)
     COL_DATA = 0
-    COL_N_PREV = 2 # Per totali
+    COL_N_PREV = 2  # Per totali
     COL_TOTALE = 3
     COL_ODC = 6
     COL_ORE = 9
@@ -648,7 +708,8 @@ class ContabilitaYearTab(QWidget):
         self.table.setWordWrap(True)  # Enable word wrap for multiline text
 
         # Force text color for Dark Mode compatibility
-        self.table.setStyleSheet("""
+        self.table.setStyleSheet(
+            """
             QTableWidget {
                 background-color: white;
                 color: black;
@@ -685,7 +746,8 @@ class ContabilitaYearTab(QWidget):
                 font-size: 10px;
                 color: #9E9E9E;
             }
-        """)
+        """
+        )
 
         self.table.auto_copy_headers = True
 
@@ -693,18 +755,18 @@ class ContabilitaYearTab(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # Pesi/Dimensioni ideali
-        self.table.setColumnWidth(self.COL_DATA, 100)      # Data
-        self.table.setColumnWidth(1, 100)                  # Mese
-        self.table.setColumnWidth(2, 80)                   # N Prev
-        self.table.setColumnWidth(self.COL_TOTALE, 120)    # Totale
-        self.table.setColumnWidth(4, 300)                  # Attivita (Large)
-        self.table.setColumnWidth(5, 150)                  # TCL
-        self.table.setColumnWidth(6, 120)                  # ODC
-        self.table.setColumnWidth(7, 150)                  # Stato
-        self.table.setColumnWidth(8, 100)                  # Tipologia
-        self.table.setColumnWidth(self.COL_ORE, 80)        # Ore
-        self.table.setColumnWidth(self.COL_RESA, 80)       # Resa
-        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch) # Annotazioni
+        self.table.setColumnWidth(self.COL_DATA, 100)  # Data
+        self.table.setColumnWidth(1, 100)  # Mese
+        self.table.setColumnWidth(2, 80)  # N Prev
+        self.table.setColumnWidth(self.COL_TOTALE, 120)  # Totale
+        self.table.setColumnWidth(4, 300)  # Attivita (Large)
+        self.table.setColumnWidth(5, 150)  # TCL
+        self.table.setColumnWidth(6, 120)  # ODC
+        self.table.setColumnWidth(7, 150)  # Stato
+        self.table.setColumnWidth(8, 100)  # Tipologia
+        self.table.setColumnWidth(self.COL_ORE, 80)  # Ore
+        self.table.setColumnWidth(self.COL_RESA, 80)  # Resa
+        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # Annotazioni
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -785,7 +847,8 @@ class ContabilitaYearTab(QWidget):
             if last_item and last_item.text() == "TOTALI":
                 total_row_idx = self.table.rowCount() - 1
 
-        if total_row_idx == -1: return
+        if total_row_idx == -1:
+            return
 
         rows = total_row_idx
         count_prev = 0
@@ -832,11 +895,14 @@ class ContabilitaYearTab(QWidget):
         try:
             clean = text.replace("€", "").replace(".", "").replace(",", ".").strip()
             return float(clean)
-        except: return 0.0
+        except:
+            return 0.0
 
     def _parse_float(self, text):
-        try: return float(text)
-        except: return 0.0
+        try:
+            return float(text)
+        except:
+            return 0.0
 
     def _format_currency(self, val):
         return f"€ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -849,32 +915,45 @@ class ContabilitaYearTab(QWidget):
             if val_f.is_integer():
                 return f"{int(val_f)}"
             else:
-                return f"{val_f:.2f}".replace('.', ',')
+                return f"{val_f:.2f}".replace(".", ",")
         except:
             return str(val)
 
     def _format_value(self, col_idx, val):
-        if not val and val != 0: return ""
+        if not val and val != 0:
+            return ""
         str_val = str(val).strip()
-        if not str_val: return ""
+        if not str_val:
+            return ""
 
         if col_idx == self.COL_DATA:
             try:
                 dt = None
-                if ' ' in str_val: str_val = str_val.split(' ')[0]
-                try: dt = datetime.strptime(str_val, "%Y-%m-%d")
+                if " " in str_val:
+                    str_val = str_val.split(" ")[0]
+                try:
+                    dt = datetime.strptime(str_val, "%Y-%m-%d")
                 except ValueError:
                     for fmt in ("%d/%m/%Y", "%Y/%m/%d"):
-                        try: dt = datetime.strptime(str_val, fmt); break
-                        except ValueError: continue
-                if dt: return dt.strftime("%d/%m/%Y")
-            except Exception: pass
+                        try:
+                            dt = datetime.strptime(str_val, fmt)
+                            break
+                        except ValueError:
+                            continue
+                if dt:
+                    return dt.strftime("%d/%m/%Y")
+            except Exception:
+                pass
         elif col_idx == self.COL_TOTALE:
-            try: return self._format_currency(float(str_val))
-            except Exception: pass
+            try:
+                return self._format_currency(float(str_val))
+            except Exception:
+                pass
         elif col_idx in [self.COL_ORE, self.COL_RESA]:
-            try: return self._format_number(float(str_val))
-            except Exception: pass
+            try:
+                return self._format_number(float(str_val))
+            except Exception:
+                pass
         elif col_idx == self.COL_ODC:
             return str_val.replace("-", "/")
 
@@ -900,10 +979,12 @@ class ContabilitaYearTab(QWidget):
                 item = self.table.item(r, c)
                 if item and item.text():
                     if text.lower() in item.text().lower():
-                         row_visible = True
-                         break
+                        row_visible = True
+                        break
             if not row_visible:
-                row_full_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
+                row_full_text = " ".join(
+                    [self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)]
+                )
                 if all(term in row_full_text for term in search_terms):
                     row_visible = True
             self.table.setRowHidden(r, not row_visible)
@@ -914,8 +995,10 @@ class ContabilitaYearTab(QWidget):
 
     def _show_context_menu(self, pos):
         item = self.table.itemAt(pos)
-        if not item: return
-        if item.text() == "TOTALI" or (self.table.item(item.row(), 0).text() == "TOTALI"): return
+        if not item:
+            return
+        if item.text() == "TOTALI" or (self.table.item(item.row(), 0).text() == "TOTALI"):
+            return
 
         row = item.row()
         first_item = self.table.item(row, 0)
@@ -932,7 +1015,7 @@ class ContabilitaYearTab(QWidget):
 
         action_open = QAction("📂 Apri File", self)
         if file_path:
-             action_open.triggered.connect(lambda: self._open_file(file_path))
+            action_open.triggered.connect(lambda: self._open_file(file_path))
         else:
             action_open.setEnabled(False)
             action_open.setText("📂 Apri File (Percorso non disponibile)")
@@ -940,10 +1023,14 @@ class ContabilitaYearTab(QWidget):
         menu.exec(self.table.viewport().mapToGlobal(pos))
 
     def _open_file(self, path_str):
-        if not path_str: return
-        try: os.startfile(path_str)
+        if not path_str:
+            return
+        try:
+            os.startfile(path_str)
         except Exception as e:
-            QMessageBox.warning(self, "Errore Apertura", f"Impossibile aprire il file:\n{path_str}\n\nErrore: {e}")
+            QMessageBox.warning(
+                self, "Errore Apertura", f"Impossibile aprire il file:\n{path_str}\n\nErrore: {e}"
+            )
 
 
 class GiornaliereYearTab(QWidget):
@@ -951,8 +1038,16 @@ class GiornaliereYearTab(QWidget):
 
     # data, personale, tcl, descrizione, n_prev, odc, pdl, inizio, fine, ore
     COLUMNS = [
-        "DATA", "PERSONALE", "TCL", "DESCRIZIONE\nATTIVITA'", "N°\nPREV.", "ODC",
-        "PDL", "INIZIO", "FINE", "ORE"
+        "DATA",
+        "PERSONALE",
+        "TCL",
+        "DESCRIZIONE\nATTIVITA'",
+        "N°\nPREV.",
+        "ODC",
+        "PDL",
+        "INIZIO",
+        "FINE",
+        "ORE",
     ]
 
     # Mappatura indici basata sulla query get_giornaliere_by_year
@@ -975,10 +1070,11 @@ class GiornaliereYearTab(QWidget):
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
-        self.table.setWordWrap(True) # Abilita testo a capo
+        self.table.setWordWrap(True)  # Abilita testo a capo
 
         # Force text color for Dark Mode compatibility
-        self.table.setStyleSheet("""
+        self.table.setStyleSheet(
+            """
             QTableWidget {
                 background-color: white;
                 color: black;
@@ -1015,7 +1111,8 @@ class GiornaliereYearTab(QWidget):
                 font-size: 10px;
                 color: #9E9E9E;
             }
-        """)
+        """
+        )
 
         self.table.auto_copy_headers = True
 
@@ -1027,14 +1124,14 @@ class GiornaliereYearTab(QWidget):
         self.table.setColumnWidth(1, 200)  # Personale
         self.table.setColumnWidth(2, 100)  # TCL (added)
         self.table.setColumnWidth(3, 300)  # Descrizione
-        self.table.setColumnWidth(4, 80)   # N Prev
+        self.table.setColumnWidth(4, 80)  # N Prev
         self.table.setColumnWidth(5, 120)  # ODC
-        self.table.setColumnWidth(6, 80)   # PDL
-        self.table.setColumnWidth(7, 80)   # Inizio
-        self.table.setColumnWidth(8, 80)   # Fine
-        self.table.setColumnWidth(9, 80)   # Ore
+        self.table.setColumnWidth(6, 80)  # PDL
+        self.table.setColumnWidth(7, 80)  # Inizio
+        self.table.setColumnWidth(8, 80)  # Fine
+        self.table.setColumnWidth(9, 80)  # Ore
 
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch) # Descrizione elastica
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # Descrizione elastica
 
         # Context Menu
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -1123,7 +1220,8 @@ class GiornaliereYearTab(QWidget):
             if last_item and last_item.text() == "TOTALI":
                 total_row_idx = self.table.rowCount() - 1
 
-        if total_row_idx == -1: return
+        if total_row_idx == -1:
+            return
 
         rows = total_row_idx
         sum_ore = 0.0
@@ -1133,15 +1231,17 @@ class GiornaliereYearTab(QWidget):
                 item = self.table.item(r, self.COL_ORE)
                 if item:
                     # Parse localizing the comma back to dot for float calc
-                    text_val = item.text().replace(',', '.')
+                    text_val = item.text().replace(",", ".")
                     sum_ore += self._parse_float(text_val)
 
         # Format total with the same helper
         self.table.item(total_row_idx, self.COL_ORE).setText(self._format_number(sum_ore))
 
     def _parse_float(self, text):
-        try: return float(text)
-        except: return 0.0
+        try:
+            return float(text)
+        except:
+            return 0.0
 
     def _format_number(self, val):
         """Formatta ORE: max 2 decimali, virgola, niente .0 finale."""
@@ -1151,27 +1251,36 @@ class GiornaliereYearTab(QWidget):
             if val_f.is_integer():
                 return f"{int(val_f)}"
             else:
-                return f"{val_f}".replace('.', ',')
+                return f"{val_f}".replace(".", ",")
         except:
             return str(val)
 
     def _format_value(self, col_idx, val):
-        if not val: return ""
+        if not val:
+            return ""
         str_val = str(val).strip()
-        if str_val.lower() == 'nan': return ""
+        if str_val.lower() == "nan":
+            return ""
 
         # Data
         if col_idx == self.COL_DATA:
             try:
                 dt = None
-                if ' ' in str_val: str_val = str_val.split(' ')[0]
-                try: dt = datetime.strptime(str_val, "%Y-%m-%d")
+                if " " in str_val:
+                    str_val = str_val.split(" ")[0]
+                try:
+                    dt = datetime.strptime(str_val, "%Y-%m-%d")
                 except ValueError:
                     for fmt in ("%d/%m/%Y", "%Y/%m/%d"):
-                        try: dt = datetime.strptime(str_val, fmt); break
-                        except ValueError: continue
-                if dt: return dt.strftime("%d/%m/%Y")
-            except: pass
+                        try:
+                            dt = datetime.strptime(str_val, fmt)
+                            break
+                        except ValueError:
+                            continue
+                if dt:
+                    return dt.strftime("%d/%m/%Y")
+            except:
+                pass
 
         # Ore formatting
         if col_idx == self.COL_ORE:
@@ -1204,7 +1313,9 @@ class GiornaliereYearTab(QWidget):
                         break
 
             if not row_visible:
-                row_full_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
+                row_full_text = " ".join(
+                    [self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)]
+                )
                 if all(term in row_full_text for term in search_terms):
                     row_visible = True
 
@@ -1216,8 +1327,10 @@ class GiornaliereYearTab(QWidget):
 
     def _show_context_menu(self, pos):
         item = self.table.itemAt(pos)
-        if not item: return
-        if item.text() == "TOTALI" or (self.table.item(item.row(), 0).text() == "TOTALI"): return
+        if not item:
+            return
+        if item.text() == "TOTALI" or (self.table.item(item.row(), 0).text() == "TOTALI"):
+            return
 
         row = item.row()
         first_item = self.table.item(row, 0)
@@ -1233,9 +1346,9 @@ class GiornaliereYearTab(QWidget):
         menu.addSeparator()
 
         if filename:
-             action_open = QAction(f"📂 Apri {filename}", self)
-             action_open.triggered.connect(lambda: self._open_giornaliera(filename))
-             menu.addAction(action_open)
+            action_open = QAction(f"📂 Apri {filename}", self)
+            action_open.triggered.connect(lambda: self._open_giornaliera(filename))
+            menu.addAction(action_open)
         else:
             action_dummy = QAction("Nessun file associato", self)
             action_dummy.setEnabled(False)
@@ -1261,9 +1374,9 @@ class GiornaliereYearTab(QWidget):
         # Cerca prima nella cartella dell'anno specifico
         year_folder = os.path.join(root_path, f"Giornaliere {self.year}")
         if os.path.exists(year_folder):
-             potential_path = os.path.join(year_folder, filename)
-             if os.path.exists(potential_path):
-                 found_path = potential_path
+            potential_path = os.path.join(year_folder, filename)
+            if os.path.exists(potential_path):
+                found_path = potential_path
 
         # Se non trovato, cerca ovunque
         if not found_path:
@@ -1280,16 +1393,31 @@ class GiornaliereYearTab(QWidget):
             except Exception as e:
                 QMessageBox.warning(self, "Errore", f"Impossibile aprire il file: {e}\nPath: {found_path}")
         else:
-            QMessageBox.warning(self, "File non trovato", f"Non riesco a trovare '{filename}' nella cartella giornaliere.")
+            QMessageBox.warning(
+                self, "File non trovato", f"Non riesco a trovare '{filename}' nella cartella giornaliere."
+            )
 
 
 class AttivitaProgrammateTab(QWidget):
     """Tab per Attività Programmate."""
 
     COLUMNS = [
-        'PS', 'AREA', 'PdL', 'IMP.', "DESCRIZIONE\nATTIVITA'", 'LUN', 'MAR', 'MER',
-        'GIO', 'VEN', "STATO\nPdL", "STATO\nATTIVITA'", "DATA\nCONTROLLO",
-        "PERSONALE\nIMPIEGATO", 'PO', 'AVVISO'
+        "PS",
+        "AREA",
+        "PdL",
+        "IMP.",
+        "DESCRIZIONE\nATTIVITA'",
+        "LUN",
+        "MAR",
+        "MER",
+        "GIO",
+        "VEN",
+        "STATO\nPdL",
+        "STATO\nATTIVITA'",
+        "DATA\nCONTROLLO",
+        "PERSONALE\nIMPIEGATO",
+        "PO",
+        "AVVISO",
     ]
 
     def __init__(self, parent=None):
@@ -1339,13 +1467,15 @@ class AttivitaProgrammateTab(QWidget):
 
         # Reset Button
         self.btn_reset = QPushButton("Reset Filtri")
-        self.btn_reset.setStyleSheet("""
+        self.btn_reset.setStyleSheet(
+            """
             QPushButton {
                 background-color: #6c757d; color: white; border: none;
                 border-radius: 4px; padding: 4px 8px;
             }
             QPushButton:hover { background-color: #5a6268; }
-        """)
+        """
+        )
         self.btn_reset.clicked.connect(self._reset_filters)
         filter_layout.addWidget(self.btn_reset)
 
@@ -1364,7 +1494,8 @@ class AttivitaProgrammateTab(QWidget):
         self.table.cellDoubleClicked.connect(self._on_double_click)
 
         # Style (Light/Black)
-        self.table.setStyleSheet("""
+        self.table.setStyleSheet(
+            """
             QTableWidget {
                 background-color: white;
                 color: black;
@@ -1391,7 +1522,8 @@ class AttivitaProgrammateTab(QWidget):
                 font-size: 10px;
                 color: #9E9E9E;
             }
-        """)
+        """
+        )
 
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
@@ -1404,19 +1536,19 @@ class AttivitaProgrammateTab(QWidget):
 
         # Adjust widths
         # PS(0), AREA(1), PdL(2), IMP(3), DESC(4), LUN..VEN(5-9), STATO P(10), STATO A(11), DATA(12), PERS(13), PO(14), AVVISO(15)
-        self.table.setColumnWidth(1, 80) # Area
-        self.table.setColumnWidth(2, 80) # PdL
-        self.table.setColumnWidth(3, 60) # Imp
-        self.table.setColumnWidth(4, 350) # Descrizione (Wide)
+        self.table.setColumnWidth(1, 80)  # Area
+        self.table.setColumnWidth(2, 80)  # PdL
+        self.table.setColumnWidth(3, 60)  # Imp
+        self.table.setColumnWidth(4, 350)  # Descrizione (Wide)
         # Days
         for i in range(5, 10):
             self.table.setColumnWidth(i, 50)
 
-        self.table.setColumnWidth(10, 120) # Stato PdL
-        self.table.setColumnWidth(11, 120) # Stato Att
-        self.table.setColumnWidth(12, 100) # Data
-        self.table.setColumnWidth(13, 150) # Pers
-        self.table.setColumnWidth(15, 250) # Avviso (Wide)
+        self.table.setColumnWidth(10, 120)  # Stato PdL
+        self.table.setColumnWidth(11, 120)  # Stato Att
+        self.table.setColumnWidth(12, 100)  # Data
+        self.table.setColumnWidth(13, 150)  # Pers
+        self.table.setColumnWidth(15, 250)  # Avviso (Wide)
 
         # Context Menu
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -1444,7 +1576,7 @@ class AttivitaProgrammateTab(QWidget):
             self.table.setRowCount(len(data))
 
             # Index for styles column (last one)
-            style_col_idx = len(self.COLUMNS) # Since COLUMNS has 16 items (0-15), style is at 16?
+            style_col_idx = len(self.COLUMNS)  # Since COLUMNS has 16 items (0-15), style is at 16?
             # In DB query: SELECT ..., styles FROM ...
             # So if COLUMNS is length 16, row_data length is 17
 
@@ -1454,22 +1586,26 @@ class AttivitaProgrammateTab(QWidget):
                 if len(row_data) > len(self.COLUMNS):
                     style_json = row_data[len(self.COLUMNS)]
                     if style_json:
-                        try: row_styles = json.loads(style_json)
-                        except: pass
+                        try:
+                            row_styles = json.loads(style_json)
+                        except:
+                            pass
 
                 for col_idx in range(len(self.COLUMNS)):
                     val = row_data[col_idx]
                     val_str = str(val).strip() if val is not None else ""
-                    if val_str.lower() == "nan": val_str = ""
+                    if val_str.lower() == "nan":
+                        val_str = ""
 
                     # Format Data Controllo (Index 12)
                     if col_idx == 12 and val_str:
-                         try:
-                             if ' ' in val_str: val_str = val_str.split(' ')[0]
-                             dt = datetime.strptime(val_str, "%Y-%m-%d")
-                             val_str = dt.strftime("%d/%m/%Y")
-                         except ValueError:
-                             pass
+                        try:
+                            if " " in val_str:
+                                val_str = val_str.split(" ")[0]
+                            dt = datetime.strptime(val_str, "%Y-%m-%d")
+                            val_str = dt.strftime("%d/%m/%Y")
+                        except ValueError:
+                            pass
 
                     item = QTableWidgetItem(val_str)
 
@@ -1487,10 +1623,10 @@ class AttivitaProgrammateTab(QWidget):
                         key = db_keys[col_idx]
                         if key in row_styles:
                             style = row_styles[key]
-                            if 'fg' in style:
-                                item.setForeground(QColor(style['fg']))
-                            if 'bg' in style:
-                                item.setBackground(QColor(style['bg']))
+                            if "fg" in style:
+                                item.setForeground(QColor(style["fg"]))
+                            if "bg" in style:
+                                item.setBackground(QColor(style["bg"]))
 
                     self.table.setItem(row_idx, col_idx, item)
 
@@ -1523,7 +1659,8 @@ class AttivitaProgrammateTab(QWidget):
         self.combo_area.clear()
         self.combo_area.addItem("Tutte")
         self.combo_area.addItems(sorted(list(areas)))
-        if curr_area in areas: self.combo_area.setCurrentText(curr_area)
+        if curr_area in areas:
+            self.combo_area.setCurrentText(curr_area)
         self.combo_area.blockSignals(False)
 
         # Update Stato Combo
@@ -1532,7 +1669,8 @@ class AttivitaProgrammateTab(QWidget):
         self.combo_stato.clear()
         self.combo_stato.addItem("Tutti")
         self.combo_stato.addItems(sorted(list(stati)))
-        if curr_stato in stati: self.combo_stato.setCurrentText(curr_stato)
+        if curr_stato in stati:
+            self.combo_stato.setCurrentText(curr_stato)
         self.combo_stato.blockSignals(False)
 
     def apply_filters(self):
@@ -1609,16 +1747,20 @@ class AttivitaProgrammateTab(QWidget):
             hide = False
             if filter_ps:
                 item = self.table.item(r, 0)
-                if not item or not item.text().strip(): hide = True
+                if not item or not item.text().strip():
+                    hide = True
             if not hide and filter_po:
                 item = self.table.item(r, 14)
-                if not item or not item.text().strip(): hide = True
+                if not item or not item.text().strip():
+                    hide = True
             if not hide and filter_area != "Tutte":
                 item = self.table.item(r, 1)
-                if not item or item.text() != filter_area: hide = True
+                if not item or item.text() != filter_area:
+                    hide = True
             if not hide and filter_stato != "Tutti":
                 item = self.table.item(r, 10)
-                if not item or item.text() != filter_stato: hide = True
+                if not item or item.text() != filter_stato:
+                    hide = True
 
             # 2. Check Search Text
             if not hide and text:
@@ -1631,7 +1773,9 @@ class AttivitaProgrammateTab(QWidget):
                             break
                 if not row_visible:
                     # Check combined terms
-                    row_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
+                    row_text = " ".join(
+                        [self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)]
+                    )
                     if not all(term in row_text for term in search_terms):
                         hide = True
 
@@ -1699,8 +1843,16 @@ class CertificatiCampioneTab(QWidget):
     """Tab per Certificati Campione (Tree View)."""
 
     HEADERS = [
-        "Modello /\nTipo", "Costruttore", "Matricola", "Range\nStrumento", "Errore\nmax %",
-        "Certificato\nTaratura", "Scadenza\nCertificato", "Emissione\nCertificato", "ID-COEMI", "Stato\nCertificato"
+        "Modello /\nTipo",
+        "Costruttore",
+        "Matricola",
+        "Range\nStrumento",
+        "Errore\nmax %",
+        "Certificato\nTaratura",
+        "Scadenza\nCertificato",
+        "Emissione\nCertificato",
+        "ID-COEMI",
+        "Stato\nCertificato",
     ]
 
     # Column Index Constants
@@ -1734,7 +1886,8 @@ class CertificatiCampioneTab(QWidget):
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
         # Styling
-        self.tree.setStyleSheet("""
+        self.tree.setStyleSheet(
+            """
             QTreeWidget {
                 background-color: white;
                 color: black;
@@ -1764,7 +1917,8 @@ class CertificatiCampioneTab(QWidget):
                 font-size: 10px;
                 color: #9E9E9E;
             }
-        """)
+        """
+        )
 
         header = self.tree.header()
         # Set interactive generally
@@ -1772,15 +1926,15 @@ class CertificatiCampioneTab(QWidget):
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         # Dimensions & Stretch
-        self.tree.setColumnWidth(self.IDX_MODELLO, 200) # Modello
-        self.tree.setColumnWidth(self.IDX_COSTRUTTORE, 120) # Costruttore
-        self.tree.setColumnWidth(self.IDX_MATRICOLA, 120) # Matricola
-        self.tree.setColumnWidth(self.IDX_RANGE, 120) # Range
-        self.tree.setColumnWidth(self.IDX_ERRORE, 80) # Errore
-        self.tree.setColumnWidth(self.IDX_CERTIFICATO, 140) # Certificato
-        self.tree.setColumnWidth(self.IDX_SCADENZA, 120) # Scadenza
-        self.tree.setColumnWidth(self.IDX_EMISSIONE, 120) # Emissione
-        self.tree.setColumnWidth(self.IDX_ID, 100) # ID
+        self.tree.setColumnWidth(self.IDX_MODELLO, 200)  # Modello
+        self.tree.setColumnWidth(self.IDX_COSTRUTTORE, 120)  # Costruttore
+        self.tree.setColumnWidth(self.IDX_MATRICOLA, 120)  # Matricola
+        self.tree.setColumnWidth(self.IDX_RANGE, 120)  # Range
+        self.tree.setColumnWidth(self.IDX_ERRORE, 80)  # Errore
+        self.tree.setColumnWidth(self.IDX_CERTIFICATO, 140)  # Certificato
+        self.tree.setColumnWidth(self.IDX_SCADENZA, 120)  # Scadenza
+        self.tree.setColumnWidth(self.IDX_EMISSIONE, 120)  # Emissione
+        self.tree.setColumnWidth(self.IDX_ID, 100)  # ID
 
         # Stretch Status Column to fill space
         header.setSectionResizeMode(self.IDX_STATO, QHeaderView.ResizeMode.Stretch)
@@ -1792,37 +1946,43 @@ class CertificatiCampioneTab(QWidget):
         toolbar = QHBoxLayout()
 
         self.btn_expand = QPushButton("Espandi Tutto")
-        self.btn_expand.setStyleSheet("""
+        self.btn_expand.setStyleSheet(
+            """
             QPushButton {
                 background-color: #6c757d; color: white; border: none;
                 border-radius: 4px; padding: 6px 12px; font-weight: bold;
             }
             QPushButton:hover { background-color: #5a6268; }
-        """)
+        """
+        )
         self.btn_expand.clicked.connect(self.tree.expandAll)
         toolbar.addWidget(self.btn_expand)
 
         self.btn_collapse = QPushButton("Comprimi Tutto")
-        self.btn_collapse.setStyleSheet("""
+        self.btn_collapse.setStyleSheet(
+            """
             QPushButton {
                 background-color: #6c757d; color: white; border: none;
                 border-radius: 4px; padding: 6px 12px; font-weight: bold;
             }
             QPushButton:hover { background-color: #5a6268; }
-        """)
+        """
+        )
         self.btn_collapse.clicked.connect(self.tree.collapseAll)
         toolbar.addWidget(self.btn_collapse)
 
         toolbar.addStretch()
 
         self.btn_analyze = QPushButton("📊 Analizza")
-        self.btn_analyze.setStyleSheet("""
+        self.btn_analyze.setStyleSheet(
+            """
             QPushButton {
                 background-color: #6610f2; color: white; border: none;
                 border-radius: 4px; padding: 6px 12px; font-weight: bold;
             }
             QPushButton:hover { background-color: #520dc2; }
-        """)
+        """
+        )
         self.btn_analyze.clicked.connect(self._run_analysis)
         toolbar.addWidget(self.btn_analyze)
 
@@ -1857,12 +2017,15 @@ class CertificatiCampioneTab(QWidget):
             # Sort rows by Emissione Descending
             def parse_date(r):
                 val = r[self.IDX_EMISSIONE]
-                if not val: return datetime.min
+                if not val:
+                    return datetime.min
                 s = str(val).strip()
                 # Try common formats
                 for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
-                    try: return datetime.strptime(s, fmt)
-                    except: continue
+                    try:
+                        return datetime.strptime(s, fmt)
+                    except:
+                        continue
                 return datetime.min
 
             rows.sort(key=parse_date, reverse=True)
@@ -1876,8 +2039,8 @@ class CertificatiCampioneTab(QWidget):
             # Add Children (History)
             if len(rows) > 1:
                 for i in range(1, len(rows)):
-                     child = self._create_item(rows[i])
-                     top_item.addChild(child)
+                    child = self._create_item(rows[i])
+                    top_item.addChild(child)
 
             self.tree.addTopLevelItem(top_item)
 
@@ -1891,14 +2054,15 @@ class CertificatiCampioneTab(QWidget):
                 strings.append(self._format_percentage(val))
             else:
                 s = str(val).strip() if val is not None else ""
-                if s.lower() == 'nan': s = ""
+                if s.lower() == "nan":
+                    s = ""
                 strings.append(s)
 
         item = SortableTreeWidgetItem(strings)
 
         # Apply Color Logic based on "Stato" column (IDX_STATO)
         stato_text = strings[self.IDX_STATO].lower()
-        icon = "🟢" # Default Green
+        icon = "🟢"  # Default Green
 
         is_red = False
         is_orange = False
@@ -1947,7 +2111,8 @@ class CertificatiCampioneTab(QWidget):
 
     def _format_percentage(self, val):
         """Formats 0.0005 -> 0,05%, 0.01 -> 1%."""
-        if val is None or str(val).strip() == "": return ""
+        if val is None or str(val).strip() == "":
+            return ""
         try:
             # Handle comma decimal input if present
             s_val = str(val).replace(",", ".")
@@ -1992,14 +2157,16 @@ class CertificatiCampioneTab(QWidget):
                 item.setHidden(True)
 
     def _item_matches(self, item, search_terms):
-        if not search_terms: return True
+        if not search_terms:
+            return True
         # Join all column text
         row_text = " ".join([item.text(c).lower() for c in range(self.tree.columnCount())])
         return all(term in row_text for term in search_terms)
 
     def _show_context_menu(self, pos):
         item = self.tree.itemAt(pos)
-        if not item: return
+        if not item:
+            return
 
         menu = QMenu(self)
         lyra = QAction("✨ Analizza Riga con Lyra", self)
@@ -2010,7 +2177,7 @@ class CertificatiCampioneTab(QWidget):
     def _analyze_item(self, item):
         row_data = []
         for c in range(self.tree.columnCount()):
-            header = self.tree.headerItem().text(c).replace('\n', ' ')
+            header = self.tree.headerItem().text(c).replace("\n", " ")
             row_data.append(f"**{header}**: {item.text(c)}")
 
         context = " | ".join(row_data)
@@ -2025,7 +2192,11 @@ class CertificatiCampioneTab(QWidget):
         path = config.get("certificati_campione_path", "")
 
         if not path or not os.path.exists(path):
-            QMessageBox.warning(self, "Attenzione", "File Certificati Campione non configurato o non trovato.\nVerifica nelle impostazioni.")
+            QMessageBox.warning(
+                self,
+                "Attenzione",
+                "File Certificati Campione non configurato o non trovato.\nVerifica nelle impostazioni.",
+            )
             return
 
         # Prepare PowerShell Script
@@ -2370,7 +2541,7 @@ try {
 
         try:
             # Create temp file with .ps1 extension
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ps1', delete=False, encoding='utf-8') as tmp:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as tmp:
                 tmp.write(ps_script)
                 tmp_path = tmp.name
 

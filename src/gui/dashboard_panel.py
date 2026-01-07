@@ -3,17 +3,26 @@ Bot TS - Dashboard Panel
 Pannello "Mappa Applicazione" interattiva e modulare.
 Updated to use ResponsiveContainer.
 """
+
 from datetime import datetime
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QCursor
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QGridLayout,
-    QScrollArea, QPushButton, QSizePolicy, QGraphicsDropShadowEffect,
-    QGraphicsOpacityEffect
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve
-from PyQt6.QtGui import QCursor, QIcon, QColor
 
 from src.core.stats_manager import StatsManager
 from src.gui.layouts.responsive import ResponsiveContainer
+
 
 class DashboardPanel(QWidget):
     """Pannello Home con Mappa Modulare Interattiva Responsiva."""
@@ -82,51 +91,82 @@ class DashboardPanel(QWidget):
         # --- Bots ---
         # 1. Dettagli OdA
         s_oda = stats.get("dettagli_oda", {})
-        responsive_grid.addWidget(self._create_module_card(
-            "Dettagli OdA", "Scarica dettagli ordini.", "📋", "#6f42c1", "dettagli_oda",
-            s_oda.get("runs", 0), s_oda.get("errors", 0)
-        ))
+        responsive_grid.addWidget(
+            self._create_module_card(
+                "Dettagli OdA",
+                "Scarica dettagli ordini.",
+                "📋",
+                "#6f42c1",
+                "dettagli_oda",
+                s_oda.get("runs", 0),
+                s_oda.get("errors", 0),
+            )
+        )
 
         # 2. Scarico TS
         s_sts = stats.get("scarico_ts", {})
-        responsive_grid.addWidget(self._create_module_card(
-            "Scarico TS", "Scarica timesheet.", "📥", "#0d6efd", "scarico_ts",
-            s_sts.get("runs", 0), s_sts.get("errors", 0)
-        ))
+        responsive_grid.addWidget(
+            self._create_module_card(
+                "Scarico TS",
+                "Scarica timesheet.",
+                "📥",
+                "#0d6efd",
+                "scarico_ts",
+                s_sts.get("runs", 0),
+                s_sts.get("errors", 0),
+            )
+        )
 
         # 3. Timbrature
         s_tmb = stats.get("timbrature", {})
-        responsive_grid.addWidget(self._create_module_card(
-            "Timbrature", "Valida timbrature.", "⏱️", "#fd7e14", "timbrature",
-            s_tmb.get("runs", 0), s_tmb.get("errors", 0)
-        ))
+        responsive_grid.addWidget(
+            self._create_module_card(
+                "Timbrature",
+                "Valida timbrature.",
+                "⏱️",
+                "#fd7e14",
+                "timbrature",
+                s_tmb.get("runs", 0),
+                s_tmb.get("errors", 0),
+            )
+        )
 
         # 4. Carico TS
         s_cts = stats.get("carico_ts", {})
-        responsive_grid.addWidget(self._create_module_card(
-            "Carico TS", "Upload finale.", "📤", "#198754", "carico_ts",
-            s_cts.get("runs", 0), s_cts.get("errors", 0)
-        ))
+        responsive_grid.addWidget(
+            self._create_module_card(
+                "Carico TS",
+                "Upload finale.",
+                "📤",
+                "#198754",
+                "carico_ts",
+                s_cts.get("runs", 0),
+                s_cts.get("errors", 0),
+            )
+        )
 
         # --- Databases ---
 
         # 5. Timbrature DB
-        responsive_grid.addWidget(self._create_module_card(
-            "Timbrature Isab", "Database storico.", "🗃️", "#20c997", "db_timbrature",
-            None, None
-        ))
+        responsive_grid.addWidget(
+            self._create_module_card(
+                "Timbrature Isab", "Database storico.", "🗃️", "#20c997", "db_timbrature", None, None
+            )
+        )
 
         # 6. Strumentale DB
-        responsive_grid.addWidget(self._create_module_card(
-            "Strumentale", "Contabilità & KPI.", "📊", "#ffc107", "db_strumentale",
-            None, None
-        ))
+        responsive_grid.addWidget(
+            self._create_module_card(
+                "Strumentale", "Contabilità & KPI.", "📊", "#ffc107", "db_strumentale", None, None
+            )
+        )
 
         # 7. DataEase DB
-        responsive_grid.addWidget(self._create_module_card(
-            "DataEase", "Scarico ore cantiere.", "🏗️", "#0dcaf0", "db_dataease",
-            None, None
-        ))
+        responsive_grid.addWidget(
+            self._create_module_card(
+                "DataEase", "Scarico ore cantiere.", "🏗️", "#0dcaf0", "db_dataease", None, None
+            )
+        )
 
         self.content_layout.addWidget(responsive_grid)
         self.content_layout.addStretch()
@@ -148,7 +188,8 @@ class DashboardPanel(QWidget):
         card.setGraphicsEffect(shadow)
 
         # Stile Card
-        card.setStyleSheet(f"""
+        card.setStyleSheet(
+            f"""
             QFrame {{
                 background-color: white;
                 border-radius: 16px;
@@ -157,7 +198,8 @@ class DashboardPanel(QWidget):
             QFrame:hover {{
                 background-color: #f8f9fa;
             }}
-        """)
+        """
+        )
 
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(20, 20, 20, 20)
@@ -193,7 +235,8 @@ class DashboardPanel(QWidget):
             # Runs Badge
             runs_lbl = QLabel(f"🚀 {runs}")
             runs_lbl.setToolTip("Esecuzioni")
-            runs_lbl.setStyleSheet("""
+            runs_lbl.setStyleSheet(
+                """
                 background-color: #e9ecef;
                 color: #495057;
                 border-radius: 10px;
@@ -201,13 +244,15 @@ class DashboardPanel(QWidget):
                 font-size: 11px;
                 font-weight: bold;
                 border: none;
-            """)
+            """
+            )
             stats_row.addWidget(runs_lbl)
 
             if errors is not None and errors > 0:
                 err_lbl = QLabel(f"⚠️ {errors}")
                 err_lbl.setToolTip("Errori")
-                err_lbl.setStyleSheet("""
+                err_lbl.setStyleSheet(
+                    """
                     background-color: #f8d7da;
                     color: #721c24;
                     border-radius: 10px;
@@ -215,7 +260,8 @@ class DashboardPanel(QWidget):
                     font-size: 11px;
                     font-weight: bold;
                     border: none;
-                """)
+                """
+                )
                 stats_row.addWidget(err_lbl)
 
             stats_row.addStretch()
@@ -248,5 +294,5 @@ class DashboardPanel(QWidget):
     def _navigate_to(self, key):
         """Naviga alla tab specificata."""
         main_window = self.window()
-        if hasattr(main_window, 'navigate_to_panel'):
+        if hasattr(main_window, "navigate_to_panel"):
             main_window.navigate_to_panel(key)

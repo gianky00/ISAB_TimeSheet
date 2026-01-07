@@ -3,24 +3,36 @@ Bot TS - Scarico Ore Panel
 Pannello dedicato per lo Scarico Ore Cantiere.
 Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableView, QLineEdit, QMessageBox, QHeaderView, QFrame, QApplication, QTabWidget
-)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QFont, QCursor, QKeySequence
+
 import time
 from datetime import datetime
 
-from src.core.contabilita_manager import ContabilitaManager
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QKeySequence
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFrame,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QTableView,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
 from src.core import config_manager
-from src.gui.scarico_ore_components import ScaricoOreTableModel, FilterHeaderView
-from src.utils.parsing import parse_currency
-from pathlib import Path
+from src.core.contabilita_manager import ContabilitaManager
+from src.gui.scarico_ore_components import FilterHeaderView, ScaricoOreTableModel
+
 
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background (solo Scarico Ore)."""
-    finished_signal = pyqtSignal(bool, str, int, int, float) # Added float duration
+
+    finished_signal = pyqtSignal(bool, str, int, int, float)  # Added float duration
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str):
@@ -39,7 +51,7 @@ class ScaricoOreWorker(QThread):
         try:
             total_rows = ContabilitaManager.scan_scarico_ore_rows(self.file_path)
         except:
-            total_rows = 1000 # Fallback
+            total_rows = 1000  # Fallback
 
         def progress_cb(current, total):
             # If total passed by callback is widely different (e.g. chunk based), ignore or adapt.
@@ -47,7 +59,8 @@ class ScaricoOreWorker(QThread):
 
             # Use the more accurate total from scan if available
             real_total = total if total > 0 else total_rows
-            if current > real_total: real_total = current # Dynamic update to prevent > 100%
+            if current > real_total:
+                real_total = current  # Dynamic update to prevent > 100%
 
             elapsed = time.time() - self.start_time
             if current > 0 and elapsed > 0:
@@ -57,13 +70,19 @@ class ScaricoOreWorker(QThread):
 
                 m, s = divmod(int(eta_seconds), 60)
                 percent = int((current / real_total) * 100) if real_total > 0 else 0
-                if percent > 99: percent = 99 # Cap until actually finished
+                if percent > 99:
+                    percent = 99  # Cap until actually finished
 
-                self.progress_signal.emit(f"⏳ Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s")
+                self.progress_signal.emit(
+                    f"⏳ Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s"
+                )
 
-        success, msg, added, removed = ContabilitaManager.import_scarico_ore(self.file_path, progress_callback=progress_cb)
+        success, msg, added, removed = ContabilitaManager.import_scarico_ore(
+            self.file_path, progress_callback=progress_cb
+        )
         total_duration = time.time() - self.start_time
         self.finished_signal.emit(success, msg, added, removed, total_duration)
+
 
 class ScaricoOrePanel(QWidget):
     """Pannello per la visualizzazione e gestione dello Scarico Ore Cantiere."""
@@ -71,7 +90,7 @@ class ScaricoOrePanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.worker = None
-        self._last_update_status = None # Store the status string to persist after reload
+        self._last_update_status = None  # Store the status string to persist after reload
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
         # ⚡ BOLT: Set loading text immediately before first paint
@@ -85,7 +104,8 @@ class ScaricoOrePanel(QWidget):
 
         # 1. Create Tabs (DataEase Wrapper)
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
+        self.tabs.setStyleSheet(
+            """
             QTabWidget::pane { border: 1px solid #dee2e6; border-radius: 6px; background-color: white; }
             QTabBar::tab {
                 background: #f1f3f5;
@@ -101,7 +121,8 @@ class ScaricoOrePanel(QWidget):
                 color: #0d6efd;
                 border-bottom: 2px solid #0d6efd;
             }
-        """)
+        """
+        )
         main_layout.addWidget(self.tabs)
 
         # 2. "Scarico Ore" Tab
@@ -117,7 +138,8 @@ class ScaricoOrePanel(QWidget):
         self.search_input.setPlaceholderText("⏳ Inizializzazione...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setFixedWidth(400)
-        self.search_input.setStyleSheet("""
+        self.search_input.setStyleSheet(
+            """
             QLineEdit {
                 border: 1px solid #ced4da;
                 border-radius: 4px;
@@ -129,7 +151,8 @@ class ScaricoOrePanel(QWidget):
             QLineEdit:focus {
                 border-color: #0d6efd;
             }
-        """)
+        """
+        )
         # Ricerca su Invio
         self.search_input.returnPressed.connect(self._perform_search)
 
@@ -139,7 +162,8 @@ class ScaricoOrePanel(QWidget):
 
         # Status Label
         self.status_label = QLabel("Inizializzazione...")
-        self.status_label.setStyleSheet("""
+        self.status_label.setStyleSheet(
+            """
             QLabel {
                 color: #495057;
                 font-size: 14px;
@@ -149,8 +173,9 @@ class ScaricoOrePanel(QWidget):
                 border-radius: 4px;
                 border: 1px solid #dee2e6;
             }
-        """)
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter) # Center alignment as requested
+        """
+        )
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center alignment as requested
         toolbar.addWidget(self.status_label)
 
         toolbar.addStretch()
@@ -159,7 +184,8 @@ class ScaricoOrePanel(QWidget):
         self.update_btn = QPushButton("🔄 Aggiorna Dati")
         self.update_btn.setToolTip("Aggiorna solo lo Scarico Ore Cantiere dal file configurato")
         self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.update_btn.setStyleSheet("""
+        self.update_btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: #0d6efd;
                 color: white;
@@ -172,7 +198,8 @@ class ScaricoOrePanel(QWidget):
             QPushButton:hover {
                 background-color: #0b5ed7;
             }
-        """)
+        """
+        )
         self.update_btn.clicked.connect(self._start_update)
         toolbar.addWidget(self.update_btn)
 
@@ -180,11 +207,11 @@ class ScaricoOrePanel(QWidget):
 
         # --- Virtual Table View ---
         self.table_view = QTableView()
-        self.table_view.setAlternatingRowColors(False) # Colors are from Excel
+        self.table_view.setAlternatingRowColors(False)  # Colors are from Excel
         self.table_view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QTableView.SelectionMode.ExtendedSelection)
         self.table_view.setShowGrid(True)
-        self.table_view.setWordWrap(True) # Enabled word wrap
+        self.table_view.setWordWrap(True)  # Enabled word wrap
         self.table_view.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
 
         # Models
@@ -209,7 +236,8 @@ class ScaricoOrePanel(QWidget):
         self.table_view.verticalHeader().setVisible(False)
 
         # Styles
-        self.table_view.setStyleSheet("""
+        self.table_view.setStyleSheet(
+            """
             QTableView {
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
@@ -238,13 +266,15 @@ class ScaricoOrePanel(QWidget):
                 border-right: 1px solid #dee2e6;
                 border-bottom: 1px solid #dee2e6;
             }
-        """)
+        """
+        )
 
         scarico_layout.addWidget(self.table_view)
 
         # --- Footer Bar for Totals (Option B) ---
         self.footer_frame = QFrame()
-        self.footer_frame.setStyleSheet("""
+        self.footer_frame.setStyleSheet(
+            """
             QFrame {
                 background-color: #e9ecef;
                 border-top: 2px solid #dee2e6;
@@ -256,7 +286,8 @@ class ScaricoOrePanel(QWidget):
                 font-size: 14px;
                 color: #212529;
             }
-        """)
+        """
+        )
         footer_layout = QHBoxLayout(self.footer_frame)
         footer_layout.setContentsMargins(15, 10, 15, 10)
 
@@ -279,7 +310,9 @@ class ScaricoOrePanel(QWidget):
         scarico_layout.addWidget(self.footer_frame)
 
         # Info label
-        self.info_label = QLabel("Visualizzazione completa. Clicca sulle intestazioni per filtrare. Copia con Ctrl+C.")
+        self.info_label = QLabel(
+            "Visualizzazione completa. Clicca sulle intestazioni per filtrare. Copia con Ctrl+C."
+        )
         self.info_label.setStyleSheet("color: #adb5bd; font-size: 11px; margin-top: 5px;")
         scarico_layout.addWidget(self.info_label)
 
@@ -302,11 +335,11 @@ class ScaricoOrePanel(QWidget):
         self.lbl_count.setText(f"Righe visibili: {row_count}")
 
         if row_count > 0:
-             total = self.source_model.get_float_total_for_visible()
-             formatted = self._format_number(total)
-             self.lbl_total_hours.setText(f"Totale Ore: {formatted}")
+            total = self.source_model.get_float_total_for_visible()
+            formatted = self._format_number(total)
+            self.lbl_total_hours.setText(f"Totale Ore: {formatted}")
         else:
-             self.lbl_total_hours.setText("Totale Ore: 0")
+            self.lbl_total_hours.setText("Totale Ore: 0")
 
     def _update_selection_totals(self):
         """Calculates total of selected 'TOTALE ORE' cells."""
@@ -328,10 +361,10 @@ class ScaricoOrePanel(QWidget):
                         # Parse float (handles comma/dot via parse_currency or float)
                         if val_str:
                             # Handle comma just in case
-                            val_str = val_str.replace(',', '.')
+                            val_str = val_str.replace(",", ".")
                             total_selected += float(val_str)
                     except ValueError:
-                        pass # Ignore parsing errors
+                        pass  # Ignore parsing errors
 
             formatted = self._format_number(total_selected)
             self.lbl_selection_total.setText(f"Totale selezionato: {formatted}")
@@ -344,7 +377,11 @@ class ScaricoOrePanel(QWidget):
         path = config.get("dataease_path", "")
 
         if not path:
-            QMessageBox.warning(self, "Configurazione Mancante", "Configura il percorso 'File Scarico Ore' nelle Impostazioni.")
+            QMessageBox.warning(
+                self,
+                "Configurazione Mancante",
+                "Configura il percorso 'File Scarico Ore' nelle Impostazioni.",
+            )
             return
 
         self.status_label.setText("⏳ Calcolo stima tempi...")
@@ -359,7 +396,9 @@ class ScaricoOrePanel(QWidget):
         self.worker.progress_signal.connect(self.status_label.setText)
         self.worker.start()
 
-    def _on_update_finished(self, success: bool, msg: str, added: int = 0, removed: int = 0, duration: float = 0.0):
+    def _on_update_finished(
+        self, success: bool, msg: str, added: int = 0, removed: int = 0, duration: float = 0.0
+    ):
         self.update_btn.setEnabled(True)
         self.table_view.setEnabled(True)
 
@@ -369,7 +408,7 @@ class ScaricoOrePanel(QWidget):
             # Always color
             added_str = f"<font color='green'><b>+{added}</b></font>"
             removed_str = f"<font color='red'><b>-{removed}</b></font>"
-            
+
             # Format duration
             if duration < 60:
                 time_str = f"{duration:.1f}s"
@@ -379,18 +418,19 @@ class ScaricoOrePanel(QWidget):
 
             final_status = f"✅ {timestamp} {added_str} {removed_str} (Tempo: {time_str})"
             self.status_label.setText(final_status)
-            self._last_update_status = final_status # Store to persist after reload
+            self._last_update_status = final_status  # Store to persist after reload
 
             # Invalidate cache by removing the file
             try:
                 if ScaricoOreTableModel.CACHE_PATH.exists():
                     ScaricoOreTableModel.CACHE_PATH.unlink()
-            except: pass
+            except:
+                pass
 
             # Reset global cache to force reload
-            ScaricoOreTableModel._global_cache['loaded'] = False
+            ScaricoOreTableModel._global_cache["loaded"] = False
 
-            self._load_data() # Reload data
+            self._load_data()  # Reload data
             # REMOVED: QMessageBox.information(self, "Successo", msg)
         else:
             self.status_label.setText("❌ Errore")
@@ -402,7 +442,7 @@ class ScaricoOrePanel(QWidget):
         # Pass current column filters? No, we need to store them in panel.
         # Actually Model handles combination logic if we pass them.
         # Let's store col filters in panel state.
-        if not hasattr(self, '_current_col_filters'):
+        if not hasattr(self, "_current_col_filters"):
             self._current_col_filters = {}
 
         self.source_model.set_filter(text, self._current_col_filters)
@@ -410,7 +450,7 @@ class ScaricoOrePanel(QWidget):
 
     def _on_header_filter_changed(self, col, values):
         """Handle column filter changes from header."""
-        if not hasattr(self, '_current_col_filters'):
+        if not hasattr(self, "_current_col_filters"):
             self._current_col_filters = {}
 
         if not values:
@@ -439,7 +479,8 @@ class ScaricoOrePanel(QWidget):
         else:
             self.search_input.setPlaceholderText("🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)")
             self.table_view.setDisabled(False)
-            self.table_view.setStyleSheet("""
+            self.table_view.setStyleSheet(
+                """
             QTableView {
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
@@ -447,13 +488,14 @@ class ScaricoOrePanel(QWidget):
                 gridline-color: #e9ecef;
                 font-size: 13px;
             }
-            """)
+            """
+            )
 
     def _on_loading_progress(self, msg):
         # Update text. If format matches worker (contains "Tempo stimato"), it's handled.
         # Ensure we don't have "Inizializzazione..." stuck if progress message comes.
-        self.status_label.setText(f"{msg}") # Worker sends full formatted string with icon
-        QApplication.processEvents() # Ensure progress updates are seen
+        self.status_label.setText(f"{msg}")  # Worker sends full formatted string with icon
+        QApplication.processEvents()  # Ensure progress updates are seen
 
     def _on_cache_loaded(self):
         """Called when background loading finishes."""
@@ -500,27 +542,27 @@ class ScaricoOrePanel(QWidget):
         header.setMinimumHeight(80)
 
         # Strategy: Most columns are fixed/interactive. DESCRIPTION stretches to fill space.
-        header.setStretchLastSection(False) 
+        header.setStretchLastSection(False)
 
         # Reset to interactive first
         for i in range(11):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
         # DATA (0), PERS1 (1), PERS2 (2), ODC (3), POS (4), DALLE (5), ALLE (6), TOT (7) -> Fixed/Interactive
-        self.table_view.setColumnWidth(0, 100) # Data
-        self.table_view.setColumnWidth(1, 150) # Pers1
-        self.table_view.setColumnWidth(2, 150) # Pers2
-        self.table_view.setColumnWidth(3, 100) # ODC
+        self.table_view.setColumnWidth(0, 100)  # Data
+        self.table_view.setColumnWidth(1, 150)  # Pers1
+        self.table_view.setColumnWidth(2, 150)  # Pers2
+        self.table_view.setColumnWidth(3, 100)  # ODC
         self.table_view.setColumnWidth(4, 60)  # POS
         self.table_view.setColumnWidth(5, 75)  # Dalle
         self.table_view.setColumnWidth(6, 75)  # Alle
         self.table_view.setColumnWidth(7, 90)  # Totale Ore
-        
+
         # DESCRIZIONE (8) -> STRETCH (Fills all remaining space)
         header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)
-        
+
         self.table_view.setColumnWidth(9, 80)  # Finito
-        self.table_view.setColumnWidth(10, 100) # Commessa
+        self.table_view.setColumnWidth(10, 100)  # Commessa
 
     def keyPressEvent(self, event):
         # Implement Ctrl+C for QTableView
@@ -532,18 +574,20 @@ class ScaricoOrePanel(QWidget):
     def _copy_selection(self):
         selection = self.table_view.selectionModel()
         indexes = selection.selectedIndexes()
-        if not indexes: return
+        if not indexes:
+            return
 
         # Sort by row then col
         indexes.sort(key=lambda x: (x.row(), x.column()))
 
         # Build text
-        rows_text = {} # row_idx -> list of (col_idx, text)
+        rows_text = {}  # row_idx -> list of (col_idx, text)
         for idx in indexes:
             r = idx.row()
             c = idx.column()
             data = self.table_view.model().data(idx)
-            if r not in rows_text: rows_text[r] = []
+            if r not in rows_text:
+                rows_text[r] = []
             rows_text[r].append((c, str(data)))
 
         # Format TSV
@@ -554,4 +598,5 @@ class ScaricoOrePanel(QWidget):
             tsv_lines.append(line)
 
         from PyQt6.QtWidgets import QApplication
+
         QApplication.clipboard().setText("\n".join(tsv_lines))

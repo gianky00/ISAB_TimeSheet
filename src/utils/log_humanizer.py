@@ -1,8 +1,10 @@
 """
-Bot TS - Log Humanizer
+SyncroJob - Log Humanizer
 Converte messaggi di log tecnici in frasi umane e colloquiali.
 """
+
 import random
+
 
 class SmartLogTranslator:
     """Traduce i log tecnici in frasi 'umane'."""
@@ -13,44 +15,44 @@ class SmartLogTranslator:
             "🚀 Si parte! Avvio i motori...",
             "👋 Ciao! Iniziamo subito a lavorare.",
             "🤖 Bot pronto. Andiamo!",
-            "⚡ Iniziamo l'automazione."
+            "⚡ Iniziamo l'automazione.",
         ],
         "login": [
             "🔐 Sto effettuando l'accesso al portale...",
             "👤 Inserisco le credenziali...",
             "🔑 Busso alla porta di ISAB...",
-            "🚪 Apro le porte del sistema."
+            "🚪 Apro le porte del sistema.",
         ],
         "search": [
             "🔍 Cerco i dati richiesti...",
             "🕵️ Mi metto alla ricerca...",
             "🔎 Analizzo il database...",
-            "🧐 Vediamo cosa trovo..."
+            "🧐 Vediamo cosa trovo...",
         ],
         "download": [
             "📥 Scarico i file...",
             "💾 Salvo tutto sul disco...",
             "📦 Pacchetto in arrivo...",
-            "📨 Recupero i documenti."
+            "📨 Recupero i documenti.",
         ],
         "success": [
             "✅ Fatto! Tutto perfetto.",
             "🎉 Missione compiuta!",
             "✨ Ottimo lavoro, ho finito.",
-            "🏆 Completato con successo."
+            "🏆 Completato con successo.",
         ],
         "error": [
             "❌ Oops, qualcosa è andato storto.",
             "⚠️ Ho incontrato un ostacolo.",
             "🚫 C'è un problema tecnico.",
-            "🤕 Ahi, errore imprevisto."
+            "🤕 Ahi, errore imprevisto.",
         ],
         "wait": [
             "⏳ Attendo un attimo...",
             "☕ Pausa caffè virtuale...",
             "🕒 Dammi un secondo...",
-            "✋ Aspetto che il sito risponda..."
-        ]
+            "✋ Aspetto che il sito risponda...",
+        ],
     }
 
     @staticmethod
@@ -60,7 +62,7 @@ class SmartLogTranslator:
         """
         lower_msg = message.lower()
         category = "info"
-        human_msg = message # Default fall-back
+        human_msg = message  # Default fall-back
 
         if "avvio" in lower_msg or "start" in lower_msg:
             category = "start"

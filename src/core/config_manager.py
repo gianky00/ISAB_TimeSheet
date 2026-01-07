@@ -2,15 +2,18 @@
 Bot TS - Configuration Manager
 Gestione della configurazione dell'applicazione.
 """
-import os
-import json
+
 import copy
-import traceback
+import json
+import os
 import threading
+import traceback
 from pathlib import Path
-from typing import Any, Dict, Optional, List
-from src.core.secrets_manager import SecretsManager
+from typing import Any, Dict, List, Optional
+
 from platformdirs import user_data_dir
+
+from src.core.secrets_manager import SecretsManager
 
 # Path del file di configurazione
 # STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob
@@ -19,7 +22,7 @@ APP_NAME = "SyncroJob"
 CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 _config_cache: Optional[Dict[str, Any]] = None
-_config_lock = threading.RLock() # Lock per accesso thread-safe
+_config_lock = threading.RLock()  # Lock per accesso thread-safe
 
 # Configurazione di default
 DEFAULT_CONFIG: Dict[str, Any] = {
@@ -43,12 +46,14 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "cantieri": [],
     "employee_mappings": {},
     "ai_model": "gemini-1.5-pro",
-    "statistics": {}
+    "statistics": {},
 }
+
 
 def ensure_config_dir():
     """Assicura che la directory di configurazione esista."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
 
 def load_config() -> Dict[str, Any]:
     """
@@ -65,22 +70,23 @@ def load_config() -> Dict[str, Any]:
 
         if CONFIG_FILE.exists():
             try:
-                with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                     loaded_config = json.load(f)
                 config.update(loaded_config)
             except (json.JSONDecodeError, IOError):
-                pass # Usa i default
+                pass  # Usa i default
 
         # Decripta e recupera password
         if "accounts" in config:
             from src.utils.security import password_manager
+
             for acc in config["accounts"]:
                 username = acc.get("username")
                 if not username:
                     continue
 
                 # Priorità 1: Keyring
-                password_from_keyring = SecretsManager.get_credential('isab_portal', username)
+                password_from_keyring = SecretsManager.get_credential("isab_portal", username)
                 if password_from_keyring:
                     acc["password"] = password_from_keyring
                     continue
@@ -93,16 +99,18 @@ def load_config() -> Dict[str, Any]:
         # Decripta SafeWork accounts
         if "safework_accounts" in config:
             from src.utils.security import password_manager
+
             for acc in config["safework_accounts"]:
                 username = acc.get("username")
-                if not username: continue
-                
+                if not username:
+                    continue
+
                 # Keyring (namespace diverso)
-                pw_keyring = SecretsManager.get_credential('safework_portal', username)
+                pw_keyring = SecretsManager.get_credential("safework_portal", username)
                 if pw_keyring:
                     acc["password"] = pw_keyring
                     continue
-                
+
                 # File fallback
                 pw_file = acc.get("password")
                 if pw_file:
@@ -111,18 +119,21 @@ def load_config() -> Dict[str, Any]:
         # Migrazione Legacy
         if "isab_username" in config and config.get("isab_username"):
             if not any(a.get("username") == config["isab_username"] for a in config["accounts"]):
-                config["accounts"].append({
-                    "username": config["isab_username"],
-                    "password": config.get("isab_password", ""),
-                    "default": True
-                })
+                config["accounts"].append(
+                    {
+                        "username": config["isab_username"],
+                        "password": config.get("isab_password", ""),
+                        "default": True,
+                    }
+                )
             del config["isab_username"]
             if "isab_password" in config:
                 del config["isab_password"]
-            save_config(config) # Salva subito la configurazione migrata
+            save_config(config)  # Salva subito la configurazione migrata
 
         _config_cache = copy.deepcopy(config)
         return config
+
 
 def save_config(config: Dict[str, Any]):
     """
@@ -131,16 +142,17 @@ def save_config(config: Dict[str, Any]):
     Utilizza salvataggio atomico e locking per prevenire corruzione file.
     """
     global _config_cache
-    
+
     with _config_lock:
         ensure_config_dir()
-        
+
         # Lavora su una copia per non modificare l'input
         config_to_process = copy.deepcopy(config)
 
         # Logica di salvataggio password
         if "accounts" in config_to_process:
             from src.utils.security import password_manager
+
             for acc in config_to_process["accounts"]:
                 username = acc.get("username")
                 password = acc.get("password")
@@ -151,7 +163,7 @@ def save_config(config: Dict[str, Any]):
                 # Tenta di salvare nel keyring
                 try:
                     if SecretsManager.is_available():
-                        SecretsManager.store_credential('isab_portal', username, password)
+                        SecretsManager.store_credential("isab_portal", username, password)
                         # Se ha successo, rimuovi la password dal file
                         acc.pop("password", None)
                         continue
@@ -164,27 +176,30 @@ def save_config(config: Dict[str, Any]):
         # Logica salvataggio SafeWork
         if "safework_accounts" in config_to_process:
             from src.utils.security import password_manager
+
             for acc in config_to_process["safework_accounts"]:
                 u = acc.get("username")
                 p = acc.get("password")
-                if not (u and p): continue
-                
+                if not (u and p):
+                    continue
+
                 try:
                     if SecretsManager.is_available():
-                        SecretsManager.store_credential('safework_portal', u, p)
+                        SecretsManager.store_credential("safework_portal", u, p)
                         acc.pop("password", None)
                         continue
-                except: pass
-                
+                except:
+                    pass
+
                 acc["password"] = password_manager.encrypt(p)
 
         try:
             # Salvataggio Atomico: Scrivi su .tmp poi rinomina
             temp_file = CONFIG_FILE.with_suffix(".tmp")
-            with open(temp_file, 'w', encoding='utf-8') as f:
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(config_to_process, f, indent=2, ensure_ascii=False)
                 f.flush()
-                os.fsync(f.fileno()) # Forza scrittura su disco
+                os.fsync(f.fileno())  # Forza scrittura su disco
 
             # Rinomina atomica (su Windows replace è atomico se dest esiste)
             os.replace(temp_file, CONFIG_FILE)
@@ -194,8 +209,10 @@ def save_config(config: Dict[str, Any]):
         except IOError as e:
             print(f"Errore salvataggio configurazione: {e}")
             if temp_file.exists():
-                try: os.remove(temp_file)
-                except: pass
+                try:
+                    os.remove(temp_file)
+                except:
+                    pass
         except Exception:
             print(f"Errore critico durante il salvataggio:\n{traceback.format_exc()}")
 
@@ -205,15 +222,18 @@ def get_config_value(key: str, default: Any = None) -> Any:
     config = load_config()
     return config.get(key, default)
 
+
 def set_config_value(key: str, value: Any):
     """Imposta un valore nella configurazione."""
     config = load_config()
     config[key] = value
     save_config(config)
 
+
 def get_accounts() -> List[Dict[str, Any]]:
     """Restituisce la lista degli account configurati."""
     return get_config_value("accounts", [])
+
 
 def add_account(username: str, password: str, is_default: bool = False):
     """Aggiunge o aggiorna un account."""
@@ -229,14 +249,11 @@ def add_account(username: str, password: str, is_default: bool = False):
         for acc in accounts:
             acc["default"] = False
 
-    accounts.append({
-        "username": username,
-        "password": password,
-        "default": is_default
-    })
+    accounts.append({"username": username, "password": password, "default": is_default})
 
     config["accounts"] = accounts
     save_config(config)
+
 
 def remove_account(username: str):
     """Rimuove un account e le credenziali associate."""
@@ -246,7 +263,7 @@ def remove_account(username: str):
 
     try:
         if SecretsManager.is_available():
-            SecretsManager.delete_credential('isab_portal', username)
+            SecretsManager.delete_credential("isab_portal", username)
     except Exception as e:
         print(f"Impossibile rimuovere credenziali dal keyring: {e}")
 
@@ -255,19 +272,21 @@ def remove_account(username: str):
 
     save_config(config)
 
+
 def set_default_account(username: str):
     """Imposta un account come default."""
     config = load_config()
     accounts = config.get("accounts", [])
     found = False
     for acc in accounts:
-        acc["default"] = (acc.get("username") == username)
+        acc["default"] = acc.get("username") == username
         if acc["default"]:
             found = True
 
     if found:
         config["accounts"] = accounts
         save_config(config)
+
 
 def get_default_account() -> Optional[Dict[str, str]]:
     """Restituisce l'account di default."""
@@ -277,20 +296,23 @@ def get_default_account() -> Optional[Dict[str, str]]:
 
     return next((acc for acc in accounts if acc.get("default")), accounts[0])
 
+
 def get_data_path() -> str:
     """Restituisce il percorso base per i dati."""
     data_dir = CONFIG_DIR / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     return str(data_dir)
 
+
 def get_download_path() -> str:
     """Restituisce il path di download configurato."""
     path = get_config_value("download_path", "")
     if path and os.path.isdir(path):
         return path
-    
+
     default_download = Path.home() / "Downloads"
     return str(default_download) if default_download.exists() else str(Path.home())
+
 
 def get_fornitori() -> list:
     """Restituisce la lista dei fornitori configurati."""

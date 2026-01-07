@@ -1,4 +1,4 @@
-; Bot TS - Inno Setup Script
+; SyncroJob - Inno Setup Script
 ; Installer configuration for SyncroJob application
 
 #define MyAppName "SyncroJob"
@@ -21,7 +21,7 @@
 AppId={{8E5F9A2C-7B4D-4E6F-A123-9D8C7E6F5A4B}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppVerName={#MyAppName} {#MyAppVersion}
+AppVerName={#MyAppName}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}

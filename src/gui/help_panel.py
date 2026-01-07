@@ -1,13 +1,21 @@
 """
-Bot TS - Help Panel
+SyncroJob - Help Panel
 Pannello Guida rivisitato con stile moderno, ricerca integrata e contenuti aggiornati.
 """
+
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTextBrowser, QFrame, QLabel, QListWidget, QSplitter, QLineEdit
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QSplitter,
+    QTextBrowser,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QIcon
-from src.utils.helpers import get_asset_path
+
 
 class HelpPanel(QWidget):
     """
@@ -29,28 +37,30 @@ class HelpPanel(QWidget):
         # Header Hero
         header = QFrame()
         header.setFixedHeight(80)
-        header.setStyleSheet("""
+        header.setStyleSheet(
+            """
             QFrame {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4b6cb7, stop:1 #182848);
                 border-bottom: 2px solid #0d6efd;
             }
-        """)
+        """
+        )
         header_layout = QHBoxLayout(header)
-        
+
         title = QLabel("📖 Centro Assistenza SyncroJob")
         title.setStyleSheet("color: white; font-size: 22px; font-weight: bold; margin-left: 10px;")
         header_layout.addWidget(title)
         header_layout.addStretch()
-        
+
         version_hint = QLabel("Documentazione Ufficiale v2.1.26")
         version_hint.setStyleSheet("color: rgba(255,255,255,0.6); font-size: 13px; margin-right: 15px;")
         header_layout.addWidget(version_hint)
-        
+
         layout.addWidget(header)
 
         # Splitter per Indice e Contenuto
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        
+
         # Sidebar Sinistra
         sidebar = QWidget()
         sidebar_layout = QVBoxLayout(sidebar)
@@ -67,7 +77,8 @@ class HelpPanel(QWidget):
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("🔍 Es. Scarico, Lyra, VPN...")
         self.search_edit.setMinimumHeight(35)
-        self.search_edit.setStyleSheet("""
+        self.search_edit.setStyleSheet(
+            """
             QLineEdit {
                 border: 1px solid #ced4da;
                 border-radius: 6px;
@@ -77,13 +88,15 @@ class HelpPanel(QWidget):
             QLineEdit:focus {
                 border-color: #0d6efd;
             }
-        """)
+        """
+        )
         self.search_edit.textChanged.connect(self._filter_index)
         sidebar_layout.addWidget(self.search_edit)
 
         # Indice Laterale
         self.index_list = QListWidget()
-        self.index_list.setStyleSheet("""
+        self.index_list.setStyleSheet(
+            """
             QListWidget {
                 background-color: transparent;
                 border: none;
@@ -103,15 +116,17 @@ class HelpPanel(QWidget):
             QListWidget::item:hover:!selected {
                 background-color: #e9ecef;
             }
-        """)
+        """
+        )
         self.index_list.currentRowChanged.connect(self._on_index_changed)
         sidebar_layout.addWidget(self.index_list)
-        
+
         # Browser Documentazione
         self.browser = QTextBrowser()
         self.browser.setOpenExternalLinks(True)
         self.browser.setReadOnly(True)
-        self.browser.setStyleSheet("""
+        self.browser.setStyleSheet(
+            """
             QTextBrowser {
                 background-color: white;
                 border: none;
@@ -120,12 +135,13 @@ class HelpPanel(QWidget):
                 line-height: 1.7;
                 color: #212529;
             }
-        """)
-        
+        """
+        )
+
         self.splitter.addWidget(sidebar)
         self.splitter.addWidget(self.browser)
         self.splitter.setStretchFactor(1, 1)
-        
+
         layout.addWidget(self.splitter)
 
     def _load_documentation(self):
@@ -142,23 +158,25 @@ class HelpPanel(QWidget):
             ("⚡ Scorciatoie Veloci", self._get_shortcuts_md()),
             ("🛠️ Risoluzione Problemi", self._get_troubleshooting_md()),
             ("🔑 Sicurezza & Licenza", self._get_license_md()),
-            ("📞 Supporto & Contatti", self._get_contacts_md())
+            ("📞 Supporto & Contatti", self._get_contacts_md()),
         ]
 
         for title, _ in self.sections:
             self.index_list.addItem(title)
-        
+
         self.index_list.setCurrentRow(0)
 
     def _on_index_changed(self, row):
-        if row < 0: return
-        
+        if row < 0:
+            return
+
         # Ottieni il titolo visualizzato nell'item
         item = self.index_list.item(row)
-        if not item: return
-        
+        if not item:
+            return
+
         title = item.text()
-        
+
         # Trova il contenuto originale corrispondente al titolo
         for section_title, content in self.sections:
             if section_title == title:
@@ -172,7 +190,7 @@ class HelpPanel(QWidget):
         for title, _ in self.sections:
             if text in title.lower():
                 self.index_list.addItem(title)
-        
+
         if self.index_list.count() > 0:
             self.index_list.setCurrentRow(0)
 
@@ -187,7 +205,7 @@ class HelpPanel(QWidget):
         return """
 # Benvenuto in SyncroJob v2.1
 
-SyncroJob (precedentemente Bot TS) è l'ecosistema definitivo per l'automazione dei processi amministrativi e tecnici legati all'appalto ISAB.
+SyncroJob è l'ecosistema definitivo per l'automazione dei processi amministrativi e tecnici legati all'appalto ISAB.
 
 ### 🌟 Visione del Progetto
 L'obiettivo è trasformare ore di lavoro manuale ripetitivo in pochi minuti di supervisione automatizzata, garantendo al contempo una qualità del dato superiore grazie all'integrazione di **intelligenza artificiale** e **database locali ultra-veloci**.
@@ -404,7 +422,7 @@ Hai bisogno di assistenza o vuoi richiedere una nuova funzionalità?
 ### 👤 Sviluppatore
 **Giancarlo Allegretti**
 * **Email**: support@syncrojob.it
-* **Web**: [bot-ts.netlify.app](https://bot-ts.netlify.app)
+* **Web**: [projectjob-bot.netlify.app](https://projectjob-bot.netlify.app)
 
 ### 🐛 Segnala un Bug
 Per una risoluzione veloce, invia sempre:
@@ -414,5 +432,3 @@ Per una risoluzione veloce, invia sempre:
 
 *Grazie per aver scelto SyncroJob!* 🚀
 """
-
-

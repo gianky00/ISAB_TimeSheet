@@ -2,14 +2,15 @@
 Gestione sicura dei segreti dell'applicazione.
 Utilizza variabili d'ambiente con fallback su file protetti.
 """
-import os
-import json
+
 import base64
+import os
 from pathlib import Path
-from cryptography.fernet import Fernet
+
+import keyring  # Per integrazione con credential manager OS
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import keyring  # Per integrazione con credential manager OS
+
 
 class SecretsManager:
     """Gestisce i segreti in modo sicuro."""
@@ -26,17 +27,17 @@ class SecretsManager:
         4. Fallback (Temporaneo, DEPRECATO)
         """
         # 1. Environment variable
-        env_key = os.environ.get('SYNCROJOB_LICENSE_KEY')
+        env_key = os.environ.get("SYNCROJOB_LICENSE_KEY")
         if env_key:
             return base64.urlsafe_b64decode(env_key)
 
         # 2. File .env (solo per sviluppo)
-        env_file = Path(__file__).parent.parent.parent / '.env'
+        env_file = Path(__file__).parent.parent.parent / ".env"
         if env_file.exists():
             with open(env_file) as f:
                 for line in f:
-                    if line.startswith('SYNCROJOB_LICENSE_KEY='):
-                        key = line.split('=', 1)[1].strip()
+                    if line.startswith("SYNCROJOB_LICENSE_KEY="):
+                        key = line.split("=", 1)[1].strip()
                         # Handle potential quotes
                         key = key.strip('"').strip("'")
                         try:
@@ -50,10 +51,10 @@ class SecretsManager:
             if stored:
                 return base64.urlsafe_b64decode(stored)
         except Exception:
-            pass # Keyring might fail in headless/some envs
+            pass  # Keyring might fail in headless/some envs
 
         # Fallback Hardcoded (Legacy - to be removed)
-        return b'8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek='
+        return b"8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
 
     @classmethod
     def get_exa_api_key(cls) -> str:

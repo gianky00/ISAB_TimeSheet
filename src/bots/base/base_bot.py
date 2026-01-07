@@ -2,38 +2,37 @@
 Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione.
 """
-import os
-import time
+
 import shutil
+import time
 from abc import ABC, abstractmethod
-from typing import Optional, Callable, List, Dict, Any
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
-    TimeoutException, 
-    NoSuchElementException,
     ElementClickInterceptedException,
-    StaleElementReferenceException
+    TimeoutException,
 )
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
-from src.core.constants import URLs, Timeouts, BotStatus, BrowserConfig
-from src.core import config_manager
-from src.bots.portale_fornitori.common.locators import CommonLocators # LoginLocators non più necessario qui
 from src.bots.base.login_page import LoginPage
+from src.bots.portale_fornitori.common.locators import (
+    CommonLocators,  # LoginLocators non più necessario qui
+)
+from src.core import config_manager
+from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
+
 
 class BaseBot(ABC):
     """
     Abstract base class for all ISAB bots.
-    
+
     Provides:
     - Selenium/Chrome management with anti-detection
     - Popup management
@@ -41,20 +40,20 @@ class BaseBot(ABC):
     - Logging callback system
     - Stop mechanism
     """
-    
+
     ISAB_URL = URLs.ISAB_PORTAL
-    
+
     def __init__(
         self,
         username: str,
         password: str,
         headless: bool = False,
         timeout: int = Timeouts.DEFAULT,
-        download_path: str = ""
+        download_path: str = "",
     ):
         """
         Initialize the bot.
-        
+
         Args:
             username: ISAB Username
             password: ISAB Password
@@ -67,7 +66,7 @@ class BaseBot(ABC):
         self.headless = headless
         self.timeout = timeout
         self.download_path = download_path
-        
+
         self.driver: Optional[webdriver.Chrome] = None
         self.wait: Optional[WebDriverWait] = None
         self.popup_wait: Optional[WebDriverWait] = None
@@ -77,19 +76,19 @@ class BaseBot(ABC):
         self._log_callback: Optional[Callable[[str], None]] = None
         self._input_callback: Optional[Callable[[str], str]] = None
         self.login_page: Optional[LoginPage] = None
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
         """Name of the bot."""
         pass
-    
+
     @property
     @abstractmethod
     def description(self) -> str:
         """Description of the bot."""
         pass
-    
+
     def set_log_callback(self, callback: Callable[[str], None]):
         """Set the logging callback."""
         self._log_callback = callback
@@ -97,7 +96,7 @@ class BaseBot(ABC):
     def set_input_callback(self, callback: Callable[[str], str]):
         """Set the input callback for user interaction."""
         self._input_callback = callback
-    
+
     def log(self, message: str):
         """Log a message."""
         print(f"[{self.name}] {message}")
@@ -110,24 +109,24 @@ class BaseBot(ABC):
             return self._input_callback(prompt)
         self.log(f"⚠️ Input richiesto ma nessuna callback configurata: {prompt}")
         return ""
-    
+
     def request_stop(self):
         """Request bot interruption."""
         self._stop_requested = True
         self.log("⚠️ Interruzione richiesta...")
-    
+
     def _check_stop(self):
         """Check if interruption was requested."""
         if self._stop_requested:
             raise InterruptedError("Bot interrotto dall'utente")
-    
+
     def _init_driver(self):
         """Initialize Chrome driver with optimized configuration."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
-        
+
         options = Options()
-        
+
         # --- 1. UI & POPUP DISABLE ---
         options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
         options.add_argument("--disable-search-engine-choice-screen")
@@ -136,12 +135,12 @@ class BaseBot(ABC):
         options.add_argument("--disable-notifications")
         options.add_argument("--disable-infobars")
         options.add_argument("--disable-popup-blocking")
-        
+
         # --- 2. ANTI-DETECTION ---
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
-        
+
         # --- 3. PERFORMANCE ---
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
@@ -149,7 +148,7 @@ class BaseBot(ABC):
         options.add_argument("--proxy-server='direct://'")
         options.add_argument("--proxy-bypass-list=*")
         options.add_argument("--start-maximized")
-        
+
         # Check config for global headless setting, overriding init argument if needed
         # Prioritize constructor argument if explicitly True? No, user wants a global flag.
         # But if passed in constructor, we should respect it?
@@ -166,7 +165,7 @@ class BaseBot(ABC):
             options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
 
         # Eager load strategy for speed
-        options.page_load_strategy = 'eager'
+        options.page_load_strategy = "eager"
 
         # --- 4. CACHING & PERSISTENT PROFILE ---
         # Use user config directory to ensure write permissions (fixes Program Files issue)
@@ -184,7 +183,7 @@ class BaseBot(ABC):
             "profile.default_content_setting_values.notifications": 2,
             "profile.default_content_setting_values.automatic_downloads": 1,
             "plugins.always_open_pdf_externally": True,
-            "safebrowsing.enabled": True, 
+            "safebrowsing.enabled": True,
             "safebrowsing.disable_download_protection": True,
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
@@ -196,7 +195,7 @@ class BaseBot(ABC):
         options.add_argument("--safebrowsing-disable-download-protection")
         options.add_argument("--safebrowsing-disable-extension-blacklist")
         options.add_experimental_option("prefs", prefs)
-        
+
         # --- 6. DRIVER INSTALLATION (Robust handling for WinError 193) ---
         driver_path = None
         try:
@@ -247,21 +246,21 @@ class BaseBot(ABC):
         # Initialize Service
         service = Service(driver_path)
         self.driver = webdriver.Chrome(service=service, options=options)
-        
+
         # Remove webdriver flag (JS side)
         self.driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
-            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"}
+            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
         )
-        
+
         # Setup waits
         self.wait = WebDriverWait(self.driver, self.timeout)
         self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
         self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
-        
+
         self.log("✓ Browser inizializzato (Modalità Silenziosa)")
         self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
-    
+
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = Timeouts.OVERLAY) -> bool:
         """
         Waits for Ext JS loading overlays to disappear.
@@ -270,7 +269,7 @@ class BaseBot(ABC):
             overlay_wait = WebDriverWait(self.driver, timeout_secondi)
             # Combine selectors for efficiency
             xpath_combined = f"{CommonLocators.LOADING_MASK[1]} | {CommonLocators.LOADING_TEXT[1]}"
-            
+
             overlay_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath_combined)))
             self.log(" -> Overlay di caricamento scomparso.")
             time.sleep(0.3)
@@ -286,17 +285,17 @@ class BaseBot(ABC):
         """
         self._check_stop()
         self.status = BotStatus.LOGGING_IN
-        
+
         if not self.login_page.login(self.username, self.password):
             return False
 
         self._check_stop()
         self._handle_session_popup()
         self._handle_ok_popup()
-        
+
         self.log("✓ Login completato con successo")
         return True
-    
+
     def _handle_session_popup(self):
         """Handles 'Active Session' popup."""
         try:
@@ -306,56 +305,52 @@ class BaseBot(ABC):
             self._attendi_scomparsa_overlay(10)
         except TimeoutException:
             pass
-    
+
     def _handle_ok_popup(self):
         """Handles generic OK popup."""
         try:
-            ok_button = self.popup_wait.until(
-                EC.element_to_be_clickable(CommonLocators.POPUP_OK)
-            )
+            ok_button = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_OK))
             self.log("Pop-up 'OK' trovato. Click...")
             ok_button.click()
-            WebDriverWait(self.driver, 5).until(
-                EC.invisibility_of_element_located(CommonLocators.POPUP_OK)
-            )
+            WebDriverWait(self.driver, 5).until(EC.invisibility_of_element_located(CommonLocators.POPUP_OK))
             self.log("Popup gestito.")
         except TimeoutException:
             pass
-    
+
     def _handle_new_session_popup(self):
         """Alias for backward compatibility."""
         self._handle_session_popup()
         self._handle_ok_popup()
-    
+
     def _handle_unsaved_changes_popup(self):
         """Handles 'Unsaved Changes' popup."""
         try:
             WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located(CommonLocators.POPUP_ATTENTION_HEADER)
             )
-            
+
             self.log("Pop-up 'Attenzione - modifiche non salvate' trovato. Click su 'Si'...")
-            
+
             si_button = WebDriverWait(self.driver, 5).until(
                 EC.element_to_be_clickable(CommonLocators.POPUP_YES_BUTTON)
             )
-            
+
             try:
                 si_button.click()
             except:
                 self.driver.execute_script("arguments[0].click();", si_button)
-            
+
             self.log("Popup 'Attenzione' gestito - cliccato 'Si'.")
             time.sleep(0.5)
             return True
-            
+
         except TimeoutException:
             pass
         except Exception as e:
             self.log(f"Errore gestione popup Attenzione: {e}")
-        
+
         return False
-    
+
     def _verify_login(self) -> bool:
         """Verifies if login was successful (via URL check)."""
         try:
@@ -366,52 +361,50 @@ class BaseBot(ABC):
     def _verify_logged_in_via_ui(self) -> bool:
         """Checks for post-login UI elements."""
         try:
-            WebDriverWait(self.driver, 5).until(EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON))
+            WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON)
+            )
             return True
         except Exception:
             return False
-    
+
     def _logout(self) -> bool:
         """
         Performs logout.
         """
         self.log("Tentativo di Logout...")
         try:
-            settings_button = self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
-            )
+            settings_button = self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON))
             settings_button.click()
             self.log("Pulsante Settings cliccato.")
-            
-            logout_option = self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
-            )
+
+            logout_option = self.wait.until(EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION))
             logout_option.click()
             self.log("Opzione 'Esci' cliccata.")
-            
+
             time.sleep(1)
             self._handle_unsaved_changes_popup()
             time.sleep(1)
-            
+
             # Confirm Logout (Standard 'Si' button)
             try:
                 yes_button = WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located(CommonLocators.POPUP_SESSION_YES)
                 )
                 self.log("Pulsante 'Si' per conferma logout trovato.")
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", yes_button)
+                self.driver.execute_script(
+                    "arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", yes_button
+                )
                 self.log("Logout confermato.")
                 time.sleep(3)
-                
+
             except TimeoutException:
                 self.log("Nessun ulteriore popup di conferma logout.")
-            
-            WebDriverWait(self.driver, 10).until(
-                EC.url_contains(self.ISAB_URL.split("://")[1].split("/")[0])
-            )
+
+            WebDriverWait(self.driver, 10).until(EC.url_contains(self.ISAB_URL.split("://")[1].split("/")[0]))
             self.log(f"✓ Logout completato. URL: {self.driver.current_url}")
             return True
-            
+
         except TimeoutException:
             current_url = self.driver.current_url if self.driver else "N/A"
             self.log(f"⚠ Timeout durante il logout. URL attuale: {current_url}")
@@ -427,48 +420,46 @@ class BaseBot(ABC):
         except Exception as e:
             self.log(f"✗ Errore durante il logout: {e}")
             return False
-    
+
     def navigate_to_menu(self, menu_path: List[str]) -> bool:
         """Navigates through ExtJS menus."""
         self._check_stop()
         self.log(f"Navigazione: {' > '.join(menu_path)}")
-        
+
         try:
             for menu_item in menu_path:
                 self._check_stop()
-                
+
                 selectors = [
                     f"//span[contains(text(), '{menu_item}')]",
                     f"//div[contains(text(), '{menu_item}')]",
                     f"//a[contains(text(), '{menu_item}')]",
                     f"//*[contains(@class, 'x-menu-item')][contains(text(), '{menu_item}')]",
-                    f"//*[normalize-space(text())='{menu_item}']"
+                    f"//*[normalize-space(text())='{menu_item}']",
                 ]
-                
+
                 clicked = False
                 for selector in selectors:
                     try:
-                        element = self.wait.until(
-                            EC.element_to_be_clickable((By.XPATH, selector))
-                        )
+                        element = self.wait.until(EC.element_to_be_clickable((By.XPATH, selector)))
                         element.click()
                         clicked = True
                         self._attendi_scomparsa_overlay()
                         break
                     except (TimeoutException, ElementClickInterceptedException):
                         continue
-                
+
                 if not clicked:
                     self.log(f"✗ Impossibile cliccare su '{menu_item}'")
                     return False
-            
+
             self.log("✓ Navigazione completata")
             return True
-            
+
         except Exception as e:
             self.log(f"✗ Errore navigazione: {e}")
             return False
-    
+
     def cleanup(self):
         """
         Closes browser and releases resources.
@@ -482,12 +473,12 @@ class BaseBot(ABC):
             self.driver = None
             self.wait = None
             self.login_page = None
-    
+
     @abstractmethod
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """Main execution logic."""
         pass
-    
+
     def _safe_login_with_retry(self, max_retries: int = 3) -> bool:
         """
         Initializes driver and login with retry mechanism.
@@ -513,7 +504,8 @@ class BaseBot(ABC):
     def _capture_error_snapshot(self) -> str:
         """Captures a screenshot and returns the path."""
         try:
-            if not self.driver: return ""
+            if not self.driver:
+                return ""
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             filename = f"error_{timestamp}.png"
             path = config_manager.CONFIG_DIR / "logs" / "snapshots" / filename
@@ -528,18 +520,18 @@ class BaseBot(ABC):
         Executes full bot workflow.
         """
         self._stop_requested = False
-        
+
         try:
             if not self._safe_login_with_retry():
                 self.status = BotStatus.ERROR
                 return False
-            
+
             self.status = BotStatus.RUNNING
             result = self.run(data)
-            
+
             self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
             return result
-            
+
         except InterruptedError:
             self.log("Bot interrotto")
             self.status = BotStatus.STOPPED
@@ -554,21 +546,21 @@ class BaseBot(ABC):
             return False
         finally:
             self.cleanup()
-    
+
     def execute_login_only(self) -> bool:
         """Executes only login."""
         self._stop_requested = False
-        
+
         try:
             self._init_driver()
-            
+
             if not self._login():
                 self.status = BotStatus.ERROR
                 return False
-            
+
             self.status = BotStatus.COMPLETED
             return True
-            
+
         except InterruptedError:
             self.log("Bot interrotto")
             self.status = BotStatus.STOPPED
@@ -579,203 +571,5 @@ class BaseBot(ABC):
             self.status = BotStatus.ERROR
             self.cleanup()
             return False
-    
-    def _logout(self) -> bool:
-        """Performs logout."""
-        self.log("Tentativo di Logout...")
-        try:
-            settings_button = self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
-            )
-            settings_button.click()
-            self.log("Pulsante Settings cliccato.")
-            
-            logout_option = self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
-            )
-            logout_option.click()
-            self.log("Opzione 'Esci' cliccata.")
-            
-            time.sleep(1)
-            self._handle_unsaved_changes_popup()
-            time.sleep(1)
-            
-            # Confirm Logout (Standard 'Si' button)
-            try:
-                yes_button = WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located(CommonLocators.POPUP_SESSION_YES)
-                )
-                self.log("Pulsante 'Si' per conferma logout trovato.")
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", yes_button)
-                self.log("Logout confermato.")
-                time.sleep(3)
-                
-            except TimeoutException:
-                self.log("Nessun ulteriore popup di conferma logout.")
-            
-            WebDriverWait(self.driver, 10).until(
-                EC.url_contains(self.ISAB_URL.split("://")[1].split("/")[0])
-            )
-            self.log(f"✓ Logout completato. URL: {self.driver.current_url}")
-            return True
-            
-        except TimeoutException:
-            current_url = self.driver.current_url if self.driver else "N/A"
-            self.log(f"⚠ Timeout durante il logout. URL attuale: {current_url}")
-            try:
-                WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located(CommonLocators.USERNAME_FIELD)
-                )
-                self.log("Campo Username trovato. Logout probabilmente riuscito.")
-                return True
-            except TimeoutException:
-                self.log("⚠ Logout incerto.")
-                return False
-        except Exception as e:
-            self.log(f"✗ Errore durante il logout: {e}")
-            return False
-    
-    def navigate_to_menu(self, menu_path: List[str]) -> bool:
-        """Navigates through ExtJS menus."""
-        self._check_stop()
-        self.log(f"Navigazione: {' > '.join(menu_path)}")
-        
-        try:
-            for menu_item in menu_path:
-                self._check_stop()
-                
-                selectors = [
-                    f"//span[contains(text(), '{menu_item}')]",
-                    f"//div[contains(text(), '{menu_item}')]",
-                    f"//a[contains(text(), '{menu_item}')]",
-                    f"//*[contains(@class, 'x-menu-item')][contains(text(), '{menu_item}')]",
-                    f"//*[normalize-space(text())='{menu_item}']"
-                ]
-                
-                clicked = False
-                for selector in selectors:
-                    try:
-                        element = self.wait.until(
-                            EC.element_to_be_clickable((By.XPATH, selector))
-                        )
-                        element.click()
-                        clicked = True
-                        self._attendi_scomparsa_overlay()
-                        break
-                    except (TimeoutException, ElementClickInterceptedException):
-                        continue
-                
-                if not clicked:
-                    self.log(f"✗ Impossibile cliccare su '{menu_item}'")
-                    return False
-            
-            self.log("✓ Navigazione completata")
-            return True
-            
-        except Exception as e:
-            self.log(f"✗ Errore navigazione: {e}")
-            return False
-    
-    def cleanup(self):
-        """Closes browser and releases resources."""
-        if self.driver:
-            try:
-                self.driver.quit()
-                self.log("Browser chiuso")
-            except Exception:
-                pass
-            self.driver = None
-            self.wait = None
-    
-    @abstractmethod
-    def run(self, data: List[Dict[str, Any]]) -> bool:
-        """Main execution logic."""
-        pass
-    
-    def _safe_login_with_retry(self, max_retries: int = 3) -> bool:
-        """Initializes driver and login with retry mechanism."""
-        for attempt in range(1, max_retries + 1):
-            self._check_stop()
-            try:
-                self._init_driver()
-                if self._login():
-                    return True
 
-                self.log(f"Tentativo {attempt}/{max_retries} fallito. Riprovo tra 5 secondi...")
-                self.cleanup()
-                time.sleep(5)
-            except Exception as e:
-                self.log(f"Errore inizializzazione (Tentativo {attempt}): {e}")
-                self.cleanup()
-                time.sleep(5)
 
-        self.log("✗ Tutti i tentativi di login sono falliti.")
-        return False
-
-    def _capture_error_snapshot(self) -> str:
-        """Captures a screenshot and returns the path."""
-        try:
-            if not self.driver: return ""
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            filename = f"error_{timestamp}.png"
-            path = config_manager.CONFIG_DIR / "logs" / "snapshots" / filename
-            path.parent.mkdir(parents=True, exist_ok=True)
-            self.driver.save_screenshot(str(path))
-            return str(path)
-        except Exception:
-            return ""
-
-    def execute(self, data: List[Dict[str, Any]]) -> bool:
-        """Executes full bot workflow."""
-        self._stop_requested = False
-        
-        try:
-            if not self._safe_login_with_retry():
-                self.status = BotStatus.ERROR
-                return False
-            
-            self.status = BotStatus.RUNNING
-            result = self.run(data)
-            
-            self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
-            return result
-            
-        except InterruptedError:
-            self.log("Bot interrotto")
-            self.status = BotStatus.STOPPED
-            return False
-        except Exception as e:
-            snapshot = self._capture_error_snapshot()
-            msg = f"✗ Errore esecuzione: {e}"
-            if snapshot:
-                msg += f" [IMG:{snapshot}]"
-            self.log(msg)
-            self.status = BotStatus.ERROR
-            return False
-        finally:
-            self.cleanup()
-    
-    def execute_login_only(self) -> bool:
-        """Executes only login."""
-        self._stop_requested = False
-        
-        try:
-            self._init_driver()
-            
-            if not self._login():
-                self.status = BotStatus.ERROR
-                return False
-            
-            self.status = BotStatus.COMPLETED
-            return True
-            
-        except InterruptedError:
-            self.log("Bot interrotto")
-            self.status = BotStatus.STOPPED
-            self.cleanup()
-            return False
-        except Exception as e:
-            self.log(f"✗ Errore esecuzione: {e}")
-            self.status = BotStatus.ERROR
-            self.cleanup()
-            return False

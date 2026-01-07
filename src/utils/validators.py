@@ -1,9 +1,11 @@
 """
 Framework di validazione input centralizzato.
 """
+
 import re
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
+
 
 @dataclass
 class ValidationResult:
@@ -11,18 +13,19 @@ class ValidationResult:
     error: Optional[str] = None
     sanitized_value: Optional[str] = None
 
+
 class InputValidator:
     """Validatore centralizzato per tutti gli input utente."""
 
     # Pattern comuni
     PATTERNS = {
-        'oda_number': r'^[A-Za-z0-9]{1,20}$',
-        'pdl_number': r'^[0-9]{6}/[CS]$',
-        'codice_fiscale': r'^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$',
-        'date_it': r'^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[012])\.(19|20)\d\d$',
-        'time': r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
-        'username': r'^[a-zA-Z0-9_]{3,50}$',
-        'email': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+        "oda_number": r"^[A-Za-z0-9]{1,20}$",
+        "pdl_number": r"^[0-9]{6}/[CS]$",
+        "codice_fiscale": r"^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$",
+        "date_it": r"^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[012])\.(19|20)\d\d$",
+        "time": r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+        "username": r"^[a-zA-Z0-9_]{3,50}$",
+        "email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
     }
 
     @classmethod
@@ -40,10 +43,9 @@ class InputValidator:
             suffix = "/S" if num < 400000 else "/C"
             sanitized = f"{sanitized}{suffix}"
 
-        if not re.match(cls.PATTERNS['pdl_number'], sanitized):
+        if not re.match(cls.PATTERNS["pdl_number"], sanitized):
             return ValidationResult(
-                False, 
-                f"PDL '{value}' non valido. Formato richiesto: 123456/C o 123456/S (o solo 6 cifre)"
+                False, f"PDL '{value}' non valido. Formato richiesto: 123456/C o 123456/S (o solo 6 cifre)"
             )
 
         return ValidationResult(True, sanitized_value=sanitized)
@@ -59,7 +61,7 @@ class InputValidator:
         if len(sanitized) > 20:
             return ValidationResult(False, "Numero OdA troppo lungo (max 20 caratteri)")
 
-        if not re.match(cls.PATTERNS['oda_number'], sanitized):
+        if not re.match(cls.PATTERNS["oda_number"], sanitized):
             return ValidationResult(False, "Numero OdA contiene caratteri non validi")
 
         return ValidationResult(True, sanitized_value=sanitized)
@@ -75,7 +77,7 @@ class InputValidator:
         if len(sanitized) != 16:
             return ValidationResult(False, "Codice Fiscale deve essere di 16 caratteri")
 
-        if not re.match(cls.PATTERNS['codice_fiscale'], sanitized):
+        if not re.match(cls.PATTERNS["codice_fiscale"], sanitized):
             return ValidationResult(False, "Formato Codice Fiscale non valido")
 
         # Validazione checksum (carattere di controllo)
@@ -89,16 +91,80 @@ class InputValidator:
         """Verifica il carattere di controllo del CF."""
         # Implementazione algoritmo di controllo
         odd_map = {
-            '0': 1, '1': 0, '2': 5, '3': 7, '4': 9, '5': 13, '6': 15, '7': 17, '8': 19, '9': 21,
-            'A': 1, 'B': 0, 'C': 5, 'D': 7, 'E': 9, 'F': 13, 'G': 15, 'H': 17, 'I': 19, 'J': 21,
-            'K': 2, 'L': 4, 'M': 18, 'N': 20, 'O': 11, 'P': 3, 'Q': 6, 'R': 8, 'S': 12, 'T': 14,
-            'U': 16, 'V': 10, 'W': 22, 'X': 25, 'Y': 24, 'Z': 23
+            "0": 1,
+            "1": 0,
+            "2": 5,
+            "3": 7,
+            "4": 9,
+            "5": 13,
+            "6": 15,
+            "7": 17,
+            "8": 19,
+            "9": 21,
+            "A": 1,
+            "B": 0,
+            "C": 5,
+            "D": 7,
+            "E": 9,
+            "F": 13,
+            "G": 15,
+            "H": 17,
+            "I": 19,
+            "J": 21,
+            "K": 2,
+            "L": 4,
+            "M": 18,
+            "N": 20,
+            "O": 11,
+            "P": 3,
+            "Q": 6,
+            "R": 8,
+            "S": 12,
+            "T": 14,
+            "U": 16,
+            "V": 10,
+            "W": 22,
+            "X": 25,
+            "Y": 24,
+            "Z": 23,
         }
         even_map = {
-            '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
-            'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9,
-            'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19,
-            'U': 20, 'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25
+            "0": 0,
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "4": 4,
+            "5": 5,
+            "6": 6,
+            "7": 7,
+            "8": 8,
+            "9": 9,
+            "A": 0,
+            "B": 1,
+            "C": 2,
+            "D": 3,
+            "E": 4,
+            "F": 5,
+            "G": 6,
+            "H": 7,
+            "I": 8,
+            "J": 9,
+            "K": 10,
+            "L": 11,
+            "M": 12,
+            "N": 13,
+            "O": 14,
+            "P": 15,
+            "Q": 16,
+            "R": 17,
+            "S": 18,
+            "T": 19,
+            "U": 20,
+            "V": 21,
+            "W": 22,
+            "X": 23,
+            "Y": 24,
+            "Z": 25,
         }
 
         total = 0
@@ -117,15 +183,16 @@ class InputValidator:
         if not value:
             return ValidationResult(False, "Data obbligatoria")
 
-        sanitized = value.strip().replace('/', '.')
+        sanitized = value.strip().replace("/", ".")
 
-        if not re.match(cls.PATTERNS['date_it'], sanitized):
+        if not re.match(cls.PATTERNS["date_it"], sanitized):
             return ValidationResult(False, "Formato data non valido (usa GG.MM.AAAA)")
 
         # Verifica data valida
         try:
             from datetime import datetime
-            datetime.strptime(sanitized, '%d.%m.%Y')
+
+            datetime.strptime(sanitized, "%d.%m.%Y")
         except ValueError:
             return ValidationResult(False, "Data non esistente")
 
@@ -137,4 +204,4 @@ class InputValidator:
         if not value:
             return ""
         # Rimuovi caratteri di controllo
-        return ''.join(c for c in value if c.isprintable())
+        return "".join(c for c in value if c.isprintable())

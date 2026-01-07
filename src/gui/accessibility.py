@@ -1,8 +1,10 @@
 """
 Utilities per accessibilità.
 """
-from PyQt6.QtWidgets import QWidget
+
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget
+
 
 def make_accessible(widget: QWidget, name: str, description: str = "", role: str = None):
     """Rende un widget accessibile."""
@@ -14,10 +16,12 @@ def make_accessible(widget: QWidget, name: str, description: str = "", role: str
     if widget.focusPolicy() == Qt.FocusPolicy.NoFocus:
         widget.setFocusPolicy(Qt.FocusPolicy.TabFocus)
 
+
 def setup_tab_order(widgets: list[QWidget]):
     """Configura ordine di tabulazione."""
     for i in range(len(widgets) - 1):
         QWidget.setTabOrder(widgets[i], widgets[i + 1])
+
 
 class KeyboardShortcuts:
     """Gestisce shortcut tastiera globali."""
@@ -33,7 +37,6 @@ class KeyboardShortcuts:
 
     @classmethod
     def setup(cls, main_window):
-        from PyQt6.QtGui import QShortcut, QKeySequence
 
         for key, action in cls.SHORTCUTS.items():
             # Check if main_window has handler (e.g., handle_save)
