@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
-from src.gui.widgets.calendar_date_edit import CalendarDateEdit
+from src.gui.old_widgets import CalendarDateEdit
 from src.utils.helpers import get_asset_path
 
 
