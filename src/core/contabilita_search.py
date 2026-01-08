@@ -73,7 +73,7 @@ class ContabilitaSearch:
         if len(query) < 3:
             return {}  # More strict for generic search
 
-        out = {"GIORNALIERE": [], "CANTIERE": [], "CERTIFICATI": []}
+        out: Dict[str, List[Dict]] = {"GIORNALIERE": [], "CANTIERE": [], "CERTIFICATI": []}
         like_query = f"%{query}%"
 
         def _fmt_date(val):

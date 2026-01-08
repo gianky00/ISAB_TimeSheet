@@ -4,6 +4,7 @@ Gestisce la sincronizzazione dei dati importati con il database.
 """
 
 import sqlite3
+from pathlib import Path
 from typing import List, Tuple
 
 import pandas as pd
@@ -17,7 +18,7 @@ class DataSynchronizer:
 
     @classmethod
     def sync_contabilita_dati(
-        cls, db_path: str, imported_data: List[Tuple], imported_years: List[int]
+        cls, db_path: Path, imported_data: List[Tuple], imported_years: List[int]
     ) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'contabilita' nel database.
@@ -73,7 +74,7 @@ class DataSynchronizer:
 
     @classmethod
     def sync_giornaliere(
-        cls, db_path: str, all_new_rows: List[Tuple], years_to_clear: List[int]
+        cls, db_path: Path, all_new_rows: List[Tuple], years_to_clear: List[int]
     ) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'giornaliere' nel database.
@@ -143,7 +144,7 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_attivita_programmate(cls, db_path: str, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
+    def sync_attivita_programmate(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'attivita_programmate' nel database.
         Rimuove tutti i dati esistenti e inserisce i nuovi.
@@ -178,7 +179,7 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_scarico_ore(cls, db_path: str, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
+    def sync_scarico_ore(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'scarico_ore' nel database.
         Rimuove tutti i dati esistenti e inserisce i nuovi.
@@ -219,7 +220,7 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_certificati_campione(cls, db_path: str, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
+    def sync_certificati_campione(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'certificati_campione' nel database.
         Rimuove tutti i dati esistenti e inserisce i nuovi.

@@ -15,9 +15,12 @@ class SafeworkBaseBot(BaseBot):
     """
 
     SAFEWORK_URL = "https://safework.isab.com/"
+    ISAB_URL = SAFEWORK_URL
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = 120) -> bool:
         """Logica di attesa fedele allo script originale."""
+        if not self.driver:
+            return False
         try:
             # Attende la scomparsa dell'overlay grigio
             WebDriverWait(self.driver, timeout_secondi).until(
@@ -45,6 +48,8 @@ class SafeworkBaseBot(BaseBot):
 
     def _attendi_caricamento_sistema(self):
         """Implementa l'attesa specifica: compare e poi scompare."""
+        if not self.driver:
+            return
         xpath_caricamento = "//span[contains(text(), 'Caricamento...')]"
         try:
             self.log("⏳ Attesa comparsa caricamento...")
@@ -68,7 +73,3 @@ class SafeworkBaseBot(BaseBot):
     @property
     def description(self) -> str:
         return "Bot Base SafeWork"
-
-    @property
-    def ISAB_URL(self) -> str:
-        return self.SAFEWORK_URL

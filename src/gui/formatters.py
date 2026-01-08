@@ -2,7 +2,9 @@
 Bot TS - GUI Formatters
 Funzioni di utilità per la formattazione dei dati da visualizzare nell'interfaccia grafica.
 """
+
 from datetime import datetime
+
 
 def format_currency(val: float) -> str:
     """Formatta un valore numerico come valuta in formato italiano (€ 1.234,56)."""
@@ -12,6 +14,7 @@ def format_currency(val: float) -> str:
         return f"€ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except (ValueError, TypeError):
         return ""
+
 
 def format_number(val) -> str:
     """Formatta un numero per la visualizzazione: max 2 decimali, virgola, e rimuove .0 se intero."""
@@ -28,6 +31,7 @@ def format_number(val) -> str:
     except (ValueError, TypeError):
         return str(val)
 
+
 def format_date(val: str) -> str:
     """Formatta una stringa di data (da YYYY-MM-DD o altri formati) a DD/MM/YYYY."""
     if not val:
@@ -35,7 +39,7 @@ def format_date(val: str) -> str:
     str_val = str(val).strip()
     if " " in str_val:
         str_val = str_val.split(" ")[0]
-    
+
     dt = None
     # Formati comuni da provare
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
@@ -44,10 +48,11 @@ def format_date(val: str) -> str:
             break
         except ValueError:
             continue
-            
+
     if dt:
         return dt.strftime("%d/%m/%Y")
-    return str_val # Ritorna il valore originale se il parsing fallisce
+    return str_val  # Ritorna il valore originale se il parsing fallisce
+
 
 def parse_float(text: str) -> float:
     """Converte una stringa (potenzialmente in formato italiano) in un float."""
@@ -59,6 +64,7 @@ def parse_float(text: str) -> float:
         return float(clean_text)
     except (ValueError, TypeError):
         return 0.0
+
 
 def parse_currency(text: str) -> float:
     """Converte una stringa di valuta (es. '€ 1.234,56') in un float."""

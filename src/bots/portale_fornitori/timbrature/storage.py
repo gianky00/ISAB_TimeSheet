@@ -125,7 +125,9 @@ class TimbratureStorage:
 
             return employees
 
-    def update_employee_details(self, nome: str, cognome: str, reparto: str = None, cantiere: str = None):
+    def update_employee_details(
+        self, nome: str, cognome: str, reparto: Optional[str] = None, cantiere: Optional[str] = None
+    ):
         """Salva l'assegnazione reparto/cantiere direttamente in config.json."""
         config = config_manager.load_config()
         mappings = config.get("employee_mappings", {})
@@ -144,9 +146,9 @@ class TimbratureStorage:
     def get_timbrature_with_reparto(
         self,
         limit: int = 500,
-        filter_text: str = None,
-        filter_reparto: str = None,
-        filter_cantiere: str = None,
+        filter_text: Optional[str] = None,
+        filter_reparto: Optional[str] = None,
+        filter_cantiere: Optional[str] = None,
     ) -> List[tuple]:
         """
         Recupera le timbrature e le arricchisce con i dati da config.json.

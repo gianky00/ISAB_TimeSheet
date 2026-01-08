@@ -6,7 +6,7 @@ Page Object Model for Dettagli OdA.
 import time
 import traceback
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
@@ -23,7 +23,7 @@ from src.utils.helpers import sanitize_filename
 
 class DettagliOdAPage:
 
-    def __init__(self, driver: WebDriver, log_callback: Optional[callable] = None):
+    def __init__(self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None):
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)

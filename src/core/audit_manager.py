@@ -23,7 +23,7 @@ class AuditManager:
 
     _instance = None
     DB_PATH = CONFIG_DIR / "data" / "audit_log.db"
-    _SALT = b"SyncroJob_Secure_Audit_2026"
+    _SALT = "SyncroJob_Secure_Audit_2026"
 
     # Livelli di severità
     class Severity:
@@ -86,13 +86,13 @@ class AuditManager:
             conn.commit()
 
     def _get_current_user(self) -> str:
-        """Recupera l'utente corrente con massima robustezza per EXE e Sorgenti."""
-        # Metodo prioritario: Variabile d'ambiente (più veloce e affidabile in EXE)
+        """Recupera l'utente corrente con massima robustezza (Environment + standard + Windows API fallback)."""
+        # 1. Tentativo tramite variabili d'ambiente (veloce)
         user = os.environ.get("USERNAME") or os.environ.get("USER")
-        if user and user.lower() != "none":
+        if user and user.lower() != "none" and user != "":
             return user
 
-        # Metodo secondario: getpass
+        # 2. Tentativo tramite modulo standard
         try:
             import getpass
 
@@ -102,14 +102,15 @@ class AuditManager:
         except:
             pass
 
-        # Metodo di sistema: WinAPI (solo se necessario)
+        # 3. Tentativo tramite Windows API (Win32)
         if os.name == "nt":
             try:
                 import ctypes
 
+                advapi32 = ctypes.windll.advapi32
                 buffer = ctypes.create_unicode_buffer(256)
                 size = ctypes.c_uint(len(buffer))
-                if ctypes.windll.advapi32.GetUserNameW(buffer, ctypes.byref(size)):
+                if advapi32.GetUserNameW(buffer, ctypes.byref(size)):
                     return buffer.value
             except:
                 pass
@@ -131,34 +132,6 @@ class AuditManager:
                 return row[0] if row and row[0] else "0" * 64
         except:
             return "0" * 64
-
-    def _get_current_user(self) -> str:
-        """Recupera l'utente corrente con massima robustezza (Windows API fallback)."""
-        # 1. Tentativo tramite modulo standard
-        try:
-            import getpass
-
-            user = getpass.getuser()
-            if user and user.lower() != "none":
-                return user
-        except:
-            pass
-
-        # 2. Tentativo tramite Windows API (Win32)
-        if os.name == "nt":
-            try:
-                import ctypes
-
-                advapi32 = ctypes.windll.advapi32
-                buffer = ctypes.create_unicode_buffer(256)
-                size = ctypes.c_uint(len(buffer))
-                if advapi32.GetUserNameW(buffer, ctypes.byref(size)):
-                    return buffer.value
-            except:
-                pass
-
-        # 3. Fallback finale tramite variabili d'ambiente
-        return os.environ.get("USERNAME") or os.environ.get("USER") or "unknown"
 
     def log_action(
         self,

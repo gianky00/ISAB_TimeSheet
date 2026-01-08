@@ -5,7 +5,7 @@ Bot for accessing Timbrature section using Page Object Model.
 
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Union
 
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
@@ -40,10 +40,12 @@ class TimbratureBot(BaseBot):
         self.fornitore = fornitore
         self.storage = TimbratureStorage()
 
-    def run(self, data: Dict[str, Any]) -> bool:
+    def run(self, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> bool:
         """
         Executes the Timbrature workflow: Navigate -> Filter -> Download -> Import.
         """
+        if not self.driver:
+            return False
         if isinstance(data, dict):
             self.data_da = data.get("data_da", self.data_da)
             self.data_a = data.get("data_a", self.data_a)

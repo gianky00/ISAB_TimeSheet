@@ -7,7 +7,10 @@ import base64
 from pathlib import Path
 from typing import List
 
-import fitz  # PyMuPDF
+try:
+    import fitz  # type: ignore
+except ImportError:
+    fitz = None
 
 
 class DocumentProcessor:

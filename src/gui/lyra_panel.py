@@ -1,5 +1,6 @@
 from io import StringIO
 from pathlib import Path
+from typing import Any, List, Optional
 
 import markdown
 import pandas as pd
@@ -31,7 +32,7 @@ from src.utils.helpers import get_asset_path
 class LyraWorker(QThread):
     finished = pyqtSignal(str)
 
-    def __init__(self, api_key: str, question: str, context: str = "", images: list = None):
+    def __init__(self, api_key: str, question: str, context: str = "", images: Optional[List[Any]] = None):
         super().__init__()
         self.api_key = api_key
         self.question = question
@@ -547,172 +548,6 @@ class LyraPanel(QWidget):
         # Use sender to position
         sender = self.sender()
         if sender:
-            pos = sender.mapToGlobal(sender.rect().bottomLeft())
-            menu.exec(pos)
-
-    def _export_pdf(self):
-        filename, _ = QFileDialog.getSaveFileName(
-            self, "Salva Chat PDF", "chat_lyra.pdf", "PDF Files (*.pdf)"
-        )
-        if filename:
-            try:
-                from PyQt6.QtPrintSupport import QPrinter
-
-                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-                printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
-                printer.setOutputFileName(filename)
-
-                self.chat_area.document().print(printer)
-                QMessageBox.information(self, "Successo", "Chat esportata correttamente!")
-            except Exception as e:
-                # Fallback: Save as HTML
-                html_file = filename.replace(".pdf", ".html")
-                with open(html_file, "w", encoding="utf-8") as f:
-                    f.write(self.chat_area.toHtml())
-                QMessageBox.warning(
-                    self, "Info", f"PDF driver non trovato. Salvato come HTML: {html_file}\nErr: {e}"
-                )
-
-    def _export_excel(self):
-        """Exports the last table found in the chat history to Excel."""
-        if not self.last_table_data:
-            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
-            return
-
-        text = self.last_table_data
-        lines = text.split("\n")
-        table_lines = []
-
-        current_block = []
-        for line in lines:
-            if line.strip().startswith("|"):
-                current_block.append(line)
-            else:
-                if current_block:
-                    if len(current_block) >= 2:
-                        table_lines = current_block
-                    current_block = []
-
-        if current_block:
-            if len(current_block) >= 2:
-                table_lines = current_block
-
-        if not table_lines:
-            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio.")
-            return
-
-        try:
-            cleaned_lines = [l for l in table_lines if "---" not in l]
-
-            data = StringIO("\n".join(cleaned_lines))
-            df = pd.read_csv(data, sep="|", header=0, engine="python")
-
-            # Clean empty columns from pipes
-            df = df.dropna(axis=1, how="all")
-            df.columns = df.columns.str.strip()
-            df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-
-            filename, _ = QFileDialog.getSaveFileName(
-                self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)"
-            )
-            if filename:
-                df.to_excel(filename, index=False)
-                QMessageBox.information(self, "Successo", "Tabella esportata correttamente!")
-
-        except Exception as e:
-            QMessageBox.critical(self, "Errore", f"Impossibile esportare la tabella: {e}")
-
-    def _set_input(self, text):
-        """Imposta il testo nell'input field."""
-        self.input_field.setText(text)
-        self.input_field.setFocus()
-
-    def _send_message(self):
-        text = self.input_field.text().strip()
-        if not text:
-            return
-        self.ask_lyra(text)
-        self.input_field.clear()
-
-    def ask_lyra(self, question: str, context: str = ""):
-        """Avvia una richiesta a Lyra."""
-        self._append_message("Tu", question)
-        if context:
-            self._append_message("Sistema", "<i>[Dati allegati all'analisi]</i>")
-
-        self.input_field.setDisabled(True)
-        self.chat_area.setFocus()
-
-        self.worker = LyraWorker(question, context)
-        self.worker.finished.connect(self._on_answer)
-        self.worker.start()
-
-    def _on_answer(self, text):
-        self._append_message("Lyra", text)
-        self.input_field.setDisabled(False)
-        self.input_field.setFocus()
-
-    def _format_markdown(self, text: str) -> str:
-        """Uses 'markdown' library to convert MD to HTML with table extension."""
-        try:
-            # Enable 'tables' and 'fenced_code' extensions
-            html = markdown.markdown(text, extensions=["tables", "fenced_code"])
-
-            # Post-process for styling
-            style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 10px; border-color: #dee2e6;"'
-            style_th = 'style="background-color: #f8f9fa; color: #495057; font-weight: bold; padding: 8px;"'
-            style_td = 'style="padding: 8px;"'
-
-            html = html.replace("<table>", f"<table {style_table}>")
-            html = html.replace("<th>", f"<th {style_th}>")
-            html = html.replace("<td>", f"<td {style_td}>")
-
-            # Detect tables for export context
-            if "<table>" in html:
-                self.last_table_data = text
-                self.btn_export_last_table.setVisible(True)
-
-            return html
-        except Exception as e:
-            print(f"Markdown error: {e}")
-            return text
-
-    def _append_message(self, sender, text):
-        color = "#6f42c1" if sender == "Lyra" else "#495057"
-        align = "left"
-
-        formatted_html = self._format_markdown(text)
-
-        # Reduced margin-bottom from 15px to 5px to compact the view
-        html = f"""
-        <div style="margin-bottom: 20px; text-align: {align};">
-            <div style="font-weight: bold; color: {color}; font-size: 13px; margin-bottom: 2px;">{sender}</div>
-            <div style="font-size: 15px; line-height: 1.5; color: #212529;">
-                {formatted_html}
-            </div>
-        </div>
-        """
-        self.chat_area.append(html)
-
-        # Scroll to bottom
-        sb = self.chat_area.verticalScrollBar()
-        sb.setValue(sb.maximum())
-
-    def _export_chat(self):
-        """Esporta la chat in PDF o l'ultima tabella in Excel."""
-        menu = QMenu(self)
-
-        pdf_action = QAction("📄 Esporta come PDF", self)
-        pdf_action.triggered.connect(self._export_pdf)
-        menu.addAction(pdf_action)
-
-        excel_action = QAction("📊 Esporta ultima tabella (Excel)", self)
-        excel_action.triggered.connect(self._export_excel)
-        menu.addAction(excel_action)
-
-        # FIXED: Use sender directly instead of casting
-        sender = self.sender()
-        if sender:
             # Calculate position below the button
             pos = sender.mapToGlobal(sender.rect().bottomLeft())
             menu.exec(pos)
@@ -723,7 +558,6 @@ class LyraPanel(QWidget):
         )
         if filename:
             try:
-                # Using QPrinter (requires PyQt6.QtPrintSupport)
                 from PyQt6.QtPrintSupport import QPrinter
 
                 printer = QPrinter(QPrinter.PrinterMode.HighResolution)
@@ -743,7 +577,6 @@ class LyraPanel(QWidget):
 
     def _export_excel(self):
         """Exports the last table found in the chat history to Excel."""
-        # FIX: Use self.last_table_data which stores the raw Markdown
         if not self.last_table_data:
             QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
             return
@@ -752,8 +585,6 @@ class LyraPanel(QWidget):
         lines = text.split("\n")
         table_lines = []
 
-        # Capture the table block from the stored markdown
-        # Assuming the stored text IS mostly the table or contains it
         current_block = []
         for line in lines:
             if line.strip().startswith("|"):
@@ -762,8 +593,6 @@ class LyraPanel(QWidget):
                 if current_block:
                     if len(current_block) >= 2:
                         table_lines = current_block
-                        # We found a table, might be multiple, take the last one or all?
-                        # Taking the last one found in the text chunk
                     current_block = []
 
         if current_block:
@@ -775,17 +604,15 @@ class LyraPanel(QWidget):
             return
 
         try:
-            cleaned_lines = [l for l in table_lines if "---" not in l]
+            cleaned_lines = [line for line in table_lines if "---" not in line]
 
             data = StringIO("\n".join(cleaned_lines))
-            # Use pandas read_csv with sep='|'
-            # Markdown tables often have leading/trailing pipes
             df = pd.read_csv(data, sep="|", header=0, engine="python")
 
             # Clean empty columns from pipes
             df = df.dropna(axis=1, how="all")
             df.columns = df.columns.str.strip()
-            df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+            df = df.apply(lambda x: x.strip() if isinstance(x, str) else x)
 
             filename, _ = QFileDialog.getSaveFileName(
                 self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)"

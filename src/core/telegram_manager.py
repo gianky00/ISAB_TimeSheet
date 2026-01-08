@@ -4,7 +4,13 @@ import re
 import threading
 
 from PyQt6.QtCore import QObject, pyqtSignal
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constants
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+    Update,
+    constants,
+)
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -120,10 +126,13 @@ class TelegramService(QObject):
         )
 
     async def _check_auth(self, update: Update) -> bool:
+        if not update.effective_user:
+            return False
         user_id = str(update.effective_user.id)
         if self.connected_chat_id and user_id != self.connected_chat_id:
             try:
-                await update.message.reply_text("⛔ Accesso Negato")
+                if update.message:
+                    await update.message.reply_text("⛔ Accesso Negato")
             except:
                 pass
             return False
@@ -132,26 +141,32 @@ class TelegramService(QObject):
     async def _cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
             return
-        await update.message.reply_text(
-            "🚀 *SyncroJob Command Center*",
-            reply_markup=self._get_main_keyboard(),
-            parse_mode=constants.ParseMode.MARKDOWN,
-        )
+        if update.message:
+            await update.message.reply_text(
+                "🚀 *SyncroJob Command Center*",
+                reply_markup=self._get_main_keyboard(),
+                parse_mode=constants.ParseMode.MARKDOWN,
+            )
 
     async def _cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
             return
-        self.status_requested.emit(str(update.effective_chat.id))
+        if update.effective_chat:
+            self.status_requested.emit(str(update.effective_chat.id))
 
     async def _cmd_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
             return
         self.command_received.emit("stop_all", {})
-        await update.message.reply_text("🛑 *Richiesta Stop Inviata*")
+        if update.message:
+            await update.message.reply_text("🛑 *Richiesta Stop Inviata*")
 
     async def _handle_text_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
             return
+        if not update.effective_chat or not update.message or not update.message.text:
+            return
+
         chat_id = update.effective_chat.id
         state = self.user_states.get(chat_id)
         text = update.message.text
@@ -179,6 +194,9 @@ class TelegramService(QObject):
     async def _handle_voice(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
             return
+        if not update.effective_chat or not update.message or not update.message.voice:
+            return
+
         chat_id = update.effective_chat.id
         file = await context.bot.get_file(update.message.voice.file_id)
         audio_bytes = await file.download_as_bytearray()
@@ -222,6 +240,9 @@ class TelegramService(QObject):
     async def _handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
             return
+        if not update.effective_chat or not update.message or not update.message.photo:
+            return
+
         chat_id = str(update.effective_chat.id)
         photo = update.message.photo[-1]
         caption = update.message.caption or ""
@@ -231,11 +252,24 @@ class TelegramService(QObject):
 
     async def _handle_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
-        if self.connected_chat_id and str(update.effective_user.id) != self.connected_chat_id:
+        if not query:
+            return
+        if (
+            self.connected_chat_id
+            and update.effective_user
+            and str(update.effective_user.id) != self.connected_chat_id
+        ):
             return
         await query.answer()
+
+        # Check explicit type
+        if not query.message or not isinstance(query.message, Message):
+            return
+
         chat_id = query.message.chat_id
         data = query.data
+        if not data:
+            return
         if data == "menu_main":
             await query.edit_message_text(
                 "🚀 *Command Center*",

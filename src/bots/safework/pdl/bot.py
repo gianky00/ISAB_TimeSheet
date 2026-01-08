@@ -61,6 +61,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _login(self) -> bool:
         """Login SafeWork ricalcato dall'originale."""
+        if not self.driver or not self.wait:
+            return False
         self.log("🌐 Accesso a Safework...")
         self.driver.get(self.SAFEWORK_URL)
 
@@ -94,6 +96,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log(f"⚠️ Impossibile rimuovere file temp (in uso?): {path} - {e}")
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
+        if not self.driver or not self.wait:
+            return False
         success_count = 0
         total = len(data)
         self.downloaded_files = []
@@ -209,6 +213,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         return success_count == total
 
     def _gestisci_alert_ricerca(self, timeout=10):
+        if not self.driver:
+            return False
         end_time = time.time() + timeout
         while time.time() < end_time:
             try:

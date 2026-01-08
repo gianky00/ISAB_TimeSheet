@@ -5,7 +5,7 @@ Page Object Model for the Scarico TS section.
 
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from selenium.common.exceptions import (
     TimeoutException,
@@ -23,7 +23,7 @@ from src.core.constants import Timeouts
 class ScaricoTSPage:
     """Encapsulates interactions with the Scarico TS page."""
 
-    def __init__(self, driver: WebDriver, log_callback: Optional[callable] = None):
+    def __init__(self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None):
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
