@@ -34,10 +34,10 @@ def mock_db(tmp_path):
 
         # Scarico Ore
         conn.execute(
-            "CREATE TABLE scarico_ore (data TEXT, pers1 TEXT, pers2 TEXT, descrizione TEXT, commessa TEXT)"
+            "CREATE TABLE scarico_ore (data TEXT, pers1 TEXT, pers2 TEXT, descrizione TEXT, commessa TEXT, totale_ore REAL)"
         )
         conn.execute(
-            "INSERT INTO scarico_ore VALUES ('2025-01-02', 'Luigi Verdi', '', 'Cablaggio quadri', 'C123')"
+            "INSERT INTO scarico_ore VALUES ('2025-01-02', 'Luigi Verdi', '', 'Cablaggio quadri', 'C123', 8.0)"
         )
 
         # Certificati

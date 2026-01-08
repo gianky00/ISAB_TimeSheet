@@ -113,14 +113,22 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         for index, item in enumerate(data):
             self._check_stop()
-            pdl_num = item.get("pdl_number") or item.get("numero_pdl")
+            pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
             print_enabled = item.get("print_enabled", False)
             printer_name = item.get("printer_name", "")
             merge_and_send = item.get("merge_and_send", False)
 
-            if not pdl_num:
+            if not pdl_raw:
                 self.log(f"⚠️ PDL non valido o mancante nella riga {index + 1}. Salto.")
                 continue
+
+            # --- SANITIZZAZIONE PDL (Richiesta: auto-suffix se 6 cifre) ---
+            pdl_num = str(pdl_raw).strip().upper().replace(" ", "")
+            if pdl_num.isdigit() and len(pdl_num) == 6:
+                num = int(pdl_num)
+                suffix = "/S" if num < 400000 else "/C"
+                pdl_num = f"{pdl_num}{suffix}"
+                self.log(f"ℹ️ PDL auto-completato: {pdl_raw} -> {pdl_num}")
 
             self.log(f"🔄 Processo PdL {pdl_num} ({index + 1}/{total})")
             campo_ricerca = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
@@ -158,6 +166,24 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             except OSError:
                 time.sleep(2)  # Retry once
                 os.rename(pdf_1, path_temp_1)
+
+            # --- PULIZIA PARTE PRIMA (Richiesta: se 2 pagine, rimuovi la seconda) ---
+            try:
+                doc_p1 = fitz.open(path_temp_1)
+                if doc_p1.page_count >= 2:
+                    self.log(f"✂️ Parte 1 ha {doc_p1.page_count} pagine. Rimuovo la pagina 2 pre-merge.")
+                    doc_p1.delete_page(1)  # Rimuove pagina index 1 (la seconda)
+                    # Salva su file temporaneo
+                    tmp_clean = path_temp_1 + "_clean.pdf"
+                    doc_p1.save(tmp_clean)
+                    doc_p1.close()
+                    # Sostituisci
+                    self._safe_remove(path_temp_1)
+                    os.rename(tmp_clean, path_temp_1)
+                else:
+                    doc_p1.close()
+            except Exception as e:
+                self.log(f"⚠️ Errore durante controllo pagine Parte 1: {e}")
 
             # --- PARTE SECONDA ---
             try:
@@ -211,32 +237,51 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 os.rename(pdf_2, path_temp_2)
 
             # --- UNIONE PDF --- 
-            nome_finale_pdl = f"PDL_{pdl_num.replace('/', '-')}.pdf"
+            pdl_upper = pdl_num.upper()
+            nome_finale_pdl = f"PDL_{pdl_upper.replace('/', '-')}.pdf"
             percorso_finale_pdl = os.path.join(self.download_path, nome_finale_pdl)
             self._safe_remove(percorso_finale_pdl)
             
-            self.log(f"🔄 Unione PDF per PdL {pdl_num}...")
+            self.log(f"🔄 Unione PDF per PdL {pdl_upper}...")
             from src.utils.document_processor import DocumentProcessor # Import qui per evitare circular import
 
             # Unisci solo la prima pagina del primo PDF con tutte le pagine del secondo
             if DocumentProcessor.merge_pdfs([path_temp_1, path_temp_2], percorso_finale_pdl):
-                self.log(f"✅ PDF {pdl_num} unito correttamente: {nome_finale_pdl}")
+                self.log(f"✅ PDF {pdl_upper} unito correttamente: {nome_finale_pdl}")
                 self.downloaded_files.append(percorso_finale_pdl)
                 all_downloaded_pdl_paths.append(percorso_finale_pdl) # Aggiungi alla lista per l'unione finale
                 success_count += 1
 
                 # Stampa
                 if print_enabled and printer_name:
-                    self.log(f"🖨️ Stampa PdL {pdl_num} su: {printer_name}")
+                    self.log(f"🖨️ Stampa PdL {pdl_upper} su: {printer_name}")
                     print_pdf(percorso_finale_pdl, printer_name)
                 else:
-                    self.log(f"ℹ️ Stampa disabilitata per PdL {pdl_num}.")
+                    self.log(f"ℹ️ Stampa disabilitata per PdL {pdl_upper}.")
 
             else:
-                self.log(f"❌ Errore durante l'unione dei PDF per PdL {pdl_num}.")
+                self.log(f"❌ Errore durante l'unione dei PDF per PdL {pdl_upper}.")
             
             self._safe_remove(path_temp_1)
             self._safe_remove(path_temp_2)
+
+        # --- MERGE ALL SESSION (Richiesta: unisci tutti i PDF della sessione in un unico file) ---
+        merge_all_session = any(item.get("merge_all_session", False) for item in data)
+        if merge_all_session and all_downloaded_pdl_paths:
+            try:
+                self.log("🔗 Unione di tutti i PDL della sessione in corso...")
+                timestamp_str = time.strftime("%d-%m-%Y_%H-%M")
+                nome_merge_totale = f"PDL_{timestamp_str}.pdf"
+                path_merge_totale = os.path.join(self.download_path, nome_merge_totale)
+                
+                from src.utils.document_processor import DocumentProcessor
+                if DocumentProcessor.merge_pdfs(all_downloaded_pdl_paths, path_merge_totale):
+                    self.log(f"✅ PDF Unico Creato: {nome_merge_totale}")
+                    self.downloaded_files.append(path_merge_totale)
+                else:
+                    self.log("❌ Errore creazione PDF Unico sessione.")
+            except Exception as e:
+                self.log(f"⚠️ Errore merge_all_session: {e}")
 
         self.log(f"✨ Completato: {success_count}/{total} PDL elaborati.")
         # self.downloaded_files è già popolato con i percorsi finali dei singoli PDL
