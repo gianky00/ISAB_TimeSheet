@@ -49,6 +49,7 @@ class TelegramService(QObject):
         self.thread = None
         self.connected_chat_id = None
         self.user_states = {}
+        self.pdl_settings = {}  # Settings specifici per PDL (es. merge_all)
         self.pending_data = {}
         self._start_lock = threading.Lock()
 
@@ -381,8 +382,27 @@ class TelegramService(QObject):
             await query.edit_message_text(f"🗄️ **DB {db_name.capitalize()}**\nScrivi cosa cercare, Lyra risponderà.", reply_markup=InlineKeyboardMarkup([[self._get_back_button("nav_db")]]), parse_mode=constants.ParseMode.MARKDOWN)
 
         elif data == "menu_pdl":
-            keyboard = [[InlineKeyboardButton("➕ Inserisci", callback_data="input_pdl")], [InlineKeyboardButton("📋 Lista", callback_data="list_pdl"), InlineKeyboardButton("🗑️ Svuota", callback_data="clear_pdl")], [InlineKeyboardButton("🖨️ Avvia (Print ON)", callback_data="run_pdl_on")], [InlineKeyboardButton("📄 Avvia (Print OFF)", callback_data="run_pdl_off")], [self._get_back_button("nav_safework")]]
+            merge_all = self.pdl_settings.get(chat_id, {}).get("merge_all", False)
+            merge_icon = "✅" if merge_all else "❌"
+            keyboard = [
+                [InlineKeyboardButton("➕ Inserisci", callback_data="input_pdl")],
+                [InlineKeyboardButton("📋 Lista", callback_data="list_pdl"), InlineKeyboardButton("🗑️ Svuota", callback_data="clear_pdl")],
+                [InlineKeyboardButton(f"🔗 Unisci Tutto: {merge_icon}", callback_data="toggle_merge_all_pdl")],
+                [InlineKeyboardButton("🖨️ Avvia (Print ON)", callback_data="run_pdl_on")],
+                [InlineKeyboardButton("📄 Avvia (Print OFF)", callback_data="run_pdl_off")],
+                [self._get_back_button("nav_safework")]
+            ]
             await query.edit_message_text("🛡️ *SafeWork PDL*", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=constants.ParseMode.MARKDOWN)
+
+        elif data == "toggle_merge_all_pdl":
+            if chat_id not in self.pdl_settings:
+                self.pdl_settings[chat_id] = {}
+            current = self.pdl_settings[chat_id].get("merge_all", False)
+            self.pdl_settings[chat_id]["merge_all"] = not current
+            # Torna al menu PDL per aggiornare il bottone
+            query.data = "menu_pdl"
+            await self._handle_button(update, context)
+            return
 
         elif data == "menu_ts":
             keyboard = [[InlineKeyboardButton("➕ OdA", callback_data="input_oda")], [InlineKeyboardButton("📋 Lista", callback_data="list_ts"), InlineKeyboardButton("🗑️ Svuota", callback_data="clear_ts")], [InlineKeyboardButton("▶ Avvia", callback_data="run_ts")], [self._get_back_button("nav_portale")]]
@@ -445,24 +465,28 @@ class TelegramService(QObject):
 
         elif data == "confirm_merge_yes_print":
             p = self.user_states.pop(chat_id, {}).get("printer", "")
+            merge_all = self.pdl_settings.get(chat_id, {}).get("merge_all", False)
             if p:
                 self.command_received.emit("set_printer", {"printer": p})
-                self.command_received.emit("run_pdl", {"print": True, "merge_and_send": True})
-                await query.edit_message_text(f"✅ Avvio con stampa su `{p}` e invio PDF.")
+                self.command_received.emit("run_pdl", {"print": True, "merge_and_send": True, "merge_all": merge_all})
+                await query.edit_message_text(f"✅ Avvio con stampa su `{p}`, invio PDF e merge finale={merge_all}.")
 
         elif data == "confirm_merge_no_print":
             p = self.user_states.pop(chat_id, {}).get("printer", "")
+            merge_all = self.pdl_settings.get(chat_id, {}).get("merge_all", False)
             if p:
                 self.command_received.emit("set_printer", {"printer": p})
-                self.command_received.emit("run_pdl", {"print": True, "merge_and_send": False})
-                await query.edit_message_text(f"✅ Avvio con stampa su `{p}`.")
+                self.command_received.emit("run_pdl", {"print": True, "merge_and_send": False, "merge_all": merge_all})
+                await query.edit_message_text(f"✅ Avvio con stampa su `{p}` e merge finale={merge_all}.")
         elif data == "confirm_merge_yes_noprint":
-            self.command_received.emit("run_pdl", {"print": False, "merge_and_send": True})
-            await query.edit_message_text("✅ Avvio scarico con invio PDF.")
+            merge_all = self.pdl_settings.get(chat_id, {}).get("merge_all", False)
+            self.command_received.emit("run_pdl", {"print": False, "merge_and_send": True, "merge_all": merge_all})
+            await query.edit_message_text(f"✅ Avvio scarico con invio PDF e merge finale={merge_all}.")
 
         elif data == "confirm_merge_no_noprint":
-            self.command_received.emit("run_pdl", {"print": False, "merge_and_send": False})
-            await query.edit_message_text("✅ Avvio scarico.")
+            merge_all = self.pdl_settings.get(chat_id, {}).get("merge_all", False)
+            self.command_received.emit("run_pdl", {"print": False, "merge_and_send": False, "merge_all": merge_all})
+            await query.edit_message_text(f"✅ Avvio scarico e merge finale={merge_all}.")
 
         elif data == "run_ts": self.command_received.emit("run_ts", {})
         elif data == "run_timbrature_yesterday": self.command_received.emit("run_timbrature", {"period": "yesterday"})

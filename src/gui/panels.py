@@ -869,10 +869,18 @@ class ScaricoPDLPanel(BaseBotPanel):
         )
         print_layout.addWidget(refresh_print_btn)
 
-
-
         print_layout.addStretch()
         params_layout.addWidget(print_group)
+
+        # 1.1 Opzioni Merge
+        merge_group = QGroupBox("Opzioni File")
+        merge_layout = QHBoxLayout(merge_group)
+        self.merge_all_check = QCheckBox("Unisci tutti in un unico PDF")
+        self.merge_all_check.setToolTip("Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL.")
+        self.merge_all_check.stateChanged.connect(self._save_data)
+        merge_layout.addWidget(self.merge_all_check)
+        merge_layout.addStretch()
+        params_layout.addWidget(merge_group)
 
         # 2. Percorso destinazione (opzionale, ma utile)
         dest_layout = QHBoxLayout()
@@ -964,6 +972,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.data_table.set_data(saved_data)
 
         self.print_check.setChecked(config.get("pdl_print_enabled", False))
+        self.merge_all_check.setChecked(config.get("pdl_merge_all_session", False))
         saved_printer = config.get("pdl_printer_name", "")
         if saved_printer:
             index = self.printer_combo.findText(saved_printer)
@@ -976,6 +985,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         data = self.data_table.get_data()
         config_manager.set_config_value("last_pdl_data", data)
         config_manager.set_config_value("pdl_print_enabled", self.print_check.isChecked())
+        config_manager.set_config_value("pdl_merge_all_session", self.merge_all_check.isChecked())
         config_manager.set_config_value("pdl_printer_name", self.printer_combo.currentText())
         config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
 
@@ -1033,6 +1043,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         printer_name = self.printer_combo.currentText()
         # Il valore viene passato da Telegram tramite un attributo temporaneo
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
+        # Checkbox UI per merge sessione
+        merge_all_session = getattr(self, "merge_all_session_from_telegram", self.merge_all_check.isChecked())
 
         bot_data = []
         for row in raw_data:
@@ -1045,6 +1057,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                         "print_enabled": print_enabled,
                         "printer_name": printer_name,
                         "merge_and_send": merge_and_send,
+                        "merge_all_session": merge_all_session,
                     }
                 )
 
@@ -1090,6 +1103,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Pulisci l'attributo temporaneo dopo l'uso
         if hasattr(self, "merge_and_send_from_telegram"):
             del self.merge_and_send_from_telegram
+        if hasattr(self, "merge_all_session_from_telegram"):
+            del self.merge_all_session_from_telegram
 
     def _on_worker_finished(self, success: bool):
         """Gestione custom per invio file unito."""

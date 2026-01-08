@@ -449,23 +449,27 @@ class MainWindow(QMainWindow):
             self.navigate_to_panel("scarico_pdl")
             print_enabled = params.get("print", False)
             merge_and_send = params.get("merge_and_send", False)
+            merge_all = params.get("merge_all", False)
 
             self.pdl_panel.print_check.setChecked(print_enabled)
-            # Passa il parametro merge_and_send direttamente al pannello
+            # Passa i parametri direttamente al pannello via attributi temporanei
             self.pdl_panel.merge_and_send_from_telegram = merge_and_send
+            self.pdl_panel.merge_all_session_from_telegram = merge_all
 
             ready, msg = self.pdl_panel.validate_ready()
             if not ready:
                 self.telegram.send_message_sync(
                     f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}\nUsa '➕ Inserisci PDL' per aggiungere dati."
                 )
-                # Pulisci l'attributo temporaneo se la validazione fallisce
+                # Pulisci gli attributi temporanei se la validazione fallisce
                 if hasattr(self.pdl_panel, "merge_and_send_from_telegram"):
                     del self.pdl_panel.merge_and_send_from_telegram
+                if hasattr(self.pdl_panel, "merge_all_session_from_telegram"):
+                    del self.pdl_panel.merge_all_session_from_telegram
                 return
             self.pdl_panel.start_btn.click()
             self.telegram.send_message_sync(
-                f"✅ Comando ricevuto. Avvio Scarico PDL (Stampa={print_enabled}, Unisci PDF e invia={merge_and_send})"
+                f"✅ Comando ricevuto. Avvio Scarico PDL (Stampa={print_enabled}, Unisci PDF e invia={merge_and_send}, Merge Sessione={merge_all})"
             )
 
         elif command == "list_pdl":
