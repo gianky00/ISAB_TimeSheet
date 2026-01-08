@@ -211,6 +211,61 @@ class MainWindow(QMainWindow):
         # Controllo aggiornamenti applicazione (dopo 3 secondi)
         QTimer.singleShot(3000, self._check_updates)
 
+        # === AUTOPILOT TIMER ===
+        self.last_autopilot_trigger = ""
+        self.autopilot_timer = QTimer(self)
+        self.autopilot_timer.timeout.connect(self._check_autopilot)
+        self.autopilot_timer.start(10000) # Check ogni 10 secondi
+
+    def _check_autopilot(self):
+        """Controlla se è l'ora di eseguire l'Autopilot Timbrature."""
+        config = config_manager.load_config()
+        
+        if not config.get("timbrature_autopilot_enabled", False):
+            return
+
+        target_time_str = config.get("timbrature_autopilot_time", "09:00")
+        current_time_str = datetime.now().strftime("%H:%M")
+
+        # Evita esecuzioni multiple nello stesso minuto
+        if current_time_str == self.last_autopilot_trigger:
+            return
+
+        if current_time_str == target_time_str:
+            self.last_autopilot_trigger = current_time_str
+            
+            # 1. Verifica stato bot (non deve essere già in esecuzione)
+            status, _ = self.timbrature_bot_panel.get_current_status()
+            if status == "RUNNING":
+                print(f"[AUTOPILOT] Skipped {current_time_str}: Bot già in esecuzione.")
+                return
+
+            # 2. Pre-Validazione Parametri
+            ready, msg = self.timbrature_bot_panel.validate_ready()
+            if not ready:
+                self.show_toast(f"Autopilot Errore: {msg}", "error")
+                return
+
+            # 3. Avvio
+            self.show_toast(f"🤖 Autopilot: Avvio Timbrature...", "info")
+            
+            # Naviga al pannello per mostrare l'attività
+            self.navigate_to_panel("timbrature")
+
+            # Imposta modalità silenziosa per Telegram (solo per questa esecuzione)
+            self.timbrature_bot_panel.silent_telegram = True
+
+            # Ritarda l'avvio effettivo per permettere alla UI di aggiornarsi (Toast + Tab Switch)
+            def trigger_start():
+                btn = self.timbrature_bot_panel.start_btn
+                print(f"[AUTOPILOT] Tentativo click Avvia. Abilitato? {btn.isEnabled()}")
+                if btn.isEnabled():
+                    btn.click()
+                else:
+                    print("[AUTOPILOT] Errore: Pulsante Avvia disabilitato (Bot già in corso?)")
+            
+            QTimer.singleShot(500, trigger_start)
+
     def _handle_bot_results(self, bot_id, results):
         """Gestisce i risultati prodotti dai bot (es. file scaricati) e li invia a Telegram."""
         if bot_id == "scarico_pdl":
@@ -920,9 +975,14 @@ class MainWindow(QMainWindow):
             # Flash Taskbar come avviso visivo aggiuntivo
             QApplication.alert(self, 0)
 
-    def show_toast(self, message: str, duration: int = 3000):
+    def show_toast(self, message: str, level: str = "info", duration: int = 3000):
         """Mostra una notifica toast (Wrapper for backward compatibility)."""
-        ToastManager.instance().show(message, "info", duration)
+        # Supporto retrocompatibilità: se il secondo argomento è un intero, è la durata
+        if isinstance(level, int):
+            duration = level
+            level = "info"
+            
+        ToastManager.instance().show(message, level, duration)
 
     def _setup_shortcuts(self):
         """Configura le scorciatoie da tastiera globali."""
@@ -1448,10 +1508,11 @@ class MainWindow(QMainWindow):
         self.timbrature_bot_panel.refresh_fornitori()
 
         # Riavvia il servizio Telegram per applicare eventuali nuovi token
+        # Nota: lo facciamo solo se necessario o con un debounce? Per ora lasciamo così.
         self.telegram.start_service()
 
-        # Feedback Toast
-        ToastManager.instance().show("Impostazioni salvate con successo!", "success")
+        # Feedback Toast rimosso perché i salvataggi sono automatici e continui
+        # ToastManager.instance().show("Impostazioni salvate con successo!", "success")
 
     def _navigate_to(self, index: int):
         """

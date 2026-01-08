@@ -824,8 +824,9 @@ class SettingsPanel(QWidget):
         self.scroll.setWidget(self.scroll_content)
         config_layout.addWidget(self.scroll)
 
-        # --- Pulsanti azione (Config Tab) ---
-        action_layout = QHBoxLayout()
+        # --- Pulsanti azione (Config Tab) - NASCOSTI (Salvataggio Automatico) ---
+        self.action_container = QWidget()
+        action_layout = QHBoxLayout(self.action_container)
         action_layout.addStretch()
 
         self.unsaved_label = QLabel("⚠️ Modifiche non salvate")
@@ -836,48 +837,15 @@ class SettingsPanel(QWidget):
         action_layout.addWidget(self.unsaved_label)
 
         self.reset_btn = QPushButton("↩️ Annulla")
-        self.reset_btn.setMinimumWidth(120)
-        self.reset_btn.setMinimumHeight(45)
-        self.reset_btn.clicked.connect(self._reset_settings)
-        self.reset_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-            }
-        """
-        )
+        self.reset_btn.setVisible(False) # Nascosto
         action_layout.addWidget(self.reset_btn)
 
         self.save_btn = QPushButton("💾 Salva impostazioni")
-        self.save_btn.setMinimumWidth(180)
-        self.save_btn.setMinimumHeight(45)
-        self.save_btn.clicked.connect(self._save_settings)
-        self.save_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
-                border-radius: 6px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-            }
-        """
-        )
+        self.save_btn.setVisible(False) # Nascosto
         action_layout.addWidget(self.save_btn)
 
-        config_layout.addLayout(action_layout)
+        config_layout.addWidget(self.action_container)
+        self.action_container.setVisible(False) # Nascondi l'intero container
 
         # Add Config Tab
         self.tabs.addTab(config_tab, "Configurazione")
@@ -1368,27 +1336,37 @@ class SettingsPanel(QWidget):
         )
 
     def _connect_change_signals(self):
-        self.headless_check.stateChanged.connect(self._on_change)
-        self.timeout_spin.valueChanged.connect(self._on_change)
-        self.contabilita_path_edit.textChanged.connect(self._on_change)
-        self.giornaliere_path_edit.textChanged.connect(self._on_change)
-        self.attivita_path_edit.textChanged.connect(self._on_change)
-        self.certificati_path_edit.textChanged.connect(self._on_change)
-        self.auto_update_contabilita_check.stateChanged.connect(self._on_change)
-        self.dataease_path_edit.textChanged.connect(self._on_change)
-        # Liste gestite manualmente
+        # Generale
+        self.headless_check.stateChanged.connect(self._save_settings)
+        
+        # Browser
+        self.timeout_spin.valueChanged.connect(self._save_settings)
+        
+        # Strumentale (Save on editing finished to avoid spamming disk)
+        self.contabilita_path_edit.textChanged.connect(self._save_settings)
+        self.giornaliere_path_edit.textChanged.connect(self._save_settings)
+        self.attivita_path_edit.textChanged.connect(self._save_settings)
+        self.certificati_path_edit.textChanged.connect(self._save_settings)
+        self.auto_update_contabilita_check.stateChanged.connect(self._save_settings)
+        self.dataease_path_edit.textChanged.connect(self._save_settings)
+        
+        # Telegram
+        self.tg_token_edit.editingFinished.connect(self._save_settings)
+        self.gemini_api_key_edit.editingFinished.connect(self._save_settings)
 
     def _on_change(self):
-        self._set_unsaved_changes(True)
+        """Metodo mantenuto per compatibilità, ora chiama il salvataggio diretto."""
+        self._save_settings()
 
     def _set_unsaved_changes(self, has_changes: bool):
-        self._has_unsaved_changes = has_changes
-        self.unsaved_label.setVisible(has_changes)
-        self.unsaved_changes.emit(has_changes)
+        """Ora ridondante con il salvataggio automatico."""
+        self._has_unsaved_changes = False
+        self.unsaved_label.setVisible(False)
+        self.unsaved_changes.emit(False)
 
     def has_unsaved_changes(self) -> bool:
-        """Restituisce True se ci sono modifiche non salvate."""
-        return self._has_unsaved_changes
+        """Sempre False con salvataggio automatico."""
+        return False
 
     def _open_data_folder(self):
         """Apre la cartella dei dati (logs, config, licenza)."""
@@ -1407,7 +1385,7 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.contabilita_path_edit.setText(path)
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     def _browse_giornaliere_path(self):
         current_path = self.giornaliere_path_edit.text()
@@ -1416,7 +1394,7 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.giornaliere_path_edit.setText(path)
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     def _browse_attivita_path(self):
         current_path = self.attivita_path_edit.text()
@@ -1427,7 +1405,7 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.attivita_path_edit.setText(path)
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     def _browse_certificati_path(self):
         current_path = self.certificati_path_edit.text()
@@ -1438,7 +1416,7 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.certificati_path_edit.setText(path)
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     def _browse_dataease_path(self):
         current_path = self.dataease_path_edit.text()
@@ -1449,7 +1427,7 @@ class SettingsPanel(QWidget):
         )
         if path:
             self.dataease_path_edit.setText(path)
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     # --- Gestione Account ---
     def _render_accounts(self, accounts):
@@ -1470,7 +1448,7 @@ class SettingsPanel(QWidget):
                 is_default = self.account_list.count() == 0
                 acc = {"username": u, "password": p, "default": is_default}
                 self._render_accounts(self._get_current_accounts() + [acc])
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _edit_account(self):
         """Modifica l'account selezionato."""
@@ -1490,7 +1468,7 @@ class SettingsPanel(QWidget):
                 acc_data["password"] = new_p
                 # Renderizza di nuovo la lista per aggiornare la label
                 self._render_accounts(self._get_current_accounts())
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _remove_account(self):
         row = self.account_list.currentRow()
@@ -1501,7 +1479,7 @@ class SettingsPanel(QWidget):
                 if accounts and not any(a["default"] for a in accounts):
                     accounts[0]["default"] = True
                     self._render_accounts(accounts)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _show_account_context_menu(self, position):
         """Mostra menu contestuale per lista account."""
@@ -1561,7 +1539,7 @@ class SettingsPanel(QWidget):
             for i, acc in enumerate(accounts):
                 acc["default"] = i == row
             self._render_accounts(accounts)
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     def _get_current_accounts(self):
         accounts = []
@@ -1590,7 +1568,7 @@ class SettingsPanel(QWidget):
                 is_default = self.sw_account_list.count() == 0
                 acc = {"username": u, "password": p, "default": is_default}
                 self._render_sw_accounts(self._get_current_sw_accounts() + [acc])
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _edit_sw_account(self):
         item = self.sw_account_list.currentItem()
@@ -1605,7 +1583,7 @@ class SettingsPanel(QWidget):
                 acc_data["username"] = u
                 acc_data["password"] = p
                 self._render_sw_accounts(self._get_current_sw_accounts())
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _remove_sw_account(self):
         row = self.sw_account_list.currentRow()
@@ -1619,7 +1597,7 @@ class SettingsPanel(QWidget):
                 if accounts and not any(a["default"] for a in accounts):
                     accounts[0]["default"] = True
                     self._render_sw_accounts(accounts)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _set_default_sw_account(self):
         row = self.sw_account_list.currentRow()
@@ -1628,7 +1606,7 @@ class SettingsPanel(QWidget):
             for i, acc in enumerate(accounts):
                 acc["default"] = i == row
             self._render_sw_accounts(accounts)
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     def _get_current_sw_accounts(self):
         accounts = []
@@ -1663,7 +1641,7 @@ class SettingsPanel(QWidget):
         if ok and text.strip():
             if not self.contract_list.findItems(text.strip(), Qt.MatchFlag.MatchExactly):
                 self.contract_list.addItem(text.strip())
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _edit_contract(self):
         item = self.contract_list.currentItem()
@@ -1671,7 +1649,7 @@ class SettingsPanel(QWidget):
             text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
             if ok and text.strip():
                 item.setText(text.strip())
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _remove_contract(self):
         row = self.contract_list.currentRow()
@@ -1681,7 +1659,7 @@ class SettingsPanel(QWidget):
                 == QMessageBox.StandardButton.Yes
             ):
                 self.contract_list.takeItem(row)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     # --- Gestione Fornitori ---
     def _add_fornitore(self):
@@ -1692,7 +1670,7 @@ class SettingsPanel(QWidget):
                     QMessageBox.warning(self, "Esistente", "Fornitore già presente.")
                     return
             self.fornitori_list.addItem(text.strip())
-            self._set_unsaved_changes(True)
+            self._save_settings()
 
     def _edit_fornitore(self):
         item = self.fornitori_list.currentItem()
@@ -1700,14 +1678,14 @@ class SettingsPanel(QWidget):
             text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
             if ok and text.strip():
                 item.setText(text.strip())
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _remove_fornitore(self):
         row = self.fornitori_list.currentRow()
         if row >= 0:
             if QMessageBox.question(self, "Conferma", "Rimuovere?") == QMessageBox.StandardButton.Yes:
                 self.fornitori_list.takeItem(row)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     # --- Gestione Reparti ---
     def _add_reparto(self):
@@ -1716,7 +1694,7 @@ class SettingsPanel(QWidget):
             text = text.strip().upper()
             if not self.reparti_list.findItems(text, Qt.MatchFlag.MatchExactly):
                 self.reparti_list.addItem(text)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _edit_reparto(self):
         item = self.reparti_list.currentItem()
@@ -1724,14 +1702,14 @@ class SettingsPanel(QWidget):
             text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
             if ok and text.strip():
                 item.setText(text.strip().upper())
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _remove_reparto(self):
         row = self.reparti_list.currentRow()
         if row >= 0:
             if QMessageBox.question(self, "Conferma", "Rimuovere reparto?") == QMessageBox.StandardButton.Yes:
                 self.reparti_list.takeItem(row)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     # --- Gestione Cantieri ---
     def _add_cantiere(self):
@@ -1740,7 +1718,7 @@ class SettingsPanel(QWidget):
             text = text.strip().upper()
             if not self.cantieri_list.findItems(text, Qt.MatchFlag.MatchExactly):
                 self.cantieri_list.addItem(text)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _edit_cantiere(self):
         item = self.cantieri_list.currentItem()
@@ -1748,7 +1726,7 @@ class SettingsPanel(QWidget):
             text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
             if ok and text.strip():
                 item.setText(text.strip().upper())
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _remove_cantiere(self):
         row = self.cantieri_list.currentRow()
@@ -1758,11 +1736,16 @@ class SettingsPanel(QWidget):
                 == QMessageBox.StandardButton.Yes
             ):
                 self.cantieri_list.takeItem(row)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     # --- Load & Save ---
     def _load_settings(self):
         config = config_manager.load_config()
+
+        # Blocca segnali per evitare loop di salvataggio durante il caricamento
+        self.blockSignals(True)
+        for child in self.findChildren(QWidget):
+            child.blockSignals(True)
 
         # Browser
         self.headless_check.setChecked(config.get("browser_headless", False))
@@ -1807,9 +1790,17 @@ class SettingsPanel(QWidget):
         self._render_accounts(config.get("accounts", []))
         self._render_sw_accounts(config.get("safework_accounts", []))
 
+        # Sblocca
+        for child in self.findChildren(QWidget):
+            child.blockSignals(False)
+        self.blockSignals(False)
+
         self._set_unsaved_changes(False)
 
     def _save_settings(self):
+        # Impedisci salvataggi ricorsivi
+        if self.signalsBlocked(): return
+
         # Raccogli dati
         fornitori = [self.fornitori_list.item(i).text() for i in range(self.fornitori_list.count())]
         contracts = [self.contract_list.item(i).text() for i in range(self.contract_list.count())]
@@ -1831,14 +1822,6 @@ class SettingsPanel(QWidget):
         )
 
         config_manager.set_config_value("telegram_token", self.tg_token_edit.text())
-        # Chat ID is read-only in UI, but we preserve it (or user clears it to re-pair)
-        # We don't save the read-only field if it's empty to allow bot to set it?
-        # Actually, let's allow user to clear it via UI if they edit the file, but here we just keep what is loaded unless we make it editable.
-        # But wait, tg_chat_id_edit is ReadOnly. So user can't change it here.
-        # But if we load it, we should save it back? Or just ignore it?
-        # Better: if we reset settings, we reload. If we save, we keep existing unless we implement a "Reset Pairing" button.
-        # For now, let's NOT overwrite it with empty if it's read only, but we display it.
-        # Actually, saving what is in the edit (even if read only) is safe because it reflects config.
         config_manager.set_config_value("telegram_chat_id", self.tg_chat_id_edit.text())
 
         # Gemini API Key (Salva in SecretsManager)
@@ -1860,23 +1843,16 @@ class SettingsPanel(QWidget):
         config_manager.set_config_value("accounts", accounts)
         config_manager.set_config_value("safework_accounts", sw_accounts)
 
-        # Audit Log Dettagliato
-        AuditManager().log_action(
-            action="Modifica Configurazione",
-            category="impostazioni",
-            entity="Sistema",
-            params={
-                "timeout": self.timeout_spin.value(),
-                "headless": self.headless_check.isChecked(),
-                "num_fornitori": len(fornitori),
-                "num_accounts": len(accounts) + len(sw_accounts),
-            },
-        )
-        self._set_unsaved_changes(False)
-        # QMessageBox.information(self, "Salvataggio", "Impostazioni salvate.") # Suppresso, usa Toast
-
-        # Emetti segnale
+        # Emetti segnale per aggiornare il resto dell'app
         self.settings_saved.emit()
+
+    def _reset_settings(self):
+        self._load_settings()
+
+    def prompt_save_if_needed(self) -> bool:
+        """Ora restituisce sempre True perché salva tutto subito."""
+        return True
+
 
     def _reset_settings(self):
         if self._has_unsaved_changes:

@@ -238,6 +238,9 @@ class BaseBotPanel(QWidget):
         """Gestisce il completamento del worker."""
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
+        
+        # Reset flag silenziamento Telegram
+        self.silent_telegram = False
 
         # Calculate duration
         duration_str = "--:--"
@@ -300,6 +303,10 @@ class BaseBotPanel(QWidget):
         """Aggiunge un messaggio al log e lo inoltra a Telegram se importante."""
         self.log_widget.append(message)
 
+        # Se il pannello è in modalità silenziosa per Telegram, non inviare nulla
+        if getattr(self, "silent_telegram", False):
+            return
+
         win = self.window()
         if win and hasattr(win, "telegram"):
             # Formattiamo il log per Telegram aggiungendo il nome del bot
@@ -348,7 +355,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("Parametri")
+        params_group = QGroupBox("⚙️ Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
@@ -512,7 +519,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("Parametri")
+        params_group = QGroupBox("⚙️ Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
@@ -663,7 +670,7 @@ class CaricoTSPanel(BaseBotPanel):
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
         # Tabella dati
-        group = QGroupBox("Parametri")
+        group = QGroupBox("⚙️ Parametri")
         group_layout = QVBoxLayout(group)
 
         # Toolbar per la tabella
@@ -807,17 +814,17 @@ class ScaricoPDLPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("Parametri")
+        params_group = QGroupBox("⚙️ Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
-        # 1. Opzioni Stampa
-        print_group = QGroupBox("Opzioni Stampa")
-        print_layout = QHBoxLayout(print_group)
+        # 1. Opzioni Stampa e Merge (Senza titoli e sulla stessa riga)
+        options_layout = QHBoxLayout()
+        options_layout.setSpacing(10)
 
-        self.print_check = QCheckBox("Al termine stampa")
+        self.print_check = QCheckBox("Al termine stampa su")
         self.print_check.stateChanged.connect(self._save_data)
-        print_layout.addWidget(self.print_check)
+        options_layout.addWidget(self.print_check)
 
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(35)
@@ -842,7 +849,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             self.printer_combo.addItem("Nessuna stampante trovata")
 
         self.printer_combo.currentTextChanged.connect(self._save_data)
-        print_layout.addWidget(self.printer_combo)
+        options_layout.addWidget(self.printer_combo)
 
         # Refresh printers button
         refresh_print_btn = QPushButton()
@@ -867,20 +874,16 @@ class ScaricoPDLPanel(BaseBotPanel):
             }
         """
         )
-        print_layout.addWidget(refresh_print_btn)
+        options_layout.addWidget(refresh_print_btn)
 
-        print_layout.addStretch()
-        params_layout.addWidget(print_group)
-
-        # 1.1 Opzioni Merge
-        merge_group = QGroupBox("Opzioni File")
-        merge_layout = QHBoxLayout(merge_group)
-        self.merge_all_check = QCheckBox("Unisci tutti in un unico PDF")
+        # 1.1 Opzioni Merge (Ora accanto al tasto refresh)
+        self.merge_all_check = QCheckBox("e unisci tutti i file in un unico PDF.")
         self.merge_all_check.setToolTip("Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL.")
         self.merge_all_check.stateChanged.connect(self._save_data)
-        merge_layout.addWidget(self.merge_all_check)
-        merge_layout.addStretch()
-        params_layout.addWidget(merge_group)
+        options_layout.addWidget(self.merge_all_check)
+
+        options_layout.addStretch()
+        params_layout.addLayout(options_layout)
 
         # 2. Percorso destinazione (opzionale, ma utile)
         dest_layout = QHBoxLayout()
@@ -1145,8 +1148,13 @@ class TimbratureBotPanel(BaseBotPanel):
             bot_description="Scarica e gestisci le timbrature del personale",
             parent=parent,
         )
+        # CRITICO: Imposta True PRIMA di creare i widget per bloccare i segnali iniziali
+        self._is_loading = True 
         self._setup_content()
         self._load_saved_data()
+        # _load_saved_data gestisce internamente il reset a False nel blocco finally,
+        # ma per sicurezza lo confermiamo qui
+        self._is_loading = False
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -1162,7 +1170,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.content_layout.addWidget(params_group)
 
         # Scheduler
-        sched_group = QGroupBox("📅 Autopilot (Pianificatore)")
+        sched_group = QGroupBox("📅 Pianifica Bot")
         sched_layout = QHBoxLayout(sched_group)
         self.autopilot_check = QCheckBox("Abilita download automatico")
         self.autopilot_check.stateChanged.connect(self._save_data)
@@ -1173,6 +1181,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.time_edit.setTime(QTime(9, 0))
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.timeChanged.connect(self._save_data)
+        self.time_edit.editingFinished.connect(self._save_data) # Force save on edit finish
         sched_layout.addWidget(self.time_edit)
         sched_layout.addStretch()
         self.content_layout.addWidget(sched_group)
@@ -1187,22 +1196,26 @@ class TimbratureBotPanel(BaseBotPanel):
             self.params_widget.refresh_fornitori()
 
     def _load_saved_data(self):
-        self.refresh_fornitori()
-        config = config_manager.load_config()
+        self._is_loading = True
+        try:
+            self.refresh_fornitori()
+            config = config_manager.load_config()
 
-        self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
-        
-        # Default dates: ALWAYS Yesterday
-        yesterday = QDate.currentDate().addDays(-1)
-        self.params_widget.set_dates(yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy"))
+            self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
+            
+            # Default dates: ALWAYS Yesterday
+            yesterday = QDate.currentDate().addDays(-1)
+            self.params_widget.set_dates(yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy"))
 
-        # Autopilot
-        self.autopilot_check.setChecked(config.get("timbrature_autopilot_enabled", False))
-        saved_time = config.get("timbrature_autopilot_time", "09:00")
-        self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
+            # Autopilot
+            self.autopilot_check.setChecked(config.get("timbrature_autopilot_enabled", False))
+            saved_time = config.get("timbrature_autopilot_time", "09:00")
+            self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
+        finally:
+            self._is_loading = False
 
     def _save_data(self):
-        if not hasattr(self, "params_widget"): return
+        if not hasattr(self, "params_widget") or self._is_loading: return
             
         date_da, date_a = self.params_widget.get_dates()
         config_manager.set_config_value("last_timbrature_fornitore", self.params_widget.get_fornitore())
@@ -1236,19 +1249,32 @@ class TimbratureBotPanel(BaseBotPanel):
         
         data_da, data_a = self.params_widget.get_dates()
 
+        self.log_widget.clear()
+        self.log_widget.append(f"▶ Preparazione avvio bot Timbrature ({fornitore})...")
+        QApplication.processEvents() # Aggiorna UI per evitare freeze durante create_bot
+
         from src.bots import create_bot
         config = config_manager.load_config()
-        bot = create_bot(
-            "timbrature",
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path()
-        )
+        
+        try:
+            bot = create_bot(
+                "timbrature",
+                username=username,
+                password=password,
+                headless=config.get("browser_headless", False),
+                timeout=config.get("browser_timeout", 30),
+                download_path=config_manager.get_download_path()
+            )
+        except Exception as e:
+            self.log_widget.append(f"❌ Errore critico inizializzazione bot: {e}")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
 
         if not bot:
             ToastManager.instance().show("Errore creazione bot.", "error")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
         
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
@@ -1260,8 +1286,7 @@ class TimbratureBotPanel(BaseBotPanel):
         
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
-        self.log_widget.clear()
-        self.log_widget.append(f"▶ Avvio bot Timbrature ({fornitore})")
+        self.log_widget.append(f"▶ Bot avviato. Download in corso...")
         self.worker.start()
         self.bot_started.emit()
 
