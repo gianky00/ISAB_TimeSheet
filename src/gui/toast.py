@@ -66,8 +66,9 @@ class ToastOverlay(QWidget):
         self.adjustSize()
 
         # Posiziona in basso al centro del genitore
-        if self.parent():
-            parent_rect = self.parent().rect()
+        parent = self.parent()
+        if isinstance(parent, QWidget):
+            parent_rect = parent.rect()
             x = (parent_rect.width() - self.width()) // 2
             y = parent_rect.height() - self.height() - 50
             self.move(x, y)

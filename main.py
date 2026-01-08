@@ -5,96 +5,65 @@
 import ctypes
 import logging
 import os
+import shutil
 import sys
 import traceback
 from pathlib import Path
 
+from src.core.config_manager import CONFIG_DIR
 
 # --- CRASH LOGGING SETUP ---
+logger = logging.getLogger("crash_logger")
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """Gestore eccezioni globale per logging e copia del log."""
+    # Prima logga l'eccezione come al solito
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    logger.critical("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+    # Ora copia il file di log nella root del progetto
+    try:
+        log_file = CONFIG_DIR / "logs" / "crash.log"
+        if log_file.exists():
+            # Costruisce il percorso di destinazione nella root del progetto
+            # __file__ si riferisce a main.py, .parent ci dà la root
+            project_root = Path(__file__).parent
+            dest_file = project_root / "crash.log"
+            
+            shutil.copy2(log_file, dest_file)
+            logger.info(f"Copia del crash log salvata in: {dest_file}")
+    except Exception as e:
+        logger.error(f"Impossibile copiare il crash log nella root: {e}")
+
 def setup_crash_logging():
-    """Configura il logging per intercettare crash all'avvio."""
-    # STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob\logs
-    import os
+    """Configura il logging per i crash e installa l'exception hook."""
+    if not CONFIG_DIR.exists():
+        CONFIG_DIR.mkdir(parents=True)
 
-    from platformdirs import user_data_dir
-
-    log_dir = Path(user_data_dir("SyncroJob", appauthor=False)) / "logs"
+    log_dir = CONFIG_DIR / "logs"
+    log_dir.mkdir(exist_ok=True)
     log_file = log_dir / "crash.log"
 
-    try:
-        log_dir.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        # Fallback estremo nella home se non si può creare la directory
-        log_dir = Path.home() / ".syncrojob_logs"
-        try:
-            log_dir.mkdir(parents=True, exist_ok=True)
-        except:
-            return
-        log_file = log_dir / "crash.log"
+    # Configurazione del logger
+    # 'w' per sovrascrivere a ogni avvio, così abbiamo solo il log del crash più recente
+    handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
 
-    # 2. Configura Logger
-    # 'w' mode sovrascrive il file ad ogni avvio come richiesto
-    logging.basicConfig(
-        filename=str(log_file),
-        filemode="w",
-        level=logging.DEBUG,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-    )
+    logger = logging.getLogger("crash_logger")
+    if not logger.handlers:
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
-    # Riduci verbosità per librerie rumorose
-    for lib in ["matplotlib", "PIL", "urllib3", "selenium"]:
-        logging.getLogger(lib).setLevel(logging.WARNING)
-
-    logger = logging.getLogger("CrashLogger")
+    # Log delle informazioni di sistema all'avvio
     logger.info(f"Crash Logger inizializzato. File: {log_file}")
     logger.info(f"Python: {sys.version}")
     logger.info(f"Eseguibile: {sys.executable}")
     logger.info(f"Piattaforma: {sys.platform}")
 
-    # 3. Redirect stdout/stderr
-    class StreamToLogger:
-        def __init__(self, logger, level):
-            self.logger = logger
-            self.level = level
-            self.linebuf = ""
-
-        def write(self, buf):
-            for line in buf.rstrip().splitlines():
-                self.logger.log(self.level, line.rstrip())
-
-        def flush(self):
-            # Il logger gestisce il flush su file
-            pass
-
-    sys.stdout = StreamToLogger(logger, logging.INFO)
-    sys.stderr = StreamToLogger(logger, logging.ERROR)
-
-    # 4. Exception Hook globale
-    def handle_exception(exc_type, exc_value, exc_traceback):
-        if issubclass(exc_type, KeyboardInterrupt):
-            sys.__excepthook__(exc_type, exc_value, exc_traceback)
-            return
-
-        logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-        # Stampa il traceback anche sulla console originale per debug immediato
-        sys.__stderr__.write("".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
-
-        # Mostra Popup (Solo Windows)
-        if os.name == "nt":
-            try:
-                error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-                # Tronca messaggio troppo lungo per il popup
-                short_msg = error_msg[-1000:] if len(error_msg) > 1000 else error_msg
-
-                ctypes.windll.user32.MessageBoxW(
-                    0,
-                    f"L'applicazione ha riscontrato un errore critico:\n\n...{short_msg}\n\nIl log completo è stato salvato nella cartella logs di SyncroJob.",
-                    "Errore Critico SyncroJob",
-                    0x10 | 0x10000,  # MB_ICONHAND | MB_SETFOREGROUND
-                )
-            except Exception as e:
-                logger.error(f"Impossibile mostrare popup errore: {e}")
-
+    # Installa il gestore di eccezioni globale
     sys.excepthook = handle_exception
     logger.info("Exception hook installato.")
 

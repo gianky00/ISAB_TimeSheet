@@ -6,7 +6,7 @@ Basato sullo script standalone funzionante.
 
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
@@ -78,6 +78,8 @@ class ScaricaTSBot(BaseBot):
         Returns:
             True se tutti i download hanno successo
         """
+        if not self.driver or not self.wait:
+            return False
         # Estrai i dati
         if isinstance(data, dict):
             rows = data.get("rows", [])
@@ -190,6 +192,8 @@ class ScaricaTSBot(BaseBot):
 
     def _navigate_to_timesheet(self) -> bool:
         """Naviga a Report -> Timesheet."""
+        if not self.wait:
+            return False
         self._check_stop()
 
         try:
@@ -216,6 +220,8 @@ class ScaricaTSBot(BaseBot):
 
     def _setup_filters(self) -> bool:
         """Imposta Fornitore e Data Da."""
+        if not self.driver or not self.wait or not self.long_wait:
+            return False
         self._check_stop()
 
         try:
@@ -248,11 +254,15 @@ class ScaricaTSBot(BaseBot):
             self.log(f"❌ Errore nell'impostazione dei filtri: {e}")
             return False
 
-    def _download_excel(self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str) -> Path:
+    def _download_excel(
+        self, source_dir: Path, dest_dir: Path, numero_oda: str, posizione_oda: str
+    ) -> Optional[Path]:
         """
         Scarica il file Excel, lo rinomina e lo sposta.
         Restituisce il path finale del file o None.
         """
+        if not self.wait or not self.driver:
+            return None
         try:
             files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
 

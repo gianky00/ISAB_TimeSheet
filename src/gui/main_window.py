@@ -21,7 +21,11 @@ from PyQt6.QtGui import (
     QPainter,
     QPixmap,
     QShortcut,
+    QTextDocument,
+    QPageSize,
+    QPageLayout,
 )
+from PyQt6.QtPrintSupport import QPrinter
 from PyQt6.QtWidgets import (
     QApplication,
     QFrame,
@@ -309,20 +313,159 @@ class MainWindow(QMainWindow):
         elif action == "restart":
             self._handle_telegram_command("restart_app", {})
 
+    def _generate_pdf_from_html(self, html_content: str, output_path: str):
+        """Genera un PDF da contenuto HTML."""
+        doc = QTextDocument()
+        
+        # Aggiungi stili CSS globali per garantire leggibilità
+        header_style = """
+        <style>
+            body { font-family: Arial, sans-serif; font-size: 18pt; }
+            h2 { font-size: 30pt; color: #333; }
+            h3 { font-size: 24pt; color: #0d6efd; margin-top: 20px; }
+            p { font-size: 18pt; color: #555; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th { background-color: #f2f2f2; color: #333; font-weight: bold; padding: 12px; font-size: 16pt; border: 1px solid #ddd; }
+            td { padding: 10px; font-size: 16pt; border: 1px solid #ddd; color: #000; }
+        </style>
+        """
+        doc.setHtml(header_style + html_content)
+
+        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+        printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
+        printer.setOutputFileName(output_path)
+        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+        printer.setPageOrientation(QPageLayout.Orientation.Landscape) # Landscape per tabelle larghe
+        
+        doc.print(printer)
+
     def _handle_telegram_command(self, command, params):
-        if command == "run_pdl":
+        if command == "search_db_pdf":
+            db_type = params.get("db", "")
+            query_text = params.get("query", "")
+            chat_id = params.get("chat_id", "")
+            year_filter = params.get("year")
+            
+            msg_text = f"🔍 Ricerca in corso in **{db_type.capitalize()}**"
+            if year_filter:
+                msg_text += f" ({year_filter})"
+            msg_text += f" per: `{query_text}`..."
+            
+            self.telegram.send_message_sync(msg_text)
+            
+            try:
+                # Logica Specifica per Database
+                html_report = ""
+                filename = f"report_{db_type}_{int(datetime.now().timestamp())}.pdf"
+                temp_pdf = str(config_manager.CONFIG_DIR / "temp" / filename)
+                
+                # Assicura che la temp dir esista
+                (config_manager.CONFIG_DIR / "temp").mkdir(exist_ok=True)
+
+                if db_type == "timbrature":
+                    # Cerca in Timbrature
+                    rows = self.timbrature_db_panel.storage.get_timbrature_with_reparto(limit=500, filter_text=query_text)
+                    
+                    if not rows:
+                        self.telegram.send_message_sync("❌ Nessun risultato trovato.")
+                        return
+
+                    # Costruisci HTML
+                    html_report = f"""
+                    <h2>Report Timbrature</h2>
+                    <p><b>Filtro:</b> {query_text}<br><b>Data Generazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Ingresso</th>
+                                <th>Uscita</th>
+                                <th>Nominativo</th>
+                                <th>Sito</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    """
+                    for r in rows:
+                        full_name = f"{r[4]} {r[3]}"
+                        html_report += f"""
+                            <tr>
+                                <td>{r[0]}</td>
+                                <td>{r[1]}</td>
+                                <td>{r[2]}</td>
+                                <td>{full_name}</td>
+                                <td>{r[6]}</td>
+                            </tr>
+                        """
+                    html_report += "</tbody></table>"
+
+                elif db_type == "strumentale":
+                    from src.core.contabilita_manager import ContabilitaManager
+                    
+                    year_val = int(year_filter) if year_filter else None
+                    matches = ContabilitaManager.search_extended(query_text, year=year_val, limit=500)
+                    
+                    if not matches or (not matches.get("GIORNALIERE") and not matches.get("CANTIERE")):
+                        self.telegram.send_message_sync("❌ Nessun risultato trovato.")
+                        return
+                        
+                    html_report = f"""
+                    <h2>Report Contabilità {year_filter if year_filter else ''}</h2>
+                    <p><b>Filtro:</b> {query_text}<br><b>Data Generazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+                    """
+                    
+                    if matches.get("GIORNALIERE"):
+                        html_report += "<h3>Giornaliere</h3><table><thead><tr><th>Data</th><th>Personale</th><th>Descrizione</th></tr></thead><tbody>"
+                        for g in matches["GIORNALIERE"]:
+                            html_report += f"<tr><td>{g['data']}</td><td>{g['personale']}</td><td>{g['descrizione']}</td></tr>"
+                        html_report += "</tbody></table>"
+
+                    if matches.get("CANTIERE"):
+                        html_report += "<h3>Cantiere</h3><table><thead><tr><th>Data</th><th>Personale</th><th>Commessa</th><th>Ore</th></tr></thead><tbody>"
+                        for c in matches["CANTIERE"]:
+                            html_report += f"<tr><td>{c['data']}</td><td>{c['personale']}</td><td>{c['commessa']}</td><td>{c.get('totale_ore','')}</td></tr>"
+                        html_report += "</tbody></table>"
+
+                else:
+                    self.telegram.send_message_sync(f"⚠️ Report PDF non supportato per {db_type}.")
+                    return
+
+                # Genera PDF
+                self._generate_pdf_from_html(html_report, temp_pdf)
+                
+                # Invia PDF
+                if os.path.exists(temp_pdf):
+                    caption = f"📄 Report {db_type.capitalize()} - {query_text}"
+                    self.telegram.send_document_sync(temp_pdf, caption)
+                else:
+                    self.telegram.send_message_sync("❌ Errore generazione file PDF.")
+
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                self.telegram.send_message_sync(f"❌ Errore imprevisto: {e}")
+
+        elif command == "run_pdl":
             self.navigate_to_panel("scarico_pdl")
             print_enabled = params.get("print", False)
+            merge_and_send = params.get("merge_and_send", False)
+
             self.pdl_panel.print_check.setChecked(print_enabled)
+            # Passa il parametro merge_and_send direttamente al pannello
+            self.pdl_panel.merge_and_send_from_telegram = merge_and_send
+
             ready, msg = self.pdl_panel.validate_ready()
             if not ready:
                 self.telegram.send_message_sync(
                     f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}\nUsa '➕ Inserisci PDL' per aggiungere dati."
                 )
+                # Pulisci l'attributo temporaneo se la validazione fallisce
+                if hasattr(self.pdl_panel, "merge_and_send_from_telegram"):
+                    del self.pdl_panel.merge_and_send_from_telegram
                 return
             self.pdl_panel.start_btn.click()
             self.telegram.send_message_sync(
-                f"✅ Comando ricevuto. Avvio Scarico PDL (Stampa={print_enabled})"
+                f"✅ Comando ricevuto. Avvio Scarico PDL (Stampa={print_enabled}, Unisci PDF e invia={merge_and_send})"
             )
 
         elif command == "list_pdl":
@@ -330,7 +473,14 @@ class MainWindow(QMainWindow):
             if not data:
                 self.telegram.send_message_sync("📋 **Lista PDL Vuota**")
             else:
-                items = [str(row.get("numero_pdl", "")) for row in data]
+                items = []
+                for row in data:
+                    # Estrai il valore dalla prima colonna, indipendentemente dal nome
+                    if row and isinstance(row, dict):
+                        first_key = next(iter(row))
+                        item_value = row.get(first_key)
+                        if item_value:  # Filtra valori vuoti o None
+                            items.append(str(item_value))
                 text = "📋 **Lista PDL Corrente:**\n" + "\n".join([f"• `{i}`" for i in items[:20]])
                 if len(items) > 20:
                     text += f"\n...ed altri {len(items)-20}"
@@ -1399,8 +1549,9 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Gestisce la chiusura della finestra: minimizza nella tray se non è force_quit."""
         if self._force_quit:
-            # Ferma servizi in background
-            self.telegram.stop_service()
+            # Ferma servizi in background in modo bloccante
+            if self.telegram:
+                self.telegram.stop_service()
 
             # Auto Backup
             config = config_manager.load_config()

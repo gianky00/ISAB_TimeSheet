@@ -115,7 +115,7 @@ class ToastManager:
     """Gestisce posizionamento e stacking toast."""
 
     _instance = None
-    _active_toasts = []
+    _active_toasts: list[Toast] = []
 
     @classmethod
     def instance(cls):
@@ -141,10 +141,14 @@ class ToastManager:
             offset_y = sum([t.height() + 10 for t in self._active_toasts])
             y = geo.y() + geo.height() - toast.height() - 20 - offset_y
         else:
-            screen = QApplication.primaryScreen().geometry()
-            x = screen.width() - toast.width() - 20
-            offset_y = sum([t.height() + 10 for t in self._active_toasts])
-            y = screen.height() - toast.height() - 60 - offset_y
+            primary_screen = QApplication.primaryScreen()
+            if primary_screen:
+                screen = primary_screen.geometry()
+                x = screen.width() - toast.width() - 20
+                offset_y = sum([t.height() + 10 for t in self._active_toasts])
+                y = screen.height() - toast.height() - 60 - offset_y
+            else:
+                x, y = 0, 0  # Fallback
 
         self._active_toasts.append(toast)
         # Remove from list when destroyed

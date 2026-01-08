@@ -50,6 +50,8 @@ class DettagliOdABot(BaseBot):
         self.fornitore = fornitore
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
+        if not self.driver:
+            return False
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)

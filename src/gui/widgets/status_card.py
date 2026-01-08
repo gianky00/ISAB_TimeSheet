@@ -2,7 +2,9 @@
 Card per visualizzare stato con icona e animazioni.
 """
 
-from PyQt6.QtCore import QPropertyAnimation, Qt, pyqtProperty
+from typing import Optional
+
+from PyQt6.QtCore import QPropertyAnimation, Qt, pyqtProperty  # type: ignore
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from ..design.colors import get_palette
@@ -76,23 +78,18 @@ class StatusCard(QFrame):
         self._pulse_anim.setStartValue(1.0)
         self._pulse_anim.setEndValue(0.5)
 
-    @pyqtProperty(float)
-    def pulseOpacity(self):
+    def get_pulse_opacity(self) -> float:
         return self._pulse_opacity
 
-    @pulseOpacity.setter
-    def pulseOpacity(self, value):
+    def set_pulse_opacity(self, value: float):
         self._pulse_opacity = value
         # Update just the icon opacity via stylesheet would be expensive,
         # so we trigger a repaint or set style on icon only if needed.
-        # For simplicity, we just change window opacity or icon opacity style.
-        # Changing QFrame opacity affects everything.
-        # Let's change border-left color alpha or something.
-        # Actually, let's just re-apply style with alpha if running.
-        pass  # Optimization: don't heavy re-style on loop.
-        # Ideally we would use QGraphicsOpacityEffect on the icon.
+        pass
 
-    def setStatus(self, status: str, message: str = None):
+    pulseOpacity = pyqtProperty(float, fget=get_pulse_opacity, fset=set_pulse_opacity)
+
+    def setStatus(self, status: str, message: Optional[str] = None):
         """Imposta lo stato della card."""
         self._status = status
         self._update_status_display(message)
@@ -103,7 +100,7 @@ class StatusCard(QFrame):
             self._pulse_anim.stop()
             self._pulse_opacity = 1.0
 
-    def _update_status_display(self, custom_message: str = None):
+    def _update_status_display(self, custom_message: Optional[str] = None):
         icon, default_msg, color_key = self.STATUS_CONFIG.get(
             self._status, self.STATUS_CONFIG[self.Status.IDLE]
         )

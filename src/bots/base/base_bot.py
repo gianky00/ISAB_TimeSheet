@@ -23,7 +23,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from src.bots.base.login_page import LoginPage
 from src.bots.portale_fornitori.common.locators import (
-    CommonLocators,  # LoginLocators non più necessario qui
+    CommonLocators,
+    LoginLocators,
 )
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
@@ -76,6 +77,7 @@ class BaseBot(ABC):
         self._log_callback: Optional[Callable[[str], None]] = None
         self._input_callback: Optional[Callable[[str], str]] = None
         self.login_page: Optional[LoginPage] = None
+        self._telegram_service: Any = None  # Nuovo attributo per il servizio Telegram
 
     @property
     @abstractmethod
@@ -89,6 +91,10 @@ class BaseBot(ABC):
         """Description of the bot."""
         pass
 
+    def set_telegram_service(self, service: Any):
+        """Imposta il servizio Telegram per l'inoltro dei log."""
+        self._telegram_service = service
+
     def set_log_callback(self, callback: Callable[[str], None]):
         """Set the logging callback."""
         self._log_callback = callback
@@ -98,10 +104,21 @@ class BaseBot(ABC):
         self._input_callback = callback
 
     def log(self, message: str):
-        """Log a message."""
+        """Log a message e inoltra al servizio Telegram se disponibile."""
         print(f"[{self.name}] {message}")
+
         if self._log_callback:
             self._log_callback(message)
+        
+        if self._telegram_service:
+            try:
+                clean_msg = message.strip()
+                import re
+                clean_msg = re.sub(r"^[\[]\d{2}:\d{2}:\d{2}[\]]\s*", "", clean_msg)
+                tg_text = f"🔹 *{self.name}*\n{clean_msg}"
+                self._telegram_service.send_message_sync(tg_text)
+            except Exception as e:
+                print(f"❌ Errore interno TelegramService (sincrono): {e}")
 
     def _ask_user(self, prompt: str) -> str:
         """Ask user for input via callback."""
@@ -254,17 +271,20 @@ class BaseBot(ABC):
         )
 
         # Setup waits
-        self.wait = WebDriverWait(self.driver, self.timeout)
-        self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
-        self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
+        if self.driver:
+            self.wait = WebDriverWait(self.driver, self.timeout)
+            self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
+            self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
 
-        self.log("✓ Browser inizializzato (Modalità Silenziosa)")
-        self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
+            self.log("✓ Browser inizializzato (Modalità Silenziosa)")
+            self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
 
     def _attendi_scomparsa_overlay(self, timeout_secondi: int = Timeouts.OVERLAY) -> bool:
         """
         Waits for Ext JS loading overlays to disappear.
         """
+        if not self.driver:
+            return False
         try:
             overlay_wait = WebDriverWait(self.driver, timeout_secondi)
             # Combine selectors for efficiency
@@ -286,7 +306,7 @@ class BaseBot(ABC):
         self._check_stop()
         self.status = BotStatus.LOGGING_IN
 
-        if not self.login_page.login(self.username, self.password):
+        if not self.login_page or not self.login_page.login(self.username, self.password):
             return False
 
         self._check_stop()
@@ -298,6 +318,8 @@ class BaseBot(ABC):
 
     def _handle_session_popup(self):
         """Handles 'Active Session' popup."""
+        if not self.popup_wait or not self.driver:
+            return
         try:
             si_button = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
             self.log("Pop-up 'Sessione attiva' trovato. Click su 'Si'...")
@@ -308,6 +330,8 @@ class BaseBot(ABC):
 
     def _handle_ok_popup(self):
         """Handles generic OK popup."""
+        if not self.popup_wait or not self.driver:
+            return
         try:
             ok_button = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_OK))
             self.log("Pop-up 'OK' trovato. Click...")
@@ -324,6 +348,8 @@ class BaseBot(ABC):
 
     def _handle_unsaved_changes_popup(self):
         """Handles 'Unsaved Changes' popup."""
+        if not self.driver:
+            return False
         try:
             WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located(CommonLocators.POPUP_ATTENTION_HEADER)
@@ -353,6 +379,8 @@ class BaseBot(ABC):
 
     def _verify_login(self) -> bool:
         """Verifies if login was successful (via URL check)."""
+        if not self.driver:
+            return False
         try:
             return "login" not in self.driver.current_url.lower()
         except Exception:
@@ -360,6 +388,8 @@ class BaseBot(ABC):
 
     def _verify_logged_in_via_ui(self) -> bool:
         """Checks for post-login UI elements."""
+        if not self.driver:
+            return False
         try:
             WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON)
@@ -372,6 +402,8 @@ class BaseBot(ABC):
         """
         Performs logout.
         """
+        if not self.driver or not self.wait:
+            return False
         self.log("Tentativo di Logout...")
         try:
             settings_button = self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON))
@@ -410,7 +442,7 @@ class BaseBot(ABC):
             self.log(f"⚠ Timeout durante il logout. URL attuale: {current_url}")
             try:
                 WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located(CommonLocators.USERNAME_FIELD)
+                    EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
                 )
                 self.log("Campo Username trovato. Logout probabilmente riuscito.")
                 return True
@@ -423,6 +455,8 @@ class BaseBot(ABC):
 
     def navigate_to_menu(self, menu_path: List[str]) -> bool:
         """Navigates through ExtJS menus."""
+        if not self.wait:
+            return False
         self._check_stop()
         self.log(f"Navigazione: {' > '.join(menu_path)}")
 
@@ -571,5 +605,3 @@ class BaseBot(ABC):
             self.status = BotStatus.ERROR
             self.cleanup()
             return False
-
-

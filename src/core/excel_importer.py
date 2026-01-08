@@ -12,22 +12,25 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
 # Tentativo di importare msoffcrypto
 try:
-    import msoffcrypto
+    import msoffcrypto  # type: ignore
 except ImportError:
     msoffcrypto = None
 
 # Tentativo di importare openpyxl
 try:
-    import openpyxl
+    import openpyxl  # type: ignore
     from openpyxl.utils import get_column_letter
+
+    HAS_OPENPYXL = True
 except ImportError:
-    openpyxl = None
+    openpyxl = None  # type: ignore
+    HAS_OPENPYXL = False
 
 
 class ExcelImporter:
@@ -120,7 +123,7 @@ class ExcelImporter:
     CERTIFICATI_CAMPIONE_COLS = list(CERTIFICATI_CAMPIONE_MAPPING.values())
 
     @staticmethod
-    def _decrypt_if_encrypted(file_path: Path) -> Tuple[any, bool]:
+    def _decrypt_if_encrypted(file_path: Path) -> Tuple[Any, bool]:
         """Tenta di decifrare un file Excel se protetto da password."""
         if msoffcrypto:
             try:
@@ -162,18 +165,19 @@ class ExcelImporter:
                 except Exception:
                     xls = pd.ExcelFile(file_obj, engine="openpyxl")
 
-                valid_sheets = [s for s in xls.sheet_names if re.search(r"(\d{4})", s)]
+                valid_sheets = [s for s in xls.sheet_names if re.search(r"(\d{4})", str(s))]
                 total_sheets = len(valid_sheets)
                 if total_sheets == 0:
                     fallback_sheets = [
-                        s for s in xls.sheet_names if s.lower() in ["dati", "preventivi", "riepilogo"]
+                        s for s in xls.sheet_names if str(s).lower() in ["dati", "preventivi", "riepilogo"]
                     ]
                     if fallback_sheets:
                         total_sheets = len(fallback_sheets)
 
                 processed_sheets = 0
 
-                for sheet_name in xls.sheet_names:
+                for sheet_name_raw in xls.sheet_names:
+                    sheet_name = str(sheet_name_raw)
                     year = None
                     match = re.search(r"(\d{4})", sheet_name)
 
@@ -191,7 +195,8 @@ class ExcelImporter:
                         header_row_idx = 1
                         key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
 
-                        for i, row in preview_df.iterrows():
+                        for i_raw, row in preview_df.iterrows():
+                            i = int(str(i_raw))
                             row_norm = []
                             for val in row.values:
                                 s = str(val).strip().upper()
@@ -676,14 +681,15 @@ class ExcelImporter:
                     xls = pd.ExcelFile(path)
                     sheet_name = None
 
-                    for name in xls.sheet_names:
+                    for name_raw in xls.sheet_names:
+                        name = str(name_raw)
                         name_lower = name.lower()
                         if "strumenti campione" in name_lower or "isab sud" in name_lower:
                             sheet_name = name
                             break
 
                     if not sheet_name and xls.sheet_names:
-                        sheet_name = xls.sheet_names[0]
+                        sheet_name = str(xls.sheet_names[0])
 
                     if not sheet_name:
                         return False, "Nessun foglio trovato nel file Excel.", []
@@ -699,7 +705,8 @@ class ExcelImporter:
 
                     target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
 
-                    for i, row in df_preview.iterrows():
+                    for i_raw, row in df_preview.iterrows():
+                        i = int(str(i_raw))
                         row_values = [str(val).strip() for val in row.values]
                         matches = sum(1 for col in target_columns if col in row_values)
 

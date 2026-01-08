@@ -153,9 +153,7 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(24, 20)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(
-                "background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;"
-            )
+            btn.setStyleSheet("background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;")
             btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
             action_layout.addWidget(btn)
 
@@ -164,9 +162,7 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(24, 20)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(
-                "background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;"
-            )
+            btn.setStyleSheet("background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;")
             btn.clicked.connect(self._open_settings)
             action_layout.addWidget(btn)
 

@@ -5,6 +5,7 @@ Gestisce l'interazione con l'intelligenza artificiale (Google Gemini).
 
 import json
 import sqlite3
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -16,7 +17,7 @@ from src.core.contabilita_manager import ContabilitaManager
 class LyraClient:
     """Client per interagire con l'API di Google Gemini (Lyra)."""
 
-    def __init__(self, api_key: str, model_name: str = None):
+    def __init__(self, api_key: str, model_name: Optional[str] = None):
         if not api_key:
             raise ValueError("API Key for Gemini is required.")
         self._api_key = api_key
@@ -152,7 +153,7 @@ class LyraClient:
 
         return "\n".join(context)
 
-    def ask(self, question: str, extra_context: str = "", images: list = None) -> str:
+    def ask(self, question: str, extra_context: str = "", images: Optional[List[Any]] = None) -> str:
         """Invia una domanda a Gemini con il contesto ed eventuali immagini."""
         try:
             system_data = self._get_system_context()
@@ -164,7 +165,7 @@ class LyraClient:
             full_prompt = f"{self.context_prompt}\n{system_data}{ctx}\n\nUtente: {question}\nLyra:"
 
             # Costruzione parti del messaggio
-            parts = [{"text": full_prompt}]
+            parts: List[Dict[str, Any]] = [{"text": full_prompt}]
 
             if images:
                 for img_b64 in images:

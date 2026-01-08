@@ -50,6 +50,8 @@ class ScaricaTSBot(BaseBot):
         """
         Executes the download workflow.
         """
+        if not self.driver:
+            return False
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)

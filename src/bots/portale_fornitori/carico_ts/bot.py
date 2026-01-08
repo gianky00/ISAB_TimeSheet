@@ -52,6 +52,8 @@ class CaricoTSBot(BaseBot):
         return "Caricamento automatico timesheet"
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
+        if not self.driver:
+            return False
         rows = data if isinstance(data, list) else data.get("rows", [])
         if not rows:
             return True

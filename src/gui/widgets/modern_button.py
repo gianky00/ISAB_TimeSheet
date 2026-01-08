@@ -2,7 +2,9 @@
 Pulsante moderno con varianti e stati.
 """
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty
+from typing import Optional
+
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore
 from PyQt6.QtWidgets import QPushButton
 
 from ..design.colors import get_palette
@@ -28,8 +30,8 @@ class ModernButton(QPushButton):
         text: str = "",
         variant: str = Variant.PRIMARY,
         size: str = Size.MEDIUM,
-        icon: str = None,
-        parent=None,
+        icon: Optional[str] = None,
+        parent: Optional[QPushButton] = None,
     ):
         super().__init__(text, parent)
         self._variant = variant
@@ -52,14 +54,14 @@ class ModernButton(QPushButton):
         self._anim.setDuration(150)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    @pyqtProperty(float)
-    def hoverOpacity(self):
+    def get_hover_opacity(self) -> float:
         return self._hover_opacity
 
-    @hoverOpacity.setter
-    def hoverOpacity(self, value):
+    def set_hover_opacity(self, value: float):
         self._hover_opacity = value
         self._apply_style()
+
+    hoverOpacity = pyqtProperty(float, fget=get_hover_opacity, fset=set_hover_opacity)
 
     def enterEvent(self, event):
         self._anim.setStartValue(0.0)

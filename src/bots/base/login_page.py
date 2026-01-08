@@ -4,7 +4,7 @@ Gestisce le interazioni con la pagina di login del portale ISAB.
 """
 
 import time
-from typing import Optional
+from typing import Callable, Optional
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -25,7 +25,11 @@ class LoginPage:
     """
 
     def __init__(
-        self, driver: WebDriver, wait: WebDriverWait, logger: Optional[callable] = None, isab_url: str = ""
+        self,
+        driver: WebDriver,
+        wait: WebDriverWait,
+        logger: Optional[Callable[[str], None]] = None,
+        isab_url: str = "",
     ):
         self.driver = driver
         self.wait = wait

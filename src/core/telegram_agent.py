@@ -129,8 +129,6 @@ class SyncroJobAgent:
     async def _async_send(self, text, photo_hex=None):
         try:
             if photo_hex:
-                import bytes
-
                 photo_bytes = bytes.fromhex(photo_hex)
                 await self.tg_app.bot.send_photo(
                     chat_id=self.connected_chat_id,
@@ -149,14 +147,17 @@ class SyncroJobAgent:
 
     # --- HANDLERS TELEGRAM ---
     async def _check_auth(self, update: Update):
-        uid = str(update.effective_user.id)
+        uid = str(update.effective_user.id) if update.effective_user else ""
         if self.connected_chat_id and uid != self.connected_chat_id:
-            await update.message.reply_text("⛔ Accesso Negato")
+            if update.message:
+                await update.message.reply_text("⛔ Accesso Negato")
             return False
         return True
 
     async def _cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
+            return
+        if not update.message:
             return
         keyboard = [
             [
@@ -178,6 +179,8 @@ class SyncroJobAgent:
     async def _handle_text(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
             return
+        if not update.message or not update.effective_chat:
+            return
         text = update.message.text
 
         # Se l'app è offline, offri di avviarla
@@ -195,6 +198,8 @@ class SyncroJobAgent:
 
     async def _handle_voice(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
+            return
+        if not update.message or not update.message.voice or not update.effective_chat:
             return
         if not self.client_conn:
             await update.message.reply_text("⚠️ App Offline. Impossibile processare vocale.")
@@ -235,8 +240,12 @@ class SyncroJobAgent:
 
     async def _handle_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
+        if not query:
+            return
         await query.answer()
         data = query.data
+        if not data:
+            return
 
         if data == "app_start_now":
             try:

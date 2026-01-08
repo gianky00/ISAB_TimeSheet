@@ -4,7 +4,6 @@ Utility per il parsing robusto di valute e numeri.
 """
 
 
-
 def parse_currency(value) -> float:
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.

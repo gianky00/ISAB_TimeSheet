@@ -3,6 +3,9 @@ title SyncroJob - Avvio da sorgenti
 cd /d "%~dp0"
 cd ..
 
+echo [INFO] Pulizia dei log di crash precedenti...
+if exist crash.log del crash.log
+
 echo =============================================
 echo    SyncroJob - Avvio da codici sorgenti
 echo =============================================
@@ -13,7 +16,6 @@ python --version >nul 2>&1
 if errorlevel 1 (
     echo [ERRORE] Python non trovato!
     echo Installa Python da https://www.python.org/downloads/
-    pause
     exit /b 1
 )
 
@@ -39,7 +41,6 @@ python main.py
 if errorlevel 1 (
     echo.
     echo [ERRORE] L'applicazione si e' chiusa con errore.
-    pause
 )
 
 deactivate

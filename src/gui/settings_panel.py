@@ -1905,3 +1905,5 @@ class SettingsPanel(QWidget):
         elif reply == QMessageBox.StandardButton.Discard:
             self._load_settings()
             return True
+
+        return False

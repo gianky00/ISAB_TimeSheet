@@ -12,7 +12,7 @@ import pandas as pd
 from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_queries import ContabilitaQueries
 from src.core.contabilita_search import ContabilitaSearch
-from src.core.contabilita_stats import ContabilitaStats
+from src.core.contabilita_stats import ContabilitaStats, YearStats
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import db_manager
 from src.core.excel_importer import ExcelImporter
@@ -64,7 +64,7 @@ class ContabilitaManager:
             return False, "Directory Giornaliere non trovata.", 0, 0
 
         current_year = datetime.now().year
-        imported_years = set()
+        imported_years: set[int] = set()
 
         try:
             # Cleanup: ensure no data from 2026+ exists (fix for bug)
@@ -193,14 +193,14 @@ class ContabilitaManager:
         return ContabilitaSearch.search_oda(cls.DB_PATH, query)
 
     @classmethod
-    def search_extended(cls, query: str) -> Dict[str, List[Dict]]:
+    def search_extended(cls, query: str, year: int = None, limit: int = 100) -> Dict[str, List[Dict]]:
         """
         Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
         Returns: Dict con liste di risultati per categoria.
         """
-        return ContabilitaSearch.search_extended(cls.DB_PATH, query)
+        return ContabilitaSearch.search_extended(cls.DB_PATH, query, year, limit)
 
     @classmethod
-    def get_year_stats(cls, year: int) -> Dict:
+    def get_year_stats(cls, year: int) -> YearStats:
         """Calcola statistiche avanzate per l'anno specificato (Tabella Dati) + KPI Diretti/Indiretti."""
         return ContabilitaStats.get_year_stats(cls.DB_PATH, year)

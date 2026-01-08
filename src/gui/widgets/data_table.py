@@ -42,7 +42,7 @@ class DataTable(QWidget):
         """
         super().__init__(parent)
         self._columns = columns
-        self._data = []
+        self._data: list[dict] = []
         self._palette = get_palette()
         self._setup_ui()
 

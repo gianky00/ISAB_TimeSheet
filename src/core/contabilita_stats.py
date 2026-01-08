@@ -4,22 +4,32 @@ Gestisce il calcolo delle statistiche per i dati della Contabilità Strumentale.
 """
 
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, TypedDict
 
 from src.core.contabilita_queries import ContabilitaQueries  # Per accedere ai dati
 from src.utils.parsing import parse_currency
+
+
+class YearStats(TypedDict):
+    total_prev: float
+    total_ore: float
+    count_total: int
+    status_counts: Dict[str, int]
+    top_commesse: List[tuple]
+    ore_dirette: float
+    ore_indirette: float
 
 
 class ContabilitaStats:
     """Gestore per il calcolo delle statistiche del database della Contabilità Strumentale."""
 
     @classmethod
-    def get_year_stats(cls, db_path: Path, year: int) -> Dict:
+    def get_year_stats(cls, db_path: Path, year: int) -> YearStats:
         """Calcola statistiche avanzate per l'anno specificato (Tabella Dati) + KPI Diretti/Indiretti."""
         data = ContabilitaQueries.get_data_by_year(db_path, year)
         giornaliere = ContabilitaQueries.get_giornaliere_by_year(db_path, year)
 
-        stats = {
+        stats: YearStats = {
             "total_prev": 0.0,
             "total_ore": 0.0,
             "count_total": 0,

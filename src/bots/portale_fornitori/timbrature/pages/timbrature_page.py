@@ -6,7 +6,7 @@ Page Object Model for the Timbrature section of the ISAB portal.
 import shutil
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -25,7 +25,7 @@ from src.core.constants import Timeouts
 class TimbraturePage:
     """Encapsulates interactions with the Timbrature page."""
 
-    def __init__(self, driver: WebDriver, log_callback: Optional[callable] = None):
+    def __init__(self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None):
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)

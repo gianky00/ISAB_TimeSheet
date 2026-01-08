@@ -3,11 +3,11 @@ import os
 import subprocess
 import time
 
-import fitz
+import fitz  # type: ignore
 import win32con
 import win32print
 import win32ui
-from PIL import Image, ImageWin
+from PIL import Image, ImageWin  # type: ignore
 
 logger = logging.getLogger(__name__)
 
