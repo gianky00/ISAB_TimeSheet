@@ -1,6 +1,7 @@
 @echo off
 title SyncroJob - Avvio da sorgenti
 cd /d "%~dp0"
+cd ..
 
 echo =============================================
 echo    SyncroJob - Avvio da codici sorgenti

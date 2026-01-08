@@ -1,6 +1,7 @@
 @echo off
 title SyncroJob - Reset Ambiente e Avvio
 cd /d "%~dp0"
+cd ..
 
 echo =============================================
 echo    SyncroJob - Reset Completo Ambiente
@@ -52,4 +53,4 @@ echo Verranno scaricati nuovamente i driver di Chrome.
 echo.
 pause
 
-call avvio.bat
+call scripts\avvio.bat

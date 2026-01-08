@@ -1,6 +1,8 @@
 @echo off
+cd /d "%~dp0"
+cd ..
 echo ========================================================
-echo           SYNCROJOB - AUTOMATED RELEASE
+echo       SYNCROJOB - LOCAL RELEASE (NO DEPLOY)
 echo ========================================================
 set VENV_DIR=.venv
 
@@ -25,9 +27,6 @@ call "%VENV_DIR%\Scripts\activate.bat"
 :: Start Timer
 set START_TIME=%TIME%
 
-echo Cleaning invalid pip distributions...
-python "admin/clean_venv.py"
-
 echo Updating dependencies...
 echo (This step shows progress for each package installation)
 python -m pip install --upgrade pip
@@ -43,7 +42,7 @@ echo.
 echo [2/5] Running Unit Tests (Split Execution to avoid memory overload)...
 
 echo [Phase 1] Running Core/Logic Tests...
-poetry run pytest tests/ --ignore=tests/unit/test_gui_contabilita_extra.py --ignore=tests/unit/test_gui_contabilita_logic.py --ignore=tests/unit/test_gui_panels_new.py --ignore=tests/unit/test_gui_panels.py --ignore=tests/unit/test_gui_settings.py --ignore=tests/unit/test_main_window.py --ignore=tests/unit/test_ux_settings_menus.py -v --tb=short
+python -m pytest tests/ --ignore=tests/unit/test_gui_contabilita_extra.py --ignore=tests/unit/test_gui_contabilita_logic.py --ignore=tests/unit/test_gui_panels_new.py --ignore=tests/unit/test_gui_panels.py --ignore=tests/unit/test_gui_settings.py --ignore=tests/unit/test_main_window.py --ignore=tests/unit/test_ux_settings_menus.py -v --tb=short
 if %errorlevel% neq 0 (
     echo CORE TESTS FAILED! Aborting release.
     pause
@@ -51,7 +50,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [Phase 2] Running GUI Tests...
-poetry run pytest tests/unit/test_gui_contabilita_extra.py tests/unit/test_gui_contabilita_logic.py tests/unit/test_gui_panels_new.py tests/unit/test_gui_panels.py tests/unit/test_gui_settings.py tests/unit/test_main_window.py tests/unit/test_ux_settings_menus.py -v --tb=short
+python -m pytest tests/unit/test_gui_contabilita_extra.py tests/unit/test_gui_contabilita_logic.py tests/unit/test_gui_panels_new.py tests/unit/test_gui_panels.py tests/unit/test_gui_settings.py tests/unit/test_main_window.py tests/unit/test_ux_settings_menus.py -v --tb=short
 if %errorlevel% neq 0 (
     echo GUI TESTS FAILED! Aborting release.
     pause
@@ -82,17 +81,17 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-:: 4. Build & Deploy
+:: 4. Build (No Deploy)
 echo.
-echo [4/5] Building Application and Installer...
+echo [4/5] Building Application and Installer (No Deploy)...
 
 echo Generating Icons...
 python "admin/Crea Setup/generate_icons.py"
 
 echo This may take a few minutes...
-python "admin/Crea Setup/build_dist.py"
+python "admin/Crea Setup/build_dist.py" --no-deploy
 if %errorlevel% neq 0 (
-    echo Error during build/deploy process!
+    echo Error during build process!
     pause
     exit /b %errorlevel%
 )

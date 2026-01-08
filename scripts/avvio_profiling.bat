@@ -1,6 +1,7 @@
 @echo off
 title SyncroJob - Avvio Profiling Scalene
 cd /d "%~dp0"
+cd ..
 
 echo =============================================
 echo    SyncroJob - Avvio con Profiling Scalene
