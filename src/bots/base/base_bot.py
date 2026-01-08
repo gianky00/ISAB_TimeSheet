@@ -77,6 +77,7 @@ class BaseBot(ABC):
         self._log_callback: Optional[Callable[[str], None]] = None
         self._input_callback: Optional[Callable[[str], str]] = None
         self.login_page: Optional[LoginPage] = None
+        self._telegram_service: Any = None  # Nuovo attributo per il servizio Telegram
 
     @property
     @abstractmethod
@@ -90,6 +91,10 @@ class BaseBot(ABC):
         """Description of the bot."""
         pass
 
+    def set_telegram_service(self, service: Any):
+        """Imposta il servizio Telegram per l'inoltro dei log."""
+        self._telegram_service = service
+
     def set_log_callback(self, callback: Callable[[str], None]):
         """Set the logging callback."""
         self._log_callback = callback
@@ -99,10 +104,21 @@ class BaseBot(ABC):
         self._input_callback = callback
 
     def log(self, message: str):
-        """Log a message."""
+        """Log a message e inoltra al servizio Telegram se disponibile."""
         print(f"[{self.name}] {message}")
+
         if self._log_callback:
             self._log_callback(message)
+        
+        if self._telegram_service:
+            try:
+                clean_msg = message.strip()
+                import re
+                clean_msg = re.sub(r"^[\[]\d{2}:\d{2}:\d{2}[\]]\s*", "", clean_msg)
+                tg_text = f"🔹 *{self.name}*\n{clean_msg}"
+                self._telegram_service.send_message_sync(tg_text)
+            except Exception as e:
+                print(f"❌ Errore interno TelegramService (sincrono): {e}")
 
     def _ask_user(self, prompt: str) -> str:
         """Ask user for input via callback."""

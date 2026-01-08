@@ -65,11 +65,12 @@ class BotWorker(QThread):
     finished_signal = pyqtSignal(bool)
     request_input_signal = pyqtSignal(str, dict, threading.Event)
 
-    def __init__(self, bot, data):
+    def __init__(self, bot, data, telegram_service=None):
         super().__init__()
         self.bot = bot
         self.data = data
         self._is_running = True
+        self.telegram_service = telegram_service
 
     def run(self):
         """Esegue il bot."""
@@ -299,42 +300,20 @@ class BaseBotPanel(QWidget):
         """Aggiunge un messaggio al log e lo inoltra a Telegram se importante."""
         self.log_widget.append(message)
 
-        # --- Streaming Intelligente Telegram ---
-        # Definiamo cosa è "importante" per l'utente mobile
-        important_keywords = [
-            "✅",
-            "❌",
-            "⚠️",
-            "🚀",
-            "▶",
-            "⏹",
-            "Arresto",
-            "Login effettuato",
-            "Accesso eseguito",
-            "Download completato",
-            "Caricamento completato",
-            "Trovati",
-            "Elaborazione",
-            "Errore",
-            "Attenzione",
-        ]
+        win = self.window()
+        if win and hasattr(win, "telegram"):
+            # Formattiamo il log per Telegram aggiungendo il nome del bot
+            clean_msg = message.strip()
+            # Rimuoviamo eventuali timestamp se presenti all'inizio (stile [HH:mm:ss])
+            import re
 
-        # Se il messaggio contiene una keyword o un'icona rilevante, inoltra
-        if any(key in message for key in important_keywords):
-            win = self.window()
-            if win and hasattr(win, "telegram"):
-                # Formattiamo il log per Telegram aggiungendo il nome del bot
-                clean_msg = message.strip()
-                # Rimuoviamo eventuali timestamp se presenti all'inizio (stile [HH:mm:ss])
-                import re
+            clean_msg = re.sub(r"^[\[]\d{2}:\d{2}:\d{2}[\]]\s*", "", clean_msg)
 
-                clean_msg = re.sub(r"^[\[]\d{2}:\d{2}:\d{2}[\]]\s*", "", clean_msg)
+            tg_text = f"🔹 *{self.bot_name}*\n{clean_msg}"
+            from typing import Any
 
-                tg_text = f"🔹 *{self.bot_name}*\n{clean_msg}"
-                from typing import Any
-
-                cast_win: Any = win
-                cast_win.telegram.send_message_sync(tg_text)
+            cast_win: Any = win
+            cast_win.telegram.send_message_sync(tg_text)
 
     def _on_status(self, status: str):
         """Aggiorna lo stato (messaggio custom)."""
@@ -503,7 +482,7 @@ class ScaricaTSPanel(BaseBotPanel):
             "elabora_ts": self.elabora_ts_check.isChecked(),
         }
 
-        self.worker = BotWorker(bot, bot_data)
+        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -654,7 +633,7 @@ class DettagliOdAPanel(BaseBotPanel):
         
         bot_data = {"rows": self.data_table.get_data(), "fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
-        self.worker = BotWorker(bot, bot_data)
+        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -798,7 +777,7 @@ class CaricoTSPanel(BaseBotPanel):
             ToastManager.instance().show("Impossibile creare il bot.", "error")
             return
 
-        self.worker = BotWorker(bot, {"rows": data})
+        self.worker = BotWorker(bot, {"rows": data}, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -889,6 +868,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         """
         )
         print_layout.addWidget(refresh_print_btn)
+
+
 
         print_layout.addStretch()
         params_layout.addWidget(print_group)
@@ -1050,6 +1031,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Prepare data for bot
         print_enabled = self.print_check.isChecked()
         printer_name = self.printer_combo.currentText()
+        # Il valore viene passato da Telegram tramite un attributo temporaneo
+        merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
 
         bot_data = []
         for row in raw_data:
@@ -1057,7 +1040,12 @@ class ScaricoPDLPanel(BaseBotPanel):
             pdl_val = row.get("numero_pdl", "")
             if pdl_val:
                 bot_data.append(
-                    {"pdl_number": pdl_val, "print_enabled": print_enabled, "printer_name": printer_name}
+                    {
+                        "pdl_number": pdl_val,
+                        "print_enabled": print_enabled,
+                        "printer_name": printer_name,
+                        "merge_and_send": merge_and_send,
+                    }
                 )
 
         # Get paths/config
@@ -1082,7 +1070,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             ToastManager.instance().show("Errore creazione bot.", "error")
             return
 
-        self.worker = BotWorker(bot, bot_data)
+        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -1093,9 +1081,42 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.log_widget.append("▶ Avvio Scarico PDL SafeWork...")
         if print_enabled:
             self.log_widget.append(f"🖨️ Stampa attiva su: {printer_name}")
+        if merge_and_send:
+            self.log_widget.append("📄 Unione PDF per Telegram attiva")
 
         self.worker.start()
         self.bot_started.emit()
+        
+        # Pulisci l'attributo temporaneo dopo l'uso
+        if hasattr(self, "merge_and_send_from_telegram"):
+            del self.merge_and_send_from_telegram
+
+    def _on_worker_finished(self, success: bool):
+        """Gestione custom per invio file unito."""
+        super()._on_worker_finished(success)
+
+        # Controlla se l'opzione di invio era attiva per questa esecuzione
+        merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
+
+        if success and merge_and_send and self.worker and hasattr(self.worker.bot, "downloaded_files"):
+            files_to_send = self.worker.bot.downloaded_files
+            if files_to_send:
+                win = self.window()
+                if win and hasattr(win, "telegram"):
+                    from typing import Any
+                    import os
+
+                    cast_win: Any = win
+                    self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
+                    
+                    for file_path in files_to_send:
+                        if os.path.exists(file_path):
+                            caption = f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
+                            cast_win.telegram.send_document_sync(file_path, caption)
+                            # Non eliminiamo i file finali, l'utente potrebbe volerli
+                    
+                    self._on_log("✅ PDF inviati con successo.")
+
 
 
 class TimbratureBotPanel(BaseBotPanel):
@@ -1217,7 +1238,7 @@ class TimbratureBotPanel(BaseBotPanel):
         
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
-        self.worker = BotWorker(bot, bot_data)
+        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished_custom)

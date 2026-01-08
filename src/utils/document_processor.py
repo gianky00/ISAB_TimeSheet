@@ -64,3 +64,23 @@ class DocumentProcessor:
             return has_text
         except:
             return False
+
+    @staticmethod
+    def merge_pdfs(file_paths: List[str], output_path: str) -> bool:
+        """Unisce più file PDF in uno solo usando PyMuPDF (fitz)."""
+        try:
+            if not fitz:
+                print("Errore: PyMuPDF (fitz) non è installato.")
+                return False
+
+            result = fitz.open()
+            for pdf_path in file_paths:
+                with fitz.open(pdf_path) as pdf_doc:
+                    result.insert_pdf(pdf_doc)
+            
+            result.save(output_path)
+            result.close()
+            return True
+        except Exception as e:
+            print(f"Errore durante l'unione dei PDF con fitz: {e}")
+            return False

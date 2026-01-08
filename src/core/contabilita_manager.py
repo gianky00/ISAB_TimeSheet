@@ -193,12 +193,12 @@ class ContabilitaManager:
         return ContabilitaSearch.search_oda(cls.DB_PATH, query)
 
     @classmethod
-    def search_extended(cls, query: str) -> Dict[str, List[Dict]]:
+    def search_extended(cls, query: str, year: int = None, limit: int = 100) -> Dict[str, List[Dict]]:
         """
         Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
         Returns: Dict con liste di risultati per categoria.
         """
-        return ContabilitaSearch.search_extended(cls.DB_PATH, query)
+        return ContabilitaSearch.search_extended(cls.DB_PATH, query, year, limit)
 
     @classmethod
     def get_year_stats(cls, year: int) -> YearStats:

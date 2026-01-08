@@ -62,7 +62,7 @@ class ContabilitaSearch:
         return results
 
     @classmethod
-    def search_extended(cls, db_path: Path, query: str) -> Dict[str, List[Dict]]:
+    def search_extended(cls, db_path: Path, query: str, year: int = None, limit: int = 100) -> Dict[str, List[Dict]]:
         """
         Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
         Returns: Dict con liste di risultati per categoria.
@@ -70,8 +70,8 @@ class ContabilitaSearch:
         if not db_path.exists():
             return {}
         query = query.strip().lower()
-        if len(query) < 3:
-            return {}  # More strict for generic search
+        if len(query) < 2: # Relaxed limit
+            return {}
 
         out: Dict[str, List[Dict]] = {"GIORNALIERE": [], "CANTIERE": [], "CERTIFICATI": []}
         like_query = f"%{query}%"
@@ -90,28 +90,49 @@ class ContabilitaSearch:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
 
+                # Params list building
+                g_params = [like_query, like_query]
+                g_where_year = ""
+                if year:
+                    g_where_year = " AND data LIKE ?"
+                    g_params.append(f"{year}-%")
+
                 # 1. Giornaliere (Cerca Personale o Descrizione)
-                sql_g = """SELECT DISTINCT data, personale, descrizione FROM giornaliere 
-                           WHERE lower(personale) LIKE ? OR lower(descrizione) LIKE ? LIMIT 20"""
-                cursor.execute(sql_g, (like_query, like_query))
+                sql_g = f"""SELECT DISTINCT data, personale, descrizione FROM giornaliere 
+                           WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){g_where_year} 
+                           ORDER BY data DESC LIMIT ?"""
+                g_params.append(limit)
+                
+                cursor.execute(sql_g, g_params)
                 for r in cursor.fetchall():
                     out["GIORNALIERE"].append(
                         {"data": _fmt_date(r[0]), "personale": r[1], "descrizione": r[2]}
                     )
 
                 # 2. Scarico Ore (Cantiere - Cerca Persone, Descrizione o Commessa)
-                sql_s = """SELECT DISTINCT data, pers1, descrizione, commessa FROM scarico_ore 
-                           WHERE lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ? LIMIT 20"""
-                cursor.execute(sql_s, (like_query, like_query, like_query))
+                s_params = [like_query, like_query, like_query]
+                s_where_year = ""
+                if year:
+                    s_where_year = " AND data LIKE ?"
+                    s_params.append(f"{year}-%")
+
+                sql_s = f"""SELECT DISTINCT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore 
+                           WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){s_where_year}
+                           ORDER BY data DESC LIMIT ?"""
+                s_params.append(limit)
+
+                cursor.execute(sql_s, s_params)
                 for r in cursor.fetchall():
                     out["CANTIERE"].append(
-                        {"data": _fmt_date(r[0]), "personale": r[1], "descrizione": r[2], "commessa": r[3]}
+                        {"data": _fmt_date(r[0]), "personale": r[1], "descrizione": r[2], "commessa": r[3], "totale_ore": r[4]}
                     )
 
-                # 3. Certificati (Cerca Matricola, Costruttore, Modello)
+                # 3. Certificati (Cerca Matricola, Costruttore, Modello) - Year ignored for Certificati usually
+                # But kept logic simple
+                c_params = [like_query, like_query, like_query, limit]
                 sql_c = """SELECT DISTINCT modello, costruttore, matricola FROM certificati_campione 
-                           WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT 20"""
-                cursor.execute(sql_c, (like_query, like_query, like_query))
+                           WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
+                cursor.execute(sql_c, c_params)
                 for r in cursor.fetchall():
                     out["CERTIFICATI"].append({"modello": r[0], "costruttore": r[1], "matricola": r[2]})
 
