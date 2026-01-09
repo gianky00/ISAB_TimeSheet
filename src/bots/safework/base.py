@@ -40,7 +40,7 @@ class SafeworkBaseBot(BaseBot):
                 By.XPATH, ".//button[contains(text(), 'OK') or @data-dismiss='modal']"
             ).click()
             self.log("ℹ️ Modale gestita (OK/Annulla).")
-        except:
+        except Exception:
             pass
 
         time.sleep(0.5)

@@ -7,9 +7,9 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 # Simula QApplication prima di importare AppUpdater per evitare errori di Qt
 app = QApplication([])
 
-from src.core import version
-from src.core.app_updater import check_for_updates
-from src.core.audit_manager import AuditManager
+from src.core import version  # noqa: E402
+from src.core.app_updater import check_for_updates  # noqa: E402
+from src.core.audit_manager import AuditManager  # noqa: E402
 
 
 @pytest.fixture

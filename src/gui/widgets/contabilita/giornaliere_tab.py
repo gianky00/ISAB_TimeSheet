@@ -1,11 +1,22 @@
 import os
 from datetime import datetime
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QAction
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHeaderView, QAbstractItemView, QTableWidgetItem, QMenu, QMessageBox
-from src.core.contabilita_manager import ContabilitaManager
+from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QHeaderView,
+    QMenu,
+    QMessageBox,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
 from src.core import config_manager
+from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets import ExcelTableWidget
+
 
 class GiornaliereYearTab(QWidget):
     """Tab per un singolo anno (Giornaliere)."""

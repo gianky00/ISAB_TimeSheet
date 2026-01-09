@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from PyQt6.QtWidgets import QTreeWidgetItem
+
 
 class SortableTreeWidgetItem(QTreeWidgetItem):
     """Custom QTreeWidgetItem che implementa l'ordinamento numerico e per data."""

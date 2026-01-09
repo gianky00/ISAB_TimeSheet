@@ -3,8 +3,6 @@ SyncroJob - GUI Module
 """
 
 from src.gui.main_window import MainWindow, create_splash_screen
-from src.gui.widgets.sidebar_button import SidebarButton
-from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.panels import (
     BaseBotPanel,
     BotWorker,
@@ -14,6 +12,8 @@ from src.gui.panels import (
 )
 from src.gui.settings_panel import SettingsPanel
 from src.gui.widgets import EditableDataTable, LogWidget, StatusIndicator
+from src.gui.widgets.sidebar_button import SidebarButton
+from src.gui.widgets.sidebar_widget import SidebarWidget
 
 __all__ = [
     "EditableDataTable",

@@ -44,7 +44,6 @@ from src.core.stats_manager import StatsManager
 # Import UI Components
 from src.gui.widgets import (
     BotParametersWidget,
-    CalendarDateEdit,
     EditableDataTable,
     ExcelTableWidget,
     LogWidget,
@@ -402,7 +401,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.params_widget.set_fornitore(config.get("last_ts_fornitore", ""))
         self.params_widget.set_dates(config.get("last_ts_date", "01.01.2025"))
         self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
-        
+
         # Carica dati specifici
         saved_data = config.get("last_ts_data", [])
         if saved_data:
@@ -441,7 +440,7 @@ class ScaricaTSPanel(BaseBotPanel):
     def _on_start(self):
         """Avvia il bot."""
         super()._on_start()
-        
+
         username, password = self.get_credentials()
         data = self.data_table.get_data()
         fornitore = self.params_widget.get_fornitore()
@@ -521,7 +520,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
-        
+
         params_layout.addSpacing(10)
 
         # Tabella
@@ -549,7 +548,7 @@ class DettagliOdAPanel(BaseBotPanel):
     def refresh_fornitori(self):
         if hasattr(self, "params_widget"):
             self.params_widget.refresh_fornitori()
-        
+
         # Aggiorna anche i contratti nella tabella
         config = config_manager.load_config()
         contracts = config.get("contracts", [])
@@ -573,7 +572,7 @@ class DettagliOdAPanel(BaseBotPanel):
     def _save_data(self):
         if not hasattr(self, "params_widget"):
             return
-        
+
         data = self.data_table.get_data()
         date_da, date_a = self.params_widget.get_dates()
 
@@ -582,7 +581,7 @@ class DettagliOdAPanel(BaseBotPanel):
         config_manager.set_config_value("last_oda_date_da", date_da)
         config_manager.set_config_value("last_oda_date_a", date_a)
         config_manager.set_config_value("path_dettagli_oda", self.params_widget.get_dest_path())
-        
+
     def _clear_table(self):
         if QMessageBox.question(self, "Conferma", "Svuotare la tabella?") == QMessageBox.StandardButton.Yes:
             self.data_table.set_data([])
@@ -598,7 +597,7 @@ class DettagliOdAPanel(BaseBotPanel):
 
     def _on_start(self):
         super()._on_start()
-        
+
         username, password = self.get_credentials()
         fornitore = self.params_widget.get_fornitore()
         data_da, data_a = self.params_widget.get_dates()
@@ -630,7 +629,7 @@ class DettagliOdAPanel(BaseBotPanel):
         if not bot:
             ToastManager.instance().show("Errore creazione bot.", "error")
             return
-        
+
         bot_data = {"rows": self.data_table.get_data(), "fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
         self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
@@ -1099,7 +1098,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         self.worker.start()
         self.bot_started.emit()
-        
+
         # Pulisci l'attributo temporaneo dopo l'uso
         if hasattr(self, "merge_and_send_from_telegram"):
             del self.merge_and_send_from_telegram
@@ -1118,18 +1117,18 @@ class ScaricoPDLPanel(BaseBotPanel):
             if files_to_send:
                 win = self.window()
                 if win and hasattr(win, "telegram"):
-                    from typing import Any
                     import os
+                    from typing import Any
 
                     cast_win: Any = win
                     self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
-                    
+
                     for file_path in files_to_send:
                         if os.path.exists(file_path):
                             caption = f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
                             cast_win.telegram.send_document_sync(file_path, caption)
                             # Non eliminiamo i file finali, l'utente potrebbe volerli
-                    
+
                     self._on_log("✅ PDF inviati con successo.")
 
 
@@ -1158,7 +1157,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
-        
+
         self.content_layout.addWidget(params_group)
 
         # Scheduler
@@ -1191,7 +1190,7 @@ class TimbratureBotPanel(BaseBotPanel):
         config = config_manager.load_config()
 
         self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
-        
+
         # Default dates: ALWAYS Yesterday
         yesterday = QDate.currentDate().addDays(-1)
         self.params_widget.set_dates(yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy"))
@@ -1203,7 +1202,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _save_data(self):
         if not hasattr(self, "params_widget"): return
-            
+
         date_da, date_a = self.params_widget.get_dates()
         config_manager.set_config_value("last_timbrature_fornitore", self.params_widget.get_fornitore())
         config_manager.set_config_value("last_timbrature_date_da", date_da)
@@ -1233,7 +1232,7 @@ class TimbratureBotPanel(BaseBotPanel):
             return
 
         self._save_data()
-        
+
         data_da, data_a = self.params_widget.get_dates()
 
         from src.bots import create_bot
@@ -1250,14 +1249,14 @@ class TimbratureBotPanel(BaseBotPanel):
         if not bot:
             ToastManager.instance().show("Errore creazione bot.", "error")
             return
-        
+
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
         self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished_custom)
-        
+
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()

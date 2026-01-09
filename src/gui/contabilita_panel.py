@@ -22,10 +22,11 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
-from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
-from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
+from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
+from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
+
 
 class ContabilitaPanel(QWidget):
     """Pannello principale Strumentale."""
@@ -148,7 +149,7 @@ class ContabilitaPanel(QWidget):
         elif curr == self.tab_giornaliere: target = self.giornaliere_tabs_widget.currentWidget()
         elif curr == self.tab_attivita: target = self.attivita_widget
         elif curr == self.tab_certificati: target = self.certificati_widget
-        
+
         if target:
             if hasattr(target, "table"):
                 try:
@@ -166,29 +167,29 @@ class ContabilitaPanel(QWidget):
             if isinstance(widget, QTreeWidget):
                 self.selection_count_label.setText(f"Selezionati: {len(widget.selectedItems())}")
                 self.selection_sum_label.setText(""); return
-            
+
             indexes = widget.selectionModel().selectedIndexes()
             if not indexes:
                 self.selection_count_label.setText("Righe: 0"); self.selection_sum_label.setText("Totale ORE SP: 0"); return
-            
+
             target_col = -1
             for c in range(widget.columnCount()):
                 h = widget.horizontalHeaderItem(c)
                 if h and ("ORE SP" in h.text().upper() or h.text().upper() == "ORE"): target_col = c; break
-            
+
             selected_rows, total_ore = set(), 0.0
             for idx in indexes:
                 row = idx.row()
                 if widget.isRowHidden(row) or (widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"): continue
                 selected_rows.add(row)
-            
+
             for row in selected_rows:
                 if target_col != -1 and widget.item(row, target_col):
                     try:
                         clean = str(widget.item(row, target_col).text()).replace(".", "").replace(",", ".").strip()
                         if clean: total_ore += float(clean)
                     except: pass
-            
+
             fmt_ore = f"{int(total_ore)}" if total_ore % 1 == 0 else f"{total_ore:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}"); self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
         except: pass

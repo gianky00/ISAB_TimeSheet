@@ -8,7 +8,7 @@ from PyQt6.QtCore import QCoreApplication
 # Simula QApplication prima di importare LyraSentinel per evitare errori di Qt
 app = QCoreApplication([])
 
-from src.core.lyra_sentinel import LyraSentinel
+from src.core.lyra_sentinel import LyraSentinel  # noqa: E402
 
 
 @pytest.fixture

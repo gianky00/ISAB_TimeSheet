@@ -3,39 +3,31 @@ Bot TS - Main Window
 Finestra principale dell'applicazione.
 """
 
-import asyncio
 import os
-import subprocess
-import threading
-from datetime import datetime
 from pathlib import Path
 
-import requests
-from PyQt6.QtCore import QPoint, Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import (
     QAction,
     QColor,
     QFont,
     QIcon,
     QKeySequence,
+    QPageLayout,
+    QPageSize,
     QPainter,
     QPixmap,
     QShortcut,
     QTextDocument,
-    QPageSize,
-    QPageLayout,
 )
 from PyQt6.QtPrintSupport import QPrinter
 from PyQt6.QtWidgets import (
     QApplication,
-    QFrame,
     QHBoxLayout,
-    QLabel,
     QLineEdit,
     QMainWindow,
     QMenu,
     QProgressBar,
-    QPushButton,
     QSplashScreen,
     QStackedWidget,
     QStatusBar,
@@ -45,21 +37,17 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.core import config_manager
 from src.core.app_updater import check_for_updates
 from src.core.backup_manager import BackupManager
-from src.core.license_validator import get_license_info
 
 # Import Core
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
-from src.core.secrets_manager import SecretsManager
-from src.core.telegram_manager import TelegramService
 from src.core.telegram_bridge import TelegramUIBridge
-from src.gui.controllers.search_controller import SearchController
-from src.gui.widgets.update_banner import UpdateBanner
+from src.core.telegram_manager import TelegramService
 from src.gui.contabilita_panel import ContabilitaPanel
+from src.gui.controllers.search_controller import SearchController
 from src.gui.dashboard_panel import DashboardPanel
 from src.gui.help_panel import HelpPanel
 from src.gui.lyra_panel import LyraPanel
@@ -77,13 +65,13 @@ from src.gui.panels import (
 from src.gui.scarico_ore_panel import ScaricoOrePanel
 from src.gui.settings_panel import SettingsPanel
 from src.gui.styles import apply_theme
-from src.gui.widgets.status_card import StatusCard
 from src.gui.widgets.sidebar_widget import SidebarWidget
+from src.gui.widgets.status_card import StatusCard
 
 # Import UI/UX Components
 from src.gui.widgets.toast import ToastManager
+from src.gui.widgets.update_banner import UpdateBanner
 from src.utils.helpers import get_app_icon_path
-from src.utils.validators import InputValidator
 
 
 class MainWindow(QMainWindow):
@@ -162,7 +150,7 @@ class MainWindow(QMainWindow):
     def _generate_pdf_from_html(self, html_content: str, output_path: str):
         """Genera un PDF da contenuto HTML."""
         doc = QTextDocument()
-        
+
         # Aggiungi stili CSS globali per garantire leggibilità
         header_style = """
         <style>
@@ -182,7 +170,7 @@ class MainWindow(QMainWindow):
         printer.setOutputFileName(output_path)
         printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
         printer.setPageOrientation(QPageLayout.Orientation.Landscape) # Landscape per tabelle larghe
-        
+
         doc.print(printer)
 
     def _forward_notification_to_telegram(self, notification):

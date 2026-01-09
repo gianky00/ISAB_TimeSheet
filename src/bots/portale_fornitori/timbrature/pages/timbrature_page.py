@@ -154,7 +154,7 @@ class TimbraturePage:
 
             arrow_element = None
             # Retry mechanism for finding the arrow
-            for attempt in range(3):
+            for _attempt in range(3):
                 try:
                     try:
                         arrow_element = self.wait.until(
@@ -169,7 +169,7 @@ class TimbraturePage:
                         # Use JS click if mouse interaction is flaky
                         try:
                             ActionChains(self.driver).move_to_element(arrow_element).click().perform()
-                        except:
+                        except Exception:
                             self.driver.execute_script("arguments[0].click();", arrow_element)
                         break
                 except Exception:
@@ -223,7 +223,7 @@ class TimbraturePage:
             self.log("Clicco su Excel...")
             try:
                 excel_btn.click()
-            except:
+            except Exception:
                 self.driver.execute_script("arguments[0].click();", excel_btn)
 
             self.log("Attendo download...")

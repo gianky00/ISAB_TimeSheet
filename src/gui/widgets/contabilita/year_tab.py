@@ -1,10 +1,20 @@
 import os
 from datetime import datetime
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QAction
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHeaderView, QAbstractItemView, QTableWidgetItem, QMenu, QMessageBox
+from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QHeaderView,
+    QMenu,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets import ExcelTableWidget
+
 
 class ContabilitaYearTab(QWidget):
     """Tab per un singolo anno (Tabella Dati)."""
@@ -119,7 +129,7 @@ class ContabilitaYearTab(QWidget):
             last = self.table.item(self.table.rowCount() - 1, 0)
             if last and last.text() == "TOTALI": total_row_idx = self.table.rowCount() - 1
         if total_row_idx == -1: return
-        
+
         count_prev, sum_totale, sum_ore = 0, 0.0, 0.0
         for r in range(total_row_idx):
             if not self.table.isRowHidden(r):

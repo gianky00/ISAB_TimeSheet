@@ -178,7 +178,7 @@ class TimbratureStorage:
                             if len(parts) == 3:
                                 d, m, y = parts
                                 search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
-                        except:
+                        except Exception:
                             pass
                     term_conditions = [f"{col} LIKE ?" for col in columns_to_search]
                     params.extend([f"%{search_term}%"] * len(columns_to_search))
@@ -266,7 +266,7 @@ class TimbratureStorage:
                                 try:
                                     ts = pd.to_datetime(row["data"])
                                     row["data"] = ts.strftime("%Y-%m-%d")
-                                except:
+                                except Exception:
                                     pass  # Keep original if parse fails
 
                         vals = row.fillna("").astype(str).to_dict()
@@ -309,7 +309,7 @@ class TimbratureStorage:
                         if old_data:
                             self.save_lists(old_data)
                             return old_data
-                except:
+                except Exception:
                     pass
 
         return {

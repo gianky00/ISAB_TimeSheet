@@ -1,11 +1,12 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 
+
 class UpdateBanner(QFrame):
     """Banner per la notifica di aggiornamenti disponibili."""
-    
+
     download_requested = pyqtSignal(str)
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("updateBanner")

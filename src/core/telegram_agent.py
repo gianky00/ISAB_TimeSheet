@@ -26,9 +26,9 @@ base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 if base_path not in sys.path:
     sys.path.insert(0, base_path)
 
-from src.core import config_manager
-from src.core.lyra_client import LyraClient
-from src.core.secrets_manager import SecretsManager
+from src.core import config_manager  # noqa: E402
+from src.core.lyra_client import LyraClient  # noqa: E402
+from src.core.secrets_manager import SecretsManager  # noqa: E402
 
 
 class SyncroJobAgent:
@@ -102,7 +102,7 @@ class SyncroJobAgent:
                     msg = json.loads(data.decode())
                     if msg.get("type") == "tg_msg":
                         self._send_to_tg(msg.get("text"), msg.get("photo"))
-            except:
+            except Exception:
                 pass
             finally:
                 self.log("Applicazione SyncroJob disconnessa.")
@@ -116,7 +116,7 @@ class SyncroJobAgent:
                 payload = json.dumps(data_dict).encode()
                 self.client_conn.sendall(payload)
                 return True
-            except:
+            except Exception:
                 self.client_conn = None
         return False
 
@@ -235,7 +235,7 @@ class SyncroJobAgent:
             intent = json.loads(clean)
             # Invia l'intento estratto all'App
             self._send_to_app({"type": "intent", "data": intent})
-        except:
+        except Exception:
             self._send_to_tg("❓ Comando non riconosciuto.")
 
     async def _handle_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -1,16 +1,19 @@
 from datetime import datetime
+
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QLabel
-from src.core.license_validator import get_license_info
+from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout
+
 from src.core import config_manager
+from src.core.license_validator import get_license_info
 from src.core.version import __version__
 from src.gui.widgets.sidebar_button import SidebarButton
 
+
 class SidebarWidget(QFrame):
     """Widget della sidebar per la navigazione principale."""
-    
+
     navigation_requested = pyqtSignal(int)
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("sidebarFrame")
@@ -108,7 +111,7 @@ class SidebarWidget(QFrame):
             self.btn_help,
             self.btn_notifications,
         ]
-        
+
         # Connect signals
         for i, btn in enumerate(self.nav_buttons):
             btn.clicked.connect(lambda _, idx=i: self.navigation_requested.emit(idx))
@@ -120,11 +123,11 @@ class SidebarWidget(QFrame):
             expiry = license_info.get("Scadenza Licenza", "N/D")
             config = config_manager.load_config()
             last_login = config.get("last_login_date", "N/D")
-            
+
             # Update last login date
             now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
-            
+
             return f"Licenza: {client}\nScadenza: {expiry}\nUltimo accesso: {last_login}"
         return "Licenza non trovata"
 

@@ -1,11 +1,26 @@
 import json
 from datetime import datetime
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QAction
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QAbstractItemView, QTableWidgetItem, QMenu, QCheckBox, QComboBox, QLabel, QPushButton
+from PyQt6.QtGui import QAction, QColor
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMenu,
+    QPushButton,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.excel_importer import ExcelImporter
 from src.gui.widgets import ExcelTableWidget
+
 
 class AttivitaProgrammateTab(QWidget):
     """Tab per Attività Programmate."""

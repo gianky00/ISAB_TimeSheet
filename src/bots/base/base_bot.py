@@ -109,7 +109,7 @@ class BaseBot(ABC):
 
         if self._log_callback:
             self._log_callback(message)
-        
+
         if self._telegram_service:
             try:
                 clean_msg = message.strip()
@@ -255,7 +255,7 @@ class BaseBot(ABC):
                         self.log(f"Driver reinstallato con successo: {driver_path}")
                 except Exception as cleanup_error:
                     self.log(f"❌ Impossibile pulire/reinstallare driver: {cleanup_error}")
-                    raise e
+                    raise e from cleanup_error
             else:
                 self.log(f"❌ Errore installazione driver: {e}")
                 raise e
@@ -363,7 +363,7 @@ class BaseBot(ABC):
 
             try:
                 si_button.click()
-            except:
+            except Exception:
                 self.driver.execute_script("arguments[0].click();", si_button)
 
             self.log("Popup 'Attenzione' gestito - cliccato 'Si'.")

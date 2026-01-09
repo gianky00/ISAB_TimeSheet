@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QPushButton
 
+
 class SidebarButton(QPushButton):
     """Pulsante personalizzato per la sidebar."""
 

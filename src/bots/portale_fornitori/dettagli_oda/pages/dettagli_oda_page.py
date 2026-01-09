@@ -241,7 +241,7 @@ class DettagliOdAPage:
             # Ensure tabs are closed even on error
             try:
                 self._close_all_tabs()
-            except:
+            except Exception:
                 pass
             return False
 
@@ -279,7 +279,7 @@ class DettagliOdAPage:
             time.sleep(0.5)
             try:
                 btn.click()
-            except:
+            except Exception:
                 self.driver.execute_script("arguments[0].click();", btn)
 
             downloaded_file = None
@@ -304,7 +304,7 @@ class DettagliOdAPage:
                 if not dest_dir.exists():
                     try:
                         dest_dir.mkdir(parents=True, exist_ok=True)
-                    except:
+                    except Exception:
                         pass
 
                 target_path = dest_dir / target_filename
@@ -315,7 +315,7 @@ class DettagliOdAPage:
                 if target_path.exists():
                     try:
                         target_path.unlink()
-                    except:
+                    except Exception:
                         pass
 
                 import shutil

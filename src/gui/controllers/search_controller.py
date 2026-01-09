@@ -1,6 +1,8 @@
 from PyQt6.QtCore import QObject, QPoint
 from PyQt6.QtWidgets import QMenu
+
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
+
 
 class SearchController(QObject):
     """Controller per la ricerca universale e la navigazione ai risultati."""

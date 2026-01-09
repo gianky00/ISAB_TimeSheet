@@ -1,14 +1,17 @@
 import asyncio
 import os
-import threading
 import subprocess
+import threading
 from datetime import datetime
-from PyQt6.QtCore import QObject, QTimer, QPoint, Qt
-from PyQt6.QtGui import QPixmap, QPainter, QGuiApplication
-from PyQt6.QtWidgets import QApplication, QMenu
+
+from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtGui import QGuiApplication, QPainter, QPixmap
+from PyQt6.QtWidgets import QApplication
+
+from src.core import config_manager
 from src.core.notification_manager import NotificationManager
 from src.core.secrets_manager import SecretsManager
-from src.core import config_manager
+
 
 class TelegramUIBridge(QObject):
     """Ponte tra il servizio Telegram e l'interfaccia utente (MainWindow)."""
@@ -63,6 +66,7 @@ class TelegramUIBridge(QObject):
         if action == "print" and obj == "pdl":
             self.telegram.pending_data[int(chat_id)] = {"action": "print", "items": items}
             from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
             from src.utils.printing import get_installed_printers
             printers = get_installed_printers()
             keyboard = [[InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers[:6]]
@@ -166,7 +170,7 @@ class TelegramUIBridge(QObject):
         query_text = params.get("query", "")
         year_filter = params.get("year")
         self.telegram.send_message_sync(f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`...")
-        
+
         try:
             html_report = ""
             filename = f"report_{db_type}_{int(datetime.now().timestamp())}.pdf"
@@ -179,7 +183,7 @@ class TelegramUIBridge(QObject):
                 if not rows:
                     self.telegram.send_message_sync("❌ Nessun risultato trovato.")
                     return
-                html_report = f"<h2>Report Timbrature</h2><table><thead><tr><th>Data</th><th>Ingresso</th><th>Uscita</th><th>Nominativo</th></tr></thead><tbody>"
+                html_report = "<h2>Report Timbrature</h2><table><thead><tr><th>Data</th><th>Ingresso</th><th>Uscita</th><th>Nominativo</th></tr></thead><tbody>"
                 for r in rows:
                     html_report += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[4]} {r[3]}</td></tr>"
                 html_report += "</tbody></table>"
@@ -189,12 +193,12 @@ class TelegramUIBridge(QObject):
                 if not matches or (not matches.get("GIORNALIERE") and not matches.get("CANTIERE")):
                     self.telegram.send_message_sync("❌ Nessun risultato.")
                     return
-                html_report = f"<h2>Report Contabilità</h2>"
+                html_report = "<h2>Report Contabilità</h2>"
                 if matches.get("GIORNALIERE"):
                     html_report += "<h3>Giornaliere</h3><table>"
                     for g in matches["GIORNALIERE"]: html_report += f"<tr><td>{g['data']}</td><td>{g['personale']}</td><td>{g['descrizione']}</td></tr>"
                     html_report += "</table>"
-            
+
             if html_report:
                 self.mw._generate_pdf_from_html(html_report, temp_pdf)
                 if os.path.exists(temp_pdf):
@@ -211,7 +215,7 @@ class TelegramUIBridge(QObject):
         panel = self.mw.pdl_panel if data_type == "pdl" else self.mw.scarico_panel
         field = "numero_pdl" if data_type == "pdl" else "numero_oda"
         validator = InputValidator.validate_pdl if data_type == "pdl" else InputValidator.validate_oda
-        
+
         existing = [str(row.get(field, "")) for row in panel.data_table.get_data()]
         for item in items:
             res = validator(item)
@@ -225,7 +229,7 @@ class TelegramUIBridge(QObject):
             panel.add_rows_simple([{field: v} for v in valid_items])
             self.mw.navigate_to_panel(panel.bot_id)
             self.mw.show_toast(f"Telegram: Aggiunti {len(valid_items)} elementi")
-        
+
         feedback = [f"✅ Aggiunti {len(valid_items)}"] if valid_items else []
         if duplicates: feedback.append(f"ℹ️ {duplicates} duplicati saltati")
         if errors: feedback.append("⚠️ Errori:\n" + "\n".join(errors[:5]))
@@ -257,7 +261,7 @@ class TelegramUIBridge(QObject):
                 p.end()
                 pixmap = combined
                 caption = f"Desktop ({len(screens)} monitor)"
-            
+
             buf = QBuffer()
             buf.open(QIODevice.OpenModeFlag.WriteOnly)
             pixmap.save(buf, "PNG")
@@ -288,6 +292,7 @@ class TelegramUIBridge(QObject):
         def run():
             try:
                 import base64
+
                 from src.core.lyra_client import LyraClient
                 img_b64 = base64.b64encode(photo_bytes).decode("utf-8")
                 prompt = "Estrai dati da questo rapportino. Tabella Markdown."

@@ -1,12 +1,25 @@
 import os
 import subprocess
 import tempfile
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QAbstractItemView, QPushButton, QTreeWidget, QMenu, QMessageBox
-from src.core.contabilita_manager import ContabilitaManager
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QHeaderView,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QTreeWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
 from src.core import config_manager
+from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
+
 
 class CertificatiCampioneTab(QWidget):
     """Tab per Certificati Campione (Tree View)."""

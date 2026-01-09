@@ -2,12 +2,10 @@
 """
 # SyncroJob - Sistema di Automazione Portale ISABEntry point principale dell'applicazione.
 """
-import ctypes
 import logging
 import os
 import shutil
 import sys
-import traceback
 from pathlib import Path
 
 from src.core.config_manager import CONFIG_DIR
@@ -31,7 +29,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
             # __file__ si riferisce a main.py, .parent ci dà la root
             project_root = Path(__file__).parent
             dest_file = project_root / "crash.log"
-            
+
             shutil.copy2(log_file, dest_file)
             logger.info(f"Copia del crash log salvata in: {dest_file}")
     except Exception as e:

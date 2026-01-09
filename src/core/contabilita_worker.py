@@ -1,8 +1,10 @@
 import os
 import time
-from datetime import datetime
+
 from PyQt6.QtCore import QThread, pyqtSignal
+
 from src.core.contabilita_manager import ContabilitaManager
+
 
 class ContabilitaWorker(QThread):
     """Worker per l'importazione in background della contabilità."""

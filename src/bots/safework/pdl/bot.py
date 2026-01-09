@@ -49,7 +49,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 timestamp = time.strftime("%H:%M:%S")
                 with open(self.log_file, "a", encoding="utf-8") as f:
                     f.write(f"[{timestamp}] {message}\n")
-            except:
+            except Exception:
                 pass
 
     @property
@@ -104,7 +104,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.driver or not self.wait:
             self.log("❌ Driver non inizializzato.")
             return False
-        
+
         success_count = 0
         total = len(data)
         self.downloaded_files = []
@@ -191,13 +191,13 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
                     try:
                         self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
-                    except:
+                    except Exception:
                         self.driver.find_element(
                             By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
                         ).click()
                     time.sleep(1)
                 self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
-                self.log(f"✅ Parte Seconda aperta.")
+                self.log("✅ Parte Seconda aperta.")
             except Exception as e:
                 self.log(f"⚠️ Errore apertura Parte Seconda per PdL {pdl_num}: {e}")
 
@@ -209,8 +209,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             is_single = False
             try:
                 txt = self.driver.find_element(By.ID, "lblPAFoglio").find_element(By.XPATH, "..").text
-                is_single = "1/1" in txt
-            except:
+            except Exception:
                 pass
 
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
@@ -236,14 +235,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 time.sleep(2)
                 os.rename(pdf_2, path_temp_2)
 
-            # --- UNIONE PDF --- 
+            # --- UNIONE PDF ---
             pdl_upper = pdl_num.upper()
             nome_finale_pdl = f"PDL_{pdl_upper.replace('/', '-')}.pdf"
             percorso_finale_pdl = os.path.join(self.download_path, nome_finale_pdl)
             self._safe_remove(percorso_finale_pdl)
-            
+
             self.log(f"🔄 Unione PDF per PdL {pdl_upper}...")
-            from src.utils.document_processor import DocumentProcessor # Import qui per evitare circular import
+            from src.utils.document_processor import (
+                DocumentProcessor,  # Import qui per evitare circular import
+            )
 
             # Unisci solo la prima pagina del primo PDF con tutte le pagine del secondo
             if DocumentProcessor.merge_pdfs([path_temp_1, path_temp_2], percorso_finale_pdl):
@@ -261,7 +262,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             else:
                 self.log(f"❌ Errore durante l'unione dei PDF per PdL {pdl_upper}.")
-            
+
             self._safe_remove(path_temp_1)
             self._safe_remove(path_temp_2)
 
@@ -273,7 +274,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 timestamp_str = time.strftime("%d-%m-%Y_%H-%M")
                 nome_merge_totale = f"PDL_{timestamp_str}.pdf"
                 path_merge_totale = os.path.join(self.download_path, nome_merge_totale)
-                
+
                 from src.utils.document_processor import DocumentProcessor
                 if DocumentProcessor.merge_pdfs(all_downloaded_pdl_paths, path_merge_totale):
                     self.log(f"✅ PDF Unico Creato: {nome_merge_totale}")
@@ -300,7 +301,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     btn_ok.click()
                     time.sleep(1)
                     return True
-            except:
+            except Exception:
                 pass
             time.sleep(0.5)
         return False

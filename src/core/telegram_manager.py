@@ -21,9 +21,9 @@ from telegram.ext import (
 )
 
 from src.core import config_manager
+from src.core.contabilita_manager import ContabilitaManager
 from src.core.secrets_manager import SecretsManager
 from src.utils.printing import get_installed_printers
-from src.core.contabilita_manager import ContabilitaManager
 
 
 class TelegramService(QObject):
@@ -81,7 +81,7 @@ class TelegramService(QObject):
                 self.log_signal.emit("⚠️ Timeout: il thread di Telegram non si è fermato correttamente.")
             else:
                 self.log_signal.emit("Servizio Telegram fermato.")
-    
+
     def _run_async_loop(self, token):
         async def main():
             self.app = (
@@ -98,13 +98,13 @@ class TelegramService(QObject):
             self.app.add_handler(MessageHandler(filters.PHOTO, self._handle_photo))
             self.app.add_handler(MessageHandler(filters.VOICE, self._handle_voice))
             self.app.add_handler(CallbackQueryHandler(self._handle_button))
-            
+
             self.log_signal.emit("✅ Servizio Telegram Attivo")
 
             try:
                 await self.app.initialize()
                 if self.stop_event.is_set(): return
-                
+
                 await self.app.updater.start_polling(drop_pending_updates=True)
                 await self.app.start()
 
@@ -168,7 +168,7 @@ class TelegramService(QObject):
             return
 
         chat_id = str(update.effective_chat.id)
-        
+
         if not self.connected_chat_id:
             self.connected_chat_id = chat_id
             config_manager.set_config_value("telegram_chat_id", chat_id)
@@ -176,7 +176,7 @@ class TelegramService(QObject):
 
         if not await self._check_auth(update):
             return
-            
+
         if update.message:
             await update.message.reply_text(
                 "🚀 *SyncroJob Command Center*",
@@ -206,14 +206,14 @@ class TelegramService(QObject):
         chat_id = update.effective_chat.id
         state = self.user_states.get(chat_id)
         text = update.message.text
-        
+
         if isinstance(state, str) and state.startswith("WAITING_DB_QUERY_"):
             parts = state.replace("WAITING_DB_QUERY_", "").split("_")
             db_type = parts[0].lower()
             year = parts[1] if len(parts) > 1 else None
 
             await update.message.reply_chat_action("typing")
-            
+
             params = {"db": db_type, "query": text, "chat_id": str(chat_id)}
             if year:
                 params["year"] = year
@@ -320,7 +320,7 @@ class TelegramService(QObject):
 
         if data == "menu_main":
             await query.edit_message_text("🚀 *Command Center*", reply_markup=self._get_main_keyboard(), parse_mode=constants.ParseMode.MARKDOWN)
-        
+
         elif data == "nav_bots":
             keyboard = [[InlineKeyboardButton("🏭 Portale Fornitori", callback_data="nav_portale")], [InlineKeyboardButton("🛡️ SafeWork", callback_data="nav_safework")], [self._get_back_button("menu_main")]]
             await query.edit_message_text("🤖 *Seleziona Piattaforma*", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=constants.ParseMode.MARKDOWN)
@@ -339,7 +339,7 @@ class TelegramService(QObject):
             if not years:
                 await query.edit_message_text("⚠️ Nessun anno disponibile nel database.", reply_markup=InlineKeyboardMarkup([[self._get_back_button("nav_db")]]))
                 return
-            
+
             keyboard = []
             # Crea righe di 3 anni
             row = []
@@ -350,7 +350,7 @@ class TelegramService(QObject):
                     row = []
             if row:
                 keyboard.append(row)
-            
+
             keyboard.append([self._get_back_button("nav_db")])
             await query.edit_message_text("📅 *Seleziona Anno*", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=constants.ParseMode.MARKDOWN)
 

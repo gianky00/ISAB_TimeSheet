@@ -102,7 +102,7 @@ class ContabilitaSearch:
                            WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){g_where_year} 
                            ORDER BY data DESC LIMIT ?"""
                 g_params.append(limit)
-                
+
                 cursor.execute(sql_g, g_params)
                 for r in cursor.fetchall():
                     out["GIORNALIERE"].append(

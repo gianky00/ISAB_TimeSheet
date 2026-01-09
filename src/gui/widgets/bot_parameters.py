@@ -3,10 +3,9 @@ SyncroJob - Bot Parameters Widget
 Widget riutilizzabile per i parametri comuni dei bot (Fornitore, Date, Percorso).
 """
 
-from pathlib import Path
 from typing import Optional
 
-from PyQt6.QtCore import QDate, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QDate, QSize, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -95,7 +94,7 @@ class BotParametersWidget(QWidget):
         if self.show_dest_path:
             row2 = QHBoxLayout()
             row2.addWidget(QLabel("Destinazione:"))
-            
+
             self.dest_path_edit = QLineEdit()
             self.dest_path_edit.setPlaceholderText("Download utente (default)")
             self.dest_path_edit.setReadOnly(True)
@@ -147,7 +146,7 @@ class BotParametersWidget(QWidget):
         config = config_manager.load_config()
         fornitori = config.get("fornitori", [])
         current = self.fornitore_combo.currentText()
-        
+
         self.fornitore_combo.clear()
         if fornitori:
             self.fornitore_combo.addItems(fornitori)

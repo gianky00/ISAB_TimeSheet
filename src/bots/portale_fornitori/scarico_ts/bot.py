@@ -286,15 +286,14 @@ class ScaricaTSBot(BaseBot):
                     if new_files:
                         downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
                         break
-                except:
+                except Exception:
                     pass
-                time.sleep(0.5)
 
             if downloaded_file and downloaded_file.exists():
                 if not dest_dir.exists():
                     try:
                         dest_dir.mkdir(parents=True, exist_ok=True)
-                    except:
+                    except Exception:
                         pass
 
                 safe_oda = sanitize_filename(numero_oda)
@@ -347,7 +346,7 @@ class ScaricaTSBot(BaseBot):
                 if percorso_finale.exists():
                     try:
                         percorso_finale.unlink()
-                    except:
+                    except Exception:
                         # Se non riesco a cancellare (es aperto), rinomino con timestamp
                         timestamp = time.strftime("%Y%m%d-%H%M%S")
                         nuovo_nome_file = f"{nuovo_nome_base}_{timestamp}.xlsx"
@@ -424,7 +423,7 @@ class ScaricaTSBot(BaseBot):
                 try:
                     src_file.unlink()
                     self.log("  (Temp eliminato)")
-                except:
+                except Exception:
                     pass
 
     def execute(self, data: List[Dict[str, Any]]) -> bool:
