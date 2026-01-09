@@ -23,7 +23,7 @@ class TestMainWindow:
 
         assert window.windowTitle() == "SyncroJob"
         assert window.page_stack.count() >= 6
-        assert window.btn_home.isChecked()
+        assert window.sidebar.btn_home.isChecked()
 
     def test_navigation(self, app, qtbot):
         # Mock internal components to avoid side effects
@@ -35,14 +35,14 @@ class TestMainWindow:
             qtbot.addWidget(window)
 
             # Click Automazioni
-            window.btn_automazioni.click()
+            window.sidebar.btn_automazioni.click()
             assert window.page_stack.currentIndex() == 1
-            assert window.btn_automazioni.isChecked()
+            assert window.sidebar.btn_automazioni.isChecked()
 
             # Click Database
-            window.btn_database.click()
+            window.sidebar.btn_database.click()
             assert window.page_stack.currentIndex() == 3
-            assert window.btn_database.isChecked()
+            assert window.sidebar.btn_database.isChecked()
 
     def test_navigate_to_panel(self, app, qtbot):
         with patch("src.gui.main_window.check_for_updates"), patch("src.gui.main_window.LyraSentinel"), patch(
