@@ -183,30 +183,43 @@ class AuditManager:
                 conn.commit()
 
             # Notifica utente se richiesto
-            if notify:
-                from src.core.notification_manager import NotificationManager
-
-                level = "info"
-                if status == "error" or severity == "high":
-                    level = "error"
-                elif status == "warning" or severity == "medium":
-                    level = "warning"
-                elif status == "success":
-                    level = "success"
-
-                title = f"{action}: {entity}"
-                # Crea un messaggio leggibile dai parametri
-                msg = f"Operazione completata con esito: {status.upper()}."
-                if params and isinstance(params, dict):
-                    if "nuova" in params:
-                        msg = f"Versione aggiornata a {params['nuova']}"
-                    elif "righe" in params:
-                        msg = f"Elaborate {params['righe']} righe."
-
-                NotificationManager.instance().add_notification(title, msg, level=level)
+            self._generate_notification_if_needed(action, entity, status, severity, params, notify)
 
         except Exception as e:
             logger.error(f"Audit Log Error: {e}")
+
+    def _generate_notification_if_needed(
+        self,
+        action: str,
+        entity: str,
+        status: str,
+        severity: str,
+        params: Any,
+        notify: bool,
+    ):
+        if notify:
+            from src.core.notification_manager import NotificationManager
+
+            level = "info"
+            if status == "error" or severity == "high":
+                level = "error"
+            elif status == "warning" or severity == "medium":
+                level = "warning"
+            elif status == "success":
+                level = "success"
+
+            title = f"{action}: {entity}"
+            # Crea un messaggio leggibile dai parametri
+            msg = f"Operazione completata con esito: {status.upper()}."
+            if params and isinstance(params, dict):
+                if "nuova" in params:
+                    msg = f"Versione aggiornata a {params['nuova']}"
+                elif "righe" in params:
+                    msg = f"Elaborate {params['righe']} righe."
+
+            NotificationManager.instance().add_notification(title, msg, level=level)
+
+
 
     def verify_integrity(self) -> bool:
         """Verifica l'integrità, ignorando i record legacy senza hash."""
