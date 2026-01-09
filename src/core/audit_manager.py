@@ -79,7 +79,7 @@ class AuditManager:
                     "UPDATE audit_logs SET user_id = 'unknown' WHERE user_id IS NULL OR user_id = 'None' OR user_id = ''"
                 )
                 conn.commit()
-            except:
+            except Exception:
                 pass
 
             conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
@@ -99,7 +99,7 @@ class AuditManager:
             user = getpass.getuser()
             if user and user.lower() != "none":
                 return user
-        except:
+        except Exception:
             pass
 
         # 3. Tentativo tramite Windows API (Win32)
@@ -112,7 +112,7 @@ class AuditManager:
                 size = ctypes.c_uint(len(buffer))
                 if advapi32.GetUserNameW(buffer, ctypes.byref(size)):
                     return buffer.value
-            except:
+            except Exception:
                 pass
 
         return "unknown"
@@ -130,7 +130,7 @@ class AuditManager:
                 cursor.execute("SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1")
                 row = cursor.fetchone()
                 return row[0] if row and row[0] else "0" * 64
-        except:
+        except Exception:
             return "0" * 64
 
     def log_action(
@@ -165,8 +165,8 @@ class AuditManager:
 
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.execute(
-                    """INSERT INTO audit_logs 
-                       (timestamp, user_id, action, category, entity, params, status, severity, row_hash) 
+                    """INSERT INTO audit_logs
+                       (timestamp, user_id, action, category, entity, params, status, severity, row_hash)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         timestamp,
@@ -229,9 +229,7 @@ class AuditManager:
 
                     if row["row_hash"] != expected_hash:
                         return False
-                    prev_hash = row["row_hash"]
-                return True
-        except:
+        except Exception:
             return False
 
     def get_logs(self, limit: int = 200) -> List[Dict[str, Any]]:
