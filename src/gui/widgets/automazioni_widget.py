@@ -26,13 +26,7 @@ class AutomazioniWidget(QTabWidget):
         self.panel_timbrature = TimbratureBotPanel()
         self.panel_carico = CaricoTSPanel()
 
-        # Registra riferimenti nella Main Window (per compatibilità)
-        self.mw.dettagli_panel = self.panel_dettagli
-        self.mw.scarico_panel = self.panel_scarico
-        self.mw.timbrature_bot_panel = self.panel_timbrature
-        self.mw.carico_panel = self.panel_carico
-
-        # Aggiungi i tab
+        # Aggiungi i tab a Portale Fornitori
         self.tab_fornitori.addTab(self.panel_dettagli, "📋 Dettagli OdA")
         self.tab_fornitori.addTab(self.panel_scarico, "📥 Scarico TS")
         self.tab_fornitori.addTab(self.panel_timbrature, "⏱️ Timbrature")
@@ -41,12 +35,20 @@ class AutomazioniWidget(QTabWidget):
         # --- TAB 2: SafeWork ---
         self.tab_safework = QTabWidget()
         self.panel_pdl = ScaricoPDLPanel()
-        self.mw.pdl_panel = self.panel_pdl
         self.tab_safework.addTab(self.panel_pdl, "🛡️ Scarico PDL")
 
         # Aggiunta tab principali
         self.addTab(self.tab_fornitori, "Portale Fornitori")
         self.addTab(self.tab_safework, "SafeWork")
+
+        # Registra riferimenti nella Main Window (per compatibilità)
+        self.mw.dettagli_panel = self.panel_dettagli
+        self.mw.scarico_panel = self.panel_scarico
+        self.mw.timbrature_bot_panel = self.panel_timbrature
+        self.mw.carico_panel = self.panel_carico
+        self.mw.pdl_panel = self.panel_pdl
+        self.mw.tab_fornitori = self.tab_fornitori
+        self.mw.tab_safework = self.tab_safework
 
         # Registrazione Controller (se presente)
         if hasattr(self.mw, "bot_controller"):

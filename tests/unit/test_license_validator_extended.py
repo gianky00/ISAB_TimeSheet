@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import base64
 from datetime import date, datetime, timedelta, timezone
 from unittest.mock import mock_open
 
@@ -31,13 +32,20 @@ def mock_license_dir(tmp_path):
 
 @pytest.fixture
 def mock_secrets_manager(mocker):
-    mocker.patch.object(SecretsManager, "get_license_key", return_value=Fernet.generate_key())
+    key_b64 = Fernet.generate_key()
+    key_raw = base64.urlsafe_b64decode(key_b64)
+    mocker.patch.object(SecretsManager, "get_license_key", return_value=key_raw)
+    return key_b64
 
 
 @pytest.fixture
-def setup_valid_license_files(mock_license_dir, mock_secrets_manager):
-    license_key = SecretsManager.get_license_key()
-    cipher = Fernet(license_key)
+def setup_valid_license_files(mock_license_dir, mocker):
+    # We need a consistent key for both SecretsManager and creating the file
+    key_b64 = Fernet.generate_key()
+    key_raw = base64.urlsafe_b64decode(key_b64)
+    mocker.patch.object(SecretsManager, "get_license_key", return_value=key_raw)
+    
+    cipher = Fernet(key_b64)
 
     # Dati di licenza validi
     license_data = {
@@ -48,7 +56,7 @@ def setup_valid_license_files(mock_license_dir, mock_secrets_manager):
     encrypted_config = cipher.encrypt(json.dumps(license_data).encode("utf-8"))
 
     # Hash SHA256 per il manifest
-    config_hash = _calculate_sha256_mock(encrypted_config)  # Usa mock per consistenza
+    config_hash = hashlib.sha256(encrypted_config).hexdigest()
 
     manifest_data = {"config.dat": config_hash}
 
@@ -61,11 +69,6 @@ def setup_valid_license_files(mock_license_dir, mock_secrets_manager):
     return license_data
 
 
-# Mock per _calculate_sha256 per semplificare la fixture
-def _calculate_sha256_mock(content):
-    return hashlib.sha256(content).hexdigest()
-
-
 def test_calculate_sha256(tmp_path):
     test_file = tmp_path / "test.txt"
     test_file.write_text("hello world")
@@ -75,11 +78,10 @@ def test_calculate_sha256(tmp_path):
 
 def test_get_hardware_id_windows_wmic(mocker):
     mocker.patch("platform.system", return_value="Windows")
-    # Il mock deve restituire un oggetto bytes reale, non un MagicMock
     mocker.patch(
         "subprocess.check_output",
         side_effect=[
-            b"SerialNumber\r\nFAKE_WMIC_SERIAL\r\n",  # WMIC success
+            b"SerialNumber\r\nFAKE_WMIC_SERIAL\r\n",
             Exception("PowerShell failed"),
             Exception("UUID failed"),
         ],
@@ -94,7 +96,7 @@ def test_get_hardware_id_windows_powershell_disk(mocker):
         "subprocess.check_output",
         side_effect=[
             Exception("WMIC failed"),
-            b"FAKE_POWERSHELL_DISK_SERIAL\r\n",  # PowerShell Disk success
+            b"FAKE_POWERSHELL_DISK_SERIAL\r\n",
             Exception("UUID failed"),
         ],
     )
@@ -106,7 +108,7 @@ def test_get_hardware_id_linux_lsblk(mocker):
     mocker.patch("platform.system", return_value="Linux")
     mocker.patch(
         "subprocess.check_output",
-        side_effect=[b"FAKE_LSBLK_SERIAL\n", Exception("machine-id failed")],  # lsblk success
+        side_effect=[b"FAKE_LSBLK_SERIAL\n", Exception("machine-id failed")],
     )
     mocker.patch("src.core.license_validator.uuid.getnode", return_value=12345)
     assert get_hardware_id() == "FAKE_LSBLK_SERIAL"
@@ -129,7 +131,6 @@ def test_get_hardware_id_linux_machine_id(mocker, tmp_path):
 
 def test_get_hardware_id_fallback_uuid(mocker):
     mocker.patch("platform.system", return_value="Unknown")
-    # Tutti i subprocess falliscono
     mocker.patch("subprocess.check_output", side_effect=Exception("All subprocess calls failed"))
     mocker.patch("src.core.license_validator.uuid.getnode", return_value=12345)
     assert get_hardware_id() == "12345"
@@ -153,8 +154,8 @@ def test_get_license_info_success(mocker, mock_license_dir, mock_secrets_manager
         },
     )
 
-    license_key = SecretsManager.get_license_key()
-    cipher = Fernet(license_key)
+    # mock_secrets_manager returns the b64 key
+    cipher = Fernet(mock_secrets_manager)
     test_payload = {"Cliente": "Test", "Scadenza Licenza": "01/01/2027"}
     encrypted_data = cipher.encrypt(json.dumps(test_payload).encode("utf-8"))
 
@@ -190,10 +191,10 @@ def test_get_detailed_license_status_missing_dir(mocker, tmp_path):
         and p != mock_paths["config"]
         and p != mock_paths["manifest"],
     )
-    mocker.patch("os.makedirs")  # Per evitare OSError, ma la logica interna creerà la dir
+    mocker.patch("os.makedirs")
 
     status, msg = get_detailed_license_status()
-    assert status == LicenseStatus.MISSING  # La cartella viene creata, ma i file saranno mancanti
+    assert status == LicenseStatus.MISSING
     assert "File di licenza mancanti" in msg
 
 
@@ -223,8 +224,6 @@ def test_get_detailed_license_status_invalid_sha(mocker, mock_license_dir, mock_
         "manifest": os.path.join(mock_license_dir, "manifest.json"),
     }
     mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
-
-    # Mock os.path.exists per far credere che i file esistano
     mocker.patch("os.path.exists", return_value=True)
 
     m4 = mock_open(read_data=b"fake_encrypted_config")
@@ -269,16 +268,15 @@ def test_get_detailed_license_status_expired(mocker, mock_license_dir, mock_secr
     }
     mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
 
-    # Crea file di licenza scaduta
-    license_key = SecretsManager.get_license_key()
-    cipher = Fernet(license_key)
+    # mock_secrets_manager returns b64 key
+    cipher = Fernet(mock_secrets_manager)
     license_data = {
         "Hardware ID": "FAKE_HW_ID",
-        "Scadenza Licenza": (date.today() - timedelta(days=1)).strftime("%d/%m/%Y"),  # Scaduta ieri
+        "Scadenza Licenza": (date.today() - timedelta(days=1)).strftime("%d/%m/%Y"),
         "Cliente": "Test Cliente",
     }
     encrypted_config = cipher.encrypt(json.dumps(license_data).encode("utf-8"))
-    config_hash = _calculate_sha256_mock(encrypted_config)
+    config_hash = hashlib.sha256(encrypted_config).hexdigest()
     manifest_data = {"config.dat": config_hash}
 
     with open(os.path.join(mock_license_dir, "config.dat"), "wb") as f:

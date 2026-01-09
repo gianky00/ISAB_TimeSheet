@@ -134,9 +134,12 @@ class BaseBot(ABC):
         options.add_experimental_option("useAutomationExtension", False)
         options.add_argument("--no-sandbox")
         options.add_argument("--start-maximized")
+        options.add_argument("--no-restore-session-state")
 
         config = config_manager.load_config()
-        if config.get("browser_headless", False):
+        # Headless logic: prioritize parameter, then config
+        is_headless = self.headless or config.get("browser_headless", False)
+        if is_headless:
             self.headless = True
             options.add_argument("--headless=new")
             options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
