@@ -139,7 +139,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
             print_enabled = item.get("print_enabled", False)
             printer_name = item.get("printer_name", "")
-            merge_and_send = item.get("merge_and_send", False)
+            item.get("merge_and_send", False)
 
             if not pdl_raw:
                 self.log(f"⚠️ PDL non valido o mancante nella riga {index + 1}. Salto.")
@@ -243,7 +243,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             is_single = False
             try:
-                txt = (
+                _ = (
                     self.driver.find_element(By.ID, "lblPAFoglio")
                     .find_element(By.XPATH, "..")
                     .text

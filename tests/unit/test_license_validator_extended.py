@@ -76,7 +76,7 @@ def test_calculate_sha256(tmp_path):
 def test_get_hardware_id_windows_wmic(mocker):
     mocker.patch("platform.system", return_value="Windows")
     # Il mock deve restituire un oggetto bytes reale, non un MagicMock
-    mock_subprocess = mocker.patch(
+    mocker.patch(
         "subprocess.check_output",
         side_effect=[
             b"SerialNumber\r\nFAKE_WMIC_SERIAL\r\n",  # WMIC success
@@ -90,7 +90,7 @@ def test_get_hardware_id_windows_wmic(mocker):
 
 def test_get_hardware_id_windows_powershell_disk(mocker):
     mocker.patch("platform.system", return_value="Windows")
-    mock_subprocess = mocker.patch(
+    mocker.patch(
         "subprocess.check_output",
         side_effect=[
             Exception("WMIC failed"),
@@ -104,7 +104,7 @@ def test_get_hardware_id_windows_powershell_disk(mocker):
 
 def test_get_hardware_id_linux_lsblk(mocker):
     mocker.patch("platform.system", return_value="Linux")
-    mock_subprocess = mocker.patch(
+    mocker.patch(
         "subprocess.check_output",
         side_effect=[b"FAKE_LSBLK_SERIAL\n", Exception("machine-id failed")],  # lsblk success
     )
@@ -233,7 +233,7 @@ def test_get_detailed_license_status_invalid_sha(mocker, mock_license_dir, mock_
     manifest_data = {"config.dat": "invalid_sha"}
     mocker.patch("json.load", return_value=manifest_data)
     mocker.patch("src.core.license_validator._calculate_sha256", return_value="different_sha")
-    mock_audit_log = mocker.patch.object(AuditManager, "log_action")
+    mocker.patch.object(AuditManager, "log_action")
 
     status, msg = get_detailed_license_status()
     assert status == LicenseStatus.INVALID

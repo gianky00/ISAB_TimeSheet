@@ -656,95 +656,9 @@ class ExcelImporter:
                 if progress_callback and row_idx % 200 == 0:
                     progress_callback(row_idx, total_rows)
 
-                subset_vals = [c.value for i, c in enumerate(row) if i <= 7]
-                if all(v is None or str(v).strip() == "" for v in subset_vals):
-                    continue
-
-                row_vals = {}
-                row_styles = {}
-
-                for i, key in enumerate(col_keys):
-                    cell = row[i]
-                    val = cell.value
-
-                    if key in ["odc", "pos"]:
-                        if val == 0 or str(val).strip() in ["0", "0.0"]:
-                            val = ""
-                    elif key == "commessa":
-                        if val == 0:
-                            val = "0"
-
-                    val_str = str(val).strip() if val is not None else ""
-                    val_str = val_str.replace("\n", " ")
-                    row_vals[key] = val_str
-
-                    fg_color = None
-                    bg_color = None
-
-                    if cell.font and cell.font.color:
-                        if cell.font.color.type == "rgb":
-                            c = str(cell.font.color.rgb)
-                            if len(c) > 6:
-                                c = "#" + c[2:]
-                            else:
-                                c = "#" + c
-                            fg_color = c
-
-                    if cell.fill and cell.fill.patternType == "solid":
-                        if cell.fill.start_color:
-                            if cell.fill.start_color.type == "rgb":
-                                c = str(cell.fill.start_color.rgb)
-                                if len(c) > 6:
-                                    c = "#" + c[2:]
-                                else:
-                                    c = "#" + c
-                                bg_color = c
-
-                    if fg_color or bg_color:
-                        style_entry = {}
-                        if fg_color:
-                            style_entry["fg"] = fg_color
-                        if bg_color:
-                            style_entry["bg"] = bg_color
-                        row_styles[key] = style_entry
-
-                check_all_empty = [
-                    "pers1",
-                    "pers2",
-                    "odc",
-                    "pos",
-                    "dalle",
-                    "alle",
-                    "totale_ore",
-                ]
-                if all(row_vals.get(k, "") == "" for k in check_all_empty):
-                    continue
-
-                if (
-                    not row_vals.get("odc")
-                    or not row_vals.get("pos")
-                    or not row_vals.get("totale_ore")
-                ):
-                    continue
-
-                if not row_vals.get("pers1") and not row_vals.get("pers2"):
-                    continue
-
-                db_row = (
-                    row_vals["data"],
-                    row_vals["pers1"],
-                    row_vals["pers2"],
-                    row_vals["odc"],
-                    row_vals["pos"],
-                    row_vals["dalle"],
-                    row_vals["alle"],
-                    row_vals["totale_ore"],
-                    row_vals["descrizione"],
-                    row_vals["finito"],
-                    row_vals["commessa"],
-                    json.dumps(row_styles) if row_styles else "",
-                )
-                rows_to_insert.append(db_row)
+                db_row = cls._process_scarico_ore_row(row, col_keys)
+                if db_row:
+                    rows_to_insert.append(db_row)
 
             return (
                 True,
@@ -754,6 +668,98 @@ class ExcelImporter:
 
         except Exception as e:
             return False, f"Errore importazione Scarico Ore: {e}", []
+
+    @classmethod
+    def _process_scarico_ore_row(cls, row, col_keys) -> Optional[Tuple]:
+        """Helper to process a single row from Scarico Ore."""
+        subset_vals = [c.value for i, c in enumerate(row) if i <= 7]
+        if all(v is None or str(v).strip() == "" for v in subset_vals):
+            return None
+
+        row_vals = {}
+        row_styles = {}
+
+        for i, key in enumerate(col_keys):
+            cell = row[i]
+            val = cell.value
+
+            if key in ["odc", "pos"]:
+                if val == 0 or str(val).strip() in ["0", "0.0"]:
+                    val = ""
+            elif key == "commessa":
+                if val == 0:
+                    val = "0"
+
+            val_str = str(val).strip() if val is not None else ""
+            val_str = val_str.replace("\n", " ")
+            row_vals[key] = val_str
+
+            fg_color = None
+            bg_color = None
+
+            if cell.font and cell.font.color:
+                if cell.font.color.type == "rgb":
+                    c = str(cell.font.color.rgb)
+                    if len(c) > 6:
+                        c = "#" + c[2:]
+                    else:
+                        c = "#" + c
+                    fg_color = c
+
+            if cell.fill and cell.fill.patternType == "solid":
+                if cell.fill.start_color:
+                    if cell.fill.start_color.type == "rgb":
+                        c = str(cell.fill.start_color.rgb)
+                        if len(c) > 6:
+                            c = "#" + c[2:]
+                        else:
+                            c = "#" + c
+                        bg_color = c
+
+            if fg_color or bg_color:
+                style_entry = {}
+                if fg_color:
+                    style_entry["fg"] = fg_color
+                if bg_color:
+                    style_entry["bg"] = bg_color
+                row_styles[key] = style_entry
+
+        check_all_empty = [
+            "pers1",
+            "pers2",
+            "odc",
+            "pos",
+            "dalle",
+            "alle",
+            "totale_ore",
+        ]
+        if all(row_vals.get(k, "") == "" for k in check_all_empty):
+            return None
+
+        if (
+            not row_vals.get("odc")
+            or not row_vals.get("pos")
+            or not row_vals.get("totale_ore")
+        ):
+            return None
+
+        if not row_vals.get("pers1") and not row_vals.get("pers2"):
+            return None
+
+        return (
+            row_vals["data"],
+            row_vals["pers1"],
+            row_vals["pers2"],
+            row_vals["odc"],
+            row_vals["pos"],
+            row_vals["dalle"],
+            row_vals["alle"],
+            row_vals["totale_ore"],
+            row_vals["descrizione"],
+            row_vals["finito"],
+            row_vals["commessa"],
+            json.dumps(row_styles) if row_styles else "",
+        )
 
     @classmethod
     def import_certificati_campione(
@@ -797,23 +803,7 @@ class ExcelImporter:
                     df_preview = pd.read_excel(
                         path, sheet_name=sheet_name, header=None, nrows=20
                     )
-
-                    header_row_idx = -1
-                    max_matches = 0
-
-                    target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
-
-                    for i_raw, row in df_preview.iterrows():
-                        i = int(str(i_raw))
-                        row_values = [str(val).strip() for val in row.values]
-                        matches = sum(1 for col in target_columns if col in row_values)
-
-                        if matches > max_matches:
-                            max_matches = matches
-                            header_row_idx = i
-
-                    if header_row_idx == -1 or max_matches < 3:
-                        header_row_idx = 5
+                    header_row_idx = cls._detect_certificati_header(df_preview)
 
                     df = pd.read_excel(
                         path, sheet_name=sheet_name, header=header_row_idx
@@ -829,75 +819,103 @@ class ExcelImporter:
                 if df.empty:
                     return False, "Foglio vuoto.", []
 
-                df.columns = [str(c).strip() for c in df.columns]
-
-                rename_map = {}
-                for excel_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
-                    if excel_col in df.columns:
-                        rename_map[excel_col] = db_col
-
-                if not rename_map:
-                    found_cols = ", ".join(list(df.columns)[:5]) + "..."
-                    return (
-                        False,
-                        f"Nessuna colonna valida trovata. Sheet: {sheet_name}, Row: {header_row_idx}. Trovate: {found_cols}",
-                        [],
-                    )
-
-                df.rename(columns=rename_map, inplace=True)
-
-                target_cols = list(cls.CERTIFICATI_CAMPIONE_MAPPING.values())
-                for c in target_cols:
-                    if c not in df.columns:
-                        df[c] = ""
-
-                df = df[target_cols]
-                df.dropna(how="all", inplace=True)
-
-                def format_date_it(val):
-                    if pd.isna(val) or val == "":
-                        return ""
-                    try:
-                        dt = pd.to_datetime(val)
-                        return dt.strftime("%d/%m/%Y")
-                    except Exception:
-                        return str(val)
-
-                df["scadenza"] = df["scadenza"].apply(format_date_it)
-                df["emissione"] = df["emissione"].apply(format_date_it)
-
-                def format_stato(val):
-                    if pd.isna(val) or val == "":
-                        return ""
-                    try:
-                        num = float(val)
-                        days = int(round(num))
-                        if days > 0:
-                            return f"Scade tra {days} giorni"
-                        elif days < 0:
-                            return f"Scaduto da {abs(days)} giorni"
-                        else:
-                            return "Scade oggi"
-                    except ValueError:
-                        return str(val)
-
-                if "stato" in df.columns:
-                    df["stato"] = df["stato"].apply(format_stato)
-
-                df = df.fillna("")
-                df = df.astype(str)
-                df = df.apply(lambda x: x.str.strip())
-
-                rows = list(df.itertuples(index=False, name=None))
-
-                return (
-                    True,
-                    f"Importate {len(rows)} righe in Certificati Campione.",
-                    rows,
-                )
+                return cls._process_certificati_df(df, sheet_name, header_row_idx)
 
         except Exception as e:
             return False, f"Errore importazione Certificati Campione: {e}", []
+
+    @classmethod
+    def _detect_certificati_header(cls, df_preview: pd.DataFrame) -> int:
+        """Detects the header row index for Certificati Campione."""
+        header_row_idx = -1
+        max_matches = 0
+        target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
+
+        for i_raw, row in df_preview.iterrows():
+            i = int(str(i_raw))
+            row_values = [str(val).strip() for val in row.values]
+            matches = sum(1 for col in target_columns if col in row_values)
+
+            if matches > max_matches:
+                max_matches = matches
+                header_row_idx = i
+
+        if header_row_idx == -1 or max_matches < 3:
+            header_row_idx = 5
+
+        return header_row_idx
+
+    @classmethod
+    def _process_certificati_df(
+        cls, df: pd.DataFrame, sheet_name: str, header_row_idx: int
+    ) -> Tuple[bool, str, List[Tuple]]:
+        """Processes the Certificati DataFrame and returns formatted rows."""
+        df.columns = [str(c).strip() for c in df.columns]
+
+        rename_map = {}
+        for excel_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
+            if excel_col in df.columns:
+                rename_map[excel_col] = db_col
+
+        if not rename_map:
+            found_cols = ", ".join(list(df.columns)[:5]) + "..."
+            return (
+                False,
+                f"Nessuna colonna valida trovata. Sheet: {sheet_name}, Row: {header_row_idx}. Trovate: {found_cols}",
+                [],
+            )
+
+        df.rename(columns=rename_map, inplace=True)
+
+        target_cols = list(cls.CERTIFICATI_CAMPIONE_MAPPING.values())
+        for c in target_cols:
+            if c not in df.columns:
+                df[c] = ""
+
+        df = df[target_cols]
+        df.dropna(how="all", inplace=True)
+
+        def format_date_it(val):
+            if pd.isna(val) or val == "":
+                return ""
+            try:
+                dt = pd.to_datetime(val)
+                return dt.strftime("%d/%m/%Y")
+            except Exception:
+                return str(val)
+
+        df["scadenza"] = df["scadenza"].apply(format_date_it)
+        df["emissione"] = df["emissione"].apply(format_date_it)
+
+        def format_stato(val):
+            if pd.isna(val) or val == "":
+                return ""
+            try:
+                num = float(val)
+                days = int(round(num))
+                if days > 0:
+                    return f"Scade tra {days} giorni"
+                elif days < 0:
+                    return f"Scaduto da {abs(days)} giorni"
+                else:
+                    return "Scade oggi"
+            except ValueError:
+                return str(val)
+
+        if "stato" in df.columns:
+            df["stato"] = df["stato"].apply(format_stato)
+
+        df = df.fillna("")
+        df = df.astype(str)
+        df = df.apply(lambda x: x.str.strip())
+
+        rows = list(df.itertuples(index=False, name=None))
+
+        return (
+            True,
+            f"Importate {len(rows)} righe in Certificati Campione.",
+            rows,
+        )
 
     @classmethod
     def scan_scarico_ore_rows(cls, file_path: str) -> int:

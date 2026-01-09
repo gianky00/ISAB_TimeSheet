@@ -80,8 +80,8 @@ class TimbratureStorage:
                 cursor = conn.cursor()
                 # Cerca dipendenti unici
                 sql = """
-                    SELECT DISTINCT nome, cognome 
-                    FROM timbrature 
+                    SELECT DISTINCT nome, cognome
+                    FROM timbrature
                     WHERE lower(nome) LIKE ? OR lower(cognome) LIKE ?
                     LIMIT 20
                 """

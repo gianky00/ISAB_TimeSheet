@@ -122,9 +122,9 @@ class LyraPanel(QWidget):
         self.model_combo.currentTextChanged.connect(self._on_model_changed)
         self.model_combo.setStyleSheet(
             """
-            QComboBox { 
-                background-color: rgba(255,255,255,0.2); 
-                color: white; 
+            QComboBox {
+                background-color: rgba(255,255,255,0.2);
+                color: white;
                 border: 1px solid rgba(255,255,255,0.5);
                 padding: 5px 10px;
                 border-radius: 4px;

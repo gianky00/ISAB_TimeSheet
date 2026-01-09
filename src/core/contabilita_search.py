@@ -35,8 +35,8 @@ class ContabilitaSearch:
                 cursor = conn.cursor()
                 # Cerca in Contabilità (n_prev = codice_oda, attivita = descrizione)
                 sql = """
-                    SELECT DISTINCT n_prev, attivita, odc 
-                    FROM contabilita 
+                    SELECT DISTINCT n_prev, attivita, odc
+                    FROM contabilita
                     WHERE (lower(n_prev) LIKE ? OR lower(attivita) LIKE ? OR lower(odc) LIKE ?)
                     AND n_prev IS NOT NULL AND n_prev != ''
                     LIMIT 20

@@ -43,7 +43,7 @@ class TestBaseBotLogic:
         # Verify options
         call_args = mock_chrome.call_args
         options = call_args.kwargs["options"]
-        args = [arg for arg in options.arguments]
+        args = list(options.arguments)
 
         assert "--headless=new" in args
         assert "--disable-notifications" in args

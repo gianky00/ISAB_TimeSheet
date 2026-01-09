@@ -216,20 +216,20 @@ class StatisticsWidget(QWidget):
             }}
         """
         )
-        l = QVBoxLayout(card)
-        l.setContentsMargins(20, 15, 20, 15)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(20, 15, 20, 15)
 
         lbl_title = QLabel(f"{icon} {title}")
         lbl_title.setStyleSheet(
             "color: #6c757d; font-size: 13px; font-weight: bold; border: none;"
         )
-        l.addWidget(lbl_title)
+        layout.addWidget(lbl_title)
 
         lbl_val = QLabel(str(value))
         lbl_val.setStyleSheet(
             f"color: {color}; font-size: 28px; font-weight: 800; border: none;"
         )
-        l.addWidget(lbl_val)
+        layout.addWidget(lbl_val)
 
         return card
 
@@ -297,7 +297,7 @@ class StatisticsWidget(QWidget):
 
                     dt = datetime.fromisoformat(last_run)
                     last_run_display = dt.strftime("%d/%m/%Y %H:%M")
-                except:
+                except Exception:
                     last_run_display = last_run
 
             self.table.setItem(row, 0, QTableWidgetItem(name))
@@ -1286,7 +1286,7 @@ class SettingsPanel(QWidget):
                 display += f" ({size_kb} KB)"
 
                 self.restore_combo.addItem(display, str(backup_path))
-            except:
+            except Exception:
                 self.restore_combo.addItem(backup_path.name, str(backup_path))
 
     def _restore_selected_backup(self):

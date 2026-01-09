@@ -150,7 +150,7 @@ class GiornaliereYearTab(QWidget):
             v = round(float(val), 2)
             s_v = f"{v:g}".replace(".", ",")
             return s_v
-        except:
+        except Exception:
             return str(val)
 
     def _format_value(self, col_idx, val):
@@ -163,7 +163,7 @@ class GiornaliereYearTab(QWidget):
             for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
                 try:
                     return datetime.strptime(s.split(" ")[0], fmt).strftime("%d/%m/%Y")
-                except:
+                except Exception:
                     continue
         if col_idx == self.COL_ORE:
             return self._format_number(val)
@@ -222,7 +222,7 @@ class GiornaliereYearTab(QWidget):
         if os.path.exists(os.path.join(year_folder, filename)):
             found = os.path.join(year_folder, filename)
         if not found:
-            for r, d, files in os.walk(root):
+            for r, _d, files in os.walk(root):
                 if filename in files:
                     found = os.path.join(r, filename)
                     break

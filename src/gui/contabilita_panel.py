@@ -216,7 +216,7 @@ class ContabilitaPanel(QWidget):
             if hasattr(target, "table"):
                 try:
                     target.table.selectionModel().selectionChanged.disconnect()
-                except:
+                except Exception:
                     pass
                 target.table.selectionModel().selectionChanged.connect(
                     lambda s, d: self._update_selection_total(target.table)
@@ -224,7 +224,7 @@ class ContabilitaPanel(QWidget):
             elif hasattr(target, "tree"):
                 try:
                     target.tree.itemSelectionChanged.disconnect()
-                except:
+                except Exception:
                     pass
                 target.tree.itemSelectionChanged.connect(
                     lambda: self._update_selection_total(target.tree)
@@ -272,7 +272,7 @@ class ContabilitaPanel(QWidget):
                         )
                         if clean:
                             total_ore += float(clean)
-                    except:
+                    except Exception:
                         pass
 
             fmt_ore = (
@@ -284,7 +284,7 @@ class ContabilitaPanel(QWidget):
             )
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
             self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
-        except:
+        except Exception:
             pass
 
     def start_import_process(self):

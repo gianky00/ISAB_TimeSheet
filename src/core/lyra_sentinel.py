@@ -4,6 +4,7 @@ Monitoraggio proattivo delle anomalie in background.
 """
 
 import sqlite3
+from pathlib import Path  # noqa: F401
 
 from PyQt6.QtCore import QThread, pyqtSignal
 

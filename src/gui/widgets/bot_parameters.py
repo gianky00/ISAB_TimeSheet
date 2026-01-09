@@ -174,7 +174,7 @@ class BotParametersWidget(QWidget):
             if self.show_date_range and date_a_str:
                 d, m, y = map(int, date_a_str.split("."))
                 self.date_a.setDate(QDate(y, m, d))
-        except:
+        except Exception:
             pass
 
     def get_dest_path(self) -> str:

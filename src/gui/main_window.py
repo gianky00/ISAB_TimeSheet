@@ -17,7 +17,6 @@ from PyQt6.QtWidgets import (
     QStackedWidget,
     QStatusBar,
     QSystemTrayIcon,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -37,9 +36,6 @@ from src.gui.styles import apply_theme
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.toast import ToastManager
 from src.gui.widgets.update_banner import UpdateBanner
-
-
-
 
 
 class MainWindow(QMainWindow):

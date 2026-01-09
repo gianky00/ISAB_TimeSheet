@@ -171,9 +171,15 @@ class DataSynchronizer:
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
 
-                existing_rows_set = set(
-                    existing_df.itertuples(index=False, name=None)
-                )
+            existing_df = pd.read_sql(
+                f"SELECT {', '.join(db_cols)} FROM attivita_programmate", conn
+            )
+            existing_df = existing_df.fillna("")
+            existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
+
+            existing_rows_set = set(
+                existing_df.itertuples(index=False, name=None)
+            )
 
             new_rows_set = set(rows_to_insert)
 

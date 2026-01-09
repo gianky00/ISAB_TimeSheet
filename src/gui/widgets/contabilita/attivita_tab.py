@@ -140,7 +140,7 @@ class AttivitaProgrammateTab(QWidget):
                             s = datetime.strptime(s.split(" ")[0], "%Y-%m-%d").strftime(
                                 "%d/%m/%Y"
                             )
-                        except:
+                        except Exception:
                             pass
                     item = QTableWidgetItem(s)
                     if col_idx < len(db_keys):
@@ -173,7 +173,7 @@ class AttivitaProgrammateTab(QWidget):
             combo.blockSignals(True)
             combo.clear()
             combo.addItem(all_text)
-            combo.addItems(sorted(list(values)))
+            combo.addItems(sorted(values))
             if curr in values:
                 combo.setCurrentText(curr)
             combo.blockSignals(False)

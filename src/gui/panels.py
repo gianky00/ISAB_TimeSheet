@@ -1573,22 +1573,22 @@ class TimbratureDBPanel(QWidget):
         d = QDialog(self)
         d.setWindowTitle(title)
         d.setMinimumWidth(300)
-        l = QVBoxLayout(d)
+        layout = QVBoxLayout(d)
 
         list_widget = QListWidget()
         list_widget.addItems(current_list)
-        l.addWidget(list_widget)
+        layout.addWidget(list_widget)
 
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("Aggiungi")
         del_btn = QPushButton("Rimuovi")
         btn_layout.addWidget(add_btn)
         btn_layout.addWidget(del_btn)
-        l.addLayout(btn_layout)
+        layout.addLayout(btn_layout)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         button_box.rejected.connect(d.accept)
-        l.addWidget(button_box)
+        layout.addWidget(button_box)
 
         def add_item():
             text, ok = QInputDialog.getText(d, "Aggiungi", "Nome:")

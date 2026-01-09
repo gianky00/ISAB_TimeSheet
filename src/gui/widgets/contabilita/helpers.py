@@ -21,7 +21,7 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
                         return dt1 < dt2
                     except ValueError:
                         continue
-            except:
+            except Exception:
                 pass
 
         # Percentage Sorting
@@ -30,7 +30,7 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
                 v1 = float(text1.replace("%", "").replace(",", ".").strip())
                 v2 = float(text2.replace("%", "").replace(",", ".").strip())
                 return v1 < v2
-            except:
+            except Exception:
                 pass
 
         # Numeric Sorting
@@ -39,7 +39,7 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
                 v1 = float(text1.replace(",", "."))
                 v2 = float(text2.replace(",", "."))
                 return v1 < v2
-            except:
+            except Exception:
                 pass
 
         return text1.lower() < text2.lower()

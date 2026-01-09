@@ -178,7 +178,7 @@ class AuditLogWidget(QWidget):
 
                 dt = datetime.fromisoformat(log["timestamp"])
                 ts_str = dt.strftime("%d/%m/%y %H:%M")
-            except:
+            except Exception:
                 ts_str = clean(log["timestamp"])
 
             items = [
@@ -340,7 +340,7 @@ class NotificationsPanel(QWidget):
 
         # Pulsanti Custom
         yes_btn = msg_box.addButton("Sì", QMessageBox.ButtonRole.YesRole)
-        no_btn = msg_box.addButton("No", QMessageBox.ButtonRole.NoRole)
+        msg_box.addButton("No", QMessageBox.ButtonRole.NoRole)
 
         # Stile leggibile
         msg_box.setStyleSheet(

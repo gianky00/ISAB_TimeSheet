@@ -46,7 +46,7 @@ class ContabilitaKPIPanel(QWidget):
         # Imposta stile matplotlib moderno
         try:
             plt.style.use("seaborn-v0_8-darkgrid")
-        except:
+        except Exception:
             pass
 
         self._setup_ui()
@@ -492,7 +492,7 @@ class ContabilitaKPIPanel(QWidget):
             labels=None,  # No static labels
             startangle=90,
             colors=colors[: len(counts)],
-            wedgeprops=dict(width=0.6, edgecolor="w"),  # Donut style for cleaner look
+            wedgeprops={"width": 0.6, "edgecolor": "w"},  # Donut style for cleaner look
         )
 
         # ax.set_title('Distribuzione Stato Attività', fontsize=14, fontweight='bold', color='#495057', pad=20)
@@ -503,11 +503,11 @@ class ContabilitaKPIPanel(QWidget):
             xy=(0, 0),
             xytext=(0, 0),
             textcoords="offset points",
-            bbox=dict(boxstyle="round", fc="black", ec="none", alpha=0.9),
+            bbox={"boxstyle": "round", "fc": "black", "ec": "none", "alpha": 0.9},
             color="white",
             fontweight="bold",
             fontsize=10,
-            arrowprops=dict(arrowstyle="-", color="black"),
+            arrowprops={"arrowstyle": "-", "color": "black"},
         )
         self.annot.set_visible(False)
 
@@ -594,7 +594,7 @@ class ContabilitaKPIPanel(QWidget):
         )
 
         ax2 = ax.twinx()
-        line = ax2.plot(
+        ax2.plot(
             x,
             grouped["ore_sp"],
             label="Ore Spese",
@@ -687,7 +687,7 @@ class ContabilitaKPIPanel(QWidget):
         ax.legend(loc="lower right", framealpha=0.8)
 
         # Aggiunge etichette numeriche
-        for i, (idx, row) in enumerate(grouped.iterrows()):
+        for i, (_idx, row) in enumerate(grouped.iterrows()):
             # Etichetta Ricavi + Margine
             margine_k = row["Margine"] / 1000
             txt_ric = (
@@ -824,7 +824,7 @@ class ContabilitaKPIPanel(QWidget):
         # Plot Stacked Bar
         # Order: Completed (Green), TCL (Yellow), Todo (Red), Other (Gray)
 
-        p1 = ax.barh(
+        ax.barh(
             0,
             pct_completed,
             height=0.6,
@@ -832,7 +832,7 @@ class ContabilitaKPIPanel(QWidget):
             label="Contabilizzate",
             edgecolor="white",
         )
-        p2 = ax.barh(
+        ax.barh(
             0,
             pct_tcl,
             left=pct_completed,
@@ -841,7 +841,7 @@ class ContabilitaKPIPanel(QWidget):
             label="In Attesa TCL",
             edgecolor="white",
         )
-        p3 = ax.barh(
+        ax.barh(
             0,
             pct_todo,
             left=pct_completed + pct_tcl,
@@ -850,7 +850,7 @@ class ContabilitaKPIPanel(QWidget):
             label="Da Completare",
             edgecolor="white",
         )
-        p4 = ax.barh(
+        ax.barh(
             0,
             pct_other,
             left=pct_completed + pct_tcl + pct_todo,

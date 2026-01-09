@@ -140,5 +140,5 @@ def print_pdf(file_path, printer_name):
         try:
             os.startfile(file_path, "print")
             return True
-        except:
+        except Exception:
             return False

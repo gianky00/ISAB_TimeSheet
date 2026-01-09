@@ -11,10 +11,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 from src.bots.base.login_page import LoginPage
+from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
 
@@ -210,6 +212,78 @@ class BaseBot(ABC):
             return False
         finally:
             self.cleanup()
+
+    def _login(self) -> bool:
+        """Default login implementation using LoginPage."""
+        if self.login_page:
+            return self.login_page.login(self.username, self.password)
+        return False
+
+    def _attendi_scomparsa_overlay(self, timeout=None):
+        """Proxy to LoginPage."""
+        if self.login_page:
+            if timeout:
+                return self.login_page._attendi_scomparsa_overlay(timeout)
+            return self.login_page._attendi_scomparsa_overlay()
+        return True
+
+    def _verify_login(self) -> bool:
+        """Proxy to verify login."""
+        if self.login_page:
+            return self.login_page._verify_logged_in_via_ui()
+        return False
+
+    def _verify_logged_in_via_ui(self) -> bool:
+        """Alias for _verify_login to satisfy tests/legacy."""
+        return self._verify_login()
+
+    def _logout(self) -> bool:
+        """Logout da ISAB."""
+        try:
+            self.log("🚪 Eseguo il logout...")
+            # 1. Clicca su impostazioni (ingranaggio)
+            self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)).click()
+            time.sleep(0.5)
+            # 2. Clicca su Esci
+            self.wait.until(EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)).click()
+            self.log("✅ Logout effettuato.")
+            return True
+        except Exception as e:
+            self.log(f"⚠️ Logout fallito: {e}")
+            return False
+
+    def navigate_to_menu(self, menu_path: List[str]) -> bool:
+        """Navigate to a specific menu."""
+        # Placeholder - implement if needed or used
+        return True
+
+    def _handle_unsaved_changes_popup(self):
+        """Handle eventual 'unsaved changes' popup."""
+        pass
+
+    def _handle_session_popup(self):
+        """Gestisce popup di sessione scaduta/esistente."""
+        try:
+            if self.popup_wait:
+                btn = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
+                btn.click()
+                self.log("✅ Popup sessione gestito (SI).")
+                return True
+        except Exception:
+            pass
+        return False
+
+    def _handle_ok_popup(self):
+        """Gestisce popup OK generici."""
+        try:
+            if self.popup_wait:
+                btn = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_OK))
+                btn.click()
+                self.log("✅ Popup OK gestito.")
+                return True
+        except Exception:
+            pass
+        return False
 
     def _safe_login_with_retry(self, max_retries: int = 2) -> bool:
         for _attempt in range(1, max_retries + 1):

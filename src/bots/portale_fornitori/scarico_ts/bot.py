@@ -122,12 +122,12 @@ class ScaricaTSBot(BaseBot):
             dest_dir = Path(self.download_path) if self.download_path else source_dir
 
             js_dispatch_events = """
-                var el = arguments[0]; 
+                var el = arguments[0];
                 var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
                 var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
             """
 
-            for i, row in enumerate(rows, 1):
+            for _i, row in enumerate(rows, 1):
                 self._check_stop()
 
                 numero_oda = str(row.get("numero_oda", "")).strip()

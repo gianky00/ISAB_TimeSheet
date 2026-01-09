@@ -68,7 +68,6 @@ class ContabilitaManager:
             return False, "Directory Giornaliere non trovata.", 0, 0
 
         current_year = datetime.now().year
-        imported_years: set[int] = set()
 
         try:
             # Cleanup: ensure no data from 2026+ exists (fix for bug)

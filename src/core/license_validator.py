@@ -11,6 +11,7 @@ import subprocess
 import uuid
 from datetime import date
 from enum import Enum
+from typing import Tuple
 
 from cryptography.fernet import Fernet
 
@@ -40,11 +41,11 @@ def get_hardware_id():
     """
     Ottiene un ID hardware univoco per la macchina.
     """
-    if system == "Windows":
+    if platform.system() == "Windows":
         return _get_windows_hardware_id()
-    elif system == "Linux":
+    elif platform.system() == "Linux":
         return _get_linux_hardware_id()
-    
+
     # Fallback universale: UUID basato su MAC address
     try:
         return str(uuid.getnode())

@@ -41,7 +41,7 @@ class KeyboardShortcuts:
 
     @classmethod
     def setup(cls, main_window):
-        for key, action in cls.SHORTCUTS.items():
+        for _key, _action in cls.SHORTCUTS.items():
             # Check if main_window has handler (e.g., handle_save)
             # The naming convention in MainWindow is slightly different (_handle_ctrl_s)
             # This is a helper class for future standardization.

@@ -62,7 +62,7 @@ class DocumentProcessor:
                     break
             doc.close()
             return has_text
-        except:
+        except Exception:
             return False
 
     @staticmethod

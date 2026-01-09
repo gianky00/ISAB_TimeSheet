@@ -181,13 +181,13 @@ class ContabilitaYearTab(QWidget):
             return float(
                 text.replace("€", "").replace(".", "").replace(",", ".").strip()
             )
-        except:
+        except Exception:
             return 0.0
 
     def _parse_float(self, text):
         try:
             return float(text.replace(",", "."))
-        except:
+        except Exception:
             return 0.0
 
     def _format_currency(self, val):
@@ -197,7 +197,7 @@ class ContabilitaYearTab(QWidget):
         try:
             v = round(float(val), 2)
             return f"{int(v)}" if v.is_integer() else f"{v:.2f}".replace(".", ",")
-        except:
+        except Exception:
             return str(val)
 
     def _format_value(self, col_idx, val):
@@ -210,17 +210,17 @@ class ContabilitaYearTab(QWidget):
             for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
                 try:
                     return datetime.strptime(s.split(" ")[0], fmt).strftime("%d/%m/%Y")
-                except:
+                except Exception:
                     continue
         elif col_idx == self.COL_TOTALE:
             try:
                 return self._format_currency(float(s))
-            except:
+            except Exception:
                 pass
         elif col_idx in [self.COL_ORE, self.COL_RESA]:
             try:
                 return self._format_number(float(s))
-            except:
+            except Exception:
                 pass
         elif col_idx == self.COL_ODC:
             return s.replace("-", "/")

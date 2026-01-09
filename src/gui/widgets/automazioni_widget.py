@@ -5,8 +5,8 @@ from src.gui.panels import (
     CaricoTSPanel,
     DettagliOdAPanel,
     ScaricaTSPanel,
-    TimbratureBotPanel,
     ScaricoPDLPanel,
+    TimbratureBotPanel,
 )
 
 

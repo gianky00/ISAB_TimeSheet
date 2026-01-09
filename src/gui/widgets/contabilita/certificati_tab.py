@@ -243,7 +243,7 @@ try {
     $list = New-Object System.Collections.ArrayList; $oggi = (Get-Date).Date
     for ($i = 9; $i -le $last; $i++) {
         if ($ws.Cells($i, "X").Value2 -eq "SI") {
-            $null = $list.Add(([PSCustomObject]@{ 
+            $null = $list.Add(([PSCustomObject]@{
                 Name = $ws.Cells($i, "G").Value2; ID = $ws.Cells($i, "V").Value2
                 Date = $oggi.AddDays([double]$ws.Cells($i, "W").Value2)
             }))

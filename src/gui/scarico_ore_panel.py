@@ -50,7 +50,7 @@ class ScaricoOreWorker(QThread):
         # This adds a small overhead but allows for the requested feature.
         try:
             total_rows = ContabilitaManager.scan_scarico_ore_rows(self.file_path)
-        except:
+        except Exception:
             total_rows = 1000  # Fallback
 
         def progress_cb(current, total):
@@ -449,7 +449,7 @@ class ScaricoOrePanel(QWidget):
             try:
                 if ScaricoOreTableModel.CACHE_PATH.exists():
                     ScaricoOreTableModel.CACHE_PATH.unlink()
-            except:
+            except Exception:
                 pass
 
             # Reset global cache to force reload
@@ -483,7 +483,7 @@ class ScaricoOrePanel(QWidget):
                 del self._current_col_filters[col]
         else:
             # Store as set of lowercase for model optimization
-            self._current_col_filters[col] = set(str(v).lower() for v in values)
+            self._current_col_filters[col] = {str(v).lower() for v in values}
 
         # Re-apply filters
         text = self.search_input.text()
@@ -528,7 +528,7 @@ class ScaricoOrePanel(QWidget):
 
     def _on_cache_loaded(self):
         """Called when background loading finishes."""
-        count = self.source_model.rowCount()
+        self.source_model.rowCount()
 
         # Restore last update status if exists, otherwise show default "Pronto"
         if self._last_update_status:

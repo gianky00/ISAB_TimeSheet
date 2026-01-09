@@ -74,7 +74,7 @@ class NotificationItem(QFrame):
         try:
             ts = datetime.fromisoformat(self.notification.get("timestamp"))
             time_str = ts.strftime("%d/%m %H:%M")
-        except:
+        except Exception:
             time_str = ""
 
         time_lbl = QLabel(time_str)

@@ -21,7 +21,7 @@ def mock_driver():
 @pytest.fixture
 def timbrature_bot(mock_driver):
     # Patch BaseBot init to avoid real browser launch
-    with patch("src.bots.base.BaseBot.__init__") as mock_base_init:
+    with patch("src.bots.base.BaseBot.__init__"):
         bot = TimbratureBot(username="test", password="pwd")
         bot.driver = mock_driver
         bot.log = MagicMock()

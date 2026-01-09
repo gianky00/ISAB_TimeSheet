@@ -113,7 +113,7 @@ class CacheWorker(QThread):
                 if style_json:
                     try:
                         append_style(json.loads(style_json))
-                    except:
+                    except Exception:
                         append_style(None)
                 else:
                     append_style(None)
@@ -157,7 +157,7 @@ class CacheWorker(QThread):
                                 str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}"
                             else:
                                 str_0 = s_val
-                    except:
+                    except Exception:
                         str_0 = s_val
                 else:
                     str_0 = s_val
@@ -205,7 +205,7 @@ class CacheWorker(QThread):
                     append_total(float(val_7))
                 else:
                     append_total(parse_currency(val_7))
-            except:
+            except Exception:
                 append_total(0.0)
 
             # --- 3. Style Cache (Pre-parse JSON) ---
@@ -214,7 +214,7 @@ class CacheWorker(QThread):
                 if style_json:
                     try:
                         append_style(json.loads(style_json))
-                    except:
+                    except Exception:
                         append_style(None)
                 else:
                     append_style(None)
@@ -397,10 +397,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
         total = sum(self._float_totals[i] for i in self._visible_indices)
         return total
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent=None):
+        if parent is None:
+            parent = QModelIndex()
         return self._filtered_count
 
-    def columnCount(self, parent=QModelIndex()):
+    def columnCount(self, parent=None):
+        if parent is None:
+            parent = QModelIndex()
         return len(self.COLUMNS)
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
@@ -470,7 +474,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
                 color_hex = styles[key].get(style_type)
                 if color_hex:
                     return QColor(color_hex)
-        except:
+        except Exception:
             pass
         return None
 
@@ -513,7 +517,7 @@ class FilterHeaderView(QHeaderView):
         if col_index == 0:
             filter_widget = DateFilterPopupWidget(unique_values, None)
         else:
-            sorted_values = sorted(list(unique_values), key=lambda x: str(x).lower())
+            sorted_values = sorted(unique_values, key=lambda x: str(x).lower())
             filter_widget = ListFilterPopupWidget(sorted_values, None)
 
         action = QWidgetAction(menu)
@@ -545,7 +549,7 @@ class ListFilterPopupWidget(QWidget):
     def __init__(self, values, selected_values=None):
         super().__init__()
         self.values = values
-        self.all_values = set(str(v).lower() for v in values)
+        self.all_values = {str(v).lower() for v in values}
         self.applied = False
 
         layout = QVBoxLayout(self)
@@ -583,7 +587,7 @@ class ListFilterPopupWidget(QWidget):
         is_all_selected = selected_values is None
         selected_set = set()
         if selected_values:
-            selected_set = set(v.lower() for v in selected_values)
+            selected_set = {v.lower() for v in selected_values}
 
         for val in values:
             item = QStandardItem(str(val))
@@ -715,14 +719,14 @@ class DateFilterPopupWidget(QWidget):
                 parts = v.split("/")
                 if len(parts) != 3:
                     continue
-                d, m, y = parts[0], parts[1], parts[2]
+                _d, m, y = parts[0], parts[1], parts[2]
 
                 if y not in structure:
                     structure[y] = {}
                 if m not in structure[y]:
                     structure[y][m] = []
                 structure[y][m].append(v)  # Store full string in leaf
-            except:
+            except Exception:
                 continue
 
         is_all_selected = selected_values is None

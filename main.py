@@ -27,13 +27,15 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         pass
 
 def setup_crash_logging():
-    if not CONFIG_DIR.exists(): CONFIG_DIR.mkdir(parents=True)
+    if not CONFIG_DIR.exists():
+        CONFIG_DIR.mkdir(parents=True)
     log_dir = CONFIG_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
     handler = logging.FileHandler(log_dir / "crash.log", mode='w', encoding='utf-8')
     handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     clogger = logging.getLogger("crash_logger")
-    if not clogger.handlers: clogger.addHandler(handler)
+    if not clogger.handlers:
+        clogger.addHandler(handler)
     clogger.setLevel(logging.INFO)
     sys.excepthook = handle_exception
 
@@ -41,10 +43,12 @@ setup_crash_logging()
 
 # Ensure src is in path
 src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
-if src_path not in sys.path: sys.path.insert(0, src_path)
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 def main():
     from PyQt6.QtWidgets import QApplication, QMessageBox
+
     from src.core.app_initializer import AppInitializer
     from src.gui.main_window import MainWindow
 

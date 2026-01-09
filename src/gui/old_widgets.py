@@ -669,22 +669,18 @@ class ExcelTableWidget(QTableWidget):
 
         # Determina i limiti della selezione
         rows = sorted(
-            list(
-                set(
+            {
                     r
                     for range_ in selection
                     for r in range(range_.topRow(), range_.bottomRow() + 1)
-                )
-            )
+                }
         )
         cols = sorted(
-            list(
-                set(
+            {
                     c
                     for range_ in selection
                     for c in range(range_.leftColumn(), range_.rightColumn() + 1)
-                )
-            )
+                }
         )
 
         if not rows or not cols:
