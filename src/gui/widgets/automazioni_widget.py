@@ -45,11 +45,18 @@ class AutomazioniWidget(QTabWidget):
         }
 
         # Connessione segnali
+        self.currentChanged.connect(self._on_main_tab_changed)
         self.tab_fornitori.currentChanged.connect(self._on_fornitori_tab_changed)
         self.tab_safework.currentChanged.connect(self._on_safework_tab_changed)
 
         # Carica il primo tab
         QTimer.singleShot(0, lambda: self._on_fornitori_tab_changed(0))
+
+    def _on_main_tab_changed(self, index):
+        """Gestisce il cambio tab principale (Fornitori vs SafeWork)."""
+        if index == 1:  # SafeWork tab
+            # Forza il caricamento del tab corrente di SafeWork
+            self._on_safework_tab_changed(self.tab_safework.currentIndex())
 
     def _on_fornitori_tab_changed(self, index):
         mapping = {
@@ -64,11 +71,18 @@ class AutomazioniWidget(QTabWidget):
             if not self._init_states[key]:
                 panel = cls()
                 setattr(self.mw, attr, panel)
-                self.tab_fornitori.removeWidget(self.tab_fornitori.widget(index))
-                self.tab_fornitori.insertTab(
-                    index, panel, self.tab_fornitori.tabText(index)
-                )
-                self.tab_fornitori.setCurrentIndex(index)
+                old_text = self.tab_fornitori.tabText(index)
+                
+                self.tab_fornitori.blockSignals(True)
+                try:
+                    self.tab_fornitori.removeTab(index)
+                    self.tab_fornitori.insertTab(
+                        index, panel, old_text
+                    )
+                    self.tab_fornitori.setCurrentIndex(index)
+                finally:
+                    self.tab_fornitori.blockSignals(False)
+                
                 self._init_states[key] = True
 
                 # Registra nel bot controller
@@ -79,8 +93,14 @@ class AutomazioniWidget(QTabWidget):
         if index == 0 and not self._init_states["pdl"]:
             panel = ScaricoPDLPanel()
             self.mw.pdl_panel = panel
-            self.tab_safework.removeWidget(self.tab_safework.widget(0))
-            self.tab_safework.insertTab(0, panel, "🛡️ Scarico PDL")
+            
+            self.tab_safework.blockSignals(True)
+            try:
+                self.tab_safework.removeTab(0)
+                self.tab_safework.insertTab(0, panel, "🛡️ Scarico PDL")
+            finally:
+                self.tab_safework.blockSignals(False)
+            
             self._init_states["pdl"] = True
             if hasattr(self.mw, "bot_controller"):
                 self.mw.bot_controller.register_panels([panel])

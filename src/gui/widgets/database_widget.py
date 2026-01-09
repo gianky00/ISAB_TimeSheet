@@ -40,7 +40,13 @@ class DatabaseWidget(QTabWidget):
             panel = ScaricoOrePanel()
             self.mw.scarico_ore_panel = panel
 
-        self.removeWidget(self.widget(index))
-        self.insertTab(index, panel, self.tabText(index))
-        self.setCurrentIndex(index)
+        old_text = self.tabText(index)
+        self.blockSignals(True)
+        try:
+            self.removeTab(index)
+            self.insertTab(index, panel, old_text)
+            self.setCurrentIndex(index)
+        finally:
+            self.blockSignals(False)
+        
         self._init_states[index] = True

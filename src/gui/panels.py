@@ -565,7 +565,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self.data_table = EditableDataTable(
             [
                 {"name": "Numero OdA", "type": "text"},
-                {"name": "Numero Contratto", "type": "text"},
+                {"name": "Numero Contratto", "type": "combo", "options": []},
             ]
         )
         self.data_table.setMinimumHeight(250)
@@ -634,6 +634,12 @@ class DettagliOdAPanel(BaseBotPanel):
             return False, "Credenziali ISAB mancanti."
         if not self.params_widget.get_fornitore():
             return False, "Fornitore mancante."
+        
+        # Check if data table has valid data
+        data = self.data_table.get_data()
+        if not data:
+            return False, "Nessun OdA inserito nella tabella."
+
         return True, ""
 
     def _on_start(self):
@@ -646,9 +652,19 @@ class DettagliOdAPanel(BaseBotPanel):
             Path.home() / "Downloads"
         )
 
+        rows = self.data_table.get_data()
+        self.log_widget.append(f"[DEBUG] Rows retrieved: {len(rows)}")
+
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
             self._update_status(StatusCard.Status.ERROR, "Parametri incompleti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
+        
+        if not rows:
+            ToastManager.instance().show("Inserisci almeno un OdA.", "warning")
+            self._update_status(StatusCard.Status.ERROR, "Dati mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -1344,6 +1360,9 @@ class TimbratureBotPanel(BaseBotPanel):
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
             download_path=config_manager.get_download_path(),
+            data_da=data_da,
+            data_a=data_a,
+            fornitore=fornitore,
         )
 
         if not bot:

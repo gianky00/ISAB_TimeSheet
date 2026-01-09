@@ -55,7 +55,10 @@ class TimbratureBot(BaseBot):
                 return False, "Fornitore non specificato."
 
         if not self.data_da:
-            return False, "Data Inizio non specificata."
+            if isinstance(data, dict) and data.get("data_da"):
+                self.data_da = data.get("data_da")
+            else:
+                return False, "Data Inizio non specificata."
 
         return True, ""
 
