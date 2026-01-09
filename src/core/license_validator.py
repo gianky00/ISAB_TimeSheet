@@ -163,11 +163,15 @@ def get_license_info():
             encrypted_data = f.read()
 
         # Retrieve key securely
-        key = SecretsManager.get_license_key()
-        if not key:
+        key_raw = SecretsManager.get_license_key()
+        if not key_raw:
             return None
 
-        cipher = Fernet(key)
+        # Fernet requires url-safe base64 encoded bytes
+        import base64
+        key_b64 = base64.urlsafe_b64encode(key_raw)
+        
+        cipher = Fernet(key_b64)
         decrypted_data = cipher.decrypt(encrypted_data)
         return json.loads(decrypted_data.decode("utf-8"))
     except Exception:
