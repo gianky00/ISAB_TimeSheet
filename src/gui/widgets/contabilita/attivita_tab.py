@@ -87,8 +87,19 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.table.cellDoubleClicked.connect(lambda r, c: self.table.selectRow(r))
         self.table.setStyleSheet("""
-            QTableWidget { background-color: white; color: black; gridline-color: #e9ecef; font-size: 13px; border: 1px solid #dee2e6; selection-background-color: #e7f1ff; selection-color: #0d6efd; }
-            QTableWidget::item { color: black; }
+            QTableWidget { 
+                background-color: white; 
+                color: black; 
+                gridline-color: #e9ecef; 
+                font-size: 13px; 
+                border: 1px solid #dee2e6; 
+                selection-background-color: #0d6efd; 
+                selection-color: white; 
+            }
+            QTableWidget::item:selected {
+                background-color: #0d6efd;
+                color: white;
+            }
             QHeaderView::section { background-color: #E1F5FE; color: #333333; padding: 10px 5px; border: none; border-right: 1px solid #B3E5FC; border-bottom: 3px solid #81D4FA; font-weight: bold; text-transform: uppercase; font-size: 11px; }
         """)
         self.table.auto_copy_headers = True

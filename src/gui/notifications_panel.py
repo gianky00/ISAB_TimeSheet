@@ -293,12 +293,16 @@ class NotificationsPanel(QWidget):
             variant=ModernButton.Variant.GHOST,
             size=ModernButton.Size.SMALL,
         )
+        mark_read_btn.setMinimumWidth(120)
+        mark_read_btn.setFixedHeight(40)
         mark_read_btn.clicked.connect(self._mark_all_read)
         notif_toolbar.addWidget(mark_read_btn)
 
         clear_btn = ModernButton(
             "Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL
         )
+        clear_btn.setMinimumWidth(120)
+        clear_btn.setFixedHeight(40)
         clear_btn.setToolTip(
             "Elimina definitivamente i messaggi (l'audit rimarrà intatto)"
         )
@@ -380,16 +384,18 @@ class NotificationsPanel(QWidget):
 
     def _style_filter_btn(self, btn):
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn.setMinimumHeight(35)
-        btn.setMinimumWidth(120)
+        btn.setMinimumHeight(45)
+        btn.setMinimumWidth(150)
         btn.setStyleSheet(
             """
             QPushButton {
                 background-color: white;
                 border: 1px solid #ced4da;
-                border-radius: 17px;
+                border-radius: 22px;
                 color: #495057;
-                font-weight: 500;
+                font-weight: bold;
+                font-size: 14px;
+                padding: 0 15px;
             }
             QPushButton:checked {
                 background-color: #0d6efd;

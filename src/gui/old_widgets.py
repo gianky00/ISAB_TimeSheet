@@ -10,6 +10,7 @@ from pathlib import Path
 from PyQt6.QtCore import (
     QAbstractAnimation,
     QEasingCurve,
+    QEvent,
     QPoint,
     QPropertyAnimation,
     QRect,
@@ -525,10 +526,25 @@ class ExcelTableWidget(QTableWidget):
             super().keyPressEvent(event)
 
     def clear_selection(self):
-        """Cancella il contenuto delle celle selezionate."""
-        for item in self.selectedItems():
-            if item.flags() & Qt.ItemFlag.ItemIsEditable:
-                item.setText("")
+        """Cancella il contenuto delle celle selezionate (incluso reset ComboBox)."""
+        ranges = self.selectedRanges()
+        for r in ranges:
+            for row in range(r.topRow(), r.bottomRow() + 1):
+                for col in range(r.leftColumn(), r.rightColumn() + 1):
+                    # Gestione Widget (es. ComboBox)
+                    widget = self.cellWidget(row, col)
+                    if isinstance(widget, QComboBox):
+                        # Cerca opzione vuota o resetta
+                        idx = widget.findText("")
+                        if idx >= 0:
+                            widget.setCurrentIndex(idx)
+                        else:
+                            widget.setCurrentIndex(-1)
+                    else:
+                        # Gestione Item Standard
+                        item = self.item(row, col)
+                        if item and (item.flags() & Qt.ItemFlag.ItemIsEditable):
+                            item.setText("")
 
     def paste_selection(self):
         """Incolla il contenuto degli appunti nella tabella."""
@@ -762,8 +778,8 @@ class EditableDataTable(QWidget):
                 color: black;  /* Force black text for high contrast */
                 gridline-color: #e9ecef;
                 font-size: 14px;
-                selection-background-color: #e7f1ff;
-                selection-color: #0d6efd;
+                selection-background-color: #0d6efd; /* Strong Blue */
+                selection-color: white; /* White text */
             }
             QTableWidget::item {
                 padding: 8px;
@@ -771,13 +787,13 @@ class EditableDataTable(QWidget):
                 border: none;
             }
             QTableWidget::item:selected {
-                background-color: #e7f1ff;
-                color: #0d6efd;
+                background-color: #0d6efd;
+                color: white;
             }
-            /* Gestione focus cella (current item) per evitare il "solo una cella colorata" */
+            /* Gestione focus cella (current item) */
             QTableWidget::item:focus {
-                background-color: #e7f1ff;
-                color: #0d6efd;
+                background-color: #0d6efd;
+                color: white;
                 border: none; /* Rimuove il bordo tratteggiato di default */
             }
             QHeaderView::section {
@@ -812,6 +828,19 @@ class EditableDataTable(QWidget):
             self._add_row()
 
         layout.addWidget(self.table)
+
+    def eventFilter(self, source, event):
+        """Intercetta il tasto Delete per i widget nelle celle (es. ComboBox)."""
+        if event.type() == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Delete:
+            if isinstance(source, QComboBox):
+                # Cerca opzione vuota o resetta
+                idx = source.findText("")
+                if idx >= 0:
+                    source.setCurrentIndex(idx)
+                else:
+                    source.setCurrentIndex(-1)
+                return True  # Evento consumato
+        return super().eventFilter(source, event)
 
     def _show_context_menu(self, position):
         """Mostra il menu contestuale."""
@@ -877,6 +906,8 @@ class EditableDataTable(QWidget):
             if col_type == "combo":
                 # Setup ComboBox
                 combo = QComboBox()
+                combo.installEventFilter(self)  # Installa filtro eventi per Delete
+                combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
                 # Fix colore testo bianco su sfondo bianco
                 combo.setStyleSheet(
                     """

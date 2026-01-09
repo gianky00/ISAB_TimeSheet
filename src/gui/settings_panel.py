@@ -119,6 +119,71 @@ class AccountDialog(QDialog):
         return self.username_edit.text(), self.password_edit.text()
 
 
+class ConfirmationDialog(QDialog):
+    """Dialog di conferma personalizzato con lo stesso layout di AccountDialog."""
+
+    def __init__(self, parent=None, title="Conferma", message="Sei sicuro?"):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setFixedWidth(350)
+        self.setStyleSheet("font-size: 15px; background-color: white;")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+
+        # Messaggio
+        self.msg_label = QLabel(message)
+        self.msg_label.setWordWrap(True)
+        self.msg_label.setStyleSheet("color: #212529; font-weight: 500;")
+        layout.addWidget(self.msg_label)
+
+        # Pulsanti
+        btns = QHBoxLayout()
+        btns.setSpacing(10)
+
+        self.ok_btn = QPushButton("Elimina")
+        self.ok_btn.setMinimumHeight(40)
+        self.ok_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+        """
+        )
+        self.ok_btn.clicked.connect(self.accept)
+
+        self.cancel_btn = QPushButton("Annulla")
+        self.cancel_btn.setMinimumHeight(40)
+        self.cancel_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #e9ecef;
+            }
+        """
+        )
+        self.cancel_btn.clicked.connect(self.reject)
+
+        btns.addWidget(self.ok_btn)
+        btns.addWidget(self.cancel_btn)
+
+        layout.addLayout(btns)
+
+
 class StatisticsWidget(QWidget):
     """Widget per visualizzare le statistiche di utilizzo."""
 
@@ -149,6 +214,7 @@ class StatisticsWidget(QWidget):
 
         # Table
         self.table = QTableWidget()
+        self.table.verticalHeader().setVisible(False)
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(
             ["Bot", "Esecuzioni", "Errori", "Successo", "Ultima Esecuzione"]
@@ -163,6 +229,8 @@ class StatisticsWidget(QWidget):
                 border-radius: 8px;
                 background-color: white;
                 font-size: 14px;
+                selection-background-color: #0d6efd;
+                selection-color: white;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
@@ -174,6 +242,10 @@ class StatisticsWidget(QWidget):
             QTableWidget::item {
                 padding: 10px;
                 border-bottom: 1px solid #f0f0f0;
+            }
+            QTableWidget::item:selected {
+                background-color: #0d6efd;
+                color: white;
             }
         """
         )
@@ -1566,19 +1638,27 @@ class SettingsPanel(QWidget):
                 self._render_accounts(self._get_current_accounts())
                 self._set_unsaved_changes(True)
 
+    def _confirm_delete(self, item_name):
+        """Mostra un dialog di conferma eliminazione stilizzato (layout coerente con AccountDialog)."""
+        dlg = ConfirmationDialog(
+            self,
+            title="Conferma Eliminazione",
+            message=f"Sei sicuro di voler rimuovere '{item_name}'?"
+        )
+        return dlg.exec() == QDialog.DialogCode.Accepted
+
     def _remove_account(self):
         row = self.account_list.currentRow()
         if row >= 0:
-            if (
-                QMessageBox.question(self, "Conferma", "Rimuovere account?")
-                == QMessageBox.StandardButton.Yes
-            ):
+            item = self.account_list.item(row)
+            acc = item.data(Qt.ItemDataRole.UserRole)
+            if self._confirm_delete(acc.get("username", "Account")):
                 self.account_list.takeItem(row)
                 accounts = self._get_current_accounts()
                 if accounts and not any(a["default"] for a in accounts):
                     accounts[0]["default"] = True
                     self._render_accounts(accounts)
-                self._set_unsaved_changes(True)
+                self._save_settings()
 
     def _show_account_context_menu(self, position):
         """Mostra menu contestuale per lista account."""

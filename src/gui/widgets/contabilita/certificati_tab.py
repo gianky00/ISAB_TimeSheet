@@ -66,7 +66,8 @@ class CertificatiCampioneTab(QWidget):
         self.tree.setStyleSheet("""
             QTreeWidget { background-color: white; color: black; font-size: 13px; border: 1px solid #dee2e6; }
             QTreeWidget::item { color: black; padding: 4px; }
-            QTreeWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
+            QTreeWidget::item:selected { background-color: #0d6efd; color: white; }
+            QTreeWidget::item:focus { background-color: #0d6efd; color: white; }
             QHeaderView::section { background-color: #E1F5FE; color: #333333; padding: 10px 5px; border: none; border-right: 1px solid #B3E5FC; border-bottom: 3px solid #81D4FA; font-weight: bold; text-transform: uppercase; font-size: 11px; }
         """)
         h = self.tree.header()

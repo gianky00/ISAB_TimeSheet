@@ -65,7 +65,8 @@ class ContabilitaKPIPanel(QWidget):
         toolbar.addWidget(QLabel("📅 Analisi per Anno:"))
 
         self.year_combo = QComboBox()
-        self.year_combo.setFixedWidth(150)
+        self.year_combo.setMinimumWidth(100)
+        self.year_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.year_combo.setStyleSheet(
             """
             QComboBox {

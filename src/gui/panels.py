@@ -336,6 +336,15 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
+    def _ask_user_input(self, prompt: str, result_container: dict, event: threading.Event):
+        """Callback per input utente dal worker (thread-safe via signal)."""
+        text, ok = QInputDialog.getText(self, "Richiesta Input", prompt)
+        if ok:
+            result_container["value"] = text
+        else:
+            result_container["value"] = ""
+        event.set()
+
     def get_credentials(self) -> tuple:
         """Ottiene le credenziali dall'account di default."""
         account = config_manager.get_default_account()
@@ -374,7 +383,7 @@ class ScaricaTSPanel(BaseBotPanel):
         # Parametri specifici: Flag Elabora TS
         self.elabora_ts_check = QCheckBox("Elabora TS")
         self.elabora_ts_check.stateChanged.connect(self._save_data)
-        params_layout.addWidget(self.elabora_ts_check)
+        self.params_widget.add_widget_to_row(self.elabora_ts_check)
 
         params_layout.addSpacing(10)
 
@@ -586,7 +595,9 @@ class DettagliOdAPanel(BaseBotPanel):
         # Aggiorna anche i contratti nella tabella
         config = config_manager.load_config()
         contracts = config.get("contracts", [])
-        self.data_table.update_column_options("Numero Contratto", contracts)
+        # Assicura che ci sia l'opzione vuota
+        options = [""] + contracts
+        self.data_table.update_column_options("Numero Contratto", options)
 
     def _load_saved_data(self):
         config = config_manager.load_config()
@@ -884,17 +895,19 @@ class ScaricoPDLPanel(BaseBotPanel):
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
-        # 1. Opzioni Stampa
-        print_group = QGroupBox("Opzioni Stampa")
-        print_layout = QHBoxLayout(print_group)
+        # Riga unica per tutte le opzioni
+        options_layout = QHBoxLayout()
+        options_layout.setSpacing(15)
 
-        self.print_check = QCheckBox("Al termine stampa")
+        # 1. Stampa
+        self.print_check = QCheckBox("Al termine stampa con")
         self.print_check.stateChanged.connect(self._save_data)
-        print_layout.addWidget(self.print_check)
+        options_layout.addWidget(self.print_check)
 
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(35)
-        self.printer_combo.setMinimumWidth(250)
+        self.printer_combo.setMinimumWidth(150)
+        self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.printer_combo.setStyleSheet(
             """
             QComboBox {
@@ -906,83 +919,42 @@ class ScaricoPDLPanel(BaseBotPanel):
             }
         """
         )
-
         # Popola stampanti
         printers = get_installed_printers()
         if printers:
             self.printer_combo.addItems(printers)
         else:
             self.printer_combo.addItem("Nessuna stampante trovata")
-
         self.printer_combo.currentTextChanged.connect(self._save_data)
-        print_layout.addWidget(self.printer_combo)
+        options_layout.addWidget(self.printer_combo)
 
-        # Refresh printers button
-        refresh_print_btn = QPushButton()
-        refresh_print_btn.setIcon(QIcon(get_asset_path("assets/icons/refresh.svg")))
-        refresh_print_btn.setIconSize(QSize(20, 20))
-        refresh_print_btn.setToolTip("Aggiorna lista stampanti")
-        refresh_print_btn.setFixedSize(35, 35)  # Consistent mini size
-        refresh_print_btn.clicked.connect(self._refresh_printers)
-        refresh_print_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #f8f9fa;
-                color: #212529;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                font-size: 18px;
-                padding-bottom: 2px;
-            }
-            QPushButton:hover {
-                background-color: #e9ecef;
-                border-color: #ced4da;
-            }
-        """
-        )
-        print_layout.addWidget(refresh_print_btn)
-
-        print_layout.addStretch()
-        params_layout.addWidget(print_group)
-
-        # 1.1 Opzioni Merge
-        merge_group = QGroupBox("Opzioni File")
-        merge_layout = QHBoxLayout(merge_group)
-        self.merge_all_check = QCheckBox("Unisci tutti in un unico PDF")
+        # 2. Merge
+        self.merge_all_check = QCheckBox("e unisci tutti in un unico PDF")
         self.merge_all_check.setToolTip(
             "Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL."
         )
         self.merge_all_check.stateChanged.connect(self._save_data)
-        merge_layout.addWidget(self.merge_all_check)
-        merge_layout.addStretch()
-        params_layout.addWidget(merge_group)
+        options_layout.addWidget(self.merge_all_check)
 
-        # 2. Percorso destinazione (opzionale, ma utile)
-        dest_layout = QHBoxLayout()
+        # 3. Destinazione
         dest_label = QLabel("Destinazione:")
-        dest_label.setMinimumWidth(80)
-        dest_layout.addWidget(dest_label)
+        options_layout.addWidget(dest_label)
 
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
-        self.dest_path_edit.setMinimumWidth(350)
+        self.dest_path_edit.setMinimumWidth(200) # Ridotto per stare in riga
 
-        # Dynamic Width logic
-        def update_width_pdl():
-            text = self.dest_path_edit.text() or self.dest_path_edit.placeholderText()
-            w = self.dest_path_edit.fontMetrics().horizontalAdvance(text) + 60
-            self.dest_path_edit.setFixedWidth(max(350, min(w, 600)))
+        # Dynamic Width logic simplified/removed as we are in HBox with stretch
+        # def update_width_pdl(): ...
+        # self.dest_path_edit.textChanged.connect(update_width_pdl)
 
-        self.dest_path_edit.textChanged.connect(update_width_pdl)
-        update_width_pdl()
-
-        dest_layout.addWidget(self.dest_path_edit)
+        options_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
         browse_btn.setIcon(QIcon(get_asset_path("assets/icons/folder.svg")))
-        browse_btn.setIconSize(QSize(24, 24))
-        browse_btn.setFixedSize(40, 40)
+        browse_btn.setIconSize(QSize(20, 20))
+        browse_btn.setFixedSize(35, 35)
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet(
             """
@@ -991,8 +963,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 color: #212529;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 22px;
-                padding-bottom: 3px;
+                padding-bottom: 2px;
             }
             QPushButton:hover {
                 background-color: #e9ecef;
@@ -1000,11 +971,10 @@ class ScaricoPDLPanel(BaseBotPanel):
             }
         """
         )
-        dest_layout.addWidget(browse_btn)
+        options_layout.addWidget(browse_btn)
 
-        dest_layout.addStretch()
-
-        params_layout.addLayout(dest_layout)
+        options_layout.addStretch()
+        params_layout.addLayout(options_layout)
 
         # 3. Tabella Input
         table_toolbar = QHBoxLayout()
@@ -1265,7 +1235,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.content_layout.addWidget(params_group)
 
         # Scheduler
-        sched_group = QGroupBox("📅 Autopilot (Pianificatore)")
+        sched_group = QGroupBox("📅 Pianifica")
         sched_layout = QHBoxLayout(sched_group)
         self.autopilot_check = QCheckBox("Abilita download automatico")
         self.autopilot_check.stateChanged.connect(self._save_data)
@@ -1448,7 +1418,8 @@ class TimbratureDBPanel(QWidget):
         for rep in self.reparti:
             self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
-        self.reparto_filter.setFixedWidth(150)
+        self.reparto_filter.setMinimumWidth(150)
+        self.reparto_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         search_layout.addWidget(self.reparto_filter)
 
         # Cantiere Filter
@@ -1457,7 +1428,8 @@ class TimbratureDBPanel(QWidget):
         for cant in self.cantieri:
             self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.currentIndexChanged.connect(lambda: self._filter_data())
-        self.cantiere_filter.setFixedWidth(150)
+        self.cantiere_filter.setMinimumWidth(150)
+        self.cantiere_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         search_layout.addWidget(self.cantiere_filter)
 
         # Import Button
@@ -1469,17 +1441,23 @@ class TimbratureDBPanel(QWidget):
         import_btn.clicked.connect(self._import_excel_manually)
         search_layout.addWidget(import_btn)
 
-        # Refresh Button
-        refresh_btn = ModernButton(
-            "Aggiorna", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
-        )
-        refresh_btn.clicked.connect(self.refresh_data)
-        search_layout.addWidget(refresh_btn)
-
         layout.addLayout(search_layout)
 
         # Table
         self.db_table = ExcelTableWidget()
+        self.db_table.verticalHeader().setVisible(False)
+        self.db_table.setStyleSheet(
+            """
+            QTableWidget {
+                selection-background-color: #0d6efd;
+                selection-color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #0d6efd;
+                color: white;
+            }
+        """
+        )
         # Cols: Data, Ingresso, Uscita, Nome, Cognome, Presenza TS, Sito, Reparto, Cantiere
         cols = [
             "Data",
@@ -1553,6 +1531,7 @@ class TimbratureDBPanel(QWidget):
 
         # Table
         self.settings_table = QTableWidget()
+        self.settings_table.verticalHeader().setVisible(False)
         self.settings_table.setColumnCount(4)
         self.settings_table.setHorizontalHeaderLabels(
             ["Nome", "Cognome", "Reparto", "Cantiere"]

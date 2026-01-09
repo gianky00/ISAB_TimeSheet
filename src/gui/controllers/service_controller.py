@@ -37,6 +37,33 @@ class ServiceController(QObject):
             self._forward_notification_to_telegram
         )
 
+        # Scheduler (ogni 60s) per task pianificati
+        self.scheduler_timer = QTimer(self)
+        self.scheduler_timer.timeout.connect(self._check_scheduled_tasks)
+        self.scheduler_timer.start(60000) # 1 minuto
+
+    def _check_scheduled_tasks(self):
+        """Controlla se ci sono task pianificati da eseguire ora."""
+        from datetime import datetime
+        from src.core import config_manager
+        
+        config = config_manager.load_config()
+        
+        # 1. Timbrature Autopilot
+        if config.get("timbrature_autopilot_enabled", False):
+            target_time = config.get("timbrature_autopilot_time", "09:00")
+            now = datetime.now().strftime("%H:%M")
+            
+            if now == target_time:
+                # Esegui solo se il pannello è disponibile
+                if hasattr(self.mw, "timbrature_bot_panel"):
+                    panel = self.mw.timbrature_bot_panel
+                    # Verifica che non sia già in esecuzione
+                    if panel.start_btn.isEnabled():
+                        # Simula avvio
+                        panel.log_widget.append(f"⏰ Avvio pianificato automatico ({now})...")
+                        panel._on_start()
+
     def _check_updates(self):
         """Controlla gli aggiornamenti in background."""
         check_for_updates(

@@ -146,21 +146,21 @@ class ToastManager:
         # Clean up closed toasts from list
         self._active_toasts = [t for t in self._active_toasts if t.isVisible()]
 
-        # Posiziona in basso a destra
+        # Posiziona in ALTO CENTRALE
         if parent:
             # Map parent geometry to global
             geo = parent.geometry()
-            x = geo.x() + geo.width() - toast.width() - 20
-            # Stack upwards
+            x = geo.x() + (geo.width() - toast.width()) // 2
+            # Stack downwards
             offset_y = sum([t.height() + 10 for t in self._active_toasts])
-            y = geo.y() + geo.height() - toast.height() - 20 - offset_y
+            y = geo.y() + 80 + offset_y # Margine dall'alto (sotto header)
         else:
             primary_screen = QApplication.primaryScreen()
             if primary_screen:
                 screen = primary_screen.geometry()
-                x = screen.width() - toast.width() - 20
+                x = (screen.width() - toast.width()) // 2
                 offset_y = sum([t.height() + 10 for t in self._active_toasts])
-                y = screen.height() - toast.height() - 60 - offset_y
+                y = 80 + offset_y
             else:
                 x, y = 0, 0  # Fallback
 

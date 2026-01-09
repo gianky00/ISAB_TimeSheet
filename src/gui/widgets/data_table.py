@@ -127,16 +127,20 @@ class DataTable(QWidget):
                 gridline-color: {p.divider};
                 border: 1px solid {p.border};
                 border-radius: 8px;
-                selection-background-color: {p.primary}33; /* 20% opacity approx */
-                selection-color: {p.on_surface};
+                selection-background-color: #0d6efd;
+                selection-color: white;
             }}
             QTableWidget::item {{
                 padding: 8px;
                 border: none;
             }}
             QTableWidget::item:focus {{
-                background-color: {p.primary}33;
-                color: {p.on_surface};
+                background-color: #0d6efd;
+                color: white;
+            }}
+            QTableWidget::item:selected {{
+                background-color: #0d6efd;
+                color: white;
             }}
             QHeaderView::section {{
                 background-color: #E1F5FE;

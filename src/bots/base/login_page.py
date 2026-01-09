@@ -88,8 +88,29 @@ class LoginPage:
             )
             self.driver.execute_script("arguments[0].click();", accedi_element)
 
+        # Gestione popup sessione attiva (immediatamente dopo click)
+        self._check_and_handle_session_popup()
+
         self.log("Login effettuato. Attendo scomparsa overlay...")
         self._attendi_scomparsa_overlay(Timeouts.LONG)
+
+    def _check_and_handle_session_popup(self):
+        """Controlla se appare il popup 'Sessione attiva' e clicca su Si."""
+        try:
+            # Breve attesa per il popup (non bloccante per il flusso normale)
+            wait_popup = WebDriverWait(self.driver, 3)
+            # Cerchiamo il bottone "Si" se appare un popup di attenzione
+            yes_btn = wait_popup.until(
+                EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES)
+            )
+            self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+            yes_btn.click()
+            time.sleep(1)
+        except TimeoutException:
+            # Nessun popup, procedi
+            pass
+        except Exception as e:
+            self.log(f"Nota: Controllo popup sessione ignorato ({e})")
 
     def _verify_logged_in_via_ui(self) -> bool:
         """Checks for post-login UI elements."""

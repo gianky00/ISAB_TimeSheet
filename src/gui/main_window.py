@@ -81,6 +81,28 @@ class MainWindow(QMainWindow):
         # Avvio automatico importazione contabilità se abilitato
         QTimer.singleShot(2000, self._check_and_start_contabilita_update)
 
+        # EAGER LOADING: Pre-carica tutti i pannelli per evitare lag durante l'uso
+        QTimer.singleShot(100, self._preload_all_panels)
+
+    def _preload_all_panels(self):
+        """Forza l'inizializzazione di tutti i pannelli."""
+        # Mostra un cursore di attesa o un messaggio nella status bar
+        self.status_bar.showMessage("⏳ Pre-caricamento moduli in corso... (Attendere)")
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            # Indices: 0=Dashboard, 1=Automazioni, 2=Lyra, 3=Database, 4=Settings, 5=Help, 6=Notifications
+            for i in range(7):
+                self.navigation_controller.get_panel(i)
+                QApplication.processEvents() # Mantiene la UI viva (opzionale)
+            
+            # Collegamento automatico aggiornamento Timbrature
+            if hasattr(self, "timbrature_bot_panel") and hasattr(self, "timbrature_db_panel"):
+                self.timbrature_bot_panel.data_updated.connect(self.timbrature_db_panel.refresh_data)
+
+            self.status_bar.showMessage("✅ Sistema pronto.", 3000)
+        finally:
+            QApplication.restoreOverrideCursor()
+
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
         if hasattr(self, "sidebar"):

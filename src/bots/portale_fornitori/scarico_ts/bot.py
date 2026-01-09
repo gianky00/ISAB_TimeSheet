@@ -384,7 +384,21 @@ class ScaricaTSBot(BaseBot):
 
                 import shutil
 
-                shutil.move(str(downloaded_file), str(percorso_finale))
+                # Retry logic for shutil.move (handles Google Drive locking)
+                move_success = False
+                for attempt in range(3):
+                    try:
+                        shutil.move(str(downloaded_file), str(percorso_finale))
+                        move_success = True
+                        break
+                    except Exception as e:
+                        self.log(f"⚠️ Tentativo spostamento {attempt+1}/3 fallito: {e}")
+                        time.sleep(2)
+                
+                if not move_success:
+                    self.log(f"❌ Impossibile spostare il file in: {percorso_finale}")
+                    return None
+
                 self.log(f"✅ Scaricato: {percorso_finale.name}")
                 return percorso_finale
             else:

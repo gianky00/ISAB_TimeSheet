@@ -39,11 +39,8 @@ class SidebarWidget(QFrame):
         # Logo/Titolo
         self.logo_label = QLabel("🚀 SyncroJob")
         self.logo_label.setObjectName("logoLabel")
+        self.logo_label.setStyleSheet("font-size: 24px; font-weight: 800; margin-bottom: 5px;")
         layout.addWidget(self.logo_label)
-
-        self.subtitle = QLabel("Work & Sync Manager")
-        self.subtitle.setObjectName("subtitleLabel")
-        layout.addWidget(self.subtitle)
 
         # Separatore
         separator = QFrame()
@@ -136,6 +133,5 @@ class SidebarWidget(QFrame):
     def set_active_button(self, index: int):
         """Aggiorna lo stato checked dei pulsanti."""
         for i, btn in enumerate(self.nav_buttons):
-            btn.blockSignals(True)
+            # Non bloccare i segnali altrimenti l'aggiornamento dello stile non parte
             btn.setChecked(i == index)
-            btn.blockSignals(False)
