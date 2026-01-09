@@ -41,7 +41,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "last_oda_data": [],
     "contabilita_file_path": "",
     "enable_auto_update_contabilita": True,
-    "certificati_campione_path": r"C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm",
+    "certificati_campione_path": "",
     "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
     "cantieri": [],
     "employee_mappings": {},
@@ -188,7 +188,7 @@ def save_config(config: Dict[str, Any]):
                         SecretsManager.store_credential("safework_portal", u, p)
                         acc.pop("password", None)
                         continue
-                except:
+                except Exception:
                     pass
 
                 acc["password"] = password_manager.encrypt(p)
@@ -211,7 +211,7 @@ def save_config(config: Dict[str, Any]):
             if temp_file.exists():
                 try:
                     os.remove(temp_file)
-                except:
+                except Exception:
                     pass
         except Exception:
             print(f"Errore critico durante il salvataggio:\n{traceback.format_exc()}")

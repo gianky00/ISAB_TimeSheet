@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QApplication
 from src.core import config_manager
 from src.core.notification_manager import NotificationManager
 from src.core.secrets_manager import SecretsManager
+from src.utils.document_generator import generate_pdf_from_html
 
 
 class TelegramUIBridge(QObject):
@@ -141,7 +142,8 @@ class TelegramUIBridge(QObject):
             from PyQt6.QtCore import QDate
             period = params.get("period", "yesterday")
             target_date = QDate.currentDate()
-            if period == "yesterday": target_date = target_date.addDays(-1)
+            if period == "yesterday":
+                target_date = target_date.addDays(-1)
             self.mw.timbrature_bot_panel.date_da_edit.setDate(target_date)
             self.mw.timbrature_bot_panel.date_a_edit.setDate(target_date)
             ready, msg = self.mw.timbrature_bot_panel.validate_ready()
@@ -196,11 +198,12 @@ class TelegramUIBridge(QObject):
                 html_report = "<h2>Report Contabilità</h2>"
                 if matches.get("GIORNALIERE"):
                     html_report += "<h3>Giornaliere</h3><table>"
-                    for g in matches["GIORNALIERE"]: html_report += f"<tr><td>{g['data']}</td><td>{g['personale']}</td><td>{g['descrizione']}</td></tr>"
+                    for g in matches["GIORNALIERE"]:
+                        html_report += f"<tr><td>{g['data']}</td><td>{g['personale']}</td><td>{g['descrizione']}</td></tr>"
                     html_report += "</table>"
 
             if html_report:
-                self.mw._generate_pdf_from_html(html_report, temp_pdf)
+                generate_pdf_from_html(html_report, temp_pdf)
                 if os.path.exists(temp_pdf):
                     self.telegram.send_document_sync(temp_pdf, caption=f"📄 Report {db_type}")
                 else:
@@ -221,9 +224,12 @@ class TelegramUIBridge(QObject):
             res = validator(item)
             if res.valid:
                 val = res.sanitized_value
-                if val in existing or val in valid_items: duplicates += 1
-                else: valid_items.append(val)
-            else: errors.append(f"❌ `{item}`: {res.error}")
+                if val in existing or val in valid_items:
+                    duplicates += 1
+                else:
+                    valid_items.append(val)
+            else:
+                errors.append(f"❌ `{item}`: {res.error}")
 
         if valid_items:
             panel.add_rows_simple([{field: v} for v in valid_items])
@@ -231,8 +237,10 @@ class TelegramUIBridge(QObject):
             self.mw.show_toast(f"Telegram: Aggiunti {len(valid_items)} elementi")
 
         feedback = [f"✅ Aggiunti {len(valid_items)}"] if valid_items else []
-        if duplicates: feedback.append(f"ℹ️ {duplicates} duplicati saltati")
-        if errors: feedback.append("⚠️ Errori:\n" + "\n".join(errors[:5]))
+        if duplicates:
+            feedback.append(f"ℹ️ {duplicates} duplicati saltati")
+        if errors:
+            feedback.append("⚠️ Errori:\n" + "\n".join(errors[:5]))
         self.telegram.send_message_sync("\n".join(feedback) if feedback else "⚠️ Nessun dato valido.")
 
     def _handle_status(self, chat_id):
@@ -253,11 +261,13 @@ class TelegramUIBridge(QObject):
             else:
                 screens = QGuiApplication.screens()
                 total_rect = QRect()
-                for s in screens: total_rect = total_rect.united(s.geometry())
+                for s in screens:
+                    total_rect = total_rect.united(s.geometry())
                 combined = QPixmap(total_rect.size())
                 combined.fill(Qt.GlobalColor.black)
                 p = QPainter(combined)
-                for s in screens: p.drawPixmap(s.geometry().topLeft() - total_rect.topLeft(), s.grabWindow(0))
+                for s in screens:
+                    p.drawPixmap(s.geometry().topLeft() - total_rect.topLeft(), s.grabWindow(0))
                 p.end()
                 pixmap = combined
                 caption = f"Desktop ({len(screens)} monitor)"
@@ -296,7 +306,8 @@ class TelegramUIBridge(QObject):
                 from src.core.lyra_client import LyraClient
                 img_b64 = base64.b64encode(photo_bytes).decode("utf-8")
                 prompt = "Estrai dati da questo rapportino. Tabella Markdown."
-                if caption: prompt += f"\nNote: {caption}"
+                if caption:
+                    prompt += f"\nNote: {caption}"
                 resp = LyraClient(api_key=api_key).ask(prompt, images=[img_b64])
                 self.telegram.send_message_sync(f"📝 **Dati Estratti**\n\n{resp}")
             except Exception as e:

@@ -83,19 +83,22 @@ class DatabaseManager:
 
     def init_db(self):
         """
-        Initializes schema and indexes for all databases.
-        This unifies initialization logic previously scattered.
+        Initializes schema and runs migrations for all databases.
         """
         self._init_contabilita()
         self._init_timbrature()
+
+    def _get_db_version(self, conn: sqlite3.Connection) -> int:
+        return conn.execute("PRAGMA user_version").fetchone()[0]
+
+    def _set_db_version(self, conn: sqlite3.Connection, version: int):
+        conn.execute(f"PRAGMA user_version = {version}")
 
     def _init_contabilita(self):
         with self.get_connection(self.DB_CONTABILITA) as conn:
             cursor = conn.cursor()
 
-            # --- Tables ---
-
-            # Contabilita (Dati)
+            # Base Schema (Version 1)
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS contabilita (
@@ -120,7 +123,6 @@ class DatabaseManager:
             """
             )
 
-            # Giornaliere
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS giornaliere (
@@ -136,17 +138,12 @@ class DatabaseManager:
                     fine TEXT,
                     ore TEXT,
                     n_prev TEXT,
+                    nome_file TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
             )
-            # Migration
-            try:
-                cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
-            except:
-                pass
 
-            # Scarico Ore
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS scarico_ore (
@@ -167,12 +164,7 @@ class DatabaseManager:
                 )
             """
             )
-            try:
-                cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
-            except:
-                pass
 
-            # Attivita Programmate
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS attivita_programmate (
@@ -198,12 +190,7 @@ class DatabaseManager:
                 )
             """
             )
-            try:
-                cursor.execute("ALTER TABLE attivita_programmate ADD COLUMN styles TEXT")
-            except:
-                pass
 
-            # Certificati Campione
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS certificati_campione (
@@ -223,11 +210,32 @@ class DatabaseManager:
             """
             )
 
-            # --- Indexes (Performance) ---
+            # --- Indexes ---
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_nprev ON contabilita(n_prev)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_year ON giornaliere(year)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)")
+
+            # --- Migrations ---
+            version = self._get_db_version(conn)
+
+            # Upgrade to Version 1 (Mark existing schema as v1)
+            if version < 1:
+                # Add columns if they don't exist (safety for legacy without versioning)
+                try:
+                    cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
+                except sqlite3.OperationalError:
+                    pass
+                try:
+                    cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
+                except sqlite3.OperationalError:
+                    pass
+                try:
+                    cursor.execute("ALTER TABLE attivita_programmate ADD COLUMN styles TEXT")
+                except sqlite3.OperationalError:
+                    pass
+
+                self._set_db_version(conn, 1)
 
             conn.commit()
 
@@ -262,15 +270,20 @@ class DatabaseManager:
                 )
             """
             )
-            # Migration for existing databases
-            try:
-                cursor.execute("ALTER TABLE dipendenti ADD COLUMN cantiere TEXT")
-            except:
-                pass
 
             # --- Indexes ---
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
+
+            # --- Migrations ---
+            version = self._get_db_version(conn)
+
+            if version < 1:
+                try:
+                    cursor.execute("ALTER TABLE dipendenti ADD COLUMN cantiere TEXT")
+                except sqlite3.OperationalError:
+                    pass
+                self._set_db_version(conn, 1)
 
             conn.commit()
 

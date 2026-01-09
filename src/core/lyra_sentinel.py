@@ -4,10 +4,10 @@ Monitoraggio proattivo delle anomalie in background.
 """
 
 import sqlite3
-from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
+from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_manager import ContabilitaManager
 
 
@@ -21,7 +21,7 @@ class LyraSentinel(QThread):
 
         # 1. Check Timbrature (Uscite mancanti recenti)
         try:
-            db_path = Path("data/timbrature_Isab.db")
+            db_path = CONFIG_DIR / "data" / "timbrature_Isab.db"
             if db_path.exists():
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
@@ -33,7 +33,7 @@ class LyraSentinel(QThread):
                 if res:
                     anomaly_count += res[0]
                 conn.close()
-        except:
+        except Exception:
             pass
 
         # 2. Check Contabilita (Margine negativo anno corrente)
@@ -45,7 +45,7 @@ class LyraSentinel(QThread):
                 margin = stats.get("total_prev", 0) - (stats.get("total_ore", 0) * 30.0)
                 if margin < 0:
                     anomaly_count += 1
-        except:
+        except Exception:
             pass
 
         self.anomalies_found.emit(anomaly_count)

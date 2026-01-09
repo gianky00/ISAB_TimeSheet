@@ -2,6 +2,7 @@ import asyncio
 import json
 import re
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from telegram import (
@@ -52,6 +53,7 @@ class TelegramService(QObject):
         self.pdl_settings = {}  # Settings specifici per PDL (es. merge_all)
         self.pending_data = {}
         self._start_lock = threading.Lock()
+        self.ai_executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="Telegram_AI")
 
     def start_service(self):
         """Avvia o riavvia il servizio in modo thread-safe."""
@@ -103,7 +105,8 @@ class TelegramService(QObject):
 
             try:
                 await self.app.initialize()
-                if self.stop_event.is_set(): return
+                if self.stop_event.is_set():
+                    return
 
                 await self.app.updater.start_polling(drop_pending_updates=True)
                 await self.app.start()
@@ -158,7 +161,7 @@ class TelegramService(QObject):
             try:
                 if update.message:
                     await update.message.reply_text("⛔ Accesso Negato")
-            except:
+            except Exception:
                 pass
             return False
         return True
@@ -274,7 +277,8 @@ class TelegramService(QObject):
                         if "action" in intent:
                              self.intent_received.emit(str(chat_id), intent)
                              return
-                     except: pass
+                     except Exception:
+                         pass
                      self.send_message_sync(f"🤖 **Lyra**: {res}")
                 else:
                     prompt = (
@@ -289,12 +293,12 @@ class TelegramService(QObject):
                         clean = res.replace("```json", "").replace("```", "").strip()
                         intent = json.loads(clean)
                         self.intent_received.emit(str(chat_id), intent)
-                    except:
+                    except Exception:
                         self.send_message_sync(f"Comando non riconosciuto: {res}")
             except Exception as e:
                 self.send_message_sync(f"❌ Errore AI: {e}")
 
-        threading.Thread(target=run, daemon=True).start()
+        self.ai_executor.submit(run)
 
     async def _handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
@@ -311,12 +315,15 @@ class TelegramService(QObject):
 
     async def _handle_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
-        if not query or not query.message or not isinstance(query.message, Message): return
-        if self.connected_chat_id and str(update.effective_user.id) != self.connected_chat_id: return
+        if not query or not query.message or not isinstance(query.message, Message):
+            return
+        if self.connected_chat_id and str(update.effective_user.id) != self.connected_chat_id:
+            return
         await query.answer()
         chat_id = query.message.chat_id
         data = query.data
-        if not data: return
+        if not data:
+            return
 
         if data == "menu_main":
             await query.edit_message_text("🚀 *Command Center*", reply_markup=self._get_main_keyboard(), parse_mode=constants.ParseMode.MARKDOWN)
@@ -488,22 +495,38 @@ class TelegramService(QObject):
             self.command_received.emit("run_pdl", {"print": False, "merge_and_send": False, "merge_all": merge_all})
             await query.edit_message_text(f"✅ Avvio scarico e merge finale={merge_all}.")
 
-        elif data == "run_ts": self.command_received.emit("run_ts", {})
-        elif data == "run_timbrature_yesterday": self.command_received.emit("run_timbrature", {"period": "yesterday"})
-        elif data == "run_timbrature_today": self.command_received.emit("run_timbrature", {"period": "today"})
-        elif data == "run_oda_details": self.command_received.emit("run_oda_details", {})
-        elif data == "run_carico": self.command_received.emit("run_carico", {})
-        elif data == "list_pdl": self.command_received.emit("list_pdl", {"chat_id": str(chat_id)})
-        elif data == "clear_pdl": self.command_received.emit("clear_pdl", {})
-        elif data == "list_ts": self.command_received.emit("list_ts", {"chat_id": str(chat_id)})
-        elif data == "clear_ts": self.command_received.emit("clear_ts", {})
-        elif data == "status": self.status_requested.emit(str(chat_id))
-        elif data == "snap_app": self.screenshot_requested.emit("app")
-        elif data == "snap_pc": self.screenshot_requested.emit("pc")
-        elif data == "stop_all": self.command_received.emit("stop_all", {})
-        elif data == "app_restart": self.command_received.emit("restart_app", {})
-        elif data == "app_conn_test": self.command_received.emit("test_connectivity", {})
-        elif data.startswith("set_forn_"): self.command_received.emit("set_fornitore", {"fornitore": data.replace("set_forn_", "")})
+        elif data == "run_ts":
+            self.command_received.emit("run_ts", {})
+        elif data == "run_timbrature_yesterday":
+            self.command_received.emit("run_timbrature", {"period": "yesterday"})
+        elif data == "run_timbrature_today":
+            self.command_received.emit("run_timbrature", {"period": "today"})
+        elif data == "run_oda_details":
+            self.command_received.emit("run_oda_details", {})
+        elif data == "run_carico":
+            self.command_received.emit("run_carico", {})
+        elif data == "list_pdl":
+            self.command_received.emit("list_pdl", {"chat_id": str(chat_id)})
+        elif data == "clear_pdl":
+            self.command_received.emit("clear_pdl", {})
+        elif data == "list_ts":
+            self.command_received.emit("list_ts", {"chat_id": str(chat_id)})
+        elif data == "clear_ts":
+            self.command_received.emit("clear_ts", {})
+        elif data == "status":
+            self.status_requested.emit(str(chat_id))
+        elif data == "snap_app":
+            self.screenshot_requested.emit("app")
+        elif data == "snap_pc":
+            self.screenshot_requested.emit("pc")
+        elif data == "stop_all":
+            self.command_received.emit("stop_all", {})
+        elif data == "app_restart":
+            self.command_received.emit("restart_app", {})
+        elif data == "app_conn_test":
+            self.command_received.emit("test_connectivity", {})
+        elif data.startswith("set_forn_"):
+            self.command_received.emit("set_fornitore", {"fornitore": data.replace("set_forn_", "")})
 
         elif data == "toggle_autopilot":
             config = config_manager.load_config()
@@ -513,7 +536,8 @@ class TelegramService(QObject):
             self.user_states[chat_id] = "WAITING_AUTOPILOT_TIME"
             await query.edit_message_text("🕒 Inserisci orario (HH:MM):")
 
-        elif data.startswith("set_print_"): self.command_received.emit("set_printer", {"printer": data.replace("set_print_", "")})
+        elif data.startswith("set_print_"):
+            self.command_received.emit("set_printer", {"printer": data.replace("set_print_", "")})
 
     def _get_full_printer_name(self, short_name: str) -> str:
         """Helper per recuperare il nome completo della stampante."""

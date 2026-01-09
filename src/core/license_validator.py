@@ -164,6 +164,9 @@ def get_license_info():
 
         # Retrieve key securely
         key = SecretsManager.get_license_key()
+        if not key:
+            return None
+
         cipher = Fernet(key)
         decrypted_data = cipher.decrypt(encrypted_data)
         return json.loads(decrypted_data.decode("utf-8"))

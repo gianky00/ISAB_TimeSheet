@@ -8,25 +8,18 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import (
-    QAction,
     QColor,
     QFont,
-    QIcon,
     QKeySequence,
-    QPageLayout,
-    QPageSize,
     QPainter,
     QPixmap,
     QShortcut,
-    QTextDocument,
 )
-from PyQt6.QtPrintSupport import QPrinter
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLineEdit,
     QMainWindow,
-    QMenu,
     QProgressBar,
     QSplashScreen,
     QStackedWidget,
@@ -48,6 +41,7 @@ from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
 from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.controllers.search_controller import SearchController
+from src.gui.controllers.tray_controller import TrayController
 from src.gui.dashboard_panel import DashboardPanel
 from src.gui.help_panel import HelpPanel
 from src.gui.lyra_panel import LyraPanel
@@ -71,7 +65,6 @@ from src.gui.widgets.status_card import StatusCard
 # Import UI/UX Components
 from src.gui.widgets.toast import ToastManager
 from src.gui.widgets.update_banner import UpdateBanner
-from src.utils.helpers import get_app_icon_path
 
 
 class MainWindow(QMainWindow):
@@ -110,7 +103,7 @@ class MainWindow(QMainWindow):
         self._current_page_index = 0
         self._force_quit = False  # NEW: Controllo chiusura definitiva
         self._setup_ui()
-        self._setup_tray_icon()  # NEW: Tray Icon
+        self.tray_controller = TrayController(self)  # Gestito dal controller
         self._connect_signals()
         self._setup_shortcuts()
 
@@ -147,32 +140,6 @@ class MainWindow(QMainWindow):
                         file_path, caption=f"📄 **PDL Scaricato**\nFile: `{os.path.basename(file_path)}`"
                     )
 
-    def _generate_pdf_from_html(self, html_content: str, output_path: str):
-        """Genera un PDF da contenuto HTML."""
-        doc = QTextDocument()
-
-        # Aggiungi stili CSS globali per garantire leggibilità
-        header_style = """
-        <style>
-            body { font-family: Arial, sans-serif; font-size: 18pt; }
-            h2 { font-size: 30pt; color: #333; }
-            h3 { font-size: 24pt; color: #0d6efd; margin-top: 20px; }
-            p { font-size: 18pt; color: #555; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-            th { background-color: #f2f2f2; color: #333; font-weight: bold; padding: 12px; font-size: 16pt; border: 1px solid #ddd; }
-            td { padding: 10px; font-size: 16pt; border: 1px solid #ddd; color: #000; }
-        </style>
-        """
-        doc.setHtml(header_style + html_content)
-
-        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-        printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
-        printer.setOutputFileName(output_path)
-        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        printer.setPageOrientation(QPageLayout.Orientation.Landscape) # Landscape per tabelle larghe
-
-        doc.print(printer)
-
     def _forward_notification_to_telegram(self, notification):
         """Inoltra notifiche importanti a Telegram (tranne quelle generate da Telegram stesso)."""
         if notification.get("title") == "Telegram":
@@ -188,43 +155,6 @@ class MainWindow(QMainWindow):
             text = f"{icon} *{title}*\n{msg}"
             self.telegram.send_message_sync(text)
 
-    def _setup_tray_icon(self):
-        """Configura l'icona nella system tray."""
-        self.tray_icon = QSystemTrayIcon(self)
-
-        icon_path = get_app_icon_path()
-        if icon_path:
-            self.tray_icon.setIcon(QIcon(icon_path))
-
-        # Tray Menu
-        tray_menu = QMenu()
-        show_action = QAction("🖥️ Mostra SyncroJob", self)
-        show_action.triggered.connect(self.showMaximized)
-        show_action.triggered.connect(self.activateWindow)
-        tray_menu.addAction(show_action)
-
-        tray_menu.addSeparator()
-
-        def force_quit_app():
-            self._force_quit = True
-            QApplication.instance().quit()
-
-        quit_action = QAction("❌ Esci", self)
-        quit_action.triggered.connect(force_quit_app)
-        tray_menu.addAction(quit_action)
-
-        self.tray_icon.setContextMenu(tray_menu)
-        self.tray_icon.activated.connect(self._handle_tray_activation)
-        self.tray_icon.show()
-
-    def _handle_tray_activation(self, reason):
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            if self.isVisible():
-                self.hide()
-            else:
-                self.showMaximized()
-                self.activateWindow()
-
     def _check_updates(self):
         """Avvia il controllo aggiornamenti in background."""
         # Usa il nuovo sistema a banner invece del popup bloccante
@@ -234,12 +164,10 @@ class MainWindow(QMainWindow):
         """Mostra un banner informativo per la nuova versione."""
         self.update_banner.show_update(new_version, download_url, changelog)
 
-        # Notifica tray
-        self.tray_icon.showMessage(
+        # Notifica tray tramite controller
+        self.tray_controller.show_message(
             "Aggiornamento Disponibile",
             f"È uscita la versione {new_version}. Clicca qui per scaricarla.",
-            QSystemTrayIcon.MessageIcon.Information,
-            5000,
         )
 
     def _on_anomalies_found(self, count):
