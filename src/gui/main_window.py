@@ -159,6 +159,42 @@ class MainWindow(QMainWindow):
         # Avvio automatico importazione contabilità se abilitato
         QTimer.singleShot(2000, self._check_and_start_contabilita_update)
 
+    def _on_anomalies_found(self, count):
+        """Gestisce le anomalie trovate da Lyra."""
+        if hasattr(self, "sidebar"):
+            self.sidebar.btn_lyra.set_badge(count)
+        if count > 0:
+            ToastManager.instance().show(f"⚠️ Lyra ha rilevato {count} anomalie", "warning")
+
+    def _show_update_banner(self, new_version, download_url, changelog):
+        """Mostra un banner informativo per la nuova versione."""
+        if hasattr(self, "update_banner"):
+            self.update_banner.show_update(new_version, download_url, changelog)
+
+        # Notifica tray tramite controller
+        if hasattr(self, "tray_controller"):
+            self.tray_controller.show_message(
+                "Aggiornamento Disponibile",
+                f"È uscita la versione {new_version}. Clicca qui per scaricarla.",
+            )
+
+    def show_background_notification(self, title: str, message: str, is_error: bool = False):
+        """
+        Mostra una notifica di sistema (Toast) se l'applicazione non è attiva.
+        """
+        is_active = self.isActiveWindow() and not self.isMinimized()
+
+        if not is_active and hasattr(self, "tray_controller"):
+            icon = (
+                QSystemTrayIcon.MessageIcon.Critical if is_error else QSystemTrayIcon.MessageIcon.Information
+            )
+            self.tray_controller.show_message(title, message, icon, 5000)
+            QApplication.alert(self, 0)
+
+    def show_toast(self, message: str, duration: int = 3000):
+        """Mostra una notifica toast."""
+        ToastManager.instance().show(message, "info", duration)
+
     def _load_styles(self):
         """Carica i fogli di stile QSS."""
         for qss in ["main_window.qss", "message_box.qss"]:

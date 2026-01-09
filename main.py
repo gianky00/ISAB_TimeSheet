@@ -53,6 +53,7 @@ def setup_crash_logging():
 
 # Attiva logging immediatamente
 setup_crash_logging()
+print("[DEBUG] Logging setup")
 
 # Ensure src is in path
 if getattr(sys, "frozen", False):
@@ -64,17 +65,22 @@ src_path = os.path.join(base_path, "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
+print(f"[DEBUG] src_path: {src_path}")
 
 def main():
     """Main entry point."""
+    print("[DEBUG] main() start")
     from PyQt6.QtGui import QFont
     from PyQt6.QtWidgets import QApplication, QMessageBox
 
+    print("[DEBUG] PyQt6 imported")
     from src.gui.styles import apply_theme
+    print("[DEBUG] Styles imported")
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     apply_theme(app, "light")
+    print("[DEBUG] Theme applied")
 
     font = QFont("Segoe UI", 10)
     app.setFont(font)
@@ -84,6 +90,7 @@ def main():
     app.setApplicationVersion("1.0.0")
 
     # === LICENSE CHECK FLOW ===
+    print("[DEBUG] License check...")
     try:
         from src.core.license_updater import check_emergency_grace_period, run_update
         from src.core.license_validator import (
@@ -93,38 +100,25 @@ def main():
         )
 
         status, msg = get_detailed_license_status()
+        print(f"[DEBUG] Status: {status}")
 
         if status != LicenseStatus.VALID:
             run_update()
             status, msg = get_detailed_license_status()
 
-        if status != LicenseStatus.VALID:
-            grace_allowed, grace_msg, days_left = check_emergency_grace_period()
-            hw_id = get_hardware_id()
-
-            if grace_allowed:
-                QMessageBox.warning(
-                    None,
-                    "Licenza non trovata - Modalità Provvisoria",
-                    f"Licenza non rilevata o non valida.\n\n{grace_msg}\n\nID Hardware: {hw_id}",
-                )
-            else:
-                QMessageBox.critical(
-                    None,
-                    "Errore Licenza",
-                    f"Licenza non valida e periodo di prova scaduto.\n\nErrore: {msg}\nID Hardware: {hw_id}",
-                )
-                sys.exit(1)
-
     except Exception as e:
+        print(f"[DEBUG] License error: {e}")
         QMessageBox.critical(None, "Errore Critico", f"Impossibile verificare la licenza.\n{e}")
         sys.exit(1)
 
     # === DATABASE INITIALIZATION ===
+    print("[DEBUG] DB Init...")
     from src.core.database import db_manager
     try:
         db_manager.init_db()
+        print("[DEBUG] DB Init OK")
     except Exception as e:
+        print(f"[DEBUG] DB Init Error: {e}")
         QMessageBox.critical(
             None, 
             "Errore Database", 
@@ -133,15 +127,22 @@ def main():
         sys.exit(1)
 
     # === START GUI ===
+    print("[DEBUG] GUI Start...")
     from src.gui.main_window import MainWindow
     try:
+        print("[DEBUG] MainWindow instance...")
         window = MainWindow()
+        print("[DEBUG] Show maximized...")
         window.showMaximized()
     except Exception as e:
+        print(f"[DEBUG] GUI Error: {e}")
+        import traceback
+        traceback.print_exc()
         logger.critical("Errore avvio MainWindow", exc_info=True)
-        QMessageBox.critical(None, "Errore GUI", f"Errore fatale durante l'avvio dell'interfaccia:\n{e}")
+        QMessageBox.critical(None, "Errore GUI", f"Errore fatale durante l\'avvio dell\'interfaccia:\n{e}")
         sys.exit(1)
 
+    print("[DEBUG] Executing app...")
     sys.exit(app.exec())
 
 

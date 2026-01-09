@@ -1,14 +1,14 @@
 """
 SyncroJob - Database Manager
-Centralized SQLite database management.
-Provides connection handling, context managers, and common utilities for all application databases.
+Centralized SQLite database management with Thread Safety.
 """
 
 import logging
 import sqlite3
+import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, List
+from typing import Any, Generator, List, Optional
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseManager:
     """
-    Singleton class to manage SQLite connections.
+    Singleton class to manage SQLite connections with thread safety and WAL mode.
     """
 
     _instance = None
@@ -38,58 +38,76 @@ class DatabaseManager:
 
     @contextmanager
     def get_connection(
-        self, db_path: Path, read_only: bool = False
+        self, db_path: Path, read_only: bool = False, timeout: float = 30.0
     ) -> Generator[sqlite3.Connection, None, None]:
         """
-        Yields a SQLite connection to the specified database.
-        Enables WAL mode and handles closing.
+        Yields a SQLite connection with Thread Safety features.
+        - WAL Mode enabled for concurrent read/write.
+        - Increased timeout for locked databases.
+        - Auto-commit handling via context manager.
         """
         uri = f"file:{db_path.absolute()}"
         if read_only:
             uri += "?mode=ro"
 
+        conn = None
         try:
-            conn = sqlite3.connect(uri, uri=True)
-        except sqlite3.OperationalError:
-            # Fallback for read-only if file doesn't exist or other error
-            conn = sqlite3.connect(str(db_path))
-
-        try:
-            # Optimize Performance
+            # check_same_thread=False is safe when using one connection per context/thread
+            conn = sqlite3.connect(uri, uri=True, timeout=timeout, check_same_thread=False)
+            
+            # Performance & Concurrency Optimizations
             if not read_only:
                 conn.execute("PRAGMA journal_mode=WAL;")
                 conn.execute("PRAGMA synchronous=NORMAL;")
-
-            # Row Factory for dict-like access if desired, but many legacy queries expect tuples.
-            # We keep default (tuples) here, but consumers can change it.
+                conn.execute(f"PRAGMA busy_timeout={int(timeout * 1000)};")
 
             yield conn
+            
+            if not read_only and conn.in_transaction:
+                conn.commit()
+
+        except sqlite3.OperationalError as e:
+            logger.error(f"Database Operational Error ({db_path.name}): {e}")
+            if conn: conn.rollback()
+            raise
         except Exception as e:
-            logger.error(f"Database Error ({db_path.name}): {e}")
+            logger.error(f"Unexpected Database Error ({db_path.name}): {e}")
+            if conn: conn.rollback()
             raise
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
-    def execute_query(self, db_path: Path, query: str, params: tuple = ()) -> List[Any]:
-        """Executes a query and returns results (SELECT) or None (INSERT/UPDATE)."""
-        with self.get_connection(db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, params)
-            if query.strip().upper().startswith("SELECT"):
-                return cursor.fetchall()
-            else:
-                conn.commit()
-                return []
+    def execute_query(self, db_path: Path, query: str, params: tuple = (), retry_count: int = 3) -> List[Any]:
+        """Executes a query with automatic retries on busy database."""
+        last_error = None
+        for attempt in range(retry_count):
+            try:
+                with self.get_connection(db_path) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(query, params)
+                    if query.strip().upper().startswith("SELECT"):
+                        return cursor.fetchall()
+                    return []
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e).lower() or "busy" in str(e).lower():
+                    last_error = e
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                raise
+        
+        logger.error(f"Failed to execute query after {retry_count} retries: {last_error}")
+        raise last_error
 
     def init_db(self):
-        """
-        Initializes schema and runs migrations for all databases.
-        """
+        """Initializes schema for all databases."""
         self._init_contabilita()
         self._init_timbrature()
 
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
-        return conn.execute("PRAGMA user_version").fetchone()[0]
+        try:
+            return conn.execute("PRAGMA user_version").fetchone()[0]
+        except: return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int):
         conn.execute(f"PRAGMA user_version = {version}")
@@ -97,196 +115,83 @@ class DatabaseManager:
     def _init_contabilita(self):
         with self.get_connection(self.DB_CONTABILITA) as conn:
             cursor = conn.cursor()
-
-            # Base Schema (Version 1)
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS contabilita (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     year INTEGER NOT NULL,
-                    data_prev TEXT,
-                    mese TEXT,
-                    n_prev TEXT,
-                    totale_prev TEXT,
-                    attivita TEXT,
-                    tcl TEXT,
-                    odc TEXT,
-                    stato_attivita TEXT,
-                    tipologia TEXT,
-                    ore_sp TEXT,
-                    resa TEXT,
-                    annotazioni TEXT,
-                    indirizzo_consuntivo TEXT,
-                    nome_file TEXT,
+                    data_prev TEXT, mese TEXT, n_prev TEXT, totale_prev TEXT,
+                    attivita TEXT, tcl TEXT, odc TEXT, stato_attivita TEXT,
+                    tipologia TEXT, ore_sp TEXT, resa TEXT, annotazioni TEXT,
+                    indirizzo_consuntivo TEXT, nome_file TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-
-            cursor.execute(
-                """
+            """)
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS giornaliere (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     year INTEGER NOT NULL,
-                    data TEXT,
-                    personale TEXT,
-                    descrizione TEXT,
-                    tcl TEXT,
-                    odc TEXT,
-                    pdl TEXT,
-                    inizio TEXT,
-                    fine TEXT,
-                    ore TEXT,
-                    n_prev TEXT,
-                    nome_file TEXT,
+                    data TEXT, personale TEXT, descrizione TEXT,
+                    tcl TEXT, odc TEXT, pdl TEXT, inizio TEXT, fine TEXT,
+                    ore TEXT, n_prev TEXT, nome_file TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-
-            cursor.execute(
-                """
+            """)
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS scarico_ore (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    data TEXT,
-                    pers1 TEXT,
-                    pers2 TEXT,
-                    odc TEXT,
-                    pos TEXT,
-                    dalle TEXT,
-                    alle TEXT,
-                    totale_ore TEXT,
-                    descrizione TEXT,
-                    finito TEXT,
-                    commessa TEXT,
-                    styles TEXT,
+                    data TEXT, pers1 TEXT, pers2 TEXT, odc TEXT, pos TEXT,
+                    dalle TEXT, alle TEXT, totale_ore TEXT, descrizione TEXT,
+                    finito TEXT, commessa TEXT, styles TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-
-            cursor.execute(
-                """
+            """)
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS attivita_programmate (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ps TEXT,
-                    area TEXT,
-                    pdl TEXT,
-                    imp TEXT,
-                    descrizione TEXT,
-                    lun TEXT,
-                    mar TEXT,
-                    mer TEXT,
-                    gio TEXT,
-                    ven TEXT,
-                    stato_pdl TEXT,
-                    stato_attivita TEXT,
-                    data_controllo TEXT,
-                    personale TEXT,
-                    po TEXT,
-                    avviso TEXT,
-                    styles TEXT,
+                    ps TEXT, area TEXT, pdl TEXT, imp TEXT, descrizione TEXT,
+                    lun TEXT, mar TEXT, mer TEXT, gio TEXT, ven TEXT,
+                    stato_pdl TEXT, stato_attivita TEXT, data_controllo TEXT,
+                    personale TEXT, po TEXT, avviso TEXT, styles TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-
-            cursor.execute(
-                """
+            """)
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS certificati_campione (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    modello TEXT,
-                    costruttore TEXT,
-                    matricola TEXT,
-                    range_strumento TEXT,
-                    errore_max TEXT,
-                    certificato TEXT,
-                    scadenza TEXT,
-                    emissione TEXT,
-                    id_coemi TEXT,
-                    stato TEXT,
+                    modello TEXT, costruttore TEXT, matricola TEXT,
+                    range_strumento TEXT, errore_max TEXT, certificato TEXT,
+                    scadenza TEXT, emissione TEXT, id_coemi TEXT, stato TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-
-            # --- Indexes ---
+            """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_nprev ON contabilita(n_prev)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_year ON giornaliere(year)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)")
 
-            # --- Migrations ---
             version = self._get_db_version(conn)
-
-            # Upgrade to Version 1 (Mark existing schema as v1)
             if version < 1:
-                # Add columns if they don't exist (safety for legacy without versioning)
-                try:
-                    cursor.execute("ALTER TABLE giornaliere ADD COLUMN nome_file TEXT")
-                except sqlite3.OperationalError:
-                    pass
-                try:
-                    cursor.execute("ALTER TABLE scarico_ore ADD COLUMN styles TEXT")
-                except sqlite3.OperationalError:
-                    pass
-                try:
-                    cursor.execute("ALTER TABLE attivita_programmate ADD COLUMN styles TEXT")
-                except sqlite3.OperationalError:
-                    pass
-
                 self._set_db_version(conn, 1)
-
-            conn.commit()
 
     def _init_timbrature(self):
         with self.get_connection(self.DB_TIMBRATURE) as conn:
             cursor = conn.cursor()
-
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS timbrature (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    data TEXT,
-                    ingresso TEXT,
-                    uscita TEXT,
-                    nome TEXT,
-                    cognome TEXT,
-                    presenza_ts TEXT,
-                    sito_timbratura TEXT,
+                    data TEXT, ingresso TEXT, uscita TEXT,
+                    nome TEXT, cognome TEXT, presenza_ts TEXT, sito_timbratura TEXT,
                     UNIQUE(data, ingresso, uscita, nome, cognome)
                 )
-            """
-            )
-
-            cursor.execute(
-                """
+            """)
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS dipendenti (
-                    nome TEXT,
-                    cognome TEXT,
-                    reparto TEXT,
-                    cantiere TEXT,
+                    nome TEXT, cognome TEXT, reparto TEXT, cantiere TEXT,
                     PRIMARY KEY (nome, cognome)
                 )
-            """
-            )
-
-            # --- Indexes ---
+            """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
-
-            # --- Migrations ---
+            
             version = self._get_db_version(conn)
-
             if version < 1:
-                try:
-                    cursor.execute("ALTER TABLE dipendenti ADD COLUMN cantiere TEXT")
-                except sqlite3.OperationalError:
-                    pass
                 self._set_db_version(conn, 1)
 
-            conn.commit()
-
-
-# Global Accessor
 db_manager = DatabaseManager()
