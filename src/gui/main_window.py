@@ -4,7 +4,6 @@ Finestra principale dell'applicazione SyncroJob.
 Implementa Lazy Loading dei pannelli per prestazioni ottimali.
 """
 
-import os
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
@@ -29,91 +28,144 @@ from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
 from src.core.telegram_bridge import TelegramUIBridge
 from src.core.telegram_manager import TelegramService
-
 from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.controllers.search_controller import SearchController
 from src.gui.controllers.service_controller import ServiceController
 from src.gui.controllers.tray_controller import TrayController
-
 from src.gui.styles import apply_theme
 from src.gui.widgets.sidebar_widget import SidebarWidget
-from src.gui.widgets.status_card import StatusCard
 from src.gui.widgets.toast import ToastManager
 from src.gui.widgets.update_banner import UpdateBanner
 
 
 class AutomazioniWidget(QTabWidget):
-    """Pannello raggruppato per le automazioni."""
+    """Pannello raggruppato per i Bot con caricamento pigro dei sub-pannelli."""
+
     def __init__(self, main_window):
         super().__init__()
         self.mw = main_window
-        
-        # Import Panels on-demand
+        self.setTabPosition(QTabWidget.TabPosition.North)
+
+        # Placeholders per i tab
+        self.tab_fornitori = QTabWidget()
+        for i in range(4):  # Dettagli, Scarico, Timbrature, Carico
+            self.tab_fornitori.addTab(QWidget(), f"Tab {i}")
+
+        self.tab_safework = QTabWidget()
+        self.tab_safework.addTab(QWidget(), "🛡️ Scarico PDL")
+
+        self.addTab(self.tab_fornitori, "Portale Fornitori")
+        self.addTab(self.tab_safework, "SafeWork")
+
+        # Nomi tab
+        self.tab_fornitori.setTabText(0, "📋 Dettagli OdA")
+        self.tab_fornitori.setTabText(1, "📥 Scarico TS")
+        self.tab_fornitori.setTabText(2, "⏱️ Timbrature")
+        self.tab_fornitori.setTabText(3, "📤 Carico TS")
+
+        # Stato inizializzazione
+        self._init_states = {
+            "dettagli": False,
+            "scarico": False,
+            "timbrature": False,
+            "carico": False,
+            "pdl": False,
+        }
+
+        # Connessione segnali
+        self.tab_fornitori.currentChanged.connect(self._on_fornitori_tab_changed)
+        self.tab_safework.currentChanged.connect(self._on_safework_tab_changed)
+
+        # Carica il primo tab
+        QTimer.singleShot(0, lambda: self._on_fornitori_tab_changed(0))
+
+    def _on_fornitori_tab_changed(self, index):
         from src.gui.panels import (
             CaricoTSPanel,
             DettagliOdAPanel,
             ScaricaTSPanel,
-            ScaricoPDLPanel,
             TimbratureBotPanel,
         )
-        
-        # Inizializza pannelli e assegnali a main_window
-        self.mw.dettagli_panel = DettagliOdAPanel()
-        self.mw.scarico_panel = ScaricaTSPanel()
-        self.mw.timbrature_bot_panel = TimbratureBotPanel()
-        self.mw.carico_panel = CaricoTSPanel()
-        self.mw.pdl_panel = ScaricoPDLPanel()
 
-        # Collega segnale timbrature
-        from src.gui.panels import TimbratureDBPanel
-        if hasattr(self.mw, 'timbrature_db_panel'):
-            self.mw.timbrature_bot_panel.data_updated.connect(self.mw.timbrature_db_panel.refresh_data)
+        mapping = {
+            0: ("dettagli", DettagliOdAPanel, "dettagli_panel"),
+            1: ("scarico", ScaricaTSPanel, "scarico_panel"),
+            2: ("timbrature", TimbratureBotPanel, "timbrature_bot_panel"),
+            3: ("carico", CaricoTSPanel, "carico_panel"),
+        }
 
-        # Global Status Card
-        self.mw.global_status_card = StatusCard("Stato Attività")
-        self.mw.global_status_card.setMinimumWidth(350)
-        self.mw.global_status_card.setMaximumHeight(40)
-        self.setCornerWidget(self.mw.global_status_card, Qt.Corner.TopRightCorner)
+        if index in mapping:
+            key, cls, attr = mapping[index]
+            if not self._init_states[key]:
+                panel = cls()
+                setattr(self.mw, attr, panel)
+                self.tab_fornitori.removeWidget(self.tab_fornitori.widget(index))
+                self.tab_fornitori.insertTab(
+                    index, panel, self.tab_fornitori.tabText(index)
+                )
+                self.tab_fornitori.setCurrentIndex(index)
+                self._init_states[key] = True
 
-        # Group 1: Portale Fornitori
-        self.mw.tab_fornitori = QTabWidget()
-        self.mw.tab_fornitori.addTab(self.mw.dettagli_panel, "📋 Dettagli OdA")
-        self.mw.tab_fornitori.addTab(self.mw.scarico_panel, "📥 Scarico TS")
-        self.mw.tab_fornitori.addTab(self.mw.timbrature_bot_panel, "⏱️ Timbrature")
-        self.mw.tab_fornitori.addTab(self.mw.carico_panel, "📤 Carico TS")
+                # Registra nel bot controller
+                if hasattr(self.mw, "bot_controller"):
+                    self.mw.bot_controller.register_panels([panel])
 
-        # Group 2: SafeWork
-        self.mw.tab_safework = QTabWidget()
-        self.mw.tab_safework.addTab(self.mw.pdl_panel, "🛡️ Scarico PDL")
+    def _on_safework_tab_changed(self, index):
+        from src.gui.panels import ScaricoPDLPanel
 
-        self.addTab(self.mw.tab_fornitori, "Portale Fornitori")
-        self.addTab(self.mw.tab_safework, "SafeWork")
-        
-        # Segnali di navigazione tab interni
-        self.currentChanged.connect(self.mw.bot_controller.update_global_status)
-        self.mw.tab_fornitori.currentChanged.connect(self.mw.bot_controller.update_global_status)
-        self.mw.tab_safework.currentChanged.connect(self.mw.bot_controller.update_global_status)
+        if index == 0 and not self._init_states["pdl"]:
+            panel = ScaricoPDLPanel()
+            self.mw.pdl_panel = panel
+            self.tab_safework.removeWidget(self.tab_safework.widget(0))
+            self.tab_safework.insertTab(0, panel, "🛡️ Scarico PDL")
+            self._init_states["pdl"] = True
+            if hasattr(self.mw, "bot_controller"):
+                self.mw.bot_controller.register_panels([panel])
 
 
 class DatabaseWidget(QTabWidget):
-    """Pannello raggruppato per i Database."""
+    """Pannello raggruppato per i Database con caricamento pigro."""
+
     def __init__(self, main_window):
         super().__init__()
         self.mw = main_window
-        
-        # Import Panels on-demand
-        from src.gui.contabilita_panel import ContabilitaPanel
-        from src.gui.panels import TimbratureDBPanel
-        from src.gui.scarico_ore_panel import ScaricoOrePanel
-        
-        self.mw.timbrature_db_panel = TimbratureDBPanel()
-        self.mw.contabilita_panel = ContabilitaPanel()
-        self.mw.scarico_ore_panel = ScaricoOrePanel()
-        
-        self.addTab(self.mw.timbrature_db_panel, "Timbrature Isab")
-        self.addTab(self.mw.contabilita_panel, "Strumentale")
-        self.addTab(self.mw.scarico_ore_panel, "DataEase")
+
+        for i in range(3):
+            self.addTab(QWidget(), f"Tab {i}")
+
+        self.setTabText(0, "Timbrature Isab")
+        self.setTabText(1, "Strumentale")
+        self.setTabText(2, "DataEase")
+
+        self._init_states = [False, False, False]
+        self.currentChanged.connect(self._on_tab_changed)
+        QTimer.singleShot(0, lambda: self._on_tab_changed(0))
+
+    def _on_tab_changed(self, index):
+        if self._init_states[index]:
+            return
+
+        if index == 0:
+            from src.gui.panels import TimbratureDBPanel
+
+            panel = TimbratureDBPanel()
+            self.mw.timbrature_db_panel = panel
+        elif index == 1:
+            from src.gui.contabilita_panel import ContabilitaPanel
+
+            panel = ContabilitaPanel()
+            self.mw.contabilita_panel = panel
+        elif index == 2:
+            from src.gui.scarico_ore_panel import ScaricoOrePanel
+
+            panel = ScaricoOrePanel()
+            self.mw.scarico_ore_panel = panel
+
+        self.removeWidget(self.widget(index))
+        self.insertTab(index, panel, self.tabText(index))
+        self.setCurrentIndex(index)
+        self._init_states[index] = True
 
 
 class MainWindow(QMainWindow):
@@ -155,7 +207,7 @@ class MainWindow(QMainWindow):
 
         # Navigazione iniziale (Dashboard)
         self.navigation_controller.navigate_to(0)
-        
+
         # Avvio automatico importazione contabilità se abilitato
         QTimer.singleShot(2000, self._check_and_start_contabilita_update)
 
@@ -164,7 +216,9 @@ class MainWindow(QMainWindow):
         if hasattr(self, "sidebar"):
             self.sidebar.btn_lyra.set_badge(count)
         if count > 0:
-            ToastManager.instance().show(f"⚠️ Lyra ha rilevato {count} anomalie", "warning")
+            ToastManager.instance().show(
+                f"⚠️ Lyra ha rilevato {count} anomalie", "warning"
+            )
 
     def _show_update_banner(self, new_version, download_url, changelog):
         """Mostra un banner informativo per la nuova versione."""
@@ -178,7 +232,9 @@ class MainWindow(QMainWindow):
                 f"È uscita la versione {new_version}. Clicca qui per scaricarla.",
             )
 
-    def show_background_notification(self, title: str, message: str, is_error: bool = False):
+    def show_background_notification(
+        self, title: str, message: str, is_error: bool = False
+    ):
         """
         Mostra una notifica di sistema (Toast) se l'applicazione non è attiva.
         """
@@ -186,7 +242,9 @@ class MainWindow(QMainWindow):
 
         if not is_active and hasattr(self, "tray_controller"):
             icon = (
-                QSystemTrayIcon.MessageIcon.Critical if is_error else QSystemTrayIcon.MessageIcon.Information
+                QSystemTrayIcon.MessageIcon.Critical
+                if is_error
+                else QSystemTrayIcon.MessageIcon.Information
             )
             self.tray_controller.show_message(title, message, icon, 5000)
             QApplication.alert(self, 0)
@@ -221,7 +279,9 @@ class MainWindow(QMainWindow):
 
         # SIDEBAR
         self.sidebar = SidebarWidget()
-        self.sidebar.navigation_requested.connect(self.navigation_controller.navigate_to)
+        self.sidebar.navigation_requested.connect(
+            self.navigation_controller.navigate_to
+        )
         main_layout.addWidget(self.sidebar)
 
         # CONTENT AREA
@@ -234,7 +294,9 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.update_banner)
 
         self.global_search = QLineEdit()
-        self.global_search.setPlaceholderText("🔍 Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")
+        self.global_search.setPlaceholderText(
+            "🔍 Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F"
+        )
         self.global_search.setMinimumHeight(40)
         self.global_search.returnPressed.connect(
             lambda: self.search_controller.perform_search(self.global_search.text())
@@ -254,14 +316,18 @@ class MainWindow(QMainWindow):
 
     def _connect_signals(self):
         """Collega i segnali globali."""
-        NotificationManager.instance().unread_count_changed.connect(self.sidebar.btn_notifications.set_badge)
-        self.sidebar.btn_notifications.set_badge(NotificationManager.instance().get_unread_count())
+        NotificationManager.instance().unread_count_changed.connect(
+            self.sidebar.btn_notifications.set_badge
+        )
+        self.sidebar.btn_notifications.set_badge(
+            NotificationManager.instance().get_unread_count()
+        )
 
     def _setup_shortcuts(self):
         """Configura le scorciatoie da tastiera globali."""
         self.shortcut_f5 = QShortcut(QKeySequence(Qt.Key.Key_F5), self)
         self.shortcut_f5.activated.connect(self._handle_f5)
-        
+
         self.shortcut_search = QShortcut(QKeySequence("Ctrl+F"), self)
         self.shortcut_search.activated.connect(self._handle_ctrl_f)
 
@@ -272,9 +338,12 @@ class MainWindow(QMainWindow):
             self.dashboard_panel.refresh_data()
         elif idx == 3 and hasattr(self, "database_widget"):
             tab_idx = self.database_widget.currentIndex()
-            if tab_idx == 0: self.timbrature_db_panel.refresh_data()
-            elif tab_idx == 1: self.contabilita_panel.refresh_tabs()
-            elif tab_idx == 2: self.scarico_ore_panel._start_update()
+            if tab_idx == 0:
+                self.timbrature_db_panel.refresh_data()
+            elif tab_idx == 1:
+                self.contabilita_panel.refresh_tabs()
+            elif tab_idx == 2:
+                self.scarico_ore_panel._start_update()
 
     def _handle_ctrl_f(self):
         """Gestisce Ctrl+F."""
@@ -286,9 +355,12 @@ class MainWindow(QMainWindow):
         self.help_panel.open_section(section_title)
 
     def _on_settings_saved(self):
-        if hasattr(self, "scarico_panel"): self.scarico_panel.refresh_fornitori()
-        if hasattr(self, "dettagli_panel"): self.dettagli_panel.refresh_fornitori()
-        if hasattr(self, "timbrature_bot_panel"): self.timbrature_bot_panel.refresh_fornitori()
+        if hasattr(self, "scarico_panel"):
+            self.scarico_panel.refresh_fornitori()
+        if hasattr(self, "dettagli_panel"):
+            self.dettagli_panel.refresh_fornitori()
+        if hasattr(self, "timbrature_bot_panel"):
+            self.timbrature_bot_panel.refresh_fornitori()
         self.telegram.start_service()
         ToastManager.instance().show("Impostazioni salvate!", "success")
 
@@ -301,18 +373,26 @@ class MainWindow(QMainWindow):
 
     def _on_download_update_clicked(self, url):
         import webbrowser
+
         webbrowser.open(url)
 
     # Wrapper per compatibilità
-    def navigate_to_panel(self, panel_key: str): self.navigation_controller.navigate_to_panel(panel_key)
-    def analyze_with_lyra(self, context_text: str): self.navigation_controller.analyze_with_lyra(context_text)
-    def show_settings(self): self.navigation_controller.navigate_to(4)
+    def navigate_to_panel(self, panel_key: str):
+        self.navigation_controller.navigate_to_panel(panel_key)
+
+    def analyze_with_lyra(self, context_text: str):
+        self.navigation_controller.analyze_with_lyra(context_text)
+
+    def show_settings(self):
+        self.navigation_controller.navigate_to(4)
 
     def closeEvent(self, event):
         if self._force_quit:
-            if self.telegram: self.telegram.stop_service()
+            if self.telegram:
+                self.telegram.stop_service()
             config = config_manager.load_config()
-            if config.get("auto_backup", True): BackupManager.create_backup()
+            if config.get("auto_backup", True):
+                BackupManager.create_backup()
             event.accept()
             return
         if self.isVisible():

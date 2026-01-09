@@ -20,8 +20,18 @@ class ContabilitaYearTab(QWidget):
     """Tab per un singolo anno (Tabella Dati)."""
 
     COLUMNS = [
-        "DATA\nPREV.", "MESE", "N°\nPREV.", "TOTALE\nPREV.", "ATTIVITA'",
-        "TCL", "ODC", "STATO\nATTIVITA'", "TIPOLOGIA", "ORE\nSP", "RESA", "ANNOTAZIONI",
+        "DATA\nPREV.",
+        "MESE",
+        "N°\nPREV.",
+        "TOTALE\nPREV.",
+        "ATTIVITA'",
+        "TCL",
+        "ODC",
+        "STATO\nATTIVITA'",
+        "TIPOLOGIA",
+        "ORE\nSP",
+        "RESA",
+        "ANNOTAZIONI",
     ]
 
     IDX_INDIRIZZO = 12
@@ -91,11 +101,14 @@ class ContabilitaYearTab(QWidget):
                     val = row_data[col_idx]
                     formatted = self._format_value(col_idx, val)
                     item = QTableWidgetItem(formatted)
-                    if col_idx in right_cols: item.setTextAlignment(align_right)
+                    if col_idx in right_cols:
+                        item.setTextAlignment(align_right)
                     self.table.setItem(row_idx, col_idx, item)
                 indirizzo = row_data[self.IDX_INDIRIZZO]
                 if self.table.item(row_idx, 0):
-                    self.table.item(row_idx, 0).setData(Qt.ItemDataRole.UserRole, indirizzo)
+                    self.table.item(row_idx, 0).setData(
+                        Qt.ItemDataRole.UserRole, indirizzo
+                    )
             self.table.resizeRowsToContents()
             self._add_totals_row()
             self._update_totals()
@@ -106,7 +119,8 @@ class ContabilitaYearTab(QWidget):
     def _add_totals_row(self):
         if self.table.rowCount() > 0:
             last = self.table.item(self.table.rowCount() - 1, 0)
-            if last and last.text() == "TOTALI": return
+            if last and last.text() == "TOTALI":
+                return
         row_idx = self.table.rowCount()
         self.table.insertRow(row_idx)
         item = QTableWidgetItem("TOTALI")
@@ -120,15 +134,19 @@ class ContabilitaYearTab(QWidget):
             it.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
             if c in [self.COL_TOTALE, self.COL_ORE, self.COL_RESA, self.COL_N_PREV]:
-                it.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                it.setTextAlignment(
+                    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                )
             self.table.setItem(row_idx, c, it)
 
     def _update_totals(self):
         total_row_idx = -1
         if self.table.rowCount() > 0:
             last = self.table.item(self.table.rowCount() - 1, 0)
-            if last and last.text() == "TOTALI": total_row_idx = self.table.rowCount() - 1
-        if total_row_idx == -1: return
+            if last and last.text() == "TOTALI":
+                total_row_idx = self.table.rowCount() - 1
+        if total_row_idx == -1:
+            return
 
         count_prev, sum_totale, sum_ore = 0, 0.0, 0.0
         for r in range(total_row_idx):
@@ -136,26 +154,41 @@ class ContabilitaYearTab(QWidget):
                 count_prev += 1
                 is_excl = False
                 r_item = self.table.item(r, self.COL_RESA)
-                if r_item and "INS.ORE SP" in r_item.text().upper(): is_excl = True
+                if r_item and "INS.ORE SP" in r_item.text().upper():
+                    is_excl = True
                 if not is_excl:
                     t_item = self.table.item(r, self.COL_TOTALE)
-                    if t_item: sum_totale += self._parse_currency(t_item.text())
+                    if t_item:
+                        sum_totale += self._parse_currency(t_item.text())
                 o_item = self.table.item(r, self.COL_ORE)
-                if o_item: sum_ore += self._parse_float(o_item.text())
+                if o_item:
+                    sum_ore += self._parse_float(o_item.text())
 
         self.table.item(total_row_idx, self.COL_N_PREV).setText(str(count_prev))
-        self.table.item(total_row_idx, self.COL_TOTALE).setText(self._format_currency(sum_totale))
-        self.table.item(total_row_idx, self.COL_ORE).setText(self._format_number(sum_ore))
+        self.table.item(total_row_idx, self.COL_TOTALE).setText(
+            self._format_currency(sum_totale)
+        )
+        self.table.item(total_row_idx, self.COL_ORE).setText(
+            self._format_number(sum_ore)
+        )
         weighted_resa = sum_totale / sum_ore if sum_ore > 0 else 0.0
-        self.table.item(total_row_idx, self.COL_RESA).setText(self._format_number(weighted_resa))
+        self.table.item(total_row_idx, self.COL_RESA).setText(
+            self._format_number(weighted_resa)
+        )
 
     def _parse_currency(self, text):
-        try: return float(text.replace("€", "").replace(".", "").replace(",", ".").strip())
-        except: return 0.0
+        try:
+            return float(
+                text.replace("€", "").replace(".", "").replace(",", ".").strip()
+            )
+        except:
+            return 0.0
 
     def _parse_float(self, text):
-        try: return float(text.replace(",", "."))
-        except: return 0.0
+        try:
+            return float(text.replace(",", "."))
+        except:
+            return 0.0
 
     def _format_currency(self, val):
         return f"€ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -164,41 +197,64 @@ class ContabilitaYearTab(QWidget):
         try:
             v = round(float(val), 2)
             return f"{int(v)}" if v.is_integer() else f"{v:.2f}".replace(".", ",")
-        except: return str(val)
+        except:
+            return str(val)
 
     def _format_value(self, col_idx, val):
-        if not val and val != 0: return ""
+        if not val and val != 0:
+            return ""
         s = str(val).strip()
-        if not s: return ""
+        if not s:
+            return ""
         if col_idx == self.COL_DATA:
             for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
-                try: return datetime.strptime(s.split(" ")[0], fmt).strftime("%d/%m/%Y")
-                except: continue
+                try:
+                    return datetime.strptime(s.split(" ")[0], fmt).strftime("%d/%m/%Y")
+                except:
+                    continue
         elif col_idx == self.COL_TOTALE:
-            try: return self._format_currency(float(s))
-            except: pass
+            try:
+                return self._format_currency(float(s))
+            except:
+                pass
         elif col_idx in [self.COL_ORE, self.COL_RESA]:
-            try: return self._format_number(float(s))
-            except: pass
-        elif col_idx == self.COL_ODC: return s.replace("-", "/")
+            try:
+                return self._format_number(float(s))
+            except:
+                pass
+        elif col_idx == self.COL_ODC:
+            return s.replace("-", "/")
         return s
 
     def filter_data(self, text):
         rows = self.table.rowCount()
-        data_rows = rows - 1 if rows > 0 and self.table.item(rows-1, 0).text() == "TOTALI" else rows
+        data_rows = (
+            rows - 1
+            if rows > 0 and self.table.item(rows - 1, 0).text() == "TOTALI"
+            else rows
+        )
         search_terms = text.lower().split()
         cols = self.table.columnCount()
         for r in range(data_rows):
             if not text:
                 self.table.setRowHidden(r, False)
                 continue
-            row_text = " ".join([self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)])
-            self.table.setRowHidden(r, not all(term in row_text for term in search_terms))
+            row_text = " ".join(
+                [
+                    self.table.item(r, c).text().lower()
+                    for c in range(cols)
+                    if self.table.item(r, c)
+                ]
+            )
+            self.table.setRowHidden(
+                r, not all(term in row_text for term in search_terms)
+            )
         self._update_totals()
 
     def _show_context_menu(self, pos):
         item = self.table.itemAt(pos)
-        if not item or item.text() == "TOTALI": return
+        if not item or item.text() == "TOTALI":
+            return
         row = item.row()
         file_path = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)
         menu = QMenu(self)
@@ -207,7 +263,9 @@ class ContabilitaYearTab(QWidget):
         menu.addAction(lyra_action)
         menu.addSeparator()
         action_open = QAction("📂 Apri File", self)
-        if file_path: action_open.triggered.connect(lambda: os.startfile(file_path))
-        else: action_open.setEnabled(False)
+        if file_path:
+            action_open.triggered.connect(lambda: os.startfile(file_path))
+        else:
+            action_open.setEnabled(False)
         menu.addAction(action_open)
         menu.exec(self.table.viewport().mapToGlobal(pos))

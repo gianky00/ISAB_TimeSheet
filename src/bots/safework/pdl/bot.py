@@ -1,7 +1,7 @@
 import glob
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import fitz  # PyMuPDF
 from selenium.webdriver.common.by import By
@@ -20,7 +20,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     Logica ricalcata dallo script originale funzionante.
     """
 
-    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+    def __init__(
+        self, username, password, headless=False, timeout=30, download_path=""
+    ):
         super().__init__(username, password, headless, timeout, download_path)
         if not self.download_path:
             from src.core.config_manager import get_download_path
@@ -34,12 +36,14 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log_file = log_dir / "pdl_bot_debug.txt"
             # Inizializza file con header sessione
             with open(self.log_file, "a", encoding="utf-8") as f:
-                f.write(f"\n\n--- NUOVA SESSIONE: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+                f.write(
+                    f"\n\n--- NUOVA SESSIONE: {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n"
+                )
         except Exception as e:
             print(f"Errore setup log file: {e}")
             self.log_file = None
         self.downloaded_files = []
-        self.merged_pdf_path = None # Inizializza qui
+        self.merged_pdf_path = None  # Inizializza qui
 
     def log(self, message: str):
         """Override log per salvare su file."""
@@ -60,6 +64,21 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def description(self) -> str:
         return "Scarica e stampa Permessi di Lavoro da SafeWork"
 
+    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+        """Validazione specifica per SafeWork PDL."""
+        base_valid, base_msg = super().validate_data(data)
+        if not base_valid:
+            return False, base_msg
+
+        if not data:
+            return False, "Nessun dato da elaborare."
+
+        # Verifica che almeno una riga abbia un PDL
+        if not any(item.get("pdl_number") or item.get("numero_pdl") for item in data):
+            return False, "Nessun numero PDL trovato nei dati forniti."
+
+        return True, ""
+
     def _login(self) -> bool:
         """Login SafeWork ricalcato dall'originale."""
         if not self.driver or not self.wait:
@@ -74,7 +93,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             ).click()
             WebDriverWait(self.driver, 5).until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "//div[contains(@class, 'ms-drop')]//span[normalize-space()='ISAB Sud']")
+                    (
+                        By.XPATH,
+                        "//div[contains(@class, 'ms-drop')]//span[normalize-space()='ISAB Sud']",
+                    )
                 )
             ).click()
             self.log("✅ Sito ISAB Sud selezionato.")
@@ -82,8 +104,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log(f"⚠️ Selezione sito non necessaria o fallita: {e}")
 
         self.log("🔐 Eseguo il login...")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente"))).send_keys(self.username)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword"))).send_keys(self.password)
+        self.wait.until(
+            EC.visibility_of_element_located((By.ID, "inpUtente"))
+        ).send_keys(self.username)
+        self.wait.until(
+            EC.visibility_of_element_located((By.ID, "inpPassword"))
+        ).send_keys(self.password)
         self.wait.until(EC.element_to_be_clickable((By.ID, "btnLogin"))).click()
 
         self.log("⏳ Attendo caricamento sistema...")
@@ -101,14 +127,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log(f"⚠️ Impossibile rimuovere file temp (in uso?): {path} - {e}")
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
-        if not self.driver or not self.wait:
-            self.log("❌ Driver non inizializzato.")
-            return False
-
+        # Driver e wait sono garantiti da execute()
         success_count = 0
         total = len(data)
         self.downloaded_files = []
-        all_downloaded_pdl_paths = [] # Tutti i PDL scaricati per l'unione finale
+        all_downloaded_pdl_paths = []  # Tutti i PDL scaricati per l'unione finale
         self.merged_pdf_path = None
 
         for index, item in enumerate(data):
@@ -131,15 +154,19 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.log(f"ℹ️ PDL auto-completato: {pdl_raw} -> {pdl_num}")
 
             self.log(f"🔄 Processo PdL {pdl_num} ({index + 1}/{total})")
-            campo_ricerca = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
+            campo_ricerca = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce"))
+            )
             campo_ricerca.clear()
             campo_ricerca.send_keys(pdl_num)
             time.sleep(0.5)
             campo_ricerca.send_keys(Keys.ENTER)
 
             if self._gestisci_alert_ricerca():
-                self.log(f"❌ Alert di ricerca per PdL {pdl_num}. Probabilmente non trovato o errore.")
-                continue # Salta questo PDL e vai al successivo
+                self.log(
+                    f"❌ Alert di ricerca per PdL {pdl_num}. Probabilmente non trovato o errore."
+                )
+                continue  # Salta questo PDL e vai al successivo
 
             self._attendi_scomparsa_overlay()
             self.log(f"✅ PdL {pdl_num} trovato.")
@@ -149,7 +176,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(1)
             ts_1 = time.time()
-            self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
+            self.wait.until(
+                EC.element_to_be_clickable(
+                    (By.ID, "topIcon-acticonAnteprimaStampaMenu")
+                )
+            ).click()
             time.sleep(0.5)
             self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
 
@@ -171,7 +202,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             try:
                 doc_p1 = fitz.open(path_temp_1)
                 if doc_p1.page_count >= 2:
-                    self.log(f"✂️ Parte 1 ha {doc_p1.page_count} pagine. Rimuovo la pagina 2 pre-merge.")
+                    self.log(
+                        f"✂️ Parte 1 ha {doc_p1.page_count} pagine. Rimuovo la pagina 2 pre-merge."
+                    )
                     doc_p1.delete_page(1)  # Rimuove pagina index 1 (la seconda)
                     # Salva su file temporaneo
                     tmp_clean = path_temp_1 + "_clean.pdf"
@@ -196,7 +229,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                             By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
                         ).click()
                     time.sleep(1)
-                self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
+                self.wait.until(
+                    EC.visibility_of_element_located((By.ID, "lblPAFoglio"))
+                )
                 self.log("✅ Parte Seconda aperta.")
             except Exception as e:
                 self.log(f"⚠️ Errore apertura Parte Seconda per PdL {pdl_num}: {e}")
@@ -208,7 +243,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             is_single = False
             try:
-                txt = self.driver.find_element(By.ID, "lblPAFoglio").find_element(By.XPATH, "..").text
+                txt = (
+                    self.driver.find_element(By.ID, "lblPAFoglio")
+                    .find_element(By.XPATH, "..")
+                    .text
+                )
             except Exception:
                 pass
 
@@ -216,9 +255,13 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             if not is_single:
                 time.sleep(1)
-                self.wait.until(EC.element_to_be_clickable((By.ID, "rbStampaTutte"))).click()
+                self.wait.until(
+                    EC.element_to_be_clickable((By.ID, "rbStampaTutte"))
+                ).click()
                 time.sleep(0.5)
-                self.wait.until(EC.element_to_be_clickable((By.ID, "btnAnteprima"))).click()
+                self.wait.until(
+                    EC.element_to_be_clickable((By.ID, "btnAnteprima"))
+                ).click()
 
             pdf_2 = self._attendi_e_ritorna_nuovo_pdf(ts_2, timeout=90)
             if not pdf_2:
@@ -247,10 +290,14 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             )
 
             # Unisci solo la prima pagina del primo PDF con tutte le pagine del secondo
-            if DocumentProcessor.merge_pdfs([path_temp_1, path_temp_2], percorso_finale_pdl):
+            if DocumentProcessor.merge_pdfs(
+                [path_temp_1, path_temp_2], percorso_finale_pdl
+            ):
                 self.log(f"✅ PDF {pdl_upper} unito correttamente: {nome_finale_pdl}")
                 self.downloaded_files.append(percorso_finale_pdl)
-                all_downloaded_pdl_paths.append(percorso_finale_pdl) # Aggiungi alla lista per l'unione finale
+                all_downloaded_pdl_paths.append(
+                    percorso_finale_pdl
+                )  # Aggiungi alla lista per l'unione finale
                 success_count += 1
 
                 # Stampa
@@ -276,7 +323,10 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 path_merge_totale = os.path.join(self.download_path, nome_merge_totale)
 
                 from src.utils.document_processor import DocumentProcessor
-                if DocumentProcessor.merge_pdfs(all_downloaded_pdl_paths, path_merge_totale):
+
+                if DocumentProcessor.merge_pdfs(
+                    all_downloaded_pdl_paths, path_merge_totale
+                ):
                     self.log(f"✅ PDF Unico Creato: {nome_merge_totale}")
                     self.downloaded_files.append(path_merge_totale)
                 else:
@@ -318,5 +368,3 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     return ultimo_file
             time.sleep(1)
         return None
-
-

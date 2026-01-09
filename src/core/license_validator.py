@@ -40,93 +40,112 @@ def get_hardware_id():
     """
     Ottiene un ID hardware univoco per la macchina.
     """
-    system = platform.system()
-
     if system == "Windows":
-        # 1. Try WMIC (Legacy)
-        try:
-            cmd = ["wmic", "diskdrive", "get", "serialnumber"]
-            output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode()
-            parts = output.strip().split("\n")
-            if len(parts) > 1:
-                serial = parts[1].strip()
-                if serial:
-                    return serial
-        except Exception:
-            pass
-
-        # 2. Try PowerShell (Disk Serial)
-        try:
-            cmd = [
-                "powershell",
-                "-NoProfile",
-                "-Command",
-                "Get-CimInstance -Class Win32_DiskDrive | " "Select-Object -ExpandProperty SerialNumber",
-            ]
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-            output = (
-                subprocess.check_output(cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL)
-                .decode()
-                .strip()
-            )
-
-            if output:
-                return output.splitlines()[0].strip()
-        except Exception:
-            pass
-
-        # 3. Try PowerShell (System UUID)
-        try:
-            cmd = [
-                "powershell",
-                "-NoProfile",
-                "-Command",
-                "Get-CimInstance -Class Win32_ComputerSystemProduct | " "Select-Object -ExpandProperty UUID",
-            ]
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-            output = (
-                subprocess.check_output(cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL)
-                .decode()
-                .strip()
-            )
-
-            if output:
-                return output
-        except Exception:
-            pass
-
+        return _get_windows_hardware_id()
     elif system == "Linux":
-        # Try lsblk
-        try:
-            # Avoid complex pipes with shell=True, execute basic lsblk and parse in python
-            cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
-            output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode().strip()
-
-            # Take the first line if multiple disks
-            first_line = output.split("\n")[0].strip()
-
-            if first_line:
-                return first_line
-        except Exception:
-            pass
-
-        # Fallback to machine-id
-        if os.path.exists("/etc/machine-id"):
-            try:
-                with open("/etc/machine-id", "r") as f:
-                    return f.read().strip()
-            except Exception:
-                pass
-
+        return _get_linux_hardware_id()
+    
     # Fallback universale: UUID basato su MAC address
     try:
         return str(uuid.getnode())
     except Exception:
         return "ERROR_GETTING_ID"
+
+def _get_windows_hardware_id():
+    """Helper to get hardware ID on Windows."""
+    # 1. Try WMIC (Legacy)
+    try:
+        cmd = ["wmic", "diskdrive", "get", "serialnumber"]
+        output = subprocess.check_output(
+            cmd, shell=False, stderr=subprocess.DEVNULL
+        ).decode()
+        parts = output.strip().split("\n")
+        if len(parts) > 1:
+            serial = parts[1].strip()
+            if serial:
+                return serial
+    except Exception:
+        pass
+
+    # 2. Try PowerShell (Disk Serial)
+    try:
+        cmd = [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance -Class Win32_DiskDrive | "
+            "Select-Object -ExpandProperty SerialNumber",
+        ]
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        output = (
+            subprocess.check_output(
+                cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
+
+        if output:
+            return output.splitlines()[0].strip()
+    except Exception:
+        pass
+
+    # 3. Try PowerShell (System UUID)
+    try:
+        cmd = [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance -Class Win32_ComputerSystemProduct | "
+            "Select-Object -ExpandProperty UUID",
+        ]
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        output = (
+            subprocess.check_output(
+                cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
+
+        if output:
+            return output
+    except Exception:
+        pass
+    return None
+
+def _get_linux_hardware_id():
+    """Helper to get hardware ID on Linux."""
+    # Try lsblk
+    try:
+        # Avoid complex pipes with shell=True, execute basic lsblk and parse in python
+        cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
+        output = (
+            subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
+
+        # Take the first line if multiple disks
+        first_line = output.split("\n")[0].strip()
+
+        if first_line:
+            return first_line
+    except Exception:
+        pass
+
+    # Fallback to machine-id
+    if os.path.exists("/etc/machine-id"):
+        try:
+            with open("/etc/machine-id", "r") as f:
+                return f.read().strip()
+        except Exception:
+            pass
+    return None
 
 
 def _get_license_paths():
@@ -169,8 +188,9 @@ def get_license_info():
 
         # Fernet requires url-safe base64 encoded bytes
         import base64
+
         key_b64 = base64.urlsafe_b64encode(key_raw)
-        
+
         cipher = Fernet(key_b64)
         decrypted_data = cipher.decrypt(encrypted_data)
         return json.loads(decrypted_data.decode("utf-8"))
@@ -210,6 +230,17 @@ def get_detailed_license_status():
         return LicenseStatus.MISSING, "File di licenza mancanti"
 
     # 1. Verifica integrità tramite manifest
+    integrity_status, integrity_msg = _check_integrity_with_manifest(paths)
+    if integrity_status != LicenseStatus.VALID:
+        return integrity_status, integrity_msg
+
+    # 2. Decifra e valida i dati
+    validation_status, validation_msg = _validate_license_data(paths)
+    return validation_status, validation_msg
+
+
+def _check_integrity_with_manifest(paths: dict) -> Tuple[LicenseStatus, str]:
+    """Helper to check license file integrity using manifest."""
     try:
         with open(paths["manifest"], "r") as f:
             manifest = json.load(f)
@@ -228,8 +259,10 @@ def get_detailed_license_status():
 
     except Exception as e:
         return LicenseStatus.ERROR, f"Errore lettura manifest: {e}"
+    return LicenseStatus.VALID, ""
 
-    # 2. Decifra e valida i dati
+def _validate_license_data(paths: dict) -> Tuple[LicenseStatus, str]:
+    """Helper to decrypt and validate license data."""
     try:
         payload = get_license_info()
         if not payload:

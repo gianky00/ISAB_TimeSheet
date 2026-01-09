@@ -6,13 +6,13 @@ Centralized management of file paths, assets, and temporary resources.
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 from src.core.config_manager import CONFIG_DIR
 
+
 class ResourceManager:
     """Gestore centralizzato per percorsi e risorse del sistema."""
-    
+
     # Root del progetto (gestisce sia sorgenti che eseguibili congelati)
     if getattr(sys, "frozen", False):
         PROJECT_ROOT = Path(os.path.dirname(sys.executable))
@@ -24,7 +24,7 @@ class ResourceManager:
     ICONS_DIR = ASSETS_DIR / "icons"
     STYLES_DIR = ASSETS_DIR / "styles"
     TEMP_DIR = PROJECT_ROOT / "temp"
-    
+
     # User Data (Config & Logs)
     LOGS_DIR = CONFIG_DIR / "logs"
     DATA_DIR = CONFIG_DIR / "data"
@@ -54,6 +54,7 @@ class ResourceManager:
         """Assicura che tutte le cartelle necessarie esistano."""
         for d in [cls.TEMP_DIR, cls.LOGS_DIR, cls.DATA_DIR]:
             d.mkdir(parents=True, exist_ok=True)
+
 
 # Inizializzazione struttura all'import
 ResourceManager.ensure_structure()

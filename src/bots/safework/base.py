@@ -33,7 +33,10 @@ class SafeworkBaseBot(BaseBot):
         try:
             modale = WebDriverWait(self.driver, 3).until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "//div[contains(@class, 'modal') and contains(@style, 'display: block')]")
+                    (
+                        By.XPATH,
+                        "//div[contains(@class, 'modal') and contains(@style, 'display: block')]",
+                    )
                 )
             )
             modale.find_element(

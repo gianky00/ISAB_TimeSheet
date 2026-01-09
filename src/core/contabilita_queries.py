@@ -38,9 +38,7 @@ class ContabilitaQueries:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = list(ExcelImporter.COLUMNS_MAPPING.values())
-                query = (
-                    f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"
-                )
+                query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"
                 cursor.execute(query, (year,))
                 rows = cursor.fetchall()
                 return rows
@@ -68,9 +66,7 @@ class ContabilitaQueries:
                     "ore",
                     "nome_file",
                 ]
-                query = (
-                    f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
-                )
+                query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
                 cursor.execute(query, (year,))
                 rows = cursor.fetchall()
                 return rows

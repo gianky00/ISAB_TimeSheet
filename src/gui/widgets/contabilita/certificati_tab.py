@@ -24,8 +24,30 @@ from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 class CertificatiCampioneTab(QWidget):
     """Tab per Certificati Campione (Tree View)."""
 
-    HEADERS = ["Modello /\nTipo", "Costruttore", "Matricola", "Range\nStrumento", "Errore\nmax %", "Certificato\nTaratura", "Scadenza\nCertificato", "Emissione\nCertificato", "ID-COEMI", "Stato\nCertificato"]
-    IDX_MODELLO, IDX_COSTRUTTORE, IDX_MATRICOLA, IDX_RANGE, IDX_ERRORE, IDX_CERTIFICATO, IDX_SCADENZA, IDX_EMISSIONE, IDX_ID, IDX_STATO = range(10)
+    HEADERS = [
+        "Modello /\nTipo",
+        "Costruttore",
+        "Matricola",
+        "Range\nStrumento",
+        "Errore\nmax %",
+        "Certificato\nTaratura",
+        "Scadenza\nCertificato",
+        "Emissione\nCertificato",
+        "ID-COEMI",
+        "Stato\nCertificato",
+    ]
+    (
+        IDX_MODELLO,
+        IDX_COSTRUTTORE,
+        IDX_MATRICOLA,
+        IDX_RANGE,
+        IDX_ERRORE,
+        IDX_CERTIFICATO,
+        IDX_SCADENZA,
+        IDX_EMISSIONE,
+        IDX_ID,
+        IDX_STATO,
+    ) = range(10)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -33,47 +55,73 @@ class CertificatiCampioneTab(QWidget):
         self._load_data()
 
     def _setup_ui(self):
-        layout = QVBoxLayout(self); layout.setContentsMargins(0, 10, 0, 0)
-        self.tree = QTreeWidget(); self.tree.setHeaderLabels(self.HEADERS); self.tree.setWordWrap(True)
-        self.tree.setAlternatingRowColors(True); self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 10, 0, 0)
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels(self.HEADERS)
+        self.tree.setWordWrap(True)
+        self.tree.setAlternatingRowColors(True)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.tree.setStyleSheet('''
+        self.tree.setStyleSheet("""
             QTreeWidget { background-color: white; color: black; font-size: 13px; border: 1px solid #dee2e6; }
             QTreeWidget::item { color: black; padding: 4px; }
             QTreeWidget::item:selected { background-color: #e7f1ff; color: #0d6efd; }
             QHeaderView::section { background-color: #E1F5FE; color: #333333; padding: 10px 5px; border: none; border-right: 1px solid #B3E5FC; border-bottom: 3px solid #81D4FA; font-weight: bold; text-transform: uppercase; font-size: 11px; }
-        ''')
-        h = self.tree.header(); h.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.tree.setColumnWidth(0, 200); self.tree.setColumnWidth(1, 120); self.tree.setColumnWidth(2, 120)
-        self.tree.setColumnWidth(3, 120); self.tree.setColumnWidth(4, 80); self.tree.setColumnWidth(5, 140)
-        self.tree.setColumnWidth(6, 120); self.tree.setColumnWidth(7, 120); self.tree.setColumnWidth(8, 100)
+        """)
+        h = self.tree.header()
+        h.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.tree.setColumnWidth(0, 200)
+        self.tree.setColumnWidth(1, 120)
+        self.tree.setColumnWidth(2, 120)
+        self.tree.setColumnWidth(3, 120)
+        self.tree.setColumnWidth(4, 80)
+        self.tree.setColumnWidth(5, 140)
+        self.tree.setColumnWidth(6, 120)
+        self.tree.setColumnWidth(7, 120)
+        self.tree.setColumnWidth(8, 100)
         h.setSectionResizeMode(9, QHeaderView.ResizeMode.Stretch)
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self._show_context_menu)
 
         toolbar = QHBoxLayout()
-        for text, func in [("Espandi Tutto", self.tree.expandAll), ("Comprimi Tutto", self.tree.collapseAll)]:
-            btn = QPushButton(text); btn.clicked.connect(func); toolbar.addWidget(btn)
+        for text, func in [
+            ("Espandi Tutto", self.tree.expandAll),
+            ("Comprimi Tutto", self.tree.collapseAll),
+        ]:
+            btn = QPushButton(text)
+            btn.clicked.connect(func)
+            toolbar.addWidget(btn)
         toolbar.addStretch()
-        self.btn_analyze = QPushButton("📊 Analizza"); self.btn_analyze.clicked.connect(self._run_analysis); toolbar.addWidget(self.btn_analyze)
-        layout.addLayout(toolbar); layout.addWidget(self.tree)
+        self.btn_analyze = QPushButton("📊 Analizza")
+        self.btn_analyze.clicked.connect(self._run_analysis)
+        toolbar.addWidget(self.btn_analyze)
+        layout.addLayout(toolbar)
+        layout.addWidget(self.tree)
 
-    def refresh_data(self): self._load_data()
+    def refresh_data(self):
+        self._load_data()
 
     def _load_data(self):
         data = ContabilitaManager.get_certificati_campione_data()
-        self.tree.clear(); self.tree.setSortingEnabled(False)
+        self.tree.clear()
+        self.tree.setSortingEnabled(False)
         groups = {}
         for r in data:
             costruttore = r[self.IDX_COSTRUTTORE] or "Altro"
             if costruttore not in groups:
                 groups[costruttore] = SortableTreeWidgetItem(self.tree, [costruttore])
                 groups[costruttore].setFirstColumnSpanned(True)
-            row_item = SortableTreeWidgetItem(groups[costruttore], [str(x) if x is not None else "" for x in r])
+            row_item = SortableTreeWidgetItem(
+                groups[costruttore], [str(x) if x is not None else "" for x in r]
+            )
             status = r[self.IDX_STATO]
-            if status == "SCADUTO": row_item.setBackground(self.IDX_STATO, Qt.GlobalColor.red)
-            elif status == "IN SCADENZA": row_item.setBackground(self.IDX_STATO, Qt.GlobalColor.yellow)
-        self.tree.setSortingEnabled(True); self.tree.sortByColumn(self.IDX_SCADENZA, Qt.SortOrder.AscendingOrder)
+            if status == "SCADUTO":
+                row_item.setBackground(self.IDX_STATO, Qt.GlobalColor.red)
+            elif status == "IN SCADENZA":
+                row_item.setBackground(self.IDX_STATO, Qt.GlobalColor.yellow)
+        self.tree.setSortingEnabled(True)
+        self.tree.sortByColumn(self.IDX_SCADENZA, Qt.SortOrder.AscendingOrder)
 
     def filter_data(self, text):
         query = text.lower()
@@ -82,23 +130,36 @@ class CertificatiCampioneTab(QWidget):
             parent_visible = False
             for j in range(parent.childCount()):
                 child = parent.child(j)
-                match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
+                match = any(
+                    query in child.text(c).lower()
+                    for c in range(self.tree.columnCount())
+                )
                 child.setHidden(not match)
-                if match: parent_visible = True
+                if match:
+                    parent_visible = True
             parent.setHidden(not parent_visible)
 
     def _show_context_menu(self, pos):
         item = self.tree.itemAt(pos)
-        if not item or item.parent() is None: return
+        if not item or item.parent() is None:
+            return
         menu = QMenu(self)
-        menu.addAction(QAction("✨ Analizza con Lyra", self)).triggered.connect(lambda: self._analyze_item(item))
+        menu.addAction(QAction("✨ Analizza con Lyra", self)).triggered.connect(
+            lambda: self._analyze_item(item)
+        )
         menu.exec(self.tree.viewport().mapToGlobal(pos))
 
     def _analyze_item(self, item):
         from src.gui.main_window import MainWindow
+
         mw = self.window()
         if isinstance(mw, MainWindow):
-            text = " | ".join([f"{self.HEADERS[c]}: {item.text(c)}" for c in range(self.tree.columnCount())])
+            text = " | ".join(
+                [
+                    f"{self.HEADERS[c]}: {item.text(c)}"
+                    for c in range(self.tree.columnCount())
+                ]
+            )
             mw.analyze_with_lyra(f"Certificato: {text}")
 
     def _run_analysis(self):
@@ -106,10 +167,14 @@ class CertificatiCampioneTab(QWidget):
         config = config_manager.load_config()
         path = config.get("certificati_campione_path", "")
         if not path or not os.path.exists(path):
-            QMessageBox.warning(self, "Attenzione", "File Certificati Campione non configurato o non trovato.")
+            QMessageBox.warning(
+                self,
+                "Attenzione",
+                "File Certificati Campione non configurato o non trovato.",
+            )
             return
 
-        ps_script_template = r'''
+        ps_script_template = r"""
 # --- Parametri Iniziali ---
 $Global:ExcelFilePath = "__FILE_PATH_PLACEHOLDER__"
 $Global:SheetName = "strumenti campione ISAB SUD"
@@ -189,12 +254,20 @@ try {
     $wb.Close($false); $xl.Quit(); [System.Runtime.InteropServices.Marshal]::ReleaseComObject($xl)
     Show-CustomSummaryBox "Avviso Scadenze" $scad $prox $oggi $Global:ExcelFilePath
 } catch { [System.Windows.Forms.MessageBox]::Show($_.Exception.Message) }
-'''
-        ps_script = ps_script_template.replace("__FILE_PATH_PLACEHOLDER__", path.replace("\\", "\\\\"))
+"""
+        ps_script = ps_script_template.replace(
+            "__FILE_PATH_PLACEHOLDER__", path.replace("\\", "\\\\")
+        )
         try:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as tmp:
-                tmp.write(ps_script); tmp_path = tmp.name
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ps1", delete=False, encoding="utf-8"
+            ) as tmp:
+                tmp.write(ps_script)
+                tmp_path = tmp.name
 
-            subprocess.Popen(["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path], shell=True)
+            subprocess.Popen(
+                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path],
+                shell=True,
+            )
         except Exception as e:
-            QMessageBox.critical(self, "Errore", f"Impossibile avviare l\'analisi:\n{e}")
+            QMessageBox.critical(self, "Errore", f"Impossibile avviare l'analisi:\n{e}")

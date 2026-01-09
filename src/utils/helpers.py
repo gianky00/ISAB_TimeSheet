@@ -21,7 +21,9 @@ def get_asset_path(relative_path: str) -> str:
         base_path = os.path.dirname(sys.executable)
     else:
         # Percorso del sorgente (src/utils/helpers.py -> src -> root)
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        base_path = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
 
     path = os.path.join(base_path, relative_path.replace("/", os.sep))
     return path
@@ -36,7 +38,9 @@ def get_app_icon_path() -> Optional[str]:
     return None
 
 
-def setup_logging(name: str = "BotTS", log_file: Optional[str] = None) -> logging.Logger:
+def setup_logging(
+    name: str = "BotTS", log_file: Optional[str] = None
+) -> logging.Logger:
     """
     Configura il sistema di logging.
 
@@ -117,7 +121,10 @@ def get_years_list(start_offset: int = -2, end_offset: int = 2) -> List[str]:
         Lista di anni come stringhe
     """
     current_year = datetime.now().year
-    return [str(year) for year in range(current_year + start_offset, current_year + end_offset + 1)]
+    return [
+        str(year)
+        for year in range(current_year + start_offset, current_year + end_offset + 1)
+    ]
 
 
 def is_windows() -> bool:

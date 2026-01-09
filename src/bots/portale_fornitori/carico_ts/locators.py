@@ -15,5 +15,8 @@ class CaricoTSLocators:
         By.XPATH,
         "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]",
     )
-    ODA_INPUT = (By.XPATH, "//label[contains(text(), 'Numero OdA')]/following::input[1]")
+    ODA_INPUT = (
+        By.XPATH,
+        "//label[contains(text(), 'Numero OdA')]/following::input[1]",
+    )
     EXTRACT_BUTTON = (By.XPATH, "//span[contains(text(), 'Estrai OdA')]")

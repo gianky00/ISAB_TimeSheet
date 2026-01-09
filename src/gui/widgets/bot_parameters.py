@@ -35,10 +35,7 @@ class BotParametersWidget(QWidget):
     changed = pyqtSignal()
 
     def __init__(
-        self,
-        show_date_range: bool = False,
-        show_dest_path: bool = True,
-        parent=None
+        self, show_date_range: bool = False, show_dest_path: bool = True, parent=None
     ):
         super().__init__(parent)
         self.show_date_range = show_date_range
@@ -165,7 +162,9 @@ class BotParametersWidget(QWidget):
 
     def get_dates(self) -> tuple[str, Optional[str]]:
         date_da = self.date_da.date().toString("dd.MM.yyyy")
-        date_a = self.date_a.date().toString("dd.MM.yyyy") if self.show_date_range else None
+        date_a = (
+            self.date_a.date().toString("dd.MM.yyyy") if self.show_date_range else None
+        )
         return date_da, date_a
 
     def set_dates(self, date_da_str: str, date_a_str: Optional[str] = None):

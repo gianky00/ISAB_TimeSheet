@@ -2,9 +2,11 @@
 Controller per la gestione della System Tray Icon.
 """
 
-from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
-from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
+
 from src.utils.helpers import get_app_icon_path
+
 
 class TrayController:
     """Gestisce l'icona e il menu della system tray."""
@@ -49,6 +51,8 @@ class TrayController:
                 self.mw.showMaximized()
                 self.mw.activateWindow()
 
-    def show_message(self, title, message, icon=QSystemTrayIcon.MessageIcon.Information, timeout=5000):
+    def show_message(
+        self, title, message, icon=QSystemTrayIcon.MessageIcon.Information, timeout=5000
+    ):
         """Mostra una notifica tray."""
         self.tray_icon.showMessage(title, message, icon, timeout)

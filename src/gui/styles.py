@@ -5,7 +5,6 @@ Gestisce l'applicazione di temi, palette e fogli di stile (QSS).
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication
@@ -14,6 +13,7 @@ from src.gui.design.colors import DARK, LIGHT, ColorPalette
 from src.utils.helpers import get_asset_path
 
 logger = logging.getLogger(__name__)
+
 
 class ThemeManager:
     """Manager centralizzato per l'aspetto visivo dell'applicazione."""
@@ -70,16 +70,22 @@ class ThemeManager:
         palette.setColor(QPalette.ColorRole.HighlightedText, q(p.on_primary))
 
         # Stati disabilitati
-        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, q(p.disabled))
-        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, q(p.disabled))
-        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, q(p.disabled))
+        palette.setColor(
+            QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, q(p.disabled)
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, q(p.disabled)
+        )
+        palette.setColor(
+            QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, q(p.disabled)
+        )
 
         app.setPalette(palette)
 
     def _apply_stylesheet(self, app: QApplication, theme_name: str):
         """Carica e applica il file QSS principale."""
         qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
-        
+
         qss_content = ""
         if qss_path.exists():
             try:
@@ -90,9 +96,12 @@ class ThemeManager:
 
         # Se il file manca o è vuoto, applica uno stile minimo basato sulla palette
         if not qss_content:
-            qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
-        
+            qss_content = (
+                f"QMainWindow {{ background-color: {self.palette.background}; }}"
+            )
+
         app.setStyleSheet(qss_content)
+
 
 # Wrapper per compatibilità con il codice esistente
 def apply_theme(app: QApplication, theme_name: str = "light"):

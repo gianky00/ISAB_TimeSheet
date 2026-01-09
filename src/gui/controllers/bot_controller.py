@@ -3,11 +3,13 @@ Controller per il coordinamento dei Bot e l'aggiornamento dello stato UI.
 """
 
 import os
+
 from PyQt6.QtCore import QObject
+
 
 class BotController(QObject):
     """
-    Gestisce l'interazione tra i pannelli Bot, il servizio Telegram 
+    Gestisce l'interazione tra i pannelli Bot, il servizio Telegram
     e i widget di stato della UI.
     """
 
@@ -24,7 +26,7 @@ class BotController(QObject):
             # Connessione segnali risultati (se presenti)
             if hasattr(panel, "bot_results_ready"):
                 panel.bot_results_ready.connect(self._handle_bot_results)
-            
+
             # Connessione segnali stato
             if hasattr(panel, "status_changed"):
                 panel.status_changed.connect(self._on_panel_status_changed)
@@ -35,8 +37,8 @@ class BotController(QObject):
             for file_path in results:
                 if os.path.exists(file_path):
                     self.telegram.send_document_sync(
-                        file_path, 
-                        caption=f"📄 **PDL Scaricato**\nFile: `{os.path.basename(file_path)}`"
+                        file_path,
+                        caption=f"📄 **PDL Scaricato**\nFile: `{os.path.basename(file_path)}`",
                     )
 
     def _on_panel_status_changed(self, status, message):

@@ -31,16 +31,22 @@ class SearchController(QObject):
         # --- 1. Contabilità Strumentale (OdA) ---
         try:
             from src.core.contabilita_manager import ContabilitaManager
+
             oda_matches = ContabilitaManager.search_oda(query)
             if oda_matches:
-                results_menu.addAction("📊 CONTABILITÀ STRUMENTALE (OdA):").setEnabled(False)
+                results_menu.addAction("📊 CONTABILITÀ STRUMENTALE (OdA):").setEnabled(
+                    False
+                )
                 for oda in oda_matches[:20]:
                     text = f"OdA {oda['codice_oda']} - {oda['descrizione'][:50]}..."
                     action = results_menu.addAction(text)
-                    action.triggered.connect(lambda _, o=oda["codice_oda"]: self.mw._navigate_to_oda(o))
+                    action.triggered.connect(
+                        lambda _, o=oda["codice_oda"]: self.mw._navigate_to_oda(o)
+                    )
                     found_count += 1
                 results_menu.addSeparator()
-        except: pass
+        except Exception:
+            pass
 
         # --- 2. Contabilità Estesa ---
         try:
@@ -49,9 +55,13 @@ class SearchController(QObject):
             if ext_matches.get("GIORNALIERE"):
                 results_menu.addAction("📂 GIORNALIERE:").setEnabled(False)
                 for g in ext_matches["GIORNALIERE"][:20]:
-                    text = f"{g['data']} - {g['personale']} - {g['descrizione'][:40]}..."
+                    text = (
+                        f"{g['data']} - {g['personale']} - {g['descrizione'][:40]}..."
+                    )
                     action = results_menu.addAction(text)
-                    action.triggered.connect(lambda _, q=query: self.mw._navigate_to_extended(1, q))
+                    action.triggered.connect(
+                        lambda _, q=query: self.mw._navigate_to_extended(1, q)
+                    )
                     found_count += 1
                 results_menu.addSeparator()
             # Cantiere
@@ -60,7 +70,9 @@ class SearchController(QObject):
                 for c in ext_matches["CANTIERE"][:20]:
                     text = f"{c['data']} - {c['personale']} - {c['commessa']}"
                     action = results_menu.addAction(text)
-                    action.triggered.connect(lambda _, q=query: self.mw._navigate_to_dataease(q))
+                    action.triggered.connect(
+                        lambda _, q=query: self.mw._navigate_to_dataease(q)
+                    )
                     found_count += 1
                 results_menu.addSeparator()
             # Certificati
@@ -69,10 +81,13 @@ class SearchController(QObject):
                 for c in ext_matches["CERTIFICATI"][:20]:
                     text = f"{c['matricola']} - {c['modello']} ({c['costruttore']})"
                     action = results_menu.addAction(text)
-                    action.triggered.connect(lambda _, q=query: self.mw._navigate_to_extended(3, q))
+                    action.triggered.connect(
+                        lambda _, q=query: self.mw._navigate_to_extended(3, q)
+                    )
                     found_count += 1
                 results_menu.addSeparator()
-        except: pass
+        except Exception:
+            pass
 
         # --- 3. Dipendenti ---
         try:
@@ -82,26 +97,40 @@ class SearchController(QObject):
                 for emp in emp_matches[:20]:
                     text = f"{emp['cognome']} {emp['nome']}"
                     action = results_menu.addAction(text)
-                    action.triggered.connect(lambda _, q=text: self.mw._navigate_to_timbrature(q))
+                    action.triggered.connect(
+                        lambda _, q=text: self.mw._navigate_to_timbrature(q)
+                    )
                     found_count += 1
                 results_menu.addSeparator()
-        except: pass
+        except Exception:
+            pass
 
         # --- 4. Audit Log ---
         try:
             from src.core.audit_manager import AuditManager
+
             audit_logs = AuditManager().get_logs(limit=100)
-            matches = [l for l in audit_logs if query.lower() in str(l["action"]).lower() or query.lower() in str(l["entity"]).lower()]
+            matches = [
+                log
+                for log in audit_logs
+                if query.lower() in str(log["action"]).lower()
+                or query.lower() in str(log["entity"]).lower()
+            ]
             if matches:
                 results_menu.addAction("🛡️ AUDIT LOG:").setEnabled(False)
                 for log in matches[:3]:
-                    action = results_menu.addAction(f"{log['action']} - {log['entity']}")
+                    action = results_menu.addAction(
+                        f"{log['action']} - {log['entity']}"
+                    )
                     action.triggered.connect(lambda: self.mw._navigate_to(6))
                     found_count += 1
-        except: pass
+        except Exception:
+            pass
 
         if found_count == 0:
             results_menu.addAction("❌ Nessun risultato trovato").setEnabled(False)
 
-        pos = self.mw.global_search.mapToGlobal(QPoint(0, self.mw.global_search.height()))
+        pos = self.mw.global_search.mapToGlobal(
+            QPoint(0, self.mw.global_search.height())
+        )
         results_menu.exec(pos)

@@ -6,13 +6,13 @@ Basato sullo script standalone funzionante.
 
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
-from src.bots.base import BaseBot, BotStatus
+from src.bots.base import BaseBot
 from src.core.timesheet_processor import TimesheetProcessor
 from src.utils.helpers import sanitize_filename
 
@@ -42,7 +42,10 @@ class ScaricaTSBot(BaseBot):
 
     @staticmethod
     def get_columns() -> list:
-        return [{"name": "Numero OdA", "type": "text"}, {"name": "Posizione OdA", "type": "text"}]
+        return [
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"},
+        ]
 
     @property
     def name(self) -> str:
@@ -52,34 +55,44 @@ class ScaricaTSBot(BaseBot):
     def description(self) -> str:
         return "Scarica i timesheet dal portale ISAB"
 
-    def __init__(self, data_da: str = "01.01.2025", fornitore: str = "", elabora_ts: bool = False, **kwargs):
+    def __init__(
+        self,
+        data_da: str = "01.01.2025",
+        fornitore: str = "",
+        elabora_ts: bool = False,
+        **kwargs,
+    ):
         """
         Inizializza il bot.
-
-        Args:
-            data_da: Data inizio timesheet (formato dd.mm.yyyy)
-            fornitore: Nome fornitore da selezionare (obbligatorio)
-            elabora_ts: Se True, esegue la rinomina e lo spostamento post-download
-            **kwargs: Altri parametri per BaseBot
         """
         super().__init__(**kwargs)
         self.data_da = data_da
         self.fornitore = fornitore
         self.elabora_ts = elabora_ts
 
+    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+        """Validazione specifica per Scarico TS."""
+        base_valid, base_msg = super().validate_data(data)
+        if not base_valid:
+            return False, base_msg
+
+        if not self.fornitore:
+            # Prova a prenderlo dai dati
+            if isinstance(data, dict) and not data.get("fornitore"):
+                return False, "Fornitore non specificato."
+            elif isinstance(data, list):
+                return False, "Fornitore non specificato."
+
+        rows = data if isinstance(data, list) else data.get("rows", [])
+        if not rows:
+            return False, "Nessun OdA da scaricare."
+
+        return True, ""
+
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """
         Esegue il download dei timesheet.
-
-        Args:
-            data: Dict con 'rows' contenente lista di dict con keys: numero_oda, posizione_oda
-                  e opzionalmente 'data_da' e 'fornitore'
-
-        Returns:
-            True se tutti i download hanno successo
         """
-        if not self.driver or not self.wait:
-            return False
         # Estrai i dati
         if isinstance(data, dict):
             rows = data.get("rows", [])
@@ -89,11 +102,9 @@ class ScaricaTSBot(BaseBot):
         else:
             rows = data
 
-        if not rows:
-            self.log("ℹ️ Nessun dato da processare.")
-            return True
-
-        self.log(f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
+        self.log(
+            f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})..."
+        )
 
         try:
             # 1. Naviga a Report -> Timesheet
@@ -106,15 +117,10 @@ class ScaricaTSBot(BaseBot):
 
             # 3. Processa ogni riga
             success_count = 0
-
-            # Usa directory download di sistema (browser default)
             source_dir = Path.home() / "Downloads"
-
-            downloaded_files_list = []  # Per Elabora TS logic
-
+            downloaded_files_list = []
             dest_dir = Path(self.download_path) if self.download_path else source_dir
 
-            # JS per dispatch eventi su input ExtJS
             js_dispatch_events = """
                 var el = arguments[0]; 
                 var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
@@ -128,14 +134,17 @@ class ScaricaTSBot(BaseBot):
                 posizione_oda = str(row.get("posizione_oda", "")).strip()
 
                 if not numero_oda:
-                    self.log(f"Riga {i}: Numero OdA mancante, saltata")
                     continue
 
                 try:
                     # Inserisci Numero OdA
-                    campo_numero_oda = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
+                    campo_numero_oda = self.wait.until(
+                        EC.presence_of_element_located((By.NAME, "NumeroOda"))
+                    )
                     self.driver.execute_script(
-                        "arguments[0].value = arguments[1];", campo_numero_oda, numero_oda
+                        "arguments[0].value = arguments[1];",
+                        campo_numero_oda,
+                        numero_oda,
                     )
                     self.driver.execute_script(js_dispatch_events, campo_numero_oda)
 
@@ -143,21 +152,28 @@ class ScaricaTSBot(BaseBot):
                     campo_posizione_oda = self.wait.until(
                         EC.presence_of_element_located((By.NAME, "PosizioneOda"))
                     )
-                    self.driver.execute_script("arguments[0].value = '';", campo_posizione_oda)
                     self.driver.execute_script(
-                        "arguments[0].value = arguments[1];", campo_posizione_oda, posizione_oda
+                        "arguments[0].value = '';", campo_posizione_oda
+                    )
+                    self.driver.execute_script(
+                        "arguments[0].value = arguments[1];",
+                        campo_posizione_oda,
+                        posizione_oda,
                     )
                     self.driver.execute_script(js_dispatch_events, campo_posizione_oda)
 
                     # Click su Cerca
-                    pulsante_cerca_xpath = "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca' and contains(@class, 'x-btn-inner')]]"
-                    self.wait.until(EC.element_to_be_clickable((By.XPATH, pulsante_cerca_xpath))).click()
+                    pulsante_cerca_xpath = "//a[contains(@class, 'x-btn') and @role='button'][.//span[normalize-space(text())='Cerca']]"
+                    self.wait.until(
+                        EC.element_to_be_clickable((By.XPATH, pulsante_cerca_xpath))
+                    ).click()
 
-                    # Attendi risultati
                     self._attendi_scomparsa_overlay(90)
 
                     # Download file Excel
-                    final_path = self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda)
+                    final_path = self._download_excel(
+                        source_dir, dest_dir, numero_oda, posizione_oda
+                    )
                     if final_path:
                         success_count += 1
                         downloaded_files_list.append(final_path)
@@ -166,23 +182,15 @@ class ScaricaTSBot(BaseBot):
                     self.log(f"❌ Errore OdA {numero_oda}: {e}")
                     continue
 
-                time.sleep(1)
-
             self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
 
-            # --- NUOVA LOGICA BATCH EX VBA (DOPO IL CICLO) ---
             if self.elabora_ts and downloaded_files_list:
-                self.log(f"⚙️ Inizio elaborazione batch di {len(downloaded_files_list)} file...")
+                self.log(
+                    f"⚙️ Inizio elaborazione batch di {len(downloaded_files_list)} file..."
+                )
                 for p in downloaded_files_list:
-                    self.log(f"  Elaborazione: {p.name}...")
                     proc_success, proc_msg = TimesheetProcessor.process_file(p)
-                    if proc_success:
-                        self.log(f"  ✓ {proc_msg}")
-                    else:
-                        self.log(f"  ✗ Errore: {proc_msg}")
-
-            # 5. Logout
-            self._logout()
+                    self.log(f"  {'✓' if proc_success else '✗'} {p.name}: {proc_msg}")
 
             return success_count == len(rows)
 
@@ -199,17 +207,23 @@ class ScaricaTSBot(BaseBot):
         try:
             # Click su "Report"
             self.wait.until(
-                EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Report']"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//*[normalize-space(text())='Report']")
+                )
             ).click()
             self._attendi_scomparsa_overlay()
 
             # Click su "Timesheet"
             timesheet_menu_xpath = "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Timesheet']]"
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, timesheet_menu_xpath))).click()
+            self.wait.until(
+                EC.element_to_be_clickable((By.XPATH, timesheet_menu_xpath))
+            ).click()
 
             # Attendi che il dropdown Fornitore sia visibile
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
-            self.wait.until(EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath)))
+            self.wait.until(
+                EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath))
+            )
             self._attendi_scomparsa_overlay()
 
             return True
@@ -230,21 +244,27 @@ class ScaricaTSBot(BaseBot):
             fornitore_arrow_element = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
             )
-            ActionChains(self.driver).move_to_element(fornitore_arrow_element).click().perform()
+            ActionChains(self.driver).move_to_element(
+                fornitore_arrow_element
+            ).click().perform()
 
             # Seleziona l'opzione fornitore
             fornitore_option_xpath = f"//li[normalize-space(text())='{self.fornitore}']"
             fornitore_option = self.long_wait.until(
                 EC.presence_of_element_located((By.XPATH, fornitore_option_xpath))
             )
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option
+            )
             time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", fornitore_option)
 
             self._attendi_scomparsa_overlay()
 
             # Inserisci Data Da
-            campo_data_da = self.wait.until(EC.visibility_of_element_located((By.NAME, "DataTimesheetDa")))
+            campo_data_da = self.wait.until(
+                EC.visibility_of_element_located((By.NAME, "DataTimesheetDa"))
+            )
             campo_data_da.clear()
             campo_data_da.send_keys(self.data_da)
 
@@ -264,10 +284,16 @@ class ScaricaTSBot(BaseBot):
         if not self.wait or not self.driver:
             return None
         try:
-            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            files_before = {
+                f
+                for f in source_dir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".xlsx"
+            }
 
             excel_button_xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, excel_button_xpath))).click()
+            self.wait.until(
+                EC.element_to_be_clickable((By.XPATH, excel_button_xpath))
+            ).click()
 
             downloaded_file = None
             download_start_time = time.time()
@@ -280,11 +306,15 @@ class ScaricaTSBot(BaseBot):
                         continue
 
                     current_files = {
-                        f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"
+                        f
+                        for f in source_dir.iterdir()
+                        if f.is_file() and f.suffix.lower() == ".xlsx"
                     }
                     new_files = current_files - files_before
                     if new_files:
-                        downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
+                        downloaded_file = max(
+                            list(new_files), key=lambda f: f.stat().st_mtime
+                        )
                         break
                 except Exception:
                     pass
@@ -425,38 +455,3 @@ class ScaricaTSBot(BaseBot):
                     self.log("  (Temp eliminato)")
                 except Exception:
                     pass
-
-    def execute(self, data: List[Dict[str, Any]]) -> bool:
-        """
-        Esegue il workflow completo: login -> download -> logout -> chiusura.
-
-        Sovrascrive execute di BaseBot per includere logout.
-        """
-        self._stop_requested = False
-
-        try:
-            if not self._safe_login_with_retry():
-                self.status = BotStatus.ERROR
-                return False
-
-            self.status = BotStatus.RUNNING
-            result = self.run(data)
-
-            # Nota: logout è già chiamato in run()
-
-            self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
-            return result
-
-        except InterruptedError:
-            self.log("Bot interrotto")
-            self.status = BotStatus.STOPPED
-            return False
-        except Exception as e:
-            self.log(f"✗ Errore esecuzione: {e}")
-            self.status = BotStatus.ERROR
-            return False
-        finally:
-            # Pausa prima di chiudere
-            self.log("Pausa di 3 secondi prima di chiudere il browser...")
-            time.sleep(3)
-            self.cleanup()

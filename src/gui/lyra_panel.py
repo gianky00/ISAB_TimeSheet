@@ -32,7 +32,13 @@ from src.utils.helpers import get_asset_path
 class LyraWorker(QThread):
     finished = pyqtSignal(str)
 
-    def __init__(self, api_key: str, question: str, context: str = "", images: Optional[List[Any]] = None):
+    def __init__(
+        self,
+        api_key: str,
+        question: str,
+        context: str = "",
+        images: Optional[List[Any]] = None,
+    ):
         super().__init__()
         self.api_key = api_key
         self.question = question
@@ -58,7 +64,9 @@ class LyraWorker(QThread):
             import traceback
 
             error_details = traceback.format_exc()
-            self.finished.emit(f"⚠️ Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}")
+            self.finished.emit(
+                f"⚠️ Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}"
+            )
 
 
 class ModelListWorker(QThread):
@@ -98,7 +106,9 @@ class LyraPanel(QWidget):
 
         # Header
         header = QFrame()
-        header.setStyleSheet("background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;")
+        header.setStyleSheet(
+            "background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;"
+        )
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -129,12 +139,16 @@ class LyraPanel(QWidget):
         refresh_models_btn.setFixedSize(32, 32)
         refresh_models_btn.setIconSize(QSize(18, 18))
         refresh_models_btn.setToolTip("Aggiorna lista modelli")
-        refresh_models_btn.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
+        refresh_models_btn.setStyleSheet(
+            "QPushButton { background-color: transparent; border: none; }"
+        )
         refresh_models_btn.clicked.connect(self._fetch_models)
         h_layout.addWidget(refresh_models_btn)
 
         sub = QLabel("Esperta Contabile")
-        sub.setStyleSheet("color: rgba(255,255,255,0.8); margin-left: 10px;")  # Added margin for spacing
+        sub.setStyleSheet(
+            "color: rgba(255,255,255,0.8); margin-left: 10px;"
+        )  # Added margin for spacing
         h_layout.addWidget(sub)
 
         h_layout.addStretch()
@@ -247,7 +261,10 @@ class LyraPanel(QWidget):
                 "Trova Anomalie Documento",
                 "Verifica se ci sono incongruenze o dati mancanti nel documento che ho allegato.",
             ),
-            ("Sintesi PDF", "Dammi un breve riepilogo del contenuto di questo documento."),
+            (
+                "Sintesi PDF",
+                "Dammi un breve riepilogo del contenuto di questo documento.",
+            ),
         ]
 
         for btn_text, prompt_text in actions:
@@ -349,7 +366,8 @@ class LyraPanel(QWidget):
 
         # Welcome message
         self._append_message(
-            "Lyra", "Ciao! Sono pronta ad analizzare i tuoi dati e i tuoi documenti. Cosa vuoi sapere oggi?"
+            "Lyra",
+            "Ciao! Sono pronta ad analizzare i tuoi dati e i tuoi documenti. Cosa vuoi sapere oggi?",
         )
 
     def _fetch_models(self):
@@ -371,7 +389,11 @@ class LyraPanel(QWidget):
 
     def _on_model_changed(self, model_name):
         """Salva il modello scelto nella configurazione globale."""
-        if model_name and "Caricamento" not in model_name and "mancante" not in model_name:
+        if (
+            model_name
+            and "Caricamento" not in model_name
+            and "mancante" not in model_name
+        ):
             config_manager.set_config_value("ai_model", model_name)
 
     def _populate_models_dropdown(self, models):
@@ -381,7 +403,9 @@ class LyraPanel(QWidget):
             # Filtra per i modelli che ci interessano di più
             pro_models = sorted([m for m in models if "pro" in m], reverse=True)
             flash_models = sorted([m for m in models if "flash" in m], reverse=True)
-            other_models = sorted([m for m in models if "pro" not in m and "flash" not in m])
+            other_models = sorted(
+                [m for m in models if "pro" not in m and "flash" not in m]
+            )
 
             ordered_models = pro_models + flash_models + other_models
             self.model_combo.addItems(ordered_models)
@@ -419,10 +443,16 @@ class LyraPanel(QWidget):
             self.attached_images = DocumentProcessor.get_pages_as_images(p)
 
             # Automatic prompt suggestion
-            self.input_field.setText("Analizza questo documento ed estrai i dati principali in una tabella.")
+            self.input_field.setText(
+                "Analizza questo documento ed estrai i dati principali in una tabella."
+            )
             self.input_field.setFocus()
         else:
-            QMessageBox.warning(self, "Formato non supportato", "Lyra al momento analizza solo file PDF.")
+            QMessageBox.warning(
+                self,
+                "Formato non supportato",
+                "Lyra al momento analizza solo file PDF.",
+            )
 
     def _remove_attachment(self):
         self.attached_file = None
@@ -461,7 +491,9 @@ class LyraPanel(QWidget):
         final_images = self.attached_images.copy()
 
         if self.attached_file:
-            self._append_message("Sistema", f"<i>[Documento allegato: {self.attached_file.name}]</i>")
+            self._append_message(
+                "Sistema", f"<i>[Documento allegato: {self.attached_file.name}]</i>"
+            )
             # If the PDF is text-searchable, we can also append the text to context
             if DocumentProcessor.is_pdf_searchable(self.attached_file):
                 pdf_text = DocumentProcessor.extract_text(self.attached_file)
@@ -565,20 +597,26 @@ class LyraPanel(QWidget):
                 printer.setOutputFileName(filename)
 
                 self.chat_area.document().print(printer)
-                QMessageBox.information(self, "Successo", "Chat esportata correttamente!")
+                QMessageBox.information(
+                    self, "Successo", "Chat esportata correttamente!"
+                )
             except Exception as e:
                 # Fallback: Save as HTML
                 html_file = filename.replace(".pdf", ".html")
                 with open(html_file, "w", encoding="utf-8") as f:
                     f.write(self.chat_area.toHtml())
                 QMessageBox.warning(
-                    self, "Info", f"PDF driver non trovato. Salvato come HTML: {html_file}\nErr: {e}"
+                    self,
+                    "Info",
+                    f"PDF driver non trovato. Salvato come HTML: {html_file}\nErr: {e}",
                 )
 
     def _export_excel(self):
         """Exports the last table found in the chat history to Excel."""
         if not self.last_table_data:
-            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
+            QMessageBox.warning(
+                self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare."
+            )
             return
 
         text = self.last_table_data
@@ -600,7 +638,9 @@ class LyraPanel(QWidget):
                 table_lines = current_block
 
         if not table_lines:
-            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio.")
+            QMessageBox.warning(
+                self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio."
+            )
             return
 
         try:
@@ -619,7 +659,11 @@ class LyraPanel(QWidget):
             )
             if filename:
                 df.to_excel(filename, index=False)
-                QMessageBox.information(self, "Successo", "Tabella esportata correttamente!")
+                QMessageBox.information(
+                    self, "Successo", "Tabella esportata correttamente!"
+                )
 
         except Exception as e:
-            QMessageBox.critical(self, "Errore", f"Impossibile esportare la tabella: {e}")
+            QMessageBox.critical(
+                self, "Errore", f"Impossibile esportare la tabella: {e}"
+            )

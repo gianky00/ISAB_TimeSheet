@@ -36,7 +36,7 @@ class StatsManager:
                         if old_stats:
                             config_manager.set_config_value("statistics", old_stats)
                             return old_stats
-                except:
+                except Exception:
                     pass
             return {}
 

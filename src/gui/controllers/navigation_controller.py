@@ -4,9 +4,11 @@ Implementa il Lazy Loading per ottimizzare le prestazioni.
 """
 
 import logging
+
 from PyQt6.QtCore import QObject
 
 logger = logging.getLogger(__name__)
+
 
 class NavigationController(QObject):
     """
@@ -22,34 +24,41 @@ class NavigationController(QObject):
         """Restituisce il pannello all'indice specificato, creandolo se necessario."""
         # Se il pannello è già stato creato, lo restituiamo
         panel = self.mw.page_stack.widget(index)
-        
+
         # Se il widget è un placeholder (o se vogliamo essere sicuri tramite attributo)
-        if hasattr(self.mw, f"_panel_initialized_{index}") and getattr(self.mw, f"_panel_initialized_{index}"):
+        if hasattr(self.mw, f"_panel_initialized_{index}") and getattr(
+            self.mw, f"_panel_initialized_{index}"
+        ):
             return panel
 
         logger.info(f"Lazy Loading pannello all'indice: {index}")
-        
+
         # Creazione dinamica in base all'indice
         new_panel = None
-        
+
         if index == 0:
             from src.gui.dashboard_panel import DashboardPanel
+
             new_panel = DashboardPanel()
             self.mw.dashboard_panel = new_panel
         elif index == 1:
             from src.gui.main_window import AutomazioniWidget
+
             new_panel = AutomazioniWidget(self.mw)
             self.mw.automazioni_widget = new_panel
         elif index == 2:
             from src.gui.lyra_panel import LyraPanel
+
             new_panel = LyraPanel()
             self.mw.lyra_panel = new_panel
         elif index == 3:
             from src.gui.main_window import DatabaseWidget
+
             new_panel = DatabaseWidget(self.mw)
             self.mw.database_widget = new_panel
         elif index == 4:
             from src.gui.settings_panel import SettingsPanel
+
             new_panel = SettingsPanel()
             self.mw.settings_panel = new_panel
             # Connetti segnali vitali delle impostazioni
@@ -57,10 +66,12 @@ class NavigationController(QObject):
             new_panel.request_help_section.connect(self.mw._on_help_requested)
         elif index == 5:
             from src.gui.help_panel import HelpPanel
+
             new_panel = HelpPanel()
             self.mw.help_panel = new_panel
         elif index == 6:
             from src.gui.notifications_panel import NotificationsPanel
+
             new_panel = NotificationsPanel()
             self.mw.notifications_panel = new_panel
 
@@ -70,19 +81,9 @@ class NavigationController(QObject):
             self.mw.page_stack.removeWidget(old_placeholder)
             self.mw.page_stack.insertWidget(index, new_panel)
             setattr(self.mw, f"_panel_initialized_{index}", True)
-            
-            # Se è il pannello automazioni, registra i bot
-            if index == 1 and hasattr(self.mw, "bot_controller"):
-                self.mw.bot_controller.register_panels([
-                    self.mw.dettagli_panel,
-                    self.mw.scarico_panel,
-                    self.mw.timbrature_bot_panel,
-                    self.mw.carico_panel,
-                    self.mw.pdl_panel
-                ])
-            
+
             return new_panel
-            
+
         return panel
 
     def navigate_to(self, index: int):

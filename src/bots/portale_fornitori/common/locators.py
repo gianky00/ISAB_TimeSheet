@@ -11,8 +11,14 @@ class LoginLocators:
 
     USERNAME_FIELD = (By.NAME, "Username")
     PASSWORD_FIELD = (By.NAME, "Password")
-    LOGIN_BUTTON = (By.XPATH, "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]")
-    LOGIN_BUTTON_FALLBACK = (By.XPATH, "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]")
+    LOGIN_BUTTON = (
+        By.XPATH,
+        "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]",
+    )
+    LOGIN_BUTTON_FALLBACK = (
+        By.XPATH,
+        "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]",
+    )
 
 
 class CommonLocators:

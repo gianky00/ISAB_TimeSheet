@@ -22,8 +22,9 @@ from src.utils.helpers import sanitize_filename
 
 
 class DettagliOdAPage:
-
-    def __init__(self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None):
+    def __init__(
+        self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None
+    ):
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
@@ -50,7 +51,9 @@ class DettagliOdAPage:
 
             # Click Report (using JS to avoid interception/crash)
             # Dalla seconda riga in poi, a volte è necessario cliccare due volte
-            report_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.REPORT_MENU))
+            report_btn = self.wait.until(
+                EC.element_to_be_clickable(DettagliOdALocators.REPORT_MENU)
+            )
             self.driver.execute_script("arguments[0].click();", report_btn)
 
             if not is_first_row:
@@ -61,10 +64,14 @@ class DettagliOdAPage:
             self._wait_for_overlay()
 
             # Click Oda
-            oda_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETTAGLI_MENU))
+            oda_btn = self.wait.until(
+                EC.element_to_be_clickable(DettagliOdALocators.DETTAGLI_MENU)
+            )
             self.driver.execute_script("arguments[0].click();", oda_btn)
 
-            self.wait.until(EC.visibility_of_element_located(DettagliOdALocators.SUPPLIER_ARROW))
+            self.wait.until(
+                EC.visibility_of_element_located(DettagliOdALocators.SUPPLIER_ARROW)
+            )
             self._wait_for_overlay()
             return True
         except Exception as e:
@@ -75,12 +82,18 @@ class DettagliOdAPage:
     def setup_supplier(self, supplier: str) -> bool:
         try:
             self.log(f"Selezione fornitore: {supplier}")
-            arrow = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SUPPLIER_ARROW))
+            arrow = self.wait.until(
+                EC.element_to_be_clickable(DettagliOdALocators.SUPPLIER_ARROW)
+            )
             ActionChains(self.driver).move_to_element(arrow).click().perform()
 
             option_xpath = f"//li[contains(text(), '{supplier}')]"
-            option = self.long_wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
+            option = self.long_wait.until(
+                EC.presence_of_element_located((By.XPATH, option_xpath))
+            )
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'nearest'});", option
+            )
             time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
@@ -101,7 +114,9 @@ class DettagliOdAPage:
 
             # 2. Click Logout
             try:
-                logout_btn = self.wait.until(EC.visibility_of_element_located(CommonLocators.LOGOUT_OPTION))
+                logout_btn = self.wait.until(
+                    EC.visibility_of_element_located(CommonLocators.LOGOUT_OPTION)
+                )
                 self.driver.execute_script("arguments[0].click();", logout_btn)
             except TimeoutException:
                 self.log("  ✗ Opzione Logout non apparsa nel menu.")
@@ -111,12 +126,16 @@ class DettagliOdAPage:
             try:
                 self.log("  Attesa conferma logout...")
                 # Click "Si" directly if visible
-                yes_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_CONFIRM_YES))
+                yes_btn = self.wait.until(
+                    EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_CONFIRM_YES)
+                )
                 self.driver.execute_script("arguments[0].click();", yes_btn)
                 self.log("  Conferma cliccata.")
 
                 # Wait for Login Screen (logout complete)
-                self.wait.until(EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD))
+                self.wait.until(
+                    EC.visibility_of_element_located(LoginLocators.USERNAME_FIELD)
+                )
                 self.log("✓ Logout completato con successo.")
 
             except TimeoutException:
@@ -130,7 +149,9 @@ class DettagliOdAPage:
         """Espande la sidebar se collassata per rendere visibile il menu Report."""
         try:
             # Cerca l'elemento di espansione
-            expand_btn = self.driver.find_element(*DettagliOdALocators.SIDEBAR_EXPAND_BUTTON)
+            expand_btn = self.driver.find_element(
+                *DettagliOdALocators.SIDEBAR_EXPAND_BUTTON
+            )
             if expand_btn.is_displayed():
                 self.log("  Menu laterale collassato, espansione in corso...")
                 # Usa JS click per robustezza
@@ -142,7 +163,13 @@ class DettagliOdAPage:
             pass
 
     def process_oda(
-        self, oda: str, contract: str, date_da: str, date_a: str, source_dir: Path, dest_dir: Path
+        self,
+        oda: str,
+        contract: str,
+        date_da: str,
+        date_a: str,
+        source_dir: Path,
+        dest_dir: Path,
     ) -> bool:
         try:
             # 1. Fill Form
@@ -168,7 +195,9 @@ class DettagliOdAPage:
             self.driver.execute_script(js_set_value, field_date_da, date_da)
 
             # Date To
-            field_date_a = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD))
+            field_date_a = self.wait.until(
+                EC.presence_of_element_located(DettagliOdALocators.DATE_A_FIELD)
+            )
             self.driver.execute_script(js_set_value, field_date_a, date_a)
 
             # Contract
@@ -178,21 +207,27 @@ class DettagliOdAPage:
             self.driver.execute_script(js_set_value, field_contract, contract)
 
             # Checkbox
-            checkbox = self.wait.until(EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD))
+            checkbox = self.wait.until(
+                EC.presence_of_element_located(DettagliOdALocators.CHECKBOX_FIELD)
+            )
             if not checkbox.is_selected():
                 self.driver.execute_script("arguments[0].click();", checkbox)
 
             time.sleep(0.5)
 
             # Click Search
-            self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)).click()
+            self.wait.until(
+                EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)
+            ).click()
             self.log("  Cerca cliccato...")
             self._wait_for_overlay()
 
             # Check Results Count
             try:
                 count_label = self.wait.until(
-                    EC.visibility_of_element_located(DettagliOdALocators.RESULTS_COUNT_LABEL)
+                    EC.visibility_of_element_located(
+                        DettagliOdALocators.RESULTS_COUNT_LABEL
+                    )
                 )
                 count_text = count_label.text.strip()  # "Trovati : 676"
                 if ":" in count_text:
@@ -212,7 +247,9 @@ class DettagliOdAPage:
             if oda:
                 # ODA Present: Details Export
                 self.log("  Apertura dettagli (OdA specifico)...")
-                details_btn = self.wait.until(EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON))
+                details_btn = self.wait.until(
+                    EC.element_to_be_clickable(DettagliOdALocators.DETAILS_ICON)
+                )
                 self.driver.execute_script("arguments[0].click();", details_btn)
                 self._wait_for_overlay()
 
@@ -229,7 +266,9 @@ class DettagliOdAPage:
                 target_filename = f"ODA_Generale_al_{safe_date_a}.xlsx"
 
             # Export and Download (using source and dest dirs)
-            res = self._download(source_dir, dest_dir, target_filename, export_btn_locator)
+            res = self._download(
+                source_dir, dest_dir, target_filename, export_btn_locator
+            )
 
             # Cleanup
             self._close_all_tabs()
@@ -256,7 +295,9 @@ class DettagliOdAPage:
             while True:
                 try:
                     # Find *visible* close buttons only
-                    close_btn = self.driver.find_element(*DettagliOdALocators.TAB_CLOSE_BTN)
+                    close_btn = self.driver.find_element(
+                        *DettagliOdALocators.TAB_CLOSE_BTN
+                    )
                     if close_btn.is_displayed():
                         self.driver.execute_script("arguments[0].click();", close_btn)
                         time.sleep(0.5)
@@ -269,13 +310,23 @@ class DettagliOdAPage:
             self.log(f"  ⚠️ Errore chiusura tab: {e}")
 
     def _download(
-        self, source_dir: Path, dest_dir: Path, target_filename: str, button_locator: tuple
+        self,
+        source_dir: Path,
+        dest_dir: Path,
+        target_filename: str,
+        button_locator: tuple,
     ) -> bool:
         try:
-            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            files_before = {
+                f
+                for f in source_dir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".xlsx"
+            }
 
             btn = self.wait.until(EC.presence_of_element_located(button_locator))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center'});", btn
+            )
             time.sleep(0.5)
             try:
                 btn.click()
@@ -291,11 +342,15 @@ class DettagliOdAPage:
                     continue
 
                 current_files = {
-                    f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"
+                    f
+                    for f in source_dir.iterdir()
+                    if f.is_file() and f.suffix.lower() == ".xlsx"
                 }
                 new_files = current_files - files_before
                 if new_files:
-                    downloaded_file = max(list(new_files), key=lambda f: f.stat().st_mtime)
+                    downloaded_file = max(
+                        list(new_files), key=lambda f: f.stat().st_mtime
+                    )
                     break
                 time.sleep(0.5)
 

@@ -80,11 +80,19 @@ class LyraClient:
                 stats = ContabilitaManager.get_year_stats(latest_year)
 
                 # Calcoli derivati
-                margine = stats["total_prev"] - (stats["total_ore"] * 30.0)  # Costo std 30
-                marginalita = (margine / stats["total_prev"] * 100) if stats["total_prev"] > 0 else 0
+                margine = stats["total_prev"] - (
+                    stats["total_ore"] * 30.0
+                )  # Costo std 30
+                marginalita = (
+                    (margine / stats["total_prev"] * 100)
+                    if stats["total_prev"] > 0
+                    else 0
+                )
 
                 context.append(f"=== REPORT CONTABILITÀ ({latest_year}) ===")
-                context.append(f"- Valore Totale Preventivato: € {stats['total_prev']:,.2f}")
+                context.append(
+                    f"- Valore Totale Preventivato: € {stats['total_prev']:,.2f}"
+                )
                 context.append(f"- Ore Spese Totali: {stats['total_ore']:,.1f} h")
                 context.append(
                     f"- Margine Operativo Stimato (vs Costo €30/h): € {margine:,.2f} ({marginalita:.1f}%)"
@@ -153,7 +161,9 @@ class LyraClient:
 
         return "\n".join(context)
 
-    def ask(self, question: str, extra_context: str = "", images: Optional[List[Any]] = None) -> str:
+    def ask(
+        self, question: str, extra_context: str = "", images: Optional[List[Any]] = None
+    ) -> str:
         """Invia una domanda a Gemini con il contesto ed eventuali immagini."""
         try:
             system_data = self._get_system_context()
@@ -169,7 +179,9 @@ class LyraClient:
 
             if images:
                 for img_b64 in images:
-                    parts.append({"inline_data": {"mime_type": "image/png", "data": img_b64}})
+                    parts.append(
+                        {"inline_data": {"mime_type": "image/png", "data": img_b64}}
+                    )
 
             payload = {"contents": [{"parts": parts}]}
 
@@ -211,7 +223,9 @@ class LyraClient:
         except Exception as e:
             return f"Si è verificato un errore critico: {str(e)}"
 
-    def analyze_media(self, media_bytes: bytes, prompt: str, mime_type: str = "image/png") -> str:
+    def analyze_media(
+        self, media_bytes: bytes, prompt: str, mime_type: str = "image/png"
+    ) -> str:
         """Invia un file multimediale (audio/immagine) a Gemini per analisi."""
         import base64
 
@@ -219,7 +233,12 @@ class LyraClient:
 
         payload = {
             "contents": [
-                {"parts": [{"text": prompt}, {"inline_data": {"mime_type": mime_type, "data": media_b64}}]}
+                {
+                    "parts": [
+                        {"text": prompt},
+                        {"inline_data": {"mime_type": mime_type, "data": media_b64}},
+                    ]
+                }
             ]
         }
 
@@ -237,7 +256,10 @@ class LyraClient:
                 usage = result.get("usageMetadata", {})
                 if usage:
                     AuditManager().log_action(
-                        "Consumo Token Media AI", category="lyra", entity=model, params=usage
+                        "Consumo Token Media AI",
+                        category="lyra",
+                        entity=model,
+                        params=usage,
                     )
 
                 return result["candidates"][0]["content"]["parts"][0]["text"]

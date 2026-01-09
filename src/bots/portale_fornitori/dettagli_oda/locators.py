@@ -12,7 +12,10 @@ class DettagliOdALocators:
     # Navigation
     SIDEBAR_EXPAND_BUTTON = (By.CSS_SELECTOR, ".x-tool-expand-right")
     REPORT_MENU = (By.XPATH, "//*[normalize-space(text())='Report']")
-    DETTAGLI_MENU = (By.XPATH, "//span[contains(@class, 'x-btn-inner') and normalize-space(text())='Oda']")
+    DETTAGLI_MENU = (
+        By.XPATH,
+        "//span[contains(@class, 'x-btn-inner') and normalize-space(text())='Oda']",
+    )
 
     # Filters
     SUPPLIER_ARROW = (
@@ -25,7 +28,10 @@ class DettagliOdALocators:
     CONTRACT_FIELD = (By.NAME, "NumeroContratto")
     DATE_FROM_FIELD = (By.NAME, "DataCreazioneDa")
     DATE_A_FIELD = (By.NAME, "DataCreazioneA")
-    CHECKBOX_FIELD = (By.NAME, "GetItemServiceInfo")  # "Includi Dettaglio Prestazioni ODA"
+    CHECKBOX_FIELD = (
+        By.NAME,
+        "GetItemServiceInfo",
+    )  # "Includi Dettaglio Prestazioni ODA"
 
     # Search
     SEARCH_BUTTON = (
@@ -49,4 +55,7 @@ class DettagliOdALocators:
 
     # Logout Specifics
     LOGOUT_SETTINGS_BUTTON = (By.ID, "user-info-settings")
-    LOGOUT_CONFIRM_YES = (By.XPATH, "//span[text()='Si' and contains(@class, 'x-btn-inner')]")
+    LOGOUT_CONFIRM_YES = (
+        By.XPATH,
+        "//span[text()='Si' and contains(@class, 'x-btn-inner')]",
+    )

@@ -128,7 +128,9 @@ class SidebarWidget(QFrame):
             now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
 
-            return f"Licenza: {client}\nScadenza: {expiry}\nUltimo accesso: {last_login}"
+            return (
+                f"Licenza: {client}\nScadenza: {expiry}\nUltimo accesso: {last_login}"
+            )
         return "Licenza non trovata"
 
     def set_active_button(self, index: int):

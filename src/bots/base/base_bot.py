@@ -3,29 +3,18 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
-import shutil
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from selenium import webdriver
-from selenium.common.exceptions import (
-    ElementClickInterceptedException,
-    TimeoutException,
-)
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 from src.bots.base.login_page import LoginPage
-from src.bots.portale_fornitori.common.locators import (
-    CommonLocators,
-    LoginLocators,
-)
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
 
@@ -55,7 +44,7 @@ class BaseBot(ABC):
         self.wait: Optional[WebDriverWait] = None
         self.popup_wait: Optional[WebDriverWait] = None
         self.long_wait: Optional[WebDriverWait] = None
-        
+
         self._status = BotStatus.IDLE
         self._stop_requested = False
         self._log_callback: Optional[Callable[[str], None]] = None
@@ -65,11 +54,13 @@ class BaseBot(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str: pass
+    def name(self) -> str:
+        pass
 
     @property
     @abstractmethod
-    def description(self) -> str: pass
+    def description(self) -> str:
+        pass
 
     @property
     def status(self) -> BotStatus:
@@ -100,13 +91,24 @@ class BaseBot(ABC):
         if self._telegram_service:
             try:
                 import re
-                clean_msg = re.sub(r"^[\\\[]\d{2}:\d{2}:\d{2}[\\\]]\s*", "", message.strip())
-                self._telegram_service.send_message_sync(f"🔹 *{self.name}*\n{clean_msg}")
-            except Exception: pass
 
-    def set_telegram_service(self, service: Any): self._telegram_service = service
-    def set_log_callback(self, callback: Callable[[str], None]): self._log_callback = callback
-    def set_input_callback(self, callback: Callable[[str], str]): self._input_callback = callback
+                clean_msg = re.sub(
+                    r"^[\\\[]\d{2}:\d{2}:\d{2}[\\\]]\s*", "", message.strip()
+                )
+                self._telegram_service.send_message_sync(
+                    f"🔹 *{self.name}*\n{clean_msg}"
+                )
+            except Exception:
+                pass
+
+    def set_telegram_service(self, service: Any):
+        self._telegram_service = service
+
+    def set_log_callback(self, callback: Callable[[str], None]):
+        self._log_callback = callback
+
+    def set_input_callback(self, callback: Callable[[str], str]):
+        self._input_callback = callback
 
     def request_stop(self):
         self._stop_requested = True
@@ -151,12 +153,19 @@ class BaseBot(ABC):
             driver_path = ChromeDriverManager().install()
             if not driver_path.lower().endswith(".exe"):
                 potential_exe = list(Path(driver_path).parent.rglob("chromedriver.exe"))
-                if potential_exe: driver_path = str(potential_exe[0])
-            
-            self.driver = webdriver.Chrome(service=Service(driver_path), options=options)
-            self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", 
-                {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"})
-            
+                if potential_exe:
+                    driver_path = str(potential_exe[0])
+
+            self.driver = webdriver.Chrome(
+                service=Service(driver_path), options=options
+            )
+            self.driver.execute_cdp_cmd(
+                "Page.addScriptToEvaluateOnNewDocument",
+                {
+                    "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+                },
+            )
+
             self.wait = WebDriverWait(self.driver, self.timeout)
             self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
             self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
@@ -203,27 +212,28 @@ class BaseBot(ABC):
             self.cleanup()
 
     def _safe_login_with_retry(self, max_retries: int = 2) -> bool:
-        for attempt in range(1, max_retries + 1):
+        for _attempt in range(1, max_retries + 1):
             self._check_stop()
             try:
                 self._init_driver()
-                if self._login(): return True
+                if self._login():
+                    return True
                 self.cleanup()
                 time.sleep(3)
-            except Exception:
+            except Exception as e:
+                self.log(f"⚠️ Errore tentativo {_attempt}: {e}")
                 self.cleanup()
                 time.sleep(3)
         return False
 
-    def _login(self) -> bool:
-        self.status = BotStatus.LOGGING_IN
-        return self.login_page.login(self.username, self.password) if self.login_page else False
-
     def cleanup(self):
         if self.driver:
-            try: self.driver.quit() 
-            except Exception: pass
+            try:
+                self.driver.quit()
+            except Exception:
+                pass
             self.driver = None
 
     @abstractmethod
-    def run(self, data: List[Dict[str, Any]]) -> bool: pass
+    def run(self, data: List[Dict[str, Any]]) -> bool:
+        pass

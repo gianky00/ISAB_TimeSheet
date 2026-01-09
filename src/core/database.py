@@ -5,10 +5,11 @@ Centralized SQLite database management with Thread Safety.
 
 import logging
 import sqlite3
+import threading
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, List, Optional
+from typing import Any, Generator, List
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -18,9 +19,11 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     """
     Singleton class to manage SQLite connections with thread safety and WAL mode.
+    Implements a write lock to prevent contention.
     """
 
     _instance = None
+    _write_lock = threading.Lock()
 
     # Predefined Paths
     DB_CONTABILITA = CONFIG_DIR / "data" / "contabilita.db"
@@ -53,8 +56,10 @@ class DatabaseManager:
         conn = None
         try:
             # check_same_thread=False is safe when using one connection per context/thread
-            conn = sqlite3.connect(uri, uri=True, timeout=timeout, check_same_thread=False)
-            
+            conn = sqlite3.connect(
+                uri, uri=True, timeout=timeout, check_same_thread=False
+            )
+
             # Performance & Concurrency Optimizations
             if not read_only:
                 conn.execute("PRAGMA journal_mode=WAL;")
@@ -62,41 +67,58 @@ class DatabaseManager:
                 conn.execute(f"PRAGMA busy_timeout={int(timeout * 1000)};")
 
             yield conn
-            
+
             if not read_only and conn.in_transaction:
                 conn.commit()
 
         except sqlite3.OperationalError as e:
             logger.error(f"Database Operational Error ({db_path.name}): {e}")
-            if conn: conn.rollback()
+            if conn:
+                conn.rollback()
             raise
         except Exception as e:
             logger.error(f"Unexpected Database Error ({db_path.name}): {e}")
-            if conn: conn.rollback()
+            if conn:
+                conn.rollback()
             raise
         finally:
             if conn:
                 conn.close()
 
-    def execute_query(self, db_path: Path, query: str, params: tuple = (), retry_count: int = 3) -> List[Any]:
-        """Executes a query with automatic retries on busy database."""
+    def execute_query(
+        self, db_path: Path, query: str, params: tuple = (), retry_count: int = 3
+    ) -> List[Any]:
+        """Executes a query with automatic retries and write synchronization."""
+        is_write = not query.strip().upper().startswith("SELECT")
+
         last_error = None
         for attempt in range(retry_count):
             try:
-                with self.get_connection(db_path) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute(query, params)
-                    if query.strip().upper().startswith("SELECT"):
-                        return cursor.fetchall()
-                    return []
+                # Se è una scrittura, acquisiamo il lock globale per questo processo
+                if is_write:
+                    self._write_lock.acquire()
+
+                try:
+                    with self.get_connection(db_path) as conn:
+                        cursor = conn.cursor()
+                        cursor.execute(query, params)
+                        if not is_write:
+                            return cursor.fetchall()
+                        return []
+                finally:
+                    if is_write:
+                        self._write_lock.release()
+
             except sqlite3.OperationalError as e:
                 if "locked" in str(e).lower() or "busy" in str(e).lower():
                     last_error = e
-                    time.sleep(0.5 * (attempt + 1))
+                    time.sleep(0.1 * (attempt + 1))
                     continue
                 raise
-        
-        logger.error(f"Failed to execute query after {retry_count} retries: {last_error}")
+
+        logger.error(
+            f"Failed to execute query after {retry_count} retries: {last_error}"
+        )
         raise last_error
 
     def init_db(self):
@@ -107,7 +129,8 @@ class DatabaseManager:
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
         try:
             return conn.execute("PRAGMA user_version").fetchone()[0]
-        except: return 0
+        except Exception:
+            return 0
 
     def _set_db_version(self, conn: sqlite3.Connection, version: int):
         conn.execute(f"PRAGMA user_version = {version}")
@@ -164,8 +187,12 @@ class DatabaseManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)"
+            )
 
             version = self._get_db_version(conn)
             if version < 1:
@@ -188,10 +215,13 @@ class DatabaseManager:
                     PRIMARY KEY (nome, cognome)
                 )
             """)
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
-            
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)"
+            )
+
             version = self._get_db_version(conn)
             if version < 1:
                 self._set_db_version(conn, 1)
+
 
 db_manager = DatabaseManager()

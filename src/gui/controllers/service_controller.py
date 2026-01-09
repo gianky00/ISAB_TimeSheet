@@ -3,12 +3,14 @@ Controller per il coordinamento dei servizi di background (Telegram, Lyra, Updat
 """
 
 from PyQt6.QtCore import QObject, QTimer
+
 from src.core.app_updater import check_for_updates
 from src.core.notification_manager import NotificationManager
 
+
 class ServiceController(QObject):
     """
-    Gestisce il ciclo di vita dei servizi di background e 
+    Gestisce il ciclo di vita dei servizi di background e
     il coordinamento delle notifiche.
     """
 
@@ -26,16 +28,20 @@ class ServiceController(QObject):
 
         # Telegram
         QTimer.singleShot(1000, self.telegram.start_service)
-        
+
         # Aggiornamenti
         QTimer.singleShot(3000, self._check_updates)
 
         # Collegamento notifiche globali -> Telegram
-        NotificationManager.instance().notification_added.connect(self._forward_notification_to_telegram)
+        NotificationManager.instance().notification_added.connect(
+            self._forward_notification_to_telegram
+        )
 
     def _check_updates(self):
         """Controlla gli aggiornamenti in background."""
-        check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
+        check_for_updates(
+            parent=self.mw, silent=True, callback=self.mw._show_update_banner
+        )
 
     def _forward_notification_to_telegram(self, notification):
         """Inoltra notifiche importanti al bot Telegram."""

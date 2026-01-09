@@ -36,7 +36,9 @@ class CaricoTSPage:
     def navigate(self) -> bool:
         try:
             self.log("Navigazione Gestione Timesheet...")
-            self.wait.until(EC.element_to_be_clickable(CaricoTSLocators.MANAGEMENT_MENU)).click()
+            self.wait.until(
+                EC.element_to_be_clickable(CaricoTSLocators.MANAGEMENT_MENU)
+            ).click()
             self._wait_overlay()
             return True
         except Exception as e:
@@ -46,12 +48,18 @@ class CaricoTSPage:
     def select_supplier(self, supplier: str) -> bool:
         try:
             self.log(f"Selezione {supplier}...")
-            arrow = self.wait.until(EC.element_to_be_clickable(CaricoTSLocators.SUPPLIER_ARROW))
+            arrow = self.wait.until(
+                EC.element_to_be_clickable(CaricoTSLocators.SUPPLIER_ARROW)
+            )
             ActionChains(self.driver).move_to_element(arrow).click().perform()
 
             opt_xpath = f"//li[contains(text(), '{supplier}')]"
-            opt = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, opt_xpath)))
-            self.driver.execute_script("arguments[0].scrollIntoView({block:'nearest'});", opt)
+            opt = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, opt_xpath))
+            )
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block:'nearest'});", opt
+            )
             time.sleep(0.3)
             self.driver.execute_script("arguments[0].click();", opt)
             self._wait_overlay()
@@ -63,7 +71,9 @@ class CaricoTSPage:
     def process_oda(self, oda: str) -> bool:
         try:
             self.log(f"Inserimento OdA: {oda}")
-            inp = self.wait.until(EC.presence_of_element_located(CaricoTSLocators.ODA_INPUT))
+            inp = self.wait.until(
+                EC.presence_of_element_located(CaricoTSLocators.ODA_INPUT)
+            )
 
             # JS Click to focus/activate
             self.driver.execute_script("arguments[0].click();", inp)
@@ -80,7 +90,9 @@ class CaricoTSPage:
             self.driver.execute_script(js, inp, oda)
 
             # Click Extract
-            btn = self.wait.until(EC.element_to_be_clickable(CaricoTSLocators.EXTRACT_BUTTON))
+            btn = self.wait.until(
+                EC.element_to_be_clickable(CaricoTSLocators.EXTRACT_BUTTON)
+            )
             btn.click()
             self.log("Estrai OdA cliccato.")
 

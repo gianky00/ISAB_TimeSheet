@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class BackupManager:
-
     # Cartelle da escludere dal backup
     EXCLUDE_DIRS = ["chrome_profile", "logs", "cache"]
 
@@ -74,7 +73,9 @@ class BackupManager:
         clouds = BackupManager.detect_cloud_paths()
 
         # 1. Check user preference first
-        preferred = config.get("backup_cloud_provider")  # e.g. "OneDrive", "Google Drive", "Local"
+        preferred = config.get(
+            "backup_cloud_provider"
+        )  # e.g. "OneDrive", "Google Drive", "Local"
 
         if preferred and preferred in clouds:
             target = clouds[preferred] / "SyncroJob_Backups"
@@ -131,7 +132,10 @@ class BackupManager:
                     action="Backup Creato",
                     category="sistema",
                     entity="BackupManager",
-                    params={"file": zip_filename, "size_kb": zip_path.stat().st_size // 1024},
+                    params={
+                        "file": zip_filename,
+                        "size_kb": zip_path.stat().st_size // 1024,
+                    },
                     severity="low",
                 )
 
@@ -159,13 +163,17 @@ class BackupManager:
     def _cleanup_old_backups(target_dir: Path, keep: int = 5):
         """Mantiene solo gli ultimi N backup."""
         try:
-            backups = sorted(target_dir.glob("SyncroJob_Backup_*.zip"), key=os.path.getmtime, reverse=True)
+            backups = sorted(
+                target_dir.glob("SyncroJob_Backup_*.zip"),
+                key=os.path.getmtime,
+                reverse=True,
+            )
             for old_backup in backups[keep:]:
                 try:
                     old_backup.unlink()
-                except:
+                except Exception:
                     pass
-        except:
+        except Exception:
             pass
 
     @staticmethod
@@ -175,7 +183,11 @@ class BackupManager:
             target_dir = BackupManager.get_backup_dir()
             if not target_dir.exists():
                 return []
-            return sorted(target_dir.glob("SyncroJob_Backup_*.zip"), key=os.path.getmtime, reverse=True)
+            return sorted(
+                target_dir.glob("SyncroJob_Backup_*.zip"),
+                key=os.path.getmtime,
+                reverse=True,
+            )
         except Exception as e:
             logger.error(f"Error listing backups: {e}")
             return []
@@ -196,7 +208,10 @@ class BackupManager:
                 zipf.extractall(CONFIG_DIR)
 
             AuditManager().log_action(
-                "Ripristino Backup", category="sistema", params={"file": Path(zip_path).name}, severity="high"
+                "Ripristino Backup",
+                category="sistema",
+                params={"file": Path(zip_path).name},
+                severity="high",
             )
             return True, "Ripristino completato. Riavviare l'applicazione."
 

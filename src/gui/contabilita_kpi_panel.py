@@ -96,7 +96,9 @@ class ContabilitaKPIPanel(QWidget):
 
         # --- ROW 1: General Scorecards ---
         lbl_sect1 = QLabel("METRICHE GENERALI")
-        lbl_sect1.setStyleSheet("color: #495057; font-weight: bold; font-size: 16px; margin-bottom: 10px;")
+        lbl_sect1.setStyleSheet(
+            "color: #495057; font-weight: bold; font-size: 16px; margin-bottom: 10px;"
+        )
         self.content_layout.addWidget(lbl_sect1)
 
         self.cards_layout = QHBoxLayout()
@@ -135,11 +137,17 @@ class ContabilitaKPIPanel(QWidget):
         )
 
         self.card_eff_resa = KPIBigCard(
-            "UTILE NETTO ORARIO", "€ 0,00 / h", "#6610f2", subtitle="Valore Ora - Costo Base"
+            "UTILE NETTO ORARIO",
+            "€ 0,00 / h",
+            "#6610f2",
+            subtitle="Valore Ora - Costo Base",
         )
 
         self.card_val_ora = KPIBigCard(
-            "VALORE PER ORA SPESA", "€ 0,00 / h", "#d63384", subtitle="Totale Prev / Ore Spese"
+            "VALORE PER ORA SPESA",
+            "€ 0,00 / h",
+            "#d63384",
+            subtitle="Totale Prev / Ore Spese",
         )
 
         self.tech_cards_layout.addWidget(self.card_margine)
@@ -231,7 +239,13 @@ class ContabilitaKPIPanel(QWidget):
             self.card_eff_resa,
             self.card_val_ora,
         ]
-        self.charts = [self.container1, self.container2, self.container3, self.container4, self.container5]
+        self.charts = [
+            self.container1,
+            self.container2,
+            self.container3,
+            self.container4,
+            self.container5,
+        ]
 
     def _create_chart_container(self, widget, height=450, title="", info_callback=None):
         """Crea un container stilizzato per il grafico."""
@@ -265,7 +279,9 @@ class ContabilitaKPIPanel(QWidget):
 
         if title:
             lbl = QLabel(title)
-            lbl.setStyleSheet("font-weight: bold; color: #495057; font-size: 14px; border: none;")
+            lbl.setStyleSheet(
+                "font-weight: bold; color: #495057; font-size: 14px; border: none;"
+            )
             header_layout.addWidget(lbl)
 
         header_layout.addStretch()
@@ -346,7 +362,9 @@ class ContabilitaKPIPanel(QWidget):
             # Recalculate derived metrics for display (some might duplicate get_year_stats logic but safer here for display formatting)
             costo_totale_stimato = tot_ore * HOURLY_COST_STD
             margine_operativo = tot_prev - costo_totale_stimato
-            marginalita_perc = (margine_operativo / tot_prev * 100) if tot_prev > 0 else 0
+            marginalita_perc = (
+                (margine_operativo / tot_prev * 100) if tot_prev > 0 else 0
+            )
             valore_per_ora = (tot_prev / tot_ore) if tot_ore > 0 else 0
             utile_netto_orario = valore_per_ora - HOURLY_COST_STD
 
@@ -397,7 +415,9 @@ class ContabilitaKPIPanel(QWidget):
             df = pd.DataFrame(data, columns=cols)
 
             # Clean DF as before
-            df["totale_prev"] = pd.to_numeric(df["totale_prev"], errors="coerce").fillna(0)
+            df["totale_prev"] = pd.to_numeric(
+                df["totale_prev"], errors="coerce"
+            ).fillna(0)
             df["ore_sp"] = pd.to_numeric(df["ore_sp"], errors="coerce").fillna(0)
             df["resa"] = pd.to_numeric(df["resa"], errors="coerce")
 
@@ -409,22 +429,30 @@ class ContabilitaKPIPanel(QWidget):
             self.card_count.lbl_value.setText(str(count))
 
             # --- 2. Update Technical Scorecards ---
-            self.card_margine.lbl_value.setText(f"€ {self._format_currency(margine_operativo)}")
+            self.card_margine.lbl_value.setText(
+                f"€ {self._format_currency(margine_operativo)}"
+            )
             self.card_margine.lbl_value.setStyleSheet(
                 f"color: {'#20c997' if margine_operativo >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
 
-            self.card_margine_perc.lbl_value.setText(f"{marginalita_perc:.1f} %".replace(".", ","))
+            self.card_margine_perc.lbl_value.setText(
+                f"{marginalita_perc:.1f} %".replace(".", ",")
+            )
             self.card_margine_perc.lbl_value.setStyleSheet(
                 f"color: {'#20c997' if marginalita_perc >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
 
-            self.card_eff_resa.lbl_value.setText(f"€ {self._format_currency(utile_netto_orario)} / h")
+            self.card_eff_resa.lbl_value.setText(
+                f"€ {self._format_currency(utile_netto_orario)} / h"
+            )
             self.card_eff_resa.lbl_value.setStyleSheet(
                 f"color: {'#20c997' if utile_netto_orario >= 0 else '#dc3545'}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
             )
 
-            self.card_val_ora.lbl_value.setText(f"€ {self._format_currency(valore_per_ora)} / h")
+            self.card_val_ora.lbl_value.setText(
+                f"€ {self._format_currency(valore_per_ora)} / h"
+            )
 
             # --- 3. Update Charts ---
             self._plot_stato_attivita(df)
@@ -446,7 +474,9 @@ class ContabilitaKPIPanel(QWidget):
             return
 
         # FILTRO ESCLUSIONE FORNITURA
-        df_filtered = df[~df["stato_attivita"].str.contains("FORNITURA", case=False, na=False)]
+        df_filtered = df[
+            ~df["stato_attivita"].str.contains("FORNITURA", case=False, na=False)
+        ]
 
         counts = df_filtered["stato_attivita"].value_counts()
         if counts.empty:
@@ -543,7 +573,9 @@ class ContabilitaKPIPanel(QWidget):
             "dicembre",
         ]
         df["mese_lower"] = df["mese"].str.lower().str.strip()
-        df["mese_cat"] = pd.Categorical(df["mese_lower"], categories=months_order, ordered=True)
+        df["mese_cat"] = pd.Categorical(
+            df["mese_lower"], categories=months_order, ordered=True
+        )
 
         grouped = df.groupby("mese_cat", observed=True)[["totale_prev", "ore_sp"]].sum()
 
@@ -563,7 +595,13 @@ class ContabilitaKPIPanel(QWidget):
 
         ax2 = ax.twinx()
         line = ax2.plot(
-            x, grouped["ore_sp"], label="Ore Spese", color="#0d6efd", marker="o", linewidth=3, markersize=8
+            x,
+            grouped["ore_sp"],
+            label="Ore Spese",
+            color="#0d6efd",
+            marker="o",
+            linewidth=3,
+            markersize=8,
         )
 
         ax.set_xticks(x)
@@ -597,12 +635,20 @@ class ContabilitaKPIPanel(QWidget):
         filtered_df = df[df["tipologia_upper"].isin(target_types)]
 
         if filtered_df.empty:
-            ax.text(0.5, 0.5, "Nessun dato per le tipologie target", ha="center", va="center")
+            ax.text(
+                0.5,
+                0.5,
+                "Nessun dato per le tipologie target",
+                ha="center",
+                va="center",
+            )
             self.canvas3.draw()
             return
 
         # Raggruppa e calcola Ricavi (Prev) e Costi
-        grouped_sums = filtered_df.groupby("tipologia_upper")[["totale_prev", "ore_sp"]].sum()
+        grouped_sums = filtered_df.groupby("tipologia_upper")[
+            ["totale_prev", "ore_sp"]
+        ].sum()
         grouped_sums["Costo"] = grouped_sums["ore_sp"] * HOURLY_COST_STD
         grouped_sums["Margine"] = grouped_sums["totale_prev"] - grouped_sums["Costo"]
 
@@ -626,7 +672,14 @@ class ContabilitaKPIPanel(QWidget):
         )
 
         # Bar 2: Costi (Ore * Standard) - Red
-        ax.barh(y - height / 2, grouped["Costo"], height, label="Costo Stimato", color="#dc3545", alpha=0.8)
+        ax.barh(
+            y - height / 2,
+            grouped["Costo"],
+            height,
+            label="Costo Stimato",
+            color="#dc3545",
+            alpha=0.8,
+        )
 
         ax.set_yticks(y)
         ax.set_yticklabels(grouped.index)
@@ -637,7 +690,9 @@ class ContabilitaKPIPanel(QWidget):
         for i, (idx, row) in enumerate(grouped.iterrows()):
             # Etichetta Ricavi + Margine
             margine_k = row["Margine"] / 1000
-            txt_ric = f" € {row['totale_prev']/1000:.1f}k (Margine: {margine_k:+.1f}k)"
+            txt_ric = (
+                f" € {row['totale_prev'] / 1000:.1f}k (Margine: {margine_k:+.1f}k)"
+            )
             ax.text(
                 row["totale_prev"],
                 i + height / 2,
@@ -652,7 +707,7 @@ class ContabilitaKPIPanel(QWidget):
             ax.text(
                 row["Costo"],
                 i - height / 2,
-                f" € {row['Costo']/1000:.1f}k",
+                f" € {row['Costo'] / 1000:.1f}k",
                 va="center",
                 fontsize=9,
                 color="#dc3545",
@@ -688,7 +743,9 @@ class ContabilitaKPIPanel(QWidget):
             "dicembre",
         ]
         df["mese_lower"] = df["mese"].str.lower().str.strip()
-        df["mese_cat"] = pd.Categorical(df["mese_lower"], categories=months_order, ordered=True)
+        df["mese_cat"] = pd.Categorical(
+            df["mese_lower"], categories=months_order, ordered=True
+        )
 
         # Qui usiamo dropna() implicito se ci sono NaN in resa
         df_resa = df[df["resa"] > 0]
@@ -700,7 +757,9 @@ class ContabilitaKPIPanel(QWidget):
             return
 
         x = range(len(grouped))
-        ax.plot(x, grouped.values, color="#6f42c1", marker="o", linewidth=3, markersize=8)
+        ax.plot(
+            x, grouped.values, color="#6f42c1", marker="o", linewidth=3, markersize=8
+        )
 
         ax.fill_between(x, grouped.values, color="#6f42c1", alpha=0.1)
 
@@ -709,7 +768,13 @@ class ContabilitaKPIPanel(QWidget):
 
         for i, v in enumerate(grouped.values):
             ax.text(
-                i, v + (v * 0.05), f"{v:.1f}", ha="center", fontsize=9, fontweight="bold", color="#6f42c1"
+                i,
+                v + (v * 0.05),
+                f"{v:.1f}",
+                ha="center",
+                fontsize=9,
+                fontweight="bold",
+                color="#6f42c1",
             )
 
         # ax.set_title('Andamento Resa Media Mensile', fontsize=14, fontweight='bold', color='#495057', pad=20)
@@ -732,9 +797,17 @@ class ContabilitaKPIPanel(QWidget):
             return
 
         # Definisci categorie
-        completed = df[df["stato_attivita"].str.contains("CONTABILIZZA|CHIUSA", case=False, na=False)]
-        pending_tcl = df[df["stato_attivita"].str.contains("IN ATTESA TCL", case=False, na=False)]
-        to_complete = df[df["stato_attivita"].str.contains("DA COMPLETARE", case=False, na=False)]
+        completed = df[
+            df["stato_attivita"].str.contains(
+                "CONTABILIZZA|CHIUSA", case=False, na=False
+            )
+        ]
+        pending_tcl = df[
+            df["stato_attivita"].str.contains("IN ATTESA TCL", case=False, na=False)
+        ]
+        to_complete = df[
+            df["stato_attivita"].str.contains("DA COMPLETARE", case=False, na=False)
+        ]
 
         count_completed = len(completed)
         count_tcl = len(pending_tcl)
@@ -751,7 +824,14 @@ class ContabilitaKPIPanel(QWidget):
         # Plot Stacked Bar
         # Order: Completed (Green), TCL (Yellow), Todo (Red), Other (Gray)
 
-        p1 = ax.barh(0, pct_completed, height=0.6, color="#198754", label="Contabilizzate", edgecolor="white")
+        p1 = ax.barh(
+            0,
+            pct_completed,
+            height=0.6,
+            color="#198754",
+            label="Contabilizzate",
+            edgecolor="white",
+        )
         p2 = ax.barh(
             0,
             pct_tcl,
@@ -806,6 +886,12 @@ class ContabilitaKPIPanel(QWidget):
         ax.axis("off")
 
         # Legend below
-        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=4, frameon=False, fontsize=9)
+        ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.2),
+            ncol=4,
+            frameon=False,
+            fontsize=9,
+        )
 
         self.canvas5.draw()

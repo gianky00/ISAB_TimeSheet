@@ -86,7 +86,9 @@ def load_config() -> Dict[str, Any]:
                     continue
 
                 # Priorità 1: Keyring
-                password_from_keyring = SecretsManager.get_credential("isab_portal", username)
+                password_from_keyring = SecretsManager.get_credential(
+                    "isab_portal", username
+                )
                 if password_from_keyring:
                     acc["password"] = password_from_keyring
                     continue
@@ -118,7 +120,9 @@ def load_config() -> Dict[str, Any]:
 
         # Migrazione Legacy
         if "isab_username" in config and config.get("isab_username"):
-            if not any(a.get("username") == config["isab_username"] for a in config["accounts"]):
+            if not any(
+                a.get("username") == config["isab_username"] for a in config["accounts"]
+            ):
                 config["accounts"].append(
                     {
                         "username": config["isab_username"],
@@ -163,7 +167,9 @@ def save_config(config: Dict[str, Any]):
                 # Tenta di salvare nel keyring
                 try:
                     if SecretsManager.is_available():
-                        SecretsManager.store_credential("isab_portal", username, password)
+                        SecretsManager.store_credential(
+                            "isab_portal", username, password
+                        )
                         # Se ha successo, rimuovi la password dal file
                         acc.pop("password", None)
                         continue

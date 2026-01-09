@@ -125,11 +125,15 @@ class HorizontalLogItem(QWidget):
         top_row.setSpacing(5)
 
         lbl_icon = QLabel(icons.get(category, "•"))
-        lbl_icon.setStyleSheet(f"font-size: 20px; color: {self.category_color};")  # Smaller Icon
+        lbl_icon.setStyleSheet(
+            f"font-size: 20px; color: {self.category_color};"
+        )  # Smaller Icon
         top_row.addWidget(lbl_icon)
 
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 11px; font-family: monospace;")  # Smaller time
+        lbl_time.setStyleSheet(
+            "color: #adb5bd; font-size: 11px; font-family: monospace;"
+        )  # Smaller time
         top_row.addWidget(lbl_time)
 
         top_row.addStretch()
@@ -137,9 +141,13 @@ class HorizontalLogItem(QWidget):
 
         # Text (Compact)
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 12px; color: #212529;")  # Smaller text
+        self.lbl_human.setStyleSheet(
+            "font-weight: bold; font-size: 12px; color: #212529;"
+        )  # Smaller text
         self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_human.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addWidget(self.lbl_human)
 
         layout.addStretch()
@@ -153,8 +161,12 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(24, 20)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;")
-            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
+            btn.setStyleSheet(
+                "background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;"
+            )
+            btn.clicked.connect(
+                lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path))
+            )
             action_layout.addWidget(btn)
 
         if fixit_action == "ACCOUNT":
@@ -162,13 +174,16 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(24, 20)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;")
+            btn.setStyleSheet(
+                "background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;"
+            )
             btn.clicked.connect(self._open_settings)
             action_layout.addWidget(btn)
 
         # Path Detection
         path_matches = re.findall(
-            r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)', tech_msg
+            r'([a-zA-Z]:\\[^ :<>|"\n]+|/(?:Users|home|tmp|var|usr|opt|app|data)/[^ :<>|"\n]+)',
+            tech_msg,
         )
         seen = set()
         for path in path_matches:
@@ -182,7 +197,9 @@ class HorizontalLogItem(QWidget):
                 btn.setStyleSheet(
                     "background-color: #17a2b8; color: white; border-radius: 3px; font-size: 10px;"
                 )
-                btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
+                btn.clicked.connect(
+                    lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p))
+                )
                 action_layout.addWidget(btn)
 
         action_layout.addStretch()
@@ -296,7 +313,9 @@ class HorizontalTimelineWidget(QScrollArea):
             self.consecutive_count += 1
             # Update last item text
             if self.container.layout.count() > 0:
-                last_widget = self.container.layout.itemAt(self.container.layout.count() - 1).widget()
+                last_widget = self.container.layout.itemAt(
+                    self.container.layout.count() - 1
+                ).widget()
                 if isinstance(last_widget, HorizontalLogItem):
                     last_widget.set_count(self.consecutive_count)
                     return
@@ -460,7 +479,9 @@ class ExcelTableWidget(QTableWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
+        self.auto_copy_headers = (
+            False  # Flag per copiare automaticamente le intestazioni
+        )
 
         # Abilita la selezione di celle (non righe intere)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
@@ -587,7 +608,11 @@ class ExcelTableWidget(QTableWidget):
         row_data = []
         for c in range(self.columnCount()):
             if not self.isColumnHidden(c):
-                header = self.horizontalHeaderItem(c).text() if self.horizontalHeaderItem(c) else f"Col {c}"
+                header = (
+                    self.horizontalHeaderItem(c).text()
+                    if self.horizontalHeaderItem(c)
+                    else f"Col {c}"
+                )
                 # Handle cell widgets (combos) or text items
                 widget = self.cellWidget(row, c)
                 if isinstance(widget, QComboBox):
@@ -618,7 +643,9 @@ class ExcelTableWidget(QTableWidget):
             for c in range(self.columnCount()):
                 item = self.item(r, c)
                 if item and not self.isColumnHidden(c):
-                    row_data.append(f"{self.horizontalHeaderItem(c).text()}: {item.text()}")
+                    row_data.append(
+                        f"{self.horizontalHeaderItem(c).text()}: {item.text()}"
+                    )
             rows_text.append(" | ".join(row_data))
 
         context = "\n".join(rows_text)
@@ -642,10 +669,22 @@ class ExcelTableWidget(QTableWidget):
 
         # Determina i limiti della selezione
         rows = sorted(
-            list(set(r for range_ in selection for r in range(range_.topRow(), range_.bottomRow() + 1)))
+            list(
+                set(
+                    r
+                    for range_ in selection
+                    for r in range(range_.topRow(), range_.bottomRow() + 1)
+                )
+            )
         )
         cols = sorted(
-            list(set(c for range_ in selection for c in range(range_.leftColumn(), range_.rightColumn() + 1)))
+            list(
+                set(
+                    c
+                    for range_ in selection
+                    for c in range(range_.leftColumn(), range_.rightColumn() + 1)
+                )
+            )
         )
 
         if not rows or not cols:
@@ -761,7 +800,9 @@ class EditableDataTable(QWidget):
         # Configurazione header
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
         # Menu contestuale
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -1088,7 +1129,9 @@ class DetailedInfoDialog(QDialog):
 
         # Title
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;")
+        lbl_title.setStyleSheet(
+            "font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;"
+        )
         layout.addWidget(lbl_title)
 
         # Content (HTML)
@@ -1116,7 +1159,9 @@ class InfoLabel(QPushButton):
     def __init__(self, title, get_text_callback, parent=None):
         super().__init__("ⓘ", parent)
         self.title = title
-        self.get_text_callback = get_text_callback  # Funzione che restituisce il testo aggiornato
+        self.get_text_callback = (
+            get_text_callback  # Funzione che restituisce il testo aggiornato
+        )
 
         # Accessibility settings
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -1153,7 +1198,9 @@ class InfoLabel(QPushButton):
     def _show_info(self):
         """Mostra il dialog con il testo aggiornato, posizionato in modo intelligente."""
         content = (
-            self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
+            self.get_text_callback()
+            if callable(self.get_text_callback)
+            else str(self.get_text_callback)
         )
         dlg = DetailedInfoDialog(self.title, content, self.window())
 
@@ -1245,7 +1292,9 @@ class KPIBigCard(QFrame):
         lbl_title.setStyleSheet(
             "color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;"
         )
-        lbl_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lbl_title.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         header_layout.addWidget(lbl_title)
 
         header_layout.addStretch()
@@ -1265,7 +1314,9 @@ class KPIBigCard(QFrame):
 
         if subtitle:
             lbl_sub = QLabel(subtitle)
-            lbl_sub.setStyleSheet("color: #adb5bd; font-size: 11px; border: none; background: transparent;")
+            lbl_sub.setStyleSheet(
+                "color: #adb5bd; font-size: 11px; border: none; background: transparent;"
+            )
             lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl_sub)
 
@@ -1302,7 +1353,9 @@ class MissionReportCard(QFrame):
         title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
         title_color = "#198754" if status else "#dc3545"
         lbl_title = QLabel(title_text)
-        lbl_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {title_color};")
+        lbl_title.setStyleSheet(
+            f"font-size: 18px; font-weight: bold; color: {title_color};"
+        )
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_title)
 
@@ -1319,7 +1372,9 @@ class MissionReportCard(QFrame):
         # Fun hint
         if status:
             lbl_hint = QLabel("Ottimo lavoro! 🚀")
-            lbl_hint.setStyleSheet("color: #6c757d; font-style: italic; margin-top: 5px;")
+            lbl_hint.setStyleSheet(
+                "color: #6c757d; font-style: italic; margin-top: 5px;"
+            )
             lbl_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl_hint)
 
