@@ -1,72 +1,99 @@
 """
-Bot TS - Styles and Themes
-Defines the visual styles for the application.
-Currently enforces Light Theme via QSS file AND QPalette.
+SyncroJob - Theme and Style Manager
+Gestisce l'applicazione di temi, palette e fogli di stile (QSS).
 """
 
+import logging
 from pathlib import Path
+from typing import Optional
 
 from PyQt6.QtGui import QColor, QPalette
+from PyQt6.QtWidgets import QApplication
 
+from src.gui.design.colors import DARK, LIGHT, ColorPalette
 from src.utils.helpers import get_asset_path
 
+logger = logging.getLogger(__name__)
 
-def apply_theme(app, theme_name="light"):
-    """
-    Applica il tema all'applicazione.
-    Carica il file QSS corrispondente da assets/styles E forza la QPalette chiara.
-    """
-    # Force light theme as per current requirement
-    theme_name = "light"
+class ThemeManager:
+    """Manager centralizzato per l'aspetto visivo dell'applicazione."""
 
-    # --- 1. FORCE LIGHT PALETTE (Overrides System Dark Mode) ---
-    palette = QPalette()
+    _instance = None
 
-    # Define Light Colors
-    white = QColor(255, 255, 255)
-    off_white = QColor(250, 250, 250)  # Very light gray for window background
-    light_gray = QColor(240, 240, 240)  # For buttons
-    text_color = QColor(33, 33, 33)  # Dark gray for text, softer than pure black
-    disabled_text = QColor(127, 127, 127)
-    primary_color = QColor(0, 150, 136)  # Teal (matches QSS)
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ThemeManager, cls).__new__(cls)
+            cls._instance.current_theme = "light"
+        return cls._instance
 
-    # Set Palette Roles
-    palette.setColor(QPalette.ColorRole.Window, off_white)
-    palette.setColor(QPalette.ColorRole.WindowText, text_color)
-    palette.setColor(QPalette.ColorRole.Base, white)
-    palette.setColor(QPalette.ColorRole.AlternateBase, light_gray)
-    palette.setColor(QPalette.ColorRole.ToolTipBase, white)
-    palette.setColor(QPalette.ColorRole.ToolTipText, text_color)
-    palette.setColor(QPalette.ColorRole.Text, text_color)
-    palette.setColor(QPalette.ColorRole.Button, white)  # Fusion buttons are usually white/light
-    palette.setColor(QPalette.ColorRole.ButtonText, text_color)
-    palette.setColor(QPalette.ColorRole.BrightText, white)
-    palette.setColor(QPalette.ColorRole.Link, primary_color)
-    palette.setColor(QPalette.ColorRole.Highlight, primary_color)
-    palette.setColor(QPalette.ColorRole.HighlightedText, white)
+    @property
+    def palette(self) -> ColorPalette:
+        """Restituisce la palette del tema corrente."""
+        return DARK if self.current_theme == "dark" else LIGHT
 
-    # Disabled state adjustments
-    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_text)
-    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_text)
-    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, disabled_text)
+    def apply_theme(self, app: QApplication, theme_name: str = "light"):
+        """
+        Applica il tema completo all'applicazione.
+        Configura la QPalette e carica i file QSS necessari.
+        """
+        self.current_theme = theme_name
+        logger.info(f"Applicazione tema: {theme_name}")
 
-    app.setPalette(palette)
+        # 1. Applica QPalette (Livello System-Native)
+        self._apply_palette(app)
 
-    # --- 2. LOAD STYLESHEET (QSS) ---
-    # Use helper to resolve path correctly in both dev and frozen modes
-    qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
+        # 2. Applica QSS Principale (Livello Branding)
+        self._apply_stylesheet(app, theme_name)
 
-    if qss_path.exists():
-        with open(qss_path, "r", encoding="utf-8") as f:
-            qss_content = f.read()
-            app.setStyleSheet(qss_content)
-    else:
-        # Fallback to inline style if file missing (dev mode)
-        print(f"Warning: Stylesheet {qss_path} not found. Using default.")
-        # Try to import colors, handle failure gracefully
-        try:
-            from .design.colors import LIGHT
+    def _apply_palette(self, app: QApplication):
+        """Traduce la ColorPalette in una QPalette Qt."""
+        p = self.palette
+        palette = QPalette()
 
-            app.setStyleSheet(f"QMainWindow {{ background-color: {LIGHT.background}; }}")
-        except ImportError:
-            pass
+        # Helper per convertire HEX in QColor
+        def q(hex_color: str) -> QColor:
+            return QColor(hex_color)
+
+        # Mappatura ruoli standard
+        palette.setColor(QPalette.ColorRole.Window, q(p.background))
+        palette.setColor(QPalette.ColorRole.WindowText, q(p.on_background))
+        palette.setColor(QPalette.ColorRole.Base, q(p.surface))
+        palette.setColor(QPalette.ColorRole.AlternateBase, q(p.surface_variant))
+        palette.setColor(QPalette.ColorRole.ToolTipBase, q(p.surface))
+        palette.setColor(QPalette.ColorRole.ToolTipText, q(p.on_surface))
+        palette.setColor(QPalette.ColorRole.Text, q(p.on_surface))
+        palette.setColor(QPalette.ColorRole.Button, q(p.surface))
+        palette.setColor(QPalette.ColorRole.ButtonText, q(p.on_surface))
+        palette.setColor(QPalette.ColorRole.BrightText, q(p.on_primary))
+        palette.setColor(QPalette.ColorRole.Link, q(p.primary))
+        palette.setColor(QPalette.ColorRole.Highlight, q(p.primary))
+        palette.setColor(QPalette.ColorRole.HighlightedText, q(p.on_primary))
+
+        # Stati disabilitati
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, q(p.disabled))
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, q(p.disabled))
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, q(p.disabled))
+
+        app.setPalette(palette)
+
+    def _apply_stylesheet(self, app: QApplication, theme_name: str):
+        """Carica e applica il file QSS principale."""
+        qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
+        
+        qss_content = ""
+        if qss_path.exists():
+            try:
+                with open(qss_path, "r", encoding="utf-8") as f:
+                    qss_content = f.read()
+            except Exception as e:
+                logger.error(f"Errore lettura QSS {qss_path}: {e}")
+
+        # Se il file manca o è vuoto, applica uno stile minimo basato sulla palette
+        if not qss_content:
+            qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
+        
+        app.setStyleSheet(qss_content)
+
+# Wrapper per compatibilità con il codice esistente
+def apply_theme(app: QApplication, theme_name: str = "light"):
+    ThemeManager().apply_theme(app, theme_name)
