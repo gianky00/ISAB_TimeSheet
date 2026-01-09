@@ -9,6 +9,7 @@ import logging
 import os
 import sqlite3
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Any, Dict, List
 
 from src.core.config_manager import CONFIG_DIR
@@ -26,10 +27,16 @@ class AuditManager:
     _SALT = "SyncroJob_Secure_Audit_2026"
 
     # Livelli di severità
-    class Severity:
+    class Severity(Enum):
         LOW = "low"  # Info, operazioni normali
         MEDIUM = "medium"  # Modifiche config, avvisi
         HIGH = "high"  # Errori, manomissioni, licenza fallita
+
+    # Stati delle operazioni
+    class Status(Enum):
+        SUCCESS = "success"
+        ERROR = "error"
+        WARNING = "warning"
 
     def __new__(cls):
         if cls._instance is None:
@@ -139,8 +146,8 @@ class AuditManager:
         category: str = "general",
         entity: str = "",
         params: Any = None,
-        status: str = "success",
-        severity: str = "low",
+        status: Any = Status.SUCCESS,
+        severity: Any = Severity.LOW,
         notify: bool = False,
     ):
         """
@@ -149,6 +156,10 @@ class AuditManager:
         """
         try:
             user_id = self._get_current_user()
+
+            # Normalizzazione Enum/Stringa
+            status_val = status.value if isinstance(status, self.Status) else str(status)
+            severity_val = severity.value if isinstance(severity, self.Severity) else str(severity)
 
             # Sanificazione Dati
             entity = entity if entity else "-"
@@ -159,7 +170,7 @@ class AuditManager:
             prev_hash = self._get_last_hash()
             # Include severity in the hash string
             data_to_hash = (
-                f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status}|{severity}"
+                f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status_val}|{severity_val}"
             )
             current_hash = self._calculate_hash(data_to_hash, prev_hash)
 
@@ -175,8 +186,8 @@ class AuditManager:
                         category,
                         entity,
                         params_json,
-                        status,
-                        severity,
+                        status_val,
+                        severity_val,
                         current_hash,
                     ),
                 )
@@ -192,25 +203,29 @@ class AuditManager:
         self,
         action: str,
         entity: str,
-        status: str,
-        severity: str,
+        status: Any,
+        severity: Any,
         params: Any,
         notify: bool,
     ):
         if notify:
             from src.core.notification_manager import NotificationManager
 
+            # Normalizzazione per logica interna
+            s_val = status.value if isinstance(status, self.Status) else str(status)
+            v_val = severity.value if isinstance(severity, self.Severity) else str(severity)
+
             level = "info"
-            if status == "error" or severity == "high":
+            if s_val == self.Status.ERROR.value or v_val == self.Severity.HIGH.value:
                 level = "error"
-            elif status == "warning" or severity == "medium":
+            elif s_val == self.Status.WARNING.value or v_val == self.Severity.MEDIUM.value:
                 level = "warning"
-            elif status == "success":
+            elif s_val == self.Status.SUCCESS.value:
                 level = "success"
 
             title = f"{action}: {entity}"
             # Crea un messaggio leggibile dai parametri
-            msg = f"Operazione completata con esito: {status.upper()}."
+            msg = f"Operazione completata con esito: {s_val.upper()}."
             if params and isinstance(params, dict):
                 if "nuova" in params:
                     msg = f"Versione aggiornata a {params['nuova']}"
@@ -237,11 +252,14 @@ class AuditManager:
                     if not row["row_hash"]:
                         continue
 
+                    # I dati nel DB sono stringhe, l'hash deve riflettere questo
                     data_to_hash = f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}"
                     expected_hash = self._calculate_hash(data_to_hash, prev_hash)
 
                     if row["row_hash"] != expected_hash:
                         return False
+                    prev_hash = row["row_hash"]
+                return True
         except Exception:
             return False
 
