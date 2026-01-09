@@ -68,7 +68,7 @@ def setup_crash_logging():
 
 # Attiva logging immediatamente
 setup_crash_logging()
-
+print("[DEBUG] Crash logging setup complete")
 
 # Ensure src is in path
 if getattr(sys, "frozen", False):
@@ -82,14 +82,29 @@ src_path = os.path.join(base_path, "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
+print(f"[DEBUG] base_path: {base_path}")
+print(f"[DEBUG] src_path: {src_path}")
 
 def main():
     """Main entry point."""
+    print("[DEBUG] Entering main()")
     # Import PyQt6 components
-    from PyQt6.QtGui import QFont
-    from PyQt6.QtWidgets import QApplication, QMessageBox
+    try:
+        from PyQt6.QtGui import QFont
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+        print("[DEBUG] PyQt6 imports successful")
+    except Exception as e:
+        print(f"[DEBUG] PyQt6 imports failed: {e}")
+        return
 
-    from src.gui.styles import apply_theme
+    try:
+        from src.gui.styles import apply_theme
+        print("[DEBUG] src.gui.styles import successful")
+    except Exception as e:
+        print(f"[DEBUG] src.gui.styles import failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return
 
     # Create application first to allow message boxes
     app = QApplication(sys.argv)
@@ -106,6 +121,7 @@ def main():
     app.setApplicationVersion("1.0.0")
 
     # === LICENSE CHECK FLOW ===
+    print("[DEBUG] Starting license check")
     try:
         from src.core.license_updater import check_emergency_grace_period, run_update
         from src.core.license_validator import (
@@ -115,6 +131,7 @@ def main():
         )
 
         status, msg = get_detailed_license_status()
+        print(f"[DEBUG] License status: {status}, msg: {msg}")
 
         # Se la licenza non è valida, proviamo a scaricarla di nuovo
         if status != LicenseStatus.VALID:
@@ -156,23 +173,44 @@ def main():
     except Exception as e:
         # Fallback di sicurezza in caso di crash del controllo licenza
         # Nota: questo viene catturato qui, ma se crasha prima (es. import) interviene l'excepthook
+        print(f"[DEBUG] License check exception: {e}")
         QMessageBox.critical(None, "Errore Critico", f"Impossibile verificare la licenza.\n{e}")
         sys.exit(1)
 
     # === START APP ===
-    from src.core.database import db_manager
-    from src.gui.main_window import MainWindow
+    print("[DEBUG] Importing db_manager and MainWindow")
+    try:
+        from src.core.database import db_manager
+        print("[DEBUG] db_manager imported")
+        from src.gui.main_window import MainWindow
+        print("[DEBUG] MainWindow imported")
+    except Exception as e:
+        print(f"[DEBUG] Import failed: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
     # Inizializza schema database (Contabilità, Timbrature, ecc.)
     try:
+        print("[DEBUG] Initializing database")
         db_manager.init_db()
+        print("[DEBUG] Database initialized")
     except Exception as e:
         print(f"[DATABASE] Errore inizializzazione: {e}")
 
-    window = MainWindow()
-    window.showMaximized()
+    try:
+        print("[DEBUG] Creating MainWindow instance")
+        window = MainWindow()
+        print("[DEBUG] Showing MainWindow")
+        window.showMaximized()
+    except Exception as e:
+        print(f"[DEBUG] Failed to create or show MainWindow: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
     # Run event loop
+    print("[DEBUG] Entering event loop")
     sys.exit(app.exec())
 
 

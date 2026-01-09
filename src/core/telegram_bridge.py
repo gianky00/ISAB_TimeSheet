@@ -159,7 +159,7 @@ class TelegramUIBridge(QObject):
             except Exception as e:
                 self.telegram.send_message_sync(f"❌ Errore riavvio: {e}")
         elif command == "stop_all":
-            panel = self.mw._get_active_bot_panel()
+            panel = self.mw.bot_controller._get_active_bot_panel()
             if panel and hasattr(panel, "stop_btn") and panel.stop_btn.isEnabled():
                 panel.stop_btn.click()
                 self.telegram.send_message_sync("🛑 Stop inviato.")
