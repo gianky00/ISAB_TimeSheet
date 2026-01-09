@@ -42,7 +42,7 @@ class NavigationController(QObject):
             new_panel = DashboardPanel()
             self.mw.dashboard_panel = new_panel
         elif index == 1:
-            from src.gui.main_window import AutomazioniWidget
+            from src.gui.widgets.automazioni_widget import AutomazioniWidget
 
             new_panel = AutomazioniWidget(self.mw)
             self.mw.automazioni_widget = new_panel
@@ -52,7 +52,7 @@ class NavigationController(QObject):
             new_panel = LyraPanel()
             self.mw.lyra_panel = new_panel
         elif index == 3:
-            from src.gui.main_window import DatabaseWidget
+            from src.gui.widgets.database_widget import DatabaseWidget
 
             new_panel = DatabaseWidget(self.mw)
             self.mw.database_widget = new_panel
