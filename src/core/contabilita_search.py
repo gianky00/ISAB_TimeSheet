@@ -35,8 +35,8 @@ class ContabilitaSearch:
                 cursor = conn.cursor()
                 # Cerca in Contabilità (n_prev = codice_oda, attivita = descrizione)
                 sql = """
-                    SELECT DISTINCT n_prev, attivita, odc 
-                    FROM contabilita 
+                    SELECT DISTINCT n_prev, attivita, odc
+                    FROM contabilita
                     WHERE (lower(n_prev) LIKE ? OR lower(attivita) LIKE ? OR lower(odc) LIKE ?)
                     AND n_prev IS NOT NULL AND n_prev != ''
                     LIMIT 20
@@ -45,7 +45,9 @@ class ContabilitaSearch:
                 cursor.execute(sql, (like_query, like_query, like_query))
 
                 rows = cursor.fetchall()
-                logging.debug(f"[DEBUG] Search '{query}' found {len(rows)} matches in Contabilita")
+                logging.debug(
+                    f"[DEBUG] Search '{query}' found {len(rows)} matches in Contabilita"
+                )
 
                 for row in rows:
                     results.append(
@@ -62,7 +64,9 @@ class ContabilitaSearch:
         return results
 
     @classmethod
-    def search_extended(cls, db_path: Path, query: str, year: int = None, limit: int = 100) -> Dict[str, List[Dict]]:
+    def search_extended(
+        cls, db_path: Path, query: str, year: int = None, limit: int = 100
+    ) -> Dict[str, List[Dict]]:
         """
         Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
         Returns: Dict con liste di risultati per categoria.
@@ -70,10 +74,14 @@ class ContabilitaSearch:
         if not db_path.exists():
             return {}
         query = query.strip().lower()
-        if len(query) < 2: # Relaxed limit
+        if len(query) < 2:  # Relaxed limit
             return {}
 
-        out: Dict[str, List[Dict]] = {"GIORNALIERE": [], "CANTIERE": [], "CERTIFICATI": []}
+        out: Dict[str, List[Dict]] = {
+            "GIORNALIERE": [],
+            "CANTIERE": [],
+            "CERTIFICATI": [],
+        }
         like_query = f"%{query}%"
 
         def _fmt_date(val):
@@ -83,7 +91,7 @@ class ContabilitaSearch:
                     return ""
                 dt = datetime.strptime(str(val).split()[0], "%Y-%m-%d")
                 return dt.strftime("%d/%m/%Y")
-            except:
+            except Exception:
                 return str(val)
 
         try:
@@ -98,15 +106,19 @@ class ContabilitaSearch:
                     g_params.append(f"{year}-%")
 
                 # 1. Giornaliere (Cerca Personale o Descrizione)
-                sql_g = f"""SELECT DISTINCT data, personale, descrizione FROM giornaliere 
-                           WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){g_where_year} 
+                sql_g = f"""SELECT DISTINCT data, personale, descrizione FROM giornaliere
+                           WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){g_where_year}
                            ORDER BY data DESC LIMIT ?"""
                 g_params.append(limit)
-                
+
                 cursor.execute(sql_g, g_params)
                 for r in cursor.fetchall():
                     out["GIORNALIERE"].append(
-                        {"data": _fmt_date(r[0]), "personale": r[1], "descrizione": r[2]}
+                        {
+                            "data": _fmt_date(r[0]),
+                            "personale": r[1],
+                            "descrizione": r[2],
+                        }
                     )
 
                 # 2. Scarico Ore (Cantiere - Cerca Persone, Descrizione o Commessa)
@@ -116,7 +128,7 @@ class ContabilitaSearch:
                     s_where_year = " AND data LIKE ?"
                     s_params.append(f"{year}-%")
 
-                sql_s = f"""SELECT DISTINCT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore 
+                sql_s = f"""SELECT DISTINCT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore
                            WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){s_where_year}
                            ORDER BY data DESC LIMIT ?"""
                 s_params.append(limit)
@@ -124,17 +136,25 @@ class ContabilitaSearch:
                 cursor.execute(sql_s, s_params)
                 for r in cursor.fetchall():
                     out["CANTIERE"].append(
-                        {"data": _fmt_date(r[0]), "personale": r[1], "descrizione": r[2], "commessa": r[3], "totale_ore": r[4]}
+                        {
+                            "data": _fmt_date(r[0]),
+                            "personale": r[1],
+                            "descrizione": r[2],
+                            "commessa": r[3],
+                            "totale_ore": r[4],
+                        }
                     )
 
                 # 3. Certificati (Cerca Matricola, Costruttore, Modello) - Year ignored for Certificati usually
                 # But kept logic simple
                 c_params = [like_query, like_query, like_query, limit]
-                sql_c = """SELECT DISTINCT modello, costruttore, matricola FROM certificati_campione 
+                sql_c = """SELECT DISTINCT modello, costruttore, matricola FROM certificati_campione
                            WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
                 cursor.execute(sql_c, c_params)
                 for r in cursor.fetchall():
-                    out["CERTIFICATI"].append({"modello": r[0], "costruttore": r[1], "matricola": r[2]})
+                    out["CERTIFICATI"].append(
+                        {"modello": r[0], "costruttore": r[1], "matricola": r[2]}
+                    )
 
         except Exception as e:
             logging.error(f"Extended Search Error: {e}")

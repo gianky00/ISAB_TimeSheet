@@ -8,7 +8,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget
 
 
-def make_accessible(widget: QWidget, name: str, description: str = "", role: Optional[str] = None):
+def make_accessible(
+    widget: QWidget, name: str, description: str = "", role: Optional[str] = None
+):
     """Rende un widget accessibile."""
     widget.setAccessibleName(name)
     if description:
@@ -39,8 +41,7 @@ class KeyboardShortcuts:
 
     @classmethod
     def setup(cls, main_window):
-
-        for key, action in cls.SHORTCUTS.items():
+        for _key, _action in cls.SHORTCUTS.items():
             # Check if main_window has handler (e.g., handle_save)
             # The naming convention in MainWindow is slightly different (_handle_ctrl_s)
             # This is a helper class for future standardization.

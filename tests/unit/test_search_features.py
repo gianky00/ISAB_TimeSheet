@@ -56,12 +56,12 @@ def mock_timbrature_db(tmp_path):
         conn.execute(
             """
             CREATE TABLE timbrature (
-                data TEXT, 
-                ingresso TEXT, 
-                uscita TEXT, 
-                nome TEXT, 
-                cognome TEXT, 
-                presenza_ts TEXT, 
+                data TEXT,
+                ingresso TEXT,
+                uscita TEXT,
+                nome TEXT,
+                cognome TEXT,
+                presenza_ts TEXT,
                 sito_timbratura TEXT
             )
         """

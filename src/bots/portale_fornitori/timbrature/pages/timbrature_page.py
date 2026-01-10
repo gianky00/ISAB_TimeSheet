@@ -25,7 +25,9 @@ from src.core.constants import Timeouts
 class TimbraturePage:
     """Encapsulates interactions with the Timbrature page."""
 
-    def __init__(self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None):
+    def __init__(
+        self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None
+    ):
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
@@ -60,7 +62,9 @@ class TimbraturePage:
         """Navigates to Report -> Timbrature."""
         try:
             self.log("Navigazione verso pagina Timbrature...")
-            report_element = self.wait.until(EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU))
+            report_element = self.wait.until(
+                EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU)
+            )
             report_element.click()
             time.sleep(1.5)
 
@@ -107,13 +111,17 @@ class TimbraturePage:
             # Focus Date From
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_da:
-                actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.2)
+                actions.key_down(Keys.CONTROL).send_keys("a").key_up(
+                    Keys.CONTROL
+                ).pause(0.2)
                 actions.send_keys(data_da).pause(0.5)
 
             # Focus Date To
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_a:
-                actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.2)
+                actions.key_down(Keys.CONTROL).send_keys("a").key_up(
+                    Keys.CONTROL
+                ).pause(0.2)
                 actions.send_keys(data_a).pause(0.5)
 
             # Checkbox "Verifica Presenza Timesheet"
@@ -154,23 +162,31 @@ class TimbraturePage:
 
             arrow_element = None
             # Retry mechanism for finding the arrow
-            for attempt in range(3):
+            for _attempt in range(3):
                 try:
                     try:
                         arrow_element = self.wait.until(
-                            EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_SUPPLIER)
+                            EC.element_to_be_clickable(
+                                TimbratureLocators.COMBO_ARROW_SUPPLIER
+                            )
                         )
                     except TimeoutException:
                         arrow_element = self.wait.until(
-                            EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_GENERIC)
+                            EC.element_to_be_clickable(
+                                TimbratureLocators.COMBO_ARROW_GENERIC
+                            )
                         )
 
                     if arrow_element:
                         # Use JS click if mouse interaction is flaky
                         try:
-                            ActionChains(self.driver).move_to_element(arrow_element).click().perform()
-                        except:
-                            self.driver.execute_script("arguments[0].click();", arrow_element)
+                            ActionChains(self.driver).move_to_element(
+                                arrow_element
+                            ).click().perform()
+                        except Exception:
+                            self.driver.execute_script(
+                                "arguments[0].click();", arrow_element
+                            )
                         break
                 except Exception:
                     time.sleep(1)
@@ -190,7 +206,9 @@ class TimbraturePage:
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'nearest'});", option
+            )
             time.sleep(0.3)
 
             try:
@@ -217,13 +235,15 @@ class TimbraturePage:
                 self.log("⚠️ Pulsante Excel non trovato.")
                 return ""
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center'});", excel_btn
+            )
             time.sleep(0.5)
 
             self.log("Clicco su Excel...")
             try:
                 excel_btn.click()
-            except:
+            except Exception:
                 self.driver.execute_script("arguments[0].click();", excel_btn)
 
             self.log("Attendo download...")
@@ -245,7 +265,9 @@ class TimbraturePage:
 
         for locator in strategies:
             try:
-                return WebDriverWait(self.driver, 2).until(EC.element_to_be_clickable(locator))
+                return WebDriverWait(self.driver, 2).until(
+                    EC.element_to_be_clickable(locator)
+                )
             except TimeoutException:
                 continue
         return None
@@ -264,7 +286,11 @@ class TimbraturePage:
 
         while time.time() - start_time < timeout:
             files = list(source_dir.glob("*"))
-            files = [f for f in files if not f.name.endswith((".crdownload", ".tmp")) and f.is_file()]
+            files = [
+                f
+                for f in files
+                if not f.name.endswith((".crdownload", ".tmp")) and f.is_file()
+            ]
 
             if files:
                 latest_file = max(files, key=lambda f: f.stat().st_mtime)

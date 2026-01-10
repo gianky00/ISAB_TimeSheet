@@ -66,7 +66,9 @@ class SmartLogTranslator:
 
         if "avvio" in lower_msg or "start" in lower_msg:
             category = "start"
-        elif "login" in lower_msg or "accesso" in lower_msg or "connessione" in lower_msg:
+        elif (
+            "login" in lower_msg or "accesso" in lower_msg or "connessione" in lower_msg
+        ):
             category = "login"
         elif "cerca" in lower_msg or "trovat" in lower_msg or "analizz" in lower_msg:
             category = "search"
@@ -74,7 +76,12 @@ class SmartLogTranslator:
             category = "download"
         elif "successo" in lower_msg or "completat" in lower_msg or "✓" in message:
             category = "success"
-        elif "errore" in lower_msg or "fallit" in lower_msg or "exception" in lower_msg or "✗" in message:
+        elif (
+            "errore" in lower_msg
+            or "fallit" in lower_msg
+            or "exception" in lower_msg
+            or "✗" in message
+        ):
             category = "error"
         elif "attes" in lower_msg or "wait" in lower_msg:
             category = "wait"

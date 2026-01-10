@@ -114,7 +114,8 @@ def check_grace_period():
 
     if not os.path.exists(token_path):
         raise Exception(
-            "Nessuna validazione online precedente.\n" "Connessione internet richiesta per il primo avvio."
+            "Nessuna validazione online precedente.\n"
+            "Connessione internet richiesta per il primo avvio."
         )
 
     try:
@@ -147,8 +148,8 @@ def check_grace_period():
 
     except Exception as e:
         if any(x in str(e) for x in ["SCADUTO", "incoerenza", "Nessuna validazione"]):
-            raise e
-        raise Exception(f"Errore verifica periodo di grazia: {e}")
+            raise
+        raise Exception(f"Errore verifica periodo di grazia: {e}") from e
 
 
 def check_emergency_grace_period():
@@ -194,7 +195,11 @@ def check_emergency_grace_period():
             return False, "Periodo di grazia di 3 giorni SCADUTO.", 0
 
         remaining_days = 3 - elapsed.days
-        return True, f"Periodo di grazia attivo ({remaining_days} giorni rimanenti)", remaining_days
+        return (
+            True,
+            f"Periodo di grazia attivo ({remaining_days} giorni rimanenti)",
+            remaining_days,
+        )
 
     except Exception as e:
         return False, f"Errore lettura periodo di grazia: {e}", 0
@@ -253,7 +258,10 @@ def run_update():
     # Repository per SyncroJob licenses
     base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
     token = get_github_token()
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3.raw"}
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3.raw",
+    }
 
     # Solo config.dat e manifest.json (no pyarmor.rkey)
     files_map = {"config.dat": "config.dat", "manifest.json": "manifest.json"}

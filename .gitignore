@@ -18,3 +18,4 @@ htmlcov/
 
 # Log files
 *.log
+.aider*

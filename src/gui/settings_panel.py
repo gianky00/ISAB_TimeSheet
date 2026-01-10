@@ -119,6 +119,71 @@ class AccountDialog(QDialog):
         return self.username_edit.text(), self.password_edit.text()
 
 
+class ConfirmationDialog(QDialog):
+    """Dialog di conferma personalizzato con lo stesso layout di AccountDialog."""
+
+    def __init__(self, parent=None, title="Conferma", message="Sei sicuro?"):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setFixedWidth(350)
+        self.setStyleSheet("font-size: 15px; background-color: white;")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+
+        # Messaggio
+        self.msg_label = QLabel(message)
+        self.msg_label.setWordWrap(True)
+        self.msg_label.setStyleSheet("color: #212529; font-weight: 500;")
+        layout.addWidget(self.msg_label)
+
+        # Pulsanti
+        btns = QHBoxLayout()
+        btns.setSpacing(10)
+
+        self.ok_btn = QPushButton("Elimina")
+        self.ok_btn.setMinimumHeight(40)
+        self.ok_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+        """
+        )
+        self.ok_btn.clicked.connect(self.accept)
+
+        self.cancel_btn = QPushButton("Annulla")
+        self.cancel_btn.setMinimumHeight(40)
+        self.cancel_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #f8f9fa;
+                color: #212529;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #e9ecef;
+            }
+        """
+        )
+        self.cancel_btn.clicked.connect(self.reject)
+
+        btns.addWidget(self.ok_btn)
+        btns.addWidget(self.cancel_btn)
+
+        layout.addLayout(btns)
+
+
 class StatisticsWidget(QWidget):
     """Widget per visualizzare le statistiche di utilizzo."""
 
@@ -142,14 +207,21 @@ class StatisticsWidget(QWidget):
 
         # Table Title
         table_title = QLabel("Dettaglio Attività")
-        table_title.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 10px; color: #495057;")
+        table_title.setStyleSheet(
+            "font-size: 16px; font-weight: bold; margin-top: 10px; color: #495057;"
+        )
         layout.addWidget(table_title)
 
         # Table
         self.table = QTableWidget()
+        self.table.verticalHeader().setVisible(False)
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Bot", "Esecuzioni", "Errori", "Successo", "Ultima Esecuzione"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.setHorizontalHeaderLabels(
+            ["Bot", "Esecuzioni", "Errori", "Successo", "Ultima Esecuzione"]
+        )
+        self.table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
         self.table.setStyleSheet(
             """
             QTableWidget {
@@ -157,6 +229,8 @@ class StatisticsWidget(QWidget):
                 border-radius: 8px;
                 background-color: white;
                 font-size: 14px;
+                selection-background-color: #0d6efd;
+                selection-color: white;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
@@ -168,6 +242,10 @@ class StatisticsWidget(QWidget):
             QTableWidget::item {
                 padding: 10px;
                 border-bottom: 1px solid #f0f0f0;
+            }
+            QTableWidget::item:selected {
+                background-color: #0d6efd;
+                color: white;
             }
         """
         )
@@ -210,16 +288,20 @@ class StatisticsWidget(QWidget):
             }}
         """
         )
-        l = QVBoxLayout(card)
-        l.setContentsMargins(20, 15, 20, 15)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(20, 15, 20, 15)
 
         lbl_title = QLabel(f"{icon} {title}")
-        lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none;")
-        l.addWidget(lbl_title)
+        lbl_title.setStyleSheet(
+            "color: #6c757d; font-size: 13px; font-weight: bold; border: none;"
+        )
+        layout.addWidget(lbl_title)
 
         lbl_val = QLabel(str(value))
-        lbl_val.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none;")
-        l.addWidget(lbl_val)
+        lbl_val.setStyleSheet(
+            f"color: {color}; font-size: 28px; font-weight: 800; border: none;"
+        )
+        layout.addWidget(lbl_val)
 
         return card
 
@@ -243,9 +325,13 @@ class StatisticsWidget(QWidget):
         self.cards_layout.addWidget(
             self._create_summary_card("Esecuzioni Totali", total_runs, "#0d6efd", "🚀")
         )
-        self.cards_layout.addWidget(self._create_summary_card("Errori Totali", total_errors, "#dc3545", "⚠️"))
         self.cards_layout.addWidget(
-            self._create_summary_card("Tasso Successo", f"{success_rate:.1f}%", "#198754", "📈")
+            self._create_summary_card("Errori Totali", total_errors, "#dc3545", "⚠️")
+        )
+        self.cards_layout.addWidget(
+            self._create_summary_card(
+                "Tasso Successo", f"{success_rate:.1f}%", "#198754", "📈"
+            )
         )
 
         # 2. Update Table
@@ -283,7 +369,7 @@ class StatisticsWidget(QWidget):
 
                     dt = datetime.fromisoformat(last_run)
                     last_run_display = dt.strftime("%d/%m/%Y %H:%M")
-                except:
+                except Exception:
                     last_run_display = last_run
 
             self.table.setItem(row, 0, QTableWidgetItem(name))
@@ -311,7 +397,7 @@ class StatisticsWidget(QWidget):
                     color: black;
                 }}
                 QProgressBar::chunk {{
-                    background-color: {'#198754' if rate > 80 else '#ffc107' if rate > 50 else '#dc3545'};
+                    background-color: {"#198754" if rate > 80 else "#ffc107" if rate > 50 else "#dc3545"};
                 }}
             """
             )
@@ -415,7 +501,9 @@ class SettingsPanel(QWidget):
         self.account_list.setMaximumHeight(100)
         self.account_list.setStyleSheet(self._list_style())
         self.account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.account_list.customContextMenuRequested.connect(lambda pos: self._show_account_context_menu(pos))
+        self.account_list.customContextMenuRequested.connect(
+            lambda pos: self._show_account_context_menu(pos)
+        )
         account_layout.addWidget(self.account_list)
 
         acc_btns = QHBoxLayout()
@@ -455,7 +543,9 @@ class SettingsPanel(QWidget):
         self.sw_account_list = QListWidget()
         self.sw_account_list.setMaximumHeight(100)
         self.sw_account_list.setStyleSheet(self._list_style())
-        self.sw_account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.sw_account_list.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
         self.sw_account_list.customContextMenuRequested.connect(
             lambda pos: self._show_sw_account_context_menu(pos)
         )
@@ -501,7 +591,11 @@ class SettingsPanel(QWidget):
         self.contract_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.contract_list.customContextMenuRequested.connect(
             lambda pos: self._show_generic_list_menu(
-                pos, self.contract_list, self._add_contract, self._edit_contract, self._remove_contract
+                pos,
+                self.contract_list,
+                self._add_contract,
+                self._edit_contract,
+                self._remove_contract,
             )
         )
         contract_layout.addWidget(self.contract_list)
@@ -540,7 +634,11 @@ class SettingsPanel(QWidget):
         self.fornitori_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.fornitori_list.customContextMenuRequested.connect(
             lambda pos: self._show_generic_list_menu(
-                pos, self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore
+                pos,
+                self.fornitori_list,
+                self._add_fornitore,
+                self._edit_fornitore,
+                self._remove_fornitore,
             )
         )
         fornitori_layout.addWidget(self.fornitori_list)
@@ -585,7 +683,11 @@ class SettingsPanel(QWidget):
         self.reparti_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.reparti_list.customContextMenuRequested.connect(
             lambda pos: self._show_generic_list_menu(
-                pos, self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto
+                pos,
+                self.reparti_list,
+                self._add_reparto,
+                self._edit_reparto,
+                self._remove_reparto,
             )
         )
         reparti_layout.addWidget(self.reparti_list)
@@ -624,7 +726,11 @@ class SettingsPanel(QWidget):
         self.cantieri_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.cantieri_list.customContextMenuRequested.connect(
             lambda pos: self._show_generic_list_menu(
-                pos, self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere
+                pos,
+                self.cantieri_list,
+                self._add_cantiere,
+                self._edit_cantiere,
+                self._remove_cantiere,
             )
         )
         cantieri_layout.addWidget(self.cantieri_list)
@@ -691,12 +797,16 @@ class SettingsPanel(QWidget):
 
         # Giornaliere Path input
         giornaliere_label = QLabel("Cartella Giornaliere (Root):")
-        giornaliere_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
+        giornaliere_label.setStyleSheet(
+            "font-size: 14px; font-weight: normal; margin-top: 10px;"
+        )
         contabilita_layout.addWidget(giornaliere_label)
 
         giornaliere_path_layout = QHBoxLayout()
         self.giornaliere_path_edit = QLineEdit()
-        self.giornaliere_path_edit.setPlaceholderText("Seleziona la cartella root delle Giornaliere...")
+        self.giornaliere_path_edit.setPlaceholderText(
+            "Seleziona la cartella root delle Giornaliere..."
+        )
         self.giornaliere_path_edit.setReadOnly(True)
         self.giornaliere_path_edit.setMinimumHeight(40)
         self._style_input(self.giornaliere_path_edit)
@@ -712,12 +822,16 @@ class SettingsPanel(QWidget):
 
         # Attività Programmate Input
         attivita_label = QLabel("File Attività Programmate (Riepilogo):")
-        attivita_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
+        attivita_label.setStyleSheet(
+            "font-size: 14px; font-weight: normal; margin-top: 10px;"
+        )
         contabilita_layout.addWidget(attivita_label)
 
         attivita_path_layout = QHBoxLayout()
         self.attivita_path_edit = QLineEdit()
-        self.attivita_path_edit.setPlaceholderText("Seleziona file Attività Programmate...")
+        self.attivita_path_edit.setPlaceholderText(
+            "Seleziona file Attività Programmate..."
+        )
         self.attivita_path_edit.setReadOnly(True)
         self.attivita_path_edit.setMinimumHeight(40)
         self._style_input(self.attivita_path_edit)
@@ -733,12 +847,16 @@ class SettingsPanel(QWidget):
 
         # Certificati Campione Input
         certificati_label = QLabel("File Certificati Campione:")
-        certificati_label.setStyleSheet("font-size: 14px; font-weight: normal; margin-top: 10px;")
+        certificati_label.setStyleSheet(
+            "font-size: 14px; font-weight: normal; margin-top: 10px;"
+        )
         contabilita_layout.addWidget(certificati_label)
 
         certificati_path_layout = QHBoxLayout()
         self.certificati_path_edit = QLineEdit()
-        self.certificati_path_edit.setPlaceholderText("Seleziona file Certificati Campione...")
+        self.certificati_path_edit.setPlaceholderText(
+            "Seleziona file Certificati Campione..."
+        )
         self.certificati_path_edit.setReadOnly(True)
         self.certificati_path_edit.setMinimumHeight(40)
         self._style_input(self.certificati_path_edit)
@@ -765,7 +883,9 @@ class SettingsPanel(QWidget):
 
         dataease_path_layout = QHBoxLayout()
         self.dataease_path_edit = QLineEdit()
-        self.dataease_path_edit.setPlaceholderText("Seleziona file Excel scarico ore...")
+        self.dataease_path_edit.setPlaceholderText(
+            "Seleziona file Excel scarico ore..."
+        )
         self.dataease_path_edit.setReadOnly(True)
         self.dataease_path_edit.setMinimumHeight(40)
         self._style_input(self.dataease_path_edit)
@@ -882,7 +1002,9 @@ class SettingsPanel(QWidget):
 
         help_btn = QPushButton("📖 Guida alla configurazione")
         help_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        help_btn.clicked.connect(lambda: self.request_help_section.emit("Configurazione Telegram"))
+        help_btn.clicked.connect(
+            lambda: self.request_help_section.emit("Configurazione Telegram")
+        )
         help_btn.setStyleSheet(
             """
             QPushButton {
@@ -915,7 +1037,9 @@ class SettingsPanel(QWidget):
         gl.setSpacing(15)
 
         self.tg_token_edit = QLineEdit()
-        self.tg_token_edit.setPlaceholderText("Inserisci il Token fornito da @BotFather")
+        self.tg_token_edit.setPlaceholderText(
+            "Inserisci il Token fornito da @BotFather"
+        )
         self.tg_token_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.tg_token_edit.setMinimumHeight(40)
         self.tg_token_edit.textChanged.connect(self._on_change)
@@ -956,7 +1080,9 @@ class SettingsPanel(QWidget):
 
         # Gemini API Key (Nuova)
         self.gemini_api_key_edit = QLineEdit()
-        self.gemini_api_key_edit.setPlaceholderText("Inserisci la Gemini API Key per l'AI Coach")
+        self.gemini_api_key_edit.setPlaceholderText(
+            "Inserisci la Gemini API Key per l'AI Coach"
+        )
         self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.gemini_api_key_edit.setMinimumHeight(40)
         self.gemini_api_key_edit.textChanged.connect(self._on_change)
@@ -993,7 +1119,9 @@ class SettingsPanel(QWidget):
         if res == QMessageBox.StandardButton.Yes:
             self.tg_chat_id_edit.clear()
             self._on_change()
-            ToastManager.instance().show("Dispositivo Telegram scollegato. Salva per applicare.", "warning")
+            ToastManager.instance().show(
+                "Dispositivo Telegram scollegato. Salva per applicare.", "warning"
+            )
 
     def _toggle_gemini_visibility(self):
         """Alterna la visibilità della Gemini API Key."""
@@ -1073,7 +1201,9 @@ class SettingsPanel(QWidget):
         config = config_manager.load_config()
         self.auto_backup_check.setChecked(config.get("auto_backup", True))
         self.auto_backup_check.stateChanged.connect(
-            lambda: config_manager.set_config_value("auto_backup", self.auto_backup_check.isChecked())
+            lambda: config_manager.set_config_value(
+                "auto_backup", self.auto_backup_check.isChecked()
+            )
         )
         sett_layout.addWidget(self.auto_backup_check)
 
@@ -1196,7 +1326,7 @@ class SettingsPanel(QWidget):
                 display += f" ({size_kb} KB)"
 
                 self.restore_combo.addItem(display, str(backup_path))
-            except:
+            except Exception:
                 self.restore_combo.addItem(backup_path.name, str(backup_path))
 
     def _restore_selected_backup(self):
@@ -1381,7 +1511,10 @@ class SettingsPanel(QWidget):
         directory = str(Path(current_path).parent) if current_path else str(Path.home())
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Seleziona file Excel Contabilità", directory, "Excel Files (*.xlsx *.xlsm *.xls)"
+            self,
+            "Seleziona file Excel Contabilità",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)",
         )
         if path:
             self.contabilita_path_edit.setText(path)
@@ -1390,7 +1523,9 @@ class SettingsPanel(QWidget):
     def _browse_giornaliere_path(self):
         current_path = self.giornaliere_path_edit.text()
         path = QFileDialog.getExistingDirectory(
-            self, "Seleziona Cartella Root Giornaliere", current_path if current_path else str(Path.home())
+            self,
+            "Seleziona Cartella Root Giornaliere",
+            current_path if current_path else str(Path.home()),
         )
         if path:
             self.giornaliere_path_edit.setText(path)
@@ -1401,7 +1536,10 @@ class SettingsPanel(QWidget):
         directory = str(Path(current_path).parent) if current_path else str(Path.home())
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Seleziona file Attività Programmate", directory, "Excel Files (*.xlsx *.xlsm *.xls)"
+            self,
+            "Seleziona file Attività Programmate",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)",
         )
         if path:
             self.attivita_path_edit.setText(path)
@@ -1412,7 +1550,10 @@ class SettingsPanel(QWidget):
         directory = str(Path(current_path).parent) if current_path else str(Path.home())
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Seleziona file Certificati Campione", directory, "Excel Files (*.xlsx *.xlsm *.xls)"
+            self,
+            "Seleziona file Certificati Campione",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)",
         )
         if path:
             self.certificati_path_edit.setText(path)
@@ -1423,7 +1564,10 @@ class SettingsPanel(QWidget):
         directory = str(Path(current_path).parent) if current_path else str(Path.home())
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Seleziona file DataEase (Scarico Ore)", directory, "Excel Files (*.xlsx *.xlsm *.xls)"
+            self,
+            "Seleziona file DataEase (Scarico Ore)",
+            directory,
+            "Excel Files (*.xlsx *.xlsm *.xls)",
         )
         if path:
             self.dataease_path_edit.setText(path)
@@ -1458,7 +1602,9 @@ class SettingsPanel(QWidget):
             return
 
         acc_data = item.data(Qt.ItemDataRole.UserRole)
-        dlg = AccountDialog(self, username=acc_data["username"], password=acc_data["password"])
+        dlg = AccountDialog(
+            self, username=acc_data["username"], password=acc_data["password"]
+        )
 
         if dlg.exec():
             new_u, new_p = dlg.get_data()
@@ -1470,10 +1616,21 @@ class SettingsPanel(QWidget):
                 self._render_accounts(self._get_current_accounts())
                 self._save_settings()
 
+    def _confirm_delete(self, item_name):
+        """Mostra un dialog di conferma eliminazione stilizzato (layout coerente con AccountDialog)."""
+        dlg = ConfirmationDialog(
+            self,
+            title="Conferma Eliminazione",
+            message=f"Sei sicuro di voler rimuovere '{item_name}'?"
+        )
+        return dlg.exec() == QDialog.DialogCode.Accepted
+
     def _remove_account(self):
         row = self.account_list.currentRow()
         if row >= 0:
-            if QMessageBox.question(self, "Conferma", "Rimuovere account?") == QMessageBox.StandardButton.Yes:
+            item = self.account_list.item(row)
+            acc = item.data(Qt.ItemDataRole.UserRole)
+            if self._confirm_delete(acc.get("username", "Account")):
                 self.account_list.takeItem(row)
                 accounts = self._get_current_accounts()
                 if accounts and not any(a["default"] for a in accounts):
@@ -1509,7 +1666,9 @@ class SettingsPanel(QWidget):
 
         menu.exec(self.account_list.viewport().mapToGlobal(position))
 
-    def _show_generic_list_menu(self, position, list_widget, add_cb, edit_cb, remove_cb):
+    def _show_generic_list_menu(
+        self, position, list_widget, add_cb, edit_cb, remove_cb
+    ):
         """Menu generico per liste semplici (contratti, fornitori)."""
         menu = QMenu()
         item = list_widget.itemAt(position)
@@ -1575,7 +1734,9 @@ class SettingsPanel(QWidget):
         if not item:
             return
         acc_data = item.data(Qt.ItemDataRole.UserRole)
-        dlg = AccountDialog(self, username=acc_data["username"], password=acc_data["password"])
+        dlg = AccountDialog(
+            self, username=acc_data["username"], password=acc_data["password"]
+        )
         dlg.setWindowTitle("Modifica SafeWork")
         if dlg.exec():
             u, p = dlg.get_data()
@@ -1637,16 +1798,22 @@ class SettingsPanel(QWidget):
 
     # --- Gestione Contratti ---
     def _add_contract(self):
-        text, ok = QInputDialog.getText(self, "Aggiungi Contratto", "Inserisci il numero di contratto:")
+        text, ok = QInputDialog.getText(
+            self, "Aggiungi Contratto", "Inserisci il numero di contratto:"
+        )
         if ok and text.strip():
-            if not self.contract_list.findItems(text.strip(), Qt.MatchFlag.MatchExactly):
+            if not self.contract_list.findItems(
+                text.strip(), Qt.MatchFlag.MatchExactly
+            ):
                 self.contract_list.addItem(text.strip())
                 self._save_settings()
 
     def _edit_contract(self):
         item = self.contract_list.currentItem()
         if item:
-            text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
+            text, ok = QInputDialog.getText(
+                self, "Modifica", "Valore:", text=item.text()
+            )
             if ok and text.strip():
                 item.setText(text.strip())
                 self._save_settings()
@@ -1663,7 +1830,9 @@ class SettingsPanel(QWidget):
 
     # --- Gestione Fornitori ---
     def _add_fornitore(self):
-        text, ok = QInputDialog.getText(self, "Aggiungi Fornitore", "Inserisci il codice e nome:")
+        text, ok = QInputDialog.getText(
+            self, "Aggiungi Fornitore", "Inserisci il codice e nome:"
+        )
         if ok and text.strip():
             for i in range(self.fornitori_list.count()):
                 if self.fornitori_list.item(i).text().lower() == text.strip().lower():
@@ -1675,7 +1844,9 @@ class SettingsPanel(QWidget):
     def _edit_fornitore(self):
         item = self.fornitori_list.currentItem()
         if item:
-            text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
+            text, ok = QInputDialog.getText(
+                self, "Modifica", "Valore:", text=item.text()
+            )
             if ok and text.strip():
                 item.setText(text.strip())
                 self._save_settings()
@@ -1683,7 +1854,10 @@ class SettingsPanel(QWidget):
     def _remove_fornitore(self):
         row = self.fornitori_list.currentRow()
         if row >= 0:
-            if QMessageBox.question(self, "Conferma", "Rimuovere?") == QMessageBox.StandardButton.Yes:
+            if (
+                QMessageBox.question(self, "Conferma", "Rimuovere?")
+                == QMessageBox.StandardButton.Yes
+            ):
                 self.fornitori_list.takeItem(row)
                 self._save_settings()
 
@@ -1699,7 +1873,9 @@ class SettingsPanel(QWidget):
     def _edit_reparto(self):
         item = self.reparti_list.currentItem()
         if item:
-            text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
+            text, ok = QInputDialog.getText(
+                self, "Modifica", "Valore:", text=item.text()
+            )
             if ok and text.strip():
                 item.setText(text.strip().upper())
                 self._save_settings()
@@ -1707,7 +1883,10 @@ class SettingsPanel(QWidget):
     def _remove_reparto(self):
         row = self.reparti_list.currentRow()
         if row >= 0:
-            if QMessageBox.question(self, "Conferma", "Rimuovere reparto?") == QMessageBox.StandardButton.Yes:
+            if (
+                QMessageBox.question(self, "Conferma", "Rimuovere reparto?")
+                == QMessageBox.StandardButton.Yes
+            ):
                 self.reparti_list.takeItem(row)
                 self._save_settings()
 
@@ -1723,7 +1902,9 @@ class SettingsPanel(QWidget):
     def _edit_cantiere(self):
         item = self.cantieri_list.currentItem()
         if item:
-            text, ok = QInputDialog.getText(self, "Modifica", "Valore:", text=item.text())
+            text, ok = QInputDialog.getText(
+                self, "Modifica", "Valore:", text=item.text()
+            )
             if ok and text.strip():
                 item.setText(text.strip().upper())
                 self._save_settings()
@@ -1757,7 +1938,9 @@ class SettingsPanel(QWidget):
         self.attivita_path_edit.setText(config.get("attivita_programmate_path", ""))
         self.certificati_path_edit.setText(config.get("certificati_campione_path", ""))
         self.dataease_path_edit.setText(config.get("dataease_path", ""))  # New
-        self.auto_update_contabilita_check.setChecked(config.get("enable_auto_update_contabilita", True))
+        self.auto_update_contabilita_check.setChecked(
+            config.get("enable_auto_update_contabilita", True)
+        )
 
         # Telegram
         self.tg_token_edit.setText(config.get("telegram_token", ""))
@@ -1802,23 +1985,45 @@ class SettingsPanel(QWidget):
         if self.signalsBlocked(): return
 
         # Raccogli dati
-        fornitori = [self.fornitori_list.item(i).text() for i in range(self.fornitori_list.count())]
-        contracts = [self.contract_list.item(i).text() for i in range(self.contract_list.count())]
-        reparti = [self.reparti_list.item(i).text() for i in range(self.reparti_list.count())]
-        cantieri = [self.cantieri_list.item(i).text() for i in range(self.cantieri_list.count())]
+        fornitori = [
+            self.fornitori_list.item(i).text()
+            for i in range(self.fornitori_list.count())
+        ]
+        contracts = [
+            self.contract_list.item(i).text() for i in range(self.contract_list.count())
+        ]
+        reparti = [
+            self.reparti_list.item(i).text() for i in range(self.reparti_list.count())
+        ]
+        cantieri = [
+            self.cantieri_list.item(i).text() for i in range(self.cantieri_list.count())
+        ]
         accounts = self._get_current_accounts()
         sw_accounts = self._get_current_sw_accounts()
 
-        config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
+        config_manager.set_config_value(
+            "browser_headless", self.headless_check.isChecked()
+        )
         config_manager.set_config_value("browser_timeout", self.timeout_spin.value())
 
-        config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
-        config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
-        config_manager.set_config_value("attivita_programmate_path", self.attivita_path_edit.text())
-        config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
-        config_manager.set_config_value("dataease_path", self.dataease_path_edit.text())  # New
         config_manager.set_config_value(
-            "enable_auto_update_contabilita", self.auto_update_contabilita_check.isChecked()
+            "contabilita_file_path", self.contabilita_path_edit.text()
+        )
+        config_manager.set_config_value(
+            "giornaliere_path", self.giornaliere_path_edit.text()
+        )
+        config_manager.set_config_value(
+            "attivita_programmate_path", self.attivita_path_edit.text()
+        )
+        config_manager.set_config_value(
+            "certificati_campione_path", self.certificati_path_edit.text()
+        )
+        config_manager.set_config_value(
+            "dataease_path", self.dataease_path_edit.text()
+        )  # New
+        config_manager.set_config_value(
+            "enable_auto_update_contabilita",
+            self.auto_update_contabilita_check.isChecked(),
         )
 
         config_manager.set_config_value("telegram_token", self.tg_token_edit.text())

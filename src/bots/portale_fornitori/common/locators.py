@@ -11,8 +11,14 @@ class LoginLocators:
 
     USERNAME_FIELD = (By.NAME, "Username")
     PASSWORD_FIELD = (By.NAME, "Password")
-    LOGIN_BUTTON = (By.XPATH, "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]")
-    LOGIN_BUTTON_FALLBACK = (By.XPATH, "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]")
+    LOGIN_BUTTON = (
+        By.XPATH,
+        "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]",
+    )
+    LOGIN_BUTTON_FALLBACK = (
+        By.XPATH,
+        "//span[text()='Accedi' and contains(@class, 'x-btn-inner')]",
+    )
 
 
 class CommonLocators:
@@ -28,7 +34,7 @@ class CommonLocators:
     # Popups
     POPUP_SESSION_YES = (
         By.XPATH,
-        "//span[text()='Si' and contains(@class, 'x-btn-inner')]/ancestor::a[contains(@class, 'x-btn')]",
+        "//span[normalize-space(text())='Si' and contains(@class, 'x-btn-inner')]",
     )
     POPUP_OK = (By.XPATH, "//span[text()='OK' and contains(@class, 'x-btn-inner')]")
     POPUP_ATTENTION_HEADER = (

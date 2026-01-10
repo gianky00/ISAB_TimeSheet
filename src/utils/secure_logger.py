@@ -12,13 +12,27 @@ class SensitiveDataFilter(logging.Filter):
 
     PATTERNS: list[tuple[Pattern, str]] = [
         # Password in vari formati
-        (re.compile(r'password["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.I), "password=***MASKED***"),
+        (
+            re.compile(r'password["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.I),
+            "password=***MASKED***",
+        ),
         # Token/API keys
-        (re.compile(r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?', re.I), r"\1=***MASKED***"),
+        (
+            re.compile(
+                r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?', re.I
+            ),
+            r"\1=***MASKED***",
+        ),
         # Codici fiscali
-        (re.compile(r"[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]"), "***CF_MASKED***"),
+        (
+            re.compile(r"[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]"),
+            "***CF_MASKED***",
+        ),
         # Numeri di carta di credito
-        (re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"), "***CARD_MASKED***"),
+        (
+            re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"),
+            "***CARD_MASKED***",
+        ),
     ]
 
     def filter(self, record: logging.LogRecord) -> bool:

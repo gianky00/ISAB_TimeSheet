@@ -50,7 +50,7 @@ class ScaricoOreWorker(QThread):
         # This adds a small overhead but allows for the requested feature.
         try:
             total_rows = ContabilitaManager.scan_scarico_ore_rows(self.file_path)
-        except:
+        except Exception:
             total_rows = 1000  # Fallback
 
         def progress_cb(current, total):
@@ -90,7 +90,9 @@ class ScaricoOrePanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.worker = None
-        self._last_update_status = None  # Store the status string to persist after reload
+        self._last_update_status = (
+            None  # Store the status string to persist after reload
+        )
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
         # ⚡ BOLT: Set loading text immediately before first paint
@@ -175,14 +177,18 @@ class ScaricoOrePanel(QWidget):
             }
         """
         )
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center alignment as requested
+        self.status_label.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
+        )  # Center alignment as requested
         toolbar.addWidget(self.status_label)
 
         toolbar.addStretch()
 
         # Update Button
         self.update_btn = QPushButton("🔄 Aggiorna Dati")
-        self.update_btn.setToolTip("Aggiorna solo lo Scarico Ore Cantiere dal file configurato")
+        self.update_btn.setToolTip(
+            "Aggiorna solo lo Scarico Ore Cantiere dal file configurato"
+        )
         self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_btn.setStyleSheet(
             """
@@ -227,7 +233,9 @@ class ScaricoOrePanel(QWidget):
         self.table_view.setHorizontalHeader(header)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         # Enable Word Wrap via Alignment (Corrected Flags)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap
+        )
 
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
@@ -292,14 +300,20 @@ class ScaricoOrePanel(QWidget):
         footer_layout.setContentsMargins(15, 10, 15, 10)
 
         self.lbl_count = QLabel("Righe: 0")
-        self.lbl_count.setStyleSheet("font-size: 16px; font-weight: bold; color: #0d6efd;")
+        self.lbl_count.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #0d6efd;"
+        )
         self.lbl_total_hours = QLabel("Totale Ore: 0")
-        self.lbl_total_hours.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_total_hours.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
 
         # New Selection Label
         self.lbl_selection_total = QLabel("Totale selezionato: 0")
         self.lbl_selection_total.setStyleSheet("color: #0d6efd;")
-        self.lbl_selection_total.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_selection_total.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
 
         footer_layout.addWidget(self.lbl_count)
         footer_layout.addStretch()
@@ -313,14 +327,18 @@ class ScaricoOrePanel(QWidget):
         self.info_label = QLabel(
             "Visualizzazione completa. Clicca sulle intestazioni per filtrare. Copia con Ctrl+C."
         )
-        self.info_label.setStyleSheet("color: #adb5bd; font-size: 11px; margin-top: 5px;")
+        self.info_label.setStyleSheet(
+            "color: #adb5bd; font-size: 11px; margin-top: 5px;"
+        )
         scarico_layout.addWidget(self.info_label)
 
         # Add Tab
         self.tabs.addTab(self.scarico_tab, "Scarico Ore")
 
         # Connect selection changes
-        self.table_view.selectionModel().selectionChanged.connect(self._update_selection_totals)
+        self.table_view.selectionModel().selectionChanged.connect(
+            self._update_selection_totals
+        )
 
     def _format_number(self, value: float) -> str:
         """Formats number: integer if no decimals, else 2 decimals."""
@@ -397,7 +415,12 @@ class ScaricoOrePanel(QWidget):
         self.worker.start()
 
     def _on_update_finished(
-        self, success: bool, msg: str, added: int = 0, removed: int = 0, duration: float = 0.0
+        self,
+        success: bool,
+        msg: str,
+        added: int = 0,
+        removed: int = 0,
+        duration: float = 0.0,
     ):
         self.update_btn.setEnabled(True)
         self.table_view.setEnabled(True)
@@ -416,7 +439,9 @@ class ScaricoOrePanel(QWidget):
                 m, s = divmod(int(duration), 60)
                 time_str = f"{m}m {s}s"
 
-            final_status = f"✅ {timestamp} {added_str} {removed_str} (Tempo: {time_str})"
+            final_status = (
+                f"✅ {timestamp} {added_str} {removed_str} (Tempo: {time_str})"
+            )
             self.status_label.setText(final_status)
             self._last_update_status = final_status  # Store to persist after reload
 
@@ -424,7 +449,7 @@ class ScaricoOrePanel(QWidget):
             try:
                 if ScaricoOreTableModel.CACHE_PATH.exists():
                     ScaricoOreTableModel.CACHE_PATH.unlink()
-            except:
+            except Exception:
                 pass
 
             # Reset global cache to force reload
@@ -458,7 +483,7 @@ class ScaricoOrePanel(QWidget):
                 del self._current_col_filters[col]
         else:
             # Store as set of lowercase for model optimization
-            self._current_col_filters[col] = set(str(v).lower() for v in values)
+            self._current_col_filters[col] = {str(v).lower() for v in values}
 
         # Re-apply filters
         text = self.search_input.text()
@@ -477,7 +502,9 @@ class ScaricoOrePanel(QWidget):
             # ⚡ BOLT: Force paint to show loading text immediately
             QApplication.processEvents()
         else:
-            self.search_input.setPlaceholderText("🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)")
+            self.search_input.setPlaceholderText(
+                "🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)"
+            )
             self.table_view.setDisabled(False)
             self.table_view.setStyleSheet(
                 """
@@ -494,12 +521,14 @@ class ScaricoOrePanel(QWidget):
     def _on_loading_progress(self, msg):
         # Update text. If format matches worker (contains "Tempo stimato"), it's handled.
         # Ensure we don't have "Inizializzazione..." stuck if progress message comes.
-        self.status_label.setText(f"{msg}")  # Worker sends full formatted string with icon
+        self.status_label.setText(
+            f"{msg}"
+        )  # Worker sends full formatted string with icon
         QApplication.processEvents()  # Ensure progress updates are seen
 
     def _on_cache_loaded(self):
         """Called when background loading finishes."""
-        count = self.source_model.rowCount()
+        self.source_model.rowCount()
 
         # Restore last update status if exists, otherwise show default "Pronto"
         if self._last_update_status:

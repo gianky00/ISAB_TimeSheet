@@ -18,18 +18,20 @@ class SecretsManager:
     APP_NAME = "SyncroJob"
 
     @classmethod
-    def get_license_key(cls) -> bytes:
+    def get_license_key(cls) -> bytes | None:
         """
         Recupera la chiave di licenza in ordine di priorità:
         1. Variabile d'ambiente SYNCROJOB_LICENSE_KEY
         2. File .env nella root del progetto
         3. Keyring di sistema
-        4. Fallback (Temporaneo, DEPRECATO)
         """
         # 1. Environment variable
         env_key = os.environ.get("SYNCROJOB_LICENSE_KEY")
         if env_key:
-            return base64.urlsafe_b64decode(env_key)
+            try:
+                return base64.urlsafe_b64decode(env_key)
+            except Exception:
+                pass
 
         # 2. File .env (solo per sviluppo)
         env_file = Path(__file__).parent.parent.parent / ".env"
@@ -53,8 +55,7 @@ class SecretsManager:
         except Exception:
             pass  # Keyring might fail in headless/some envs
 
-        # Fallback Hardcoded (Legacy - to be removed)
-        return b"8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
+        return None
 
     @classmethod
     def get_exa_api_key(cls) -> str:

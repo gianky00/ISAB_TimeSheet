@@ -26,9 +26,9 @@ base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 if base_path not in sys.path:
     sys.path.insert(0, base_path)
 
-from src.core import config_manager
-from src.core.lyra_client import LyraClient
-from src.core.secrets_manager import SecretsManager
+from src.core import config_manager  # noqa: E402
+from src.core.lyra_client import LyraClient  # noqa: E402
+from src.core.secrets_manager import SecretsManager  # noqa: E402
 
 
 class SyncroJobAgent:
@@ -73,7 +73,9 @@ class SyncroJobAgent:
 
     def _setup_handlers(self):
         self.tg_app.add_handler(CommandHandler("start", self._cmd_start))
-        self.tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text))
+        self.tg_app.add_handler(
+            MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text)
+        )
         self.tg_app.add_handler(MessageHandler(filters.VOICE, self._handle_voice))
         self.tg_app.add_handler(CallbackQueryHandler(self._handle_button))
 
@@ -102,7 +104,7 @@ class SyncroJobAgent:
                     msg = json.loads(data.decode())
                     if msg.get("type") == "tg_msg":
                         self._send_to_tg(msg.get("text"), msg.get("photo"))
-            except:
+            except Exception:
                 pass
             finally:
                 self.log("Applicazione SyncroJob disconnessa.")
@@ -116,7 +118,7 @@ class SyncroJobAgent:
                 payload = json.dumps(data_dict).encode()
                 self.client_conn.sendall(payload)
                 return True
-            except:
+            except Exception:
                 self.client_conn = None
         return False
 
@@ -185,7 +187,13 @@ class SyncroJobAgent:
 
         # Se l'app è offline, offri di avviarla
         if not self.client_conn:
-            keyboard = [[InlineKeyboardButton("🚀 Avvia SyncroJob", callback_data="app_start_now")]]
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        "🚀 Avvia SyncroJob", callback_data="app_start_now"
+                    )
+                ]
+            ]
             await update.message.reply_text(
                 "⚠️ *SyncroJob è Offline*\nL'applicazione principale non è in esecuzione sul PC.",
                 reply_markup=InlineKeyboardMarkup(keyboard),
@@ -202,12 +210,16 @@ class SyncroJobAgent:
         if not update.message or not update.message.voice or not update.effective_chat:
             return
         if not self.client_conn:
-            await update.message.reply_text("⚠️ App Offline. Impossibile processare vocale.")
+            await update.message.reply_text(
+                "⚠️ App Offline. Impossibile processare vocale."
+            )
             return
 
         file = await context.bot.get_file(update.message.voice.file_id)
         audio_bytes = await file.download_as_bytearray()
-        await self._process_with_ai(update.effective_chat.id, bytes(audio_bytes), is_audio=True)
+        await self._process_with_ai(
+            update.effective_chat.id, bytes(audio_bytes), is_audio=True
+        )
 
     async def _process_with_ai(self, chat_id, data, is_audio=False):
         api_key = SecretsManager.get_gemini_api_key()
@@ -235,7 +247,7 @@ class SyncroJobAgent:
             intent = json.loads(clean)
             # Invia l'intento estratto all'App
             self._send_to_app({"type": "intent", "data": intent})
-        except:
+        except Exception:
             self._send_to_tg("❓ Comando non riconosciuto.")
 
     async def _handle_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -251,7 +263,10 @@ class SyncroJobAgent:
             try:
                 # Avvia l'applicazione (assume main.py nella root)
                 main_py = os.path.join(base_path, "main.py")
-                subprocess.Popen([sys.executable, main_py], creationflags=subprocess.CREATE_NEW_CONSOLE)
+                subprocess.Popen(
+                    [sys.executable, main_py],
+                    creationflags=subprocess.CREATE_NEW_CONSOLE,
+                )
                 await query.edit_message_text(
                     "🔄 *Avvio in corso...*\nL'applicazione si aprirà tra pochi secondi."
                 )
@@ -269,7 +284,9 @@ class SyncroJobAgent:
                     InlineKeyboardButton("🖥️ PC", callback_data="snap_pc"),
                 ]
             ]
-            await query.edit_message_text("Scegli screenshot:", reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(
+                "Scegli screenshot:", reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
         elif data in ["snap_app", "snap_pc"]:
             mode = "app" if data == "snap_app" else "pc"

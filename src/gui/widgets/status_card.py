@@ -48,7 +48,9 @@ class StatusCard(QFrame):
         self._icon_label = QLabel()
         self._icon_label.setFixedSize(24, 24)
         self._icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._icon_label.setStyleSheet("font-size: 16px; border: none; background: transparent;")
+        self._icon_label.setStyleSheet(
+            "font-size: 16px; border: none; background: transparent;"
+        )
         layout.addWidget(self._icon_label)
 
         # Text container
@@ -109,7 +111,9 @@ class StatusCard(QFrame):
         self._apply_style()
 
     def _apply_style(self):
-        _, _, color_key = self.STATUS_CONFIG.get(self._status, self.STATUS_CONFIG[self.Status.IDLE])
+        _, _, color_key = self.STATUS_CONFIG.get(
+            self._status, self.STATUS_CONFIG[self.Status.IDLE]
+        )
 
         accent = getattr(self._palette, color_key, self._palette.primary)
 

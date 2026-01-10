@@ -110,7 +110,9 @@ class NotificationManager(QObject):
 
     def delete_notification(self, notification_id: str):
         """Elimina una notifica."""
-        self.notifications = [n for n in self.notifications if n["id"] != notification_id]
+        self.notifications = [
+            n for n in self.notifications if n["id"] != notification_id
+        ]
         self._save_notifications()
         self.notifications_updated.emit()
         self.unread_count_changed.emit(self.get_unread_count())

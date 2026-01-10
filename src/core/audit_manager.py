@@ -9,6 +9,7 @@ import logging
 import os
 import sqlite3
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Any, Dict, List
 
 from src.core.config_manager import CONFIG_DIR
@@ -26,10 +27,16 @@ class AuditManager:
     _SALT = "SyncroJob_Secure_Audit_2026"
 
     # Livelli di severità
-    class Severity:
+    class Severity(Enum):
         LOW = "low"  # Info, operazioni normali
         MEDIUM = "medium"  # Modifiche config, avvisi
         HIGH = "high"  # Errori, manomissioni, licenza fallita
+
+    # Stati delle operazioni
+    class Status(Enum):
+        SUCCESS = "success"
+        ERROR = "error"
+        WARNING = "warning"
 
     def __new__(cls):
         if cls._instance is None:
@@ -69,7 +76,9 @@ class AuditManager:
 
             for col_name, col_type in columns_to_add:
                 try:
-                    conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_type}")
+                    conn.execute(
+                        f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_type}"
+                    )
                 except sqlite3.OperationalError:
                     pass
 
@@ -79,10 +88,12 @@ class AuditManager:
                     "UPDATE audit_logs SET user_id = 'unknown' WHERE user_id IS NULL OR user_id = 'None' OR user_id = ''"
                 )
                 conn.commit()
-            except:
+            except Exception:
                 pass
 
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)"
+            )
             conn.commit()
 
     def _get_current_user(self) -> str:
@@ -99,7 +110,7 @@ class AuditManager:
             user = getpass.getuser()
             if user and user.lower() != "none":
                 return user
-        except:
+        except Exception:
             pass
 
         # 3. Tentativo tramite Windows API (Win32)
@@ -112,7 +123,7 @@ class AuditManager:
                 size = ctypes.c_uint(len(buffer))
                 if advapi32.GetUserNameW(buffer, ctypes.byref(size)):
                     return buffer.value
-            except:
+            except Exception:
                 pass
 
         return "unknown"
@@ -127,10 +138,12 @@ class AuditManager:
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1")
+                cursor.execute(
+                    "SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1"
+                )
                 row = cursor.fetchone()
                 return row[0] if row and row[0] else "0" * 64
-        except:
+        except Exception:
             return "0" * 64
 
     def log_action(
@@ -139,8 +152,8 @@ class AuditManager:
         category: str = "general",
         entity: str = "",
         params: Any = None,
-        status: str = "success",
-        severity: str = "low",
+        status: Any = Status.SUCCESS,
+        severity: Any = Severity.LOW,
         notify: bool = False,
     ):
         """
@@ -150,6 +163,14 @@ class AuditManager:
         try:
             user_id = self._get_current_user()
 
+            # Normalizzazione Enum/Stringa
+            status_val = (
+                status.value if isinstance(status, self.Status) else str(status)
+            )
+            severity_val = (
+                severity.value if isinstance(severity, self.Severity) else str(severity)
+            )
+
             # Sanificazione Dati
             entity = entity if entity else "-"
             category = category if category else "general"
@@ -158,15 +179,13 @@ class AuditManager:
 
             prev_hash = self._get_last_hash()
             # Include severity in the hash string
-            data_to_hash = (
-                f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status}|{severity}"
-            )
+            data_to_hash = f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status_val}|{severity_val}"
             current_hash = self._calculate_hash(data_to_hash, prev_hash)
 
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.execute(
-                    """INSERT INTO audit_logs 
-                       (timestamp, user_id, action, category, entity, params, status, severity, row_hash) 
+                    """INSERT INTO audit_logs
+                       (timestamp, user_id, action, category, entity, params, status, severity, row_hash)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         timestamp,
@@ -175,38 +194,60 @@ class AuditManager:
                         category,
                         entity,
                         params_json,
-                        status,
-                        severity,
+                        status_val,
+                        severity_val,
                         current_hash,
                     ),
                 )
                 conn.commit()
 
             # Notifica utente se richiesto
-            if notify:
-                from src.core.notification_manager import NotificationManager
-
-                level = "info"
-                if status == "error" or severity == "high":
-                    level = "error"
-                elif status == "warning" or severity == "medium":
-                    level = "warning"
-                elif status == "success":
-                    level = "success"
-
-                title = f"{action}: {entity}"
-                # Crea un messaggio leggibile dai parametri
-                msg = f"Operazione completata con esito: {status.upper()}."
-                if params and isinstance(params, dict):
-                    if "nuova" in params:
-                        msg = f"Versione aggiornata a {params['nuova']}"
-                    elif "righe" in params:
-                        msg = f"Elaborate {params['righe']} righe."
-
-                NotificationManager.instance().add_notification(title, msg, level=level)
+            self._generate_notification_if_needed(
+                action, entity, status, severity, params, notify
+            )
 
         except Exception as e:
             logger.error(f"Audit Log Error: {e}")
+
+    def _generate_notification_if_needed(
+        self,
+        action: str,
+        entity: str,
+        status: Any,
+        severity: Any,
+        params: Any,
+        notify: bool,
+    ):
+        if notify:
+            from src.core.notification_manager import NotificationManager
+
+            # Normalizzazione per logica interna
+            s_val = status.value if isinstance(status, self.Status) else str(status)
+            v_val = (
+                severity.value if isinstance(severity, self.Severity) else str(severity)
+            )
+
+            level = "info"
+            if s_val == self.Status.ERROR.value or v_val == self.Severity.HIGH.value:
+                level = "error"
+            elif (
+                s_val == self.Status.WARNING.value
+                or v_val == self.Severity.MEDIUM.value
+            ):
+                level = "warning"
+            elif s_val == self.Status.SUCCESS.value:
+                level = "success"
+
+            title = f"{action}: {entity}"
+            # Crea un messaggio leggibile dai parametri
+            msg = f"Operazione completata con esito: {s_val.upper()}."
+            if params and isinstance(params, dict):
+                if "nuova" in params:
+                    msg = f"Versione aggiornata a {params['nuova']}"
+                elif "righe" in params:
+                    msg = f"Elaborate {params['righe']} righe."
+
+            NotificationManager.instance().add_notification(title, msg, level=level)
 
     def verify_integrity(self) -> bool:
         """Verifica l'integrità, ignorando i record legacy senza hash."""
@@ -224,6 +265,7 @@ class AuditManager:
                     if not row["row_hash"]:
                         continue
 
+                    # I dati nel DB sono stringhe, l'hash deve riflettere questo
                     data_to_hash = f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}"
                     expected_hash = self._calculate_hash(data_to_hash, prev_hash)
 
@@ -231,7 +273,7 @@ class AuditManager:
                         return False
                     prev_hash = row["row_hash"]
                 return True
-        except:
+        except Exception:
             return False
 
     def get_logs(self, limit: int = 200) -> List[Dict[str, Any]]:
@@ -241,7 +283,9 @@ class AuditManager:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                cursor.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?", (limit,))
+                cursor.execute(
+                    "SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?", (limit,)
+                )
                 for row in cursor.fetchall():
                     logs.append(dict(row))
         except Exception as e:
@@ -255,6 +299,8 @@ class AuditManager:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
                 conn.commit()
-                self.log_action("Sistema", "mantenimento", "Audit Database", {"clean_days": days})
+                self.log_action(
+                    "Sistema", "mantenimento", "Audit Database", {"clean_days": days}
+                )
         except Exception as e:
             logger.error(f"Retention Policy Error: {e}")

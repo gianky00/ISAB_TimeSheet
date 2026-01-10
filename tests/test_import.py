@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.getcwd())
 
 try:
-    from src.gui.notifications_panel import NotificationItem
+    # from src.gui.notifications_panel import NotificationItem # Removed unused import
 
     print("Imported NotificationItem from notifications_panel (unexpected)")
 except ImportError:

@@ -52,8 +52,12 @@ class TimbratureStorage:
                 )
             """
             )
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)"
+            )
             conn.commit()
 
     def _ensure_db_exists(self):
@@ -76,8 +80,8 @@ class TimbratureStorage:
                 cursor = conn.cursor()
                 # Cerca dipendenti unici
                 sql = """
-                    SELECT DISTINCT nome, cognome 
-                    FROM timbrature 
+                    SELECT DISTINCT nome, cognome
+                    FROM timbrature
                     WHERE lower(nome) LIKE ? OR lower(cognome) LIKE ?
                     LIMIT 20
                 """
@@ -103,7 +107,9 @@ class TimbratureStorage:
             cursor = conn.cursor()
 
             # Ottieni tutti i dipendenti unici dalle timbrature
-            cursor.execute("SELECT DISTINCT nome, cognome FROM timbrature ORDER BY cognome, nome")
+            cursor.execute(
+                "SELECT DISTINCT nome, cognome FROM timbrature ORDER BY cognome, nome"
+            )
             rows = cursor.fetchall()
 
             employees = []
@@ -126,7 +132,11 @@ class TimbratureStorage:
             return employees
 
     def update_employee_details(
-        self, nome: str, cognome: str, reparto: Optional[str] = None, cantiere: Optional[str] = None
+        self,
+        nome: str,
+        cognome: str,
+        reparto: Optional[str] = None,
+        cantiere: Optional[str] = None,
     ):
         """Salva l'assegnazione reparto/cantiere direttamente in config.json."""
         config = config_manager.load_config()
@@ -160,9 +170,7 @@ class TimbratureStorage:
             cursor = conn.cursor()
 
             # Query base (solo sulla tabella timbrature)
-            query = (
-                "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
-            )
+            query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
             params = []
             conditions = []
 
@@ -178,7 +186,7 @@ class TimbratureStorage:
                             if len(parts) == 3:
                                 d, m, y = parts
                                 search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
-                        except:
+                        except Exception:
                             pass
                     term_conditions = [f"{col} LIKE ?" for col in columns_to_search]
                     params.extend([f"%{search_term}%"] * len(columns_to_search))
@@ -204,9 +212,17 @@ class TimbratureStorage:
                 cant = emp_data.get("cantiere", "")
 
                 # Applica Filtri Reparto/Cantiere
-                if filter_reparto and filter_reparto != "Tutti" and rep != filter_reparto:
+                if (
+                    filter_reparto
+                    and filter_reparto != "Tutti"
+                    and rep != filter_reparto
+                ):
                     continue
-                if filter_cantiere and filter_cantiere != "Tutti" and cant != filter_cantiere:
+                if (
+                    filter_cantiere
+                    and filter_cantiere != "Tutti"
+                    and cant != filter_cantiere
+                ):
                     continue
 
                 final_rows.append(row + (rep, cant))
@@ -216,7 +232,9 @@ class TimbratureStorage:
 
             return final_rows
 
-    def import_excel(self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None) -> bool:
+    def import_excel(
+        self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None
+    ) -> bool:
         """
         Imports an Excel file into the database.
 
@@ -260,13 +278,15 @@ class TimbratureStorage:
                     try:
                         # Normalize date
                         if "data" in row and pd.notna(row["data"]):
-                            if isinstance(row["data"], (pd.Timestamp, pd.DatetimeIndex)):
+                            if isinstance(
+                                row["data"], (pd.Timestamp, pd.DatetimeIndex)
+                            ):
                                 row["data"] = row["data"].strftime("%Y-%m-%d")
                             else:
                                 try:
                                     ts = pd.to_datetime(row["data"])
                                     row["data"] = ts.strftime("%Y-%m-%d")
-                                except:
+                                except Exception:
                                     pass  # Keep original if parse fails
 
                         vals = row.fillna("").astype(str).to_dict()
@@ -286,7 +306,9 @@ class TimbratureStorage:
 
                 conn.commit()
 
-            log(f"Importazione: {added_count} nuovi record aggiunti, {skipped_count} duplicati ignorati.")
+            log(
+                f"Importazione: {added_count} nuovi record aggiunti, {skipped_count} duplicati ignorati."
+            )
             return True
 
         except Exception as e:
@@ -298,7 +320,9 @@ class TimbratureStorage:
         config = config_manager.load_config()
 
         # Logica di migrazione se mancano i dati nel config ma esiste il vecchio file
-        if "reparti" not in config or (not config.get("reparti") and not config.get("cantieri")):
+        if "reparti" not in config or (
+            not config.get("reparti") and not config.get("cantieri")
+        ):
             old_path = self.db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 try:
@@ -309,11 +333,13 @@ class TimbratureStorage:
                         if old_data:
                             self.save_lists(old_data)
                             return old_data
-                except:
+                except Exception:
                     pass
 
         return {
-            "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),
+            "reparti": config.get(
+                "reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
+            ),
             "cantieri": config.get("cantieri", []),
         }
 

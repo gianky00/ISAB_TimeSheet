@@ -45,7 +45,8 @@ class InputValidator:
 
         if not re.match(cls.PATTERNS["pdl_number"], sanitized):
             return ValidationResult(
-                False, f"PDL '{value}' non valido. Formato richiesto: 123456/C o 123456/S (o solo 6 cifre)"
+                False,
+                f"PDL '{value}' non valido. Formato richiesto: 123456/C o 123456/S (o solo 6 cifre)",
             )
 
         return ValidationResult(True, sanitized_value=sanitized)

@@ -47,7 +47,10 @@ class ModernButton(QPushButton):
 
             self.setIcon(QIcon(icon))
             # Increase padding for icon
-            self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
+            self.setStyleSheet(
+                self.styleSheet()
+                + "QPushButton { padding-left: 32px; text-align: left; }"
+            )
 
     def _setup_animation(self):
         self._anim = QPropertyAnimation(self, b"hoverOpacity")

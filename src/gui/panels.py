@@ -44,7 +44,6 @@ from src.core.stats_manager import StatsManager
 # Import UI Components
 from src.gui.widgets import (
     BotParametersWidget,
-    CalendarDateEdit,
     EditableDataTable,
     ExcelTableWidget,
     LogWidget,
@@ -110,7 +109,9 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
-    bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results (e.g. file paths)
+    bot_results_ready = pyqtSignal(
+        str, list
+    )  # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str)  # status, message
 
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
@@ -265,14 +266,20 @@ class BaseBotPanel(QWidget):
             params={
                 "durata": duration_str,
                 "dettagli": (
-                    "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
+                    "Esecuzione completata correttamente"
+                    if success
+                    else "Esecuzione fallita o interrotta"
                 ),
             },
             status=status,
         )
 
         # Risultati per Telegram/UI (#2)
-        if self.worker and hasattr(self.worker.bot, "downloaded_files") and self.worker.bot.downloaded_files:
+        if (
+            self.worker
+            and hasattr(self.worker.bot, "downloaded_files")
+            and self.worker.bot.downloaded_files
+        ):
             self.bot_results_ready.emit(self.bot_id, self.worker.bot.downloaded_files)
 
         self.bot_finished.emit(success)
@@ -285,7 +292,11 @@ class BaseBotPanel(QWidget):
                 if success
                 else "Si è verificato un errore durante l'esecuzione."
             )
-            title = f"{self.bot_name} - Completato" if success else f"{self.bot_name} - Errore"
+            title = (
+                f"{self.bot_name} - Completato"
+                if success
+                else f"{self.bot_name} - Errore"
+            )
             # Use getattr or Any cast to avoid mypy error on dynamic method
             from typing import Any
 
@@ -332,6 +343,15 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
+    def _ask_user_input(self, prompt: str, result_container: dict, event: threading.Event):
+        """Callback per input utente dal worker (thread-safe via signal)."""
+        text, ok = QInputDialog.getText(self, "Richiesta Input", prompt)
+        if ok:
+            result_container["value"] = text
+        else:
+            result_container["value"] = ""
+        event.set()
+
     def get_credentials(self) -> tuple:
         """Ottiene le credenziali dall'account di default."""
         account = config_manager.get_default_account()
@@ -360,7 +380,9 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Usiamo il widget atomico per i parametri comuni
-        self.params_widget = BotParametersWidget(show_date_range=False, show_dest_path=True)
+        self.params_widget = BotParametersWidget(
+            show_date_range=False, show_dest_path=True
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -368,7 +390,7 @@ class ScaricaTSPanel(BaseBotPanel):
         # Parametri specifici: Flag Elabora TS
         self.elabora_ts_check = QCheckBox("Elabora TS")
         self.elabora_ts_check.stateChanged.connect(self._save_data)
-        params_layout.addWidget(self.elabora_ts_check)
+        self.params_widget.add_widget_to_row(self.elabora_ts_check)
 
         params_layout.addSpacing(10)
 
@@ -376,7 +398,9 @@ class ScaricaTSPanel(BaseBotPanel):
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
         self.clear_btn = ModernButton(
-            "Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL
+            "Pulisci Tabella",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -409,7 +433,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.params_widget.set_fornitore(config.get("last_ts_fornitore", ""))
         self.params_widget.set_dates(config.get("last_ts_date", "01.01.2025"))
         self.params_widget.set_dest_path(config.get("path_scarico_ts", ""))
-        
+
         # Carica dati specifici
         saved_data = config.get("last_ts_data", [])
         if saved_data:
@@ -425,13 +449,20 @@ class ScaricaTSPanel(BaseBotPanel):
         date_da, _ = self.params_widget.get_dates()
         config_manager.set_config_value("last_ts_data", self.data_table.get_data())
         config_manager.set_config_value("last_ts_date", date_da)
-        config_manager.set_config_value("last_ts_fornitore", self.params_widget.get_fornitore())
-        config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
+        config_manager.set_config_value(
+            "last_ts_fornitore", self.params_widget.get_fornitore()
+        )
+        config_manager.set_config_value(
+            "path_scarico_ts", self.params_widget.get_dest_path()
+        )
         config_manager.set_config_value("elabora_ts", self.elabora_ts_check.isChecked())
 
     def _clear_table(self):
         """Pulisce la tabella."""
-        if QMessageBox.question(self, "Conferma", "Svuotare la tabella?") == QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(self, "Conferma", "Svuotare la tabella?")
+            == QMessageBox.StandardButton.Yes
+        ):
             self.data_table.set_data([])
             self._save_data()
 
@@ -448,12 +479,14 @@ class ScaricaTSPanel(BaseBotPanel):
     def _on_start(self):
         """Avvia il bot."""
         super()._on_start()
-        
+
         username, password = self.get_credentials()
         data = self.data_table.get_data()
         fornitore = self.params_widget.get_fornitore()
         data_da, _ = self.params_widget.get_dates()
-        download_path = self.params_widget.get_dest_path() or str(Path.home() / "Downloads")
+        download_path = self.params_widget.get_dest_path() or str(
+            Path.home() / "Downloads"
+        )
 
         if not all([username, password, data, fornitore]):
             ToastManager.instance().show("Verifica i parametri di avvio.", "warning")
@@ -465,6 +498,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self._save_data()
 
         from src.bots import create_bot
+
         config = config_manager.load_config()
         bot = create_bot(
             "scarico_ts",
@@ -503,7 +537,6 @@ class ScaricaTSPanel(BaseBotPanel):
         self.bot_started.emit()
 
 
-
 class DettagliOdAPanel(BaseBotPanel):
     """Pannello per il bot Dettagli OdA."""
 
@@ -511,7 +544,7 @@ class DettagliOdAPanel(BaseBotPanel):
         super().__init__(
             bot_id="dettagli_oda",
             bot_name="📋 Dettagli OdA",
-            bot_description="Scarica automaticamente i dettagli degli Ordini d\'Acquisto.",
+            bot_description="Scarica automaticamente i dettagli degli Ordini d'Acquisto.",
             parent=parent,
         )
         self._setup_content()
@@ -524,23 +557,32 @@ class DettagliOdAPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Widget atomico per i parametri
-        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=True)
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=True
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
-        
+
         params_layout.addSpacing(10)
 
         # Tabella
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
-        self.clear_btn = ModernButton("Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
+        self.clear_btn = ModernButton(
+            "Pulisci Tabella",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+        )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
         params_layout.addLayout(table_toolbar)
 
         self.data_table = EditableDataTable(
-            [{"name": "Numero OdA", "type": "text"}, {"name": "Numero Contratto", "type": "text"}]
+            [
+                {"name": "Numero OdA", "type": "text"},
+                {"name": "Numero Contratto", "type": "combo", "options": []},
+            ]
         )
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
@@ -556,11 +598,13 @@ class DettagliOdAPanel(BaseBotPanel):
     def refresh_fornitori(self):
         if hasattr(self, "params_widget"):
             self.params_widget.refresh_fornitori()
-        
+
         # Aggiorna anche i contratti nella tabella
         config = config_manager.load_config()
         contracts = config.get("contracts", [])
-        self.data_table.update_column_options("Numero Contratto", contracts)
+        # Assicura che ci sia l'opzione vuota
+        options = [""] + contracts
+        self.data_table.update_column_options("Numero Contratto", options)
 
     def _load_saved_data(self):
         config = config_manager.load_config()
@@ -580,18 +624,25 @@ class DettagliOdAPanel(BaseBotPanel):
     def _save_data(self):
         if not hasattr(self, "params_widget"):
             return
-        
+
         data = self.data_table.get_data()
         date_da, date_a = self.params_widget.get_dates()
 
         config_manager.set_config_value("last_oda_data", data)
-        config_manager.set_config_value("last_oda_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value(
+            "last_oda_fornitore", self.params_widget.get_fornitore()
+        )
         config_manager.set_config_value("last_oda_date_da", date_da)
         config_manager.set_config_value("last_oda_date_a", date_a)
-        config_manager.set_config_value("path_dettagli_oda", self.params_widget.get_dest_path())
-        
+        config_manager.set_config_value(
+            "path_dettagli_oda", self.params_widget.get_dest_path()
+        )
+
     def _clear_table(self):
-        if QMessageBox.question(self, "Conferma", "Svuotare la tabella?") == QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(self, "Conferma", "Svuotare la tabella?")
+            == QMessageBox.StandardButton.Yes
+        ):
             self.data_table.set_data([])
             self._save_data()
 
@@ -601,15 +652,26 @@ class DettagliOdAPanel(BaseBotPanel):
             return False, "Credenziali ISAB mancanti."
         if not self.params_widget.get_fornitore():
             return False, "Fornitore mancante."
+        
+        # Check if data table has valid data
+        data = self.data_table.get_data()
+        if not data:
+            return False, "Nessun OdA inserito nella tabella."
+
         return True, ""
 
     def _on_start(self):
         super()._on_start()
-        
+
         username, password = self.get_credentials()
         fornitore = self.params_widget.get_fornitore()
         data_da, data_a = self.params_widget.get_dates()
-        download_path = self.params_widget.get_dest_path() or str(Path.home() / "Downloads")
+        download_path = self.params_widget.get_dest_path() or str(
+            Path.home() / "Downloads"
+        )
+
+        rows = self.data_table.get_data()
+        self.log_widget.append(f"[DEBUG] Rows retrieved: {len(rows)}")
 
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
@@ -617,10 +679,18 @@ class DettagliOdAPanel(BaseBotPanel):
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
+        
+        if not rows:
+            ToastManager.instance().show("Inserisci almeno un OdA.", "warning")
+            self._update_status(StatusCard.Status.ERROR, "Dati mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
 
         self._save_data()
 
         from src.bots import create_bot
+
         config = config_manager.load_config()
         bot = create_bot(
             "dettagli_oda",
@@ -631,14 +701,19 @@ class DettagliOdAPanel(BaseBotPanel):
             download_path=download_path,
             fornitore=fornitore,
             data_da=data_da,
-            data_a=data_a
+            data_a=data_a,
         )
 
         if not bot:
             ToastManager.instance().show("Errore creazione bot.", "error")
             return
-        
-        bot_data = {"rows": self.data_table.get_data(), "fornitore": fornitore, "data_da": data_da, "data_a": data_a}
+
+        bot_data = {
+            "rows": self.data_table.get_data(),
+            "fornitore": fornitore,
+            "data_da": data_da,
+            "data_a": data_a,
+        }
 
         self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
@@ -678,7 +753,9 @@ class CaricoTSPanel(BaseBotPanel):
         table_toolbar.addStretch()
 
         self.clear_btn = ModernButton(
-            "Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL
+            "Pulisci Tabella",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -723,7 +800,9 @@ class CaricoTSPanel(BaseBotPanel):
     def _clear_table(self):
         """Pulisce la tabella."""
         if (
-            QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?")
+            QMessageBox.question(
+                self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"
+            )
             == QMessageBox.StandardButton.Yes
         ):
             self.data_table.set_data([])
@@ -751,7 +830,9 @@ class CaricoTSPanel(BaseBotPanel):
         username, password = self.get_credentials()
 
         if not username or not password:
-            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
+            ToastManager.instance().show(
+                "Configura le credenziali ISAB nelle Impostazioni.", "warning"
+            )
             self._update_status(StatusCard.Status.ERROR, "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
@@ -760,7 +841,8 @@ class CaricoTSPanel(BaseBotPanel):
         data = self.data_table.get_data()
         if not data:
             ToastManager.instance().show(
-                "Inserisci almeno una riga con i dati del Timesheet da caricare.", "warning"
+                "Inserisci almeno una riga con i dati del Timesheet da caricare.",
+                "warning",
             )
             self._update_status(StatusCard.Status.ERROR, "Dati mancanti")
             self.start_btn.setEnabled(True)
@@ -784,7 +866,9 @@ class CaricoTSPanel(BaseBotPanel):
             ToastManager.instance().show("Impossibile creare il bot.", "error")
             return
 
-        self.worker = BotWorker(bot, {"rows": data}, telegram_service=self.window().telegram)
+        self.worker = BotWorker(
+            bot, {"rows": data}, telegram_service=self.window().telegram
+        )
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -818,17 +902,27 @@ class ScaricoPDLPanel(BaseBotPanel):
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
+<<<<<<< HEAD
         # 1. Opzioni Stampa e Merge (Senza titoli e sulla stessa riga)
         options_layout = QHBoxLayout()
         options_layout.setSpacing(10)
 
         self.print_check = QCheckBox("Al termine stampa su")
+=======
+        # Riga unica per tutte le opzioni
+        options_layout = QHBoxLayout()
+        options_layout.setSpacing(15)
+
+        # 1. Stampa
+        self.print_check = QCheckBox("Al termine stampa con")
+>>>>>>> refactor/code-optimization
         self.print_check.stateChanged.connect(self._save_data)
         options_layout.addWidget(self.print_check)
 
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(35)
-        self.printer_combo.setMinimumWidth(250)
+        self.printer_combo.setMinimumWidth(150)
+        self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.printer_combo.setStyleSheet(
             """
             QComboBox {
@@ -840,40 +934,21 @@ class ScaricoPDLPanel(BaseBotPanel):
             }
         """
         )
-
         # Popola stampanti
         printers = get_installed_printers()
         if printers:
             self.printer_combo.addItems(printers)
         else:
             self.printer_combo.addItem("Nessuna stampante trovata")
-
         self.printer_combo.currentTextChanged.connect(self._save_data)
         options_layout.addWidget(self.printer_combo)
 
-        # Refresh printers button
-        refresh_print_btn = QPushButton()
-        refresh_print_btn.setIcon(QIcon(get_asset_path("assets/icons/refresh.svg")))
-        refresh_print_btn.setIconSize(QSize(20, 20))
-        refresh_print_btn.setToolTip("Aggiorna lista stampanti")
-        refresh_print_btn.setFixedSize(35, 35)  # Consistent mini size
-        refresh_print_btn.clicked.connect(self._refresh_printers)
-        refresh_print_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #f8f9fa;
-                color: #212529;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                font-size: 18px;
-                padding-bottom: 2px;
-            }
-            QPushButton:hover {
-                background-color: #e9ecef;
-                border-color: #ced4da;
-            }
-        """
+        # 2. Merge
+        self.merge_all_check = QCheckBox("e unisci tutti in un unico PDF")
+        self.merge_all_check.setToolTip(
+            "Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL."
         )
+<<<<<<< HEAD
         options_layout.addWidget(refresh_print_btn)
 
         # 1.1 Opzioni Merge (Ora accanto al tasto refresh)
@@ -884,33 +959,30 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         options_layout.addStretch()
         params_layout.addLayout(options_layout)
+=======
+        self.merge_all_check.stateChanged.connect(self._save_data)
+        options_layout.addWidget(self.merge_all_check)
+>>>>>>> refactor/code-optimization
 
-        # 2. Percorso destinazione (opzionale, ma utile)
-        dest_layout = QHBoxLayout()
+        # 3. Destinazione
         dest_label = QLabel("Destinazione:")
-        dest_label.setMinimumWidth(80)
-        dest_layout.addWidget(dest_label)
+        options_layout.addWidget(dest_label)
 
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
-        self.dest_path_edit.setMinimumWidth(350)
+        self.dest_path_edit.setMinimumWidth(200) # Ridotto per stare in riga
 
-        # Dynamic Width logic
-        def update_width_pdl():
-            text = self.dest_path_edit.text() or self.dest_path_edit.placeholderText()
-            w = self.dest_path_edit.fontMetrics().horizontalAdvance(text) + 60
-            self.dest_path_edit.setFixedWidth(max(350, min(w, 600)))
+        # Dynamic Width logic simplified/removed as we are in HBox with stretch
+        # def update_width_pdl(): ...
+        # self.dest_path_edit.textChanged.connect(update_width_pdl)
 
-        self.dest_path_edit.textChanged.connect(update_width_pdl)
-        update_width_pdl()
-
-        dest_layout.addWidget(self.dest_path_edit)
+        options_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
         browse_btn.setIcon(QIcon(get_asset_path("assets/icons/folder.svg")))
-        browse_btn.setIconSize(QSize(24, 24))
-        browse_btn.setFixedSize(40, 40)
+        browse_btn.setIconSize(QSize(20, 20))
+        browse_btn.setFixedSize(35, 35)
         browse_btn.clicked.connect(self._browse_dest_path)
         browse_btn.setStyleSheet(
             """
@@ -919,8 +991,7 @@ class ScaricoPDLPanel(BaseBotPanel):
                 color: #212529;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
-                font-size: 22px;
-                padding-bottom: 3px;
+                padding-bottom: 2px;
             }
             QPushButton:hover {
                 background-color: #e9ecef;
@@ -928,17 +999,18 @@ class ScaricoPDLPanel(BaseBotPanel):
             }
         """
         )
-        dest_layout.addWidget(browse_btn)
+        options_layout.addWidget(browse_btn)
 
-        dest_layout.addStretch()
-
-        params_layout.addLayout(dest_layout)
+        options_layout.addStretch()
+        params_layout.addLayout(options_layout)
 
         # 3. Tabella Input
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
         self.clear_btn = ModernButton(
-            "Pulisci Tabella", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL
+            "Pulisci Tabella",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -987,14 +1059,25 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _save_data(self):
         data = self.data_table.get_data()
         config_manager.set_config_value("last_pdl_data", data)
-        config_manager.set_config_value("pdl_print_enabled", self.print_check.isChecked())
-        config_manager.set_config_value("pdl_merge_all_session", self.merge_all_check.isChecked())
-        config_manager.set_config_value("pdl_printer_name", self.printer_combo.currentText())
+        config_manager.set_config_value(
+            "pdl_print_enabled", self.print_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "pdl_merge_all_session", self.merge_all_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "pdl_printer_name", self.printer_combo.currentText()
+        )
         config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
 
     def _clear_table(self):
         if (
-            QMessageBox.question(self, "Conferma", "Cancellare tutti i PDL?", QMessageBox.StandardButton.Yes)
+            QMessageBox.question(
+                self,
+                "Conferma",
+                "Cancellare tutti i PDL?",
+                QMessageBox.StandardButton.Yes,
+            )
             == QMessageBox.StandardButton.Yes
         ):
             self.data_table.set_data([])
@@ -1028,8 +1111,12 @@ class ScaricoPDLPanel(BaseBotPanel):
         username, password = self.get_credentials()
 
         if not username or not password:
-            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
-            self._update_status(StatusCard.Status.ERROR, "Credenziali SafeWork mancanti")
+            ToastManager.instance().show(
+                "Configura le credenziali SafeWork nelle Impostazioni.", "warning"
+            )
+            self._update_status(
+                StatusCard.Status.ERROR, "Credenziali SafeWork mancanti"
+            )
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -1047,7 +1134,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Il valore viene passato da Telegram tramite un attributo temporaneo
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
         # Checkbox UI per merge sessione
-        merge_all_session = getattr(self, "merge_all_session_from_telegram", self.merge_all_check.isChecked())
+        merge_all_session = getattr(
+            self, "merge_all_session_from_telegram", self.merge_all_check.isChecked()
+        )
 
         bot_data = []
         for row in raw_data:
@@ -1102,7 +1191,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         self.worker.start()
         self.bot_started.emit()
-        
+
         # Pulisci l'attributo temporaneo dopo l'uso
         if hasattr(self, "merge_and_send_from_telegram"):
             del self.merge_and_send_from_telegram
@@ -1116,29 +1205,36 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Controlla se l'opzione di invio era attiva per questa esecuzione
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
 
-        if success and merge_and_send and self.worker and hasattr(self.worker.bot, "downloaded_files"):
+        if (
+            success
+            and merge_and_send
+            and self.worker
+            and hasattr(self.worker.bot, "downloaded_files")
+        ):
             files_to_send = self.worker.bot.downloaded_files
             if files_to_send:
                 win = self.window()
                 if win and hasattr(win, "telegram"):
-                    from typing import Any
                     import os
+                    from typing import Any
 
                     cast_win: Any = win
                     self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
-                    
+
                     for file_path in files_to_send:
                         if os.path.exists(file_path):
-                            caption = f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
+                            caption = (
+                                f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
+                            )
                             cast_win.telegram.send_document_sync(file_path, caption)
                             # Non eliminiamo i file finali, l'utente potrebbe volerli
-                    
-                    self._on_log("✅ PDF inviati con successo.")
 
+                    self._on_log("✅ PDF inviati con successo.")
 
 
 class TimbratureBotPanel(BaseBotPanel):
     """Pannello per il bot Timbrature (Controlli e Log)."""
+
     data_updated = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -1162,15 +1258,21 @@ class TimbratureBotPanel(BaseBotPanel):
         params_layout = QVBoxLayout(params_group)
 
         # Widget atomico
-        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=False
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
-        
+
         self.content_layout.addWidget(params_group)
 
         # Scheduler
+<<<<<<< HEAD
         sched_group = QGroupBox("📅 Pianifica Bot")
+=======
+        sched_group = QGroupBox("📅 Pianifica")
+>>>>>>> refactor/code-optimization
         sched_layout = QHBoxLayout(sched_group)
         self.autopilot_check = QCheckBox("Abilita download automatico")
         self.autopilot_check.stateChanged.connect(self._save_data)
@@ -1201,6 +1303,7 @@ class TimbratureBotPanel(BaseBotPanel):
             self.refresh_fornitori()
             config = config_manager.load_config()
 
+<<<<<<< HEAD
             self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
             
             # Default dates: ALWAYS Yesterday
@@ -1217,12 +1320,39 @@ class TimbratureBotPanel(BaseBotPanel):
     def _save_data(self):
         if not hasattr(self, "params_widget") or self._is_loading: return
             
+=======
+        self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
+
+        # Default dates: ALWAYS Yesterday
+        yesterday = QDate.currentDate().addDays(-1)
+        self.params_widget.set_dates(
+            yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy")
+        )
+
+        # Autopilot
+        self.autopilot_check.setChecked(
+            config.get("timbrature_autopilot_enabled", False)
+        )
+        saved_time = config.get("timbrature_autopilot_time", "09:00")
+        self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
+
+    def _save_data(self):
+        if not hasattr(self, "params_widget"):
+            return
+
+>>>>>>> refactor/code-optimization
         date_da, date_a = self.params_widget.get_dates()
-        config_manager.set_config_value("last_timbrature_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value(
+            "last_timbrature_fornitore", self.params_widget.get_fornitore()
+        )
         config_manager.set_config_value("last_timbrature_date_da", date_da)
         config_manager.set_config_value("last_timbrature_date_a", date_a)
-        config_manager.set_config_value("timbrature_autopilot_enabled", self.autopilot_check.isChecked())
-        config_manager.set_config_value("timbrature_autopilot_time", self.time_edit.time().toString("HH:mm"))
+        config_manager.set_config_value(
+            "timbrature_autopilot_enabled", self.autopilot_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "timbrature_autopilot_time", self.time_edit.time().toString("HH:mm")
+        )
 
     def validate_ready(self) -> tuple[bool, str]:
         username, password = self.get_credentials()
@@ -1246,7 +1376,7 @@ class TimbratureBotPanel(BaseBotPanel):
             return
 
         self._save_data()
-        
+
         data_da, data_a = self.params_widget.get_dates()
 
         self.log_widget.clear()
@@ -1254,7 +1384,9 @@ class TimbratureBotPanel(BaseBotPanel):
         QApplication.processEvents() # Aggiorna UI per evitare freeze durante create_bot
 
         from src.bots import create_bot
+
         config = config_manager.load_config()
+<<<<<<< HEAD
         
         try:
             bot = create_bot(
@@ -1270,20 +1402,33 @@ class TimbratureBotPanel(BaseBotPanel):
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
+=======
+        bot = create_bot(
+            "timbrature",
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=config_manager.get_download_path(),
+            data_da=data_da,
+            data_a=data_a,
+            fornitore=fornitore,
+        )
+>>>>>>> refactor/code-optimization
 
         if not bot:
             ToastManager.instance().show("Errore creazione bot.", "error")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
-        
+
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
         self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished_custom)
-        
+
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.append(f"▶ Bot avviato. Download in corso...")
@@ -1355,7 +1500,8 @@ class TimbratureDBPanel(QWidget):
         for rep in self.reparti:
             self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
-        self.reparto_filter.setFixedWidth(150)
+        self.reparto_filter.setMinimumWidth(150)
+        self.reparto_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         search_layout.addWidget(self.reparto_filter)
 
         # Cantiere Filter
@@ -1364,29 +1510,48 @@ class TimbratureDBPanel(QWidget):
         for cant in self.cantieri:
             self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.currentIndexChanged.connect(lambda: self._filter_data())
-        self.cantiere_filter.setFixedWidth(150)
+        self.cantiere_filter.setMinimumWidth(150)
+        self.cantiere_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         search_layout.addWidget(self.cantiere_filter)
 
         # Import Button
         import_btn = ModernButton(
-            "Importa Excel", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL
+            "Importa Excel",
+            variant=ModernButton.Variant.SECONDARY,
+            size=ModernButton.Size.SMALL,
         )
         import_btn.clicked.connect(self._import_excel_manually)
         search_layout.addWidget(import_btn)
-
-        # Refresh Button
-        refresh_btn = ModernButton(
-            "Aggiorna", variant=ModernButton.Variant.GHOST, size=ModernButton.Size.SMALL
-        )
-        refresh_btn.clicked.connect(self.refresh_data)
-        search_layout.addWidget(refresh_btn)
 
         layout.addLayout(search_layout)
 
         # Table
         self.db_table = ExcelTableWidget()
+        self.db_table.verticalHeader().setVisible(False)
+        self.db_table.setStyleSheet(
+            """
+            QTableWidget {
+                selection-background-color: #0d6efd;
+                selection-color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #0d6efd;
+                color: white;
+            }
+        """
+        )
         # Cols: Data, Ingresso, Uscita, Nome, Cognome, Presenza TS, Sito, Reparto, Cantiere
-        cols = ["Data", "Ingresso", "Uscita", "Nome", "Cognome", "Presenza TS", "Sito", "Reparto", "Cantiere"]
+        cols = [
+            "Data",
+            "Ingresso",
+            "Uscita",
+            "Nome",
+            "Cognome",
+            "Presenza TS",
+            "Sito",
+            "Reparto",
+            "Cantiere",
+        ]
         self.db_table.setColumnCount(len(cols))
         self.db_table.setHorizontalHeaderLabels(cols)
 
@@ -1395,7 +1560,9 @@ class TimbratureDBPanel(QWidget):
 
         self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.db_table.auto_copy_headers = True
-        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        self.db_table.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectItems
+        )
 
         layout.addWidget(self.db_table)
 
@@ -1413,7 +1580,9 @@ class TimbratureDBPanel(QWidget):
 
         # Open Settings Button
         open_settings_btn = ModernButton(
-            "Gestisci Liste", variant=ModernButton.Variant.SECONDARY, size=ModernButton.Size.SMALL
+            "Gestisci Liste",
+            variant=ModernButton.Variant.SECONDARY,
+            size=ModernButton.Size.SMALL,
         )
         open_settings_btn.setToolTip("Gestisci reparti e cantieri nelle Impostazioni")
         open_settings_btn.clicked.connect(self._open_settings)
@@ -1421,7 +1590,9 @@ class TimbratureDBPanel(QWidget):
 
         layout.addLayout(header_layout)
 
-        sub = QLabel("Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente.")
+        sub = QLabel(
+            "Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente."
+        )
         sub.setStyleSheet("color: #6c757d; margin-bottom: 5px;")
         layout.addWidget(sub)
 
@@ -1431,7 +1602,9 @@ class TimbratureDBPanel(QWidget):
 
         # Load saved state
         config = config_manager.load_config()
-        self.filter_empty_cb.setChecked(config.get("timbrature_filter_empty_only", False))
+        self.filter_empty_cb.setChecked(
+            config.get("timbrature_filter_empty_only", False)
+        )
 
         self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
         filter_layout.addWidget(self.filter_empty_cb)
@@ -1440,8 +1613,11 @@ class TimbratureDBPanel(QWidget):
 
         # Table
         self.settings_table = QTableWidget()
+        self.settings_table.verticalHeader().setVisible(False)
         self.settings_table.setColumnCount(4)
-        self.settings_table.setHorizontalHeaderLabels(["Nome", "Cognome", "Reparto", "Cantiere"])
+        self.settings_table.setHorizontalHeaderLabels(
+            ["Nome", "Cognome", "Reparto", "Cantiere"]
+        )
 
         header = self.settings_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -1453,7 +1629,9 @@ class TimbratureDBPanel(QWidget):
 
     def _on_filter_empty_changed(self, state):
         """Save preference and reload settings table."""
-        config_manager.set_config_value("timbrature_filter_empty_only", self.filter_empty_cb.isChecked())
+        config_manager.set_config_value(
+            "timbrature_filter_empty_only", self.filter_empty_cb.isChecked()
+        )
         self._load_settings_data()
 
     def _on_tab_changed(self, index):
@@ -1475,22 +1653,22 @@ class TimbratureDBPanel(QWidget):
         d = QDialog(self)
         d.setWindowTitle(title)
         d.setMinimumWidth(300)
-        l = QVBoxLayout(d)
+        layout = QVBoxLayout(d)
 
         list_widget = QListWidget()
         list_widget.addItems(current_list)
-        l.addWidget(list_widget)
+        layout.addWidget(list_widget)
 
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("Aggiungi")
         del_btn = QPushButton("Rimuovi")
         btn_layout.addWidget(add_btn)
         btn_layout.addWidget(del_btn)
-        l.addLayout(btn_layout)
+        layout.addLayout(btn_layout)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         button_box.rejected.connect(d.accept)
-        l.addWidget(button_box)
+        layout.addWidget(button_box)
 
         def add_item():
             text, ok = QInputDialog.getText(d, "Aggiungi", "Nome:")
@@ -1575,13 +1753,17 @@ class TimbratureDBPanel(QWidget):
             combo_rep = QComboBox()
             combo_rep.addItems([""] + self.reparti)
             combo_rep.setCurrentText(emp["reparto"])
-            combo_rep.setStyleSheet("QComboBox { border: none; background: transparent; }")
+            combo_rep.setStyleSheet(
+                "QComboBox { border: none; background: transparent; }"
+            )
 
             # Cantiere (ComboBox)
             combo_cant = QComboBox()
             combo_cant.addItems([""] + self.cantieri)
             combo_cant.setCurrentText(emp["cantiere"])
-            combo_cant.setStyleSheet("QComboBox { border: none; background: transparent; }")
+            combo_cant.setStyleSheet(
+                "QComboBox { border: none; background: transparent; }"
+            )
 
             # Connect signals with closures
             nome = emp["nome"]
@@ -1589,12 +1771,16 @@ class TimbratureDBPanel(QWidget):
 
             # Update Reparto
             combo_rep.currentTextChanged.connect(
-                lambda text, n=nome, c=cognome: self.storage.update_employee_details(n, c, reparto=text)
+                lambda text, n=nome, c=cognome: self.storage.update_employee_details(
+                    n, c, reparto=text
+                )
             )
 
             # Update Cantiere
             combo_cant.currentTextChanged.connect(
-                lambda text, n=nome, c=cognome: self.storage.update_employee_details(n, c, cantiere=text)
+                lambda text, n=nome, c=cognome: self.storage.update_employee_details(
+                    n, c, cantiere=text
+                )
             )
 
             self.settings_table.setCellWidget(i, 2, combo_rep)
@@ -1611,7 +1797,10 @@ class TimbratureDBPanel(QWidget):
         cantiere = self.cantiere_filter.currentData()
 
         rows = self.storage.get_timbrature_with_reparto(
-            limit=500, filter_text=text, filter_reparto=reparto, filter_cantiere=cantiere
+            limit=500,
+            filter_text=text,
+            filter_reparto=reparto,
+            filter_cantiere=cantiere,
         )
         self._update_table(rows)
 
@@ -1664,10 +1853,12 @@ class TimbratureDBPanel(QWidget):
                     params={"file": Path(file_path).name},
                 )
                 self.refresh_data()
-                ToastManager.instance().show("Dati importati correttamente nel database.", "success")
+                ToastManager.instance().show(
+                    "Dati importati correttamente nel database.", "success"
+                )
                 self._load_settings_data()
             else:
                 ToastManager.instance().show("Impossibile importare il file.", "error")
 
         except Exception as e:
-            ToastManager.instance().show(f"Errore durante l\'importazione: {e}", "error")
+            ToastManager.instance().show(f"Errore durante l'importazione: {e}", "error")

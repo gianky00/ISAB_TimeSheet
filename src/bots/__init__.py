@@ -19,7 +19,10 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "name": "Scarico TS",
         "description": "Scarica i timesheet dal portale ISAB",
         "icon": "📥",
-        "columns": [{"name": "Numero OdA", "type": "text"}, {"name": "Posizione OdA", "type": "text"}],
+        "columns": [
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"},
+        ],
         "config_key": "last_ts_data",
     },
     "carico_ts": {
@@ -53,7 +56,10 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "name": "Dettagli OdA",
         "description": "Accede ai Dettagli OdA - browser rimane aperto",
         "icon": "📋",
-        "columns": [{"name": "Numero OdA", "type": "text"}, {"name": "Posizione OdA", "type": "text"}],
+        "columns": [
+            {"name": "Numero OdA", "type": "text"},
+            {"name": "Posizione OdA", "type": "text"},
+        ],
         "config_key": "last_oda_data",
         "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione",
     },

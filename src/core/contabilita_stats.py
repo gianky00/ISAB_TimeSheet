@@ -58,12 +58,14 @@ class ContabilitaStats:
 
                     status = str(row[7]).strip().upper()
                     if status:
-                        stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
+                        stats["status_counts"][status] = (
+                            stats["status_counts"].get(status, 0) + 1
+                        )
 
                     if val_prev > 0:
                         attivita = str(row[4]).strip() or "N/D"
                         commesse.append((attivita, val_prev))
-                except:
+                except Exception:
                     pass
 
         stats["top_commesse"] = sorted(commesse, key=lambda x: x[1], reverse=True)[:5]
@@ -84,7 +86,7 @@ class ContabilitaStats:
                         stats["ore_dirette"] += ore
                     else:
                         stats["ore_indirette"] += ore
-                except:
+                except Exception:
                     pass
 
         return stats

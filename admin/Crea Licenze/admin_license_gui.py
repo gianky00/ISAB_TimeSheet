@@ -20,7 +20,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root)
 
-from src.core.secrets_manager import SecretsManager
+from src.core.secrets_manager import SecretsManager  # noqa: E402
 
 # Carica variabili d'ambiente
 load_dotenv()
@@ -145,7 +145,7 @@ class LicenseAdminApp:
         try:
             self.ent_disk.delete(0, tk.END)
             self.ent_disk.insert(0, self.root.clipboard_get().strip())
-        except:
+        except Exception:
             pass
 
     def set_expiry_days(self, days):
@@ -254,7 +254,7 @@ class LicenseAdminApp:
 
 def main():
     root = tk.Tk()
-    app = LicenseAdminApp(root)
+    _app = LicenseAdminApp(root)
     root.mainloop()
 
 

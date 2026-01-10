@@ -41,7 +41,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "last_oda_data": [],
     "contabilita_file_path": "",
     "enable_auto_update_contabilita": True,
-    "certificati_campione_path": r"C:\Users\Coemi\Desktop\CERTIFICATI CAMPIONE\Registro calibrazioni\STRUMENTI CAMPIONE ISAB SUD AGGIORNATO.xlsm",
+    "certificati_campione_path": "",
     "reparti": ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"],
     "cantieri": [],
     "employee_mappings": {},
@@ -86,7 +86,9 @@ def load_config() -> Dict[str, Any]:
                     continue
 
                 # Priorità 1: Keyring
-                password_from_keyring = SecretsManager.get_credential("isab_portal", username)
+                password_from_keyring = SecretsManager.get_credential(
+                    "isab_portal", username
+                )
                 if password_from_keyring:
                     acc["password"] = password_from_keyring
                     continue
@@ -118,7 +120,9 @@ def load_config() -> Dict[str, Any]:
 
         # Migrazione Legacy
         if "isab_username" in config and config.get("isab_username"):
-            if not any(a.get("username") == config["isab_username"] for a in config["accounts"]):
+            if not any(
+                a.get("username") == config["isab_username"] for a in config["accounts"]
+            ):
                 config["accounts"].append(
                     {
                         "username": config["isab_username"],
@@ -163,7 +167,9 @@ def save_config(config: Dict[str, Any]):
                 # Tenta di salvare nel keyring
                 try:
                     if SecretsManager.is_available():
-                        SecretsManager.store_credential("isab_portal", username, password)
+                        SecretsManager.store_credential(
+                            "isab_portal", username, password
+                        )
                         # Se ha successo, rimuovi la password dal file
                         acc.pop("password", None)
                         continue
@@ -188,7 +194,7 @@ def save_config(config: Dict[str, Any]):
                         SecretsManager.store_credential("safework_portal", u, p)
                         acc.pop("password", None)
                         continue
-                except:
+                except Exception:
                     pass
 
                 acc["password"] = password_manager.encrypt(p)
@@ -211,7 +217,7 @@ def save_config(config: Dict[str, Any]):
             if temp_file.exists():
                 try:
                     os.remove(temp_file)
-                except:
+                except Exception:
                     pass
         except Exception:
             print(f"Errore critico durante il salvataggio:\n{traceback.format_exc()}")

@@ -45,15 +45,21 @@ class DataSynchronizer:
                 existing_df = existing_df.fillna("")
                 cols_to_str_ex = [c for c in existing_df.columns if c != "year"]
                 existing_df[cols_to_str_ex] = (
-                    existing_df[cols_to_str_ex].astype(str).apply(lambda x: x.str.strip())
+                    existing_df[cols_to_str_ex]
+                    .astype(str)
+                    .apply(lambda x: x.str.strip())
                 )
 
-                existing_rows = set(list(existing_df.itertuples(index=False, name=None)))
+                existing_rows = set(existing_df.itertuples(index=False, name=None))
 
                 # New rows from DF (assuming imported_data is already cleaned and formatted)
-                new_rows_for_year = [row for row in imported_data if row[0] == year]  # row[0] is 'year'
-                new_df_for_year = pd.DataFrame(new_rows_for_year, columns=target_columns)
-                new_rows_set = set(list(new_df_for_year.itertuples(index=False, name=None)))
+                new_rows_for_year = [
+                    row for row in imported_data if row[0] == year
+                ]  # row[0] is 'year'
+                new_df_for_year = pd.DataFrame(
+                    new_rows_for_year, columns=target_columns
+                )
+                new_rows_set = set(new_df_for_year.itertuples(index=False, name=None))
 
                 added = len(new_rows_set - existing_rows)
                 removed = len(existing_rows - new_rows_set)
@@ -111,9 +117,13 @@ class DataSynchronizer:
 
                 existing_df = existing_df.fillna("")
                 cols_str_ex = [c for c in existing_df.columns if c != "year"]
-                existing_df[cols_str_ex] = existing_df[cols_str_ex].astype(str).apply(lambda x: x.str.strip())
+                existing_df[cols_str_ex] = (
+                    existing_df[cols_str_ex].astype(str).apply(lambda x: x.str.strip())
+                )
 
-                existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
+                existing_rows_set = set(
+                    existing_df.itertuples(index=False, name=None)
+                )
 
             if all_new_rows:
                 new_df = pd.DataFrame(all_new_rows, columns=target_cols)
@@ -122,9 +132,11 @@ class DataSynchronizer:
 
             new_df = new_df.fillna("")
             cols_str_new = [c for c in new_df.columns if c != "year"]
-            new_df[cols_str_new] = new_df[cols_str_new].astype(str).apply(lambda x: x.str.strip())
+            new_df[cols_str_new] = (
+                new_df[cols_str_new].astype(str).apply(lambda x: x.str.strip())
+            )
 
-            new_rows_set = set(list(new_df.itertuples(index=False, name=None)))
+            new_rows_set = set(new_df.itertuples(index=False, name=None))
 
             total_added = len(new_rows_set - existing_rows_set)
             total_removed = len(existing_rows_set - new_rows_set)
@@ -144,7 +156,9 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_attivita_programmate(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
+    def sync_attivita_programmate(
+        cls, db_path: Path, rows_to_insert: List[Tuple]
+    ) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'attivita_programmate' nel database.
         Rimuove tutti i dati esistenti e inserisce i nuovi.
@@ -157,10 +171,15 @@ class DataSynchronizer:
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
 
-            existing_df = pd.read_sql(f"SELECT {', '.join(db_cols)} FROM attivita_programmate", conn)
+            existing_df = pd.read_sql(
+                f"SELECT {', '.join(db_cols)} FROM attivita_programmate", conn
+            )
             existing_df = existing_df.fillna("")
             existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
-            existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
+
+            existing_rows_set = set(
+                existing_df.itertuples(index=False, name=None)
+            )
 
             new_rows_set = set(rows_to_insert)
 
@@ -179,7 +198,9 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_scarico_ore(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
+    def sync_scarico_ore(
+        cls, db_path: Path, rows_to_insert: List[Tuple]
+    ) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'scarico_ore' nel database.
         Rimuove tutti i dati esistenti e inserisce i nuovi.
@@ -192,16 +213,20 @@ class DataSynchronizer:
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
 
-            existing_df = pd.read_sql(f"SELECT {', '.join(db_cols)} FROM scarico_ore", conn)
+            existing_df = pd.read_sql(
+                f"SELECT {', '.join(db_cols)} FROM scarico_ore", conn
+            )
             existing_df = existing_df.fillna("")
             existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
-            existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
+            existing_rows_set = set(
+                existing_df.itertuples(index=False, name=None)
+            )
 
             if rows_to_insert:
                 new_df = pd.DataFrame(rows_to_insert, columns=db_cols)
                 new_df = new_df.fillna("")
                 new_df = new_df.astype(str).apply(lambda x: x.str.strip())
-                new_rows_set = set(list(new_df.itertuples(index=False, name=None)))
+                new_rows_set = set(new_df.itertuples(index=False, name=None))
             else:
                 new_rows_set = set()
 
@@ -220,7 +245,9 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_certificati_campione(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
+    def sync_certificati_campione(
+        cls, db_path: Path, rows_to_insert: List[Tuple]
+    ) -> Tuple[int, int]:
         """
         Sincronizza i dati della tabella 'certificati_campione' nel database.
         Rimuove tutti i dati esistenti e inserisce i nuovi.
@@ -233,10 +260,14 @@ class DataSynchronizer:
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
 
-            existing_df = pd.read_sql(f"SELECT {', '.join(target_cols)} FROM certificati_campione", conn)
+            existing_df = pd.read_sql(
+                f"SELECT {', '.join(target_cols)} FROM certificati_campione", conn
+            )
             existing_df = existing_df.fillna("")
             existing_df = existing_df.astype(str).apply(lambda x: x.str.strip())
-            existing_rows_set = set(list(existing_df.itertuples(index=False, name=None)))
+            existing_rows_set = set(
+                existing_df.itertuples(index=False, name=None)
+            )
 
             new_rows_set = set(rows_to_insert)
 

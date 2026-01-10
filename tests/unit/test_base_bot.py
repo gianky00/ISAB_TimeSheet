@@ -43,7 +43,7 @@ class TestBaseBotLogic:
         # Verify options
         call_args = mock_chrome.call_args
         options = call_args.kwargs["options"]
-        args = [arg for arg in options.arguments]
+        args = list(options.arguments)
 
         assert "--headless=new" in args
         assert "--disable-notifications" in args
@@ -62,10 +62,11 @@ class TestBaseBotLogic:
             base_bot._check_stop()
 
     def test_verify_login_url(self, base_bot):
-        """Should return False if URL contains 'login'."""
-        base_bot.driver = MagicMock()
-        base_bot.driver.current_url = "https://site.com/Ui/Login"
+        """Should delegate to login_page."""
+        base_bot.login_page = MagicMock()
+        
+        base_bot.login_page._verify_logged_in_via_ui.return_value = False
         assert base_bot._verify_login() is False
 
-        base_bot.driver.current_url = "https://site.com/Ui/Dashboard"
+        base_bot.login_page._verify_logged_in_via_ui.return_value = True
         assert base_bot._verify_login() is True

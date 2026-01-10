@@ -7,9 +7,9 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 # Simula QApplication prima di importare AppUpdater per evitare errori di Qt
 app = QApplication([])
 
-from src.core import version
-from src.core.app_updater import check_for_updates
-from src.core.audit_manager import AuditManager
+from src.core import version  # noqa: E402
+from src.core.app_updater import check_for_updates  # noqa: E402
+from src.core.audit_manager import AuditManager  # noqa: E402
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_u
     mock_qmessagebox_question = mocker.patch("PyQt6.QtWidgets.QMessageBox.question")
     mock_qmessagebox_question.return_value = QMessageBox.StandardButton.Yes
     mock_webbrowser_open = mocker.patch("webbrowser.open")
-    mock_audit_log = mocker.patch.object(AuditManager, "log_action")
+    mocker.patch.object(AuditManager, "log_action")
 
     check_for_updates(silent=False)
 

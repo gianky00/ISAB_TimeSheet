@@ -72,18 +72,18 @@ async def test_handle_button_menu_main(telegram_service):
     update = MagicMock(spec=Update)
     update.effective_user = MagicMock(spec=User)
     update.effective_user.id = 123456789
-    
+
     query = AsyncMock()
     query.data = "menu_main"
     # Use spec=Message to pass isinstance check in code
     query.message = MagicMock(spec=Message)
     query.message.chat_id = 123456789
     update.callback_query = query
-    
+
     context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
 
     await telegram_service._handle_button(update, context)
-    
+
     query.answer.assert_called_once()
     query.edit_message_text.assert_called_once()
     args = query.edit_message_text.call_args

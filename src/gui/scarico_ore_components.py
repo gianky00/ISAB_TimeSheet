@@ -41,7 +41,9 @@ class CacheWorker(QThread):
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
-            display_data, search_index, float_totals, style_cache = self._build_caches(self.data_source)
+            display_data, search_index, float_totals, style_cache = self._build_caches(
+                self.data_source
+            )
             # Save to disk
             self.progress.emit("Salvataggio cache...")
             self._save_cache(display_data, search_index, float_totals, style_cache)
@@ -61,21 +63,41 @@ class CacheWorker(QThread):
                         # Old format: data, search, totals
                         # We must rebuild because 'data' is raw, we need 'display_data'
                         raw_data = loaded[0]
-                        display_data, search_index, float_totals, style_cache = self._build_caches(raw_data)
+                        display_data, search_index, float_totals, style_cache = (
+                            self._build_caches(raw_data)
+                        )
                     elif len(loaded) == 4:
                         # Version 2 format: raw_data, search, totals, style
                         # Checking if we need to rebuild (if data is not pre-formatted strings)
                         d, s, t, st = loaded
-                        if d and len(d) > 0 and (d[0][0] is None or not isinstance(d[0][0], str)):
+                        if (
+                            d
+                            and len(d) > 0
+                            and (d[0][0] is None or not isinstance(d[0][0], str))
+                        ):
                             # Likely raw data or None, rebuild
-                            display_data, search_index, float_totals, style_cache = self._build_caches(d)
+                            display_data, search_index, float_totals, style_cache = (
+                                self._build_caches(d)
+                            )
                         else:
                             # Already formatted
-                            display_data, search_index, float_totals, style_cache = d, s, t, st
+                            display_data, search_index, float_totals, style_cache = (
+                                d,
+                                s,
+                                t,
+                                st,
+                            )
                     else:
-                        display_data, search_index, float_totals, style_cache = [], [], [], []
+                        display_data, search_index, float_totals, style_cache = (
+                            [],
+                            [],
+                            [],
+                            [],
+                        )
 
-                self.finished.emit(display_data, search_index, float_totals, style_cache)
+                self.finished.emit(
+                    display_data, search_index, float_totals, style_cache
+                )
             except Exception as e:
                 print(f"Error loading cache: {e}")
                 self.finished.emit([], [], [], [])
@@ -91,7 +113,7 @@ class CacheWorker(QThread):
                 if style_json:
                     try:
                         append_style(json.loads(style_json))
-                    except:
+                    except Exception:
                         append_style(None)
                 else:
                     append_style(None)
@@ -135,7 +157,7 @@ class CacheWorker(QThread):
                                 str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}"
                             else:
                                 str_0 = s_val
-                    except:
+                    except Exception:
                         str_0 = s_val
                 else:
                     str_0 = s_val
@@ -183,7 +205,7 @@ class CacheWorker(QThread):
                     append_total(float(val_7))
                 else:
                     append_total(parse_currency(val_7))
-            except:
+            except Exception:
                 append_total(0.0)
 
             # --- 3. Style Cache (Pre-parse JSON) ---
@@ -192,7 +214,7 @@ class CacheWorker(QThread):
                 if style_json:
                     try:
                         append_style(json.loads(style_json))
-                    except:
+                    except Exception:
                         append_style(None)
                 else:
                     append_style(None)
@@ -342,7 +364,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
                 # Pre-bind
                 s_idx = self._search_index
                 # Efficient intersection
-                indices = [i for i in indices if all(t in s_idx[i] for t in search_terms)]
+                indices = [
+                    i for i in indices if all(t in s_idx[i] for t in search_terms)
+                ]
 
             # 2. Column Filters
             if col_filters:
@@ -373,10 +397,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
         total = sum(self._float_totals[i] for i in self._visible_indices)
         return total
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent=None):
+        if parent is None:
+            parent = QModelIndex()
         return self._filtered_count
 
-    def columnCount(self, parent=QModelIndex()):
+    def columnCount(self, parent=None):
+        if parent is None:
+            parent = QModelIndex()
         return len(self.COLUMNS)
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
@@ -412,7 +440,10 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return None
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+        if (
+            orientation == Qt.Orientation.Horizontal
+            and role == Qt.ItemDataRole.DisplayRole
+        ):
             return self.COLUMNS[section]
         return None
 
@@ -443,7 +474,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
                 color_hex = styles[key].get(style_type)
                 if color_hex:
                     return QColor(color_hex)
-        except:
+        except Exception:
             pass
         return None
 
@@ -486,7 +517,7 @@ class FilterHeaderView(QHeaderView):
         if col_index == 0:
             filter_widget = DateFilterPopupWidget(unique_values, None)
         else:
-            sorted_values = sorted(list(unique_values), key=lambda x: str(x).lower())
+            sorted_values = sorted(unique_values, key=lambda x: str(x).lower())
             filter_widget = ListFilterPopupWidget(sorted_values, None)
 
         action = QWidgetAction(menu)
@@ -518,7 +549,7 @@ class ListFilterPopupWidget(QWidget):
     def __init__(self, values, selected_values=None):
         super().__init__()
         self.values = values
-        self.all_values = set(str(v).lower() for v in values)
+        self.all_values = {str(v).lower() for v in values}
         self.applied = False
 
         layout = QVBoxLayout(self)
@@ -556,7 +587,7 @@ class ListFilterPopupWidget(QWidget):
         is_all_selected = selected_values is None
         selected_set = set()
         if selected_values:
-            selected_set = set(v.lower() for v in selected_values)
+            selected_set = {v.lower() for v in selected_values}
 
         for val in values:
             item = QStandardItem(str(val))
@@ -688,14 +719,14 @@ class DateFilterPopupWidget(QWidget):
                 parts = v.split("/")
                 if len(parts) != 3:
                     continue
-                d, m, y = parts[0], parts[1], parts[2]
+                _d, m, y = parts[0], parts[1], parts[2]
 
                 if y not in structure:
                     structure[y] = {}
                 if m not in structure[y]:
                     structure[y][m] = []
                 structure[y][m].append(v)  # Store full string in leaf
-            except:
+            except Exception:
                 continue
 
         is_all_selected = selected_values is None
@@ -762,7 +793,9 @@ class DateFilterPopupWidget(QWidget):
                         has_partial = True
                         break
                 y_item.setCheckState(
-                    Qt.CheckState.PartiallyChecked if has_partial else Qt.CheckState.Unchecked
+                    Qt.CheckState.PartiallyChecked
+                    if has_partial
+                    else Qt.CheckState.Unchecked
                 )
 
             self.model.appendRow(y_item)

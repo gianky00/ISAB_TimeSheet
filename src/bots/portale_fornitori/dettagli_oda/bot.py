@@ -4,7 +4,7 @@ SyncroJob - Dettagli OdA Bot
 
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
@@ -13,7 +13,6 @@ from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
 
 
 class DettagliOdABot(BaseBot):
-
     @staticmethod
     def get_name() -> str:
         return "Dettagli OdA"
@@ -49,9 +48,22 @@ class DettagliOdABot(BaseBot):
         self.data_a = data_a
         self.fornitore = fornitore
 
+    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+        """Validazione specifica per Dettagli OdA."""
+        base_valid, base_msg = super().validate_data(data)
+        if not base_valid:
+            return False, base_msg
+
+        if not self.fornitore:
+            return False, "Fornitore non specificato."
+
+        rows = data if isinstance(data, list) else data.get("rows", [])
+        if not rows:
+            return False, "Nessun dato fornito per l'elaborazione."
+
+        return True, ""
+
     def run(self, data: List[Dict[str, Any]]) -> bool:
-        if not self.driver:
-            return False
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)
@@ -59,9 +71,6 @@ class DettagliOdABot(BaseBot):
             self.fornitore = data.get("fornitore", self.fornitore)
         else:
             rows = data
-
-        if not rows:
-            return True
 
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
         page = DettagliOdAPage(self.driver, self.log)
@@ -77,13 +86,6 @@ class DettagliOdABot(BaseBot):
             oda = str(row.get("numero_oda", "")).strip()
             contract = str(row.get("numero_contratto", "")).strip()
 
-            # Note: ODA can be empty for General List export
-
-            # self.log("-" * 40)
-            # self.log(f"Riga {i}: OdA={oda}, Contratto={contract}")
-
-            # Navigate and Setup for each row as required by the workflow (resetting tabs)
-            # Pass (i==1) to let the page know if it's the first row
             if not page.navigate_to_dettagli(is_first_row=(i == 1)):
                 self.log("❌ Problema nella navigazione.")
                 continue
@@ -91,11 +93,12 @@ class DettagliOdABot(BaseBot):
                 self.log("❌ Fornitore non selezionabile.")
                 continue
 
-            if page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir):
+            if page.process_oda(
+                oda, contract, self.data_da, self.data_a, source_dir, dest_dir
+            ):
                 success += 1
 
             time.sleep(1)
 
-        page.logout()
         self.log("✨ Procedura conclusa.")
         return success == len(rows)

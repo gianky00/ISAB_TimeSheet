@@ -62,7 +62,7 @@ class DocumentProcessor:
                     break
             doc.close()
             return has_text
-        except:
+        except Exception:
             return False
 
     @staticmethod
@@ -77,7 +77,7 @@ class DocumentProcessor:
             for pdf_path in file_paths:
                 with fitz.open(pdf_path) as pdf_doc:
                     result.insert_pdf(pdf_doc)
-            
+
             result.save(output_path)
             result.close()
             return True
