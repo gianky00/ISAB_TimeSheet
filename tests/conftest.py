@@ -15,6 +15,17 @@ import pytest
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
+# Set matplotlib backend to 'Agg' to avoid GUI issues during tests
+def pytest_sessionstart(session):
+    """
+    Called after the Session object has been created and before performing collection and entering the run test loop.
+    """
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+    except ImportError:
+        pass
+
 
 def pytest_configure(config):
     """
