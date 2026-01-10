@@ -97,17 +97,20 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(10000, self._check_and_start_contabilita_update)
 
     def _preload_background(self):
-        """Avvia la sequenza di caricamento incrementale con feedback visivo."""
-        # Coda di caricamento: (Indice, Descrizione Tecnica)
-        self._preload_queue = [
-            (1, "Inizializzazione sottosistema Automazioni"),
-            (3, "Caricamento indici Database"),
-            (2, "Avvio motore analisi Lyra"),
-            (4, "Caricamento preferenze utente"),
-            (5, "Indicizzazione documentazione"),
-            (6, "Sincronizzazione centro notifiche")
+        """Avvia la sequenza di caricamento incrementale PROFONDO con feedback visivo."""
+        # Coda di caricamento: (Azione, Descrizione)
+        self._preload_tasks = [
+            (lambda: self.navigation_controller.get_panel(PageIndex.DATABASE), "Inizializzazione Database"),
+            (lambda: self.timbrature_db_panel.refresh_data(), "Popolamento Timbrature Isab"),
+            (lambda: self.contabilita_panel.refresh_tabs(), "Caricamento Registro Strumentale"),
+            (lambda: self.scarico_ore_panel._start_update(), "Sincronizzazione DataEase"),
+            (lambda: self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI), "Preparazione Motori Automazione"),
+            (lambda: self.navigation_controller.get_panel(PageIndex.LYRA), "Avvio Analisi Lyra"),
+            (lambda: self.navigation_controller.get_panel(PageIndex.SETTINGS), "Configurazione Preferenze"),
+            (lambda: self.navigation_controller.get_panel(PageIndex.NOTIFICATIONS), "Centro Notifiche"),
+            (lambda: self.navigation_controller.get_panel(PageIndex.HELP), "Guida e Documentazione")
         ]
-        self._total_preload = len(self._preload_queue)
+        self._total_preload = len(self._preload_tasks)
         
         # Attiva indicatori
         self.progress_bar.setVisible(True)
@@ -118,31 +121,33 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(100, self._process_next_preload)
 
     def _process_next_preload(self):
-        """Carica il prossimo pannello nella coda."""
+        """Esegue il prossimo task di precaricamento senza bloccare la UI."""
         from PyQt6 import sip
         if sip.isdeleted(self):
             return
 
-        if not self._preload_queue:
+        if not hasattr(self, "_preload_tasks") or not self._preload_tasks:
             self._finalize_preload()
             return
 
         # Estrai il prossimo task
-        idx, description = self._preload_queue.pop(0)
+        action, description = self._preload_tasks.pop(0)
         
-        # Feedback Utente (Stile Enterprise)
-        self.status_bar.showMessage(f"{description}...")
-        self.progress_bar.setValue(self._total_preload - len(self._preload_queue))
+        # Feedback Utente
+        self.status_bar.showMessage(f"Ottimizzazione: {description}...")
+        self.progress_bar.setValue(self._total_preload - len(self._preload_tasks))
         
-        # Esegui caricamento (Safe)
+        # Esegui azione (Safe)
         try:
-            if hasattr(self, "navigation_controller"):
-                self.navigation_controller.get_panel(idx)
+            action()
         except Exception as e:
-            print(f"Error loading {description}: {e}")
+            print(f"Error during deep preload of {description}: {e}")
 
-        # Pianifica il prossimo step
-        QTimer.singleShot(150, self._process_next_preload)
+        # TRUCCO PER REATTIVITÀ: Forza l'app a gestire i click e il mouse PRIMA del prossimo task
+        QApplication.processEvents()
+
+        # Pianifica il prossimo step con un delay leggermente superiore per fluidità
+        QTimer.singleShot(300, self._process_next_preload)
 
     def _finalize_preload(self):
         """Conclude la sequenza di caricamento."""
