@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.0.29"
+version = "1.0.38"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -50,8 +50,14 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-# Nota: test_gui_contabilita_extra.py viene ignorato nel test globale per evitare crash da esaurimento risorse GUI su Windows
-test = "pytest tests/ --ignore=tests/unit/test_gui_contabilita_extra.py -v --tb=short"
+# Comando per avviare l'app principale
+syncrojob = "main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --tb=short"
 
 [tool.black]
 line-length = 110

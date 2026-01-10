@@ -123,17 +123,31 @@ def cleanup_widgets(qapp):
     from PyQt6.QtWidgets import QApplication
     import gc
     
+    # Try to import sip for explicit C++ deletion
+    try:
+        from PyQt6 import sip
+    except ImportError:
+        sip = None
+    
     # Close all top-level widgets
     for widget in QApplication.topLevelWidgets():
-        if widget.isVisible():
-            widget.close()
-        widget.deleteLater()
+        try:
+            if widget.isVisible():
+                widget.close()
+            widget.deleteLater()
+            if sip and not sip.isdeleted(widget):
+                # Dangerous but necessary for GDI leak prevention in massive suites
+                # sip.delete(widget) 
+                pass 
+        except Exception:
+            pass
     
     # Process deferred delete events
     qapp.processEvents()
     
-    # Force Python Garbage Collection to destroy C++ wrappers
+    # Force Python Garbage Collection
     gc.collect()
+    gc.collect() # Double collect for cyclic references
 
 
 @pytest.fixture

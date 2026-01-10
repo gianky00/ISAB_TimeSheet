@@ -124,12 +124,20 @@ class TelegramService(QObject):
 
             finally:
                 self.log_signal.emit("Spegnimento del bot Telegram...")
-                if self.app.updater and self.app.updater.is_running:
-                    await self.app.updater.stop()
-                if self.app.running:
-                    await self.app.stop()
-                await self.app.shutdown()
-                self.log_signal.emit("Bot Telegram spento.")
+                try:
+                    async def shutdown_sequence():
+                        if self.app.updater and self.app.updater.is_running:
+                            await self.app.updater.stop()
+                        if self.app.running:
+                            await self.app.stop()
+                        await self.app.shutdown()
+
+                    await asyncio.wait_for(shutdown_sequence(), timeout=5.0)
+                    self.log_signal.emit("Bot Telegram spento.")
+                except asyncio.TimeoutError:
+                    self.log_signal.emit("⚠️ Timeout spegnimento Telegram: forzato.")
+                except Exception as e:
+                    self.log_signal.emit(f"⚠️ Errore spegnimento Telegram: {e}")
 
         try:
             self.loop = asyncio.new_event_loop()

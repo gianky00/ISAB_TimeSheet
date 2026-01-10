@@ -61,10 +61,21 @@ def check_git_status():
         print_ok("Working tree pulito.")
         return True
     else:
-        print_fail("Ci sono modifiche non committate:")
-        print(result.stdout)
-        print(f"{YELLOW}⚠️  Consiglio: Committa le modifiche prima del rilascio.{RESET}")
-        return False # Cambia a True se vuoi permettere build dirty (sconsigliato)
+        print(f"{YELLOW}⚠️  Attenzione: Ci sono modifiche non committate.{RESET}")
+        print(f"{YELLOW}   Verranno incluse automaticamente nel commit di release.{RESET}")
+        return True # Non blocca più la release
+
+def check_requirements_sync():
+    print_step("Sincronizzazione requirements.txt...")
+    script_path = PROJECT_ROOT / "admin" / "sync_requirements.py"
+    # Esegue la sincronizzazione (senza --check) per assicurare l'allineamento
+    ret = subprocess.call([sys.executable, str(script_path)], cwd=PROJECT_ROOT)
+    if ret == 0:
+        print_ok("requirements.txt sincronizzato correttamente.")
+        return True
+    else:
+        print_fail("Errore durante la sincronizzazione di requirements.txt!")
+        return False
 
 def run_tests():
     print_step("Esecuzione Test Suite (Fast Mode)...")
@@ -85,13 +96,23 @@ def run_tests():
         return False
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="SyncroJob Pre-Flight Check")
+    parser.add_argument("--skip-tests", action="store_true", help="Salta l'esecuzione dei test")
+    args = parser.parse_args()
+
     print(f"{BOLD}✈️  AVVIO PRE-FLIGHT CHECK...{RESET}")
     
     checks = [
         check_versions,
-        check_git_status,
-        run_tests
+        check_requirements_sync,
+        check_git_status
     ]
+    
+    if not args.skip_tests:
+        checks.append(run_tests)
+    else:
+        print(f"{YELLOW}⚠️  SKIP: Esecuzione test saltata su richiesta utente.{RESET}")
     
     for check in checks:
         if not check():
