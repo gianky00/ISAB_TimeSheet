@@ -21,6 +21,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from enum import IntEnum
+
 from src.core import config_manager
 from src.core.backup_manager import BackupManager
 from src.core.lyra_sentinel import LyraSentinel
@@ -36,6 +38,16 @@ from src.gui.styles import apply_theme
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.toast import ToastManager
 from src.gui.widgets.update_banner import UpdateBanner
+
+
+class PageIndex(IntEnum):
+    DASHBOARD = 0
+    AUTOMAZIONI = 1
+    LYRA = 2
+    DATABASE = 3
+    SETTINGS = 4
+    HELP = 5
+    NOTIFICATIONS = 6
 
 
 class MainWindow(QMainWindow):
@@ -76,32 +88,70 @@ class MainWindow(QMainWindow):
         self.service_controller.start_all()
 
         # Navigazione iniziale (Dashboard)
-        self.navigation_controller.navigate_to(0)
+        self.navigation_controller.navigate_to(PageIndex.DASHBOARD)
 
-        # Avvio automatico importazione contabilità se abilitato
-        QTimer.singleShot(2000, self._check_and_start_contabilita_update)
+        # PRECARICAMENTO SILENZIOSO: Carica i moduli pesanti in background dopo l'avvio
+        QTimer.singleShot(500, self._preload_background)
 
-        # EAGER LOADING: Pre-carica tutti i pannelli per evitare lag durante l'uso
-        QTimer.singleShot(100, self._preload_all_panels)
+        # Avvio automatico importazione contabilità (ritardato per stabilità)
+        QTimer.singleShot(10000, self._check_and_start_contabilita_update)
 
-    def _preload_all_panels(self):
-        """Forza l'inizializzazione di tutti i pannelli."""
-        # Mostra un cursore di attesa o un messaggio nella status bar
-        self.status_bar.showMessage("⏳ Pre-caricamento moduli in corso... (Attendere)")
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+    def _preload_background(self):
+        """Avvia la sequenza di caricamento incrementale con feedback visivo."""
+        # Coda di caricamento: (Indice, Descrizione Tecnica)
+        self._preload_queue = [
+            (1, "Inizializzazione sottosistema Automazioni"),
+            (3, "Caricamento indici Database"),
+            (2, "Avvio motore analisi Lyra"),
+            (4, "Caricamento preferenze utente"),
+            (5, "Indicizzazione documentazione"),
+            (6, "Sincronizzazione centro notifiche")
+        ]
+        self._total_preload = len(self._preload_queue)
+        
+        # Attiva indicatori
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, self._total_preload)
+        self.progress_bar.setValue(0)
+        
+        # Avvia la catena
+        QTimer.singleShot(100, self._process_next_preload)
+
+    def _process_next_preload(self):
+        """Carica il prossimo pannello nella coda."""
+        from PyQt6 import sip
+        if sip.isdeleted(self):
+            return
+
+        if not self._preload_queue:
+            self._finalize_preload()
+            return
+
+        # Estrai il prossimo task
+        idx, description = self._preload_queue.pop(0)
+        
+        # Feedback Utente (Stile Enterprise)
+        self.status_bar.showMessage(f"{description}...")
+        self.progress_bar.setValue(self._total_preload - len(self._preload_queue))
+        
+        # Esegui caricamento (Safe)
         try:
-            # Indices: 0=Dashboard, 1=Automazioni, 2=Lyra, 3=Database, 4=Settings, 5=Help, 6=Notifications
-            for i in range(7):
-                self.navigation_controller.get_panel(i)
-                QApplication.processEvents() # Mantiene la UI viva (opzionale)
-            
-            # Collegamento automatico aggiornamento Timbrature
-            if hasattr(self, "timbrature_bot_panel") and hasattr(self, "timbrature_db_panel"):
-                self.timbrature_bot_panel.data_updated.connect(self.timbrature_db_panel.refresh_data)
+            if hasattr(self, "navigation_controller"):
+                self.navigation_controller.get_panel(idx)
+        except Exception as e:
+            print(f"Error loading {description}: {e}")
 
-            self.status_bar.showMessage("✅ Sistema pronto.", 3000)
-        finally:
-            QApplication.restoreOverrideCursor()
+        # Pianifica il prossimo step
+        QTimer.singleShot(150, self._process_next_preload)
+
+    def _finalize_preload(self):
+        """Conclude la sequenza di caricamento."""
+        from PyQt6 import sip
+        if sip.isdeleted(self):
+            return
+            
+        self.progress_bar.setVisible(False)
+        self.status_bar.showMessage("SyncroJob è pronto. Tutti i servizi attivi.", 3000)
 
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
@@ -226,9 +276,9 @@ class MainWindow(QMainWindow):
     def _handle_f5(self):
         """Gestisce F5."""
         idx = self.page_stack.currentIndex()
-        if idx == 0 and hasattr(self, "dashboard_panel"):
+        if idx == PageIndex.DASHBOARD and hasattr(self, "dashboard_panel"):
             self.dashboard_panel.refresh_data()
-        elif idx == 3 and hasattr(self, "database_widget"):
+        elif idx == PageIndex.DATABASE and hasattr(self, "database_widget"):
             tab_idx = self.database_widget.currentIndex()
             if tab_idx == 0:
                 self.timbrature_db_panel.refresh_data()
@@ -243,7 +293,7 @@ class MainWindow(QMainWindow):
         self.global_search.selectAll()
 
     def _on_help_requested(self, section_title):
-        self.navigation_controller.navigate_to(5)
+        self.navigation_controller.navigate_to(PageIndex.HELP)
         self.help_panel.open_section(section_title)
 
     def _on_settings_saved(self):
@@ -260,7 +310,7 @@ class MainWindow(QMainWindow):
         config = config_manager.load_config()
         if config.get("enable_auto_update_contabilita", False):
             # Assicuriamoci che il pannello sia caricato se dobbiamo avviarlo
-            self.navigation_controller.get_panel(3)
+            self.navigation_controller.get_panel(PageIndex.DATABASE)
             self.contabilita_panel.start_import_process()
 
     def _on_download_update_clicked(self, url):
@@ -276,7 +326,7 @@ class MainWindow(QMainWindow):
         self.navigation_controller.analyze_with_lyra(context_text)
 
     def show_settings(self):
-        self.navigation_controller.navigate_to(4)
+        self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
     def closeEvent(self, event):
         if self._force_quit:

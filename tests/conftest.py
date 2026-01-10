@@ -8,7 +8,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -110,3 +110,69 @@ def _isolate_config(tmp_path):
 
 # The qapp fixture is now provided automatically by the pytest-qt plugin.
 # Defining it here would override the plugin's fixture and cause conflicts.
+
+
+@pytest.fixture
+def mock_ui_dependencies(mocker):
+    """
+    Mock massivo delle dipendenze UI per evitare I/O su disco e DB reali.
+    Permette di istanziare Widget complessi in isolamento.
+    """
+    # Mock Database Instance (db_manager)
+    mock_db = MagicMock()
+    mocker.patch("src.core.database.db_manager", mock_db)
+    
+    # Mock ContabilitaManager (Class Mock)
+    mock_contabilita_class = mocker.patch("src.core.contabilita_manager.ContabilitaManager")
+    
+    # Configure Class Methods and Attributes
+    mock_contabilita_class.DB_PATH = MagicMock()
+    mock_contabilita_class.DB_PATH.exists.return_value = True
+    mock_contabilita_class.get_available_years.return_value = [2024, 2025]
+    mock_contabilita_class.get_scarico_ore_data.return_value = []
+    
+    # Configure Instance Methods (if any are used)
+    mock_contabilita_instance = mock_contabilita_class.return_value
+    mock_contabilita_instance.get_status_message.return_value = "Ready"
+    
+    # Mock TimbratureStorage
+    # Force import to avoid AttributeError: module 'src' has no attribute 'bots'
+    import src.bots.portale_fornitori.timbrature.storage
+    mocker.patch.object(src.bots.portale_fornitori.timbrature.storage, "TimbratureStorage", return_value=MagicMock())
+    
+    # Mock LyraSentinel & Telegram
+    mocker.patch("src.core.lyra_sentinel.LyraSentinel", return_value=MagicMock())
+    mocker.patch("src.core.telegram_manager.TelegramService", return_value=MagicMock())
+    
+    # Mock ConfigManager per evitare scritture reali
+    mocker.patch("src.core.config_manager.save_config")
+
+    return {
+        "contabilita": mock_contabilita_instance,
+        "db": mock_db
+    }
+
+
+@pytest.fixture
+def mock_driver(mocker):
+    """
+    Mock del driver Selenium per testare i Bot senza aprire il browser.
+    """
+    mock = MagicMock()
+    mock.page_source = "<html><body><div id='test'></div></body></html>"
+    # Mocking wait instance behavior
+    mock_wait = MagicMock()
+    mocker.patch("selenium.webdriver.support.ui.WebDriverWait", return_value=mock_wait)
+    return mock
+
+
+@pytest.fixture
+def create_mock_html(tmp_path):
+    """
+    Crea un file HTML temporaneo per testare i selettori.
+    """
+    def _create(content, filename="test.html"):
+        html_file = tmp_path / filename
+        html_file.write_text(content, encoding="utf-8")
+        return html_file
+    return _create

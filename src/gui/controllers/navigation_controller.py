@@ -36,44 +36,52 @@ class NavigationController(QObject):
         # Creazione dinamica in base all'indice
         new_panel = None
 
-        if index == 0:
-            from src.gui.dashboard_panel import DashboardPanel
+        try:
+            if index == 0:
+                from src.gui.dashboard_panel import DashboardPanel
 
-            new_panel = DashboardPanel()
-            self.mw.dashboard_panel = new_panel
-        elif index == 1:
-            from src.gui.widgets.automazioni_widget import AutomazioniWidget
+                new_panel = DashboardPanel()
+                self.mw.dashboard_panel = new_panel
+            elif index == 1:
+                from src.gui.widgets.automazioni_widget import AutomazioniWidget
 
-            new_panel = AutomazioniWidget(self.mw)
-            self.mw.automazioni_widget = new_panel
-        elif index == 2:
-            from src.gui.lyra_panel import LyraPanel
+                new_panel = AutomazioniWidget(self.mw)
+                self.mw.automazioni_widget = new_panel
+            elif index == 2:
+                from src.gui.lyra_panel import LyraPanel
 
-            new_panel = LyraPanel()
-            self.mw.lyra_panel = new_panel
-        elif index == 3:
-            from src.gui.widgets.database_widget import DatabaseWidget
+                new_panel = LyraPanel()
+                self.mw.lyra_panel = new_panel
+            elif index == 3:
+                from src.gui.widgets.database_widget import DatabaseWidget
 
-            new_panel = DatabaseWidget(self.mw)
-            self.mw.database_widget = new_panel
-        elif index == 4:
-            from src.gui.settings_panel import SettingsPanel
+                new_panel = DatabaseWidget(self.mw)
+                self.mw.database_widget = new_panel
+            elif index == 4:
+                from src.gui.settings_panel import SettingsPanel
 
-            new_panel = SettingsPanel()
-            self.mw.settings_panel = new_panel
-            # Connetti segnali vitali delle impostazioni
-            new_panel.settings_saved.connect(self.mw._on_settings_saved)
-            new_panel.request_help_section.connect(self.mw._on_help_requested)
-        elif index == 5:
-            from src.gui.help_panel import HelpPanel
+                new_panel = SettingsPanel()
+                self.mw.settings_panel = new_panel
+                # Connetti segnali vitali delle impostazioni
+                new_panel.settings_saved.connect(self.mw._on_settings_saved)
+                new_panel.request_help_section.connect(self.mw._on_help_requested)
+            elif index == 5:
+                from src.gui.help_panel import HelpPanel
 
-            new_panel = HelpPanel()
-            self.mw.help_panel = new_panel
-        elif index == 6:
-            from src.gui.notifications_panel import NotificationsPanel
+                new_panel = HelpPanel()
+                self.mw.help_panel = new_panel
+            elif index == 6:
+                from src.gui.notifications_panel import NotificationsPanel
 
-            new_panel = NotificationsPanel()
-            self.mw.notifications_panel = new_panel
+                new_panel = NotificationsPanel()
+                self.mw.notifications_panel = new_panel
+        except Exception as e:
+            import traceback
+            logger.error(f"❌ Critical Error loading panel {index}: {e}")
+            logger.error(traceback.format_exc())
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(self.mw, "Errore Caricamento", f"Impossibile caricare il modulo.\nErrore: {e}")
+            return panel  # Return placeholder
 
         if new_panel:
             # Rimpiazza il placeholder nello stack
@@ -82,9 +90,32 @@ class NavigationController(QObject):
             self.mw.page_stack.insertWidget(index, new_panel)
             setattr(self.mw, f"_panel_initialized_{index}", True)
 
+            # Tenta di collegare i segnali incrociati
+            self._try_connect_signals()
+
             return new_panel
 
         return panel
+
+    def _try_connect_signals(self):
+        """
+        Tenta di collegare i segnali tra pannelli che dipendono l'uno dall'altro
+        quando entrambi sono stati inizializzati.
+        """
+        # Timbrature Bot -> Timbrature DB
+        if (
+            hasattr(self.mw, "timbrature_bot_panel")
+            and hasattr(self.mw, "timbrature_db_panel")
+            and not getattr(self.mw, "_timbrature_signals_connected", False)
+        ):
+            try:
+                self.mw.timbrature_bot_panel.data_updated.connect(
+                    self.mw.timbrature_db_panel.refresh_data
+                )
+                self.mw._timbrature_signals_connected = True
+                logger.info("Signal: Timbrature Bot -> DB connected.")
+            except Exception as e:
+                logger.error(f"Signal Connection Failed: {e}")
 
     def navigate_to(self, index: int):
         """Navigazione con Lazy Loading."""

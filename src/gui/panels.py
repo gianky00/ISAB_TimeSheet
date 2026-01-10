@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 
-from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, pyqtSignal
+from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -364,7 +364,15 @@ class ScaricaTSPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading to speed up startup
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for ScaricaTSPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -541,7 +549,15 @@ class DettagliOdAPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for DettagliOdAPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -733,7 +749,15 @@ class CaricoTSPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for CaricoTSPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -887,7 +911,15 @@ class ScaricoPDLPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for ScaricoPDLPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -1217,7 +1249,15 @@ class TimbratureBotPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for TimbratureBotPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -1373,7 +1413,23 @@ class TimbratureDBPanel(QWidget):
         self.cantieri = self.lists.get("cantieri", [])
 
         self._setup_ui()
-        self.refresh_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_refresh_data)
+        QTimer.singleShot(20, self._safe_load_settings_data)
+
+    def _safe_refresh_data(self):
+        try:
+            self.refresh_data()
+        except Exception as e:
+            print(f"❌ Error refreshing data for TimbratureDBPanel: {e}")
+            traceback.print_exc()
+
+    def _safe_load_settings_data(self):
+        try:
+            self._load_settings_data()
+        except Exception as e:
+            print(f"❌ Error loading settings data for TimbratureDBPanel: {e}")
+            traceback.print_exc()
 
     def _setup_ui(self):
         """Configura l'interfaccia utente."""
@@ -1541,9 +1597,6 @@ class TimbratureDBPanel(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         layout.addWidget(self.settings_table)
-
-        # Load data immediately
-        self._load_settings_data()
 
     def _on_filter_empty_changed(self, state):
         """Save preference and reload settings table."""

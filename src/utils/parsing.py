@@ -3,6 +3,7 @@ SyncroJob - Parsing Utils
 Utility per il parsing robusto di valute e numeri.
 """
 
+import re
 
 def parse_currency(value) -> float:
     """
@@ -28,9 +29,16 @@ def parse_currency(value) -> float:
 
     # Rimuovi simbolo valuta e spazi
     s = s.replace("€", "").strip()
+    
+    # Rimuovi testo "Euro" (case insensitive)
+    s = re.sub(r"(?i)euro", "", s).strip()
 
     # Rimuovi eventuali caratteri invisibili
     s = "".join(c for c in s if c.isprintable())
+    
+    # Gestione 'nan'
+    if s.lower() == 'nan':
+        return 0.0
 
     # Caso speciale: Numeri enormi scientifici o errori Excel (es. 50883250...)
     # Se il numero ha più di 15 cifre ed è intero, è sospetto.
