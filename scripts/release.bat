@@ -6,6 +6,18 @@ cd ..
 set VENV_PYTHON=.venv\Scripts\python.exe
 
 echo ============================================================
+echo 🔍 SYNCROJOB - PRE-FLIGHT CHECK
+echo ============================================================
+%VENV_PYTHON% admin/pre_flight_check.py
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo ❌ Pre-Flight Check Fallito. Rilascio annullato.
+    pause
+    exit /b %ERRORLEVEL%
+)
+
+echo.
+echo ============================================================
 echo 🚀 SYNCROJOB - RELEASE SHORTCUT
 echo ============================================================
 echo.

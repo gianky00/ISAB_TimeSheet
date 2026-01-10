@@ -7,6 +7,8 @@ import logging
 import os
 import shutil
 import sys
+import threading
+import traceback
 from pathlib import Path
 
 from src.core.config_manager import CONFIG_DIR
@@ -15,10 +17,18 @@ from src.core.config_manager import CONFIG_DIR
 logger = logging.getLogger("crash_logger")
 
 def handle_exception(exc_type, exc_value, exc_traceback):
+    """Gestore globale per eccezioni non gestite (Thread Principale)."""
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
-    logger.critical("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
+    
+    error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    logger.critical(f"UNHANDLED EXCEPTION (MainThread):\n{error_msg}")
+    
+    # Forza il flush immediato
+    for handler in logger.handlers:
+        handler.flush()
+        
     try:
         log_file = CONFIG_DIR / "logs" / "crash.log"
         if log_file.exists():
@@ -26,18 +36,32 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     except Exception:
         pass
 
+def handle_thread_exception(args):
+    """Gestore globale per eccezioni nei thread secondari."""
+    error_msg = "".join(traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback))
+    logger.critical(f"UNHANDLED EXCEPTION (Thread: {args.thread.name}):\n{error_msg}")
+    
+    # Forza il flush
+    for handler in logger.handlers:
+        handler.flush()
+
 def setup_crash_logging():
     if not CONFIG_DIR.exists():
         CONFIG_DIR.mkdir(parents=True)
     log_dir = CONFIG_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
+    
+    # Setup Logger con Flush immediato
     handler = logging.FileHandler(log_dir / "crash.log", mode='w', encoding='utf-8')
     handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     clogger = logging.getLogger("crash_logger")
     if not clogger.handlers:
         clogger.addHandler(handler)
     clogger.setLevel(logging.INFO)
+    
+    # Installazione Hooks
     sys.excepthook = handle_exception
+    threading.excepthook = handle_thread_exception  # Richiede Python 3.8+
 
 setup_crash_logging()
 

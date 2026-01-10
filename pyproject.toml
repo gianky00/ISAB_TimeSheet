@@ -50,7 +50,8 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-test = "pytest tests/ --ignore=tests/unit/test_gui_contabilita_extra.py --ignore=tests/unit/test_gui_contabilita_logic.py --ignore=tests/unit/test_gui_panels_new.py --ignore=tests/unit/test_gui_panels.py --ignore=tests/unit/test_gui_settings.py --ignore=tests/unit/test_main_window.py --ignore=tests/unit/test_ux_settings_menus.py -v --tb=short"
+# Nota: test_gui_contabilita_extra.py viene ignorato nel test globale per evitare crash da esaurimento risorse GUI su Windows
+test = "pytest tests/ --ignore=tests/unit/test_gui_contabilita_extra.py -v --tb=short"
 
 [tool.black]
 line-length = 110

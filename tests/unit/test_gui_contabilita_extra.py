@@ -1,12 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtWidgets import QWidget
-
-from src.gui.contabilita_panel import ContabilitaPanel
-
-
-from unittest.mock import MagicMock, patch
-
 class TestContabilitaExtra:
 
     def test_contabilita_panel_init(self, qapp, qtbot):
@@ -18,7 +11,8 @@ class TestContabilitaExtra:
              patch("src.gui.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab, \
              patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel") as mock_kpi_class, \
              patch("src.gui.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab, \
-             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab:
+             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab, \
+             patch("src.gui.contabilita_panel.QTimer.singleShot") as mock_timer:
             
             # Ensure mock returns a QWidget with the required methods
             for m in [mock_cert_tab, mock_att_tab, mock_kpi_class, mock_giorn_tab, mock_year_tab]:
@@ -38,6 +32,9 @@ class TestContabilitaExtra:
 
             panel = ContabilitaPanel()
             qtbot.addWidget(panel)
+            
+            # Manually trigger the deferred loading since timer is mocked
+            panel._safe_refresh_tabs()
 
             assert panel is not None
             assert panel.main_tabs.count() >= 5
@@ -51,7 +48,8 @@ class TestContabilitaExtra:
              patch("src.gui.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab, \
              patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel") as mock_kpi_class, \
              patch("src.gui.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab, \
-             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab:
+             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab, \
+             patch("src.gui.contabilita_panel.QTimer.singleShot") as mock_timer:
 
             # Ensure mock returns a real QWidget with required methods
             for m in [mock_cert_tab, mock_att_tab, mock_kpi_class, mock_giorn_tab, mock_year_tab]:
@@ -70,6 +68,9 @@ class TestContabilitaExtra:
 
             panel = ContabilitaPanel()
             qtbot.addWidget(panel)
+            
+            # Manually trigger
+            panel._safe_refresh_tabs()
 
             # Switch to "Giornaliere" (Index 1)
             panel.main_tabs.setCurrentIndex(1)

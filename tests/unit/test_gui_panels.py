@@ -16,6 +16,7 @@ class TestGUIPanels:
     def test_scarica_ts_panel_init(self, app, qtbot):
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
+        qtbot.wait(100) # Wait for lazy loading
 
         # Manually set data
         panel.params_widget.fornitore_combo.addItem("F1")
@@ -38,6 +39,7 @@ class TestGUIPanels:
         mock_load.return_value = {}
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
+        qtbot.wait(100)
 
         # Modify UI
         panel.params_widget.fornitore_combo.addItem("NewF")
@@ -85,6 +87,7 @@ class TestGUIPanels:
     def test_carico_ts_panel_structure(self, app, qtbot):
         panel = CaricoTSPanel()
         qtbot.addWidget(panel)
+        qtbot.wait(100)
 
         # Just check it doesn't crash and has table
         assert panel.data_table is not None

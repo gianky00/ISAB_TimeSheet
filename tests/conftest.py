@@ -112,6 +112,30 @@ def _isolate_config(tmp_path):
 # Defining it here would override the plugin's fixture and cause conflicts.
 
 
+@pytest.fixture(autouse=True)
+def cleanup_widgets(qapp):
+    """
+    Force clean up of all top-level widgets after each test.
+    This prevents "Widget Zombie" leaks and GDI handle exhaustion on Windows.
+    """
+    yield
+    
+    from PyQt6.QtWidgets import QApplication
+    import gc
+    
+    # Close all top-level widgets
+    for widget in QApplication.topLevelWidgets():
+        if widget.isVisible():
+            widget.close()
+        widget.deleteLater()
+    
+    # Process deferred delete events
+    qapp.processEvents()
+    
+    # Force Python Garbage Collection to destroy C++ wrappers
+    gc.collect()
+
+
 @pytest.fixture
 def mock_ui_dependencies(mocker):
     """
