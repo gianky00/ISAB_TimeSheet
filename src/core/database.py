@@ -65,6 +65,9 @@ class DatabaseManager:
                 conn.execute("PRAGMA journal_mode=WAL;")
                 conn.execute("PRAGMA synchronous=NORMAL;")
                 conn.execute(f"PRAGMA busy_timeout={int(timeout * 1000)};")
+            
+            # Enable Foreign Keys for both read and write
+            conn.execute("PRAGMA foreign_keys = ON;")
 
             yield conn
 
@@ -122,9 +125,13 @@ class DatabaseManager:
         raise last_error
 
     def init_db(self):
-        """Initializes schema for all databases."""
-        self._init_contabilita()
-        self._init_timbrature()
+        """Initializes schema for all databases using the migration system."""
+        self._run_migrations(
+            self.DB_CONTABILITA, self.MIGRATIONS_CONTABILITA, "Contabilita"
+        )
+        self._run_migrations(
+            self.DB_TIMBRATURE, self.MIGRATIONS_TIMBRATURE, "Timbrature"
+        )
 
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
         try:
@@ -135,93 +142,159 @@ class DatabaseManager:
     def _set_db_version(self, conn: sqlite3.Connection, version: int):
         conn.execute(f"PRAGMA user_version = {version}")
 
-    def _init_contabilita(self):
-        with self.get_connection(self.DB_CONTABILITA) as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS contabilita (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    year INTEGER NOT NULL,
-                    data_prev TEXT, mese TEXT, n_prev TEXT, totale_prev TEXT,
-                    attivita TEXT, tcl TEXT, odc TEXT, stato_attivita TEXT,
-                    tipologia TEXT, ore_sp TEXT, resa TEXT, annotazioni TEXT,
-                    indirizzo_consuntivo TEXT, nome_file TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS giornaliere (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    year INTEGER NOT NULL,
-                    data TEXT, personale TEXT, descrizione TEXT,
-                    tcl TEXT, odc TEXT, pdl TEXT, inizio TEXT, fine TEXT,
-                    ore TEXT, n_prev TEXT, nome_file TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS scarico_ore (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    data TEXT, pers1 TEXT, pers2 TEXT, odc TEXT, pos TEXT,
-                    dalle TEXT, alle TEXT, totale_ore TEXT, descrizione TEXT,
-                    finito TEXT, commessa TEXT, styles TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS attivita_programmate (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ps TEXT, area TEXT, pdl TEXT, imp TEXT, descrizione TEXT,
-                    lun TEXT, mar TEXT, mer TEXT, gio TEXT, ven TEXT,
-                    stato_pdl TEXT, stato_attivita TEXT, data_controllo TEXT,
-                    personale TEXT, po TEXT, avviso TEXT, styles TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS certificati_campione (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    modello TEXT, costruttore TEXT, matricola TEXT,
-                    range_strumento TEXT, errore_max TEXT, certificato TEXT,
-                    scadenza TEXT, emissione TEXT, id_coemi TEXT, stato TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)"
-            )
+    def _run_migrations(self, db_path: Path, migrations: dict, db_name: str):
+        """
+        Executes pending migrations for a specific database.
+        """
+        with self.get_connection(db_path) as conn:
+            current_ver = self._get_db_version(conn)
+            target_ver = max(migrations.keys()) if migrations else 0
 
-            version = self._get_db_version(conn)
-            if version < 1:
-                self._set_db_version(conn, 1)
+            if current_ver < target_ver:
+                logger.info(
+                    f"[{db_name}] Database outdated (v{current_ver}). Migrating to v{target_ver}..."
+                )
 
-    def _init_timbrature(self):
-        with self.get_connection(self.DB_TIMBRATURE) as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS timbrature (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    data TEXT, ingresso TEXT, uscita TEXT,
-                    nome TEXT, cognome TEXT, presenza_ts TEXT, sito_timbratura TEXT,
-                    UNIQUE(data, ingresso, uscita, nome, cognome)
-                )
-            """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS dipendenti (
-                    nome TEXT, cognome TEXT, reparto TEXT, cantiere TEXT,
-                    PRIMARY KEY (nome, cognome)
-                )
-            """)
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)"
+                try:
+                    # Apply migrations sequentially
+                    for ver in range(current_ver + 1, target_ver + 1):
+                        if ver in migrations:
+                            logger.info(f"[{db_name}] Applying migration v{ver}...")
+                            migrations[ver](conn)
+                            self._set_db_version(conn, ver)
+                            logger.info(f"[{db_name}] Migration v{ver} completed.")
+                    
+                    logger.info(f"[{db_name}] All migrations completed successfully.")
+                except Exception as e:
+                    logger.critical(f"[{db_name}] Migration failed at step v{ver}: {e}")
+                    raise
+
+    # ==========================================
+    # DEFINIZIONE MIGRAZIONI CONTABILITÀ
+    # ==========================================
+    @staticmethod
+    def _mig_contabilita_v1(conn: sqlite3.Connection):
+        """Schema Iniziale Contabilità (v1)"""
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS contabilita (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                year INTEGER NOT NULL,
+                data_prev TEXT, mese TEXT, n_prev TEXT, totale_prev TEXT,
+                attivita TEXT, tcl TEXT, odc TEXT, stato_attivita TEXT,
+                tipologia TEXT, ore_sp TEXT, resa TEXT, annotazioni TEXT,
+                indirizzo_consuntivo TEXT, nome_file TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS giornaliere (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                year INTEGER NOT NULL,
+                data TEXT, personale TEXT, descrizione TEXT,
+                tcl TEXT, odc TEXT, pdl TEXT, inizio TEXT, fine TEXT,
+                ore TEXT, n_prev TEXT, nome_file TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS scarico_ore (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TEXT, pers1 TEXT, pers2 TEXT, odc TEXT, pos TEXT,
+                dalle TEXT, alle TEXT, totale_ore TEXT, descrizione TEXT,
+                finito TEXT, commessa TEXT, styles TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS attivita_programmate (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ps TEXT, area TEXT, pdl TEXT, imp TEXT, descrizione TEXT,
+                lun TEXT, mar TEXT, mer TEXT, gio TEXT, ven TEXT,
+                stato_pdl TEXT, stato_attivita TEXT, data_controllo TEXT,
+                personale TEXT, po TEXT, avviso TEXT, styles TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS certificati_campione (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                modello TEXT, costruttore TEXT, matricola TEXT,
+                range_strumento TEXT, errore_max TEXT, certificato TEXT,
+                scadenza TEXT, emissione TEXT, id_coemi TEXT, stato TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)"
+        )
 
-            version = self._get_db_version(conn)
-            if version < 1:
-                self._set_db_version(conn, 1)
+    @staticmethod
+    def _mig_contabilita_v2(conn: sqlite3.Connection):
+        """Ottimizzazione indici Contabilità (v2)"""
+        cursor = conn.cursor()
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cont_n_prev ON contabilita(n_prev)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cont_odc ON contabilita(odc)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cont_tcl ON contabilita(tcl)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_giorn_odc ON giornaliere(odc)"
+        )
+
+    # ==========================================
+    # DEFINIZIONE MIGRAZIONI TIMBRATURE
+    # ==========================================
+    @staticmethod
+    def _mig_timbrature_v1(conn: sqlite3.Connection):
+        """Schema Iniziale Timbrature (v1)"""
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS timbrature (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TEXT, ingresso TEXT, uscita TEXT,
+                nome TEXT, cognome TEXT, presenza_ts TEXT, sito_timbratura TEXT,
+                UNIQUE(data, ingresso, uscita, nome, cognome)
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS dipendenti (
+                nome TEXT, cognome TEXT, reparto TEXT, cantiere TEXT,
+                PRIMARY KEY (nome, cognome)
+            )
+        """)
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)"
+        )
+
+    @staticmethod
+    def _mig_timbrature_v2(conn: sqlite3.Connection):
+        """Ottimizzazione indici Timbrature (v2)"""
+        cursor = conn.cursor()
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_timb_nome_cognome ON timbrature(cognome, nome)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)"
+        )
+
+    # Dizionari di Migrazione
+    MIGRATIONS_CONTABILITA = {
+        1: _mig_contabilita_v1,
+        2: _mig_contabilita_v2
+    }
+
+    MIGRATIONS_TIMBRATURE = {
+        1: _mig_timbrature_v1,
+        2: _mig_timbrature_v2
+    }
 
 
 db_manager = DatabaseManager()

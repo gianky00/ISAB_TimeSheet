@@ -14,8 +14,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-# Use explicit import from old_widgets to avoid circular dependency via src.gui.widgets
-from src.gui.old_widgets import ExcelTableWidget
+# Use explicit import from new modular widget to avoid circular dependency
+from .excel_table import ExcelTableWidget
 
 from ..design.colors import get_palette
 from ..design.spacing import Spacing

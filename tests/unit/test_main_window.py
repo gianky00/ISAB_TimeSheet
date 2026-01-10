@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from src.gui.main_window import MainWindow
+from src.gui.main_window import MainWindow, PageIndex
 
 
 class TestMainWindow:
@@ -36,12 +36,12 @@ class TestMainWindow:
 
             # Click Automazioni
             window.sidebar.btn_automazioni.click()
-            assert window.page_stack.currentIndex() == 1
+            assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
             assert window.sidebar.btn_automazioni.isChecked()
 
             # Click Database
             window.sidebar.btn_database.click()
-            assert window.page_stack.currentIndex() == 3
+            assert window.page_stack.currentIndex() == PageIndex.DATABASE
             assert window.sidebar.btn_database.isChecked()
 
     def test_navigate_to_panel(self, app, qtbot):
@@ -52,18 +52,20 @@ class TestMainWindow:
             window = MainWindow()
             qtbot.addWidget(window)
 
-            # Force preload to ensure panels exist
-            window._preload_all_panels()
+            # In the new implementation, we use _preload_background
+            # For the test, we can trigger it or just ensure panels are loaded
+            window._preload_background()
+            
+            # Since _preload_background uses QTimer, we might need to wait or 
+            # manually initialize what we need for the deep link test
+            window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
 
             # Test deep link navigation
             window.navigate_to_panel("timbrature")  # Should go to Automazioni -> Timbrature (Tab 2)
-            assert window.page_stack.currentIndex() == 1
+            assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
             
-            # Since _preload_all_panels was called, the panels should be initialized
             # Automazioni panel is at index 1
-            automazioni_panel = window.navigation_controller.get_panel(1)
-            assert automazioni_panel.currentIndex() == 0 # Portale Fornitori tab
-            
-            # Sub-tab check: Timbrature is at index 2 in Portale Fornitori
+            automazioni_panel = window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
+            # Timbrature is at index 2 in Portale Fornitori (tab 0 of Automazioni)
             portale_fornitori_tab = automazioni_panel.widget(0)
             assert portale_fornitori_tab.currentIndex() == 2

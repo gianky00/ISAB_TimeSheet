@@ -6,7 +6,7 @@ Pannello per la visualizzazione della Contabilità Strumentale.
 import os
 from datetime import datetime
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -38,7 +38,16 @@ class ContabilitaPanel(QWidget):
         self.update_buttons = []
         self._last_status_html = "Pronto"
         self._setup_ui()
-        self.refresh_tabs()
+        # Defer heavy loading
+        QTimer.singleShot(10, self._safe_refresh_tabs)
+
+    def _safe_refresh_tabs(self):
+        try:
+            self.refresh_tabs()
+        except Exception as e:
+            import traceback
+            print(f"❌ Error refreshing tabs for ContabilitaPanel: {e}")
+            traceback.print_exc()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)

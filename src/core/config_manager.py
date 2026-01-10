@@ -139,6 +139,16 @@ def load_config() -> Dict[str, Any]:
         return config
 
 
+def _reset_configuration_for_testing():
+    """
+    Resetta la cache di configurazione per i test.
+    DA USARE SOLO NEI TEST!
+    """
+    global _config_cache
+    with _config_lock:
+        _config_cache = None
+
+
 def save_config(config: Dict[str, Any]):
     """
     Salva la configurazione. Tenta di usare keyring, altrimenti cripta nel file.

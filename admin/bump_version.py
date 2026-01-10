@@ -48,11 +48,24 @@ def bump_version(part="patch"):
 
     new_version = f"{major}.{minor}.{patch}"
 
-    # Sostituisci nel contenuto
+    # Sostituisci nel contenuto di version.py
     new_content = re.sub(r'__version__\s*=\s*".*"', f'__version__ = "{new_version}"', content)
 
     with open(version_file, "w", encoding="utf-8") as f:
         f.write(new_content)
+
+    # Aggiorna pyproject.toml
+    pyproject_file = os.path.join(root_dir, "pyproject.toml")
+    if os.path.exists(pyproject_file):
+        with open(pyproject_file, "r", encoding="utf-8") as f:
+            pp_content = f.read()
+        
+        # Sostituisci solo la prima occorrenza di version = "..." (quella del pacchetto)
+        pp_new_content = re.sub(r'^version\s*=\s*".*"', f'version = "{new_version}"', pp_content, flags=re.MULTILINE)
+        
+        with open(pyproject_file, "w", encoding="utf-8") as f:
+            f.write(pp_new_content)
+        print(f"✓ pyproject.toml aggiornato alla versione {new_version}")
 
     print(f"✓ Versione aggiornata: {old_version} → {new_version}")
     return new_version

@@ -154,16 +154,73 @@ class BaseBot(ABC):
         }
         options.add_experimental_option("prefs", prefs)
 
-        try:
-            driver_path = ChromeDriverManager().install()
-            if not driver_path.lower().endswith(".exe"):
-                potential_exe = list(Path(driver_path).parent.rglob("chromedriver.exe"))
-                if potential_exe:
-                    driver_path = str(potential_exe[0])
+    def _init_driver(self):
+        self.log("Inizializzazione browser...")
+        self.status = BotStatus.INITIALIZING
 
-            self.driver = webdriver.Chrome(
-                service=Service(driver_path), options=options
-            )
+        options = Options()
+        options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
+        options.add_argument("--disable-notifications")
+        options.add_argument("--disable-infobars")
+        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_argument("--no-sandbox")
+        options.add_argument("--start-maximized")
+        options.add_argument("--no-restore-session-state")
+
+        config = config_manager.load_config()
+        # Headless logic: prioritize parameter, then config
+        is_headless = self.headless or config.get("browser_headless", False)
+        if is_headless:
+            self.headless = True
+            options.add_argument("--headless=new")
+            options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
+
+        profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
+        options.add_argument(f"user-data-dir={profile_dir}")
+
+        prefs = {
+            "profile.default_content_setting_values.automatic_downloads": 1,
+            "plugins.always_open_pdf_externally": True,
+            "download.prompt_for_download": False,
+        }
+        options.add_experimental_option("prefs", prefs)
+
+        driver_path = None
+        service = None
+
+        # 1. Tentativo con ChromeDriverManager (Network)
+        try:
+            self.log("Verifica aggiornamenti driver...")
+            installed_path = ChromeDriverManager().install()
+            # Fix per alcuni ambienti Windows dove il path non ha .exe
+            if not installed_path.lower().endswith(".exe"):
+                potential_exe = list(Path(installed_path).parent.rglob("chromedriver.exe"))
+                if potential_exe:
+                    installed_path = str(potential_exe[0])
+            driver_path = installed_path
+            self.log(f"Driver scaricato: {driver_path}")
+        except Exception as e:
+            self.log(f"⚠️ Impossibile scaricare driver automatico: {e}")
+        
+        # 2. Tentativo Fallback Locale (Cartella 'drivers' o 'bin')
+        if not driver_path:
+            local_driver = Path("drivers") / "chromedriver.exe"
+            if local_driver.exists():
+                driver_path = str(local_driver.absolute())
+                self.log(f"Usando driver locale: {driver_path}")
+
+        # 3. Tentativo creazione Service
+        if driver_path:
+            service = Service(driver_path)
+
+        try:
+            # Se service è None, Selenium cercherà nel PATH
+            self.driver = webdriver.Chrome(service=service, options=options)
+            
+            # Anti-detection script
             self.driver.execute_cdp_cmd(
                 "Page.addScriptToEvaluateOnNewDocument",
                 {
@@ -175,8 +232,17 @@ class BaseBot(ABC):
             self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
             self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
             self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
+
         except Exception as e:
-            self.log(f"❌ Errore driver: {e}")
+            msg = f"❌ ERRORE CRITICO DRIVER: {e}"
+            self.log(msg)
+            
+            # User-friendly hint
+            if "SessionNotCreatedException" in str(e) or "version" in str(e).lower():
+                self.log("💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta.")
+                self.log("   1. Aggiorna Google Chrome all'ultima versione.")
+                self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile e mettilo nella cartella 'drivers'.")
+            
             raise
 
     def execute(self, data: List[Dict[str, Any]]) -> bool:
@@ -211,10 +277,44 @@ class BaseBot(ABC):
             return False
         except Exception as e:
             self.log(f"✗ Errore fatale: {e}")
+            self._save_error_state(str(e))
             self.status = BotStatus.ERROR
             return False
         finally:
             self.cleanup()
+
+    def _save_error_state(self, error_msg: str):
+        """Salva screenshot e sorgente HTML in caso di errore."""
+        if not self.driver:
+            return
+
+        try:
+            from datetime import datetime
+            from src.core.config_manager import CONFIG_DIR
+            
+            error_dir = CONFIG_DIR / "logs" / "errors"
+            error_dir.mkdir(parents=True, exist_ok=True)
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_name = self.name.replace(" ", "_").lower()
+            
+            # 1. Screenshot
+            screenshot_path = error_dir / f"error_{safe_name}_{timestamp}.png"
+            self.driver.save_screenshot(str(screenshot_path))
+            
+            # 2. HTML Source
+            html_path = error_dir / f"error_{safe_name}_{timestamp}.html"
+            html_path.write_text(self.driver.page_source, encoding="utf-8")
+            
+            self.log(f"📸 Stato errore salvato in: {error_dir.name}")
+            
+            # 3. Notifica Telegram con dettaglio (opzionale se il messaggio è troppo lungo)
+            if self._telegram_service:
+                # Invia solo il percorso dello screenshot per brevità
+                pass
+
+        except Exception as e:
+            self.log(f"⚠️ Impossibile salvare lo stato di errore: {e}")
 
     def _login(self) -> bool:
         """Default login implementation using LoginPage."""

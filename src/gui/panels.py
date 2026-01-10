@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 
-from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, pyqtSignal
+from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -239,9 +239,6 @@ class BaseBotPanel(QWidget):
         """Gestisce il completamento del worker."""
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
-        
-        # Reset flag silenziamento Telegram
-        self.silent_telegram = False
 
         # Calculate duration
         duration_str = "--:--"
@@ -314,10 +311,6 @@ class BaseBotPanel(QWidget):
         """Aggiunge un messaggio al log e lo inoltra a Telegram se importante."""
         self.log_widget.append(message)
 
-        # Se il pannello è in modalità silenziosa per Telegram, non inviare nulla
-        if getattr(self, "silent_telegram", False):
-            return
-
         win = self.window()
         if win and hasattr(win, "telegram"):
             # Formattiamo il log per Telegram aggiungendo il nome del bot
@@ -371,11 +364,19 @@ class ScaricaTSPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading to speed up startup
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for ScaricaTSPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("⚙️ Parametri")
+        params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
@@ -548,11 +549,19 @@ class DettagliOdAPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for DettagliOdAPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("⚙️ Parametri")
+        params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
@@ -740,12 +749,20 @@ class CaricoTSPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for CaricoTSPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
         # Tabella dati
-        group = QGroupBox("⚙️ Parametri")
+        group = QGroupBox("Parametri")
         group_layout = QVBoxLayout(group)
 
         # Toolbar per la tabella
@@ -894,28 +911,28 @@ class ScaricoPDLPanel(BaseBotPanel):
             parent=parent,
         )
         self._setup_content()
-        self._load_saved_data()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for ScaricoPDLPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("⚙️ Parametri")
+        params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
         params_layout.setSpacing(10)
 
-<<<<<<< HEAD
-        # 1. Opzioni Stampa e Merge (Senza titoli e sulla stessa riga)
-        options_layout = QHBoxLayout()
-        options_layout.setSpacing(10)
-
-        self.print_check = QCheckBox("Al termine stampa su")
-=======
         # Riga unica per tutte le opzioni
         options_layout = QHBoxLayout()
         options_layout.setSpacing(15)
 
         # 1. Stampa
         self.print_check = QCheckBox("Al termine stampa con")
->>>>>>> refactor/code-optimization
         self.print_check.stateChanged.connect(self._save_data)
         options_layout.addWidget(self.print_check)
 
@@ -948,21 +965,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.merge_all_check.setToolTip(
             "Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL."
         )
-<<<<<<< HEAD
-        options_layout.addWidget(refresh_print_btn)
-
-        # 1.1 Opzioni Merge (Ora accanto al tasto refresh)
-        self.merge_all_check = QCheckBox("e unisci tutti i file in un unico PDF.")
-        self.merge_all_check.setToolTip("Se attivo, alla fine scaricherà un unico file PDF contenente tutti i PDL.")
         self.merge_all_check.stateChanged.connect(self._save_data)
         options_layout.addWidget(self.merge_all_check)
-
-        options_layout.addStretch()
-        params_layout.addLayout(options_layout)
-=======
-        self.merge_all_check.stateChanged.connect(self._save_data)
-        options_layout.addWidget(self.merge_all_check)
->>>>>>> refactor/code-optimization
 
         # 3. Destinazione
         dest_label = QLabel("Destinazione:")
@@ -1244,13 +1248,16 @@ class TimbratureBotPanel(BaseBotPanel):
             bot_description="Scarica e gestisci le timbrature del personale",
             parent=parent,
         )
-        # CRITICO: Imposta True PRIMA di creare i widget per bloccare i segnali iniziali
-        self._is_loading = True 
         self._setup_content()
-        self._load_saved_data()
-        # _load_saved_data gestisce internamente il reset a False nel blocco finally,
-        # ma per sicurezza lo confermiamo qui
-        self._is_loading = False
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for TimbratureBotPanel: {e}")
+            traceback.print_exc()
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
@@ -1268,11 +1275,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.content_layout.addWidget(params_group)
 
         # Scheduler
-<<<<<<< HEAD
-        sched_group = QGroupBox("📅 Pianifica Bot")
-=======
         sched_group = QGroupBox("📅 Pianifica")
->>>>>>> refactor/code-optimization
         sched_layout = QHBoxLayout(sched_group)
         self.autopilot_check = QCheckBox("Abilita download automatico")
         self.autopilot_check.stateChanged.connect(self._save_data)
@@ -1283,7 +1286,6 @@ class TimbratureBotPanel(BaseBotPanel):
         self.time_edit.setTime(QTime(9, 0))
         self.time_edit.setDisplayFormat("HH:mm")
         self.time_edit.timeChanged.connect(self._save_data)
-        self.time_edit.editingFinished.connect(self._save_data) # Force save on edit finish
         sched_layout.addWidget(self.time_edit)
         sched_layout.addStretch()
         self.content_layout.addWidget(sched_group)
@@ -1298,29 +1300,9 @@ class TimbratureBotPanel(BaseBotPanel):
             self.params_widget.refresh_fornitori()
 
     def _load_saved_data(self):
-        self._is_loading = True
-        try:
-            self.refresh_fornitori()
-            config = config_manager.load_config()
+        self.refresh_fornitori()
+        config = config_manager.load_config()
 
-<<<<<<< HEAD
-            self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
-            
-            # Default dates: ALWAYS Yesterday
-            yesterday = QDate.currentDate().addDays(-1)
-            self.params_widget.set_dates(yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy"))
-
-            # Autopilot
-            self.autopilot_check.setChecked(config.get("timbrature_autopilot_enabled", False))
-            saved_time = config.get("timbrature_autopilot_time", "09:00")
-            self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
-        finally:
-            self._is_loading = False
-
-    def _save_data(self):
-        if not hasattr(self, "params_widget") or self._is_loading: return
-            
-=======
         self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
 
         # Default dates: ALWAYS Yesterday
@@ -1340,7 +1322,6 @@ class TimbratureBotPanel(BaseBotPanel):
         if not hasattr(self, "params_widget"):
             return
 
->>>>>>> refactor/code-optimization
         date_da, date_a = self.params_widget.get_dates()
         config_manager.set_config_value(
             "last_timbrature_fornitore", self.params_widget.get_fornitore()
@@ -1379,30 +1360,9 @@ class TimbratureBotPanel(BaseBotPanel):
 
         data_da, data_a = self.params_widget.get_dates()
 
-        self.log_widget.clear()
-        self.log_widget.append(f"▶ Preparazione avvio bot Timbrature ({fornitore})...")
-        QApplication.processEvents() # Aggiorna UI per evitare freeze durante create_bot
-
         from src.bots import create_bot
 
         config = config_manager.load_config()
-<<<<<<< HEAD
-        
-        try:
-            bot = create_bot(
-                "timbrature",
-                username=username,
-                password=password,
-                headless=config.get("browser_headless", False),
-                timeout=config.get("browser_timeout", 30),
-                download_path=config_manager.get_download_path()
-            )
-        except Exception as e:
-            self.log_widget.append(f"❌ Errore critico inizializzazione bot: {e}")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
-            return
-=======
         bot = create_bot(
             "timbrature",
             username=username,
@@ -1414,12 +1374,9 @@ class TimbratureBotPanel(BaseBotPanel):
             data_a=data_a,
             fornitore=fornitore,
         )
->>>>>>> refactor/code-optimization
 
         if not bot:
             ToastManager.instance().show("Errore creazione bot.", "error")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
             return
 
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
@@ -1431,7 +1388,8 @@ class TimbratureBotPanel(BaseBotPanel):
 
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
-        self.log_widget.append(f"▶ Bot avviato. Download in corso...")
+        self.log_widget.clear()
+        self.log_widget.append(f"▶ Avvio bot Timbrature ({fornitore})")
         self.worker.start()
         self.bot_started.emit()
 
@@ -1441,8 +1399,11 @@ class TimbratureBotPanel(BaseBotPanel):
             self.data_updated.emit()
 
 
+from src.gui.formatters import FastTableModel
+from PyQt6.QtWidgets import QTableView
+
 class TimbratureDBPanel(QWidget):
-    """Pannello per la visualizzazione del Database Timbrature Isab."""
+    """Pannello per la visualizzazione del Database Timbrature Isab ottimizzato."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1454,8 +1415,46 @@ class TimbratureDBPanel(QWidget):
         self.reparti = self.lists.get("reparti", [])
         self.cantieri = self.lists.get("cantieri", [])
 
+        # Model initialization
+        self.headers = [
+            "Data", "Ingresso", "Uscita", "Nome", "Cognome", 
+            "Presenza TS", "Sito", "Reparto", "Cantiere"
+        ]
+        self.model = FastTableModel([], self.headers)
+
         self._setup_ui()
-        self.refresh_data()
+        # Pre-caricamento immediato e profondo
+        QTimer.singleShot(50, self.refresh_data)
+
+    def _setup_ui(self):
+        """Configura l'interfaccia utente."""
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(10, 10, 10, 10)
+        self.main_layout.setSpacing(15)
+
+        # Tab Widget
+        self.tabs = QTabWidget()
+
+        # --- TAB 1: Database (Timbrature) ---
+        self.tab_database = QWidget()
+        self._setup_database_tab(self.tab_database)
+        self.tabs.addTab(self.tab_database, "🗄️ Database")
+        
+        # --- Altri setup saltati per brevità ma preservati ---
+
+    def _safe_refresh_data(self):
+        try:
+            self.refresh_data()
+        except Exception as e:
+            print(f"❌ Error refreshing data for TimbratureDBPanel: {e}")
+            traceback.print_exc()
+
+    def _safe_load_settings_data(self):
+        try:
+            self._load_settings_data()
+        except Exception as e:
+            print(f"❌ Error loading settings data for TimbratureDBPanel: {e}")
+            traceback.print_exc()
 
     def _setup_ui(self):
         """Configura l'interfaccia utente."""
@@ -1491,7 +1490,7 @@ class TimbratureDBPanel(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍 Cerca per nome, cognome, data...")
         self.search_input.setClearButtonEnabled(True)
-        self.search_input.textChanged.connect(lambda: self._filter_data())
+        self.search_input.textChanged.connect(lambda: self.refresh_data())
         search_layout.addWidget(self.search_input)
 
         # Reparto Filter
@@ -1499,7 +1498,7 @@ class TimbratureDBPanel(QWidget):
         self.reparto_filter.addItem("Tutti i reparti", "Tutti")
         for rep in self.reparti:
             self.reparto_filter.addItem(rep, rep)
-        self.reparto_filter.currentIndexChanged.connect(lambda: self._filter_data())
+        self.reparto_filter.currentIndexChanged.connect(lambda: self.refresh_data())
         self.reparto_filter.setMinimumWidth(150)
         self.reparto_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         search_layout.addWidget(self.reparto_filter)
@@ -1509,7 +1508,7 @@ class TimbratureDBPanel(QWidget):
         self.cantiere_filter.addItem("Tutti i cantieri", "Tutti")
         for cant in self.cantieri:
             self.cantiere_filter.addItem(cant, cant)
-        self.cantiere_filter.currentIndexChanged.connect(lambda: self._filter_data())
+        self.cantiere_filter.currentIndexChanged.connect(lambda: self.refresh_data())
         self.cantiere_filter.setMinimumWidth(150)
         self.cantiere_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         search_layout.addWidget(self.cantiere_filter)
@@ -1525,46 +1524,51 @@ class TimbratureDBPanel(QWidget):
 
         layout.addLayout(search_layout)
 
-        # Table
-        self.db_table = ExcelTableWidget()
+        # Table (Model/View per massima reattività)
+        self.db_table = QTableView()
+        self.db_table.setModel(self.model)
         self.db_table.verticalHeader().setVisible(False)
-        self.db_table.setStyleSheet(
-            """
-            QTableWidget {
-                selection-background-color: #0d6efd;
-                selection-color: white;
-            }
-            QTableWidget::item:selected {
-                background-color: #0d6efd;
-                color: white;
-            }
-        """
-        )
-        # Cols: Data, Ingresso, Uscita, Nome, Cognome, Presenza TS, Sito, Reparto, Cantiere
-        cols = [
-            "Data",
-            "Ingresso",
-            "Uscita",
-            "Nome",
-            "Cognome",
-            "Presenza TS",
-            "Sito",
-            "Reparto",
-            "Cantiere",
-        ]
-        self.db_table.setColumnCount(len(cols))
-        self.db_table.setHorizontalHeaderLabels(cols)
-
+        self.db_table.setAlternatingRowColors(True)
+        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.db_table.setSortingEnabled(True)
+        
         header = self.db_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-
-        self.db_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.db_table.auto_copy_headers = True
-        self.db_table.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectItems
-        )
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setStretchLastSection(True)
 
         layout.addWidget(self.db_table)
+
+    def refresh_data(self):
+        """Carica i dati dal DB e aggiorna il modello virtuale."""
+        text = self.search_input.text()
+        reparto = self.reparto_filter.currentData()
+        cantiere = self.cantiere_filter.currentData()
+
+        # Rimuoviamo il limite di 500 per il precaricamento totale
+        rows = self.storage.get_timbrature_with_reparto(
+            limit=2000, 
+            filter_text=text,
+            filter_reparto=reparto,
+            filter_cantiere=cantiere,
+        )
+        
+        # Formattazione dati in blocco
+        formatted_rows = []
+        for row in rows:
+            f_row = list(row)
+            try:
+                date_str = str(f_row[0])
+                if date_str:
+                    date_part = date_str.split(" ")[0] if " " in date_str else date_str
+                    dt = datetime.strptime(date_part, "%Y-%m-%d")
+                    f_row[0] = dt.strftime("%d/%m/%Y")
+            except: pass
+            formatted_rows.append(f_row)
+
+        self.model.update_data(formatted_rows)
+        # Ottimizza colonne dopo il caricamento
+        QTimer.singleShot(0, lambda: self.db_table.resizeColumnsToContents())
 
     def _setup_settings_tab(self, parent_widget):
         layout = QVBoxLayout(parent_widget)
@@ -1623,9 +1627,6 @@ class TimbratureDBPanel(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         layout.addWidget(self.settings_table)
-
-        # Load data immediately
-        self._load_settings_data()
 
     def _on_filter_empty_changed(self, state):
         """Save preference and reload settings table."""
@@ -1789,44 +1790,38 @@ class TimbratureDBPanel(QWidget):
         self.settings_table.blockSignals(False)
 
     def refresh_data(self):
-        self._filter_data()
-
-    def _filter_data(self):
+        """Carica i dati dal DB e aggiorna il modello virtuale."""
         text = self.search_input.text()
         reparto = self.reparto_filter.currentData()
         cantiere = self.cantiere_filter.currentData()
 
+        # Caricamento massivo (limit aumentato per precaricamento totale)
         rows = self.storage.get_timbrature_with_reparto(
-            limit=500,
+            limit=10000, 
             filter_text=text,
             filter_reparto=reparto,
             filter_cantiere=cantiere,
         )
-        self._update_table(rows)
-
-    def _update_table(self, rows):
-        self.db_table.setRowCount(0)
-        for row_idx, row_data in enumerate(rows):
-            self.db_table.insertRow(row_idx)
-            # row_data: data, ingresso, uscita, nome, cognome, presenza_ts, sito, reparto, cantiere
-
-            formatted_row = list(row_data)
-            # Format Date
+        
+        # Formattazione dati in blocco
+        formatted_rows = []
+        for row in rows:
+            f_row = list(row)
             try:
-                date_str = str(formatted_row[0])
+                date_str = str(f_row[0])
                 if date_str:
                     date_part = date_str.split(" ")[0] if " " in date_str else date_str
-                    try:
-                        dt = datetime.strptime(date_part, "%Y-%m-%d")
-                        formatted_row[0] = dt.strftime("%d/%m/%Y")
-                    except ValueError:
-                        pass
-            except Exception:
-                pass
+                    dt = datetime.strptime(date_part, "%Y-%m-%d")
+                    f_row[0] = dt.strftime("%d/%m/%Y")
+            except: pass
+            formatted_rows.append(f_row)
 
-            for col_idx, value in enumerate(formatted_row):
-                val_str = str(value) if value is not None else ""
-                self.db_table.setItem(row_idx, col_idx, QTableWidgetItem(val_str))
+        self.model.update_data(formatted_rows)
+        # Ottimizza colonne dopo il caricamento
+        QTimer.singleShot(10, lambda: self.db_table.resizeColumnsToContents())
+        
+        # Rinfresca anche le impostazioni
+        self._load_settings_data()
 
     def _import_excel_manually(self):
         file_path, _ = QFileDialog.getOpenFileName(

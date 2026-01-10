@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.0.29"
+version = "1.0.38"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -32,7 +32,7 @@ platformdirs = "*"
 msoffcrypto-tool = "*"
 markdown = "*"
 pymupdf = "*"
-pywin32 = "*"
+pywin32 = { version = "*", platform = "win32" }
 python-telegram-bot = "*"
 
 [tool.poetry.group.dev.dependencies]
@@ -50,7 +50,14 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-test = "pytest tests/ --ignore=tests/unit/test_gui_contabilita_extra.py --ignore=tests/unit/test_gui_contabilita_logic.py --ignore=tests/unit/test_gui_panels_new.py --ignore=tests/unit/test_gui_panels.py --ignore=tests/unit/test_gui_settings.py --ignore=tests/unit/test_main_window.py --ignore=tests/unit/test_ux_settings_menus.py -v --tb=short"
+# Comando per avviare l'app principale
+syncrojob = "main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --tb=short"
 
 [tool.black]
 line-length = 110

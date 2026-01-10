@@ -1,77 +1,42 @@
-"""
-Bot TS - GUI Formatters
-Funzioni di utilità per la formattazione dei dati da visualizzare nell'interfaccia grafica.
-"""
+from PyQt6.QtCore import QAbstractTableModel, Qt, QModelIndex
 
-from datetime import datetime
+class FastTableModel(QAbstractTableModel):
+    """
+    Modello di dati ottimizzato per la massima reattività.
+    Non crea widget per cella, ma fornisce i dati solo quando richiesto dalla vista.
+    """
+    def __init__(self, data=None, headers=None):
+        super().__init__()
+        self._data = data or []
+        self._headers = headers or []
 
+    def rowCount(self, parent=QModelIndex()):
+        return len(self._data)
 
-def format_currency(val: float) -> str:
-    """Formatta un valore numerico come valuta in formato italiano (€ 1.234,56)."""
-    if val is None:
-        return ""
-    try:
-        return f"€ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    except (ValueError, TypeError):
-        return ""
+    def columnCount(self, parent=QModelIndex()):
+        return len(self._headers)
 
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        if not index.isValid():
+            return None
 
-def format_number(val) -> str:
-    """Formatta un numero per la visualizzazione: max 2 decimali, virgola, e rimuove .0 se intero."""
-    if val is None:
-        return ""
-    try:
-        val_f = float(val)
-        val_f = round(val_f, 2)
-        if val_f.is_integer():
-            return f"{int(val_f)}"
-        else:
-            # Converte in stringa con punto, poi sostituisce con virgola
-            return f"{val_f:.2f}".replace(".", ",")
-    except (ValueError, TypeError):
-        return str(val)
+        if role == Qt.ItemDataRole.DisplayRole:
+            value = self._data[index.row()][index.column()]
+            return str(value) if value is not None else ""
+        
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            # Allineamento predefinito
+            return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
+        return None
 
-def format_date(val: str) -> str:
-    """Formatta una stringa di data (da YYYY-MM-DD o altri formati) a DD/MM/YYYY."""
-    if not val:
-        return ""
-    str_val = str(val).strip()
-    if " " in str_val:
-        str_val = str_val.split(" ")[0]
+    def headerData(self, section, orientation, role):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+            return self._headers[section]
+        return None
 
-    dt = None
-    # Formati comuni da provare
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
-        try:
-            dt = datetime.strptime(str_val, fmt)
-            break
-        except ValueError:
-            continue
-
-    if dt:
-        return dt.strftime("%d/%m/%Y")
-    return str_val  # Ritorna il valore originale se il parsing fallisce
-
-
-def parse_float(text: str) -> float:
-    """Converte una stringa (potenzialmente in formato italiano) in un float."""
-    if not isinstance(text, str):
-        text = str(text)
-    try:
-        # Gestisce sia "1.234,56" che "1234.56"
-        clean_text = text.replace(".", "").replace(",", ".").strip()
-        return float(clean_text)
-    except (ValueError, TypeError):
-        return 0.0
-
-
-def parse_currency(text: str) -> float:
-    """Converte una stringa di valuta (es. '€ 1.234,56') in un float."""
-    if not isinstance(text, str):
-        text = str(text)
-    try:
-        clean_text = text.replace("€", "").replace(".", "").replace(",", ".").strip()
-        return float(clean_text)
-    except (ValueError, TypeError):
-        return 0.0
+    def update_data(self, new_data):
+        """Aggiorna i dati del modello in modo atomico."""
+        self.beginResetModel()
+        self._data = new_data
+        self.endResetModel()
