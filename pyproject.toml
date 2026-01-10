@@ -32,7 +32,7 @@ platformdirs = "*"
 msoffcrypto-tool = "*"
 markdown = "*"
 pymupdf = "*"
-pywin32 = "*"
+pywin32 = { version = "*", platform = "win32" }
 python-telegram-bot = "*"
 
 [tool.poetry.group.dev.dependencies]
