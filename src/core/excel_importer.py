@@ -6,10 +6,11 @@ Gestisce l'importazione di dati da vari formati Excel.
 import io
 import json
 import logging
+import os
 import re
 import warnings
 import zipfile
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -475,7 +476,10 @@ class ExcelImporter:
         years_encountered = set()
 
         if total_tasks > 0:
-            with ThreadPoolExecutor(max_workers=4) as executor:
+            # Use ProcessPoolExecutor for CPU-bound Excel parsing
+            # Limit max_workers to 4 or cpu_count/2 to avoid memory spikes
+            max_workers = min(4, (os.cpu_count() or 1))
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
                 for result in executor.map(cls._process_single_giornaliera, tasks_args):
                     processed_count += 1
                     if progress_callback:

@@ -285,10 +285,48 @@ class DatabaseManager:
             "CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)"
         )
 
+    @staticmethod
+    def _mig_contabilita_v3(conn: sqlite3.Connection):
+        """Implementazione FTS5 per ricerche veloci (v3)"""
+        cursor = conn.cursor()
+        # Tabella virtuale per Contabilità
+        cursor.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS contabilita_fts USING fts5(
+                n_prev, attivita, odc, annotazioni,
+                content='contabilita',
+                content_rowid='id'
+            )
+        """)
+        # Trigger per mantenere sincronizzato l'indice FTS
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS contabilita_ai AFTER INSERT ON contabilita BEGIN
+                INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni)
+                VALUES (new.id, new.n_prev, new.attivita, new.odc, new.annotazioni);
+            END;
+        """)
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS contabilita_ad AFTER DELETE ON contabilita BEGIN
+                INSERT INTO contabilita_fts(contabilita_fts, rowid, n_prev, attivita, odc, annotazioni)
+                VALUES('delete', old.id, old.n_prev, old.attivita, old.odc, old.annotazioni);
+            END;
+        """)
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS contabilita_au AFTER UPDATE ON contabilita BEGIN
+                INSERT INTO contabilita_fts(contabilita_fts, rowid, n_prev, attivita, odc, annotazioni)
+                VALUES('delete', old.id, old.n_prev, old.attivita, old.odc, old.annotazioni);
+                INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni)
+                VALUES (new.id, new.n_prev, new.attivita, new.odc, new.annotazioni);
+            END;
+        """)
+        
+        # Popolamento iniziale se la tabella non è vuota
+        cursor.execute("INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni) SELECT id, n_prev, attivita, odc, annotazioni FROM contabilita")
+
     # Dizionari di Migrazione
     MIGRATIONS_CONTABILITA = {
         1: _mig_contabilita_v1,
-        2: _mig_contabilita_v2
+        2: _mig_contabilita_v2,
+        3: _mig_contabilita_v3
     }
 
     MIGRATIONS_TIMBRATURE = {

@@ -27,9 +27,17 @@ class TestMainWindow:
 
     def test_navigation(self, app, qtbot):
         # Mock internal components to avoid side effects
-        with patch("src.gui.main_window.ServiceController"), patch("src.gui.main_window.LyraSentinel"), patch(
-            "src.gui.main_window.config_manager.load_config", return_value={}
-        ):
+        with patch("src.gui.main_window.ServiceController"), \
+             patch("src.gui.main_window.LyraSentinel"), \
+             patch("src.gui.contabilita_panel.ContabilitaManager") as mock_manager, \
+             patch("src.gui.main_window.config_manager.load_config", return_value={}):
+            
+            mock_manager.get_available_years.return_value = []
+            mock_manager.get_year_stats.return_value = {
+                "total_prev": 0.0, "total_ore": 0.0, "count_total": 0,
+                "status_counts": {}, "top_commesse": [],
+                "ore_dirette": 0.0, "ore_indirette": 0.0
+            }
 
             window = MainWindow()
             qtbot.addWidget(window)
@@ -45,9 +53,17 @@ class TestMainWindow:
             assert window.sidebar.btn_database.isChecked()
 
     def test_navigate_to_panel(self, app, qtbot):
-        with patch("src.gui.main_window.ServiceController"), patch("src.gui.main_window.LyraSentinel"), patch(
-            "src.gui.main_window.config_manager.load_config", return_value={}
-        ):
+        with patch("src.gui.main_window.ServiceController"), \
+             patch("src.gui.main_window.LyraSentinel"), \
+             patch("src.gui.contabilita_panel.ContabilitaManager") as mock_manager, \
+             patch("src.gui.main_window.config_manager.load_config", return_value={}):
+
+            mock_manager.get_available_years.return_value = []
+            mock_manager.get_year_stats.return_value = {
+                "total_prev": 0.0, "total_ore": 0.0, "count_total": 0,
+                "status_counts": {}, "top_commesse": [],
+                "ore_dirette": 0.0, "ore_indirette": 0.0
+            }
 
             window = MainWindow()
             qtbot.addWidget(window)

@@ -168,29 +168,22 @@ class ContabilitaPanel(QWidget):
             self._connect_selection_signal()
 
     def refresh_tabs(self):
-        curr_dati = self.year_tabs_widget.tabText(self.year_tabs_widget.currentIndex())
-        curr_giorn = self.giornaliere_tabs_widget.tabText(
-            self.giornaliere_tabs_widget.currentIndex()
-        )
-        self.year_tabs_widget.clear()
-        self.giornaliere_tabs_widget.clear()
+        """Aggiornamento incrementale dei tab per evitare flickering."""
         years = ContabilitaManager.get_available_years()
         if not years:
+            self.year_tabs_widget.clear()
+            self.giornaliere_tabs_widget.clear()
             no_data = QLabel("Nessun dato disponibile.")
             no_data.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.year_tabs_widget.addTab(no_data, "Info")
             return
-        for year in years:
-            self.year_tabs_widget.addTab(ContabilitaYearTab(year), str(year))
-            self.giornaliere_tabs_widget.addTab(GiornaliereYearTab(year), str(year))
-        for i in range(self.year_tabs_widget.count()):
-            if self.year_tabs_widget.tabText(i) == curr_dati:
-                self.year_tabs_widget.setCurrentIndex(i)
-                break
-        for i in range(self.giornaliere_tabs_widget.count()):
-            if self.giornaliere_tabs_widget.tabText(i) == curr_giorn:
-                self.giornaliere_tabs_widget.setCurrentIndex(i)
-                break
+
+        # --- Aggiornamento Tab Preventivi ---
+        self._sync_tab_widget(self.year_tabs_widget, years, ContabilitaYearTab)
+        
+        # --- Aggiornamento Tab Giornaliere ---
+        self._sync_tab_widget(self.giornaliere_tabs_widget, years, GiornaliereYearTab)
+
         self._connect_selection_signal()
         if hasattr(self, "kpi_panel"):
             self.kpi_panel.refresh_years()
@@ -198,6 +191,34 @@ class ContabilitaPanel(QWidget):
             self.attivita_widget.refresh_data()
         if hasattr(self, "certificati_widget"):
             self.certificati_widget.refresh_data()
+
+    def _sync_tab_widget(self, tab_widget, target_years, tab_class):
+        """Helper per sincronizzare gli anni nei tab senza distruggere tutto."""
+        # 1. Trova anni attuali
+        existing_years = {}
+        for i in range(tab_widget.count()):
+            try:
+                year = int(tab_widget.tabText(i))
+                existing_years[year] = i
+            except ValueError: continue
+
+        # 2. Rimuovi anni non più presenti
+        for year in list(existing_years.keys()):
+            if year not in target_years:
+                tab_widget.removeTab(existing_years[year])
+                # Ricalcola indici dopo rimozione
+                return self._sync_tab_widget(tab_widget, target_years, tab_class)
+
+        # 3. Aggiungi nuovi anni o rinfresca esistenti
+        for year in target_years:
+            if year in existing_years:
+                # Già presente, rinfresca dati
+                widget = tab_widget.widget(existing_years[year])
+                if hasattr(widget, "refresh_data"):
+                    widget.refresh_data()
+            else:
+                # Nuovo anno, aggiungi tab
+                tab_widget.addTab(tab_class(year), str(year))
 
     def set_search_query(self, query):
         search_edit = self.main_tabs.currentWidget().findChild(QLineEdit)

@@ -33,6 +33,12 @@ def parse_currency(value) -> float:
     # Rimuovi testo "Euro" (case insensitive)
     s = re.sub(r"(?i)euro", "", s).strip()
 
+    # Gestione segno negativo (se staccato o con spazi)
+    is_negative = False
+    if s.startswith("-") or " - " in s or s.endswith("-"):
+        is_negative = True
+        s = s.replace("-", "").strip()
+
     # Rimuovi eventuali caratteri invisibili
     s = "".join(c for c in s if c.isprintable())
     
@@ -103,8 +109,9 @@ def parse_currency(value) -> float:
 
     try:
         val = float(s)
-
-        # SANITY CHECK PER "NUMERI ESAGERATI"
+        if is_negative:
+            val = -val
+        return val
         # Se il valore supera 1 trilione (10^12) ed è probabilmente un errore di parsing
         # (es. 50,883,250... invece di 508.83)
         # Proviamo a scalarlo?

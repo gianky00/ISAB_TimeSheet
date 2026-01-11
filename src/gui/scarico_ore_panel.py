@@ -389,6 +389,12 @@ class ScaricoOrePanel(QWidget):
         except Exception as e:
             print(f"Errore selezione: {e}")
 
+    def set_search_query(self, text):
+        """Imposta il testo della ricerca globale."""
+        self.search_input.setText(text)
+        self.search_input.setFocus()
+        self.search_input.selectAll()
+
     def _start_update(self):
         """Avvia l'aggiornamento specifico per Scarico Ore."""
         config = config_manager.load_config()

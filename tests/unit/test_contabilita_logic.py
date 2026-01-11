@@ -26,12 +26,12 @@ class TestContabilitaLogic:
             mock_cursor.fetchall.return_value = []
             yield mock1
 
-    @patch("src.core.data_synchronizer.pd.read_sql")
+    @patch("src.core.contabilita_manager.DataSynchronizer.sync_contabilita_dati")
     @patch("src.core.contabilita_manager.pd.read_sql")
     @patch("src.core.contabilita_manager.pd.read_excel")
     @patch("src.core.contabilita_manager.pd.ExcelFile")
     def test_import_data_success(
-        self, mock_excel_file, mock_read_excel, mock_read_sql, mock_sync_read_sql, mock_db
+        self, mock_excel_file, mock_read_excel, mock_read_sql, mock_sync, mock_db
     ):
         """Test importazione contabilità con successo."""
         # 1. Mock Excel File structure
@@ -82,7 +82,7 @@ class TestContabilitaLogic:
             "nome_file",
         ]
         mock_read_sql.return_value = pd.DataFrame(columns=db_cols)
-        mock_sync_read_sql.return_value = pd.DataFrame(columns=db_cols)
+        mock_sync.return_value = (1, 0)
 
         # 4. Call import
         with patch("pathlib.Path.exists", return_value=True):

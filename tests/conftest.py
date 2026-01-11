@@ -35,8 +35,18 @@ def pytest_configure(config):
     """
     patcher = patch("os.getlogin", return_value="testuser")
     patcher.start()
-    # Ensure the patch is stopped after the test session finishes
+    
+    # Global mock for Selenium and ChromeDriverManager to avoid downloads/browser popups
+    selenium_patcher = patch("selenium.webdriver.Chrome", return_value=MagicMock())
+    manager_patcher = patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="/mock/path/chromedriver")
+    
+    selenium_patcher.start()
+    manager_patcher.start()
+    
+    # Ensure the patches are stopped after the test session finishes
     config.add_cleanup(patcher.stop)
+    config.add_cleanup(selenium_patcher.stop)
+    config.add_cleanup(manager_patcher.stop)
 
 
 @pytest.fixture

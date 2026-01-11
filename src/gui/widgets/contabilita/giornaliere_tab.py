@@ -88,6 +88,10 @@ class GiornaliereYearTab(QWidget):
         self.table.verticalHeader().setVisible(False)
         layout.addWidget(self.table)
 
+    def refresh_data(self):
+        """Metodo pubblico per rinfrescare i dati del tab."""
+        self._load_data()
+
     def _load_data(self):
         data = ContabilitaManager.get_giornaliere_by_year(self.year)
         self.table.setSortingEnabled(False)

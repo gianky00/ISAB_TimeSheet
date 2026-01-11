@@ -30,7 +30,7 @@ class TimbratureStorage:
     }
 
     def __init__(self, db_path: Path = DB_PATH):
-        self.db_path = db_path
+        self.db_path = Path(db_path)
         self._ensure_db_exists()
 
     def _init_schema(self):

@@ -274,6 +274,12 @@ class HorizontalTimelineWidget(QScrollArea):
         self.scroll_anim.setEasingCurve(QEasingCurve.Type.OutQuad)
         self.scroll_anim.start()
 
+    def set_mood(self, mood: str):
+        """Cambia lo stile visuale della timeline in base al mood (es. 'running', 'success', 'error')."""
+        self.last_mood = mood
+        # Implementazione futura per cambiare colori di sfondo o animazioni
+        pass
+
     def clear(self):
         while self.container.main_layout.count():
             item = self.container.main_layout.takeAt(0)
