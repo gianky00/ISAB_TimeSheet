@@ -1196,19 +1196,13 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.worker.start()
         self.bot_started.emit()
 
-        # Pulisci l'attributo temporaneo dopo l'uso
-        if hasattr(self, "merge_and_send_from_telegram"):
-            del self.merge_and_send_from_telegram
-        if hasattr(self, "merge_all_session_from_telegram"):
-            del self.merge_all_session_from_telegram
-
     def _on_worker_finished(self, success: bool):
         """Gestione custom per invio file unito."""
-        super()._on_worker_finished(success)
-
         # Controlla se l'opzione di invio era attiva per questa esecuzione
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
-
+        
+        # Catturiamo i file PRIMA di chiamare super() perché super() resetta self.worker
+        files_to_send = []
         if (
             success
             and merge_and_send
@@ -1216,24 +1210,32 @@ class ScaricoPDLPanel(BaseBotPanel):
             and hasattr(self.worker.bot, "downloaded_files")
         ):
             files_to_send = self.worker.bot.downloaded_files
-            if files_to_send:
-                win = self.window()
-                if win and hasattr(win, "telegram"):
-                    import os
-                    from typing import Any
 
-                    cast_win: Any = win
-                    self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
+        super()._on_worker_finished(success)
 
-                    for file_path in files_to_send:
-                        if os.path.exists(file_path):
-                            caption = (
-                                f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
-                            )
-                            cast_win.telegram.send_document_sync(file_path, caption)
-                            # Non eliminiamo i file finali, l'utente potrebbe volerli
+        if success and merge_and_send and files_to_send:
+            win = self.window()
+            if win and hasattr(win, "telegram"):
+                import os
+                from typing import Any
 
-                    self._on_log("✅ PDF inviati con successo.")
+                cast_win: Any = win
+                self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
+
+                for file_path in files_to_send:
+                    if os.path.exists(file_path):
+                        caption = (
+                            f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
+                        )
+                        cast_win.telegram.send_document_sync(file_path, caption)
+
+                self._on_log("✅ PDF inviati con successo.")
+
+        # Pulisci l'attributo temporaneo dopo l'uso
+        if hasattr(self, "merge_and_send_from_telegram"):
+            del self.merge_and_send_from_telegram
+        if hasattr(self, "merge_all_session_from_telegram"):
+            del self.merge_all_session_from_telegram
 
 
 class TimbratureBotPanel(BaseBotPanel):
