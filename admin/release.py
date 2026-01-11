@@ -36,10 +36,6 @@ def get_current_version():
     match = re.search(r'__version__\s*=\s*"(.*?)"', content)
     return match.group(1) if match else "unknown"
 
-
-
-
-
 def main():
     parser = argparse.ArgumentParser(description="SyncroJob Automated Release Tool")
     parser.add_argument("type", choices=["patch", "minor", "major", "auto"], default="auto", nargs="?", help="Bump type")
@@ -158,8 +154,6 @@ def detect_bump_type():
         # Default PATCH (fix, refactor, chore, docs, ecc.)
         return "patch"
     except Exception:
-        return "patch"
-
 def main():
     parser = argparse.ArgumentParser(description="SyncroJob Automated Release Tool")
     parser.add_argument("type", choices=["patch", "minor", "major", "auto"], default="auto", nargs="?", help="Bump type")
