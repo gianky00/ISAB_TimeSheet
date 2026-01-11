@@ -394,7 +394,7 @@ class ScaricaTSBot(BaseBot):
                     except Exception as e:
                         self.log(f"⚠️ Tentativo spostamento {attempt+1}/3 fallito: {e}")
                         time.sleep(2)
-                
+
                 if not move_success:
                     self.log(f"❌ Impossibile spostare il file in: {percorso_finale}")
                     return None

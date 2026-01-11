@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from src.core.telegram_manager import TelegramService
+
 
 class TestTelegramServiceUltraFixed:
     @pytest.fixture
@@ -17,13 +20,13 @@ class TestTelegramServiceUltraFixed:
         mock_update.effective_chat.id = 123
         mock_update.message.text = "123456/S"
         mock_update.message.reply_text = AsyncMock()
-        
+
         # Bypass check_auth for simplicity or mock it
         with patch.object(service, "_check_auth", return_value=True):
             service.user_states[123] = "WAITING_PDL"
             mock_signal = MagicMock()
             service.data_received = mock_signal
-            
+
             await service._handle_text_input(mock_update, None)
             mock_signal.emit.assert_called_with("pdl", ["123456/S"])
 

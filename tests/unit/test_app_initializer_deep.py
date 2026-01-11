@@ -1,8 +1,10 @@
-import pytest
-import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.core.app_initializer import AppInitializer
 from src.core.license_validator import LicenseStatus
+
 
 class TestAppInitializer:
     @pytest.fixture(autouse=True)
@@ -12,7 +14,7 @@ class TestAppInitializer:
              patch("src.core.app_initializer.run_update") as m_update, \
              patch("src.core.app_initializer.check_emergency_grace_period") as m_grace, \
              patch("src.core.app_initializer.get_hardware_id") as m_hwid:
-            
+
             m_status.return_value = (LicenseStatus.VALID, "OK")
             m_update.return_value = None
             m_grace.return_value = (False, "No Grace", None)
@@ -32,7 +34,7 @@ class TestAppInitializer:
         # Forza licenza non valida e niente periodo di grazia
         m_status.return_value = (LicenseStatus.INVALID, "Expired")
         m_grace.return_value = (False, "No Grace", None)
-        
+
         # Mocking QMessageBox to prevent blocking UI
         with patch("src.core.app_initializer.QMessageBox.critical"):
             AppInitializer.initialize()

@@ -1,7 +1,10 @@
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.core.data_synchronizer import DataSynchronizer
+
 
 class TestDataSynchronizerDetailed:
     @pytest.fixture
@@ -21,13 +24,13 @@ class TestDataSynchronizerDetailed:
     def test_sync_giornaliere_logic(self, mock_db):
         conn, cursor = mock_db
         # Mock fetchone for counts (added, removed)
-        cursor.fetchone.side_effect = [(5,), (2,)] 
-        
+        cursor.fetchone.side_effect = [(5,), (2,)]
+
         new_rows = [(2024, "2024-01-01", "P", "D", "T", "O", "P", "08", "17", 8, "100", "file.xlsx")]
         years = [2024]
-        
+
         added, removed = DataSynchronizer.sync_giornaliere(Path("fake.db"), new_rows, years)
-        
+
         assert added == 5
         assert removed == 2
         assert cursor.executemany.called
@@ -38,9 +41,9 @@ class TestDataSynchronizerDetailed:
     def test_sync_attivita_programmate(self, mock_db):
         conn, cursor = mock_db
         cursor.fetchone.side_effect = [(10,), (0,)]
-        
+
         added, removed = DataSynchronizer.sync_attivita_programmate(Path("fake.db"), [("row", "style")])
-        
+
         assert added == 10
         assert removed == 0
         assert "attivita_programmate" in cursor.execute.call_args_list[1][0][0]
@@ -48,9 +51,9 @@ class TestDataSynchronizerDetailed:
     def test_sync_scarico_ore(self, mock_db):
         conn, cursor = mock_db
         cursor.fetchone.side_effect = [(50,), (10,)]
-        
+
         added, removed = DataSynchronizer.sync_scarico_ore(Path("fake.db"), [("data",)])
-        
+
         assert added == 50
         assert removed == 10
         assert "scarico_ore" in cursor.execute.call_args_list[1][0][0]

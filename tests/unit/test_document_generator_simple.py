@@ -1,7 +1,9 @@
-import pytest
-from unittest.mock import MagicMock, patch
-from src.utils.document_generator import generate_pdf_from_html
+from unittest.mock import patch
+
 from PyQt6.QtGui import QTextDocument
+
+from src.utils.document_generator import generate_pdf_from_html
+
 
 class TestDocumentGeneratorSimple:
     def test_generate_pdf_from_html(self, qapp):

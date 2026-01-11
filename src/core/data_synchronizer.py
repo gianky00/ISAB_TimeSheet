@@ -3,7 +3,6 @@ SyncroJob - Data Synchronizer
 Gestisce la sincronizzazione dei dati importati con il database.
 """
 
-import sqlite3
 from pathlib import Path
 from typing import List, Tuple
 
@@ -31,27 +30,27 @@ class DataSynchronizer:
 
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
-            
+
             # 1. Crea tabella temporanea per l'import
             cursor.execute("DROP TABLE IF EXISTS temp_contabilita")
             cols_def = ", ".join([f'"{c}" TEXT' for c in target_columns])
             cursor.execute(f"CREATE TEMPORARY TABLE temp_contabilita ({cols_def})")
-            
+
             # 2. Inserimento massivo dei nuovi dati (tutto come stringa per confronto coerente)
             placeholders = ", ".join(["?"] * len(target_columns))
             query_insert = f"INSERT INTO temp_contabilita VALUES ({placeholders})"
-            
+
             # Normalizzazione dati: strip e stringa
             normalized_data = []
             for row in imported_data:
                 normalized_data.append(tuple(str(x).strip() if x is not None else "" for x in row))
-            
+
             cursor.executemany(query_insert, normalized_data)
 
             # 3. Calcolo diff per ogni anno
             for year in imported_years:
                 year_str = str(year)
-                
+
                 # Righe aggiunte: presenti in temp_contabilita ma non in contabilita
                 # Usiamo CAST o stringhe per garantire coerenza
                 query_added = f"""
@@ -103,11 +102,11 @@ class DataSynchronizer:
 
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
-            
+
             cursor.execute("DROP TABLE IF EXISTS temp_giornaliere")
             cols_def = ", ".join([f'"{c}" TEXT' for c in target_cols])
             cursor.execute(f"CREATE TEMPORARY TABLE temp_giornaliere ({cols_def})")
-            
+
             if all_new_rows:
                 placeholders = ", ".join(["?"] * len(target_cols))
                 normalized = [tuple(str(x).strip() if x is not None else "" for x in r) for r in all_new_rows]
@@ -115,7 +114,7 @@ class DataSynchronizer:
 
             for year in years_to_clear:
                 year_str = str(year)
-                
+
                 # Added
                 query_added = f"""
                     SELECT COUNT(*) FROM (
@@ -177,14 +176,14 @@ class DataSynchronizer:
         """Metodo generico per sincronizzazione tabelle intere."""
         total_added = 0
         total_removed = 0
-        
+
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
-            
+
             cursor.execute(f"DROP TABLE IF EXISTS temp_{table_name}")
             cols_def = ", ".join([f'"{c}" TEXT' for c in columns])
             cursor.execute(f"CREATE TEMPORARY TABLE temp_{table_name} ({cols_def})")
-            
+
             if new_data:
                 placeholders = ", ".join(["?"] * len(columns))
                 normalized = [tuple(str(x).strip() if x is not None else "" for x in r) for r in new_data]
@@ -215,7 +214,7 @@ class DataSynchronizer:
                 INSERT INTO {table_name} ({', '.join([f'"{c}"' for c in columns])})
                 SELECT {', '.join([f'"{c}"' for c in columns])} FROM temp_{table_name}
             """)
-            
+
             conn.commit()
-            
+
         return total_added, total_removed

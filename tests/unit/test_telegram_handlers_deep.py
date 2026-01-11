@@ -1,6 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+
 from src.core.telegram_manager import TelegramService
+
 
 @pytest.fixture
 def service():
@@ -17,13 +20,13 @@ class TestTelegramHandlersDeep:
         # Test year selection
         with patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]):
             await service._handle_db_actions("db_select_year_strumentale", mock_query, "123")
-            
+
             # Check if 2024 is in the response text or markup
             # call_args[0] is positional args, [1] is kwargs
             args, kwargs = mock_query.edit_message_text.call_args
             text = args[0] if args else kwargs.get("text", "")
             assert "Anno" in text
-            
+
             # Check keyboard
             markup = kwargs.get("reply_markup")
             found_2024 = False
@@ -47,6 +50,6 @@ class TestTelegramHandlersDeep:
         # Stop all command - connect to signal instead of patching emit
         mock_slot = MagicMock()
         service.command_received.connect(mock_slot)
-        
+
         await service._handle_utility_actions("stop_all", mock_query, "123")
-        mock_slot.assert_called_with("stop_all", dict())
+        mock_slot.assert_called_with("stop_all", {})

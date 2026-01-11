@@ -1,11 +1,11 @@
-import pytest
-import os
-import json
 import sqlite3
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+import pytest
+
 from src.core.audit_manager import AuditManager
 from src.core.stats_manager import StatsManager
+
 
 @pytest.fixture
 def temp_audit_db(tmp_path):
@@ -29,7 +29,7 @@ class TestAuditManager:
     def test_log_action(self, temp_audit_db):
         manager = temp_audit_db
         manager.log_action("Test Action", category="test", entity="user", params={"p": 1})
-        
+
         # Verify data
         logs = manager.get_logs(limit=1)
         assert len(logs) == 1
@@ -40,21 +40,21 @@ class TestAuditManager:
         manager = temp_audit_db
         manager.log_action("A1")
         manager.log_action("A2")
-        
+
         assert manager.verify_integrity() is True
-        
+
         # Tamper with the DB
         with sqlite3.connect(manager.DB_PATH) as conn:
             conn.execute("UPDATE audit_logs SET action = 'HACKED' WHERE id = 1")
             conn.commit()
-            
+
         assert manager.verify_integrity() is False
 
 class TestStatsManager:
     def test_increment_usage(self, mock_config_stats):
         manager, mock_cfg = mock_config_stats
         manager.increment_usage("bot_1")
-        
+
         stats = manager.get_all_stats()
         assert stats["bot_1"]["runs"] == 1
         mock_cfg.set_config_value.assert_called()
@@ -62,6 +62,6 @@ class TestStatsManager:
     def test_increment_error(self, mock_config_stats):
         manager, mock_cfg = mock_config_stats
         manager.increment_error("bot_1")
-        
+
         stats = manager.get_all_stats()
         assert stats["bot_1"]["errors"] == 1

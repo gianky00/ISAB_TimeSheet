@@ -1,6 +1,6 @@
-import pytest
-from src.utils.validators import InputValidator
 from src.utils.parsing import parse_currency
+from src.utils.validators import InputValidator
+
 
 class TestValidatorsAndParsingDeep:
     def test_input_validator_pdl_auto_suffix(self):

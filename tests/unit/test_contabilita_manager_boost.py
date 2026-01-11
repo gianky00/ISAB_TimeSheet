@@ -1,7 +1,7 @@
-import pytest
+from unittest.mock import patch
+
 from src.core.contabilita_manager import ContabilitaManager
-from unittest.mock import MagicMock, patch
-from pathlib import Path
+
 
 class TestContabilitaManagerDeep:
     def test_scan_scarico_ore_rows_proxy(self):

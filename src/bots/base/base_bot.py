@@ -204,7 +204,7 @@ class BaseBot(ABC):
             self.log(f"Driver scaricato: {driver_path}")
         except Exception as e:
             self.log(f"⚠️ Impossibile scaricare driver automatico: {e}")
-        
+
         # 2. Tentativo Fallback Locale (Cartella 'drivers' o 'bin')
         if not driver_path:
             local_driver = Path("drivers") / "chromedriver.exe"
@@ -219,7 +219,7 @@ class BaseBot(ABC):
         try:
             # Se service è None, Selenium cercherà nel PATH
             self.driver = webdriver.Chrome(service=service, options=options)
-            
+
             # Anti-detection script
             self.driver.execute_cdp_cmd(
                 "Page.addScriptToEvaluateOnNewDocument",
@@ -236,13 +236,13 @@ class BaseBot(ABC):
         except Exception as e:
             msg = f"❌ ERRORE CRITICO DRIVER: {e}"
             self.log(msg)
-            
+
             # User-friendly hint
             if "SessionNotCreatedException" in str(e) or "version" in str(e).lower():
                 self.log("💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta.")
                 self.log("   1. Aggiorna Google Chrome all'ultima versione.")
                 self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile e mettilo nella cartella 'drivers'.")
-            
+
             raise
 
     def execute(self, data: List[Dict[str, Any]]) -> bool:
@@ -290,24 +290,25 @@ class BaseBot(ABC):
 
         try:
             from datetime import datetime
+
             from src.core.config_manager import CONFIG_DIR
-            
+
             error_dir = CONFIG_DIR / "logs" / "errors"
             error_dir.mkdir(parents=True, exist_ok=True)
-            
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_name = self.name.replace(" ", "_").lower()
-            
+
             # 1. Screenshot
             screenshot_path = error_dir / f"error_{safe_name}_{timestamp}.png"
             self.driver.save_screenshot(str(screenshot_path))
-            
+
             # 2. HTML Source
             html_path = error_dir / f"error_{safe_name}_{timestamp}.html"
             html_path.write_text(self.driver.page_source, encoding="utf-8")
-            
+
             self.log(f"📸 Stato errore salvato in: {error_dir.name}")
-            
+
             # 3. Notifica Telegram con dettaglio (opzionale se il messaggio è troppo lungo)
             if self._telegram_service:
                 # Invia solo il percorso dello screenshot per brevità
@@ -360,6 +361,7 @@ class BaseBot(ABC):
         # Placeholder - implement if needed or used
         return True
 
+    @abstractmethod
     def _handle_unsaved_changes_popup(self):
         """Handle eventual 'unsaved changes' popup."""
         pass

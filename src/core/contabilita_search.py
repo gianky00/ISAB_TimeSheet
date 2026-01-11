@@ -34,7 +34,7 @@ class ContabilitaSearch:
         try:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
-                
+
                 # Tentativo con FTS5 (molto più veloce)
                 sql_fts = """
                     SELECT n_prev, attivita, odc
@@ -43,8 +43,8 @@ class ContabilitaSearch:
                     LIMIT 20
                 """
                 # Sanitizzazione semplice per FTS5 (evita errori se l'utente mette caratteri speciali)
-                fts_query = f'"{query}*"' 
-                
+                fts_query = f'"{query}*"'
+
                 try:
                     cursor.execute(sql_fts, (fts_query,))
                     rows = cursor.fetchall()

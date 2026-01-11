@@ -1,8 +1,10 @@
-import pytest
-import pandas as pd
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+import pandas as pd
+
 from src.core.timesheet_processor import TimesheetProcessor
+
 
 class TestTimesheetProcessorSimple:
     def test_process_file_logic(self):
@@ -12,7 +14,7 @@ class TestTimesheetProcessorSimple:
             "Descrizione": ["A", "A", "B", "B", "C"]
         }
         df = pd.DataFrame(data)
-        
+
         with patch("src.core.timesheet_processor.Path.exists", return_value=True), \
              patch("src.core.timesheet_processor.pd.ExcelFile") as mock_excel_file, \
              patch("src.core.timesheet_processor.pd.read_excel", return_value=df):

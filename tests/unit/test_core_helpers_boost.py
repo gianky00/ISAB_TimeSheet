@@ -1,10 +1,12 @@
-import pytest
-from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
-from src.core.data_synchronizer import DataSynchronizer
-from unittest.mock import MagicMock, patch
-from PyQt6.QtWidgets import QTreeWidget
 import sqlite3
 from pathlib import Path
+from unittest.mock import patch
+
+from PyQt6.QtWidgets import QTreeWidget
+
+from src.core.data_synchronizer import DataSynchronizer
+from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
+
 
 class TestCoreHelpersBoost:
     def test_sortable_item_logic(self, qapp):
@@ -20,7 +22,7 @@ class TestCoreHelpersBoost:
         # Init DB with table
         with sqlite3.connect(db_path) as conn:
             conn.execute("CREATE TABLE contabilita (year INTEGER, data TEXT, n_prev TEXT)")
-        
+
         # Test sync (empty to 1 row)
         data = [(2024, "01/01/2024", "100/24")]
         with patch("src.core.excel_importer.ExcelImporter.COLUMNS_MAPPING", {"D": "data", "P": "n_prev"}):

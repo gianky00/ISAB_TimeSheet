@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -31,7 +31,7 @@ class TestMainWindow:
              patch("src.gui.main_window.LyraSentinel"), \
              patch("src.gui.contabilita_panel.ContabilitaManager") as mock_manager, \
              patch("src.gui.main_window.config_manager.load_config", return_value={}):
-            
+
             mock_manager.get_available_years.return_value = []
             mock_manager.get_year_stats.return_value = {
                 "total_prev": 0.0, "total_ore": 0.0, "count_total": 0,
@@ -71,15 +71,15 @@ class TestMainWindow:
             # In the new implementation, we use _preload_background
             # For the test, we can trigger it or just ensure panels are loaded
             window._preload_background()
-            
-            # Since _preload_background uses QTimer, we might need to wait or 
+
+            # Since _preload_background uses QTimer, we might need to wait or
             # manually initialize what we need for the deep link test
             window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
 
             # Test deep link navigation
             window.navigate_to_panel("timbrature")  # Should go to Automazioni -> Timbrature (Tab 2)
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
-            
+
             # Automazioni panel is at index 1
             automazioni_panel = window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
             # Timbrature is at index 2 in Portale Fornitori (tab 0 of Automazioni)

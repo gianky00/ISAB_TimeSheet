@@ -1,5 +1,4 @@
 import sqlite3
-import os
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 
@@ -76,7 +75,7 @@ def test_lyra_sentinel_contabilita_anomaly(mocker, tmp_path):
 def test_lyra_sentinel_no_anomalies(mocker, tmp_path, mock_db_path):
     # Patch CONFIG_DIR
     mocker.patch("src.core.lyra_sentinel.CONFIG_DIR", tmp_path)
-    
+
     conn = sqlite3.connect(mock_db_path)
     cursor = conn.cursor()
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")

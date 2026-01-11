@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.bots.portale_fornitori.dettagli_oda.bot import DettagliOdABot
-from pathlib import Path
+
 
 class TestDettagliOdaBotDeep:
     @pytest.fixture
@@ -16,7 +18,7 @@ class TestDettagliOdaBotDeep:
         # Valid data list format
         data = [{"numero_oda": "123", "contratto": "C1"}]
         assert bot.validate_data(data)[0] is True
-        
+
         # Missing data
         assert bot.validate_data([])[0] is False
 
@@ -24,21 +26,21 @@ class TestDettagliOdaBotDeep:
         bot.driver = MagicMock()
         bot.wait = MagicMock()
         bot.long_wait = MagicMock()
-        
+
         # Mock page objects
         with patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage") as mock_page_cls:
             mock_page = mock_page_cls.return_value
             mock_page.navigate_to_dettagli.return_value = True
             mock_page.setup_supplier.return_value = True
             mock_page.process_oda.return_value = True
-            
+
             data = {
                 "rows": [{"numero_oda": "123", "contratto": "C1"}],
                 "fornitore": "F1",
                 "date_da": "01.01.2024",
                 "date_a": "31.12.2024"
             }
-            
+
             res = bot.run(data)
             assert res is True
             mock_page.process_oda.assert_called_once()

@@ -7,8 +7,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
-import pandas as pd
-
 from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_queries import ContabilitaQueries
 from src.core.contabilita_search import ContabilitaSearch

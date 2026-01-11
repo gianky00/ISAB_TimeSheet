@@ -1,7 +1,7 @@
-import pytest
-from pathlib import Path
 from unittest.mock import patch
+
 from src.utils.resource_manager import ResourceManager
+
 
 class TestResourceManager:
     def test_paths_definitions(self):
@@ -15,7 +15,7 @@ class TestResourceManager:
             mock_exists.return_value = True
             path = ResourceManager.get_icon("app")
             assert path.endswith("app.svg")
-            
+
             path_ico = ResourceManager.get_icon("app.ico")
             assert path_ico.endswith("app.ico")
 

@@ -9,9 +9,9 @@ Controlla:
 3. Integrità Test Suite
 """
 
-import sys
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 # ANSI Colors
@@ -46,7 +46,7 @@ def check_versions():
     print_step("Verifica allineamento versioni...")
     v_toml = get_pyproject_version()
     v_code = get_code_version()
-    
+
     if v_toml == v_code:
         print_ok(f"Versioni allineate: {v_toml}")
         return True
@@ -81,7 +81,7 @@ def run_tests():
     print_step("Esecuzione Test Suite (Fast Mode)...")
     # Usa il comando 'test' definito in pyproject.toml che include già le esclusioni
     cmd = ["poetry", "run", "test"]
-    
+
     try:
         # Eseguiamo subprocess lasciando l'output visibile così l'utente vede i progressi
         ret = subprocess.call(cmd, cwd=PROJECT_ROOT, shell=True)
@@ -102,23 +102,23 @@ def main():
     args = parser.parse_args()
 
     print(f"{BOLD}✈️  AVVIO PRE-FLIGHT CHECK...{RESET}")
-    
+
     checks = [
         check_versions,
         check_requirements_sync,
         check_git_status
     ]
-    
+
     if not args.skip_tests:
         checks.append(run_tests)
     else:
         print(f"{YELLOW}⚠️  SKIP: Esecuzione test saltata su richiesta utente.{RESET}")
-    
+
     for check in checks:
         if not check():
             print(f"\n{RED}⛔ ABORT: Controllo fallito. Correggi gli errori e riprova.{RESET}")
             sys.exit(1)
-            
+
     print(f"\n{GREEN}{BOLD}🚀 READY FOR TAKEOFF! Tutte le verifiche superate.{RESET}")
     sys.exit(0)
 

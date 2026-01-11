@@ -45,15 +45,16 @@ class ServiceController(QObject):
     def _check_scheduled_tasks(self):
         """Controlla se ci sono task pianificati da eseguire ora."""
         from datetime import datetime
+
         from src.core import config_manager
-        
+
         config = config_manager.load_config()
-        
+
         # 1. Timbrature Autopilot
         if config.get("timbrature_autopilot_enabled", False):
             target_time = config.get("timbrature_autopilot_time", "09:00")
             now = datetime.now().strftime("%H:%M")
-            
+
             if now == target_time:
                 # Esegui solo se il pannello è disponibile
                 if hasattr(self.mw, "timbrature_bot_panel"):

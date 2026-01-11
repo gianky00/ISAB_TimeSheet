@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
+
 import tomlkit
+
 
 def generate_requirements_content():
     lock_file = Path("poetry.lock")
@@ -27,7 +29,7 @@ def generate_requirements_content():
 def sync(check_only=False):
     content = generate_requirements_content()
     req_file = Path("requirements.txt")
-    
+
     current_content = ""
     if req_file.exists():
         with open(req_file, "r", encoding="utf-8") as f:

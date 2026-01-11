@@ -1,6 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
+
 from src.bots.base.base_bot import BaseBot
+
 
 class ConcreteDummyBot(BaseBot):
     @property
@@ -28,6 +31,6 @@ class TestBaseBotRefined:
         bot = ConcreteDummyBot("u", "p")
         mock_tg = MagicMock()
         bot.set_telegram_service(mock_tg)
-        
+
         bot.log("Test Log")
         mock_tg.send_message_sync.assert_called()

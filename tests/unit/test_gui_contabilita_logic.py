@@ -21,11 +21,11 @@ class TestContabilitaTableLogic:
 
         tab = ContabilitaYearTab(2023)
         qtbot.addWidget(tab)
-        
+
         # We need to wait for the QTimer.singleShot(10, self._load_data) to fire
         # Or manually call _load_data
         tab._load_data()
-        
+
         try:
             # Verify data row added
             # Actually, current _load_data in year_tab.py DOES NOT add a totals row yet.
@@ -37,7 +37,7 @@ class TestContabilitaTableLogic:
             # Row 0 is the data row
             total_val = model.data(model.index(0, 3))
             ore_val = model.data(model.index(0, 9))
-            
+
             assert "1000" in str(total_val)
             assert "10" in str(ore_val)
         finally:
@@ -52,7 +52,7 @@ class TestContabilitaTableLogic:
 
         tab = GiornaliereYearTab(2023)
         qtbot.addWidget(tab)
-        
+
         try:
             # Check formatting of ore (index 9)
             model = tab.table.model()

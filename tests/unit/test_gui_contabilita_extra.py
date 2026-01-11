@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
+
 from PyQt6.QtWidgets import QWidget
+
 
 class TestContabilitaExtra:
     """
@@ -9,16 +11,15 @@ class TestContabilitaExtra:
 
     def test_contabilita_panel_init(self, qapp, qtbot):
         from src.gui.contabilita_panel import ContabilitaPanel
-        
+
         # We mock EVERYTHING inside the panel to isolate the container logic
         with patch("src.gui.contabilita_panel.ContabilitaManager") as mock_manager, \
              patch("src.gui.contabilita_panel.ContabilitaYearTab") as mock_year_tab, \
              patch("src.gui.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab, \
              patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel") as mock_kpi_class, \
              patch("src.gui.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab, \
-             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab, \
-             patch("src.gui.contabilita_panel.QTimer.singleShot") as mock_timer:
-            
+             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab:
+
             # Setup Mocks to behave like QWidgets without strictly being fully initialized ones
             # We use a real simple QWidget as base for the return value to satisfy addTab types
             def create_mock_widget(*args, **kwargs):
@@ -44,7 +45,7 @@ class TestContabilitaExtra:
             # Instantiate Panel without qtbot.addWidget (to avoid strict integration)
             panel = ContabilitaPanel()
             # panel.show() # Not strictly needed for logic test if we trigger methods manually
-            
+
             try:
                 # Manually trigger deferred loading (simulating the QTimer callback)
                 panel._safe_refresh_tabs()
@@ -65,8 +66,7 @@ class TestContabilitaExtra:
              patch("src.gui.contabilita_panel.GiornaliereYearTab") as mock_giorn_tab, \
              patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel") as mock_kpi_class, \
              patch("src.gui.contabilita_panel.AttivitaProgrammateTab") as mock_att_tab, \
-             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab, \
-             patch("src.gui.contabilita_panel.QTimer.singleShot") as mock_timer:
+             patch("src.gui.contabilita_panel.CertificatiCampioneTab") as mock_cert_tab:
 
             def create_mock_widget(*args, **kwargs):
                 w = QWidget()
@@ -84,8 +84,8 @@ class TestContabilitaExtra:
             mock_manager.get_available_years.return_value = [2024] # Single year for simplicity
 
             panel = ContabilitaPanel()
-            # panel.show() 
-            
+            # panel.show()
+
             try:
                 panel._safe_refresh_tabs()
 

@@ -5,6 +5,7 @@ Utility per il parsing robusto di valute e numeri.
 
 import re
 
+
 def parse_currency(value) -> float:
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
@@ -29,7 +30,7 @@ def parse_currency(value) -> float:
 
     # Rimuovi simbolo valuta e spazi
     s = s.replace("€", "").strip()
-    
+
     # Rimuovi testo "Euro" (case insensitive)
     s = re.sub(r"(?i)euro", "", s).strip()
 
@@ -41,7 +42,7 @@ def parse_currency(value) -> float:
 
     # Rimuovi eventuali caratteri invisibili
     s = "".join(c for c in s if c.isprintable())
-    
+
     # Gestione 'nan'
     if s.lower() == 'nan':
         return 0.0

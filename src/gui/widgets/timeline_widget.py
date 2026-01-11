@@ -12,7 +12,6 @@ from PyQt6.QtCore import (
     QPropertyAnimation,
     Qt,
     QUrl,
-    pyqtSignal,
 )
 from PyQt6.QtGui import (
     QColor,
@@ -32,7 +31,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.utils.helpers import get_asset_path
 from src.utils.log_humanizer import SmartLogTranslator
 
 

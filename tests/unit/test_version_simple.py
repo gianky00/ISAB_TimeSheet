@@ -1,5 +1,5 @@
-import pytest
-from src.core.version import __version__, __app_name__
+from src.core.version import __app_name__, __version__
+
 
 def test_version_info():
     # Verifica che la versione sia una stringa valida

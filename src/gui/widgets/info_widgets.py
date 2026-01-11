@@ -3,17 +3,17 @@ SyncroJob - Info Widgets
 Dialoghi e card informative.
 """
 
-from PyQt6.QtCore import Qt, QPoint, QRect
+from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtGui import QColor, QCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
     QFrame,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
-    QGraphicsDropShadowEffect,
 )
 
 

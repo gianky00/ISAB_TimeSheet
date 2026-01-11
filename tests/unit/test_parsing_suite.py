@@ -1,5 +1,7 @@
 import pytest
+
 from src.utils.parsing import parse_currency
+
 
 class TestParsingUtils:
 
@@ -26,7 +28,7 @@ class TestParsingUtils:
         # If passed as string "1.000" -> logic check dots_count=1. parts[1] len=3.
         # It falls through to float conversion of "1.000" -> 1.0.
         # This is often correct for data coming from systems that serialize floats as 1.000.
-        assert parse_currency("1.000") == 1.0 
+        assert parse_currency("1.000") == 1.0
 
     def test_parse_currency_dirty_input(self):
         assert parse_currency("Euro 1.200,50") == 1200.50

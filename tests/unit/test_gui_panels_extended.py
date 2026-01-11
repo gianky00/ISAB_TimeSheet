@@ -1,8 +1,11 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
+from src.gui.help_panel import HelpPanel
 from src.gui.lyra_panel import LyraPanel
 from src.gui.notifications_panel import NotificationsPanel
-from src.gui.help_panel import HelpPanel
+
 
 class TestGUIPanelsExtended:
     @pytest.fixture
@@ -10,13 +13,12 @@ class TestGUIPanelsExtended:
         return qapp
 
     def test_lyra_panel_init(self, qtbot):
-        with patch("src.gui.lyra_panel.SecretsManager.get_gemini_api_key", return_value="fake_key"), \
-             patch("src.gui.lyra_panel.ModelListWorker") as mock_worker:
+        with patch("src.gui.lyra_panel.SecretsManager.get_gemini_api_key", return_value="fake_key"):
             panel = LyraPanel()
             qtbot.addWidget(panel)
             assert panel.chat_area is not None
             assert panel.input_field is not None
-            
+
             # Test typing and sending (logic level)
             panel.input_field.setText("Ciao Lyra")
             with patch.object(panel, "ask_lyra") as mock_ask:
@@ -30,7 +32,7 @@ class TestGUIPanelsExtended:
             mock_manager.get_notifications.return_value = [
                 {"id": 1, "title": "Test", "message": "Msg", "timestamp": "2024-01-01", "read": False}
             ]
-            
+
             panel = NotificationsPanel()
             qtbot.addWidget(panel)
             panel.refresh_notifications()
@@ -41,7 +43,7 @@ class TestGUIPanelsExtended:
         panel = HelpPanel()
         qtbot.addWidget(panel)
         assert panel.index_list.count() > 0
-        
+
         # Test search
         panel.search_edit.setText("installazione")
         # Logic should filter items (we check it doesn't crash)
@@ -52,16 +54,15 @@ class TestGUIPanelsExtended:
         with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
-            
+
             panel = NotificationsPanel()
             qtbot.addWidget(panel)
-            
+
             # Mock the message box to avoid blocking
-            with patch("PyQt6.QtWidgets.QMessageBox.exec", return_value=None), \
-                 patch("PyQt6.QtWidgets.QMessageBox.clickedButton") as mock_clicked:
-                
+            with patch("PyQt6.QtWidgets.QMessageBox.exec", return_value=None):
+
                 # Simulate "Sì" click
-                # Finding the "Sì" button is hard without real exec, 
+                # Finding the "Sì" button is hard without real exec,
                 # so we just mock the manager call directly or the button logic
                 panel.manager.clear_all = MagicMock()
                 # Instead of clicking (which opens dialog), we test the internal logic if possible

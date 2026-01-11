@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QTabWidget, QWidget
+from PyQt6.QtWidgets import QTabWidget
 
 from src.gui.panels import (
     CaricoTSPanel,
@@ -19,7 +19,7 @@ class AutomazioniWidget(QTabWidget):
 
         # --- TAB 1: Portale Fornitori ---
         self.tab_fornitori = QTabWidget()
-        
+
         # Istanzia TUTTI i pannelli subito
         self.panel_dettagli = DettagliOdAPanel()
         self.panel_scarico = ScaricaTSPanel()

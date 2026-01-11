@@ -1,17 +1,23 @@
 import asyncio
+import base64  # Moved from _handle_photo
 import os
 import subprocess
 import threading
 from datetime import datetime
 
-from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtCore import QBuffer, QDate, QIODevice, QObject, QRect, Qt
 from PyQt6.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.core import config_manager
+from src.core.contabilita_manager import ContabilitaManager
+from src.core.lyra_client import LyraClient
 from src.core.notification_manager import NotificationManager
 from src.core.secrets_manager import SecretsManager
 from src.utils.document_generator import generate_pdf_from_html
+from src.utils.printing import get_installed_printers
+from src.utils.validators import InputValidator
 
 
 class TelegramUIBridge(QObject):
@@ -37,8 +43,6 @@ class TelegramUIBridge(QObject):
 
     def _handle_intent(self, chat_id, intent):
         """Gestisce l'intento estratto dall'AI."""
-        from src.utils.validators import InputValidator
-
         action = intent.get("action")
         obj = intent.get("object")
         items = intent.get("items", [])
@@ -74,10 +78,6 @@ class TelegramUIBridge(QObject):
                 "action": "print",
                 "items": items,
             }
-            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-            from src.utils.printing import get_installed_printers
-
             printers = get_installed_printers()
             keyboard = [
                 [
@@ -99,8 +99,6 @@ class TelegramUIBridge(QObject):
                 self.telegram.loop,
             )
         elif action == "download" and obj == "pdl":
-            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
             keyboard = [
                 [
                     InlineKeyboardButton(
@@ -191,7 +189,6 @@ class TelegramUIBridge(QObject):
         self.telegram.send_message_sync("✅ Avvio Carico Timesheet.")
 
     def _handle_run_timbrature(self, params):
-        from PyQt6.QtCore import QDate
         self.mw.navigate_to_panel("timbrature")
         period = params.get("period", "yesterday")
         target_date = QDate.currentDate()
@@ -251,8 +248,6 @@ class TelegramUIBridge(QObject):
                     html_report += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[4]} {r[3]}</td></tr>"
                 html_report += "</tbody></table>"
             elif db_type == "strumentale":
-                from src.core.contabilita_manager import ContabilitaManager
-
                 matches = ContabilitaManager.search_extended(
                     query_text,
                     year=int(year_filter) if year_filter else None,
@@ -283,8 +278,6 @@ class TelegramUIBridge(QObject):
 
     def _handle_data(self, data_type, items):
         """Gestisce l'inserimento dati da Telegram."""
-        from src.utils.validators import InputValidator
-
         valid_items, duplicates, errors = [], 0, []
         panel = self.mw.pdl_panel if data_type == "pdl" else self.mw.scarico_panel
         field = "numero_pdl" if data_type == "pdl" else "numero_oda"
@@ -331,8 +324,6 @@ class TelegramUIBridge(QObject):
 
     def _handle_screenshot(self, mode="app"):
         try:
-            from PyQt6.QtCore import QBuffer, QIODevice, QRect
-
             if mode == "app":
                 pixmap = self.mw.grab()
                 caption = "Solo App"
@@ -369,8 +360,6 @@ class TelegramUIBridge(QObject):
 
         def run():
             try:
-                from src.core.lyra_client import LyraClient
-
                 resp = LyraClient(api_key=api_key).ask(query)
                 self.telegram.send_message_sync(f"🤖 **AI Coach**\n\n{resp}")
             except Exception as e:
@@ -387,10 +376,6 @@ class TelegramUIBridge(QObject):
 
         def run():
             try:
-                import base64
-
-                from src.core.lyra_client import LyraClient
-
                 img_b64 = base64.b64encode(photo_bytes).decode("utf-8")
                 prompt = "Estrai dati da questo rapportino. Tabella Markdown."
                 if caption:
@@ -401,3 +386,4 @@ class TelegramUIBridge(QObject):
                 self.telegram.send_message_sync(f"❌ Errore: {e}")
 
         threading.Thread(target=run, daemon=True).start()
+

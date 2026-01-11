@@ -1,7 +1,7 @@
-import pytest
-import pandas as pd
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
+
 
 class TestContabilitaKPIPanelDeep:
     @patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024])
@@ -16,24 +16,24 @@ class TestContabilitaKPIPanelDeep:
             "ore_dirette": 80.0,
             "ore_indirette": 20.0
         }
-        
+
         # Mock raw data for charts
         data = [
             ("2024-01-01", "gennaio", "P1", "1000", "A1", "T1", "O1", "CHIUSA", "SQUADRA", "10", "1.0", "", "", "")
         ]
         mock_get_data.return_value = data
-        
+
         panel = ContabilitaKPIPanel()
         qtbot.addWidget(panel)
-        
+
         # Trigger data load for 2024
         panel.year_combo.setCurrentText("2024")
         panel._load_kpi_data()
-        
+
         # Verify cards updated
         assert "10.000,00" in panel.card_totale.lbl_value.text()
         assert "100,00" in panel.card_ore.lbl_value.text()
-        
+
         # Verify charts were drawn (canvases have figures with content)
         assert len(panel.fig1.axes) > 0
         assert len(panel.fig2.axes) > 0

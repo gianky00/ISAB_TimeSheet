@@ -21,14 +21,14 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
-    
+
     error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     logger.critical(f"UNHANDLED EXCEPTION (MainThread):\n{error_msg}")
-    
+
     # Forza il flush immediato
     for handler in logger.handlers:
         handler.flush()
-        
+
     try:
         log_file = CONFIG_DIR / "logs" / "crash.log"
         if log_file.exists():
@@ -40,7 +40,7 @@ def handle_thread_exception(args):
     """Gestore globale per eccezioni nei thread secondari."""
     error_msg = "".join(traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback))
     logger.critical(f"UNHANDLED EXCEPTION (Thread: {args.thread.name}):\n{error_msg}")
-    
+
     # Forza il flush
     for handler in logger.handlers:
         handler.flush()
@@ -50,7 +50,7 @@ def setup_crash_logging():
         CONFIG_DIR.mkdir(parents=True)
     log_dir = CONFIG_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
-    
+
     # Setup Logger con Flush immediato
     handler = logging.FileHandler(log_dir / "crash.log", mode='w', encoding='utf-8')
     handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
@@ -58,7 +58,7 @@ def setup_crash_logging():
     if not clogger.handlers:
         clogger.addHandler(handler)
     clogger.setLevel(logging.INFO)
-    
+
     # Installazione Hooks
     sys.excepthook = handle_exception
     threading.excepthook = handle_thread_exception  # Richiede Python 3.8+

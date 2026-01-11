@@ -1,10 +1,12 @@
-import pytest
+from unittest.mock import patch
+
 import requests
-from unittest.mock import MagicMock, patch
-from src.core.stats_manager import StatsManager
-from src.gui.widgets.status_indicator import StatusIndicator
-from src.gui.toast import ToastOverlay
+
 from src.core.license_updater import run_update
+from src.core.stats_manager import StatsManager
+from src.gui.toast import ToastOverlay
+from src.gui.widgets.status_indicator import StatusIndicator
+
 
 class TestRefinementBoost:
     def test_stats_manager_reset(self, tmp_path):

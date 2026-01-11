@@ -1,17 +1,16 @@
-import pytest
-from src.gui.widgets.sidebar_button import SidebarButton
+
 from src.core.contabilita_queries import ContabilitaQueries
-from unittest.mock import MagicMock, patch
-from pathlib import Path
+from src.gui.widgets.sidebar_button import SidebarButton
+
 
 class TestFinalSimpleBoost:
     def test_sidebar_button_badge(self, qapp):
         btn = SidebarButton("Test", icon="🏠")
         assert "🏠" in btn.text()
-        
+
         btn.set_badge(5)
         assert "🔴 5" in btn.text()
-        
+
         btn.set_badge(0)
         assert "🔴" not in btn.text()
 
@@ -19,7 +18,7 @@ class TestFinalSimpleBoost:
         # Create a file that is NOT a database to trigger exception
         db_path = tmp_path / "fake.db"
         db_path.write_text("not a db")
-        
+
         # All these should return [] instead of crashing
         assert ContabilitaQueries.get_available_years(db_path) == []
         assert ContabilitaQueries.get_data_by_year(db_path, 2024) == []

@@ -1,4 +1,5 @@
-from PyQt6.QtCore import QAbstractTableModel, Qt, QModelIndex
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
+
 
 class FastTableModel(QAbstractTableModel):
     """
@@ -23,7 +24,7 @@ class FastTableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.DisplayRole:
             value = self._data[index.row()][index.column()]
             return str(value) if value is not None else ""
-        
+
         if role == Qt.ItemDataRole.TextAlignmentRole:
             # Allineamento predefinito
             return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter

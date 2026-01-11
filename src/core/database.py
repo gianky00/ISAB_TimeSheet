@@ -65,7 +65,7 @@ class DatabaseManager:
                 conn.execute("PRAGMA journal_mode=WAL;")
                 conn.execute("PRAGMA synchronous=NORMAL;")
                 conn.execute(f"PRAGMA busy_timeout={int(timeout * 1000)};")
-            
+
             # Enable Foreign Keys for both read and write
             conn.execute("PRAGMA foreign_keys = ON;")
 
@@ -163,7 +163,7 @@ class DatabaseManager:
                             migrations[ver](conn)
                             self._set_db_version(conn, ver)
                             logger.info(f"[{db_name}] Migration v{ver} completed.")
-                    
+
                     logger.info(f"[{db_name}] All migrations completed successfully.")
                 except Exception as e:
                     logger.critical(f"[{db_name}] Migration failed at step v{ver}: {e}")
@@ -318,7 +318,7 @@ class DatabaseManager:
                 VALUES (new.id, new.n_prev, new.attivita, new.odc, new.annotazioni);
             END;
         """)
-        
+
         # Popolamento iniziale se la tabella non è vuota
         cursor.execute("INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni) SELECT id, n_prev, attivita, odc, annotazioni FROM contabilita")
 

@@ -1,10 +1,10 @@
-import pytest
 import sqlite3
-from pathlib import Path
+from unittest.mock import patch
+
 from src.core.audit_manager import AuditManager
 from src.core.contabilita_stats import ContabilitaStats
 from src.core.excel_importer import ExcelImporter
-from unittest.mock import patch, MagicMock
+
 
 class TestCoreLogicRefined:
     def test_audit_manager_singleton_and_init(self, tmp_path):
@@ -17,7 +17,7 @@ class TestCoreLogicRefined:
             with sqlite3.connect(db_path) as conn:
                 res = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='audit_logs'").fetchone()
                 assert res is not None
-            
+
             am.log_action("Test Action")
             assert len(am.get_logs()) == 1
 
@@ -25,14 +25,14 @@ class TestCoreLogicRefined:
         db_path = tmp_path / "stats.db"
         with sqlite3.connect(db_path) as conn:
             # Create table with all required columns
-            cols = ["id INTEGER PRIMARY KEY", "year INTEGER"] 
+            cols = ["id INTEGER PRIMARY KEY", "year INTEGER"]
             cols += [f"{v} TEXT" for v in ExcelImporter.COLUMNS_MAPPING.values()]
             conn.execute(f"CREATE TABLE contabilita ({', '.join(cols)})")
-            
-            g_cols = ["id INTEGER PRIMARY KEY", "year INTEGER", "data TEXT", "personale TEXT", "tcl TEXT", 
+
+            g_cols = ["id INTEGER PRIMARY KEY", "year INTEGER", "data TEXT", "personale TEXT", "tcl TEXT",
                       "descrizione TEXT", "n_prev TEXT", "odc TEXT", "pdl TEXT", "inizio TEXT", "fine TEXT", "ore TEXT", "nome_file TEXT"]
             conn.execute(f"CREATE TABLE giornaliere ({', '.join(g_cols)})")
-            
+
             # Insert data
             # index 2:n_prev, 3:totale_prev, 4:attivita, 7:stato_attivita, 9:ore_sp (val_ore)
             conn.execute("INSERT INTO contabilita (year, n_prev, totale_prev, attivita, stato_attivita, ore_sp) VALUES (2024, 'PREV1', '1.000,00', 'Att1', 'COMPLETATO', '10,0')")

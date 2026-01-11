@@ -1,11 +1,12 @@
-import pytest
-import requests
 from unittest.mock import MagicMock, patch
-from src.utils.printing import get_installed_printers
-from src.gui.styles import apply_theme
+
+from PyQt6.QtWidgets import QWidget
+
 from src.core.stats_manager import StatsManager
+from src.gui.styles import apply_theme
 from src.gui.toast import ToastOverlay
-from PyQt6.QtWidgets import QWidget, QApplication
+from src.utils.printing import get_installed_printers
+
 
 class TestLastSimpleBoost:
     def test_get_printers_logic(self):
@@ -20,7 +21,7 @@ class TestLastSimpleBoost:
         with patch("src.gui.styles.get_asset_path", return_value="fake.qss"), \
              patch("src.gui.styles.Path.exists", return_value=True), \
              patch("builtins.open", MagicMock()):
-            
+
             # Setup open mock to return specific content
             with patch("src.gui.styles.open", create=True) as mock_open:
                 mock_open.return_value.__enter__.return_value.read.return_value = "QWidget { color: red; }"

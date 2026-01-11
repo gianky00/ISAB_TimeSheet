@@ -1,9 +1,11 @@
 
-import pytest
-from unittest.mock import MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
-from selenium.webdriver.common.by import By
+
 
 class TestScaricaTSBotHardened:
 
@@ -23,11 +25,11 @@ class TestScaricaTSBotHardened:
         # Setup: mock wait.until to return a mock element (clickable)
         mock_el = MagicMock()
         bot.wait.until.return_value = mock_el
-        
+
         # We also need to mock _attendi_scomparsa_overlay which is in BaseBot
         with patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
             success = bot._navigate_to_timesheet()
-            
+
         assert success is True
         # Verify calls to wait.until
         assert bot.wait.until.call_count >= 2
@@ -40,15 +42,14 @@ class TestScaricaTSBotHardened:
         """Test the filter setup logic (Vendor selection and Date)."""
         bot.fornitore = "VENDOR_XYZ"
         bot.data_da = "10.01.2026"
-        
+
         mock_el = MagicMock()
         bot.wait.until.return_value = mock_el
         bot.long_wait.until.return_value = mock_el
-        
-        with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains") as mock_action:
-            with patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
+
+        with patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
                 success = bot._setup_filters()
-                
+
         assert success is True
         # Verify that send_keys was called with the date
         mock_el.send_keys.assert_called_with("10.01.2026")
@@ -59,19 +60,19 @@ class TestScaricaTSBotHardened:
             {"numero_oda": "ODA1", "posizione_oda": "10"},
             {"numero_oda": "ODA2", "posizione_oda": "20"}
         ]
-        
+
         # Mock dependencies to return success for first and fail for second (or viceversa)
         with patch.object(bot, "_navigate_to_timesheet", return_value=True):
             with patch.object(bot, "_setup_filters", return_value=True):
                 # Mock _download_excel: fail first, succeed second
                 with patch.object(bot, "_download_excel") as mock_download:
                     mock_download.side_effect = [Exception("Crashed"), Path("test.xlsx")]
-                    
+
                     # We also need to mock the UI interactions inside the loop
                     bot.wait.until.return_value = MagicMock()
-                    
+
                     success = bot.run(data)
-                    
+
                     # Should be false because not ALL rows succeeded (success_count == len(rows))
-                    assert success is False 
+                    assert success is False
                     assert mock_download.call_count == 2

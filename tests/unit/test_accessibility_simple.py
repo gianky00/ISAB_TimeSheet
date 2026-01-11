@@ -1,6 +1,8 @@
-import pytest
 from PyQt6.QtWidgets import QWidget
-from src.gui.accessibility import make_accessible, setup_tab_order, KeyboardShortcuts
+from unittest.mock import MagicMock
+
+from src.gui.accessibility import KeyboardShortcuts, make_accessible, setup_tab_order
+
 
 class TestAccessibilitySimple:
     def test_make_accessible(self, qapp):
@@ -19,5 +21,3 @@ class TestAccessibilitySimple:
         assert "Ctrl+S" in KeyboardShortcuts.SHORTCUTS
         # Setup call should not crash
         KeyboardShortcuts.setup(MagicMock())
-
-from unittest.mock import MagicMock

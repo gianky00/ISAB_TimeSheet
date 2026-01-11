@@ -38,7 +38,6 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
-from src.core.audit_manager import AuditManager
 from src.core.backup_manager import BackupManager
 from src.core.secrets_manager import SecretsManager
 from src.core.stats_manager import StatsManager
@@ -1468,10 +1467,10 @@ class SettingsPanel(QWidget):
     def _connect_change_signals(self):
         # Generale
         self.headless_check.stateChanged.connect(self._save_settings)
-        
+
         # Browser
         self.timeout_spin.valueChanged.connect(self._save_settings)
-        
+
         # Strumentale (Save on editing finished to avoid spamming disk)
         self.contabilita_path_edit.textChanged.connect(self._save_settings)
         self.giornaliere_path_edit.textChanged.connect(self._save_settings)
@@ -1479,7 +1478,7 @@ class SettingsPanel(QWidget):
         self.certificati_path_edit.textChanged.connect(self._save_settings)
         self.auto_update_contabilita_check.stateChanged.connect(self._save_settings)
         self.dataease_path_edit.textChanged.connect(self._save_settings)
-        
+
         # Telegram
         self.tg_token_edit.editingFinished.connect(self._save_settings)
         self.gemini_api_key_edit.editingFinished.connect(self._save_settings)
@@ -1982,7 +1981,8 @@ class SettingsPanel(QWidget):
 
     def _save_settings(self):
         # Impedisci salvataggi ricorsivi
-        if self.signalsBlocked(): return
+        if self.signalsBlocked():
+            return
 
         # Raccogli dati
         fornitori = [

@@ -1,13 +1,14 @@
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 from src.gui.panels import DettagliOdAPanel, ScaricoPDLPanel, TimbratureDBPanel
+
 
 class TestBotPanelsFinal:
     def test_dettagli_oda_panel_logic(self, qapp, qtbot):
         with patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]}):
             panel = DettagliOdAPanel()
             qtbot.addWidget(panel)
-            
+
             panel.data_table.set_data([{"numero_oda": "12345"}])
             ready, msg = panel.validate_ready()
             # If creds missing, it should be False
@@ -18,7 +19,7 @@ class TestBotPanelsFinal:
             panel = ScaricoPDLPanel()
             qtbot.addWidget(panel)
             assert panel.printer_combo.count() > 0
-            
+
             panel.print_check.setChecked(True)
             assert panel.print_check.isChecked()
 
@@ -29,7 +30,7 @@ class TestBotPanelsFinal:
             ]
             panel = TimbratureDBPanel()
             qtbot.addWidget(panel)
-            
+
             panel.refresh_data()
             assert panel.model.rowCount() == 1
             assert "01/01/2024" in panel.model.data(panel.model.index(0, 0))

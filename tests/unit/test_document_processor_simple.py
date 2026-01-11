@@ -1,7 +1,8 @@
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 from src.utils.document_processor import DocumentProcessor
+
 
 class TestDocumentProcessorSimple:
     def test_extract_text_exception_handling(self, tmp_path):

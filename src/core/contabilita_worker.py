@@ -159,8 +159,8 @@ class ContabilitaWorker(QThread):
                 overall_success, final_msg, total_added, total_removed, total_duration
             )
         except Exception as e:
-            import traceback
-            error_details = traceback.format_exc()
+
+
             self.finished_signal.emit(
                 False, f"Errore critico durante l'importazione: {e}", 0, 0, 0.0
             )

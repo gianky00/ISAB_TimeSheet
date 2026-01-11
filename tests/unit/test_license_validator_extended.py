@@ -1,7 +1,7 @@
+import base64
 import hashlib
 import json
 import os
-import base64
 from datetime import date, datetime, timedelta, timezone
 from unittest.mock import mock_open
 
@@ -44,7 +44,7 @@ def setup_valid_license_files(mock_license_dir, mocker):
     key_b64 = Fernet.generate_key()
     key_raw = base64.urlsafe_b64decode(key_b64)
     mocker.patch.object(SecretsManager, "get_license_key", return_value=key_raw)
-    
+
     cipher = Fernet(key_b64)
 
     # Dati di licenza validi

@@ -1,8 +1,10 @@
-import pytest
-import os
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.bots.base.base_bot import BaseBot
 from src.core.constants import BotStatus
+
 
 class DummyBot(BaseBot):
     @property
@@ -28,7 +30,7 @@ class TestBaseBotOrchestration:
         with patch.object(bot, "_safe_login_with_retry", return_value=True), \
              patch.object(bot, "run", return_value=True), \
              patch.object(bot, "cleanup"):
-            
+
             result = bot.execute([{"data": "test"}])
             assert result is True
             assert bot.status == BotStatus.COMPLETED
@@ -36,12 +38,12 @@ class TestBaseBotOrchestration:
     def test_save_error_state(self, bot, tmp_path):
         bot.driver = MagicMock()
         bot.driver.page_source = "<html>Error</html>"
-        
+
         # Patching datetime where it's used
         with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
             # We don't patch datetime to avoid AttributeError if it's imported as class
             # We just let it run and check if files are created in tmp_path
             bot._save_error_state("Something went wrong")
-            
+
             error_dir = tmp_path / "logs" / "errors"
             assert error_dir.exists()

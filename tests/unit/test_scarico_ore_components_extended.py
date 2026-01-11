@@ -1,7 +1,9 @@
-import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-from src.gui.scarico_ore_components import ScaricoOreTableModel, CacheWorker
+
+import pytest
+
+from src.gui.scarico_ore_components import CacheWorker, ScaricoOreTableModel
+
 
 class TestScaricoOreComponentsExtended:
     def test_table_model_init(self, qapp):
@@ -16,10 +18,10 @@ class TestScaricoOreComponentsExtended:
             ("2024-01-01", "P1", "P2", "ODC", "POS", "08:00", "17:00", "8.00", "Desc", "SI", "COMM", "{}")
         ]
         worker = CacheWorker(Path("test_cache.pkl"), data_source=data)
-        
+
         with qtbot.wait_signal(worker.finished, timeout=2000):
             worker.start()
-            
+
         # Verify that display cache was built
         # finished signal: display_data, search_index, float_totals, style_cache
         # We can't easily check args of signal from worker.start() without more setup,
@@ -39,11 +41,11 @@ class TestScaricoOreComponentsExtended:
         model._search_index = ["01/01/2024 mario rossi odc1...", "02/01/2024 luigi verdi odc2..."]
         model._visible_indices = [0, 1]
         model._filtered_count = 2
-        
+
         # Filter for "Mario"
         model.set_filter("mario")
         assert model.rowCount() == 1
-        
+
         # Clear filter
         model.set_filter("")
         assert model.rowCount() == 2

@@ -180,7 +180,7 @@ class ContabilitaPanel(QWidget):
 
         # --- Aggiornamento Tab Preventivi ---
         self._sync_tab_widget(self.year_tabs_widget, years, ContabilitaYearTab)
-        
+
         # --- Aggiornamento Tab Giornaliere ---
         self._sync_tab_widget(self.giornaliere_tabs_widget, years, GiornaliereYearTab)
 
@@ -200,7 +200,8 @@ class ContabilitaPanel(QWidget):
             try:
                 year = int(tab_widget.tabText(i))
                 existing_years[year] = i
-            except ValueError: continue
+            except ValueError:
+                continue
 
         # 2. Rimuovi anni non più presenti
         for year in list(existing_years.keys()):

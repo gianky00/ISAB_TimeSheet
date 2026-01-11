@@ -1,14 +1,14 @@
-import pytest
-import json
 import base64
-from pathlib import Path
+import json
 from unittest.mock import MagicMock, patch
+
 from src.core.license_validator import (
-    get_hardware_id, 
-    get_license_info, 
+    LicenseStatus,
     get_detailed_license_status,
-    LicenseStatus
+    get_hardware_id,
+    get_license_info,
 )
+
 
 class TestLicenseValidatorDeep:
     @patch("platform.system", return_value="Windows")
@@ -35,13 +35,13 @@ class TestLicenseValidatorDeep:
         # 32-byte key for Fernet
         key = b"12345678901234567890123456789012"
         mock_get_key.return_value = key
-        
+
         from cryptography.fernet import Fernet
         key_b64 = base64.urlsafe_b64encode(key)
         f = Fernet(key_b64)
         payload = {"Cliente": "Test Client", "Hardware ID": "HW1"}
         encrypted = f.encrypt(json.dumps(payload).encode())
-        
+
         with patch("builtins.open", MagicMock()) as mock_open:
             mock_open.return_value.__enter__.return_value.read.return_value = encrypted
             info = get_license_info()
@@ -53,14 +53,14 @@ class TestLicenseValidatorDeep:
         mock_paths.return_value = {
             "dir": "dir", "config": "conf", "manifest": "man"
         }
-        
+
         manifest_data = {"config.dat": "CORRECT_HASH"}
         with patch("builtins.open", MagicMock()) as mock_open:
             mock_open.return_value.__enter__.return_value.read.side_effect = [
                 json.dumps(manifest_data).encode(), # manifest read
                 b"wrong data" # config.dat read for hashing
             ]
-            
+
             # Mock hash calculation to return wrong hash
             with patch("src.core.license_validator._calculate_sha256", return_value="WRONG_HASH"):
                 status, msg = get_detailed_license_status()
@@ -73,7 +73,7 @@ class TestLicenseValidatorDeep:
     @patch("os.path.exists", return_value=True)
     def test_detailed_status_hardware_mismatch(self, mock_exists, mock_integrity, mock_hwid, mock_info):
         mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
-        
+
         status, msg = get_detailed_license_status()
         assert status == LicenseStatus.INVALID
         assert "Hardware ID non valido" in msg
@@ -88,7 +88,7 @@ class TestLicenseValidatorDeep:
         mock_info.return_value = {"Hardware ID": "MY-HW", "Scadenza Licenza": "01/01/2023"}
         # Trusted time is in 2024
         mock_trusted_time.return_value = (datetime(2024, 1, 1), True)
-        
+
         status, msg = get_detailed_license_status()
         assert status == LicenseStatus.EXPIRED
         assert "SCADUTA" in msg
