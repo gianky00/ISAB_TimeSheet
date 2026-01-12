@@ -26,6 +26,7 @@ class LicenseStatus(Enum):
     INVALID = "Invalid"
     EXPIRED = "Expired"
     ERROR = "Error"
+    GRACE = "Grace"
 
 
 def _calculate_sha256(filepath):

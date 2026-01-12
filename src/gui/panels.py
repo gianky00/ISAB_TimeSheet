@@ -663,11 +663,6 @@ class DettagliOdAPanel(BaseBotPanel):
         if not self.params_widget.get_fornitore():
             return False, "Fornitore mancante."
 
-        # Check if data table has valid data
-        data = self.data_table.get_data()
-        if not data:
-            return False, "Nessun OdA inserito nella tabella."
-
         return True, ""
 
     def _on_start(self):
@@ -686,13 +681,6 @@ class DettagliOdAPanel(BaseBotPanel):
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
             self._update_status(StatusCard.Status.ERROR, "Parametri incompleti")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
-            return
-
-        if not rows:
-            ToastManager.instance().show("Inserisci almeno un OdA.", "warning")
-            self._update_status(StatusCard.Status.ERROR, "Dati mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return

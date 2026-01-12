@@ -19,8 +19,8 @@ class TestDettagliOdaBotDeep:
         data = [{"numero_oda": "123", "contratto": "C1"}]
         assert bot.validate_data(data)[0] is True
 
-        # Missing data
-        assert bot.validate_data([])[0] is False
+        # Missing data - Now should be True as it allows general list search
+        assert bot.validate_data([])[0] is True
 
     def test_run_success_simulation(self, bot):
         bot.driver = MagicMock()
@@ -35,7 +35,7 @@ class TestDettagliOdaBotDeep:
             mock_page.process_oda.return_value = True
 
             data = {
-                "rows": [{"numero_oda": "123", "contratto": "C1"}],
+                "rows": [],  # Empty rows
                 "fornitore": "F1",
                 "date_da": "01.01.2024",
                 "date_a": "31.12.2024"
@@ -43,4 +43,7 @@ class TestDettagliOdaBotDeep:
 
             res = bot.run(data)
             assert res is True
+            # Should be called once with empty ODA
             mock_page.process_oda.assert_called_once()
+            args = mock_page.process_oda.call_args[0]
+            assert args[0] == ""

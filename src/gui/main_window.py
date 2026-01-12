@@ -35,6 +35,7 @@ from src.gui.controllers.service_controller import ServiceController
 from src.gui.controllers.tray_controller import TrayController
 from src.gui.styles import apply_theme
 from src.gui.widgets.sidebar_widget import SidebarWidget
+from src.gui.widgets.status_card import StatusCard
 from src.gui.widgets.toast import ToastManager
 from src.gui.widgets.update_banner import UpdateBanner
 
@@ -245,6 +246,11 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.progress_bar.setMaximumWidth(200)
         self.status_bar.addPermanentWidget(self.progress_bar)
+
+        # Status Card Globale
+        self.global_status_card = StatusCard("Stato Globale")
+        self.global_status_card.setMinimumWidth(200)
+        self.status_bar.addPermanentWidget(self.global_status_card)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
