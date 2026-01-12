@@ -124,7 +124,8 @@ class TestRunner:
         return files_map
 
     def run_process(self, target, isolate=False, timeout=None):
-        cmd = [sys.executable, "-m", "pytest", target, "--no-header", "--quiet", "--tb=short"]
+        # Aggiungiamo --cov=src --cov-append per accumulare la copertura
+        cmd = [sys.executable, "-m", "pytest", target, "--no-header", "--quiet", "--tb=short", "--cov=src", "--cov-append"]
         
         start = time.time()
         try:
@@ -176,13 +177,39 @@ class TestRunner:
 
         Console.info(f"📄 Report salvato in: {REPORT_FILE}")
 
+    def show_coverage(self):
+        """Mostra il report di copertura totale in modo rapido."""
+        Console.header("📊 REPORT COPERTURA")
+        
+        # 1. Tenta di mostrare dati esistenti
+        try:
+            res = subprocess.run([sys.executable, "-m", "coverage", "report", "-m"], 
+                                 cwd=ROOT_DIR)
+            if res.returncode == 0:
+                return
+        except Exception:
+            pass
+
+        # 2. Se non ci sono dati, calcola
+        Console.info("Dati non trovati. Calcolo in corso (attendere)...")
+        cmd = [sys.executable, "-m", "pytest", "--cov=src", "--cov-report=term-missing", "-q", "--no-summary"]
+        try:
+            subprocess.run(cmd, cwd=ROOT_DIR)
+        except Exception as e:
+            Console.error(f"Errore calcolo copertura: {e}")
+
     def run(self):
         parser = argparse.ArgumentParser(description="🛡️ Robust Test Runner")
         parser.add_argument("--reset", action="store_true", help="Ricomincia da zero ignorando lo stato precedente.")
         parser.add_argument("--filter", type=str, help="Esegui solo test in questo path (es. tests/unit).")
         parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="Timeout in secondi per file.")
         parser.add_argument("--retry", type=int, default=0, help="Numero di retry per test falliti (per flaky tests).")
+        parser.add_argument("--coverage-only", action="store_true", help="Calcola e mostra solo la copertura totale.")
         args = parser.parse_args()
+
+        if args.coverage_only:
+            self.show_coverage()
+            return
 
         Console.header("🛡️  ROBUST TEST RUNNER AVVIATO")
 
@@ -191,6 +218,12 @@ class TestRunner:
         should_reset = args.reset or state is None or args.filter
 
         if should_reset:
+            # Pulizia dati copertura precedenti su reset
+            try:
+                subprocess.run([sys.executable, "-m", "coverage", "erase"], cwd=ROOT_DIR)
+            except Exception:
+                pass
+            
             self.files_map = self.discover_tests(args.filter)
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             self.queue_files = sorted(list(self.files_map.keys()))
@@ -198,6 +231,13 @@ class TestRunner:
             if STATE_FILE.exists():
                 os.remove(STATE_FILE)
         else:
+            # Mostra copertura precedente se esiste
+            try:
+                Console.info("📊 Copertura precedente:")
+                subprocess.run([sys.executable, "-m", "coverage", "report", "--format=text"], cwd=ROOT_DIR)
+            except Exception:
+                pass
+
             self.files_map = defaultdict(list, state.get("total_files_map", {}))
             self.queue_files = state.get("queue", [])
             self.failed_tests = state.get("failed", [])
@@ -298,6 +338,15 @@ class TestRunner:
         print(f"⏱️  Tempo Totale: {total_time:.2f}s")
         print(f"✅ Passati: {self.passed_tests}")
         
+        # Mostra Report Copertura Finale
+        Console.header("📊 COPERTURA FINALE")
+        try:
+            subprocess.run([sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR)
+            subprocess.run([sys.executable, "-m", "coverage", "html"], cwd=ROOT_DIR) # Genera anche HTML
+            Console.info("Report HTML generato in htmlcov/index.html")
+        except Exception as e:
+            Console.error(f"Impossibile generare report copertura: {e}")
+
         if self.failed_tests:
             print(f"❌ Falliti: {len(self.failed_tests)}")
             Console.warning(f"⚠️  Vedi {REPORT_FILE} per i dettagli completi.")

@@ -1,35 +1,63 @@
 import pytest
-
 from src.utils.parsing import parse_currency
 
+class TestParsingSuite:
+    """Test approfonditi per src/utils/parsing.py."""
 
-class TestParsingUtils:
+    def test_parse_none_empty(self):
+        """Test valori nulli o vuoti."""
+        assert parse_currency(None) == 0.0
+        assert parse_currency("") == 0.0
+        assert parse_currency("   ") == 0.0
 
-    @pytest.mark.parametrize("input_val, expected", [
-        ("1.234,56", 1234.56),      # IT format
-        ("1,234.56", 1234.56),      # US format
-        ("1234.56", 1234.56),       # Simple US
-        ("1234,56", 1234.56),       # Simple IT
-        ("€ 1.234,56", 1234.56),    # Currency symbol
-        ("  500,00  ", 500.0),      # Spacing
-        (123.45, 123.45),           # Float input
-        (None, 0.0),                # None
-        ("", 0.0),                  # Empty
-        ("nan", 0.0),               # Textual NaN
-    ])
-    def test_parse_currency_standard(self, input_val, expected):
-        assert parse_currency(input_val) == expected
+    def test_parse_numeric_types(self):
+        """Test tipi già numerici."""
+        assert parse_currency(100) == 100.0
+        assert parse_currency(100.50) == 100.50
 
-    def test_parse_currency_ambiguous_thousands(self):
-        # 1.000 is usually 1000 in IT, but ambiguous.
-        # The logic says: if only one dot and not 3 digits after -> decimal.
-        # But "1.000" HAS 3 digits. Logic implies it might try float parsing.
-        # Let's verify behavior.
-        # If passed as string "1.000" -> logic check dots_count=1. parts[1] len=3.
-        # It falls through to float conversion of "1.000" -> 1.0.
-        # This is often correct for data coming from systems that serialize floats as 1.000.
-        assert parse_currency("1.000") == 1.0
+    def test_parse_currency_clean_symbols(self):
+        """Test rimozione simboli valuta."""
+        assert parse_currency("€ 50,00") == 50.0
+        assert parse_currency("50,00 €") == 50.0
+        assert parse_currency("Euro 50") == 50.0
+        assert parse_currency("EURO 50") == 50.0
 
-    def test_parse_currency_dirty_input(self):
-        assert parse_currency("Euro 1.200,50") == 1200.50
-        assert parse_currency("1.200,50 \u20ac") == 1200.50 # Euro symbol
+    def test_parse_negative(self):
+        """Test numeri negativi."""
+        assert parse_currency("-50,00") == -50.0
+        assert parse_currency("50,00-") == -50.0
+        assert parse_currency("- 50,00") == -50.0
+
+    def test_format_italian_standard(self):
+        """Test formato 1.234,56 (IT)."""
+        assert parse_currency("1.234,56") == 1234.56
+        assert parse_currency("10.000,00") == 10000.00
+        assert parse_currency("1234,56") == 1234.56 # Senza migliaia
+
+    def test_format_us_standard(self):
+        """Test formato 1,234.56 (US)."""
+        assert parse_currency("1,234.56") == 1234.56
+        assert parse_currency("10,000.00") == 10000.00
+        assert parse_currency("1234.56") == 1234.56 # Senza migliaia
+
+    def test_ambiguous_single_dot(self):
+        """
+        Test casi ambigui con un solo punto.
+        La logica corrente: se parti decimali != 3 char -> float standard.
+        """
+        assert parse_currency("10.50") == 10.50
+        assert parse_currency("10.5") == 10.5
+        # "1.234" è ambiguo. Codice dice: se 3 cifre, potrebbe essere migliaia o float.
+        # Al momento 'parse_currency' fallisce nel decidere e prova float(s).
+        # Quindi "1.234" -> float("1.234") -> 1.234
+        assert parse_currency("1.234") == 1.234 
+
+    def test_nan_handling(self):
+        """Test gestione stringa 'nan'."""
+        assert parse_currency("nan") == 0.0
+        assert parse_currency("NAN") == 0.0
+
+    def test_cleanup_garbage(self):
+        """Test pulizia caratteri strani."""
+        # Il codice non rimuove lettere arbitrarie, quindi float("12a34") fallisce -> return 0.0
+        assert parse_currency("12a34") == 0.0
