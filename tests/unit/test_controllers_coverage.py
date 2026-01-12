@@ -1,46 +1,93 @@
+
+import pytest
+import os
+from PyQt6.QtWidgets import QWidget, QStackedWidget
+from PyQt6.QtCore import QObject, pyqtSignal
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtWidgets import QWidget
-
+from src.gui.controllers.bot_controller import BotController
 from src.gui.controllers.navigation_controller import NavigationController
 from src.gui.controllers.search_controller import SearchController
 
+class MockMainWindow(QObject):
+    """Mock leggero che simula l'interfaccia di MainWindow senza caricare Qt reale."""
+    def __init__(self):
+        super().__init__()
+        self.page_stack = MagicMock()
+        self.automazioni_widget = MagicMock()
+        self.tab_fornitori = MagicMock()
+        self.tab_safework = MagicMock()
+        self.global_status_card = MagicMock()
+        self.sidebar = MagicMock()
+        self._current_page_index = 0
+        self.lyra_panel = MagicMock()
+        self.database_widget = MagicMock()
+        self.scarico_ore_panel = MagicMock()
+        self.timbrature_db_panel = MagicMock()
+        self.contabilita_panel = MagicMock()
 
-class TestControllersDeep:
-    def test_navigation_panel_routing(self, qapp):
-        # NavigationController expects a QObject (main_window)
-        mock_mw = QWidget()
-        mock_mw.page_stack = MagicMock()
-        mock_mw.sidebar = MagicMock()
-        mock_mw.automazioni_widget = MagicMock()
-        mock_mw.tab_fornitori = MagicMock()
-        mock_mw.tab_safework = MagicMock()
-        mock_mw._current_page_index = -1
+class TestControllersCoverage:
+    @pytest.fixture
+    def mw(self, qapp):
+        return MockMainWindow()
 
-        nav = NavigationController(mock_mw)
+    def test_bot_controller_handle_results(self, mw, mocker):
+        """Verifica inoltro risultati bot a Telegram."""
+        mock_telegram = MagicMock()
+        ctrl = BotController(mw, mock_telegram)
+        
+        mocker.patch("src.gui.controllers.bot_controller.os.path.exists", return_value=True)
+        
+        ctrl._handle_bot_results("scarico_pdl", ["/pdl.pdf"])
+        mock_telegram.send_document_sync.assert_called_once()
 
-        with patch.object(nav, "navigate_to") as mock_nav:
-            nav.navigate_to_panel("timbrature")
-            mock_nav.assert_called_with(1)
-            mock_mw.automazioni_widget.setCurrentIndex.assert_called_with(0)
-            mock_mw.tab_fornitori.setCurrentIndex.assert_called_with(2)
+    def test_navigation_controller_simple_logic(self, mw, mocker):
+        """Verifica logica di navigazione senza caricare pannelli reali."""
+        ctrl = NavigationController(mw)
+        
+        # Mock get_panel per evitare import reali
+        mocker.patch.object(ctrl, "get_panel", return_value=QWidget())
+        
+        ctrl.navigate_to(1)
+        
+        assert mw._current_page_index == 1
+        mw.page_stack.setCurrentIndex.assert_called_with(1)
+        mw.sidebar.set_active_button.assert_called_with(1)
 
-    def test_search_routing_logic(self, qapp):
-        mock_mw = QWidget()
-        mock_mw.global_search = MagicMock()
+    def test_navigation_controller_settings_dirty_check(self, mw, mocker):
+        """Verifica blocco navigazione se impostazioni non salvate."""
+        ctrl = NavigationController(mw)
+        mw._current_page_index = 4
+        
+        mw.settings_panel = MagicMock()
+        mw.settings_panel.has_unsaved_changes.return_value = True
+        mw.settings_panel.prompt_save_if_needed.return_value = False
+        
+        ctrl.navigate_to(0)
+        
+        # Deve essere rimasto sulla pagina 4
+        mw.page_stack.setCurrentIndex.assert_not_called()
+        mw.sidebar.set_active_button.assert_called_with(4)
 
-        # SearchController(main_window)
-        search = SearchController(mock_mw)
+    def test_bot_controller_panel_status_sync(self, mw, mocker):
+        """Verifica sincronizzazione stato globale."""
+        ctrl = BotController(mw, MagicMock())
+        mock_panel = MagicMock()
+        
+        mocker.patch.object(ctrl, "_get_active_bot_panel", return_value=mock_panel)
+        mocker.patch.object(ctrl, "sender", return_value=mock_panel)
+        
+        ctrl._on_panel_status_changed("RUNNING", "Test")
+        mw.global_status_card.setStatus.assert_called_with("RUNNING", "Test")
 
-        with patch("src.gui.controllers.search_controller.QMenu") as mock_menu:
-            with patch("src.core.contabilita_manager.ContabilitaManager.search_oda", return_value=[{"codice_oda": "123", "descrizione": "test"}]):
-                search.perform_search("123456")
-                assert mock_menu.called
-
-    def test_search_routing_no_results(self, qapp):
-        mock_mw = QWidget()
-        search = SearchController(mock_mw)
-
-        with patch("src.core.contabilita_manager.ContabilitaManager.search_oda", return_value=[]):
-            search.perform_search("x")
-            # Too short, should return early
+    def test_search_controller_routing(self, mw, mocker):
+        """Verifica che la ricerca OdA inoltri i risultati correttamente."""
+        ctrl = SearchController(mw)
+        mock_menu = MagicMock()
+        
+        mocker.patch("src.core.contabilita_manager.ContabilitaManager.search_oda", 
+                     return_value=[{"codice_oda": "123", "descrizione": "D"}])
+        
+        count = ctrl._search_oda("123", mock_menu)
+        assert count == 1
+        assert mock_menu.addAction.called

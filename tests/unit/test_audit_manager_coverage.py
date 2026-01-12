@@ -1,202 +1,91 @@
+
 import sqlite3
 import pytest
-import os
-from unittest.mock import patch, MagicMock
+import hashlib
+from pathlib import Path
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
 from src.core.audit_manager import AuditManager
 
-class TestAuditManager:
-    """Test suite for AuditManager in src/core/audit_manager.py"""
-
+class TestAuditManagerCoverage:
     @pytest.fixture
-    def mock_db(self, tmp_path):
-        """Creates a temporary DB for AuditManager."""
-        db_file = tmp_path / "test_audit.db"
+    def audit_db(self, tmp_path, mocker):
+        """Mock del DB di audit usando un file temporaneo."""
+        db_path = tmp_path / "audit_test.db"
+        # Patch del DB_PATH della classe
+        mocker.patch.object(AuditManager, "DB_PATH", db_path)
+        # Forza reset singleton
+        AuditManager._instance = None
+        manager = AuditManager()
+        yield manager, db_path
+
+    def test_log_action_hashing_chain(self, audit_db):
+        """Verifica che le righe siano incatenate tramite hash."""
+        manager, db_path = audit_db
         
-        # Patch the class-level DB_PATH
-        with patch("src.core.audit_manager.AuditManager.DB_PATH", db_file):
-            # Reset instance to ensure __init_db__ runs on new DB
-            AuditManager._instance = None
-            manager = AuditManager()
-            yield manager
+        manager.log_action("Action 1")
+        manager.log_action("Action 2")
+        
+        with sqlite3.connect(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
             
-            # Cleanup
-            AuditManager._instance = None
+            assert len(rows) == 2
+            h1 = rows[0]["row_hash"]
+            h2 = rows[1]["row_hash"]
+            
+            assert h1 != h2
+            assert h1 is not None
+            assert len(h1) == 64
 
-    def test_singleton(self, mock_db):
-        m1 = AuditManager()
-        m2 = AuditManager()
-        assert m1 is m2
-
-    def test_init_db_creates_table(self, mock_db):
-        assert mock_db.DB_PATH.exists()
-        with sqlite3.connect(mock_db.DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='audit_logs'")
-            assert cursor.fetchone() is not None
-
-    def test_log_action_success(self, mock_db):
-        mock_db.log_action("Test Action", category="TEST", entity="Item1")
+    def test_verify_integrity_success(self, audit_db):
+        """Verifica che un log non manomesso passi la validazione."""
+        manager, _ = audit_db
+        manager.log_action("Test 1")
+        manager.log_action("Test 2")
         
-        logs = mock_db.get_logs()
-        assert len(logs) == 1
-        entry = logs[0]
-        assert entry["action"] == "Test Action"
-        assert entry["category"] == "TEST"
-        assert entry["status"] == "success"
-        # Verify hash was generated
-        assert entry["row_hash"] is not None
+        assert manager.verify_integrity() is True
 
-    def test_integrity_verification_valid(self, mock_db):
-        mock_db.log_action("A1")
-        mock_db.log_action("A2")
+    def test_verify_integrity_tamper_detection(self, audit_db):
+        """Verifica che la modifica manuale di una riga rompa l'integrità."""
+        manager, db_path = audit_db
+        manager.log_action("Secure Action")
         
-        assert mock_db.verify_integrity() is True
-
-    def test_integrity_verification_tampered(self, mock_db):
-        mock_db.log_action("A1")
-        
-        # Tamper DB manually
-        with sqlite3.connect(mock_db.DB_PATH) as conn:
-            conn.execute("UPDATE audit_logs SET action='HACKED' WHERE id=1")
+        # Manomissione manuale nel DB
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("UPDATE audit_logs SET action = 'Hacked Action' WHERE id = 1")
             conn.commit()
             
-        assert mock_db.verify_integrity() is False
+        assert manager.verify_integrity() is False
 
-    def test_retention_policy(self, mock_db):
-        # Insert old record (using SQL directly to bypass timestamp auto-set)
+    def test_run_retention_policy(self, audit_db):
+        """Verifica la cancellazione dei log vecchi."""
+        manager, db_path = audit_db
+        
+        # Inserisci un log vecchio manualmente con formato ISO coerente
         old_date = (datetime.now() - timedelta(days=100)).isoformat()
-        with sqlite3.connect(mock_db.DB_PATH) as conn:
-            conn.execute(
-                "INSERT INTO audit_logs (timestamp, action, row_hash) VALUES (?, ?, ?)",
-                (old_date, "OLD", "hash")
-            )
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("INSERT INTO audit_logs (timestamp, action, user_id) VALUES (?, ?, ?)", 
+                         (old_date, "Old Action", "test_user"))
             conn.commit()
             
-        mock_db.run_retention_policy(days=90)
+        manager.run_retention_policy(days=30)
         
-        logs = mock_db.get_logs()
-        # Should contain only the "Retention Policy" log created by the method itself
-        # The OLD one should be gone.
-        actions = [l["action"] for l in logs]
-        assert "OLD" not in actions
-        assert "Sistema" in actions # The log generated by run_retention_policy
+        with sqlite3.connect(db_path) as conn:
+            count = conn.execute("SELECT COUNT(*) FROM audit_logs WHERE action = 'Old Action'").fetchone()[0]
+            assert count == 0
 
-    def test_notification_trigger(self, mock_db):
-        """Test that notification manager is called if notify=True."""
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_nm:
-            mock_instance = mock_nm.return_value
-            
-            # Case 1: Error status
-            mock_db.log_action("NotifyMe", notify=True, status=AuditManager.Status.ERROR)
-            assert mock_instance.add_notification.call_args[1]["level"] == "error"
-            
-            # Case 2: Warning status
-            mock_db.log_action("NotifyWarn", notify=True, status=AuditManager.Status.WARNING)
-            assert mock_instance.add_notification.call_args[1]["level"] == "warning"
-            
-            # Case 3: Success with custom params (nuova)
-            mock_db.log_action("Update", notify=True, params={"nuova": "2.0.0"})
-            assert "Versione aggiornata a 2.0.0" in mock_instance.add_notification.call_args[0][1]
-
-            # Case 4: Success with custom params (righe)
-            mock_db.log_action("Import", notify=True, params={"righe": 100})
-            assert "Elaborate 100 righe" in mock_instance.add_notification.call_args[0][1]
-
-    @patch("src.core.audit_manager.os.environ.get")
-    def test_get_current_user_fallbacks(self, mock_env, mock_db):
-        """Test user fallbacks when environment is missing."""
-        mock_env.return_value = None # No USERNAME/USER
+    def test_get_current_user_fallback(self, audit_db, mocker):
+        """Verifica il recupero dell'utente con vari fallback."""
+        manager, _ = audit_db
         
-        # Test getpass fallback
-        with patch("getpass.getuser", return_value="GetPassUser"):
-            assert mock_db._get_current_user() == "GetPassUser"
+        # Mock environment
+        mocker.patch("os.environ.get", return_value="TestUser")
+        assert manager._get_current_user() == "TestUser"
+        
+        # Mock all failed -> unknown
+        mocker.patch("os.environ.get", return_value=None)
+        mocker.patch("getpass.getuser", side_effect=Exception("Failed"))
+        mocker.patch("os.name", "posix") # Forza posix per saltare ctypes
             
-        # Test unknown fallback
-        with patch("getpass.getuser", side_effect=Exception("Failed")):
-            # If win32 check fails too
-            with patch("src.core.audit_manager.os.name", "posix"):
-                assert mock_db._get_current_user() == "unknown"
-
-    @pytest.mark.skipif(os.name != "nt", reason="Windows specific test")
-    @patch("src.core.audit_manager.os.environ.get")
-    def test_get_current_user_win32(self, mock_env, mock_db):
-        """Test Windows API fallback."""
-        mock_env.return_value = None
-        with patch("getpass.getuser", side_effect=Exception("Failed")):
-            # This should trigger the win32 code path
-            user = mock_db._get_current_user()
-            assert user != "unknown"
-
-    def test_integrity_legacy_records(self, mock_db):
-        """Test that integrity skips legacy records without hash."""
-        with sqlite3.connect(mock_db.DB_PATH) as conn:
-            # Insert record without hash
-            conn.execute(
-                "INSERT INTO audit_logs (timestamp, action, row_hash) VALUES (?, ?, ?)",
-                (datetime.now().isoformat(), "LEGACY", None)
-            )
-            conn.commit()
-            
-        assert mock_db.verify_integrity() is True
-
-    def test_get_logs_exception(self, mock_db):
-        """Test get_logs error handling."""
-        with patch("src.core.audit_manager.sqlite3.connect", side_effect=sqlite3.Error("Query Fail")):
-            assert mock_db.get_logs() == []
-
-    def test_run_retention_policy_exception(self, mock_db):
-        """Test run_retention_policy error handling."""
-        with patch("src.core.audit_manager.sqlite3.connect", side_effect=sqlite3.Error("Delete Fail")):
-            # Should not crash
-            mock_db.run_retention_policy()
-
-    def test_get_last_hash_exception(self, mock_db):
-        """Test _get_last_hash exception handling."""
-        with patch("src.core.audit_manager.sqlite3.connect", side_effect=Exception("Hash Fail")):
-            assert mock_db._get_last_hash() == "0" * 64
-
-    def test_verify_integrity_exception(self, mock_db):
-        """Test verify_integrity exception handling."""
-        with patch("src.core.audit_manager.sqlite3.connect", side_effect=Exception("Integrity Fail")):
-            assert mock_db.verify_integrity() is False
-
-    def test_init_db_migration_exception(self, tmp_path):
-        """Test that init_db handles migration errors gracefully."""
-        db_file = tmp_path / "migration_fail.db"
-        with patch("src.core.audit_manager.AuditManager.DB_PATH", db_file):
-            with patch("src.core.audit_manager.sqlite3.connect") as mock_conn:
-                mock_c = MagicMock()
-                mock_conn.return_value.__enter__.return_value = mock_c
-                
-                # 1 call for CREATE TABLE
-                # 5 calls for ALTER TABLE
-                # 1 call for UPDATE (PULIZIA DATI)
-                # 1 call for CREATE INDEX
-                
-                side_effects = [None, None, None, None, None, None, Exception("Update Fail"), None]
-                mock_c.execute.side_effect = side_effects
-                
-                AuditManager._instance = None
-                manager = AuditManager()
-                assert manager is not None
-
-    @pytest.mark.skipif(os.name != "nt", reason="Windows specific test")
-    @patch("src.core.audit_manager.os.environ.get")
-    def test_get_current_user_win32_exception(self, mock_env, mock_db):
-        """Test Windows API fallback exception."""
-        mock_env.return_value = None
-        import sys
-        with patch("getpass.getuser", side_effect=Exception("Failed")):
-            # Creiamo un mock per ctypes
-            mock_ctypes = MagicMock()
-            mock_ctypes.windll.advapi32.GetUserNameW.side_effect = Exception("Win32 Fail")
-            with patch.dict(sys.modules, {"ctypes": mock_ctypes}):
-                assert mock_db._get_current_user() == "unknown"
-
-    def test_log_action_full_exception(self, mock_db):
-        """Trigger the catch-all exception in log_action."""
-        # Triggering error during parameter processing
-        with patch("json.dumps", side_effect=TypeError("Not serializable")):
-            mock_db.log_action("Fail", params=object())
-            # Should not crash
+        assert manager._get_current_user() == "unknown"

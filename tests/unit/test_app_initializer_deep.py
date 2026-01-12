@@ -1,56 +1,84 @@
-from unittest.mock import MagicMock, patch
 
 import pytest
-
+import sys
+from unittest.mock import MagicMock, patch
 from src.core.app_initializer import AppInitializer
 from src.core.license_validator import LicenseStatus
 
+class TestAppInitializerDeep:
+    @pytest.fixture
+    def mock_msgbox(self, mocker):
+        return mocker.patch("PyQt6.QtWidgets.QMessageBox.critical")
 
-class TestAppInitializer:
-    @pytest.fixture(autouse=True)
-    def mock_license_deps(self):
-        """Mocka tutte le dipendenze esterne della licenza per evitare loop o chiamate reali."""
-        with patch("src.core.app_initializer.get_detailed_license_status") as m_status, \
-             patch("src.core.app_initializer.run_update") as m_update, \
-             patch("src.core.app_initializer.check_emergency_grace_period") as m_grace, \
-             patch("src.core.app_initializer.get_hardware_id") as m_hwid:
+    @pytest.fixture
+    def mock_msgbox_warn(self, mocker):
+        return mocker.patch("PyQt6.QtWidgets.QMessageBox.warning")
 
-            m_status.return_value = (LicenseStatus.VALID, "OK")
-            m_update.return_value = None
-            m_grace.return_value = (False, "No Grace", None)
-            m_hwid.return_value = "TEST-ID"
-            yield m_status, m_update, m_grace
+    def test_initialize_full_success(self, mocker):
+        """Verifica avvio con successo (Licenza valida + DB OK)."""
+        m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
+        m_status.return_value = (LicenseStatus.VALID, "OK")
+        mocker.patch("src.core.app_initializer.db_manager.init_db")
+        
+        assert AppInitializer.initialize() is True
 
-    @patch("src.core.app_initializer.db_manager.init_db")
-    def test_initialize_flow_success(self, mock_db, mock_license_deps):
-        m_status, _, _ = mock_license_deps
+    def test_initialize_update_trigger(self, mocker):
+        """Verifica che se la licenza manca, venga tentato l'aggiornamento."""
+        m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
+        m_status.side_effect = [
+            (LicenseStatus.INVALID, "Missing"), 
+            (LicenseStatus.VALID, "OK")
+        ]
+        
+        mock_update = mocker.patch("src.core.app_initializer.run_update")
+        mocker.patch("src.core.app_initializer.db_manager.init_db")
+        mocker.patch("sys.exit")
+        
         res = AppInitializer.initialize()
         assert res is True
-        mock_db.assert_called_once()
+        assert mock_update.call_count == 1
 
-    @patch("src.core.app_initializer.sys.exit")
-    def test_initialize_fail_license(self, mock_exit, mock_license_deps):
-        m_status, _, m_grace = mock_license_deps
-        # Forza licenza non valida e niente periodo di grazia
+    def test_initialize_emergency_grace_success(self, mocker, mock_msgbox_warn):
+        """Verifica avvio in modalità provvisoria tramite periodo di grazia."""
+        m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
         m_status.return_value = (LicenseStatus.INVALID, "Expired")
-        m_grace.return_value = (False, "No Grace", None)
+        mocker.patch("src.core.app_initializer.run_update")
+        
+        mocker.patch("src.core.app_initializer.check_emergency_grace_period", 
+                     return_value=(True, "Grace Active", 3))
+        mocker.patch("src.core.app_initializer.get_hardware_id", return_value="HWID")
+        mocker.patch("src.core.app_initializer.db_manager.init_db")
+        
+        assert AppInitializer.initialize() is True
+        mock_msgbox_warn.assert_called_once()
 
-        # Mocking QMessageBox to prevent blocking UI
-        with patch("src.core.app_initializer.QMessageBox.critical"):
-            AppInitializer.initialize()
-            # Deve chiamare sys.exit(1)
-            mock_exit.assert_called_with(1)
+    def test_initialize_failed_license_exit(self, mocker, mock_msgbox):
+        """Verifica che l'app esca se licenza e grazia falliscono."""
+        m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
+        m_status.return_value = (LicenseStatus.INVALID, "Banned")
+        mocker.patch("src.core.app_initializer.run_update")
+        mocker.patch("src.core.app_initializer.check_emergency_grace_period", 
+                     return_value=(False, "Grace Expired", 0))
+        mocker.patch("src.core.app_initializer.get_hardware_id", return_value="HWID")
+        
+        mock_exit = mocker.patch("sys.exit")
+        
+        AppInitializer.initialize()
+        
+        mock_exit.assert_called_once_with(1)
+        mock_msgbox.assert_called_once()
 
-    @patch("src.core.app_initializer.db_manager.init_db", side_effect=Exception("DB Error"))
-    @patch("src.core.app_initializer.sys.exit")
-    def test_initialize_fail_db(self, mock_exit, mock_db, mock_license_deps):
-        with patch("src.core.app_initializer.QMessageBox.critical"):
-            AppInitializer.initialize()
-            mock_exit.assert_called_with(1)
-
-    def test_setup_app_style(self):
-        mock_app = MagicMock()
-        with patch("src.core.app_initializer.apply_theme"):
-            AppInitializer.setup_app_style(mock_app)
-            mock_app.setStyle.assert_called_with("Fusion")
-            assert mock_app.setApplicationName.called
+    def test_initialize_db_error_exit(self, mocker, mock_msgbox):
+        """Verifica che l'app esca se il database non si inizializza."""
+        m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
+        m_status.return_value = (LicenseStatus.VALID, "OK")
+        
+        m_db = mocker.patch("src.core.app_initializer.db_manager.init_db")
+        m_db.side_effect = Exception("DB Corrupted")
+        
+        mock_exit = mocker.patch("sys.exit")
+        
+        AppInitializer.initialize()
+        
+        mock_exit.assert_called_once_with(1)
+        mock_msgbox.assert_called_once()

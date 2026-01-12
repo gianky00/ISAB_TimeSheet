@@ -89,12 +89,15 @@ class TestRunner:
         with open(STATE_FILE, "w") as f:
             json.dump(state, f, indent=2)
 
-    def discover_tests(self, target_dir=None):
+    def discover_tests(self, targets=None):
         Console.info("🔍 Rilevamento test in corso (pytest --collect-only)...")
         
         cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q"]
-        if target_dir:
-            cmd.append(target_dir)
+        if targets:
+            if isinstance(targets, list):
+                cmd.extend(targets)
+            else:
+                cmd.append(targets)
 
         try:
             result = subprocess.run(
@@ -200,6 +203,7 @@ class TestRunner:
 
     def run(self):
         parser = argparse.ArgumentParser(description="🛡️ Robust Test Runner")
+        parser.add_argument("targets", nargs="*", help="File o directory di test specifici da eseguire.")
         parser.add_argument("--reset", action="store_true", help="Ricomincia da zero ignorando lo stato precedente.")
         parser.add_argument("--filter", type=str, help="Esegui solo test in questo path (es. tests/unit).")
         parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="Timeout in secondi per file.")
@@ -217,7 +221,11 @@ class TestRunner:
 
         # 1. Caricamento Stato o Inizio
         state = self.load_state()
-        should_reset = args.reset or state is None or args.filter
+        
+        # Determina i target: preferenza ad argomenti posizionali, poi --filter
+        targets = args.targets if args.targets else args.filter
+        
+        should_reset = args.reset or state is None or targets
 
         if should_reset:
             # Pulizia dati copertura precedenti su reset
@@ -226,7 +234,7 @@ class TestRunner:
             except Exception:
                 pass
             
-            self.files_map = self.discover_tests(args.filter)
+            self.files_map = self.discover_tests(targets)
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             self.queue_files = sorted(list(self.files_map.keys()))
             Console.info(f"Nuova sessione: {self.total_tests} test in {len(self.files_map)} file.")

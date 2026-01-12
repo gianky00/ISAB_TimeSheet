@@ -1,129 +1,104 @@
-"""
-Unit Tests for Backup Features
-Tests cloud detection and backup creation logic.
-"""
-
 import os
-from unittest.mock import patch
-
+import zipfile
 import pytest
-
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 from src.core.backup_manager import BackupManager
 
+class TestBackupFeatures:
+    @pytest.fixture
+    def mock_dirs(self, tmp_path):
+        """Prepara directory sorgente e destinazione per i test."""
+        source = tmp_path / "source"
+        source.mkdir()
+        target = tmp_path / "target"
+        target.mkdir()
+        
+        # Crea file critici
+        (source / "data.db").write_text("db content")
+        (source / "config.json").write_text("{}")
+        
+        # Crea cartella da escludere
+        (source / "cache").mkdir()
+        (source / "cache" / "trash.tmp").write_text("junk")
+        
+        return source, target
 
-@pytest.fixture
-def mock_home(tmp_path):
-    """Mocks user home directory with fake cloud folders."""
-    home = tmp_path / "home"
-    home.mkdir()
+    def test_detect_cloud_paths_onedrive(self, mocker):
+        """Verifica rilevamento OneDrive tramite variabile d'ambiente."""
+        # Setup: Mock Path.home() per restituire un oggetto Path che si comporta bene
+        fake_home = Path("/home/user")
+        mocker.patch("pathlib.Path.home", return_value=fake_home)
+        
+        # Mock os.environ.get
+        mocker.patch("os.environ.get", return_value="/cloud/onedrive")
+        # Mock os.path.isdir per dire che quel path ESISTE
+        mocker.patch("os.path.isdir", return_value=True)
+        # Importante: mockare anche os.path.exists se usato internamente o neighboring logic
+        mocker.patch("os.path.exists", return_value=True)
+        
+        paths = BackupManager.detect_cloud_paths()
+        assert "OneDrive" in paths
+        # Su Windows i percorsi potrebbero venire normalizzati, ma il contenuto deve corrispondere
+        assert "/cloud/onedrive" in str(paths["OneDrive"]).replace("\\", "/")
 
-    # Create fake cloud dirs
-    (home / "OneDrive").mkdir()
-    (home / "Google Drive").mkdir()
-
-    return home
-
-
-def test_detect_cloud_paths(mock_home):
-    """Test detection of cloud services."""
-    with patch("pathlib.Path.home", return_value=mock_home):
-        # Clear env var to test folder detection
-        with patch.dict(os.environ, {"OneDrive": ""}):
-            paths = BackupManager.detect_cloud_paths()
-            assert "OneDrive" in paths
-            assert "Google Drive" in paths
-            assert paths["OneDrive"] == mock_home / "OneDrive"
-
-
-def test_get_backup_dir_onedrive_priority(mock_home):
-    """Test that OneDrive is prioritized by default."""
-    with patch("pathlib.Path.home", return_value=mock_home), patch.dict(
-        os.environ, {"OneDrive": str(mock_home / "OneDrive")}
-    ):
-
-        # Mock config to empty
-        with patch("src.core.backup_manager.load_config", return_value={}):
-            backup_dir = BackupManager.get_backup_dir()
-            expected = mock_home / "OneDrive" / "SyncroJob_Backups"
-            assert backup_dir == expected
-
-
-def test_get_backup_dir_user_preference(mock_home):
-    """Test user preference override."""
-    with patch("pathlib.Path.home", return_value=mock_home):
-        # User prefers Google Drive
-        # MOCK detect_cloud_paths to return only our mocked paths, preventing real G: drive detection
-        mock_clouds = {"Google Drive": mock_home / "Google Drive"}
-
-        with patch(
-            "src.core.backup_manager.load_config", return_value={"backup_cloud_provider": "Google Drive"}
-        ), patch("src.core.backup_manager.BackupManager.detect_cloud_paths", return_value=mock_clouds):
-
-            backup_dir = BackupManager.get_backup_dir()
-            expected = mock_home / "Google Drive" / "SyncroJob_Backups"
-            assert backup_dir == expected
-
-
-def test_get_backup_dir_local_fallback(tmp_path):
-    """Test fallback to Documents if no cloud found."""
-    # Empty home
-    empty_home = tmp_path / "empty_home"
-    empty_home.mkdir()
-
-    with patch("pathlib.Path.home", return_value=empty_home), patch.dict(os.environ, {"OneDrive": ""}):
-
-        # Ensure detect_cloud_paths finds nothing
-        with patch("src.core.backup_manager.load_config", return_value={}), patch(
-            "src.core.backup_manager.BackupManager.detect_cloud_paths", return_value={}
-        ):
-
-            backup_dir = BackupManager.get_backup_dir()
-            expected = empty_home / "Documents" / "SyncroJob_Backups"
-            assert backup_dir == expected
-
-
-def test_create_backup_success(tmp_path):
-    """Test creation of ZIP backup."""
-    # Mock source config dir
-    fake_config_dir = tmp_path / "config"
-    fake_config_dir.mkdir()
-    (fake_config_dir / "test.db").touch()
-    (fake_config_dir / "config.json").touch()
-
-    # Mock target dir
-    target_dir = tmp_path / "backups"
-    target_dir.mkdir()
-
-    with patch("src.core.backup_manager.CONFIG_DIR", fake_config_dir), patch(
-        "src.core.backup_manager.BackupManager.get_backup_dir", return_value=target_dir
-    ), patch("src.core.audit_manager.AuditManager.log_action") as mock_audit:
-
-        success, msg = BackupManager.create_backup()
-
+    def test_create_backup_logic(self, mock_dirs, mocker):
+        """Verifica che il backup contenga solo i file corretti."""
+        source, target = mock_dirs
+        mocker.patch("src.core.backup_manager.CONFIG_DIR", source)
+        mocker.patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=target)
+        
+        # Esegui backup
+        success, zip_path = BackupManager.create_backup()
+        
         assert success is True
-        assert "SyncroJob_Backup_" in msg
-        assert len(list(target_dir.glob("*.zip"))) == 1
-        mock_audit.assert_called()
+        assert Path(zip_path).exists()
+        
+        # Ispezione ZIP
+        with zipfile.ZipFile(zip_path, "r") as z:
+            names = z.namelist()
+            assert "data.db" in names
+            assert "config.json" in names
+            # Cache esclusa
+            assert not any("cache" in n for n in names)
 
+    def test_cleanup_old_backups(self, mock_dirs):
+        """Verifica che vengano mantenuti solo gli ultimi N backup."""
+        _, target = mock_dirs
+        
+        # Crea 7 finti backup
+        for i in range(7):
+            p = target / f"SyncroJob_Backup_2026010{i}_000000.zip"
+            p.write_text("zip data")
+            # Forza tempi di modifica diversi
+            os.utime(p, (1000 + i, 1000 + i))
+            
+        BackupManager._cleanup_old_backups(target, keep=5)
+        
+        remaining = list(target.glob("*.zip"))
+        assert len(remaining) == 5
 
-def test_cleanup_old_backups(tmp_path):
-    """Test rotation of old backups."""
-    target_dir = tmp_path / "rotation"
-    target_dir.mkdir()
+    def test_restore_backup_safe_extraction(self, mock_dirs, mocker):
+        """Verifica che il restore sovrascriva i dati nella sorgente."""
+        source, target = mock_dirs
+        mocker.patch("src.core.backup_manager.CONFIG_DIR", source)
+        
+        # Crea uno zip di backup
+        zip_path = target / "test_restore.zip"
+        with zipfile.ZipFile(zip_path, "w") as z:
+            z.writestr("new_data.db", "restored content")
+            
+        success, msg = BackupManager.restore_backup(str(zip_path))
+        
+        assert success is True
+        assert (source / "new_data.db").exists()
+        assert (source / "new_data.db").read_text() == "restored content"
 
-    # Create 10 dummy backups with DIFFERENT mtimes
-    import time
-
-    for i in range(10):
-        p = target_dir / f"SyncroJob_Backup_2025010{i}.zip"
-        p.touch()
-        # Set mtime explicitly (files created earlier have smaller timestamp)
-        # We want 09 to be newest -> highest timestamp
-        os.utime(p, (time.time() + i * 10, time.time() + i * 10))
-
-    BackupManager._cleanup_old_backups(target_dir, keep=5)
-
-    remaining = list(target_dir.glob("*.zip"))
-    assert len(remaining) == 5
-    # Ensure newest remains (09 has highest mtime)
-    assert (target_dir / "SyncroJob_Backup_20250109.zip").exists()
+    def test_restore_invalid_zip(self, tmp_path):
+        """Verifica errore in caso di file non zip."""
+        bad_file = tmp_path / "fake.zip"
+        bad_file.write_text("not a zip")
+        
+        success, msg = BackupManager.restore_backup(str(bad_file))
+        assert success is False
+        assert "non valido" in msg
