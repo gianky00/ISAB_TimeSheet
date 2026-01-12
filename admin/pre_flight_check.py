@@ -78,10 +78,11 @@ def check_requirements_sync():
         return False
 
 def run_tests():
-    print_step("Esecuzione Test Suite (Robust Mode)...")
+    print_step("Esecuzione Test Suite (Robust Mode - Fail Fast)...")
     # Utilizza il runner robusto che gestisce isolamento, report e retry
     runner_script = PROJECT_ROOT / "tests" / "run_robust_tests.py"
-    cmd = [sys.executable, str(runner_script), "--reset"]
+    # Aggiunto --exitfirst per fermarsi al primo errore (Fail-Fast)
+    cmd = [sys.executable, str(runner_script), "--reset", "--exitfirst"]
 
     try:
         # Eseguiamo subprocess lasciando l'output visibile

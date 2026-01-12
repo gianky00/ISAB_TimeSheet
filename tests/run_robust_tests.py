@@ -205,7 +205,9 @@ class TestRunner:
         parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="Timeout in secondi per file.")
         parser.add_argument("--retry", type=int, default=0, help="Numero di retry per test falliti (per flaky tests).")
         parser.add_argument("--coverage-only", action="store_true", help="Calcola e mostra solo la copertura totale.")
+        parser.add_argument("-x", "--exitfirst", action="store_true", help="Ferma l'esecuzione al primo fallimento.")
         args = parser.parse_args()
+        self.exitfirst = args.exitfirst
 
         if args.coverage_only:
             self.show_coverage()
@@ -331,6 +333,12 @@ class TestRunner:
                     "error": error_msg,
                     "full_output": full_log
                 })
+
+                if getattr(self, "exitfirst", False):
+                    Console.error("\n⛔ EXITFIRST: Test fallito. Interruzione immediata.")
+                    self.save_state()
+                    self.generate_report()
+                    sys.exit(1)
 
     def finish(self):
         total_time = time.time() - self.start_time

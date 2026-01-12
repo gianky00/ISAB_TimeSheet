@@ -148,6 +148,92 @@ class TestBackupManagerCoverage:
                 assert success is True
                 assert (config_dir / "restored.json").exists()
 
+    def test_detect_cloud_paths_google_drive_fallback(self, tmp_path):
+        """Test Google Drive fallback to user folder."""
+        with patch("pathlib.Path.home", return_value=tmp_path):
+            (tmp_path / "Google Drive").mkdir()
+            with patch("os.path.exists", return_value=False):
+                paths = BackupManager.detect_cloud_paths()
+                assert "Google Drive" in paths
+
+    def test_detect_cloud_paths_mega(self, tmp_path):
+        """Test MEGA detection."""
+        with patch("pathlib.Path.home", return_value=tmp_path):
+            (tmp_path / "MEGAsync").mkdir()
+            paths = BackupManager.detect_cloud_paths()
+            assert "MEGA" in paths
+            
+            # Alternative path
+            (tmp_path / "MEGAsync").rmdir()
+            (tmp_path / "MEGA").mkdir()
+            paths = BackupManager.detect_cloud_paths()
+            assert "MEGA" in paths
+
+    def test_get_backup_dir_fallback_clouds(self, tmp_path):
+        """Test get_backup_dir fallback when clouds exist but preferred not set."""
+        clouds = {"Dropbox": tmp_path / "Dropbox"}
+        with patch("src.core.backup_manager.BackupManager.detect_cloud_paths", return_value=clouds):
+            with patch("src.core.backup_manager.load_config", return_value={}):
+                target = BackupManager.get_backup_dir()
+                assert target == clouds["Dropbox"] / "SyncroJob_Backups"
+
+    def test_get_backup_dir_manual_override(self, tmp_path):
+        """Test get_backup_dir with manual path override."""
+        manual_path = tmp_path / "manual"
+        manual_path.mkdir()
+        with patch("src.core.backup_manager.load_config", return_value={"backup_path": str(manual_path)}):
+            target = BackupManager.get_backup_dir()
+            assert target == manual_path
+
+    def test_create_backup_exception(self):
+        """Test create_backup exception handling."""
+        with patch("src.core.backup_manager.BackupManager.get_backup_dir", side_effect=Exception("Path error")):
+            success, msg = BackupManager.create_backup()
+            assert success is False
+            assert "Path error" in msg
+
+    def test_cleanup_old_backups_exception(self, tmp_path):
+        """Test _cleanup_old_backups exception handling."""
+        # Mocking glob to return a mock file that raises exception on unlink
+        with patch("src.core.backup_manager.Path.glob") as mock_glob:
+            mock_file = MagicMock()
+            mock_file.unlink.side_effect = Exception("Locked")
+            mock_glob.return_value = [mock_file]
+            
+            with patch("src.core.backup_manager.os.path.getmtime", return_value=1000):
+                BackupManager._cleanup_old_backups(tmp_path, keep=0)
+                assert mock_file.unlink.called
+
+    def test_cleanup_old_backups_outer_exception(self, tmp_path):
+        """Test _cleanup_old_backups outer exception handling."""
+        with patch("src.core.backup_manager.Path.glob", side_effect=Exception("Glob fail")):
+            # Should not crash
+            BackupManager._cleanup_old_backups(tmp_path)
+
+    def test_list_backups_exception(self):
+        """Test list_backups exception handling."""
+        with patch("src.core.backup_manager.BackupManager.get_backup_dir", side_effect=Exception("List fail")):
+            assert BackupManager.list_backups() == []
+
+    def test_restore_backup_not_found(self):
+        """Test restoring non-existent file."""
+        success, msg = BackupManager.restore_backup("missing.zip")
+        assert success is False
+        assert "non trovato" in msg
+
+    def test_get_backup_dir_fallback_onedrive(self, tmp_path):
+        """Test get_backup_dir auto-fallback to OneDrive."""
+        clouds = {"OneDrive": tmp_path / "OneDrive"}
+        with patch("src.core.backup_manager.BackupManager.detect_cloud_paths", return_value=clouds):
+            with patch("src.core.backup_manager.load_config", return_value={}):
+                target = BackupManager.get_backup_dir()
+                assert target == clouds["OneDrive"] / "SyncroJob_Backups"
+
+    def test_list_backups_dir_not_exists(self):
+        """Test list_backups when target dir doesn't exist."""
+        with patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=Path("non_existent_dir_123")):
+            assert BackupManager.list_backups() == []
+
     def test_restore_backup_invalid(self, tmp_path):
         """Test restoring invalid file."""
         bad_zip = tmp_path / "bad.zip"
@@ -156,3 +242,14 @@ class TestBackupManagerCoverage:
         success, msg = BackupManager.restore_backup(str(bad_zip))
         assert success is False
         assert "non valido" in msg
+
+    def test_restore_backup_exception(self, tmp_path):
+        """Test restore_backup exception handling."""
+        zip_path = tmp_path / "test.zip"
+        with zipfile.ZipFile(zip_path, "w") as z:
+            z.writestr("test.txt", "content")
+            
+        with patch("zipfile.ZipFile", side_effect=Exception("Extract error")):
+            success, msg = BackupManager.restore_backup(str(zip_path))
+            assert success is False
+            assert "Extract error" in msg

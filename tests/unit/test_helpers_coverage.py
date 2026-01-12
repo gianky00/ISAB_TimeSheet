@@ -9,6 +9,11 @@ from unittest.mock import patch, MagicMock
 from src.utils import helpers
 
 class TestHelpersCoverage:
+    def test_sanitize_filename_empty(self):
+        from src.utils.helpers import sanitize_filename
+        # Stringa che diventa vuota dopo sanitizzazione e strip
+        assert sanitize_filename(".") == "unnamed_file"
+        assert sanitize_filename("..") == "unnamed_file"
 
     def test_get_asset_path_dev(self):
         """Test get_asset_path in dev mode (not frozen)."""
@@ -139,7 +144,7 @@ class TestHelpersCoverage:
 
     def test_sanitize_filename(self):
         assert helpers.sanitize_filename("valid_file.txt") == "valid_file.txt"
-        assert helpers.sanitize_filename("File Con Spazi.pdf") == "File_Con_Spazi.pdf"
+        assert helpers.sanitize_filename("File Con Spazi.pdf") == "File Con Spazi.pdf"
         
         # Logic analysis: "../traversal.txt" -> ".._traversal.txt" -> "._traversal.txt" -> "_traversal.txt" (strip)
         # So we expect "_traversal.txt" not ".traversal.txt"

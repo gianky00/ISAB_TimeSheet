@@ -160,3 +160,43 @@ class TestAuditManager:
         """Test verify_integrity exception handling."""
         with patch("src.core.audit_manager.sqlite3.connect", side_effect=Exception("Integrity Fail")):
             assert mock_db.verify_integrity() is False
+
+    def test_init_db_migration_exception(self, tmp_path):
+        """Test that init_db handles migration errors gracefully."""
+        db_file = tmp_path / "migration_fail.db"
+        with patch("src.core.audit_manager.AuditManager.DB_PATH", db_file):
+            with patch("src.core.audit_manager.sqlite3.connect") as mock_conn:
+                mock_c = MagicMock()
+                mock_conn.return_value.__enter__.return_value = mock_c
+                
+                # 1 call for CREATE TABLE
+                # 5 calls for ALTER TABLE
+                # 1 call for UPDATE (PULIZIA DATI)
+                # 1 call for CREATE INDEX
+                
+                side_effects = [None, None, None, None, None, None, Exception("Update Fail"), None]
+                mock_c.execute.side_effect = side_effects
+                
+                AuditManager._instance = None
+                manager = AuditManager()
+                assert manager is not None
+
+    @pytest.mark.skipif(os.name != "nt", reason="Windows specific test")
+    @patch("src.core.audit_manager.os.environ.get")
+    def test_get_current_user_win32_exception(self, mock_env, mock_db):
+        """Test Windows API fallback exception."""
+        mock_env.return_value = None
+        import sys
+        with patch("getpass.getuser", side_effect=Exception("Failed")):
+            # Creiamo un mock per ctypes
+            mock_ctypes = MagicMock()
+            mock_ctypes.windll.advapi32.GetUserNameW.side_effect = Exception("Win32 Fail")
+            with patch.dict(sys.modules, {"ctypes": mock_ctypes}):
+                assert mock_db._get_current_user() == "unknown"
+
+    def test_log_action_full_exception(self, mock_db):
+        """Trigger the catch-all exception in log_action."""
+        # Triggering error during parameter processing
+        with patch("json.dumps", side_effect=TypeError("Not serializable")):
+            mock_db.log_action("Fail", params=object())
+            # Should not crash

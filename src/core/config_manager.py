@@ -66,7 +66,7 @@ def load_config() -> Dict[str, Any]:
             return copy.deepcopy(_config_cache)
 
         ensure_config_dir()
-        config = DEFAULT_CONFIG.copy()
+        config = copy.deepcopy(DEFAULT_CONFIG)
 
         if CONFIG_FILE.exists():
             try:

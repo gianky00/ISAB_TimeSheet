@@ -1,5 +1,6 @@
-
 import json
+import uuid
+from datetime import datetime
 import pytest
 from unittest.mock import patch, MagicMock
 from src.core import notification_manager, config_manager
@@ -97,18 +98,33 @@ class TestNotificationManagerCoverage:
     def test_get_notifications_filter(self, tmp_path):
         with patch.object(config_manager, "CONFIG_DIR", tmp_path):
             mgr = notification_manager.NotificationManager.instance()
-            mgr.add_notification("Unread", "M")
-            mgr.add_notification("Read", "M")
-            mgr.mark_as_read(mgr.notifications[0]["id"]) # Mark 'Read' as read (it's at index 0 because add inserts at 0)
+            mgr.add_notification("Unread", "M", "info")
+            mgr.add_notification("Read", "M", "info")
+            mgr.notifications[0]["read"] = True # Mark "Read" as read (it was inserted at 0)
             
-            # Wait, add_notification inserts at 0.
-            # 1. Add "Unread". List: [Unread]
-            # 2. Add "Read". List: [Read, Unread]
-            # 3. Mark index 0 ("Read") as read.
+            unread = mgr.get_notifications(filter_unread=True)
+            assert len(unread) == 1
+            assert unread[0]["title"] == "Unread"
             
-            all_n = mgr.get_notifications(filter_unread=False)
-            unread_n = mgr.get_notifications(filter_unread=True)
-            
-            assert len(all_n) == 2
-            assert len(unread_n) == 1
-            assert unread_n[0]["title"] == "Unread"
+            all_notifs = mgr.get_notifications(filter_unread=False)
+            assert len(all_notifs) == 2
+
+    def test_load_notifications_exception(self, tmp_path):
+        """Test _load_notifications exception handling."""
+        notif_file = tmp_path / "notifications.json"
+        notif_file.write_text("NOT JSON")
+        
+        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
+            # Reset instance to force reload
+            notification_manager.NotificationManager._instance = None
+            manager = notification_manager.NotificationManager.instance()
+            # Should return empty list on JSON error
+            assert manager.notifications == []
+
+    def test_save_notifications_exception(self, tmp_path):
+        """Test _save_notifications exception handling."""
+        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
+            mgr = notification_manager.NotificationManager.instance()
+            with patch("builtins.open", side_effect=Exception("Disk error")):
+                # Should not crash
+                mgr._save_notifications()

@@ -140,6 +140,12 @@ class TestSecretsManagerCoverage:
         # Should not raise
         SecretsManager.delete_credential("api", "user")
 
+    def test_delete_credential_exception(self):
+        """Test delete_credential exception handling."""
+        with patch("keyring.delete_password", side_effect=Exception("Keyring Fail")):
+            # Should not crash
+            SecretsManager.delete_credential("any", "user")
+
     def test_specific_api_getters(self, mock_keyring):
         """Test wrapper methods for specific keys."""
         mock_keyring.get_password.return_value = "test_val"

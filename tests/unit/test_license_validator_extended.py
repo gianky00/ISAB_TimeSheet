@@ -13,6 +13,8 @@ from src.core.license_validator import (
     LicenseStatus,
     _calculate_sha256,
     _get_license_paths,
+    _check_integrity_with_manifest,
+    _validate_license_data,
     get_detailed_license_status,
     get_hardware_id,
     get_license_client,
@@ -313,6 +315,77 @@ def test_get_detailed_license_status_valid(
     assert status == LicenseStatus.VALID
     assert "Licenza valida per" in msg
 
+def test_get_detailed_license_status_mkdir_fail(mocker):
+    mocker.patch("os.path.exists", side_effect=[False, False]) # Dir doesn't exist
+    mocker.patch("os.makedirs", side_effect=OSError("Permesso negato"))
+    mocker.patch("src.core.license_validator._get_license_paths", return_value={"dir": "/root/lic"})
+    
+    status, msg = get_detailed_license_status()
+    assert status == LicenseStatus.ERROR
+    assert "Impossibile creare cartella" in msg
+
+def test_check_integrity_exception(mocker):
+    paths = {"manifest": "any.json", "config": "any.dat"}
+    mocker.patch("builtins.open", side_effect=Exception("Read error"))
+    status, msg = _check_integrity_with_manifest(paths)
+    assert status == LicenseStatus.ERROR
+    assert "Errore lettura manifest" in msg
+
+def test_validate_license_data_no_payload(mocker):
+    mocker.patch("src.core.license_validator.get_license_info", return_value=None)
+    status, msg = _validate_license_data({})
+    assert status == LicenseStatus.INVALID
+    assert "Impossibile leggere" in msg
+
+def test_validate_license_data_invalid_date(mocker):
+    payload = {"Hardware ID": "SAME", "Scadenza Licenza": "invalid"}
+    mocker.patch("src.core.license_validator.get_license_info", return_value=payload)
+    mocker.patch("src.core.license_validator.get_hardware_id", return_value="SAME")
+    status, msg = _validate_license_data({})
+    assert status == LicenseStatus.INVALID
+    assert "Formato data" in msg
+
+def test_validate_license_data_expired_untrusted(mocker):
+    payload = {"Hardware ID": "SAME", "Scadenza Licenza": "01/01/2020"}
+    mocker.patch("src.core.license_validator.get_license_info", return_value=payload)
+    mocker.patch("src.core.license_validator.get_hardware_id", return_value="SAME")
+    # Scaduta e orario NON fidato - patchiamo dove viene IMPORTATA
+    mocker.patch("src.core.license_validator.get_trusted_time", return_value=(datetime(2021, 1, 1, tzinfo=timezone.utc), False))
+    
+    status, msg = _validate_license_data({})
+    assert status == LicenseStatus.EXPIRED
+    assert "Verifica orario di sistema" in msg
+
+def test_validate_license_data_exception(mocker):
+    mocker.patch("src.core.license_validator.get_license_info", side_effect=Exception("Boom"))
+    status, msg = _validate_license_data({})
+    assert status == LicenseStatus.ERROR
+    assert "Errore validazione" in msg
+
+def test_get_license_info_no_key(mocker, mock_license_dir):
+    mocker.patch("src.core.license_validator._get_license_paths", return_value={"config": os.path.join(mock_license_dir, "config.dat")})
+    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch.object(SecretsManager, "get_license_key", return_value=None)
+    assert get_license_info() is None
+
+def test_get_license_info_exception(mocker, mock_license_dir):
+    mocker.patch("src.core.license_validator._get_license_paths", return_value={"config": os.path.join(mock_license_dir, "config.dat")})
+    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("builtins.open", side_effect=Exception("Read fail"))
+    assert get_license_info() is None
+
+def test_get_license_expiry_none(mocker):
+    mocker.patch("src.core.license_validator.get_license_info", return_value=None)
+    assert get_license_expiry() == "N/D"
+
+def test_get_license_client_none(mocker):
+    mocker.patch("src.core.license_validator.get_license_info", return_value=None)
+    assert get_license_client() == "N/D"
+
+def test_get_hardware_id_exception(mocker):
+    mocker.patch("platform.system", return_value="Unknown")
+    mocker.patch("src.core.license_validator.uuid.getnode", side_effect=Exception("UUID fail"))
+    assert get_hardware_id() == "ERROR_GETTING_ID"
 
 def test_verify_license(mocker):
     mocker.patch(
