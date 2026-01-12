@@ -1541,7 +1541,8 @@ class TimbratureDBPanel(QWidget):
                     date_part = date_str.split(" ")[0] if " " in date_str else date_str
                     dt = datetime.strptime(date_part, "%Y-%m-%d")
                     f_row[0] = dt.strftime("%d/%m/%Y")
-            except Exception: pass
+            except Exception:
+                pass
             formatted_rows.append(f_row)
 
         self.model.update_data(formatted_rows)

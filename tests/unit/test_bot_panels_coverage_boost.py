@@ -25,7 +25,13 @@ class TestBotPanelsFinalCoverage:
                 assert mock_set.called
 
     def test_timbrature_bot_start_logic(self, qapp, qtbot):
-        with patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]}):
+        with patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]}), \
+             patch("src.gui.panels.BotWorker") as MockWorker:  # Mock the Worker class
+            
+            # Setup mock worker instance
+            mock_worker_instance = MockWorker.return_value
+            mock_worker_instance.start = MagicMock()
+
             panel = TimbratureBotPanel()
             qtbot.addWidget(panel)
 
@@ -42,3 +48,5 @@ class TestBotPanelsFinalCoverage:
                     panel._on_start()
                     assert mock_create.called
                     assert panel.worker is not None
+                    # Verify worker started
+                    mock_worker_instance.start.assert_called_once()

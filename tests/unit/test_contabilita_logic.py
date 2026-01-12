@@ -26,10 +26,10 @@ class TestContabilitaLogic:
             mock_cursor.fetchall.return_value = []
             yield mock1
 
-    @patch("src.core.contabilita_manager.DataSynchronizer.sync_contabilita_dati")
-    @patch("src.core.contabilita_manager.pd.read_sql")
-    @patch("src.core.contabilita_manager.pd.read_excel")
-    @patch("src.core.contabilita_manager.pd.ExcelFile")
+    @patch("src.core.excel_importer.DataSynchronizer.sync_contabilita_dati")
+    @patch("src.core.excel_importer.pd.read_sql")
+    @patch("src.core.excel_importer.pd.read_excel")
+    @patch("src.core.excel_importer.pd.ExcelFile")
     def test_import_data_success(
         self, mock_excel_file, mock_read_excel, mock_read_sql, mock_sync, mock_db
     ):

@@ -2052,14 +2052,6 @@ class SettingsPanel(QWidget):
         self.settings_saved.emit()
 
     def _reset_settings(self):
-        self._load_settings()
-
-    def prompt_save_if_needed(self) -> bool:
-        """Ora restituisce sempre True perché salva tutto subito."""
-        return True
-
-
-    def _reset_settings(self):
         if self._has_unsaved_changes:
             if (
                 QMessageBox.question(self, "Conferma", "Annullare modifiche?")

@@ -8,11 +8,11 @@ from src.core.contabilita_manager import ContabilitaManager
 
 class TestCertificatiImport(unittest.TestCase):
 
-    @patch("src.core.contabilita_manager.pd.read_sql")
-    @patch("src.core.contabilita_manager.db_manager")
-    @patch("src.core.contabilita_manager.pd.ExcelFile")
-    @patch("src.core.contabilita_manager.pd.read_excel")
-    @patch("src.core.contabilita_manager.Path.exists")
+    @patch("src.core.excel_importer.pd.read_sql")
+    @patch("src.core.excel_importer.db_manager")
+    @patch("src.core.excel_importer.pd.ExcelFile")
+    @patch("src.core.excel_importer.pd.read_excel")
+    @patch("src.core.excel_importer.Path.exists")
     def test_import_certificati_dynamic_header(
         self, mock_exists, mock_read_excel, mock_excel_file, mock_db_manager, mock_read_sql
     ):

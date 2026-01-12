@@ -49,7 +49,7 @@ class TestNotificationsPanelDeep:
                     pass
 
     def test_audit_log_widget_refresh(self, qapp, qtbot):
-        with patch("src.core.audit_manager.AuditManager") as mock_audit:
+        with patch("src.gui.notifications_panel.AuditManager") as mock_audit:
             mock_inst = mock_audit.return_value
             mock_inst.verify_integrity.return_value = True
             mock_inst.get_logs.return_value = [

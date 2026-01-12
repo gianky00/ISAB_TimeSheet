@@ -541,159 +541,187 @@ class TelegramService(QObject):
                 parse_mode=constants.ParseMode.MARKDOWN,
             )
 
-    async def _handle_bot_actions(self, data, query, chat_id, update, context):
-        """Gestisce le azioni di controllo dei Bot."""
-        if data == "menu_pdl":
-            merge_all = self.pdl_settings.get(chat_id, {}).get("merge_all", False)
-            merge_icon = "✅" if merge_all else "❌"
-            keyboard = [
-                [InlineKeyboardButton("➕ Inserisci", callback_data="input_pdl")],
-                [
-                    InlineKeyboardButton("📋 Lista", callback_data="list_pdl"),
-                    InlineKeyboardButton("🗑️ Svuota", callback_data="clear_pdl"),
-                ],
-                [
-                    InlineKeyboardButton(
-                        f"🔗 Unisci Tutto: {merge_icon}",
-                        callback_data="toggle_merge_all_pdl",
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "🖨️ Avvia (Print ON)", callback_data="run_pdl_on"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "📄 Avvia (Print OFF)", callback_data="run_pdl_off"
-                    )
-                ],
-                [self._get_back_button("nav_safework")],
-            ]
-            await query.edit_message_text(
-                "🛡️ *SafeWork PDL*",
-                reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode=constants.ParseMode.MARKDOWN,
-            )
-        elif data == "toggle_merge_all_pdl":
-            if chat_id not in self.pdl_settings:
-                self.pdl_settings[chat_id] = {}
-            current = self.pdl_settings[chat_id].get("merge_all", False)
-            self.pdl_settings[chat_id]["merge_all"] = not current
-            query.data = "menu_pdl"
-            await self._handle_button(update, context)
-            return
-        elif data == "menu_ts":
-            keyboard = [
-                [InlineKeyboardButton("➕ OdA", callback_data="input_oda")],
-                [
-                    InlineKeyboardButton("📋 Lista", callback_data="list_ts"),
-                    InlineKeyboardButton("🗑️ Svuota", callback_data="clear_ts"),
-                ],
-                [InlineKeyboardButton("▶ Avvia", callback_data="run_ts")],
-                [self._get_back_button("nav_portale")],
-            ]
-            await query.edit_message_text(
-                "📥 *Portale TS*",
-                reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode=constants.ParseMode.MARKDOWN,
-            )
-        elif data == "menu_oda_details":
-            keyboard = [
-                [InlineKeyboardButton("➕ OdA", callback_data="input_oda")],
-                [
-                    InlineKeyboardButton("📋 Lista", callback_data="list_ts"),
-                    InlineKeyboardButton("🗑️ Svuota", callback_data="clear_ts"),
-                ],
-                [
-                    InlineKeyboardButton(
-                        "▶ Avvia Dettagli", callback_data="run_oda_details"
-                    )
-                ],
-                [self._get_back_button("nav_portale")],
-            ]
-            await query.edit_message_text(
-                "📋 *Dettagli OdA*",
-                reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode=constants.ParseMode.MARKDOWN,
-            )
-        elif data == "menu_carico":
-            await query.edit_message_text(
-                "📤 *Carico TS*",
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "▶ Avvia Carico", callback_data="run_carico"
-                            )
-                        ],
-                        [self._get_back_button("nav_portale")],
-                    ]
-                ),
-                parse_mode=constants.ParseMode.MARKDOWN,
-            )
-        elif data == "menu_timbrature":
-            await query.edit_message_text(
-                "⏱️ *Timbrature*",
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "🕒 Ieri", callback_data="run_timbrature_yesterday"
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                "📅 Oggi", callback_data="run_timbrature_today"
-                            )
-                        ],
-                        [self._get_back_button("nav_portale")],
-                    ]
-                ),
-                parse_mode=constants.ParseMode.MARKDOWN,
-            )
-        elif data == "input_pdl":
-            self.user_states[chat_id] = "WAITING_PDL"
-            await query.edit_message_text("⌨️ Inserisci PDL:")
-        elif data == "input_oda":
-            self.user_states[chat_id] = "WAITING_ODA"
-            await query.edit_message_text("⌨️ Inserisci OdA:")
-        elif data == "run_pdl_on":
-            from src.utils.printing import get_installed_printers
+    async def _handle_menu_pdl(self, query, chat_id):
+        merge_all = self.pdl_settings.get(chat_id, {}).get("merge_all", False)
+        merge_icon = "✅" if merge_all else "❌"
+        keyboard = [
+            [InlineKeyboardButton("➕ Inserisci", callback_data="input_pdl")],
+            [
+                InlineKeyboardButton("📋 Lista", callback_data="list_pdl"),
+                InlineKeyboardButton("🗑️ Svuota", callback_data="clear_pdl"),
+            ],
+            [
+                InlineKeyboardButton(
+                    f"🔗 Unisci Tutto: {merge_icon}",
+                    callback_data="toggle_merge_all_pdl",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🖨️ Avvia (Print ON)", callback_data="run_pdl_on"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📄 Avvia (Print OFF)", callback_data="run_pdl_off"
+                )
+            ],
+            [self._get_back_button("nav_safework")],
+        ]
+        await query.edit_message_text(
+            "🛡️ *SafeWork PDL*",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode=constants.ParseMode.MARKDOWN,
+        )
 
-            printers = get_installed_printers()
-            keyboard = [
+    async def _handle_toggle_merge_all_pdl(self, query, chat_id, update, context):
+        if chat_id not in self.pdl_settings:
+            self.pdl_settings[chat_id] = {}
+        current = self.pdl_settings[chat_id].get("merge_all", False)
+        self.pdl_settings[chat_id]["merge_all"] = not current
+        query.data = "menu_pdl"
+        await self._handle_button(update, context)
+
+    async def _handle_menu_ts(self, query):
+        keyboard = [
+            [InlineKeyboardButton("➕ OdA", callback_data="input_oda")],
+            [
+                InlineKeyboardButton("📋 Lista", callback_data="list_ts"),
+                InlineKeyboardButton("🗑️ Svuota", callback_data="clear_ts"),
+            ],
+            [InlineKeyboardButton("▶ Avvia", callback_data="run_ts")],
+            [self._get_back_button("nav_portale")],
+        ]
+        await query.edit_message_text(
+            "📥 *Portale TS*",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode=constants.ParseMode.MARKDOWN,
+        )
+
+    async def _handle_menu_oda_details(self, query):
+        keyboard = [
+            [InlineKeyboardButton("➕ OdA", callback_data="input_oda")],
+            [
+                InlineKeyboardButton("📋 Lista", callback_data="list_ts"),
+                InlineKeyboardButton("🗑️ Svuota", callback_data="clear_ts"),
+            ],
+            [
+                InlineKeyboardButton(
+                    "▶ Avvia Dettagli", callback_data="run_oda_details"
+                )
+            ],
+            [self._get_back_button("nav_portale")],
+        ]
+        await query.edit_message_text(
+            "📋 *Dettagli OdA*",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode=constants.ParseMode.MARKDOWN,
+        )
+
+    async def _handle_menu_carico(self, query):
+        await query.edit_message_text(
+            "📤 *Carico TS*",
+            reply_markup=InlineKeyboardMarkup(
                 [
-                    InlineKeyboardButton(
-                        f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}"
-                    )
-                ]
-                for p in printers[:6]
-            ]
-            keyboard.append([self._get_back_button("menu_pdl")])
-            await query.edit_message_text(
-                "Seleziona la stampante:", reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        elif data == "run_pdl_off":
-            await query.edit_message_text(
-                "Vuoi ricevere il PDF unito in chat?",
-                reply_markup=InlineKeyboardMarkup(
                     [
-                        [
-                            InlineKeyboardButton(
-                                "✅ Sì, invia in chat",
-                                callback_data="confirm_merge_yes_noprint",
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                "❌ No", callback_data="confirm_merge_no_noprint"
-                            )
-                        ],
-                        [self._get_back_button("menu_pdl")],
-                    ]
-                ),
-            )
+                        InlineKeyboardButton(
+                            "▶ Avvia Carico", callback_data="run_carico"
+                        )
+                    ],
+                    [self._get_back_button("nav_portale")],
+                ]
+            ),
+            parse_mode=constants.ParseMode.MARKDOWN,
+        )
+
+    async def _handle_menu_timbrature(self, query):
+        await query.edit_message_text(
+            "⏱️ *Timbrature*",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "🕒 Ieri", callback_data="run_timbrature_yesterday"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "📅 Oggi", callback_data="run_timbrature_today"
+                        )
+                    ],
+                    [self._get_back_button("nav_portale")],
+                ]
+            ),
+            parse_mode=constants.ParseMode.MARKDOWN,
+        )
+
+    async def _handle_input_pdl(self, query, chat_id):
+        self.user_states[chat_id] = "WAITING_PDL"
+        await query.edit_message_text("⌨️ Inserisci PDL:")
+
+    async def _handle_input_oda(self, query, chat_id):
+        self.user_states[chat_id] = "WAITING_ODA"
+        await query.edit_message_text("⌨️ Inserisci OdA:")
+
+    async def _handle_run_pdl_on(self, query):
+        from src.utils.printing import get_installed_printers
+
+        printers = get_installed_printers()
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}"
+                )
+            ]
+            for p in printers[:6]
+        ]
+        keyboard.append([self._get_back_button("menu_pdl")])
+        await query.edit_message_text(
+            "Seleziona la stampante:", reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    async def _handle_run_pdl_off(self, query):
+        await query.edit_message_text(
+            "Vuoi ricevere il PDF unito in chat?",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "✅ Sì, invia in chat",
+                            callback_data="confirm_merge_yes_noprint",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "❌ No", callback_data="confirm_merge_no_noprint"
+                        )
+                    ],
+                    [self._get_back_button("menu_pdl")],
+                ]
+            ),
+        )
+
+    async def _handle_bot_actions(self, data, query, chat_id, update, context):
+        """Gestisce le azioni di controllo dei Bot con dispatch map."""
+        # Mapping action -> handler function
+        actions_map = {
+            "menu_pdl": lambda: self._handle_menu_pdl(query, chat_id),
+            "toggle_merge_all_pdl": lambda: self._handle_toggle_merge_all_pdl(
+                query, chat_id, update, context
+            ),
+            "menu_ts": lambda: self._handle_menu_ts(query),
+            "menu_oda_details": lambda: self._handle_menu_oda_details(query),
+            "menu_carico": lambda: self._handle_menu_carico(query),
+            "menu_timbrature": lambda: self._handle_menu_timbrature(query),
+            "input_pdl": lambda: self._handle_input_pdl(query, chat_id),
+            "input_oda": lambda: self._handle_input_oda(query, chat_id),
+            "run_pdl_on": lambda: self._handle_run_pdl_on(query),
+            "run_pdl_off": lambda: self._handle_run_pdl_off(query),
+        }
+
+        if handler := actions_map.get(data):
+            await handler()
+
         elif data.startswith("sel_print_run_"):
             sn = data.replace("sel_print_run_", "")
             fpn = self._get_full_printer_name(sn)

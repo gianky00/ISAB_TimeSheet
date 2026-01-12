@@ -19,6 +19,9 @@ class ConcreteBot(BaseBot):
         self._check_stop()
         return True
 
+    def _handle_unsaved_changes_popup(self):
+        pass
+
 @pytest.fixture
 def mock_bot_deps():
     with patch("src.bots.base.base_bot.webdriver") as mock_webdriver, \

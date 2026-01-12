@@ -36,65 +36,6 @@ def get_current_version():
     match = re.search(r'__version__\s*=\s*"(.*?)"', content)
     return match.group(1) if match else "unknown"
 
-def main():
-    parser = argparse.ArgumentParser(description="SyncroJob Automated Release Tool")
-    parser.add_argument("type", choices=["patch", "minor", "major", "auto"], default="auto", nargs="?", help="Bump type")
-    parser.add_argument("--deploy", action="store_true", help="Deploy to Netlify")
-    parser.add_argument("--skip-tests", action="store_true", help="Skip test execution during pre-flight")
-    parser.add_argument("--no-git", action="store_true", help="Skip Git operations")
-    parser.add_argument("--push", action="store_true", help="Push to remote after release")
-    args = parser.parse_args()
-
-    start_time = time.time()
-
-    # 1. Pre-Flight Check Interno
-    pre_flight_cmd = [str(VENV_PYTHON), "admin/pre_flight_check.py"]
-    if args.skip_tests:
-        pre_flight_cmd.append("--skip-tests")
-
-    run_command(pre_flight_cmd, "Pre-Flight Safety Check")
-
-    # 2. Sync Requirements
-    run_command([str(VENV_PYTHON), "admin/sync_requirements.py"], "Syncing Requirements")
-
-    # 3. Resolve Bump Type
-    bump_type = args.type
-    if bump_type == "auto":
-        bump_type = detect_bump_type()
-        print(f"🔍 Detected bump type: {bump_type}")
-
-    # 4. Version Bump
-    run_command([str(VENV_PYTHON), "admin/bump_version.py", bump_type], f"Bumping {bump_type}")
-    new_version = get_current_version()
-
-    # 4. Generate Icons (Ensures visual assets are up to date)
-    run_command([str(VENV_PYTHON), "admin/Crea Setup/generate_icons.py"], "Updating Icons")
-
-    # 5. Git Operations
-    if not args.no_git:
-        run_command(["git", "add", "."], "Staging changes")
-        run_command(["git", "commit", "-m", f"chore: release v{new_version} [auto]"], f"Committing v{new_version}")
-        run_command(["git", "tag", "-a", f"v{new_version}", "-m", f"Release v{new_version}"], f"Tagging v{new_version}")
-        if args.push:
-            run_command(["git", "push", "origin", "main", "--tags"], "Pushing to remote")
-
-    # 5. Build
-    build_cmd = [str(VENV_PYTHON), "admin/Crea Setup/build_dist.py"]
-    if not args.deploy:
-        build_cmd.append("--no-deploy")
-    run_command(build_cmd, "Building Distribution")
-
-    duration = time.time() - start_time
-    success_msg = f"🚀 *SyncroJob v{new_version} Rilasciata!*\nStatus: Success\nTempo: {duration:.1f}s\nMode: {'Cloud' if args.deploy else 'Local'}"
-
-    print("\n" + "=" * 60)
-    print(f"✨ RELEASE v{new_version} COMPLETED in {duration:.1f}s")
-    print("=" * 60)
-
-    notify_telegram(success_msg)
-
-
-
 def notify_telegram(message):
     """Invia notifica rapida via Telegram (usando i segreti nel progetto)"""
     try:
@@ -154,6 +95,8 @@ def detect_bump_type():
         # Default PATCH (fix, refactor, chore, docs, ecc.)
         return "patch"
     except Exception:
+        return "patch"
+
 def main():
     parser = argparse.ArgumentParser(description="SyncroJob Automated Release Tool")
     parser.add_argument("type", choices=["patch", "minor", "major", "auto"], default="auto", nargs="?", help="Bump type")

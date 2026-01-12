@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt6.QtCore import QAbstractTableModel, Qt
 
 
 class FastTableModel(QAbstractTableModel):
@@ -11,10 +11,10 @@ class FastTableModel(QAbstractTableModel):
         self._data = data or []
         self._headers = headers or []
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent=None):
         return len(self._data)
 
-    def columnCount(self, parent=QModelIndex()):
+    def columnCount(self, parent=None):
         return len(self._headers)
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):

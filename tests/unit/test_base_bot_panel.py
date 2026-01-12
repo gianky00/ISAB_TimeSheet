@@ -1,10 +1,11 @@
+import sys
 import threading
 import unittest
 from datetime import datetime
-from unittest.mock import MagicMock, PropertyMock, patch  # Added PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import (  # Added QGraphicsOpacityEffect
+from PyQt6.QtWidgets import (
     QApplication,
     QGroupBox,
     QHBoxLayout,
@@ -16,25 +17,20 @@ from PyQt6.QtWidgets import (  # Added QGraphicsOpacityEffect
 
 # Import the panels and worker
 from src.gui.panels import BaseBotPanel
-from src.gui.widgets import (  # Added EditableDataTable
+from src.gui.widgets import (
     EditableDataTable,
     ModernButton,
 )
 from src.gui.widgets.status_card import StatusCard
 
 
-# Mock QApplication
-class MockQApplication(QApplication):
-    def __init__(self, *args, **kwargs):
-        pass
-
 class TestBaseBotPanel(unittest.TestCase):
 
     def setUp(self):
-        if QApplication.instance() is None:
-            self.app = MockQApplication([])
-        else:
-            self.app = QApplication.instance()
+        # Ensure QApplication exists
+        self.app = QApplication.instance()
+        if self.app is None:
+            self.app = QApplication(sys.argv)
 
         # Mock dependencies for BaseBotPanel and its subclasses
         self.mock_parent = MagicMock(spec=QWidget)
@@ -55,7 +51,8 @@ class TestBaseBotPanel(unittest.TestCase):
         self.patcher_panels_stats_manager = patch('src.gui.panels.StatsManager', new=MagicMock(return_value=self.mock_stats_manager_instance))
         self.patcher_panels_stats_manager.start()
 
-        self.patcher_status_card = patch('src.gui.widgets.status_card.StatusCard')
+        # Patch StatusCard in src.gui.panels
+        self.patcher_status_card = patch('src.gui.panels.StatusCard')
         self.mock_status_card_class = self.patcher_status_card.start()
         self.mock_status_card_instance = MagicMock()
         self.mock_status_card_class.return_value = self.mock_status_card_instance
@@ -64,7 +61,8 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_status_card_instance._status_label.text.return_value = "Idle message"
         self.mock_status_card_instance.setStatus = MagicMock() # Mock setStatus
 
-        self.patcher_log_widget = patch('src.gui.widgets.LogWidget')
+        # Patch LogWidget in src.gui.panels
+        self.patcher_log_widget = patch('src.gui.panels.LogWidget')
         self.mock_log_widget_class = self.patcher_log_widget.start()
         self.mock_log_widget_instance = MagicMock()
         self.mock_log_widget_instance.append = MagicMock() # Explicitly mock append
@@ -72,7 +70,8 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_log_widget_instance.timeline.set_mood = MagicMock() # Mock set_mood
         self.mock_log_widget_class.return_value = self.mock_log_widget_instance
 
-        self.patcher_modern_button = patch('src.gui.widgets.modern_button.ModernButton')
+        # Patch ModernButton in src.gui.panels
+        self.patcher_modern_button = patch('src.gui.panels.ModernButton')
         self.mock_modern_button_class = self.patcher_modern_button.start()
         self.mock_start_btn_instance = MagicMock(spec=QPushButton)
         self.mock_stop_btn_instance = MagicMock(spec=QPushButton)
@@ -118,28 +117,33 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_bot_worker_instance.bot = self.mock_worker_bot_instance
         self.mock_bot_worker_class.return_value = self.mock_bot_worker_instance
 
-        # Patch PyQt6.QtWidgets Layouts and Widgets that are instantiated in _setup_base_ui
-        self.patcher_qvboxlayout = patch('PyQt6.QtWidgets.QVBoxLayout')
+        # Patch PyQt6.QtWidgets Layouts and Widgets in src.gui.panels
+        self.patcher_qvboxlayout = patch('src.gui.panels.QVBoxLayout')
         self.mock_qvboxlayout_class = self.patcher_qvboxlayout.start()
         self.mock_qvboxlayout_instance = MagicMock(spec=QVBoxLayout)
         self.mock_qvboxlayout_class.return_value = self.mock_qvboxlayout_instance
 
-        self.patcher_qhboxlayout = patch('PyQt6.QtWidgets.QHBoxLayout')
+        self.patcher_qhboxlayout = patch('src.gui.panels.QHBoxLayout')
         self.mock_qhboxlayout_class = self.patcher_qhboxlayout.start()
         self.mock_qhboxlayout_instance = MagicMock(spec=QHBoxLayout)
         self.mock_qhboxlayout_class.return_value = self.mock_qhboxlayout_instance
 
-        self.patcher_qgroupbox = patch('PyQt6.QtWidgets.QGroupBox') # Added
+        self.patcher_qgroupbox = patch('src.gui.panels.QGroupBox')
         self.mock_qgroupbox_class = self.patcher_qgroupbox.start()
         self.mock_qgroupbox_instance = MagicMock(spec=QGroupBox)
         self.mock_qgroupbox_class.return_value = self.mock_qgroupbox_instance
 
-        self.patcher_qwidget_for_content = patch('PyQt6.QtWidgets.QWidget') # for content_widget
+        # We cannot easily patch src.gui.panels.QWidget because BaseBotPanel inherits from it.
+        # If we patch it, we might break the inheritance if the module is reloaded or if we patch before import.
+        # But we imported BaseBotPanel at top of file.
+        # However, self.content_widget = QWidget() uses the name in the module.
+        # Let's try patching it.
+        self.patcher_qwidget_for_content = patch('src.gui.panels.QWidget') 
         self.mock_qwidget_for_content_class = self.patcher_qwidget_for_content.start()
-        self.mock_content_widget_instance = self.mock_qwidget_for_content_class.return_value # Get the instance returned
+        self.mock_content_widget_instance = self.mock_qwidget_for_content_class.return_value 
 
-        # Patch QGraphicsOpacityEffect for MissionReportCard usage
-        self.patcher_qgraphic_opacity_effect = patch('PyQt6.QtWidgets.QGraphicsOpacityEffect')
+        # Patch QGraphicsOpacityEffect in src.gui.widgets.timeline_widget because that's where it is used
+        self.patcher_qgraphic_opacity_effect = patch('src.gui.widgets.timeline_widget.QGraphicsOpacityEffect')
         self.mock_qgraphic_opacity_effect_class = self.patcher_qgraphic_opacity_effect.start()
         self.mock_qgraphic_opacity_effect_instance = MagicMock()
         self.mock_qgraphic_opacity_effect_class.return_value = self.mock_qgraphic_opacity_effect_instance
@@ -199,8 +203,9 @@ class TestBaseBotPanel(unittest.TestCase):
         self.patcher_mission_report_card.stop() # Added
         self.patcher_re_module.stop()
 
-        if hasattr(self, 'app') and self.app is not None and not isinstance(self.app, MockQApplication):
-            self.app.quit()
+        # Do NOT quit the app here. Keep it alive for the session.
+        # if hasattr(self, 'app') and self.app is not None:
+        #     self.app.quit()
 
     def test_base_panel_init(self):
         self.assertEqual(self.panel.bot_id, "bot_id")

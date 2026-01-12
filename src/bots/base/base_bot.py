@@ -361,9 +361,8 @@ class BaseBot(ABC):
         # Placeholder - implement if needed or used
         return True
 
-    @abstractmethod
     def _handle_unsaved_changes_popup(self):
-        """Handle eventual 'unsaved changes' popup."""
+        """Handle eventual 'unsaved changes' popup. Default implementation: do nothing."""
         pass
 
     def _handle_session_popup(self):

@@ -123,16 +123,21 @@ def _isolate_config(tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def cleanup_widgets(qapp):
+def cleanup_widgets():
     """
     Force clean up of all top-level widgets after each test.
     This prevents "Widget Zombie" leaks and GDI handle exhaustion on Windows.
+    Does NOT require 'qapp' fixture to avoid creating QApplication for non-GUI tests.
     """
     yield
 
     import gc
 
     from PyQt6.QtWidgets import QApplication
+
+    # Only clean up if QApplication exists
+    if not QApplication.instance():
+        return
 
     # Try to import sip for explicit C++ deletion
     try:
@@ -154,7 +159,7 @@ def cleanup_widgets(qapp):
             pass
 
     # Process deferred delete events
-    qapp.processEvents()
+    QApplication.processEvents()
 
     # Force Python Garbage Collection
     gc.collect()

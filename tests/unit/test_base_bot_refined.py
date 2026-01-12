@@ -11,6 +11,7 @@ class ConcreteDummyBot(BaseBot):
     @property
     def description(self): return "Desc"
     def run(self, data): return True
+    def _handle_unsaved_changes_popup(self): pass
 
 class TestBaseBotRefined:
     def test_request_stop_logic(self):
