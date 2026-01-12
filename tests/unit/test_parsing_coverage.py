@@ -1,5 +1,5 @@
-import pytest
 from src.utils.parsing import parse_currency
+
 
 class TestParsingCoverage:
     """Test suite per src/utils/parsing.py"""
@@ -44,18 +44,18 @@ class TestParsingCoverage:
         """Test logica complessa punti/virgole."""
         # Solo virgola
         assert parse_currency("1234,56") == 1234.56
-        
+
         # Più punti (migliaia)
         assert parse_currency("1.234.567") == 1234567.0
-        
+
         # Solo un punto - ambiguo
         # "1.234" -> 3 cifre dopo punto. Attualmente il codice lascia il punto se == 3.
         # float("1.234") -> 1.234
         assert parse_currency("1.234") == 1.234
-        
+
         # "1.23" -> < 3 cifre -> Decimale
         assert parse_currency("1.23") == 1.23
-        
+
         # "1.2345" -> > 3 cifre -> Decimale
         assert parse_currency("1.2345") == 1.2345
 

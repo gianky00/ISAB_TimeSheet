@@ -158,7 +158,7 @@ class ExcelImporter:
         if match:
             year = int(match.group(1))
             return year if 2000 <= year <= 2100 else None
-        
+
         if sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
             return datetime.now().year
         return None
@@ -202,7 +202,7 @@ class ExcelImporter:
                     rename_map[col] = "data_prev"
                 elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
                     rename_map[col] = "n_prev"
-        
+
         df.rename(columns=rename_map, inplace=True)
         return df
 

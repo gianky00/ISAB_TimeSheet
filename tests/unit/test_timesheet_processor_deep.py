@@ -1,8 +1,11 @@
 
-import pytest
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+import pytest
+
 from src.core.timesheet_processor import TimesheetProcessor
+
 
 class TestTimesheetProcessorDeep:
     @pytest.fixture
@@ -33,7 +36,7 @@ class TestTimesheetProcessorDeep:
         file_path = tmp_path / "wrong.xlsx"
         df = pd.DataFrame({"A": [1]})
         df.to_excel(file_path, sheet_name="Sheet1")
-        
+
         success, msg = TimesheetProcessor.process_file(file_path)
         assert success is False
         assert "non trovato" in msg
@@ -44,7 +47,7 @@ class TestTimesheetProcessorDeep:
         df = pd.DataFrame({"Data": ["2024"]})
         with pd.ExcelWriter(file_path) as writer:
             df.to_excel(writer, sheet_name='Timesheet', startrow=1, index=False)
-            
+
         success, msg = TimesheetProcessor.process_file(file_path)
         assert success is True
         assert "Nessuna colonna POS" in msg

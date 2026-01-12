@@ -31,8 +31,7 @@ class TestParsingSuite:
     def test_parse_currency_cleaning(self):
         """Verifica rimozione testo e caratteri sporchi."""
         assert parse_currency("50 Euro") == 50.0
-        assert parse_currency(" 100 
- ") == 100.0
+        assert parse_currency(" 100 \n ") == 100.0
         assert parse_currency("NaN") == 0.0
         assert parse_currency(None) == 0.0
 

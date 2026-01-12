@@ -1,5 +1,5 @@
-import pytest
 from src.utils.validators import InputValidator
+
 
 class TestValidatorsCoverage:
     """Test suite per src/utils/validators.py"""

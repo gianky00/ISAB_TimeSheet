@@ -36,7 +36,7 @@ class AppInitializer:
     def _check_license():
         try:
             status, msg = get_detailed_license_status()
-            
+
             # Se la licenza non è valida o manca, tenta l'aggiornamento online
             if status != LicenseStatus.VALID:
                 logger.info("Licenza non valida o mancante. Tentativo di aggiornamento online...")
@@ -48,7 +48,7 @@ class AppInitializer:
                 logger.warning(f"Validazione licenza fallita ({status.value}): {msg}")
                 grace_allowed, grace_msg, remaining = check_emergency_grace_period()
                 hw_id = get_hardware_id()
-                
+
                 if grace_allowed:
                     logger.info(f"Accesso consentito tramite periodo di grazia: {grace_msg}")
                     QMessageBox.warning(
@@ -65,7 +65,7 @@ class AppInitializer:
                         f"Impossibile trovare una licenza valida e il periodo di grazia è scaduto.\n\n{msg}\n\nID Hardware: {hw_id}",
                     )
                     return False
-            
+
             logger.info("Licenza verificata con successo.")
             return True
         except Exception as e:

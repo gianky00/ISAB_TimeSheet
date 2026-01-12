@@ -12,8 +12,8 @@ from src.core.audit_manager import AuditManager
 from src.core.license_validator import (
     LicenseStatus,
     _calculate_sha256,
-    _get_license_paths,
     _check_integrity_with_manifest,
+    _get_license_paths,
     _validate_license_data,
     get_detailed_license_status,
     get_hardware_id,
@@ -319,7 +319,7 @@ def test_get_detailed_license_status_mkdir_fail(mocker):
     mocker.patch("os.path.exists", side_effect=[False, False]) # Dir doesn't exist
     mocker.patch("os.makedirs", side_effect=OSError("Permesso negato"))
     mocker.patch("src.core.license_validator._get_license_paths", return_value={"dir": "/root/lic"})
-    
+
     status, msg = get_detailed_license_status()
     assert status == LicenseStatus.ERROR
     assert "Impossibile creare cartella" in msg
@@ -351,7 +351,7 @@ def test_validate_license_data_expired_untrusted(mocker):
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="SAME")
     # Scaduta e orario NON fidato - patchiamo dove viene IMPORTATA
     mocker.patch("src.core.license_validator.get_trusted_time", return_value=(datetime(2021, 1, 1, tzinfo=timezone.utc), False))
-    
+
     status, msg = _validate_license_data({})
     assert status == LicenseStatus.EXPIRED
     assert "Verifica orario di sistema" in msg

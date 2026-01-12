@@ -1,5 +1,5 @@
-import pytest
 from src.utils.log_humanizer import SmartLogTranslator
+
 
 class TestLogHumanizerBoost:
     """Test suite estesa per SmartLogTranslator."""
@@ -31,7 +31,7 @@ class TestLogHumanizerBoost:
         msg = "Export completato e file salvato"
         # Nota: 'salvat' attiva download, ma 'completat' attiva success.
         # L'ordine degli if nel codice originale determina la priorità.
-        # 'scaric'/'salvat' viene prima di 'successo'/'completat'? 
+        # 'scaric'/'salvat' viene prima di 'successo'/'completat'?
         # Controllando il codice: 'download' è prima di 'success' nell'if-elif chain?
         # No, guardando il codice:
         # 1. start

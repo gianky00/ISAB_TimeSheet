@@ -1,8 +1,10 @@
+from pathlib import Path
+
 import pandas as pd
 import pytest
-from pathlib import Path
-from unittest.mock import patch
+
 from src.core.timesheet_processor import TimesheetProcessor
+
 
 class TestTimesheetProcessorCoverage:
     """Test suite for src/core/timesheet_processor.py"""
@@ -29,7 +31,7 @@ class TestTimesheetProcessorCoverage:
         df = pd.DataFrame({"A": [1]})
         with pd.ExcelWriter(file_path) as writer:
             df.to_excel(writer, sheet_name="Altro", index=False)
-        
+
         success, msg = TimesheetProcessor.process_file(file_path)
         assert success is False
         assert "Foglio 'Timesheet' non trovato" in msg
@@ -42,7 +44,7 @@ class TestTimesheetProcessorCoverage:
         # In pandas to_excel, startrow=1 scrive header a riga 2 (index 1).
         with pd.ExcelWriter(file_path) as writer:
             sample_df.to_excel(writer, sheet_name="Timesheet", index=False, startrow=1)
-        
+
         success, msg = TimesheetProcessor.process_file(file_path)
         assert success is True
         assert "Trovati 2 POS univoci" in msg
@@ -53,7 +55,7 @@ class TestTimesheetProcessorCoverage:
         df = pd.DataFrame({"Altro": [1, 2]})
         with pd.ExcelWriter(file_path) as writer:
             df.to_excel(writer, sheet_name="Timesheet", index=False, startrow=1)
-            
+
         success, msg = TimesheetProcessor.process_file(file_path)
         assert success is True
         assert "Nessuna colonna POS trovata" in msg
@@ -62,7 +64,7 @@ class TestTimesheetProcessorCoverage:
         """Test gestione eccezioni (es. file corrotto o non leggibile)."""
         file_path = tmp_path / "corrupted.xlsx"
         file_path.write_text("Not an excel file") # Scrive testo, pd.ExcelFile fallirà
-        
+
         success, msg = TimesheetProcessor.process_file(file_path)
         assert success is False
         # msg conterrà l'errore di pandas/zipfile

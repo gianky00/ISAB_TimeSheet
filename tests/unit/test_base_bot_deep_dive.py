@@ -1,10 +1,11 @@
 
+from unittest.mock import MagicMock
+
 import pytest
-import time
-from unittest.mock import MagicMock, patch
-from selenium.common.exceptions import SessionNotCreatedException, TimeoutException
+
 from src.bots.base.base_bot import BaseBot
 from src.core.constants import BotStatus
+
 
 class ConcreteBot(BaseBot):
     """Implementazione concreta per testare la classe base."""
@@ -26,14 +27,14 @@ class TestBaseBotDeepDive:
         m_cleanup = mocker.patch.object(bot, "cleanup")
         mocker.patch("time.sleep")
         mocker.patch.object(bot, "_check_stop")
-        
+
         # Primo tentativo: errore driver
         # Secondo tentativo: successo
         m_init.side_effect = [Exception("Driver Crash"), None]
         m_login.return_value = True
-        
+
         res = bot._safe_login_with_retry(max_retries=2)
-        
+
         assert res is True
         assert m_init.call_count == 2
         assert m_cleanup.call_count == 1 # Chiamato dopo il primo fallimento
@@ -43,9 +44,9 @@ class TestBaseBotDeepDive:
         m_safe_login = mocker.patch.object(bot, "_safe_login_with_retry", return_value=True)
         m_run = mocker.patch.object(bot, "run", return_value=True)
         m_cleanup = mocker.patch.object(bot, "cleanup")
-        
+
         success = bot.execute([{"data": 1}])
-        
+
         assert success is True
         assert bot.status == BotStatus.COMPLETED
         m_cleanup.assert_called_once()
@@ -53,9 +54,9 @@ class TestBaseBotDeepDive:
     def test_execute_validation_failure(self, bot, mocker):
         """Verifica che il bot si fermi se la validazione dati fallisce."""
         mocker.patch.object(bot, "validate_data", return_value=(False, "Errore dati"))
-        
+
         success = bot.execute([{}])
-        
+
         assert success is False
         assert bot.status == BotStatus.ERROR
 
@@ -63,12 +64,12 @@ class TestBaseBotDeepDive:
         """Verifica il salvataggio di screenshot e HTML in caso di errore."""
         bot.driver = MagicMock()
         bot.driver.page_source = "<html>Error</html>"
-        
+
         mock_config_dir = tmp_path / "config"
         mocker.patch("src.core.config_manager.CONFIG_DIR", mock_config_dir)
-        
+
         bot._save_error_state("Fatal error")
-        
+
         error_dir = mock_config_dir / "logs" / "errors"
         assert error_dir.exists()
         # Dovrebbero esserci .png e .html
@@ -80,10 +81,10 @@ class TestBaseBotDeepDive:
         """Verifica il rilevamento del Proxy Error nel portale."""
         mock_driver = MagicMock()
         mock_driver.title = "502 Proxy Error"
-        
+
         from src.bots.base.login_page import LoginPage
         lp = LoginPage(mock_driver, MagicMock(), isab_url="http://isab")
-        
+
         res = lp.login("u", "p")
         assert res is False
         # Non deve aver nemmeno provato a cercare i campi
@@ -95,14 +96,14 @@ class TestBaseBotDeepDive:
         # Mocking WebDriverWait direttamente nel modulo per precisione
         mock_wait_cls = mocker.patch("src.bots.base.login_page.WebDriverWait")
         mock_wait_inst = mock_wait_cls.return_value
-        
+
         mock_yes_btn = MagicMock()
         mock_wait_inst.until.return_value = mock_yes_btn
-        
+
         from src.bots.base.login_page import LoginPage
         lp = LoginPage(mock_driver, MagicMock())
         lp._check_and_handle_session_popup()
-        
+
         # Verifica che il bottone sia stato cliccato
         mock_yes_btn.click.assert_called_once()
 
@@ -113,9 +114,9 @@ class TestBaseBotDeepDive:
         mocker.patch.object(bot, "cleanup")
         mocker.patch("time.sleep")
         mocker.patch.object(bot, "_check_stop")
-        
+
         res = bot._safe_login_with_retry(max_retries=2)
-        
+
         assert res is False
         assert bot._login.call_count == 2
         assert bot.cleanup.call_count == 2

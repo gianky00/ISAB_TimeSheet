@@ -1,10 +1,8 @@
 
 import pytest
-from PyQt6.QtCore import Qt, QModelIndex
-from PyQt6.QtWidgets import QApplication
 
-from src.gui.scarico_ore_panel import ScaricoOrePanel, ScaricoOreWorker
-from src.core.contabilita_manager import ContabilitaManager
+from src.gui.scarico_ore_panel import ScaricoOrePanel
+
 
 class TestScaricoOrePanelDeep:
     @pytest.fixture
@@ -21,28 +19,28 @@ class TestScaricoOrePanelDeep:
             ("2024-01-01", "P1", "P2", "ODC1", "10", "08:00", "12:00", "4.5", "Desc", "S", "C1")
         ]
         panel.source_model.set_data(mock_data)
-        
+
         # Simula selezione colonna 7 per entrambe le righe
         selection_model = panel.table_view.selectionModel()
         idx1 = panel.source_model.index(0, 7)
         idx2 = panel.source_model.index(1, 7)
-        
+
         # Usa il flag di selezione corretto per PyQt6
         from PyQt6.QtCore import QItemSelectionModel
         selection_model.select(idx1, QItemSelectionModel.SelectionFlag.Select)
         selection_model.select(idx2, QItemSelectionModel.SelectionFlag.Select)
-        
+
         panel._update_selection_totals()
-        
+
         assert "12.5" in panel.lbl_selection_total.text()
 
     def test_header_filter_changed_logic(self, panel, mocker):
         """Verifica che il cambio filtro dell'intestazione aggiorni il modello."""
         mock_set_filter = mocker.patch.object(panel.source_model, "set_filter")
-        
+
         # Simula filtro su colonna 1 (Persona 1)
         panel._on_header_filter_changed(1, ["ROSSI", "VERDI"])
-        
+
         assert 1 in panel._current_col_filters
         assert "rossi" in panel._current_col_filters[1]
         mock_set_filter.assert_called_once()
@@ -59,16 +57,16 @@ class TestScaricoOrePanelDeep:
             ("D1", "P1", "P2", "ODC", "POS", "8:00", "17:00", "9.0", "DESC", "FIN", "COM")
         ]
         panel.source_model.set_data(mock_data)
-        
+
         # Seleziona riga
         panel.table_view.selectAll()
-        
+
         # Mocking QApplication.clipboard().setText()
         mock_clipboard = mocker.MagicMock()
         mocker.patch("PyQt6.QtWidgets.QApplication.clipboard", return_value=mock_clipboard)
-        
+
         panel._copy_selection()
-        
+
         # Verifica chiamata
         mock_clipboard.setText.assert_called_once()
         call_args = mock_clipboard.setText.call_args[0][0]
@@ -79,9 +77,9 @@ class TestScaricoOrePanelDeep:
         """Verifica il ripristino della UI dopo l'aggiornamento."""
         mocker.patch("pathlib.Path.exists", return_value=True)
         mocker.patch("pathlib.Path.unlink")
-        
+
         panel._on_update_finished(True, "Successo", added=10, removed=2, duration=15.5)
-        
+
         assert panel.update_btn.isEnabled()
         assert "✅" in panel.status_label.text()
         assert "+10" in panel.status_label.text()

@@ -1,8 +1,10 @@
 import sqlite3
+from unittest.mock import patch
+
 import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+
 from src.core.database import DatabaseManager
+
 
 class TestDatabaseCoverage:
     """
@@ -16,23 +18,23 @@ class TestDatabaseCoverage:
         # Crea path temporanei per i DB
         self.temp_dir = tmp_path / "data"
         self.temp_dir.mkdir()
-        
+
         self.db_contabilita = self.temp_dir / "test_contabilita.db"
         self.db_timbrature = self.temp_dir / "test_timbrature.db"
-        
+
         # Patch delle costanti nel DatabaseManager
         # Dato che è un Singleton, dobbiamo stare attenti.
         # Patchiamo le proprietà dell'istanza.
         self.db_manager = DatabaseManager()
-        
+
         # Salviamo i valori originali
         self.orig_cont = self.db_manager.DB_CONTABILITA
         self.orig_timb = self.db_manager.DB_TIMBRATURE
-        
+
         # Sovrascriviamo
         self.db_manager.DB_CONTABILITA = self.db_contabilita
         self.db_manager.DB_TIMBRATURE = self.db_timbrature
-        
+
         # Inizializza i DB (crea tabelle)
         self.db_manager.init_db()
 
@@ -66,7 +68,7 @@ class TestDatabaseCoverage:
         query = "SELECT name FROM sqlite_master WHERE type='table' AND name='timbrature';"
         res = self.db_manager.execute_query(self.db_timbrature, query)
         assert len(res) == 1
-        
+
         with self.db_manager.get_connection(self.db_timbrature) as conn:
             ver = self.db_manager._get_db_version(conn)
             assert ver == 2 # Ci sono 2 migrazioni
@@ -76,11 +78,11 @@ class TestDatabaseCoverage:
         # Insert
         insert_sql = "INSERT INTO contabilita (year, n_prev) VALUES (?, ?)"
         self.db_manager.execute_query(self.db_contabilita, insert_sql, (2024, "P-001"))
-        
+
         # Select
         select_sql = "SELECT year, n_prev FROM contabilita WHERE n_prev = ?"
         rows = self.db_manager.execute_query(self.db_contabilita, select_sql, ("P-001",))
-        
+
         assert len(rows) == 1
         assert rows[0][0] == 2024
         assert rows[0][1] == "P-001"
@@ -99,7 +101,7 @@ class TestDatabaseCoverage:
         with patch.object(sqlite3.Cursor, 'execute', side_effect=sqlite3.OperationalError("database is locked")) as mock_exec:
             with pytest.raises(sqlite3.OperationalError) as excinfo:
                 self.db_manager.execute_query(self.db_contabilita, "SELECT * FROM contabilita", retry_count=2)
-            
+
             assert "locked" in str(excinfo.value)
             # Deve aver riprovato retry_count volte (range(2) -> 0, 1)
             assert mock_exec.call_count == 2
@@ -108,15 +110,15 @@ class TestDatabaseCoverage:
         """Testa logica migrazioni manuale."""
         # Creiamo un DB vuoto e forziamo versione 0
         tmp_db = self.temp_dir / "migration_test.db"
-        
+
         # Definizione migrazione fake
         def mig_v1(conn):
             conn.execute("CREATE TABLE test (id INT)")
-            
+
         migrations = {1: mig_v1}
-        
+
         self.db_manager._run_migrations(tmp_db, migrations, "TestDB")
-        
+
         # Verifica
         with self.db_manager.get_connection(tmp_db) as conn:
             ver = self.db_manager._get_db_version(conn)

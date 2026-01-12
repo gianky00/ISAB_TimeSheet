@@ -1,5 +1,6 @@
 from src.core import constants
 
+
 class TestConstantsCoverage:
     """Test suite per src/core/constants.py"""
 

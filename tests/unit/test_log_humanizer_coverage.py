@@ -1,6 +1,7 @@
-import random
 from unittest.mock import patch
+
 from src.utils.log_humanizer import SmartLogTranslator
+
 
 class TestLogHumanizerCoverage:
     """Test suite per src/utils/log_humanizer.py"""
@@ -30,7 +31,7 @@ class TestLogHumanizerCoverage:
         human, tech, cat = SmartLogTranslator.humanize("Operazione completata")
         assert cat == "success"
         assert human in SmartLogTranslator.TEMPLATES["success"]
-        
+
         # Test con carattere speciale
         _, _, cat2 = SmartLogTranslator.humanize("Risultato ✓")
         assert cat2 == "success"
@@ -39,7 +40,7 @@ class TestLogHumanizerCoverage:
         human, tech, cat = SmartLogTranslator.humanize("Errore imprevisto")
         assert cat == "error"
         assert human in SmartLogTranslator.TEMPLATES["error"]
-        
+
         # Test con carattere speciale
         _, _, cat2 = SmartLogTranslator.humanize("Fallito ✗")
         assert cat2 == "error"
@@ -63,7 +64,7 @@ class TestLogHumanizerCoverage:
         _, tech, cat = SmartLogTranslator.humanize("Errore login credenziali")
         assert cat == "error"
         assert "[FIXIT:ACCOUNT]" in tech
-        
+
         # Solo credenziali
         _, tech, cat = SmartLogTranslator.humanize("credenziali errate")
         assert "[FIXIT:ACCOUNT]" in tech

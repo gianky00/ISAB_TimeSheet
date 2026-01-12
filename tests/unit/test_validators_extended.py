@@ -1,6 +1,6 @@
 
-import pytest
-from src.utils.validators import InputValidator, ValidationResult
+from src.utils.validators import InputValidator
+
 
 class TestValidatorsExtended:
     def test_validate_pdl_auto_suffix(self):
@@ -9,12 +9,12 @@ class TestValidatorsExtended:
         res_s = InputValidator.validate_pdl("123456")
         assert res_s.valid is True
         assert res_s.sanitized_value == "123456/S"
-        
+
         # >= 400000 -> /C
         res_c = InputValidator.validate_pdl("400001")
         assert res_c.valid is True
         assert res_c.sanitized_value == "400001/C"
-        
+
         # Già presente -> mantiene
         res_existing = InputValidator.validate_pdl("123456/C")
         assert res_existing.sanitized_value == "123456/C"
@@ -29,10 +29,10 @@ class TestValidatorsExtended:
     def test_validate_codice_fiscale_checksum(self):
         """Verifica l'algoritmo di checksum del Codice Fiscale."""
         # CF Valido (esempio reale/strutturato correttamente)
-        valid_cf = "RSSMRA80A01H501U" 
+        valid_cf = "RSSMRA80A01H501U"
         res = InputValidator.validate_codice_fiscale(valid_cf)
         assert res.valid is True
-        
+
         # Checksum errato (cambio l'ultima lettera)
         invalid_cf = "RSSMRA80A01H501Z"
         res_inv = InputValidator.validate_codice_fiscale(invalid_cf)

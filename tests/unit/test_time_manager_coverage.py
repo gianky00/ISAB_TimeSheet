@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from src.core import time_manager
+
 
 class TestTimeManagerCoverage:
     """Test suite per src/core/time_manager.py"""
@@ -32,7 +34,7 @@ class TestTimeManagerCoverage:
         mock_resp = MagicMock()
         mock_resp.headers = {} # No Date
         mock_head.return_value = mock_resp
-        
+
         dt = time_manager.get_network_time()
         assert dt is None
 
@@ -43,13 +45,13 @@ class TestTimeManagerCoverage:
         mock_resp = MagicMock()
         mock_resp.headers = {"Date": "Dummy"}
         mock_head.return_value = mock_resp
-        
+
         # Restituisci un datetime senza tzinfo
         naive_dt = datetime(2023, 1, 1, 12, 0, 0)
         mock_parse.return_value = naive_dt
-        
+
         dt = time_manager.get_network_time()
-        
+
         # Verifica che sia stato convertito in timezone aware
         assert dt.tzinfo == timezone.utc
         assert dt.year == 2023
@@ -59,7 +61,7 @@ class TestTimeManagerCoverage:
         """Test get_trusted_time usa rete se disponibile."""
         fake_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
         mock_net.return_value = fake_time
-        
+
         dt, trusted = time_manager.get_trusted_time()
         assert dt == fake_time
         assert trusted is True
@@ -68,7 +70,7 @@ class TestTimeManagerCoverage:
     def test_get_trusted_time_fallback(self, mock_net):
         """Test get_trusted_time fallback su sistema."""
         mock_net.return_value = None
-        
+
         dt, trusted = time_manager.get_trusted_time()
         assert isinstance(dt, datetime)
         assert trusted is False

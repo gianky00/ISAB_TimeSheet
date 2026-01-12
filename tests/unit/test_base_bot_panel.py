@@ -56,7 +56,7 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_status_card_class = self.patcher_status_card.start()
         # Bind real Enum to Mock class so code using StatusCard.Status works
         self.mock_status_card_class.Status = StatusCard.Status
-        
+
         self.mock_status_card_instance = MagicMock()
         self.mock_status_card_class.return_value = self.mock_status_card_instance
         type(self.mock_status_card_instance)._status = PropertyMock(return_value="idle") # Mock the _status property
@@ -147,9 +147,9 @@ class TestBaseBotPanel(unittest.TestCase):
         # But we imported BaseBotPanel at top of file.
         # However, self.content_widget = QWidget() uses the name in the module.
         # Let's try patching it.
-        self.patcher_qwidget_for_content = patch('src.gui.panels.QWidget') 
+        self.patcher_qwidget_for_content = patch('src.gui.panels.QWidget')
         self.mock_qwidget_for_content_class = self.patcher_qwidget_for_content.start()
-        self.mock_content_widget_instance = self.mock_qwidget_for_content_class.return_value 
+        self.mock_content_widget_instance = self.mock_qwidget_for_content_class.return_value
 
         # Patch QGraphicsOpacityEffect in src.gui.widgets.timeline_widget because that's where it is used
         self.patcher_qgraphic_opacity_effect = patch('src.gui.widgets.timeline_widget.QGraphicsOpacityEffect')

@@ -1,5 +1,7 @@
 import re
+
 from src.core import version
+
 
 def test_version_format():
     """Verifica formato versione Semantic Versioning like."""

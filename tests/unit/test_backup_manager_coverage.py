@@ -1,9 +1,10 @@
 import os
 import zipfile
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from src.core.backup_manager import BackupManager
+
 
 class TestBackupManagerCoverage:
 
@@ -19,7 +20,7 @@ class TestBackupManagerCoverage:
         """Test OneDrive detection in home directory."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             (tmp_path / "OneDrive").mkdir()
-            
+
             with patch.dict(os.environ, {}, clear=True): # Ensure env var not present
                 paths = BackupManager.detect_cloud_paths()
                 assert "OneDrive" in paths
@@ -31,10 +32,10 @@ class TestBackupManagerCoverage:
             with patch("os.path.exists") as mock_exists:
                 # Simulate G: drive existing
                 mock_exists.side_effect = lambda p: p == "G:/My Drive"
-                
+
                 paths = BackupManager.detect_cloud_paths()
                 assert "Google Drive" in paths
-                assert str(paths["Google Drive"]) == "G:\My Drive"
+                assert str(paths["Google Drive"]) == r"G:\My Drive"
 
     def test_detect_cloud_paths_dropbox(self, tmp_path):
         """Test Dropbox detection."""
@@ -46,7 +47,7 @@ class TestBackupManagerCoverage:
     def test_get_backup_dir_preferred(self, tmp_path):
         """Test get_backup_dir with user preference."""
         clouds = {"OneDrive": tmp_path / "OneDrive"}
-        
+
         with patch("src.core.backup_manager.BackupManager.detect_cloud_paths", return_value=clouds):
             with patch("src.core.backup_manager.load_config", return_value={"backup_cloud_provider": "OneDrive"}):
                 target = BackupManager.get_backup_dir()
@@ -76,7 +77,7 @@ class TestBackupManagerCoverage:
             with patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=target_dir):
                 with patch("src.core.audit_manager.AuditManager.log_action") as mock_audit:
                     success, path = BackupManager.create_backup()
-                    
+
                     assert success is True
                     assert "SyncroJob_Backup_" in path
                     assert Path(path).exists()
@@ -116,7 +117,7 @@ class TestBackupManagerCoverage:
             os.utime(p, (i*1000, i*1000))
 
         BackupManager._cleanup_old_backups(tmp_path, keep=3)
-        
+
         files = list(tmp_path.glob("*.zip"))
         assert len(files) == 3
         # Should have kept the 3 most recent (highest timestamps)
@@ -127,7 +128,7 @@ class TestBackupManagerCoverage:
         """Test listing backups."""
         (tmp_path / "SyncroJob_Backup_1.zip").touch()
         (tmp_path / "SyncroJob_Backup_2.zip").touch()
-        
+
         with patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=tmp_path):
             backups = BackupManager.list_backups()
             assert len(backups) == 2
@@ -162,7 +163,7 @@ class TestBackupManagerCoverage:
             (tmp_path / "MEGAsync").mkdir()
             paths = BackupManager.detect_cloud_paths()
             assert "MEGA" in paths
-            
+
             # Alternative path
             (tmp_path / "MEGAsync").rmdir()
             (tmp_path / "MEGA").mkdir()
@@ -199,7 +200,7 @@ class TestBackupManagerCoverage:
             mock_file = MagicMock()
             mock_file.unlink.side_effect = Exception("Locked")
             mock_glob.return_value = [mock_file]
-            
+
             with patch("src.core.backup_manager.os.path.getmtime", return_value=1000):
                 BackupManager._cleanup_old_backups(tmp_path, keep=0)
                 assert mock_file.unlink.called
@@ -238,7 +239,7 @@ class TestBackupManagerCoverage:
         """Test restoring invalid file."""
         bad_zip = tmp_path / "bad.zip"
         bad_zip.write_text("Not a zip")
-        
+
         success, msg = BackupManager.restore_backup(str(bad_zip))
         assert success is False
         assert "non valido" in msg
@@ -248,7 +249,7 @@ class TestBackupManagerCoverage:
         zip_path = tmp_path / "test.zip"
         with zipfile.ZipFile(zip_path, "w") as z:
             z.writestr("test.txt", "content")
-            
+
         with patch("zipfile.ZipFile", side_effect=Exception("Extract error")):
             success, msg = BackupManager.restore_backup(str(zip_path))
             assert success is False

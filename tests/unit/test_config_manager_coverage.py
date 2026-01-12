@@ -1,17 +1,18 @@
-import os
 import json
-import shutil
-import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+import pytest
+
 from src.core import config_manager
+
 
 @pytest.fixture
 def temp_config_env(tmp_path):
     """Fixture per isolare l'ambiente di configurazione."""
     test_dir = tmp_path / "config_test"
     test_file = test_dir / "config.json"
-    
+
     with (patch("src.core.config_manager.CONFIG_DIR", test_dir),
           patch("src.core.config_manager.CONFIG_FILE", test_file)):
         config_manager._reset_configuration_for_testing()
@@ -37,11 +38,11 @@ class TestConfigManagerCoverage:
         """Verifica caricamento da file esistente."""
         test_dir, test_file = temp_config_env
         test_dir.mkdir(parents=True, exist_ok=True)
-        
+
         custom_data = {"browser_timeout": 99, "custom_key": "custom_val"}
         with open(test_file, "w", encoding="utf-8") as f:
             json.dump(custom_data, f)
-            
+
         config = config_manager.load_config()
         assert config["browser_timeout"] == 99
         assert config["custom_key"] == "custom_val"
@@ -53,7 +54,7 @@ class TestConfigManagerCoverage:
         test_dir, test_file = temp_config_env
         test_dir.mkdir(parents=True, exist_ok=True)
         test_file.write_text("NOT A JSON")
-        
+
         config = config_manager.load_config()
         assert config["browser_timeout"] == 30 # Default
 
@@ -62,10 +63,10 @@ class TestConfigManagerCoverage:
         _, test_file = temp_config_env
         config = config_manager.DEFAULT_CONFIG.copy()
         config["browser_timeout"] = 45
-        
+
         config_manager.save_config(config)
         assert test_file.exists()
-        
+
         with open(test_file, "r", encoding="utf-8") as f:
             saved = json.load(f)
         assert saved["browser_timeout"] == 45
@@ -81,17 +82,17 @@ class TestConfigManagerCoverage:
     def test_password_handling_keyring(self, mock_get, mock_store, mock_avail, temp_config_env):
         """Test integrazione Keyring: password rimosse dal file e salvate in SecretsManager."""
         _, test_file = temp_config_env
-        
+
         # 1. Salvataggio
         accs = [{"username": "user1", "password": "secret_password"}]
         config = config_manager.load_config()
         config["accounts"] = accs
-        
+
         config_manager.save_config(config)
-        
+
         # Verifica store chiamato
         mock_store.assert_called()
-        
+
         # Verifica file JSON: non deve avere la password in chiaro
         with open(test_file, "r") as f:
             saved = json.load(f)
@@ -100,7 +101,7 @@ class TestConfigManagerCoverage:
         # 2. Caricamento
         config_manager._reset_configuration_for_testing()
         mock_get.return_value = "secret_password"
-        
+
         loaded = config_manager.load_config()
         assert loaded["accounts"][0]["password"] == "secret_password"
 
@@ -110,13 +111,13 @@ class TestConfigManagerCoverage:
     def test_password_handling_fallback(self, mock_dec, mock_enc, mock_avail, temp_config_env):
         """Test fallback: password cifrate nel file se Keyring non disponibile."""
         _, test_file = temp_config_env
-        
+
         accs = [{"username": "user_fallback", "password": "plain_password"}]
         config = config_manager.load_config()
         config["accounts"] = accs
-        
+
         config_manager.save_config(config)
-        
+
         # Verifica file JSON: deve avere la password cifrata
         with open(test_file, "r") as f:
             saved = json.load(f)
@@ -131,14 +132,14 @@ class TestConfigManagerCoverage:
         """Test migrazione vecchi campi isab_username/password."""
         test_dir, test_file = temp_config_env
         test_dir.mkdir(parents=True, exist_ok=True)
-        
+
         legacy = {
             "isab_username": "legacy_user",
             "isab_password": "legacy_password"
         }
         with open(test_file, "w") as f:
             json.dump(legacy, f)
-            
+
         config = config_manager.load_config()
         assert "isab_username" not in config
         assert any(a["username"] == "legacy_user" for a in config["accounts"])
@@ -147,17 +148,17 @@ class TestConfigManagerCoverage:
         """Test add, remove, set default account."""
         config_manager.add_account("user1", "pass1", is_default=True)
         config_manager.add_account("user2", "pass2", is_default=False)
-        
+
         accounts = config_manager.get_accounts()
         # Ora len(accounts) dovrebbe essere 2 perché ho risolto il bug del deepcopy
         # Ma se altri test hanno sporcato lo stato globale prima del deepcopy fix?
         # Dovrebbe essere 2 se _reset_configuration_for_testing e deepcopy funzionano.
         assert len(accounts) == 2
         assert config_manager.get_default_account()["username"] == "user1"
-        
+
         config_manager.set_default_account("user2")
         assert config_manager.get_default_account()["username"] == "user2"
-        
+
         config_manager.remove_account("user1")
         assert len(config_manager.get_accounts()) == 1
         assert config_manager.get_default_account()["username"] == "user2"
@@ -172,7 +173,7 @@ class TestConfigManagerCoverage:
         with patch("os.path.isdir", return_value=True):
             config_manager.set_config_value("download_path", "/fake/path")
             assert config_manager.get_download_path() == "/fake/path"
-            
+
         # Download path - fallback
         with patch("os.path.isdir", return_value=False):
             with patch("pathlib.Path.home", return_value=Path(temp_config_env[0])):

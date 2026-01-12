@@ -41,7 +41,7 @@ class TestSafeWorkBot:
              patch("builtins.open"), \
              patch("src.bots.safework.pdl.bot.fitz") as mock_fitz, \
              patch.object(bot, "_check_stop"):
-            
+
             # Mock fitz doc to simulate page count for cleaning logic
             mock_doc = MagicMock()
             mock_doc.page_count = 2
@@ -58,9 +58,9 @@ class TestSafeWorkBot:
             # 3. sleep(0.5) after clicking Anteprima menu
             # 4. sleep(1) to expand Parte Seconda
             # 5. sleep(1) after clicking btnPrintPS (options dialog wait)
-            
+
             sleep_calls = [call.args[0] for call in mock_sleep.call_args_list]
-            
+
             assert 0.5 in sleep_calls
             assert 1 in sleep_calls
             # The exact number of calls might vary based on flow, but we check existence

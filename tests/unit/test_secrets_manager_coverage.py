@@ -1,10 +1,7 @@
-import os
 import base64
-import pytest
-import keyring
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+
 from src.core.secrets_manager import SecretsManager
+
 
 class TestSecretsManagerCoverage:
     def test_derive_key(self):
@@ -13,41 +10,41 @@ class TestSecretsManagerCoverage:
         salt = b"staticsalt"
         key1 = SecretsManager.derive_key(pwd, salt)
         key2 = SecretsManager.derive_key(pwd, salt)
-        
+
         assert key1 == key2
         assert len(key1) > 32 # Base64 encoded 32 bytes
-        
+
     def test_get_license_key_from_env(self, mocker):
         """Verifica recupero da variabile d'ambiente (Priorità 1)."""
         secret = b"my-secret-key"
         encoded = base64.urlsafe_b64encode(secret).decode()
         mocker.patch("os.environ.get", return_value=encoded)
-        
+
         res = SecretsManager.get_license_key()
         assert res == secret
 
     def test_get_license_key_from_file(self, tmp_path, mocker):
         """Verifica recupero da file .env (Priorità 2)."""
         mocker.patch("os.environ.get", return_value=None)
-        
+
         # Simula il contenuto del file .env
         secret_bytes = b"file_secret_key"
         encoded_secret = base64.urlsafe_b64encode(secret_bytes).decode()
         env_content = f"SYNCROJOB_LICENSE_KEY={encoded_secret}\n"
-        
+
         # Invece di mockare Path in modo complesso, mockiamo direttamente
         # i punti di ingresso della logica di SecretsManager.get_license_key
-        
+
         # 1. Mock Path.exists per far sembrare che il file esista
         from src.core.secrets_manager import Path as SMPath
         mocker.patch.object(SMPath, "exists", return_value=True)
-        
+
         # 2. Mock della funzione open globale per restituire il contenuto voluto
         mocker.patch("builtins.open", mocker.mock_open(read_data=env_content))
-        
+
         # 3. Assicuriamoci che non fallisca per il Keyring dopo
         mocker.patch("keyring.get_password", return_value=None)
-        
+
         res = SecretsManager.get_license_key()
         assert res == secret_bytes
 
@@ -57,11 +54,11 @@ class TestSecretsManagerCoverage:
         # Mock Path per dire che .env non esiste
         from src.core.secrets_manager import Path as SMPath
         mocker.patch.object(SMPath, "exists", return_value=False)
-        
+
         secret = b"keyring_secret"
         encoded = base64.urlsafe_b64encode(secret).decode()
         mocker.patch("keyring.get_password", return_value=encoded)
-        
+
         res = SecretsManager.get_license_key()
         assert res == secret
 
@@ -71,7 +68,7 @@ class TestSecretsManagerCoverage:
         from src.core.secrets_manager import Path as SMPath
         mocker.patch.object(SMPath, "exists", return_value=False)
         mocker.patch("keyring.get_password", return_value=None)
-        
+
         assert SecretsManager.get_license_key() is None
 
     def test_get_license_key_invalid_base64_env(self, mocker):
@@ -80,7 +77,7 @@ class TestSecretsManagerCoverage:
         from src.core.secrets_manager import Path as SMPath
         mocker.patch.object(SMPath, "exists", return_value=False)
         mocker.patch("keyring.get_password", return_value=None)
-        
+
         assert SecretsManager.get_license_key() is None
 
     def test_is_available_true(self, mocker):
@@ -123,9 +120,9 @@ class TestSecretsManagerCoverage:
             if "exa" in key: return "exa_val"
             if "GEMINI" in key: return "gemini_val"
             return None
-            
+
         mocker.patch.object(SecretsManager, "get_credential", side_effect=mock_get)
-        
+
         assert SecretsManager.get_exa_api_key() == "exa_val"
         assert SecretsManager.get_gemini_api_key() == "gemini_val"
         assert SecretsManager.get_openai_key() == ""

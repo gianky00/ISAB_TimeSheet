@@ -1,18 +1,20 @@
 
 import os
-import pytest
-import requests
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
+
+import pytest
+import requests
+
 from src.core.license_updater import (
-    get_github_token, 
-    update_grace_timestamp, 
-    check_grace_period, 
+    _get_emergency_grace_token_path,
     check_emergency_grace_period,
+    check_grace_period,
+    get_github_token,
     run_update,
-    _get_validity_token_path,
-    _get_emergency_grace_token_path
+    update_grace_timestamp,
 )
+
 
 class TestLicenseUpdaterAdvanced:
     @pytest.fixture
@@ -32,11 +34,11 @@ class TestLicenseUpdaterAdvanced:
         # Setup: timestamp di 1 giorno fa
         past_time = datetime.now() - timedelta(days=1)
         mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now(), True))
-        
+
         # Salva timestamp (usa la logica interna di cifratura)
         with patch("src.core.time_manager.get_trusted_time", return_value=(past_time, True)):
             update_grace_timestamp()
-            
+
         # Verifica
         assert check_grace_period() is True
 
@@ -45,10 +47,10 @@ class TestLicenseUpdaterAdvanced:
         # Setup: timestamp di 4 giorni fa
         past_time = datetime.now() - timedelta(days=4)
         mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now(), True))
-        
+
         with patch("src.core.time_manager.get_trusted_time", return_value=(past_time, True)):
             update_grace_timestamp()
-            
+
         with pytest.raises(Exception, match="SCADUTO"):
             check_grace_period()
 
@@ -57,10 +59,10 @@ class TestLicenseUpdaterAdvanced:
         # Setup: timestamp di oggi
         now = datetime.now()
         mocker.patch("src.core.time_manager.get_trusted_time", return_value=(now - timedelta(hours=1), True))
-        
+
         with patch("src.core.time_manager.get_trusted_time", return_value=(now, True)):
             update_grace_timestamp()
-            
+
         # Il tempo "fidato" ora è 1 ora indietro rispetto al timestamp salvato
         with pytest.raises(Exception, match="incoerenza orologio"):
             check_grace_period()
@@ -68,13 +70,13 @@ class TestLicenseUpdaterAdvanced:
     def test_emergency_grace_period_flow(self, mock_license_dir, mocker):
         """Verifica il ciclo di vita del periodo di emergenza."""
         mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now(), True))
-        
+
         # 1. Creazione
         allowed, msg, days = check_emergency_grace_period()
         assert allowed is True
         assert days == 3
         assert os.path.exists(_get_emergency_grace_token_path())
-        
+
         # 2. Verifica (dopo 1 giorno)
         mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now() + timedelta(days=1), True))
         allowed, msg, days = check_emergency_grace_period()
@@ -84,14 +86,14 @@ class TestLicenseUpdaterAdvanced:
     def test_run_update_full_success(self, mock_license_dir, mocker):
         """Verifica aggiornamento completo con successo da GitHub."""
         mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
-        
+
         mock_resp_ok = MagicMock()
         mock_resp_ok.status_code = 200
         mock_resp_ok.content = b"fake-content"
-        
+
         with patch("requests.get", return_value=mock_resp_ok):
             success = run_update()
-            
+
         assert success is True
         assert os.path.exists(os.path.join(mock_license_dir, "config.dat"))
         assert os.path.exists(os.path.join(mock_license_dir, "manifest.json"))
@@ -99,7 +101,7 @@ class TestLicenseUpdaterAdvanced:
     def test_run_update_partial_404(self, mock_license_dir, mocker):
         """Verifica che un 404 su un file interrompa l'aggiornamento."""
         mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
-        
+
         def mock_get(url, **kwargs):
             resp = MagicMock()
             if "manifest.json" in url:
@@ -108,10 +110,10 @@ class TestLicenseUpdaterAdvanced:
                 resp.status_code = 200
                 resp.content = b"data"
             return resp
-            
+
         with patch("requests.get", side_effect=mock_get):
             success = run_update()
-            
+
         assert success is False
         # Non dovrebbero essere stati scritti i file se incompleto
         assert not os.path.exists(os.path.join(mock_license_dir, "config.dat"))
@@ -119,9 +121,9 @@ class TestLicenseUpdaterAdvanced:
     def test_run_update_network_error(self, mock_license_dir, mocker):
         """Verifica gestione errore di rete (timeout)."""
         mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
-        
+
         with patch("requests.get", side_effect=requests.exceptions.Timeout("Timeout")):
             success = run_update()
-            
+
         assert success is False
         assert "Offline" in mocker.patch("builtins.print").call_args_list[-2][0][0]

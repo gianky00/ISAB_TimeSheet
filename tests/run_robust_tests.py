@@ -1,13 +1,13 @@
+import argparse
+import datetime
+import json
+import os
+import signal
 import subprocess
 import sys
 import time
-import json
-import argparse
-import os
-import signal
-import datetime
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 # --- CONFIGURAZIONE ---
 ROOT_DIR = Path(__file__).parent.parent
@@ -34,16 +34,16 @@ class Console:
 
     @staticmethod
     def info(msg): Console.print(f"ℹ️  {msg}", Console.CYAN)
-    
+
     @staticmethod
     def success(msg): Console.print(f"✅ {msg}", Console.GREEN)
-    
+
     @staticmethod
     def warning(msg): Console.print(f"⚠️  {msg}", Console.WARNING)
-    
+
     @staticmethod
     def error(msg): Console.print(f"❌ {msg}", Console.FAIL)
-    
+
     @staticmethod
     def header(msg): Console.print(f"\n{Console.BOLD}{msg}{Console.ENDC}", Console.HEADER)
 
@@ -57,7 +57,7 @@ class TestRunner:
         self.start_time = 0
         self.queue_files = []
         self.interrupted = False
-        
+
         # Gestione Ctrl+C
         signal.signal(signal.SIGINT, self.signal_handler)
 
@@ -91,7 +91,7 @@ class TestRunner:
 
     def discover_tests(self, targets=None):
         Console.info("🔍 Rilevamento test in corso (pytest --collect-only)...")
-        
+
         cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q"]
         if targets:
             if isinstance(targets, list):
@@ -117,7 +117,7 @@ class TestRunner:
             if "::" in line and "error" not in line.lower():
                 file_path = line.split("::")[0]
                 files_map[file_path].append(line)
-        
+
         if not files_map:
             if result.stderr:
                 print(result.stderr)
@@ -129,7 +129,7 @@ class TestRunner:
     def run_process(self, target, isolate=False, timeout=None):
         # Aggiungiamo --cov=src --cov-append per accumulare la copertura
         cmd = [sys.executable, "-m", "pytest", target, "--no-header", "--quiet", "--tb=short", "--cov=src", "--cov-append"]
-        
+
         start = time.time()
         try:
             result = subprocess.run(
@@ -149,15 +149,15 @@ class TestRunner:
     def generate_report(self):
         """Genera un report Markdown dettagliato."""
         total_duration = time.time() - self.start_time
-        
+
         with open(REPORT_FILE, "w", encoding="utf-8") as f:
-            f.write(f"# 📊 Test Execution Report\n\n")
+            f.write("# 📊 Test Execution Report\n\n")
             f.write(f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"**Duration:** {total_duration:.2f}s\n\n")
-            
+
             f.write("## Summary\n")
-            f.write(f"| Metric | Count |\n")
-            f.write(f"|---|---|\n")
+            f.write("| Metric | Count |\n")
+            f.write("|---|---|\n")
             f.write(f"| 🧪 Total | {self.total_tests} |\n")
             f.write(f"| ✅ Passed | {self.passed_tests} |\n")
             f.write(f"| ❌ Failed | {len(self.failed_tests)} |\n")
@@ -183,10 +183,10 @@ class TestRunner:
     def show_coverage(self):
         """Mostra il report di copertura totale in modo rapido."""
         Console.header("📊 REPORT COPERTURA")
-        
+
         # 1. Tenta di mostrare dati esistenti
         try:
-            res = subprocess.run([sys.executable, "-m", "coverage", "report", "-m"], 
+            res = subprocess.run([sys.executable, "-m", "coverage", "report", "-m"],
                                  cwd=ROOT_DIR)
             if res.returncode == 0:
                 return
@@ -221,10 +221,10 @@ class TestRunner:
 
         # 1. Caricamento Stato o Inizio
         state = self.load_state()
-        
+
         # Determina i target: preferenza ad argomenti posizionali, poi --filter
         targets = args.targets if args.targets else args.filter
-        
+
         should_reset = args.reset or state is None or targets
 
         if should_reset:
@@ -233,7 +233,7 @@ class TestRunner:
                 subprocess.run([sys.executable, "-m", "coverage", "erase"], cwd=ROOT_DIR)
             except Exception:
                 pass
-            
+
             self.files_map = self.discover_tests(targets)
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             self.queue_files = sorted(list(self.files_map.keys()))
@@ -253,16 +253,16 @@ class TestRunner:
             self.failed_tests = state.get("failed", [])
             self.passed_tests = state.get("passed", 0)
             self.skipped_tests = state.get("skipped", 0)
-            
+
             # Ricalcola totale se la mappa esiste, altrimenti rifà discovery
             if not self.files_map:
                 self.files_map = self.discover_tests()
-            
+
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             Console.warning(f"Ripresa sessione: {len(self.queue_files)} file rimanenti.")
 
         self.start_time = time.time()
-        
+
         # 2. Execution Loop
         processed_files = 0
         total_files_count = len(self.queue_files) # Aprossimativo se ripreso
@@ -270,14 +270,14 @@ class TestRunner:
         while self.queue_files:
             current_file = self.queue_files[0]
             node_ids = self.files_map.get(current_file, [])
-            
+
             if not node_ids:
                 self.queue_files.pop(0)
                 continue
 
             test_count = len(node_ids)
             progress_pct = ((self.passed_tests + len(self.failed_tests)) / self.total_tests) * 100
-            
+
             print(f"\n📂 File: {Console.BOLD}{current_file}{Console.ENDC} ({test_count} tests)")
             print(f"   📊 Progress: {progress_pct:.1f}% | Passed: {self.passed_tests} | Failed: {len(self.failed_tests)}")
 
@@ -292,7 +292,7 @@ class TestRunner:
             else:
                 reason = "TIMEOUT" if is_timeout else "FAIL"
                 Console.warning(f"{reason} ({dur:.2f}s) -> Attivazione ISOLATION MODE")
-                
+
                 # Fallback: Esecuzione Isolata
                 self.run_isolated_tests(node_ids, retry_count=args.retry)
                 self.queue_files.pop(0)
@@ -303,14 +303,14 @@ class TestRunner:
     def run_isolated_tests(self, node_ids, retry_count=0):
         for nid in node_ids:
             if self.interrupted: break
-            
+
             print(f"    👉 {nid.split('::')[-1]} ... ", end="", flush=True)
-            
+
             success = False
             # Tentativi (Retry Logic)
             for attempt in range(retry_count + 1):
                 res, dur, is_timeout = self.run_process(nid, isolate=True, timeout=30)
-                
+
                 if not is_timeout and res.returncode == 0:
                     success = True
                     break
@@ -323,10 +323,10 @@ class TestRunner:
                 self.passed_tests += 1
             else:
                 Console.print("FAIL", Console.FAIL)
-                
+
                 error_msg = "Timeout"
                 full_log = "Execution Timed Out"
-                
+
                 if res:
                     lines = res.stdout.splitlines()
                     full_log = res.stdout + res.stderr
@@ -353,7 +353,7 @@ class TestRunner:
         Console.header("🏁 ESECUZIONE COMPLETATA")
         print(f"⏱️  Tempo Totale: {total_time:.2f}s")
         print(f"✅ Passati: {self.passed_tests}")
-        
+
         # Mostra Report Copertura Finale
         Console.header("📊 COPERTURA FINALE")
         try:

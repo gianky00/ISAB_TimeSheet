@@ -115,7 +115,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if not self.driver or not self.wait:
             self.log("❌ Driver o Wait non inizializzati.")
             return False
-            
+
         self.log("🌐 Navigazione verso l'URL SafeWork...")
         try:
             self.driver.get(self.SAFEWORK_URL)
@@ -131,7 +131,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             )
             btn_sito.click()
             self.log("🖱️ Menu siti aperto. Cerco 'ISAB Sud'...")
-            
+
             opzione_isab = WebDriverWait(self.driver, 5).until(
                 EC.element_to_be_clickable(
                     (
@@ -151,12 +151,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             u_field.clear()
             u_field.send_keys(self.username)
             self.log("⌨️ Username inserito.")
-            
+
             p_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword")))
             p_field.clear()
             p_field.send_keys(self.password)
             self.log("⌨️ Password inserita.")
-            
+
             self.log("🖱️ Clic su pulsante Login...")
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnLogin"))).click()
         except Exception as e:
@@ -170,7 +170,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         except Exception as e:
             self.log_error("Attesa post-login", e)
             return False
-            
+
         return True
 
     def _safe_remove(self, path):
@@ -189,7 +189,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.downloaded_files = []
         all_downloaded_pdl_paths = []  # Tutti i PDL scaricati per l'unione finale
         self.merged_pdf_path = None
-        
+
         self.log(f"🚀 Inizio elaborazione di {total} righe di dati.")
 
         for index, item in enumerate(data):
@@ -198,9 +198,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
                 print_enabled = item.get("print_enabled", False)
                 printer_name = item.get("printer_name", "")
-                
+
                 self.log(f"--- Elaborazione Riga {index + 1}/{total} ---")
-                
+
                 if not pdl_raw:
                     self.log(f"⚠️ PDL non valido o mancante nella riga {index + 1}. Salto.")
                     continue
@@ -239,15 +239,15 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     time.sleep(2)
                     # Verifica se il PDL è effettivamente caricato nonostante l'alert
                     try:
-                        # Se l'overlay sparisce e siamo ancora sulla pagina di ricerca, 
+                        # Se l'overlay sparisce e siamo ancora sulla pagina di ricerca,
                         # verifichiamo se i dati sono apparsi
                         self._attendi_scomparsa_overlay(timeout_secondi=5)
-                    except:
+                    except Exception:
                         pass
                 else:
                     self.log("⏳ Attesa scomparsa overlay post-ricerca...")
                     self._attendi_scomparsa_overlay()
-                
+
                 self.log(f"✅ Verifica stato post-ricerca per {pdl_num}. URL: {self.driver.current_url}")
 
                 # --- PARTE PRIMA ---
@@ -255,7 +255,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 self.driver.execute_script("window.scrollTo(0, 0);")
                 time.sleep(1)
                 ts_1 = time.time()
-                
+
                 try:
                     self.log("🖱️ Clic pulsante Anteprima Stampa...")
                     self.wait.until(
@@ -293,7 +293,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     pagine_orig = doc_p1.page_count
                     if pagine_orig >= 2:
                         self.log(f"✂️ Parte 1 ha {pagine_orig} pagine. Rimuovo la pagina 2.")
-                        doc_p1.delete_page(1) 
+                        doc_p1.delete_page(1)
                         tmp_clean = path_temp_1 + "_clean.pdf"
                         doc_p1.save(tmp_clean)
                         doc_p1.close()
@@ -308,7 +308,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
                 # --- PARTE SECONDA ---
                 try:
-                    self.log(f"⏳ Verifica apertura sezione Parte Seconda...")
+                    self.log("⏳ Verifica apertura sezione Parte Seconda...")
                     if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
                         self.log("🖱️ Parte Seconda non visibile, clicco per espandere...")
                         try:
@@ -333,7 +333,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 try:
                     self.log("🖱️ Clic pulsante Stampa Parte Seconda (btnPrintPS)...")
                     self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
-                    
+
                     # Verifica se è un PDL a foglio singolo o multiplo
                     self.log("⏳ Attesa dialogo opzioni stampa...")
                     time.sleep(1)
@@ -400,7 +400,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
                 self._safe_remove(path_temp_1)
                 self._safe_remove(path_temp_2)
-                
+
             except InterruptedError:
                 self.log("🛑 Stop richiesto dall'utente durante il loop.")
                 raise
@@ -443,7 +443,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     if alert_content.is_displayed():
                         testo = alert_content.text.replace("\n", " ").strip()
                         self.log(f"🚩 ALERT RILEVATO: '{testo}'")
-                except:
+                except Exception:
                     pass
 
                 btn_ok = self.driver.find_element(

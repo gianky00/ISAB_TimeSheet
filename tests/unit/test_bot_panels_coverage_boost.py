@@ -27,7 +27,7 @@ class TestBotPanelsFinalCoverage:
     def test_timbrature_bot_start_logic(self, qapp, qtbot):
         with patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]}), \
              patch("src.gui.panels.BotWorker") as MockWorker:  # Mock the Worker class
-            
+
             # Setup mock worker instance
             mock_worker_instance = MockWorker.return_value
             mock_worker_instance.start = MagicMock()
