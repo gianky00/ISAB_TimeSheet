@@ -1,5 +1,5 @@
+
 from src.gui.widgets.timeline_widget import HorizontalTimelineWidget, LogWidget
-import pytest
 
 # The 'qapp' fixture is automatically provided by pytest-qt and ensures a
 # QApplication instance exists before any tests that use GUI components are run.

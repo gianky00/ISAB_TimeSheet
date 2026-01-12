@@ -6,10 +6,11 @@ Gestisce l'importazione di dati da vari formati Excel.
 import io
 import json
 import logging
+import os
 import re
 import warnings
 import zipfile
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -141,6 +142,71 @@ class ExcelImporter:
         return file_path, False
 
     @classmethod
+    def _get_excel_file(cls, file_obj) -> pd.ExcelFile:
+        """Tenta di aprire il file Excel con pandas o openpyxl."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                return pd.ExcelFile(file_obj)
+            except Exception:
+                return pd.ExcelFile(file_obj, engine="openpyxl")
+
+    @classmethod
+    def _identify_sheet_year(cls, sheet_name: str) -> Optional[int]:
+        """Estrae l'anno dal nome del foglio o usa l'anno corrente per nomi specifici."""
+        match = re.search(r"(\d{4})", sheet_name)
+        if match:
+            year = int(match.group(1))
+            return year if 2000 <= year <= 2100 else None
+        
+        if sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
+            return datetime.now().year
+        return None
+
+    @classmethod
+    def _find_header_row(cls, xls, sheet_name) -> int:
+        """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
+        preview_df = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=10)
+        key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
+
+        for i_raw, row in preview_df.iterrows():
+            row_norm = []
+            for val in row.values:
+                s = str(val).strip().upper()
+                s = s.replace(" ", "").replace(".", "").replace("°", "")
+                row_norm.append(s)
+
+            matches = sum(1 for k in key_cols_norm if k in row_norm)
+            if matches >= 2:
+                return int(str(i_raw))
+        return 1  # Default
+
+    @classmethod
+    def _normalize_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Rinomina le colonne del DataFrame usando la mappa interna."""
+        normalized_map = {}
+        for k, v in cls.COLUMNS_MAPPING.items():
+            norm_k = k.upper().replace(" ", "").replace(".", "").replace("°", "")
+            normalized_map[norm_k] = v
+
+        rename_map = {}
+        for col in df.columns:
+            col_str = str(col).strip().upper()
+            norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
+
+            if norm_col in normalized_map:
+                rename_map[col] = normalized_map[norm_col]
+            else:
+                # Euristiche extra
+                if "PREV" in norm_col and "DATA" in norm_col:
+                    rename_map[col] = "data_prev"
+                elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
+                    rename_map[col] = "n_prev"
+        
+        df.rename(columns=rename_map, inplace=True)
+        return df
+
+    @classmethod
     def import_contabilita_dati(
         cls,
         file_path: str,
@@ -160,121 +226,35 @@ class ExcelImporter:
 
         try:
             file_obj, _ = cls._decrypt_if_encrypted(path)
+            xls = cls._get_excel_file(file_obj)
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+            # Conteggio fogli validi per progress bar
+            valid_sheets = [s for s in xls.sheet_names if cls._identify_sheet_year(str(s))]
+            total_sheets = len(valid_sheets)
+            processed_sheets = 0
+
+            for sheet_name_raw in xls.sheet_names:
+                sheet_name = str(sheet_name_raw)
+                year = cls._identify_sheet_year(sheet_name)
+                if not year:
+                    continue
+
                 try:
-                    xls = pd.ExcelFile(file_obj)
-                except Exception:
-                    xls = pd.ExcelFile(file_obj, engine="openpyxl")
+                    header_row_idx = cls._find_header_row(xls, sheet_name)
+                    df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
+                    df.columns = [str(c).strip().upper() for c in df.columns]
 
-                valid_sheets = [
-                    s for s in xls.sheet_names if re.search(r"(\d{4})", str(s))
-                ]
-                total_sheets = len(valid_sheets)
-                if total_sheets == 0:
-                    fallback_sheets = [
-                        s
-                        for s in xls.sheet_names
-                        if str(s).lower() in ["dati", "preventivi", "riepilogo"]
-                    ]
-                    if fallback_sheets:
-                        total_sheets = len(fallback_sheets)
+                    if not df.empty:
+                        df = df.iloc[:-1]
+                    df.dropna(how="all", inplace=True)
 
-                processed_sheets = 0
-
-                for sheet_name_raw in xls.sheet_names:
-                    sheet_name = str(sheet_name_raw)
-                    year = None
-                    match = re.search(r"(\d{4})", sheet_name)
-
-                    if match:
-                        year = int(match.group(1))
-                        if not (2000 <= year <= 2100):
-                            continue
-                    elif sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
-                        year = datetime.now().year
-                    else:
+                    if df.empty:
                         continue
 
-                    try:
-                        preview_df = pd.read_excel(
-                            xls, sheet_name=sheet_name, header=None, nrows=10
-                        )
-                        header_row_idx = 1
-                        key_cols_norm = [
-                            "DATAPREV",
-                            "MESE",
-                            "NPREV",
-                            "TOTALEPREV",
-                            "ATTIVITA",
-                            "ODC",
-                        ]
+                    df["year"] = year
+                    df = cls._normalize_columns(df)
 
-                        for i_raw, row in preview_df.iterrows():
-                            i = int(str(i_raw))
-                            row_norm = []
-                            for val in row.values:
-                                s = str(val).strip().upper()
-                                s = s.replace(" ", "").replace(".", "").replace("°", "")
-                                row_norm.append(s)
-
-                            matches = sum(1 for k in key_cols_norm if k in row_norm)
-                            if matches >= 2:
-                                header_row_idx = i
-                                break
-
-                        df = pd.read_excel(
-                            xls, sheet_name=sheet_name, header=header_row_idx
-                        )
-                        df.columns = [str(c).strip().upper() for c in df.columns]
-
-                        if not df.empty:
-                            df = df.iloc[:-1]
-                        df.dropna(how="all", inplace=True)
-
-                        if df.empty:
-                            continue
-
-                        df["year"] = year
-
-                        normalized_map = {}
-                        for k, v in cls.COLUMNS_MAPPING.items():
-                            norm_k = (
-                                k.upper()
-                                .replace(" ", "")
-                                .replace(".", "")
-                                .replace("°", "")
-                            )
-                            normalized_map[norm_k] = v
-
-                        rename_map = {}
-                        for col in df.columns:
-                            col_str = str(col).strip().upper()
-                            norm_col = (
-                                col_str.replace(" ", "")
-                                .replace(".", "")
-                                .replace("°", "")
-                            )
-
-                            if norm_col in normalized_map:
-                                rename_map[col] = normalized_map[norm_col]
-                            else:
-                                if "PREV" in norm_col and "DATA" in norm_col:
-                                    rename_map[col] = "data_prev"
-                                elif "PREV" in norm_col and (
-                                    "N" in norm_col or "NUM" in norm_col
-                                ):
-                                    rename_map[col] = "n_prev"
-
-                        df.rename(columns=rename_map, inplace=True)
-
-                    except Exception as e:
-                        logging.warning(
-                            f"Errore durante l'elaborazione del foglio {sheet_name}: {e}"
-                        )
-                        continue
-
+                    # Ensure all required columns exist
                     for db_col in cls.COLUMNS_MAPPING.values():
                         if db_col not in df.columns:
                             df[db_col] = ""
@@ -294,23 +274,28 @@ class ExcelImporter:
                     if progress_callback:
                         progress_callback(processed_sheets, total_sheets)
 
-                if not imported_years:
-                    return (
-                        False,
-                        "Nessun anno importato (Controlla nomi fogli: YYYY o 'Dati/Preventivi').",
-                        [],
-                        [],
-                    )
+                except Exception as e:
+                    logging.warning(f"Errore foglio {sheet_name}: {e}")
+                    continue
 
+            if not imported_years:
                 return (
-                    True,
-                    f"Anni importati: {sorted(set(imported_years))}",
-                    all_new_rows,
-                    list(set(imported_years)),
+                    False,
+                    "Nessun anno importato (Controlla nomi fogli: YYYY o 'Dati/Preventivi').",
+                    [],
+                    [],
                 )
 
+            return (
+                True,
+                f"Anni importati: {sorted(set(imported_years))}",
+                all_new_rows,
+                list(set(imported_years)),
+            )
+
         except Exception as e:
-            return False, f"Errore: {e}", [], []
+            logging.error(f"Errore importazione Excel: {e}")
+            return False, f"Errore critico importazione: {e}", [], []
 
     @classmethod
     def _process_single_giornaliera(
@@ -475,7 +460,10 @@ class ExcelImporter:
         years_encountered = set()
 
         if total_tasks > 0:
-            with ThreadPoolExecutor(max_workers=4) as executor:
+            # Use ProcessPoolExecutor for CPU-bound Excel parsing
+            # Limit max_workers to 4 or cpu_count/2 to avoid memory spikes
+            max_workers = min(4, (os.cpu_count() or 1))
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
                 for result in executor.map(cls._process_single_giornaliera, tasks_args):
                     processed_count += 1
                     if progress_callback:

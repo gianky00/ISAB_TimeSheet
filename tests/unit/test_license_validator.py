@@ -33,8 +33,9 @@ def mock_secrets():
     """Mocks SecretsManager to return a fixed key."""
     with patch("src.core.license_validator.SecretsManager") as mock_sm:
         # Generate a real key for Fernet to use
-        from cryptography.fernet import Fernet
         import base64
+
+        from cryptography.fernet import Fernet
 
         key = Fernet.generate_key()
         # SecretsManager.get_license_key() returns DECODED bytes

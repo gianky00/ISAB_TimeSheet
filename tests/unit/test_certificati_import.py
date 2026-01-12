@@ -8,13 +8,12 @@ from src.core.contabilita_manager import ContabilitaManager
 
 class TestCertificatiImport(unittest.TestCase):
 
-    @patch("src.core.data_synchronizer.pd.read_sql")
-    @patch("src.core.data_synchronizer.db_manager")
-    @patch("src.core.contabilita_manager.pd.ExcelFile")
-    @patch("src.core.contabilita_manager.pd.read_excel")
-    @patch("src.core.contabilita_manager.Path.exists")
+    @patch("src.core.excel_importer.pd.read_sql")
+    @patch("src.core.excel_importer.pd.ExcelFile")
+    @patch("src.core.excel_importer.pd.read_excel")
+    @patch("src.core.excel_importer.Path.exists")
     def test_import_certificati_dynamic_header(
-        self, mock_exists, mock_read_excel, mock_excel_file, mock_db_manager, mock_sync_read_sql
+        self, mock_exists, mock_read_excel, mock_excel_file, mock_read_sql
     ):
         # Setup mocks
         mock_exists.return_value = True
@@ -24,17 +23,11 @@ class TestCertificatiImport(unittest.TestCase):
         mock_xls_instance.sheet_names = ["Strumenti Campione ISAB SUD", "Other Sheet"]
         mock_excel_file.return_value = mock_xls_instance
 
-        # Mock DB connection
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
-        mock_conn.cursor.return_value = mock_cursor
-
         # Mock read_sql for existing rows (return empty)
-        mock_sync_read_sql.return_value = pd.DataFrame()
+        mock_read_sql.return_value = pd.DataFrame()
 
-        with patch("src.core.contabilita_manager.pd.read_sql") as mock_read_sql:
-            mock_read_sql.return_value = pd.DataFrame()
+        with patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione") as mock_sync:
+            mock_sync.return_value = (1, 0)
 
             # 1. Preview DataFrame (simulate header at row 5)
             # Row 0-4: Garbage

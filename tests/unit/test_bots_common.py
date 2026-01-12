@@ -17,6 +17,9 @@ class ConcreteBot(BaseBot):
     def run(self, data):
         return True
 
+    def _handle_unsaved_changes_popup(self):
+        pass
+
 
 class TestBaseBot:
 

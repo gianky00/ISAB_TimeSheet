@@ -216,7 +216,7 @@ def sanitize_filename(filename: str) -> str:
 
     # 2. Replace forbidden characters with underscore
     # We use a whitelist approach for maximum security:
-    # Alphanumeric, underscore, hyphen, dot, space, parenthesis, square brackets.
+    # Alphanumeric, underscore, hyphen, dot, parenthesis, square brackets and spaces.
     # Excludes: / \ : * ? " < > |
     safe_filename = re.sub(r"[^a-zA-Z0-9_\-\.\(\)\[\] ]", "_", filename)
 

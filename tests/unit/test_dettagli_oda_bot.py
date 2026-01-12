@@ -51,17 +51,20 @@ class TestDettagliOdAPage:
 
 class TestDettagliOdABot:
     @patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage")
-    def test_run(self, MockPage, dettagli_bot):
+    def test_run_empty_rows(self, MockPage, dettagli_bot):
         page_instance = MockPage.return_value
-        page_instance.navigate.return_value = True
-        page_instance.select_supplier.return_value = True
+        page_instance.navigate_to_dettagli.return_value = True
+        page_instance.setup_supplier.return_value = True
         page_instance.process_oda.return_value = True
 
-        data = [{"numero_oda": "123", "numero_contratto": "C1"}]
-        # run() parameters are data, fornitore, data_da, data_a
+        # Test with empty rows list
         result = dettagli_bot.run(
-            {"rows": data, "fornitore": "Forn", "data_da": "01.01.2024", "data_a": "01.01.2025"}
+            {"rows": [], "fornitore": "Forn", "data_da": "01.01.2024", "data_a": "01.01.2025"}
         )
 
         assert result is True
-        page_instance.process_oda.assert_called()
+        # process_oda should have been called once with empty oda/contract
+        page_instance.process_oda.assert_called_once()
+        args = page_instance.process_oda.call_args[0]
+        assert args[0] == "" # oda
+        assert args[1] == "" # contract

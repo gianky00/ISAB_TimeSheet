@@ -19,8 +19,9 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
-from .calendar_date_edit import CalendarDateEdit
 from src.utils.helpers import get_asset_path
+
+from .calendar_date_edit import CalendarDateEdit
 
 
 class BotParametersWidget(QWidget):
@@ -112,10 +113,10 @@ class BotParametersWidget(QWidget):
         """Aggiunge un widget personalizzato alla riga dei parametri (prima dello stretch)."""
         # Rimuovi lo stretch finale temporaneamente
         item = self.main_row_layout.takeAt(self.main_row_layout.count() - 1)
-        
+
         self.main_row_layout.addSpacing(15)
         self.main_row_layout.addWidget(widget)
-        
+
         # Rimetti lo stretch
         if item:
             self.main_row_layout.addItem(item)

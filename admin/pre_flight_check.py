@@ -9,9 +9,9 @@ Controlla:
 3. Integrità Test Suite
 """
 
-import sys
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 # ANSI Colors
@@ -46,7 +46,7 @@ def check_versions():
     print_step("Verifica allineamento versioni...")
     v_toml = get_pyproject_version()
     v_code = get_code_version()
-    
+
     if v_toml == v_code:
         print_ok(f"Versioni allineate: {v_toml}")
         return True
@@ -78,18 +78,20 @@ def check_requirements_sync():
         return False
 
 def run_tests():
-    print_step("Esecuzione Test Suite (Fast Mode)...")
-    # Usa il comando 'test' definito in pyproject.toml che include già le esclusioni
-    cmd = ["poetry", "run", "test"]
-    
+    print_step("Esecuzione Test Suite (Robust Mode - Fail Fast)...")
+    # Utilizza il runner robusto che gestisce isolamento, report e retry
+    runner_script = PROJECT_ROOT / "tests" / "run_robust_tests.py"
+    # Aggiunto --exitfirst per fermarsi al primo errore (Fail-Fast)
+    cmd = [sys.executable, str(runner_script), "--reset", "--exitfirst"]
+
     try:
-        # Eseguiamo subprocess lasciando l'output visibile così l'utente vede i progressi
-        ret = subprocess.call(cmd, cwd=PROJECT_ROOT, shell=True)
+        # Eseguiamo subprocess lasciando l'output visibile
+        ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
         if ret == 0:
             print_ok("Tutti i test passati.")
             return True
         else:
-            print_fail("Test falliti. Build annullata.")
+            print_fail("Test falliti. Controlla il report o l'output sopra. Build annullata.")
             return False
     except Exception as e:
         print_fail(f"Errore esecuzione test: {e}")
@@ -102,23 +104,23 @@ def main():
     args = parser.parse_args()
 
     print(f"{BOLD}✈️  AVVIO PRE-FLIGHT CHECK...{RESET}")
-    
+
     checks = [
         check_versions,
         check_requirements_sync,
         check_git_status
     ]
-    
+
     if not args.skip_tests:
         checks.append(run_tests)
     else:
         print(f"{YELLOW}⚠️  SKIP: Esecuzione test saltata su richiesta utente.{RESET}")
-    
+
     for check in checks:
         if not check():
             print(f"\n{RED}⛔ ABORT: Controllo fallito. Correggi gli errori e riprova.{RESET}")
             sys.exit(1)
-            
+
     print(f"\n{GREEN}{BOLD}🚀 READY FOR TAKEOFF! Tutte le verifiche superate.{RESET}")
     sys.exit(0)
 

@@ -23,6 +23,9 @@ class ConcreteBot(BaseBot):
     def run(self, data):
         return True
 
+    def _handle_unsaved_changes_popup(self):
+        pass
+
 
 @pytest.fixture
 def base_bot():
@@ -64,7 +67,7 @@ class TestBaseBotLogic:
     def test_verify_login_url(self, base_bot):
         """Should delegate to login_page."""
         base_bot.login_page = MagicMock()
-        
+
         base_bot.login_page._verify_logged_in_via_ui.return_value = False
         assert base_bot._verify_login() is False
 

@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QMessageBox,
     QPushButton,
+    QTableView,  # Moved from bottom
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -40,12 +41,12 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.stats_manager import StatsManager
+from src.gui.formatters import FastTableModel  # Moved from bottom
 
 # Import UI Components
 from src.gui.widgets import (
     BotParametersWidget,
     EditableDataTable,
-    ExcelTableWidget,
     LogWidget,
     MissionReportCard,
 )
@@ -661,11 +662,6 @@ class DettagliOdAPanel(BaseBotPanel):
             return False, "Credenziali ISAB mancanti."
         if not self.params_widget.get_fornitore():
             return False, "Fornitore mancante."
-        
-        # Check if data table has valid data
-        data = self.data_table.get_data()
-        if not data:
-            return False, "Nessun OdA inserito nella tabella."
 
         return True, ""
 
@@ -685,13 +681,6 @@ class DettagliOdAPanel(BaseBotPanel):
         if not all([username, password, fornitore]):
             ToastManager.instance().show("Verifica i parametri.", "warning")
             self._update_status(StatusCard.Status.ERROR, "Parametri incompleti")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
-            return
-        
-        if not rows:
-            ToastManager.instance().show("Inserisci almeno un OdA.", "warning")
-            self._update_status(StatusCard.Status.ERROR, "Dati mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -1196,19 +1185,13 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.worker.start()
         self.bot_started.emit()
 
-        # Pulisci l'attributo temporaneo dopo l'uso
-        if hasattr(self, "merge_and_send_from_telegram"):
-            del self.merge_and_send_from_telegram
-        if hasattr(self, "merge_all_session_from_telegram"):
-            del self.merge_all_session_from_telegram
-
     def _on_worker_finished(self, success: bool):
         """Gestione custom per invio file unito."""
-        super()._on_worker_finished(success)
-
         # Controlla se l'opzione di invio era attiva per questa esecuzione
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
 
+        # Catturiamo i file PRIMA di chiamare super() perché super() resetta self.worker
+        files_to_send = []
         if (
             success
             and merge_and_send
@@ -1216,24 +1199,32 @@ class ScaricoPDLPanel(BaseBotPanel):
             and hasattr(self.worker.bot, "downloaded_files")
         ):
             files_to_send = self.worker.bot.downloaded_files
-            if files_to_send:
-                win = self.window()
-                if win and hasattr(win, "telegram"):
-                    import os
-                    from typing import Any
 
-                    cast_win: Any = win
-                    self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
+        super()._on_worker_finished(success)
 
-                    for file_path in files_to_send:
-                        if os.path.exists(file_path):
-                            caption = (
-                                f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
-                            )
-                            cast_win.telegram.send_document_sync(file_path, caption)
-                            # Non eliminiamo i file finali, l'utente potrebbe volerli
+        if success and merge_and_send and files_to_send:
+            win = self.window()
+            if win and hasattr(win, "telegram"):
+                import os
+                from typing import Any
 
-                    self._on_log("✅ PDF inviati con successo.")
+                cast_win: Any = win
+                self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
+
+                for file_path in files_to_send:
+                    if os.path.exists(file_path):
+                        caption = (
+                            f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
+                        )
+                        cast_win.telegram.send_document_sync(file_path, caption)
+
+                self._on_log("✅ PDF inviati con successo.")
+
+        # Pulisci l'attributo temporaneo dopo l'uso
+        if hasattr(self, "merge_and_send_from_telegram"):
+            del self.merge_and_send_from_telegram
+        if hasattr(self, "merge_all_session_from_telegram"):
+            del self.merge_all_session_from_telegram
 
 
 class TimbratureBotPanel(BaseBotPanel):
@@ -1399,8 +1390,9 @@ class TimbratureBotPanel(BaseBotPanel):
             self.data_updated.emit()
 
 
-from src.gui.formatters import FastTableModel
-from PyQt6.QtWidgets import QTableView
+
+
+
 
 class TimbratureDBPanel(QWidget):
     """Pannello per la visualizzazione del Database Timbrature Isab ottimizzato."""
@@ -1417,7 +1409,7 @@ class TimbratureDBPanel(QWidget):
 
         # Model initialization
         self.headers = [
-            "Data", "Ingresso", "Uscita", "Nome", "Cognome", 
+            "Data", "Ingresso", "Uscita", "Nome", "Cognome",
             "Presenza TS", "Sito", "Reparto", "Cantiere"
         ]
         self.model = FastTableModel([], self.headers)
@@ -1426,35 +1418,9 @@ class TimbratureDBPanel(QWidget):
         # Pre-caricamento immediato e profondo
         QTimer.singleShot(50, self.refresh_data)
 
-    def _setup_ui(self):
-        """Configura l'interfaccia utente."""
-        self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(10, 10, 10, 10)
-        self.main_layout.setSpacing(15)
 
-        # Tab Widget
-        self.tabs = QTabWidget()
 
-        # --- TAB 1: Database (Timbrature) ---
-        self.tab_database = QWidget()
-        self._setup_database_tab(self.tab_database)
-        self.tabs.addTab(self.tab_database, "🗄️ Database")
-        
-        # --- Altri setup saltati per brevità ma preservati ---
 
-    def _safe_refresh_data(self):
-        try:
-            self.refresh_data()
-        except Exception as e:
-            print(f"❌ Error refreshing data for TimbratureDBPanel: {e}")
-            traceback.print_exc()
-
-    def _safe_load_settings_data(self):
-        try:
-            self._load_settings_data()
-        except Exception as e:
-            print(f"❌ Error loading settings data for TimbratureDBPanel: {e}")
-            traceback.print_exc()
 
     def _setup_ui(self):
         """Configura l'interfaccia utente."""
@@ -1532,7 +1498,7 @@ class TimbratureDBPanel(QWidget):
         self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.db_table.setSortingEnabled(True)
-        
+
         header = self.db_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
@@ -1547,12 +1513,12 @@ class TimbratureDBPanel(QWidget):
 
         # Rimuoviamo il limite di 500 per il precaricamento totale
         rows = self.storage.get_timbrature_with_reparto(
-            limit=2000, 
+            limit=2000,
             filter_text=text,
             filter_reparto=reparto,
             filter_cantiere=cantiere,
         )
-        
+
         # Formattazione dati in blocco
         formatted_rows = []
         for row in rows:
@@ -1563,7 +1529,8 @@ class TimbratureDBPanel(QWidget):
                     date_part = date_str.split(" ")[0] if " " in date_str else date_str
                     dt = datetime.strptime(date_part, "%Y-%m-%d")
                     f_row[0] = dt.strftime("%d/%m/%Y")
-            except: pass
+            except Exception:
+                pass
             formatted_rows.append(f_row)
 
         self.model.update_data(formatted_rows)
@@ -1789,39 +1756,7 @@ class TimbratureDBPanel(QWidget):
 
         self.settings_table.blockSignals(False)
 
-    def refresh_data(self):
-        """Carica i dati dal DB e aggiorna il modello virtuale."""
-        text = self.search_input.text()
-        reparto = self.reparto_filter.currentData()
-        cantiere = self.cantiere_filter.currentData()
 
-        # Caricamento massivo (limit aumentato per precaricamento totale)
-        rows = self.storage.get_timbrature_with_reparto(
-            limit=10000, 
-            filter_text=text,
-            filter_reparto=reparto,
-            filter_cantiere=cantiere,
-        )
-        
-        # Formattazione dati in blocco
-        formatted_rows = []
-        for row in rows:
-            f_row = list(row)
-            try:
-                date_str = str(f_row[0])
-                if date_str:
-                    date_part = date_str.split(" ")[0] if " " in date_str else date_str
-                    dt = datetime.strptime(date_part, "%Y-%m-%d")
-                    f_row[0] = dt.strftime("%d/%m/%Y")
-            except: pass
-            formatted_rows.append(f_row)
-
-        self.model.update_data(formatted_rows)
-        # Ottimizza colonne dopo il caricamento
-        QTimer.singleShot(10, lambda: self.db_table.resizeColumnsToContents())
-        
-        # Rinfresca anche le impostazioni
-        self._load_settings_data()
 
     def _import_excel_manually(self):
         file_path, _ = QFileDialog.getOpenFileName(

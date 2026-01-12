@@ -64,7 +64,14 @@ class SmartLogTranslator:
         category = "info"
         human_msg = message  # Default fall-back
 
-        if "avvio" in lower_msg or "start" in lower_msg:
+        if (
+            "errore" in lower_msg
+            or "fallit" in lower_msg
+            or "exception" in lower_msg
+            or "✗" in message
+        ):
+            category = "error"
+        elif "avvio" in lower_msg or "start" in lower_msg:
             category = "start"
         elif (
             "login" in lower_msg or "accesso" in lower_msg or "connessione" in lower_msg
@@ -76,13 +83,6 @@ class SmartLogTranslator:
             category = "download"
         elif "successo" in lower_msg or "completat" in lower_msg or "✓" in message:
             category = "success"
-        elif (
-            "errore" in lower_msg
-            or "fallit" in lower_msg
-            or "exception" in lower_msg
-            or "✗" in message
-        ):
-            category = "error"
         elif "attes" in lower_msg or "wait" in lower_msg:
             category = "wait"
 
@@ -90,7 +90,7 @@ class SmartLogTranslator:
             human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])
 
         # Rich Tags Injection
-        if "credenziali" in lower_msg or "login" in lower_msg and category == "error":
+        if "credenziali" in lower_msg or ("login" in lower_msg and category == "error"):
             message += " [FIXIT:ACCOUNT]"
 
         return human_msg, message, category

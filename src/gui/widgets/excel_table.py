@@ -4,7 +4,7 @@ Tabella potenziata con funzionalità stile Excel.
 """
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QCursor, QKeySequence, QAction
+from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,

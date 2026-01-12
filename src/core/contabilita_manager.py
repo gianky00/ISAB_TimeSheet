@@ -7,8 +7,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
-import pandas as pd
-
 from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_queries import ContabilitaQueries
 from src.core.contabilita_search import ContabilitaSearch
@@ -81,9 +79,11 @@ class ContabilitaManager:
             try:
                 with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
                     lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
-                    lookup_df = pd.read_sql_query(lookup_query, conn)
-                    lookup_df = lookup_df.drop_duplicates(subset=["n_prev"])
-                    lookup_map = dict(zip(lookup_df["n_prev"], lookup_df["odc"], strict=False))
+                    cursor = conn.cursor()
+                    cursor.execute(lookup_query)
+                    rows = cursor.fetchall()
+                    # Creazione dizionario n_prev -> odc, ignorando duplicati (usa l'ultimo trovato)
+                    lookup_map = {row[0]: row[1] for row in rows if row[0]}
             except Exception:
                 pass
 

@@ -4,6 +4,7 @@ Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
 """
 
 import logging
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -33,20 +34,38 @@ class ContabilitaSearch:
         try:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
-                # Cerca in Contabilità (n_prev = codice_oda, attivita = descrizione)
-                sql = """
-                    SELECT DISTINCT n_prev, attivita, odc
-                    FROM contabilita
-                    WHERE (lower(n_prev) LIKE ? OR lower(attivita) LIKE ? OR lower(odc) LIKE ?)
-                    AND n_prev IS NOT NULL AND n_prev != ''
+
+                # Tentativo con FTS5 (molto più veloce)
+                sql_fts = """
+                    SELECT n_prev, attivita, odc
+                    FROM contabilita_fts
+                    WHERE contabilita_fts MATCH ?
                     LIMIT 20
                 """
-                like_query = f"%{query}%"
-                cursor.execute(sql, (like_query, like_query, like_query))
+                # Sanitizzazione semplice per FTS5 (evita errori se l'utente mette caratteri speciali)
+                fts_query = f'"{query}*"'
 
-                rows = cursor.fetchall()
+                try:
+                    cursor.execute(sql_fts, (fts_query,))
+                    rows = cursor.fetchall()
+                except sqlite3.OperationalError:
+                    rows = [] # Fallback al LIKE se FTS5 fallisce
+
+                # Se FTS5 non trova nulla o fallisce, usiamo LIKE come fallback
+                if not rows:
+                    sql_like = """
+                        SELECT DISTINCT n_prev, attivita, odc
+                        FROM contabilita
+                        WHERE (lower(n_prev) LIKE ? OR lower(attivita) LIKE ? OR lower(odc) LIKE ?)
+                        AND n_prev IS NOT NULL AND n_prev != ''
+                        LIMIT 20
+                    """
+                    like_query = f"%{query}%"
+                    cursor.execute(sql_like, (like_query, like_query, like_query))
+                    rows = cursor.fetchall()
+
                 logging.debug(
-                    f"[DEBUG] Search '{query}' found {len(rows)} matches in Contabilita"
+                    f"[DEBUG] Search '{query}' found {len(rows)} matches"
                 )
 
                 for row in rows:

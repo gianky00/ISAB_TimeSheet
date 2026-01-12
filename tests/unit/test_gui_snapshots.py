@@ -1,9 +1,11 @@
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # Import panels (these imports assume the file structure is correct)
 from src.gui.contabilita_panel import ContabilitaPanel
 from src.gui.scarico_ore_panel import ScaricoOrePanel
+
 
 class TestGuiSnapshots:
 
@@ -20,17 +22,17 @@ class TestGuiSnapshots:
         with patch("src.core.config_manager.get_config_value", return_value=[]):
             panel = ContabilitaPanel()
             qtbot.addWidget(panel)
-            
+
             # Check Tabs
             # ContabilitaPanel uses a QTabWidget named 'main_tabs'
             assert panel.main_tabs.count() >= 3 # Dati, Preventivi, Riepilogo, etc.
-            
+
     def test_scarico_ore_panel_instantiation(self, qtbot, mock_deps):
         """Verify ScaricoOrePanel can be instantiated."""
         with patch("src.core.config_manager.get_config_value", return_value=[]):
             panel = ScaricoOrePanel()
             qtbot.addWidget(panel)
-            
+
             # Check title or label existence
             # ScaricoOrePanel has a table_view
             assert panel.table_view is not None

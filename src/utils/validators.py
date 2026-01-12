@@ -204,5 +204,5 @@ class InputValidator:
         """Sanitizza stringa per uso in SQL (anche se usiamo parametri)."""
         if not value:
             return ""
-        # Rimuovi caratteri di controllo
-        return "".join(c for c in value if c.isprintable())
+        # Rimuovi caratteri di controllo, ma mantieni formattazione base
+        return "".join(c for c in value if c.isprintable() or c in ("\n", "\r", "\t"))

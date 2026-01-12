@@ -4,6 +4,7 @@ Finestra principale dell'applicazione SyncroJob.
 Implementa Lazy Loading dei pannelli per prestazioni ottimali.
 """
 
+from enum import IntEnum
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
@@ -21,8 +22,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from enum import IntEnum
-
 from src.core import config_manager
 from src.core.backup_manager import BackupManager
 from src.core.lyra_sentinel import LyraSentinel
@@ -36,6 +35,7 @@ from src.gui.controllers.service_controller import ServiceController
 from src.gui.controllers.tray_controller import TrayController
 from src.gui.styles import apply_theme
 from src.gui.widgets.sidebar_widget import SidebarWidget
+from src.gui.widgets.status_card import StatusCard
 from src.gui.widgets.toast import ToastManager
 from src.gui.widgets.update_banner import UpdateBanner
 
@@ -100,29 +100,57 @@ class MainWindow(QMainWindow):
         """Avvia la sequenza di caricamento incrementale PROFONDO con feedback visivo."""
         # Coda di caricamento: (Azione, Descrizione)
         self._preload_tasks = [
-            (lambda: self.navigation_controller.get_panel(PageIndex.DATABASE), "Inizializzazione Database"),
-            (lambda: self.timbrature_db_panel.refresh_data(), "Popolamento Timbrature Isab"),
-            (lambda: self.contabilita_panel.refresh_tabs(), "Caricamento Registro Strumentale"),
-            (lambda: self.scarico_ore_panel._start_update(), "Sincronizzazione DataEase"),
-            (lambda: self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI), "Preparazione Motori Automazione"),
-            (lambda: self.navigation_controller.get_panel(PageIndex.LYRA), "Avvio Analisi Lyra"),
-            (lambda: self.navigation_controller.get_panel(PageIndex.SETTINGS), "Configurazione Preferenze"),
-            (lambda: self.navigation_controller.get_panel(PageIndex.NOTIFICATIONS), "Centro Notifiche"),
-            (lambda: self.navigation_controller.get_panel(PageIndex.HELP), "Guida e Documentazione")
+            (
+                lambda: self.navigation_controller.get_panel(PageIndex.DATABASE),
+                "Inizializzazione Database",
+            ),
+            (
+                lambda: self.timbrature_db_panel.refresh_data(),
+                "Popolamento Timbrature Isab",
+            ),
+            (
+                lambda: self.contabilita_panel.refresh_tabs(),
+                "Caricamento Registro Strumentale",
+            ),
+            (
+                lambda: self.scarico_ore_panel._start_update(),
+                "Sincronizzazione DataEase",
+            ),
+            (
+                lambda: self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI),
+                "Preparazione Motori Automazione",
+            ),
+            (
+                lambda: self.navigation_controller.get_panel(PageIndex.LYRA),
+                "Avvio Analisi Lyra",
+            ),
+            (
+                lambda: self.navigation_controller.get_panel(PageIndex.SETTINGS),
+                "Configurazione Preferenze",
+            ),
+            (
+                lambda: self.navigation_controller.get_panel(PageIndex.NOTIFICATIONS),
+                "Centro Notifiche",
+            ),
+            (
+                lambda: self.navigation_controller.get_panel(PageIndex.HELP),
+                "Guida e Documentazione",
+            ),
         ]
         self._total_preload = len(self._preload_tasks)
-        
+
         # Attiva indicatori
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, self._total_preload)
         self.progress_bar.setValue(0)
-        
+
         # Avvia la catena
         QTimer.singleShot(100, self._process_next_preload)
 
     def _process_next_preload(self):
         """Esegue il prossimo task di precaricamento senza bloccare la UI."""
         from PyQt6 import sip
+
         if sip.isdeleted(self):
             return
 
@@ -132,11 +160,11 @@ class MainWindow(QMainWindow):
 
         # Estrai il prossimo task
         action, description = self._preload_tasks.pop(0)
-        
+
         # Feedback Utente
         self.status_bar.showMessage(f"Ottimizzazione: {description}...")
         self.progress_bar.setValue(self._total_preload - len(self._preload_tasks))
-        
+
         # Esegui azione (Safe)
         try:
             action()
@@ -152,9 +180,10 @@ class MainWindow(QMainWindow):
     def _finalize_preload(self):
         """Conclude la sequenza di caricamento."""
         from PyQt6 import sip
+
         if sip.isdeleted(self):
             return
-            
+
         self.progress_bar.setVisible(False)
         self.status_bar.showMessage("SyncroJob è pronto. Tutti i servizi attivi.", 3000)
 
@@ -217,6 +246,11 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.progress_bar.setMaximumWidth(200)
         self.status_bar.addPermanentWidget(self.progress_bar)
+
+        # Status Card Globale
+        self.global_status_card = StatusCard("Stato Globale")
+        self.global_status_card.setMinimumWidth(200)
+        self.status_bar.addPermanentWidget(self.global_status_card)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -326,6 +360,45 @@ class MainWindow(QMainWindow):
     # Wrapper per compatibilità
     def navigate_to_panel(self, panel_key: str):
         self.navigation_controller.navigate_to_panel(panel_key)
+
+    def _navigate_to(self, index: int):
+        """Naviga verso un indice di pagina specifico."""
+        self.navigation_controller.navigate_to(index)
+
+    def _navigate_to_oda(self, oda_code: str):
+        """Naviga verso la contabilità e cerca un OdA specifico."""
+        self.navigation_controller.navigate_to(PageIndex.DATABASE)
+        # Il pannello database ha diversi tab (Timbrature, Contabilità, Scarico Ore)
+        # Assumiamo che tab 1 sia Contabilità (da verificare nel widget)
+        if hasattr(self, "database_widget"):
+            self.database_widget.setCurrentIndex(1)
+            if hasattr(self, "contabilita_panel"):
+                self.contabilita_panel.set_search_query(oda_code)
+
+    def _navigate_to_extended(self, tab_idx: int, query: str):
+        """Naviga verso un sub-tab specifico del pannello Contabilità."""
+        self.navigation_controller.navigate_to(PageIndex.DATABASE)
+        if hasattr(self, "database_widget"):
+            self.database_widget.setCurrentIndex(1)
+            if hasattr(self, "contabilita_panel"):
+                self.contabilita_panel.main_tabs.setCurrentIndex(tab_idx)
+                self.contabilita_panel.set_search_query(query)
+
+    def _navigate_to_dataease(self, query: str):
+        """Naviga verso il pannello Scarico Ore (DataEase)."""
+        self.navigation_controller.navigate_to(PageIndex.DATABASE)
+        if hasattr(self, "database_widget"):
+            self.database_widget.setCurrentIndex(2)
+            if hasattr(self, "scarico_ore_panel"):
+                self.scarico_ore_panel.set_search_query(query)
+
+    def _navigate_to_timbrature(self, query: str):
+        """Naviga verso il database Timbrature."""
+        self.navigation_controller.navigate_to(PageIndex.DATABASE)
+        if hasattr(self, "database_widget"):
+            self.database_widget.setCurrentIndex(0)
+            if hasattr(self, "timbrature_db_panel"):
+                self.timbrature_db_panel.search_input.setText(query)
 
     def analyze_with_lyra(self, context_text: str):
         self.navigation_controller.analyze_with_lyra(context_text)

@@ -1,29 +1,33 @@
-import os
-from datetime import datetime
-
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
-    QMenu,
-    QTableWidgetItem,
+    QTableView,
     QVBoxLayout,
     QWidget,
-    QTableView,
 )
 
-from src.core.contabilita_queries import ContabilitaQueries
 from src.core.config_manager import CONFIG_DIR
+from src.core.contabilita_queries import ContabilitaQueries
 from src.gui.formatters import FastTableModel
+
 
 class ContabilitaYearTab(QWidget):
     """Tab per un singolo anno ottimizzato per massima reattività."""
 
     COLUMNS = [
-        "DATA\nPREV.", "MESE", "N°\nPREV.", "TOTALE\nPREV.", "ATTIVITA'",
-        "TCL", "ODC", "STATO\nATTIVITA'", "TIPOLOGIA", "ORE\nSP",
-        "RESA", "ANNOTAZIONI",
+        "DATA\nPREV.",
+        "MESE",
+        "N°\nPREV.",
+        "TOTALE\nPREV.",
+        "ATTIVITA'",
+        "TCL",
+        "ODC",
+        "STATO\nATTIVITA'",
+        "TIPOLOGIA",
+        "ORE\nSP",
+        "RESA",
+        "ANNOTAZIONI",
     ]
 
     def __init__(self, year: int, parent=None):
@@ -46,50 +50,56 @@ class ContabilitaYearTab(QWidget):
         self.table.setSortingEnabled(True)
         self.table.verticalHeader().setVisible(False)
         self.table.setStyleSheet("""
-            QTableView { 
-                background-color: white; 
-                border: 1px solid #dee2e6; 
+            QTableView {
+                background-color: white;
+                border: 1px solid #dee2e6;
                 alternate-background-color: #f8f9fa;
             }
-            QHeaderView::section { 
-                background-color: #E1F5FE; 
-                color: #333333; 
-                padding: 8px; 
-                border: none; 
-                border-right: 1px solid #B3E5FC; 
-                border-bottom: 2px solid #81D4FA; 
-                font-weight: bold; 
-                font-size: 11px; 
+            QHeaderView::section {
+                background-color: #E1F5FE;
+                color: #333333;
+                padding: 8px;
+                border: none;
+                border-right: 1px solid #B3E5FC;
+                border-bottom: 2px solid #81D4FA;
+                font-weight: bold;
+                font-size: 11px;
             }
         """)
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        
+
         # Imposta larghezze iniziali ragionevoli
         self.table.setColumnWidth(0, 90)
         self.table.setColumnWidth(2, 80)
         self.table.setColumnWidth(4, 300)
-        
+
         header.setStretchLastSection(True)
 
         layout.addWidget(self.table)
+
+    def refresh_data(self):
+        """Metodo pubblico per rinfrescare i dati del tab."""
+        self._load_data()
 
     def _load_data(self):
         """Carica i dati dal DB e aggiorna il modello virtuale."""
         try:
             db_path = CONFIG_DIR / "data" / "contabilita.db"
             db_data = ContabilitaQueries.get_data_by_year(db_path, self.year)
-            
+
             # Formattazione per la visualizzazione
             display_rows = []
             for row in db_data:
                 # Trasforma i dati in stringhe leggibili per il modello
-                display_row = [str(x) if x is not None else "" for x in row[:len(self.COLUMNS)]]
+                display_row = [
+                    str(x) if x is not None else "" for x in row[: len(self.COLUMNS)]
+                ]
                 display_rows.append(display_row)
-            
+
             self.model.update_data(display_rows)
-            
+
         except Exception as e:
             print(f"Error loading data for year {self.year}: {e}")
 

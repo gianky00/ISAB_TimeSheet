@@ -50,17 +50,15 @@ class DettagliOdABot(BaseBot):
 
     def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""
-        base_valid, base_msg = super().validate_data(data)
-        if not base_valid:
-            return False, base_msg
+        # Non chiamiamo super().validate_data(data) perché bloccherebbe se data è vuoto.
+        # Verifichiamo manualmente le credenziali e il fornitore.
+        if not self.username or not self.password:
+            return False, "Credenziali mancanti nelle impostazioni."
 
         if not self.fornitore:
             return False, "Fornitore non specificato."
 
-        rows = data if isinstance(data, list) else data.get("rows", [])
-        if not rows:
-            return False, "Nessun dato fornito per l'elaborazione."
-
+        # Il bot può partire anche se data è vuoto (per la lista generale)
         return True, ""
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
@@ -71,6 +69,11 @@ class DettagliOdABot(BaseBot):
             self.fornitore = data.get("fornitore", self.fornitore)
         else:
             rows = data
+
+        # Se non ci sono righe, aggiungiamo una riga vuota per far partire la ricerca generale
+        if not rows:
+            self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
+            rows = [{"numero_oda": "", "numero_contratto": ""}]
 
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
         page = DettagliOdAPage(self.driver, self.log)

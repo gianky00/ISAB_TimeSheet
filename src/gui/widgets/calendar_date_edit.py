@@ -4,6 +4,7 @@ QDateEdit personalizzato con popup calendario.
 """
 
 from PyQt6.QtWidgets import QDateEdit
+
 from src.utils.helpers import get_asset_path
 
 

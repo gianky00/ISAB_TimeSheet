@@ -8,7 +8,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -35,8 +35,18 @@ def pytest_configure(config):
     """
     patcher = patch("os.getlogin", return_value="testuser")
     patcher.start()
-    # Ensure the patch is stopped after the test session finishes
+
+    # Global mock for Selenium and ChromeDriverManager to avoid downloads/browser popups
+    selenium_patcher = patch("selenium.webdriver.Chrome", return_value=MagicMock())
+    manager_patcher = patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="/mock/path/chromedriver")
+
+    selenium_patcher.start()
+    manager_patcher.start()
+
+    # Ensure the patches are stopped after the test session finishes
     config.add_cleanup(patcher.stop)
+    config.add_cleanup(selenium_patcher.stop)
+    config.add_cleanup(manager_patcher.stop)
 
 
 @pytest.fixture
@@ -113,22 +123,28 @@ def _isolate_config(tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def cleanup_widgets(qapp):
+def cleanup_widgets():
     """
     Force clean up of all top-level widgets after each test.
     This prevents "Widget Zombie" leaks and GDI handle exhaustion on Windows.
+    Does NOT require 'qapp' fixture to avoid creating QApplication for non-GUI tests.
     """
     yield
-    
-    from PyQt6.QtWidgets import QApplication
+
     import gc
-    
+
+    from PyQt6.QtWidgets import QApplication
+
+    # Only clean up if QApplication exists
+    if not QApplication.instance():
+        return
+
     # Try to import sip for explicit C++ deletion
     try:
         from PyQt6 import sip
     except ImportError:
         sip = None
-    
+
     # Close all top-level widgets
     for widget in QApplication.topLevelWidgets():
         try:
@@ -137,14 +153,14 @@ def cleanup_widgets(qapp):
             widget.deleteLater()
             if sip and not sip.isdeleted(widget):
                 # Dangerous but necessary for GDI leak prevention in massive suites
-                # sip.delete(widget) 
-                pass 
+                # sip.delete(widget)
+                pass
         except Exception:
             pass
-    
+
     # Process deferred delete events
-    qapp.processEvents()
-    
+    QApplication.processEvents()
+
     # Force Python Garbage Collection
     gc.collect()
     gc.collect() # Double collect for cyclic references
@@ -159,29 +175,29 @@ def mock_ui_dependencies(mocker):
     # Mock Database Instance (db_manager)
     mock_db = MagicMock()
     mocker.patch("src.core.database.db_manager", mock_db)
-    
+
     # Mock ContabilitaManager (Class Mock)
     mock_contabilita_class = mocker.patch("src.core.contabilita_manager.ContabilitaManager")
-    
+
     # Configure Class Methods and Attributes
     mock_contabilita_class.DB_PATH = MagicMock()
     mock_contabilita_class.DB_PATH.exists.return_value = True
     mock_contabilita_class.get_available_years.return_value = [2024, 2025]
     mock_contabilita_class.get_scarico_ore_data.return_value = []
-    
+
     # Configure Instance Methods (if any are used)
     mock_contabilita_instance = mock_contabilita_class.return_value
     mock_contabilita_instance.get_status_message.return_value = "Ready"
-    
+
     # Mock TimbratureStorage
     # Force import to avoid AttributeError: module 'src' has no attribute 'bots'
     import src.bots.portale_fornitori.timbrature.storage
     mocker.patch.object(src.bots.portale_fornitori.timbrature.storage, "TimbratureStorage", return_value=MagicMock())
-    
+
     # Mock LyraSentinel & Telegram
     mocker.patch("src.core.lyra_sentinel.LyraSentinel", return_value=MagicMock())
     mocker.patch("src.core.telegram_manager.TelegramService", return_value=MagicMock())
-    
+
     # Mock ConfigManager per evitare scritture reali
     mocker.patch("src.core.config_manager.save_config")
 
