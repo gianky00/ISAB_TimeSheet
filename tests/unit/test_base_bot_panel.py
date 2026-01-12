@@ -54,6 +54,9 @@ class TestBaseBotPanel(unittest.TestCase):
         # Patch StatusCard in src.gui.panels
         self.patcher_status_card = patch('src.gui.panels.StatusCard')
         self.mock_status_card_class = self.patcher_status_card.start()
+        # Bind real Enum to Mock class so code using StatusCard.Status works
+        self.mock_status_card_class.Status = StatusCard.Status
+        
         self.mock_status_card_instance = MagicMock()
         self.mock_status_card_class.return_value = self.mock_status_card_instance
         type(self.mock_status_card_instance)._status = PropertyMock(return_value="idle") # Mock the _status property
@@ -73,6 +76,10 @@ class TestBaseBotPanel(unittest.TestCase):
         # Patch ModernButton in src.gui.panels
         self.patcher_modern_button = patch('src.gui.panels.ModernButton')
         self.mock_modern_button_class = self.patcher_modern_button.start()
+        # Bind real Enums
+        self.mock_modern_button_class.Variant = ModernButton.Variant
+        self.mock_modern_button_class.Size = ModernButton.Size
+
         self.mock_start_btn_instance = MagicMock(spec=QPushButton)
         self.mock_stop_btn_instance = MagicMock(spec=QPushButton)
         self.mock_modern_button_class.side_effect = [self.mock_start_btn_instance, self.mock_stop_btn_instance]
@@ -81,11 +88,13 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_start_btn_instance.setEnabled = MagicMock() # Mock setEnabled
         self.mock_stop_btn_instance.setEnabled = MagicMock() # Mock setEnabled
 
-        self.patcher_get_asset_path = patch('src.utils.helpers.get_asset_path')
+        # Patch get_asset_path in src.gui.panels because it is imported directly
+        self.patcher_get_asset_path = patch('src.gui.panels.get_asset_path')
         self.mock_get_asset_path = self.patcher_get_asset_path.start()
         self.mock_get_asset_path.return_value = "mock/path/to/asset.svg"
 
-        self.patcher_config_manager = patch('src.core.config_manager')
+        # Patch config_manager in src.gui.panels directly to ensure it catches usage
+        self.patcher_config_manager = patch('src.gui.panels.config_manager')
         self.mock_config_manager = self.patcher_config_manager.start()
         self.mock_config_manager.load_config.return_value = {"browser_headless": False, "browser_timeout": 30}
         self.mock_config_manager.get_download_path.return_value = "/mock/download/path"
@@ -229,14 +238,14 @@ class TestBaseBotPanel(unittest.TestCase):
         )
         self.mock_start_btn_instance.clicked.connect.assert_called_once_with(self.panel._on_start)
         self.mock_stop_btn_instance.clicked.connect.assert_called_once_with(self.panel._on_stop)
-        self.assertFalse(self.mock_stop_btn_instance.isEnabled())
+        self.mock_stop_btn_instance.setEnabled.assert_called_with(False)
         # QTimer.singleShot is not called when BaseBotPanel is instantiated directly, only in subclasses
         # self.mock_qtimer_singleshot.assert_called_once() # Removed as it's not called here
 
     def test_update_status(self):
         self.panel._update_status(StatusCard.Status.RUNNING, "Bot is running")
         self.mock_status_card_instance.setStatus.assert_called_once_with(StatusCard.Status.RUNNING, "Bot is running")
-        self.panel.status_changed.emit.assert_called_once_with("RUNNING", "Bot is running")
+        self.panel.status_changed.emit.assert_called_once_with(StatusCard.Status.RUNNING, "Bot is running")
 
     def test_get_current_status(self):
         status, message = self.panel.get_current_status()
@@ -317,8 +326,8 @@ class TestBaseBotPanel(unittest.TestCase):
 
         # Success scenario
         self.panel._on_worker_finished(True)
-        self.assertTrue(self.panel.start_btn.isEnabled())
-        self.assertFalse(self.panel.stop_btn.isEnabled())
+        self.mock_start_btn_instance.setEnabled.assert_called_with(True)
+        self.mock_stop_btn_instance.setEnabled.assert_called_with(False)
         self.mock_mission_report_card_class.assert_called_once_with("1m 30s", True)
         self.mock_audit_manager_instance.log_action.assert_called_with(status="success", **{
             "action": "Completamento Automazione",
@@ -332,12 +341,12 @@ class TestBaseBotPanel(unittest.TestCase):
             "Operazione completata con successo.",
             is_error=False
         )
-        self.panel.worker.wait.assert_called_once()
+        self.mock_bot_worker_instance.wait.assert_called_once()
         self.assertIsNone(self.panel.worker)
         self.panel.bot_results_ready.emit.assert_called_once_with(self.panel.bot_id, ["file1.pdf", "file2.pdf"])
 
         self.mock_audit_manager_instance.log_action.reset_mock()
-        self.panel.bot_finished.emit.reset_called()
+        self.panel.bot_finished.emit.reset_mock()
         self.mock_parent.show_background_notification.reset_mock()
         self.mock_bot_worker_instance.wait.reset_mock()
         self.panel.worker = self.mock_bot_worker_instance # Re-assign for next test case

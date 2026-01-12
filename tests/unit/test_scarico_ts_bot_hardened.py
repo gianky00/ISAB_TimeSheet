@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from selenium.webdriver.remote.webelement import WebElement
 
 from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
@@ -23,7 +24,7 @@ class TestScaricaTSBotHardened:
     def test_navigate_to_timesheet_success(self, bot):
         """Test the navigation flow to the timesheet page."""
         # Setup: mock wait.until to return a mock element (clickable)
-        mock_el = MagicMock()
+        mock_el = MagicMock(spec=WebElement)
         bot.wait.until.return_value = mock_el
 
         # We also need to mock _attendi_scomparsa_overlay which is in BaseBot
@@ -43,7 +44,7 @@ class TestScaricaTSBotHardened:
         bot.fornitore = "VENDOR_XYZ"
         bot.data_da = "10.01.2026"
 
-        mock_el = MagicMock()
+        mock_el = MagicMock(spec=WebElement)
         bot.wait.until.return_value = mock_el
         bot.long_wait.until.return_value = mock_el
 

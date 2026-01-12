@@ -9,12 +9,11 @@ from src.core.contabilita_manager import ContabilitaManager
 class TestCertificatiImport(unittest.TestCase):
 
     @patch("src.core.excel_importer.pd.read_sql")
-    @patch("src.core.excel_importer.db_manager")
     @patch("src.core.excel_importer.pd.ExcelFile")
     @patch("src.core.excel_importer.pd.read_excel")
     @patch("src.core.excel_importer.Path.exists")
     def test_import_certificati_dynamic_header(
-        self, mock_exists, mock_read_excel, mock_excel_file, mock_db_manager, mock_read_sql
+        self, mock_exists, mock_read_excel, mock_excel_file, mock_read_sql
     ):
         # Setup mocks
         mock_exists.return_value = True
@@ -23,12 +22,6 @@ class TestCertificatiImport(unittest.TestCase):
         mock_xls_instance = MagicMock()
         mock_xls_instance.sheet_names = ["Strumenti Campione ISAB SUD", "Other Sheet"]
         mock_excel_file.return_value = mock_xls_instance
-
-        # Mock DB connection
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
-        mock_conn.cursor.return_value = mock_cursor
 
         # Mock read_sql for existing rows (return empty)
         mock_read_sql.return_value = pd.DataFrame()

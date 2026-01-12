@@ -78,18 +78,19 @@ def check_requirements_sync():
         return False
 
 def run_tests():
-    print_step("Esecuzione Test Suite (Fast Mode)...")
-    # Usa il comando 'test' definito in pyproject.toml che include già le esclusioni
-    cmd = ["poetry", "run", "test"]
+    print_step("Esecuzione Test Suite (Robust Mode)...")
+    # Utilizza il runner robusto che gestisce isolamento, report e retry
+    runner_script = PROJECT_ROOT / "tests" / "run_robust_tests.py"
+    cmd = [sys.executable, str(runner_script), "--reset"]
 
     try:
-        # Eseguiamo subprocess lasciando l'output visibile così l'utente vede i progressi
-        ret = subprocess.call(cmd, cwd=PROJECT_ROOT, shell=True)
+        # Eseguiamo subprocess lasciando l'output visibile
+        ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
         if ret == 0:
             print_ok("Tutti i test passati.")
             return True
         else:
-            print_fail("Test falliti. Build annullata.")
+            print_fail("Test falliti. Controlla il report o l'output sopra. Build annullata.")
             return False
     except Exception as e:
         print_fail(f"Errore esecuzione test: {e}")
