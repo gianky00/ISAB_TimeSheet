@@ -48,12 +48,33 @@ class TestScaricaTSBotHardened:
         bot.wait.until.return_value = mock_el
         bot.long_wait.until.return_value = mock_el
 
-        with patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
+        with patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"), \
+             patch("time.sleep") as mock_sleep:
                 success = bot._setup_filters()
 
         assert success is True
         # Verify that send_keys was called with the date
         mock_el.send_keys.assert_called_with("10.01.2026")
+        
+        # VERIFY CRITICAL SLEEP: The 0.5s pause before clicking vendor option
+        mock_sleep.assert_called_with(0.5)
+
+    def test_download_excel_timing_and_retry(self, bot):
+        """Test that _download_excel has the correct wait/retry timing."""
+        source_dir = Path("source")
+        dest_dir = Path("dest")
+        
+        # Mock Path methods to simulate file appearance
+        with patch("pathlib.Path.iterdir", return_value=[]), \
+             patch("time.time", side_effect=[0, 1, 2, 30]), \
+             patch("time.sleep") as mock_sleep:
+            
+            # This will timeout after 25 seconds (simulated by side_effect)
+            res = bot._download_excel(source_dir, dest_dir, "ODA1", "10")
+            
+            assert res is None
+            # Verify that it slept during the retry loop (0.5s intervals)
+            mock_sleep.assert_any_call(0.5)
 
     def test_run_loop_handles_exception_and_continues(self, bot):
         """Test that run() continues to next row if one fails."""
