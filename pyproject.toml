@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.0.41"
+version = "1.0.42"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
