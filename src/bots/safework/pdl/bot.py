@@ -231,6 +231,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     self.log_error(f"Interazione campo ricerca PDL {pdl_num}", e)
                     continue
 
+                # Controllo specifico per popup "Ricerca Estesa"
+                if self._gestisci_ricerca_estesa():
+                    self.log(f"⚠️ PdL {pdl_num} inesistente (0 risultati dopo estensione). Salto.")
+                    continue
+
                 if self._gestisci_alert_ricerca():
                     # NOTA IMPORTANTE: Se appare l'alert "PdL non in programmazione", non facciamo 'continue'.
                     # È sempre un avviso informativo. Attendiamo 2 secondi per permettere al sistema
@@ -429,6 +434,51 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         self.log(f"✨ FINE ESECUZIONE: {success_count}/{total} PDL completati.")
         return success_count == total
+
+    def _gestisci_ricerca_estesa(self) -> bool:
+        """
+        Gestisce il popup 'La ricerca veloce... estenderla?'.
+        Ritorna True se, dopo l'estensione, non si trovano risultati (0 Permessi).
+        """
+        if not self.driver:
+            return False
+
+        try:
+            # Cerca il testo specifico indicato dall'utente: <p idtxt="1C51D77B">
+            try:
+                WebDriverWait(self.driver, 2).until(
+                    EC.visibility_of_element_located((By.CSS_SELECTOR, "p[idtxt='1C51D77B']"))
+                )
+                self.log("ℹ️ Rilevato popup 'Ricerca estesa'.")
+            except Exception:
+                return False  # Popup non apparso, procedi normale
+
+            # Clicca su Si: <span idtxt="E421C594">
+            try:
+                btn_si = self.driver.find_element(By.CSS_SELECTOR, "span[idtxt='E421C594']")
+                btn_si.click()
+                self.log("🖱️ Cliccato 'Si' per estendere la ricerca.")
+            except Exception as e:
+                self.log(f"⚠️ Popup trovato ma impossibile cliccare Si: {e}")
+                return False
+
+            # Attendi ricaricamento pagina/overlay
+            self._attendi_scomparsa_overlay()
+
+            # Verifica Risultati: <span id="numPermessiTrovati">0</span>
+            try:
+                num_res = self.driver.find_element(By.ID, "numPermessiTrovati")
+                valore = num_res.text.strip()
+                self.log(f"ℹ️ Risultati trovati dopo estensione: {valore}")
+                if valore == "0":
+                    return True  # Stop, PdL inesistente
+            except Exception:
+                self.log("⚠️ Impossibile leggere il numero di risultati.")
+
+        except Exception as e:
+            self.log_error("Gestione Ricerca Estesa", e)
+
+        return False
 
     def _gestisci_alert_ricerca(self, timeout=10):
         if not self.driver:

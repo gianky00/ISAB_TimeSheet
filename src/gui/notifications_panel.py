@@ -216,7 +216,7 @@ class NotificationsPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.filter_unread = False
+        self.current_filter = "all"  # 'all', 'unread', 'errors'
         self.manager = NotificationManager.instance()
 
         self._setup_ui()
@@ -276,15 +276,21 @@ class NotificationsPanel(QWidget):
         self.btn_all = QPushButton("Tutti")
         self.btn_all.setCheckable(True)
         self.btn_all.setChecked(True)
-        self.btn_all.clicked.connect(lambda: self._set_filter(False))
+        self.btn_all.clicked.connect(lambda: self._set_filter("all"))
         self._style_filter_btn(self.btn_all)
         notif_toolbar.addWidget(self.btn_all)
 
         self.btn_unread = QPushButton("Da leggere")
         self.btn_unread.setCheckable(True)
-        self.btn_unread.clicked.connect(lambda: self._set_filter(True))
+        self.btn_unread.clicked.connect(lambda: self._set_filter("unread"))
         self._style_filter_btn(self.btn_unread)
         notif_toolbar.addWidget(self.btn_unread)
+
+        self.btn_errors = QPushButton("Solo Errori")
+        self.btn_errors.setCheckable(True)
+        self.btn_errors.clicked.connect(lambda: self._set_filter("errors"))
+        self._style_filter_btn(self.btn_errors)
+        notif_toolbar.addWidget(self.btn_errors)
 
         notif_toolbar.addStretch()
 
@@ -408,10 +414,11 @@ class NotificationsPanel(QWidget):
         """
         )
 
-    def _set_filter(self, unread_only):
-        self.filter_unread = unread_only
-        self.btn_all.setChecked(not unread_only)
-        self.btn_unread.setChecked(unread_only)
+    def _set_filter(self, mode):
+        self.current_filter = mode
+        self.btn_all.setChecked(mode == "all")
+        self.btn_unread.setChecked(mode == "unread")
+        self.btn_errors.setChecked(mode == "errors")
         self.refresh_notifications()
 
     def _mark_all_read(self):
@@ -424,7 +431,11 @@ class NotificationsPanel(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        notifications = self.manager.get_notifications(self.filter_unread)
+        is_unread_mode = (self.current_filter == "unread")
+        notifications = self.manager.get_notifications(is_unread_mode)
+
+        if self.current_filter == "errors":
+            notifications = [n for n in notifications if n.get("level") == "error"]
 
         if not notifications:
             empty_lbl = QLabel("Nessuna notifica")

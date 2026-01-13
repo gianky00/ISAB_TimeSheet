@@ -272,6 +272,11 @@ class BaseBotPanel(QWidget):
             status=status,
         )
 
+        # Update Status Card (Fix Global Status Stuck)
+        final_status = StatusCard.Status.SUCCESS if success else StatusCard.Status.ERROR
+        final_msg = "Completato" if success else "Errore"
+        self._update_status(final_status, final_msg)
+
         # Risultati per Telegram/UI (#2)
         if (
             self.worker
