@@ -2,8 +2,10 @@ import asyncio
 import json
 import re
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 
+import telegram
 from PyQt6.QtCore import QObject, pyqtSignal
 from telegram import (
     InlineKeyboardButton,
@@ -63,6 +65,7 @@ class TelegramService(QObject):
             if self.thread and self.thread.is_alive():
                 self.log_signal.emit("Riavvio del servizio Telegram in corso...")
                 self.stop_service()
+                time.sleep(2.0)  # Wait for TCP connections to fully close
 
             config = config_manager.load_config()
             token = config.get("telegram_token", "")
@@ -108,6 +111,7 @@ class TelegramService(QObject):
             self.app.add_handler(MessageHandler(filters.PHOTO, self._handle_photo))
             self.app.add_handler(MessageHandler(filters.VOICE, self._handle_voice))
             self.app.add_handler(CallbackQueryHandler(self._handle_button))
+            self.app.add_error_handler(self._handle_error)
 
             self.log_signal.emit("✅ Servizio Telegram Attivo")
 
@@ -151,6 +155,16 @@ class TelegramService(QObject):
             self.log_signal.emit("Thread Telegram terminato.")
             if self.loop and self.loop.is_running():
                 self.loop.close()
+
+    async def _handle_error(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Gestisce gli errori globali del bot."""
+        if isinstance(context.error, telegram.error.Conflict):
+            self.log_signal.emit("🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio.")
+            self.stop_event.set()
+        elif isinstance(context.error, telegram.error.NetworkError):
+            self.log_signal.emit(f"⚠️ Errore Rete Telegram: {context.error}")
+        else:
+            self.log_signal.emit(f"❌ Errore Telegram Imprevisto: {context.error}")
 
     def _get_main_keyboard(self):
         """Menu Principale Gerarchico."""

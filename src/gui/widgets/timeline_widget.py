@@ -39,18 +39,18 @@ class HorizontalLogItem(QWidget):
 
     def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
         super().__init__(parent)
-        self.setFixedSize(160, 90)
+        self.setFixedSize(180, 150)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(2)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(5)
 
         self.setStyleSheet(
             """
             QWidget {
                 background-color: white;
                 border: 1px solid #dee2e6;
-                border-radius: 6px;
+                border-radius: 8px;
             }
             QLabel {
                 background-color: transparent;
@@ -101,18 +101,18 @@ class HorizontalLogItem(QWidget):
         top_row.setSpacing(5)
 
         lbl_icon = QLabel(icons.get(category, "•"))
-        lbl_icon.setStyleSheet(f"font-size: 20px; color: {self.category_color};")
+        lbl_icon.setStyleSheet(f"font-size: 24px; color: {self.category_color};")
         top_row.addWidget(lbl_icon)
 
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 11px; font-family: monospace;")
+        lbl_time.setStyleSheet("color: #adb5bd; font-size: 12px; font-family: monospace;")
         top_row.addWidget(lbl_time)
 
         top_row.addStretch()
         layout.addLayout(top_row)
 
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 12px; color: #212529;")
+        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 13px; color: #212529;")
         self.lbl_human.setWordWrap(True)
         self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(self.lbl_human)
@@ -120,23 +120,23 @@ class HorizontalLogItem(QWidget):
         layout.addStretch()
 
         action_layout = QHBoxLayout()
-        action_layout.setSpacing(2)
+        action_layout.setSpacing(5)
 
         if snapshot_path:
             btn = QPushButton("📷")
-            btn.setFixedSize(24, 20)
+            btn.setFixedSize(30, 24)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #dc3545; color: white; border-radius: 3px; font-size: 10px;")
+            btn.setStyleSheet("background-color: #dc3545; color: white; border-radius: 4px; font-size: 12px;")
             btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
             action_layout.addWidget(btn)
 
         if fixit_action == "ACCOUNT":
             btn = QPushButton("🔧")
-            btn.setFixedSize(24, 20)
+            btn.setFixedSize(30, 24)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #ffc107; color: black; border-radius: 3px; font-size: 10px;")
+            btn.setStyleSheet("background-color: #ffc107; color: black; border-radius: 4px; font-size: 12px;")
             btn.clicked.connect(self._open_settings)
             action_layout.addWidget(btn)
 
@@ -150,10 +150,10 @@ class HorizontalLogItem(QWidget):
             if len(path) > 4 and "http" not in path and path not in seen:
                 seen.add(path)
                 btn = QPushButton("📂")
-                btn.setFixedSize(24, 20)
+                btn.setFixedSize(30, 24)
                 btn.setToolTip(f"Apri: {Path(path).name}")
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet("background-color: #17a2b8; color: white; border-radius: 3px; font-size: 10px;")
+                btn.setStyleSheet("background-color: #17a2b8; color: white; border-radius: 4px; font-size: 12px;")
                 btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
                 action_layout.addWidget(btn)
 
@@ -180,24 +180,30 @@ class HorizontalTimelineContainer(QWidget):
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(10, 5, 10, 5)
         self.main_layout.setSpacing(10)
-        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.setMinimumHeight(90)
+        self.main_layout.addStretch()
+        self.setMinimumHeight(160)
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        line_y = 20
+        line_y = 30
         pen = QPen(QColor("#dee2e6"))
         pen.setWidth(2)
         painter.setPen(pen)
 
-        if self.main_layout.count() > 0:
-            first = self.main_layout.itemAt(0).widget()
-            last = self.main_layout.itemAt(self.main_layout.count() - 1).widget()
-            if first and last:
-                start_x = first.geometry().center().x()
-                end_x = last.geometry().center().x()
-                painter.drawLine(start_x, line_y, end_x, line_y)
+        # Trova il primo e l'ultimo widget reali (escludendo lo stretch)
+        widgets = []
+        for i in range(self.main_layout.count()):
+            w = self.main_layout.itemAt(i).widget()
+            if w and not w.isHidden():
+                widgets.append(w)
+
+        if len(widgets) >= 2:
+            first = widgets[0]
+            last = widgets[-1]
+            start_x = first.geometry().center().x()
+            end_x = last.geometry().center().x()
+            painter.drawLine(start_x, line_y, end_x, line_y)
 
 
 class HorizontalTimelineWidget(QScrollArea):
@@ -208,7 +214,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setFixedHeight(110)
+        self.setFixedHeight(220)
         self.setStyleSheet("border: none; background-color: transparent;")
 
         self.container = HorizontalTimelineContainer()
@@ -227,7 +233,10 @@ class HorizontalTimelineWidget(QScrollArea):
     def add_widget(self, widget: QWidget):
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
-        self.container.main_layout.addWidget(widget)
+        
+        # Inserisce prima dello stretch finale
+        idx = self.container.main_layout.count() - 1
+        self.container.main_layout.insertWidget(max(0, idx), widget)
 
         self.anim = QPropertyAnimation(effect, b"opacity")
         self.anim.setDuration(500)
@@ -246,13 +255,16 @@ class HorizontalTimelineWidget(QScrollArea):
 
         if cat == self.last_category and cat in ["download", "search"]:
             self.consecutive_count += 1
-            if self.container.main_layout.count() > 0:
-                last_widget = self.container.main_layout.itemAt(
-                    self.container.main_layout.count() - 1
-                ).widget()
-                if isinstance(last_widget, HorizontalLogItem):
-                    last_widget.set_count(self.consecutive_count)
-                    return
+            # Cerca l'ultimo widget reale
+            widgets = []
+            for i in range(self.container.main_layout.count()):
+                w = self.container.main_layout.itemAt(i).widget()
+                if isinstance(w, HorizontalLogItem):
+                    widgets.append(w)
+            
+            if widgets:
+                widgets[-1].set_count(self.consecutive_count)
+                return
         else:
             self.consecutive_count = 1
             self.last_category = cat
@@ -283,6 +295,9 @@ class HorizontalTimelineWidget(QScrollArea):
             item = self.container.main_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
+        
+        # Re-aggiunge lo stretch dopo la pulizia
+        self.container.main_layout.addStretch()
         self.container.update()
 
 
@@ -324,6 +339,7 @@ class MissionReportCard(QFrame):
 
     def __init__(self, duration_str, status, parent=None):
         super().__init__(parent)
+        self.setFixedSize(260, 150)
         self.setStyleSheet("QFrame { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef); border: 1px solid #dee2e6; border-radius: 8px; margin: 10px 5px; }")
 
         layout = QVBoxLayout(self)
