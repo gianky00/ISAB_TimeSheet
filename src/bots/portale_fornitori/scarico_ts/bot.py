@@ -186,13 +186,19 @@ class ScaricaTSBot(BaseBot):
 
             self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
 
-            # Logica "Elabora TS": Gestione interattiva conflitti (VBA Style)
+            # Logica "Elabora TS": Trasformazione VBA + Salvataggio
             if self.elabora_ts and downloaded_files_list:
-                self.log(f"⚙️ Avvio elaborazione interattiva (Elabora TS)...")
-                self._process_downloaded_files_vba_style(downloaded_files_list, dest_dir)
-            
-            # Nota: TimesheetProcessor.process_file rimosso/disabilitato se elabora_ts è inteso come "VBA move logic"
-            # Se serviva anche l'analisi POS, va aggiunta dentro _process_downloaded_files_vba_style
+                self.log(f"⚙️ Avvio elaborazione TS (Logica VBA) su {len(downloaded_files_list)} file...")
+                processed_count = 0
+                for temp_file in downloaded_files_list:
+                    p_path = Path(temp_file)
+                    ok, msg = TimesheetProcessor.process_and_move(p_path, dest_dir)
+                    if ok:
+                        self.log(f"  ✅ {msg}")
+                        processed_count += 1
+                    else:
+                        self.log(f"  ❌ Errore elaborazione {p_path.name}: {msg}")
+                self.log(f"🏁 Elaborazione conclusa: {processed_count}/{len(downloaded_files_list)} completati.")
 
             return success_count == len(rows)
 
