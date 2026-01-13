@@ -136,39 +136,11 @@ class BaseBot(ABC):
         options.add_argument("--start-maximized")
         options.add_argument("--no-restore-session-state")
 
-        config = config_manager.load_config()
-        # Headless logic: prioritize parameter, then config
-        is_headless = self.headless or config.get("browser_headless", False)
-        if is_headless:
-            self.headless = True
-            options.add_argument("--headless=new")
-            options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
-
-        profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
-        options.add_argument(f"user-data-dir={profile_dir}")
-
-        prefs = {
-            "profile.default_content_setting_values.automatic_downloads": 1,
-            "plugins.always_open_pdf_externally": True,
-            "download.prompt_for_download": False,
-        }
-        options.add_experimental_option("prefs", prefs)
-
-    def _init_driver(self):
-        self.log("Inizializzazione browser...")
-        self.status = BotStatus.INITIALIZING
-
-        options = Options()
-        options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--disable-popup-blocking")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option("useAutomationExtension", False)
-        options.add_argument("--no-sandbox")
-        options.add_argument("--start-maximized")
-        options.add_argument("--no-restore-session-state")
+        # Stability Flags (Critical for Windows environments)
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--remote-debugging-port=9222")
+        options.add_argument("--disable-software-rasterizer")
 
         config = config_manager.load_config()
         # Headless logic: prioritize parameter, then config
@@ -238,7 +210,12 @@ class BaseBot(ABC):
             self.log(msg)
 
             # User-friendly hint
-            if "SessionNotCreatedException" in str(e) or "version" in str(e).lower():
+            err_str = str(e).lower()
+            if "chrome instance exited" in err_str:
+                self.log("💡 SUGGERIMENTO: Chrome è crashato all'avvio (Sandbox/Version Mismatch).")
+                self.log("   - Assicurati che Chrome sia aggiornato.")
+                self.log("   - Il sistema ha tentato di usare flag anti-crash, ma il problema persiste.")
+            elif "sessionnotcreatedexception" in err_str or "version" in err_str:
                 self.log("💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta.")
                 self.log("   1. Aggiorna Google Chrome all'ultima versione.")
                 self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile e mettilo nella cartella 'drivers'.")

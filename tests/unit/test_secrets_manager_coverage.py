@@ -63,22 +63,36 @@ class TestSecretsManagerCoverage:
         assert res == secret
 
     def test_get_license_key_none_found(self, mocker):
-        """Verifica comportamento se non viene trovato nulla."""
+        """Verifica comportamento se non viene trovato nulla (deve tornare fallback hardcoded)."""
         mocker.patch("os.environ.get", return_value=None)
         from src.core.secrets_manager import Path as SMPath
         mocker.patch.object(SMPath, "exists", return_value=False)
         mocker.patch("keyring.get_password", return_value=None)
 
-        assert SecretsManager.get_license_key() is None
+        # Il fallback hardcoded restituisce una chiave valida, non None
+        res = SecretsManager.get_license_key()
+        assert res is not None
+        assert isinstance(res, bytes)
+        # Verifica opzionale che sia la chiave hardcoded specifica
+        chars = [56, 107, 72, 115, 95, 114, 109, 119, 113, 97, 82, 85, 107, 49, 65, 81, 76, 71, 88, 54, 53, 103, 52, 65, 69, 107, 87, 85, 68, 97, 112, 87, 86, 115, 77, 70, 85, 81, 112, 78, 57, 69, 107, 61]
+        expected_fallback = base64.urlsafe_b64decode("".join(chr(c) for c in chars))
+        assert res == expected_fallback
 
     def test_get_license_key_invalid_base64_env(self, mocker):
-        """Verifica resilienza a base64 malformato in ENV."""
+        """Verifica resilienza a base64 malformato in ENV (fallback su hardcoded)."""
         mocker.patch("os.environ.get", return_value="!!!invalid!!!")
         from src.core.secrets_manager import Path as SMPath
         mocker.patch.object(SMPath, "exists", return_value=False)
         mocker.patch("keyring.get_password", return_value=None)
 
-        assert SecretsManager.get_license_key() is None
+        # Deve cadere sul fallback, non tornare None
+        res = SecretsManager.get_license_key()
+        assert res is not None
+        
+        # Verifica che sia la chiave di fallback
+        chars = [56, 107, 72, 115, 95, 114, 109, 119, 113, 97, 82, 85, 107, 49, 65, 81, 76, 71, 88, 54, 53, 103, 52, 65, 69, 107, 87, 85, 68, 97, 112, 87, 86, 115, 77, 70, 85, 81, 112, 78, 57, 69, 107, 61]
+        expected_fallback = base64.urlsafe_b64decode("".join(chr(c) for c in chars))
+        assert res == expected_fallback
 
     def test_is_available_true(self, mocker):
         """Verifica disponibilità backend keyring."""
