@@ -14,10 +14,12 @@ from src.core.backup_manager import BackupManager
 class TestSprintAAuditBackup:
     @pytest.fixture
     def audit_mgr(self, tmp_path, mocker):
-        mocker.patch("src.core.audit_manager.CONFIG_DIR", tmp_path)
-        with patch("src.core.audit_manager.AuditManager._instance", None):
-            mgr = AuditManager()
-            return mgr
+        db_path = tmp_path / "audit_test.db"
+        mocker.patch.object(AuditManager, "DB_PATH", db_path)
+        # Forza reset singleton reale
+        AuditManager._instance = None
+        mgr = AuditManager()
+        return mgr
 
     def test_audit_integrity_chain(self, audit_mgr):
         """Verifica che la catena di hash rilevi manomissioni."""

@@ -42,7 +42,8 @@ class TestTelegramManagerExtended:
         mock_update.message.reply_chat_action = AsyncMock()
 
         # Mock signal
-        mock_signal = mocker.patch.object(service.command_received, "emit")
+        mock_signal = mocker.Mock()
+        service.command_received.connect(mock_signal)
 
         await service._handle_text_input(mock_update, MagicMock())
 
@@ -66,7 +67,8 @@ class TestTelegramManagerExtended:
         mocker.patch("src.core.lyra_client.LyraClient", return_value=mock_client)
         mocker.patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake_key")
 
-        mock_intent_signal = mocker.patch.object(service.intent_received, "emit")
+        mock_intent_signal = mocker.Mock()
+        service.intent_received.connect(mock_intent_signal)
 
         # Bypass ThreadPoolExecutor per rendere il test deterministico
         def mock_submit(fn, *args, **kwargs):

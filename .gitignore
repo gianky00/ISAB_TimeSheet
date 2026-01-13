@@ -19,3 +19,6 @@ htmlcov/
 # Log files
 *.log
 .aider*
+/.mypy_cache
+/.ruff_cache
+/.pytest_cache

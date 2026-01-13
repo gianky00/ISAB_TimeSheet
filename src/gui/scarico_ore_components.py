@@ -341,6 +341,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
     def update_data(self, new_data):
         self.load_data_async(new_data)
 
+    def set_data(self, data):
+        """Aggiornamento dati sincrono (principalmente per test)."""
+        worker = CacheWorker(self.CACHE_PATH)
+        display_data, search, totals, style_cache = worker._build_caches(data)
+        self._on_worker_finished(display_data, search, totals, style_cache)
+
     def set_filter(self, text, col_filters=None):
         """
         Applica filtri (testo globale e colonne) e aggiorna _visible_indices.

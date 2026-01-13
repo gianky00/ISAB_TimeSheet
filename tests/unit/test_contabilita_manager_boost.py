@@ -8,12 +8,13 @@ from src.core.database import DatabaseManager
 
 class TestContabilitaManagerBoost:
     @pytest.fixture
-    def db_setup(self, tmp_path):
+    def db_setup(self, tmp_path, mocker):
         db_path = tmp_path / "contabilita.db"
-        # Patch del DB_PATH del manager
-        with patch.object(ContabilitaManager, "DB_PATH", db_path):
-            DatabaseManager().init_db()
-            yield db_path
+        # Patch dei path sia nel manager che nel DatabaseManager
+        mocker.patch.object(DatabaseManager, "DB_CONTABILITA", db_path)
+        mocker.patch.object(ContabilitaManager, "DB_PATH", db_path)
+        DatabaseManager().init_db()
+        return db_path
 
     def test_import_giornaliere_lookup_logic(self, db_setup, mocker):
         """Verifica che l'importazione giornaliere usi correttamente la mappa ODC dai preventivi."""

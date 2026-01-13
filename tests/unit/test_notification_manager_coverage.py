@@ -16,9 +16,13 @@ class TestNotificationManagerCoverage:
 
     def test_add_notification_and_signals(self, manager, mocker):
         """Verifica aggiunta notifica e invio segnali Qt."""
-        mock_added = mocker.patch.object(manager.notification_added, "emit")
-        mock_updated = mocker.patch.object(manager.notifications_updated, "emit")
-        mock_count = mocker.patch.object(manager.unread_count_changed, "emit")
+        mock_added = mocker.Mock()
+        mock_updated = mocker.Mock()
+        mock_count = mocker.Mock()
+        
+        manager.notification_added.connect(mock_added)
+        manager.notifications_updated.connect(mock_updated)
+        manager.unread_count_changed.connect(mock_count)
 
         manager.add_notification("Titolo", "Messaggio", level="success")
 

@@ -32,20 +32,20 @@ class TestE2EWorkflowsHardened:
         # 2. Crea file Excel "scaricato dal bot" con intestazioni esatte
         excel_path = tmp_path / "bot_download.xlsx"
         df_data = {
-            "DATA PREV.": ["01/01/2024"],
-            "MESE": ["Gennaio"],
-            "N° PREV.": ["P123"],
-            "TOTALE PREV.": ["1000"],
-            "ATTIVITA'": ["Manutenzione Speciale Meccanica"],
-            "ODC": ["54001234"],
-            "TCL": ["T1"],
-            "STATO ATTIVITA'": ["IN CORSO"],
-            "TIPOLOGIA": ["VARIE"],
-            "ORE SP": ["10"],
-            "RESA": ["100"],
-            "ANNOTAZIONI": ["Nessuna"],
-            "INDIRIZZO CONSUNTIVO": ["C:/test"],
-            "NOME FILE": ["test.pdf"]
+            "DATA PREV.": ["01/01/2024", "02/01/2024"],
+            "MESE": ["Gennaio", "Gennaio"],
+            "N° PREV.": ["P123", "P124"],
+            "TOTALE PREV.": ["1000", "2000"],
+            "ATTIVITA'": ["Manutenzione Speciale Meccanica", "Altra Attivita"],
+            "ODC": ["54001234", "54001235"],
+            "TCL": ["T1", "T1"],
+            "STATO ATTIVITA'": ["IN CORSO", "COMPLETATO"],
+            "TIPOLOGIA": ["VARIE", "VARIE"],
+            "ORE SP": ["10", "20"],
+            "RESA": ["100", "100"],
+            "ANNOTAZIONI": ["Nessuna", "Note"],
+            "INDIRIZZO CONSUNTIVO": ["C:/test", "C:/test2"],
+            "NOME FILE": ["test.pdf", "test2.pdf"]
         }
         df = pd.DataFrame(df_data)
         with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:

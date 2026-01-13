@@ -75,8 +75,6 @@ class TestSafeWorkPDLBotDeep:
         bot.wait = MagicMock()
         bot._attendi_scomparsa_overlay = MagicMock()
 
-        mocker.patch.object(bot, "_setup_filters", return_value=True)
-        mocker.patch.object(bot, "_navigate_to_timesheet", return_value=True)
         mocker.patch.object(bot, "_gestisci_alert_ricerca", return_value=False)
         mocker.patch.object(bot, "_attendi_e_ritorna_nuovo_pdf", return_value="/tmp/pdl.pdf")
 
@@ -85,9 +83,9 @@ class TestSafeWorkPDLBotDeep:
         mock_doc.page_count = 1
         mocker.patch("src.bots.safework.pdl.bot.fitz.open", return_value=mock_doc)
 
-        # PATCH CRUCIALE: DocumentProcessor nel namespace del bot
-        # Questo intercetta l'import locale "from src.utils.document_processor import DocumentProcessor"
-        mock_processor = mocker.patch("src.bots.safework.pdl.bot.DocumentProcessor")
+        # PATCH CRUCIALE: DocumentProcessor
+        # Poiché è importato localmente nel metodo run, patchiamo il modulo originale
+        mock_processor = mocker.patch("src.utils.document_processor.DocumentProcessor")
         mock_processor.merge_pdfs.return_value = True
 
         mocker.patch("src.bots.safework.pdl.bot.os.rename")

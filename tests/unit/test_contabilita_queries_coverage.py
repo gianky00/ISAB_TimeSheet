@@ -7,19 +7,18 @@ from src.core.database import DatabaseManager
 
 class TestContabilitaQueriesCoverage:
     @pytest.fixture
-    def db_path(self, tmp_path):
+    def db_path(self, tmp_path, mocker):
         p = tmp_path / "queries.db"
-        DatabaseManager().init_db() # Crea schema reale in path temporaneo
-        # Nota: init_db usa i path globali, dobbiamo patcharli
+        # Patch dei path globali prima di init_db
+        mocker.patch.object(DatabaseManager, "DB_CONTABILITA", p)
+        mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", p)
+        DatabaseManager().init_db() 
         return p
 
-    def test_get_data_by_year_columns_alignment(self, db_path, mocker):
+    def test_get_data_by_year_columns_alignment(self, db_path):
         """Verifica che la query per anno restituisca tutte le colonne mappate."""
-        mocker.patch("src.core.database.db_manager.get_connection", side_effect=lambda p, read_only=False: DatabaseManager().get_connection(db_path, read_only))
-
         manager = DatabaseManager()
         # Inserisci riga completa (15 colonne previste dal mapping)
-        cols = ["year", "n_prev", "attivita", "odc"]
         manager.execute_query(db_path, "INSERT INTO contabilita (year, n_prev, attivita, odc) VALUES (2024, 'P1', 'A1', 'O1')")
 
         rows = ContabilitaQueries.get_data_by_year(db_path, 2024)
@@ -33,10 +32,8 @@ class TestContabilitaQueriesCoverage:
         p = tmp_path / "non_existent.db"
         assert ContabilitaQueries.get_available_years(p) == []
 
-    def test_get_scarico_ore_data_sorting(self, db_path, mocker):
+    def test_get_scarico_ore_data_sorting(self, db_path):
         """Verifica ordinamento decrescente (id DESC) per scarico ore."""
-        mocker.patch("src.core.database.db_manager.get_connection", side_effect=lambda p, read_only=False: DatabaseManager().get_connection(db_path, read_only))
-
         manager = DatabaseManager()
         manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')")
         manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Ultima')")

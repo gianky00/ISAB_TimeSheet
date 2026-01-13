@@ -85,7 +85,8 @@ class TestSprintCGUIDeep:
 
         # 3. Selezioniamo le prime due righe
         table.selectRow(0)
-        table.setRangeSelected(table.selectionModel().selection().first().indexes()[0].row(), 0, table.selectionModel().selection().first().indexes()[0].row(), 9, True)
+        from PyQt6.QtWidgets import QTableWidgetSelectionRange
+        table.setRangeSelected(QTableWidgetSelectionRange(0, 0, 0, 9), True)
         # Per semplicità nei test headless forziamo la selezione manuale nel modello
         table.selectAll()
 
