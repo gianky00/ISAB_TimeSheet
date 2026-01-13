@@ -8,7 +8,7 @@ class TestPrintingWindowsMocked:
     def test_get_installed_printers_mocked(self, mocker):
         """Verifica il recupero nomi stampanti tramite win32print."""
         # EnumPrinters restituisce tuple (flags, description, name, comment)
-        mock_enum = mocker.patch("win32print.EnumPrinters", return_value=[
+        mocker.patch("win32print.EnumPrinters", return_value=[
             (0, "Desc1", "Printer1", ""),
             (0, "Desc2", "Printer2", "")
         ])
@@ -28,7 +28,7 @@ class TestPrintingWindowsMocked:
         mock_doc.__len__.return_value = 2 # 2 pagine
         mock_fitz.return_value = mock_doc
 
-        mock_win32print = mocker.patch("win32print.GetDefaultPrinter", return_value="DefaultPrinter")
+        mocker.patch("win32print.GetDefaultPrinter", return_value="DefaultPrinter")
         mock_win32ui = mocker.patch("win32ui.CreateDC")
         mock_hdc = MagicMock()
         mock_win32ui.return_value = mock_hdc

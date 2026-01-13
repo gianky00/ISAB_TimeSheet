@@ -4,6 +4,7 @@ Finestra principale dell'applicazione SyncroJob.
 Implementa Lazy Loading dei pannelli per prestazioni ottimali.
 """
 
+from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
+    QLabel,
     QLineEdit,
     QMainWindow,
     QProgressBar,
@@ -24,6 +26,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.backup_manager import BackupManager
+from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
 from src.core.telegram_bridge import TelegramUIBridge
@@ -185,7 +188,28 @@ class MainWindow(QMainWindow):
             return
 
         self.progress_bar.setVisible(False)
+        self._update_license_status_bar()
         self.status_bar.showMessage("SyncroJob è pronto. Tutti i servizi attivi.", 3000)
+
+    def _update_license_status_bar(self):
+        """Aggiorna le etichette della licenza nella status bar."""
+        license_info = get_license_info()
+        if license_info:
+            client = license_info.get("Cliente", "N/D")
+            expiry = license_info.get("Scadenza Licenza", "N/D")
+            config = config_manager.load_config()
+            last_login = config.get("last_login_date", "N/D")
+
+            # Update last login date
+            now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+            config_manager.set_config_value("last_login_date", now_str)
+
+            self.lbl_license.setText(f"👤 Licenza: {client}")
+            self.lbl_expiry.setText(f"📅 Scadenza: {expiry}")
+            self.lbl_last_login.setText(f"🔑 Ultimo accesso: {last_login}")
+
+            for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
+                lbl.setVisible(True)
 
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
@@ -241,6 +265,16 @@ class MainWindow(QMainWindow):
         """Configura l'interfaccia con Placeholders per Lazy Loading."""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
+
+        # License info in status bar (inizialmente nascoste)
+        self.lbl_license = QLabel()
+        self.lbl_expiry = QLabel()
+        self.lbl_last_login = QLabel()
+
+        for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
+            lbl.setVisible(False)
+            lbl.setStyleSheet("color: #495057; font-size: 12px; margin-right: 15px;")
+            self.status_bar.addWidget(lbl)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)

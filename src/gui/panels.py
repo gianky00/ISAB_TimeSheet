@@ -1200,7 +1200,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         missing_list = []
         if self.worker and hasattr(self.worker.bot, "downloaded_files"):
             files_to_send = self.worker.bot.downloaded_files
-        
+
         if self.worker and hasattr(self.worker.bot, "missing_pdls"):
             missing_list = self.worker.bot.missing_pdls
 

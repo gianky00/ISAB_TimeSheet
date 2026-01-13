@@ -309,79 +309,62 @@ class DettagliOdAPage:
         except Exception as e:
             self.log(f"  ⚠️ Errore chiusura tab: {e}")
 
-    def _download(
-        self,
-        source_dir: Path,
-        dest_dir: Path,
-        target_filename: str,
-        button_locator: tuple,
-    ) -> bool:
+    def _download(self, source_dir: Path, dest_dir: Path, target_filename: str, button_locator: tuple) -> bool:
+        """Esegue il download, attende il file e lo sposta nella cartella finale."""
         try:
-            files_before = {
-                f
-                for f in source_dir.iterdir()
-                if f.is_file() and f.suffix.lower() == ".xlsx"
-            }
+            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
 
-            btn = self.wait.until(EC.presence_of_element_located(button_locator))
-            self.driver.execute_script(
-                "arguments[0].scrollIntoView({block: 'center'});", btn
-            )
+            if not self._click_export_button(button_locator):
+                return False
+
+            downloaded_file = self._wait_for_download(source_dir, files_before)
+            if not downloaded_file:
+                self.log("  ✗ File non trovato nella cartella Download.")
+                return False
+
+            return self._finalize_download(downloaded_file, dest_dir, target_filename)
+        except Exception as e:
+            self.log(f"  ✗ Errore download: {e}")
+            return False
+
+    def _click_export_button(self, locator: tuple) -> bool:
+        try:
+            btn = self.wait.until(EC.presence_of_element_located(locator))
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             time.sleep(0.5)
             try:
                 btn.click()
             except Exception:
                 self.driver.execute_script("arguments[0].click();", btn)
-
-            downloaded_file = None
-            start_time = time.time()
-            while time.time() - start_time < Timeouts.DOWNLOAD:
-                # Check for active downloads
-                if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
-                    time.sleep(0.5)
-                    continue
-
-                current_files = {
-                    f
-                    for f in source_dir.iterdir()
-                    if f.is_file() and f.suffix.lower() == ".xlsx"
-                }
-                new_files = current_files - files_before
-                if new_files:
-                    downloaded_file = max(
-                        list(new_files), key=lambda f: f.stat().st_mtime
-                    )
-                    break
-                time.sleep(0.5)
-
-            if downloaded_file and downloaded_file.exists():
-                # Assicura dest dir
-                if not dest_dir.exists():
-                    try:
-                        dest_dir.mkdir(parents=True, exist_ok=True)
-                    except Exception:
-                        pass
-
-                target_path = dest_dir / target_filename
-
-                # Sovrascrittura o gestione duplicati?
-                # La richiesta specifica un nome tassativo, quindi sovrascriviamo se necessario,
-                # ma per sicurezza cancelliamo prima l'esistente.
-                if target_path.exists():
-                    try:
-                        target_path.unlink()
-                    except Exception:
-                        pass
-
-                import shutil
-
-                shutil.move(str(downloaded_file), str(target_path))
-
-                self.log(f"  ✓ Scaricato: {target_path.name}")
-                return True
-            else:
-                self.log("  ✗ File non trovato nella cartella Download.")
-                return False
-        except Exception as e:
-            self.log(f"  ✗ Errore download: {e}")
+            return True
+        except Exception:
             return False
+
+    def _wait_for_download(self, source_dir: Path, files_before: set) -> Optional[Path]:
+        start = time.time()
+        while time.time() - start < Timeouts.DOWNLOAD:
+            if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
+                time.sleep(0.5)
+                continue
+
+            current = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            new_files = current - files_before
+            if new_files:
+                return max(list(new_files), key=lambda f: f.stat().st_mtime)
+            time.sleep(0.5)
+        return None
+
+    def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> bool:
+        import shutil
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        target_path = dest_dir / target_name
+
+        if target_path.exists():
+            try:
+                target_path.unlink()
+            except Exception:
+                pass
+
+        shutil.move(str(src), str(target_path))
+        self.log(f"  ✓ Scaricato: {target_path.name}")
+        return True

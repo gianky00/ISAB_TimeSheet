@@ -86,7 +86,7 @@ class TestScaricoTSBotHardened:
         bot._setup_filters = ScaricaTSBot._setup_filters.__get__(bot, ScaricaTSBot)
 
         # Mocking expected_conditions e ActionChains
-        m_ec = mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.EC")
+        mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.EC")
         m_actions = mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains")
         mocker.patch("time.sleep")
 

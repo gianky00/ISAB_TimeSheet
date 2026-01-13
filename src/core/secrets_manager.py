@@ -21,51 +21,72 @@ class SecretsManager:
     @classmethod
     def get_license_key(cls) -> bytes | None:
         """
-        Recupera la chiave di licenza in ordine di priorità:
-        1. Variabile d'ambiente SYNCROJOB_LICENSE_KEY
-        2. File .env nella root del progetto
-        3. Keyring di sistema
-        4. Fallback hardcoded (offuscato)
+        Recupera la chiave di licenza in ordine di priorità.
         """
         # 1. Environment variable
+        key = cls._get_key_from_env()
+        if key:
+            return key
+
+        # 2. File .env
+        key = cls._get_key_from_env_file()
+        if key:
+            return key
+
+        # 3. Keyring di sistema
+        key = cls._get_key_from_keyring()
+        if key:
+            return key
+
+        # 4. Fallback hardcoded
+        return cls._get_fallback_key()
+
+    @classmethod
+    def _get_key_from_env(cls) -> bytes | None:
         env_key = os.environ.get("SYNCROJOB_LICENSE_KEY")
         if env_key:
             try:
                 return base64.urlsafe_b64decode(env_key)
             except Exception:
                 pass
+        return None
 
-        # 2. File .env (solo per sviluppo)
+    @classmethod
+    def _get_key_from_env_file(cls) -> bytes | None:
         try:
-            # Calcola il path relativo alla root del progetto
-            if getattr(sys, "frozen", False):
-                # Se siamo in PyInstaller, il .env non è nel bundle ma potrebbe essere nella cartella dell'eseguibile
-                env_file = Path(sys.executable).parent / ".env"
-            else:
-                env_file = Path(__file__).parent.parent.parent / ".env"
-
+            env_file = cls._get_env_file_path()
             if env_file.exists():
-                with open(env_file) as f:
+                with open(env_file, "r", encoding="utf-8") as f:
                     for line in f:
                         if line.startswith("SYNCROJOB_LICENSE_KEY="):
-                            key = line.split("=", 1)[1].strip()
-                            key = key.strip("\"").strip("'")
+                            key_str = line.split("=", 1)[1].strip()
+                            key_str = key_str.strip("\"").strip("'")
                             try:
-                                return base64.urlsafe_b64decode(key)
+                                return base64.urlsafe_b64decode(key_str)
                             except Exception:
                                 pass
         except Exception:
             pass
+        return None
 
-        # 3. Keyring di sistema
+    @staticmethod
+    def _get_env_file_path() -> Path:
+        if getattr(sys, "frozen", False):
+            return Path(sys.executable).parent / ".env"
+        return Path(__file__).parent.parent.parent / ".env"
+
+    @classmethod
+    def _get_key_from_keyring(cls) -> bytes | None:
         try:
             stored = keyring.get_password(cls.APP_NAME, "license_key")
             if stored:
                 return base64.urlsafe_b64decode(stored)
         except Exception:
             pass
+        return None
 
-        # 4. Fallback hardcoded (offuscato) - Chiave standard di decriptazione licenza
+    @classmethod
+    def _get_fallback_key(cls) -> bytes | None:
         try:
             # 8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek=
             chars = [56, 107, 72, 115, 95, 114, 109, 119, 113, 97, 82, 85, 107, 49, 65, 81, 76, 71, 88, 54, 53, 103, 52, 65, 69, 107, 87, 85, 68, 97, 112, 87, 86, 115, 77, 70, 85, 81, 112, 78, 57, 69, 107, 61]
@@ -73,7 +94,6 @@ class SecretsManager:
             return base64.urlsafe_b64decode(key_str)
         except Exception:
             pass
-
         return None
 
     @classmethod

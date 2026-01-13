@@ -21,173 +21,142 @@ class TimesheetProcessor:
     def process_and_move(file_path: Path, dest_dir: Path) -> tuple[bool, str]:
         """
         Elabora il file Excel secondo la logica VBA e lo salva nella cartella di destinazione.
-
-        Logica VBA replicata:
-        1. Apre file e foglio 'Timesheet'.
-        2. Legge ODC (A2).
-        3. Conta POS univoci in colonna B (da B2 in giù).
-        4. Genera nome file: {ODC}_TS.xlsx (se >1 POS) o {ODC}_{POS}_TS.xlsx.
-        5. Rinomina Intestazioni (B1, C1, N1..W1).
-        6. Pulisce Colonna B (numeri interi).
-        7. Elimina colonne (AC, Z, X, L, I, H, G, F, E, D, A).
-        8. Autofit colonne (stima).
-        9. Salva in dest_dir gestendo conflitti.
         """
         if not file_path.exists():
             return False, f"File sorgente non trovato: {file_path}"
 
-        if not dest_dir.exists():
-            try:
-                dest_dir.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                return False, f"Impossibile creare dest_dir: {e}"
+        try:
+            dest_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            return False, f"Impossibile creare dest_dir: {e}"
 
         try:
-            # --- 1. Apertura File ---
-            # data_only=False per mantenere eventuali formule, anche se il VBA lavora sui valori.
-            # L'importante è che openpyxl legga il file esistente.
             wb = openpyxl.load_workbook(file_path)
-
             if "Timesheet" not in wb.sheetnames:
                 wb.close()
                 return False, "Foglio 'Timesheet' non trovato."
 
             ws = wb["Timesheet"]
 
-            # --- 2. Lettura ODC (A2) ---
-            # VBA: valA2 = Trim(CStr(tsSheet.Range("A2").Value))
-            val_a2 = str(ws["A2"].value).strip() if ws["A2"].value else ""
-            if not val_a2:
+            # 1. Estrazione Metadata (ODC, POS)
+            odc = str(ws["A2"].value).strip() if ws["A2"].value else ""
+            if not odc:
                 wb.close()
                 return False, "Valore ODC (cella A2) mancante."
 
-            # --- 3. Analisi POS (Colonna B) ---
-            # Trova l'ultima riga
-            last_row = ws.max_row
-            pos_values = set()
-            val_b2_cleaned = ""  # Per il nome file se POS unico
+            pos_values, first_pos_cleaned = TimesheetProcessor._analyze_pos_column(ws)
 
-            # Raccogli valori per conteggio (saltando header riga 1)
-            # VBA: Range("B2:B" & lastRow)
-            for row in ws.iter_rows(min_row=2, max_row=last_row, min_col=2, max_col=2):
-                cell = row[0]
-                val = str(cell.value).strip() if cell.value is not None else ""
-                if val:
-                    pos_values.add(val)
-                    # Logica pulizia specifica per B2 (usata nel nome file)
-                    if cell.row == 2:
-                        # VBA: If IsNumeric(rawValB2) ... CStr(CLng(rawValB2))
-                        # Similiamo la conversione in intero per togliere zeri o decimali
-                        if val.replace(".", "", 1).isdigit():
-                            try:
-                                val_b2_cleaned = str(int(float(val)))
-                            except Exception:
-                                val_b2_cleaned = val
-                        else:
-                            val_b2_cleaned = val
+            # 2. Generazione Percorso Destinazione
+            dest_path = TimesheetProcessor._get_destination_path(dest_dir, odc, pos_values, first_pos_cleaned)
 
-            # --- 4. Genera Nuovo Nome ---
-            # VBA: If dict.Count > 1 Then ... Else ...
-            if len(pos_values) > 1:
-                new_base_name = f"{val_a2}_TS"
-            else:
-                # Se 0 POS (file vuoto?) usa comunque A2_TS o A2__TS
-                # VBA usa valA2 & "_" & valB2 & "_TS"
-                new_base_name = f"{val_a2}_{val_b2_cleaned}_TS"
+            # 3. Trasformazione Foglio (Headers, Pulizia, Eliminazione, Autofit)
+            TimesheetProcessor._apply_transformations(ws)
 
-            new_filename = f"{new_base_name}.xlsx"
-            dest_path = dest_dir / new_filename
-
-            # Gestione Conflitti Automatizzata
-            if dest_path.exists():
-                timestamp = time.strftime("%Y%m%d-%H%M%S")
-                new_filename = f"{new_base_name}_{timestamp}.xlsx"
-                dest_path = dest_dir / new_filename
-
-            # --- 5. Rinomina Intestazioni ---
-            headers_map = {
-                "B1": "POS",
-                "C1": "Data",
-                "N1": "Ing",
-                "O1": "Usc",
-                "P1": "Tot",
-                "Q1": "Pre",
-                "R1": "ORE_C",
-                "S1": "ORE_M",
-                "T1": "ORE_ST_NOT",
-                "U1": "ORE_ST_DIU",
-                "V1": "ORE_FEST_NOT",
-                "W1": "ORE_FEST_DIU",
-            }
-            for cell_ref, val in headers_map.items():
-                ws[cell_ref].value = val
-
-            # --- 6. Pulizia Dati Colonna B ---
-            # VBA: cell.Value = CLng(Trim(cell.Value)), NumberFormat = "0"
-            for row in ws.iter_rows(min_row=2, max_row=last_row, min_col=2, max_col=2):
-                cell = row[0]
-                val = cell.value
-                if val is not None:
-                    s_val = str(val).strip()
-                    # Check numerico lasco (es. "30.0" o "30")
-                    if s_val.replace(".", "", 1).isdigit():
-                        try:
-                            num_val = int(float(s_val))
-                            cell.value = num_val
-                            cell.number_format = "0"
-                        except Exception:
-                            pass  # Lascia invariato se fallisce
-
-            # --- 7. Elimina Colonne ---
-            # VBA: AC, Z, X, L, I, H, G, F, E, D, A
-            # Importante: eliminare in ordine decrescente di indice
-            cols_to_delete_letters = [
-                "AC",
-                "Z",
-                "X",
-                "L",
-                "I",
-                "H",
-                "G",
-                "F",
-                "E",
-                "D",
-                "A",
-            ]
-            cols_indices = [
-                column_index_from_string(c) for c in cols_to_delete_letters
-            ]
-            cols_indices.sort(reverse=True)
-
-            for col_idx in cols_indices:
-                ws.delete_cols(col_idx)
-
-            # --- 8. Autofit (Stima) ---
-            for col in ws.columns:
-                max_length = 0
-                column = get_column_letter(col[0].column)
-                for cell in col:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-                adjusted_width = (max_length + 2) * 1.2
-                ws.column_dimensions[column].width = adjusted_width
-
-            # --- 9. Salvataggio ---
+            # 4. Salvataggio e Pulizia
             wb.save(dest_path)
             wb.close()
 
-            # Pulizia sorgente
-            try:
-                if file_path.resolve() != dest_path.resolve():
-                    file_path.unlink()
-            except Exception:
-                pass
+            TimesheetProcessor._cleanup_source(file_path, dest_path)
 
             return True, f"Salvato in: {dest_path.name}"
 
         except Exception as e:
             logger.error(f"Errore elaborazione {file_path.name}: {e}")
             return False, str(e)
+
+    @staticmethod
+    def _analyze_pos_column(ws) -> tuple[set[str], str]:
+        """Analizza la colonna B per contare i POS univoci e pulire il primo valore."""
+        pos_values = set()
+        first_pos_cleaned = ""
+
+        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
+            val = str(row[0].value).strip() if row[0].value is not None else ""
+            if val:
+                pos_values.add(val)
+                if not first_pos_cleaned:
+                    first_pos_cleaned = TimesheetProcessor._clean_pos_value(val)
+
+        return pos_values, first_pos_cleaned
+
+    @staticmethod
+    def _clean_pos_value(val: str) -> str:
+        """Converte un valore POS in stringa intera pulita (es. '10.0' -> '10')."""
+        if val.replace(".", "", 1).isdigit():
+            try:
+                return str(int(float(val)))
+            except Exception:
+                return val
+        return val
+
+    @staticmethod
+    def _get_destination_path(dest_dir: Path, odc: str, pos_values: set[str], pos_cleaned: str) -> Path:
+        """Determina il nome file finale gestendo conflitti e conteggio POS."""
+        if len(pos_values) > 1:
+            base = f"{odc}_TS"
+        else:
+            base = f"{odc}_{pos_cleaned}_TS"
+
+        dest_path = dest_dir / f"{base}.xlsx"
+        if dest_path.exists():
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            dest_path = dest_dir / f"{base}_{timestamp}.xlsx"
+
+        return dest_path
+
+    @staticmethod
+    def _apply_transformations(ws):
+        """Applica tutte le modifiche strutturali al foglio di lavoro."""
+        # 1. Rinomina Intestazioni
+        headers = {
+            "B1": "POS", "C1": "Data", "N1": "Ing", "O1": "Usc",
+            "P1": "Tot", "Q1": "Pre", "R1": "ORE_C", "S1": "ORE_M",
+            "T1": "ORE_ST_NOT", "U1": "ORE_ST_DIU", "V1": "ORE_FEST_NOT", "W1": "ORE_FEST_DIU",
+        }
+        for cell, val in headers.items():
+            ws[cell].value = val
+
+        # 2. Pulizia numerica colonna B
+        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=2, max_col=2):
+            cell = row[0]
+            if cell.value is not None:
+                s_val = str(cell.value).strip()
+                if s_val.replace(".", "", 1).isdigit():
+                    try:
+                        cell.value = int(float(s_val))
+                        cell.number_format = "0"
+                    except Exception:
+                        pass
+
+        # 3. Eliminazione Colonne (ordine inverso)
+        cols = ["AC", "Z", "X", "L", "I", "H", "G", "F", "E", "D", "A"]
+        indices = sorted([column_index_from_string(c) for c in cols], reverse=True)
+        for idx in indices:
+            ws.delete_cols(idx)
+
+        # 4. Autofit stimato
+        TimesheetProcessor._autofit_columns(ws)
+
+    @staticmethod
+    def _autofit_columns(ws):
+        """Regola la larghezza delle colonne in base al contenuto."""
+        for col in ws.columns:
+            max_len = 0
+            col_letter = get_column_letter(col[0].column)
+            for cell in col:
+                try:
+                    val_len = len(str(cell.value))
+                    if val_len > max_len:
+                        max_len = val_len
+                except Exception:
+                    pass
+            ws.column_dimensions[col_letter].width = (max_len + 2) * 1.2
+
+    @staticmethod
+    def _cleanup_source(src: Path, dest: Path):
+        """Rimuove il file sorgente se diverso dalla destinazione."""
+        try:
+            if src.resolve() != dest.resolve():
+                src.unlink()
+        except Exception:
+            pass

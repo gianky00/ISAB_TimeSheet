@@ -41,8 +41,8 @@ class TestBaseBotDeepDive:
 
     def test_execute_full_lifecycle_success(self, bot, mocker):
         """Verifica la transizione degli stati durante un'esecuzione corretta."""
-        m_safe_login = mocker.patch.object(bot, "_safe_login_with_retry", return_value=True)
-        m_run = mocker.patch.object(bot, "run", return_value=True)
+        mocker.patch.object(bot, "_safe_login_with_retry", return_value=True)
+        mocker.patch.object(bot, "run", return_value=True)
         m_cleanup = mocker.patch.object(bot, "cleanup")
 
         success = bot.execute([{"data": 1}])

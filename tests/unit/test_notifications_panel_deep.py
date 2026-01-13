@@ -59,13 +59,13 @@ class TestNotificationsPanelDeep:
             # The layout contains widgets and potentially spacers. We look for NotificationItem widgets.
             # Assuming NotificationItem has a 'data' attribute or we inspect labels if possible.
             # Since we can't easily import NotificationItem here to check instance, we check count.
-            
+
             widgets = []
             for i in range(panel.scroll_layout.count()):
                 w = panel.scroll_layout.itemAt(i).widget()
                 if w:
                     widgets.append(w)
-            
+
             # Should satisfy: 1 widget (the error one)
             assert len(widgets) == 1
             # Verify it's the error one (NotificationItem usually stores data)

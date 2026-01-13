@@ -53,7 +53,7 @@ class TestBotResilienceAdvanced:
 
     def test_safe_login_retry_logic(self, bot):
         """Test: Verifica che il bot riprovi il login in caso di fallimento temporaneo."""
-        with patch.object(bot, "_init_driver") as mock_init, \
+        with patch.object(bot, "_init_driver"), \
              patch.object(bot, "_login") as mock_login, \
              patch.object(bot, "cleanup") as mock_cleanup:
 

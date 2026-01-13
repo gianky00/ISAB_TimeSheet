@@ -42,8 +42,10 @@ class TestDatabaseSecurityStress:
 
         t1 = threading.Thread(target=writer_task)
         t2 = threading.Thread(target=reader_task)
-        t1.start(); t2.start()
-        t1.join(); t2.join()
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
 
         assert len(errors) == 0, f"Rilevati errori di concorrenza: {errors}"
         res = db_mgr.execute_query(db_path, "SELECT COUNT(*) FROM test")

@@ -233,7 +233,7 @@ class HorizontalTimelineWidget(QScrollArea):
     def add_widget(self, widget: QWidget):
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
-        
+
         # Inserisce prima dello stretch finale
         idx = self.container.main_layout.count() - 1
         self.container.main_layout.insertWidget(max(0, idx), widget)
@@ -261,7 +261,7 @@ class HorizontalTimelineWidget(QScrollArea):
                 w = self.container.main_layout.itemAt(i).widget()
                 if isinstance(w, HorizontalLogItem):
                     widgets.append(w)
-            
+
             if widgets:
                 widgets[-1].set_count(self.consecutive_count)
                 return
@@ -295,7 +295,7 @@ class HorizontalTimelineWidget(QScrollArea):
             item = self.container.main_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-        
+
         # Re-aggiunge lo stretch dopo la pulizia
         self.container.main_layout.addStretch()
         self.container.update()

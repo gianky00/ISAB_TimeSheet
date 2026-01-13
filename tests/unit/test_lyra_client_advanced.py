@@ -1,10 +1,11 @@
 
-import pytest
-import json
 import sqlite3
-from unittest.mock import MagicMock, patch
-from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
+
 from src.core.lyra_client import LyraClient
+
 
 class TestLyraClientAdvanced:
 
@@ -26,19 +27,19 @@ class TestLyraClientAdvanced:
             "status_counts": {"APERTO": 1},
             "top_commesse": [("Attività Test", 1000.0)]
         }
-        
+
         # 2. Mock Timbrature (SQLite reale in tmp_path)
         db_dir = tmp_path / "data"
         db_dir.mkdir()
         db_path = db_dir / "timbrature_Isab.db"
         mocker.patch("src.core.lyra_client.CONFIG_DIR", tmp_path)
-        
+
         with sqlite3.connect(db_path) as conn:
             conn.execute("CREATE TABLE timbrature (data TEXT, nome TEXT, cognome TEXT, ingresso TEXT, uscita TEXT)")
             conn.execute("INSERT INTO timbrature VALUES ('2026-01-01', 'Mario', 'Rossi', '08:00', '17:00')")
-            
+
         context = client._get_system_context()
-        
+
         assert "REPORT CONTABILITÀ (2026)" in context
         assert "€ 1,000.00" in context
         assert "REPORT TIMBRATURE" in context
@@ -47,7 +48,7 @@ class TestLyraClientAdvanced:
     def test_ask_payload_and_response_parsing(self, client, mocker):
         """Test: Verifica costruzione payload e parsing risposta Gemini."""
         mock_post = mocker.patch("src.core.lyra_client.requests.post")
-        
+
         # Mock risposta API
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -58,13 +59,13 @@ class TestLyraClientAdvanced:
             "usageMetadata": {"totalTokenCount": 100}
         }
         mock_post.return_value = mock_resp
-        
+
         # Mock context e audit
         mocker.patch.object(client, "_get_system_context", return_value="System Context")
         mock_audit = mocker.patch("src.core.lyra_client.AuditManager")
-        
+
         response = client.ask("Ciao Lyra", extra_context="Contesto Utente")
-        
+
         assert response == "Risposta AI di test"
         # Verifica che il payload contenga i contesti
         args, kwargs = mock_post.call_args
@@ -83,9 +84,9 @@ class TestLyraClientAdvanced:
         mock_resp.status_code = 403
         mock_resp.text = "Invalid API Key"
         mock_post.return_value = mock_resp
-        
+
         mocker.patch.object(client, "_get_system_context", return_value="")
-        
+
         response = client.ask("Errore?")
         assert "Errore API" in response
         assert "403" in response
@@ -102,7 +103,7 @@ class TestLyraClientAdvanced:
             ]
         }
         mock_get.return_value = mock_resp
-        
+
         models = client.list_models()
         assert "gemini-1.5-pro" in models
         assert "embedding-001" not in models # Non supporta generateContent

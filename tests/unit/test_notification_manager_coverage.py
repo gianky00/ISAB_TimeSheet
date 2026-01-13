@@ -19,12 +19,12 @@ class TestNotificationManagerCoverage:
         mock_added = mocker.Mock()
         mock_updated = mocker.Mock()
         mock_count = mocker.Mock()
-        
+
         manager.notification_added.connect(mock_added)
         manager.notifications_updated.connect(mock_updated)
         manager.unread_count_changed.connect(mock_count)
 
-        manager.add_notification("Titolo", "Messaggio", level="success")
+        manager.add_notification("Titolo", "Messaggio", level="error")
 
         assert len(manager.notifications) == 1
         assert manager.notifications[0]["title"] == "Titolo"
@@ -47,7 +47,7 @@ class TestNotificationManagerCoverage:
 
     def test_mark_as_read_logic(self, manager):
         """Verifica gestione dello stato letto/non letto."""
-        manager.add_notification("N1", "M1")
+        manager.add_notification("N1", "M1", level="error")
         nid = manager.notifications[0]["id"]
 
         assert manager.get_unread_count() == 1
@@ -57,8 +57,8 @@ class TestNotificationManagerCoverage:
 
     def test_mark_all_as_read(self, manager):
         """Verifica segna tutto come letto."""
-        manager.add_notification("N1", "M1")
-        manager.add_notification("N2", "M2")
+        manager.add_notification("N1", "M1", level="error")
+        manager.add_notification("N2", "M2", level="error")
 
         manager.mark_all_as_read()
         assert manager.get_unread_count() == 0

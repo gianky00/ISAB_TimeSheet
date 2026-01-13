@@ -46,7 +46,7 @@ class TestConfigManagerHardened:
     def test_atomic_save_mechanism(self, setup_config, mocker):
         """Verifica il meccanismo di salvataggio atomico tramite file .tmp."""
         m_replace = mocker.patch("os.replace", side_effect=os.replace)
-        m_fsync = mocker.patch("os.fsync")
+        mocker.patch("os.fsync")
 
         config = load_config()
         config["test_key"] = "test_val"
@@ -97,7 +97,7 @@ class TestConfigManagerHardened:
                 errors.append(str(e))
 
         threads = []
-        for i in range(20):
+        for _i in range(20):
             t = threading.Thread(target=thread_task)
             threads.append(t)
             t.start()

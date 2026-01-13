@@ -12,7 +12,7 @@ class TestContabilitaQueriesCoverage:
         # Patch dei path globali prima di init_db
         mocker.patch.object(DatabaseManager, "DB_CONTABILITA", p)
         mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", p)
-        DatabaseManager().init_db() 
+        DatabaseManager().init_db()
         return p
 
     def test_get_data_by_year_columns_alignment(self, db_path):

@@ -42,43 +42,40 @@ class ResponsiveContainer(QWidget):
         return "desktop"
 
     def _rebuild_layout(self):
-        # Clear layout
+        """Pulisce e ricostruisce il layout in base alla modalità corrente."""
+        self._clear_layout()
+        self._build_layout_by_mode()
+
+    def _clear_layout(self):
+        """Rimuove tutti gli elementi dal layout principale senza distruggere i widget."""
         while self._main_layout.count():
-            item = self._main_layout.takeAt(0)
-            if item.layout():
-                # We need to reparent items inside nested layouts or just clear the pointers
-                # Since we added widgets to nested layouts, taking the layout item doesn't automatically unparent widgets
-                # But here we keep reference in self._widgets
-                pass
+            self._main_layout.takeAt(0)
 
-        # To reuse widgets, we must ensure they are not deleted.
-        # QVBoxLayout.takeAt removes from layout but doesn't delete widget if it has a parent.
-        # But we need to explicitly hide/show or just re-add.
-
+    def _build_layout_by_mode(self):
+        """Sceglie il metodo di costruzione del layout basandosi sul modo corrente."""
         if self._current_mode == "mobile":
-            # Stack verticale
-            for widget in self._widgets:
-                self._main_layout.addWidget(widget)
-                widget.show()
+            self._add_widgets_stacked()
         elif self._current_mode == "tablet":
-            # 2 colonne
-            row = QHBoxLayout()
-            for i, widget in enumerate(self._widgets):
-                row.addWidget(widget)
-                widget.show()
-                if (i + 1) % 2 == 0:
-                    self._main_layout.addLayout(row)
-                    row = QHBoxLayout()
-            if row.count():
-                self._main_layout.addLayout(row)
+            self._add_widgets_grid(cols=2)
         else:
-            # 3+ colonne (Desktop)
-            row = QHBoxLayout()
-            for i, widget in enumerate(self._widgets):
-                row.addWidget(widget)
-                widget.show()
-                if (i + 1) % 3 == 0:
-                    self._main_layout.addLayout(row)
-                    row = QHBoxLayout()
-            if row.count():
-                self._main_layout.addLayout(row)
+            self._add_widgets_grid(cols=3)
+
+    def _add_widgets_stacked(self):
+        """Disposizione verticale (1 colonna)."""
+        for widget in self._widgets:
+            self._main_layout.addWidget(widget)
+            widget.show()
+
+    def _add_widgets_grid(self, cols: int):
+        """Disposizione a griglia con numero di colonne specificato."""
+        current_row = QHBoxLayout()
+        for i, widget in enumerate(self._widgets):
+            current_row.addWidget(widget)
+            widget.show()
+
+            if (i + 1) % cols == 0:
+                self._main_layout.addLayout(current_row)
+                current_row = QHBoxLayout()
+
+        if current_row.count() > 0:
+            self._main_layout.addLayout(current_row)

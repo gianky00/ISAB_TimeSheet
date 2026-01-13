@@ -87,14 +87,14 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.table.cellDoubleClicked.connect(lambda r, c: self.table.selectRow(r))
         self.table.setStyleSheet("""
-            QTableWidget { 
-                background-color: white; 
-                color: black; 
-                gridline-color: #e9ecef; 
-                font-size: 13px; 
-                border: 1px solid #dee2e6; 
-                selection-background-color: #0d6efd; 
-                selection-color: white; 
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+                selection-background-color: #0d6efd;
+                selection-color: white;
             }
             QTableWidget::item:selected {
                 background-color: #0d6efd;

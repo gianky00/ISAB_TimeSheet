@@ -4,6 +4,7 @@ import os
 import subprocess
 import threading
 from datetime import datetime
+from typing import Any
 
 from PyQt6.QtCore import QBuffer, QDate, QIODevice, QObject, QRect, Qt
 from PyQt6.QtGui import QGuiApplication, QPainter, QPixmap
@@ -47,84 +48,67 @@ class TelegramUIBridge(QObject):
         obj = intent.get("object")
         items = intent.get("items", [])
 
-        # 1. Aggiunta Dati
+        # 1. Processamento Dati
         if items:
-            if obj == "pdl":
-                valid_pdl = []
-                for i in items:
-                    res = InputValidator.validate_pdl(i)
-                    if res.valid:
-                        valid_pdl.append({"numero_pdl": res.sanitized_value})
-                if valid_pdl:
-                    self.mw.pdl_panel.add_rows_simple(valid_pdl)
-                    self.mw.show_toast(
-                        f"Telegram: aggiunti {len(valid_pdl)} PDL via AI"
-                    )
-            elif obj == "oda":
-                valid_oda = []
-                for i in items:
-                    res = InputValidator.validate_oda(i)
-                    if res.valid:
-                        valid_oda.append({"numero_oda": res.sanitized_value})
-                if valid_oda:
-                    self.mw.scarico_panel.add_rows_simple(valid_oda)
-                    self.mw.show_toast(
-                        f"Telegram: aggiunti {len(valid_oda)} OdA via AI"
-                    )
+            self._process_intent_data(obj, items)
 
-        # 2. Esecuzione Azione
+        # 2. Processamento Azione
         if action == "print" and obj == "pdl":
-            self.telegram.pending_data[int(chat_id)] = {
-                "action": "print",
-                "items": items,
-            }
-            printers = get_installed_printers()
-            keyboard = [
-                [
-                    InlineKeyboardButton(
-                        f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}"
-                    )
-                ]
-                for p in printers[:6]
-            ]
-            self.telegram.send_message_sync(
-                "✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**"
-            )
-            asyncio.run_coroutine_threadsafe(
-                self.telegram.app.bot.send_message(
-                    chat_id=chat_id,
-                    text=f"✅ PDL {', '.join(items)} pronti. **Quale stampante uso?**",
-                    reply_markup=InlineKeyboardMarkup(keyboard),
-                ),
-                self.telegram.loop,
-            )
+            self._handle_intent_print_pdl(chat_id, items)
         elif action == "download" and obj == "pdl":
-            keyboard = [
-                [
-                    InlineKeyboardButton(
-                        "✅ Sì, stampa", callback_data="confirm_print_yes"
-                    ),
-                    InlineKeyboardButton(
-                        "❌ No, solo download", callback_data="confirm_print_no"
-                    ),
-                ]
-            ]
-            asyncio.run_coroutine_threadsafe(
-                self.telegram.app.bot.send_message(
-                    chat_id=chat_id,
-                    text="Aggiunti PDL. **Vuoi che li stampi anche?**",
-                    reply_markup=InlineKeyboardMarkup(keyboard),
-                ),
-                self.telegram.loop,
-            )
-        elif action == "download" and obj == "oda":
-            self._handle_command("run_ts", {})
-        elif action == "download" and obj == "timbrature":
-            self._handle_command("run_timbrature", {"period": "today"})
+            self._handle_intent_download_pdl(chat_id)
+        elif action == "download":
+            self._handle_intent_generic_download(obj)
         elif action == "status":
             self._handle_status(chat_id)
         elif action == "restart":
             self._handle_command("restart_app", {})
+
+    def _process_intent_data(self, obj, items):
+        """Valida e aggiunge dati ai pannelli corrispondenti."""
+        if obj == "pdl":
+            valid = [i for i in items if InputValidator.validate_pdl(i).valid]
+            if valid:
+                self.mw.pdl_panel.add_rows_simple([{"numero_pdl": InputValidator.validate_pdl(v).sanitized_value} for v in valid])
+                self.mw.show_toast(f"Telegram: aggiunti {len(valid)} PDL")
+        elif obj == "oda":
+            valid = [i for i in items if InputValidator.validate_oda(i).valid]
+            if valid:
+                self.mw.scarico_panel.add_rows_simple([{"numero_oda": InputValidator.validate_oda(v).sanitized_value} for v in valid])
+                self.mw.show_toast(f"Telegram: aggiunti {len(valid)} OdA")
+
+    def _handle_intent_print_pdl(self, chat_id, items):
+        self.telegram.pending_data[int(chat_id)] = {"action": "print", "items": items}
+        printers = get_installed_printers()[:6]
+        keyboard = [[InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers]
+
+        self.telegram.send_message_sync("✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**")
+        asyncio.run_coroutine_threadsafe(
+            self.telegram.app.bot.send_message(
+                chat_id=chat_id,
+                text=f"✅ PDL {', '.join(items)} pronti. **Quale stampante uso?**",
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            ), self.telegram.loop
+        )
+
+    def _handle_intent_download_pdl(self, chat_id):
+        keyboard = [[
+            InlineKeyboardButton("✅ Sì, stampa", callback_data="confirm_print_yes"),
+            InlineKeyboardButton("❌ No, solo download", callback_data="confirm_print_no")
+        ]]
+        asyncio.run_coroutine_threadsafe(
+            self.telegram.app.bot.send_message(
+                chat_id=chat_id,
+                text="Aggiunti PDL. **Vuoi che li stampi anche?**",
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            ), self.telegram.loop
+        )
+
+    def _handle_intent_generic_download(self, obj):
+        if obj == "oda":
+            self._handle_command("run_ts", {})
+        elif obj == "timbrature":
+            self._handle_command("run_timbrature", {"period": "today"})
 
     def _handle_command(self, command, params):
         """Gestisce i comandi testuali da Telegram."""
@@ -225,56 +209,58 @@ class TelegramUIBridge(QObject):
         db_type = params.get("db", "")
         query_text = params.get("query", "")
         year_filter = params.get("year")
-        self.telegram.send_message_sync(
-            f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`..."
-        )
+
+        self.telegram.send_message_sync(f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`...")
 
         try:
-            html_report = ""
-            filename = f"report_{db_type}_{int(datetime.now().timestamp())}.pdf"
-            temp_dir = config_manager.CONFIG_DIR / "temp"
-            temp_dir.mkdir(exist_ok=True)
-            temp_pdf = str(temp_dir / filename)
+            report_data = self._fetch_report_data(db_type, query_text, year_filter)
+            if not report_data:
+                self.telegram.send_message_sync("❌ Nessun risultato trovato.")
+                return
 
-            if db_type == "timbrature":
-                rows = self.mw.timbrature_db_panel.storage.get_timbrature_with_reparto(
-                    limit=500, filter_text=query_text
-                )
-                if not rows:
-                    self.telegram.send_message_sync("❌ Nessun risultato trovato.")
-                    return
-                html_report = "<h2>Report Timbrature</h2><table><thead><tr><th>Data</th><th>Ingresso</th><th>Uscita</th><th>Nominativo</th></tr></thead><tbody>"
-                for r in rows:
-                    html_report += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[4]} {r[3]}</td></tr>"
-                html_report += "</tbody></table>"
-            elif db_type == "strumentale":
-                matches = ContabilitaManager.search_extended(
-                    query_text,
-                    year=int(year_filter) if year_filter else None,
-                    limit=500,
-                )
-                if not matches or (
-                    not matches.get("GIORNALIERE") and not matches.get("CANTIERE")
-                ):
-                    self.telegram.send_message_sync("❌ Nessun risultato.")
-                    return
-                html_report = "<h2>Report Contabilità</h2>"
-                if matches.get("GIORNALIERE"):
-                    html_report += "<h3>Giornaliere</h3><table>"
-                    for g in matches["GIORNALIERE"]:
-                        html_report += f"<tr><td>{g['data']}</td><td>{g['personale']}</td><td>{g['descrizione']}</td></tr>"
-                    html_report += "</table>"
-
-            if html_report:
-                generate_pdf_from_html(html_report, temp_pdf)
-                if os.path.exists(temp_pdf):
-                    self.telegram.send_document_sync(
-                        temp_pdf, caption=f"📄 Report {db_type}"
-                    )
-                else:
-                    self.telegram.send_message_sync("❌ Errore generazione PDF.")
+            html = self._generate_report_html(db_type, report_data)
+            self._send_pdf_report(db_type, html)
         except Exception as e:
             self.telegram.send_message_sync(f"❌ Errore: {e}")
+
+    def _fetch_report_data(self, db_type, query, year) -> Any:
+        if db_type == "timbrature":
+            return self.mw.timbrature_db_panel.storage.get_timbrature_with_reparto(limit=500, filter_text=query)
+        if db_type == "strumentale":
+            return ContabilitaManager.search_extended(query, year=(int(year) if year else None), limit=500)
+        return None
+
+    def _generate_report_html(self, db_type, data) -> str:
+        if db_type == "timbrature":
+            html = "<h2>Report Timbrature</h2><table><thead><tr><th>Data</th><th>Ingresso</th><th>Uscita</th><th>Nominativo</th></tr></thead><tbody>"
+            for r in data:
+                html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[4]} {r[3]}</td></tr>"
+            return html + "</tbody></table>"
+
+        if db_type == "strumentale":
+            if not data.get("GIORNALIERE"):
+                return ""
+            html = "<h2>Report Contabilità</h2><h3>Giornaliere</h3><table>"
+            for g in data["GIORNALIERE"]:
+                html += f"<tr><td>{g['data']}</td><td>{g['personale']}</td><td>{g['descrizione']}</td></tr>"
+            return html + "</table>"
+        return ""
+
+    def _send_pdf_report(self, db_type, html):
+        if not html:
+            self.telegram.send_message_sync("❌ Errore: Dati non validi per il report.")
+            return
+
+        filename = f"report_{db_type}_{int(datetime.now().timestamp())}.pdf"
+        temp_dir = config_manager.CONFIG_DIR / "temp"
+        temp_dir.mkdir(exist_ok=True)
+        path = str(temp_dir / filename)
+
+        generate_pdf_from_html(html, path)
+        if os.path.exists(path):
+            self.telegram.send_document_sync(path, caption=f"📄 Report {db_type}")
+        else:
+            self.telegram.send_message_sync("❌ Errore generazione PDF.")
 
     def _handle_data(self, data_type, items):
         """Gestisce l'inserimento dati da Telegram."""

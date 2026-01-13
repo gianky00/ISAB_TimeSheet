@@ -88,7 +88,7 @@ class TestSecretsManagerCoverage:
         # Deve cadere sul fallback, non tornare None
         res = SecretsManager.get_license_key()
         assert res is not None
-        
+
         # Verifica che sia la chiave di fallback
         chars = [56, 107, 72, 115, 95, 114, 109, 119, 113, 97, 82, 85, 107, 49, 65, 81, 76, 71, 88, 54, 53, 103, 52, 65, 69, 107, 87, 85, 68, 97, 112, 87, 86, 115, 77, 70, 85, 81, 112, 78, 57, 69, 107, 61]
         expected_fallback = base64.urlsafe_b64decode("".join(chr(c) for c in chars))
@@ -131,8 +131,10 @@ class TestSecretsManagerCoverage:
     def test_specific_api_getters(self, mocker):
         """Verifica i getter specifici per le API Key."""
         def mock_get(service, key):
-            if "exa" in key: return "exa_val"
-            if "GEMINI" in key: return "gemini_val"
+            if "exa" in key:
+                return "exa_val"
+            if "GEMINI" in key:
+                return "gemini_val"
             return None
 
         mocker.patch.object(SecretsManager, "get_credential", side_effect=mock_get)

@@ -99,7 +99,7 @@ class TestSprintAAuditBackup:
 
         BackupManager._cleanup_old_backups(backup_dir, keep=5)
 
-        remaining = sorted(list(backup_dir.glob("*.zip")), key=os.path.getmtime)
+        remaining = sorted(backup_dir.glob("*.zip"), key=os.path.getmtime)
         assert len(remaining) == 5
         # Gli ultimi 5 devono essere quelli con i numeri più alti (6, 7, 8...)
         assert "20260107" in remaining[-1].name

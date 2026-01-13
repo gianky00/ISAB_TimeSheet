@@ -1,6 +1,7 @@
 import json
 import pickle
 from pathlib import Path
+from typing import Optional
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QStandardItem, QStandardItemModel
@@ -122,106 +123,70 @@ class CacheWorker(QThread):
         return style_cache
 
     def _build_caches(self, data):
-        """
-        Pre-computa tutto: Stringhe visualizzate, Indice ricerca, Totali, Stili.
-        Optimized for speed.
-        """
-        display_data = []  # List of list of strings
-        search_index = []
-        float_totals = []
-        style_cache = []
-
-        append_display = display_data.append
-        append_search = search_index.append
-        append_total = float_totals.append
-        append_style = style_cache.append
-
-        str_converter = str
+        """Pre-computa tutto: Stringhe visualizzate, Indice ricerca, Totali, Stili."""
+        display_data, search_index, float_totals, style_cache = [], [], [], []
 
         for row in data:
-            # --- 1. Display Strings & Search Index ---
-            # We want to format everything ONCE here.
+            # 1. Date & Display Strings
+            date_str = self._format_date_for_display(row[0])
+            disp_row, search_parts = self._process_row_fields(row, date_str)
 
-            # Date (Col 0)
-            val_0 = row[0]
-            str_0 = ""
-            if val_0:
-                s_val = str_converter(val_0)
-                if "-" in s_val:
-                    try:
-                        if len(s_val) >= 10 and s_val[4] == "-" and s_val[7] == "-":
-                            str_0 = f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
-                        else:
-                            parts = s_val.split(" ")[0].split("-")
-                            if len(parts) == 3:
-                                str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}"
-                            else:
-                                str_0 = s_val
-                    except Exception:
-                        str_0 = s_val
-                else:
-                    str_0 = s_val
+            display_data.append(disp_row)
+            search_index.append(" ".join(search_parts).lower())
 
-            # Build Display Row (Cols 0-10)
-            display_row = [str_0]
-            search_parts = [str_0]
+            # 2. Totals
+            float_totals.append(self._parse_row_total(row[7]))
 
-            for i in range(1, 11):
-                val = row[i]
-                if val is None:
-                    d_val = ""
-                else:
-                    d_val = str_converter(val)
-
-                display_row.append(d_val)
-                if d_val:
-                    search_parts.append(d_val)
-
-            # Append full raw row just in case we need it? No, keep memory low.
-            # But wait, if we rebuild cache next time, do we have raw data?
-            # If we save PRE-FORMATTED data to disk, we lose raw data (e.g. floats are now strings).
-            # This means we CANNOT rebuild totals/styles correctly if we rely on raw types later?
-            # Float totals are stored separately. Styles are stored separately.
-            # So display_data being strings is fine for display and search.
-            # What if we need to export to Excel later with real types?
-            # The export usually uses the DB or the Table Model.
-            # If Table Model only has strings, export will have strings.
-            # User might want numbers.
-            # However, for PERFORMANCE of the VIEW, strings are key.
-            # If export is needed, we can load from DB again or keep raw data in memory (doubles RAM).
-            # For 130k rows, RAM is cheap (100MB).
-            # Let's keep display_data as the main source for the View.
-            # If needed, we can add raw_data later.
-
-            append_display(display_row)
-
-            # Search Index (lowercase joined)
-            append_search(" ".join(search_parts).lower())
-
-            # --- 2. Float Totals (Col 7) ---
-            val_7 = row[7]
-            try:
-                if isinstance(val_7, (int, float)):
-                    append_total(float(val_7))
-                else:
-                    append_total(parse_currency(val_7))
-            except Exception:
-                append_total(0.0)
-
-            # --- 3. Style Cache (Pre-parse JSON) ---
-            if len(row) > 11:
-                style_json = row[11]
-                if style_json:
-                    try:
-                        append_style(json.loads(style_json))
-                    except Exception:
-                        append_style(None)
-                else:
-                    append_style(None)
-            else:
-                append_style(None)
+            # 3. Styles
+            style_cache.append(self._parse_row_style(row))
 
         return display_data, search_index, float_totals, style_cache
+
+    def _format_date_for_display(self, val) -> str:
+        """Parsa e formatta il valore data per la visualizzazione."""
+        if not val:
+            return ""
+        s_val = str(val)
+        if "-" not in s_val:
+            return s_val
+
+        try:
+            if len(s_val) >= 10 and s_val[4] == "-" and s_val[7] == "-":
+                return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
+            parts = s_val.split(" ")[0].split("-")
+            return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == 3 else s_val
+        except Exception:
+            return s_val
+
+    def _process_row_fields(self, row, date_str) -> tuple[list[str], list[str]]:
+        """Converte i campi in stringhe e prepara le parti per la ricerca."""
+        disp_row = [date_str]
+        search_parts = [date_str]
+        for i in range(1, 11):
+            val = row[i]
+            d_val = "" if val is None else str(val)
+            disp_row.append(d_val)
+            if d_val:
+                search_parts.append(d_val)
+        return disp_row, search_parts
+
+    def _parse_row_total(self, val) -> float:
+        """Parsa in modo resiliente il totale ore in float."""
+        try:
+            if isinstance(val, (int, float)):
+                return float(val)
+            return parse_currency(val)
+        except Exception:
+            return 0.0
+
+    def _parse_row_style(self, row) -> Optional[dict]:
+        """Estrae e parsa il JSON degli stili se presente."""
+        if len(row) <= 11 or not row[11]:
+            return None
+        try:
+            return json.loads(row[11])
+        except Exception:
+            return None
 
     def _save_cache(self, data, search, totals, style_cache):
         try:
@@ -713,98 +678,96 @@ class DateFilterPopupWidget(QWidget):
         self._build_tree(values, selected_values)
 
     def _build_tree(self, values, selected_values):
-        # Structure: {Year: {Month: [Day, Day]}}
-        structure = {}
+        """Costruisce la struttura ad albero Anno -> Mese -> Giorno."""
         self.raw_dates = set(values)
-
-        for v in values:
-            if not v:
-                continue
-            try:
-                # v is DD/MM/YYYY
-                parts = v.split("/")
-                if len(parts) != 3:
-                    continue
-                _d, m, y = parts[0], parts[1], parts[2]
-
-                if y not in structure:
-                    structure[y] = {}
-                if m not in structure[y]:
-                    structure[y][m] = []
-                structure[y][m].append(v)  # Store full string in leaf
-            except Exception:
-                continue
+        structure = self._group_dates_by_hierarchy(values)
 
         is_all_selected = selected_values is None
         selected_set = set(selected_values) if selected_values else set()
 
-        sorted_years = sorted(structure.keys(), reverse=True)
-
-        for y in sorted_years:
-            y_item = QStandardItem(y)
-            y_item.setCheckable(True)
-            y_item.setEditable(False)
-
-            months = structure[y]
-            y_checked_count = 0
-
-            for m in sorted(months.keys()):
-                m_name = self._get_month_name(m)
-                m_item = QStandardItem(f"{m_name} ({m})")
-                m_item.setCheckable(True)
-                m_item.setEditable(False)
-
-                days_list = months[m]
-                m_checked_count = 0
-
-                for date_str in sorted(days_list):
-                    # Display just the day part? Or date_str?
-                    # Let's display date_str but cleaner
-                    day_part = date_str.split("/")[0]
-                    d_item = QStandardItem(day_part)
-                    d_item.setCheckable(True)
-                    d_item.setEditable(False)
-                    d_item.setData(date_str, Qt.ItemDataRole.UserRole)  # Store value
-
-                    if is_all_selected or (date_str in selected_set):
-                        d_item.setCheckState(Qt.CheckState.Checked)
-                        m_checked_count += 1
-                    else:
-                        d_item.setCheckState(Qt.CheckState.Unchecked)
-
-                    m_item.appendRow(d_item)
-
-                # Set Month State
-                if m_checked_count == len(days_list):
-                    m_item.setCheckState(Qt.CheckState.Checked)
-                    y_checked_count += 1
-                elif m_checked_count > 0:
-                    m_item.setCheckState(Qt.CheckState.PartiallyChecked)
-                else:
-                    m_item.setCheckState(Qt.CheckState.Unchecked)
-
-                y_item.appendRow(m_item)
-
-            # Set Year State
-            if y_checked_count == len(months):
-                y_item.setCheckState(Qt.CheckState.Checked)
-            elif y_checked_count > 0:  # This logic is simple, ideally we check partial
-                # If any child is partial or checked, we are partial
-                y_item.setCheckState(Qt.CheckState.PartiallyChecked)
-            else:
-                # Check for deeper partials
-                has_partial = False
-                for r in range(y_item.rowCount()):
-                    if y_item.child(r).checkState() != Qt.CheckState.Unchecked:
-                        has_partial = True
-                        break
-                y_item.setCheckState(
-                    Qt.CheckState.PartiallyChecked
-                    if has_partial
-                    else Qt.CheckState.Unchecked
-                )
-
+        for y in sorted(structure.keys(), reverse=True):
+            y_item = self._create_year_item(y, structure[y], selected_set, is_all_selected)
             self.model.appendRow(y_item)
+
+    def _group_dates_by_hierarchy(self, values) -> dict:
+        """Organizza le date in un dizionario Anno -> Mese -> [Date]."""
+        structure = {}
+        for v in values:
+            if not v:
+                continue
+            try:
+                parts = v.split("/")
+                if len(parts) != 3:
+                    continue
+                _, m, y = parts
+                if y not in structure:
+                    structure[y] = {}
+                if m not in structure[y]:
+                    structure[y][m] = []
+                structure[y][m].append(v)
+            except Exception:
+                continue
+        return structure
+
+    def _create_year_item(self, year, months_map, selected_set, is_all) -> QStandardItem:
+        """Crea il nodo anno e popola i mesi."""
+        y_item = QStandardItem(year)
+        y_item.setCheckable(True)
+        y_item.setEditable(False)
+
+        checked_months = 0
+        for m in sorted(months_map.keys()):
+            m_item = self._create_month_item(m, months_map[m], selected_set, is_all)
+            y_item.appendRow(m_item)
+            if m_item.checkState() == Qt.CheckState.Checked:
+                checked_months += 1
+
+        # Stato Anno
+        if checked_months == len(months_map):
+            y_item.setCheckState(Qt.CheckState.Checked)
+        elif checked_months > 0 or self._has_any_child_checked(y_item):
+            y_item.setCheckState(Qt.CheckState.PartiallyChecked)
+        else:
+            y_item.setCheckState(Qt.CheckState.Unchecked)
+
+        return y_item
+
+    def _create_month_item(self, month_code, days, selected_set, is_all) -> QStandardItem:
+        """Crea il nodo mese e popola i giorni."""
+        m_name = self._get_month_name(month_code)
+        m_item = QStandardItem(f"{m_name} ({month_code})")
+        m_item.setCheckable(True)
+        m_item.setEditable(False)
+
+        checked_days = 0
+        for date_str in sorted(days):
+            day_part = date_str.split("/")[0]
+            d_item = QStandardItem(day_part)
+            d_item.setCheckable(True)
+            d_item.setEditable(False)
+            d_item.setData(date_str, Qt.ItemDataRole.UserRole)
+
+            state = Qt.CheckState.Checked if (is_all or date_str in selected_set) else Qt.CheckState.Unchecked
+            d_item.setCheckState(state)
+            if state == Qt.CheckState.Checked:
+                checked_days += 1
+            m_item.appendRow(d_item)
+
+        # Stato Mese
+        if checked_days == len(days):
+            m_item.setCheckState(Qt.CheckState.Checked)
+        elif checked_days > 0:
+            m_item.setCheckState(Qt.CheckState.PartiallyChecked)
+        else:
+            m_item.setCheckState(Qt.CheckState.Unchecked)
+        return m_item
+
+    def _has_any_child_checked(self, item: QStandardItem) -> bool:
+        """Verifica ricorsiva se almeno un figlio è selezionato."""
+        for r in range(item.rowCount()):
+            if item.child(r).checkState() != Qt.CheckState.Unchecked:
+                return True
+        return False
 
     def _get_month_name(self, m_str):
         names = {

@@ -7,7 +7,6 @@ import copy
 import json
 import os
 import threading
-import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -58,7 +57,6 @@ def ensure_config_dir():
 def load_config() -> Dict[str, Any]:
     """
     Carica la configurazione dal file, la decripta e la mette in cache.
-    Se la cache è piena, restituisce la cache.
     """
     global _config_cache
     with _config_lock:
@@ -66,77 +64,87 @@ def load_config() -> Dict[str, Any]:
             return copy.deepcopy(_config_cache)
 
         ensure_config_dir()
-        config = copy.deepcopy(DEFAULT_CONFIG)
+        config = _load_base_config()
 
-        if CONFIG_FILE.exists():
-            try:
-                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                    loaded_config = json.load(f)
-                config.update(loaded_config)
-            except (json.JSONDecodeError, IOError):
-                pass  # Usa i default
-
-        # Decripta e recupera password
-        if "accounts" in config:
-            from src.utils.security import password_manager
-
-            for acc in config["accounts"]:
-                username = acc.get("username")
-                if not username:
-                    continue
-
-                # Priorità 1: Keyring
-                password_from_keyring = SecretsManager.get_credential(
-                    "isab_portal", username
-                )
-                if password_from_keyring:
-                    acc["password"] = password_from_keyring
-                    continue
-
-                # Priorità 2: File di configurazione (fallback)
-                password_from_file = acc.get("password")
-                if password_from_file:
-                    acc["password"] = password_manager.decrypt(password_from_file)
-
-        # Decripta SafeWork accounts
-        if "safework_accounts" in config:
-            from src.utils.security import password_manager
-
-            for acc in config["safework_accounts"]:
-                username = acc.get("username")
-                if not username:
-                    continue
-
-                # Keyring (namespace diverso)
-                pw_keyring = SecretsManager.get_credential("safework_portal", username)
-                if pw_keyring:
-                    acc["password"] = pw_keyring
-                    continue
-
-                # File fallback
-                pw_file = acc.get("password")
-                if pw_file:
-                    acc["password"] = password_manager.decrypt(pw_file)
+        # Decripta password per tutti i tipi di account
+        _decrypt_all_credentials(config)
 
         # Migrazione Legacy
-        if "isab_username" in config and config.get("isab_username"):
-            if not any(
-                a.get("username") == config["isab_username"] for a in config["accounts"]
-            ):
-                config["accounts"].append(
-                    {
-                        "username": config["isab_username"],
-                        "password": config.get("isab_password", ""),
-                        "default": True,
-                    }
-                )
-            del config["isab_username"]
-            if "isab_password" in config:
-                del config["isab_password"]
-            save_config(config)  # Salva subito la configurazione migrata
+        if _migrate_legacy_config(config):
+            save_config(config)
 
         _config_cache = copy.deepcopy(config)
         return config
+
+
+def _load_base_config() -> Dict[str, Any]:
+    """Carica il file JSON base o restituisce i default."""
+    config = copy.deepcopy(DEFAULT_CONFIG)
+    if not CONFIG_FILE.exists():
+        return config
+
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            loaded_config = json.load(f)
+        config.update(loaded_config)
+    except (json.JSONDecodeError, IOError):
+        pass
+    return config
+
+
+def _decrypt_all_credentials(config: Dict[str, Any]):
+    """Decripta le credenziali per Isab e SafeWork."""
+    _decrypt_account_list(config.get("accounts", []), "isab_portal")
+    _decrypt_account_list(config.get("safework_accounts", []), "safework_portal")
+
+
+def _decrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
+    """Decripta una lista di account usando keyring o fallback locale."""
+    if not accounts:
+        return
+
+    from src.utils.security import password_manager
+
+    for acc in accounts:
+        username = acc.get("username")
+        if not username:
+            continue
+
+        # Priorità 1: Keyring
+        pw_keyring = SecretsManager.get_credential(service_name, username)
+        if pw_keyring:
+            acc["password"] = pw_keyring
+            continue
+
+        # Priorità 2: Fallback criptato nel file
+        pw_file = acc.get("password")
+        if pw_file:
+            try:
+                acc["password"] = password_manager.decrypt(pw_file)
+            except Exception:
+                pass
+
+
+def _migrate_legacy_config(config: Dict[str, Any]) -> bool:
+    """Migra le vecchie chiavi 'isab_username' nel nuovo formato accounts."""
+    if "isab_username" not in config or not config.get("isab_username"):
+        return False
+
+    old_user = config["isab_username"]
+    if not any(a.get("username") == old_user for a in config.get("accounts", [])):
+        if "accounts" not in config:
+            config["accounts"] = []
+        config["accounts"].append(
+            {
+                "username": old_user,
+                "password": config.get("isab_password", ""),
+                "default": True,
+            }
+        )
+
+    del config["isab_username"]
+    config.pop("isab_password", None)
+    return True
 
 
 def _reset_configuration_for_testing():
@@ -151,86 +159,73 @@ def _reset_configuration_for_testing():
 
 def save_config(config: Dict[str, Any]):
     """
-    Salva la configurazione. Tenta di usare keyring, altrimenti cripta nel file.
-    Aggiorna la cache con la versione decriptata.
-    Utilizza salvataggio atomico e locking per prevenire corruzione file.
+    Salva la configurazione in modo atomico.
     """
     global _config_cache
-
     with _config_lock:
         ensure_config_dir()
+        config_to_save = copy.deepcopy(config)
 
-        # Lavora su una copia per non modificare l'input
-        config_to_process = copy.deepcopy(config)
-
-        # Logica di salvataggio password
-        if "accounts" in config_to_process:
-            from src.utils.security import password_manager
-
-            for acc in config_to_process["accounts"]:
-                username = acc.get("username")
-                password = acc.get("password")
-
-                if not (username and password):
-                    continue
-
-                # Tenta di salvare nel keyring
-                try:
-                    if SecretsManager.is_available():
-                        SecretsManager.store_credential(
-                            "isab_portal", username, password
-                        )
-                        # Se ha successo, rimuovi la password dal file
-                        acc.pop("password", None)
-                        continue
-                except Exception as e:
-                    print(f"Keyring non disponibile, uso fallback: {e}")
-
-                # Fallback: cripta la password nel file
-                acc["password"] = password_manager.encrypt(password)
-
-        # Logica salvataggio SafeWork
-        if "safework_accounts" in config_to_process:
-            from src.utils.security import password_manager
-
-            for acc in config_to_process["safework_accounts"]:
-                u = acc.get("username")
-                p = acc.get("password")
-                if not (u and p):
-                    continue
-
-                try:
-                    if SecretsManager.is_available():
-                        SecretsManager.store_credential("safework_portal", u, p)
-                        acc.pop("password", None)
-                        continue
-                except Exception:
-                    pass
-
-                acc["password"] = password_manager.encrypt(p)
+        # Cripta/Sposta in keyring le password prima del salvataggio su disco
+        _encrypt_all_credentials(config_to_save)
 
         try:
-            # Salvataggio Atomico: Scrivi su .tmp poi rinomina
-            temp_file = CONFIG_FILE.with_suffix(".tmp")
-            with open(temp_file, "w", encoding="utf-8") as f:
-                json.dump(config_to_process, f, indent=2, ensure_ascii=False)
-                f.flush()
-                os.fsync(f.fileno())  # Forza scrittura su disco
-
-            # Rinomina atomica (su Windows replace è atomico se dest esiste)
-            os.replace(temp_file, CONFIG_FILE)
-
-            # Invalida e aggiorna la cache con i dati decriptati originali
+            _atomic_write_json(config_to_save, CONFIG_FILE)
+            # Cache aggiornata con dati in chiaro (originali)
             _config_cache = copy.deepcopy(config)
-        except IOError as e:
-            print(f"Errore salvataggio configurazione: {e}")
-            if temp_file.exists():
-                try:
-                    os.remove(temp_file)
-                except Exception:
-                    pass
+        except Exception as e:
+            print(f"Errore critico durante il salvataggio: {e}")
+
+
+def _encrypt_all_credentials(config: Dict[str, Any]):
+    """Gestisce la protezione delle credenziali prima del salvataggio."""
+    _encrypt_account_list(config.get("accounts", []), "isab_portal")
+    _encrypt_account_list(config.get("safework_accounts", []), "safework_portal")
+
+
+def _encrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
+    """Sposta in keyring o cripta localmente le password di una lista di account."""
+    if not accounts:
+        return
+
+    from src.utils.security import password_manager
+
+    for acc in accounts:
+        # Recupera la password originale prima di qualsiasi modifica
+        password = acc.get("password")
+        username = acc.get("username")
+
+        if not username or not password:
+            continue
+
+        try:
+            if SecretsManager.is_available():
+                SecretsManager.store_credential(service_name, username, password)
+                # Rimuovi la password in chiaro dal dizionario che verrà salvato
+                acc.pop("password", None)
+                continue
         except Exception:
-            print(f"Errore critico durante il salvataggio:\n{traceback.format_exc()}")
+            pass
+
+        # Fallback: Cripta nel file
+        acc["password"] = password_manager.encrypt(password)
+
+
+def _atomic_write_json(data: Dict[str, Any], target_path: Path):
+    """Scrittura atomica del file JSON."""
+    temp_file = target_path.with_suffix(".tmp")
+    try:
+        with open(temp_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_file, target_path)
+    finally:
+        if temp_file.exists():
+            try:
+                os.remove(temp_file)
+            except Exception:
+                pass
 
 
 def get_config_value(key: str, default: Any = None) -> Any:

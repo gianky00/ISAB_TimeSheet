@@ -10,7 +10,7 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 
 class TestBotTimingSequences:
     """
-    Questa suite di test verifica che le pause (time.sleep) critiche siano 
+    Questa suite di test verifica che le pause (time.sleep) critiche siano
     presenti e chiamate nell'ordine corretto per tutti i bot.
     """
 
@@ -59,7 +59,7 @@ class TestBotTimingSequences:
         with patch("time.sleep") as mock_sleep, \
              patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
 
-            with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains") as mock_action:
+            with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains"):
                 mock_scarico_bot._setup_filters()
 
             assert any(c.args[0] == 0.5 for c in mock_sleep.call_args_list)
@@ -101,7 +101,7 @@ class TestBotTimingSequences:
             page.wait = MagicMock()
             page.wait.until.return_value = mock_el
 
-            with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains") as mock_action:
+            with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"):
                 page.navigate_to_timbrature()
 
             calls = [c.args[0] for c in mock_sleep.call_args_list]

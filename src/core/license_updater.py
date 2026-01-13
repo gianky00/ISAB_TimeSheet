@@ -5,6 +5,7 @@ Gestisce l'aggiornamento e la validazione della licenza.
 
 import os
 from datetime import datetime, timedelta
+from typing import Dict, Optional, Tuple
 
 import requests
 from cryptography.fernet import Fernet
@@ -80,14 +81,10 @@ def _get_emergency_grace_token_path():
 
 
 def update_grace_timestamp():
-    """Salva il timestamp corrente cifrato per il periodo di grazia offline (per licenze valide)."""
+    """Salva il timestamp corrente cifrato per il periodo di grazia offline."""
     try:
         token_path = _get_validity_token_path()
         current_time, is_trusted = time_manager.get_trusted_time()
-
-        # Se non abbiamo un orario affidabile (offline) e stiamo solo aggiornando
-        # il timestamp di validità, usiamo l'orario locale (che è meglio di niente)
-        # ma questo metodo dovrebbe essere chiamato solo dopo un successo online.
 
         cipher = Fernet(GRACE_PERIOD_KEY)
         encrypted_time = cipher.encrypt(current_time.isoformat().encode("utf-8"))
@@ -97,7 +94,6 @@ def update_grace_timestamp():
         with open(token_path, "wb") as f:
             f.write(encrypted_time)
 
-        # Se abbiamo una licenza valida, rimuoviamo l'eventuale token di emergenza
         emergency_token = _get_emergency_grace_token_path()
         if os.path.exists(emergency_token):
             os.remove(emergency_token)
@@ -107,9 +103,7 @@ def update_grace_timestamp():
 
 
 def check_grace_period():
-    """
-    Verifica se l'applicazione può funzionare offline (con licenza valida in precedenza).
-    """
+    """Verifica se l'applicazione può funzionare offline."""
     token_path = _get_validity_token_path()
 
     if not os.path.exists(token_path):
@@ -126,15 +120,11 @@ def check_grace_period():
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         last_online = datetime.fromisoformat(decrypted_data)
 
-        # Usa time_manager per ottenere l'ora, preferibilmente da rete
         now, is_trusted = time_manager.get_trusted_time()
 
-        # Controllo rollback orologio (solo se abbiamo un orario locale)
-        # Se is_trusted è False, 'now' è locale.
         if now < last_online - timedelta(minutes=5):
             raise Exception("Rilevata incoerenza orologio di sistema.")
 
-        # Controllo 3 giorni
         days_offline = (now - last_online).days
         if days_offline >= 3:
             raise Exception(
@@ -153,30 +143,21 @@ def check_grace_period():
 
 
 def check_emergency_grace_period():
-    """
-    Gestisce il periodo di grazia di 3 giorni per licenze mancanti o invalide.
-    Restituisce (allowed: bool, message: str, remaining_days: int)
-    """
+    """Gestisce il periodo di grazia di 3 giorni per licenze mancanti o invalide."""
     token_path = _get_emergency_grace_token_path()
-
     current_time, is_trusted = time_manager.get_trusted_time()
 
-    # Se il token non esiste, lo creiamo (inizio periodo di grazia)
     if not os.path.exists(token_path):
         try:
             cipher = Fernet(GRACE_PERIOD_KEY)
-            # Salviamo l'inizio del periodo
             encrypted_start = cipher.encrypt(current_time.isoformat().encode("utf-8"))
-
             os.makedirs(os.path.dirname(token_path), exist_ok=True)
             with open(token_path, "wb") as f:
                 f.write(encrypted_start)
-
             return True, "Periodo di grazia attivato (3 giorni)", 3
         except Exception as e:
             return False, f"Errore attivazione periodo di grazia: {e}", 0
 
-    # Se esiste, verifichiamo quanto tempo è passato
     try:
         with open(token_path, "rb") as f:
             encrypted_data = f.read()
@@ -185,12 +166,10 @@ def check_emergency_grace_period():
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         start_time = datetime.fromisoformat(decrypted_data)
 
-        # Controllo manipolazione orologio (se locale)
-        if current_time < start_time - timedelta(minutes=60):  # Tolleranza di 1h
+        if current_time < start_time - timedelta(minutes=60):
             return False, "Rilevata manipolazione orologio di sistema", 0
 
         elapsed = current_time - start_time
-
         if elapsed.days >= 3:
             return False, "Periodo di grazia di 3 giorni SCADUTO.", 0
 
@@ -200,7 +179,6 @@ def check_emergency_grace_period():
             f"Periodo di grazia attivo ({remaining_days} giorni rimanenti)",
             remaining_days,
         )
-
     except Exception as e:
         return False, f"Errore lettura periodo di grazia: {e}", 0
 
@@ -215,106 +193,83 @@ def is_running_from_source() -> bool:
 def is_license_folder_empty() -> bool:
     """Verifica se la cartella licenza è vuota o non esiste."""
     license_dir = get_license_dir()
-
     if not os.path.exists(license_dir):
         return True
 
-    # Controlla se ci sono i file necessari
     config_dat = os.path.join(license_dir, "config.dat")
     manifest_json = os.path.join(license_dir, "manifest.json")
-
     return not (os.path.exists(config_dat) and os.path.exists(manifest_json))
 
-
-def auto_download_license_if_needed():
-    """
-    Compatibilità backward: wrapper per run_update, ma ora non blocca se cartella piena.
-    Lasciato per non rompere import esistenti, ma la logica principale sarà in run_update.
-    """
-    pass  # Deprecato, logica spostata in main.py che chiama run_update direttamente se serve
-
-
-def run_update():
-    """
-    Controlla e scarica aggiornamenti licenza da GitHub.
-    Restituisce True se il download è avvenuto con successo (file trovati e scaricati).
-    """
+def run_update() -> bool:
+    """Controlla e scarica aggiornamenti licenza da GitHub."""
     print("[LICENZA] ═══════════════════════════════════════════════")
     print("[LICENZA] Tentativo aggiornamento licenza...")
 
     hw_id = license_validator.get_hardware_id().strip().rstrip(".")
     license_dir = get_license_dir()
-
     print(f"[LICENZA] Hardware ID: {hw_id[:20]}...")
 
-    if not os.path.exists(license_dir):
+    if not _ensure_license_dir(license_dir):
+        return False
+
+    base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
+    downloaded, error = _download_license_files(base_url)
+
+    success = False
+    if error:
+        print(f"[LICENZA] {error}")
+    elif downloaded:
+        success = _save_license_files(license_dir, downloaded)
+
+    print("[LICENZA] ═══════════════════════════════════════════════")
+    return success
+
+def _ensure_license_dir(path: str) -> bool:
+    """Assicura l'esistenza della cartella licenza."""
+    if not os.path.exists(path):
         try:
-            os.makedirs(license_dir)
+            os.makedirs(path)
             print("[LICENZA] Cartella licenza creata")
         except OSError as e:
             print(f"[ERRORE] Creazione cartella licenza: {e}")
             return False
+    return True
 
-    # Repository per SyncroJob licenses
-    base_url = f"https://api.github.com/repos/gianky00/intelleo-licenses/contents/licenses/{hw_id}"
+
+def _download_license_files(base_url: str) -> Tuple[Dict[str, bytes], Optional[str]]:
+    """Tenta il download dei file manifest e config da GitHub."""
     token = get_github_token()
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3.raw",
     }
+    files = {"config.dat": "config.dat", "manifest.json": "manifest.json"}
 
-    # Solo config.dat e manifest.json (no pyarmor.rkey)
-    files_map = {"config.dat": "config.dat", "manifest.json": "manifest.json"}
-
-    downloaded_content = {}
-    incomplete_update = False
-    network_error_occurred = False
-
-    # Tentativo download
-    for remote_name, local_name in files_map.items():
-        url = f"{base_url}/{remote_name}"
-
+    downloaded = {}
+    for remote, local in files.items():
         try:
-            response = requests.get(url, headers=headers, timeout=10)
-
-            if response.status_code == 200:
-                downloaded_content[local_name] = response.content
-                print(f"[LICENZA] ✓ {remote_name} scaricato")
-            elif response.status_code == 404:
-                print(f"[LICENZA] ⚠ {remote_name} non trovato")
-                incomplete_update = True
-            elif response.status_code == 401:
-                print("[ERRORE] Token autenticazione non valido")
-                incomplete_update = True
-                break
+            res = requests.get(f"{base_url}/{remote}", headers=headers, timeout=10)
+            if res.status_code == 200:
+                downloaded[local] = res.content
+                print(f"[LICENZA] ✓ {remote} scaricato")
             else:
-                print(f"[AVVISO] {remote_name}: HTTP {response.status_code}")
-                incomplete_update = True
+                return {}, f"File {remote} non trovato o errore HTTP {res.status_code}"
+        except requests.RequestException:
+            return {}, "Offline - Impossibile aggiornare"
+    return downloaded, None
 
-        except requests.RequestException as e:
-            print(f"[AVVISO] Connessione fallita: {e}")
-            network_error_occurred = True
-            break
-
-    success = False
-    if network_error_occurred:
-        print("[LICENZA] Offline - Impossibile aggiornare")
-    elif incomplete_update:
-        print("[LICENZA] Licenza incompleta o non trovata su GitHub")
-    else:
-        try:
-            for local_name, content in downloaded_content.items():
-                full_path = os.path.join(license_dir, local_name)
-                with open(full_path, "wb") as f:
-                    f.write(content)
-            print("[LICENZA] ✓ Aggiornamento completato")
-            update_grace_timestamp()
-            success = True
-        except OSError as e:
-            print(f"[ERRORE] Scrittura file licenza: {e}")
-
-    print("[LICENZA] ═══════════════════════════════════════════════")
-    return success
+def _save_license_files(license_dir: str, files: Dict[str, bytes]) -> bool:
+    """Salva i file scaricati su disco."""
+    try:
+        for name, content in files.items():
+            with open(os.path.join(license_dir, name), "wb") as f:
+                f.write(content)
+        print("[LICENZA] ✓ Aggiornamento completato")
+        update_grace_timestamp()
+        return True
+    except OSError as e:
+        print(f"[ERRORE] Scrittura file licenza: {e}")
+        return False
 
 
 if __name__ == "__main__":

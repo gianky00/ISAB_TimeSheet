@@ -612,58 +612,54 @@ class LyraPanel(QWidget):
                 )
 
     def _export_excel(self):
-        """Exports the last table found in the chat history to Excel."""
+        """Esporta l'ultima tabella trovata nella cronologia chat in Excel."""
         if not self.last_table_data:
-            QMessageBox.warning(
-                self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare."
-            )
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
             return
 
-        text = self.last_table_data
+        table_lines = self._extract_table_lines(self.last_table_data)
+        if not table_lines:
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio.")
+            return
+
+        try:
+            df = self._parse_markdown_table(table_lines)
+            self._save_df_to_excel(df)
+        except Exception as e:
+            QMessageBox.critical(self, "Errore", f"Impossibile esportare la tabella: {e}")
+
+    def _extract_table_lines(self, text: str) -> List[str]:
+        """Estrae le linee che compongono una tabella Markdown."""
         lines = text.split("\n")
         table_lines = []
-
         current_block = []
+
         for line in lines:
             if line.strip().startswith("|"):
                 current_block.append(line)
             else:
-                if current_block:
-                    if len(current_block) >= 2:
-                        table_lines = current_block
-                    current_block = []
+                if len(current_block) >= 2:
+                    table_lines = current_block
+                current_block = []
 
-        if current_block:
-            if len(current_block) >= 2:
-                table_lines = current_block
+        return current_block if len(current_block) >= 2 else table_lines
 
-        if not table_lines:
-            QMessageBox.warning(
-                self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio."
-            )
-            return
+    def _parse_markdown_table(self, table_lines: List[str]) -> pd.DataFrame:
+        """Parsa le linee Markdown in un DataFrame pandas."""
+        cleaned = [line for line in table_lines if "---" not in line]
+        data = StringIO("\n".join(cleaned))
+        df = pd.read_csv(data, sep="|", header=0, engine="python")
 
-        try:
-            cleaned_lines = [line for line in table_lines if "---" not in line]
+        # Pulizia colonne e spazi
+        df = df.dropna(axis=1, how="all")
+        df.columns = df.columns.str.strip()
+        return df.apply(lambda x: x.strip() if isinstance(x, str) else x)
 
-            data = StringIO("\n".join(cleaned_lines))
-            df = pd.read_csv(data, sep="|", header=0, engine="python")
-
-            # Clean empty columns from pipes
-            df = df.dropna(axis=1, how="all")
-            df.columns = df.columns.str.strip()
-            df = df.apply(lambda x: x.strip() if isinstance(x, str) else x)
-
-            filename, _ = QFileDialog.getSaveFileName(
-                self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)"
-            )
-            if filename:
-                df.to_excel(filename, index=False)
-                QMessageBox.information(
-                    self, "Successo", "Tabella esportata correttamente!"
-                )
-
-        except Exception as e:
-            QMessageBox.critical(
-                self, "Errore", f"Impossibile esportare la tabella: {e}"
-            )
+    def _save_df_to_excel(self, df: pd.DataFrame):
+        """Mostra il dialog di salvataggio e scrive il file Excel."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)"
+        )
+        if filename:
+            df.to_excel(filename, index=False)
+            QMessageBox.information(self, "Successo", "Tabella esportata correttamente!")

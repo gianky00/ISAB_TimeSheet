@@ -85,7 +85,7 @@ class TestHardeningAuditSecurity:
             fake_hash = manager._calculate_hash(fake_data, h1)
 
             conn.execute("""
-INSERT INTO audit_logs 
+INSERT INTO audit_logs
                 (timestamp, user_id, action, category, entity, params, status, severity, row_hash)
                 VALUES (?, 'attacker', 'Exploit', 'general', '-', '{}', 'success', 'high', ?)
 """,
@@ -161,7 +161,7 @@ INSERT INTO audit_logs
 
         # 1. Insert
         mgr.execute_query(db_path, """
-            INSERT INTO contabilita (year, n_prev, attivita, odc) 
+            INSERT INTO contabilita (year, n_prev, attivita, odc)
             VALUES (2026, 'P123', 'Manutenzione Valvole', 'ODC_99')
         """)
 

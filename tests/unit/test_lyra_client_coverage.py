@@ -1,9 +1,9 @@
 
 import sqlite3
-import requests
 from unittest.mock import MagicMock
 
 import pytest
+import requests
 
 from src.core.lyra_client import LyraClient
 
@@ -29,7 +29,7 @@ class TestLyraClientCoverage:
         mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_year_stats", return_value=mock_stats)
 
         # Mock SQLite per Timbrature
-        db_path = tmp_path / "timbrature_test.db"
+        tmp_path / "timbrature_test.db"
         mocker.patch("src.core.lyra_client.CONFIG_DIR", tmp_path)
         (tmp_path / "data").mkdir()
         real_db_path = tmp_path / "data" / "timbrature_Isab.db"

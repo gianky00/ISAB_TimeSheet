@@ -4,6 +4,7 @@ Implementa il Lazy Loading per ottimizzare le prestazioni.
 """
 
 import logging
+from typing import Optional
 
 from PyQt6.QtCore import QObject
 
@@ -22,80 +23,85 @@ class NavigationController(QObject):
 
     def get_panel(self, index: int):
         """Restituisce il pannello all'indice specificato, creandolo se necessario."""
-        # Se il pannello è già stato creato, lo restituiamo
         panel = self.mw.page_stack.widget(index)
 
-        # Se il widget è un placeholder (o se vogliamo essere sicuri tramite attributo)
-        if hasattr(self.mw, f"_panel_initialized_{index}") and getattr(
-            self.mw, f"_panel_initialized_{index}"
-        ):
+        # Se il pannello è già stato creato, lo restituiamo
+        if getattr(self.mw, f"_panel_initialized_{index}", False):
             return panel
 
         logger.info(f"Lazy Loading pannello all'indice: {index}")
 
-        # Creazione dinamica in base all'indice
-        new_panel = None
-
         try:
-            if index == 0:
-                from src.gui.dashboard_panel import DashboardPanel
-
-                new_panel = DashboardPanel()
-                self.mw.dashboard_panel = new_panel
-            elif index == 1:
-                from src.gui.widgets.automazioni_widget import AutomazioniWidget
-
-                new_panel = AutomazioniWidget(self.mw)
-                self.mw.automazioni_widget = new_panel
-            elif index == 2:
-                from src.gui.lyra_panel import LyraPanel
-
-                new_panel = LyraPanel()
-                self.mw.lyra_panel = new_panel
-            elif index == 3:
-                from src.gui.widgets.database_widget import DatabaseWidget
-
-                new_panel = DatabaseWidget(self.mw)
-                self.mw.database_widget = new_panel
-            elif index == 4:
-                from src.gui.settings_panel import SettingsPanel
-
-                new_panel = SettingsPanel()
-                self.mw.settings_panel = new_panel
-                # Connetti segnali vitali delle impostazioni
-                new_panel.settings_saved.connect(self.mw._on_settings_saved)
-                new_panel.request_help_section.connect(self.mw._on_help_requested)
-            elif index == 5:
-                from src.gui.help_panel import HelpPanel
-
-                new_panel = HelpPanel()
-                self.mw.help_panel = new_panel
-            elif index == 6:
-                from src.gui.notifications_panel import NotificationsPanel
-
-                new_panel = NotificationsPanel()
-                self.mw.notifications_panel = new_panel
+            new_panel = self._create_panel_by_index(index)
+            if new_panel:
+                self._initialize_new_panel(index, new_panel)
+                return new_panel
         except Exception as e:
-            import traceback
-            logger.error(f"❌ Critical Error loading panel {index}: {e}")
-            logger.error(traceback.format_exc())
-            from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.critical(self.mw, "Errore Caricamento", f"Impossibile caricare il modulo.\nErrore: {e}")
-            return panel  # Return placeholder
-
-        if new_panel:
-            # Rimpiazza il placeholder nello stack
-            old_placeholder = self.mw.page_stack.widget(index)
-            self.mw.page_stack.removeWidget(old_placeholder)
-            self.mw.page_stack.insertWidget(index, new_panel)
-            setattr(self.mw, f"_panel_initialized_{index}", True)
-
-            # Tenta di collegare i segnali incrociati
-            self._try_connect_signals()
-
-            return new_panel
+            self._handle_panel_error(index, e)
 
         return panel
+
+    def _create_panel_by_index(self, index: int) -> Optional[QObject]:
+        """Factory method per la creazione dei pannelli in base all'indice."""
+        if index == 0:
+            from src.gui.dashboard_panel import DashboardPanel
+            self.mw.dashboard_panel = DashboardPanel()
+            return self.mw.dashboard_panel
+
+        if index == 1:
+            from src.gui.widgets.automazioni_widget import AutomazioniWidget
+            self.mw.automazioni_widget = AutomazioniWidget(self.mw)
+            return self.mw.automazioni_widget
+
+        if index == 2:
+            from src.gui.lyra_panel import LyraPanel
+            self.mw.lyra_panel = LyraPanel()
+            return self.mw.lyra_panel
+
+        if index == 3:
+            from src.gui.widgets.database_widget import DatabaseWidget
+            self.mw.database_widget = DatabaseWidget(self.mw)
+            return self.mw.database_widget
+
+        if index == 4:
+            return self._create_settings_panel()
+
+        if index == 5:
+            from src.gui.help_panel import HelpPanel
+            self.mw.help_panel = HelpPanel()
+            return self.mw.help_panel
+
+        if index == 6:
+            from src.gui.notifications_panel import NotificationsPanel
+            self.mw.notifications_panel = NotificationsPanel()
+            return self.mw.notifications_panel
+
+        return None
+
+    def _create_settings_panel(self) -> QObject:
+        """Crea e configura il pannello impostazioni."""
+        from src.gui.settings_panel import SettingsPanel
+        panel = SettingsPanel()
+        self.mw.settings_panel = panel
+        panel.settings_saved.connect(self.mw._on_settings_saved)
+        panel.request_help_section.connect(self.mw._on_help_requested)
+        return panel
+
+    def _initialize_new_panel(self, index: int, new_panel: QObject):
+        """Sostituisce il placeholder e inizializza lo stato del pannello."""
+        old_placeholder = self.mw.page_stack.widget(index)
+        self.mw.page_stack.removeWidget(old_placeholder)
+        self.mw.page_stack.insertWidget(index, new_panel)
+        setattr(self.mw, f"_panel_initialized_{index}", True)
+        self._try_connect_signals()
+
+    def _handle_panel_error(self, index: int, e: Exception):
+        """Gestisce errori critici durante il caricamento dei moduli UI."""
+        import traceback
+        logger.error(f"❌ Critical Error loading panel {index}: {e}")
+        logger.error(traceback.format_exc())
+        from PyQt6.QtWidgets import QMessageBox
+        QMessageBox.critical(self.mw, "Errore Caricamento", f"Impossibile caricare il modulo.\nErrore: {e}")
 
     def _try_connect_signals(self):
         """

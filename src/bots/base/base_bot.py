@@ -121,106 +121,108 @@ class BaseBot(ABC):
             raise InterruptedError("Bot interrotto dall'utente")
 
     def _init_driver(self):
+        """Inizializzazione del driver Chrome con opzioni e configurazioni specifiche."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
 
+        options = self._get_chrome_options()
+        driver_path = self._get_chromedriver_path()
+        service = Service(driver_path) if driver_path else None
+
+        try:
+            self._setup_driver_instance(service, options)
+            self._configure_waits_and_pages()
+        except Exception as e:
+            self._handle_driver_error(e)
+
+    def _get_chrome_options(self) -> Options:
+        """Configura e restituisce le opzioni di Chrome."""
         options = Options()
-        options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--disable-popup-blocking")
-        options.add_argument("--disable-blink-features=AutomationControlled")
+        # Argomenti standard
+        args = [
+            "--disable-features=DownloadBubble,DownloadBubbleV2",
+            "--disable-notifications", "--disable-infobars",
+            "--disable-popup-blocking", "--disable-blink-features=AutomationControlled",
+            "--no-sandbox", "--start-maximized", "--no-restore-session-state",
+            "--disable-dev-shm-usage", "--disable-gpu",
+            "--remote-debugging-port=9222", "--disable-software-rasterizer"
+        ]
+        for arg in args:
+            options.add_argument(arg)
+
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
-        options.add_argument("--no-sandbox")
-        options.add_argument("--start-maximized")
-        options.add_argument("--no-restore-session-state")
 
-        # Stability Flags (Critical for Windows environments)
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--remote-debugging-port=9222")
-        options.add_argument("--disable-software-rasterizer")
-
+        # Gestione Headless
         config = config_manager.load_config()
-        # Headless logic: prioritize parameter, then config
-        is_headless = self.headless or config.get("browser_headless", False)
-        if is_headless:
+        if self.headless or config.get("browser_headless", False):
             self.headless = True
             options.add_argument("--headless=new")
             options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
 
+        # Directory Profilo e Preferenze
         profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
         options.add_argument(f"user-data-dir={profile_dir}")
-
-        prefs = {
+        options.add_experimental_option("prefs", {
             "profile.default_content_setting_values.automatic_downloads": 1,
             "plugins.always_open_pdf_externally": True,
             "download.prompt_for_download": False,
-        }
-        options.add_experimental_option("prefs", prefs)
+        })
+        return options
 
-        driver_path = None
-        service = None
-
-        # 1. Tentativo con ChromeDriverManager (Network)
+    def _get_chromedriver_path(self) -> Optional[str]:
+        """Tenta di ottenere il path di chromedriver (automatico o locale)."""
+        # 1. Automatico
         try:
             self.log("Verifica aggiornamenti driver...")
-            installed_path = ChromeDriverManager().install()
-            # Fix per alcuni ambienti Windows dove il path non ha .exe
-            if not installed_path.lower().endswith(".exe"):
-                potential_exe = list(Path(installed_path).parent.rglob("chromedriver.exe"))
-                if potential_exe:
-                    installed_path = str(potential_exe[0])
-            driver_path = installed_path
-            self.log(f"Driver scaricato: {driver_path}")
+            path = ChromeDriverManager().install()
+            if not path.lower().endswith(".exe"):
+                potential = list(Path(path).parent.rglob("chromedriver.exe"))
+                if potential:
+                    path = str(potential[0])
+            return path
         except Exception as e:
             self.log(f"⚠️ Impossibile scaricare driver automatico: {e}")
 
-        # 2. Tentativo Fallback Locale (Cartella 'drivers' o 'bin')
-        if not driver_path:
-            local_driver = Path("drivers") / "chromedriver.exe"
-            if local_driver.exists():
-                driver_path = str(local_driver.absolute())
-                self.log(f"Usando driver locale: {driver_path}")
+        # 2. Locale Fallback
+        local_driver = Path("drivers") / "chromedriver.exe"
+        if local_driver.exists():
+            path = str(local_driver.absolute())
+            self.log(f"Usando driver locale: {path}")
+            return path
+        return None
 
-        # 3. Tentativo creazione Service
-        if driver_path:
-            service = Service(driver_path)
+    def _setup_driver_instance(self, service: Optional[Service], options: Options):
+        """Crea l'istanza di webdriver.Chrome."""
+        self.driver = webdriver.Chrome(service=service, options=options)
+        # Anti-detection
+        self.driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument",
+            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"}
+        )
 
-        try:
-            # Se service è None, Selenium cercherà nel PATH
-            self.driver = webdriver.Chrome(service=service, options=options)
+    def _configure_waits_and_pages(self):
+        """Inizializza gli oggetti WebDriverWait e LoginPage."""
+        if not self.driver:
+            return
+        self.wait = WebDriverWait(self.driver, self.timeout)
+        self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
+        self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
+        self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
 
-            # Anti-detection script
-            self.driver.execute_cdp_cmd(
-                "Page.addScriptToEvaluateOnNewDocument",
-                {
-                    "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-                },
-            )
-
-            self.wait = WebDriverWait(self.driver, self.timeout)
-            self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
-            self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
-            self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
-
-        except Exception as e:
-            msg = f"❌ ERRORE CRITICO DRIVER: {e}"
-            self.log(msg)
-
-            # User-friendly hint
-            err_str = str(e).lower()
-            if "chrome instance exited" in err_str:
-                self.log("💡 SUGGERIMENTO: Chrome è crashato all'avvio (Sandbox/Version Mismatch).")
-                self.log("   - Assicurati che Chrome sia aggiornato.")
-                self.log("   - Il sistema ha tentato di usare flag anti-crash, ma il problema persiste.")
-            elif "sessionnotcreatedexception" in err_str or "version" in err_str:
-                self.log("💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta.")
-                self.log("   1. Aggiorna Google Chrome all'ultima versione.")
-                self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile e mettilo nella cartella 'drivers'.")
-
-            raise
+    def _handle_driver_error(self, e: Exception):
+        """Gestisce gli errori di avvio del driver fornendo suggerimenti all'utente."""
+        msg = f"❌ ERRORE CRITICO DRIVER: {e}"
+        self.log(msg)
+        err_str = str(e).lower()
+        if "chrome instance exited" in err_str:
+            self.log("💡 SUGGERIMENTO: Chrome è crashato all'avvio (Sandbox/Version Mismatch).")
+            self.log("   - Assicurati che Chrome sia aggiornato.")
+        elif "sessionnotcreatedexception" in err_str or "version" in err_str:
+            self.log("💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta.")
+            self.log("   1. Aggiorna Google Chrome all'ultima versione.")
+            self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile.")
+        raise e
 
     def execute(self, data: List[Dict[str, Any]]) -> bool:
         """Workflow completo: Validazione -> Browser -> Esecuzione."""
@@ -338,6 +340,7 @@ class BaseBot(ABC):
         # Placeholder - implement if needed or used
         return True
 
+    @abstractmethod
     def _handle_unsaved_changes_popup(self):
         """Handle eventual 'unsaved changes' popup. Default implementation: do nothing."""
         pass

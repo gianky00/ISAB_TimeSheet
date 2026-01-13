@@ -136,79 +136,77 @@ class AuditLogWidget(QWidget):
 
     def refresh(self):
         """Ricarica i log e applica colori basati sulla severità."""
-        # 1. Verifica Integrità
-        is_valid = self.manager.verify_integrity()
-        if is_valid:
-            self.integrity_lbl.setText("✅ Database Integro (Certificato)")
-            self.integrity_lbl.setStyleSheet(
-                "color: #198754; font-size: 13px; font-weight: bold;"
-            )
-        else:
-            self.integrity_lbl.setText("⚠️ MANOMISSIONE RILEVATA!")
-            self.integrity_lbl.setStyleSheet(
-                "color: #dc3545; font-size: 13px; font-weight: bold;"
-            )
+        self._update_integrity_ui(self.manager.verify_integrity())
 
-        # 2. Carica dati
         logs = self.manager.get_logs(limit=200)
         self.table.setRowCount(0)
+        self._populate_table(logs)
 
+    def _update_integrity_ui(self, is_valid: bool):
+        if is_valid:
+            self.integrity_lbl.setText("✅ Database Integro (Certificato)")
+            self.integrity_lbl.setStyleSheet("color: #198754; font-size: 13px; font-weight: bold;")
+        else:
+            self.integrity_lbl.setText("⚠️ MANOMISSIONE RILEVATA!")
+            self.integrity_lbl.setStyleSheet("color: #dc3545; font-size: 13px; font-weight: bold;")
+
+    def _populate_table(self, logs):
         for log in logs:
             row = self.table.rowCount()
             self.table.insertRow(row)
 
-            # Helper per evitare stringhe 'None' o vuote
-            def clean(val):
-                s = str(val).strip()
-                if not val or s.lower() == "none" or s == "":
-                    return "-"
-                return s
-
-            # Colore Severità
-            sev = clean(log.get("severity")).lower()
-            row_color = None
-            if sev == "high":
-                row_color = QColor("#fff5f5")
-            elif sev == "medium":
-                row_color = QColor("#fff9f0")
-
-            # Format timestamp
-            try:
-                from datetime import datetime
-
-                dt = datetime.fromisoformat(log["timestamp"])
-                ts_str = dt.strftime("%d/%m/%y %H:%M")
-            except Exception:
-                ts_str = clean(log["timestamp"])
-
-            items = [
-                QTableWidgetItem(ts_str),
-                QTableWidgetItem(clean(log.get("user_id"))),
-                QTableWidgetItem(clean(log.get("action"))),
-                QTableWidgetItem(clean(log.get("entity"))),
-                QTableWidgetItem(
-                    clean(log.get("params")) if log.get("params") != "{}" else "-"
-                ),
-                QTableWidgetItem(clean(log.get("status")).upper()),
-            ]
-
-            # Applica font bold all'operazione
-            items[2].setFont(QFont("Arial", 9, QFont.Weight.Bold))
-
-            # Colore Esito
-            status = log["status"].lower()
-            if status == "error" or sev == "high":
-                items[5].setForeground(QColor("#dc3545"))
-            elif status == "warning" or sev == "medium":
-                items[5].setForeground(QColor("#fd7e14"))
-            else:
-                items[5].setForeground(QColor("#198754"))
-            items[5].setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            items = self._create_row_items(log)
+            self._apply_row_styles(items, log)
 
             for col, item in enumerate(items):
-                if row_color:
-                    item.setBackground(row_color)
                 self.table.setItem(row, col, item)
+
+    def _create_row_items(self, log) -> list[QTableWidgetItem]:
+        def clean(v):
+            s = str(v).strip()
+            return "-" if not v or s.lower() == "none" or s == "" else s
+
+        ts = self._format_log_timestamp(log.get("timestamp"))
+        params = clean(log.get("params")) if log.get("params") != "{}" else "-"
+
+        return [
+            QTableWidgetItem(ts),
+            QTableWidgetItem(clean(log.get("user_id"))),
+            QTableWidgetItem(clean(log.get("action"))),
+            QTableWidgetItem(clean(log.get("entity"))),
+            QTableWidgetItem(params),
+            QTableWidgetItem(clean(log.get("status")).upper()),
+        ]
+
+    def _format_log_timestamp(self, ts_raw) -> str:
+        try:
+            from datetime import datetime
+            dt = datetime.fromisoformat(ts_raw)
+            return dt.strftime("%d/%m/%y %H:%M")
+        except Exception:
+            return str(ts_raw) if ts_raw else "-"
+
+    def _apply_row_styles(self, items, log):
+        sev = str(log.get("severity", "")).lower()
+        status = str(log.get("status", "")).lower()
+
+        # 1. Background (Severity)
+        bg = QColor("#fff5f5") if sev == "high" else QColor("#fff9f0") if sev == "medium" else None
+        if bg:
+            for it in items:
+                it.setBackground(bg)
+
+        # 2. Action Font (Bold)
+        items[2].setFont(QFont("Arial", 9, QFont.Weight.Bold))
+
+        # 3. Status Color (Foreground)
+        if status == "error" or sev == "high":
+            items[5].setForeground(QColor("#dc3545"))
+        elif status == "warning" or sev == "medium":
+            items[5].setForeground(QColor("#fd7e14"))
+        else:
+            items[5].setForeground(QColor("#198754"))
+        items[5].setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
 
 class NotificationsPanel(QWidget):

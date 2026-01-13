@@ -2,7 +2,7 @@ import glob
 import os
 import time
 import traceback
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import fitz  # PyMuPDF
 from selenium.webdriver.common.by import By
@@ -183,12 +183,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log(f"⚠️ Impossibile rimuovere file temp (in uso?): {path} - {str(e)}")
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
-        # Driver e wait sono garantiti da execute()
+        """Esegue il ciclo principale di scarico PDL."""
         success_count = 0
         total = len(data)
         self.downloaded_files = []
-        all_downloaded_pdl_paths = []  # Tutti i PDL scaricati per l'unione finale
-        self.missing_pdls = [] # Traccia PdL inesistenti
+        all_downloaded_pdl_paths = []
+        self.missing_pdls = []
         self.merged_pdf_path = None
 
         self.log(f"🚀 Inizio elaborazione di {total} righe di dati.")
@@ -196,247 +196,235 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         for index, item in enumerate(data):
             try:
                 self._check_stop()
-                pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
-                print_enabled = item.get("print_enabled", False)
-                printer_name = item.get("printer_name", "")
-
-                self.log(f"--- Elaborazione Riga {index + 1}/{total} ---")
-
-                if not pdl_raw:
-                    self.log(f"⚠️ PDL non valido o mancante nella riga {index + 1}. Salto.")
-                    continue
-
-                # --- SANITIZZAZIONE PDL ---
-                pdl_num = str(pdl_raw).strip().upper().replace(" ", "")
-                if pdl_num.isdigit() and len(pdl_num) == 6:
-                    num = int(pdl_num)
-                    suffix = "/S" if num < 400000 else "/C"
-                    pdl_num = f"{pdl_num}{suffix}"
-                    self.log(f"ℹ️ PDL auto-completato: {pdl_raw} -> {pdl_num}")
-                else:
-                    self.log(f"ℹ️ PDL già formattato o non standard: {pdl_num}")
-
-                self.log(f"🔄 Ricerca PdL {pdl_num} in interfaccia...")
-                try:
-                    campo_ricerca = self.wait.until(
-                        EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce"))
-                    )
-                    campo_ricerca.clear()
-                    campo_ricerca.send_keys(pdl_num)
-                    time.sleep(0.5)
-                    val_inserito = campo_ricerca.get_attribute("value")
-                    self.log(f"⌨️ Valore inserito nel campo: '{val_inserito}'")
-                    campo_ricerca.send_keys(Keys.ENTER)
-                    self.log("⌨️ Inviato tasto ENTER per ricerca.")
-                except Exception as e:
-                    self.log_error(f"Interazione campo ricerca PDL {pdl_num}", e)
-                    continue
-
-                # Controllo specifico per popup "Ricerca Estesa"
-                if self._gestisci_ricerca_estesa():
-                    self.log(f"ℹ️ PdL {pdl_num} inesistente. Salto.")
-                    self.missing_pdls.append(pdl_num)
-                    success_count += 1 # È normale, quindi lo contiamo come gestito
-                    continue
-
-                if self._gestisci_alert_ricerca():
-                    # NOTA IMPORTANTE: Se appare l'alert "PdL non in programmazione", non facciamo 'continue'.
-                    # È sempre un avviso informativo. Attendiamo 2 secondi per permettere al sistema
-                    # di caricare comunque i dati del PDL a video, garantendo la resilienza del bot.
-                    self.log(f"⚠️ Rilevato alert durante la ricerca del PdL {pdl_num}. Provo a procedere comunque...")
-                    time.sleep(2)
-                    # Verifica se il PDL è effettivamente caricato nonostante l'alert
-                    try:
-                        # Se l'overlay sparisce e siamo ancora sulla pagina di ricerca,
-                        # verifichiamo se i dati sono apparsi
-                        self._attendi_scomparsa_overlay(timeout_secondi=5)
-                    except Exception:
-                        pass
-                else:
-                    self.log("⏳ Attesa scomparsa overlay post-ricerca...")
-                    self._attendi_scomparsa_overlay()
-
-                self.log(f"✅ Verifica stato post-ricerca per {pdl_num}. URL: {self.driver.current_url}")
-
-                # --- PARTE PRIMA ---
-                self.log(f"⬇️ Avvio scarico Parte Prima per PdL {pdl_num}...")
-                self.driver.execute_script("window.scrollTo(0, 0);")
-                time.sleep(1)
-                ts_1 = time.time()
-
-                try:
-                    self.log("🖱️ Clic pulsante Anteprima Stampa...")
-                    self.wait.until(
-                        EC.element_to_be_clickable(
-                            (By.ID, "topIcon-acticonAnteprimaStampaMenu")
-                        )
-                    ).click()
-                    time.sleep(0.5)
-                    self.log("🖱️ Selezione lingua 'Italiano'...")
-                    self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
-                except Exception as e:
-                    self.log_error(f"Click stampa Parte 1 PDL {pdl_num}", e)
-                    continue
-
-                self.log("⏳ Attesa download file PDF (Parte 1)...")
-                pdf_1 = self._attendi_e_ritorna_nuovo_pdf(ts_1)
-                if not pdf_1:
-                    self.log(f"❌ Timeout scarico Parte 1 per PdL {pdl_num}.")
-                    continue
-                self.log(f"✅ Parte 1 scaricata: {os.path.basename(pdf_1)}")
-
-                path_temp_1 = os.path.join(self.download_path, f"temp_p1_{int(ts_1)}.pdf")
-                self._safe_remove(path_temp_1)
-                try:
-                    os.rename(pdf_1, path_temp_1)
-                    self.log(f"📂 File rinominato in: {os.path.basename(path_temp_1)}")
-                except Exception as e:
-                    self.log(f"⚠️ Errore rinomina Parte 1: {e}")
-                    path_temp_1 = pdf_1 # Prova a usare l'originale se rename fallisce
-
-                # --- PULIZIA PARTE PRIMA ---
-                try:
-                    self.log(f"🔍 Controllo pagine Parte 1: {path_temp_1}")
-                    doc_p1 = fitz.open(path_temp_1)
-                    pagine_orig = doc_p1.page_count
-                    if pagine_orig >= 2:
-                        self.log(f"✂️ Parte 1 ha {pagine_orig} pagine. Rimuovo la pagina 2.")
-                        doc_p1.delete_page(1)
-                        tmp_clean = path_temp_1 + "_clean.pdf"
-                        doc_p1.save(tmp_clean)
-                        doc_p1.close()
-                        self._safe_remove(path_temp_1)
-                        os.rename(tmp_clean, path_temp_1)
-                        self.log("✅ Pagina 2 rimossa correttamente.")
-                    else:
-                        self.log(f"ℹ️ Parte 1 ha {pagine_orig} pagine. Nessuna rimozione necessaria.")
-                        doc_p1.close()
-                except Exception as e:
-                    self.log(f"⚠️ Errore pulizia Parte 1: {e}")
-
-                # --- PARTE SECONDA ---
-                try:
-                    self.log("⏳ Verifica apertura sezione Parte Seconda...")
-                    if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
-                        self.log("🖱️ Parte Seconda non visibile, clicco per espandere...")
-                        try:
-                            self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
-                        except Exception:
-                            self.driver.find_element(
-                                By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
-                            ).click()
-                        time.sleep(1)
-                    self.wait.until(
-                        EC.visibility_of_element_located((By.ID, "lblPAFoglio"))
-                    )
-                    self.log("✅ Sezione Parte Seconda aperta.")
-                except Exception as e:
-                    self.log(f"⚠️ Errore apertura Parte Seconda: {e}")
-
-                self.log(f"⬇️ Avvio scarico Parte Seconda per PdL {pdl_num}...")
-                self._attendi_scomparsa_overlay()
-                self.driver.execute_script("window.scrollTo(0, 0);")
-                ts_2 = time.time()
-
-                try:
-                    self.log("🖱️ Clic pulsante Stampa Parte Seconda (btnPrintPS)...")
-                    self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
-
-                    # Verifica se è un PDL a foglio singolo o multiplo
-                    self.log("⏳ Attesa dialogo opzioni stampa...")
-                    time.sleep(1)
-                    try:
-                        btn_tutte = self.driver.find_element(By.ID, "rbStampaTutte")
-                        if btn_tutte.is_displayed():
-                            self.log("🔘 Seleziono 'Stampa Tutte'...")
-                            btn_tutte.click()
-                            time.sleep(0.5)
-                            self.log("🖱️ Clic Anteprima...")
-                            self.driver.find_element(By.ID, "btnAnteprima").click()
-                    except Exception:
-                        self.log("ℹ️ Dialogo 'Tutte' non trovato, probabilmente foglio singolo.")
-                except Exception as e:
-                    self.log_error(f"Click stampa Parte 2 PDL {pdl_num}", e)
-                    self._safe_remove(path_temp_1)
-                    continue
-
-                self.log("⏳ Attesa download file PDF (Parte 2, timeout lungo)...")
-                pdf_2 = self._attendi_e_ritorna_nuovo_pdf(ts_2, timeout=90)
-                if not pdf_2:
-                    self.log(f"❌ Timeout scarico Parte 2 per PdL {pdl_num}.")
-                    self._safe_remove(path_temp_1)
-                    continue
-                self.log(f"✅ Parte 2 scaricata: {os.path.basename(pdf_2)}")
-
-                path_temp_2 = os.path.join(self.download_path, f"temp_p2_{int(ts_2)}.pdf")
-                self._safe_remove(path_temp_2)
-                try:
-                    os.rename(pdf_2, path_temp_2)
-                except Exception as e:
-                    self.log(f"⚠️ Errore rinomina Parte 2: {e}")
-                    path_temp_2 = pdf_2
-
-                # --- UNIONE PDF ---
-                pdl_upper = pdl_num.upper()
-                nome_finale_pdl = f"PDL_{pdl_upper.replace('/', '-')}.pdf"
-                percorso_finale_pdl = os.path.join(self.download_path, nome_finale_pdl)
-                self._safe_remove(percorso_finale_pdl)
-
-                self.log(f"🔄 Avvio unione PDF [P1 + P2] -> {nome_finale_pdl}")
-                from src.utils.document_processor import DocumentProcessor
-
-                if DocumentProcessor.merge_pdfs(
-                    [path_temp_1, path_temp_2], percorso_finale_pdl
-                ):
-                    self.log(f"✅ PdL {pdl_upper} unito con successo.")
-                    self.downloaded_files.append(percorso_finale_pdl)
-                    all_downloaded_pdl_paths.append(percorso_finale_pdl)
+                res = self._process_single_pdl_row(index, total, item, all_downloaded_pdl_paths)
+                if res:
                     success_count += 1
-
-                    # Stampa
-                    if print_enabled and printer_name:
-                        self.log(f"🖨️ Richiesta stampa su: {printer_name}")
-                        try:
-                            print_pdf(percorso_finale_pdl, printer_name)
-                            self.log("✅ Comando stampa inviato.")
-                        except Exception as e:
-                            self.log(f"⚠️ Errore durante la stampa: {e}")
-                    else:
-                        self.log(f"ℹ️ Stampa non richiesta per PdL {pdl_upper}.")
-                else:
-                    self.log(f"❌ Fallimento unione PDF per PdL {pdl_upper}.")
-
-                self._safe_remove(path_temp_1)
-                self._safe_remove(path_temp_2)
-
             except InterruptedError:
                 self.log("🛑 Stop richiesto dall'utente durante il loop.")
                 raise
             except Exception as e:
                 self.log_error(f"Processo PDL riga {index+1}", e)
 
-        # --- MERGE ALL SESSION ---
-        merge_all_session = any(item.get("merge_all_session", False) for item in data)
-        if merge_all_session and all_downloaded_pdl_paths:
-            try:
-                self.log(f"🔗 Unione di TUTTI i {len(all_downloaded_pdl_paths)} PDL della sessione...")
-                timestamp_str = time.strftime("%d-%m-%Y_%H-%M")
-                nome_merge_totale = f"PDL_SESSIONE_{timestamp_str}.pdf"
-                path_merge_totale = os.path.join(self.download_path, nome_merge_totale)
-
-                from src.utils.document_processor import DocumentProcessor
-                if DocumentProcessor.merge_pdfs(
-                    all_downloaded_pdl_paths, path_merge_totale
-                ):
-                    self.log(f"✅ PDF Unico Sessione creato: {nome_merge_totale}")
-                    self.downloaded_files.append(path_merge_totale)
-                else:
-                    self.log("❌ Errore creazione PDF Unico sessione.")
-            except Exception as e:
-                self.log_error("Unione totale sessione", e)
+        # Merge finale di sessione
+        self._handle_session_merge(data, all_downloaded_pdl_paths)
 
         self.log(f"✨ FINE ESECUZIONE: {success_count}/{total} PDL completati.")
         return success_count == total
+
+    def _process_single_pdl_row(self, index, total, item, all_paths) -> bool:
+        """Gestisce l'intera pipeline per un singolo PDL."""
+        pdl_raw = item.get("pdl_number") or item.get("numero_pdl")
+        if not pdl_raw:
+            self.log(f"⚠️ PDL non valido o mancante nella riga {index + 1}. Salto.")
+            return False
+
+        self.log(f"--- Elaborazione Riga {index + 1}/{total} ---")
+        pdl_num = self._sanitizza_pdl_number(pdl_raw)
+
+        # 1. Ricerca
+        if not self._esegui_ricerca_pdl(pdl_num):
+            return True  # Contato come gestito (mancante)
+
+        # 2. Scarico Parte Prima
+        path_p1 = self._scarica_parte_prima(pdl_num)
+        if not path_p1:
+            return False
+
+        # 3. Scarico Parte Seconda
+        path_p2 = self._scarica_parte_seconda(pdl_num)
+        if not path_p2:
+            self._safe_remove(path_p1)
+            return False
+
+        # 4. Unione, Stampa e Tracking
+        success = self._unisci_e_stampa_pdl(pdl_num, path_p1, path_p2, item, all_paths)
+
+        # Pulizia temporanei
+        self._safe_remove(path_p1)
+        self._safe_remove(path_p2)
+        return success
+
+    def _sanitizza_pdl_number(self, pdl_raw: Any) -> str:
+        """Formatta il numero PDL aggiungendo i suffissi /S o /C se necessario."""
+        pdl_num = str(pdl_raw).strip().upper().replace(" ", "")
+        if pdl_num.isdigit() and len(pdl_num) == 6:
+            num = int(pdl_num)
+            suffix = "/S" if num < 400000 else "/C"
+            pdl_num = f"{pdl_num}{suffix}"
+            self.log(f"ℹ️ PDL auto-completato: {pdl_raw} -> {pdl_num}")
+        else:
+            self.log(f"ℹ️ PDL già formattato o non standard: {pdl_num}")
+        return pdl_num
+
+    def _esegui_ricerca_pdl(self, pdl_num: str) -> bool:
+        """Esegue la ricerca del PDL e gestisce i vari popup di errore/estensione."""
+        self.log(f"🔄 Ricerca PdL {pdl_num} in interfaccia...")
+        try:
+            campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
+            campo.clear()
+            campo.send_keys(pdl_num)
+            time.sleep(0.5)
+            campo.send_keys(Keys.ENTER)
+        except Exception as e:
+            self.log_error(f"Interazione campo ricerca PDL {pdl_num}", e)
+            return False
+
+        if self._gestisci_ricerca_estesa():
+            self.log(f"ℹ️ PdL {pdl_num} inesistente. Salto.")
+            self.missing_pdls.append(pdl_num)
+            return False
+
+        if self._gestisci_alert_ricerca():
+            self.log(f"⚠️ Rilevato alert per {pdl_num}. Attesa resiliente...")
+            time.sleep(2)
+            try:
+                self._attendi_scomparsa_overlay(timeout_secondi=5)
+            except Exception:
+                pass
+        else:
+            self._attendi_scomparsa_overlay()
+
+        return True
+
+    def _scarica_parte_prima(self, pdl_num: str) -> Optional[str]:
+        """Gestisce il download e la pulizia (rimozione pag 2) della Parte Prima."""
+        self.log(f"⬇️ Avvio scarico Parte Prima per PdL {pdl_num}...")
+        self.driver.execute_script("window.scrollTo(0, 0);")
+        time.sleep(1)
+        ts = time.time()
+
+        try:
+            self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
+            time.sleep(0.5)
+            self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
+        except Exception as e:
+            self.log_error(f"Click stampa Parte 1 PDL {pdl_num}", e)
+            return None
+
+        pdf_path = self._attendi_e_ritorna_nuovo_pdf(ts)
+        if not pdf_path:
+            return None
+
+        # Rinomina e Pulizia Pagine
+        temp_path = os.path.join(self.download_path, f"temp_p1_{int(ts)}.pdf")
+        try:
+            os.rename(pdf_path, temp_path)
+            self._clean_p1_pdf(temp_path)
+            return temp_path
+        except Exception as e:
+            self.log(f"⚠️ Errore post-download Parte 1: {e}")
+            return pdf_path
+
+    def _clean_p1_pdf(self, path: str):
+        """Rimuove la seconda pagina dal PDF se presente."""
+        try:
+            doc = fitz.open(path)
+            if doc.page_count >= 2:
+                doc.delete_page(1)
+                tmp = path + "_clean.pdf"
+                doc.save(tmp)
+                doc.close()
+                self._safe_remove(path)
+                os.rename(tmp, path)
+            else:
+                doc.close()
+        except Exception as e:
+            self.log(f"⚠️ Errore pulizia PDF: {e}")
+
+    def _scarica_parte_seconda(self, pdl_num: str) -> Optional[str]:
+        """Gestisce l'espansione della sezione e il download della Parte Seconda."""
+        if not self._espandi_parte_seconda():
+            return None
+
+        self.log(f"⬇️ Avvio scarico Parte Seconda per PdL {pdl_num}...")
+        self._attendi_scomparsa_overlay()
+        self.driver.execute_script("window.scrollTo(0, 0);")
+        ts = time.time()
+
+        try:
+            self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
+            time.sleep(1)
+            # Gestione eventuale dialogo "Stampa Tutte"
+            self._gestisci_dialogo_stampa_tutte()
+        except Exception as e:
+            self.log_error(f"Click stampa Parte 2 PDL {pdl_num}", e)
+            return None
+
+        pdf_path = self._attendi_e_ritorna_nuovo_pdf(ts, timeout=90)
+        if not pdf_path:
+            return None
+
+        temp_path = os.path.join(self.download_path, f"temp_p2_{int(ts)}.pdf")
+        try:
+            os.rename(pdf_path, temp_path)
+            return temp_path
+        except Exception:
+            return pdf_path
+
+    def _espandi_parte_seconda(self) -> bool:
+        """Tenta di rendere visibile la sezione Parte Seconda."""
+        try:
+            if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
+                try:
+                    self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
+                except Exception:
+                    self.driver.find_element(By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]").click()
+                time.sleep(1)
+            self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
+            return True
+        except Exception as e:
+            self.log(f"⚠️ Errore apertura Parte Seconda: {e}")
+            return False
+
+    def _gestisci_dialogo_stampa_tutte(self):
+        """Seleziona 'Stampa Tutte' nel popup se appare."""
+        try:
+            btn_tutte = self.driver.find_element(By.ID, "rbStampaTutte")
+            if btn_tutte.is_displayed():
+                btn_tutte.click()
+                time.sleep(0.5)
+                self.driver.find_element(By.ID, "btnAnteprima").click()
+        except Exception:
+            pass
+
+    def _unisci_e_stampa_pdl(self, pdl_num, p1, p2, item, all_paths) -> bool:
+        """Esegue il merge dei PDF e l'eventuale stampa fisica."""
+        nome_finale = f"PDL_{pdl_num.replace('/', '-')}.pdf"
+        percorso_finale = os.path.join(self.download_path, nome_finale)
+        self._safe_remove(percorso_finale)
+
+        from src.utils.document_processor import DocumentProcessor
+        if DocumentProcessor.merge_pdfs([p1, p2], percorso_finale):
+            self.log(f"✅ PdL {pdl_num} unito con successo.")
+            self.downloaded_files.append(percorso_finale)
+            all_paths.append(percorso_finale)
+
+            # Stampa
+            if item.get("print_enabled") and item.get("printer_name"):
+                try:
+                    print_pdf(percorso_finale, item["printer_name"])
+                    self.log("✅ Comando stampa inviato.")
+                except Exception as e:
+                    self.log(f"⚠️ Errore stampa: {e}")
+            return True
+
+        self.log(f"❌ Fallimento unione PDF per PdL {pdl_num}.")
+        return False
+
+    def _handle_session_merge(self, data, all_paths):
+        """Crea un unico PDF con tutti i PDL se richiesto."""
+        if any(i.get("merge_all_session") for i in data) and all_paths:
+            try:
+                self.log(f"🔗 Unione sessione ({len(all_paths)} PDL)...")
+                ts = time.strftime("%d-%m-%Y_%H-%M")
+                path_merge = os.path.join(self.download_path, f"PDL_SESSIONE_{ts}.pdf")
+
+                from src.utils.document_processor import DocumentProcessor
+                if DocumentProcessor.merge_pdfs(all_paths, path_merge):
+                    self.log(f"✅ PDF Unico Sessione creato: {os.path.basename(path_merge)}")
+                    self.downloaded_files.append(path_merge)
+            except Exception as e:
+                self.log_error("Unione totale sessione", e)
 
     def _gestisci_ricerca_estesa(self) -> bool:
         """

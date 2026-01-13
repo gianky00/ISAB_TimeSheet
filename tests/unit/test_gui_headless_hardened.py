@@ -2,7 +2,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel
+from PyQt6.QtWidgets import QApplication, QLabel, QWidget
 
 from src.gui.dashboard_panel import DashboardPanel
 from src.gui.settings_panel import SettingsPanel

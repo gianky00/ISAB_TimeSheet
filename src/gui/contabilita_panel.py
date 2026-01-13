@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QTableWidget,
     QTabWidget,
     QTreeWidget,
     QVBoxLayout,
@@ -262,12 +263,10 @@ class ContabilitaPanel(QWidget):
                 )
 
     def _update_selection_total(self, widget):
+        """Calcola e visualizza i totali per le righe selezionate (Table o Tree)."""
         try:
             if isinstance(widget, QTreeWidget):
-                self.selection_count_label.setText(
-                    f"Selezionati: {len(widget.selectedItems())}"
-                )
-                self.selection_sum_label.setText("")
+                self._handle_tree_selection(widget)
                 return
 
             indexes = widget.selectionModel().selectedIndexes()
@@ -276,47 +275,50 @@ class ContabilitaPanel(QWidget):
                 self.selection_sum_label.setText("Totale ORE SP: 0")
                 return
 
-            target_col = -1
-            for c in range(widget.columnCount()):
-                h = widget.horizontalHeaderItem(c)
-                if h and ("ORE SP" in h.text().upper() or h.text().upper() == "ORE"):
-                    target_col = c
-                    break
+            target_col = self._find_ore_column(widget)
+            selected_rows, total_ore = self._calculate_selection_stats(widget, indexes, target_col)
 
-            selected_rows, total_ore = set(), 0.0
-            for idx in indexes:
-                row = idx.row()
-                if widget.isRowHidden(row) or (
-                    widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
-                ):
-                    continue
-                selected_rows.add(row)
-
-            for row in selected_rows:
-                if target_col != -1 and widget.item(row, target_col):
-                    try:
-                        clean = (
-                            str(widget.item(row, target_col).text())
-                            .replace(".", "")
-                            .replace(",", ".")
-                            .strip()
-                        )
-                        if clean:
-                            total_ore += float(clean)
-                    except Exception:
-                        pass
-
-            fmt_ore = (
-                f"{int(total_ore)}"
-                if total_ore % 1 == 0
-                else f"{total_ore:,.2f}".replace(",", "X")
-                .replace(".", ",")
-                .replace("X", ".")
-            )
+            fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
             self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
         except Exception:
             pass
+
+    def _handle_tree_selection(self, tree: QTreeWidget):
+        self.selection_count_label.setText(f"Selezionati: {len(tree.selectedItems())}")
+        self.selection_sum_label.setText("")
+
+    def _find_ore_column(self, table: QTableWidget) -> int:
+        for c in range(table.columnCount()):
+            h = table.horizontalHeaderItem(c)
+            if h and ("ORE SP" in h.text().upper() or h.text().upper() == "ORE"):
+                return c
+        return -1
+
+    def _calculate_selection_stats(self, widget, indexes, target_col) -> tuple[set[int], float]:
+        selected_rows, total_ore = set(), 0.0
+        for idx in indexes:
+            row = idx.row()
+            if widget.isRowHidden(row) or (widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"):
+                continue
+            selected_rows.add(row)
+
+        if target_col != -1:
+            for row in selected_rows:
+                it = widget.item(row, target_col)
+                if it:
+                    try:
+                        clean = str(it.text()).replace(".", "").replace(",", ".").strip()
+                        if clean:
+                            total_ore += float(clean)
+                    except Exception:
+                        pass
+        return selected_rows, total_ore
+
+    def _format_ore_display(self, total: float) -> str:
+        if total % 1 == 0:
+            return str(int(total))
+        return f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     def start_import_process(self):
         config = config_manager.load_config()

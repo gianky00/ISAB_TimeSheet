@@ -1,6 +1,6 @@
 
-import pytest
 from src.utils.parsing import parse_currency
+
 
 class TestParsingSuite:
     def test_parse_currency_it_standard(self):
@@ -16,7 +16,7 @@ class TestParsingSuite:
 
     def test_parse_currency_ambiguous_dot(self):
         """Verifica gestione del punto ambiguo."""
-        # Un punto solo con 3 cifre dopo: 1.000 -> 1.0 (float standard) 
+        # Un punto solo con 3 cifre dopo: 1.000 -> 1.0 (float standard)
         # o 1000? La logica attuale lascia il punto se ambiguo.
         assert parse_currency("1.000") == 1.0
         # Più di un punto -> migliaia sicure

@@ -236,7 +236,7 @@ class TestRunner:
 
             self.files_map = self.discover_tests(targets)
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
-            self.queue_files = sorted(list(self.files_map.keys()))
+            self.queue_files = sorted(self.files_map.keys())
             Console.info(f"Nuova sessione: {self.total_tests} test in {len(self.files_map)} file.")
             if STATE_FILE.exists():
                 os.remove(STATE_FILE)
@@ -264,8 +264,7 @@ class TestRunner:
         self.start_time = time.time()
 
         # 2. Execution Loop
-        processed_files = 0
-        total_files_count = len(self.queue_files) # Aprossimativo se ripreso
+        len(self.queue_files) # Aprossimativo se ripreso
 
         while self.queue_files:
             current_file = self.queue_files[0]
@@ -301,52 +300,63 @@ class TestRunner:
         self.finish()
 
     def run_isolated_tests(self, node_ids, retry_count=0):
+        """Esegue i test uno alla volta per isolare i fallimenti."""
         for nid in node_ids:
-            if self.interrupted: break
+            if self.interrupted:
+                break
 
             print(f"    👉 {nid.split('::')[-1]} ... ", end="", flush=True)
-
-            success = False
-            # Tentativi (Retry Logic)
-            for attempt in range(retry_count + 1):
-                res, dur, is_timeout = self.run_process(nid, isolate=True, timeout=30)
-
-                if not is_timeout and res.returncode == 0:
-                    success = True
-                    break
-                else:
-                     if attempt < retry_count:
-                         print(f"{Console.WARNING}RETRY{Console.ENDC} ... ", end="", flush=True)
+            success, res = self._execute_test_with_retries(nid, retry_count)
 
             if success:
                 Console.print("PASS", Console.GREEN)
                 self.passed_tests += 1
             else:
-                Console.print("FAIL", Console.FAIL)
+                self._handle_isolated_failure(nid, res)
 
-                error_msg = "Timeout"
-                full_log = "Execution Timed Out"
+    def _execute_test_with_retries(self, nid, retry_count):
+        """Tenta l'esecuzione di un test singolo con logica di retry."""
+        success = False
+        res = None
+        for attempt in range(retry_count + 1):
+            res, dur, is_timeout = self.run_process(nid, isolate=True, timeout=30)
+            if not is_timeout and res.returncode == 0:
+                success = True
+                break
+            elif attempt < retry_count:
+                print(f"{Console.WARNING}RETRY{Console.ENDC} ... ", end="", flush=True)
+        return success, res
 
-                if res:
-                    lines = res.stdout.splitlines()
-                    full_log = res.stdout + res.stderr
-                    # Euristiche parsing errore
-                    for line in lines[-15:]:
-                        if any(x in line for x in ["E ", "Error:", "FAILED"]):
-                            error_msg = line.strip()
-                            break
+    def _handle_isolated_failure(self, nid, res):
+        """Gestisce il fallimento finale di un test isolato."""
+        Console.print("FAIL", Console.FAIL)
+        error_msg = "Timeout"
+        full_log = "Execution Timed Out"
 
-                self.failed_tests.append({
-                    "id": nid,
-                    "error": error_msg,
-                    "full_output": full_log
-                })
+        if res:
+            lines = res.stdout.splitlines()
+            full_log = res.stdout + res.stderr
+            error_msg = self._extract_error_message(lines)
 
-                if getattr(self, "exitfirst", False):
-                    Console.error("\n⛔ EXITFIRST: Test fallito. Interruzione immediata.")
-                    self.save_state()
-                    self.generate_report()
-                    sys.exit(1)
+        self.failed_tests.append({
+            "id": nid,
+            "error": error_msg,
+            "log": full_log,
+            "full_output": full_log
+        })
+
+        if getattr(self, "exitfirst", False):
+            Console.error("\n⛔ EXITFIRST: Test fallito. Interruzione immediata.")
+            self.save_state()
+            self.generate_report()
+            sys.exit(1)
+
+    def _extract_error_message(self, lines):
+        """Estrae un messaggio di errore significativo dalle ultime righe del log."""
+        for line in lines[-15:]:
+            if any(x in line for x in ["E ", "Error:", "FAILED"]):
+                return line.strip()
+        return "Unknown Error"
 
     def finish(self):
         total_time = time.time() - self.start_time
