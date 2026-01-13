@@ -42,13 +42,17 @@ class BotController(QObject):
                     )
 
     def _on_panel_status_changed(self, status, message):
-        """Aggiorna la card di stato globale se il pannello che ha emesso è quello attivo."""
+        """Aggiorna la card di stato appropriata (SafeWork o Portale) in base al bot."""
         sender = self.sender()
-        active_panel = self._get_active_bot_panel()
+        bot_id = getattr(sender, "bot_id", "")
 
-        if sender == active_panel:
-            if hasattr(self.mw, "global_status_card") and self.mw.global_status_card:
-                self.mw.global_status_card.setStatus(status, message)
+        # Update the correct status card based on bot_id
+        if bot_id in ["scarico_pdl"]:  # SafeWork bots
+            if hasattr(self.mw, "status_safework"):
+                self.mw.status_safework.setStatus(status, message)
+        else:  # Default to Portale Fornitori bots
+            if hasattr(self.mw, "status_portale"):
+                self.mw.status_portale.setStatus(status, message)
 
     def _get_active_bot_panel(self):
         """Determina quale pannello bot è attualmente visibile nella UI."""
@@ -62,10 +66,5 @@ class BotController(QObject):
             return self.mw.tab_safework.currentWidget()
         return None
 
-    def update_global_status(self):
-        """Aggiorna forzatamente lo stato globale basandosi sul pannello attivo."""
-        panel = self._get_active_bot_panel()
-        if panel and hasattr(panel, "get_current_status"):
-            status, message = panel.get_current_status()
-            if hasattr(self.mw, "global_status_card") and self.mw.global_status_card:
-                self.mw.global_status_card.setStatus(status, message)
+    # Removed update_global_status as it's no longer relevant with separate cards
+

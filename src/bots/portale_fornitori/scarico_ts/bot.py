@@ -99,6 +99,8 @@ class ScaricaTSBot(BaseBot):
             self.data_da = data.get("data_da", self.data_da)
             if data.get("fornitore"):
                 self.fornitore = data.get("fornitore")
+            # Importante: aggiorna il flag elabora_ts dai dati
+            self.elabora_ts = data.get("elabora_ts", self.elabora_ts)
         else:
             rows = data
 
@@ -176,7 +178,7 @@ class ScaricaTSBot(BaseBot):
                     )
                     if final_path:
                         success_count += 1
-                        downloaded_files_list.append(final_path)
+                        downloaded_files_list.append(str(final_path))
 
                 except Exception as e:
                     self.log(f"❌ Errore OdA {numero_oda}: {e}")
@@ -184,13 +186,13 @@ class ScaricaTSBot(BaseBot):
 
             self.log(f"✨ Download completati: {success_count}/{len(rows)}.")
 
+            # Logica "Elabora TS": Gestione interattiva conflitti (VBA Style)
             if self.elabora_ts and downloaded_files_list:
-                self.log(
-                    f"⚙️ Inizio elaborazione batch di {len(downloaded_files_list)} file..."
-                )
-                for p in downloaded_files_list:
-                    proc_success, proc_msg = TimesheetProcessor.process_file(p)
-                    self.log(f"  {'✓' if proc_success else '✗'} {p.name}: {proc_msg}")
+                self.log(f"⚙️ Avvio elaborazione interattiva (Elabora TS)...")
+                self._process_downloaded_files_vba_style(downloaded_files_list, dest_dir)
+            
+            # Nota: TimesheetProcessor.process_file rimosso/disabilitato se elabora_ts è inteso come "VBA move logic"
+            # Se serviva anche l'analisi POS, va aggiunta dentro _process_downloaded_files_vba_style
 
             return success_count == len(rows)
 
@@ -335,43 +337,33 @@ class ScaricaTSBot(BaseBot):
                     nuovo_nome_base = f"TS_{safe_oda}"
 
                 nuovo_nome_file = f"{nuovo_nome_base}.xlsx"
+                
+                # SE ELABORA TS E' ATTIVO:
+                # Non spostiamo il file nella destinazione finale ora.
+                # Lo rinominiamo solo localmente (in Download) per prepararlo alla fase successiva.
+                if self.elabora_ts:
+                    percorso_temp_rinominato = source_dir / nuovo_nome_file
+                    
+                    # Gestione conflitto locale in temp (raro ma possibile)
+                    if percorso_temp_rinominato.exists():
+                        try:
+                            percorso_temp_rinominato.unlink()
+                        except Exception:
+                            timestamp = time.strftime("%Y%m%d-%H%M%S")
+                            percorso_temp_rinominato = source_dir / f"{nuovo_nome_base}_{timestamp}.xlsx"
+
+                    try:
+                        import shutil
+                        shutil.move(str(downloaded_file), str(percorso_temp_rinominato))
+                        self.log(f"✅ Scaricato (Temp): {percorso_temp_rinominato.name}")
+                        return percorso_temp_rinominato
+                    except Exception as e:
+                        self.log(f"❌ Errore rinomina temp: {e}")
+                        return None
+
+                # COMPORTAMENTO STANDARD (Elabora TS = False)
+                # Spostamento diretto con gestione automatica conflitti (timestamp)
                 percorso_finale = dest_dir / nuovo_nome_file
-
-                # Se "Elabora TS" è attivo, NON gestiamo qui i conflitti con timestamp o cancellazione,
-                # ma spostiamo comunque qui per avere un nome base coerente (o temp).
-                # Tuttavia, se Elabora TS è attivo, la logica VBA implica che dobbiamo gestire i conflitti POI.
-                # Per ora, manteniamo la logica di rename standard qui.
-                # Se esiste già, _download_excel standard lo sovrascrive o rinomina con timestamp.
-                # Per supportare la logica VBA che CHIEDE all'utente, se Elabora TS è True,
-                # dovremmo forse evitare di sovrascrivere qui se vogliamo chiedere?
-                # Ma qui stiamo creando il file per la prima volta in questa sessione.
-
-                # Se Elabora TS è True, lasciamo gestire il conflitto alla funzione _process_downloaded_files_vba_style?
-                # No, perché quella funzione itera sui file già scaricati.
-                # Se il file esiste già da una sessione PRECEDENTE, qui lo sovrascriviamo o rinominiamo.
-
-                # Modifica per Elabora TS:
-                # Se il file esiste già, e siamo in modalità Elabora TS, NON lo sovrascriviamo brutalmente qui?
-                # Oppure lo spostiamo con un nome temporaneo e poi lo rinominiamo?
-
-                # Approccio: Spostiamo sempre qui nel path finale con nome standard.
-                # Se esiste già, aggiungiamo timestamp automatico per evitare perdita dati.
-                # POI, in _process_downloaded_files_vba_style, controlliamo se ci sono conflitti "logici"?
-                # No, la richiesta dice: "Esegui un codice... alla fine... Controlla se le cartelle esistono... Cicla file origine... Se destinazione esiste chiedi".
-
-                # REVISIONE LOGICA RICHIESTA:
-                # Il codice VBA sposta da Origine (C2) a Destinazione (C3).
-                # Qui Origine = Downloads, Destinazione = dest_dir.
-                # Se facciamo lo spostamento qui in _download_excel, non c'è più nulla da spostare "alla fine".
-
-                # SOLUZIONE:
-                # Indipendentemente dal flag, spostiamo il file nella destinazione.
-                # Se elabora_ts è True: Spostiamo in una cartella temporanea per poi elaborare.
-                # Se elabora_ts è False: Spostiamo direttamente nella destinazione (con rinomina standard silenziosa).
-
-                # Indipendentemente dal flag Elabora TS, spostiamo il file nella destinazione.
-                # Se Elabora TS è attivo, la rinomina (sanitize) è già avvenuta sopra.
-                # La gestione conflitti è standard (timestamp se bloccato, sovrascrittura se possibile).
 
                 if percorso_finale.exists():
                     try:

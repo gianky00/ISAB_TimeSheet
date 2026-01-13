@@ -1191,21 +1191,25 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.bot_started.emit()
 
     def _on_worker_finished(self, success: bool):
-        """Gestione custom per invio file unito."""
+        """Gestione custom per invio file unito e segnalazione PdL inesistenti."""
         # Controlla se l'opzione di invio era attiva per questa esecuzione
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
 
-        # Catturiamo i file PRIMA di chiamare super() perché super() resetta self.worker
+        # Catturiamo i file e i PdL mancanti PRIMA di chiamare super()
         files_to_send = []
-        if (
-            success
-            and merge_and_send
-            and self.worker
-            and hasattr(self.worker.bot, "downloaded_files")
-        ):
+        missing_list = []
+        if self.worker and hasattr(self.worker.bot, "downloaded_files"):
             files_to_send = self.worker.bot.downloaded_files
+        
+        if self.worker and hasattr(self.worker.bot, "missing_pdls"):
+            missing_list = self.worker.bot.missing_pdls
 
         super()._on_worker_finished(success)
+
+        # Se ci sono PdL mancanti, aggiorniamo il messaggio della card (Normal condition)
+        if missing_list:
+            missing_str = ", ".join(missing_list)
+            self._update_status(StatusCard.Status.SUCCESS, f"Completato (Inesistenti: {missing_str})")
 
         if success and merge_and_send and files_to_send:
             win = self.window()

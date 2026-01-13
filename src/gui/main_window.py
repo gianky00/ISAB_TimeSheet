@@ -247,10 +247,14 @@ class MainWindow(QMainWindow):
         self.progress_bar.setMaximumWidth(200)
         self.status_bar.addPermanentWidget(self.progress_bar)
 
-        # Status Card Globale
-        self.global_status_card = StatusCard("Stato Globale")
-        self.global_status_card.setMinimumWidth(200)
-        self.status_bar.addPermanentWidget(self.global_status_card)
+        # Status Cards Separate
+        self.status_portale = StatusCard("Portale Fornitori")
+        self.status_portale.setMinimumWidth(180)
+        self.status_bar.addPermanentWidget(self.status_portale)
+
+        self.status_safework = StatusCard("SafeWork")
+        self.status_safework.setMinimumWidth(180)
+        self.status_bar.addPermanentWidget(self.status_safework)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)

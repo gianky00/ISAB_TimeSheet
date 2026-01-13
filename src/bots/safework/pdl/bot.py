@@ -188,6 +188,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         total = len(data)
         self.downloaded_files = []
         all_downloaded_pdl_paths = []  # Tutti i PDL scaricati per l'unione finale
+        self.missing_pdls = [] # Traccia PdL inesistenti
         self.merged_pdf_path = None
 
         self.log(f"🚀 Inizio elaborazione di {total} righe di dati.")
@@ -233,7 +234,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
                 # Controllo specifico per popup "Ricerca Estesa"
                 if self._gestisci_ricerca_estesa():
-                    self.log(f"⚠️ PdL {pdl_num} inesistente (0 risultati dopo estensione). Salto.")
+                    self.log(f"ℹ️ PdL {pdl_num} inesistente. Salto.")
+                    self.missing_pdls.append(pdl_num)
+                    success_count += 1 # È normale, quindi lo contiamo come gestito
                     continue
 
                 if self._gestisci_alert_ricerca():
