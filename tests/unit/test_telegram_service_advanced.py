@@ -1,8 +1,7 @@
-
 import pytest
 import threading
 import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from src.core.telegram_manager import TelegramService
 from PyQt6.QtCore import QCoreApplication
 
@@ -28,6 +27,7 @@ class TestTelegramServiceAdvanced:
         service.thread = MagicMock()
         service.thread.is_alive.return_value = True
         
+        service.stop_event = threading.Event()
         service.stop_service()
         assert service.stop_event.is_set()
 
@@ -47,11 +47,10 @@ class TestTelegramServiceAdvanced:
         service.connected_chat_id = "12345"
         mock_update = MagicMock()
         mock_update.effective_user.id = 99999
-        mock_update.message.reply_text = MagicMock()
+        mock_update.message.reply_text = AsyncMock()
         
         res = await service._check_auth(mock_update)
         assert res is False
-        # Verifica che abbia risposto col diniego
         assert mock_update.message.reply_text.called
 
     @pytest.mark.asyncio
@@ -62,7 +61,7 @@ class TestTelegramServiceAdvanced:
         
         mock_update = MagicMock()
         mock_update.effective_chat.id = 55555
-        mock_update.message.reply_text = MagicMock()
+        mock_update.message.reply_text = AsyncMock()
         
         await service._cmd_start(mock_update, MagicMock())
         
@@ -80,7 +79,7 @@ class TestTelegramServiceAdvanced:
         mock_update.effective_chat.id = chat_id
         mock_update.effective_user.id = chat_id
         mock_update.message.text = "PDL1, PDL2"
-        mock_update.message.reply_text = MagicMock()
+        mock_update.message.reply_text = AsyncMock()
         
         # Mock del segnale
         mock_signal = MagicMock()
@@ -88,9 +87,8 @@ class TestTelegramServiceAdvanced:
         
         await service._handle_text_input(mock_update, MagicMock())
         
-        # Verifica che il segnale sia stato emesso con i dati splittati
         mock_signal.assert_called_with("pdl", ["PDL1", "PDL2"])
-        assert service.user_states[chat_id] is None # Stato resettato
+        assert service.user_states[chat_id] is None
 
     @pytest.mark.asyncio
     async def test_cmd_status_emits_signal(self, service):
