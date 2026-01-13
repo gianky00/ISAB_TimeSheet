@@ -7,7 +7,9 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import subprocess
+import sys
 import uuid
 from datetime import date
 from enum import Enum
@@ -166,6 +168,42 @@ def _get_license_paths():
     }
 
 
+def _check_and_migrate_local_license(target_paths: dict):
+    """
+    Check if license files exist in the application directory (e.g. where .exe is).
+    If found, copy them to the standard AppData location.
+    This fixes issues where users place license files next to the executable.
+    """
+    # Determine app root
+    if getattr(sys, "frozen", False):
+        app_dir = os.path.dirname(sys.executable)
+    else:
+        # In dev mode, look in project root (2 levels up from src/core)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        app_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
+
+    # Potential locations in app dir: ./Licenza/ or ./
+    potential_dirs = [
+        os.path.join(app_dir, "Licenza"),
+        app_dir,
+    ]
+
+    for source_dir in potential_dirs:
+        config_src = os.path.join(source_dir, "config.dat")
+        manifest_src = os.path.join(source_dir, "manifest.json")
+
+        if os.path.exists(config_src) and os.path.exists(manifest_src):
+            try:
+                os.makedirs(target_paths["dir"], exist_ok=True)
+                shutil.copy2(config_src, target_paths["config"])
+                shutil.copy2(manifest_src, target_paths["manifest"])
+                return True
+            except Exception:
+                pass  # Fail silently, we'll return Missing anyway
+
+    return False
+
+
 def get_license_info():
     """
     Ottiene le informazioni della licenza decifrate.
@@ -175,6 +213,9 @@ def get_license_info():
     """
     paths = _get_license_paths()
     config_path = paths["config"]
+
+    if not os.path.exists(config_path):
+        _check_and_migrate_local_license(paths)
 
     if not os.path.exists(config_path):
         return None
@@ -226,6 +267,10 @@ def get_detailed_license_status():
             os.makedirs(paths["dir"])
         except OSError:
             return LicenseStatus.ERROR, "Impossibile creare cartella 'Licenza'"
+
+    # 0. Check Migration (Fix for manual installation)
+    if not (os.path.exists(paths["config"]) and os.path.exists(paths["manifest"])):
+        _check_and_migrate_local_license(paths)
 
     # Controllo file
     if not os.path.exists(paths["config"]) or not os.path.exists(paths["manifest"]):

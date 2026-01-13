@@ -47,10 +47,14 @@ class BotController(QObject):
         active_panel = self._get_active_bot_panel()
 
         if sender == active_panel:
-            self.mw.global_status_card.setStatus(status, message)
+            if hasattr(self.mw, "global_status_card") and self.mw.global_status_card:
+                self.mw.global_status_card.setStatus(status, message)
 
     def _get_active_bot_panel(self):
         """Determina quale pannello bot è attualmente visibile nella UI."""
+        if not hasattr(self.mw, "automazioni_widget") or not self.mw.automazioni_widget:
+            return None
+
         main_idx = self.mw.automazioni_widget.currentIndex()
         if main_idx == 0:  # Portale Fornitori
             return self.mw.tab_fornitori.currentWidget()
@@ -63,4 +67,5 @@ class BotController(QObject):
         panel = self._get_active_bot_panel()
         if panel and hasattr(panel, "get_current_status"):
             status, message = panel.get_current_status()
-            self.mw.global_status_card.setStatus(status, message)
+            if hasattr(self.mw, "global_status_card") and self.mw.global_status_card:
+                self.mw.global_status_card.setStatus(status, message)

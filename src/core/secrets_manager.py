@@ -5,6 +5,7 @@ Utilizza variabili d'ambiente con fallback su file protetti.
 
 import base64
 import os
+import sys
 from pathlib import Path
 
 import keyring  # Per integrazione con credential manager OS
@@ -24,6 +25,7 @@ class SecretsManager:
         1. Variabile d'ambiente SYNCROJOB_LICENSE_KEY
         2. File .env nella root del progetto
         3. Keyring di sistema
+        4. Fallback hardcoded (offuscato)
         """
         # 1. Environment variable
         env_key = os.environ.get("SYNCROJOB_LICENSE_KEY")
@@ -34,18 +36,26 @@ class SecretsManager:
                 pass
 
         # 2. File .env (solo per sviluppo)
-        env_file = Path(__file__).parent.parent.parent / ".env"
-        if env_file.exists():
-            with open(env_file) as f:
-                for line in f:
-                    if line.startswith("SYNCROJOB_LICENSE_KEY="):
-                        key = line.split("=", 1)[1].strip()
-                        # Handle potential quotes
-                        key = key.strip('"').strip("'")
-                        try:
-                            return base64.urlsafe_b64decode(key)
-                        except Exception:
-                            pass
+        try:
+            # Calcola il path relativo alla root del progetto
+            if getattr(sys, "frozen", False):
+                # Se siamo in PyInstaller, il .env non è nel bundle ma potrebbe essere nella cartella dell'eseguibile
+                env_file = Path(sys.executable).parent / ".env"
+            else:
+                env_file = Path(__file__).parent.parent.parent / ".env"
+
+            if env_file.exists():
+                with open(env_file) as f:
+                    for line in f:
+                        if line.startswith("SYNCROJOB_LICENSE_KEY="):
+                            key = line.split("=", 1)[1].strip()
+                            key = key.strip("\"").strip("'")
+                            try:
+                                return base64.urlsafe_b64decode(key)
+                            except Exception:
+                                pass
+        except Exception:
+            pass
 
         # 3. Keyring di sistema
         try:
@@ -53,7 +63,16 @@ class SecretsManager:
             if stored:
                 return base64.urlsafe_b64decode(stored)
         except Exception:
-            pass  # Keyring might fail in headless/some envs
+            pass
+
+        # 4. Fallback hardcoded (offuscato) - Chiave standard di decriptazione licenza
+        try:
+            # 8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek=
+            chars = [56, 107, 72, 115, 95, 114, 109, 119, 113, 97, 82, 85, 107, 49, 65, 81, 76, 71, 88, 54, 53, 103, 52, 65, 69, 107, 87, 85, 68, 97, 112, 87, 86, 115, 77, 70, 85, 81, 112, 78, 57, 69, 107, 61]
+            key_str = "".join(chr(c) for c in chars)
+            return base64.urlsafe_b64decode(key_str)
+        except Exception:
+            pass
 
         return None
 
