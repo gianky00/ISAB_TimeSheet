@@ -17,6 +17,8 @@ class MockBot(BaseBot):
         return "Bot di test"
     def run(self, data):
         return True
+    def _handle_unsaved_changes_popup(self):
+        pass
 
 class TestBotResilienceAdvanced:
 

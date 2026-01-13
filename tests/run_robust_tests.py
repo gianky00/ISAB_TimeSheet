@@ -112,11 +112,16 @@ class TestRunner:
             sys.exit(1)
 
         files_map = defaultdict(list)
+        
         for line in result.stdout.splitlines():
             line = line.strip()
-            if "::" in line and "error" not in line.lower():
-                file_path = line.split("::")[0]
-                files_map[file_path].append(line)
+            # Un NodeID valido di pytest contiene '::' e non inizia con '=' o 'collected'
+            if "::" in line and not line.startswith("=") and not line.startswith("collected"):
+                # Alcune righe potrebbero avere avvisi extra, prendiamo solo la prima parte
+                node_id = line.split()[0] if " " in line else line
+                if "::" in node_id:
+                    file_path = node_id.split("::")[0]
+                    files_map[file_path].append(node_id)
 
         if not files_map:
             if result.stderr:

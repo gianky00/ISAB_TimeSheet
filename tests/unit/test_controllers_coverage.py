@@ -71,15 +71,26 @@ class TestControllersCoverage:
         mw.sidebar.set_active_button.assert_called_with(4)
 
     def test_bot_controller_panel_status_sync(self, mw, mocker):
-        """Verifica sincronizzazione stato globale."""
+        """Verifica sincronizzazione stato per SafeWork e Portale Fornitori."""
         ctrl = BotController(mw, MagicMock())
-        mock_panel = MagicMock()
+        
+        # 1. Test SafeWork
+        mock_panel_sw = MagicMock()
+        mock_panel_sw.bot_id = "scarico_pdl"
+        mocker.patch.object(ctrl, "sender", return_value=mock_panel_sw)
+        
+        mw.status_safework = MagicMock()
+        ctrl._on_panel_status_changed("RUNNING", "Test SW")
+        mw.status_safework.setStatus.assert_called_with("RUNNING", "Test SW")
 
-        mocker.patch.object(ctrl, "_get_active_bot_panel", return_value=mock_panel)
-        mocker.patch.object(ctrl, "sender", return_value=mock_panel)
-
-        ctrl._on_panel_status_changed("RUNNING", "Test")
-        mw.global_status_card.setStatus.assert_called_with("RUNNING", "Test")
+        # 2. Test Portale (Default)
+        mock_panel_portale = MagicMock()
+        mock_panel_portale.bot_id = "scarico_ts"
+        mocker.patch.object(ctrl, "sender", return_value=mock_panel_portale)
+        
+        mw.status_portale = MagicMock()
+        ctrl._on_panel_status_changed("IDLE", "Test Portale")
+        mw.status_portale.setStatus.assert_called_with("IDLE", "Test Portale")
 
     def test_search_controller_routing(self, mw, mocker):
         """Verifica che la ricerca OdA inoltri i risultati correttamente."""

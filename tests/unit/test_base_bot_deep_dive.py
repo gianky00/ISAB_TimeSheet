@@ -14,6 +14,7 @@ class ConcreteBot(BaseBot):
     @property
     def description(self): return "Bot di test"
     def run(self, data): return True
+    def _handle_unsaved_changes_popup(self): pass
 
 class TestBaseBotDeepDive:
     @pytest.fixture
@@ -72,10 +73,11 @@ class TestBaseBotDeepDive:
 
         error_dir = mock_config_dir / "logs" / "errors"
         assert error_dir.exists()
-        # Dovrebbero esserci .png e .html
+        # Verifichiamo la creazione fisica dell'HTML
         files = list(error_dir.glob("*"))
         assert any(f.suffix == ".html" for f in files)
-        assert any(f.suffix == ".png" for f in files)
+        # Per lo screenshot, verifichiamo la chiamata al driver (mockato)
+        bot.driver.save_screenshot.assert_called_once()
 
     def test_login_page_proxy_error_detection(self, mocker):
         """Verifica il rilevamento del Proxy Error nel portale."""

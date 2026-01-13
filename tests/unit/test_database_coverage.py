@@ -1,5 +1,5 @@
 import sqlite3
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -98,13 +98,23 @@ class TestDatabaseCoverage:
 
     def test_operational_error_retry(self):
         """Verifica che il retry system intercetti errori di lock (mocked)."""
-        with patch.object(sqlite3.Cursor, 'execute', side_effect=sqlite3.OperationalError("database is locked")) as mock_exec:
+        # Mocking sqlite3.connect inside the database module to return a mock connection
+        with patch("src.core.database.sqlite3.connect") as mock_connect:
+            mock_conn = MagicMock()
+            mock_cursor = MagicMock()
+            mock_connect.return_value = mock_conn
+            mock_conn.cursor.return_value = mock_cursor
+            mock_cursor.execute.side_effect = sqlite3.OperationalError("database is locked")
+            
+            # Using context manager for connection in execute_query
+            mock_conn.__enter__.return_value = mock_conn
+
             with pytest.raises(sqlite3.OperationalError) as excinfo:
                 self.db_manager.execute_query(self.db_contabilita, "SELECT * FROM contabilita", retry_count=2)
 
             assert "locked" in str(excinfo.value)
             # Deve aver riprovato retry_count volte (range(2) -> 0, 1)
-            assert mock_exec.call_count == 2
+            assert mock_cursor.execute.call_count == 2
 
     def test_migrations_logic(self):
         """Testa logica migrazioni manuale."""

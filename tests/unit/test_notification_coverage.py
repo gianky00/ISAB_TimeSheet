@@ -80,7 +80,7 @@ class TestNotificationCoverage:
 
     def test_mark_as_read(self):
         """Test segna come letto."""
-        self.manager.add_notification("A", "B")
+        self.manager.add_notification("A", "B", level="error")
         nid = self.manager.notifications[0]["id"]
 
         assert self.manager.get_unread_count() == 1
@@ -92,8 +92,8 @@ class TestNotificationCoverage:
 
     def test_mark_all_as_read(self):
         """Test segna tutto come letto."""
-        self.manager.add_notification("A", "B")
-        self.manager.add_notification("C", "D")
+        self.manager.add_notification("A", "B", level="error")
+        self.manager.add_notification("C", "D", level="error")
 
         assert self.manager.get_unread_count() == 2
 

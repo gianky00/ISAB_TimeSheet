@@ -68,6 +68,7 @@ class SmartLogTranslator:
             "errore" in lower_msg
             or "fallit" in lower_msg
             or "exception" in lower_msg
+            or "eccezion" in lower_msg
             or "✗" in message
         ):
             category = "error"

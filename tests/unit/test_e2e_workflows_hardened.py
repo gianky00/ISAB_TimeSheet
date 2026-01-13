@@ -107,7 +107,7 @@ class TestE2EWorkflowsHardened:
 
         # 3. Trigger Notifica
         notif_mgr = NotificationManager.instance()
-        notif_mgr.add_notification("Anomalia Rilevata", f"Trovate {anomalies_count[0]} timbrature errate", level="warning")
+        notif_mgr.add_notification("Anomalia Rilevata", f"Trovate {anomalies_count[0]} timbrature errate", level="error")
 
         # 4. Verifica persistenza notifica
         assert notif_mgr.get_unread_count() == 1

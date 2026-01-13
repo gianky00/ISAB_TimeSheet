@@ -121,9 +121,12 @@ class TestLicenseUpdaterAdvanced:
     def test_run_update_network_error(self, mock_license_dir, mocker):
         """Verifica gestione errore di rete (timeout)."""
         mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
+        mock_print = mocker.patch("builtins.print")
 
         with patch("requests.get", side_effect=requests.exceptions.Timeout("Timeout")):
             success = run_update()
 
         assert success is False
-        assert "Offline" in mocker.patch("builtins.print").call_args_list[-2][0][0]
+        # Verifichiamo che il messaggio di offline sia stato stampato
+        printed_messages = [call[0][0] for call in mock_print.call_args_list if call[0]]
+        assert any("Offline" in msg for msg in printed_messages)
