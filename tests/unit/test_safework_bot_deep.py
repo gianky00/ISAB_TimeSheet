@@ -75,6 +75,8 @@ class TestSafeWorkPDLBotDeep:
         bot.wait = MagicMock()
         bot._attendi_scomparsa_overlay = MagicMock()
 
+        # Mock per evitare skip del ciclo
+        mocker.patch.object(bot, "_gestisci_ricerca_estesa", return_value=False)
         mocker.patch.object(bot, "_gestisci_alert_ricerca", return_value=False)
         mocker.patch.object(bot, "_attendi_e_ritorna_nuovo_pdf", return_value="/tmp/pdl.pdf")
 
