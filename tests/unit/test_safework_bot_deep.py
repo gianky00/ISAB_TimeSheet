@@ -69,16 +69,23 @@ class TestSafeWorkPDLBotDeep:
         bot.log = MagicMock()
         bot._check_stop = MagicMock()
         bot.downloaded_files = []
+        
+        # Bind real methods to execute the pipeline
         bot.run = SafeWorkPDLBot.run.__get__(bot, SafeWorkPDLBot)
+        bot._process_single_pdl_row = SafeWorkPDLBot._process_single_pdl_row.__get__(bot, SafeWorkPDLBot)
+        bot._unisci_e_stampa_pdl = SafeWorkPDLBot._unisci_e_stampa_pdl.__get__(bot, SafeWorkPDLBot)
+        bot._handle_session_merge = SafeWorkPDLBot._handle_session_merge.__get__(bot, SafeWorkPDLBot)
+        bot._sanitizza_pdl_number = SafeWorkPDLBot._sanitizza_pdl_number.__get__(bot, SafeWorkPDLBot)
+        bot._safe_remove = MagicMock()
 
         bot.driver = MagicMock()
         bot.wait = MagicMock()
         bot._attendi_scomparsa_overlay = MagicMock()
 
         # Mock per evitare skip del ciclo
-        mocker.patch.object(bot, "_gestisci_ricerca_estesa", return_value=False)
-        mocker.patch.object(bot, "_gestisci_alert_ricerca", return_value=False)
-        mocker.patch.object(bot, "_attendi_e_ritorna_nuovo_pdf", return_value="/tmp/pdl.pdf")
+        mocker.patch.object(bot, "_esegui_ricerca_pdl", return_value=True)
+        mocker.patch.object(bot, "_scarica_parte_prima", return_value="/tmp/p1.pdf")
+        mocker.patch.object(bot, "_scarica_parte_seconda", return_value="/tmp/p2.pdf")
 
         # Mock fitz
         mock_doc = MagicMock()
@@ -86,7 +93,6 @@ class TestSafeWorkPDLBotDeep:
         mocker.patch("src.bots.safework.pdl.bot.fitz.open", return_value=mock_doc)
 
         # PATCH CRUCIALE: DocumentProcessor
-        # Poiché è importato localmente nel metodo run, patchiamo il modulo originale
         mock_processor = mocker.patch("src.utils.document_processor.DocumentProcessor")
         mock_processor.merge_pdfs.return_value = True
 

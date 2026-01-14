@@ -3,13 +3,19 @@ Baseline tests for ContabilitaPanel selection totals.
 """
 
 import pytest
-from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QTreeWidget, QTreeWidgetItem
+from unittest.mock import MagicMock
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QTreeWidget, QTreeWidgetItem, QWidget
 
 from src.gui.contabilita_panel import ContabilitaPanel
 
 
 @pytest.fixture
-def panel(qtbot):
+def panel(qtbot, mock_ui_dependencies, mocker):
+    mocker.patch("src.gui.contabilita_panel.ContabilitaPanel.refresh_tabs")
+    mocker.patch("src.gui.widgets.contabilita.attivita_tab.AttivitaProgrammateTab", return_value=QWidget())
+    mocker.patch("src.gui.widgets.contabilita.certificati_tab.CertificatiCampioneTab", return_value=QWidget())
+    mocker.patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel", return_value=QWidget())
+    mocker.patch("PyQt6.QtCore.QTimer.singleShot")
     p = ContabilitaPanel()
     qtbot.addWidget(p)
     return p
