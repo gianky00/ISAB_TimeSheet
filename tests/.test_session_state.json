@@ -1,5 +1,21 @@
 {
   "queue": [
+    "tests/unit/test_notification_manager.py",
+    "tests/unit/test_notification_manager_coverage.py",
+    "tests/unit/test_notifications_panel_deep.py",
+    "tests/unit/test_parsing_coverage.py",
+    "tests/unit/test_parsing_deep.py",
+    "tests/unit/test_parsing_refactoring.py",
+    "tests/unit/test_parsing_suite.py",
+    "tests/unit/test_password_manager_deep.py",
+    "tests/unit/test_printing.py",
+    "tests/unit/test_printing_windows_mocked.py",
+    "tests/unit/test_refinement_boost.py",
+    "tests/unit/test_resource_manager.py",
+    "tests/unit/test_resource_manager_coverage.py",
+    "tests/unit/test_responsive_layout_refactoring.py",
+    "tests/unit/test_safework_bot.py",
+    "tests/unit/test_safework_bot_deep.py",
     "tests/unit/test_safework_bot_refactoring.py",
     "tests/unit/test_safework_pdl_bot_deep.py",
     "tests/unit/test_scarica_ts_bot_deep.py",
@@ -10,11 +26,13 @@
     "tests/unit/test_scarico_ts_bot.py",
     "tests/unit/test_scarico_ts_bot_hardened.py",
     "tests/unit/test_scarico_ts_bot_simulation.py",
+    "tests/unit/test_search_controller_coverage.py",
     "tests/unit/test_search_features.py",
     "tests/unit/test_secrets_manager_coverage.py",
     "tests/unit/test_secrets_manager_refactoring.py",
     "tests/unit/test_security.py",
     "tests/unit/test_security_suite.py",
+    "tests/unit/test_service_controller_coverage.py",
     "tests/unit/test_settings_panel_deep.py",
     "tests/unit/test_simple_coverage_boost.py",
     "tests/unit/test_sprint_a_audit_backup.py",
@@ -25,6 +43,7 @@
     "tests/unit/test_telegram_core_deep.py",
     "tests/unit/test_telegram_deep_dive.py",
     "tests/unit/test_telegram_handlers_deep.py",
+    "tests/unit/test_telegram_manager_coverage.py",
     "tests/unit/test_telegram_manager_extended.py",
     "tests/unit/test_telegram_manager_logic.py",
     "tests/unit/test_telegram_service.py",
@@ -49,33 +68,8 @@
     "tests/unit/test_version.py",
     "tests/unit/test_version_simple.py"
   ],
-  "failed": [
-    {
-      "id": "tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table",
-      "error": "Timeout",
-      "log": "Execution Timed Out",
-      "full_output": "Execution Timed Out"
-    },
-    {
-      "id": "tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table",
-      "error": "Timeout",
-      "log": "Execution Timed Out",
-      "full_output": "Execution Timed Out"
-    },
-    {
-      "id": "tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table",
-      "error": "Timeout",
-      "log": "Execution Timed Out",
-      "full_output": "Execution Timed Out"
-    },
-    {
-      "id": "tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table",
-      "error": "Timeout",
-      "log": "Execution Timed Out",
-      "full_output": "Execution Timed Out"
-    }
-  ],
-  "passed": 671,
+  "failed": [],
+  "passed": 618,
   "skipped": 0,
   "total_files_map": {
     "tests/integration/test_config_security.py": [
@@ -849,6 +843,19 @@
       "tests/unit/test_log_humanizer_coverage.py::TestLogHumanizerCoverage::test_rich_tags_injection_account",
       "tests/unit/test_log_humanizer_coverage.py::TestLogHumanizerCoverage::test_humanize_deterministic"
     ],
+    "tests/unit/test_login_page_coverage.py": [
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_attendi_scomparsa_overlay_success",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_attendi_scomparsa_overlay_timeout",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_check_and_handle_session_popup_found",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_login_already_logged_in",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_login_exception_generic",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_login_proxy_error",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_login_retry_refresh",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_login_timeout_general",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_perform_login_form_action_fallback_js",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_perform_login_form_action_success",
+      "tests/unit/test_login_page_coverage.py::TestLoginPageCoverage::test_verify_logged_in_via_ui_false"
+    ],
     "tests/unit/test_lyra.py": [
       "tests/unit/test_lyra.py::TestLyra::test_ask_model_version",
       "tests/unit/test_lyra.py::TestLyra::test_no_fallback_logic"
@@ -892,6 +899,17 @@
       "tests/unit/test_master_coverage.py::TestMasterCoverage::test_date_filter_popup_logic",
       "tests/unit/test_master_coverage.py::TestMasterCoverage::test_audit_manager_integrity",
       "tests/unit/test_master_coverage.py::TestMasterCoverage::test_contabilita_queries_years"
+    ],
+    "tests/unit/test_navigation_controller_coverage.py": [
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_analyze_with_lyra",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_get_panel_already_initialized",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_get_panel_lazy_loading",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_initialize_new_panel",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_different_page",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_extended",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_panel_nested_bot",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_same_page",
+      "tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_settings_unsaved_prompt"
     ],
     "tests/unit/test_navigation_controller_refactoring.py": [
       "tests/unit/test_navigation_controller_refactoring.py::test_get_panel_already_initialized",
@@ -1073,6 +1091,16 @@
       "tests/unit/test_scarico_ts_bot_simulation.py::TestScaricoTSBotDeep::test_bot_workflow_simulation",
       "tests/unit/test_scarico_ts_bot_simulation.py::TestScaricoTSBotDeep::test_validate_data_failure"
     ],
+    "tests/unit/test_search_controller_coverage.py": [
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_perform_search_integration",
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_perform_search_no_results",
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_perform_search_short_query",
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_audit_found",
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_employees_found",
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_extended_found",
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_oda_exception",
+      "tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_oda_found"
+    ],
     "tests/unit/test_search_features.py": [
       "tests/unit/test_search_features.py::test_search_oda_found",
       "tests/unit/test_search_features.py::test_search_oda_description",
@@ -1123,6 +1151,14 @@
       "tests/unit/test_security_suite.py::TestSecuritySuite::test_decrypt_plaintext",
       "tests/unit/test_security_suite.py::TestSecuritySuite::test_corrupted_key_regeneration",
       "tests/unit/test_security_suite.py::TestSecuritySuite::test_decrypt_error_returns_empty"
+    ],
+    "tests/unit/test_service_controller_coverage.py": [
+      "tests/unit/test_service_controller_coverage.py::TestServiceControllerCoverage::test_check_scheduled_tasks_autopilot_trigger",
+      "tests/unit/test_service_controller_coverage.py::TestServiceControllerCoverage::test_check_scheduled_tasks_no_trigger",
+      "tests/unit/test_service_controller_coverage.py::TestServiceControllerCoverage::test_check_updates",
+      "tests/unit/test_service_controller_coverage.py::TestServiceControllerCoverage::test_forward_notification_to_telegram_ignored",
+      "tests/unit/test_service_controller_coverage.py::TestServiceControllerCoverage::test_forward_notification_to_telegram_sent",
+      "tests/unit/test_service_controller_coverage.py::TestServiceControllerCoverage::test_start_all"
     ],
     "tests/unit/test_settings_panel_deep.py": [
       "tests/unit/test_settings_panel_deep.py::TestSettingsPanelComplete::test_settings_navigation",
@@ -1195,4 +1231,213 @@
     ],
     "tests/unit/test_telegram_core_deep.py": [
       "tests/unit/test_telegram_core_deep.py::TestTelegramCoreDeep::test_handle_voice_logic",
-      "tests/unit/test_telegram_core_deep.py::TestTelegramCoreDeep::test_handle_photo_emit"
+      "tests/unit/test_telegram_core_deep.py::TestTelegramCoreDeep::test_handle_photo_emit",
+      "tests/unit/test_telegram_core_deep.py::TestTelegramCoreDeep::test_handle_button_navigation_complex",
+      "tests/unit/test_telegram_core_deep.py::TestTelegramCoreDeep::test_sync_send_methods"
+    ],
+    "tests/unit/test_telegram_deep_dive.py": [
+      "tests/unit/test_telegram_deep_dive.py::TestTelegramDeepDive::test_all_nav_menus",
+      "tests/unit/test_telegram_deep_dive.py::TestTelegramDeepDive::test_db_actions_flow",
+      "tests/unit/test_telegram_deep_dive.py::TestTelegramDeepDive::test_bot_actions_menus",
+      "tests/unit/test_telegram_deep_dive.py::TestTelegramDeepDive::test_utility_actions_complex"
+    ],
+    "tests/unit/test_telegram_handlers_deep.py": [
+      "tests/unit/test_telegram_handlers_deep.py::TestTelegramHandlersDeep::test_db_actions_strumentale_flow",
+      "tests/unit/test_telegram_handlers_deep.py::TestTelegramHandlersDeep::test_utility_maintenance_actions"
+    ],
+    "tests/unit/test_telegram_manager_coverage.py": [
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_check_auth_fail",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_check_auth_success",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_cmd_start",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_autopilot_toggle",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_button_db_year",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_button_direct_command",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_button_menu_main",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_db_query_input",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_photo",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_text_input_nlu",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_text_input_query",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_text_input_sequential_oda",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_utility_menus",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_handle_voice",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_process_with_ai_no_key",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_process_with_ai_text",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_send_document_sync_safe",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_send_message_sync_safe",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_send_photo_sync_safe",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_start_service_no_token",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_start_service_success",
+      "tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_stop_service"
+    ],
+    "tests/unit/test_telegram_manager_extended.py": [
+      "tests/unit/test_telegram_manager_extended.py::TestTelegramManagerExtended::test_check_auth_denied",
+      "tests/unit/test_telegram_manager_extended.py::TestTelegramManagerExtended::test_handle_text_input_db_query_state",
+      "tests/unit/test_telegram_manager_extended.py::TestTelegramManagerExtended::test_process_with_ai_intent_detection",
+      "tests/unit/test_telegram_manager_extended.py::TestTelegramManagerExtended::test_handle_nav_actions_menu_switching",
+      "tests/unit/test_telegram_manager_extended.py::TestTelegramManagerExtended::test_handle_toggle_merge_all_pdl",
+      "tests/unit/test_telegram_manager_extended.py::TestTelegramManagerExtended::test_send_photo_sync_delegation"
+    ],
+    "tests/unit/test_telegram_manager_logic.py": [
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_initialization",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_auth_success",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_auth_fail",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_cmd_stop",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_text_input_waiting_pdl",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_text_input_query",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_text_input_ai_trigger",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_nav_actions_main",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_nav_actions_bots",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_db_actions_strumentale",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_utility_actions_status",
+      "tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_button_dispatcher"
+    ],
+    "tests/unit/test_telegram_service.py": [
+      "tests/unit/test_telegram_service.py::test_check_auth_success",
+      "tests/unit/test_telegram_service.py::test_check_auth_failure",
+      "tests/unit/test_telegram_service.py::test_cmd_start",
+      "tests/unit/test_telegram_service.py::test_handle_button_menu_main"
+    ],
+    "tests/unit/test_telegram_service_advanced.py": [
+      "tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_start_stop_service_logic",
+      "tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_check_auth_success",
+      "tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_check_auth_denied",
+      "tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_cmd_start_association",
+      "tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_handle_text_input_state_machine",
+      "tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_cmd_status_emits_signal"
+    ],
+    "tests/unit/test_telegram_ultra.py": [
+      "tests/unit/test_telegram_ultra.py::TestTelegramServiceUltraFixed::test_handle_text_input_states",
+      "tests/unit/test_telegram_ultra.py::TestTelegramServiceUltraFixed::test_error_handling_auth_fail"
+    ],
+    "tests/unit/test_timbrature_bot.py": [
+      "tests/unit/test_timbrature_bot.py::TestTimbraturePage::test_navigate_to_timbrature_success",
+      "tests/unit/test_timbrature_bot.py::TestTimbraturePage::test_set_filters_success",
+      "tests/unit/test_timbrature_bot.py::TestTimbratureStorage::test_import_excel_success",
+      "tests/unit/test_timbrature_bot.py::TestTimbratureBot::test_run_success"
+    ],
+    "tests/unit/test_timbrature_storage_enhanced.py": [
+      "tests/unit/test_timbrature_storage_enhanced.py::TestTimbratureStorage::test_init_creates_tables",
+      "tests/unit/test_timbrature_storage_enhanced.py::TestTimbratureStorage::test_get_employees_from_timbrature",
+      "tests/unit/test_timbrature_storage_enhanced.py::TestTimbratureStorage::test_update_employee_details",
+      "tests/unit/test_timbrature_storage_enhanced.py::TestTimbratureStorage::test_get_lists",
+      "tests/unit/test_timbrature_storage_enhanced.py::TestTimbratureStorage::test_import_excel_mock"
+    ],
+    "tests/unit/test_timbrature_storage_simple.py": [
+      "tests/unit/test_timbrature_storage_simple.py::TestTimbratureStorageSimple::test_storage_init_and_import",
+      "tests/unit/test_timbrature_storage_simple.py::TestTimbratureStorageSimple::test_get_lists_default"
+    ],
+    "tests/unit/test_time_manager_coverage.py": [
+      "tests/unit/test_time_manager_coverage.py::TestTimeManagerCoverage::test_get_network_time_success",
+      "tests/unit/test_time_manager_coverage.py::TestTimeManagerCoverage::test_get_network_time_error",
+      "tests/unit/test_time_manager_coverage.py::TestTimeManagerCoverage::test_get_network_time_no_header",
+      "tests/unit/test_time_manager_coverage.py::TestTimeManagerCoverage::test_get_network_time_naive_timezone",
+      "tests/unit/test_time_manager_coverage.py::TestTimeManagerCoverage::test_get_trusted_time_network",
+      "tests/unit/test_time_manager_coverage.py::TestTimeManagerCoverage::test_get_trusted_time_fallback"
+    ],
+    "tests/unit/test_timesheet_processor_coverage.py": [
+      "tests/unit/test_timesheet_processor_coverage.py::TestTimesheetProcessorCoverage::test_process_file_not_found",
+      "tests/unit/test_timesheet_processor_coverage.py::TestTimesheetProcessorCoverage::test_process_file_no_sheet",
+      "tests/unit/test_timesheet_processor_coverage.py::TestTimesheetProcessorCoverage::test_process_file_with_pos",
+      "tests/unit/test_timesheet_processor_coverage.py::TestTimesheetProcessorCoverage::test_process_file_no_pos_column",
+      "tests/unit/test_timesheet_processor_coverage.py::TestTimesheetProcessorCoverage::test_process_file_exception"
+    ],
+    "tests/unit/test_timesheet_processor_deep.py": [
+      "tests/unit/test_timesheet_processor_deep.py::TestTimesheetProcessorDeep::test_process_file_success",
+      "tests/unit/test_timesheet_processor_deep.py::TestTimesheetProcessorDeep::test_process_file_missing_sheet",
+      "tests/unit/test_timesheet_processor_deep.py::TestTimesheetProcessorDeep::test_process_file_no_pos_column",
+      "tests/unit/test_timesheet_processor_deep.py::TestTimesheetProcessorDeep::test_process_file_not_found"
+    ],
+    "tests/unit/test_timesheet_processor_refactoring.py": [
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_file_not_found",
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_missing_sheet",
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_missing_odc",
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_success_single_pos",
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_success_multiple_pos",
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_conflict_handling",
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_mkdir_error",
+      "tests/unit/test_timesheet_processor_refactoring.py::test_process_and_move_critical_exception"
+    ],
+    "tests/unit/test_timesheet_processor_simple.py": [
+      "tests/unit/test_timesheet_processor_simple.py::TestTimesheetProcessorSimple::test_process_file_logic"
+    ],
+    "tests/unit/test_utils_boost.py": [
+      "tests/unit/test_utils_boost.py::TestValidatorsAndParsingDeep::test_input_validator_pdl_auto_suffix",
+      "tests/unit/test_utils_boost.py::TestValidatorsAndParsingDeep::test_input_validator_cf_invalid",
+      "tests/unit/test_utils_boost.py::TestValidatorsAndParsingDeep::test_parse_currency_edge_cases",
+      "tests/unit/test_utils_boost.py::TestValidatorsAndParsingDeep::test_validate_date_it_invalid"
+    ],
+    "tests/unit/test_utils_comprehensive.py": [
+      "tests/unit/test_utils_comprehensive.py::test_helpers_format_timestamp",
+      "tests/unit/test_utils_comprehensive.py::test_helpers_sanitize_filename"
+    ],
+    "tests/unit/test_utils_deep.py": [
+      "tests/unit/test_utils_deep.py::TestUtilsDeep::test_document_processor_text_extraction",
+      "tests/unit/test_utils_deep.py::TestUtilsDeep::test_is_pdf_searchable"
+    ],
+    "tests/unit/test_utils_extra.py": [
+      "tests/unit/test_utils_extra.py::test_log_humanizer_categories",
+      "tests/unit/test_utils_extra.py::test_log_humanizer_random_choice",
+      "tests/unit/test_utils_extra.py::test_log_humanizer_fixit_tag",
+      "tests/unit/test_utils_extra.py::test_secure_logger_masking",
+      "tests/unit/test_utils_extra.py::test_get_secure_logger"
+    ],
+    "tests/unit/test_utils_suite.py": [
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_sanitize_filename",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_get_app_icon_path",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_setup_logging",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_format_timestamp",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_get_months_list",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_get_years_list",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_is_windows",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_open_folder",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_safe_str",
+      "tests/unit/test_utils_suite.py::TestUtilsHelpers::test_truncate_string",
+      "tests/unit/test_utils_suite.py::TestUtilsParsing::test_parse_currency",
+      "tests/unit/test_utils_suite.py::TestUtilsValidators::test_validate_oda",
+      "tests/unit/test_utils_suite.py::TestUtilsValidators::test_validate_codice_fiscale",
+      "tests/unit/test_utils_suite.py::TestUtilsValidators::test_validate_date_it",
+      "tests/unit/test_utils_suite.py::TestUtilsValidators::test_sanitize_sql_string"
+    ],
+    "tests/unit/test_ux_settings_menus.py": [
+      "tests/unit/test_ux_settings_menus.py::test_context_menu_setup",
+      "tests/unit/test_ux_settings_menus.py::test_generic_menu_callback_structure"
+    ],
+    "tests/unit/test_validators_coverage.py": [
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_pdl_valid",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_pdl_auto_suffix_s",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_pdl_auto_suffix_c",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_pdl_invalid_format",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_oda_valid",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_oda_too_long",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_oda_invalid_chars",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_oda_empty",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_cf_valid",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_cf_wrong_length",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_cf_invalid_format",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_cf_wrong_checksum",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_cf_empty",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_date_valid",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_date_slash_conversion",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_date_invalid_format",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_date_not_exist",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_validate_date_empty",
+      "tests/unit/test_validators_coverage.py::TestValidatorsCoverage::test_sanitize_sql"
+    ],
+    "tests/unit/test_validators_extended.py": [
+      "tests/unit/test_validators_extended.py::TestValidatorsExtended::test_validate_pdl_auto_suffix",
+      "tests/unit/test_validators_extended.py::TestValidatorsExtended::test_validate_pdl_invalid",
+      "tests/unit/test_validators_extended.py::TestValidatorsExtended::test_validate_codice_fiscale_checksum",
+      "tests/unit/test_validators_extended.py::TestValidatorsExtended::test_validate_date_italian_logical_check",
+      "tests/unit/test_validators_extended.py::TestValidatorsExtended::test_validate_oda_constraints",
+      "tests/unit/test_validators_extended.py::TestValidatorsExtended::test_sanitize_sql_string"
+    ],
+    "tests/unit/test_version.py": [
+      "tests/unit/test_version.py::test_version_format",
+      "tests/unit/test_version.py::test_app_constants"
+    ],
+    "tests/unit/test_version_simple.py": [
+      "tests/unit/test_version_simple.py::test_version_info"
+    ]
+  },
+  "timestamp": 1768408529.4203792
+}

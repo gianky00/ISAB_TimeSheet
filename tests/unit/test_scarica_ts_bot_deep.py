@@ -47,27 +47,33 @@ class TestScaricaTSBotDeep:
         bot.wait = MagicMock()
         source_dir = Path("./fake_source")
         dest_dir = Path("./fake_dest")
-
+    
         # Mocking time.time to control the loop
         with patch("pathlib.Path.iterdir") as mock_iter, \
              patch("pathlib.Path.exists", return_value=True), \
-             patch("shutil.move") as mock_move, \
-             patch("pathlib.Path.stat") as mock_stat:
+             patch("pathlib.Path.unlink"), \
+             patch("pathlib.Path.mkdir"), \
+             patch("shutil.move") as mock_move:
 
             # Setup mock file
-            new_file = MagicMock()
+            new_file = MagicMock(spec=Path)
             new_file.suffix = ".xlsx"
             new_file.name = "download.xlsx"
             new_file.exists.return_value = True
+            new_file.__str__.return_value = str(source_dir / "download.xlsx")
+            
+            # Important: mock stat().st_mtime correctly on the object
+            new_file.stat.return_value.st_mtime = 1000
 
             # Simulate: Before download (empty), During (crdownload), After (xlsx)
+            # We need enough items to satisfy all calls
             mock_iter.side_effect = [
-                set(), # Before
-                set(), # Wait loop 1
-                {new_file} # Wait loop 2
+                set(), # files_before
+                set(), # _wait_for_new_file -> any (.crdownload)
+                {new_file}, # _wait_for_new_file -> current_files (.xlsx)
+                set(), # extra fallback
+                set()
             ]
-
-            mock_stat.return_value.st_mtime = 1000
 
             with patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):
                 # Mock button click

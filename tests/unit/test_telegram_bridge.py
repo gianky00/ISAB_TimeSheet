@@ -90,9 +90,13 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_main_window.show_toast = MagicMock()
 
         # Mock InputValidator.validate_pdl
+        # Called twice per item: first for all items in the filter list comprehension, 
+        # then for all items in the add_rows_simple list comprehension.
         MockInputValidator.validate_pdl.side_effect = [
-            MagicMock(valid=True, sanitized_value="PDL001"),
-            MagicMock(valid=True, sanitized_value="PDL002")
+            MagicMock(valid=True, sanitized_value="PDL001"), # filter item 1
+            MagicMock(valid=True, sanitized_value="PDL002"), # filter item 2
+            MagicMock(valid=True, sanitized_value="PDL001"), # map item 1
+            MagicMock(valid=True, sanitized_value="PDL002")  # map item 2
         ]
 
         chat_id = 123
@@ -104,16 +108,19 @@ class TestTelegramUIBridge(unittest.TestCase):
             {"numero_pdl": "PDL001"},
             {"numero_pdl": "PDL002"}
         ])
-        self.mock_main_window.show_toast.assert_called_once_with("Telegram: aggiunti 2 PDL via AI")
+        self.mock_main_window.show_toast.assert_called_once_with("Telegram: aggiunti 2 PDL")
 
     @patch('src.core.telegram_bridge.InputValidator')
     def test_handle_intent_add_oda(self, MockInputValidator):
         self.mock_main_window.scarico_panel = MagicMock()
         self.mock_main_window.show_toast = MagicMock()
 
+        # Called twice per item: Filter sequence then Map sequence
         MockInputValidator.validate_oda.side_effect = [
-            MagicMock(valid=True, sanitized_value="ODA001"),
-            MagicMock(valid=True, sanitized_value="ODA002")
+            MagicMock(valid=True, sanitized_value="ODA001"), # filter item 1
+            MagicMock(valid=True, sanitized_value="ODA002"), # filter item 2
+            MagicMock(valid=True, sanitized_value="ODA001"), # map item 1
+            MagicMock(valid=True, sanitized_value="ODA002")  # map item 2
         ]
 
         chat_id = 123
@@ -125,7 +132,7 @@ class TestTelegramUIBridge(unittest.TestCase):
             {"numero_oda": "ODA001"},
             {"numero_oda": "ODA002"}
         ])
-        self.mock_main_window.show_toast.assert_called_once_with("Telegram: aggiunti 2 OdA via AI")
+        self.mock_main_window.show_toast.assert_called_once_with("Telegram: aggiunti 2 OdA")
 
     @patch('src.core.telegram_bridge.get_installed_printers')
     @patch('src.core.telegram_bridge.InlineKeyboardButton')

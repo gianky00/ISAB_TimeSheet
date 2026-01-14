@@ -47,6 +47,12 @@ class TestSprintDBotResilience:
         mock_driver.page_source = "<html>Error</html>"
         bot.driver = mock_driver
 
+        # Make save_screenshot create a dummy file so glob finds it
+        def dummy_save(path):
+            from pathlib import Path
+            Path(path).write_text("fake png")
+        mock_driver.save_screenshot.side_effect = dummy_save
+
         bot._save_error_state("Test Error")
 
         error_dir = tmp_path / "logs" / "errors"
@@ -59,6 +65,7 @@ class TestSprintDBotResilience:
         assert len(screenshots) == 1
         assert len(html_files) == 1
         assert html_files[0].read_text() == "<html>Error</html>"
+        mock_driver.save_screenshot.assert_called_once()
 
     def test_bot_user_interruption(self, bot, mocker):
         """Verifica che la richiesta di stop interrompa il flusso."""

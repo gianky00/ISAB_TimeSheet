@@ -1,58 +1,15 @@
 # 📊 Test Execution Report
 
-**Date:** 2026-01-14 07:28:16
-**Duration:** 90.34s
+**Date:** 2026-01-14 17:10:42
+**Duration:** 22.03s
 
 ## Summary
 | Metric | Count |
 |---|---|
-| 🧪 Total | 940 |
-| ✅ Passed | 265 |
-| ❌ Failed | 4 |
+| 🧪 Total | 9 |
+| ✅ Passed | 9 |
+| ❌ Failed | 0 |
 | ⏩ Skipped | 0 |
 
-## ❌ Failures Details
-### `tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table`
-**Error:** `Timeout`
-
-<details><summary>Full Output</summary>
-
-```text
-Execution Timed Out
-```
-</details>
-
----
-### `tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table`
-**Error:** `Timeout`
-
-<details><summary>Full Output</summary>
-
-```text
-Execution Timed Out
-```
-</details>
-
----
-### `tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table`
-**Error:** `Timeout`
-
-<details><summary>Full Output</summary>
-
-```text
-Execution Timed Out
-```
-</details>
-
----
-### `tests/unit/test_contabilita_panel_refactoring.py::test_update_selection_total_table`
-**Error:** `Timeout`
-
-<details><summary>Full Output</summary>
-
-```text
-Execution Timed Out
-```
-</details>
-
----
+## ✅ All Tests Passed!
+Great job! No issues found.
