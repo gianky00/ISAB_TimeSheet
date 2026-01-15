@@ -76,6 +76,10 @@ class CaricoTSBot(BaseBot):
 
         self.log(f"Avvio estrazione Carico TS per OdA: {oda}")
 
+        if not self.driver:
+            return False
+        assert self.driver
+
         page = CaricoTSPage(self.driver, self.log)
 
         if not page.navigate():

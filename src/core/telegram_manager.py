@@ -204,9 +204,10 @@ class TelegramService(QObject):
         if not self.connected_chat_id:
             self.connected_chat_id = chat_id
             config_manager.set_config_value("telegram_chat_id", chat_id)
-            await update.message.reply_text(
-                f"✅ Dispositivo associato! Chat ID: {chat_id}"
-            )
+            if update.message:
+                await update.message.reply_text(
+                    f"✅ Dispositivo associato! Chat ID: {chat_id}"
+                )
 
         if not await self._check_auth(update):
             return
@@ -361,6 +362,7 @@ class TelegramService(QObject):
             return
         if (
             self.connected_chat_id
+            and update.effective_user
             and str(update.effective_user.id) != self.connected_chat_id
         ):
             return

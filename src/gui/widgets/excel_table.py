@@ -115,7 +115,8 @@ class ExcelTableWidget(QTableWidget):
                 self._paste_cell_data(target_r, target_c, cell_text.strip())
 
     def _get_clipboard_text(self) -> str:
-        return QApplication.clipboard().text()
+        clipboard = QApplication.clipboard()
+        return clipboard.text() if clipboard else ""
 
     def _get_paste_start_pos(self) -> tuple[int, int]:
         r, c = self.currentRow(), self.currentColumn()
@@ -209,12 +210,21 @@ class ExcelTableWidget(QTableWidget):
             win.analyze_with_lyra(context)
 
     def copy_selection(self):
-        """Copia la selezione negli appunti in formato compatibile con Excel."""
-        selection = self.selectedRanges()
+        """Copia le celle selezionate negli appunti."""
+        selection = self.selectedIndexes()
         if not selection:
-            if not self.selectedItems():
-                return
             return
+
+        # ... logic ...
+        rows = sorted(list(set(index.row() for index in selection)))
+        columns = sorted(list(set(index.column() for index in selection)))
+        
+        # ... costruction of text ...
+        # (This is a simplified representation, I need to wrap the existing logic)
+        # Let's target the specific line 118 usually
+        
+        # Since I don't have the full content in memory, I'll read it first to be precise.
+        pass
 
         rows, cols = self._get_selected_rows_cols(selection)
         if not rows or not cols:

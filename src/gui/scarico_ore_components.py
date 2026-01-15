@@ -689,9 +689,9 @@ class DateFilterPopupWidget(QWidget):
             y_item = self._create_year_item(y, structure[y], selected_set, is_all_selected)
             self.model.appendRow(y_item)
 
-    def _group_dates_by_hierarchy(self, values) -> dict:
+    def _group_dates_by_hierarchy(self, values: list) -> Dict[str, Dict[str, List[str]]]:
         """Organizza le date in un dizionario Anno -> Mese -> [Date]."""
-        structure = {}
+        structure: Dict[str, Dict[str, List[str]]] = {}
         for v in values:
             if not v:
                 continue

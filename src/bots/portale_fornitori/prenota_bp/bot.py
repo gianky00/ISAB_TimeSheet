@@ -2,7 +2,7 @@
 Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB.
 """
 import traceback
-from typing import Any
+from typing import Any, List, Dict
 
 from src.bots.base.base_bot import BaseBot
 
@@ -44,7 +44,7 @@ class PrenotaBPBot(BaseBot):
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
-        self.results = []
+        self.results: List[Dict[str, Any]] = []
 
     def _get_row_value(self, row: dict, target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
@@ -73,6 +73,10 @@ class PrenotaBPBot(BaseBot):
         if not rows:
             self.log("Nessun dato da processare.")
             return True
+
+        if not self.driver:
+            return False
+        assert self.driver
 
         self.log(f"Avvio elaborazione per {len(rows)} BP (Fornitore: {self.fornitore})")
         page = PrenotaBPPage(self.driver, self.log)

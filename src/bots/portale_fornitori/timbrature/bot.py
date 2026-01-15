@@ -75,6 +75,10 @@ class TimbratureBot(BaseBot):
             f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})..."
         )
 
+        if not self.driver:
+            return False
+        assert self.driver
+
         page = TimbraturePage(self.driver, self.log)
 
         # 1. Navigation

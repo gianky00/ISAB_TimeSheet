@@ -4,7 +4,7 @@ import time
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
-import fitz  # PyMuPDF
+import fitz  # type: ignore # PyMuPDF
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -369,6 +369,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _espandi_parte_seconda(self) -> bool:
         """Tenta di rendere visibile la sezione Parte Seconda."""
+        if not self.driver or not self.wait:
+            return False
+        assert self.driver and self.wait
         try:
             if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
                 try:
@@ -384,6 +387,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _gestisci_dialogo_stampa_tutte(self):
         """Seleziona 'Stampa Tutte' nel popup se appare."""
+        if not self.driver:
+            return
+        assert self.driver
         try:
             btn_tutte = self.driver.find_element(By.ID, "rbStampaTutte")
             if btn_tutte.is_displayed():

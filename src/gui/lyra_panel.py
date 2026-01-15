@@ -653,7 +653,11 @@ class LyraPanel(QWidget):
         # Pulizia colonne e spazi
         df = df.dropna(axis=1, how="all")
         df.columns = df.columns.str.strip()
-        return df.apply(lambda x: x.strip() if isinstance(x, str) else x)
+        # Usa apply su ogni colonna per strippare stringhe, garantendo il ritorno di un DataFrame
+        for col in df.columns:
+            if df[col].dtype == "object":
+                df[col] = df[col].str.strip()
+        return df
 
     def _save_df_to_excel(self, df: pd.DataFrame):
         """Mostra il dialog di salvataggio e scrive il file Excel."""

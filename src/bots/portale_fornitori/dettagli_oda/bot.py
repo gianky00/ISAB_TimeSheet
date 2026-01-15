@@ -76,6 +76,11 @@ class DettagliOdABot(BaseBot):
             rows = [{"numero_oda": "", "numero_contratto": ""}]
 
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
+        
+        if not self.driver:
+            return False
+        assert self.driver
+
         page = DettagliOdAPage(self.driver, self.log)
 
         # Define source (System Downloads) and destination (Configured Path)

@@ -70,6 +70,12 @@ class ScaricaTSBot(BaseBot):
         self.fornitore = fornitore
         self.elabora_ts = elabora_ts
 
+    def _ask_user(self, prompt: str) -> str:
+        """Richiede input all'utente."""
+        if self._input_callback:
+            return self._input_callback(prompt)
+        return ""
+
     def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
         """Validazione specifica per Scarico TS."""
         base_valid, base_msg = super().validate_data(data)
@@ -115,8 +121,9 @@ class ScaricaTSBot(BaseBot):
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)
-            if data.get("fornitore"):
-                self.fornitore = data.get("fornitore")
+            forn = data.get("fornitore")
+            if forn:
+                self.fornitore = str(forn)
             self.elabora_ts = data.get("elabora_ts", self.elabora_ts)
         else:
             rows = data
@@ -154,6 +161,10 @@ class ScaricaTSBot(BaseBot):
 
     def _search_oda(self, numero_oda: str, posizione_oda: str) -> bool:
         """Inserisce i parametri di ricerca e clicca Cerca."""
+        if not self.wait or not self.driver:
+            return False
+        assert self.wait and self.driver
+
         js_dispatch = """
             var el = arguments[0];
             var ev_in = new Event('input', {bubbles:true}); el.dispatchEvent(ev_in);
@@ -193,6 +204,7 @@ class ScaricaTSBot(BaseBot):
         """Naviga a Report -> Timesheet."""
         if not self.wait:
             return False
+        assert self.wait
         self._check_stop()
 
         try:
@@ -227,6 +239,7 @@ class ScaricaTSBot(BaseBot):
         """Imposta Fornitore e Data Da."""
         if not self.driver or not self.wait or not self.long_wait:
             return False
+        assert self.driver and self.wait and self.long_wait
         self._check_stop()
 
         try:
@@ -271,6 +284,7 @@ class ScaricaTSBot(BaseBot):
         """Scarica il file Excel, lo rinomina e lo sposta."""
         if not self.wait or not self.driver:
             return None
+        assert self.wait and self.driver
 
         try:
             files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
@@ -297,6 +311,9 @@ class ScaricaTSBot(BaseBot):
 
     def _click_excel_export_button(self) -> bool:
         """Individua e clicca il pulsante di esportazione Excel."""
+        if not self.wait:
+            return False
+        assert self.wait
         xpath = "//div[contains(@class, 'x-tool') and @role='button'][.//div[@data-ref='toolEl' and contains(@class, 'x-tool-tool-el') and contains(@style, 'FontAwesome')]]"
         try:
             self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
