@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from src.gui.scarico_ore_components import CacheWorker, ScaricoOreTableModel
@@ -12,7 +10,7 @@ class TestScaricoOreComponentsExtended:
         assert model.rowCount() == 0
 
     @pytest.mark.asyncio
-    async def test_cache_worker_build(self, qapp, qtbot):
+    async def test_cache_worker_build(self, qapp, qtbot, tmp_path):
         # Sample data: 11 columns + style
         data = [
             (
@@ -30,7 +28,8 @@ class TestScaricoOreComponentsExtended:
                 "{}",
             )
         ]
-        worker = CacheWorker(Path("test_cache.pkl"), data_source=data)
+        cache_file = tmp_path / "test_cache.pkl"
+        worker = CacheWorker(cache_file, data_source=data)
 
         with qtbot.wait_signal(worker.finished, timeout=2000):
             worker.start()

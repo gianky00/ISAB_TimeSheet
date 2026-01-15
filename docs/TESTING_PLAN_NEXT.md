@@ -46,7 +46,7 @@
 - **Pre-commit:** Add hook to run unit tests on changed files.
 - **Review:** Weekly review of `htmlcov/index.html`.
 
-## 5. Execution Script (`run_coverage_plan.bat`)
+## 5. Execution Script (`scripts/run_coverage_plan.bat`)
 Create a script to:
 1. Install missing deps.
 2. Run tests with specific focus.

@@ -99,7 +99,7 @@ python tests/run_robust_tests.py --reset --filter tests/unit
 For an explicit coverage sweep using the helper script (Windows):
 
 ```bash path=null start=null
-run_coverage_plan.bat
+scripts/run_coverage_plan.bat
 ```
 
 This assumes `.venv` exists, refreshes test dependencies, then runs:

@@ -3,6 +3,8 @@ echo ==========================================
 echo  ISAB TimeSheet - Test Coverage Plan
 echo ==========================================
 
+cd ..
+
 if not exist .venv (
     echo [ERROR] Virtual environment not found!
     exit /b 1
