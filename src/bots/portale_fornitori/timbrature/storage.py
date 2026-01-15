@@ -170,7 +170,7 @@ class TimbratureStorage:
 
     def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
         query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
-        params = []
+        params: list[str] = []
         if not filter_text:
             return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
 

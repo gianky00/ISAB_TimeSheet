@@ -47,8 +47,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         except Exception as e:
             print(f"Errore setup log file: {e}")
             self.log_file = None
-        self.downloaded_files = []
-        self.merged_pdf_path = None  # Inizializza qui
+        self.downloaded_files: List[str] = []
+        self.missing_pdls: List[str] = []
+        self.merged_pdf_path: Optional[str] = None  # Inizializza qui
 
     def log(self, message: str):
         """Override log per salvare su file con massimo dettaglio."""
@@ -187,7 +188,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         success_count = 0
         total = len(data)
         self.downloaded_files = []
-        all_downloaded_pdl_paths = []
+        all_downloaded_pdl_paths: List[str] = []
         self.missing_pdls = []
         self.merged_pdf_path = None
 
@@ -258,6 +259,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _esegui_ricerca_pdl(self, pdl_num: str) -> bool:
         """Esegue la ricerca del PDL e gestisce i vari popup di errore/estensione."""
+        if not self.wait or not self.driver:
+            return False
+        assert self.wait and self.driver
         self.log(f"🔄 Ricerca PdL {pdl_num} in interfaccia...")
         try:
             campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
@@ -288,6 +292,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _scarica_parte_prima(self, pdl_num: str) -> Optional[str]:
         """Gestisce il download e la pulizia (rimozione pag 2) della Parte Prima."""
+        if not self.driver or not self.wait:
+            return None
+        assert self.driver and self.wait
         self.log(f"⬇️ Avvio scarico Parte Prima per PdL {pdl_num}...")
         self.driver.execute_script("window.scrollTo(0, 0);")
         time.sleep(1)
@@ -332,12 +339,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log(f"⚠️ Errore pulizia PDF: {e}")
 
     def _scarica_parte_seconda(self, pdl_num: str) -> Optional[str]:
-        """Gestisce l'espansione della sezione e il download della Parte Seconda."""
-        if not self._espandi_parte_seconda():
+        """Gestisce il download della Parte Seconda."""
+        if not self.driver or not self.wait:
             return None
-
+        assert self.driver and self.wait
         self.log(f"⬇️ Avvio scarico Parte Seconda per PdL {pdl_num}...")
-        self._attendi_scomparsa_overlay()
         self.driver.execute_script("window.scrollTo(0, 0);")
         ts = time.time()
 
@@ -433,6 +439,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """
         if not self.driver:
             return False
+        assert self.driver  # Type narrowing
 
         try:
             # Cerca il testo specifico indicato dall'utente: <p idtxt="1C51D77B">
@@ -474,6 +481,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def _gestisci_alert_ricerca(self, timeout=10):
         if not self.driver:
             return False
+        assert self.driver
         self.log("🔍 Controllo eventuali alert di errore ricerca...")
         end_time = time.time() + timeout
         while time.time() < end_time:

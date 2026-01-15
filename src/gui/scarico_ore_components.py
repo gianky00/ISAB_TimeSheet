@@ -1,7 +1,7 @@
 import json
 import pickle
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, List
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QStandardItem, QStandardItemModel
@@ -680,7 +680,7 @@ class DateFilterPopupWidget(QWidget):
     def _build_tree(self, values, selected_values):
         """Costruisce la struttura ad albero Anno -> Mese -> Giorno."""
         self.raw_dates = set(values)
-        structure = self._group_dates_by_hierarchy(values)
+        structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(values)
 
         is_all_selected = selected_values is None
         selected_set = set(selected_values) if selected_values else set()
@@ -765,7 +765,8 @@ class DateFilterPopupWidget(QWidget):
     def _has_any_child_checked(self, item: QStandardItem) -> bool:
         """Verifica ricorsiva se almeno un figlio è selezionato."""
         for r in range(item.rowCount()):
-            if item.child(r).checkState() != Qt.CheckState.Unchecked:
+            child = item.child(r)
+            if child and child.checkState() != Qt.CheckState.Unchecked:
                 return True
         return False
 

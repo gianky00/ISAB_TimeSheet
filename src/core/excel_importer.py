@@ -224,7 +224,7 @@ class ExcelImporter:
             file_obj, _ = cls._decrypt_if_encrypted(path)
             xls = cls._get_excel_file(file_obj)
 
-            valid_sheets = [s for s in xls.sheet_names if cls._identify_sheet_year(str(s))]
+            valid_sheets = [str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))]
             if not valid_sheets:
                 return False, "Nessun anno importato (Controlla nomi fogli: YYYY o 'Dati/Preventivi').", [], []
 
@@ -838,7 +838,7 @@ class ExcelImporter:
         df.columns = [str(c).strip() for c in df.columns]
 
         # 1. Mapping e Validazione Colonne
-        rename_map = cls._build_certificati_rename_map(df.columns)
+        rename_map = cls._build_certificati_rename_map(df.columns.tolist())
         if not rename_map:
             found_cols = ", ".join(list(df.columns)[:5]) + "..."
             return False, f"Nessuna colonna valida trovata. Sheet: {sheet_name}, Row: {header_row_idx}. Trovate: {found_cols}", []

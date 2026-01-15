@@ -1348,8 +1348,8 @@ class ScaricoPDLPanel(BaseBotPanel):
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
 
         # Catturiamo i file e i PdL mancanti PRIMA di chiamare super()
-        files_to_send = []
-        missing_list = []
+        files_to_send: list = []
+        missing_list: list = []
         if self.worker and hasattr(self.worker.bot, "downloaded_files"):
             files_to_send = self.worker.bot.downloaded_files
 

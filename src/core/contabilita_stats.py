@@ -51,7 +51,7 @@ class ContabilitaStats:
     @classmethod
     def _process_main_data(cls, data, stats) -> List[tuple]:
         """Processa i dati OdA principali per calcolare totali e status."""
-        commesse = []
+        commesse: list[tuple] = []
         if not data:
             return commesse
 
