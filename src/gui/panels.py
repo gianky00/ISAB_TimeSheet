@@ -221,14 +221,6 @@ class BaseBotPanel(QWidget):
         """Connette i segnali comuni ai callback del pannello."""
         pass
 
-    def _on_log(self, message: str):
-        """Riceve un log dal bot e lo mostra nel widget."""
-        self.log_widget.append(message)
-
-    def _on_status(self, status: str):
-        """Riceve un aggiornamento di stato dal bot."""
-        self._update_status(status)
-
     def get_bot_instance(self):
         """Restituisce un'istanza del bot. Da implementare nelle sottoclassi."""
         return None

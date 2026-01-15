@@ -2,6 +2,7 @@ import glob
 import os
 import time
 import traceback
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import fitz  # type: ignore # PyMuPDF
@@ -53,6 +54,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     ):
         """Inizializza il bot PDL con logging esteso."""
         super().__init__(username, password, headless, timeout, download_path)
+        self.log_file: Optional[Path] = None
+        self.merged_pdf_path: Optional[Path] = None
 
         # Setup File Logging
         try:
@@ -73,7 +76,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             self.log_file = None
         self.downloaded_files: List[str] = []
         self.missing_pdls: List[str] = []
-        self.merged_pdf_path: Optional[str] = None  # Inizializza qui
 
     def log(self, message: str):
         """Override log per salvare su file con massimo dettaglio."""
