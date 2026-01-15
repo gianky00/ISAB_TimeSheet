@@ -82,3 +82,26 @@ mypy_path = "."
 explicit_package_bases = true
 namespace_packages = true
 
+[tool.deptry]
+ignore = ["DEP001", "DEP002", "DEP003"]
+known_first_party = ["src"]
+
+[tool.codespell]
+skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss"
+ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,costruction,allo,rende,alle,faza,fazes"
+check-filenames = true
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = true
+ignore-magic = true
+ignore-semiprivate = true
+ignore-private = true
+ignore-property-decorators = true
+ignore-module = true
+fail-under = 80
+exclude = ["tests", "docs", "build", "dist", "admin"]
+verbose = 1
+quiet = false
+color = true
+

@@ -58,7 +58,10 @@ from src.utils.printing import get_installed_printers
 
 
 class BotWorker(QThread):
-    """Thread worker per eseguire i bot in background."""
+    """
+    Thread worker per eseguire i bot in background.
+    Gestisce i segnali di log, stato, conclusione e richieste di input interattivo.
+    """
 
     log_signal = pyqtSignal(str)
     status_signal = pyqtSignal(str)
@@ -73,7 +76,7 @@ class BotWorker(QThread):
         self.telegram_service = telegram_service
 
     def run(self):
-        """Esegue il bot."""
+        """Avvia l'esecuzione del bot nel thread dedicato."""
         try:
             # Collega i callback
             self.bot.set_log_callback(self.log_signal.emit)
@@ -98,14 +101,17 @@ class BotWorker(QThread):
         return result_container.get("value", "")
 
     def stop(self):
-        """Richiede lo stop del bot."""
+        """Interrompe l'esecuzione del bot."""
         self._is_running = False
-        if self.bot:
+        if hasattr(self.bot, "request_stop"):
             self.bot.request_stop()
 
 
 class BaseBotPanel(QWidget):
-    """Pannello base per tutti i bot."""
+    """
+    Classe base per i pannelli di controllo dei bot.
+    Gestisce l'interfaccia comune: tabella dati, log, controlli di avvio/stop e report.
+    """
 
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()

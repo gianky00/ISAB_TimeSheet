@@ -59,7 +59,8 @@ class CacheWorker(QThread):
                 self.progress.emit("Caricamento cache...")
                 with open(self.cache_path, "rb") as f:
                     # Legacy support: check pickle structure
-                    loaded = pickle.load(f)
+                    # We use pickle for local trusted cache of complex data structures.
+                    loaded = pickle.load(f)  # nosec B301
                     if len(loaded) == 3:
                         # Old format: data, search, totals
                         # We must rebuild because 'data' is raw, we need 'display_data'

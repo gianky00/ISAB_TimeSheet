@@ -44,6 +44,7 @@ from src.gui.widgets.update_banner import UpdateBanner
 
 
 class PageIndex(IntEnum):
+    """Indici delle pagine nello StackedWidget principale."""
     DASHBOARD = 0
     AUTOMAZIONI = 1
     LYRA = 2
@@ -54,7 +55,10 @@ class PageIndex(IntEnum):
 
 
 class MainWindow(QMainWindow):
-    """Finestra principale dell'applicazione SyncroJob."""
+    """
+    Finestra principale dell'applicazione.
+    Coordina i controller, la navigazione e il caricamento dei pannelli.
+    """
 
     def __init__(self):
         super().__init__()
