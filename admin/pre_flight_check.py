@@ -151,15 +151,15 @@ def run_bandit():
 
 def run_xenon():
     print_step("XENON: Analisi Complessità...")
-    # Permettiamo C per i singoli blocchi e per i moduli mediamente complessi
+    # Ripristiniamo il rigore: Grado B come limite massimo per tutto
     cmd = [
         get_bin("xenon"),
         "--max-absolute",
-        "C",
-        "--max-modules",
-        "C",
-        "--max-average",
         "B",
+        "--max-modules",
+        "B",
+        "--max-average",
+        "A",
         "src",
     ]
     success, output = run_tool("xenon", cmd)
