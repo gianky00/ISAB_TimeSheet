@@ -20,6 +20,7 @@ class TestDesignSystem:
         assert BorderRadius.full == 9999
         assert "rgba" in Shadow.md
 
+
 class TestLogHumanizer:
     def test_humanize_categories(self):
         # Start
@@ -55,6 +56,7 @@ class TestLogHumanizer:
         h, t, c = SmartLogTranslator.humanize("login fallito per credenziali errate")
         assert "[FIXIT:ACCOUNT]" in t
 
+
 class TestFastTableModelExtended:
     def test_model_edge_cases(self):
         model = FastTableModel(data=[[None]], headers=["Col1"])
@@ -67,4 +69,7 @@ class TestFastTableModelExtended:
         assert model.data(model.index(0, 0), role=Qt.ItemDataRole.ToolTipRole) is None
 
         # Vertical header
-        assert model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole) is None
+        assert (
+            model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole)
+            is None
+        )

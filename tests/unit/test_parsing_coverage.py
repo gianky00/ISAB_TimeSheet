@@ -1,6 +1,5 @@
-
-import pytest
 from src.utils.parsing import parse_currency
+
 
 class TestParsing:
     def test_parse_currency_basics(self):

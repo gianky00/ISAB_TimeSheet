@@ -32,7 +32,7 @@ class TestConfigManagerHardened:
         config = load_config()
         assert config["browser_timeout"] == 30
         assert config["ai_model"] == "gemini-1.5-pro"
-        assert setup_config.parent.exists() # Verifica creazione directory
+        assert setup_config.parent.exists()  # Verifica creazione directory
 
     def test_load_config_corrupted_json(self, setup_config):
         """Verifica resilienza a file JSON corrotto."""
@@ -66,12 +66,14 @@ class TestConfigManagerHardened:
         setup_config.parent.mkdir(parents=True, exist_ok=True)
         old_data = {
             "isab_username": "old_user",
-            "isab_password": "old_password_encrypted"
+            "isab_password": "old_password_encrypted",
         }
         setup_config.write_text(json.dumps(old_data))
 
         # Mock password_manager per decrittare la vecchia pass
-        with patch("src.utils.security.password_manager.decrypt", return_value="plain_pass"):
+        with patch(
+            "src.utils.security.password_manager.decrypt", return_value="plain_pass"
+        ):
             config = load_config()
 
         assert "isab_username" not in config
@@ -111,8 +113,12 @@ class TestConfigManagerHardened:
 
     def test_credential_storage_priority(self, mocker):
         """Verifica che il keyring abbia priorità sul file."""
-        mocker.patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True)
-        m_store = mocker.patch("src.core.secrets_manager.SecretsManager.store_credential")
+        mocker.patch(
+            "src.core.secrets_manager.SecretsManager.is_available", return_value=True
+        )
+        m_store = mocker.patch(
+            "src.core.secrets_manager.SecretsManager.store_credential"
+        )
 
         config = load_config()
         config["accounts"] = [{"username": "boss", "password": "top_secret"}]

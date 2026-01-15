@@ -8,7 +8,6 @@ from src.bots.portale_fornitori.timbrature.bot import TimbratureBot
 
 
 class TestSpecificBots:
-
     @pytest.fixture
     def mock_driver(self):
         with patch("src.bots.base.base_bot.webdriver.Chrome") as mock:

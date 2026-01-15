@@ -14,6 +14,7 @@ from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
 
 class DettagliOdABot(BaseBot):
     """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori."""
+
     @staticmethod
     def get_name() -> str:
         """Restituisce il nome del bot."""
@@ -66,6 +67,7 @@ class DettagliOdABot(BaseBot):
         return True, ""
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
+        """Esegue lo scarico dei dettagli per ogni Ordine di Acquisto fornito."""
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)
@@ -80,7 +82,7 @@ class DettagliOdABot(BaseBot):
             rows = [{"numero_oda": "", "numero_contratto": ""}]
 
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
-        
+
         if not self.driver:
             return False
         assert self.driver

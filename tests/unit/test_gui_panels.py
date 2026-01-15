@@ -7,7 +7,6 @@ from src.gui.settings_panel import SettingsPanel
 
 
 class TestGUIPanels:
-
     @pytest.fixture
     def app(self, qapp):
         # qapp fixture from pytest-qt handles QApplication instance
@@ -16,12 +15,13 @@ class TestGUIPanels:
     def test_scarica_ts_panel_init(self, app, qtbot):
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
-        qtbot.wait(100) # Wait for lazy loading
+        qtbot.wait(100)  # Wait for lazy loading
 
         # Manually set data
         panel.params_widget.fornitore_combo.addItem("F1")
         panel.params_widget.fornitore_combo.addItem("F2")
         from PyQt6.QtCore import QDate
+
         panel.params_widget.date_da.setDate(QDate(2025, 1, 1))
 
         # Check UI initialization

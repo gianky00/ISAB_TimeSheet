@@ -8,8 +8,13 @@ from src.gui.settings_panel import SettingsPanel
 class TestSettingsPanelComplete:
     @pytest.fixture
     def panel(self, qapp):
-        with patch("src.gui.settings_panel.config_manager.load_config", return_value={}):
-            with patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value=""):
+        with patch(
+            "src.gui.settings_panel.config_manager.load_config", return_value={}
+        ):
+            with patch(
+                "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
+                return_value="",
+            ):
                 return SettingsPanel()
 
     def test_settings_navigation(self, panel, qtbot):
@@ -23,19 +28,23 @@ class TestSettingsPanelComplete:
 
     def test_account_settings_logic(self, panel, qtbot):
         qtbot.addWidget(panel)
-        panel.tabs.setCurrentIndex(0) # Configurazione
+        panel.tabs.setCurrentIndex(0)  # Configurazione
 
         # Test adding an account
-        with patch("src.gui.settings_panel.AccountDialog.exec", return_value=True), \
-             patch("src.gui.settings_panel.AccountDialog.get_data", return_value=("new_user", "pw")):
-
+        with (
+            patch("src.gui.settings_panel.AccountDialog.exec", return_value=True),
+            patch(
+                "src.gui.settings_panel.AccountDialog.get_data",
+                return_value=("new_user", "pw"),
+            ),
+        ):
             with patch.object(panel, "_save_settings") as mock_save:
                 panel._add_account()
                 mock_save.assert_called()
 
     def test_telegram_settings_change(self, panel, qtbot):
         qtbot.addWidget(panel)
-        panel.tabs.setCurrentIndex(3) # Telegram
+        panel.tabs.setCurrentIndex(3)  # Telegram
 
         with patch.object(panel, "_save_settings") as mock_save:
             panel.tg_token_edit.setText("new_token")
@@ -51,8 +60,11 @@ class TestSettingsPanelComplete:
 
     def test_backup_manual(self, panel, qtbot):
         qtbot.addWidget(panel)
-        panel.tabs.setCurrentIndex(1) # Backup
-        with patch("src.core.backup_manager.BackupManager.create_backup", return_value=(True, "OK")):
+        panel.tabs.setCurrentIndex(1)  # Backup
+        with patch(
+            "src.core.backup_manager.BackupManager.create_backup",
+            return_value=(True, "OK"),
+        ):
             panel._run_manual_backup()
             # Check if toast shown
-            assert True # Logic reached
+            assert True  # Logic reached

@@ -32,7 +32,7 @@ class TestDocumentProcessorCoverage:
     def test_get_pages_as_images_limit(self, mock_fitz):
         """Verifica conversione in base64 con limite pagine."""
         mock_doc = MagicMock()
-        mock_doc.__len__.return_value = 10 # 10 pagine
+        mock_doc.__len__.return_value = 10  # 10 pagine
 
         mock_page = MagicMock()
         mock_pix = MagicMock()
@@ -62,7 +62,7 @@ class TestDocumentProcessorCoverage:
         """Verifica rilevamento PDF immagine (senza testo)."""
         mock_doc = MagicMock()
         mock_page = MagicMock()
-        mock_page.get_text.return_value = "   " # Solo spazi
+        mock_page.get_text.return_value = "   "  # Solo spazi
         mock_doc.__iter__.return_value = [mock_page]
         mock_fitz.open.return_value = mock_doc
 

@@ -14,6 +14,8 @@ class ModernButton(QPushButton):
     """Pulsante con animazioni e varianti."""
 
     class Variant:
+        """Varianti cromatiche del pulsante basate sul sistema di design."""
+
         PRIMARY = "primary"
         SECONDARY = "secondary"
         SUCCESS = "success"
@@ -21,6 +23,8 @@ class ModernButton(QPushButton):
         GHOST = "ghost"
 
     class Size:
+        """Taglie dimensionali disponibili per il pulsante."""
+
         SMALL = "small"
         MEDIUM = "medium"
         LARGE = "large"
@@ -53,32 +57,38 @@ class ModernButton(QPushButton):
             )
 
     def _setup_animation(self):
+        """Inizializza l'animazione di opacità per l'effetto hover."""
         self._anim = QPropertyAnimation(self, b"hoverOpacity")
         self._anim.setDuration(150)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def get_hover_opacity(self) -> float:
+        """Restituisce il valore corrente dell'opacità hover."""
         return self._hover_opacity
 
     def set_hover_opacity(self, value: float):
+        """Imposta il valore dell'opacità hover e aggiorna lo stile."""
         self._hover_opacity = value
         self._apply_style()
 
     hoverOpacity = pyqtProperty(float, fget=get_hover_opacity, fset=set_hover_opacity)
 
     def enterEvent(self, event):
+        """Avvia l'animazione hover all'ingresso del mouse."""
         self._anim.setStartValue(0.0)
         self._anim.setEndValue(0.1)
         self._anim.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        """Avvia l'animazione di uscita al movimento del mouse."""
         self._anim.setStartValue(0.1)
         self._anim.setEndValue(0.0)
         self._anim.start()
         super().leaveEvent(event)
 
     def _get_colors(self):
+        """Restituisce la coppia di colori (sfondo, testo) in base alla variante."""
         p = self._palette
         colors = {
             self.Variant.PRIMARY: (p.primary, p.on_primary),
@@ -90,6 +100,7 @@ class ModernButton(QPushButton):
         return colors.get(self._variant, (p.primary, p.on_primary))
 
     def _get_size_styles(self):
+        """Restituisce il padding e la dimensione del font in base alla taglia."""
         sizes = {
             self.Size.SMALL: ("8px 12px", "12px"),
             self.Size.MEDIUM: ("10px 20px", "14px"),
@@ -98,6 +109,7 @@ class ModernButton(QPushButton):
         return sizes.get(self._size, sizes[self.Size.MEDIUM])
 
     def _apply_style(self):
+        """Genera e applica il foglio di stile QSS dinamico."""
         bg_color, text_color = self._get_colors()
         padding, font_size = self._get_size_styles()
 

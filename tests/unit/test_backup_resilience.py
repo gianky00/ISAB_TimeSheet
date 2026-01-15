@@ -1,4 +1,3 @@
-
 import os
 import time
 import zipfile
@@ -10,7 +9,6 @@ from src.core.backup_manager import BackupManager
 
 
 class TestBackupResilience:
-
     @pytest.fixture
     def setup_files(self, tmp_path):
         """Prepara file finti da backuppare."""
@@ -25,7 +23,7 @@ class TestBackupResilience:
         cache_dir = source_dir / "cache"
         cache_dir.mkdir()
         (cache_dir / "temp.dat").write_text("cache data")
-        (source_dir / "logs.txt").write_text("logs") # estensione non in INCLUDE_EXT
+        (source_dir / "logs.txt").write_text("logs")  # estensione non in INCLUDE_EXT
 
         backup_dir = tmp_path / "backups"
         backup_dir.mkdir()
@@ -38,7 +36,10 @@ class TestBackupResilience:
 
         # Mocking CONFIG_DIR e target backup dir
         mocker.patch("src.core.backup_manager.CONFIG_DIR", source_dir)
-        mocker.patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir)
+        mocker.patch(
+            "src.core.backup_manager.BackupManager.get_backup_dir",
+            return_value=backup_dir,
+        )
         # Mocking AuditManager instance
         mocker.patch("src.core.backup_manager.AuditManager")
 
@@ -52,8 +53,8 @@ class TestBackupResilience:
             names = zipf.namelist()
             assert "database.db" in names
             assert "config.json" in names
-            assert "cache/temp.dat" not in names # Escluso per directory
-            assert "logs.txt" not in names # Escluso per estensione
+            assert "cache/temp.dat" not in names  # Escluso per directory
+            assert "logs.txt" not in names  # Escluso per estensione
 
     def test_backup_retention_policy(self, setup_files, mocker):
         """Test: Mantieni solo gli ultimi N backup."""

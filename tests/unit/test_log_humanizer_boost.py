@@ -54,7 +54,7 @@ class TestLogHumanizerBoost:
 
     def test_humanize_error_category(self):
         """Verifica categorizzazione errore."""
-        msg = "Eccezione non gestita durante il processo" # 'exception' -> error
+        msg = "Eccezione non gestita durante il processo"  # 'exception' -> error
         human, tech, cat = SmartLogTranslator.humanize(msg)
         assert cat == "error"
         assert human in SmartLogTranslator.TEMPLATES["error"]

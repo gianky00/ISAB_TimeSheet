@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -17,13 +16,20 @@ def qapp():
         app = QApplication([])
     yield app
 
+
 class TestGUIHeadlessHardened:
     @pytest.fixture
     def settings_panel(self, qapp, mocker):
         # Mocking config_manager per evitare scritture su disco
-        mocker.patch("src.core.config_manager.load_config", return_value={"browser_headless": False, "browser_timeout": 30})
+        mocker.patch(
+            "src.core.config_manager.load_config",
+            return_value={"browser_headless": False, "browser_timeout": 30},
+        )
         mocker.patch("src.core.config_manager.set_config_value")
-        mocker.patch("src.core.secrets_manager.SecretsManager.get_gemini_api_key", return_value="fake_key")
+        mocker.patch(
+            "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
+            return_value="fake_key",
+        )
 
         panel = SettingsPanel()
         return panel
@@ -36,14 +42,18 @@ class TestGUIHeadlessHardened:
         settings_panel.headless_check.stateChanged.connect(m_save)
 
         # Simula cambio checkbox headless
-        settings_panel.headless_check.setChecked(not settings_panel.headless_check.isChecked())
+        settings_panel.headless_check.setChecked(
+            not settings_panel.headless_check.isChecked()
+        )
         QApplication.processEvents()
         assert m_save.called
 
     def test_dashboard_greeting_logic(self, qapp, mocker):
         """Verifica il saluto dinamico in base all'ora."""
         # Mock StatsManager per evitare crash nel refresh
-        mocker.patch("src.core.stats_manager.StatsManager.get_all_stats", return_value={})
+        mocker.patch(
+            "src.core.stats_manager.StatsManager.get_all_stats", return_value={}
+        )
 
         # Patch datetime nel modulo dashboard_panel
         mock_datetime = mocker.patch("src.gui.dashboard_panel.datetime")

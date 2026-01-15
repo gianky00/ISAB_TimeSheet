@@ -28,7 +28,9 @@ class TestDettagliOdaBotDeep:
         bot.long_wait = MagicMock()
 
         # Mock page objects
-        with patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage") as mock_page_cls:
+        with patch(
+            "src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage"
+        ) as mock_page_cls:
             mock_page = mock_page_cls.return_value
             mock_page.navigate_to_dettagli.return_value = True
             mock_page.setup_supplier.return_value = True
@@ -38,7 +40,7 @@ class TestDettagliOdaBotDeep:
                 "rows": [],  # Empty rows
                 "fornitore": "F1",
                 "date_da": "01.01.2024",
-                "date_a": "31.12.2024"
+                "date_a": "31.12.2024",
             }
 
             res = bot.run(data)

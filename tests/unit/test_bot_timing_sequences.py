@@ -31,8 +31,12 @@ class TestBotTimingSequences:
 
     @pytest.fixture
     def mock_safework_bot(self):
-        with patch("src.bots.safework.base.SafeworkBaseBot._init_driver"), \
-             patch("src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None):
+        with (
+            patch("src.bots.safework.base.SafeworkBaseBot._init_driver"),
+            patch(
+                "src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None
+            ),
+        ):
             bot = SafeWorkPDLBot("u", "p")
             bot.driver = MagicMock()
             bot.wait = MagicMock()
@@ -56,9 +60,10 @@ class TestBotTimingSequences:
         mock_scarico_bot.wait.until.return_value = mock_el
         mock_scarico_bot.long_wait.until.return_value = mock_el
 
-        with patch("time.sleep") as mock_sleep, \
-             patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
-
+        with (
+            patch("time.sleep") as mock_sleep,
+            patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"),
+        ):
             with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains"):
                 mock_scarico_bot._setup_filters()
 
@@ -68,15 +73,24 @@ class TestBotTimingSequences:
         """Verifica la pausa critica dopo la ricerca di un PDL."""
         data = [{"numero_pdl": "123456"}]
 
-        with patch("time.sleep") as mock_sleep, \
-             patch.object(SafeWorkPDLBot, "_gestisci_alert_ricerca", return_value=False), \
-             patch.object(SafeWorkPDLBot, "_attendi_scomparsa_overlay"), \
-             patch.object(SafeWorkPDLBot, "_attendi_e_ritorna_nuovo_pdf", return_value="f.pdf"), \
-             patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True), \
-             patch("os.rename"), patch("os.remove"), patch("os.path.exists", return_value=True), \
-             patch("builtins.open"), patch("src.bots.safework.pdl.bot.fitz"), \
-             patch.object(mock_safework_bot, "_check_stop"):
-
+        with (
+            patch("time.sleep") as mock_sleep,
+            patch.object(SafeWorkPDLBot, "_gestisci_alert_ricerca", return_value=False),
+            patch.object(SafeWorkPDLBot, "_attendi_scomparsa_overlay"),
+            patch.object(
+                SafeWorkPDLBot, "_attendi_e_ritorna_nuovo_pdf", return_value="f.pdf"
+            ),
+            patch(
+                "src.utils.document_processor.DocumentProcessor.merge_pdfs",
+                return_value=True,
+            ),
+            patch("os.rename"),
+            patch("os.remove"),
+            patch("os.path.exists", return_value=True),
+            patch("builtins.open"),
+            patch("src.bots.safework.pdl.bot.fitz"),
+            patch.object(mock_safework_bot, "_check_stop"),
+        ):
             mock_safework_bot.wait.until.return_value = MagicMock()
             mock_safework_bot.driver.find_element.return_value.is_displayed.return_value = True
 
@@ -92,16 +106,19 @@ class TestBotTimingSequences:
             TimbraturePage,
         )
 
-        with patch("time.sleep") as mock_sleep, \
-             patch.object(TimbraturePage, "_wait_for_overlay"):
-
+        with (
+            patch("time.sleep") as mock_sleep,
+            patch.object(TimbraturePage, "_wait_for_overlay"),
+        ):
             page = TimbraturePage(mock_timbrature_bot.driver)
             # Mock elements
             mock_el = MagicMock()
             page.wait = MagicMock()
             page.wait.until.return_value = mock_el
 
-            with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"):
+            with patch(
+                "src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"
+            ):
                 page.navigate_to_timbrature()
 
             calls = [c.args[0] for c in mock_sleep.call_args_list]
@@ -115,15 +132,18 @@ class TestBotTimingSequences:
             TimbraturePage,
         )
 
-        with patch("time.sleep") as mock_sleep, \
-             patch.object(TimbraturePage, "_wait_for_overlay"):
-
+        with (
+            patch("time.sleep") as mock_sleep,
+            patch.object(TimbraturePage, "_wait_for_overlay"),
+        ):
             page = TimbraturePage(mock_timbrature_bot.driver)
             page.wait = MagicMock()
             page.wait.until.return_value = MagicMock()
 
             # Mock WebDriverWait interno a _select_supplier
-            with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait") as mock_wait_class:
+            with patch(
+                "src.bots.portale_fornitori.timbrature.pages.timbrature_page.WebDriverWait"
+            ) as mock_wait_class:
                 mock_wait_instance = mock_wait_class.return_value
                 mock_wait_instance.until.return_value = MagicMock()
 
@@ -140,10 +160,11 @@ class TestBotTimingSequences:
         dest_dir = Path("dest")
         mock_scarico_bot.wait.until.return_value = MagicMock()
 
-        with patch("time.sleep") as mock_sleep, \
-             patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 40]), \
-             patch("pathlib.Path.iterdir") as mock_iter:
-
+        with (
+            patch("time.sleep") as mock_sleep,
+            patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 40]),
+            patch("pathlib.Path.iterdir") as mock_iter,
+        ):
             mock_iter.side_effect = [[Path("f.crdownload")], [Path("f.crdownload")], []]
 
             mock_scarico_bot._download_excel(source_dir, dest_dir, "ODA", "10")

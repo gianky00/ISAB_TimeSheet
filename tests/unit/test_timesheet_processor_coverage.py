@@ -12,10 +12,7 @@ class TestTimesheetProcessorCoverage:
     @pytest.fixture
     def sample_df(self):
         """Dataframe sample for testing."""
-        return pd.DataFrame({
-            "POS": ["POS1", "POS2", "POS1"],
-            "Ore": [8, 4, 4]
-        })
+        return pd.DataFrame({"POS": ["POS1", "POS2", "POS1"], "Ore": [8, 4, 4]})
 
     def test_process_file_not_found(self, tmp_path):
         """Test elaborazione file non esistente."""
@@ -42,6 +39,7 @@ class TestTimesheetProcessorCoverage:
 
         # Use openpyxl directly to create the file with the required structure
         import openpyxl
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Timesheet"
@@ -60,6 +58,7 @@ class TestTimesheetProcessorCoverage:
         """Test file con Timesheet ma senza colonna POS."""
         file_path = tmp_path / "test_no_pos.xlsx"
         import openpyxl
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Timesheet"
@@ -74,7 +73,7 @@ class TestTimesheetProcessorCoverage:
     def test_process_file_exception(self, tmp_path):
         """Test gestione eccezioni (es. file corrotto o non leggibile)."""
         file_path = tmp_path / "corrupted.xlsx"
-        file_path.write_text("Not an excel file") # Scrive testo, openpyxl fallirà
+        file_path.write_text("Not an excel file")  # Scrive testo, openpyxl fallirà
 
         success, msg = TimesheetProcessor.process_and_move(file_path, dest_dir=tmp_path)
         assert success is False

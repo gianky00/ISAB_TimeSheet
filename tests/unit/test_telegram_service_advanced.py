@@ -7,14 +7,13 @@ from src.core.telegram_manager import TelegramService
 
 
 class TestTelegramServiceAdvanced:
-
     @pytest.fixture
     def service(self, mocker):
         """Fixture per TelegramService con config mockato."""
-        mocker.patch("src.core.config_manager.load_config", return_value={
-            "telegram_token": "FAKE_TOKEN",
-            "telegram_chat_id": "12345"
-        })
+        mocker.patch(
+            "src.core.config_manager.load_config",
+            return_value={"telegram_token": "FAKE_TOKEN", "telegram_chat_id": "12345"},
+        )
         return TelegramService()
 
     def test_start_stop_service_logic(self, service, mocker):
@@ -57,7 +56,7 @@ class TestTelegramServiceAdvanced:
     @pytest.mark.asyncio
     async def test_cmd_start_association(self, service, mocker):
         """Test: Associazione automatica del primo chat_id al comando /start."""
-        service.connected_chat_id = None # Reset
+        service.connected_chat_id = None  # Reset
         mock_set_config = mocker.patch("src.core.config_manager.set_config_value")
 
         mock_update = MagicMock()

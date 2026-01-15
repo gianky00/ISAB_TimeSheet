@@ -4,7 +4,6 @@ from src.utils.printing import get_installed_printers, print_pdf
 
 
 class TestPrinting:
-
     @patch("src.utils.printing.win32print")
     def test_get_installed_printers(self, mock_win32print):
         mock_win32print.EnumPrinters.return_value = [(0, 0, "Printer1", 0)]

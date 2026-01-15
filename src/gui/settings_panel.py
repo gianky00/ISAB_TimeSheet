@@ -926,15 +926,15 @@ class SettingsPanel(QWidget):
         action_layout.addWidget(self.unsaved_label)
 
         self.reset_btn = QPushButton("↩️ Annulla")
-        self.reset_btn.setVisible(False) # Nascosto
+        self.reset_btn.setVisible(False)  # Nascosto
         action_layout.addWidget(self.reset_btn)
 
         self.save_btn = QPushButton("💾 Salva impostazioni")
-        self.save_btn.setVisible(False) # Nascosto
+        self.save_btn.setVisible(False)  # Nascosto
         action_layout.addWidget(self.save_btn)
 
         config_layout.addWidget(self.action_container)
-        self.action_container.setVisible(False) # Nascondi l'intero container
+        self.action_container.setVisible(False)  # Nascondi l'intero container
 
         # Add Config Tab
         self.tabs.addTab(config_tab, "Configurazione")
@@ -1590,7 +1590,7 @@ class SettingsPanel(QWidget):
         dlg = ConfirmationDialog(
             self,
             title="Conferma Eliminazione",
-            message=f"Sei sicuro di voler rimuovere '{item_name}'?"
+            message=f"Sei sicuro di voler rimuovere '{item_name}'?",
         )
         return dlg.exec() == QDialog.DialogCode.Accepted
 

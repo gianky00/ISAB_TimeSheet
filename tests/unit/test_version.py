@@ -9,6 +9,7 @@ def test_version_format():
     # Formato X.Y.Z
     assert re.match(r"^\d+\.\d+\.\d+$", version.__version__)
 
+
 def test_app_constants():
     """Verifica costanti applicazione."""
     assert version.__app_name__ == "SyncroJob"

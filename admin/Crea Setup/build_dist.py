@@ -163,7 +163,10 @@ def create_version_json():
     if not os.path.exists(netlify_dir):
         os.makedirs(netlify_dir)
 
-    version_json = {"version": version, "url": f"https://syncrojob.netlify.app/SyncroJob_Setup_{version}.exe"}
+    version_json = {
+        "version": version,
+        "url": f"https://syncrojob.netlify.app/SyncroJob_Setup_{version}.exe",
+    }
 
     # Write version.json
     json_path = os.path.join(netlify_dir, "version.json")
@@ -291,11 +294,21 @@ def deploy_netlify(netlify_dir):
     try:
         subprocess.run(["netlify", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli")
+        print(
+            "[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli"
+        )
         return False
 
     # Deploy
-    cmd = ["netlify", "deploy", "--prod", "--dir", netlify_dir, "--site", NETLIFY_SITE_ID]
+    cmd = [
+        "netlify",
+        "deploy",
+        "--prod",
+        "--dir",
+        netlify_dir,
+        "--site",
+        NETLIFY_SITE_ID,
+    ]
 
     result = subprocess.run(cmd)
 
@@ -309,7 +322,9 @@ def deploy_netlify(netlify_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
-    parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify deployment")
+    parser.add_argument(
+        "--no-deploy", action="store_true", help="Skip Netlify deployment"
+    )
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
     args = parser.parse_args()
 

@@ -1,4 +1,3 @@
-
 import pytest
 from PyQt6.QtWidgets import QApplication, QComboBox, QTableWidgetItem
 
@@ -34,14 +33,14 @@ class TestExcelTableCoverage:
         """Verifica l'aggiunta di righe sopra e l'aggiornamento opzioni."""
         cols = [
             {"name": "Col1", "type": "text"},
-            {"name": "Col2", "type": "combo", "options": ["A", "B"]}
+            {"name": "Col2", "type": "combo", "options": ["A", "B"]},
         ]
         data_table = EditableDataTable(cols)
 
         # Aggiungi riga sopra (alla prima riga)
         data_table.table.setCurrentCell(0, 0)
         data_table._add_row_above()
-        assert data_table.table.rowCount() == 6 # 5 default + 1
+        assert data_table.table.rowCount() == 6  # 5 default + 1
 
         # Aggiorna opzioni combo
         data_table.update_column_options("Col2", ["C", "D"])

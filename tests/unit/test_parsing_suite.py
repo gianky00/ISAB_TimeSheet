@@ -1,4 +1,3 @@
-
 from src.utils.parsing import parse_currency
 
 

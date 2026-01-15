@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
@@ -20,7 +19,9 @@ class TestLicenseUpdaterAdvanced:
     @pytest.fixture
     def mock_license_dir(self, tmp_path):
         """Mock della directory licenza usando un path temporaneo."""
-        with patch("src.core.license_updater.get_license_dir", return_value=str(tmp_path)):
+        with patch(
+            "src.core.license_updater.get_license_dir", return_value=str(tmp_path)
+        ):
             yield tmp_path
 
     def test_github_token_reconstruction(self):
@@ -33,10 +34,15 @@ class TestLicenseUpdaterAdvanced:
         """Verifica successo periodo di grazia entro i 3 giorni."""
         # Setup: timestamp di 1 giorno fa
         past_time = datetime.now() - timedelta(days=1)
-        mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now(), True))
+        mocker.patch(
+            "src.core.time_manager.get_trusted_time",
+            return_value=(datetime.now(), True),
+        )
 
         # Salva timestamp (usa la logica interna di cifratura)
-        with patch("src.core.time_manager.get_trusted_time", return_value=(past_time, True)):
+        with patch(
+            "src.core.time_manager.get_trusted_time", return_value=(past_time, True)
+        ):
             update_grace_timestamp()
 
         # Verifica
@@ -46,9 +52,14 @@ class TestLicenseUpdaterAdvanced:
         """Verifica fallimento periodo di grazia dopo 3 giorni."""
         # Setup: timestamp di 4 giorni fa
         past_time = datetime.now() - timedelta(days=4)
-        mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now(), True))
+        mocker.patch(
+            "src.core.time_manager.get_trusted_time",
+            return_value=(datetime.now(), True),
+        )
 
-        with patch("src.core.time_manager.get_trusted_time", return_value=(past_time, True)):
+        with patch(
+            "src.core.time_manager.get_trusted_time", return_value=(past_time, True)
+        ):
             update_grace_timestamp()
 
         with pytest.raises(Exception, match="SCADUTO"):
@@ -58,7 +69,10 @@ class TestLicenseUpdaterAdvanced:
         """Verifica blocco in caso di rollback dell'orologio di sistema."""
         # Setup: timestamp di oggi
         now = datetime.now()
-        mocker.patch("src.core.time_manager.get_trusted_time", return_value=(now - timedelta(hours=1), True))
+        mocker.patch(
+            "src.core.time_manager.get_trusted_time",
+            return_value=(now - timedelta(hours=1), True),
+        )
 
         with patch("src.core.time_manager.get_trusted_time", return_value=(now, True)):
             update_grace_timestamp()
@@ -69,7 +83,10 @@ class TestLicenseUpdaterAdvanced:
 
     def test_emergency_grace_period_flow(self, mock_license_dir, mocker):
         """Verifica il ciclo di vita del periodo di emergenza."""
-        mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now(), True))
+        mocker.patch(
+            "src.core.time_manager.get_trusted_time",
+            return_value=(datetime.now(), True),
+        )
 
         # 1. Creazione
         allowed, msg, days = check_emergency_grace_period()
@@ -78,14 +95,19 @@ class TestLicenseUpdaterAdvanced:
         assert os.path.exists(_get_emergency_grace_token_path())
 
         # 2. Verifica (dopo 1 giorno)
-        mocker.patch("src.core.time_manager.get_trusted_time", return_value=(datetime.now() + timedelta(days=1), True))
+        mocker.patch(
+            "src.core.time_manager.get_trusted_time",
+            return_value=(datetime.now() + timedelta(days=1), True),
+        )
         allowed, msg, days = check_emergency_grace_period()
         assert allowed is True
         assert days == 2
 
     def test_run_update_full_success(self, mock_license_dir, mocker):
         """Verifica aggiornamento completo con successo da GitHub."""
-        mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
+        mocker.patch(
+            "src.core.license_validator.get_hardware_id", return_value="FAKE-HWID"
+        )
 
         mock_resp_ok = MagicMock()
         mock_resp_ok.status_code = 200
@@ -100,7 +122,9 @@ class TestLicenseUpdaterAdvanced:
 
     def test_run_update_partial_404(self, mock_license_dir, mocker):
         """Verifica che un 404 su un file interrompa l'aggiornamento."""
-        mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
+        mocker.patch(
+            "src.core.license_validator.get_hardware_id", return_value="FAKE-HWID"
+        )
 
         def mock_get(url, **kwargs):
             resp = MagicMock()
@@ -120,7 +144,9 @@ class TestLicenseUpdaterAdvanced:
 
     def test_run_update_network_error(self, mock_license_dir, mocker):
         """Verifica gestione errore di rete (timeout)."""
-        mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
+        mocker.patch(
+            "src.core.license_validator.get_hardware_id", return_value="FAKE-HWID"
+        )
         mock_print = mocker.patch("builtins.print")
 
         with patch("requests.get", side_effect=requests.exceptions.Timeout("Timeout")):

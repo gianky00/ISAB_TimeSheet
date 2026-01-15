@@ -14,28 +14,33 @@ from src.bots.safework.pdl.bot import SafeWorkPDLBot
 @pytest.fixture(autouse=True)
 def mock_waits():
     """Mock globale delle attese per evitare loop infiniti nei test."""
-    with patch("src.bots.safework.base.WebDriverWait"), \
-         patch("src.bots.safework.pdl.bot.WebDriverWait"):
+    with (
+        patch("src.bots.safework.base.WebDriverWait"),
+        patch("src.bots.safework.pdl.bot.WebDriverWait"),
+    ):
         yield
+
 
 @pytest.fixture(autouse=True)
 def mock_time_and_sleep():
     """Patch time.sleep per non attendere e time.time per i loop di polling."""
     # Simula il tempo che avanza velocemente per rompere i loop 'while time.time() < scadenza'
     current_time = [1000.0]
+
     def fast_time():
         current_time[0] += 10.0
         return current_time[0]
 
-    with patch("time.sleep"), \
-         patch("time.time", side_effect=fast_time):
+    with patch("time.sleep"), patch("time.time", side_effect=fast_time):
         yield
+
 
 @pytest.fixture(autouse=True)
 def mock_settings(tmp_path):
     """Isola i log e i download."""
     with patch("src.bots.safework.pdl.bot.config_manager.CONFIG_DIR", tmp_path):
         yield
+
 
 @pytest.fixture
 def mock_bot(tmp_path):
@@ -47,13 +52,12 @@ def mock_bot(tmp_path):
     os.makedirs(bot.download_path, exist_ok=True)
     return bot
 
+
 def test_run_success_full_workflow(mock_bot, mocker, tmp_path):
     """Test workflow completo di successo per un PDL."""
-    data = [{
-        "pdl_number": "123456",
-        "print_enabled": True,
-        "printer_name": "TestPrinter"
-    }]
+    data = [
+        {"pdl_number": "123456", "print_enabled": True, "printer_name": "TestPrinter"}
+    ]
 
     mock_search_field = MagicMock()
     mock_bot.wait.until.return_value = mock_search_field
@@ -74,13 +78,16 @@ def test_run_success_full_workflow(mock_bot, mocker, tmp_path):
     mock_doc = MagicMock()
     mock_doc.page_count = 1
     mocker.patch("src.bots.safework.pdl.bot.fitz.open", return_value=mock_doc)
-    m_merge = mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
+    m_merge = mocker.patch(
+        "src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True
+    )
     mocker.patch("src.bots.safework.pdl.bot.print_pdf")
 
     success = mock_bot.run(data)
     assert success is True
     assert len(mock_bot.downloaded_files) == 1
     assert m_merge.called
+
 
 def test_run_pdl_not_found(mock_bot, mocker):
     """Test caso PDL non trovato (ricerca estesa fallita)."""
@@ -89,6 +96,7 @@ def test_run_pdl_not_found(mock_bot, mocker):
     success = mock_bot.run(data)
     assert success is True
     assert "999999/C" in mock_bot.missing_pdls
+
 
 def test_run_download_timeout_p1(mock_bot, mocker):
     """Test timeout download Parte 1."""
@@ -100,6 +108,7 @@ def test_run_download_timeout_p1(mock_bot, mocker):
     success = mock_bot.run(data)
     assert success is False
     assert len(mock_bot.downloaded_files) == 0
+
 
 def test_run_alert_handled(mock_bot, mocker, tmp_path):
     """Test gestione alert durante la ricerca."""
@@ -115,10 +124,13 @@ def test_run_alert_handled(mock_bot, mocker, tmp_path):
     mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(side_effect=[str(p1), str(p2)])
 
     mocker.patch("src.bots.safework.pdl.bot.fitz.open")
-    mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
+    mocker.patch(
+        "src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True
+    )
 
     success = mock_bot.run(data)
     assert success is True
+
 
 def test_run_p2_expand_error(mock_bot, mocker, tmp_path):
     """Test errore apertura Parte Seconda."""
@@ -134,6 +146,7 @@ def test_run_p2_expand_error(mock_bot, mocker, tmp_path):
     success = mock_bot.run(data)
     assert success is False
 
+
 def test_run_merge_session_failure(mock_bot, mocker, tmp_path):
     """Test fallimento unione sessione."""
     data = [{"pdl_number": "123456", "merge_all_session": True}]
@@ -145,7 +158,7 @@ def test_run_merge_session_failure(mock_bot, mocker, tmp_path):
     mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(side_effect=[str(p1), str(p2)])
 
     m_merge = mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs")
-    m_merge.side_effect = [True, False] # Success individual, Fail session
+    m_merge.side_effect = [True, False]  # Success individual, Fail session
 
     mocker.patch("src.bots.safework.pdl.bot.fitz.open")
     mocker.patch("os.rename")
@@ -154,6 +167,7 @@ def test_run_merge_session_failure(mock_bot, mocker, tmp_path):
     success = mock_bot.run(data)
     assert success is True
     assert m_merge.call_count == 2
+
 
 def test_check_stop_during_loop(mock_bot, mocker):
     """Test interruzione durante il loop."""

@@ -1,5 +1,3 @@
-
-
 import pytest
 
 from src.core.app_initializer import AppInitializer
@@ -28,7 +26,7 @@ class TestAppInitializerDeep:
         m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
         m_status.side_effect = [
             (LicenseStatus.INVALID, "Missing"),
-            (LicenseStatus.VALID, "OK")
+            (LicenseStatus.VALID, "OK"),
         ]
 
         mock_update = mocker.patch("src.core.app_initializer.run_update")
@@ -45,8 +43,10 @@ class TestAppInitializerDeep:
         m_status.return_value = (LicenseStatus.INVALID, "Expired")
         mocker.patch("src.core.app_initializer.run_update")
 
-        mocker.patch("src.core.app_initializer.check_emergency_grace_period",
-                     return_value=(True, "Grace Active", 3))
+        mocker.patch(
+            "src.core.app_initializer.check_emergency_grace_period",
+            return_value=(True, "Grace Active", 3),
+        )
         mocker.patch("src.core.app_initializer.get_hardware_id", return_value="HWID")
         mocker.patch("src.core.app_initializer.db_manager.init_db")
 
@@ -58,8 +58,10 @@ class TestAppInitializerDeep:
         m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
         m_status.return_value = (LicenseStatus.INVALID, "Banned")
         mocker.patch("src.core.app_initializer.run_update")
-        mocker.patch("src.core.app_initializer.check_emergency_grace_period",
-                     return_value=(False, "Grace Expired", 0))
+        mocker.patch(
+            "src.core.app_initializer.check_emergency_grace_period",
+            return_value=(False, "Grace Expired", 0),
+        )
         mocker.patch("src.core.app_initializer.get_hardware_id", return_value="HWID")
 
         mock_exit = mocker.patch("sys.exit")

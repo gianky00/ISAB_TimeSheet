@@ -1,4 +1,3 @@
-
 import pytest
 
 from src.core.contabilita_queries import ContabilitaQueries
@@ -19,12 +18,16 @@ class TestContabilitaQueriesCoverage:
         """Verifica che la query per anno restituisca tutte le colonne mappate."""
         manager = DatabaseManager()
         # Inserisci riga completa (15 colonne previste dal mapping)
-        manager.execute_query(db_path, "INSERT INTO contabilita (year, n_prev, attivita, odc) VALUES (2024, 'P1', 'A1', 'O1')")
+        manager.execute_query(
+            db_path,
+            "INSERT INTO contabilita (year, n_prev, attivita, odc) VALUES (2024, 'P1', 'A1', 'O1')",
+        )
 
         rows = ContabilitaQueries.get_data_by_year(db_path, 2024)
         assert len(rows) == 1
         # Il numero di colonne restituite deve corrispondere al mapping di ExcelImporter (14 colonne)
         from src.core.excel_importer import ExcelImporter
+
         assert len(rows[0]) == len(ExcelImporter.COLUMNS_MAPPING)
 
     def test_get_available_years_empty_db(self, tmp_path):
@@ -35,8 +38,12 @@ class TestContabilitaQueriesCoverage:
     def test_get_scarico_ore_data_sorting(self, db_path):
         """Verifica ordinamento decrescente (id DESC) per scarico ore."""
         manager = DatabaseManager()
-        manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')")
-        manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Ultima')")
+        manager.execute_query(
+            db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')"
+        )
+        manager.execute_query(
+            db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Ultima')"
+        )
 
         rows = ContabilitaQueries.get_scarico_ore_data(db_path)
         # La colonna 'descrizione' è all'indice 8 nel mapping SCARICO_ORE_COLS

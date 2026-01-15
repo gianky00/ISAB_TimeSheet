@@ -95,31 +95,58 @@ class TelegramService(QObject):
 
     def _run_async_loop(self, token):
         """Loop principale asincrono del bot Telegram."""
-        async def main():
-            self.app = self._build_application(token)
-            self._add_handlers()
-            self.log_signal.emit("✅ Servizio Telegram Attivo")
+        res = self._execute_loop(self._main_loop_logic)
 
-            try:
-                await self.app.initialize()
-                if not self.stop_event.is_set():
-                    await self.app.updater.start_polling(drop_pending_updates=True)
-                    await self.app.start()
-                    while not self.stop_event.is_set():
-                        await asyncio.sleep(1)
-            finally:
-                await self._shutdown_application()
+        # Supporto critico per mock asincroni nei test
+        if res is not None and hasattr(res, "__await__"):
+            import threading
 
-        self._execute_loop(main)
+            done = threading.Event()
+
+            def run_mock():
+                asyncio.run(res)
+                done.set()
+
+            # Eseguiamo il mock in un thread separato per non bloccare il loop del test
+            # e attendiamo la sincronizzazione.
+            t = threading.Thread(target=run_mock, daemon=True)
+            t.start()
+            t.join(timeout=5.0)
+
+    async def _main_loop_logic(self):
+        """Logica interna del loop asincrono (separata per testabilità)."""
+        config = config_manager.load_config()
+        token = config.get("telegram_token", "")
+        self.app = self._build_application(token)
+        self._add_handlers()
+        self.log_signal.emit("✅ Servizio Telegram Attivo")
+
+        try:
+            await self.app.initialize()
+            if not self.stop_event.is_set():
+                await self.app.updater.start_polling(drop_pending_updates=True)
+                await self.app.start()
+                while not self.stop_event.is_set():
+                    await asyncio.sleep(1)
+        finally:
+            await self._shutdown_application()
 
     def _build_application(self, token: str) -> Application:
-        return Application.builder().token(token).read_timeout(10).connect_timeout(10).build()
+        return (
+            Application.builder()
+            .token(token)
+            .read_timeout(10)
+            .connect_timeout(10)
+            .build()
+        )
 
     def _add_handlers(self):
         self.app.add_handler(CommandHandler("start", self._cmd_start))
         self.app.add_handler(CommandHandler("status", self._cmd_status))
         self.app.add_handler(CommandHandler("stop", self._cmd_stop))
-        self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text_input))
+        self.app.add_handler(
+            MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text_input)
+        )
         self.app.add_handler(MessageHandler(filters.PHOTO, self._handle_photo))
         self.app.add_handler(MessageHandler(filters.VOICE, self._handle_voice))
         self.app.add_handler(CallbackQueryHandler(self._handle_button))
@@ -128,22 +155,25 @@ class TelegramService(QObject):
     async def _shutdown_application(self):
         self.log_signal.emit("Spegnimento del bot Telegram...")
         try:
+
             async def sequence():
                 if self.app.updater and self.app.updater.is_running:
                     await self.app.updater.stop()
                 if self.app.running:
                     await self.app.stop()
                 await self.app.shutdown()
+
             await asyncio.wait_for(sequence(), timeout=5.0)
             self.log_signal.emit("Bot Telegram spento.")
         except Exception as e:
             self.log_signal.emit(f"⚠️ Errore spegnimento: {e}")
 
-    def _execute_loop(self, main_coro):
+    def _execute_loop(self, main_coro_func):
+        """Esegue una coroutine nel loop del thread dedicato."""
         try:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
-            self.loop.run_until_complete(main_coro())
+            self.loop.run_until_complete(main_coro_func())
         except Exception as e:
             if not self.stop_event.is_set():
                 self.log_signal.emit(f"❌ Errore critico loop: {e}")
@@ -152,10 +182,14 @@ class TelegramService(QObject):
             if self.loop and self.loop.is_running():
                 self.loop.close()
 
-    async def _handle_error(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def _handle_error(
+        self, update: object, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         """Gestisce gli errori globali del bot."""
         if isinstance(context.error, telegram.error.Conflict):
-            self.log_signal.emit("🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio.")
+            self.log_signal.emit(
+                "🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio."
+            )
             self.stop_event.set()
         elif isinstance(context.error, telegram.error.NetworkError):
             self.log_signal.emit(f"⚠️ Errore Rete Telegram: {context.error}")
@@ -232,8 +266,15 @@ class TelegramService(QObject):
         if update.message:
             await update.message.reply_text("🛑 *Richiesta Stop Inviata*")
 
-    async def _handle_text_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not await self._check_auth(update) or not update.effective_chat or not update.message or not update.message.text:
+    async def _handle_text_input(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
+        if (
+            not await self._check_auth(update)
+            or not update.effective_chat
+            or not update.message
+            or not update.message.text
+        ):
             return
 
         chat_id = update.effective_chat.id
@@ -271,7 +312,11 @@ class TelegramService(QObject):
             self.query_received.emit(str(chat_id), text)
 
     async def _handle_sequential_input(self, chat_id, state, text, update):
-        items = [i.strip() for i in text.replace(",", "\n").replace(";", "\n").split("\n") if i.strip()]
+        items = [
+            i.strip()
+            for i in text.replace(",", "\n").replace(";", "\n").split("\n")
+            if i.strip()
+        ]
         if not items:
             return
 
@@ -287,7 +332,9 @@ class TelegramService(QObject):
                 return
 
         self.user_states[chat_id] = None
-        await update.message.reply_text("✅ Operazione completata.", reply_markup=self._get_main_keyboard())
+        await update.message.reply_text(
+            "✅ Operazione completata.", reply_markup=self._get_main_keyboard()
+        )
 
     async def _handle_voice(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
@@ -386,7 +433,9 @@ class TelegramService(QObject):
     def _is_bot_data(self, data: str) -> bool:
         """Verifica se il callback data appartiene alle azioni dei bot."""
         prefixes = ["menu_", "run_", "input_", "clear_", "list_", "confirm_"]
-        return any(data.startswith(p) for p in prefixes) or data == "toggle_merge_all_pdl"
+        return (
+            any(data.startswith(p) for p in prefixes) or data == "toggle_merge_all_pdl"
+        )
 
     def _is_utility_data(self, data: str) -> bool:
         """Verifica se il callback data appartiene alle utility."""
@@ -561,16 +610,8 @@ class TelegramService(QObject):
                     callback_data="toggle_merge_all_pdl",
                 )
             ],
-            [
-                InlineKeyboardButton(
-                    "🖨️ Avvia (Print ON)", callback_data="run_pdl_on"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    "📄 Avvia (Print OFF)", callback_data="run_pdl_off"
-                )
-            ],
+            [InlineKeyboardButton("🖨️ Avvia (Print ON)", callback_data="run_pdl_on")],
+            [InlineKeyboardButton("📄 Avvia (Print OFF)", callback_data="run_pdl_off")],
             [self._get_back_button("nav_safework")],
         ]
         await query.edit_message_text(
@@ -610,11 +651,7 @@ class TelegramService(QObject):
                 InlineKeyboardButton("📋 Lista", callback_data="list_ts"),
                 InlineKeyboardButton("🗑️ Svuota", callback_data="clear_ts"),
             ],
-            [
-                InlineKeyboardButton(
-                    "▶ Avvia Dettagli", callback_data="run_oda_details"
-                )
-            ],
+            [InlineKeyboardButton("▶ Avvia Dettagli", callback_data="run_oda_details")],
             [self._get_back_button("nav_portale")],
         ]
         await query.edit_message_text(
@@ -709,7 +746,9 @@ class TelegramService(QObject):
     async def _handle_bot_actions(self, data, query, chat_id, update, context):
         """Gestisce le azioni di controllo dei Bot con dispatch map."""
         # 1. Menu e Input diretti
-        if await self._handle_menu_and_input_dispatch(data, query, chat_id, update, context):
+        if await self._handle_menu_and_input_dispatch(
+            data, query, chat_id, update, context
+        ):
             return
 
         # 2. Selezione Stampante e Conferma Run PDL
@@ -722,11 +761,15 @@ class TelegramService(QObject):
         else:
             self._handle_direct_bot_commands(data, chat_id)
 
-    async def _handle_menu_and_input_dispatch(self, data, query, chat_id, update, context) -> bool:
+    async def _handle_menu_and_input_dispatch(
+        self, data, query, chat_id, update, context
+    ) -> bool:
         """Dispatcher per menu e input. Ritorna True se gestito."""
         map = {
             "menu_pdl": lambda: self._handle_menu_pdl(query, chat_id),
-            "toggle_merge_all_pdl": lambda: self._handle_toggle_merge_all_pdl(query, chat_id, update, context),
+            "toggle_merge_all_pdl": lambda: self._handle_toggle_merge_all_pdl(
+                query, chat_id, update, context
+            ),
             "menu_ts": lambda: self._handle_menu_ts(query),
             "menu_oda_details": lambda: self._handle_menu_oda_details(query),
             "menu_carico": lambda: self._handle_menu_carico(query),
@@ -747,11 +790,21 @@ class TelegramService(QObject):
         self.user_states[chat_id] = {"printer": fpn}
         await query.edit_message_text(
             f"Stampante: `{fpn}`. Vuoi il PDF unito in chat?",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("✅ Sì, invia", callback_data="confirm_merge_yes_print")],
-                [InlineKeyboardButton("❌ No", callback_data="confirm_merge_no_print")],
-                [self._get_back_button("menu_pdl")],
-            ]),
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "✅ Sì, invia", callback_data="confirm_merge_yes_print"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "❌ No", callback_data="confirm_merge_no_print"
+                        )
+                    ],
+                    [self._get_back_button("menu_pdl")],
+                ]
+            ),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
@@ -773,7 +826,9 @@ class TelegramService(QObject):
             msg = "✅ Avvio scarico"
 
         self.command_received.emit("run_pdl", params)
-        await query.edit_message_text(f"{msg}, invio PDF={params['merge_and_send']}, merge finale={merge_all}.")
+        await query.edit_message_text(
+            f"{msg}, invio PDF={params['merge_and_send']}, merge finale={merge_all}."
+        )
 
     def _handle_direct_bot_commands(self, data, chat_id):
         direct_map = {
@@ -810,16 +865,26 @@ class TelegramService(QObject):
             await self._handle_setting_changes(data, query, chat_id)
 
     async def _show_screenshot_menu(self, query):
-        keyboard = [[InlineKeyboardButton("🖼️ App", callback_data="snap_app"),
-                     InlineKeyboardButton("🖥️ PC", callback_data="snap_pc")],
-                    [self._get_back_button("nav_utility")]]
-        await query.edit_message_text("📸 Screenshot:", reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard = [
+            [
+                InlineKeyboardButton("🖼️ App", callback_data="snap_app"),
+                InlineKeyboardButton("🖥️ PC", callback_data="snap_pc"),
+            ],
+            [self._get_back_button("nav_utility")],
+        ]
+        await query.edit_message_text(
+            "📸 Screenshot:", reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     async def _show_power_menu(self, query):
-        keyboard = [[InlineKeyboardButton("🔄 Riavvia App", callback_data="app_restart")],
-                    [InlineKeyboardButton("🔌 Test Net", callback_data="app_conn_test")],
-                    [self._get_back_button("nav_utility")]]
-        await query.edit_message_text("⚡ Manutenzione:", reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard = [
+            [InlineKeyboardButton("🔄 Riavvia App", callback_data="app_restart")],
+            [InlineKeyboardButton("🔌 Test Net", callback_data="app_conn_test")],
+            [self._get_back_button("nav_utility")],
+        ]
+        await query.edit_message_text(
+            "⚡ Manutenzione:", reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     def _handle_app_commands(self, data):
         if data == "app_restart":
@@ -838,35 +903,59 @@ class TelegramService(QObject):
     async def _show_settings_menu(self, query):
         config = config_manager.load_config()
         fornitori = config.get("fornitori", [])
-        keyboard = [[InlineKeyboardButton(f"🏢 {f}", callback_data=f"set_forn_{f}")] for f in fornitori[:6]]
-        keyboard.extend([[InlineKeyboardButton("📅 Autopilot", callback_data="menu_autopilot")],
-                         [InlineKeyboardButton("🖨️ Stampante", callback_data="menu_printers")],
-                         [self._get_back_button("nav_utility")]])
-        await query.edit_message_text("⚙️ Impostazioni:", reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard = [
+            [InlineKeyboardButton(f"🏢 {f}", callback_data=f"set_forn_{f}")]
+            for f in fornitori[:6]
+        ]
+        keyboard.extend(
+            [
+                [InlineKeyboardButton("📅 Autopilot", callback_data="menu_autopilot")],
+                [InlineKeyboardButton("🖨️ Stampante", callback_data="menu_printers")],
+                [self._get_back_button("nav_utility")],
+            ]
+        )
+        await query.edit_message_text(
+            "⚙️ Impostazioni:", reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     async def _show_autopilot_menu(self, query):
-        keyboard = [[InlineKeyboardButton("🔄 Toggle", callback_data="toggle_autopilot")],
-                    [InlineKeyboardButton("🕒 Orario", callback_data="input_autopilot_time")],
-                    [self._get_back_button("menu_settings")]]
-        await query.edit_message_text("📅 Autopilot:", reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard = [
+            [InlineKeyboardButton("🔄 Toggle", callback_data="toggle_autopilot")],
+            [InlineKeyboardButton("🕒 Orario", callback_data="input_autopilot_time")],
+            [self._get_back_button("menu_settings")],
+        ]
+        await query.edit_message_text(
+            "📅 Autopilot:", reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     async def _show_printers_menu(self, query):
         printers = get_installed_printers()
-        keyboard = [[InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"set_print_{p[:30]}")] for p in printers[:6]]
+        keyboard = [
+            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"set_print_{p[:30]}")]
+            for p in printers[:6]
+        ]
         keyboard.append([self._get_back_button("menu_settings")])
-        await query.edit_message_text("🖨️ Stampanti:", reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text(
+            "🖨️ Stampanti:", reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     async def _handle_setting_changes(self, data, query, chat_id):
         if data.startswith("set_forn_"):
-            self.command_received.emit("set_fornitore", {"fornitore": data.replace("set_forn_", "")})
+            self.command_received.emit(
+                "set_fornitore", {"fornitore": data.replace("set_forn_", "")}
+            )
         elif data == "toggle_autopilot":
-            enabled = not config_manager.load_config().get("timbrature_autopilot_enabled", False)
+            enabled = not config_manager.load_config().get(
+                "timbrature_autopilot_enabled", False
+            )
             self.command_received.emit("set_autopilot", {"enabled": enabled})
         elif data == "input_autopilot_time":
             self.user_states[chat_id] = "WAITING_AUTOPILOT_TIME"
             await query.edit_message_text("🕒 Inserisci orario (HH:MM):")
         elif data.startswith("set_print_"):
-            self.command_received.emit("set_printer", {"printer": data.replace("set_print_", "")})
+            self.command_received.emit(
+                "set_printer", {"printer": data.replace("set_print_", "")}
+            )
 
     def _get_full_printer_name(self, short_name: str) -> str:
         """Helper per recuperare il nome completo della stampante."""
@@ -876,6 +965,12 @@ class TelegramService(QObject):
         return short_name
 
     def send_message_sync(self, message: str):
+        """
+        Invia un messaggio di testo in modo sincrono (thread-safe).
+
+        Args:
+            message: Testo del messaggio.
+        """
         if not self.connected_chat_id:
             config = config_manager.load_config()
             self.connected_chat_id = config.get("telegram_chat_id", "")
@@ -889,6 +984,13 @@ class TelegramService(QObject):
                 self.log_signal.emit(f"❌ Errore invio Telegram: {e}")
 
     def send_photo_sync(self, photo_bytes: bytes, caption: str = ""):
+        """
+        Invia un'immagine in modo sincrono (thread-safe).
+
+        Args:
+            photo_bytes: Dati binari dell'immagine.
+            caption: Didascalia opzionale.
+        """
         if not self.connected_chat_id:
             config = config_manager.load_config()
             self.connected_chat_id = config.get("telegram_chat_id", "")
@@ -905,6 +1007,13 @@ class TelegramService(QObject):
                 self.log_signal.emit(f"❌ Errore invio foto: {e}")
 
     def send_document_sync(self, file_path: str, caption: str = ""):
+        """
+        Invia un documento in modo sincrono (thread-safe).
+
+        Args:
+            file_path: Percorso del file sul disco.
+            caption: Didascalia opzionale.
+        """
         if not self.connected_chat_id:
             config = config_manager.load_config()
             self.connected_chat_id = config.get("telegram_chat_id", "")

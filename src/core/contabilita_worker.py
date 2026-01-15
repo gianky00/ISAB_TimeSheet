@@ -34,7 +34,13 @@ class ContabilitaWorker(QThread):
             self.start_time = time.time()
 
             # Stato interno accumulato
-            state = {"added": 0, "removed": 0, "messages": [], "success": False, "total_ops": total_ops}
+            state = {
+                "added": 0,
+                "removed": 0,
+                "messages": [],
+                "success": False,
+                "total_ops": total_ops,
+            }
 
             # Esecuzione fasi
             self._phase_import_contabilita(state)
@@ -44,8 +50,11 @@ class ContabilitaWorker(QThread):
 
             duration = time.time() - self.start_time
             self.finished_signal.emit(
-                state["success"], " | ".join(state["messages"]),
-                state["added"], state["removed"], duration
+                state["success"],
+                " | ".join(state["messages"]),
+                state["added"],
+                state["removed"],
+                duration,
             )
         except Exception as e:
             self.finished_signal.emit(False, f"Errore critico: {e}", 0, 0, 0.0)
@@ -53,10 +62,14 @@ class ContabilitaWorker(QThread):
     def _calculate_total_ops(self) -> int:
         """Calcola il numero totale di operazioni per la barra di progresso."""
         self.progress_signal.emit("⏳ Analisi carico di lavoro...")
-        sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
+        sheets, files = ContabilitaManager.scan_workload(
+            self.file_path, self.giornaliere_path
+        )
 
         attivita = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
-        certificati = 1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
+        certificati = (
+            1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
+        )
 
         total = sheets + files + attivita + certificati
         return total if total > 0 else 1
@@ -84,9 +97,16 @@ class ContabilitaWorker(QThread):
 
         success, msg, added, removed = ContabilitaManager.import_data_from_excel(
             self.file_path,
-            progress_callback=lambda c, t: self._emit_progress(c, 0, state)
+            progress_callback=lambda c, t: self._emit_progress(c, 0, state),
         )
-        self._update_state(state, success, added, removed, f"Contabilità: OK (+{added}/-{removed})", f"Err Contabilità: {msg}")
+        self._update_state(
+            state,
+            success,
+            added,
+            removed,
+            f"Contabilità: OK (+{added}/-{removed})",
+            f"Err Contabilità: {msg}",
+        )
 
     def _phase_import_giornaliere(self, state):
         if not self.giornaliere_path:
@@ -98,32 +118,51 @@ class ContabilitaWorker(QThread):
 
         success, msg, added, removed = ContabilitaManager.import_giornaliere(
             self.giornaliere_path,
-            progress_callback=lambda c, t: self._emit_progress(c, sheets, state)
+            progress_callback=lambda c, t: self._emit_progress(c, sheets, state),
         )
-        self._update_state(state, success, added, removed, f"Giornaliere: OK (+{added}/-{removed})", f"Err Giornaliere: {msg}")
+        self._update_state(
+            state,
+            success,
+            added,
+            removed,
+            f"Giornaliere: OK (+{added}/-{removed})",
+            f"Err Giornaliere: {msg}",
+        )
 
     def _phase_import_attivita(self, state):
         if not self.attivita_path:
             return
 
-        success, msg, added, removed = ContabilitaManager.import_attivita_programmate(self.attivita_path)
+        success, msg, added, removed = ContabilitaManager.import_attivita_programmate(
+            self.attivita_path
+        )
         # Offset manuale per l'attivita (fine delle giornaliere)
-        sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
+        sheets, files = ContabilitaManager.scan_workload(
+            self.file_path, self.giornaliere_path
+        )
         self._emit_progress(1, sheets + files, state)
 
-        self._update_state(state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}")
+        self._update_state(
+            state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}"
+        )
 
     def _phase_import_certificati(self, state):
         if not self.certificati_path:
             return
 
-        success, msg, added, removed = ContabilitaManager.import_certificati_campione(self.certificati_path)
+        success, msg, added, removed = ContabilitaManager.import_certificati_campione(
+            self.certificati_path
+        )
         # Offset per certificati
-        sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
+        sheets, files = ContabilitaManager.scan_workload(
+            self.file_path, self.giornaliere_path
+        )
         att_task = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
         self._emit_progress(1, sheets + files + att_task, state)
 
-        self._update_state(state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}")
+        self._update_state(
+            state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}"
+        )
 
     def _update_state(self, state, success, added, removed, ok_msg, err_msg):
         state["added"] += added

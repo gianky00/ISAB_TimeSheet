@@ -20,11 +20,13 @@ def test_get_key_from_env():
         res = SecretsManager._get_key_from_env()
         assert res == test_key_bytes
 
+
 def test_get_key_from_env_invalid():
     """Test variabile d'ambiente non valida."""
     with patch.dict(os.environ, {"SYNCROJOB_LICENSE_KEY": "!!!not_b64!!!"}):
         res = SecretsManager._get_key_from_env()
         assert res is None
+
 
 def test_get_key_from_env_file(tmp_path):
     """Test caricamento da file .env."""
@@ -37,6 +39,7 @@ def test_get_key_from_env_file(tmp_path):
         res = SecretsManager._get_key_from_env_file()
         assert res == test_key_bytes
 
+
 def test_get_env_file_path_logic():
     """Test logica path file .env."""
     # Scenario standard (non frozen)
@@ -45,10 +48,13 @@ def test_get_env_file_path_logic():
         assert path.name == ".env"
 
     # Scenario frozen (PyInstaller)
-    with patch.object(sys, "frozen", True, create=True), \
-         patch.object(sys, "executable", "C:\\App\\app.exe"):
+    with (
+        patch.object(sys, "frozen", True, create=True),
+        patch.object(sys, "executable", "C:\\App\\app.exe"),
+    ):
         path = SecretsManager._get_env_file_path()
         assert path == Path("C:\\App\\.env")
+
 
 def test_get_key_from_keyring():
     """Test caricamento da keyring."""
@@ -58,18 +64,21 @@ def test_get_key_from_keyring():
         res = SecretsManager._get_key_from_keyring()
         assert res == test_key_bytes
 
+
 def test_get_fallback_key():
     """Test fallback hardcoded."""
     res = SecretsManager._get_fallback_key()
     assert res is not None
     assert len(res) == 32
 
+
 def test_get_license_key_priority():
     """Verifica le priorità di caricamento."""
-    with patch.object(SecretsManager, "_get_key_from_env", return_value=b"env"), \
-         patch.object(SecretsManager, "_get_key_from_env_file", return_value=b"file"), \
-         patch.object(SecretsManager, "_get_key_from_keyring", return_value=b"keyring"):
-
+    with (
+        patch.object(SecretsManager, "_get_key_from_env", return_value=b"env"),
+        patch.object(SecretsManager, "_get_key_from_env_file", return_value=b"file"),
+        patch.object(SecretsManager, "_get_key_from_keyring", return_value=b"keyring"),
+    ):
         # Priority 1: Env
         assert SecretsManager.get_license_key() == b"env"
 
@@ -78,18 +87,27 @@ def test_get_license_key_priority():
             assert SecretsManager.get_license_key() == b"file"
 
             # Priority 3: Keyring
-            with patch.object(SecretsManager, "_get_key_from_env_file", return_value=None):
+            with patch.object(
+                SecretsManager, "_get_key_from_env_file", return_value=None
+            ):
                 assert SecretsManager.get_license_key() == b"keyring"
 
                 # Priority 4: Fallback
-                with patch.object(SecretsManager, "_get_key_from_keyring", return_value=None):
-                    assert SecretsManager.get_license_key() == SecretsManager._get_fallback_key()
+                with patch.object(
+                    SecretsManager, "_get_key_from_keyring", return_value=None
+                ):
+                    assert (
+                        SecretsManager.get_license_key()
+                        == SecretsManager._get_fallback_key()
+                    )
+
 
 def test_is_available():
     with patch("keyring.get_password", return_value="ok"):
         assert SecretsManager.is_available() is True
     with patch("keyring.get_password", side_effect=Exception()):
         assert SecretsManager.is_available() is False
+
 
 def test_credentials_wrappers():
     with patch.object(SecretsManager, "get_credential", return_value="fake"):
@@ -98,14 +116,18 @@ def test_credentials_wrappers():
         assert SecretsManager.get_openai_key() == "fake"
         assert SecretsManager.get_gemini_api_key() == "fake"
 
+
 def test_derive_key():
     key = SecretsManager.derive_key("pass", b"salt")
     assert isinstance(key, bytes)
     assert len(key) > 0
 
+
 def test_store_delete_credential():
-    with patch("keyring.set_password") as m_set, \
-         patch("keyring.delete_password") as m_del:
+    with (
+        patch("keyring.set_password") as m_set,
+        patch("keyring.delete_password") as m_del,
+    ):
         SecretsManager.store_credential("svc", "usr", "pwd")
         m_set.assert_called_once()
         SecretsManager.delete_credential("svc", "usr")

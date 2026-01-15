@@ -20,10 +20,11 @@ class TestSecuritySuite:
         fake_salt_file = fake_key_dir / "encryption.salt"
 
         # Patching class attributes
-        with patch.object(PasswordManager, '_KEY_DIR', fake_key_dir), \
-             patch.object(PasswordManager, '_KEY_FILE', fake_key_file), \
-             patch.object(PasswordManager, '_SALT_FILE', fake_salt_file):
-
+        with (
+            patch.object(PasswordManager, "_KEY_DIR", fake_key_dir),
+            patch.object(PasswordManager, "_KEY_FILE", fake_key_file),
+            patch.object(PasswordManager, "_SALT_FILE", fake_salt_file),
+        ):
             self.pm = PasswordManager()
             yield
 
@@ -56,6 +57,7 @@ class TestSecuritySuite:
         # Creiamo un ciphertext legacy valido
         # Per farlo, dobbiamo usare la stessa chiave del PM corrente
         from cryptography.fernet import Fernet
+
         fernet = Fernet(self.pm._key)
         raw_enc = fernet.encrypt(b"LegacySecret").decode()
         legacy_cipher = f"ENC:{raw_enc}"
@@ -81,7 +83,7 @@ class TestSecuritySuite:
         # Il file chiave dovrebbe essere stato sovrascritto con una chiave valida
         content = new_pm._KEY_FILE.read_bytes()
         assert content != b"TrashData"
-        assert len(content) > 30 # Fernet key length base64 encoded
+        assert len(content) > 30  # Fernet key length base64 encoded
 
     def test_decrypt_error_returns_empty(self):
         """Test gestione errori decrypt."""

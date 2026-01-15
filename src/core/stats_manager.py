@@ -10,11 +10,17 @@ from src.core import config_manager
 
 
 class StatsManager:
+    """
+    Gestore delle statistiche di utilizzo dei bot.
+    Utilizza il pattern Singleton e salva i dati nel file di configurazione globale.
+    """
+
     _instance = None
 
     def __new__(cls):
+        """Assicura un'unica istanza del manager."""
         if cls._instance is None:
-            cls._instance = super(StatsManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._init()
         return cls._instance
 

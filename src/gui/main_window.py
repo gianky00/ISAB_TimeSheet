@@ -45,6 +45,7 @@ from src.gui.widgets.update_banner import UpdateBanner
 
 class PageIndex(IntEnum):
     """Indici delle pagine nello StackedWidget principale."""
+
     DASHBOARD = 0
     AUTOMAZIONI = 1
     LYRA = 2
@@ -401,6 +402,7 @@ class MainWindow(QMainWindow):
 
     # Wrapper per compatibilità
     def navigate_to_panel(self, panel_key: str):
+        """Naviga verso il pannello specificato tramite chiave stringa."""
         self.navigation_controller.navigate_to_panel(panel_key)
 
     def _navigate_to(self, index: int):
@@ -443,12 +445,18 @@ class MainWindow(QMainWindow):
                 self.timbrature_db_panel.search_input.setText(query)
 
     def analyze_with_lyra(self, context_text: str):
+        """Passa il contesto a Lyra e naviga verso il pannello AI."""
         self.navigation_controller.analyze_with_lyra(context_text)
 
     def show_settings(self):
+        """Mostra il pannello delle impostazioni."""
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
     def closeEvent(self, event):
+        """
+        Gestisce l'evento di chiusura della finestra.
+        Se non forzata, nasconde l'applicazione nel tray.
+        """
         if self._force_quit:
             if self.telegram:
                 self.telegram.stop_service()

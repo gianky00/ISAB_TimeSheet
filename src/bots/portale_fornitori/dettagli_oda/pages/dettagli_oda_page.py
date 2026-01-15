@@ -22,18 +22,32 @@ from src.utils.helpers import sanitize_filename
 
 
 class DettagliOdAPage:
+    """
+    Page Object Model per la gestione della pagina Dettagli OdA (Ordini di Acquisto).
+    Fornisce metodi per navigare, filtrare ed esportare i dettagli degli ordini.
+    """
+
     def __init__(
         self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None
     ):
+        """
+        Inizializza la pagina con il driver Selenium e la callback di log.
+
+        Args:
+            driver: Istanza di WebDriver.
+            log_callback: Callback opzionale per l'output dei log.
+        """
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
         self._log = log_callback or print
 
-    def log(self, msg):
+    def log(self, msg: str):
+        """Inoltra un messaggio alla callback di log configurata."""
         self._log(msg)
 
     def _wait_for_overlay(self):
+        """Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili."""
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
@@ -44,6 +58,14 @@ class DettagliOdAPage:
             pass
 
     def navigate_to_dettagli(self, is_first_row: bool = True) -> bool:
+        """
+        Naviga nel menu del portale fino alla pagina dei Dettagli OdA.
+
+        Args:
+            is_first_row: Se True, esegue un click singolo, altrimenti tenta il doppio click per robustezza.
+        Returns:
+            bool: True se la navigazione ha avuto successo.
+        """
         try:
             self.expand_sidebar_if_collapsed()
             self.log("Navigazione menu Report -> Oda...")
@@ -80,6 +102,14 @@ class DettagliOdAPage:
             return False
 
     def setup_supplier(self, supplier: str) -> bool:
+        """
+        Seleziona il fornitore dal menu a discesa della pagina.
+
+        Args:
+            supplier: Nome del fornitore da selezionare.
+        Returns:
+            bool: True se la selezione ha avuto successo.
+        """
         try:
             self.log(f"Selezione fornitore: {supplier}")
             arrow = self.wait.until(
@@ -103,6 +133,7 @@ class DettagliOdAPage:
             return False
 
     def logout(self):
+        """Esegue la procedura di logout specifica per questa area del portale."""
         try:
             self.log("Esecuzione logout...")
             # 1. Click Settings (using specific ID provided)
@@ -171,6 +202,19 @@ class DettagliOdAPage:
         source_dir: Path,
         dest_dir: Path,
     ) -> bool:
+        """
+        Compila il form di ricerca per un OdA e avvia l'esportazione dei dati.
+
+        Args:
+            oda: Numero OdA (opzionale).
+            contract: Numero contratto.
+            date_da: Data inizio (gg.mm.aaaa).
+            date_a: Data fine (gg.mm.aaaa).
+            source_dir: Directory di download del browser.
+            dest_dir: Directory di destinazione finale.
+        Returns:
+            bool: True se l'operazione è completata con successo.
+        """
         try:
             # 1. Fill Form
             js_set_value = """
@@ -285,7 +329,7 @@ class DettagliOdAPage:
             return False
 
     def _close_all_tabs(self):
-        """Closes all open tabs using the X button."""
+        """Chiude tutte le schede aperte nel portale cliccando sull'icona X."""
         try:
             # Find all close buttons. We might need to iterate or they might be dynamic.
             # Usually ExtJS tabs have a close tool.
@@ -309,10 +353,20 @@ class DettagliOdAPage:
         except Exception as e:
             self.log(f"  ⚠️ Errore chiusura tab: {e}")
 
-    def _download(self, source_dir: Path, dest_dir: Path, target_filename: str, button_locator: tuple) -> bool:
+    def _download(
+        self,
+        source_dir: Path,
+        dest_dir: Path,
+        target_filename: str,
+        button_locator: tuple,
+    ) -> bool:
         """Esegue il download, attende il file e lo sposta nella cartella finale."""
         try:
-            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            files_before = {
+                f
+                for f in source_dir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".xlsx"
+            }
 
             if not self._click_export_button(button_locator):
                 return False
@@ -328,9 +382,12 @@ class DettagliOdAPage:
             return False
 
     def _click_export_button(self, locator: tuple) -> bool:
+        """Tenta di cliccare il pulsante di esportazione Excel gestendo intercettazioni."""
         try:
             btn = self.wait.until(EC.presence_of_element_located(locator))
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center'});", btn
+            )
             time.sleep(0.5)
             try:
                 btn.click()
@@ -341,13 +398,18 @@ class DettagliOdAPage:
             return False
 
     def _wait_for_download(self, source_dir: Path, files_before: set) -> Optional[Path]:
+        """Attende il completamento del download monitorando la directory sorgente."""
         start = time.time()
         while time.time() - start < Timeouts.DOWNLOAD:
             if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
                 time.sleep(0.5)
                 continue
 
-            current = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            current = {
+                f
+                for f in source_dir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".xlsx"
+            }
             new_files = current - files_before
             if new_files:
                 return max(list(new_files), key=lambda f: f.stat().st_mtime)
@@ -355,7 +417,9 @@ class DettagliOdAPage:
         return None
 
     def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> bool:
+        """Sposta il file scaricato nella destinazione finale rinominandolo."""
         import shutil
+
         dest_dir.mkdir(parents=True, exist_ok=True)
         target_path = dest_dir / target_name
 

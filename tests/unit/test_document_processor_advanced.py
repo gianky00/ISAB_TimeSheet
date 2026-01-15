@@ -1,4 +1,3 @@
-
 import base64
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -9,7 +8,6 @@ from src.utils.document_processor import DocumentProcessor
 
 
 class TestDocumentProcessorAdvanced:
-
     @pytest.fixture
     def mock_fitz(self, mocker):
         """Mock globale per fitz (PyMuPDF)."""
@@ -36,7 +34,7 @@ class TestDocumentProcessorAdvanced:
     def test_get_pages_as_images_limit(self, mock_fitz):
         """Test: Conversione in base64 con limite pagine."""
         mock_doc = MagicMock()
-        mock_doc.__len__.return_value = 10 # PDF da 10 pagine
+        mock_doc.__len__.return_value = 10  # PDF da 10 pagine
 
         mock_page = MagicMock()
         mock_pix = MagicMock()
@@ -78,9 +76,9 @@ class TestDocumentProcessorAdvanced:
         """Test: Logica di unione PDF."""
         mock_out_doc = MagicMock()
         mock_fitz.open.side_effect = [
-            mock_out_doc, # Primo call per output
-            MagicMock(),   # Call per file 1
-            MagicMock()    # Call per file 2
+            mock_out_doc,  # Primo call per output
+            MagicMock(),  # Call per file 1
+            MagicMock(),  # Call per file 2
         ]
 
         success = DocumentProcessor.merge_pdfs(["f1.pdf", "f2.pdf"], "merged.pdf")
@@ -95,4 +93,4 @@ class TestDocumentProcessorAdvanced:
         mock_fitz.open.side_effect = Exception("Corrupted File")
 
         text = DocumentProcessor.extract_text(Path("corrupt.pdf"))
-        assert text == "" # Non deve crashare
+        assert text == ""  # Non deve crashare

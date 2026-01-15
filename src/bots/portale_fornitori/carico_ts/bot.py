@@ -11,6 +11,7 @@ from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPa
 
 class CaricoTSBot(BaseBot):
     """Bot per l'estrazione e il caricamento dei dati Timesheet sul Portale Fornitori."""
+
     FORNITORE = "KK10608 - COEMI S.R.L."
 
     @staticmethod
@@ -71,6 +72,7 @@ class CaricoTSBot(BaseBot):
         return True, ""
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
+        """Esegue il processo di caricamento dei Timesheet per ogni riga di dati."""
         # Il driver è garantito da execute()
         rows = data if isinstance(data, list) else data.get("rows", [])
 

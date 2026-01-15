@@ -47,7 +47,9 @@ class TimesheetProcessor:
             pos_values, first_pos_cleaned = TimesheetProcessor._analyze_pos_column(ws)
 
             # 2. Generazione Percorso Destinazione
-            dest_path = TimesheetProcessor._get_destination_path(dest_dir, odc, pos_values, first_pos_cleaned)
+            dest_path = TimesheetProcessor._get_destination_path(
+                dest_dir, odc, pos_values, first_pos_cleaned
+            )
 
             # 3. Trasformazione Foglio (Headers, Pulizia, Eliminazione, Autofit)
             TimesheetProcessor._apply_transformations(ws)
@@ -90,7 +92,9 @@ class TimesheetProcessor:
         return val
 
     @staticmethod
-    def _get_destination_path(dest_dir: Path, odc: str, pos_values: set[str], pos_cleaned: str) -> Path:
+    def _get_destination_path(
+        dest_dir: Path, odc: str, pos_values: set[str], pos_cleaned: str
+    ) -> Path:
         """Determina il nome file finale gestendo conflitti e conteggio POS."""
         if len(pos_values) > 1:
             base = f"{odc}_TS"
@@ -109,9 +113,18 @@ class TimesheetProcessor:
         """Applica tutte le modifiche strutturali al foglio di lavoro."""
         # 1. Rinomina Intestazioni
         headers = {
-            "B1": "POS", "C1": "Data", "N1": "Ing", "O1": "Usc",
-            "P1": "Tot", "Q1": "Pre", "R1": "ORE_C", "S1": "ORE_M",
-            "T1": "ORE_ST_NOT", "U1": "ORE_ST_DIU", "V1": "ORE_FEST_NOT", "W1": "ORE_FEST_DIU",
+            "B1": "POS",
+            "C1": "Data",
+            "N1": "Ing",
+            "O1": "Usc",
+            "P1": "Tot",
+            "Q1": "Pre",
+            "R1": "ORE_C",
+            "S1": "ORE_M",
+            "T1": "ORE_ST_NOT",
+            "U1": "ORE_ST_DIU",
+            "V1": "ORE_FEST_NOT",
+            "W1": "ORE_FEST_DIU",
         }
         for cell, val in headers.items():
             ws[cell].value = val

@@ -17,7 +17,10 @@ class TestExcelTableWidgetDeep:
         table.clear_selection()
 
     def test_editable_data_table(self, qapp, qtbot):
-        cols = [{"name": "Col1", "type": "text"}, {"name": "Col2", "type": "combo", "options": ["A", "B"]}]
+        cols = [
+            {"name": "Col1", "type": "text"},
+            {"name": "Col2", "type": "combo", "options": ["A", "B"]},
+        ]
         edt = EditableDataTable(cols)
         qtbot.addWidget(edt)
 
@@ -38,6 +41,7 @@ class TestExcelTableWidgetDeep:
         table.setColumnCount(1)
         table.setRowCount(1)
         from PyQt6.QtWidgets import QTableWidgetItem
+
         table.setItem(0, 0, QTableWidgetItem("Test"))
 
         table.set_row_status(0, "completato")

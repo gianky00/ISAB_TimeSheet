@@ -1,4 +1,3 @@
-
 import sqlite3
 
 import pandas as pd
@@ -45,7 +44,7 @@ class TestE2EWorkflowsHardened:
             "RESA": ["100", "100"],
             "ANNOTAZIONI": ["Nessuna", "Note"],
             "INDIRIZZO CONSUNTIVO": ["C:/test", "C:/test2"],
-            "NOME FILE": ["test.pdf", "test2.pdf"]
+            "NOME FILE": ["test.pdf", "test2.pdf"],
         }
         df = pd.DataFrame(df_data)
         with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
@@ -53,16 +52,35 @@ class TestE2EWorkflowsHardened:
             df.to_excel(writer, sheet_name="DATI 2024", index=False)
 
         # 3. Importazione via ExcelImporter
-        success, msg, rows, years = ExcelImporter.import_contabilita_dati(str(excel_path))
+        success, msg, rows, years = ExcelImporter.import_contabilita_dati(
+            str(excel_path)
+        )
         assert success is True, f"Import fallito: {msg}"
         assert len(rows) > 0
 
         # 4. Salvataggio nel DB
         # ExcelImporter restituisce tuple (year, data_prev, mese, n_prev, totale_prev, attivita, tcl, odc, ...)
-        cols = ["year", "data_prev", "mese", "n_prev", "totale_prev", "attivita", "tcl", "odc",
-                "stato_attivita", "tipologia", "ore_sp", "resa", "annotazioni", "indirizzo_consuntivo", "nome_file"]
+        cols = [
+            "year",
+            "data_prev",
+            "mese",
+            "n_prev",
+            "totale_prev",
+            "attivita",
+            "tcl",
+            "odc",
+            "stato_attivita",
+            "tipologia",
+            "ore_sp",
+            "resa",
+            "annotazioni",
+            "indirizzo_consuntivo",
+            "nome_file",
+        ]
         placeholders = ", ".join(["?"] * len(cols))
-        insert_query = f"INSERT INTO contabilita ({', '.join(cols)}) VALUES ({placeholders})"
+        insert_query = (
+            f"INSERT INTO contabilita ({', '.join(cols)}) VALUES ({placeholders})"
+        )
 
         # Inserimento della prima riga importata
         # Assicuriamoci che la tupla abbia la lunghezza corretta (15 colonne)
@@ -74,7 +92,9 @@ class TestE2EWorkflowsHardened:
 
         # 5. Verifica indicizzazione FTS5 (Ricerca testuale "Meccanica")
         # Il trigger AI inserisce in contabilita_fts(rowid, n_prev, attivita, odc, annotazioni)
-        search_query = "SELECT attivita FROM contabilita_fts WHERE attivita MATCH 'Meccanica'"
+        search_query = (
+            "SELECT attivita FROM contabilita_fts WHERE attivita MATCH 'Meccanica'"
+        )
         results = db_mgr.execute_query(db_path, search_query)
 
         assert len(results) > 0, "Dato non trovato in FTS5 dopo l'inserimento!"
@@ -95,7 +115,10 @@ class TestE2EWorkflowsHardened:
         conn.close()
 
         # 2. Avvio Sentinel
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[])
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[],
+        )
         sentinel = LyraSentinel()
 
         # Monitoriamo i segnali
@@ -107,7 +130,11 @@ class TestE2EWorkflowsHardened:
 
         # 3. Trigger Notifica
         notif_mgr = NotificationManager.instance()
-        notif_mgr.add_notification("Anomalia Rilevata", f"Trovate {anomalies_count[0]} timbrature errate", level="error")
+        notif_mgr.add_notification(
+            "Anomalia Rilevata",
+            f"Trovate {anomalies_count[0]} timbrature errate",
+            level="error",
+        )
 
         # 4. Verifica persistenza notifica
         assert notif_mgr.get_unread_count() == 1

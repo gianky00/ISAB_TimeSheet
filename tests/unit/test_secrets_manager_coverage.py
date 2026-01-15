@@ -1,14 +1,13 @@
-
 import base64
 import os
-import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 import keyring
+import pytest
 
 from src.core.secrets_manager import SecretsManager
+
 
 class TestSecretsManager:
     @pytest.fixture
@@ -26,7 +25,7 @@ class TestSecretsManager:
         """Test retrieving license key from environment variable."""
         valid_key_b64 = "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
         os.environ["SYNCROJOB_LICENSE_KEY"] = valid_key_b64
-        
+
         key = SecretsManager.get_license_key()
         assert key == base64.urlsafe_b64decode(valid_key_b64)
 
@@ -43,10 +42,12 @@ class TestSecretsManager:
     def test_get_license_key_priority_keyring(self, mock_env, mock_keyring):
         """Test retrieving license key from keyring when others missing."""
         valid_key_b64 = "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
-        keyring.get_password.return_value = valid_key_b64 # mocked
+        keyring.get_password.return_value = valid_key_b64  # mocked
 
         # Ensure env file fallback fails
-        with patch.object(SecretsManager, "_get_env_file_path", return_value=Path("non_existent")):
+        with patch.object(
+            SecretsManager, "_get_env_file_path", return_value=Path("non_existent")
+        ):
             key = SecretsManager.get_license_key()
             assert key == base64.urlsafe_b64decode(valid_key_b64)
             keyring.get_password.assert_called_with("SyncroJob", "license_key")
@@ -54,16 +55,18 @@ class TestSecretsManager:
     def test_get_license_key_fallback(self, mock_env, mock_keyring):
         """Test fallback hardcoded key."""
         keyring.get_password.return_value = None
-        with patch.object(SecretsManager, "_get_env_file_path", return_value=Path("non_existent")):
-             key = SecretsManager.get_license_key()
-             # Should be the hardcoded one
-             expected_b64 = "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
-             assert key == base64.urlsafe_b64decode(expected_b64)
+        with patch.object(
+            SecretsManager, "_get_env_file_path", return_value=Path("non_existent")
+        ):
+            key = SecretsManager.get_license_key()
+            # Should be the hardcoded one
+            expected_b64 = "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
+            assert key == base64.urlsafe_b64decode(expected_b64)
 
     def test_get_api_keys(self, mock_keyring):
         """Test retrieval of various API keys."""
         keyring.get_password.return_value = "secret_value"
-        
+
         assert SecretsManager.get_exa_api_key() == "secret_value"
         keyring.get_password.assert_called_with("SyncroJob_api", "exa_api_key")
 

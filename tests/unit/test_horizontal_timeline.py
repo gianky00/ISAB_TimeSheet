@@ -1,4 +1,3 @@
-
 from src.gui.widgets.timeline_widget import HorizontalTimelineWidget, LogWidget
 
 # The 'qapp' fixture is automatically provided by pytest-qt and ensures a

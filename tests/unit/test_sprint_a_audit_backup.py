@@ -40,11 +40,24 @@ class TestSprintAAuditBackup:
         with sqlite3.connect(audit_mgr.DB_PATH) as conn:
             # 100 giorni fa (ISO format per coerenza)
             past_date = "2020-01-01T10:00:00.000000"
-            conn.execute("INSERT INTO audit_logs (timestamp, action, severity, status, category, user_id, params, row_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                         (past_date, "Old", "low", "success", "gen", "u", "{}", "fakehash"))
+            conn.execute(
+                "INSERT INTO audit_logs (timestamp, action, severity, status, category, user_id, params, row_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (past_date, "Old", "low", "success", "gen", "u", "{}", "fakehash"),
+            )
             # Oggi
-            conn.execute("INSERT INTO audit_logs (timestamp, action, severity, status, category, user_id, params, row_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                         ("2026-01-12T10:00:00.000000", "New", "low", "success", "gen", "u", "{}", "fakehash2"))
+            conn.execute(
+                "INSERT INTO audit_logs (timestamp, action, severity, status, category, user_id, params, row_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    "2026-01-12T10:00:00.000000",
+                    "New",
+                    "low",
+                    "success",
+                    "gen",
+                    "u",
+                    "{}",
+                    "fakehash2",
+                ),
+            )
             conn.commit()
 
         audit_mgr.run_retention_policy(days=30)
@@ -71,7 +84,10 @@ class TestSprintAAuditBackup:
         backup_dir = tmp_path / "MyBackups"
         backup_dir.mkdir()
 
-        with patch("src.core.backup_manager.BackupManager.get_backup_dir", return_value=backup_dir):
+        with patch(
+            "src.core.backup_manager.BackupManager.get_backup_dir",
+            return_value=backup_dir,
+        ):
             success, zip_path = BackupManager.create_backup()
 
             assert success is True

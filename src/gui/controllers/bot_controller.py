@@ -67,4 +67,3 @@ class BotController(QObject):
         return None
 
     # Removed update_global_status as it's no longer relevant with separate cards
-

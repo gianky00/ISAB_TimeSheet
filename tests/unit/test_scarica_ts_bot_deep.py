@@ -28,13 +28,17 @@ class TestScaricaTSBotDeep:
         bot.wait = MagicMock()
         bot.long_wait = MagicMock()
 
-        data = {"rows": [{"numero_oda": "12345", "posizione_oda": "10"}], "fornitore": "F1"}
+        data = {
+            "rows": [{"numero_oda": "12345", "posizione_oda": "10"}],
+            "fornitore": "F1",
+        }
 
-        with patch.object(bot, "_navigate_to_timesheet", return_value=True), \
-             patch.object(bot, "_setup_filters", return_value=True), \
-             patch.object(bot, "_download_excel", return_value=Path("test.xlsx")), \
-             patch.object(bot, "_check_stop"):
-
+        with (
+            patch.object(bot, "_navigate_to_timesheet", return_value=True),
+            patch.object(bot, "_setup_filters", return_value=True),
+            patch.object(bot, "_download_excel", return_value=Path("test.xlsx")),
+            patch.object(bot, "_check_stop"),
+        ):
             # Mock internal waits to avoid import issues
             bot.wait.until = MagicMock()
 
@@ -49,12 +53,13 @@ class TestScaricaTSBotDeep:
         dest_dir = Path("./fake_dest")
 
         # Mocking time.time to control the loop
-        with patch("pathlib.Path.iterdir") as mock_iter, \
-             patch("pathlib.Path.exists", return_value=True), \
-             patch("pathlib.Path.unlink"), \
-             patch("pathlib.Path.mkdir"), \
-             patch("shutil.move") as mock_move:
-
+        with (
+            patch("pathlib.Path.iterdir") as mock_iter,
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.unlink"),
+            patch("pathlib.Path.mkdir"),
+            patch("shutil.move") as mock_move,
+        ):
             # Setup mock file
             new_file = MagicMock(spec=Path)
             new_file.suffix = ".xlsx"
@@ -68,11 +73,11 @@ class TestScaricaTSBotDeep:
             # Simulate: Before download (empty), During (crdownload), After (xlsx)
             # We need enough items to satisfy all calls
             mock_iter.side_effect = [
-                set(), # files_before
-                set(), # _wait_for_new_file -> any (.crdownload)
-                {new_file}, # _wait_for_new_file -> current_files (.xlsx)
-                set(), # extra fallback
-                set()
+                set(),  # files_before
+                set(),  # _wait_for_new_file -> any (.crdownload)
+                {new_file},  # _wait_for_new_file -> current_files (.xlsx)
+                set(),  # extra fallback
+                set(),
             ]
 
             with patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):

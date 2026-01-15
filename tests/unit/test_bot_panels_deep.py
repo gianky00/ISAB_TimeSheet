@@ -15,6 +15,7 @@ def mock_ui_deps(mocker):
     mocker.patch("src.utils.helpers.get_asset_path", return_value="")
     return mocker
 
+
 def test_base_bot_panel_logic(qtbot, mock_ui_deps):
     panel = BaseBotPanel("test_bot", "Test Bot", "Description")
     qtbot.addWidget(panel)
@@ -30,6 +31,7 @@ def test_base_bot_panel_logic(qtbot, mock_ui_deps):
     panel._on_bot_finished(True)
     assert panel.start_btn.isEnabled() is True
     assert panel.stop_btn.isEnabled() is False
+
 
 def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
     panel = ScaricaTSPanel()
@@ -47,6 +49,7 @@ def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
     ready, msg = panel.validate_ready()
     assert ready is True
 
+
 def test_carico_ts_panel_deep(qtbot, mock_ui_deps):
     panel = CaricoTSPanel()
     qtbot.addWidget(panel)
@@ -58,7 +61,8 @@ def test_carico_ts_panel_deep(qtbot, mock_ui_deps):
     # Test reset
     panel.log_widget.clear()
     panel.log_widget.append_log("Test")
-    panel._on_stop() # Should stop worker if exists
+    panel._on_stop()  # Should stop worker if exists
+
 
 def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):
     panel = DettagliOdAPanel()
@@ -70,6 +74,7 @@ def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):
     # Test adding rows
     panel.add_rows_simple([{"numero_oda": "999"}])
     assert panel.data_table.get_data()[0]["numero_oda"] == "999"
+
 
 @patch("src.gui.panels.BotWorker")
 def test_bot_worker_integration(mock_worker_cls, qtbot, mock_ui_deps):

@@ -18,7 +18,7 @@ def mock_bot(tmp_path):
         username="test_user",
         password="test_password",
         fornitore="Test Fornitore",
-        download_path=str(tmp_path / "dest")
+        download_path=str(tmp_path / "dest"),
     )
     bot.driver = MagicMock()
     bot.wait = MagicMock()
@@ -27,17 +27,19 @@ def mock_bot(tmp_path):
     os.makedirs(bot.download_path, exist_ok=True)
     return bot
 
+
 @pytest.fixture(autouse=True)
 def mock_time_and_sleep():
     """Mock time.sleep e time.time per i test."""
     current_time = [1000.0]
+
     def fast_time():
         current_time[0] += 5.0
         return current_time[0]
 
-    with patch("time.sleep"), \
-         patch("time.time", side_effect=fast_time):
+    with patch("time.sleep"), patch("time.time", side_effect=fast_time):
         yield
+
 
 def test_validate_data(mock_bot):
     # Valid data
@@ -49,6 +51,7 @@ def test_validate_data(mock_bot):
     mock_bot.fornitore = "F"
     assert mock_bot.validate_data([])[0] is False
 
+
 def test_run_success_standard(mock_bot, mocker, tmp_path):
     """Test workflow standard senza elaborazione TS."""
     data = [{"numero_oda": "ODA1", "posizione_oda": "10"}]
@@ -57,7 +60,9 @@ def test_run_success_standard(mock_bot, mocker, tmp_path):
     mocker.patch.object(mock_bot, "_setup_filters", return_value=True)
     mocker.patch.object(mock_bot, "_attendi_scomparsa_overlay")
 
-    mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.Path.home", return_value=tmp_path)
+    mocker.patch(
+        "src.bots.portale_fornitori.scarico_ts.bot.Path.home", return_value=tmp_path
+    )
 
     final_file = tmp_path / "dest" / "TS_ODA1-10.xlsx"
     mocker.patch.object(mock_bot, "_download_excel", return_value=final_file)
@@ -65,6 +70,7 @@ def test_run_success_standard(mock_bot, mocker, tmp_path):
     success = mock_bot.run(data)
     assert success is True
     assert mock_bot._download_excel.called
+
 
 def test_run_with_elabora_ts(mock_bot, mocker, tmp_path):
     """Test workflow con elaborazione TS (Logica VBA)."""
@@ -77,11 +83,15 @@ def test_run_with_elabora_ts(mock_bot, mocker, tmp_path):
     final_file = tmp_path / "downloads" / "TS_ODA1.xlsx"
     mocker.patch.object(mock_bot, "_download_excel", return_value=final_file)
 
-    m_proc = mocker.patch("src.core.timesheet_processor.TimesheetProcessor.process_and_move", return_value=(True, "OK"))
+    m_proc = mocker.patch(
+        "src.core.timesheet_processor.TimesheetProcessor.process_and_move",
+        return_value=(True, "OK"),
+    )
 
     success = mock_bot.run(data)
     assert success is True
     assert m_proc.called
+
 
 def test_download_excel_logic(mock_bot, mocker, tmp_path):
     """Test interno di _download_excel."""
@@ -112,6 +122,7 @@ def test_download_excel_logic(mock_bot, mocker, tmp_path):
         args, _ = m_move.call_args
         assert "TS_ODA123-10.xlsx" in str(args[1])
 
+
 def test_download_excel_elabora_ts_true(mock_bot, mocker, tmp_path):
     """Test _download_excel quando elabora_ts è True (rinomina solo in temp)."""
     source_dir = tmp_path / "Downloads"
@@ -135,9 +146,11 @@ def test_download_excel_elabora_ts_true(mock_bot, mocker, tmp_path):
         args, _ = m_move.call_args
         assert str(source_dir) in str(args[1])
 
+
 def test_navigate_to_timesheet_failure(mock_bot, mocker):
     mock_bot.wait.until.side_effect = Exception("Element not found")
     assert mock_bot._navigate_to_timesheet() is False
+
 
 def test_setup_filters_failure(mock_bot, mocker):
     mock_bot.wait.until.side_effect = Exception("Filter error")

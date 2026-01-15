@@ -30,9 +30,9 @@ class AutomazioniWidget(QTabWidget):
 
         # Aggiungi i tab a Portale Fornitori
         self.tab_fornitori.addTab(self.panel_dettagli, "📋 Dettagli OdA")
-        self.tab_fornitori.addTab(self.panel_prenota, "🎫 Prenota BP")
         self.tab_fornitori.addTab(self.panel_scarico, "📥 Scarico TS")
         self.tab_fornitori.addTab(self.panel_timbrature, "⏱️ Timbrature")
+        self.tab_fornitori.addTab(self.panel_prenota, "🎫 Prenota BP")
         self.tab_fornitori.addTab(self.panel_carico, "📤 Carico TS")
 
         # --- TAB 2: SafeWork ---
@@ -56,12 +56,13 @@ class AutomazioniWidget(QTabWidget):
 
         # Registrazione Controller (se presente)
         if hasattr(self.mw, "bot_controller"):
-            self.mw.bot_controller.register_panels([
-                self.panel_dettagli,
-                self.panel_prenota,
-                self.panel_scarico,
-                self.panel_timbrature,
-                self.panel_carico,
-                self.panel_pdl
-            ])
-
+            self.mw.bot_controller.register_panels(
+                [
+                    self.panel_dettagli,
+                    self.panel_prenota,
+                    self.panel_scarico,
+                    self.panel_timbrature,
+                    self.panel_carico,
+                    self.panel_pdl,
+                ]
+            )

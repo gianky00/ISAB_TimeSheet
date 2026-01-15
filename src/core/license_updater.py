@@ -119,17 +119,22 @@ def check_grace_period():
         cipher = Fernet(GRACE_PERIOD_KEY)
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         last_online = datetime.fromisoformat(decrypted_data)
-        if last_online.tzinfo:
-            last_online = last_online.replace(tzinfo=None)
 
         now, is_trusted = time_manager.get_trusted_time()
-        if now.tzinfo:
-            now = now.replace(tzinfo=None)
 
-        if now < last_online - timedelta(minutes=5):
+        from datetime import timezone
+
+        def to_utc(dt):
+            """Converte in UTC aware. Se naive, assume orario locale di sistema."""
+            return dt.astimezone(timezone.utc)
+
+        now_utc = to_utc(now)
+        last_online_utc = to_utc(last_online)
+
+        if now_utc < last_online_utc - timedelta(minutes=5):
             raise Exception("Rilevata incoerenza orologio di sistema.")
 
-        days_offline = (now - last_online).days
+        days_offline = (now_utc - last_online_utc).days
         if days_offline >= 3:
             raise Exception(
                 "Periodo di grazia offline (3 giorni) SCADUTO.\n"
@@ -169,16 +174,19 @@ def check_emergency_grace_period():
         cipher = Fernet(GRACE_PERIOD_KEY)
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         start_time = datetime.fromisoformat(decrypted_data)
-        if start_time.tzinfo:
-            start_time = start_time.replace(tzinfo=None)
-        
-        if current_time.tzinfo:
-            current_time = current_time.replace(tzinfo=None)
 
-        if current_time < start_time - timedelta(minutes=60):
+        from datetime import timezone
+
+        def to_utc(dt):
+            return dt.astimezone(timezone.utc)
+
+        now_utc = to_utc(current_time)
+        start_utc = to_utc(start_time)
+
+        if now_utc < start_utc - timedelta(minutes=60):
             return False, "Rilevata manipolazione orologio di sistema", 0
 
-        elapsed = current_time - start_time
+        elapsed = now_utc - start_utc
         if elapsed.days >= 3:
             return False, "Periodo di grazia di 3 giorni SCADUTO.", 0
 
@@ -209,6 +217,7 @@ def is_license_folder_empty() -> bool:
     manifest_json = os.path.join(license_dir, "manifest.json")
     return not (os.path.exists(config_dat) and os.path.exists(manifest_json))
 
+
 def run_update() -> bool:
     """Controlla e scarica aggiornamenti licenza da GitHub."""
     print("[LICENZA] ═══════════════════════════════════════════════")
@@ -232,6 +241,7 @@ def run_update() -> bool:
 
     print("[LICENZA] ═══════════════════════════════════════════════")
     return success
+
 
 def _ensure_license_dir(path: str) -> bool:
     """Assicura l'esistenza della cartella licenza."""
@@ -266,6 +276,7 @@ def _download_license_files(base_url: str) -> Tuple[Dict[str, bytes], Optional[s
         except requests.RequestException:
             return {}, "Offline - Impossibile aggiornare"
     return downloaded, None
+
 
 def _save_license_files(license_dir: str, files: Dict[str, bytes]) -> bool:
     """Salva i file scaricati su disco."""

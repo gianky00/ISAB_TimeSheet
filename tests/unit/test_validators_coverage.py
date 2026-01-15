@@ -1,6 +1,5 @@
+from src.utils.validators import InputValidator
 
-import pytest
-from src.utils.validators import InputValidator, ValidationResult
 
 class TestValidators:
     def test_validate_pdl(self):
@@ -8,22 +7,22 @@ class TestValidators:
         res = InputValidator.validate_pdl("123456/C")
         assert res.valid is True
         assert res.sanitized_value == "123456/C"
-        
+
         # Valid PDL lowercase
         res = InputValidator.validate_pdl("123456/s")
         assert res.valid is True
         assert res.sanitized_value == "123456/S"
-        
+
         # Auto-suffix S
         res = InputValidator.validate_pdl("123456")
         assert res.valid is True
         assert res.sanitized_value == "123456/S"
-        
+
         # Auto-suffix C
         res = InputValidator.validate_pdl("456789")
         assert res.valid is True
         assert res.sanitized_value == "456789/C"
-        
+
         # Invalid
         res = InputValidator.validate_pdl("abc")
         assert res.valid is False
@@ -33,10 +32,10 @@ class TestValidators:
         res = InputValidator.validate_oda("ODA123")
         assert res.valid is True
         assert res.sanitized_value == "ODA123"
-        
+
         res = InputValidator.validate_oda("")
         assert res.valid is False
-        
+
         res = InputValidator.validate_oda("A" * 21)
         assert res.valid is False
         assert "troppo lungo" in res.error
@@ -46,10 +45,10 @@ class TestValidators:
         valid_cf = "RSSMRA80A01H501U"
         res = InputValidator.validate_codice_fiscale(valid_cf)
         assert res.valid is True
-        
+
         # Invalid length
         assert InputValidator.validate_codice_fiscale("ABC").valid is False
-        
+
         # Invalid checksum
         assert InputValidator.validate_codice_fiscale("GNCALR80A01H501A").valid is False
 

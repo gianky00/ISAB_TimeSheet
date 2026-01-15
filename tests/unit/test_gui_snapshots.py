@@ -8,7 +8,6 @@ from src.gui.scarico_ore_panel import ScaricoOrePanel
 
 
 class TestGuiSnapshots:
-
     @pytest.fixture
     def mock_deps(self, mock_ui_dependencies):
         return mock_ui_dependencies
@@ -25,7 +24,7 @@ class TestGuiSnapshots:
 
             # Check Tabs
             # ContabilitaPanel uses a QTabWidget named 'main_tabs'
-            assert panel.main_tabs.count() >= 3 # Dati, Preventivi, Riepilogo, etc.
+            assert panel.main_tabs.count() >= 3  # Dati, Preventivi, Riepilogo, etc.
 
     def test_scarico_ore_panel_instantiation(self, qtbot, mock_deps):
         """Verify ScaricoOrePanel can be instantiated."""

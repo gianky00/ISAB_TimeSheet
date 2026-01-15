@@ -38,6 +38,10 @@ class HorizontalLogItem(QWidget):
     """Widget per singolo elemento della timeline log orizzontale."""
 
     def __init__(self, human_msg, tech_msg, category, timestamp, parent=None):
+        """
+        Inizializza un elemento log con icona, messaggio umano e timestamp.
+        Supporta screenshot integrati e pulsanti di correzione rapida (FixIt).
+        """
         super().__init__(parent)
         self.setFixedSize(180, 150)
 
@@ -105,16 +109,22 @@ class HorizontalLogItem(QWidget):
         top_row.addWidget(lbl_icon)
 
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 12px; font-family: monospace;")
+        lbl_time.setStyleSheet(
+            "color: #adb5bd; font-size: 12px; font-family: monospace;"
+        )
         top_row.addWidget(lbl_time)
 
         top_row.addStretch()
         layout.addLayout(top_row)
 
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 13px; color: #212529;")
+        self.lbl_human.setStyleSheet(
+            "font-weight: bold; font-size: 13px; color: #212529;"
+        )
         self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_human.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addWidget(self.lbl_human)
 
         layout.addStretch()
@@ -127,8 +137,12 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(30, 24)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #dc3545; color: white; border-radius: 4px; font-size: 12px;")
-            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
+            btn.setStyleSheet(
+                "background-color: #dc3545; color: white; border-radius: 4px; font-size: 12px;"
+            )
+            btn.clicked.connect(
+                lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path))
+            )
             action_layout.addWidget(btn)
 
         if fixit_action == "ACCOUNT":
@@ -136,7 +150,9 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(30, 24)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #ffc107; color: black; border-radius: 4px; font-size: 12px;")
+            btn.setStyleSheet(
+                "background-color: #ffc107; color: black; border-radius: 4px; font-size: 12px;"
+            )
             btn.clicked.connect(self._open_settings)
             action_layout.addWidget(btn)
 
@@ -153,8 +169,12 @@ class HorizontalLogItem(QWidget):
                 btn.setFixedSize(30, 24)
                 btn.setToolTip(f"Apri: {Path(path).name}")
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet("background-color: #17a2b8; color: white; border-radius: 4px; font-size: 12px;")
-                btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
+                btn.setStyleSheet(
+                    "background-color: #17a2b8; color: white; border-radius: 4px; font-size: 12px;"
+                )
+                btn.clicked.connect(
+                    lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p))
+                )
                 action_layout.addWidget(btn)
 
         action_layout.addStretch()
@@ -162,11 +182,13 @@ class HorizontalLogItem(QWidget):
             layout.addLayout(action_layout)
 
     def set_count(self, count):
+        """Aggiorna il contatore dei log consecutivi identici."""
         current_text = self.lbl_human.text()
         base = current_text.split(" (x")[0]
         self.lbl_human.setText(f"{base} (x{count})")
 
     def _open_settings(self):
+        """Apre il pannello impostazioni per correggere problemi di configurazione."""
         parent = self.window()
         if hasattr(parent, "show_settings"):
             parent.show_settings()
@@ -176,6 +198,7 @@ class HorizontalTimelineContainer(QWidget):
     """Container interno che disegna la linea di connessione."""
 
     def __init__(self, parent=None):
+        """Inizializza il layout orizzontale del container."""
         super().__init__(parent)
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(10, 5, 10, 5)
@@ -184,6 +207,7 @@ class HorizontalTimelineContainer(QWidget):
         self.setMinimumHeight(160)
 
     def paintEvent(self, event):
+        """Disegna una linea di connessione grigia tra gli elementi del log."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         line_y = 30
@@ -210,6 +234,7 @@ class HorizontalTimelineWidget(QScrollArea):
     """Widget Timeline Orizzontale con animazioni."""
 
     def __init__(self, parent=None):
+        """Inizializza l'area di scorrimento orizzontale."""
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -223,6 +248,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.consecutive_count = 0
 
     def wheelEvent(self, event):
+        """Abilita lo scorrimento orizzontale tramite rotellina verticale del mouse."""
         delta = event.angleDelta().y()
         if delta != 0:
             scrollbar = self.horizontalScrollBar()
@@ -231,6 +257,7 @@ class HorizontalTimelineWidget(QScrollArea):
             super().wheelEvent(event)
 
     def add_widget(self, widget: QWidget):
+        """Aggiunge un widget alla timeline con un effetto di dissolvenza (fade-in)."""
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
 
@@ -250,6 +277,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.container.update()
 
     def add_log(self, message: str):
+        """Analizza un messaggio di log tecnico e lo aggiunge alla timeline."""
         human, tech, cat = SmartLogTranslator.humanize(message)
         timestamp = datetime.now().strftime("%H:%M")
 
@@ -273,6 +301,7 @@ class HorizontalTimelineWidget(QScrollArea):
         self.add_widget(item)
 
     def _smooth_scroll_to_end(self):
+        """Scorre fluidamente verso l'ultimo elemento aggiunto."""
         sb = self.horizontalScrollBar()
         start_val = sb.value()
         end_val = sb.maximum()
@@ -291,6 +320,7 @@ class HorizontalTimelineWidget(QScrollArea):
         pass
 
     def clear(self):
+        """Rimuove tutti gli elementi dalla timeline."""
         while self.container.main_layout.count():
             item = self.container.main_layout.takeAt(0)
             if item.widget():
@@ -305,10 +335,12 @@ class LogWidget(QWidget):
     """Widget per visualizzare i log (Horizontal Wrapper)."""
 
     def __init__(self, parent=None):
+        """Inizializza il widget log."""
         super().__init__(parent)
         self._setup_ui()
 
     def _setup_ui(self):
+        """Configura l'interfaccia con header e timeline."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         header_layout = QHBoxLayout()
@@ -319,7 +351,9 @@ class LogWidget(QWidget):
 
         clear_btn = QPushButton("🧹 Pulisci Log")
         clear_btn.setMaximumWidth(120)
-        clear_btn.setStyleSheet("QPushButton { background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 11px; } QPushButton:hover { background-color: #5a6268; }")
+        clear_btn.setStyleSheet(
+            "QPushButton { background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 11px; } QPushButton:hover { background-color: #5a6268; }"
+        )
         clear_btn.clicked.connect(self.clear)
         header_layout.addWidget(clear_btn)
         layout.addLayout(header_layout)
@@ -328,9 +362,15 @@ class LogWidget(QWidget):
         layout.addWidget(self.timeline)
 
     def append(self, message: str):
+        """Aggiunge un nuovo messaggio alla timeline."""
         self.timeline.add_log(message)
 
+    def append_log(self, message: str):
+        """Alias per append (compatibilità test)."""
+        self.append(message)
+
     def clear(self):
+        """Svuota la timeline."""
         self.timeline.clear()
 
 
@@ -338,15 +378,26 @@ class MissionReportCard(QFrame):
     """Card riepilogativa stile 'Mission Complete'."""
 
     def __init__(self, duration_str, status, parent=None):
+        """
+        Inizializza la card di report con durata ed esito.
+
+        Args:
+            duration_str: Stringa formattata del tempo impiegato.
+            status: Boolean indicante il successo della missione.
+        """
         super().__init__(parent)
         self.setFixedSize(260, 150)
-        self.setStyleSheet("QFrame { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef); border: 1px solid #dee2e6; border-radius: 8px; margin: 10px 5px; }")
+        self.setStyleSheet(
+            "QFrame { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #e9ecef); border: 1px solid #dee2e6; border-radius: 8px; margin: 10px 5px; }"
+        )
 
         layout = QVBoxLayout(self)
         title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
         title_color = "#198754" if status else "#dc3545"
         lbl_title = QLabel(title_text)
-        lbl_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {title_color};")
+        lbl_title.setStyleSheet(
+            f"font-size: 18px; font-weight: bold; color: {title_color};"
+        )
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_title)
 
@@ -356,6 +407,7 @@ class MissionReportCard(QFrame):
         layout.addLayout(stats_layout)
 
     def _add_stat(self, layout, label, value):
+        """Aggiunge una statistica individuale alla card."""
         container = QWidget()
         v_layout = QVBoxLayout(container)
         v_layout.setContentsMargins(0, 0, 0, 0)

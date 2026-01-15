@@ -1,18 +1,18 @@
 import os
-import sys
-import logging
 from datetime import datetime
-import pytest
+from unittest.mock import patch
+
 from src.utils.helpers import (
-    get_asset_path,
     format_timestamp,
+    get_asset_path,
     get_months_list,
     get_years_list,
     safe_str,
-    truncate_string,
     sanitize_filename,
-    setup_logging
+    setup_logging,
+    truncate_string,
 )
+
 
 class TestHelpers:
     def test_get_asset_path(self):
@@ -21,7 +21,7 @@ class TestHelpers:
             path = get_asset_path("assets/test.txt")
             assert "assets" in path
             assert "test.txt" in path
-            
+
         # Frozen mode
         with patch("sys.frozen", True, create=True):
             with patch("sys.executable", "C:\\App\\app.exe"):
@@ -68,13 +68,11 @@ class TestHelpers:
     def test_setup_logging(self, tmp_path):
         log_file = str(tmp_path / "test.log")
         logger = setup_logging("TestLogger", log_file)
-        
+
         assert logger.name == "TestLogger"
         assert len(logger.handlers) >= 1
-        
+
         logger.info("Test message")
         assert os.path.exists(log_file)
         with open(log_file, "r") as f:
             assert "Test message" in f.read()
-
-from unittest.mock import patch

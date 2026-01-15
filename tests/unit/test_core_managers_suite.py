@@ -8,7 +8,6 @@ from src.core.time_manager import get_network_time, get_trusted_time
 
 
 class TestStatsManager:
-
     @pytest.fixture
     def manager(self):
         # Reset singleton
@@ -44,7 +43,6 @@ class TestStatsManager:
 
 
 class TestTimeManager:
-
     @patch("src.core.time_manager.requests.head")
     def test_get_network_time_success(self, mock_head):
         # Mock response

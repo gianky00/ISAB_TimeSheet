@@ -1,12 +1,9 @@
-
-
 import pytest
 
 from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
 
 
 class TestGUIAdvanced:
-
     @pytest.fixture
     def app(self, qtbot):
         """Fixture per l'applicazione Qt."""
@@ -42,7 +39,7 @@ class TestGUIAdvanced:
             "total_ore": 100.0,
             "count_total": 5,
             "ore_dirette": 80.0,
-            "ore_indirette": 20.0
+            "ore_indirette": 20.0,
         }
         mock_manager.get_year_stats.return_value = stats_2026
         # Mocking data to avoid pandas errors in charts
@@ -66,7 +63,11 @@ class TestGUIAdvanced:
 
         # Scenario 1: Margine POSITIVO (Ricavi 1000, Costi 100*30=3000 -> Aspetta, 1000-3000 è negativo)
         # HOURLY_COST_STD = 30.0. Per avere margine positivo: Ricavi > Ore * 30
-        stats_pos = {"total_prev": 5000.0, "total_ore": 100.0, "count_total": 1} # 5000 - 3000 = +2000
+        stats_pos = {
+            "total_prev": 5000.0,
+            "total_ore": 100.0,
+            "count_total": 1,
+        }  # 5000 - 3000 = +2000
         mock_manager.get_year_stats.return_value = stats_pos
         mock_manager.get_data_by_year.return_value = []
 
@@ -78,7 +79,11 @@ class TestGUIAdvanced:
         assert "#20c997" in panel.card_margine.lbl_value.styleSheet()
 
         # Scenario 2: Margine NEGATIVO
-        stats_neg = {"total_prev": 1000.0, "total_ore": 100.0, "count_total": 1} # 1000 - 3000 = -2000
+        stats_neg = {
+            "total_prev": 1000.0,
+            "total_ore": 100.0,
+            "count_total": 1,
+        }  # 1000 - 3000 = -2000
         mock_manager.get_year_stats.return_value = stats_neg
 
         panel._load_kpi_data()
@@ -87,8 +92,12 @@ class TestGUIAdvanced:
 
     def test_info_label_callback(self, qtbot):
         """Test: Verifica che l'icona info mostri il contenuto corretto."""
-        def test_callback(): return "Info Dettagliata Test"
+
+        def test_callback():
+            return "Info Dettagliata Test"
+
         from src.gui.widgets import KPIBigCard
+
         card = KPIBigCard("Test", "Valore")
         card.set_info_callback(test_callback)
 

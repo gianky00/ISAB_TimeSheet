@@ -61,34 +61,32 @@ class SmartLogTranslator:
         Analizza il messaggio tecnico e restituisce (human_msg, tech_msg, category).
         """
         lower_msg = message.lower()
+
+        # Mapping keyword -> categoria
+        mappings = {
+            "error": ["errore", "fallit", "exception", "eccezion", "✗"],
+            "start": ["avvio", "start"],
+            "login": ["login", "accesso", "connessione"],
+            "search": ["cerca", "trovat", "analizz"],
+            "download": ["scaric", "salvat", "export"],
+            "success": ["successo", "completat", "✓"],
+            "wait": ["attes", "wait"],
+        }
+
         category = "info"
-        human_msg = message  # Default fall-back
+        for cat, keywords in mappings.items():
+            if any(kw in lower_msg for kw in keywords) or (
+                cat in ["error", "success"]
+                and any(kw in message for kw in ["✗", "✓"] if kw in keywords)
+            ):
+                category = cat
+                break
 
-        if (
-            "errore" in lower_msg
-            or "fallit" in lower_msg
-            or "exception" in lower_msg
-            or "eccezion" in lower_msg
-            or "✗" in message
-        ):
-            category = "error"
-        elif "avvio" in lower_msg or "start" in lower_msg:
-            category = "start"
-        elif (
-            "login" in lower_msg or "accesso" in lower_msg or "connessione" in lower_msg
-        ):
-            category = "login"
-        elif "cerca" in lower_msg or "trovat" in lower_msg or "analizz" in lower_msg:
-            category = "search"
-        elif "scaric" in lower_msg or "salvat" in lower_msg or "export" in lower_msg:
-            category = "download"
-        elif "successo" in lower_msg or "completat" in lower_msg or "✓" in message:
-            category = "success"
-        elif "attes" in lower_msg or "wait" in lower_msg:
-            category = "wait"
-
-        if category in SmartLogTranslator.TEMPLATES:
-            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])
+        human_msg = (
+            random.choice(SmartLogTranslator.TEMPLATES[category])
+            if category in SmartLogTranslator.TEMPLATES
+            else message
+        )
 
         # Rich Tags Injection
         if "credenziali" in lower_msg or ("login" in lower_msg and category == "error"):

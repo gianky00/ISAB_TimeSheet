@@ -27,6 +27,7 @@ class TestRefinementBoost:
 
     def test_toast_overlay_fade(self, qapp, qtbot):
         from PyQt6.QtWidgets import QWidget
+
         parent = QWidget()
         toast = ToastOverlay(parent)
         toast.show_toast("Test")

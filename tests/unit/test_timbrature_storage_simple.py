@@ -8,7 +8,7 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 class TestTimbratureStorageSimple:
     def test_storage_init_and_import(self, tmp_path):
         db_file = tmp_path / "timbrature.db"
-        storage = TimbratureStorage(db_file) # Pass as Path object
+        storage = TimbratureStorage(db_file)  # Pass as Path object
 
         # Test importing excel
         excel_file = tmp_path / "data.xlsx"
@@ -21,11 +21,14 @@ class TestTimbratureStorageSimple:
             "Nome Risorsa": ["Mario"],
             "Cognome Risorsa": ["Rossi"],
             "Presente Nei Timesheet": ["Sì"],
-            "Sito Timbratura": ["ISAB"]
+            "Sito Timbratura": ["ISAB"],
         }
         df = pd.DataFrame(data)
 
-        with patch("src.bots.portale_fornitori.timbrature.storage.pd.read_excel", return_value=df):
+        with patch(
+            "src.bots.portale_fornitori.timbrature.storage.pd.read_excel",
+            return_value=df,
+        ):
             success = storage.import_excel(str(excel_file))
             assert success is True
 

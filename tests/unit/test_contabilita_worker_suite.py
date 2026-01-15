@@ -10,7 +10,7 @@ class TestContabilitaWorkerLogic:
         worker = ContabilitaWorker("f.xlsx", "g_path", "a.xlsx", "c.xlsx")
 
         # Mock manager methods
-        mock_manager.scan_workload.return_value = (2, 5) # 2 sheets, 5 files
+        mock_manager.scan_workload.return_value = (2, 5)  # 2 sheets, 5 files
         mock_manager.import_data_from_excel.return_value = (True, "OK", 10, 0)
         mock_manager.import_giornaliere.return_value = (True, "OK", 20, 0)
         mock_manager.import_attivita_programmate.return_value = (True, "OK", 5, 0)
@@ -27,7 +27,7 @@ class TestContabilitaWorkerLogic:
         assert args[0] is True
         assert "Contabilità: OK" in args[1]
         assert "Giornaliere: OK" in args[1]
-        assert args[2] == 37 # 10+20+5+2
+        assert args[2] == 37  # 10+20+5+2
 
     @patch("src.core.contabilita_worker.ContabilitaManager")
     @patch("os.path.exists", return_value=True)

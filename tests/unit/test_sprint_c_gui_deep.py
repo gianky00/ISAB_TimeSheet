@@ -1,4 +1,3 @@
-
 import pytest
 from PyQt6.QtWidgets import (
     QApplication,
@@ -15,11 +14,24 @@ class TestSprintCGUIDeep:
     @pytest.fixture
     def panel(self, qapp, mocker):
         # Mocking heavy managers
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2023, 2024])
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_year_stats", return_value={
-            "total_prev": 1000.0, "total_ore": 50.0, "count_total": 5, "ore_dirette": 40.0, "ore_indirette": 10.0
-        })
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_data_by_year", return_value=[])
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[2023, 2024],
+        )
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_year_stats",
+            return_value={
+                "total_prev": 1000.0,
+                "total_ore": 50.0,
+                "count_total": 5,
+                "ore_dirette": 40.0,
+                "ore_indirette": 10.0,
+            },
+        )
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_data_by_year",
+            return_value=[],
+        )
 
         # Mocking matplotlib
         mocker.patch("matplotlib.figure.Figure.add_subplot")
@@ -41,7 +53,10 @@ class TestSprintCGUIDeep:
         assert "2024" in texts
 
         # Update: rimuovi uno, aggiungi uno
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024, 2025])
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[2024, 2025],
+        )
         panel.refresh_tabs()
         QApplication.processEvents()
 
@@ -51,10 +66,20 @@ class TestSprintCGUIDeep:
 
     def test_kpi_card_formatting(self, qapp, mocker):
         """Verifica che le card KPI formattino correttamente i valori."""
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024])
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_year_stats", return_value={
-            "total_prev": 1500.50, "total_ore": 10.0, "count_total": 1, "ore_dirette": 10.0, "ore_indirette": 0.0
-        })
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[2024],
+        )
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_year_stats",
+            return_value={
+                "total_prev": 1500.50,
+                "total_ore": 10.0,
+                "count_total": 1,
+                "ore_dirette": 10.0,
+                "ore_indirette": 0.0,
+            },
+        )
 
         # Mock plotting
         mocker.patch.object(ContabilitaKPIPanel, "_plot_stato_attivita")
@@ -80,12 +105,13 @@ class TestSprintCGUIDeep:
 
         # 2. Inseriamo la tabella nel pannello simulando il widget attivo
         # Non possiamo iniettarla facilmente nei tab dinamici, testiamo il metodo di calcolo direttamente
-        panel._update_selection_total(table) # Vuoto
+        panel._update_selection_total(table)  # Vuoto
         assert "Righe: 0" in panel.selection_count_label.text()
 
         # 3. Selezioniamo le prime due righe
         table.selectRow(0)
         from PyQt6.QtWidgets import QTableWidgetSelectionRange
+
         table.setRangeSelected(QTableWidgetSelectionRange(0, 0, 0, 9), True)
         # Per semplicità nei test headless forziamo la selezione manuale nel modello
         table.selectAll()

@@ -154,8 +154,11 @@ class TimbratureStorage:
         config_manager.set_config_value("employee_mappings", mappings)
 
     def get_timbrature_with_reparto(
-        self, limit: int = 500, filter_text: Optional[str] = None,
-        filter_reparto: Optional[str] = None, filter_cantiere: Optional[str] = None,
+        self,
+        limit: int = 500,
+        filter_text: Optional[str] = None,
+        filter_reparto: Optional[str] = None,
+        filter_cantiere: Optional[str] = None,
     ) -> List[tuple]:
         """Recupera le timbrature e le arricchisce con i dati da config.json."""
         mappings = config_manager.load_config().get("employee_mappings", {})
@@ -166,7 +169,9 @@ class TimbratureStorage:
             cursor.execute(sql, params)
             raw_rows = cursor.fetchall()
 
-            return self._enrich_and_filter_timb(raw_rows, mappings, filter_reparto, filter_cantiere, limit)
+            return self._enrich_and_filter_timb(
+                raw_rows, mappings, filter_reparto, filter_cantiere, limit
+            )
 
     def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
         query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
@@ -178,7 +183,10 @@ class TimbratureStorage:
         conditions = []
         for term in search_terms:
             search_term = self._normalize_search_date(term)
-            term_conditions = [f"{col} LIKE ?" for col in ["data", "nome", "cognome", "sito_timbratura"]]
+            term_conditions = [
+                f"{col} LIKE ?"
+                for col in ["data", "nome", "cognome", "sito_timbratura"]
+            ]
             params.extend([f"%{search_term}%"] * 4)
             conditions.append(f"({' OR '.join(term_conditions)})")
 
@@ -196,7 +204,9 @@ class TimbratureStorage:
                 pass
         return term
 
-    def _enrich_and_filter_timb(self, rows, mappings, f_rep, f_cant, limit) -> List[tuple]:
+    def _enrich_and_filter_timb(
+        self, rows, mappings, f_rep, f_cant, limit
+    ) -> List[tuple]:
         final = []
         for r in rows:
             nome, cognome = r[3], r[4]
@@ -213,8 +223,11 @@ class TimbratureStorage:
                 break
         return final
 
-    def import_excel(self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None) -> bool:
+    def import_excel(
+        self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None
+    ) -> bool:
         """Imports an Excel file into the database."""
+
         def log(m):
             log_callback(m) if log_callback else print(m)
 
@@ -257,10 +270,13 @@ class TimbratureStorage:
                         pass
 
             vals = row.fillna("").astype(str).to_dict()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO timbrature (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura)
                 VALUES (:data, :ingresso, :uscita, :nome, :cognome, :presenza_ts, :sito_timbratura)
-            """, vals)
+            """,
+                vals,
+            )
             stats["added"] += 1
         except sqlite3.IntegrityError:
             stats["skipped"] += 1

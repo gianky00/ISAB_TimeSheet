@@ -1,4 +1,3 @@
-
 import sqlite3
 from unittest.mock import MagicMock
 
@@ -8,11 +7,13 @@ from src.core.lyra_client import LyraClient
 
 
 class TestLyraClientAdvanced:
-
     @pytest.fixture
     def client(self, mocker):
         """Fixture per LyraClient con API key mockata."""
-        mocker.patch("src.core.config_manager.load_config", return_value={"ai_model": "gemini-test"})
+        mocker.patch(
+            "src.core.config_manager.load_config",
+            return_value={"ai_model": "gemini-test"},
+        )
         return LyraClient(api_key="FAKE_KEY")
 
     def test_get_system_context_aggregation(self, client, mocker, tmp_path):
@@ -25,7 +26,7 @@ class TestLyraClientAdvanced:
             "total_ore": 10.0,
             "count_total": 1,
             "status_counts": {"APERTO": 1},
-            "top_commesse": [("Attività Test", 1000.0)]
+            "top_commesse": [("Attività Test", 1000.0)],
         }
 
         # 2. Mock Timbrature (SQLite reale in tmp_path)
@@ -35,8 +36,12 @@ class TestLyraClientAdvanced:
         mocker.patch("src.core.lyra_client.CONFIG_DIR", tmp_path)
 
         with sqlite3.connect(db_path) as conn:
-            conn.execute("CREATE TABLE timbrature (data TEXT, nome TEXT, cognome TEXT, ingresso TEXT, uscita TEXT)")
-            conn.execute("INSERT INTO timbrature VALUES ('2026-01-01', 'Mario', 'Rossi', '08:00', '17:00')")
+            conn.execute(
+                "CREATE TABLE timbrature (data TEXT, nome TEXT, cognome TEXT, ingresso TEXT, uscita TEXT)"
+            )
+            conn.execute(
+                "INSERT INTO timbrature VALUES ('2026-01-01', 'Mario', 'Rossi', '08:00', '17:00')"
+            )
 
         context = client._get_system_context()
 
@@ -53,15 +58,15 @@ class TestLyraClientAdvanced:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "candidates": [{
-                "content": {"parts": [{"text": "Risposta AI di test"}]}
-            }],
-            "usageMetadata": {"totalTokenCount": 100}
+            "candidates": [{"content": {"parts": [{"text": "Risposta AI di test"}]}}],
+            "usageMetadata": {"totalTokenCount": 100},
         }
         mock_post.return_value = mock_resp
 
         # Mock context e audit
-        mocker.patch.object(client, "_get_system_context", return_value="System Context")
+        mocker.patch.object(
+            client, "_get_system_context", return_value="System Context"
+        )
         mock_audit = mocker.patch("src.core.lyra_client.AuditManager")
 
         response = client.ask("Ciao Lyra", extra_context="Contesto Utente")
@@ -98,12 +103,18 @@ class TestLyraClientAdvanced:
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
             "models": [
-                {"name": "models/gemini-1.5-pro", "supportedGenerationMethods": ["generateContent"]},
-                {"name": "models/embedding-001", "supportedGenerationMethods": ["embedContent"]}
+                {
+                    "name": "models/gemini-1.5-pro",
+                    "supportedGenerationMethods": ["generateContent"],
+                },
+                {
+                    "name": "models/embedding-001",
+                    "supportedGenerationMethods": ["embedContent"],
+                },
             ]
         }
         mock_get.return_value = mock_resp
 
         models = client.list_models()
         assert "gemini-1.5-pro" in models
-        assert "embedding-001" not in models # Non supporta generateContent
+        assert "embedding-001" not in models  # Non supporta generateContent

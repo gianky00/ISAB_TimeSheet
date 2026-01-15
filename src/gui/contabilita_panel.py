@@ -47,6 +47,7 @@ class ContabilitaPanel(QWidget):
             self.refresh_tabs()
         except Exception as e:
             import traceback
+
             print(f"❌ Error refreshing tabs for ContabilitaPanel: {e}")
             traceback.print_exc()
 
@@ -56,11 +57,13 @@ class ContabilitaPanel(QWidget):
 
         self.main_tabs = QTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
-        self.main_tabs.setStyleSheet("""
+        self.main_tabs.setStyleSheet(
+            """
             QTabWidget::pane { border: 1px solid #dee2e6; border-radius: 6px; background-color: white; }
             QTabBar::tab { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px 20px; margin-right: 2px; border-top-left-radius: 6px; border-top-right-radius: 6px; color: #495057; font-weight: bold; font-size: 14px; }
             QTabBar::tab:selected { background: white; border-bottom-color: white; color: #0d6efd; }
-        """)
+        """
+        )
 
         self.selection_container = QWidget()
         selection_layout = QHBoxLayout(self.selection_container)
@@ -276,7 +279,9 @@ class ContabilitaPanel(QWidget):
                 return
 
             target_col = self._find_ore_column(widget)
-            selected_rows, total_ore = self._calculate_selection_stats(widget, indexes, target_col)
+            selected_rows, total_ore = self._calculate_selection_stats(
+                widget, indexes, target_col
+            )
 
             fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
@@ -295,11 +300,15 @@ class ContabilitaPanel(QWidget):
                 return c
         return -1
 
-    def _calculate_selection_stats(self, widget, indexes, target_col) -> tuple[set[int], float]:
+    def _calculate_selection_stats(
+        self, widget, indexes, target_col
+    ) -> tuple[set[int], float]:
         selected_rows, total_ore = set(), 0.0
         for idx in indexes:
             row = idx.row()
-            if widget.isRowHidden(row) or (widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"):
+            if widget.isRowHidden(row) or (
+                widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
+            ):
                 continue
             selected_rows.add(row)
 
@@ -308,7 +317,9 @@ class ContabilitaPanel(QWidget):
                 it = widget.item(row, target_col)
                 if it:
                     try:
-                        clean = str(it.text()).replace(".", "").replace(",", ".").strip()
+                        clean = (
+                            str(it.text()).replace(".", "").replace(",", ".").strip()
+                        )
                         if clean:
                             total_ore += float(clean)
                     except Exception:

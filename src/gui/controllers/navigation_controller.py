@@ -45,21 +45,25 @@ class NavigationController(QObject):
         """Factory method per la creazione dei pannelli in base all'indice."""
         if index == 0:
             from src.gui.dashboard_panel import DashboardPanel
+
             self.mw.dashboard_panel = DashboardPanel()
             return self.mw.dashboard_panel
 
         if index == 1:
             from src.gui.widgets.automazioni_widget import AutomazioniWidget
+
             self.mw.automazioni_widget = AutomazioniWidget(self.mw)
             return self.mw.automazioni_widget
 
         if index == 2:
             from src.gui.lyra_panel import LyraPanel
+
             self.mw.lyra_panel = LyraPanel()
             return self.mw.lyra_panel
 
         if index == 3:
             from src.gui.widgets.database_widget import DatabaseWidget
+
             self.mw.database_widget = DatabaseWidget(self.mw)
             return self.mw.database_widget
 
@@ -68,11 +72,13 @@ class NavigationController(QObject):
 
         if index == 5:
             from src.gui.help_panel import HelpPanel
+
             self.mw.help_panel = HelpPanel()
             return self.mw.help_panel
 
         if index == 6:
             from src.gui.notifications_panel import NotificationsPanel
+
             self.mw.notifications_panel = NotificationsPanel()
             return self.mw.notifications_panel
 
@@ -81,6 +87,7 @@ class NavigationController(QObject):
     def _create_settings_panel(self) -> QObject:
         """Crea e configura il pannello impostazioni."""
         from src.gui.settings_panel import SettingsPanel
+
         panel = SettingsPanel()
         self.mw.settings_panel = panel
         panel.settings_saved.connect(self.mw._on_settings_saved)
@@ -98,10 +105,16 @@ class NavigationController(QObject):
     def _handle_panel_error(self, index: int, e: Exception):
         """Gestisce errori critici durante il caricamento dei moduli UI."""
         import traceback
+
         logger.error(f"❌ Critical Error loading panel {index}: {e}")
         logger.error(traceback.format_exc())
         from PyQt6.QtWidgets import QMessageBox
-        QMessageBox.critical(self.mw, "Errore Caricamento", f"Impossibile caricare il modulo.\nErrore: {e}")
+
+        QMessageBox.critical(
+            self.mw,
+            "Errore Caricamento",
+            f"Impossibile caricare il modulo.\nErrore: {e}",
+        )
 
     def _try_connect_signals(self):
         """
@@ -166,13 +179,12 @@ class NavigationController(QObject):
         """Navigazione verso pannelli annidati."""
         bot_map = {
             "dettagli_oda": (0, 0),
-            "prenota_bp": (0, 1),
-            "scarico_ts": (0, 2),
-            "timbrature": (0, 3),
+            "scarico_ts": (0, 1),
+            "timbrature": (0, 2),
+            "prenota_bp": (0, 3),
             "carico_ts": (0, 4),
             "scarico_pdl": (1, 0),
         }
-
 
         if panel_key in bot_map:
             main_idx, sub_idx = bot_map[panel_key]

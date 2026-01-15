@@ -5,7 +5,6 @@ from src.core.excel_importer import ExcelImporter
 
 
 class TestContabilitaManager:
-
     def test_mappings_integrity(self):
         # Verify critical mappings exist
         assert "DATA PREV." in ExcelImporter.COLUMNS_MAPPING

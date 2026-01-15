@@ -7,12 +7,12 @@ from src.core.contabilita_manager import ContabilitaManager
 
 
 class TestContabilitaLogic:
-
     @pytest.fixture(autouse=True)
     def mock_db(self):
-        with patch("src.core.contabilita_manager.db_manager") as mock1, patch(
-            "src.core.data_synchronizer.db_manager"
-        ) as mock2:
+        with (
+            patch("src.core.contabilita_manager.db_manager") as mock1,
+            patch("src.core.data_synchronizer.db_manager") as mock2,
+        ):
             mock_conn = MagicMock()
             mock_cursor = MagicMock()
             mock_conn.cursor.return_value = mock_cursor
@@ -96,10 +96,25 @@ class TestContabilitaLogic:
 
     @patch("src.core.contabilita_manager.DataSynchronizer")
     @patch("src.core.contabilita_manager.ExcelImporter")
-    def test_import_giornaliere(self, mock_excel_importer, mock_data_synchronizer, mock_db):
+    def test_import_giornaliere(
+        self, mock_excel_importer, mock_data_synchronizer, mock_db
+    ):
         # Mock ExcelImporter.import_giornaliere
         imported_rows = [
-            (2023, "2023-01-01", "U", "D", "T", "O", "P", "08", "17", 8, "100", "file.xlsx"),
+            (
+                2023,
+                "2023-01-01",
+                "U",
+                "D",
+                "T",
+                "O",
+                "P",
+                "08",
+                "17",
+                8,
+                "100",
+                "file.xlsx",
+            ),
         ]
         imported_years = [2023]
         mock_excel_importer.import_giornaliere.return_value = (
@@ -116,12 +131,16 @@ class TestContabilitaLogic:
             path_inst = MockPath.return_value
             path_inst.exists.return_value = True
 
-            success, msg, added, removed = ContabilitaManager.import_giornaliere("dummy_folder")
+            success, msg, added, removed = ContabilitaManager.import_giornaliere(
+                "dummy_folder"
+            )
 
         assert success is True
         assert added == 1
         assert removed == 0
-        mock_excel_importer.import_giornaliere.assert_called_once_with("dummy_folder", ANY, ANY)
+        mock_excel_importer.import_giornaliere.assert_called_once_with(
+            "dummy_folder", ANY, ANY
+        )
         mock_data_synchronizer.sync_giornaliere.assert_called_once_with(
             ContabilitaManager.DB_PATH, imported_rows, imported_years
         )

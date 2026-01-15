@@ -10,8 +10,8 @@ from selenium.common.exceptions import TimeoutException, WebDriverException
 # But for now, I will construct a generic test that mocks the Selenium driver behaviors
 # that are typical in BaseBot.
 
-class TestBaseBotLogic:
 
+class TestBaseBotLogic:
     @pytest.fixture
     def mock_driver(self):
         driver = MagicMock()

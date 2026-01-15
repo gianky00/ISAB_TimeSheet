@@ -16,36 +16,44 @@ REPORT_FILE = Path(__file__).parent / "test_report.md"
 DEFAULT_TIMEOUT = 60  # Secondi per file prima di considerare timeout
 # ----------------------
 
+
 class Console:
     """Helper per output colorato senza dipendenze esterne."""
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
     @staticmethod
     def print(msg, color=ENDC, end="\n"):
         print(f"{color}{msg}{Console.ENDC}", end=end, flush=True)
 
     @staticmethod
-    def info(msg): Console.print(f"ℹ️  {msg}", Console.CYAN)
+    def info(msg):
+        Console.print(f"ℹ️  {msg}", Console.CYAN)
 
     @staticmethod
-    def success(msg): Console.print(f"✅ {msg}", Console.GREEN)
+    def success(msg):
+        Console.print(f"✅ {msg}", Console.GREEN)
 
     @staticmethod
-    def warning(msg): Console.print(f"⚠️  {msg}", Console.WARNING)
+    def warning(msg):
+        Console.print(f"⚠️  {msg}", Console.WARNING)
 
     @staticmethod
-    def error(msg): Console.print(f"❌ {msg}", Console.FAIL)
+    def error(msg):
+        Console.print(f"❌ {msg}", Console.FAIL)
 
     @staticmethod
-    def header(msg): Console.print(f"\n{Console.BOLD}{msg}{Console.ENDC}", Console.HEADER)
+    def header(msg):
+        Console.print(f"\n{Console.BOLD}{msg}{Console.ENDC}", Console.HEADER)
+
 
 class TestRunner:
     def __init__(self):
@@ -64,7 +72,9 @@ class TestRunner:
     def signal_handler(self, sig, frame):
         if not self.interrupted:
             self.interrupted = True
-            Console.warning("\n\n🛑 Interrupt ricevuto! Salvataggio stato e chiusura in corso...")
+            Console.warning(
+                "\n\n🛑 Interrupt ricevuto! Salvataggio stato e chiusura in corso..."
+            )
             self.save_state()
             sys.exit(130)
 
@@ -84,7 +94,7 @@ class TestRunner:
             "passed": self.passed_tests,
             "skipped": self.skipped_tests,
             "total_files_map": dict(self.files_map),
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         with open(STATE_FILE, "w") as f:
             json.dump(state, f, indent=2)
@@ -105,7 +115,7 @@ class TestRunner:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd=ROOT_DIR
+                cwd=ROOT_DIR,
             )
         except Exception as e:
             Console.error(f"Errore critico discovery: {e}")
@@ -116,7 +126,11 @@ class TestRunner:
         for line in result.stdout.splitlines():
             line = line.strip()
             # Un NodeID valido di pytest contiene '::' e non inizia con '=' o 'collected'
-            if "::" in line and not line.startswith("=") and not line.startswith("collected"):
+            if (
+                "::" in line
+                and not line.startswith("=")
+                and not line.startswith("collected")
+            ):
                 # Alcune righe potrebbero avere avvisi extra, prendiamo solo la prima parte
                 node_id = line.split()[0] if " " in line else line
                 if "::" in node_id:
@@ -133,7 +147,17 @@ class TestRunner:
 
     def run_process(self, target, isolate=False, timeout=None):
         # Aggiungiamo --cov=src --cov-append per accumulare la copertura
-        cmd = [sys.executable, "-m", "pytest", target, "--no-header", "--quiet", "--tb=short", "--cov=src", "--cov-append"]
+        cmd = [
+            sys.executable,
+            "-m",
+            "pytest",
+            target,
+            "--no-header",
+            "--quiet",
+            "--tb=short",
+            "--cov=src",
+            "--cov-append",
+        ]
 
         start = time.time()
         try:
@@ -143,13 +167,13 @@ class TestRunner:
                 stderr=subprocess.PIPE,
                 text=True,
                 cwd=ROOT_DIR,
-                timeout=timeout
+                timeout=timeout,
             )
             duration = time.time() - start
-            return result, duration, False # False = No Timeout
+            return result, duration, False  # False = No Timeout
         except subprocess.TimeoutExpired:
             duration = time.time() - start
-            return None, duration, True # True = Timeout
+            return None, duration, True  # True = Timeout
 
     def generate_report(self):
         """Genera un report Markdown dettagliato."""
@@ -157,7 +181,9 @@ class TestRunner:
 
         with open(REPORT_FILE, "w", encoding="utf-8") as f:
             f.write("# 📊 Test Execution Report\n\n")
-            f.write(f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(
+                f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            )
             f.write(f"**Duration:** {total_duration:.2f}s\n\n")
 
             f.write("## Summary\n")
@@ -191,8 +217,9 @@ class TestRunner:
 
         # 1. Tenta di mostrare dati esistenti
         try:
-            res = subprocess.run([sys.executable, "-m", "coverage", "report", "-m"],
-                                 cwd=ROOT_DIR)
+            res = subprocess.run(
+                [sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR
+            )
             if res.returncode == 0:
                 return
         except Exception:
@@ -200,7 +227,15 @@ class TestRunner:
 
         # 2. Se non ci sono dati, calcola
         Console.info("Dati non trovati. Calcolo in corso (attendere)...")
-        cmd = [sys.executable, "-m", "pytest", "--cov=src", "--cov-report=term-missing", "-q", "--no-summary"]
+        cmd = [
+            sys.executable,
+            "-m",
+            "pytest",
+            "--cov=src",
+            "--cov-report=term-missing",
+            "-q",
+            "--no-summary",
+        ]
         try:
             subprocess.run(cmd, cwd=ROOT_DIR)
         except Exception as e:
@@ -208,13 +243,42 @@ class TestRunner:
 
     def run(self):
         parser = argparse.ArgumentParser(description="🛡️ Robust Test Runner")
-        parser.add_argument("targets", nargs="*", help="File o directory di test specifici da eseguire.")
-        parser.add_argument("--reset", action="store_true", help="Ricomincia da zero ignorando lo stato precedente.")
-        parser.add_argument("--filter", type=str, help="Esegui solo test in questo path (es. tests/unit).")
-        parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="Timeout in secondi per file.")
-        parser.add_argument("--retry", type=int, default=0, help="Numero di retry per test falliti (per flaky tests).")
-        parser.add_argument("--coverage-only", action="store_true", help="Calcola e mostra solo la copertura totale.")
-        parser.add_argument("-x", "--exitfirst", action="store_true", help="Ferma l'esecuzione al primo fallimento.")
+        parser.add_argument(
+            "targets", nargs="*", help="File o directory di test specifici da eseguire."
+        )
+        parser.add_argument(
+            "--reset",
+            action="store_true",
+            help="Ricomincia da zero ignorando lo stato precedente.",
+        )
+        parser.add_argument(
+            "--filter",
+            type=str,
+            help="Esegui solo test in questo path (es. tests/unit).",
+        )
+        parser.add_argument(
+            "--timeout",
+            type=int,
+            default=DEFAULT_TIMEOUT,
+            help="Timeout in secondi per file.",
+        )
+        parser.add_argument(
+            "--retry",
+            type=int,
+            default=0,
+            help="Numero di retry per test falliti (per flaky tests).",
+        )
+        parser.add_argument(
+            "--coverage-only",
+            action="store_true",
+            help="Calcola e mostra solo la copertura totale.",
+        )
+        parser.add_argument(
+            "-x",
+            "--exitfirst",
+            action="store_true",
+            help="Ferma l'esecuzione al primo fallimento.",
+        )
         args = parser.parse_args()
         self.exitfirst = args.exitfirst
 
@@ -235,21 +299,28 @@ class TestRunner:
         if should_reset:
             # Pulizia dati copertura precedenti su reset
             try:
-                subprocess.run([sys.executable, "-m", "coverage", "erase"], cwd=ROOT_DIR)
+                subprocess.run(
+                    [sys.executable, "-m", "coverage", "erase"], cwd=ROOT_DIR
+                )
             except Exception:
                 pass
 
             self.files_map = self.discover_tests(targets)
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             self.queue_files = sorted(self.files_map.keys())
-            Console.info(f"Nuova sessione: {self.total_tests} test in {len(self.files_map)} file.")
+            Console.info(
+                f"Nuova sessione: {self.total_tests} test in {len(self.files_map)} file."
+            )
             if STATE_FILE.exists():
                 os.remove(STATE_FILE)
         else:
             # Mostra copertura precedente se esiste
             try:
                 Console.info("📊 Copertura precedente:")
-                subprocess.run([sys.executable, "-m", "coverage", "report", "--format=text"], cwd=ROOT_DIR)
+                subprocess.run(
+                    [sys.executable, "-m", "coverage", "report", "--format=text"],
+                    cwd=ROOT_DIR,
+                )
             except Exception:
                 pass
 
@@ -264,12 +335,14 @@ class TestRunner:
                 self.files_map = self.discover_tests()
 
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
-            Console.warning(f"Ripresa sessione: {len(self.queue_files)} file rimanenti.")
+            Console.warning(
+                f"Ripresa sessione: {len(self.queue_files)} file rimanenti."
+            )
 
         self.start_time = time.time()
 
         # 2. Execution Loop
-        len(self.queue_files) # Aprossimativo se ripreso
+        len(self.queue_files)  # Aprossimativo se ripreso
 
         while self.queue_files:
             current_file = self.queue_files[0]
@@ -280,10 +353,16 @@ class TestRunner:
                 continue
 
             test_count = len(node_ids)
-            progress_pct = ((self.passed_tests + len(self.failed_tests)) / self.total_tests) * 100
+            progress_pct = (
+                (self.passed_tests + len(self.failed_tests)) / self.total_tests
+            ) * 100
 
-            print(f"\n📂 File: {Console.BOLD}{current_file}{Console.ENDC} ({test_count} tests)")
-            print(f"   📊 Progress: {progress_pct:.1f}% | Passed: {self.passed_tests} | Failed: {len(self.failed_tests)}")
+            print(
+                f"\n📂 File: {Console.BOLD}{current_file}{Console.ENDC} ({test_count} tests)"
+            )
+            print(
+                f"   📊 Progress: {progress_pct:.1f}% | Passed: {self.passed_tests} | Failed: {len(self.failed_tests)}"
+            )
 
             # Tentativo esecuzione veloce (Intero File)
             res, dur, is_timeout = self.run_process(current_file, timeout=args.timeout)
@@ -343,12 +422,9 @@ class TestRunner:
             full_log = res.stdout + res.stderr
             error_msg = self._extract_error_message(lines)
 
-        self.failed_tests.append({
-            "id": nid,
-            "error": error_msg,
-            "log": full_log,
-            "full_output": full_log
-        })
+        self.failed_tests.append(
+            {"id": nid, "error": error_msg, "log": full_log, "full_output": full_log}
+        )
 
         if getattr(self, "exitfirst", False):
             Console.error("\n⛔ EXITFIRST: Test fallito. Interruzione immediata.")
@@ -372,8 +448,12 @@ class TestRunner:
         # Mostra Report Copertura Finale
         Console.header("📊 COPERTURA FINALE")
         try:
-            subprocess.run([sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR)
-            subprocess.run([sys.executable, "-m", "coverage", "html"], cwd=ROOT_DIR) # Genera anche HTML
+            subprocess.run(
+                [sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR
+            )
+            subprocess.run(
+                [sys.executable, "-m", "coverage", "html"], cwd=ROOT_DIR
+            )  # Genera anche HTML
             Console.info("Report HTML generato in htmlcov/index.html")
         except Exception as e:
             Console.error(f"Impossibile generare report copertura: {e}")
@@ -390,6 +470,7 @@ class TestRunner:
             if STATE_FILE.exists():
                 os.remove(STATE_FILE)
             sys.exit(0)
+
 
 if __name__ == "__main__":
     runner = TestRunner()

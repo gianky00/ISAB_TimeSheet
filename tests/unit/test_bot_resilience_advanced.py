@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -12,16 +11,19 @@ class MockBot(BaseBot):
     @property
     def name(self):
         return "MockBot"
+
     @property
     def description(self):
         return "Bot di test"
+
     def run(self, data):
         return True
+
     def _handle_unsaved_changes_popup(self):
         pass
 
-class TestBotResilienceAdvanced:
 
+class TestBotResilienceAdvanced:
     @pytest.fixture
     def bot(self, tmp_path, mocker):
         """Setup del bot con percorsi mockati."""
@@ -55,10 +57,11 @@ class TestBotResilienceAdvanced:
 
     def test_safe_login_retry_logic(self, bot):
         """Test: Verifica che il bot riprovi il login in caso di fallimento temporaneo."""
-        with patch.object(bot, "_init_driver"), \
-             patch.object(bot, "_login") as mock_login, \
-             patch.object(bot, "cleanup") as mock_cleanup:
-
+        with (
+            patch.object(bot, "_init_driver"),
+            patch.object(bot, "_login") as mock_login,
+            patch.object(bot, "cleanup") as mock_cleanup,
+        ):
             # Fallisce la prima volta, riesce la seconda
             mock_login.side_effect = [False, True]
 
@@ -66,11 +69,13 @@ class TestBotResilienceAdvanced:
 
             assert res is True
             assert mock_login.call_count == 2
-            assert mock_cleanup.call_count == 1 # Chiamato dopo il primo fallimento
+            assert mock_cleanup.call_count == 1  # Chiamato dopo il primo fallimento
 
     def test_execute_interrupted_error(self, bot):
         """Test: Gestione corretta dell'interruzione manuale dell'utente."""
-        with patch.object(bot, "_safe_login_with_retry", side_effect=InterruptedError("Stop")):
+        with patch.object(
+            bot, "_safe_login_with_retry", side_effect=InterruptedError("Stop")
+        ):
             result = bot.execute([{"data": 1}])
 
             assert result is False
@@ -78,9 +83,10 @@ class TestBotResilienceAdvanced:
 
     def test_execute_fatal_error_handling(self, bot):
         """Test: Un errore fatale deve attivare il salvataggio dello stato e impostare lo stato ERROR."""
-        with patch.object(bot, "_safe_login_with_retry", return_value=True), \
-             patch.object(bot, "run", side_effect=Exception("Crash!")):
-
+        with (
+            patch.object(bot, "_safe_login_with_retry", return_value=True),
+            patch.object(bot, "run", side_effect=Exception("Crash!")),
+        ):
             with patch.object(bot, "_save_error_state") as mock_save:
                 result = bot.execute([{"data": 1}])
 

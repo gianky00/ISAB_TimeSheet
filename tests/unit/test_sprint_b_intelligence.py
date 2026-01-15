@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -15,7 +14,10 @@ class TestSprintBIntelligence:
     @pytest.fixture
     def lyra(self, mocker):
         # Mock config per evitare caricamento file reali
-        mocker.patch("src.core.config_manager.load_config", return_value={"ai_model": "gemini-test"})
+        mocker.patch(
+            "src.core.config_manager.load_config",
+            return_value={"ai_model": "gemini-test"},
+        )
         # Mock AuditManager per evitare scritture su DB reale
         mocker.patch("src.core.audit_manager.AuditManager.log_action")
         return LyraClient(api_key="fake_key")
@@ -27,20 +29,59 @@ class TestSprintBIntelligence:
         # Dati finti (Tabella Dati)
         # Indici: 2: n_prev, 3: val_prev, 4: attivita, 7: status, 9: ore
         mock_data = [
-            (1, 2024, "P001", "€ 1.000,00", "Attivita A", "T1", "O1", "IN CORSO", "V", "10,0"),
-            (2, 2024, "P002", "€ 2.000,00", "Attivita B", "T1", "O2", "CHIUSA", "V", "5,5"),
-            (3, 2024, "TOTALE", "€ 3.000,00", "", "", "", "", "", "15,5"), # Da ignorare
+            (
+                1,
+                2024,
+                "P001",
+                "€ 1.000,00",
+                "Attivita A",
+                "T1",
+                "O1",
+                "IN CORSO",
+                "V",
+                "10,0",
+            ),
+            (
+                2,
+                2024,
+                "P002",
+                "€ 2.000,00",
+                "Attivita B",
+                "T1",
+                "O2",
+                "CHIUSA",
+                "V",
+                "5,5",
+            ),
+            (
+                3,
+                2024,
+                "TOTALE",
+                "€ 3.000,00",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "15,5",
+            ),  # Da ignorare
         ]
 
         # Dati finti (Giornaliere)
         # Indici: 4: n_prev, 5: odc, 9: ore
         mock_giorn = [
-            (1, 2024, "data", "p", "P001", "O1", "pdl", "i", "f", "8,0"), # Diretta
-            (2, 2024, "data", "p", "", "", "pdl", "i", "f", "2,0"),       # Indiretta
+            (1, 2024, "data", "p", "P001", "O1", "pdl", "i", "f", "8,0"),  # Diretta
+            (2, 2024, "data", "p", "", "", "pdl", "i", "f", "2,0"),  # Indiretta
         ]
 
-        mocker.patch("src.core.contabilita_queries.ContabilitaQueries.get_data_by_year", return_value=mock_data)
-        mocker.patch("src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year", return_value=mock_giorn)
+        mocker.patch(
+            "src.core.contabilita_queries.ContabilitaQueries.get_data_by_year",
+            return_value=mock_data,
+        )
+        mocker.patch(
+            "src.core.contabilita_queries.ContabilitaQueries.get_giornaliere_by_year",
+            return_value=mock_giorn,
+        )
 
         stats = ContabilitaStats.get_year_stats(mock_db_path, 2024)
 
@@ -57,11 +98,20 @@ class TestSprintBIntelligence:
     def test_lyra_system_context_assembly(self, lyra, mocker, tmp_path):
         """Verifica che Lyra aggreghi correttamente i dati locali per il prompt."""
         # Mock dei manager
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024])
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_year_stats", return_value={
-            "total_prev": 5000.0, "total_ore": 100.0, "count_total": 10,
-            "status_counts": {"IN CORSO": 5}, "top_commesse": [("Test", 1000.0)]
-        })
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[2024],
+        )
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_year_stats",
+            return_value={
+                "total_prev": 5000.0,
+                "total_ore": 100.0,
+                "count_total": 10,
+                "status_counts": {"IN CORSO": 5},
+                "top_commesse": [("Test", 1000.0)],
+            },
+        )
         mocker.patch("src.core.lyra_client.CONFIG_DIR", tmp_path)
 
         context = lyra._get_system_context()
@@ -78,7 +128,7 @@ class TestSprintBIntelligence:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "candidates": [{"content": {"parts": [{"text": "Risposta AI"}]}}],
-            "usageMetadata": {"totalTokenCount": 100}
+            "usageMetadata": {"totalTokenCount": 100},
         }
 
         with patch("requests.post", return_value=mock_response):

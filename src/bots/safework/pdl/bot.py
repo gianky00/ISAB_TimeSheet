@@ -42,11 +42,17 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     def description(self) -> str:
         """Restituisce la descrizione dell'istanza del bot."""
         return "Scarica e stampa PDL da SafeWork"
-        super().__init__(username, password, headless, timeout, download_path)
-        if not self.download_path:
-            from src.core.config_manager import get_download_path
 
-            self.download_path = get_download_path()
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        headless: bool = False,
+        timeout: int = 30,
+        download_path: str = "",
+    ):
+        """Inizializza il bot PDL con logging esteso."""
+        super().__init__(username, password, headless, timeout, download_path)
 
         # Setup File Logging
         try:
@@ -60,7 +66,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     f"--- SESSIONE DEBUG PDL BOT (DETTAGLIO MASSIMO) --- \nAvvio: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
                     f"Config: User={username}, Headless={headless}, Timeout={timeout}\n"
                     f"Download Path: {self.download_path}\n"
-                    f"{'-'*50}\n"
+                    f"{'-' * 50}\n"
                 )
         except Exception as e:
             print(f"Errore setup log file: {e}")
@@ -87,18 +93,12 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         if hasattr(self, "log_file") and self.log_file:
             try:
                 with open(self.log_file, "a", encoding="utf-8") as f:
-                    f.write(f"--- DETTAGLIO ERRORE ---\nURL Corrente: {self.driver.current_url if self.driver else 'N/A'}\n")
-                    f.write(f"STACK TRACE:\n{traceback.format_exc()}\n{'-'*50}\n")
+                    f.write(
+                        f"--- DETTAGLIO ERRORE ---\nURL Corrente: {self.driver.current_url if self.driver else 'N/A'}\n"
+                    )
+                    f.write(f"STACK TRACE:\n{traceback.format_exc()}\n{'-' * 50}\n")
             except Exception:
                 pass
-
-    @property
-    def name(self) -> str:
-        return "scarico_pdl"
-
-    @property
-    def description(self) -> str:
-        return "Scarica e stampa Permessi di Lavoro da SafeWork"
 
     def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
         """Validazione specifica per SafeWork PDL."""
@@ -118,9 +118,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             pdl = item.get("pdl_number") or item.get("numero_pdl")
             if pdl:
                 found_pdl = True
-                self.log(f"✅ Riga {i+1}: Trovato PDL {pdl}")
+                self.log(f"✅ Riga {i + 1}: Trovato PDL {pdl}")
             else:
-                self.log(f"⚠️ Riga {i+1}: PDL mancante")
+                self.log(f"⚠️ Riga {i + 1}: PDL mancante")
 
         if not found_pdl:
             self.log("❌ Nessun numero PDL trovato nei dati forniti.")
@@ -166,12 +166,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         try:
             self.log(f"🔐 Inserimento credenziali per utente: {self.username}")
-            u_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente")))
+            u_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpUtente"))
+            )
             u_field.clear()
             u_field.send_keys(self.username)
             self.log("⌨️ Username inserito.")
 
-            p_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword")))
+            p_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpPassword"))
+            )
             p_field.clear()
             p_field.send_keys(self.password)
             self.log("⌨️ Password inserita.")
@@ -215,14 +219,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         for index, item in enumerate(data):
             try:
                 self._check_stop()
-                res = self._process_single_pdl_row(index, total, item, all_downloaded_pdl_paths)
+                res = self._process_single_pdl_row(
+                    index, total, item, all_downloaded_pdl_paths
+                )
                 if res:
                     success_count += 1
             except InterruptedError:
                 self.log("🛑 Stop richiesto dall'utente durante il loop.")
                 raise
             except Exception as e:
-                self.log_error(f"Processo PDL riga {index+1}", e)
+                self.log_error(f"Processo PDL riga {index + 1}", e)
 
         # Merge finale di sessione
         self._handle_session_merge(data, all_downloaded_pdl_paths)
@@ -282,7 +288,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         assert self.wait and self.driver
         self.log(f"🔄 Ricerca PdL {pdl_num} in interfaccia...")
         try:
-            campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
+            campo = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce"))
+            )
             campo.clear()
             campo.send_keys(pdl_num)
             time.sleep(0.5)
@@ -319,7 +327,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ts = time.time()
 
         try:
-            self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
+            self.wait.until(
+                EC.element_to_be_clickable(
+                    (By.ID, "topIcon-acticonAnteprimaStampaMenu")
+                )
+            ).click()
             time.sleep(0.5)
             self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
         except Exception as e:
@@ -395,7 +407,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 try:
                     self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
                 except Exception:
-                    self.driver.find_element(By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]").click()
+                    self.driver.find_element(
+                        By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
+                    ).click()
                 time.sleep(1)
             self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
             return True
@@ -424,6 +438,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self._safe_remove(percorso_finale)
 
         from src.utils.document_processor import DocumentProcessor
+
         if DocumentProcessor.merge_pdfs([p1, p2], percorso_finale):
             self.log(f"✅ PdL {pdl_num} unito con successo.")
             self.downloaded_files.append(percorso_finale)
@@ -450,8 +465,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 path_merge = os.path.join(self.download_path, f"PDL_SESSIONE_{ts}.pdf")
 
                 from src.utils.document_processor import DocumentProcessor
+
                 if DocumentProcessor.merge_pdfs(all_paths, path_merge):
-                    self.log(f"✅ PDF Unico Sessione creato: {os.path.basename(path_merge)}")
+                    self.log(
+                        f"✅ PDF Unico Sessione creato: {os.path.basename(path_merge)}"
+                    )
                     self.downloaded_files.append(path_merge)
             except Exception as e:
                 self.log_error("Unione totale sessione", e)
@@ -469,7 +487,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Cerca il testo specifico indicato dall'utente: <p idtxt="1C51D77B">
             try:
                 WebDriverWait(self.driver, 2).until(
-                    EC.visibility_of_element_located((By.CSS_SELECTOR, "p[idtxt='1C51D77B']"))
+                    EC.visibility_of_element_located(
+                        (By.CSS_SELECTOR, "p[idtxt='1C51D77B']")
+                    )
                 )
                 self.log("ℹ️ Rilevato popup 'Ricerca estesa'.")
             except Exception:
@@ -477,7 +497,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             # Clicca su Si: <span idtxt="E421C594">
             try:
-                btn_si = self.driver.find_element(By.CSS_SELECTOR, "span[idtxt='E421C594']")
+                btn_si = self.driver.find_element(
+                    By.CSS_SELECTOR, "span[idtxt='E421C594']"
+                )
                 btn_si.click()
                 self.log("🖱️ Cliccato 'Si' per estendere la ricerca.")
             except Exception as e:
@@ -512,7 +534,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             try:
                 # Cerca il testo dell'alert per il log
                 try:
-                    alert_content = self.driver.find_element(By.XPATH, "//div[contains(@class, 'modal-content')]")
+                    alert_content = self.driver.find_element(
+                        By.XPATH, "//div[contains(@class, 'modal-content')]"
+                    )
                     if alert_content.is_displayed():
                         testo = alert_content.text.replace("\n", " ").strip()
                         self.log(f"🚩 ALERT RILEVATO: '{testo}'")
@@ -534,7 +558,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _attendi_e_ritorna_nuovo_pdf(self, tempo_riferimento, timeout=60):
         scadenza = time.time() + timeout
-        self.log(f"⏳ Polling cartella download (Ref Time: {int(tempo_riferimento)})...")
+        self.log(
+            f"⏳ Polling cartella download (Ref Time: {int(tempo_riferimento)})..."
+        )
         while time.time() < scadenza:
             files = glob.glob(os.path.join(self.download_path, "*.pdf"))
             nuovi_files = [f for f in files if os.path.getmtime(f) > tempo_riferimento]

@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 import json
 import os
 import shutil
@@ -26,8 +27,9 @@ MANIFEST_FILE = os.path.join(INSPECTOR_DIR, "workflow_manifest.json")
 URL_MAP = {
     "Portale Fornitori": URLs.ISAB_PORTAL,
     "Safework": "https://safework.isab.com/",
-    "Google (Test)": "https://www.google.com"
+    "Google (Test)": "https://www.google.com",
 }
+
 
 class BotArchitect:
     def __init__(self):
@@ -44,7 +46,9 @@ class BotArchitect:
         if os.path.exists(INSPECTOR_DIR):
             shutil.rmtree(INSPECTOR_DIR)
         os.makedirs(INSPECTOR_DIR)
-        self.log_to_console("🚀 ISPETTORE PRONTO. Cartella log_inspector inizializzata.")
+        self.log_to_console(
+            "🚀 ISPETTORE PRONTO. Cartella log_inspector inizializzata."
+        )
 
     def log_to_console(self, text):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {text}")
@@ -56,35 +60,45 @@ class BotArchitect:
         root.attributes("-topmost", True)
 
         notebook = ttk.Notebook(root)
-        notebook.pack(expand=True, fill='both', padx=10, pady=10)
+        notebook.pack(expand=True, fill="both", padx=10, pady=10)
 
         # --- TAB 1: SETUP ---
         config_frame = ttk.Frame(notebook)
         notebook.add(config_frame, text=" ⚙️ Setup ")
 
-        ttk.Label(config_frame, text="Inizia Sessione di Analisi", font=('Arial', 12, 'bold')).pack(pady=20)
+        ttk.Label(
+            config_frame, text="Inizia Sessione di Analisi", font=("Arial", 12, "bold")
+        ).pack(pady=20)
 
         selected_url = tk.StringVar()
         ttk.Label(config_frame, text="Seleziona Portale Target:").pack(pady=5)
-        combo = ttk.Combobox(config_frame, textvariable=selected_url, state="readonly", width=40)
-        combo['values'] = list(URL_MAP.keys())
+        combo = ttk.Combobox(
+            config_frame, textvariable=selected_url, state="readonly", width=40
+        )
+        combo["values"] = list(URL_MAP.keys())
         combo.current(0)
         combo.pack(pady=5)
 
-        ttk.Label(config_frame, text="Output: admin/log_inspector/", foreground="blue").pack(pady=10)
+        ttk.Label(
+            config_frame, text="Output: admin/log_inspector/", foreground="blue"
+        ).pack(pady=10)
 
         def on_confirm():
             root.quit()
             root.destroy()
 
-        ttk.Button(config_frame, text="🚀 AVVIA ISPEZIONE", command=on_confirm).pack(side="bottom", pady=30)
+        ttk.Button(config_frame, text="🚀 AVVIA ISPEZIONE", command=on_confirm).pack(
+            side="bottom", pady=30
+        )
 
         # --- TAB 2: GUIDA ---
         guide_frame = ttk.Frame(notebook)
         notebook.add(guide_frame, text=" 📖 Guida ")
 
-        guide_text = scrolledtext.ScrolledText(guide_frame, wrap=tk.WORD, font=('Consolas', 10))
-        guide_text.pack(expand=True, fill='both', padx=5, pady=5)
+        guide_text = scrolledtext.ScrolledText(
+            guide_frame, wrap=tk.WORD, font=("Consolas", 10)
+        )
+        guide_text.pack(expand=True, fill="both", padx=5, pady=5)
 
         instructions = """
 === GUIDA ALL'USO DELL'ISPETTORE ===
@@ -114,7 +128,7 @@ class BotArchitect:
    contenente screenshot e dati tecnici per l'IA.
 """
         guide_text.insert(tk.INSERT, instructions)
-        guide_text.configure(state='disabled')
+        guide_text.configure(state="disabled")
 
         root.mainloop()
         return selected_url.get(), URL_MAP.get(selected_url.get())
@@ -127,25 +141,43 @@ class BotArchitect:
 
     def auto_login(self, portal_name, url):
         self.driver.get(url)
-        accounts = self.config.get("accounts", []) if portal_name != "Safework" else self.config.get("safework_accounts", [])
-        acc = next((a for a in accounts if a.get("default")), accounts[0] if accounts else None)
+        accounts = (
+            self.config.get("accounts", [])
+            if portal_name != "Safework"
+            else self.config.get("safework_accounts", [])
+        )
+        acc = next(
+            (a for a in accounts if a.get("default")), accounts[0] if accounts else None
+        )
         if not acc:
             return
         u, p = acc.get("username"), acc.get("password")
         try:
             if portal_name == "Safework":
-                WebDriverWait(self.driver, 15).until(EC.element_to_be_clickable((By.XPATH, "//button[@class='ms-choice']"))).click()
-                WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[normalize-space()='ISAB Sud']"))).click()
+                WebDriverWait(self.driver, 15).until(
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "//button[@class='ms-choice']")
+                    )
+                ).click()
+                WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "//span[normalize-space()='ISAB Sud']")
+                    )
+                ).click()
                 self.driver.find_element(By.ID, "inpUtente").send_keys(u)
                 self.driver.find_element(By.ID, "inpPassword").send_keys(p)
                 self.driver.find_element(By.ID, "btnLogin").click()
             else:
-                WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.NAME, "Username"))).send_keys(u)
+                WebDriverWait(self.driver, 15).until(
+                    EC.presence_of_element_located((By.NAME, "Username"))
+                ).send_keys(u)
                 self.driver.find_element(By.NAME, "Password").send_keys(p)
                 btn = self.driver.find_element(By.XPATH, "//span[text()='Accedi']")
                 self.driver.execute_script("arguments[0].click();", btn)
                 try:
-                    WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Si']"))).click()
+                    WebDriverWait(self.driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, "//span[text()='Si']"))
+                    ).click()
                 except Exception:
                     pass
             self.log_to_console(f"✅ Login automatico: {u}")
@@ -160,12 +192,22 @@ class BotArchitect:
 
         self.log_to_console(f"📸 SNAPSHOT {self.state_counter}: {state_name}")
         self.driver.save_screenshot(os.path.join(state_path, "view.png"))
-        with open(os.path.join(state_path, "structure.html"), "w", encoding="utf-8") as f:
+        with open(
+            os.path.join(state_path, "structure.html"), "w", encoding="utf-8"
+        ) as f:
             f.write(self.driver.page_source)
 
         elements = self.driver.execute_script(self._get_ultimate_scanner_js())
         with open(os.path.join(state_path, "mapping.json"), "w", encoding="utf-8") as f:
-            json.dump({"context": state_name, "url": self.driver.current_url, "elements": elements}, f, indent=4)
+            json.dump(
+                {
+                    "context": state_name,
+                    "url": self.driver.current_url,
+                    "elements": elements,
+                },
+                f,
+                indent=4,
+            )
 
         self.last_state_folder = folder_name
         self._record_entry("STATE_CHANGE", state_name, folder_name)
@@ -176,14 +218,16 @@ class BotArchitect:
         self._record_entry("ACTION", action_desc, self.last_state_folder)
 
     def _record_entry(self, entry_type, description, ref_state):
-        self.workflow.append({
-            "order": len(self.workflow) + 1,
-            "type": entry_type,
-            "description": description,
-            "reference_state": ref_state,
-            "url": self.driver.current_url,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.workflow.append(
+            {
+                "order": len(self.workflow) + 1,
+                "type": entry_type,
+                "description": description,
+                "reference_state": ref_state,
+                "url": self.driver.current_url,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
         with open(MANIFEST_FILE, "w", encoding="utf-8") as f:
             json.dump(self.workflow, f, indent=4)
 
@@ -227,24 +271,24 @@ class BotArchitect:
         self.init_driver()
         self.auto_login(name, url)
 
-        print("\n" + "═"*60)
+        print("\n" + "═" * 60)
         print(" 🕵️  UNIVERSAL INSPECTOR - ACTIVE")
         print(f" 📂  DESTINAZIONE: {INSPECTOR_DIR}")
-        print("─"*60)
+        print("─" * 60)
         print(" Comandi:")
         print("  's Nome' -> Snapshot STATO (Nuova Vista)")
         print("  'Testo'  -> Descrivi AZIONE (es. Clicco Cerca)")
         print("  'q'      -> Fine Sessione")
-        print("═"*60 + "\n")
+        print("═" * 60 + "\n")
 
         try:
             time.sleep(2)
             self.capture_state("Landing_Page")
             while True:
                 cmd = input(f"[{self.last_state_folder}] > ").strip()
-                if cmd.lower() == 'q':
+                if cmd.lower() == "q":
                     break
-                if cmd.lower().startswith('s '):
+                if cmd.lower().startswith("s "):
                     self.capture_state(cmd[2:].strip())
                 else:
                     self.record_action(cmd)
@@ -254,6 +298,7 @@ class BotArchitect:
         finally:
             if self.driver:
                 self.driver.quit()
+
 
 if __name__ == "__main__":
     BotArchitect().run()

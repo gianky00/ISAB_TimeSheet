@@ -1,4 +1,3 @@
-
 import pytest
 
 from src.gui.scarico_ore_panel import ScaricoOrePanel
@@ -15,8 +14,32 @@ class TestScaricoOrePanelDeep:
         """Verifica il calcolo della somma ore per la selezione."""
         # Configura dati nel modello (Column 7 è Totale Ore)
         mock_data = [
-            ("2024-01-01", "P1", "P2", "ODC1", "10", "08:00", "16:00", "8.0", "Desc", "S", "C1"),
-            ("2024-01-01", "P1", "P2", "ODC1", "10", "08:00", "12:00", "4.5", "Desc", "S", "C1")
+            (
+                "2024-01-01",
+                "P1",
+                "P2",
+                "ODC1",
+                "10",
+                "08:00",
+                "16:00",
+                "8.0",
+                "Desc",
+                "S",
+                "C1",
+            ),
+            (
+                "2024-01-01",
+                "P1",
+                "P2",
+                "ODC1",
+                "10",
+                "08:00",
+                "12:00",
+                "4.5",
+                "Desc",
+                "S",
+                "C1",
+            ),
         ]
         panel.source_model.set_data(mock_data)
 
@@ -27,6 +50,7 @@ class TestScaricoOrePanelDeep:
 
         # Usa il flag di selezione corretto per PyQt6
         from PyQt6.QtCore import QItemSelectionModel
+
         selection_model.select(idx1, QItemSelectionModel.SelectionFlag.Select)
         selection_model.select(idx2, QItemSelectionModel.SelectionFlag.Select)
 
@@ -54,7 +78,19 @@ class TestScaricoOrePanelDeep:
     def test_copy_selection_tsv_format(self, panel, mocker):
         """Verifica che la copia della selezione generi il formato TSV corretto."""
         mock_data = [
-            ("D1", "P1", "P2", "ODC", "POS", "8:00", "17:00", "9.0", "DESC", "FIN", "COM")
+            (
+                "D1",
+                "P1",
+                "P2",
+                "ODC",
+                "POS",
+                "8:00",
+                "17:00",
+                "9.0",
+                "DESC",
+                "FIN",
+                "COM",
+            )
         ]
         panel.source_model.set_data(mock_data)
 
@@ -63,7 +99,9 @@ class TestScaricoOrePanelDeep:
 
         # Mocking QApplication.clipboard().setText()
         mock_clipboard = mocker.MagicMock()
-        mocker.patch("PyQt6.QtWidgets.QApplication.clipboard", return_value=mock_clipboard)
+        mocker.patch(
+            "PyQt6.QtWidgets.QApplication.clipboard", return_value=mock_clipboard
+        )
 
         panel._copy_selection()
 
@@ -85,4 +123,3 @@ class TestScaricoOrePanelDeep:
         assert "+10" in panel.status_label.text()
         assert "-2" in panel.status_label.text()
         assert "15.5s" in panel.status_label.text()
-

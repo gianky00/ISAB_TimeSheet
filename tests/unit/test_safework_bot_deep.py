@@ -31,15 +31,21 @@ class TestSafeWorkPDLBotDeep:
         """Verifica l'algoritmo di polling dei file PDF."""
         bot = MagicMock(spec=SafeWorkPDLBot)
         bot.download_path = "/tmp"
-        bot._attendi_e_ritorna_nuovo_pdf = SafeWorkPDLBot._attendi_e_ritorna_nuovo_pdf.__get__(bot, SafeWorkPDLBot)
+        bot._attendi_e_ritorna_nuovo_pdf = (
+            SafeWorkPDLBot._attendi_e_ritorna_nuovo_pdf.__get__(bot, SafeWorkPDLBot)
+        )
 
         m_glob = mocker.patch("src.bots.safework.pdl.bot.glob.glob")
         m_glob.side_effect = [
-            ["/tmp/file.crdownload"], ["/tmp/file.crdownload"],
-            ["/tmp/file.pdf"], []
+            ["/tmp/file.crdownload"],
+            ["/tmp/file.crdownload"],
+            ["/tmp/file.pdf"],
+            [],
         ]
         mocker.patch("src.bots.safework.pdl.bot.os.path.getmtime", return_value=200)
-        mocker.patch("src.bots.safework.pdl.bot.time.time", side_effect=[100, 101, 102, 300])
+        mocker.patch(
+            "src.bots.safework.pdl.bot.time.time", side_effect=[100, 101, 102, 300]
+        )
         mocker.patch("src.bots.safework.pdl.bot.time.sleep")
 
         res = bot._attendi_e_ritorna_nuovo_pdf(150)
@@ -50,7 +56,9 @@ class TestSafeWorkPDLBotDeep:
         bot = MagicMock(spec=SafeWorkPDLBot)
         bot.driver = MagicMock()
         bot.log = MagicMock()
-        bot._gestisci_alert_ricerca = SafeWorkPDLBot._gestisci_alert_ricerca.__get__(bot, SafeWorkPDLBot)
+        bot._gestisci_alert_ricerca = SafeWorkPDLBot._gestisci_alert_ricerca.__get__(
+            bot, SafeWorkPDLBot
+        )
 
         mock_btn = MagicMock()
         bot.driver.find_element.return_value = mock_btn
@@ -72,10 +80,18 @@ class TestSafeWorkPDLBotDeep:
 
         # Bind real methods to execute the pipeline
         bot.run = SafeWorkPDLBot.run.__get__(bot, SafeWorkPDLBot)
-        bot._process_single_pdl_row = SafeWorkPDLBot._process_single_pdl_row.__get__(bot, SafeWorkPDLBot)
-        bot._unisci_e_stampa_pdl = SafeWorkPDLBot._unisci_e_stampa_pdl.__get__(bot, SafeWorkPDLBot)
-        bot._handle_session_merge = SafeWorkPDLBot._handle_session_merge.__get__(bot, SafeWorkPDLBot)
-        bot._sanitizza_pdl_number = SafeWorkPDLBot._sanitizza_pdl_number.__get__(bot, SafeWorkPDLBot)
+        bot._process_single_pdl_row = SafeWorkPDLBot._process_single_pdl_row.__get__(
+            bot, SafeWorkPDLBot
+        )
+        bot._unisci_e_stampa_pdl = SafeWorkPDLBot._unisci_e_stampa_pdl.__get__(
+            bot, SafeWorkPDLBot
+        )
+        bot._handle_session_merge = SafeWorkPDLBot._handle_session_merge.__get__(
+            bot, SafeWorkPDLBot
+        )
+        bot._sanitizza_pdl_number = SafeWorkPDLBot._sanitizza_pdl_number.__get__(
+            bot, SafeWorkPDLBot
+        )
         bot._safe_remove = MagicMock()
 
         bot.driver = MagicMock()

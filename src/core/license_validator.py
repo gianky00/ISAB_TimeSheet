@@ -55,6 +55,7 @@ def get_hardware_id():
     except Exception:
         return "ERROR_GETTING_ID"
 
+
 def _get_windows_hardware_id():
     """Helper to get hardware ID on Windows."""
     # 1. Try WMIC (Legacy)
@@ -121,6 +122,7 @@ def _get_windows_hardware_id():
     except Exception:
         pass
     return None
+
 
 def _get_linux_hardware_id():
     """Helper to get hardware ID on Linux."""
@@ -307,6 +309,7 @@ def _check_integrity_with_manifest(paths: dict) -> Tuple[LicenseStatus, str]:
     except Exception as e:
         return LicenseStatus.ERROR, f"Errore lettura manifest: {e}"
     return LicenseStatus.VALID, ""
+
 
 def _validate_license_data(paths: dict) -> Tuple[LicenseStatus, str]:
     """Helper to decrypt and validate license data."""

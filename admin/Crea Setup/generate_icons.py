@@ -15,7 +15,9 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
     images = []
 
     for size in sizes:
-        img = _generate_icon_layer(size, text, color_bg, color_text, font_path, accent_color)
+        img = _generate_icon_layer(
+            size, text, color_bg, color_text, font_path, accent_color
+        )
         images.append(img)
 
     # Salvataggio ICO
@@ -25,16 +27,20 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
     except OSError as e:
         print(f"⚠️ Errore salvataggio {filename}: {e}")
 
+
 def _find_system_font() -> str:
     """Restituisce il primo font TTF valido trovato nel sistema."""
     paths = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/seguisb.ttf", "C:/Windows/Fonts/arial.ttf"
+        "C:/Windows/Fonts/arialbd.ttf",
+        "C:/Windows/Fonts/seguisb.ttf",
+        "C:/Windows/Fonts/arial.ttf",
     ]
     for p in paths:
         if os.path.exists(p):
             return p
     return None
+
 
 def _generate_icon_layer(size, text, bg, fg, font_path, accent) -> Image.Image:
     """Crea una singola immagine per una specifica dimensione dell'icona."""
@@ -59,6 +65,7 @@ def _generate_icon_layer(size, text, bg, fg, font_path, accent) -> Image.Image:
 
     return img
 
+
 def _draw_accent_stripe(draw, w, h, radius, color):
     """Disegna la striscia di accento sul fondo dell'icona."""
     stripe_h = int(h * 0.12)
@@ -71,6 +78,7 @@ def _draw_accent_stripe(draw, w, h, radius, color):
     if h - radius > h - stripe_h:
         draw.rectangle([0, h - stripe_h, w, h - radius], fill=color)
 
+
 def _draw_icon_text(draw, size, text, color, font_path):
     """Renderizza il testo centrato con una leggera ombra."""
     w, h = size
@@ -78,7 +86,11 @@ def _draw_icon_text(draw, size, text, color, font_path):
 
     # Caricamento Font
     try:
-        font = ImageFont.truetype(font_path, font_size) if font_path else ImageFont.load_default()
+        font = (
+            ImageFont.truetype(font_path, font_size)
+            if font_path
+            else ImageFont.load_default()
+        )
     except Exception:
         font = ImageFont.load_default()
 
@@ -96,11 +108,16 @@ def _draw_icon_text(draw, size, text, color, font_path):
     draw.text((tx + offset, ty + offset), text, fill=(0, 0, 0, 50), font=font)
     draw.text((tx, ty), text, fill=color, font=font)
 
+
 def _apply_highlight_overlay(img, size, radius) -> Image.Image:
     """Aggiunge un gradiente di luce sulla metà superiore dell'icona."""
     overlay = Image.new("RGBA", size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(overlay)
-    draw.rounded_rectangle([2, 2, size[0] - 2, size[1] // 2], radius=max(0, radius - 2), fill=(255, 255, 255, 25))
+    draw.rounded_rectangle(
+        [2, 2, size[0] - 2, size[1] // 2],
+        radius=max(0, radius - 2),
+        fill=(255, 255, 255, 25),
+    )
     return Image.alpha_composite(img, overlay)
 
 

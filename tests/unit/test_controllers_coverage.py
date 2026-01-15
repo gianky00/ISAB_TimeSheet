@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -12,6 +11,7 @@ from src.gui.controllers.search_controller import SearchController
 
 class MockMainWindow(QObject):
     """Mock leggero che simula l'interfaccia di MainWindow senza caricare Qt reale."""
+
     def __init__(self):
         super().__init__()
         self.page_stack = MagicMock()
@@ -27,6 +27,7 @@ class MockMainWindow(QObject):
         self.timbrature_db_panel = MagicMock()
         self.contabilita_panel = MagicMock()
 
+
 class TestControllersCoverage:
     @pytest.fixture
     def mw(self, qapp):
@@ -37,7 +38,9 @@ class TestControllersCoverage:
         mock_telegram = MagicMock()
         ctrl = BotController(mw, mock_telegram)
 
-        mocker.patch("src.gui.controllers.bot_controller.os.path.exists", return_value=True)
+        mocker.patch(
+            "src.gui.controllers.bot_controller.os.path.exists", return_value=True
+        )
 
         ctrl._handle_bot_results("scarico_pdl", ["/pdl.pdf"])
         mock_telegram.send_document_sync.assert_called_once()
@@ -97,8 +100,10 @@ class TestControllersCoverage:
         ctrl = SearchController(mw)
         mock_menu = MagicMock()
 
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.search_oda",
-                     return_value=[{"codice_oda": "123", "descrizione": "D"}])
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.search_oda",
+            return_value=[{"codice_oda": "123", "descrizione": "D"}],
+        )
 
         count = ctrl._search_oda("123", mock_menu)
         assert count == 1

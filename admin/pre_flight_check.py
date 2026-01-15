@@ -23,24 +23,30 @@ BOLD = "\033[1m"
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
+
 def print_step(msg):
     print(f"\n{BOLD}🔍 {msg}{RESET}")
+
 
 def print_ok(msg):
     print(f"{GREEN}✅ {msg}{RESET}")
 
+
 def print_fail(msg):
     print(f"{RED}❌ {msg}{RESET}")
+
 
 def get_pyproject_version():
     content = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'version\s*=\s*"(.*?)"', content)
     return match.group(1) if match else None
 
+
 def get_code_version():
     content = (PROJECT_ROOT / "src/core/version.py").read_text(encoding="utf-8")
     match = re.search(r'__version__\s*=\s*"(.*?)"', content)
     return match.group(1) if match else None
+
 
 def check_versions():
     print_step("Verifica allineamento versioni...")
@@ -51,19 +57,27 @@ def check_versions():
         print_ok(f"Versioni allineate: {v_toml}")
         return True
     else:
-        print_fail(f"Discrepanza versioni!\n   pyproject.toml: {v_toml}\n   version.py:     {v_code}")
+        print_fail(
+            f"Discrepanza versioni!\n   pyproject.toml: {v_toml}\n   version.py:     {v_code}"
+        )
         return False
+
 
 def check_git_status():
     print_step("Verifica stato Git...")
-    result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "status", "--porcelain"], capture_output=True, text=True
+    )
     if not result.stdout.strip():
         print_ok("Working tree pulito.")
         return True
     else:
         print(f"{YELLOW}⚠️  Attenzione: Ci sono modifiche non committate.{RESET}")
-        print(f"{YELLOW}   Verranno incluse automaticamente nel commit di release.{RESET}")
-        return True # Non blocca più la release
+        print(
+            f"{YELLOW}   Verranno incluse automaticamente nel commit di release.{RESET}"
+        )
+        return True  # Non blocca più la release
+
 
 def check_requirements_sync():
     print_step("Sincronizzazione requirements.txt...")
@@ -76,6 +90,37 @@ def check_requirements_sync():
     else:
         print_fail("Errore durante la sincronizzazione di requirements.txt!")
         return False
+
+
+def check_code_quality():
+    print_step("Controllo Qualità Codice (Ruff)...")
+    ruff_bin = (
+        PROJECT_ROOT / ".venv" / "Scripts" / "ruff.exe"
+        if sys.platform == "win32"
+        else "ruff"
+    )
+
+    # Esegue ruff check e format --check
+    try:
+        # Check linting
+        ret_lint = subprocess.call([str(ruff_bin), "check", "."], cwd=PROJECT_ROOT)
+        # Check formatting
+        ret_fmt = subprocess.call(
+            [str(ruff_bin), "format", "--check", "."], cwd=PROJECT_ROOT
+        )
+
+        if ret_lint == 0 and ret_fmt == 0:
+            print_ok("Qualità codice verificata (Ruff).")
+            return True
+        else:
+            print_fail(
+                "Ruff ha riscontrato problemi. Correggi con 'ruff format .' e 'ruff check --fix .'"
+            )
+            return False
+    except Exception as e:
+        print_fail(f"Impossibile eseguire Ruff: {e}")
+        return False
+
 
 def run_tests():
     print_step("Esecuzione Test Suite (Robust Mode - Fail Fast)...")
@@ -91,16 +136,22 @@ def run_tests():
             print_ok("Tutti i test passati.")
             return True
         else:
-            print_fail("Test falliti. Controlla il report o l'output sopra. Build annullata.")
+            print_fail(
+                "Test falliti. Controlla il report o l'output sopra. Build annullata."
+            )
             return False
     except Exception as e:
         print_fail(f"Errore esecuzione test: {e}")
         return False
 
+
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="SyncroJob Pre-Flight Check")
-    parser.add_argument("--skip-tests", action="store_true", help="Salta l'esecuzione dei test")
+    parser.add_argument(
+        "--skip-tests", action="store_true", help="Salta l'esecuzione dei test"
+    )
     args = parser.parse_args()
 
     print(f"{BOLD}✈️  AVVIO PRE-FLIGHT CHECK...{RESET}")
@@ -108,7 +159,8 @@ def main():
     checks = [
         check_versions,
         check_requirements_sync,
-        check_git_status
+        check_code_quality,
+        check_git_status,
     ]
 
     if not args.skip_tests:
@@ -118,11 +170,14 @@ def main():
 
     for check in checks:
         if not check():
-            print(f"\n{RED}⛔ ABORT: Controllo fallito. Correggi gli errori e riprova.{RESET}")
+            print(
+                f"\n{RED}⛔ ABORT: Controllo fallito. Correggi gli errori e riprova.{RESET}"
+            )
             sys.exit(1)
 
     print(f"\n{GREEN}{BOLD}🚀 READY FOR TAKEOFF! Tutte le verifiche superate.{RESET}")
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

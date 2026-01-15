@@ -1,4 +1,3 @@
-
 import sqlite3
 import time
 from datetime import datetime
@@ -12,7 +11,6 @@ from src.utils.security import PasswordManager
 
 
 class TestHardeningAuditSecurity:
-
     @pytest.fixture
     def audit_env(self, tmp_path, mocker):
         """Setup isolato per AuditManager."""
@@ -68,7 +66,7 @@ class TestHardeningAuditSecurity:
         manager, db_path = audit_env
 
         manager.log_action("First")
-        manager.log_action("Third") # Questa sarà ID 2
+        manager.log_action("Third")  # Questa sarà ID 2
 
         # Ora inseriamo manualmente una riga con ID forzato o semplicemente "in mezzo"
         # (SQLite AUTOINCREMENT non permette facilmente ID intermedi, ma simuliamo un attacco
@@ -84,12 +82,14 @@ class TestHardeningAuditSecurity:
             fake_data = f"{datetime.now().isoformat()}|attacker|Exploit|general|-|{{}}|success|high"
             fake_hash = manager._calculate_hash(fake_data, h1)
 
-            conn.execute("""
+            conn.execute(
+                """
 INSERT INTO audit_logs
                 (timestamp, user_id, action, category, entity, params, status, severity, row_hash)
                 VALUES (?, 'attacker', 'Exploit', 'general', '-', '{}', 'success', 'high', ?)
 """,
-                (datetime.now().isoformat(), fake_hash))
+                (datetime.now().isoformat(), fake_hash),
+            )
             conn.commit()
 
         # L'integrità deve fallire perché la riga "Third" (che ora è dopo la riga fake)
@@ -116,7 +116,9 @@ INSERT INTO audit_logs
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)
         mocker.patch("src.utils.security.PasswordManager._KEY_DIR", sec_dir)
-        mocker.patch("src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key")
+        mocker.patch(
+            "src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key"
+        )
 
         with patch("src.utils.security.PasswordManager._instance", None):
             pm = PasswordManager()
@@ -160,25 +162,40 @@ INSERT INTO audit_logs
         mgr, db_path = db_env
 
         # 1. Insert
-        mgr.execute_query(db_path, """
+        mgr.execute_query(
+            db_path,
+            """
             INSERT INTO contabilita (year, n_prev, attivita, odc)
             VALUES (2026, 'P123', 'Manutenzione Valvole', 'ODC_99')
-        """)
+        """,
+        )
 
         # Verifica FTS
-        res = mgr.execute_query(db_path, "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Valvole'")
+        res = mgr.execute_query(
+            db_path,
+            "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Valvole'",
+        )
         assert len(res) == 1
 
         # 2. Update
-        mgr.execute_query(db_path, "UPDATE contabilita SET attivita = 'Revisione Pompe' WHERE n_prev = 'P123'")
+        mgr.execute_query(
+            db_path,
+            "UPDATE contabilita SET attivita = 'Revisione Pompe' WHERE n_prev = 'P123'",
+        )
 
-        res_old = mgr.execute_query(db_path, "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Valvole'")
-        res_new = mgr.execute_query(db_path, "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Pompe'")
+        res_old = mgr.execute_query(
+            db_path,
+            "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Valvole'",
+        )
+        res_new = mgr.execute_query(
+            db_path, "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Pompe'"
+        )
         assert len(res_old) == 0
         assert len(res_new) == 1
 
         # 3. Delete
         mgr.execute_query(db_path, "DELETE FROM contabilita WHERE n_prev = 'P123'")
-        res_del = mgr.execute_query(db_path, "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Pompe'")
+        res_del = mgr.execute_query(
+            db_path, "SELECT * FROM contabilita_fts WHERE contabilita_fts MATCH 'Pompe'"
+        )
         assert len(res_del) == 0
-

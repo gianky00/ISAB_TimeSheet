@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock
 
 from src.utils.printing import get_installed_printers, print_pdf
@@ -8,10 +7,10 @@ class TestPrintingWindowsMocked:
     def test_get_installed_printers_mocked(self, mocker):
         """Verifica il recupero nomi stampanti tramite win32print."""
         # EnumPrinters restituisce tuple (flags, description, name, comment)
-        mocker.patch("win32print.EnumPrinters", return_value=[
-            (0, "Desc1", "Printer1", ""),
-            (0, "Desc2", "Printer2", "")
-        ])
+        mocker.patch(
+            "win32print.EnumPrinters",
+            return_value=[(0, "Desc1", "Printer1", ""), (0, "Desc2", "Printer2", "")],
+        )
 
         printers = get_installed_printers()
         assert printers == ["Printer1", "Printer2"]
@@ -25,7 +24,7 @@ class TestPrintingWindowsMocked:
         # 2. Mock librerie Windows e Fitz
         mock_fitz = mocker.patch("fitz.open")
         mock_doc = MagicMock()
-        mock_doc.__len__.return_value = 2 # 2 pagine
+        mock_doc.__len__.return_value = 2  # 2 pagine
         mock_fitz.return_value = mock_doc
 
         mocker.patch("win32print.GetDefaultPrinter", return_value="DefaultPrinter")
@@ -59,7 +58,7 @@ class TestPrintingWindowsMocked:
         # Deve catturare l'eccezione interna e provare startfile
         success = print_pdf(str(dummy_pdf), "Printer")
 
-        assert success is True # Ritorna True se lo startfile ha successo
+        assert success is True  # Ritorna True se lo startfile ha successo
         mock_startfile.assert_called_once_with(str(dummy_pdf), "print")
 
     def test_print_pdf_file_not_found(self):

@@ -7,16 +7,24 @@ from src.bots.portale_fornitori.common.locators import LoginLocators
 
 class ConcreteBot(BaseBot):
     """Sottoclasse concreta per testare BaseBot."""
+
     def __init__(self, username="user", password="pw", **kwargs):
         super().__init__(username=username, password=password, **kwargs)
 
     @property
-    def name(self): return "TestBot"
-    @property
-    def description(self): return "Desc"
+    def name(self):
+        return "TestBot"
 
-    def run(self, data): return True
-    def _handle_unsaved_changes_popup(self): pass
+    @property
+    def description(self):
+        return "Desc"
+
+    def run(self, data):
+        return True
+
+    def _handle_unsaved_changes_popup(self):
+        pass
+
 
 class TestBotBasePages:
     def test_login_page_logic(self):
@@ -40,9 +48,10 @@ class TestBotBasePages:
         bot = ConcreteBot(username="test_user", password="test_password")
 
         # BaseBot doesn't have start(), it has execute()
-        with patch.object(bot, "_safe_login_with_retry", return_value=True), \
-             patch.object(bot, "cleanup"):
-
+        with (
+            patch.object(bot, "_safe_login_with_retry", return_value=True),
+            patch.object(bot, "cleanup"),
+        ):
             result = bot.execute([{"data": 1}])
             assert result is True
             assert bot.status.name == "COMPLETED"

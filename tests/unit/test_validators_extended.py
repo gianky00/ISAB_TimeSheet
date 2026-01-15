@@ -1,4 +1,3 @@
-
 from src.utils.validators import InputValidator
 
 
@@ -21,10 +20,10 @@ class TestValidatorsExtended:
 
     def test_validate_pdl_invalid(self):
         """Verifica blocchi su PDL malformati."""
-        assert InputValidator.validate_pdl("12345").valid is False # Troppo corto
-        assert InputValidator.validate_pdl("1234567").valid is False # Troppo lungo
-        assert InputValidator.validate_pdl("ABCDEF").valid is False # Non numerico
-        assert InputValidator.validate_pdl("").valid is False # Vuoto
+        assert InputValidator.validate_pdl("12345").valid is False  # Troppo corto
+        assert InputValidator.validate_pdl("1234567").valid is False  # Troppo lungo
+        assert InputValidator.validate_pdl("ABCDEF").valid is False  # Non numerico
+        assert InputValidator.validate_pdl("").valid is False  # Vuoto
 
     def test_validate_codice_fiscale_checksum(self):
         """Verifica l'algoritmo di checksum del Codice Fiscale."""
@@ -41,16 +40,23 @@ class TestValidatorsExtended:
 
     def test_validate_date_italian_logical_check(self):
         """Verifica che date inesistenti siano bloccate."""
-        assert InputValidator.validate_date_italian("31.02.2024").valid is False # Febbraio corto
+        assert (
+            InputValidator.validate_date_italian("31.02.2024").valid is False
+        )  # Febbraio corto
         assert InputValidator.validate_date_italian("01/01/2024").valid is True
-        assert InputValidator.validate_date_italian("01/01/2024").sanitized_value == "01.01.2024"
+        assert (
+            InputValidator.validate_date_italian("01/01/2024").sanitized_value
+            == "01.01.2024"
+        )
 
     def test_validate_oda_constraints(self):
         """Verifica vincoli lunghezza e caratteri OdA."""
         # 20 caratteri (limite max)
         assert InputValidator.validate_oda("ODA12345678901234567").valid is True
-        assert InputValidator.validate_oda("ODA-123").valid is False # Carattere non ammesso dal pattern
-        assert InputValidator.validate_oda("A" * 21).valid is False # Troppo lungo
+        assert (
+            InputValidator.validate_oda("ODA-123").valid is False
+        )  # Carattere non ammesso dal pattern
+        assert InputValidator.validate_oda("A" * 21).valid is False  # Troppo lungo
 
     def test_sanitize_sql_string(self):
         """Verifica rimozione caratteri non stampabili."""

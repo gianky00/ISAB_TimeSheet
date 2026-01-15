@@ -224,16 +224,28 @@ class ExcelImporter:
             file_obj, _ = cls._decrypt_if_encrypted(path)
             xls = cls._get_excel_file(file_obj)
 
-            valid_sheets = [str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))]
+            valid_sheets = [
+                str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))
+            ]
             if not valid_sheets:
-                return False, "Nessun anno importato (Controlla nomi fogli: YYYY o 'Dati/Preventivi').", [], []
+                return (
+                    False,
+                    "Nessun anno importato (Controlla nomi fogli: YYYY o 'Dati/Preventivi').",
+                    [],
+                    [],
+                )
 
             all_rows, imported_years = cls._process_all_sheets(
                 xls, valid_sheets, progress_callback
             )
 
             if not imported_years:
-                return False, "Fogli validi trovati ma nessun dato importato (fogli vuoti?).", [], []
+                return (
+                    False,
+                    "Fogli validi trovati ma nessun dato importato (fogli vuoti?).",
+                    [],
+                    [],
+                )
 
             return (
                 True,
@@ -339,8 +351,18 @@ class ExcelImporter:
             df["nome_file"] = file_path.name
 
             target_cols = [
-                "year", "data", "personale", "descrizione", "tcl", "odc",
-                "pdl", "inizio", "fine", "ore", "n_prev", "nome_file"
+                "year",
+                "data",
+                "personale",
+                "descrizione",
+                "tcl",
+                "odc",
+                "pdl",
+                "inizio",
+                "fine",
+                "ore",
+                "n_prev",
+                "nome_file",
             ]
             rows = list(df[target_cols].itertuples(index=False, name=None))
             return (year, rows, None)
@@ -359,7 +381,9 @@ class ExcelImporter:
                 return None
             except Exception:
                 try:
-                    return pd.read_excel(file_path, sheet_name="RIASSUNTO", engine="openpyxl")
+                    return pd.read_excel(
+                        file_path, sheet_name="RIASSUNTO", engine="openpyxl"
+                    )
                 except Exception as e:
                     raise e
 
@@ -386,12 +410,16 @@ class ExcelImporter:
         if df.empty:
             return df
 
-        df = df.iloc[:-1] # Rimuovi riga totali
+        df = df.iloc[:-1]  # Rimuovi riga totali
         if "personale" in df.columns:
             df = df[~df["personale"].str.contains("Totale", na=False, case=False)]
 
         # Drop righe completamente vuote nelle colonne chiave
-        check_cols = [c for c in df.columns if c in cls.GIORNALIERE_MAPPING.values() and c != "data"]
+        check_cols = [
+            c
+            for c in df.columns
+            if c in cls.GIORNALIERE_MAPPING.values() and c != "data"
+        ]
         if check_cols:
             df.dropna(how="all", subset=check_cols, inplace=True)
 
@@ -403,7 +431,18 @@ class ExcelImporter:
             if db_col not in df.columns:
                 df[db_col] = ""
 
-        cols_to_clean = ["odc", "n_prev", "data", "personale", "descrizione", "tcl", "pdl", "inizio", "fine", "ore"]
+        cols_to_clean = [
+            "odc",
+            "n_prev",
+            "data",
+            "personale",
+            "descrizione",
+            "tcl",
+            "pdl",
+            "inizio",
+            "fine",
+            "ore",
+        ]
         df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
         df[cols_to_clean] = df[cols_to_clean].replace(r"(?i)^nan$", "", regex=True)
         return df
@@ -421,14 +460,19 @@ class ExcelImporter:
         mask_empty = df["odc"] == ""
         if mask_empty.any():
             comm_pattern = r"\b(\d{2}/\d{3})\b"
-            extracted = df.loc[mask_empty, "descrizione"].str.extract(comm_pattern, expand=False)
+            extracted = df.loc[mask_empty, "descrizione"].str.extract(
+                comm_pattern, expand=False
+            )
             df.loc[mask_empty, "odc"] = extracted.fillna("")
 
         # 3. Normalizzazione standard 5400...
-        mask_standard = ~df["odc"].str.contains("canone", case=False, na=False) & \
-                        ~df["odc"].str.match(r"^\d{2}/\d{3}$", na=False)
+        mask_standard = ~df["odc"].str.contains("canone", case=False, na=False) & ~df[
+            "odc"
+        ].str.match(r"^\d{2}/\d{3}$", na=False)
         if mask_standard.any():
-            extracted = df.loc[mask_standard, "odc"].str.extract(r"(5400\d+)", expand=False)
+            extracted = df.loc[mask_standard, "odc"].str.extract(
+                r"(5400\d+)", expand=False
+            )
             df.loc[mask_standard, "odc"] = extracted.fillna("")
 
     @classmethod
@@ -447,9 +491,16 @@ class ExcelImporter:
 
         tasks_args = cls._collect_giornaliere_tasks(root, lookup_map)
         if not tasks_args:
-            return True, f"Nessuna nuova giornaliera trovata (check anno >= {datetime.now().year}).", [], []
+            return (
+                True,
+                f"Nessuna nuova giornaliera trovata (check anno >= {datetime.now().year}).",
+                [],
+                [],
+            )
 
-        all_rows, imported_years = cls._run_parallel_import(tasks_args, progress_callback)
+        all_rows, imported_years = cls._run_parallel_import(
+            tasks_args, progress_callback
+        )
 
         if not imported_years:
             return True, "Nessuna riga valida importata dai file trovati.", [], []
@@ -546,7 +597,9 @@ class ExcelImporter:
                 return pd.read_excel(path, sheet_name="Riepilogo", header=2)
             except (ValueError, Exception):
                 try:
-                    return pd.read_excel(path, sheet_name="Riepilogo", header=2, engine="openpyxl")
+                    return pd.read_excel(
+                        path, sheet_name="Riepilogo", header=2, engine="openpyxl"
+                    )
                 except Exception:
                     return None
 
@@ -562,7 +615,10 @@ class ExcelImporter:
             else:
                 # Euristiche per newline (es. "STATO\nPdL" -> "STATO PdL")
                 for col in df.columns:
-                    if excel_col.replace("\n", " ").strip() == col.replace("\n", " ").strip():
+                    if (
+                        excel_col.replace("\n", " ").strip()
+                        == col.replace("\n", " ").strip()
+                    ):
                         rename_map[col] = db_col
                         break
 
@@ -648,11 +704,25 @@ class ExcelImporter:
             return openpyxl.load_workbook(wb_file, data_only=True, read_only=False)
 
     @classmethod
-    def _process_all_scarico_rows(cls, ws, progress_callback: Optional[Callable]) -> List[Tuple]:
+    def _process_all_scarico_rows(
+        cls, ws, progress_callback: Optional[Callable]
+    ) -> List[Tuple]:
         """Cicla sulle righe del foglio scarico ore."""
         rows_to_insert = []
         start_row = 6
-        col_keys = ["data", "pers1", "pers2", "odc", "pos", "dalle", "alle", "totale_ore", "descrizione", "finito", "commessa"]
+        col_keys = [
+            "data",
+            "pers1",
+            "pers2",
+            "odc",
+            "pos",
+            "dalle",
+            "alle",
+            "totale_ore",
+            "descrizione",
+            "finito",
+            "commessa",
+        ]
         total_rows = ws.max_row
 
         for row_idx, row in enumerate(
@@ -671,7 +741,11 @@ class ExcelImporter:
     def _process_scarico_ore_row(cls, row, col_keys) -> Optional[Tuple]:
         """Processa una singola riga estraendo valori e stili."""
         # Check preliminare: riga vuota?
-        if all(c.value is None or str(c.value).strip() == "" for i, c in enumerate(row) if i <= 7):
+        if all(
+            c.value is None or str(c.value).strip() == ""
+            for i, c in enumerate(row)
+            if i <= 7
+        ):
             return None
 
         row_vals = {}
@@ -691,11 +765,18 @@ class ExcelImporter:
             return None
 
         return (
-            row_vals["data"], row_vals["pers1"], row_vals["pers2"],
-            row_vals["odc"], row_vals["pos"], row_vals["dalle"],
-            row_vals["alle"], row_vals["totale_ore"], row_vals["descrizione"],
-            row_vals["finito"], row_vals["commessa"],
-            json.dumps(row_styles) if row_styles else ""
+            row_vals["data"],
+            row_vals["pers1"],
+            row_vals["pers2"],
+            row_vals["odc"],
+            row_vals["pos"],
+            row_vals["dalle"],
+            row_vals["alle"],
+            row_vals["totale_ore"],
+            row_vals["descrizione"],
+            row_vals["finito"],
+            row_vals["commessa"],
+            json.dumps(row_styles) if row_styles else "",
         )
 
     @staticmethod
@@ -732,12 +813,24 @@ class ExcelImporter:
     def _is_scarico_row_valid(cls, row_vals: Dict[str, str]) -> bool:
         """Verifica se la riga ha i dati minimi necessari per l'importazione."""
         # 1. Almeno uno tra i campi tecnici deve essere presente
-        check_all_empty = ["pers1", "pers2", "odc", "pos", "dalle", "alle", "totale_ore"]
+        check_all_empty = [
+            "pers1",
+            "pers2",
+            "odc",
+            "pos",
+            "dalle",
+            "alle",
+            "totale_ore",
+        ]
         if all(row_vals.get(k, "") == "" for k in check_all_empty):
             return False
 
         # 2. Campi obbligatori core
-        if not row_vals.get("odc") or not row_vals.get("pos") or not row_vals.get("totale_ore"):
+        if (
+            not row_vals.get("odc")
+            or not row_vals.get("pos")
+            or not row_vals.get("totale_ore")
+        ):
             return False
 
         # 3. Almeno un operatore
@@ -841,7 +934,11 @@ class ExcelImporter:
         rename_map = cls._build_certificati_rename_map(df.columns.tolist())
         if not rename_map:
             found_cols = ", ".join(list(df.columns)[:5]) + "..."
-            return False, f"Nessuna colonna valida trovata. Sheet: {sheet_name}, Row: {header_row_idx}. Trovate: {found_cols}", []
+            return (
+                False,
+                f"Nessuna colonna valida trovata. Sheet: {sheet_name}, Row: {header_row_idx}. Trovate: {found_cols}",
+                [],
+            )
 
         df.rename(columns=rename_map, inplace=True)
 
@@ -880,6 +977,7 @@ class ExcelImporter:
     @classmethod
     def _apply_certificati_formatting(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Applica formattazione date e calcolo giorni scadenza."""
+
         def format_date_it(val):
             if pd.isna(val) or val == "":
                 return ""

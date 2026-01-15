@@ -145,10 +145,14 @@ class AuditLogWidget(QWidget):
     def _update_integrity_ui(self, is_valid: bool):
         if is_valid:
             self.integrity_lbl.setText("✅ Database Integro (Certificato)")
-            self.integrity_lbl.setStyleSheet("color: #198754; font-size: 13px; font-weight: bold;")
+            self.integrity_lbl.setStyleSheet(
+                "color: #198754; font-size: 13px; font-weight: bold;"
+            )
         else:
             self.integrity_lbl.setText("⚠️ MANOMISSIONE RILEVATA!")
-            self.integrity_lbl.setStyleSheet("color: #dc3545; font-size: 13px; font-weight: bold;")
+            self.integrity_lbl.setStyleSheet(
+                "color: #dc3545; font-size: 13px; font-weight: bold;"
+            )
 
     def _populate_table(self, logs):
         for log in logs:
@@ -181,6 +185,7 @@ class AuditLogWidget(QWidget):
     def _format_log_timestamp(self, ts_raw) -> str:
         try:
             from datetime import datetime
+
             dt = datetime.fromisoformat(ts_raw)
             return dt.strftime("%d/%m/%y %H:%M")
         except Exception:
@@ -191,7 +196,13 @@ class AuditLogWidget(QWidget):
         status = str(log.get("status", "")).lower()
 
         # 1. Background (Severity)
-        bg = QColor("#fff5f5") if sev == "high" else QColor("#fff9f0") if sev == "medium" else None
+        bg = (
+            QColor("#fff5f5")
+            if sev == "high"
+            else QColor("#fff9f0")
+            if sev == "medium"
+            else None
+        )
         if bg:
             for it in items:
                 it.setBackground(bg)
@@ -429,7 +440,7 @@ class NotificationsPanel(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        is_unread_mode = (self.current_filter == "unread")
+        is_unread_mode = self.current_filter == "unread"
         notifications = self.manager.get_notifications(is_unread_mode)
 
         if self.current_filter == "errors":

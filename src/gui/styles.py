@@ -21,8 +21,9 @@ class ThemeManager:
     _instance = None
 
     def __new__(cls):
+        """Pattern Singleton per il gestore dello stile."""
         if cls._instance is None:
-            cls._instance = super(ThemeManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance.current_theme = "light"
         return cls._instance
 

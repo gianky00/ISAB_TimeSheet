@@ -46,7 +46,12 @@ class TestDettagliOdAPage:
 
         mock_driver.find_element.side_effect = side_effect
 
-        assert page.process_oda("123", "C1", "01.01.2024", "01.01.2025", Path("."), Path(".")) is True
+        assert (
+            page.process_oda(
+                "123", "C1", "01.01.2024", "01.01.2025", Path("."), Path(".")
+            )
+            is True
+        )
 
 
 class TestDettagliOdABot:
@@ -59,12 +64,17 @@ class TestDettagliOdABot:
 
         # Test with empty rows list
         result = dettagli_bot.run(
-            {"rows": [], "fornitore": "Forn", "data_da": "01.01.2024", "data_a": "01.01.2025"}
+            {
+                "rows": [],
+                "fornitore": "Forn",
+                "data_da": "01.01.2024",
+                "data_a": "01.01.2025",
+            }
         )
 
         assert result is True
         # process_oda should have been called once with empty oda/contract
         page_instance.process_oda.assert_called_once()
         args = page_instance.process_oda.call_args[0]
-        assert args[0] == "" # oda
-        assert args[1] == "" # contract
+        assert args[0] == ""  # oda
+        assert args[1] == ""  # contract

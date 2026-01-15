@@ -75,9 +75,7 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         ],
         "config_key": "last_prenota_bp_data",
     },
-
     "timbrature": {
-
         "class": TimbratureBot,
         "name": "Timbrature",
         "description": "Scarica e archivia le timbrature dal portale ISAB",

@@ -131,13 +131,17 @@ class ScaricaTSBot(BaseBot):
         else:
             rows = data
 
-        self.log(f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
+        self.log(
+            f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})..."
+        )
 
         source_dir = Path.home() / "Downloads"
         dest_dir = Path(self.download_path) if self.download_path else source_dir
         return rows, dest_dir
 
-    def _process_oda_rows(self, rows: List[Dict], dest_dir: Path) -> Tuple[int, List[str]]:
+    def _process_oda_rows(
+        self, rows: List[Dict], dest_dir: Path
+    ) -> Tuple[int, List[str]]:
         """Cicla sugli OdA ed esegue la ricerca e il download."""
         success_count = 0
         downloaded_files = []
@@ -153,7 +157,9 @@ class ScaricaTSBot(BaseBot):
 
             try:
                 if self._search_oda(numero_oda, posizione_oda):
-                    final_path = self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda)
+                    final_path = self._download_excel(
+                        source_dir, dest_dir, numero_oda, posizione_oda
+                    )
                     if final_path:
                         success_count += 1
                         downloaded_files.append(str(final_path))
@@ -174,17 +180,29 @@ class ScaricaTSBot(BaseBot):
             var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
         """
         # Numero OdA
-        campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
-        self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
+        campo_num = self.wait.until(
+            EC.presence_of_element_located((By.NAME, "NumeroOda"))
+        )
+        self.driver.execute_script(
+            "arguments[0].value = arguments[1];", campo_num, numero_oda
+        )
         self.driver.execute_script(js_dispatch, campo_num)
 
         # Posizione OdA
-        campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
-        self.driver.execute_script("arguments[0].value = ''; arguments[0].value = arguments[1];", campo_pos, posizione_oda)
+        campo_pos = self.wait.until(
+            EC.presence_of_element_located((By.NAME, "PosizioneOda"))
+        )
+        self.driver.execute_script(
+            "arguments[0].value = ''; arguments[0].value = arguments[1];",
+            campo_pos,
+            posizione_oda,
+        )
         self.driver.execute_script(js_dispatch, campo_pos)
 
         # Click Cerca
-        xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
+        xpath_cerca = (
+            "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
+        )
         self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
 
         self._attendi_scomparsa_overlay(90)
@@ -290,7 +308,11 @@ class ScaricaTSBot(BaseBot):
         assert self.wait and self.driver
 
         try:
-            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            files_before = {
+                f
+                for f in source_dir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".xlsx"
+            }
 
             # 1. Clicca tasto Excel
             if not self._click_excel_export_button():
@@ -303,7 +325,9 @@ class ScaricaTSBot(BaseBot):
                 return None
 
             # 3. Determina nome e destinazione
-            final_path = self._get_final_download_path(source_dir, dest_dir, numero_oda, posizione_oda)
+            final_path = self._get_final_download_path(
+                source_dir, dest_dir, numero_oda, posizione_oda
+            )
 
             # 4. Sposta/Rinomina
             return self._move_to_destination(downloaded_file, final_path)
@@ -325,7 +349,9 @@ class ScaricaTSBot(BaseBot):
             self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
             return False
 
-    def _wait_for_new_file(self, source_dir: Path, files_before: set, timeout: int = 25) -> Optional[Path]:
+    def _wait_for_new_file(
+        self, source_dir: Path, files_before: set, timeout: int = 25
+    ) -> Optional[Path]:
         """Attende la comparsa di un nuovo file .xlsx nella directory sorgente."""
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -335,7 +361,11 @@ class ScaricaTSBot(BaseBot):
                     time.sleep(0.5)
                     continue
 
-                current_files = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+                current_files = {
+                    f
+                    for f in source_dir.iterdir()
+                    if f.is_file() and f.suffix.lower() == ".xlsx"
+                }
                 new_files = current_files - files_before
                 if new_files:
                     return max(list(new_files), key=lambda f: f.stat().st_mtime)
@@ -344,12 +374,18 @@ class ScaricaTSBot(BaseBot):
             time.sleep(0.5)
         return None
 
-    def _get_final_download_path(self, source_dir: Path, dest_dir: Path, oda: str, pos: str) -> Path:
+    def _get_final_download_path(
+        self, source_dir: Path, dest_dir: Path, oda: str, pos: str
+    ) -> Path:
         """Costruisce il percorso finale basato su ODA/POS e impostazione elabora_ts."""
         safe_oda = sanitize_filename(oda)
         safe_pos = sanitize_filename(pos)
 
-        base_name = f"TS_{safe_oda}-{safe_pos}" if safe_pos and safe_pos != "unnamed_file" else f"TS_{safe_oda}"
+        base_name = (
+            f"TS_{safe_oda}-{safe_pos}"
+            if safe_pos and safe_pos != "unnamed_file"
+            else f"TS_{safe_oda}"
+        )
         filename = f"{base_name}.xlsx"
 
         # Se elabora_ts, il file resta in temp (Downloads) rinominato
@@ -379,7 +415,7 @@ class ScaricaTSBot(BaseBot):
                 self.log(f"✅ Scaricato: {dest.name}")
                 return dest
             except Exception as e:
-                self.log(f"⚠️ Tentativo spostamento {attempt+1}/3 fallito: {e}")
+                self.log(f"⚠️ Tentativo spostamento {attempt + 1}/3 fallito: {e}")
                 time.sleep(2)
 
         self.log(f"❌ Impossibile spostare il file in: {dest}")

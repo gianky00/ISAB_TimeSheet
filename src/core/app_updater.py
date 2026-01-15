@@ -56,6 +56,7 @@ def _is_newer_version(remote_ver_str: str) -> bool:
     except Exception:
         return False
 
+
 def _handle_update_found(remote_ver, download_url, changelog, parent, callback):
     """Notifica l'utente o esegue il callback per l'aggiornamento trovato."""
     if callback:

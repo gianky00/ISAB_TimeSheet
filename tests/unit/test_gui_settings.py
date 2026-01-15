@@ -6,14 +6,17 @@ from src.gui.settings_panel import SettingsPanel
 
 
 class TestSettingsGUI:
-
     @pytest.fixture
     def app(self, qapp):
         return qapp
 
     @patch("src.gui.settings_panel.config_manager.load_config")
     def test_settings_panel_init(self, mock_load, app, qtbot):
-        mock_load.return_value = {"browser_headless": True, "browser_timeout": 45, "accounts": []}
+        mock_load.return_value = {
+            "browser_headless": True,
+            "browser_timeout": 45,
+            "accounts": [],
+        }
 
         panel = SettingsPanel()
         qtbot.addWidget(panel)

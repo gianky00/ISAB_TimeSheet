@@ -11,8 +11,21 @@ def test_cache_worker_build_caches_logic():
     worker = CacheWorker(None)
     # raw_row: 0:data, 1:pers1, 2:pers2, 3:odc, 4:pos, 5:dalle, 6:alle, 7:totale_ore, 8:desc, 9:finito, 10:commessa, 11:style_json
     raw_data = [
-        ["2025-01-13", "Pers1", "Pers2", "ODC1", "10", "08:00", "17:00", 8.0, "Desc", "Sì", "C1", '{"odc": {"bg": "#FF0000"}}'],
-        ["13/01/2025", "U1", None, "5400", "20", "", "", "4,5", None, "No", "", None]
+        [
+            "2025-01-13",
+            "Pers1",
+            "Pers2",
+            "ODC1",
+            "10",
+            "08:00",
+            "17:00",
+            8.0,
+            "Desc",
+            "Sì",
+            "C1",
+            '{"odc": {"bg": "#FF0000"}}',
+        ],
+        ["13/01/2025", "U1", None, "5400", "20", "", "", "4,5", None, "No", "", None],
     ]
 
     display, search, totals, styles = worker._build_caches(raw_data)
@@ -26,10 +39,11 @@ def test_cache_worker_build_caches_logic():
 
     # Check row 2 (IT Date and None values)
     assert display[1][0] == "13/01/2025"
-    assert display[1][2] == "" # None converted to ""
-    assert display[1][8] == "" # None converted to ""
+    assert display[1][2] == ""  # None converted to ""
+    assert display[1][8] == ""  # None converted to ""
     assert totals[1] == 4.5  # 4,5 parsed to float
     assert styles[1] is None
+
 
 def test_date_filter_tree_building(qtbot):
     """Test hierarchical tree building for date filters."""
@@ -47,11 +61,12 @@ def test_date_filter_tree_building(qtbot):
     # Months in 2025: 01 and 02
     assert year_2025.rowCount() == 2
 
-    month_01 = year_2025.child(0) # Sorted by key
+    month_01 = year_2025.child(0)  # Sorted by key
     assert "Gennaio" in month_01.text()
     # Days in Jan 2025: 13 and 14
     assert month_01.rowCount() == 2
     assert month_01.child(0).text() == "13"
+
 
 def test_date_filter_selection_logic(qtbot):
     """Test that selecting/unselecting nodes correctly updates the result."""
@@ -66,7 +81,7 @@ def test_date_filter_selection_logic(qtbot):
 
     # Select all
     widget.select_all()
-    assert widget.get_selected_values() is None # None means all
+    assert widget.get_selected_values() is None  # None means all
 
     # Select none
     widget.select_none()

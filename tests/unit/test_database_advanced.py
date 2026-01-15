@@ -1,4 +1,3 @@
-
 import sqlite3
 import threading
 
@@ -17,7 +16,9 @@ class TestDatabaseAdvanced:
     @pytest.fixture
     def manager(self, db_dir, mocker):
         # Override predefined paths for testing
-        mocker.patch.object(DatabaseManager, "DB_CONTABILITA", db_dir / "contabilita.db")
+        mocker.patch.object(
+            DatabaseManager, "DB_CONTABILITA", db_dir / "contabilita.db"
+        )
         mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", db_dir / "timbrature.db")
         return DatabaseManager()
 
@@ -38,8 +39,11 @@ class TestDatabaseAdvanced:
         db_path = db_dir / "test_mig.db"
 
         # Definiamo migrazioni dummy per il test
-        def m1(conn): conn.execute("CREATE TABLE t1 (id INTEGER)")
-        def m2(conn): conn.execute("ALTER TABLE t1 ADD COLUMN val TEXT")
+        def m1(conn):
+            conn.execute("CREATE TABLE t1 (id INTEGER)")
+
+        def m2(conn):
+            conn.execute("ALTER TABLE t1 ADD COLUMN val TEXT")
 
         test_migrations = {1: m1, 2: m2}
 
@@ -108,21 +112,36 @@ class TestDatabaseAdvanced:
         manager._run_migrations(db_path, manager.MIGRATIONS_CONTABILITA, "Contabilita")
 
         # Insert
-        manager.execute_query(db_path, "INSERT INTO contabilita (year, n_prev, attivita) VALUES (2024, 'P123', 'Manutenzione Impianti')")
+        manager.execute_query(
+            db_path,
+            "INSERT INTO contabilita (year, n_prev, attivita) VALUES (2024, 'P123', 'Manutenzione Impianti')",
+        )
 
         # Search via FTS
-        res = manager.execute_query(db_path, "SELECT rowid FROM contabilita_fts WHERE contabilita_fts MATCH 'Manutenzione'")
+        res = manager.execute_query(
+            db_path,
+            "SELECT rowid FROM contabilita_fts WHERE contabilita_fts MATCH 'Manutenzione'",
+        )
         assert len(res) == 1
 
         # Update
-        manager.execute_query(db_path, "UPDATE contabilita SET attivita = 'Riparazione' WHERE n_prev = 'P123'")
+        manager.execute_query(
+            db_path,
+            "UPDATE contabilita SET attivita = 'Riparazione' WHERE n_prev = 'P123'",
+        )
 
         # Search old (should be empty)
-        res_old = manager.execute_query(db_path, "SELECT rowid FROM contabilita_fts WHERE contabilita_fts MATCH 'Manutenzione'")
+        res_old = manager.execute_query(
+            db_path,
+            "SELECT rowid FROM contabilita_fts WHERE contabilita_fts MATCH 'Manutenzione'",
+        )
         assert len(res_old) == 0
 
         # Search new
-        res_new = manager.execute_query(db_path, "SELECT rowid FROM contabilita_fts WHERE contabilita_fts MATCH 'Riparazione'")
+        res_new = manager.execute_query(
+            db_path,
+            "SELECT rowid FROM contabilita_fts WHERE contabilita_fts MATCH 'Riparazione'",
+        )
         assert len(res_new) == 1
 
     def test_execute_query_retries_on_lock(self, manager, db_dir, mocker):
@@ -141,7 +160,7 @@ class TestDatabaseAdvanced:
         # La prima esecuzione fallisce, la seconda passa
         mock_cursor.execute.side_effect = [
             sqlite3.OperationalError("database is locked"),
-            mocker.MagicMock() # Successo
+            mocker.MagicMock(),  # Successo
         ]
 
         # Mocking get_connection che è un context manager
@@ -149,7 +168,7 @@ class TestDatabaseAdvanced:
         mock_get_conn = mocker.patch.object(manager, "get_connection")
         mock_get_conn.return_value.__enter__.return_value = mock_conn
 
-        mocker.patch("time.sleep") # Non aspettare davvero
+        mocker.patch("time.sleep")  # Non aspettare davvero
 
         # Esecuzione
         manager.execute_query(db_path, "INSERT INTO x VALUES (1)")

@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,11 +9,19 @@ from src.core.constants import BotStatus
 # Classe concreta minima per testare la BaseBot astratta
 class DummyBot(BaseBot):
     @property
-    def name(self): return "Dummy"
+    def name(self):
+        return "Dummy"
+
     @property
-    def description(self): return "Test Bot"
-    def run(self, data): return True
-    def _handle_unsaved_changes_popup(self): pass
+    def description(self):
+        return "Test Bot"
+
+    def run(self, data):
+        return True
+
+    def _handle_unsaved_changes_popup(self):
+        pass
+
 
 class TestSprintDBotResilience:
     @pytest.fixture
@@ -36,7 +43,7 @@ class TestSprintDBotResilience:
 
         assert result is True
         assert mock_login.call_count == 2
-        assert bot.cleanup.call_count == 1 # Chiamato dopo il primo fallimento
+        assert bot.cleanup.call_count == 1  # Chiamato dopo il primo fallimento
 
     def test_bot_error_capture_screenshot(self, bot, mocker, tmp_path):
         """Verifica che il bot salvi screenshot e HTML in caso di errore fatale."""
@@ -50,7 +57,9 @@ class TestSprintDBotResilience:
         # Make save_screenshot create a dummy file so glob finds it
         def dummy_save(path):
             from pathlib import Path
+
             Path(path).write_text("fake png")
+
         mock_driver.save_screenshot.side_effect = dummy_save
 
         bot._save_error_state("Test Error")
@@ -85,8 +94,14 @@ class TestSprintDBotResilience:
     def test_bot_driver_initialization_failure_handling(self, bot, mocker):
         """Verifica la gestione di errori critici durante l'init del driver (es. version mismatch)."""
         # Simula errore di versione driver
-        mocker.patch("selenium.webdriver.Chrome", side_effect=Exception("SessionNotCreatedException: version mismatch"))
-        mocker.patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="fake_path")
+        mocker.patch(
+            "selenium.webdriver.Chrome",
+            side_effect=Exception("SessionNotCreatedException: version mismatch"),
+        )
+        mocker.patch(
+            "webdriver_manager.chrome.ChromeDriverManager.install",
+            return_value="fake_path",
+        )
 
         # Dobbiamo catturare i log per verificare il suggerimento all'utente
         logs = []
@@ -96,4 +111,4 @@ class TestSprintDBotResilience:
             bot._init_driver()
 
         assert any("Chrome è troppo recente" in m for m in logs)
-        assert bot.status == BotStatus.INITIALIZING # Stato impostato prima dell'errore
+        assert bot.status == BotStatus.INITIALIZING  # Stato impostato prima dell'errore

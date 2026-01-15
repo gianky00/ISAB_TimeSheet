@@ -10,7 +10,9 @@ class TestNotificationCoverage:
     """Test suite per src/core/notification_manager.py"""
 
     @pytest.fixture(autouse=True)
-    def setup_manager(self, tmp_path, qapp): # qapp fixture from pytest-qt needed for signals
+    def setup_manager(
+        self, tmp_path, qapp
+    ):  # qapp fixture from pytest-qt needed for signals
         """Setup isolato per NotificationManager."""
         # Reset Singleton
         NotificationManager._instance = None
@@ -22,7 +24,7 @@ class TestNotificationCoverage:
             self.manager = NotificationManager.instance()
             # Assicuriamoci che punti al file giusto
             self.manager.notifications_file = self.fake_file
-            self.manager.notifications = [] # Pulisci in memoria
+            self.manager.notifications = []  # Pulisci in memoria
 
         yield
 
@@ -51,8 +53,18 @@ class TestNotificationCoverage:
         """Test caricamento da file esistente."""
         # Creiamo un file dummy
         data = [
-            {"id": "1", "title": "Old", "timestamp": "2023-01-01T00:00:00", "read": True},
-            {"id": "2", "title": "New", "timestamp": "2024-01-01T00:00:00", "read": False}
+            {
+                "id": "1",
+                "title": "Old",
+                "timestamp": "2023-01-01T00:00:00",
+                "read": True,
+            },
+            {
+                "id": "2",
+                "title": "New",
+                "timestamp": "2024-01-01T00:00:00",
+                "read": False,
+            },
         ]
         self.fake_file.write_text(json.dumps(data))
 
@@ -68,7 +80,7 @@ class TestNotificationCoverage:
         """Test filtri (letti/non letti)."""
         self.manager.notifications = [
             {"id": "1", "read": True},
-            {"id": "2", "read": False}
+            {"id": "2", "read": False},
         ]
 
         all_n = self.manager.get_notifications(filter_unread=False)
@@ -120,4 +132,3 @@ class TestNotificationCoverage:
 
         assert len(self.manager.notifications) == 0
         assert not self.fake_file.exists() or self.fake_file.read_text() == "[]"
-

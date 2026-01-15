@@ -19,6 +19,7 @@ def table(qtbot):
             widget.setItem(r, c, QTableWidgetItem(f"R{r}C{c}"))
     return widget
 
+
 def test_copy_selection_logic(table, qtbot):
     """Test copying a range of cells to clipboard."""
     clipboard = QApplication.clipboard()
@@ -37,6 +38,7 @@ def test_copy_selection_logic(table, qtbot):
     expected = "R0C0\tR0C1\nR1C0\tR1C1"
     assert text.strip() == expected
 
+
 def test_paste_selection_logic(table, qtbot):
     """Test pasting TSV data from clipboard into table."""
     clipboard = QApplication.clipboard()
@@ -51,6 +53,7 @@ def test_paste_selection_logic(table, qtbot):
     assert table.item(2, 3).text() == "P2"
     assert table.item(3, 2).text() == "P3"
     assert table.item(3, 3).text() == "P4"
+
 
 def test_paste_into_combobox(table, qtbot):
     """Test that pasting into a cell with a ComboBox updates the index."""

@@ -33,7 +33,9 @@ class TestScaricoTSBotHardened:
         bot.validate_data = ScaricaTSBot.validate_data.__get__(bot, ScaricaTSBot)
 
         # Mock del metodo super().validate_data (BaseBot)
-        mocker.patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, ""))
+        mocker.patch(
+            "src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")
+        )
 
         # 1. Successo
         valid, msg = bot.validate_data([{"numero_oda": "123"}])
@@ -53,11 +55,13 @@ class TestScaricoTSBotHardened:
         bot._ask_user = MagicMock(return_value="REV1")
 
         # Colleghiamo il metodo reale
-        bot._process_downloaded_files_vba_style = ScaricaTSBot._process_downloaded_files_vba_style.__get__(bot, ScaricaTSBot)
+        bot._process_downloaded_files_vba_style = (
+            ScaricaTSBot._process_downloaded_files_vba_style.__get__(bot, ScaricaTSBot)
+        )
 
         dest_dir = tmp_path / "dest"
         dest_dir.mkdir()
-        (dest_dir / "TS_123.xlsx").write_text("old") # Conflitto
+        (dest_dir / "TS_123.xlsx").write_text("old")  # Conflitto
 
         src_file = tmp_path / "TS_123.xlsx"
         src_file.write_text("new")
@@ -78,7 +82,7 @@ class TestScaricoTSBotHardened:
         bot.wait = MagicMock()
         bot.long_wait = MagicMock()
         bot.fornitore = "TEST_FORN"
-        bot.data_da = "01.01.2024" # Obbligatorio per send_keys
+        bot.data_da = "01.01.2024"  # Obbligatorio per send_keys
         bot._check_stop = MagicMock()
         bot._attendi_scomparsa_overlay = MagicMock()
 
@@ -87,7 +91,9 @@ class TestScaricoTSBotHardened:
 
         # Mocking expected_conditions e ActionChains
         mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.EC")
-        m_actions = mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains")
+        m_actions = mocker.patch(
+            "src.bots.portale_fornitori.scarico_ts.bot.ActionChains"
+        )
         mocker.patch("time.sleep")
 
         # Mock elementi

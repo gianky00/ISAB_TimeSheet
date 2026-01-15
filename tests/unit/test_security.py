@@ -2,7 +2,6 @@ from src.utils.security import password_manager
 
 
 class TestSecurity:
-
     def test_encryption_decryption(self):
         text = "my_secret_password"
         encrypted = password_manager.encrypt(text)

@@ -44,6 +44,7 @@ class GiornaliereYearTab(QWidget):
         self._load_data()
 
     def _setup_ui(self):
+        """Inizializza l'interfaccia utente del tab per l'anno specifico."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
         self.table = ExcelTableWidget()
@@ -185,6 +186,7 @@ class GiornaliereYearTab(QWidget):
         return s
 
     def filter_data(self, text):
+        """Filtra i dati dell'anno corrente in base alla ricerca testuale."""
         rows = self.table.rowCount()
         data_rows = (
             rows - 1

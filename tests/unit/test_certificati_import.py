@@ -7,7 +7,6 @@ from src.core.contabilita_manager import ContabilitaManager
 
 
 class TestCertificatiImport(unittest.TestCase):
-
     @patch("src.core.excel_importer.pd.read_sql")
     @patch("src.core.excel_importer.pd.ExcelFile")
     @patch("src.core.excel_importer.pd.read_excel")
@@ -26,7 +25,9 @@ class TestCertificatiImport(unittest.TestCase):
         # Mock read_sql for existing rows (return empty)
         mock_read_sql.return_value = pd.DataFrame()
 
-        with patch("src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione") as mock_sync:
+        with patch(
+            "src.core.data_synchronizer.DataSynchronizer.sync_certificati_campione"
+        ) as mock_sync:
             mock_sync.return_value = (1, 0)
 
             # 1. Preview DataFrame (simulate header at row 5)
@@ -38,7 +39,13 @@ class TestCertificatiImport(unittest.TestCase):
                 ["Garbage"] * 5,
                 ["Garbage"] * 5,
                 ["Garbage"] * 5,
-                ["Modello / Tipo", "Costruttore", "Matricola", "Range Strumento", "Errore max %"],  # Row 5
+                [
+                    "Modello / Tipo",
+                    "Costruttore",
+                    "Matricola",
+                    "Range Strumento",
+                    "Errore max %",
+                ],  # Row 5
             ]
             preview_df = pd.DataFrame(preview_data)
 
@@ -48,11 +55,17 @@ class TestCertificatiImport(unittest.TestCase):
             ]
             real_df = pd.DataFrame(
                 data_rows,
-                columns=["Modello / Tipo", "Costruttore", "Matricola", "Range Strumento", "Errore max %"],
+                columns=[
+                    "Modello / Tipo",
+                    "Costruttore",
+                    "Matricola",
+                    "Range Strumento",
+                    "Errore max %",
+                ],
             )
-            real_df["Scadenza Certificato"] = (
-                "2025-12-31"  # Add other cols to satisfy mapping if strictly needed or if they are just optional
-            )
+            real_df[
+                "Scadenza Certificato"
+            ] = "2025-12-31"  # Add other cols to satisfy mapping if strictly needed or if they are just optional
             real_df["Emissione Certificato"] = "2025-01-01"
             real_df["ID-COEMI"] = "ID001"
             real_df["Stato Certificato"] = "Valido"
@@ -69,7 +82,12 @@ class TestCertificatiImport(unittest.TestCase):
             mock_read_excel.side_effect = read_excel_side_effect
 
             # Execute
-            result, msg, added, removed = ContabilitaManager.import_certificati_campione("dummy.xlsx")
+            (
+                result,
+                msg,
+                added,
+                removed,
+            ) = ContabilitaManager.import_certificati_campione("dummy.xlsx")
 
             # Assertions
             self.assertTrue(result, f"Import failed: {msg}")

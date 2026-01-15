@@ -103,7 +103,9 @@ class LoginPage:
             yes_btn = wait_popup.until(
                 EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES)
             )
-            self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+            self.log(
+                "⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso."
+            )
             yes_btn.click()
             time.sleep(1)
         except TimeoutException:
@@ -142,20 +144,16 @@ class LoginPage:
             self.log("Tentativo di login...")
             self._attendi_scomparsa_overlay(timeout_secondi=10)
 
-            # --- OTTIMIZZAZIONE: Verifica sessione immediata ---
-            if self._verify_logged_in_via_ui():
-                self.log("✓ Sessione già attiva rilevata (fast-skip).")
-                return True
-
             try:
-                # Se non siamo loggati, allora cerchiamo il form
-                WebDriverWait(self.driver, 3).until(
+                # 1. Cerca il form di login (comportamento standard)
+                WebDriverWait(self.driver, 5).until(
                     EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
                 )
                 self._perform_login_form_action(username, password)
             except TimeoutException:
-                # Fallback: ricontrolla una volta se nel frattempo siamo entrati
+                # 2. Se il form non c'è, controlla se siamo già loggati (fast-skip)
                 if self._verify_logged_in_via_ui():
+                    self.log("✓ Rilevata sessione attiva (skip login).")
                     return True
 
                 self.log("⚠️ Username assente e sessione invalida/scaduta.")

@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 import pandas as pd
@@ -14,6 +13,7 @@ class TestTimesheetProcessorDeep:
         file_path = tmp_path / "timesheet.xlsx"
 
         import openpyxl
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Timesheet"
@@ -29,7 +29,9 @@ class TestTimesheetProcessorDeep:
 
     def test_process_file_success(self, mock_excel, tmp_path):
         """Verifica elaborazione corretta con conteggio POS."""
-        success, msg = TimesheetProcessor.process_and_move(mock_excel, dest_dir=tmp_path)
+        success, msg = TimesheetProcessor.process_and_move(
+            mock_excel, dest_dir=tmp_path
+        )
         assert success is True
         assert "Salvato in" in msg
 
@@ -48,6 +50,7 @@ class TestTimesheetProcessorDeep:
         file_path = tmp_path / "no_pos.xlsx"
 
         import openpyxl
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Timesheet"
@@ -61,6 +64,8 @@ class TestTimesheetProcessorDeep:
 
     def test_process_file_not_found(self, tmp_path):
         """Verifica errore se il file non esiste."""
-        success, msg = TimesheetProcessor.process_and_move(Path("ghost.xlsx"), dest_dir=tmp_path)
+        success, msg = TimesheetProcessor.process_and_move(
+            Path("ghost.xlsx"), dest_dir=tmp_path
+        )
         assert success is False
         assert "non trovato" in msg

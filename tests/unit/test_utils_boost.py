@@ -12,7 +12,9 @@ class TestValidatorsAndParsingDeep:
 
     def test_input_validator_cf_invalid(self):
         # Test invalid checksum
-        res = InputValidator.validate_codice_fiscale("RSSMRA80A01L219Z") # Checksum wrong
+        res = InputValidator.validate_codice_fiscale(
+            "RSSMRA80A01L219Z"
+        )  # Checksum wrong
         assert res.valid is False
 
     def test_parse_currency_edge_cases(self):

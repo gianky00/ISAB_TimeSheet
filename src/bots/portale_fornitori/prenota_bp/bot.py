@@ -1,8 +1,9 @@
 """
 Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornitori ISAB.
 """
+
 import traceback
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
 from src.bots.base.base_bot import BaseBot
 
@@ -11,6 +12,7 @@ from .pages.prenota_bp_page import PrenotaBPPage
 
 class PrenotaBPBot(BaseBot):
     """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori."""
+
     @staticmethod
     def get_columns() -> list:
         """Definisce le colonne richieste per l'input dei dati (Numero BP, Note)."""
@@ -50,6 +52,7 @@ class PrenotaBPBot(BaseBot):
 
     def _get_row_value(self, row: dict, target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
+
         def normalize(s):
             return str(s).upper().replace(" ", "").replace("_", "")
 
@@ -58,7 +61,6 @@ class PrenotaBPBot(BaseBot):
             if normalize(k) == target_norm:
                 return str(v) if v is not None else ""
         return ""
-
 
     def run(self, data: Any):
         """Esecuzione principale del bot."""
@@ -70,7 +72,6 @@ class PrenotaBPBot(BaseBot):
             self.fornitore = data.get("fornitore") or self.fornitore
         else:
             rows = data
-
 
         if not rows:
             self.log("Nessun dato da processare.")
@@ -99,9 +100,10 @@ class PrenotaBPBot(BaseBot):
                 note = self._get_row_value(row, "Note di Ritiro").strip()
 
                 if not num_bp:
-                    self.log(f"Riga {i+1}: Numero BP mancante o colonna errata, salto.")
+                    self.log(
+                        f"Riga {i + 1}: Numero BP mancante o colonna errata, salto."
+                    )
                     continue
-
 
                 try:
                     # Filtraggio specifico per il BP corrente (Selezione Fornitore robusta)
@@ -109,7 +111,7 @@ class PrenotaBPBot(BaseBot):
                         fornitore=self.fornitore,
                         numero_bp=num_bp,
                         data_da=self.data_da,
-                        data_a=self.data_a
+                        data_a=self.data_a,
                     )
 
                     page.prenota_nuovo_bp(num_bp, note)
@@ -117,9 +119,13 @@ class PrenotaBPBot(BaseBot):
                     processed_count += 1
                 except Exception as e:
                     self.log(f"✗ Errore su BP {num_bp}: {str(e)}")
-                    self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
+                    self.results.append(
+                        {"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)}
+                    )
 
-            self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
+            self.log(
+                f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati."
+            )
             return True
 
         except Exception as e:

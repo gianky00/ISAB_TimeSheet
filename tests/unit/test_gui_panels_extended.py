@@ -13,7 +13,10 @@ class TestGUIPanelsExtended:
         return qapp
 
     def test_lyra_panel_init(self, qtbot):
-        with patch("src.gui.lyra_panel.SecretsManager.get_gemini_api_key", return_value="fake_key"):
+        with patch(
+            "src.gui.lyra_panel.SecretsManager.get_gemini_api_key",
+            return_value="fake_key",
+        ):
             panel = LyraPanel()
             qtbot.addWidget(panel)
             assert panel.chat_area is not None
@@ -26,11 +29,19 @@ class TestGUIPanelsExtended:
                 mock_ask.assert_called_with("Ciao Lyra")
 
     def test_notifications_panel(self, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
+        with patch(
+            "src.core.notification_manager.NotificationManager.instance"
+        ) as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
             mock_manager.get_notifications.return_value = [
-                {"id": 1, "title": "Test", "message": "Msg", "timestamp": "2024-01-01", "read": False}
+                {
+                    "id": 1,
+                    "title": "Test",
+                    "message": "Msg",
+                    "timestamp": "2024-01-01",
+                    "read": False,
+                }
             ]
 
             panel = NotificationsPanel()
@@ -51,7 +62,9 @@ class TestGUIPanelsExtended:
         assert panel.search_edit.text() == "installazione"
 
     def test_notifications_clear_all(self, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
+        with patch(
+            "src.core.notification_manager.NotificationManager.instance"
+        ) as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
 
@@ -60,7 +73,6 @@ class TestGUIPanelsExtended:
 
             # Mock the message box to avoid blocking
             with patch("PyQt6.QtWidgets.QMessageBox.exec", return_value=None):
-
                 # Simulate "Sì" click
                 # Finding the "Sì" button is hard without real exec,
                 # so we just mock the manager call directly or the button logic

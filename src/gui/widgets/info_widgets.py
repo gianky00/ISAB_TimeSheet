@@ -41,7 +41,9 @@ class DetailedInfoDialog(QDialog):
 
         layout = QVBoxLayout(self)
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;")
+        lbl_title.setStyleSheet(
+            "font-weight: bold; font-size: 16px; color: #0d6efd; margin-bottom: 10px;"
+        )
         layout.addWidget(lbl_title)
 
         lbl_content = QLabel(content)
@@ -68,15 +70,23 @@ class InfoLabel(QPushButton):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.clicked.connect(self._show_info)
-        self.setStyleSheet("QPushButton { color: #6c757d; font-weight: bold; font-size: 16px; background: transparent; border: none; padding: 0px 5px; } QPushButton:hover { color: #0d6efd; }")
+        self.setStyleSheet(
+            "QPushButton { color: #6c757d; font-weight: bold; font-size: 16px; background: transparent; border: none; padding: 0px 5px; } QPushButton:hover { color: #0d6efd; }"
+        )
 
     def _show_info(self):
-        content = self.get_text_callback() if callable(self.get_text_callback) else str(self.get_text_callback)
+        content = (
+            self.get_text_callback()
+            if callable(self.get_text_callback)
+            else str(self.get_text_callback)
+        )
         dlg = DetailedInfoDialog(self.title, content, self.window())
         cursor_pos = QCursor.pos()
         top_left = self.mapToGlobal(QPoint(0, 0))
         widget_rect = QRect(top_left, self.size())
-        target_pos = cursor_pos if widget_rect.contains(cursor_pos) else widget_rect.center()
+        target_pos = (
+            cursor_pos if widget_rect.contains(cursor_pos) else widget_rect.center()
+        )
         screen = QApplication.screenAt(target_pos)
         if screen:
             dlg.adjustSize()
@@ -102,7 +112,9 @@ class KPIBigCard(QFrame):
     def __init__(self, title, value, color="#0d6efd", parent=None, subtitle=None):
         super().__init__(parent)
         self.info_content_callback = lambda: "Nessuna informazione disponibile."
-        self.setStyleSheet("QFrame { background-color: white; border-radius: 12px; border: 1px solid #e9ecef; }")
+        self.setStyleSheet(
+            "QFrame { background-color: white; border-radius: 12px; border: 1px solid #e9ecef; }"
+        )
         self.setMinimumWidth(200)
         self.setMinimumHeight(120)
 
@@ -119,7 +131,9 @@ class KPIBigCard(QFrame):
 
         header_layout = QHBoxLayout()
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;")
+        lbl_title.setStyleSheet(
+            "color: #6c757d; font-size: 13px; font-weight: bold; border: none; background: transparent;"
+        )
         header_layout.addWidget(lbl_title)
         header_layout.addStretch()
         self.info_icon = InfoLabel(title, self._get_info_content)
@@ -127,13 +141,17 @@ class KPIBigCard(QFrame):
         layout.addLayout(header_layout)
 
         self.lbl_value = QLabel(value)
-        self.lbl_value.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;")
+        self.lbl_value.setStyleSheet(
+            f"color: {color}; font-size: 28px; font-weight: 800; border: none; background: transparent;"
+        )
         self.lbl_value.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.lbl_value)
 
         if subtitle:
             lbl_sub = QLabel(subtitle)
-            lbl_sub.setStyleSheet("color: #adb5bd; font-size: 11px; border: none; background: transparent;")
+            lbl_sub.setStyleSheet(
+                "color: #adb5bd; font-size: 11px; border: none; background: transparent;"
+            )
             lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(lbl_sub)
 

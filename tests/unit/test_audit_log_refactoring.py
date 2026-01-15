@@ -20,7 +20,7 @@ def audit_widget(qtbot, mocker):
             "entity": "SYSTEM",
             "params": "{}",
             "status": "success",
-            "severity": "low"
+            "severity": "low",
         },
         {
             "timestamp": "2025-01-13T10:05:00",
@@ -29,13 +29,14 @@ def audit_widget(qtbot, mocker):
             "entity": "DATABASE",
             "params": '{"id": 1}',
             "status": "error",
-            "severity": "high"
-        }
+            "severity": "high",
+        },
     ]
 
     widget = AuditLogWidget()
     qtbot.addWidget(widget)
     return widget
+
 
 def test_audit_refresh_population(audit_widget):
     """Test that logs are correctly populated in the table."""
@@ -51,6 +52,7 @@ def test_audit_refresh_population(audit_widget):
     assert error_item.text() == "ERROR"
     # high severity/error status should have red-ish foreground
     assert error_item.foreground().color().name().lower() in ["#dc3545", "#ff0000"]
+
 
 def test_integrity_display(audit_widget, mocker):
     """Test integrity label updates."""

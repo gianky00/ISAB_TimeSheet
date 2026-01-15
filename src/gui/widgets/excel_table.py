@@ -215,17 +215,6 @@ class ExcelTableWidget(QTableWidget):
         if not selection:
             return
 
-        # ... logic ...
-        rows = sorted(list(set(index.row() for index in selection)))
-        columns = sorted(list(set(index.column() for index in selection)))
-        
-        # ... costruction of text ...
-        # (This is a simplified representation, I need to wrap the existing logic)
-        # Let's target the specific line 118 usually
-        
-        # Since I don't have the full content in memory, I'll read it first to be precise.
-        pass
-
         rows, cols = self._get_selected_rows_cols(selection)
         if not rows or not cols:
             return
@@ -245,9 +234,19 @@ class ExcelTableWidget(QTableWidget):
             QToolTip.showText(QCursor.pos(), "✨ Copiato!", self)
 
     def _get_selected_rows_cols(self, ranges) -> tuple[list[int], list[int]]:
-        rows = sorted({r for rng in ranges for r in range(rng.topRow(), rng.bottomRow() + 1)})
-        cols = sorted({c for rng in ranges for c in range(rng.leftColumn(), rng.rightColumn() + 1)})
-        return rows, cols
+        """Estrae gli indici unici di riga e colonna dalla selezione."""
+        rows = set()
+        cols = set()
+        for item in ranges:
+            if hasattr(item, "topRow"):  # QTableWidgetSelectionRange
+                for r in range(item.topRow(), item.bottomRow() + 1):
+                    rows.add(r)
+                for c in range(item.leftColumn(), item.rightColumn() + 1):
+                    cols.add(c)
+            elif hasattr(item, "row"):  # QModelIndex
+                rows.add(item.row())
+                cols.add(item.column())
+        return sorted(rows), sorted(cols)
 
     def _build_header_tsv(self, cols: list[int]) -> str:
         headers = []
@@ -447,6 +446,7 @@ class EditableDataTable(QWidget):
         self.data_changed.emit()
 
     def get_data(self) -> list:
+        """Estrae tutti i dati dalla tabella come lista di dizionari."""
         data = []
         for row in range(self.table.rowCount()):
             row_data = {}
@@ -467,6 +467,12 @@ class EditableDataTable(QWidget):
         return data
 
     def set_data(self, data: list):
+        """
+        Popola la tabella con i dati forniti.
+
+        Args:
+            data: Lista di dizionari contenenti i valori per le colonne.
+        """
         self.table.blockSignals(True)
         self.table.setRowCount(0)
         for row_data in data:
@@ -489,8 +495,9 @@ class EditableDataTable(QWidget):
                     item = self.table.item(row, col)
                     if item:
                         item.setText(str(value))
-        while self.table.rowCount() < 5:
-            self._add_row()
+        if self.table.rowCount() == 0:
+            while self.table.rowCount() < 5:
+                self._add_row()
         self.table.blockSignals(False)
 
     def update_column_options(self, column_name: str, new_options: list):

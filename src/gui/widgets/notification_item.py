@@ -8,7 +8,13 @@ from src.core.notification_manager import NotificationManager
 
 # Widget per singola notifica
 class NotificationItem(QFrame):
+    """
+    Widget grafico per la visualizzazione di una singola notifica nel centro notifiche.
+    Supporta diversi livelli di severità (info, success, warning, error).
+    """
+
     def __init__(self, notification):
+        """Inizializza l'item con i dati della notifica."""
         super().__init__()
         self.notification = notification
         self.manager = NotificationManager.instance()
@@ -113,6 +119,7 @@ class NotificationItem(QFrame):
         layout.addWidget(msg_lbl)
 
     def mousePressEvent(self, event):
+        """Segna la notifica come letta quando l'utente ci clicca sopra."""
         if not self.notification.get("read", False):
             self.manager.mark_as_read(self.notification["id"])
         super().mousePressEvent(event)

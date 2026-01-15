@@ -22,20 +22,23 @@ class ConcreteBot(BaseBot):
     def _handle_unsaved_changes_popup(self):
         pass
 
+
 @pytest.fixture
 def mock_bot_deps():
-    with patch("src.bots.base.base_bot.webdriver") as mock_webdriver, \
-         patch("src.bots.base.base_bot.ChromeDriverManager") as mock_cdm, \
-         patch("src.bots.base.base_bot.config_manager") as mock_config, \
-         patch("src.bots.base.base_bot.LoginPage") as mock_login_page:
-
+    with (
+        patch("src.bots.base.base_bot.webdriver") as mock_webdriver,
+        patch("src.bots.base.base_bot.ChromeDriverManager") as mock_cdm,
+        patch("src.bots.base.base_bot.config_manager") as mock_config,
+        patch("src.bots.base.base_bot.LoginPage") as mock_login_page,
+    ):
         mock_config.load_config.return_value = {}
         yield {
             "webdriver": mock_webdriver,
             "cdm": mock_cdm,
             "config": mock_config,
-            "login_page": mock_login_page
+            "login_page": mock_login_page,
         }
+
 
 class TestBaseBot:
     def test_initialization(self):
@@ -110,9 +113,10 @@ class TestBaseBot:
         bot = ConcreteBot("u", "p")
 
         # Mock _init_driver and _login
-        with patch.object(bot, "_init_driver") as mock_init, \
-             patch.object(bot, "_login") as mock_login:
-
+        with (
+            patch.object(bot, "_init_driver") as mock_init,
+            patch.object(bot, "_login") as mock_login,
+        ):
             # Fail first, succeed second
             mock_login.side_effect = [False, True]
 
@@ -128,10 +132,11 @@ class TestBaseBot:
         mock_driver.page_source = "<html></html>"
         bot.driver = mock_driver
 
-        with patch("pathlib.Path.mkdir"), \
-             patch("pathlib.Path.write_text"), \
-             patch("datetime.datetime") as mock_dt:
-
+        with (
+            patch("pathlib.Path.mkdir"),
+            patch("pathlib.Path.write_text"),
+            patch("datetime.datetime") as mock_dt,
+        ):
             mock_dt.now.return_value.strftime.return_value = "timestamp"
             bot._save_error_state("some error")
 

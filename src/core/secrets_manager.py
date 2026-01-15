@@ -60,7 +60,7 @@ class SecretsManager:
                     for line in f:
                         if line.startswith("SYNCROJOB_LICENSE_KEY="):
                             key_str = line.split("=", 1)[1].strip()
-                            key_str = key_str.strip("\"").strip("'")
+                            key_str = key_str.strip('"').strip("'")
                             try:
                                 return base64.urlsafe_b64decode(key_str)
                             except Exception:
@@ -89,7 +89,52 @@ class SecretsManager:
     def _get_fallback_key(cls) -> bytes | None:
         try:
             # 8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek=
-            chars = [56, 107, 72, 115, 95, 114, 109, 119, 113, 97, 82, 85, 107, 49, 65, 81, 76, 71, 88, 54, 53, 103, 52, 65, 69, 107, 87, 85, 68, 97, 112, 87, 86, 115, 77, 70, 85, 81, 112, 78, 57, 69, 107, 61]
+            chars = [
+                56,
+                107,
+                72,
+                115,
+                95,
+                114,
+                109,
+                119,
+                113,
+                97,
+                82,
+                85,
+                107,
+                49,
+                65,
+                81,
+                76,
+                71,
+                88,
+                54,
+                53,
+                103,
+                52,
+                65,
+                69,
+                107,
+                87,
+                85,
+                68,
+                97,
+                112,
+                87,
+                86,
+                115,
+                77,
+                70,
+                85,
+                81,
+                112,
+                78,
+                57,
+                69,
+                107,
+                61,
+            ]
             key_str = "".join(chr(c) for c in chars)
             return base64.urlsafe_b64decode(key_str)
         except Exception:

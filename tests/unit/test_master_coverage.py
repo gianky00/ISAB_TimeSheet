@@ -10,7 +10,7 @@ class TestMasterCoverage:
 
         # Test selection
         widget.select_all()
-        assert len(widget.get_selected_values() or []) == 0 # None means all
+        assert len(widget.get_selected_values() or []) == 0  # None means all
 
         widget.select_none()
         assert len(widget.get_selected_values() or []) == 0
@@ -24,13 +24,14 @@ class TestMasterCoverage:
         widget = DateFilterPopupWidget(dates)
 
         # Check tree structure
-        assert widget.model.rowCount() == 2 # 2024 and 2023
+        assert widget.model.rowCount() == 2  # 2024 and 2023
 
         selected = widget.get_selected_values()
-        assert selected is None # Initial state is all selected
+        assert selected is None  # Initial state is all selected
 
     def test_audit_manager_integrity(self, tmp_path):
         from src.core.audit_manager import AuditManager
+
         with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
             am = AuditManager()
             am.log_action("Test", "User1")
@@ -38,6 +39,7 @@ class TestMasterCoverage:
 
     def test_contabilita_queries_years(self, tmp_path):
         from src.core.contabilita_queries import ContabilitaQueries
+
         # Just test the method doesn't crash with empty db
         db = tmp_path / "test.db"
         years = ContabilitaQueries.get_available_years(db)

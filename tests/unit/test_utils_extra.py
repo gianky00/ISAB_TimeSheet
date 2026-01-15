@@ -49,20 +49,30 @@ def test_secure_logger_masking():
     logger_filter = SensitiveDataFilter()
 
     # Test password masking
-    record = logging.LogRecord("test", logging.INFO, "path", 1, "My password: SuperSecret123", None, None)
+    record = logging.LogRecord(
+        "test", logging.INFO, "path", 1, "My password: SuperSecret123", None, None
+    )
     logger_filter.filter(record)
     assert "***MASKED***" in record.msg
     assert "SuperSecret123" not in record.msg
 
     # Test token masking
-    record = logging.LogRecord("test", logging.INFO, "path", 1, "token: abc-123-def", None, None)
+    record = logging.LogRecord(
+        "test", logging.INFO, "path", 1, "token: abc-123-def", None, None
+    )
     logger_filter.filter(record)
     assert "token=***MASKED***" in record.msg
     assert "abc-123-def" not in record.msg
 
     # Test CF masking
     record = logging.LogRecord(
-        "test", logging.INFO, "path", 1, "Il codice fiscale è RSSMRA80A01H501W", None, None
+        "test",
+        logging.INFO,
+        "path",
+        1,
+        "Il codice fiscale è RSSMRA80A01H501W",
+        None,
+        None,
     )
     logger_filter.filter(record)
     assert "***CF_MASKED***" in record.msg

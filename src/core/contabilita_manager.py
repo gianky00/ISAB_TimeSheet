@@ -44,9 +44,12 @@ class ContabilitaManager:
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, int, int]:
         """Importa i dati dal file Excel specificato (Tabella Dati)."""
-        success, message, imported_rows, imported_years = (
-            ExcelImporter.import_contabilita_dati(file_path, progress_callback)
-        )
+        (
+            success,
+            message,
+            imported_rows,
+            imported_years,
+        ) = ExcelImporter.import_contabilita_dati(file_path, progress_callback)
         if not success:
             return False, message, 0, 0
 
@@ -61,6 +64,15 @@ class ContabilitaManager:
         root_path: str,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, int, int]:
+        """
+        Scansiona e importa i dati dalle cartelle annuali delle giornaliere.
+
+        Args:
+            root_path: Percorso radice contenente le cartelle 'Giornaliere YYYY'.
+            progress_callback: Callback opzionale per il monitoraggio dell'avanzamento.
+        Returns:
+            tuple: (Successo, Messaggio, Righe Aggiunte, Righe Rimosse)
+        """
         root = Path(root_path)
         if not root.exists():
             return False, "Directory Giornaliere non trovata.", 0, 0
@@ -88,10 +100,13 @@ class ContabilitaManager:
                 pass
 
             # 2. Import Giornaliere data
-            success, message, all_new_rows, years_encountered = (
-                ExcelImporter.import_giornaliere(
-                    root_path, lookup_map, progress_callback
-                )
+            (
+                success,
+                message,
+                all_new_rows,
+                years_encountered,
+            ) = ExcelImporter.import_giornaliere(
+                root_path, lookup_map, progress_callback
             )
             if not success:
                 return False, message, 0, 0

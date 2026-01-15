@@ -16,6 +16,7 @@ def temp_audit_db(tmp_path):
         manager = AuditManager()
         yield manager
 
+
 @pytest.fixture
 def mock_config_stats():
     with patch("src.core.stats_manager.config_manager") as mock_cfg:
@@ -25,10 +26,13 @@ def mock_config_stats():
         manager = StatsManager()
         yield manager, mock_cfg
 
+
 class TestAuditManager:
     def test_log_action(self, temp_audit_db):
         manager = temp_audit_db
-        manager.log_action("Test Action", category="test", entity="user", params={"p": 1})
+        manager.log_action(
+            "Test Action", category="test", entity="user", params={"p": 1}
+        )
 
         # Verify data
         logs = manager.get_logs(limit=1)
@@ -49,6 +53,7 @@ class TestAuditManager:
             conn.commit()
 
         assert manager.verify_integrity() is False
+
 
 class TestStatsManager:
     def test_increment_usage(self, mock_config_stats):

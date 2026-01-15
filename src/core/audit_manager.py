@@ -28,19 +28,24 @@ class AuditManager:
 
     # Livelli di severità
     class Severity(Enum):
+        """Livelli di criticità di un evento di audit."""
+
         LOW = "low"  # Info, operazioni normali
         MEDIUM = "medium"  # Modifiche config, avvisi
         HIGH = "high"  # Errori, manomissioni, licenza fallita
 
     # Stati delle operazioni
     class Status(Enum):
+        """Stato finale di un'operazione registrata."""
+
         SUCCESS = "success"
         ERROR = "error"
         WARNING = "warning"
 
     def __new__(cls):
+        """Implementazione del pattern Singleton per garantire un unico gestore audit."""
         if cls._instance is None:
-            cls._instance = super(AuditManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._init_db()
         return cls._instance
 
@@ -218,6 +223,17 @@ class AuditManager:
         params: Any,
         notify: bool,
     ):
+        """
+        Analizza i parametri dell'azione e genera una notifica utente se richiesto.
+
+        Args:
+            action: L'azione eseguita.
+            entity: L'entità coinvolta.
+            status: Esito dell'operazione.
+            severity: Grado di importanza dell'evento.
+            params: Parametri aggiuntivi dell'azione.
+            notify: Se True, invia effettivamente la notifica.
+        """
         if notify:
             from src.core.notification_manager import NotificationManager
 
@@ -250,7 +266,13 @@ class AuditManager:
             NotificationManager.instance().add_notification(title, msg, level=level)
 
     def verify_integrity(self) -> bool:
-        """Verifica l'integrità, ignorando i record legacy senza hash."""
+        """
+        Verifica l'integrità della catena di hash nel database dell'audit log.
+        Rileva manomissioni manuali ai record storici.
+
+        Returns:
+            bool: True se tutti gli hash sono validi.
+        """
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row
@@ -261,7 +283,7 @@ class AuditManager:
                 prev_hash = "0" * 64
                 for row in rows:
                     # Se il record non ha hash (legacy), non lo validiamo ma aggiorniamo il prev_hash
-                    # per non rompere la catena futura. Se ha un hash, deve essere corretto.
+                    # per non romperla catena futura. Se ha un hash, deve essere corretto.
                     if not row["row_hash"]:
                         continue
 

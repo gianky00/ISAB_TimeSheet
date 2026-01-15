@@ -1,4 +1,3 @@
-
 import base64
 import sqlite3
 from unittest.mock import MagicMock, patch
@@ -37,7 +36,10 @@ class TestAISentinelHardened:
         conn.close()
 
         # Mock Contabilita per evitare altre anomalie
-        mocker.patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[])
+        mocker.patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[],
+        )
 
         sentinel.run()
 
@@ -93,7 +95,10 @@ class TestAISentinelHardened:
         out_pdf = str(tmp_path / "merged.pdf")
 
         mock_res = MagicMock()
-        with patch("src.utils.document_processor.fitz.open", side_effect=[mock_res, MagicMock(), MagicMock()]):
+        with patch(
+            "src.utils.document_processor.fitz.open",
+            side_effect=[mock_res, MagicMock(), MagicMock()],
+        ):
             success = DocumentProcessor.merge_pdfs(["p1.pdf", "p2.pdf"], out_pdf)
 
             assert success is True

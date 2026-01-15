@@ -15,6 +15,8 @@ class StatusCard(QFrame):
     """Card per mostrare stato operazione."""
 
     class Status:
+        """Costanti per definire lo stato visualizzato nella card."""
+
         IDLE = "idle"
         RUNNING = "running"
         SUCCESS = "success"
@@ -74,6 +76,7 @@ class StatusCard(QFrame):
         self._update_status_display()
 
     def _setup_animation(self):
+        """Inizializza l'animazione di pulsazione per lo stato 'RUNNING'."""
         self._pulse_anim = QPropertyAnimation(self, b"pulseOpacity")
         self._pulse_anim.setDuration(1000)
         self._pulse_anim.setLoopCount(-1)  # Infinite
@@ -81,9 +84,11 @@ class StatusCard(QFrame):
         self._pulse_anim.setEndValue(0.5)
 
     def get_pulse_opacity(self) -> float:
+        """Restituisce il valore corrente dell'opacità di pulsazione."""
         return self._pulse_opacity
 
     def set_pulse_opacity(self, value: float):
+        """Imposta il valore dell'opacità di pulsazione."""
         self._pulse_opacity = value
         # Update just the icon opacity via stylesheet would be expensive,
         # so we trigger a repaint or set style on icon only if needed.
@@ -92,7 +97,13 @@ class StatusCard(QFrame):
     pulseOpacity = pyqtProperty(float, fget=get_pulse_opacity, fset=set_pulse_opacity)
 
     def setStatus(self, status: str, message: Optional[str] = None):
-        """Imposta lo stato della card."""
+        """
+        Imposta lo stato della card e aggiorna l'interfaccia.
+
+        Args:
+            status: Il nuovo stato (idle, running, success, error, warning).
+            message: Messaggio personalizzato opzionale.
+        """
         self._status = status
         self._update_status_display(message)
 
@@ -103,6 +114,7 @@ class StatusCard(QFrame):
             self._pulse_opacity = 1.0
 
     def _update_status_display(self, custom_message: Optional[str] = None):
+        """Aggiorna icone e testi in base allo stato corrente."""
         icon, default_msg, color_key = self.STATUS_CONFIG.get(
             self._status, self.STATUS_CONFIG[self.Status.IDLE]
         )
@@ -111,6 +123,7 @@ class StatusCard(QFrame):
         self._apply_style()
 
     def _apply_style(self):
+        """Applica il foglio di stile QSS dinamico con il colore dell'accento di stato."""
         _, _, color_key = self.STATUS_CONFIG.get(
             self._status, self.STATUS_CONFIG[self.Status.IDLE]
         )

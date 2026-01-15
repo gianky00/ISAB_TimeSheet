@@ -35,7 +35,9 @@ class SidebarWidget(QFrame):
         # Logo/Titolo
         self.logo_label = QLabel("🚀 SyncroJob")
         self.logo_label.setObjectName("logoLabel")
-        self.logo_label.setStyleSheet("font-size: 24px; font-weight: 800; margin-bottom: 5px;")
+        self.logo_label.setStyleSheet(
+            "font-size: 24px; font-weight: 800; margin-bottom: 5px;"
+        )
         layout.addWidget(self.logo_label)
 
         # Separatore

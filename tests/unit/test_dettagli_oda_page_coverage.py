@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -50,10 +49,10 @@ class TestDettagliOdaPageCoverage:
         mock_file.name = "file.xlsx"
 
         mock_iter.side_effect = [
-            [], # files_before
-            [mocker.MagicMock(suffix=".crdownload")], # primo giro loop: in corso
-            [mock_file], # secondo giro loop: finito
-            [mock_file]  # terzo giro: conferma
+            [],  # files_before
+            [mocker.MagicMock(suffix=".crdownload")],  # primo giro loop: in corso
+            [mock_file],  # secondo giro loop: finito
+            [mock_file],  # terzo giro: conferma
         ]
 
         # Mock del bottone export
@@ -67,9 +66,10 @@ class TestDettagliOdaPageCoverage:
         """Verifica la strategia di robustezza per righe successive alla prima."""
         page.wait = MagicMock()
         # Mock per expand_sidebar_if_collapsed
-        with patch.object(page, "expand_sidebar_if_collapsed"), \
-             patch.object(page, "_wait_for_overlay"):
-
+        with (
+            patch.object(page, "expand_sidebar_if_collapsed"),
+            patch.object(page, "_wait_for_overlay"),
+        ):
             # Simula navigazione per la seconda riga (is_first_row=False)
             page.navigate_to_dettagli(is_first_row=False)
 
@@ -94,9 +94,13 @@ class TestDettagliOdaPageCoverage:
         mock_expand_btn = MagicMock()
         mock_expand_btn.is_displayed.return_value = True
 
-        with patch.object(page.driver, "find_element", return_value=mock_expand_btn), \
-             patch("time.sleep"):
+        with (
+            patch.object(page.driver, "find_element", return_value=mock_expand_btn),
+            patch("time.sleep"),
+        ):
             page.expand_sidebar_if_collapsed()
 
         # Deve aver cliccato il pulsante di espansione
-        page.driver.execute_script.assert_called_with("arguments[0].click();", mock_expand_btn)
+        page.driver.execute_script.assert_called_with(
+            "arguments[0].click();", mock_expand_btn
+        )

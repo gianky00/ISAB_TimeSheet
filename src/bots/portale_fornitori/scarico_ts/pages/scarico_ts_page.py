@@ -32,6 +32,7 @@ class ScaricoTSPage:
         self._log = log_callback or print
 
     def log(self, msg: str):
+        """Inoltra il messaggio di log alla callback configurata."""
         self._log(msg)
 
     def _wait_for_overlay(self):

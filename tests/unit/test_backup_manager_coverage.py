@@ -1,9 +1,12 @@
 import os
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, patch
+
 from src.core.backup_manager import BackupManager
+
 
 class TestBackupManager:
     @pytest.fixture
@@ -33,17 +36,17 @@ class TestBackupManager:
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "test.db").write_text("dummy db content")
-        
+
         # Mock AuditManager
         mock_audit = mocker.patch("src.core.backup_manager.AuditManager")
-        
+
         # Set backup dir to a subdirectory
         backup_dir = tmp_path / "backups"
         backup_dir.mkdir()
-        
+
         with patch.object(manager, "get_backup_dir", return_value=backup_dir):
             success, msg = manager.create_backup()
-            
+
             assert success is True
             assert ".zip" in msg
             # Check if file exists
@@ -54,7 +57,7 @@ class TestBackupManager:
         # Empty CONFIG_DIR (tmp_path has no relevant files by default)
         backup_dir = tmp_path / "backups"
         backup_dir.mkdir()
-        
+
         with patch.object(manager, "get_backup_dir", return_value=backup_dir):
             success, msg = manager.create_backup()
             assert success is False
@@ -65,9 +68,7 @@ class TestBackupManager:
         zip_path = tmp_path / "backup.zip"
         with zipfile.ZipFile(zip_path, "w") as z:
             z.writestr("restored.json", "{}")
-            
-        mock_audit = mocker.patch("src.core.backup_manager.AuditManager")
-        
+
         success, msg = manager.restore_backup(str(zip_path))
         assert success is True
         assert (tmp_path / "restored.json").exists()
@@ -75,7 +76,7 @@ class TestBackupManager:
     def test_restore_backup_invalid(self, manager, tmp_path):
         bad_zip = tmp_path / "bad.zip"
         bad_zip.write_text("not a zip")
-        
+
         success, msg = manager.restore_backup(str(bad_zip))
         assert success is False
         assert "non valido" in msg
@@ -86,10 +87,10 @@ class TestBackupManager:
             p = tmp_path / f"SyncroJob_Backup_{i}.zip"
             p.touch()
             # Set mtime to ensure sorting
-            os.utime(p, (i*100, i*100))
-            
+            os.utime(p, (i * 100, i * 100))
+
         manager._cleanup_old_backups(tmp_path, keep=5)
-        
+
         remaining = list(tmp_path.glob("*.zip"))
         assert len(remaining) == 5
         # Should be 5, 6, 7, 8, 9 (newest)
@@ -101,7 +102,7 @@ class TestBackupManager:
         backup_dir = tmp_path / "list_test"
         backup_dir.mkdir()
         (backup_dir / "SyncroJob_Backup_A.zip").touch()
-        
+
         with patch.object(manager, "get_backup_dir", return_value=backup_dir):
             backups = manager.list_backups()
             assert len(backups) == 1

@@ -7,6 +7,8 @@ from selenium.webdriver.common.by import By
 
 
 class CaricoTSLocators:
+    """Locatori Selenium per la pagina Carico Timesheet."""
+
     MANAGEMENT_MENU = (
         By.XPATH,
         "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Gestione Timesheet']]",

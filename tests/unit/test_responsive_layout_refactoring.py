@@ -16,6 +16,7 @@ def test_responsive_mode_detection(qtbot):
     assert container._get_mode(750) == "tablet"
     assert container._get_mode(1200) == "desktop"
 
+
 def test_layout_rebuilding(qtbot):
     """Test that widgets are correctly added back after a resize/rebuild."""
     container = ResponsiveContainer()
@@ -35,4 +36,4 @@ def test_layout_rebuilding(qtbot):
     container._current_mode = "desktop"
     container._rebuild_layout()
     # Desktop uses addLayout for rows
-    assert container._main_layout.count() == 1 # 2 widgets in 1 row
+    assert container._main_layout.count() == 1  # 2 widgets in 1 row

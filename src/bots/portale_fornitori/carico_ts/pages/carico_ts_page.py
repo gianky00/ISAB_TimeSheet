@@ -16,12 +16,21 @@ from src.core.constants import Timeouts
 
 
 class CaricoTSPage:
+    """
+    Page Object Model per la gestione del caricamento dei TimeSheet.
+    Fornisce strumenti per navigare nell'area gestione e interagire con gli ordini.
+    """
+
     def __init__(self, driver: WebDriver, log_callback=None):
+        """
+        Inizializza la pagina con il driver e la callback di logging.
+        """
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.log = log_callback or print
 
     def _wait_overlay(self):
+        """Attende la scomparsa delle maschere di caricamento del portale."""
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
@@ -34,6 +43,7 @@ class CaricoTSPage:
             pass
 
     def navigate(self) -> bool:
+        """Naviga verso il menu Gestione Timesheet."""
         try:
             self.log("Navigazione Gestione Timesheet...")
             self.wait.until(
@@ -46,6 +56,14 @@ class CaricoTSPage:
             return False
 
     def select_supplier(self, supplier: str) -> bool:
+        """
+        Seleziona il fornitore indicato dal menu a discesa.
+
+        Args:
+            supplier: Nome del fornitore.
+        Returns:
+            bool: True se la selezione ha avuto successo.
+        """
         try:
             self.log(f"Selezione {supplier}...")
             arrow = self.wait.until(
@@ -69,6 +87,14 @@ class CaricoTSPage:
             return False
 
     def process_oda(self, oda: str) -> bool:
+        """
+        Inserisce il numero OdA nel campo di input e avvia l'estrazione.
+
+        Args:
+            oda: Numero dell'Ordine di Acquisto.
+        Returns:
+            bool: True se l'input è stato inviato correttamente.
+        """
         try:
             self.log(f"Inserimento OdA: {oda}")
             inp = self.wait.until(
