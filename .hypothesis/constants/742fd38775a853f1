@@ -1,4 +1,0 @@
-# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\utils\parsing.py
-# hypothesis_version: 6.150.2
-
-[0.0, 50.0, 50.5, 508.83, 1000.0, 1234.56, ' - ', '(?i)euro', ',', '-', '.', '1,234.56', '1.000', '1.234,56', '508,83', '508.83', '__main__', 'nan', '€', '€ 50,00']
