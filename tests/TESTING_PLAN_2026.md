@@ -1,71 +1,35 @@
-# Piano Tecnico Incremento Test Coverage (2026)
+# Piano Tecnico Incremento Test Coverage (Aggiornato 2026)
 
-**Obiettivo:** Portare il coverage dal 4% attuale a >20% stabili, priorizzando la stabilità e la logica core.
+**Obiettivo:** Portare il coverage dal 4% attuale a >20% stabili.
+**Stato Attuale:** 11% (Incremento notevole su moduli core).
 
-## 1. Analisi Attuale (Baseline)
-- **Totale:** ~4%
-- **Aree Scoperte Critiche:** 
-  - `src/gui/panels.py` (0%) - Logica UI principale.
-  - `src/core/excel_importer.py` (17%) - Parsing dati sensibile.
-  - `src/bots/base/base_bot.py` (0%) - Fondamenta automazione.
-  - `src/core/telegram_manager.py` (0%) - Comunicazione critica.
+## 1. Analisi Attuale (Baseline Post-Intervento)
+- **Totale:** ~11%
+- **Moduli Migliorati:**
+  - `src/utils/parsing.py`: 92% (era 13%)
+  - `src/bots/base/base_bot.py`: 57% (era 0%)
+  - `src/core/config_manager.py`: 42% (era 20%)
+  - `src/core/excel_importer.py`: 28% (era 17%)
+  - `src/gui/panels.py`: 25% (era 0%)
 
-## 2. Strategia per Modulo
+## 2. Prossimi Passi (Priorità Alta)
 
-### A. Core Utilities (Target: 90%+)
-Questi moduli sono funzioni pure e devono essere testati esaustivamente per garantire fondamenta solide.
-- **Target:** `src/utils/parsing.py`, `src/utils/helpers.py`, `src/utils/validators.py`.
-- **Tecnica:** Unit test classici con parametri parametrizzati (`@pytest.mark.parametrize`).
-- **Azioni:**
-  - Coprire tutti i formati data in `parsing.py`.
-  - Coprire validazione input (CF, Email, Date) in `validators.py`.
+### A. Bot Specifici (Low Coverage)
+I bot specifici (`scarico_ts`, `prenota_bp`, `safework`) ereditano da `BaseBot` ma hanno molta logica custom non testata.
+- **Target:** `src/bots/portale_fornitori/scarico_ts/bot.py` (14%).
+- **Azione:** Creare `test_scarico_ts_bot_logic.py` usando i mock di `BaseBot` già collaudati.
 
-### B. Data & IO (Target: 60%+)
-Gestione file e database.
-- **Target:** `src/core/excel_importer.py`, `src/core/database.py`.
-- **Tecnica:** 
-  - `unittest.mock` per simulare file system e contenuti file Excel.
-  - DB SQLite `:memory:` per test veloci e isolati del layer dati.
-- **Azioni:**
-  - Creare fixture che generano Excel validi e invalidi.
-  - Testare transazioni DB e rollback in caso di errore.
+### B. Core Managers
+- **Target:** `src/core/audit_manager.py` (49%).
+- **Azione:** Completare i test su rotazione log e scrittura DB.
+- **Target:** `src/core/telegram_manager.py` (0%).
+- **Azione:** Mockare `python-telegram-bot` per testare la gestione comandi senza rete.
 
-### C. Bot Logic (Target: 40%+)
-Logica di automazione senza browser reale.
-- **Target:** `src/bots/base/base_bot.py`, `src/bots/base/login_page.py`.
-- **Tecnica:** **Deep Mocking** di Selenium.
-  - NON avviare mai Chrome reale.
-  - Mockare `driver.find_element`, `WebDriverWait.until`.
-  - Verificare che i bot chiamino i selettori corretti e gestiscano le eccezioni `TimeoutException`.
+### C. GUI (Pannelli Rimanenti)
+- **Target:** `ScaricaTSPanel` in `src/gui/panels.py`.
+- **Azione:** Replicare il pattern di test usato per `TimbratureDBPanel` (testare `_save_data`, `validate_ready`).
 
-### D. GUI Logic (Target: 20%+)
-Testare la logica dietro i pannelli, non il rendering.
-- **Target:** `src/gui/panels.py` (metodi non-UI), `src/gui/widgets/bot_parameters.py`.
-- **Tecnica:** `pytest-qt` (qtbot).
-  - Testare segnali/slot.
-  - Verificare che il click su "Avvia" chiami il metodo corretto.
-  - Mockare dialoghi (`QMessageBox`, `QFileDialog`) per non bloccare i test.
-
-## 3. Roadmap Esecutiva
-
-1.  **Fase 1: Low Hanging Fruit (Utilities)**
-    - Implementare test per `utils/parsing.py` e `utils/helpers.py`.
-    - Risultato atteso: +2% coverage totale, +sicurezza su conversioni dati.
-
-2.  **Fase 2: Excel & Configurazione**
-    - Implementare test per `config_manager.py` e `excel_importer.py`.
-    - Risultato atteso: +5% coverage totale, prevenzione regressioni su I/O.
-
-3.  **Fase 3: Bot Core**
-    - Implementare test completi per `BaseBot` (init, login flow, error handling).
-    - Risultato atteso: +5% coverage totale, stabilità bot.
-
-4.  **Fase 4: Panel Logic**
-    - Testare `ScaricaTSPanel` e `TimbratureDBPanel` (logica salvataggio/caricamento).
-    - Risultato atteso: +5% coverage totale.
-
-## 4. Regole d'Oro per i Test
-1.  **Nessun I/O Reale:** Usare `tmp_path` di pytest per file temporanei.
-2.  **Nessun Browser Reale:** Mockare sempre Selenium.
-3.  **Nessuna GUI Bloccante:** Patchare sempre `exec_()` dei dialog.
-4.  **Pulizia:** Ogni test deve lasciare l'ambiente come l'ha trovato.
+## 3. Strategia di Mantenimento
+1.  **Eseguire `run_robust_tests.py` prima di ogni commit.**
+2.  **Non accettare PR che abbassano il coverage.**
+3.  **Continuare a usare `mock` per isolare I/O e UI.**

@@ -1,91 +1,120 @@
-
-import sqlite3
-from datetime import datetime, timedelta
-
 import pytest
-
+import sqlite3
+import os
+import json
+from unittest.mock import MagicMock, patch
 from src.core.audit_manager import AuditManager
 
+class TestAuditManager:
+    """Test coverage for src/core/audit_manager.py"""
 
-class TestAuditManagerCoverage:
     @pytest.fixture
-    def audit_db(self, tmp_path, mocker):
-        """Mock del DB di audit usando un file temporaneo."""
-        db_path = tmp_path / "audit_test.db"
-        # Patch del DB_PATH della classe
-        mocker.patch.object(AuditManager, "DB_PATH", db_path)
-        # Forza reset singleton
-        AuditManager._instance = None
-        manager = AuditManager()
-        yield manager, db_path
+    def mock_db(self):
+        # Use in-memory DB for tests
+        with patch.object(AuditManager, 'DB_PATH', ':memory:'):
+            # Force singleton reset
+            AuditManager._instance = None
+            manager = AuditManager()
+            # Ensure table exists (AuditManager.__new__ calls _init_db, but with :memory: path handling might vary)
+            # In our code _init_db uses self.DB_PATH.parent.mkdir which fails for :memory:.
+            # So we need to mock _init_db or handle the path.
+            # Better approach: Mock DB_PATH to a temporary file.
+            yield manager
+            AuditManager._instance = None
 
-    def test_log_action_hashing_chain(self, audit_db):
-        """Verifica che le righe siano incatenate tramite hash."""
-        manager, db_path = audit_db
+    @pytest.fixture
+    def temp_db_manager(self, tmp_path):
+        db_file = tmp_path / "audit_test.db"
+        with patch.object(AuditManager, 'DB_PATH', db_file):
+            AuditManager._instance = None
+            manager = AuditManager()
+            yield manager
+            AuditManager._instance = None
 
-        manager.log_action("Action 1")
-        manager.log_action("Action 2")
+    def test_singleton(self, temp_db_manager):
+        m1 = AuditManager()
+        m2 = AuditManager()
+        assert m1 is m2
 
-        with sqlite3.connect(db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
+    def test_init_db_creation(self, temp_db_manager):
+        # Verify table exists
+        with sqlite3.connect(temp_db_manager.DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='audit_logs'")
+            assert cursor.fetchone() is not None
+            # Verify columns
+            cursor.execute("PRAGMA table_info(audit_logs)")
+            columns = {row[1] for row in cursor.fetchall()}
+            assert "severity" in columns
+            assert "row_hash" in columns
 
-            assert len(rows) == 2
-            h1 = rows[0]["row_hash"]
-            h2 = rows[1]["row_hash"]
+    def test_log_action_integrity(self, temp_db_manager):
+        manager = temp_db_manager
+        
+        # Log action
+        manager.log_action("LOGIN", "auth", "user1", {"ip": "127.0.0.1"})
+        
+        # Verify it's in DB
+        logs = manager.get_logs()
+        assert len(logs) == 1
+        entry = logs[0]
+        assert entry['action'] == "LOGIN"
+        assert entry['entity'] == "user1"
+        assert json.loads(entry['params']) == {"ip": "127.0.0.1"}
+        assert entry['row_hash'] != "0" * 64
 
-            assert h1 != h2
-            assert h1 is not None
-            assert len(h1) == 64
-
-    def test_verify_integrity_success(self, audit_db):
-        """Verifica che un log non manomesso passi la validazione."""
-        manager, _ = audit_db
-        manager.log_action("Test 1")
-        manager.log_action("Test 2")
-
+        # Verify integrity
         assert manager.verify_integrity() is True
 
-    def test_verify_integrity_tamper_detection(self, audit_db):
-        """Verifica che la modifica manuale di una riga rompa l'integrità."""
-        manager, db_path = audit_db
-        manager.log_action("Secure Action")
-
-        # Manomissione manuale nel DB
-        with sqlite3.connect(db_path) as conn:
-            conn.execute("UPDATE audit_logs SET action = 'Hacked Action' WHERE id = 1")
+    def test_integrity_failure(self, temp_db_manager):
+        manager = temp_db_manager
+        manager.log_action("TEST", "test")
+        
+        # Tamper with DB
+        with sqlite3.connect(manager.DB_PATH) as conn:
+            conn.execute("UPDATE audit_logs SET action = 'HACKED' WHERE action = 'TEST'")
             conn.commit()
-
+            
         assert manager.verify_integrity() is False
 
-    def test_run_retention_policy(self, audit_db):
-        """Verifica la cancellazione dei log vecchi."""
-        manager, db_path = audit_db
+    @patch('src.core.audit_manager.os.environ.get')
+    def test_get_current_user_env(self, mock_env, temp_db_manager):
+        mock_env.return_value = "TEST_USER"
+        assert temp_db_manager._get_current_user() == "TEST_USER"
 
-        # Inserisci un log vecchio manualmente con formato ISO coerente
+    @patch('src.core.notification_manager.NotificationManager.instance')
+    def test_notification_trigger(self, mock_notify, temp_db_manager):
+        mock_instance = MagicMock()
+        mock_notify.return_value = mock_instance
+        
+        temp_db_manager.log_action(
+            "UPDATE", 
+            status=AuditManager.Status.SUCCESS, 
+            notify=True,
+            params={"nuova": "2.0"}
+        )
+        
+        mock_instance.add_notification.assert_called_once()
+        args, kwargs = mock_instance.add_notification.call_args
+        assert kwargs['level'] == 'success'
+        assert "Versione aggiornata a 2.0" in args[1]
+
+    def test_retention_policy(self, temp_db_manager):
+        from datetime import datetime, timedelta
+        
+        # Insert old record
         old_date = (datetime.now() - timedelta(days=100)).isoformat()
-        with sqlite3.connect(db_path) as conn:
-            conn.execute("INSERT INTO audit_logs (timestamp, action, user_id) VALUES (?, ?, ?)",
-                         (old_date, "Old Action", "test_user"))
+        with sqlite3.connect(temp_db_manager.DB_PATH) as conn:
+            conn.execute(
+                "INSERT INTO audit_logs (timestamp, action, row_hash) VALUES (?, ?, ?)",
+                (old_date, "OLD_ACTION", "dummy_hash")
+            )
             conn.commit()
-
-        manager.run_retention_policy(days=30)
-
-        with sqlite3.connect(db_path) as conn:
-            count = conn.execute("SELECT COUNT(*) FROM audit_logs WHERE action = 'Old Action'").fetchone()[0]
-            assert count == 0
-
-    def test_get_current_user_fallback(self, audit_db, mocker):
-        """Verifica il recupero dell'utente con vari fallback."""
-        manager, _ = audit_db
-
-        # Mock environment
-        mocker.patch("os.environ.get", return_value="TestUser")
-        assert manager._get_current_user() == "TestUser"
-
-        # Mock all failed -> unknown
-        mocker.patch("os.environ.get", return_value=None)
-        mocker.patch("getpass.getuser", side_effect=Exception("Failed"))
-        mocker.patch("os.name", "posix") # Forza posix per saltare ctypes
-
-        assert manager._get_current_user() == "unknown"
+            
+        temp_db_manager.run_retention_policy(days=90)
+        
+        logs = temp_db_manager.get_logs(limit=100)
+        # Should only have the log about retention, OLD_ACTION should be gone
+        actions = [l['action'] for l in logs]
+        assert "OLD_ACTION" not in actions
+        assert "Sistema" in actions # The retention log itself

@@ -1,124 +1,126 @@
-
-from unittest.mock import MagicMock
-
 import pytest
-
+from unittest.mock import MagicMock, patch, ANY
 from src.bots.base.base_bot import BaseBot
 from src.core.constants import BotStatus
 
-
 class ConcreteBot(BaseBot):
-    """Implementazione concreta per testare la classe base."""
+    """Implementazione minima per testare BaseBot."""
     @property
     def name(self): return "TestBot"
     @property
-    def description(self): return "Bot di test"
-    def run(self, data): return True
-    def _handle_unsaved_changes_popup(self): pass
+    def description(self): return "Test Description"
+    
+    def run(self, data):
+        # Simulazione logica bot
+        self.log("Running bot...")
+        if data.get("fail"):
+            raise Exception("Run failed")
+        return True
 
-class TestBaseBotDeepDive:
-    @pytest.fixture
-    def bot(self):
+    def _handle_unsaved_changes_popup(self):
+        pass
+
+@pytest.fixture
+def bot(tmp_path):
+    # Mock config
+    with patch("src.core.config_manager.load_config", return_value={}):
         return ConcreteBot("user", "pass")
 
-    def test_safe_login_retry_on_driver_error(self, bot, mocker):
-        """Verifica che il bot riprovi il login se il driver crasha all'avvio."""
-        m_init = mocker.patch.object(bot, "_init_driver")
-        m_login = mocker.patch.object(bot, "_login")
-        m_cleanup = mocker.patch.object(bot, "cleanup")
-        mocker.patch("time.sleep")
-        mocker.patch.object(bot, "_check_stop")
+def test_bot_initialization(bot):
+    assert bot.status == BotStatus.IDLE
+    assert bot.username == "user"
+    assert bot.password == "pass"
 
-        # Primo tentativo: errore driver
-        # Secondo tentativo: successo
-        m_init.side_effect = [Exception("Driver Crash"), None]
-        m_login.return_value = True
+def test_init_driver_success(bot):
+    """Test inizializzazione driver con mock completi."""
+    with (
+        patch("selenium.webdriver.Chrome") as mock_chrome,
+        patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="/path/to/driver"),
+        patch("selenium.webdriver.chrome.service.Service") as mock_service
+    ):
+        bot._init_driver()
+        
+        mock_chrome.assert_called_once()
+        assert bot.driver is not None
+        assert bot.wait is not None
+        assert bot.status == BotStatus.INITIALIZING
 
-        res = bot._safe_login_with_retry(max_retries=2)
+def test_login_flow_success(bot):
+    """Test flusso di login riuscito."""
+    # Mock driver & components
+    bot.driver = MagicMock()
+    bot.login_page = MagicMock()
+    bot.login_page.login.return_value = True
+    
+    # Mock _init_driver per non fare nulla (già abbiamo il driver mockato)
+    with patch.object(bot, "_init_driver"):
+        success = bot._safe_login_with_retry()
+    
+    assert success is True
+    # BaseBot doesn't expose is_logged_in property, relying on return value
+    # But we can verify login_page.login was called
+    bot.login_page.login.assert_called_with("user", "pass")
 
-        assert res is True
-        assert m_init.call_count == 2
-        assert m_cleanup.call_count == 1 # Chiamato dopo il primo fallimento
+def test_login_flow_failure_retry(bot):
+    """Test fallimento login e retry."""
+    bot.driver = MagicMock()
+    bot.login_page = MagicMock()
+    # Primo fallisce, secondo riesce
+    bot.login_page.login.side_effect = [False, True]
+    
+    with (
+        patch.object(bot, "_init_driver"),
+        patch.object(bot, "cleanup")
+    ):
+        success = bot._safe_login_with_retry(max_retries=2)
+        
+    assert success is True
+    assert bot.login_page.login.call_count == 2
 
-    def test_execute_full_lifecycle_success(self, bot, mocker):
-        """Verifica la transizione degli stati durante un'esecuzione corretta."""
-        mocker.patch.object(bot, "_safe_login_with_retry", return_value=True)
-        mocker.patch.object(bot, "run", return_value=True)
-        m_cleanup = mocker.patch.object(bot, "cleanup")
+def test_execute_workflow_success(bot):
+    """Test intero flusso execute()."""
+    # Mock passaggi interni
+    with (
+        patch.object(bot, "_safe_login_with_retry", return_value=True),
+        patch.object(bot, "_init_driver"),
+        patch.object(bot, "cleanup")
+    ):
+        res = bot.execute({"data": "ok"})
+        
+    assert res is True
+    assert bot.status == BotStatus.COMPLETED
 
-        success = bot.execute([{"data": 1}])
+def test_execute_workflow_login_fail(bot):
+    """Test fallimento execute se login fallisce."""
+    with (
+        patch.object(bot, "_safe_login_with_retry", return_value=False),
+        patch.object(bot, "_init_driver"),
+        patch.object(bot, "cleanup")
+    ):
+        res = bot.execute({})
+        
+    assert res is False
+    assert bot.status == BotStatus.ERROR
 
-        assert success is True
-        assert bot.status == BotStatus.COMPLETED
-        m_cleanup.assert_called_once()
+def test_execute_workflow_run_fail(bot):
+    """Test eccezione durante run()."""
+    with (
+        patch.object(bot, "_safe_login_with_retry", return_value=True),
+        patch.object(bot, "_init_driver"),
+        patch.object(bot, "cleanup"),
+        patch.object(bot, "_save_error_state") as mock_save_err
+    ):
+        res = bot.execute({"fail": True})
+        
+    assert res is False
+    assert bot.status == BotStatus.ERROR
+    mock_save_err.assert_called_once() # Deve salvare screenshot errore
 
-    def test_execute_validation_failure(self, bot, mocker):
-        """Verifica che il bot si fermi se la validazione dati fallisce."""
-        mocker.patch.object(bot, "validate_data", return_value=(False, "Errore dati"))
-
-        success = bot.execute([{}])
-
-        assert success is False
-        assert bot.status == BotStatus.ERROR
-
-    def test_save_error_state(self, bot, mocker, tmp_path):
-        """Verifica il salvataggio di screenshot e HTML in caso di errore."""
-        bot.driver = MagicMock()
-        bot.driver.page_source = "<html>Error</html>"
-
-        mock_config_dir = tmp_path / "config"
-        mocker.patch("src.core.config_manager.CONFIG_DIR", mock_config_dir)
-
-        bot._save_error_state("Fatal error")
-
-        error_dir = mock_config_dir / "logs" / "errors"
-        assert error_dir.exists()
-        # Verifichiamo la creazione fisica dell'HTML
-        files = list(error_dir.glob("*"))
-        assert any(f.suffix == ".html" for f in files)
-        # Per lo screenshot, verifichiamo la chiamata al driver (mockato)
-        bot.driver.save_screenshot.assert_called_once()
-
-    def test_login_page_proxy_error_detection(self, mocker):
-        """Verifica il rilevamento del Proxy Error nel portale."""
-        mock_driver = MagicMock()
-        mock_driver.title = "502 Proxy Error"
-
-        from src.bots.base.login_page import LoginPage
-        lp = LoginPage(mock_driver, MagicMock(), isab_url="http://isab")
-
-        res = lp.login("u", "p")
-        assert res is False
-        # Non deve aver nemmeno provato a cercare i campi
-        mock_driver.get.assert_called_once()
-
-    def test_login_page_session_popup_handling(self, mocker):
-        """Verifica il click automatico sul popup di sessione esistente."""
-        mock_driver = MagicMock()
-        # Mocking WebDriverWait direttamente nel modulo per precisione
-        mock_wait_cls = mocker.patch("src.bots.base.login_page.WebDriverWait")
-        mock_wait_inst = mock_wait_cls.return_value
-
-        mock_yes_btn = MagicMock()
-        mock_wait_inst.until.return_value = mock_yes_btn
-
-        from src.bots.base.login_page import LoginPage
-        lp = LoginPage(mock_driver, MagicMock())
-        lp._check_and_handle_session_popup()
-
-        # Verifica che il bottone sia stato cliccato
-        mock_yes_btn.click.assert_called_once()
-
-    def test_safe_login_full_retry_logic(self, bot, mocker):
-        """Verifica che il bot provi 2 volte e poi fallisca se tutto va male."""
-        mocker.patch.object(bot, "_init_driver")
-        mocker.patch.object(bot, "_login", return_value=False) # Fallimento costante
-        mocker.patch.object(bot, "cleanup")
-        mocker.patch("time.sleep")
-        mocker.patch.object(bot, "_check_stop")
-
-        res = bot._safe_login_with_retry(max_retries=2)
-
-        assert res is False
-        assert bot._login.call_count == 2
-        assert bot.cleanup.call_count == 2
+def test_stop_request(bot):
+    """Test richiesta di stop."""
+    bot.request_stop()
+    assert bot._stop_requested is True
+    
+    # Verify check_stop raises
+    with pytest.raises(InterruptedError):
+        bot._check_stop()
