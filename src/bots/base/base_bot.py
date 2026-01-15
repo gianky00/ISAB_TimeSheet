@@ -95,7 +95,7 @@ class BaseBot(ABC):
                 import re
 
                 clean_msg = re.sub(
-                    r"^[\\\[]\d{2}:\d{2}:\d{2}[\\\]]\s*", "", message.strip()
+                    r"^[\\\\[]\\d{2}:\\d{2}:\\d{2}[\\\\]]\\s*", "", message.strip()
                 )
                 self._telegram_service.send_message_sync(
                     f"🔹 *{self.name}*\n{clean_msg}"
@@ -130,6 +130,9 @@ class BaseBot(ABC):
         service = Service(driver_path) if driver_path else None
 
         try:
+            # Type narrowing for mypy
+            if not service:
+                raise RuntimeError("Chromedriver service non disponibile")
             self._setup_driver_instance(service, options)
             self._configure_waits_and_pages()
         except Exception as e:
@@ -192,7 +195,7 @@ class BaseBot(ABC):
             return path
         return None
 
-    def _setup_driver_instance(self, service: Optional[Service], options: Options):
+    def _setup_driver_instance(self, service: Service, options: Options):
         """Crea l'istanza di webdriver.Chrome."""
         self.driver = webdriver.Chrome(service=service, options=options)
         # Anti-detection
@@ -288,11 +291,6 @@ class BaseBot(ABC):
 
             self.log(f"📸 Stato errore salvato in: {error_dir.name}")
 
-            # 3. Notifica Telegram con dettaglio (opzionale se il messaggio è troppo lungo)
-            if self._telegram_service:
-                # Invia solo il percorso dello screenshot per brevità
-                pass
-
         except Exception as e:
             self.log(f"⚠️ Impossibile salvare lo stato di errore: {e}")
 
@@ -323,6 +321,8 @@ class BaseBot(ABC):
     def _logout(self) -> bool:
         """Logout da ISAB."""
         try:
+            if not self.wait:
+                return False
             self.log("🚪 Eseguo il logout...")
             # 1. Clicca su impostazioni (ingranaggio)
             self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)).click()

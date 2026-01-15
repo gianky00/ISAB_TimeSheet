@@ -82,7 +82,7 @@ class ContabilitaSearch:
 
     @classmethod
     def search_extended(
-        cls, db_path: Path, query: str, year: int = None, limit: int = 100
+        cls, db_path: Path, query: str, year: int | None = None, limit: int = 100
     ) -> Dict[str, List[Dict]]:
         """Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati)."""
         if not db_path.exists() or len(query.strip()) < 2:
