@@ -1457,7 +1457,7 @@ class SettingsPanel(QWidget):
         """Metodo mantenuto per compatibilità, ora chiama il salvataggio diretto."""
         self._save_settings()
 
-    def _set_unsaved_changes(self, has_changes: bool):
+    def _set_unsaved_changes(self, _: bool):
         """Ora ridondante con il salvataggio automatico."""
         self._has_unsaved_changes = False
         self.unsaved_label.setVisible(False)

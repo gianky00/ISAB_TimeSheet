@@ -357,6 +357,7 @@ class TelegramService(QObject):
         self.photo_received.emit(chat_id, bytes(photo_bytes), caption)
 
     async def _handle_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Gestisce tutti i callback dei bottoni inline."""
         query = update.callback_query
         if not query or not query.message or not isinstance(query.message, Message):
             return
@@ -377,23 +378,21 @@ class TelegramService(QObject):
             await self._handle_nav_actions(data, query)
         elif data.startswith("db_"):
             await self._handle_db_actions(data, query, chat_id)
-        elif (
-            data.startswith("menu_")
-            or data.startswith("run_")
-            or data.startswith("input_")
-            or data.startswith("clear_")
-            or data.startswith("list_")
-            or data.startswith("confirm_")
-            or data == "toggle_merge_all_pdl"
-        ):
+        elif self._is_bot_data(data):
             await self._handle_bot_actions(data, query, chat_id, update, context)
-        elif (
-            data in ["status", "screenshot", "snap_app", "snap_pc", "stop_all"]
-            or data.startswith("app_")
-            or data.startswith("set_")
-            or data.startswith("toggle_")
-        ):
+        elif self._is_utility_data(data):
             await self._handle_utility_actions(data, query, chat_id)
+
+    def _is_bot_data(self, data: str) -> bool:
+        """Verifica se il callback data appartiene alle azioni dei bot."""
+        prefixes = ["menu_", "run_", "input_", "clear_", "list_", "confirm_"]
+        return any(data.startswith(p) for p in prefixes) or data == "toggle_merge_all_pdl"
+
+    def _is_utility_data(self, data: str) -> bool:
+        """Verifica se il callback data appartiene alle utility."""
+        items = ["status", "screenshot", "snap_app", "snap_pc", "stop_all"]
+        prefixes = ["app_", "set_", "toggle_"]
+        return data in items or any(data.startswith(p) for p in prefixes)
 
     async def _handle_nav_actions(self, data, query):
         """Gestisce i bottoni di navigazione dei menu."""

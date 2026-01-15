@@ -16,14 +16,32 @@ from src.utils.printing import print_pdf
 
 
 class SafeWorkPDLBot(SafeworkBaseBot):
-    """
-    Bot per lo scarico e la stampa dei PDL da SafeWork.
-    Logica ricalcata dallo script originale funzionante.
-    """
+    """Bot per lo scarico e la stampa automatizzata dei Permessi di Lavoro (PDL) da SafeWork."""
 
-    def __init__(
-        self, username, password, headless=False, timeout=30, download_path=""
-    ):
+    @staticmethod
+    def get_name() -> str:
+        """Restituisce il nome del bot."""
+        return "Scarico PDL"
+
+    @staticmethod
+    def get_description() -> str:
+        """Restituisce una descrizione delle funzionalità del bot."""
+        return "Scarica e stampa PDL da SafeWork"
+
+    @staticmethod
+    def get_columns() -> list:
+        """Definisce le colonne richieste per l'input dei dati (Numero PDL)."""
+        return [{"name": "Numero PDL", "type": "text"}]
+
+    @property
+    def name(self) -> str:
+        """Restituisce il nome dell'istanza del bot."""
+        return "Scarico PDL"
+
+    @property
+    def description(self) -> str:
+        """Restituisce la descrizione dell'istanza del bot."""
+        return "Scarica e stampa PDL da SafeWork"
         super().__init__(username, password, headless, timeout, download_path)
         if not self.download_path:
             from src.core.config_manager import get_download_path

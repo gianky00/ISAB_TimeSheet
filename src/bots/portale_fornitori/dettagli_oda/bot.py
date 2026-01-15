@@ -13,16 +13,20 @@ from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
 
 
 class DettagliOdABot(BaseBot):
+    """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori."""
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome del bot."""
         return "Dettagli OdA"
 
     @staticmethod
     def get_description() -> str:
+        """Restituisce una descrizione sintetica del bot."""
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
     @staticmethod
     def get_columns() -> list:
+        """Definisce le colonne richieste per l'input dei dati."""
         return [
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": []},

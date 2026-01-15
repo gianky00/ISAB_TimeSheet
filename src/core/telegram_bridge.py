@@ -189,9 +189,9 @@ class TelegramUIBridge(QObject):
 
     def _handle_restart_app(self):
         try:
-            subprocess.Popen(
-                ["cmd.exe", "/c", "start", os.path.abspath("avvio.bat")], shell=True
-            )
+            import subprocess
+
+            subprocess.Popen(["cmd.exe", "/c", "start", os.path.abspath("avvio.bat")])
             QApplication.quit()
         except Exception as e:
             self.telegram.send_message_sync(f"❌ Errore riavvio: {e}")

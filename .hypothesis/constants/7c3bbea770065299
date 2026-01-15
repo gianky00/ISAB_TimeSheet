@@ -1,0 +1,4 @@
+# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\bots\base\base_bot.py
+# hypothesis_version: 6.150.2
+
+[0.5, '%Y%m%d_%H%M%S', '--disable-gpu', '--disable-infobars', '--headless=new', '--no-sandbox', '--start-maximized', '.exe', 'Bot interrotto', '_', 'browser_headless', 'chromedriver.exe', 'data', 'drivers', 'enable-automation', 'errors', 'excludeSwitches', 'logs', 'prefs', 'source', 'utf-8', 'version', '✅ Logout effettuato.', '✅ Popup OK gestito.']

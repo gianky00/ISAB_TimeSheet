@@ -10,8 +10,10 @@ from .pages.prenota_bp_page import PrenotaBPPage
 
 
 class PrenotaBPBot(BaseBot):
+    """Bot per la prenotazione massiva di Badge Provvisori (BP) sul Portale Fornitori."""
     @staticmethod
     def get_columns() -> list:
+        """Definisce le colonne richieste per l'input dei dati (Numero BP, Note)."""
         return [
             {"name": "Numero BP", "type": "text"},
             {"name": "Note di Ritiro", "type": "text"},

@@ -335,7 +335,7 @@ class BaseBot(ABC):
             self.log(f"⚠️ Logout fallito: {e}")
             return False
 
-    def navigate_to_menu(self, menu_path: List[str]) -> bool:
+    def navigate_to_menu(self, _menu_path: List[str]) -> bool:
         """Navigate to a specific menu."""
         # Placeholder - implement if needed or used
         return True

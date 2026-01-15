@@ -34,14 +34,17 @@ class ScaricaTSBot(BaseBot):
 
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome visualizzato del bot."""
         return "Scarico TS"
 
     @staticmethod
     def get_description() -> str:
+        """Restituisce una descrizione delle funzionalità del bot."""
         return "Scarica i timesheet dal portale ISAB"
 
     @staticmethod
     def get_columns() -> list:
+        """Restituisce la configurazione delle colonne per l'input dati."""
         return [
             {"name": "Numero OdA", "type": "text"},
             {"name": "Posizione OdA", "type": "text"},

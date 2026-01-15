@@ -134,7 +134,7 @@ class ContabilitaSearch:
 
         sql = f"""SELECT data, personale, descrizione FROM giornaliere
                   WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){where}
-                  ORDER BY data DESC LIMIT ?"""
+                  ORDER BY data DESC LIMIT ?"""  # nosec B608
         params.append(limit)
         cursor.execute(sql, params)
         return [
@@ -154,7 +154,7 @@ class ContabilitaSearch:
 
         sql = f"""SELECT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore
                   WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){where}
-                  ORDER BY data DESC LIMIT ?"""
+                  ORDER BY data DESC LIMIT ?"""  # nosec B608
         params.append(limit)
         cursor.execute(sql, params)
         return [

@@ -10,18 +10,22 @@ from src.bots.portale_fornitori.carico_ts.pages.carico_ts_page import CaricoTSPa
 
 
 class CaricoTSBot(BaseBot):
+    """Bot per l'estrazione e il caricamento dei dati Timesheet sul Portale Fornitori."""
     FORNITORE = "KK10608 - COEMI S.R.L."
 
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome del bot."""
         return "Carico TS"
 
     @staticmethod
     def get_description() -> str:
+        """Restituisce una descrizione sintetica del bot."""
         return "Caricamento automatico timesheet"
 
     @staticmethod
     def get_columns() -> list:
+        """Definisce le colonne richieste per l'input dei dati."""
         # Full list from original code
         return [
             {"name": "Numero OdA", "type": "text"},

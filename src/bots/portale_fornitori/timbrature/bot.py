@@ -13,24 +13,26 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
 class TimbratureBot(BaseBot):
-    """
-    Bot for downloading and archiving Timbrature data.
-    """
+    """Bot per lo scarico e l'archiviazione automatica delle timbrature dal Portale Fornitori."""
 
     @property
     def name(self) -> str:
+        """Restituisce il nome del bot."""
         return "Timbrature"
 
     @property
     def description(self) -> str:
+        """Restituisce una descrizione delle funzionalità del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
     @staticmethod
     def get_name() -> str:
+        """Metodo statico che restituisce il nome del bot."""
         return "Timbrature"
 
     @staticmethod
     def get_description() -> str:
+        """Metodo statico che restituisce la descrizione del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
     def __init__(

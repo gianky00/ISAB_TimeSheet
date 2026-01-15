@@ -267,8 +267,7 @@ try {
                 tmp_path = tmp.name
 
             subprocess.Popen(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path],
-                shell=True,
+                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path]
             )
         except Exception as e:
             QMessageBox.critical(self, "Errore", f"Impossibile avviare l'analisi:\n{e}")
