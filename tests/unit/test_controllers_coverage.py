@@ -73,12 +73,12 @@ class TestControllersCoverage:
     def test_bot_controller_panel_status_sync(self, mw, mocker):
         """Verifica sincronizzazione stato per SafeWork e Portale Fornitori."""
         ctrl = BotController(mw, MagicMock())
-        
+
         # 1. Test SafeWork
         mock_panel_sw = MagicMock()
         mock_panel_sw.bot_id = "scarico_pdl"
         mocker.patch.object(ctrl, "sender", return_value=mock_panel_sw)
-        
+
         mw.status_safework = MagicMock()
         ctrl._on_panel_status_changed("RUNNING", "Test SW")
         mw.status_safework.setStatus.assert_called_with("RUNNING", "Test SW")
@@ -87,7 +87,7 @@ class TestControllersCoverage:
         mock_panel_portale = MagicMock()
         mock_panel_portale.bot_id = "scarico_ts"
         mocker.patch.object(ctrl, "sender", return_value=mock_panel_portale)
-        
+
         mw.status_portale = MagicMock()
         ctrl._on_panel_status_changed("IDLE", "Test Portale")
         mw.status_portale.setStatus.assert_called_with("IDLE", "Test Portale")

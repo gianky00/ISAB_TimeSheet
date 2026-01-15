@@ -16,7 +16,7 @@ sys.modules["win32print"] = MagicMock()
 sys.modules["win32ui"] = MagicMock()
 sys.modules["win32con"] = MagicMock()
 
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
+from src.bots.safework.pdl.bot import SafeWorkPDLBot  # noqa: E402
 
 
 class TestSafeWorkPDLBotDeep:
@@ -69,7 +69,7 @@ class TestSafeWorkPDLBotDeep:
         bot.log = MagicMock()
         bot._check_stop = MagicMock()
         bot.downloaded_files = []
-        
+
         # Bind real methods to execute the pipeline
         bot.run = SafeWorkPDLBot.run.__get__(bot, SafeWorkPDLBot)
         bot._process_single_pdl_row = SafeWorkPDLBot._process_single_pdl_row.__get__(bot, SafeWorkPDLBot)

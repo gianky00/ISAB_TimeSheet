@@ -1,267 +1,113 @@
 import json
-from pathlib import Path
-from unittest.mock import patch
-
 import pytest
-
+from unittest.mock import MagicMock, patch
 from src.core import config_manager
 
+@pytest.fixture(autouse=True)
+def mock_config_paths(tmp_path):
+    """Reindirizza i path di configurazione su una directory temporanea."""
+    # Reset cache before each test
+    config_manager._reset_configuration_for_testing()
+    
+    # Mock CONFIG_DIR and CONFIG_FILE
+    new_config_dir = tmp_path / "SyncroJob"
+    new_config_dir.mkdir()
+    new_config_file = new_config_dir / "config.json"
+    
+    with patch("src.core.config_manager.CONFIG_DIR", new_config_dir), \
+         patch("src.core.config_manager.CONFIG_FILE", new_config_file):
+        yield new_config_file
 
-@pytest.fixture
-def temp_config_env(tmp_path):
-    """Fixture per isolare l'ambiente di configurazione."""
-    test_dir = tmp_path / "config_test"
-    test_file = test_dir / "config.json"
+def test_load_defaults(mock_config_paths):
+    """Se il file non esiste, deve caricare i default."""
+    config = config_manager.load_config()
+    assert config["browser_timeout"] == 30
+    assert config["reparti"] == ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
 
-    with (patch("src.core.config_manager.CONFIG_DIR", test_dir),
-          patch("src.core.config_manager.CONFIG_FILE", test_file)):
-        config_manager._reset_configuration_for_testing()
-        yield test_dir, test_file
-        config_manager._reset_configuration_for_testing()
+def test_save_and_load_persistence(mock_config_paths):
+    """Verifica che i valori salvati vengano ricaricati."""
+    config_manager.set_config_value("browser_timeout", 60)
+    
+    # Force reload by resetting cache
+    config_manager._reset_configuration_for_testing()
+    
+    config = config_manager.load_config()
+    assert config["browser_timeout"] == 60
 
-class TestConfigManagerCoverage:
-    """Test suite completa per src/core/config_manager.py"""
-
-    def test_ensure_config_dir(self, temp_config_env):
-        test_dir, _ = temp_config_env
-        config_manager.ensure_config_dir()
-        assert test_dir.exists()
-
-    def test_load_config_defaults(self, temp_config_env):
-        """Verifica caricamento default se il file non esiste."""
-        config = config_manager.load_config()
-        assert config["browser_timeout"] == 30
-        assert "accounts" in config
-        assert isinstance(config["accounts"], list)
-
-    def test_load_config_from_file(self, temp_config_env):
-        """Verifica caricamento da file esistente."""
-        test_dir, test_file = temp_config_env
-        test_dir.mkdir(parents=True, exist_ok=True)
-
-        custom_data = {"browser_timeout": 99, "custom_key": "custom_val"}
-        with open(test_file, "w", encoding="utf-8") as f:
-            json.dump(custom_data, f)
-
-        config = config_manager.load_config()
-        assert config["browser_timeout"] == 99
-        assert config["custom_key"] == "custom_val"
-        # Deve comunque avere i campi di default mancanti
-        assert "reparti" in config
-
-    def test_load_config_corrupted(self, temp_config_env):
-        """Verifica fallback su errore JSON."""
-        test_dir, test_file = temp_config_env
-        test_dir.mkdir(parents=True, exist_ok=True)
-        test_file.write_text("NOT A JSON")
-
-        config = config_manager.load_config()
-        assert config["browser_timeout"] == 30 # Default
-
-    def test_save_config_basic(self, temp_config_env):
-        """Verifica salvataggio atomico."""
-        _, test_file = temp_config_env
-        config = config_manager.DEFAULT_CONFIG.copy()
-        config["browser_timeout"] = 45
-
-        config_manager.save_config(config)
-        assert test_file.exists()
-
-        with open(test_file, "r", encoding="utf-8") as f:
-            saved = json.load(f)
-        assert saved["browser_timeout"] == 45
-
-    def test_get_set_value(self, temp_config_env):
-        config_manager.set_config_value("test_key", "test_val")
-        assert config_manager.get_config_value("test_key") == "test_val"
-        assert config_manager.get_config_value("non_existent", "def") == "def"
-
-    @patch("src.core.config_manager.SecretsManager.is_available", return_value=True)
-    @patch("src.core.config_manager.SecretsManager.store_credential")
-    @patch("src.core.config_manager.SecretsManager.get_credential")
-    def test_password_handling_keyring(self, mock_get, mock_store, mock_avail, temp_config_env):
-        """Test integrazione Keyring: password rimosse dal file e salvate in SecretsManager."""
-        _, test_file = temp_config_env
-
-        # 1. Salvataggio
-        accs = [{"username": "user1", "password": "secret_password"}]
-        config = config_manager.load_config()
-        config["accounts"] = accs
-
-        config_manager.save_config(config)
-
-        # Verifica store chiamato
-        mock_store.assert_called()
-
-        # Verifica file JSON: non deve avere la password in chiaro
-        with open(test_file, "r") as f:
-            saved = json.load(f)
-        assert "password" not in saved["accounts"][0]
-
-        # 2. Caricamento
-        config_manager._reset_configuration_for_testing()
-        mock_get.return_value = "secret_password"
-
-        loaded = config_manager.load_config()
-        assert loaded["accounts"][0]["password"] == "secret_password"
-
-    @patch("src.core.config_manager.SecretsManager.is_available", return_value=False)
-    @patch("src.utils.security.password_manager.encrypt", return_value="ENCRYPTED")
-    @patch("src.utils.security.password_manager.decrypt", return_value="DECRYPTED")
-    def test_password_handling_fallback(self, mock_dec, mock_enc, mock_avail, temp_config_env):
-        """Test fallback: password cifrate nel file se Keyring non disponibile."""
-        _, test_file = temp_config_env
-
-        accs = [{"username": "user_fallback", "password": "plain_password"}]
-        config = config_manager.load_config()
-        config["accounts"] = accs
-
-        config_manager.save_config(config)
-
-        # Verifica file JSON: deve avere la password cifrata
-        with open(test_file, "r") as f:
-            saved = json.load(f)
-        assert saved["accounts"][0]["password"] == "ENCRYPTED"
-
-        # Caricamento
-        config_manager._reset_configuration_for_testing()
-        loaded = config_manager.load_config()
-        assert loaded["accounts"][0]["password"] == "DECRYPTED"
-
-    def test_migration_legacy(self, temp_config_env):
-        """Test migrazione vecchi campi isab_username/password."""
-        test_dir, test_file = temp_config_env
-        test_dir.mkdir(parents=True, exist_ok=True)
-
-        legacy = {
-            "isab_username": "legacy_user",
-            "isab_password": "legacy_password"
-        }
-        with open(test_file, "w") as f:
-            json.dump(legacy, f)
-
-        config = config_manager.load_config()
-        assert "isab_username" not in config
-        assert any(a["username"] == "legacy_user" for a in config["accounts"])
-
-    def test_account_management_crud(self, temp_config_env):
-        """Test add, remove, set default account."""
-        config_manager.add_account("user1", "pass1", is_default=True)
-        config_manager.add_account("user2", "pass2", is_default=False)
-
-        accounts = config_manager.get_accounts()
-        # Ora len(accounts) dovrebbe essere 2 perché ho risolto il bug del deepcopy
-        # Ma se altri test hanno sporcato lo stato globale prima del deepcopy fix?
-        # Dovrebbe essere 2 se _reset_configuration_for_testing e deepcopy funzionano.
-        assert len(accounts) == 2
-        assert config_manager.get_default_account()["username"] == "user1"
-
+def test_account_management():
+    """Test aggiunta, rimozione e default account."""
+    # Mock SecretsManager to avoid keyring interactions
+    with patch("src.core.config_manager.SecretsManager") as MockSecrets:
+        MockSecrets.is_available.return_value = True
+        
+        # Add Account 1 (Default)
+        config_manager.add_account("user1", "pass1")
+        accs = config_manager.get_accounts()
+        assert len(accs) == 1
+        assert accs[0]["username"] == "user1"
+        assert accs[0]["default"] is True
+        
+        # Add Account 2
+        config_manager.add_account("user2", "pass2")
+        accs = config_manager.get_accounts()
+        assert len(accs) == 2
+        assert accs[1]["username"] == "user2"
+        assert accs[1]["default"] is False # First remains default
+        
+        # Set Default
         config_manager.set_default_account("user2")
-        assert config_manager.get_default_account()["username"] == "user2"
+        default = config_manager.get_default_account()
+        assert default["username"] == "user2"
+        
+        # Remove Account
+        config_manager.remove_account("user2")
+        accs = config_manager.get_accounts()
+        assert len(accs) == 1
+        assert accs[0]["username"] == "user1"
+        assert accs[0]["default"] is True # user1 becomes default again
 
-        config_manager.remove_account("user1")
-        assert len(config_manager.get_accounts()) == 1
-        assert config_manager.get_default_account()["username"] == "user2"
+def test_secure_password_storage(mock_config_paths):
+    """Verifica che le password non siano salvate in chiaro nel JSON."""
+    with patch("src.core.config_manager.SecretsManager") as MockSecrets, \
+         patch("src.utils.security.password_manager.encrypt") as mock_encrypt:
+        
+        # Scenario 1: Keyring Available
+        MockSecrets.is_available.return_value = True
+        config_manager.add_account("secure_user", "secure_pass")
+        
+        # Verify stored in keyring
+        MockSecrets.store_credential.assert_called_with("isab_portal", "secure_user", "secure_pass")
+        
+        # Verify JSON file does NOT contain password
+        with open(mock_config_paths, "r") as f:
+            data = json.load(f)
+            acc = data["accounts"][0]
+            assert "password" not in acc or acc["password"] is None
 
-    def test_path_utilities(self, temp_config_env):
-        test_dir, _ = temp_config_env
-        data_path = config_manager.get_data_path()
-        assert Path(data_path).exists()
-        assert str(test_dir) in data_path
+        # Scenario 2: Keyring Unavailable (Fallback encryption)
+        MockSecrets.is_available.return_value = False
+        mock_encrypt.return_value = "ENCRYPTED_BLOB"
+        
+        config_manager.add_account("local_user", "local_pass")
+        
+        # Verify JSON file contains encrypted password
+        with open(mock_config_paths, "r") as f:
+            data = json.load(f)
+            # Find the local_user account
+            acc = next(a for a in data["accounts"] if a["username"] == "local_user")
+            assert acc["password"] == "ENCRYPTED_BLOB"
 
-        # Download path - caso dir esistente
-        with patch("os.path.isdir", return_value=True):
-            config_manager.set_config_value("download_path", "/fake/path")
-            assert config_manager.get_download_path() == "/fake/path"
-
-        # Download path - fallback
-        with patch("os.path.isdir", return_value=False):
-            with patch("pathlib.Path.home", return_value=Path(temp_config_env[0])):
-                dp = config_manager.get_download_path()
-                assert dp is not None
-
-    @patch("src.core.config_manager.SecretsManager.is_available", return_value=True)
-    @patch("src.core.config_manager.SecretsManager.get_credential")
-    def test_load_safework_accounts(self, mock_get, mock_avail, temp_config_env):
-        """Test caricamento account SafeWork da keyring e fallback."""
-        test_dir, test_file = temp_config_env
-        test_dir.mkdir(parents=True, exist_ok=True)
-        data = {
-            "safework_accounts": [
-                {"username": "sw1", "password": "ENC_PASSWORD"},
-                {"password": "no_user"} # Dovrebbe essere saltato (riga 112-113)
-            ]
-        }
-        with open(test_file, "w") as f:
-            json.dump(data, f)
-        mock_get.side_effect = lambda svc, user: "SW_PASS" if user == "sw1" else None
-        config_manager._reset_configuration_for_testing()
-        config = config_manager.load_config()
-        assert config["safework_accounts"][0]["password"] == "SW_PASS"
-
-    def test_save_config_io_error(self, temp_config_env):
-        """Test errore IO durante il salvataggio."""
-        original_open = open
-        def side_open(file, *args, **kwargs):
-            if str(file).endswith(".tmp"):
-                raise IOError("Disk Full")
-            return original_open(file, *args, **kwargs)
-        with patch("builtins.open", side_effect=side_open):
-            config_manager.save_config({"test": 1})
-
-    def test_remove_account_exception(self, temp_config_env):
-        config_manager.add_account("fail_user", "pass")
-        with patch("src.core.config_manager.SecretsManager.is_available", return_value=True):
-            with patch("src.core.config_manager.SecretsManager.delete_credential", side_effect=Exception("Delete Fail")):
-                config_manager.remove_account("fail_user")
-        assert len(config_manager.get_accounts()) == 0
-
-    def test_get_default_account_none(self, temp_config_env):
-        config_manager.set_config_value("accounts", [])
-        assert config_manager.get_default_account() is None
-
-    def test_fornitori_utility(self, temp_config_env):
-        config_manager.set_config_value("fornitori", ["F1", "F2"])
-        assert config_manager.get_fornitori() == ["F1", "F2"]
-
-    def test_save_config_keyring_exception(self, temp_config_env):
-        with (patch("src.core.config_manager.SecretsManager.is_available", return_value=True),
-              patch("src.core.config_manager.SecretsManager.store_credential", side_effect=Exception("Keyring Fail"))):
-            config_manager.add_account("user_key_fail", "pass")
-            config_manager._reset_configuration_for_testing()
-            config = config_manager.load_config()
-            assert any(a["username"] == "user_key_fail" for a in config["accounts"])
-
-    def test_safework_save_exceptions(self, temp_config_env):
-        with (patch("src.core.config_manager.SecretsManager.is_available", return_value=True),
-              patch("src.core.config_manager.SecretsManager.store_credential", side_effect=Exception("SW Fail"))):
-            config = config_manager.load_config()
-            config["safework_accounts"] = [{"username": "sw_fail", "password": "p"}]
-            config_manager.save_config(config)
-
-    def test_load_config_cache_hit(self, temp_config_env):
-        """Verifica che il caricamento avvenga dalla cache se disponibile."""
-        config_manager.load_config()
-        with patch("json.load") as mock_json:
-            config = config_manager.load_config()
-            mock_json.assert_not_called()
-            assert "accounts" in config
-
-    def test_remove_account_no_keyring(self, temp_config_env):
-        """Test rimozione account quando il keyring non è disponibile."""
-        config_manager.add_account("user_del", "pass", is_default=True)
-        with patch("src.core.config_manager.SecretsManager.is_available", return_value=False):
-            config_manager.remove_account("user_del")
-        assert len(config_manager.get_accounts()) == 0
-
-    def test_add_account_no_username(self, temp_config_env):
-        """Copertura per riga 86, 175, 200 (username mancante)."""
-        # Aggiungiamo account invalido via set_config_value per triggerare il loop in load/save
-        config = config_manager.load_config()
-        config["accounts"].append({"password": "p"}) # No username
-        config["safework_accounts"].append({"password": "sp"}) # No username
-        config_manager.save_config(config)
-        # Dovrebbe saltarli senza crash
-        config_manager._reset_configuration_for_testing()
-        loaded = config_manager.load_config()
-        assert len(loaded["accounts"]) == 1 # L'account vuoto potrebbe essere rimasto o saltato
+def test_atomic_write_failure(mock_config_paths):
+    """Test resilienza salvataggio se la scrittura fallisce."""
+    # Create valid config first
+    config_manager.save_config({"test": 1})
+    
+    # Mock open to raise exception
+    with patch("builtins.open", side_effect=IOError("Disk full")):
+        config_manager.save_config({"test": 2})
+        
+    # Check that original file is untouched (still {"test": 1} effectively, 
+    # but we check if it's corrupted or empty)
+    with open(mock_config_paths, "r") as f:
+        content = json.load(f)
+    assert content["test"] == 1

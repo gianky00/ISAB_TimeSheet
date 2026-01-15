@@ -10,7 +10,7 @@ from pathlib import Path
 script_path = Path(__file__).parent.parent.parent / "admin" / "Crea Setup"
 sys.path.append(str(script_path))
 
-from generate_icons import create_modern_icon
+from generate_icons import create_modern_icon  # noqa: E402
 
 
 def test_icon_generation_output(tmp_path):

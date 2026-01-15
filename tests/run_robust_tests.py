@@ -112,7 +112,7 @@ class TestRunner:
             sys.exit(1)
 
         files_map = defaultdict(list)
-        
+
         for line in result.stdout.splitlines():
             line = line.strip()
             # Un NodeID valido di pytest contiene '::' e non inizia con '=' o 'collected'

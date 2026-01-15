@@ -39,7 +39,7 @@ class TestTimesheetProcessorCoverage:
     def test_process_file_with_pos(self, tmp_path, sample_df):
         """Test elaborazione corretta con colonna POS."""
         file_path = tmp_path / "test_ok.xlsx"
-        
+
         # Use openpyxl directly to create the file with the required structure
         import openpyxl
         wb = openpyxl.Workbook()
@@ -49,7 +49,7 @@ class TestTimesheetProcessorCoverage:
         # Write POS header and data
         ws["B1"] = "POS"
         ws["B2"] = "POS1"
-        ws["B3"] = "POS2" 
+        ws["B3"] = "POS2"
         wb.save(file_path)
 
         success, msg = TimesheetProcessor.process_and_move(file_path, dest_dir=tmp_path)

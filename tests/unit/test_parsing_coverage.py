@@ -1,65 +1,48 @@
+import pytest
 from src.utils.parsing import parse_currency
 
+@pytest.mark.parametrize("input_val, expected", [
+    # Basic cases
+    (None, 0.0),
+    (100, 100.0),
+    (100.50, 100.50),
+    ("50", 50.0),
+    ("nan", 0.0),
+    ("NaN", 0.0),
+    ("", 0.0),
+    ("   ", 0.0),
 
-class TestParsingCoverage:
-    """Test suite per src/utils/parsing.py"""
+    # Italian format (Comma decimal, Dot thousands)
+    ("1.234,56", 1234.56),
+    ("1.000,00", 1000.00),
+    ("508,83", 508.83),
+    ("0,50", 0.50),
 
-    def test_parse_currency_basics(self):
-        assert parse_currency(None) == 0.0
-        assert parse_currency(123.45) == 123.45
-        assert parse_currency(100) == 100.0
-        assert parse_currency("") == 0.0
-        assert parse_currency("  ") == 0.0
+    # US/International format (Dot decimal, Comma thousands)
+    ("1,234.56", 1234.56),
+    ("1,000.00", 1000.00),
+    ("508.83", 508.83),
 
-    def test_parse_currency_it_format(self):
-        """Test formato italiano con punti per migliaia e virgola per decimali."""
-        assert parse_currency("1.234,56") == 1234.56
-        assert parse_currency("508,83") == 508.83
+    # Symbols and Text
+    ("€ 50,00", 50.0),
+    ("50,00 €", 50.0),
+    ("Euro 100", 100.0),
+    ("100 euro", 100.0),
 
-    def test_parse_currency_us_format(self):
-        """Test formato US con virgole per migliaia e punto per decimali."""
-        assert parse_currency("1,234.56") == 1234.56
-        assert parse_currency("508.83") == 508.83
+    # Negative numbers
+    ("-50", -50.0),
+    ("- 50,00", -50.0),
+    ("50,00 -", -50.0),
+    ("€ -10", -10.0),
 
-    def test_parse_currency_symbols(self):
-        """Test con simboli valuta e testo."""
-        assert parse_currency("€ 1.234,56") == 1234.56
-        assert parse_currency("1234,56 Euro") == 1234.56
-        assert parse_currency("EURO 100") == 100.0
+    # Edge cases (Ambiguous dots)
+    ("1.234.567", 1234567.0), # Multiple dots = thousands
+    ("1.000", 1.0), # Single dot with 3 digits = standard float logic (ambiguous but defined behavior)
+    ("1.5", 1.5),   # Single dot normal
 
-    def test_parse_currency_negative(self):
-        """Test numeri negativi."""
-        assert parse_currency("-100,50") == -100.5
-        assert parse_currency("100,50-") == -100.5
-        assert parse_currency(" - 100,50 ") == -100.5
-
-    def test_parse_currency_special_cases(self):
-        """Test casi speciali come nan e caratteri invisibili."""
-        assert parse_currency("nan") == 0.0
-        assert parse_currency("NaN") == 0.0
-        # Carattere non printable (null byte rimosso da join c.isprintable())
-        assert parse_currency("100\0.50") == 100.5
-
-    def test_parse_currency_dots_and_commas(self):
-        """Test logica complessa punti/virgole."""
-        # Solo virgola
-        assert parse_currency("1234,56") == 1234.56
-
-        # Più punti (migliaia)
-        assert parse_currency("1.234.567") == 1234567.0
-
-        # Solo un punto - ambiguo
-        # "1.234" -> 3 cifre dopo punto. Attualmente il codice lascia il punto se == 3.
-        # float("1.234") -> 1.234
-        assert parse_currency("1.234") == 1.234
-
-        # "1.23" -> < 3 cifre -> Decimale
-        assert parse_currency("1.23") == 1.23
-
-        # "1.2345" -> > 3 cifre -> Decimale
-        assert parse_currency("1.2345") == 1.2345
-
-    def test_parse_currency_errors(self):
-        """Test gestione errori di parsing."""
-        assert parse_currency("abc") == 0.0
-        assert parse_currency("€ ---") == 0.0
+    # Invalid
+    ("abc", 0.0),
+    ("12.34.56,78", 123456.78), # Messy but parsable
+])
+def test_parse_currency(input_val, expected):
+    assert parse_currency(input_val) == expected

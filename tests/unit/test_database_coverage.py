@@ -105,7 +105,7 @@ class TestDatabaseCoverage:
             mock_connect.return_value = mock_conn
             mock_conn.cursor.return_value = mock_cursor
             mock_cursor.execute.side_effect = sqlite3.OperationalError("database is locked")
-            
+
             # Using context manager for connection in execute_query
             mock_conn.__enter__.return_value = mock_conn
 

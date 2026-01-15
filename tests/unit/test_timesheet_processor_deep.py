@@ -12,7 +12,7 @@ class TestTimesheetProcessorDeep:
     def mock_excel(self, tmp_path):
         """Crea un file Excel finto per i test."""
         file_path = tmp_path / "timesheet.xlsx"
-        
+
         import openpyxl
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -46,7 +46,7 @@ class TestTimesheetProcessorDeep:
     def test_process_file_no_pos_column(self, tmp_path):
         """Verifica comportamento se la colonna POS manca."""
         file_path = tmp_path / "no_pos.xlsx"
-        
+
         import openpyxl
         wb = openpyxl.Workbook()
         ws = wb.active

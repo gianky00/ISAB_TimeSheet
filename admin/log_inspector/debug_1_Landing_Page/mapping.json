@@ -1,0 +1,481 @@
+{
+    "context": "Landing_Page",
+    "url": "https://portalefornitori.isab.com/Ui/",
+    "elements": [
+        {
+            "data_id": "user-info-settings",
+            "frame": "root",
+            "id": "user-info-settings",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 36,
+                "w": 62,
+                "x": 1850,
+                "y": 8
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"user-info-settings\")"
+        },
+        {
+            "data_id": "tool-1027",
+            "frame": "root",
+            "id": "tool-1027",
+            "name": null,
+            "qtip": "Espandi",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 7,
+                "y": -9943
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1027\")"
+        },
+        {
+            "data_id": "tool-1062",
+            "frame": "root",
+            "id": "tool-1062",
+            "name": null,
+            "qtip": "Espandi",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 320,
+                "y": 67
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1062\")"
+        },
+        {
+            "data_id": "generic_menu_button-1036",
+            "frame": "root",
+            "id": "generic_menu_button-1036",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 193.21875,
+                "x": 7,
+                "y": 103
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1036\")"
+        },
+        {
+            "data_id": "tool-1063",
+            "frame": "root",
+            "id": "tool-1063",
+            "name": null,
+            "qtip": "Espandi",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 320,
+                "y": 122
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1063\")"
+        },
+        {
+            "data_id": "generic_menu_button-1038",
+            "frame": "root",
+            "id": "generic_menu_button-1038",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 152.359375,
+                "x": 7,
+                "y": 158
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1038\")"
+        },
+        {
+            "data_id": "tool-1064",
+            "frame": "root",
+            "id": "tool-1064",
+            "name": null,
+            "qtip": "Espandi",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 320,
+                "y": 177
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1064\")"
+        },
+        {
+            "data_id": "generic_menu_button-1040",
+            "frame": "root",
+            "id": "generic_menu_button-1040",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 192.15625,
+                "x": 7,
+                "y": 213
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1040\")"
+        },
+        {
+            "data_id": "tool-1065",
+            "frame": "root",
+            "id": "tool-1065",
+            "name": null,
+            "qtip": "Espandi",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 320,
+                "y": 232
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1065\")"
+        },
+        {
+            "data_id": "generic_menu_button-1043",
+            "frame": "root",
+            "id": "generic_menu_button-1043",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 166.875,
+                "x": 7,
+                "y": 268
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1043\")"
+        },
+        {
+            "data_id": "generic_menu_button-1044",
+            "frame": "root",
+            "id": "generic_menu_button-1044",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 206.796875,
+                "x": 7,
+                "y": 324
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1044\")"
+        },
+        {
+            "data_id": "tool-1068",
+            "frame": "root",
+            "id": "tool-1068",
+            "name": null,
+            "qtip": "Espandi",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 320,
+                "y": 287
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1068\")"
+        },
+        {
+            "data_id": "generic_menu_button-1050",
+            "frame": "root",
+            "id": "generic_menu_button-1050",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 241.25,
+                "x": 7,
+                "y": 323
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1050\")"
+        },
+        {
+            "data_id": "generic_menu_button-1051",
+            "frame": "root",
+            "id": "generic_menu_button-1051",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 265.609375,
+                "x": 7,
+                "y": 379
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1051\")"
+        },
+        {
+            "data_id": "tool-1069",
+            "frame": "root",
+            "id": "tool-1069",
+            "name": null,
+            "qtip": "Espandi",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 320,
+                "y": 342
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1069\")"
+        },
+        {
+            "data_id": "generic_menu_button-1053",
+            "frame": "root",
+            "id": "generic_menu_button-1053",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 86.875,
+                "x": 7,
+                "y": 378
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1053\")"
+        },
+        {
+            "data_id": "generic_menu_button-1055",
+            "frame": "root",
+            "id": "generic_menu_button-1055",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 135.59375,
+                "x": 103.875,
+                "y": 378
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1055\")"
+        },
+        {
+            "data_id": "generic_menu_button-1056",
+            "frame": "root",
+            "id": "generic_menu_button-1056",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 129.625,
+                "x": 7,
+                "y": 434
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1056\")"
+        },
+        {
+            "data_id": "generic_menu_button-1057",
+            "frame": "root",
+            "id": "generic_menu_button-1057",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 88.765625,
+                "x": 146.625,
+                "y": 434
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1057\")"
+        },
+        {
+            "data_id": "generic_menu_button-1058",
+            "frame": "root",
+            "id": "generic_menu_button-1058",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 46,
+                "w": 156,
+                "x": 7,
+                "y": 490
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"generic_menu_button-1058\")"
+        },
+        {
+            "data_id": "tool-1026",
+            "frame": "root",
+            "id": "tool-1026",
+            "name": null,
+            "qtip": "Riduci",
+            "rect": {
+                "h": 16,
+                "w": 16,
+                "x": 360,
+                "y": 809
+            },
+            "row_ctx": "",
+            "tag": "div",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tool-1026\")"
+        },
+        {
+            "data_id": "home_menu_combo",
+            "frame": "root",
+            "id": "home_menu_combo-inputEl",
+            "name": "home_menu_combo-inputEl",
+            "qtip": null,
+            "rect": {
+                "h": 64,
+                "w": 1438,
+                "x": 418,
+                "y": 406
+            },
+            "row_ctx": "",
+            "tag": "input",
+            "text": "",
+            "value": "",
+            "visible": true,
+            "xpath": "id(\"home_menu_combo-inputEl\")"
+        },
+        {
+            "data_id": "tab-1031",
+            "frame": "root",
+            "id": "tab-1031",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 40,
+                "w": 82.734375,
+                "x": 403,
+                "y": 782
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "Home",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"tab-1031\")"
+        },
+        {
+            "data_id": "button-1006",
+            "frame": "root",
+            "id": "button-1006",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 32,
+                "w": 75,
+                "x": 882,
+                "y": -9890
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"button-1006\")"
+        },
+        {
+            "data_id": "button-1007",
+            "frame": "root",
+            "id": "button-1007",
+            "name": null,
+            "qtip": null,
+            "rect": {
+                "h": 32,
+                "w": 75,
+                "x": 963,
+                "y": -9890
+            },
+            "row_ctx": "",
+            "tag": "a",
+            "text": "",
+            "value": null,
+            "visible": true,
+            "xpath": "id(\"button-1007\")"
+        }
+    ]
+}

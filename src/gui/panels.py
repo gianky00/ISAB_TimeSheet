@@ -732,7 +732,159 @@ class DettagliOdAPanel(BaseBotPanel):
         self.bot_started.emit()
 
 
+class PrenotaBPPanel(BaseBotPanel):
+    """Pannello per il bot Prenota BP."""
+
+    def __init__(self, parent=None):
+        super().__init__(
+            bot_id="prenota_bp",
+            bot_name="🎫 Prenota BP",
+            bot_description="Gestisce la prenotazione dei Badge Provvisori sul portale.",
+            parent=parent,
+        )
+        self._setup_content()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for PrenotaBPPanel: {e}")
+
+    def _setup_content(self):
+        """Configura il contenuto specifico del pannello."""
+        params_group = QGroupBox("Parametri Prenotazione")
+        params_layout = QVBoxLayout(params_group)
+        params_layout.setSpacing(10)
+
+        # Widget atomico per i parametri - Abilitato date range
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=False
+        )
+        self.params_widget.settings_requested.connect(self._open_settings)
+        self.params_widget.changed.connect(self._save_data)
+        params_layout.addWidget(self.params_widget)
+
+        params_layout.addSpacing(10)
+
+        table_toolbar = QHBoxLayout()
+        table_toolbar.addStretch()
+        self.clear_btn = ModernButton(
+            "Pulisci Tabella",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+            parent=self,
+        )
+        self.clear_btn.clicked.connect(self._clear_table)
+        table_toolbar.addWidget(self.clear_btn)
+        params_layout.addLayout(table_toolbar)
+
+        # Definiamo le nuove colonne: NUMERO BP e NOTE DI RITIRO
+        columns = [
+            {"name": "NUMERO BP", "type": "text"},
+            {"name": "NOTE DI RITIRO", "type": "text"}
+        ]
+        self.data_table = EditableDataTable(columns)
+        self.data_table.setMinimumHeight(200)
+        self.data_table.data_changed.connect(self._save_data)
+        params_layout.addWidget(self.data_table)
+
+        self.content_layout.addWidget(params_group)
+
+
+    def _open_settings(self):
+        """Apre le impostazioni."""
+        main_window = self.window()
+        if hasattr(main_window, "show_settings"):
+            main_window.show_settings()
+
+
+    def _load_saved_data(self):
+        config = config_manager.load_config()
+        saved_data = config.get("last_prenota_bp_data", [])
+        if saved_data:
+            self.data_table.set_data(saved_data)
+
+        # Usiamo set_dates (metodo corretto di BotParametersWidget)
+        date_da = config.get("last_prenota_date_from", "01.01.2024")
+        date_a = config.get("last_prenota_date_to", "31.12.2025")
+        self.params_widget.set_dates(date_da, date_a)
+
+    def _save_data(self):
+        data = self.data_table.get_data()
+        config_manager.set_config_value("last_prenota_bp_data", data)
+
+        # Usiamo get_dates (metodo corretto di BotParametersWidget)
+        date_da, date_a = self.params_widget.get_dates()
+        config_manager.set_config_value("last_prenota_date_from", date_da)
+        config_manager.set_config_value("last_prenota_date_to", date_a)
+
+    def _clear_table(self):
+        if (
+            QMessageBox.question(
+                self,
+                "Conferma",
+                "Cancellare tutti i dati dalla lista?",
+                QMessageBox.StandardButton.Yes,
+            )
+            == QMessageBox.StandardButton.Yes
+        ):
+            self.data_table.set_data([])
+            self._save_data()
+
+    def _on_start(self):
+        """Override: Prepara e avvia il worker specifico."""
+        # Validazione form
+        ready, msg = self.validate_ready()
+        if not ready:
+            QMessageBox.warning(self, "Attenzione", msg)
+            return
+
+        # Recupera dati e configura bot
+        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+
+        username, password = self.get_credentials()
+        config = config_manager.load_config()
+
+        fornitore = self.params_widget.get_fornitore()
+        date_da, date_a = self.params_widget.get_dates()
+
+        bot = PrenotaBPBot(
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            fornitore=fornitore,
+            data_da=date_da,
+            data_a=date_a,
+        )
+
+        bot_data = {
+            "rows": self.data_table.get_data(),
+            "fornitore": fornitore,
+            "data_da": date_da,
+            "data_a": date_a,
+        }
+
+        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
+
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+
+        # UI Update
+        self._update_status(StatusCard.Status.RUNNING, "Esecuzione...")
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.log_widget.clear()
+        self.log_widget.append("▶ Avvio bot Prenota BP...")
+        self.worker.start()
+        self.bot_started.emit()
+
+
 class CaricoTSPanel(BaseBotPanel):
+
     """Pannello per il bot Carico TS."""
 
     def __init__(self, parent=None):

@@ -2,9 +2,15 @@
 Baseline tests for ContabilitaPanel selection totals.
 """
 
+
 import pytest
-from unittest.mock import MagicMock
-from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QTreeWidget, QTreeWidgetItem, QWidget
+from PyQt6.QtWidgets import (
+    QTableWidget,
+    QTableWidgetItem,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QWidget,
+)
 
 from src.gui.contabilita_panel import ContabilitaPanel
 

@@ -1,0 +1,10 @@
+[
+    {
+        "order": 1,
+        "type": "STATE_CHANGE",
+        "description": "Landing_Page",
+        "reference_state": "debug_1_Landing_Page",
+        "url": "https://portalefornitori.isab.com/Ui/",
+        "timestamp": "2026-01-15T08:20:25.128582"
+    }
+]

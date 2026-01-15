@@ -90,7 +90,7 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_main_window.show_toast = MagicMock()
 
         # Mock InputValidator.validate_pdl
-        # Called twice per item: first for all items in the filter list comprehension, 
+        # Called twice per item: first for all items in the filter list comprehension,
         # then for all items in the add_rows_simple list comprehension.
         MockInputValidator.validate_pdl.side_effect = [
             MagicMock(valid=True, sanitized_value="PDL001"), # filter item 1

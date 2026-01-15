@@ -92,7 +92,7 @@ class TestSprintDBotResilience:
         logs = []
         bot.set_log_callback(lambda m: logs.append(m))
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="version mismatch"):
             bot._init_driver()
 
         assert any("Chrome è troppo recente" in m for m in logs)

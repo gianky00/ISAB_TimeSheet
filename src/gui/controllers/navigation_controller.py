@@ -166,11 +166,13 @@ class NavigationController(QObject):
         """Navigazione verso pannelli annidati."""
         bot_map = {
             "dettagli_oda": (0, 0),
-            "scarico_ts": (0, 1),
-            "timbrature": (0, 2),
-            "carico_ts": (0, 3),
+            "prenota_bp": (0, 1),
+            "scarico_ts": (0, 2),
+            "timbrature": (0, 3),
+            "carico_ts": (0, 4),
             "scarico_pdl": (1, 0),
         }
+
 
         if panel_key in bot_map:
             main_idx, sub_idx = bot_map[panel_key]

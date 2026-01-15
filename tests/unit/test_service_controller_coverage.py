@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from PyQt6.QtCore import QTimer
+
 from src.gui.controllers.service_controller import ServiceController
+
 
 class TestServiceControllerCoverage(unittest.TestCase):
     def setUp(self):
@@ -16,9 +17,9 @@ class TestServiceControllerCoverage(unittest.TestCase):
     @patch('src.gui.controllers.service_controller.NotificationManager')
     def test_start_all(self, mock_nm, mock_ss):
         mock_nm_instance = mock_nm.instance.return_value
-        
+
         self.controller.start_all()
-        
+
         self.mock_sentinel.anomalies_found.connect.assert_called_with(self.mock_mw._on_anomalies_found)
         # Verify calls to singleShot (1000, 2000, 3000ms)
         self.assertTrue(mock_ss.called)
@@ -43,12 +44,12 @@ class TestServiceControllerCoverage(unittest.TestCase):
     @patch('datetime.datetime')
     def test_check_scheduled_tasks_autopilot_trigger(self, mock_dt):
         mock_dt.now.return_value.strftime.return_value = "09:00"
-        
+
         # Mock panel
         mock_panel = MagicMock()
         mock_panel.start_btn.isEnabled.return_value = True
         self.mock_mw.timbrature_bot_panel = mock_panel
-        
+
         # We need to patch the local import in src.gui.controllers.service_controller
         with patch('src.core.config_manager.load_config') as mock_load:
              mock_load.return_value = {
@@ -56,7 +57,7 @@ class TestServiceControllerCoverage(unittest.TestCase):
                 "timbrature_autopilot_time": "09:00"
             }
              self.controller._check_scheduled_tasks()
-        
+
         mock_panel._on_start.assert_called()
         mock_panel.log_widget.append.assert_called()
 
@@ -64,7 +65,7 @@ class TestServiceControllerCoverage(unittest.TestCase):
     @patch('datetime.datetime')
     def test_check_scheduled_tasks_no_trigger(self, mock_dt):
         mock_dt.now.return_value.strftime.return_value = "10:00"
-        
+
         with patch('src.core.config_manager.load_config') as mock_load:
              mock_load.return_value = {
                 "timbrature_autopilot_enabled": True,

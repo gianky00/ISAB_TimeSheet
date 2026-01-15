@@ -91,7 +91,7 @@ def test_init_driver_version_error(bot, mocker):
     logs = []
     bot.set_log_callback(lambda m: logs.append(m))
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="version mismatch"):
         bot._init_driver()
 
     assert any("SUGGERIMENTO: La tua versione di Chrome" in log for log in logs)

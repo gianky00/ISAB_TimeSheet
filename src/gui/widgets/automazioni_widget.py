@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QTabWidget
 from src.gui.panels import (
     CaricoTSPanel,
     DettagliOdAPanel,
+    PrenotaBPPanel,
     ScaricaTSPanel,
     ScaricoPDLPanel,
     TimbratureBotPanel,
@@ -22,12 +23,14 @@ class AutomazioniWidget(QTabWidget):
 
         # Istanzia TUTTI i pannelli subito
         self.panel_dettagli = DettagliOdAPanel()
+        self.panel_prenota = PrenotaBPPanel()
         self.panel_scarico = ScaricaTSPanel()
         self.panel_timbrature = TimbratureBotPanel()
         self.panel_carico = CaricoTSPanel()
 
         # Aggiungi i tab a Portale Fornitori
         self.tab_fornitori.addTab(self.panel_dettagli, "📋 Dettagli OdA")
+        self.tab_fornitori.addTab(self.panel_prenota, "🎫 Prenota BP")
         self.tab_fornitori.addTab(self.panel_scarico, "📥 Scarico TS")
         self.tab_fornitori.addTab(self.panel_timbrature, "⏱️ Timbrature")
         self.tab_fornitori.addTab(self.panel_carico, "📤 Carico TS")
@@ -43,6 +46,7 @@ class AutomazioniWidget(QTabWidget):
 
         # Registra riferimenti nella Main Window (per compatibilità)
         self.mw.dettagli_panel = self.panel_dettagli
+        self.mw.prenota_panel = self.panel_prenota
         self.mw.scarico_panel = self.panel_scarico
         self.mw.timbrature_bot_panel = self.panel_timbrature
         self.mw.carico_panel = self.panel_carico
@@ -54,8 +58,10 @@ class AutomazioniWidget(QTabWidget):
         if hasattr(self.mw, "bot_controller"):
             self.mw.bot_controller.register_panels([
                 self.panel_dettagli,
+                self.panel_prenota,
                 self.panel_scarico,
                 self.panel_timbrature,
                 self.panel_carico,
                 self.panel_pdl
             ])
+

@@ -142,29 +142,33 @@ class LoginPage:
             self.log("Tentativo di login...")
             self._attendi_scomparsa_overlay(timeout_secondi=10)
 
+            # --- OTTIMIZZAZIONE: Verifica sessione immediata ---
+            if self._verify_logged_in_via_ui():
+                self.log("✓ Sessione già attiva rilevata (fast-skip).")
+                return True
+
             try:
-                WebDriverWait(self.driver, 5).until(
+                # Se non siamo loggati, allora cerchiamo il form
+                WebDriverWait(self.driver, 3).until(
                     EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
                 )
                 self._perform_login_form_action(username, password)
-
             except TimeoutException:
-                self.log("Campo Username non trovato. Verifico se già loggato...")
+                # Fallback: ricontrolla una volta se nel frattempo siamo entrati
                 if self._verify_logged_in_via_ui():
-                    self.log("✓ Rilevata sessione attiva (skip login).")
                     return True
-                else:
-                    self.log("⚠️ Username assente e sessione invalida/scaduta.")
-                    self.log("🔄 Ricarico la pagina per forzare il form di login...")
-                    self.driver.refresh()
-                    self._attendi_scomparsa_overlay(10)
 
-                    try:
-                        self._perform_login_form_action(username, password)
-                        return True
-                    except Exception as e:
-                        self.log(f"✗ Fallito recupero sessione: {e}")
-                        return False
+                self.log("⚠️ Username assente e sessione invalida/scaduta.")
+                self.log("🔄 Ricarico la pagina per forzare il form di login...")
+                self.driver.refresh()
+                self._attendi_scomparsa_overlay(10)
+
+                try:
+                    self._perform_login_form_action(username, password)
+                    return True
+                except Exception as e:
+                    self.log(f"✗ Fallito recupero sessione: {e}")
+                    return False
 
             self.log("✓ Login completato con successo")
             return True

@@ -1,8 +1,12 @@
 import unittest
-from unittest.mock import MagicMock, patch, ANY
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from unittest.mock import MagicMock, patch
+
+from selenium.common.exceptions import (
+    TimeoutException,
+)
+
 from src.bots.base.login_page import LoginPage
-from src.bots.portale_fornitori.common.locators import LoginLocators, CommonLocators
+
 
 class TestLoginPageCoverage(unittest.TestCase):
     def setUp(self):
@@ -36,11 +40,11 @@ class TestLoginPageCoverage(unittest.TestCase):
         mock_user = MagicMock()
         mock_pass = MagicMock()
         mock_btn = MagicMock()
-        
+
         # Mock wait.until logic sequence
         # 1. user field, 2. pass field, 3. login btn
         self.mock_wait.until.side_effect = [mock_user, mock_pass, mock_btn]
-        
+
         # Patch internal calls
         self.page._check_and_handle_session_popup = MagicMock()
         self.page._attendi_scomparsa_overlay = MagicMock()
@@ -55,14 +59,14 @@ class TestLoginPageCoverage(unittest.TestCase):
     def test_perform_login_form_action_fallback_js(self):
         mock_user = MagicMock()
         mock_pass = MagicMock()
-        
+
         # 1. user, 2. pass, 3. btn (raises)
         self.mock_wait.until.side_effect = [
-            mock_user, 
-            mock_pass, 
+            mock_user,
+            mock_pass,
             TimeoutException()
         ]
-        
+
         self.mock_driver.find_element.return_value = "fallback_element"
         self.page._check_and_handle_session_popup = MagicMock()
         self.page._attendi_scomparsa_overlay = MagicMock()
@@ -76,7 +80,7 @@ class TestLoginPageCoverage(unittest.TestCase):
             mock_wait_instance = MockWait.return_value
             mock_yes = MagicMock()
             mock_wait_instance.until.return_value = mock_yes
-            
+
             with patch('time.sleep'):
                 self.page._check_and_handle_session_popup()
                 mock_yes.click.assert_called()
@@ -96,11 +100,11 @@ class TestLoginPageCoverage(unittest.TestCase):
     def test_login_already_logged_in(self):
         self.page._attendi_scomparsa_overlay = MagicMock()
         self.page._verify_logged_in_via_ui = MagicMock(return_value=True)
-        
+
         # First wait raises Timeout (username field not found), triggering already logged check
         with patch('src.bots.base.login_page.WebDriverWait') as MockWait:
              MockWait.return_value.until.side_effect = TimeoutException()
-             
+
              res = self.page.login("u", "p")
              self.assertTrue(res)
              self.logger_mock.assert_any_call("✓ Rilevata sessione attiva (skip login).")
@@ -109,26 +113,26 @@ class TestLoginPageCoverage(unittest.TestCase):
         self.page._attendi_scomparsa_overlay = MagicMock()
         self.page._verify_logged_in_via_ui = MagicMock(return_value=False)
         self.page._perform_login_form_action = MagicMock()
-        
+
         # First wait raises Timeout
         with patch('src.bots.base.login_page.WebDriverWait') as MockWait:
              MockWait.return_value.until.side_effect = TimeoutException()
-             
+
              res = self.page.login("u", "p")
-             
+
              self.mock_driver.refresh.assert_called()
              self.page._perform_login_form_action.assert_called_with("u", "p")
              self.assertTrue(res)
 
     def test_login_timeout_general(self):
         self.page._attendi_scomparsa_overlay = MagicMock()
-        
+
         # First wait raises Timeout
         with patch('src.bots.base.login_page.WebDriverWait') as MockWait:
              MockWait.return_value.until.side_effect = TimeoutException()
              self.page._verify_logged_in_via_ui = MagicMock(return_value=False)
              self.page._perform_login_form_action = MagicMock(side_effect=Exception("Refresh failed"))
-             
+
              res = self.page.login("u", "p")
              self.assertFalse(res)
 

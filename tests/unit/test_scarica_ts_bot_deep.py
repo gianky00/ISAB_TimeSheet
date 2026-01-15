@@ -47,7 +47,7 @@ class TestScaricaTSBotDeep:
         bot.wait = MagicMock()
         source_dir = Path("./fake_source")
         dest_dir = Path("./fake_dest")
-    
+
         # Mocking time.time to control the loop
         with patch("pathlib.Path.iterdir") as mock_iter, \
              patch("pathlib.Path.exists", return_value=True), \
@@ -61,7 +61,7 @@ class TestScaricaTSBotDeep:
             new_file.name = "download.xlsx"
             new_file.exists.return_value = True
             new_file.__str__.return_value = str(source_dir / "download.xlsx")
-            
+
             # Important: mock stat().st_mtime correctly on the object
             new_file.stat.return_value.st_mtime = 1000
 
