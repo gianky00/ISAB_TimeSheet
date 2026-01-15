@@ -75,51 +75,63 @@ class SearchController(QObject):
 
             ext_matches = ContabilitaManager.search_extended(query)
             count = 0
-
-            # Giornaliere
-            if ext_matches.get("GIORNALIERE"):
-                self._add_disabled_action(menu, "📂 GIORNALIERE:")
-                for g in ext_matches["GIORNALIERE"][:20]:
-                    text = (
-                        f"{g['data']} - {g['personale']} - {g['descrizione'][:40]}..."
-                    )
-                    action = menu.addAction(text)
-                    if action:
-                        action.triggered.connect(
-                            lambda _, q=query: self.mw._navigate_to_extended(1, q)
-                        )
-                    count += 1
-                menu.addSeparator()
-
-            # Cantiere
-            if ext_matches.get("CANTIERE"):
-                self._add_disabled_action(menu, "🏗️ CANTIERE (Scarico Ore):")
-                for c in ext_matches["CANTIERE"][:20]:
-                    text = f"{c['data']} - {c['personale']} - {c['commessa']}"
-                    action = menu.addAction(text)
-                    if action:
-                        action.triggered.connect(
-                            lambda _, q=query: self.mw._navigate_to_dataease(q)
-                        )
-                    count += 1
-                menu.addSeparator()
-
-            # Certificati
-            if ext_matches.get("CERTIFICATI"):
-                self._add_disabled_action(menu, "📜 CERTIFICATI:")
-                for c in ext_matches["CERTIFICATI"][:20]:
-                    text = f"{c['matricola']} - {c['modello']} ({c['costruttore']})"
-                    action = menu.addAction(text)
-                    if action:
-                        action.triggered.connect(
-                            lambda _, q=query: self.mw._navigate_to_extended(3, q)
-                        )
-                    count += 1
-                menu.addSeparator()
-
+            count += self._add_giornaliere_matches(
+                query, menu, ext_matches.get("GIORNALIERE")
+            )
+            count += self._add_cantiere_matches(
+                query, menu, ext_matches.get("CANTIERE")
+            )
+            count += self._add_certificati_matches(
+                query, menu, ext_matches.get("CERTIFICATI")
+            )
             return count
         except Exception:
             return 0
+
+    def _add_giornaliere_matches(self, query: str, menu: QMenu, matches: list) -> int:
+        """Aggiunge i risultati delle Giornaliere al menu."""
+        if not matches:
+            return 0
+        self._add_disabled_action(menu, "📂 GIORNALIERE:")
+        for g in matches[:20]:
+            text = f"{g['data']} - {g['personale']} - {g['descrizione'][:40]}..."
+            action = menu.addAction(text)
+            if action:
+                action.triggered.connect(
+                    lambda _, q=query: self.mw._navigate_to_extended(1, q)
+                )
+        menu.addSeparator()
+        return len(matches[:20])
+
+    def _add_cantiere_matches(self, query: str, menu: QMenu, matches: list) -> int:
+        """Aggiunge i risultati del Cantiere al menu."""
+        if not matches:
+            return 0
+        self._add_disabled_action(menu, "🏗️ CANTIERE (Scarico Ore):")
+        for c in matches[:20]:
+            text = f"{c['data']} - {c['personale']} - {c['commessa']}"
+            action = menu.addAction(text)
+            if action:
+                action.triggered.connect(
+                    lambda _, q=query: self.mw._navigate_to_dataease(q)
+                )
+        menu.addSeparator()
+        return len(matches[:20])
+
+    def _add_certificati_matches(self, query: str, menu: QMenu, matches: list) -> int:
+        """Aggiunge i risultati dei Certificati al menu."""
+        if not matches:
+            return 0
+        self._add_disabled_action(menu, "📜 CERTIFICATI:")
+        for c in matches[:20]:
+            text = f"{c['matricola']} - {c['modello']} ({c['costruttore']})"
+            action = menu.addAction(text)
+            if action:
+                action.triggered.connect(
+                    lambda _, q=query: self.mw._navigate_to_extended(3, q)
+                )
+        menu.addSeparator()
+        return len(matches[:20])
 
     def _search_employees(self, query: str, menu: QMenu) -> int:
         """Ricerca dei dipendenti."""

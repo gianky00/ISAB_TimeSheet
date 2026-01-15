@@ -82,9 +82,9 @@ class DataSynchronizer:
                     f"""
                     INSERT INTO contabilita ({", ".join([f'"{c}"' for c in target_columns])})
                     SELECT {", ".join([f'"{c}"' for c in target_columns])} FROM temp_contabilita WHERE year = ?
-                """,
+                """,  # nosec B608
                     (year_str,),
-                )  # nosec B608
+                )
 
             conn.commit()
 
@@ -129,8 +129,9 @@ class DataSynchronizer:
                     for r in all_new_rows
                 ]
                 cursor.executemany(
-                    f"INSERT INTO temp_giornaliere VALUES ({placeholders})", normalized
-                )  # nosec B608
+                    f"INSERT INTO temp_giornaliere VALUES ({placeholders})",  # nosec B608
+                    normalized,
+                )
 
             for year in years_to_clear:
                 year_str = str(year)
@@ -162,9 +163,9 @@ class DataSynchronizer:
                     f"""
                     INSERT INTO giornaliere ({", ".join([f'"{c}"' for c in target_cols])})
                     SELECT {", ".join([f'"{c}"' for c in target_cols])} FROM temp_giornaliere WHERE year = ?
-                """,
+                """,  # nosec B608
                     (year_str,),
-                )  # nosec B608
+                )
 
             conn.commit()
 
@@ -220,40 +221,38 @@ class DataSynchronizer:
                     for r in new_data
                 ]
                 cursor.executemany(
-                    f"INSERT INTO temp_{table_name} VALUES ({placeholders})", normalized
-                )  # nosec B608
+                    f"INSERT INTO temp_{table_name} VALUES ({placeholders})",  # nosec B608
+                    normalized,
+                )
 
             # Added
-            cursor.execute(
-                f"""
+            query_added = f"""
                 SELECT COUNT(*) FROM (
                     SELECT {", ".join([f'"{c}"' for c in columns])} FROM temp_{table_name}
                     EXCEPT
                     SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in columns])} FROM {table_name}
                 )
-            """
-            )  # nosec B608
+            """  # nosec B608
+            cursor.execute(query_added)
             total_added = cursor.fetchone()[0]
 
             # Removed
-            cursor.execute(
-                f"""
+            query_removed = f"""
                 SELECT COUNT(*) FROM (
                     SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in columns])} FROM {table_name}
                     EXCEPT
                     SELECT {", ".join([f'"{c}"' for c in columns])} FROM temp_{table_name}
                 )
-            """
-            )  # nosec B608
+            """  # nosec B608
+            cursor.execute(query_removed)
             total_removed = cursor.fetchone()[0]
 
             cursor.execute(f"DELETE FROM {table_name}")  # nosec B608
-            cursor.execute(
-                f"""
+            query_finalize = f"""
                 INSERT INTO {table_name} ({", ".join([f'"{c}"' for c in columns])})
                 SELECT {", ".join([f'"{c}"' for c in columns])} FROM temp_{table_name}
-            """
-            )  # nosec B608
+            """  # nosec B608
+            cursor.execute(query_finalize)
 
             conn.commit()
 

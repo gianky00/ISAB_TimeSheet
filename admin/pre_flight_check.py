@@ -3,7 +3,7 @@
 🚀 SyncroJob Developer Toolbox & Pre-Flight Check
 ================================================
 Un unico entry point per tutti i controlli di qualità, sicurezza e integrità.
-Tool integrati: Ruff, Bandit, Interrogate, Pytest, Pre-commit.
+Tool integrati: Ruff, Bandit, Interrogate, Pytest, Mypy, Xenon, Vulture, Codespell.
 """
 
 import argparse
@@ -73,16 +73,28 @@ def check_versions():
 def run_ruff(fix=False):
     print_step("RUFF: Controllo Qualità e Formattazione...")
     cmd = [get_bin("ruff"), "check", ".", "--fix" if fix else ""]
+    cmd = [c for c in cmd if c]
     ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
 
-    # Formattazione
-    subprocess.call(
-        [get_bin("ruff"), "format", ".", "--check" if not fix else ""], cwd=PROJECT_ROOT
-    )
+    fmt_cmd = [get_bin("ruff"), "format", "."]
+    if not fix:
+        fmt_cmd.append("--check")
+    subprocess.call(fmt_cmd, cwd=PROJECT_ROOT)
 
     if ret == 0:
-        print_ok("Codice pulito.")
+        print_ok("Stile e Qualità base OK.")
         return True
+    return False
+
+
+def run_mypy():
+    print_step("MYPY: Controllo Statico dei Tipi...")
+    cmd = [get_bin("mypy"), "src", "--ignore-missing-imports"]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    if ret == 0:
+        print_ok("Nessun errore di tipizzazione trovato.")
+        return True
+    print_fail("Rilevati errori di tipo (Type Errors).")
     return False
 
 
@@ -94,6 +106,48 @@ def run_bandit():
         print_ok("Nessuna vulnerabilità critica rilevata.")
         return True
     print_fail("Rilevati potenziali problemi di sicurezza.")
+    return False
+
+
+def run_xenon():
+    print_step("XENON: Analisi Complessità Ciclo-matematica...")
+    # Blocca se il codice ha un grado di complessità superiore a B
+    cmd = [
+        get_bin("xenon"),
+        "--max-absolute",
+        "B",
+        "--max-modules",
+        "B",
+        "--max-average",
+        "A",
+        "src",
+    ]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    if ret == 0:
+        print_ok("Il codice è manutenibile e ben strutturato.")
+        return True
+    print_fail("Rilevata complessità eccessiva in alcuni moduli.")
+    return False
+
+
+def run_vulture():
+    print_step("VULTURE: Ricerca Codice Morto...")
+    cmd = [get_bin("vulture"), "src", "--min-confidence", "80"]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    if ret == 0:
+        print_ok("Nessuna funzione o variabile inutilizzata trovata.")
+        return True
+    print_fail("Trovato potenziale codice inutilizzato.")
+    return False
+
+
+def run_codespell():
+    print_step("CODESPELL: Controllo errori di battitura...")
+    cmd = [get_bin("codespell")]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    if ret == 0:
+        print_ok("Nessun errore di battitura trovato.")
+        return True
     return False
 
 
@@ -140,18 +194,24 @@ def main():
     args = parser.parse_args()
 
     start_time = time.time()
-    print(f"\n{BOLD}{YELLOW}🚀 SYNCROJOB MASTER CHECK AVVIATO{RESET}")
-    print(f"{ '='*50}")
+    print(
+        f"\n{BOLD}{YELLOW}🚀 SYNCROJOB MASTER CHECK AVVIATO (Versione Ultra-Quality){RESET}"
+    )
+    print(f"{'=' * 60}")
 
     if args.test_only:
         success = run_tests()
     else:
-        # Pipeline completa
+        # Pipeline completa e rigorosa
         checks = [
             (check_versions, []),
             (sync_requirements, []),
             (run_ruff, [args.fix]),
+            (run_codespell, []),
+            (run_mypy, []),
             (run_bandit, []),
+            (run_xenon, []),
+            (run_vulture, []),
             (run_interrogate, []),
         ]
 
@@ -161,20 +221,29 @@ def main():
 
         success = True
         for func, f_args in checks:
-            if not func(*f_args):
+            try:
+                if not func(*f_args):
+                    success = False
+                    print(f"\n{RED}🛑 Bloccato al passaggio: {func.__name__}{RESET}")
+                    # Chiedi all'utente se vuole continuare comunque
+                    # (Simulato come False in modalità non-interattiva)
+                    break
+            except Exception as e:
+                print_fail(f"Errore durante {func.__name__}: {e}")
                 success = False
-                print(f"\n{RED}🛑 Bloccato al passaggio: {func.__name__}{RESET}")
                 break
 
     duration = time.time() - start_time
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     if success:
         print(
-            f"{GREEN}{BOLD}✨ TUTTI I CONTROLLI PASSATI! (Tempo: {duration:.1f}s){RESET}"
+            f"{GREEN}{BOLD}✨ ECCELLENTE! TUTTI I CONTROLLI DI QUALITÀ SUPERATI! (Tempo: {duration:.1f}s){RESET}"
         )
         sys.exit(0)
     else:
-        print(f"{RED}{BOLD}❌ CONTROLLI FALLITI. Correggi gli errori sopra.{RESET}")
+        print(
+            f"{RED}{BOLD}❌ QUALITÀ NON SUFFICIENTE. Correggi gli errori sopra.{RESET}"
+        )
         sys.exit(1)
 
 
