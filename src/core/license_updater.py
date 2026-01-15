@@ -119,8 +119,12 @@ def check_grace_period():
         cipher = Fernet(GRACE_PERIOD_KEY)
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         last_online = datetime.fromisoformat(decrypted_data)
+        if last_online.tzinfo:
+            last_online = last_online.replace(tzinfo=None)
 
         now, is_trusted = time_manager.get_trusted_time()
+        if now.tzinfo:
+            now = now.replace(tzinfo=None)
 
         if now < last_online - timedelta(minutes=5):
             raise Exception("Rilevata incoerenza orologio di sistema.")
@@ -165,6 +169,11 @@ def check_emergency_grace_period():
         cipher = Fernet(GRACE_PERIOD_KEY)
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         start_time = datetime.fromisoformat(decrypted_data)
+        if start_time.tzinfo:
+            start_time = start_time.replace(tzinfo=None)
+        
+        if current_time.tzinfo:
+            current_time = current_time.replace(tzinfo=None)
 
         if current_time < start_time - timedelta(minutes=60):
             return False, "Rilevata manipolazione orologio di sistema", 0

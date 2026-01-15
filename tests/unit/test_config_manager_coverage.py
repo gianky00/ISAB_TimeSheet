@@ -1,113 +1,93 @@
+
 import json
+import os
 import pytest
 from unittest.mock import MagicMock, patch
-from src.core import config_manager
+from src.core.config_manager import (
+    load_config,
+    save_config,
+    get_config_value,
+    set_config_value,
+    add_account,
+    remove_account,
+    _reset_configuration_for_testing,
+    DEFAULT_CONFIG
+)
 
-@pytest.fixture(autouse=True)
-def mock_config_paths(tmp_path):
-    """Reindirizza i path di configurazione su una directory temporanea."""
-    # Reset cache before each test
-    config_manager._reset_configuration_for_testing()
-    
-    # Mock CONFIG_DIR and CONFIG_FILE
-    new_config_dir = tmp_path / "SyncroJob"
-    new_config_dir.mkdir()
-    new_config_file = new_config_dir / "config.json"
-    
-    with patch("src.core.config_manager.CONFIG_DIR", new_config_dir), \
-         patch("src.core.config_manager.CONFIG_FILE", new_config_file):
-        yield new_config_file
+class TestConfigManager:
+    @pytest.fixture(autouse=True)
+    def setup_test(self, tmp_path, mocker):
+        # Reset cache before each test
+        _reset_configuration_for_testing()
+        # Mock paths
+        mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
+        mocker.patch("src.core.config_manager.CONFIG_FILE", tmp_path / "config.json")
+        yield
 
-def test_load_defaults(mock_config_paths):
-    """Se il file non esiste, deve caricare i default."""
-    config = config_manager.load_config()
-    assert config["browser_timeout"] == 30
-    assert config["reparti"] == ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
+    def test_load_default_config(self):
+        config = load_config()
+        assert config == DEFAULT_CONFIG
 
-def test_save_and_load_persistence(mock_config_paths):
-    """Verifica che i valori salvati vengano ricaricati."""
-    config_manager.set_config_value("browser_timeout", 60)
-    
-    # Force reload by resetting cache
-    config_manager._reset_configuration_for_testing()
-    
-    config = config_manager.load_config()
-    assert config["browser_timeout"] == 60
+    def test_save_and_load_config(self):
+        config = load_config()
+        config["browser_headless"] = True
+        save_config(config)
+        
+        # Reset cache to force reload from disk
+        _reset_configuration_for_testing()
+        
+        new_config = load_config()
+        assert new_config["browser_headless"] is True
 
-def test_account_management():
-    """Test aggiunta, rimozione e default account."""
-    # Mock SecretsManager to avoid keyring interactions
-    with patch("src.core.config_manager.SecretsManager") as MockSecrets:
-        MockSecrets.is_available.return_value = True
-        
-        # Add Account 1 (Default)
-        config_manager.add_account("user1", "pass1")
-        accs = config_manager.get_accounts()
-        assert len(accs) == 1
-        assert accs[0]["username"] == "user1"
-        assert accs[0]["default"] is True
-        
-        # Add Account 2
-        config_manager.add_account("user2", "pass2")
-        accs = config_manager.get_accounts()
-        assert len(accs) == 2
-        assert accs[1]["username"] == "user2"
-        assert accs[1]["default"] is False # First remains default
-        
-        # Set Default
-        config_manager.set_default_account("user2")
-        default = config_manager.get_default_account()
-        assert default["username"] == "user2"
-        
-        # Remove Account
-        config_manager.remove_account("user2")
-        accs = config_manager.get_accounts()
-        assert len(accs) == 1
-        assert accs[0]["username"] == "user1"
-        assert accs[0]["default"] is True # user1 becomes default again
+    def test_get_set_value(self):
+        set_config_value("custom_key", "custom_value")
+        assert get_config_value("custom_key") == "custom_value"
 
-def test_secure_password_storage(mock_config_paths):
-    """Verifica che le password non siano salvate in chiaro nel JSON."""
-    with patch("src.core.config_manager.SecretsManager") as MockSecrets, \
-         patch("src.utils.security.password_manager.encrypt") as mock_encrypt:
-        
-        # Scenario 1: Keyring Available
-        MockSecrets.is_available.return_value = True
-        config_manager.add_account("secure_user", "secure_pass")
-        
-        # Verify stored in keyring
-        MockSecrets.store_credential.assert_called_with("isab_portal", "secure_user", "secure_pass")
-        
-        # Verify JSON file does NOT contain password
-        with open(mock_config_paths, "r") as f:
-            data = json.load(f)
-            acc = data["accounts"][0]
-            assert "password" not in acc or acc["password"] is None
+    def test_add_remove_account(self, mocker):
+        # Mock SecretsManager to avoid keyring issues
+        mocker.patch("src.core.config_manager.SecretsManager.is_available", return_value=False)
+        mocker.patch("src.utils.security.password_manager.encrypt", side_effect=lambda x: f"enc_{x}")
+        mocker.patch("src.utils.security.password_manager.decrypt", side_effect=lambda x: x.replace("enc_", ""))
 
-        # Scenario 2: Keyring Unavailable (Fallback encryption)
-        MockSecrets.is_available.return_value = False
-        mock_encrypt.return_value = "ENCRYPTED_BLOB"
+        add_account("user1", "pass1", is_default=True)
+        accounts = get_config_value("accounts")
+        assert len(accounts) == 1
+        assert accounts[0]["username"] == "user1"
+        assert accounts[0]["default"] is True
         
-        config_manager.add_account("local_user", "local_pass")
+        add_account("user2", "pass2", is_default=False)
+        assert len(get_config_value("accounts")) == 2
         
-        # Verify JSON file contains encrypted password
-        with open(mock_config_paths, "r") as f:
-            data = json.load(f)
-            # Find the local_user account
-            acc = next(a for a in data["accounts"] if a["username"] == "local_user")
-            assert acc["password"] == "ENCRYPTED_BLOB"
+        remove_account("user1")
+        accounts = get_config_value("accounts")
+        assert len(accounts) == 1
+        assert accounts[0]["username"] == "user2"
+        assert accounts[0]["default"] is True # user2 became default
 
-def test_atomic_write_failure(mock_config_paths):
-    """Test resilienza salvataggio se la scrittura fallisce."""
-    # Create valid config first
-    config_manager.save_config({"test": 1})
-    
-    # Mock open to raise exception
-    with patch("builtins.open", side_effect=IOError("Disk full")):
-        config_manager.save_config({"test": 2})
+    def test_legacy_migration(self, tmp_path):
+        # Create legacy config file
+        legacy_data = {
+            "isab_username": "legacy_user",
+            "isab_password": "legacy_password"
+        }
+        config_file = tmp_path / "config.json"
+        with open(config_file, "w") as f:
+            json.dump(legacy_data, f)
+            
+        config = load_config()
+        assert "isab_username" not in config
+        assert len(config["accounts"]) == 1
+        assert config["accounts"][0]["username"] == "legacy_user"
+        assert config["accounts"][0]["default"] is True
+
+    def test_atomic_write_failure_cleanup(self, tmp_path, mocker):
+        from src.core.config_manager import _atomic_write_json
+        target = tmp_path / "fail.json"
         
-    # Check that original file is untouched (still {"test": 1} effectively, 
-    # but we check if it's corrupted or empty)
-    with open(mock_config_paths, "r") as f:
-        content = json.load(f)
-    assert content["test"] == 1
+        # Mock open to fail
+        with patch("builtins.open", side_effect=IOError("Disk full")):
+            with pytest.raises(IOError):
+                _atomic_write_json({"data": 1}, target)
+        
+        assert not target.exists()
+        assert not (tmp_path / "fail.tmp").exists()

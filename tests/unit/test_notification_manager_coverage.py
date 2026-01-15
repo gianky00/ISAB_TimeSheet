@@ -1,78 +1,86 @@
-
-
+import json
 import pytest
-
+from unittest.mock import MagicMock, patch
 from src.core.notification_manager import NotificationManager
 
-
-class TestNotificationManagerCoverage:
+class TestNotificationManager:
     @pytest.fixture
     def manager(self, tmp_path, mocker):
-        # Patch della directory config
+        # Mock CONFIG_DIR to use tmp_path
         mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
-        # Forza reset singleton
+        # Reset singleton for testing
         NotificationManager._instance = None
         return NotificationManager.instance()
 
-    def test_add_notification_and_signals(self, manager, mocker):
-        """Verifica aggiunta notifica e invio segnali Qt."""
-        mock_added = mocker.Mock()
-        mock_updated = mocker.Mock()
-        mock_count = mocker.Mock()
+    def test_singleton(self, manager):
+        assert NotificationManager.instance() is manager
 
-        manager.notification_added.connect(mock_added)
-        manager.notifications_updated.connect(mock_updated)
-        manager.unread_count_changed.connect(mock_count)
-
-        manager.add_notification("Titolo", "Messaggio", level="error")
-
+    def test_add_notification(self, manager):
+        # Mock signals explicitly
+        manager.notification_added = MagicMock()
+        manager.notifications_updated = MagicMock()
+        manager.unread_count_changed = MagicMock()
+        
+        manager.add_notification("Title", "Message", "error")
+        
         assert len(manager.notifications) == 1
-        assert manager.notifications[0]["title"] == "Titolo"
+        assert manager.notifications[0]["title"] == "Title"
+        assert manager.notifications[0]["level"] == "error"
+        assert manager.notifications[0]["read"] is False
+        
+        manager.notification_added.emit.assert_called_once()
+        args = manager.notification_added.emit.call_args[0][0]
+        assert args["title"] == "Title"
+
+    def test_get_unread_count(self, manager):
+        manager.add_notification("T1", "M1", "info")
+        manager.add_notification("T2", "M2", "error") # Unread error
+        manager.add_notification("T3", "M3", "error") # Unread error
+        
+        assert manager.get_unread_count() == 2
+        
+        # Mark one as read
+        manager.mark_as_read(manager.notifications[0]["id"]) # notifications[0] is most recent (T3)
         assert manager.get_unread_count() == 1
-
-        mock_added.assert_called_once()
-        mock_updated.assert_called_once()
-        mock_count.assert_called_with(1)
-
-    def test_persistence_load_save(self, manager, tmp_path):
-        """Verifica che le notifiche sopravvivano al riavvio del manager."""
-        manager.add_notification("Persistente", "Dato")
-
-        # Simula riavvio singleton
-        NotificationManager._instance = None
-        nuovo_manager = NotificationManager.instance()
-
-        assert len(nuovo_manager.notifications) == 1
-        assert nuovo_manager.notifications[0]["title"] == "Persistente"
-
-    def test_mark_as_read_logic(self, manager):
-        """Verifica gestione dello stato letto/non letto."""
-        manager.add_notification("N1", "M1", level="error")
-        nid = manager.notifications[0]["id"]
-
-        assert manager.get_unread_count() == 1
-        manager.mark_as_read(nid)
-        assert manager.get_unread_count() == 0
-        assert manager.notifications[0]["read"] is True
 
     def test_mark_all_as_read(self, manager):
-        """Verifica segna tutto come letto."""
-        manager.add_notification("N1", "M1", level="error")
-        manager.add_notification("N2", "M2", level="error")
-
+        manager.add_notification("T1", "M1", "error")
+        manager.add_notification("T2", "M2", "error")
+        assert manager.get_unread_count() == 2
+        
         manager.mark_all_as_read()
         assert manager.get_unread_count() == 0
+        assert all(n["read"] for n in manager.notifications)
 
     def test_delete_notification(self, manager):
-        """Verifica rimozione singola notifica."""
-        manager.add_notification("Delete Me", "Bye")
-        nid = manager.notifications[0]["id"]
-
-        manager.delete_notification(nid)
+        manager.add_notification("T1", "M1")
+        id_to_del = manager.notifications[0]["id"]
+        
+        manager.delete_notification(id_to_del)
         assert len(manager.notifications) == 0
 
     def test_clear_all(self, manager):
-        """Verifica svuotamento totale."""
-        manager.add_notification("N1", "M1")
+        manager.add_notification("T1", "M1")
+        manager.add_notification("T2", "M2")
+        
         manager.clear_all()
         assert len(manager.notifications) == 0
+
+    def test_persistence(self, manager, tmp_path):
+        manager.add_notification("Persist Me", "Important")
+        
+        # Create new instance, should load from file
+        NotificationManager._instance = None
+        new_manager = NotificationManager.instance()
+        
+        assert len(new_manager.notifications) == 1
+        assert new_manager.notifications[0]["title"] == "Persist Me"
+
+    def test_load_corrupted_file(self, tmp_path):
+        notif_file = tmp_path / "notifications.json"
+        notif_file.write_text("invalid json")
+        
+        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+            NotificationManager._instance = None
+            manager = NotificationManager.instance()
+            assert manager.notifications == []

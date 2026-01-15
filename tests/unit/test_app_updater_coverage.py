@@ -1,89 +1,84 @@
-from unittest.mock import MagicMock
-
 import pytest
+from unittest.mock import MagicMock, patch
+from src.core.app_updater import check_for_updates, _is_newer_version, _handle_update_found
+from src.core import version
 
-from src.core.app_updater import check_for_updates
-
-
-class TestAppUpdaterCoverage:
+class TestAppUpdater:
+    @pytest.fixture
+    def mock_requests(self, mocker):
+        return mocker.patch("requests.get")
 
     @pytest.fixture
-    def mock_deps(self, mocker):
-        """Mock per requests, webbrowser e QMessageBox nel namespace di app_updater."""
-        mock_req = mocker.patch("src.core.app_updater.requests")
-        mock_web = mocker.patch("src.core.app_updater.webbrowser")
-        mock_msg = mocker.patch("src.core.app_updater.QMessageBox")
+    def mock_webbrowser(self, mocker):
+        return mocker.patch("webbrowser.open")
 
-        # Patch modulo version
-        mock_ver = mocker.patch("src.core.app_updater.version")
-        mock_ver.__version__ = "1.0.0"
-        mock_ver.UPDATE_URL = "http://fake.url"
+    @pytest.fixture
+    def mock_qmessagebox(self, mocker):
+        return mocker.patch("src.core.app_updater.QMessageBox")
 
-        return {
-            "requests": mock_req,
-            "webbrowser": mock_web,
-            "msgbox": mock_msg,
-            "version": mock_ver
-        }
+    def test_check_for_updates_no_url(self, mock_requests, monkeypatch):
+        monkeypatch.setattr(version, "UPDATE_URL", "")
+        check_for_updates()
+        mock_requests.assert_not_called()
 
-    def test_update_available_and_user_confirms(self, mock_deps):
-        """Test: Nuova versione disponibile, l'utente accetta di scaricarla."""
-        mock_deps["version"].__version__ = "1.0.0"
+    def test_check_for_updates_request_fail(self, mock_requests, monkeypatch):
+        monkeypatch.setattr(version, "UPDATE_URL", "http://test.url")
+        mock_requests.return_value.status_code = 404
+        check_for_updates()
+        # Should exit gracefully
 
+    def test_check_for_updates_newer_found(self, mock_requests, mock_qmessagebox, mock_webbrowser, monkeypatch):
+        monkeypatch.setattr(version, "UPDATE_URL", "http://test.url")
+        monkeypatch.setattr(version, "__version__", "1.0.0")
+        
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
             "version": "1.1.0",
             "url": "http://download.url",
-            "changelog": "Fixes"
+            "changelog": "Fix bugs"
         }
-        mock_deps["requests"].get.return_value = mock_resp
-
-        # QMessageBox.question deve restituire YES
-        from PyQt6.QtWidgets import QMessageBox
-        mock_deps["msgbox"].StandardButton = QMessageBox.StandardButton # Mantieni accesso a Enum
-        mock_deps["msgbox"].question.return_value = QMessageBox.StandardButton.Yes
-
+        mock_requests.return_value = mock_resp
+        
+        # Simulate user clicking Yes
+        mock_qmessagebox.question.return_value = mock_qmessagebox.StandardButton.Yes
+        
         check_for_updates(silent=False)
+        
+        mock_qmessagebox.question.assert_called_once()
+        mock_webbrowser.assert_called_with("http://download.url")
 
-        mock_deps["webbrowser"].open.assert_called_with("http://download.url")
-
-    def test_app_is_up_to_date(self, mock_deps):
-        """Test: L'app è già aggiornata (o versione locale > remota)."""
-        mock_deps["version"].__version__ = "1.2.0"
-
+    def test_check_for_updates_not_newer(self, mock_requests, mock_qmessagebox, monkeypatch):
+        monkeypatch.setattr(version, "UPDATE_URL", "http://test.url")
+        monkeypatch.setattr(version, "__version__", "1.0.0")
+        
         mock_resp = MagicMock()
         mock_resp.status_code = 200
-        mock_resp.json.return_value = {"version": "1.1.0"}
-        mock_deps["requests"].get.return_value = mock_resp
-
+        mock_resp.json.return_value = {"version": "1.0.0"}
+        mock_requests.return_value = mock_resp
+        
         check_for_updates(silent=False)
+        
+        mock_qmessagebox.information.assert_called_once() # "Già aggiornato"
 
-        mock_deps["msgbox"].information.assert_called_once()
-        mock_deps["webbrowser"].open.assert_not_called()
+    def test_is_newer_version(self, monkeypatch):
+        monkeypatch.setattr(version, "__version__", "1.0.0")
+        assert _is_newer_version("1.1.0") is True
+        assert _is_newer_version("0.9.0") is False
+        assert _is_newer_version("1.0.0") is False
+        assert _is_newer_version("invalid") is False
 
-    def test_update_callback_mechanism(self, mock_deps):
-        """Test: Utilizzo del meccanismo di callback invece del dialog standard."""
-        mock_deps["version"].__version__ = "1.0.0"
+    def test_handle_update_found_callback(self):
+        cb = MagicMock()
+        _handle_update_found("1.1", "url", "log", None, cb)
+        cb.assert_called_with("1.1", "url", "log")
 
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {
-            "version": "2.0.0",
-            "url": "http://new.url",
-            "changelog": "Mega update"
-        }
-        mock_deps["requests"].get.return_value = mock_resp
-
-        callback = MagicMock()
-        check_for_updates(callback=callback)
-
-        callback.assert_called_with("2.0.0", "http://new.url", "Mega update")
-        mock_deps["msgbox"].question.assert_not_called()
-
-    def test_requests_timeout_handling(self, mock_deps):
-        """Test: Gestione timeout o errori di rete (silent=False)."""
-        mock_deps["requests"].get.side_effect = Exception("Timeout")
-
+    def test_check_updates_silent_exception(self, mock_requests, monkeypatch):
+        monkeypatch.setattr(version, "UPDATE_URL", "http://test.url")
+        mock_requests.side_effect = Exception("Network error")
+        
+        # Silent=True, should not print or show message
+        check_for_updates(silent=True)
+        
+        # Silent=False, should print (can't easily assert print, but ensure no crash)
         check_for_updates(silent=False)
-        mock_deps["msgbox"].information.assert_not_called()

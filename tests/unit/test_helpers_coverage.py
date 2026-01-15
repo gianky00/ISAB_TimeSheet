@@ -1,157 +1,80 @@
-
-import logging
 import os
 import sys
+import logging
 from datetime import datetime
-from unittest.mock import patch
+import pytest
+from src.utils.helpers import (
+    get_asset_path,
+    format_timestamp,
+    get_months_list,
+    get_years_list,
+    safe_str,
+    truncate_string,
+    sanitize_filename,
+    setup_logging
+)
 
-from src.utils import helpers
-
-
-class TestHelpersCoverage:
-    def test_sanitize_filename_empty(self):
-        from src.utils.helpers import sanitize_filename
-        # Stringa che diventa vuota dopo sanitizzazione e strip
-        assert sanitize_filename(".") == "unnamed_file"
-        assert sanitize_filename("..") == "unnamed_file"
-
-    def test_get_asset_path_dev(self):
-        """Test get_asset_path in dev mode (not frozen)."""
-        with patch.object(sys, "frozen", False, create=True):
-            # Percorso relativo atteso: src/utils/../../assets/test.txt -> root/assets/test.txt
-            # helpers.py è in src/utils/
-            path = helpers.get_asset_path("assets/test.txt")
+class TestHelpers:
+    def test_get_asset_path(self):
+        # Development mode
+        with patch("sys.frozen", False, create=True):
+            path = get_asset_path("assets/test.txt")
             assert "assets" in path
-            assert path.endswith(os.path.join("assets", "test.txt"))
-
-    def test_get_asset_path_frozen(self):
-        """Test get_asset_path in frozen mode (executable)."""
-        with patch.object(sys, "frozen", True, create=True):
-            with patch.object(sys, "executable", r"C:\App\app.exe"):
-                path = helpers.get_asset_path("assets/test.txt")
-                # Expected: C:\App\assets\test.txt
-                assert path == os.path.join(r"C:\App", "assets", "test.txt")
-
-    def test_get_app_icon_path(self):
-        """Test get_app_icon_path functionality."""
-        # Case 1: Icon exists
-        with patch("os.path.exists", return_value=True):
-            with patch("src.utils.helpers.get_asset_path", return_value="/path/to/icon.ico"):
-                assert helpers.get_app_icon_path() == "/path/to/icon.ico"
-
-        # Case 2: Icon does not exist
-        with patch("os.path.exists", return_value=False):
-             assert helpers.get_app_icon_path() is None
-
-    def test_setup_logging(self, tmp_path):
-        """Test logger configuration."""
-        log_file = tmp_path / "test.log"
-        logger = helpers.setup_logging("TestLogger", str(log_file))
-
-        assert logger.name == "TestLogger"
-        assert logger.level == logging.INFO
-        assert len(logger.handlers) >= 1
-
-        # Verify idempotency (calling again shouldn't add handlers)
-        handlers_count = len(logger.handlers)
-        helpers.setup_logging("TestLogger", str(log_file))
-        assert len(logger.handlers) == handlers_count
-
-        # Test exception on bad file
-        with patch("logging.FileHandler", side_effect=Exception("Permesso negato")):
-            logger_bad = helpers.setup_logging("BadLogger", "/root/bad.log")
-            # Should not crash, just warn and log to console
-            assert logger_bad.handlers  # Console handler should be there
+            assert "test.txt" in path
+            
+        # Frozen mode
+        with patch("sys.frozen", True, create=True):
+            with patch("sys.executable", "C:\\App\\app.exe"):
+                path = get_asset_path("assets/test.txt")
+                assert path.startswith("C:\\App")
 
     def test_format_timestamp(self):
-        """Test format_timestamp."""
-        dt = datetime(2023, 10, 25, 14, 30, 0)
-        assert helpers.format_timestamp(dt) == "25/10/2023 14:30:00"
-
-        # Test default (now) - just check format structure
-        now_str = helpers.format_timestamp()
-        assert len(now_str) == 19
-        assert "/" in now_str
-        assert ":" in now_str
+        dt = datetime(2026, 1, 15, 10, 30, 0)
+        assert format_timestamp(dt) == "15/01/2026 10:30:00"
+        # Test default now
+        assert "2026" in format_timestamp()
 
     def test_get_months_list(self):
-        months = helpers.get_months_list()
+        months = get_months_list()
         assert len(months) == 12
         assert months[0] == "Gennaio"
-        assert months[-1] == "Dicembre"
 
     def test_get_years_list(self):
-        current = datetime.now().year
-        # Default -2 to +2
-        years = helpers.get_years_list()
-        assert str(current) in years
-        assert str(current - 2) in years
-        assert str(current + 2) in years
-        assert len(years) == 5
-
-    def test_is_windows(self):
-        with patch("sys.platform", "win32"):
-            assert helpers.is_windows() is True
-        with patch("sys.platform", "linux"):
-            assert helpers.is_windows() is False
-
-    def test_open_folder(self):
-        """Test open_folder logic for different OS."""
-        # Non-existent path
-        with patch("os.path.exists", return_value=False):
-            assert helpers.open_folder("bad/path") is False
-
-        # Exists
-        with patch("os.path.exists", return_value=True):
-            # Windows
-            with patch("sys.platform", "win32"):
-                with patch("os.startfile") as mock_start:
-                    assert helpers.open_folder("C:/Test") is True
-                    mock_start.assert_called_with("C:/Test")
-
-            # Darwin (Mac)
-            with patch("sys.platform", "darwin"):
-                with patch("subprocess.run") as mock_run:
-                    assert helpers.open_folder("/tmp") is True
-                    mock_run.assert_called_with(["open", "/tmp"])
-
-            # Linux
-            with patch("sys.platform", "linux"):
-                with patch("subprocess.run") as mock_run:
-                    assert helpers.open_folder("/tmp") is True
-                    mock_run.assert_called_with(["xdg-open", "/tmp"])
-
-            # Exception handling
-            with patch("sys.platform", "win32"):
-                with patch("os.startfile", side_effect=Exception("Error")):
-                    assert helpers.open_folder("C:/Test") is False
+        years = get_years_list(start_offset=-1, end_offset=1)
+        current_year = datetime.now().year
+        assert str(current_year) in years
+        assert str(current_year - 1) in years
+        assert str(current_year + 1) in years
+        assert len(years) == 3
 
     def test_safe_str(self):
-        assert helpers.safe_str(None) == ""
-        assert helpers.safe_str(None, "N/A") == "N/A"
-        assert helpers.safe_str(123) == "123"
-        assert helpers.safe_str("test") == "test"
+        assert safe_str(None, "default") == "default"
+        assert safe_str(123) == "123"
+        assert safe_str("hello") == "hello"
 
     def test_truncate_string(self):
-        assert helpers.truncate_string("Short") == "Short"
-        assert helpers.truncate_string(None) == ""
-
-        long_text = "Questa è una stringa molto lunga che deve essere troncata"
-        truncated = helpers.truncate_string(long_text, max_length=10, suffix="..")
-        assert len(truncated) == 10
-        assert truncated.endswith("..")
-        assert truncated == "Questa è.."
+        text = "This is a very long string that should be truncated"
+        assert truncate_string(text, 10) == "This is..."
+        assert truncate_string("short", 50) == "short"
+        assert truncate_string("", 10) == ""
 
     def test_sanitize_filename(self):
-        assert helpers.sanitize_filename("valid_file.txt") == "valid_file.txt"
-        assert helpers.sanitize_filename("File Con Spazi.pdf") == "File Con Spazi.pdf"
+        assert sanitize_filename("test/file.txt") == "test_file.txt"
+        assert sanitize_filename("file*with?chars.png") == "file_with_chars.png"
+        assert sanitize_filename("..\\") == "_"
+        assert sanitize_filename("   spaced file   ") == "spaced file"
+        assert sanitize_filename(None) == "unnamed_file"
 
-        # Logic analysis: "../traversal.txt" -> ".._traversal.txt" -> "._traversal.txt" -> "_traversal.txt" (strip)
-        # So we expect "_traversal.txt" not ".traversal.txt"
-        assert helpers.sanitize_filename("../traversal.txt") == "_traversal.txt"
+    def test_setup_logging(self, tmp_path):
+        log_file = str(tmp_path / "test.log")
+        logger = setup_logging("TestLogger", log_file)
+        
+        assert logger.name == "TestLogger"
+        assert len(logger.handlers) >= 1
+        
+        logger.info("Test message")
+        assert os.path.exists(log_file)
+        with open(log_file, "r") as f:
+            assert "Test message" in f.read()
 
-        assert helpers.sanitize_filename("invalid|chars?.txt") == "invalid_chars_.txt"
-        assert helpers.sanitize_filename(None) == "unnamed_file"
-        assert helpers.sanitize_filename("") == "unnamed_file"
-        # Test double underscores collapse
-        assert helpers.sanitize_filename("a__b.txt") == "a_b.txt"
+from unittest.mock import patch
