@@ -1,4 +1,3 @@
-
 from src.gui.widgets.timeline_widget import HorizontalTimelineWidget, LogWidget
 
 # The 'qapp' fixture is automatically provided by pytest-qt and ensures a
@@ -30,8 +29,9 @@ def test_horizontal_timeline_functionality(qtbot):
         widget.append(log_message)
 
     # Check if the number of items in the timeline's container layout matches the number of logs added
-    # Note: We use main_layout now
-    item_count = widget.timeline.container.main_layout.count()
+    # We count only the widgets, as the layout also contains a stretch (spacer)
+    layout = widget.timeline.container.main_layout
+    item_count = sum(1 for i in range(layout.count()) if layout.itemAt(i).widget())
 
     assert item_count == len(
         logs_to_add

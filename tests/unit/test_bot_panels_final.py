@@ -5,7 +5,10 @@ from src.gui.panels import DettagliOdAPanel, ScaricoPDLPanel, TimbratureDBPanel
 
 class TestBotPanelsFinal:
     def test_dettagli_oda_panel_logic(self, qapp, qtbot):
-        with patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]}):
+        with patch(
+            "src.gui.panels.config_manager.load_config",
+            return_value={"fornitori": ["F1"]},
+        ):
             panel = DettagliOdAPanel()
             qtbot.addWidget(panel)
 
@@ -26,7 +29,17 @@ class TestBotPanelsFinal:
     def test_timbrature_db_panel_refresh(self, qapp, qtbot):
         with patch("src.gui.panels.TimbratureStorage") as mock_storage:
             mock_storage.return_value.get_timbrature_with_reparto.return_value = [
-                ("2024-01-01", "08:00", "17:00", "Mario", "Rossi", "SI", "ISAB", "R1", "C1")
+                (
+                    "2024-01-01",
+                    "08:00",
+                    "17:00",
+                    "Mario",
+                    "Rossi",
+                    "SI",
+                    "ISAB",
+                    "R1",
+                    "C1",
+                )
             ]
             panel = TimbratureDBPanel()
             qtbot.addWidget(panel)

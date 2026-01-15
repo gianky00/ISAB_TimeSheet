@@ -30,6 +30,11 @@ from src.utils.helpers import get_asset_path
 
 
 class LyraWorker(QThread):
+    """
+    Thread worker dedicato all'interazione con l'API di Lyra (Gemini).
+    Gestisce l'invio della domanda, del contesto testuale e delle immagini in background.
+    """
+
     finished = pyqtSignal(str)
 
     def __init__(
@@ -39,6 +44,15 @@ class LyraWorker(QThread):
         context: str = "",
         images: Optional[List[Any]] = None,
     ):
+        """
+        Inizializza il worker.
+
+        Args:
+            api_key: Chiave API per l'autenticazione.
+            question: Testo della domanda dell'utente.
+            context: Contesto aggiuntivo estratto dai documenti.
+            images: Lista di immagini (pagine PDF convertite) da inviare.
+        """
         super().__init__()
         self.api_key = api_key
         self.question = question
@@ -46,6 +60,7 @@ class LyraWorker(QThread):
         self.images = images or []
 
     def run(self):
+        """Esegue la chiamata all'API e segnala la risposta finale."""
         try:
             if not self.api_key:
                 self.finished.emit(
@@ -70,13 +85,19 @@ class LyraWorker(QThread):
 
 
 class ModelListWorker(QThread):
+    """
+    Thread worker per il recupero asincrono della lista dei modelli disponibili.
+    """
+
     finished = pyqtSignal(list)
 
     def __init__(self, api_key: str):
+        """Inizializza il worker con la chiave API."""
         super().__init__()
         self.api_key = api_key
 
     def run(self):
+        """Recupera la lista dei modelli dal client Lyra."""
         try:
             if not self.api_key:
                 self.finished.emit([])
@@ -90,7 +111,14 @@ class ModelListWorker(QThread):
 
 
 class LyraPanel(QWidget):
+    """
+    Pannello dell'interfaccia utente per l'assistente IA Lyra.
+    Fornisce una chat interattiva, supporto per allegati PDF,
+    e strumenti di esportazione dati.
+    """
+
     def __init__(self, parent=None):
+        """Inizializza l'interfaccia e avvia il caricamento dei modelli."""
         super().__init__(parent)
         self.last_table_data = None
         self.attached_file = None
@@ -102,6 +130,7 @@ class LyraPanel(QWidget):
         self._fetch_models()
 
     def _setup_ui(self):
+        """Configura tutti i widget dell'interfaccia utente (header, chat, input)."""
         layout = QVBoxLayout(self)
 
         # Header
@@ -397,6 +426,7 @@ class LyraPanel(QWidget):
             config_manager.set_config_value("ai_model", model_name)
 
     def _populate_models_dropdown(self, models):
+        """Popola il menu a discesa con i modelli AI filtrati e ordinati."""
         self.model_combo.blockSignals(True)  # Evita loop durante popolamento
         self.model_combo.clear()
         if models:
@@ -424,6 +454,7 @@ class LyraPanel(QWidget):
         self.model_combo.blockSignals(False)
 
     def _attach_file(self):
+        """Apre un dialogo per selezionare e allegare un file PDF o immagine."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Allega Documento", "", "Documenti (*.pdf *.png *.jpg)"
         )
@@ -431,6 +462,7 @@ class LyraPanel(QWidget):
             self._handle_file(file_path)
 
     def _handle_file(self, file_path):
+        """Processa il file selezionato e prepara le immagini per il worker."""
         p = Path(file_path)
         if p.suffix.lower() == ".pdf":
             self.attached_file = p
@@ -455,17 +487,20 @@ class LyraPanel(QWidget):
             )
 
     def _remove_attachment(self):
+        """Rimuove l'allegato corrente e nasconde la barra delle info."""
         self.attached_file = None
         self.attached_images = []
         self.attachment_frame.setVisible(False)
 
     def dragEnterEvent(self, event):
+        """Gestisce l'ingresso di un file trascinato nel pannello."""
         if event.mimeData().hasUrls():
             event.accept()
         else:
             event.ignore()
 
     def dropEvent(self, event):
+        """Gestisce il rilascio di un file trascinato nel pannello."""
         urls = event.mimeData().urls()
         if urls:
             file_path = urls[0].toLocalFile()
@@ -477,6 +512,7 @@ class LyraPanel(QWidget):
         self.input_field.setFocus()
 
     def _send_message(self):
+        """Prepara e invia il messaggio all'IA."""
         text = self.input_field.text().strip()
         if not text and not self.attached_file:
             return
@@ -485,7 +521,13 @@ class LyraPanel(QWidget):
         self.input_field.clear()
 
     def ask_lyra(self, question: str, context: str = ""):
-        """Avvia una richiesta a Lyra."""
+        """
+        Avvia una richiesta a Lyra gestendo l'UI e il thread worker.
+
+        Args:
+            question: La domanda dell'utente.
+            context: Testo opzionale per arricchire la richiesta.
+        """
         self._append_message("Tu", question)
 
         final_images = self.attached_images.copy()
@@ -514,10 +556,177 @@ class LyraPanel(QWidget):
         # self._remove_attachment()
 
     def _on_answer(self, text):
+        """Callback eseguito quando l'IA restituisce la risposta."""
         self._append_message("Lyra", text)
         self.input_field.setDisabled(False)
         self.attach_btn.setDisabled(False)
         self.input_field.setFocus()
+
+    def _format_markdown(self, text: str) -> str:
+        """
+        Converte il testo Markdown in HTML con stili per le tabelle.
+
+        Args:
+            text: Testo in formato Markdown.
+        Returns:
+            str: Testo formattato come HTML.
+        """
+        try:
+            # Enable 'tables' and 'fenced_code' extensions
+            html = markdown.markdown(text, extensions=["tables", "fenced_code"])
+
+            # Post-process for styling
+            style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 10px; border-color: #dee2e6;"'
+            style_th = 'style="background-color: #f8f9fa; color: #495057; font-weight: bold; padding: 8px;"'
+            style_td = 'style="padding: 8px;"'
+
+            html = html.replace("<table>", f"<table {style_table}>")
+            html = html.replace("<th>", f"<th {style_th}>")
+            html = html.replace("<td>", f"<td {style_td}>")
+
+            # Detect tables for export context
+            if "<table>" in html:
+                self.last_table_data = text
+                self.btn_export_last_table.setVisible(True)
+
+            return html
+        except Exception as e:
+            print(f"Markdown error: {e}")
+            return text
+
+    def _append_message(self, sender, text):
+        """Aggiunge un messaggio alla cronologia della chat."""
+        color = "#6f42c1" if sender == "Lyra" else "#495057"
+        align = "left"
+
+        formatted_html = self._format_markdown(text)
+
+        # Reduced margin-bottom from 15px to 5px to compact the view
+        html = f"""
+        <div style="margin-bottom: 20px; text-align: {align};">
+            <div style="font-weight: bold; color: {color}; font-size: 13px; margin-bottom: 2px;">{sender}</div>
+            <div style="font-size: 15px; line-height: 1.5; color: #212529;">
+                {formatted_html}
+            </div>
+        </div>
+        """
+        self.chat_area.append(html)
+
+        # Scroll to bottom
+        sb = self.chat_area.verticalScrollBar()
+        sb.setValue(sb.maximum())
+
+    def _export_chat(self):
+        """Mostra il menu per esportare la chat in PDF o l'ultima tabella in Excel."""
+        menu = QMenu(self)
+
+        pdf_action = QAction("📄 Esporta come PDF", self)
+        pdf_action.triggered.connect(self._export_pdf)
+        menu.addAction(pdf_action)
+
+        excel_action = QAction("📊 Esporta ultima tabella (Excel)", self)
+        excel_action.triggered.connect(self._export_excel)
+        menu.addAction(excel_action)
+
+        # Use sender to position
+        sender = self.sender()
+        if sender:
+            # Calculate position below the button
+            pos = sender.mapToGlobal(sender.rect().bottomLeft())
+            menu.exec(pos)
+
+    def _export_pdf(self):
+        """Esporta l'intera cronologia della chat come file PDF."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Salva Chat PDF", "chat_lyra.pdf", "PDF Files (*.pdf)"
+        )
+        if filename:
+            try:
+                from PyQt6.QtPrintSupport import QPrinter
+
+                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
+                printer.setOutputFileName(filename)
+
+                self.chat_area.document().print(printer)
+                QMessageBox.information(
+                    self, "Successo", "Chat esportata correttamente!"
+                )
+            except Exception as e:
+                # Fallback: Save as HTML
+                html_file = filename.replace(".pdf", ".html")
+                with open(html_file, "w", encoding="utf-8") as f:
+                    f.write(self.chat_area.toHtml())
+                QMessageBox.warning(
+                    self,
+                    "Info",
+                    f"PDF driver non trovato. Salvato come HTML: {html_file}\nErr: {e}",
+                )
+
+    def _export_excel(self):
+        """Esporta l'ultima tabella trovata nella cronologia chat in Excel."""
+        if not self.last_table_data:
+            QMessageBox.warning(
+                self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare."
+            )
+            return
+
+        table_lines = self._extract_table_lines(self.last_table_data)
+        if not table_lines:
+            QMessageBox.warning(
+                self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio."
+            )
+            return
+
+        try:
+            df = self._parse_markdown_table(table_lines)
+            self._save_df_to_excel(df)
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Errore", f"Impossibile esportare la tabella: {e}"
+            )
+
+    def _extract_table_lines(self, text: str) -> List[str]:
+        """Estrae le linee che compongono una tabella Markdown."""
+        lines = text.split("\n")
+        table_lines = []
+        current_block = []
+
+        for line in lines:
+            if line.strip().startswith("|"):
+                current_block.append(line)
+            else:
+                if len(current_block) >= 2:
+                    table_lines = current_block
+                current_block = []
+
+        return current_block if len(current_block) >= 2 else table_lines
+
+    def _parse_markdown_table(self, table_lines: List[str]) -> pd.DataFrame:
+        """Parsa le linee Markdown in un DataFrame pandas."""
+        cleaned = [line for line in table_lines if "---" not in line]
+        data = StringIO("\n".join(cleaned))
+        df = pd.read_csv(data, sep="|", header=0, engine="python")
+
+        # Pulizia colonne e spazi
+        df = df.dropna(axis=1, how="all")
+        df.columns = df.columns.str.strip()
+        # Usa apply su ogni colonna per strippare stringhe, garantendo il ritorno di un DataFrame
+        for col in df.columns:
+            if df[col].dtype == "object":
+                df[col] = df[col].str.strip()
+        return df
+
+    def _save_df_to_excel(self, df: pd.DataFrame):
+        """Mostra il dialog di salvataggio e scrive il file Excel."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)"
+        )
+        if filename:
+            df.to_excel(filename, index=False)
+            QMessageBox.information(
+                self, "Successo", "Tabella esportata correttamente!"
+            )
 
     def _format_markdown(self, text: str) -> str:
         """Uses 'markdown' library to convert MD to HTML with table extension."""
@@ -612,31 +821,14 @@ class LyraPanel(QWidget):
                 )
 
     def _export_excel(self):
-        """Exports the last table found in the chat history to Excel."""
+        """Esporta l'ultima tabella trovata nella cronologia chat in Excel."""
         if not self.last_table_data:
             QMessageBox.warning(
                 self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare."
             )
             return
 
-        text = self.last_table_data
-        lines = text.split("\n")
-        table_lines = []
-
-        current_block = []
-        for line in lines:
-            if line.strip().startswith("|"):
-                current_block.append(line)
-            else:
-                if current_block:
-                    if len(current_block) >= 2:
-                        table_lines = current_block
-                    current_block = []
-
-        if current_block:
-            if len(current_block) >= 2:
-                table_lines = current_block
-
+        table_lines = self._extract_table_lines(self.last_table_data)
         if not table_lines:
             QMessageBox.warning(
                 self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio."
@@ -644,26 +836,51 @@ class LyraPanel(QWidget):
             return
 
         try:
-            cleaned_lines = [line for line in table_lines if "---" not in line]
-
-            data = StringIO("\n".join(cleaned_lines))
-            df = pd.read_csv(data, sep="|", header=0, engine="python")
-
-            # Clean empty columns from pipes
-            df = df.dropna(axis=1, how="all")
-            df.columns = df.columns.str.strip()
-            df = df.apply(lambda x: x.strip() if isinstance(x, str) else x)
-
-            filename, _ = QFileDialog.getSaveFileName(
-                self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)"
-            )
-            if filename:
-                df.to_excel(filename, index=False)
-                QMessageBox.information(
-                    self, "Successo", "Tabella esportata correttamente!"
-                )
-
+            df = self._parse_markdown_table(table_lines)
+            self._save_df_to_excel(df)
         except Exception as e:
             QMessageBox.critical(
                 self, "Errore", f"Impossibile esportare la tabella: {e}"
+            )
+
+    def _extract_table_lines(self, text: str) -> List[str]:
+        """Estrae le linee che compongono una tabella Markdown."""
+        lines = text.split("\n")
+        table_lines = []
+        current_block = []
+
+        for line in lines:
+            if line.strip().startswith("|"):
+                current_block.append(line)
+            else:
+                if len(current_block) >= 2:
+                    table_lines = current_block
+                current_block = []
+
+        return current_block if len(current_block) >= 2 else table_lines
+
+    def _parse_markdown_table(self, table_lines: List[str]) -> pd.DataFrame:
+        """Parsa le linee Markdown in un DataFrame pandas."""
+        cleaned = [line for line in table_lines if "---" not in line]
+        data = StringIO("\n".join(cleaned))
+        df = pd.read_csv(data, sep="|", header=0, engine="python")
+
+        # Pulizia colonne e spazi
+        df = df.dropna(axis=1, how="all")
+        df.columns = df.columns.str.strip()
+        # Usa apply su ogni colonna per strippare stringhe, garantendo il ritorno di un DataFrame
+        for col in df.columns:
+            if df[col].dtype == "object":
+                df[col] = df[col].str.strip()
+        return df
+
+    def _save_df_to_excel(self, df: pd.DataFrame):
+        """Mostra il dialog di salvataggio e scrive il file Excel."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Salva Tabella Excel", "analisi_lyra.xlsx", "Excel Files (*.xlsx)"
+        )
+        if filename:
+            df.to_excel(filename, index=False)
+            QMessageBox.information(
+                self, "Successo", "Tabella esportata correttamente!"
             )

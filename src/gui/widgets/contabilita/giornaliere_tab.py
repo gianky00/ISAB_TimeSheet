@@ -44,6 +44,7 @@ class GiornaliereYearTab(QWidget):
         self._load_data()
 
     def _setup_ui(self):
+        """Inizializza l'interfaccia utente del tab per l'anno specifico."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
         self.table = ExcelTableWidget()
@@ -52,14 +53,14 @@ class GiornaliereYearTab(QWidget):
         self.table.setWordWrap(True)
         self.table.setStyleSheet(
             """
-            QTableWidget { 
-                background-color: white; 
-                color: black; 
-                gridline-color: #e9ecef; 
-                font-size: 13px; 
-                border: 1px solid #dee2e6; 
-                selection-background-color: #0d6efd; 
-                selection-color: white; 
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+                selection-background-color: #0d6efd;
+                selection-color: white;
             }
             QTableWidget::item:selected {
                 background-color: #0d6efd;
@@ -185,6 +186,7 @@ class GiornaliereYearTab(QWidget):
         return s
 
     def filter_data(self, text):
+        """Filtra i dati dell'anno corrente in base alla ricerca testuale."""
         rows = self.table.rowCount()
         data_rows = (
             rows - 1

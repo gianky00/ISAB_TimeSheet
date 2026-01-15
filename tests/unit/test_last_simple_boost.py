@@ -12,19 +12,22 @@ class TestLastSimpleBoost:
     def test_get_printers_logic(self):
         # win32print.EnumPrinters level 2 returns tuples where index 2 is the name
         with patch("src.utils.printing.win32print") as mock_win:
-            mock_win.EnumPrinters.return_value = ( (None, None, "P1", None), )
+            mock_win.EnumPrinters.return_value = ((None, None, "P1", None),)
             printers = get_installed_printers()
             assert "P1" in printers
 
     def test_apply_theme_logic(self, qapp):
         # Mock Path.exists and open to return a custom stylesheet
-        with patch("src.gui.styles.get_asset_path", return_value="fake.qss"), \
-             patch("src.gui.styles.Path.exists", return_value=True), \
-             patch("builtins.open", MagicMock()):
-
+        with (
+            patch("src.gui.styles.get_asset_path", return_value="fake.qss"),
+            patch("src.gui.styles.Path.exists", return_value=True),
+            patch("builtins.open", MagicMock()),
+        ):
             # Setup open mock to return specific content
             with patch("src.gui.styles.open", create=True) as mock_open:
-                mock_open.return_value.__enter__.return_value.read.return_value = "QWidget { color: red; }"
+                mock_open.return_value.__enter__.return_value.read.return_value = (
+                    "QWidget { color: red; }"
+                )
                 apply_theme(qapp, "light")
                 assert "color: red" in qapp.styleSheet()
 

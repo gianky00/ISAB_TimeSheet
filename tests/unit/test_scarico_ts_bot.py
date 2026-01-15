@@ -28,7 +28,6 @@ def scarico_bot(mock_driver):
 
 
 class TestScaricoTSPage:
-
     def test_navigate_success(self, mock_driver):
         page = ScaricoTSPage(mock_driver)
         page.wait = MagicMock()
@@ -57,7 +56,6 @@ class TestScaricoTSPage:
 
 
 class TestScaricoTSBot:
-
     @patch("src.bots.portale_fornitori.scarico_ts.scarico_ts_bot.ScaricoTSPage")
     def test_run_success(self, MockPage, scarico_bot):
         page_instance = MockPage.return_value

@@ -37,6 +37,7 @@ class TestLicenseValidatorDeep:
         mock_get_key.return_value = key
 
         from cryptography.fernet import Fernet
+
         key_b64 = base64.urlsafe_b64encode(key)
         f = Fernet(key_b64)
         payload = {"Cliente": "Test Client", "Hardware ID": "HW1"}
@@ -50,28 +51,34 @@ class TestLicenseValidatorDeep:
     @patch("src.core.license_validator._get_license_paths")
     @patch("os.path.exists", return_value=True)
     def test_detailed_status_integrity_fail(self, mock_exists, mock_paths):
-        mock_paths.return_value = {
-            "dir": "dir", "config": "conf", "manifest": "man"
-        }
+        mock_paths.return_value = {"dir": "dir", "config": "conf", "manifest": "man"}
 
         manifest_data = {"config.dat": "CORRECT_HASH"}
         with patch("builtins.open", MagicMock()) as mock_open:
             mock_open.return_value.__enter__.return_value.read.side_effect = [
-                json.dumps(manifest_data).encode(), # manifest read
-                b"wrong data" # config.dat read for hashing
+                json.dumps(manifest_data).encode(),  # manifest read
+                b"wrong data",  # config.dat read for hashing
             ]
 
             # Mock hash calculation to return wrong hash
-            with patch("src.core.license_validator._calculate_sha256", return_value="WRONG_HASH"):
+            with patch(
+                "src.core.license_validator._calculate_sha256",
+                return_value="WRONG_HASH",
+            ):
                 status, msg = get_detailed_license_status()
                 assert status == LicenseStatus.INVALID
                 assert "Integrità" in msg
 
     @patch("src.core.license_validator.get_license_info")
     @patch("src.core.license_validator.get_hardware_id", return_value="MY-HW")
-    @patch("src.core.license_validator._check_integrity_with_manifest", return_value=(LicenseStatus.VALID, ""))
+    @patch(
+        "src.core.license_validator._check_integrity_with_manifest",
+        return_value=(LicenseStatus.VALID, ""),
+    )
     @patch("os.path.exists", return_value=True)
-    def test_detailed_status_hardware_mismatch(self, mock_exists, mock_integrity, mock_hwid, mock_info):
+    def test_detailed_status_hardware_mismatch(
+        self, mock_exists, mock_integrity, mock_hwid, mock_info
+    ):
         mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
 
         status, msg = get_detailed_license_status()
@@ -80,12 +87,21 @@ class TestLicenseValidatorDeep:
 
     @patch("src.core.license_validator.get_license_info")
     @patch("src.core.license_validator.get_hardware_id", return_value="MY-HW")
-    @patch("src.core.license_validator._check_integrity_with_manifest", return_value=(LicenseStatus.VALID, ""))
+    @patch(
+        "src.core.license_validator._check_integrity_with_manifest",
+        return_value=(LicenseStatus.VALID, ""),
+    )
     @patch("src.core.license_validator.get_trusted_time")
     @patch("os.path.exists", return_value=True)
-    def test_detailed_status_expired(self, mock_exists, mock_trusted_time, mock_integrity, mock_hwid, mock_info):
+    def test_detailed_status_expired(
+        self, mock_exists, mock_trusted_time, mock_integrity, mock_hwid, mock_info
+    ):
         from datetime import datetime
-        mock_info.return_value = {"Hardware ID": "MY-HW", "Scadenza Licenza": "01/01/2023"}
+
+        mock_info.return_value = {
+            "Hardware ID": "MY-HW",
+            "Scadenza Licenza": "01/01/2023",
+        }
         # Trusted time is in 2024
         mock_trusted_time.return_value = (datetime(2024, 1, 1), True)
 
@@ -101,6 +117,8 @@ class TestLicenseValidatorDeep:
         with patch("subprocess.check_output", side_effect=Exception("no lsblk")):
             mock_exists.side_effect = lambda p: p == "/etc/machine-id"
             with patch("builtins.open", MagicMock()) as mock_open:
-                mock_open.return_value.__enter__.return_value.read.return_value = "MACHINE-ID-123"
+                mock_open.return_value.__enter__.return_value.read.return_value = (
+                    "MACHINE-ID-123"
+                )
                 hwid = get_hardware_id()
                 assert hwid == "MACHINE-ID-123"

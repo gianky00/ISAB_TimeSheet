@@ -10,7 +10,9 @@ class TestExcelImporter:
     @patch("src.core.excel_importer.pd.ExcelFile")
     @patch("src.core.excel_importer.pd.read_excel")
     @patch("src.core.excel_importer.Path.exists", return_value=True)
-    def test_import_contabilita_dati_success(self, mock_exists, mock_read_excel, mock_excel_file):
+    def test_import_contabilita_dati_success(
+        self, mock_exists, mock_read_excel, mock_excel_file
+    ):
         # Mock ExcelFile
         mock_xls = MagicMock()
         mock_xls.sheet_names = ["2024"]
@@ -19,19 +21,21 @@ class TestExcelImporter:
         # Mock preview_df for header detection
         preview_data = [
             ["Row 1", "Garbage"],
-            ["DATA PREV.", "MESE", "N° PREV.", "TOTALE PREV.", "ATTIVITA'", "ODC"]
+            ["DATA PREV.", "MESE", "N° PREV.", "TOTALE PREV.", "ATTIVITA'", "ODC"],
         ]
         preview_df = pd.DataFrame(preview_data)
 
         # Mock main df (must have at least 2 rows because code does iloc[:-1])
-        main_df = pd.DataFrame({
-            "DATA PREV.": ["01/01/2024", "TOTAL"],
-            "MESE": ["Gennaio", ""],
-            "N° PREV.": ["123", ""],
-            "TOTALE PREV.": ["1000", "1000"],
-            "ATTIVITA'": ["Test", ""],
-            "ODC": ["5400123", ""]
-        })
+        main_df = pd.DataFrame(
+            {
+                "DATA PREV.": ["01/01/2024", "TOTAL"],
+                "MESE": ["Gennaio", ""],
+                "N° PREV.": ["123", ""],
+                "TOTALE PREV.": ["1000", "1000"],
+                "ATTIVITA'": ["Test", ""],
+                "ODC": ["5400123", ""],
+            }
+        )
 
         mock_read_excel.side_effect = [preview_df, main_df]
 
@@ -44,17 +48,21 @@ class TestExcelImporter:
 
     def test_process_single_giornaliera_cleaning(self):
         # Mock df for RIASSUNTO (must have 2 rows)
-        df = pd.DataFrame({
-            "DATA": ["2024-01-01", "TOTAL"],
-            "PERSONALE": ["Mario Rossi", ""],
-            "ODC": ["5400123 ", ""],
-            "N° PDL": ["999", ""],
-            "ORE": [8.0, 8.0],
-            "consuntivo": ["123", ""]
-        })
+        df = pd.DataFrame(
+            {
+                "DATA": ["2024-01-01", "TOTAL"],
+                "PERSONALE": ["Mario Rossi", ""],
+                "ODC": ["5400123 ", ""],
+                "N° PDL": ["999", ""],
+                "ORE": [8.0, 8.0],
+                "consuntivo": ["123", ""],
+            }
+        )
 
         with patch("src.core.excel_importer.pd.read_excel", return_value=df):
-            year, rows, err = ExcelImporter._process_single_giornaliera((2024, Path("file.xlsx"), {}))
+            year, rows, err = ExcelImporter._process_single_giornaliera(
+                (2024, Path("file.xlsx"), {})
+            )
 
             assert err is None
             assert len(rows) == 1
@@ -91,23 +99,27 @@ class TestExcelImporter:
     @patch("src.core.excel_importer.pd.read_excel")
     @patch("src.core.excel_importer.pd.ExcelFile")
     @patch("src.core.excel_importer.Path.exists", return_value=True)
-    def test_import_certificati_campione(self, mock_exists, mock_excel_file, mock_read_excel):
+    def test_import_certificati_campione(
+        self, mock_exists, mock_excel_file, mock_read_excel
+    ):
         mock_xls = MagicMock()
         mock_xls.sheet_names = ["Strumenti Campione"]
         mock_excel_file.return_value = mock_xls
 
         # Header detection mock
-        preview_df = pd.DataFrame([
-            ["Modello / Tipo", "Costruttore", "Matricola", "ID-COEMI"]
-        ])
+        preview_df = pd.DataFrame(
+            [["Modello / Tipo", "Costruttore", "Matricola", "ID-COEMI"]]
+        )
 
-        main_df = pd.DataFrame({
-            "Modello / Tipo": ["M1"],
-            "Costruttore": ["C1"],
-            "Matricola": ["SN1"],
-            "ID-COEMI": ["ID1"],
-            "Scadenza Certificato": ["2025-01-01"]
-        })
+        main_df = pd.DataFrame(
+            {
+                "Modello / Tipo": ["M1"],
+                "Costruttore": ["C1"],
+                "Matricola": ["SN1"],
+                "ID-COEMI": ["ID1"],
+                "Scadenza Certificato": ["2025-01-01"],
+            }
+        )
 
         mock_read_excel.side_effect = [preview_df, main_df]
 
@@ -140,17 +152,17 @@ class TestExcelImporter:
 
             # mock_cells must match col_keys length (11)
             mock_cells = [
-                create_mock_cell("2024-01-01"), # data
-                create_mock_cell("P1"),         # pers1
-                create_mock_cell("P2"),         # pers2
-                create_mock_cell("54001"),      # odc
-                create_mock_cell("10"),         # pos
-                create_mock_cell("08:00"),      # dalle
-                create_mock_cell("17:00"),      # alle
-                create_mock_cell("8.0"),        # totale_ore
-                create_mock_cell("Desc"),       # descrizione
-                create_mock_cell("SI"),         # finito
-                create_mock_cell("COMM")        # commessa
+                create_mock_cell("2024-01-01"),  # data
+                create_mock_cell("P1"),  # pers1
+                create_mock_cell("P2"),  # pers2
+                create_mock_cell("54001"),  # odc
+                create_mock_cell("10"),  # pos
+                create_mock_cell("08:00"),  # dalle
+                create_mock_cell("17:00"),  # alle
+                create_mock_cell("8.0"),  # totale_ore
+                create_mock_cell("Desc"),  # descrizione
+                create_mock_cell("SI"),  # finito
+                create_mock_cell("COMM"),  # commessa
             ]
 
             mock_ws.iter_rows.return_value = [mock_cells]
@@ -163,11 +175,9 @@ class TestExcelImporter:
     @patch("src.core.excel_importer.pd.read_excel")
     @patch("src.core.excel_importer.Path.exists", return_value=True)
     def test_import_attivita_programmate(self, mock_exists, mock_read_excel):
-        df = pd.DataFrame({
-            "PS": ["P1"],
-            "AREA": ["A1"],
-            "DESCRIZIONE\nATTIVITA'": ["D1"]
-        })
+        df = pd.DataFrame(
+            {"PS": ["P1"], "AREA": ["A1"], "DESCRIZIONE\nATTIVITA'": ["D1"]}
+        )
         mock_read_excel.return_value = df
 
         success, msg, rows = ExcelImporter.import_attivita_programmate("p.xlsx")

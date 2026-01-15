@@ -1,10 +1,6 @@
-from datetime import datetime
-
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout
 
-from src.core import config_manager
-from src.core.license_validator import get_license_info
 from src.core.version import __version__
 from src.gui.widgets.sidebar_button import SidebarButton
 
@@ -17,7 +13,7 @@ class SidebarWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("sidebarFrame")
-        self.setFixedWidth(240)
+        self.setFixedWidth(210)
         # FORCE STYLE TO ENSURE TEXT VISIBILITY (as in original main_window.py)
         self.setStyleSheet(
             """
@@ -39,7 +35,9 @@ class SidebarWidget(QFrame):
         # Logo/Titolo
         self.logo_label = QLabel("🚀 SyncroJob")
         self.logo_label.setObjectName("logoLabel")
-        self.logo_label.setStyleSheet("font-size: 24px; font-weight: 800; margin-bottom: 5px;")
+        self.logo_label.setStyleSheet(
+            "font-size: 24px; font-weight: 800; margin-bottom: 5px;"
+        )
         layout.addWidget(self.logo_label)
 
         # Separatore
@@ -74,20 +72,6 @@ class SidebarWidget(QFrame):
 
         layout.addSpacing(10)
 
-        # License Info
-        self.license_label = QLabel(self._get_license_text())
-        self.license_label.setObjectName("licenseLabel")
-        self.license_label.setWordWrap(True)
-        layout.addWidget(self.license_label)
-
-        # Separatore
-        separator2 = QFrame()
-        separator2.setObjectName("sidebarSeparator")
-        separator2.setFrameShape(QFrame.Shape.HLine)
-        layout.addWidget(separator2)
-
-        layout.addSpacing(10)
-
         # Impostazioni
         self.btn_settings = SidebarButton("Impostazioni", "⚙️")
         layout.addWidget(self.btn_settings)
@@ -95,6 +79,7 @@ class SidebarWidget(QFrame):
         # Versione
         version_label = QLabel(f"v{__version__}")
         version_label.setObjectName("versionLabel")
+        version_label.setStyleSheet("font-size: 14px; color: rgba(255, 255, 255, 0.7);")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(version_label)
 
@@ -112,23 +97,6 @@ class SidebarWidget(QFrame):
         # Connect signals
         for i, btn in enumerate(self.nav_buttons):
             btn.clicked.connect(lambda _, idx=i: self.navigation_requested.emit(idx))
-
-    def _get_license_text(self) -> str:
-        license_info = get_license_info()
-        if license_info:
-            client = license_info.get("Cliente", "N/D")
-            expiry = license_info.get("Scadenza Licenza", "N/D")
-            config = config_manager.load_config()
-            last_login = config.get("last_login_date", "N/D")
-
-            # Update last login date
-            now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
-            config_manager.set_config_value("last_login_date", now_str)
-
-            return (
-                f"Licenza: {client}\nScadenza: {expiry}\nUltimo accesso: {last_login}"
-            )
-        return "Licenza non trovata"
 
     def set_active_button(self, index: int):
         """Aggiorna lo stato checked dei pulsanti."""

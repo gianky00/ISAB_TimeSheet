@@ -77,7 +77,9 @@ class TestTimbratureStorage:
         type(mock_df).columns = PropertyMock(return_value=mock_cols)
 
         # However, it's easier to just use a real DataFrame for data logic
-        real_df = pd.DataFrame([{"Data Timbratura": "2023-01-01", "Ora Ingresso": "08:00"}])
+        real_df = pd.DataFrame(
+            [{"Data Timbratura": "2023-01-01", "Ora Ingresso": "08:00"}]
+        )
         mock_read_excel.return_value = real_df
 
         # Mock iterrows (removed as we use real_df now)
@@ -104,7 +106,6 @@ class TestTimbratureStorage:
 
 
 class TestTimbratureBot:
-
     @patch("src.bots.portale_fornitori.timbrature.bot.TimbraturePage")
     @patch("src.bots.portale_fornitori.timbrature.bot.TimbratureStorage")
     def test_run_success(self, MockStorage, MockPage, timbrature_bot):
@@ -120,8 +121,10 @@ class TestTimbratureBot:
 
         # Act
         data = {"data_da": "01.01.2023"}
-        with patch("os.path.exists", return_value=True), patch("os.remove") as mock_remove:
-
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.remove") as mock_remove,
+        ):
             result = timbrature_bot.run(data)
 
         # Assert

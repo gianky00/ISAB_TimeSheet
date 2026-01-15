@@ -5,7 +5,7 @@ Handles database operations for Timbrature.
 
 import sqlite3
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -160,160 +160,128 @@ class TimbratureStorage:
         filter_reparto: Optional[str] = None,
         filter_cantiere: Optional[str] = None,
     ) -> List[tuple]:
-        """
-        Recupera le timbrature e le arricchisce con i dati da config.json.
-        """
-        config = config_manager.load_config()
-        mappings = config.get("employee_mappings", {})
+        """Recupera le timbrature e le arricchisce con i dati da config.json."""
+        mappings = config_manager.load_config().get("employee_mappings", {})
 
         with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
-
-            # Query base (solo sulla tabella timbrature)
-            query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
-            params = []
-            conditions = []
-
-            if filter_text:
-                search_terms = filter_text.lower().split()
-                columns_to_search = ["data", "nome", "cognome", "sito_timbratura"]
-                for term in search_terms:
-                    search_term = term
-                    # (Logic date conversion DD/MM/YYYY omitted for brevity, same as before)
-                    if "/" in term:
-                        try:
-                            parts = term.split("/")
-                            if len(parts) == 3:
-                                d, m, y = parts
-                                search_term = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
-                        except Exception:
-                            pass
-                    term_conditions = [f"{col} LIKE ?" for col in columns_to_search]
-                    params.extend([f"%{search_term}%"] * len(columns_to_search))
-                    conditions.append(f"({' OR '.join(term_conditions)})")
-
-            if conditions:
-                query += " WHERE " + " AND ".join(conditions)
-
-            query += f" ORDER BY id DESC LIMIT {limit * 2}"  # Fetch more to allow Python filtering
-
-            cursor.execute(query, params)
+            sql, params = self._build_timb_query(filter_text, limit)
+            cursor.execute(sql, params)
             raw_rows = cursor.fetchall()
 
-            # Arricchimento e Filtro Python
-            final_rows = []
-            for row in raw_rows:
-                # row indices: 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, 5:presenza_ts, 6:sito
-                nome, cognome = row[3], row[4]
-                key = f"{nome}|{cognome}"
-                emp_data = mappings.get(key, {"reparto": "", "cantiere": ""})
+            return self._enrich_and_filter_timb(
+                raw_rows, mappings, filter_reparto, filter_cantiere, limit
+            )
 
-                rep = emp_data.get("reparto", "")
-                cant = emp_data.get("cantiere", "")
+    def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
+        query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
+        params: list[str] = []
+        if not filter_text:
+            return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
 
-                # Applica Filtri Reparto/Cantiere
-                if (
-                    filter_reparto
-                    and filter_reparto != "Tutti"
-                    and rep != filter_reparto
-                ):
-                    continue
-                if (
-                    filter_cantiere
-                    and filter_cantiere != "Tutti"
-                    and cant != filter_cantiere
-                ):
-                    continue
+        search_terms = filter_text.lower().split()
+        conditions = []
+        for term in search_terms:
+            search_term = self._normalize_search_date(term)
+            term_conditions = [
+                f"{col} LIKE ?"
+                for col in ["data", "nome", "cognome", "sito_timbratura"]
+            ]
+            params.extend([f"%{search_term}%"] * 4)
+            conditions.append(f"({' OR '.join(term_conditions)})")
 
-                final_rows.append(row + (rep, cant))
+        query += " WHERE " + " AND ".join(conditions)
+        return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
 
-                if len(final_rows) >= limit:
-                    break
+    def _normalize_search_date(self, term: str) -> str:
+        if "/" in term:
+            try:
+                parts = term.split("/")
+                if len(parts) == 3:
+                    d, m, y = parts
+                    return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+            except Exception:
+                pass
+        return term
 
-            return final_rows
+    def _enrich_and_filter_timb(
+        self, rows, mappings, f_rep, f_cant, limit
+    ) -> List[tuple]:
+        final = []
+        for r in rows:
+            nome, cognome = r[3], r[4]
+            emp = mappings.get(f"{nome}|{cognome}", {"reparto": "", "cantiere": ""})
+            rep, cant = emp.get("reparto", ""), emp.get("cantiere", "")
+
+            if f_rep and f_rep != "Tutti" and rep != f_rep:
+                continue
+            if f_cant and f_cant != "Tutti" and cant != f_cant:
+                continue
+
+            final.append(r + (rep, cant))
+            if len(final) >= limit:
+                break
+        return final
 
     def import_excel(
         self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None
     ) -> bool:
-        """
-        Imports an Excel file into the database.
+        """Imports an Excel file into the database."""
 
-        Args:
-            excel_path: Path to the Excel file.
-            log_callback: Optional callback for logging messages.
-
-        Returns:
-            True if import was successful.
-        """
-
-        def log(msg):
-            if log_callback:
-                log_callback(msg)
-            else:
-                print(msg)
+        def log(m):
+            log_callback(m) if log_callback else print(m)
 
         try:
             df = pd.read_excel(excel_path, engine="openpyxl")
-
-            # Normalize column names
             df.columns = df.columns.str.strip()
 
-            # Validate columns
-            missing_cols = [c for c in self.COLUMNS_MAP.keys() if c not in df.columns]
-            if missing_cols:
-                log(f"⚠️ Colonne mancanti nel file Excel: {missing_cols}")
+            missing = [c for c in self.COLUMNS_MAP.keys() if c not in df.columns]
+            if missing:
+                log(f"⚠️ Colonne mancanti: {missing}")
                 return False
 
-            # Filter and rename
             df_filtered = df[list(self.COLUMNS_MAP.keys())].copy()
             df_filtered.rename(columns=self.COLUMNS_MAP, inplace=True)
 
-            added_count = 0
-            skipped_count = 0
-
+            stats = {"added": 0, "skipped": 0}
             with db_manager.get_connection(self.db_path) as conn:
                 cursor = conn.cursor()
-
                 for _, row in df_filtered.iterrows():
-                    try:
-                        # Normalize date
-                        if "data" in row and pd.notna(row["data"]):
-                            if isinstance(
-                                row["data"], (pd.Timestamp, pd.DatetimeIndex)
-                            ):
-                                row["data"] = row["data"].strftime("%Y-%m-%d")
-                            else:
-                                try:
-                                    ts = pd.to_datetime(row["data"])
-                                    row["data"] = ts.strftime("%Y-%m-%d")
-                                except Exception:
-                                    pass  # Keep original if parse fails
-
-                        vals = row.fillna("").astype(str).to_dict()
-
-                        cursor.execute(
-                            """
-                            INSERT INTO timbrature (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura)
-                            VALUES (:data, :ingresso, :uscita, :nome, :cognome, :presenza_ts, :sito_timbratura)
-                        """,
-                            vals,
-                        )
-                        added_count += 1
-                    except sqlite3.IntegrityError:
-                        skipped_count += 1
-                    except Exception as e:
-                        log(f"Errore riga: {e}")
-
+                    self._process_excel_row(cursor, row, stats, log)
                 conn.commit()
 
-            log(
-                f"Importazione: {added_count} nuovi record aggiunti, {skipped_count} duplicati ignorati."
-            )
+            log(f"Importazione: {stats['added']} nuovi, {stats['skipped']} duplicati.")
             return True
-
         except Exception as e:
             log(f"Errore lettura Excel: {e}")
             raise e
+
+    def _process_excel_row(self, cursor, row, stats, log):
+        try:
+            # Data Normalization
+            data_val = row.get("data")
+            if pd.notna(data_val):
+                if isinstance(data_val, (pd.Timestamp, pd.DatetimeIndex)):
+                    row["data"] = data_val.strftime("%Y-%m-%d")
+                else:
+                    try:
+                        row["data"] = pd.to_datetime(data_val).strftime("%Y-%m-%d")
+                    except Exception:
+                        pass
+
+            vals = row.fillna("").astype(str).to_dict()
+            cursor.execute(
+                """
+                INSERT INTO timbrature (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura)
+                VALUES (:data, :ingresso, :uscita, :nome, :cognome, :presenza_ts, :sito_timbratura)
+            """,
+                vals,
+            )
+            stats["added"] += 1
+        except sqlite3.IntegrityError:
+            stats["skipped"] += 1
+        except Exception as e:
+            log(f"Errore riga: {e}")
 
     def get_lists(self) -> Dict[str, List[str]]:
         """Recupera le liste configurate (Reparti, Cantieri) da config.json con migrazione automatica."""

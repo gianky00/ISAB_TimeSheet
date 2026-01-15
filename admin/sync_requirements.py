@@ -17,7 +17,7 @@ def generate_requirements_content():
     for package in lock_data.get("package", []):
         name = package["name"]
         version = package["version"]
-        groups = package.get("groups", ["main"]) # Default to main if not specified
+        groups = package.get("groups", ["main"])  # Default to main if not specified
         optional = package.get("optional", False)
 
         if "main" in groups and not optional:
@@ -25,6 +25,7 @@ def generate_requirements_content():
 
     packages.sort(key=str.lower)
     return "\n".join(packages) + "\n"
+
 
 def sync(check_only=False):
     content = generate_requirements_content()
@@ -49,6 +50,7 @@ def sync(check_only=False):
             print("SUCCESS: requirements.txt updated from poetry.lock")
     else:
         print("SUCCESS: requirements.txt is already in sync.")
+
 
 if __name__ == "__main__":
     check_mode = "--check" in sys.argv

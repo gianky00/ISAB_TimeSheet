@@ -1,0 +1,4 @@
+# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\core\constants.py
+# hypothesis_version: 6.150.2
+
+['1920,1080', 'chrome_profile', 'completed', 'error', 'idle', 'initializing', 'logging_in', 'running', 'stopped']

@@ -9,14 +9,6 @@ import re
 def parse_currency(value) -> float:
     """
     Converte una stringa o numero in float, gestendo formati Italiani e Internazionali.
-
-    Esempi gestiti:
-    - "1.234,56" -> 1234.56 (IT)
-    - "1,234.56" -> 1234.56 (US)
-    - "1234.56" -> 1234.56 (US/Std)
-    - "1234,56" -> 1234.56 (IT)
-    - "€ 1.234,56" -> 1234.56
-    - 1234.56 (float) -> 1234.56
     """
     if value is None:
         return 0.0
@@ -25,104 +17,84 @@ def parse_currency(value) -> float:
         return float(value)
 
     s = str(value).strip()
-    if not s:
+    if not s or s.lower() == "nan":
         return 0.0
 
-    # Rimuovi simbolo valuta e spazi
-    s = s.replace("€", "").strip()
+    # 1. Pulizia e Normalizzazione
+    s, is_negative = _normalize_string(s)
 
-    # Rimuovi testo "Euro" (case insensitive)
+    # 2. Rilevamento e gestione separatori
+    s = _process_separators(s)
+
+    try:
+        val = float(s)
+        return -val if is_negative else val
+    except ValueError:
+        return 0.0
+
+
+def _normalize_string(s: str) -> tuple[str, bool]:
+    """Rimuove simboli, testo inutile e gestisce il segno negativo."""
+    # Rimuovi simbolo valuta e testo "Euro"
+    s = s.replace("€", "")
     s = re.sub(r"(?i)euro", "", s).strip()
 
-    # Gestione segno negativo (se staccato o con spazi)
+    # Gestione segno negativo
     is_negative = False
     if s.startswith("-") or " - " in s or s.endswith("-"):
         is_negative = True
         s = s.replace("-", "").strip()
 
-    # Rimuovi eventuali caratteri invisibili
+    # Rimuovi caratteri invisibili
     s = "".join(c for c in s if c.isprintable())
 
-    # Gestione 'nan'
-    if s.lower() == 'nan':
-        return 0.0
+    return s, is_negative
 
-    # Caso speciale: Numeri enormi scientifici o errori Excel (es. 50883250...)
-    # Se il numero ha più di 15 cifre ed è intero, è sospetto.
-    # Ma prima puliamo.
 
-    # Rilevamento formato
+def _process_separators(s: str) -> str:
+    """Gestisce la logica di conversione dei separatori (punti e virgole)."""
     has_comma = "," in s
     has_dot = "." in s
 
-    # 1. Formato chiaramente Italiano: punti e virgola finale
-    # Es: 1.234,56
     if has_comma and has_dot:
-        last_comma = s.rfind(",")
-        last_dot = s.rfind(".")
+        return _handle_mixed_separators(s)
+    elif has_comma:
+        return s.replace(",", ".")
+    elif has_dot:
+        return _handle_single_dot(s)
 
-        if last_comma > last_dot:
-            # IT: Punti sono migliaia, virgola è decimale
-            s = s.replace(".", "").replace(",", ".")
-        else:
-            # US: Virgole sono migliaia, punto è decimale
-            s = s.replace(",", "")
+    return s
 
-    # 2. Solo virgola: "1234,56" (IT) o "1,234" (US migliaia)
-    elif has_comma and not has_dot:
-        # Ambiguo. Euristiche:
-        # Se c'è una sola virgola ed è seguita da 1 o 2 cifre -> Decimale (IT)
-        # Se seguita da 3 cifre -> Potrebbe essere migliaia (US) o 3 decimali (Gas/Finanza)
-        # Assumiamo contesto CONTABILITÀ ITALIANA: Virgola è sempre Decimale.
-        s = s.replace(",", ".")
 
-    # 3. Solo punto: "1234.56" (US) o "1.234" (IT migliaia)
-    elif has_dot and not has_comma:
-        # Ambiguo.
-        # "123.456" -> 123456 (IT) o 123.456 (US)
-        # Contesto Italiano: Il punto è spesso migliaia.
-        # TUTTAVIA, Pandas/Python usano punto per decimale nelle conversioni standard.
-        # Se la stringa viene da un `astype(str)` di un float, sarà "123.456".
+def _handle_mixed_separators(s: str) -> str:
+    """Gestisce stringhe con sia punto che virgola (es. 1.234,56 o 1,234.56)."""
+    last_comma = s.rfind(",")
+    last_dot = s.rfind(".")
 
-        # Controlliamo il numero di punti
-        dots_count = s.count(".")
-        if dots_count > 1:
-            # "1.234.567" -> Sicuramente migliaia
-            s = s.replace(".", "")
-        else:
-            # Un solo punto.
-            # Se ha 3 decimali esatti ("1.234"), è ambiguo (Mille o Uno virgola due..).
-            # Se ha 2 decimali ("10.50"), è quasi certamente decimale (US/Python standard).
-            # Se ha 1 decimale ("10.5"), è decimale.
+    if last_comma > last_dot:
+        # IT: Punti sono migliaia, virgola è decimale
+        return s.replace(".", "").replace(",", ".")
+    else:
+        # US: Virgole sono migliaia, punto è decimale
+        return s.replace(",", "")
 
-            parts = s.split(".")
-            if len(parts[1]) != 3:
-                # Non 3 cifre -> Decimale sicuro
-                pass  # Lascia il punto
-            else:
-                # 3 cifre ("1.234").
-                # Qui rischiamo. "50.883" -> 50883 o 50.883?
-                # Se è un prezzo unitario, potrebbe essere 50 euro.
-                # Se è un totale, potrebbe essere 50 mila.
-                # Se il valore originale era float, è decimale.
-                # Nel dubbio, proviamo a parsare come float.
-                pass
 
-    try:
-        val = float(s)
-        if is_negative:
-            val = -val
-        return val
-        # Se il valore supera 1 trilione (10^12) ed è probabilmente un errore di parsing
-        # (es. 50,883,250... invece di 508.83)
-        # Proviamo a scalarlo?
-        # No, meglio ritornare il valore parsato ma loggare se possibile, o applicare logica correttiva.
-        # Caso specifico utente: 50.883.250.000.000.000 vs 508,83
-        # Rapporto: 10^14.
+def _handle_single_dot(s: str) -> str:
+    """Gestisce stringhe con solo punti."""
+    if s.count(".") > 1:
+        # "1.234.567" -> Sicuramente migliaia
+        return s.replace(".", "")
 
-        return val
-    except ValueError:
-        return 0.0
+    # Un solo punto: ambiguo se ha 3 cifre dopo (es. "1.234")
+    # Manteniamo la logica originale: se non sono 3 cifre, è decimale.
+    # Se sono 3 cifre, per ora lo lasciamo così (float standard).
+    parts = s.split(".")
+    if len(parts) > 1 and len(parts[1]) == 3:
+        # Qui potremmo decidere se trattarlo come migliaia,
+        # ma l'originale faceva 'pass' lasciandolo come float.
+        pass
+
+    return s
 
 
 if __name__ == "__main__":

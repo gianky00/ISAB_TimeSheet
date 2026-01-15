@@ -10,7 +10,6 @@ from src.utils.security import password_manager
 
 # Usa pytest invece di unittest
 class TestConfigSecurity:
-
     @pytest.fixture(autouse=True)
     def setup_method(self, setup_clean_config):
         """
@@ -18,10 +17,14 @@ class TestConfigSecurity:
         e applica patch aggiuntive necessarie per questo test.
         """
         # Patch password_manager per usare la directory temporanea
-        with patch.object(password_manager, "_KEY_DIR", new=setup_clean_config.parent), patch.object(
-            password_manager, "_KEY_FILE", new=setup_clean_config.parent / "secret.key"
+        with (
+            patch.object(password_manager, "_KEY_DIR", new=setup_clean_config.parent),
+            patch.object(
+                password_manager,
+                "_KEY_FILE",
+                new=setup_clean_config.parent / "secret.key",
+            ),
         ):
-
             # Forza il ricaricamento della chiave nel contesto patchato
             password_manager._key = password_manager._load_or_create_key()
 
@@ -53,7 +56,11 @@ class TestConfigSecurity:
 
     def test_legacy_plaintext_migration(self):
         # 1. Scrivi una vecchia config manualmente
-        legacy_data = {"accounts": [{"username": "old", "password": "plaintext_pass", "default": True}]}
+        legacy_data = {
+            "accounts": [
+                {"username": "old", "password": "plaintext_pass", "default": True}
+            ]
+        }
         with open(config_manager.CONFIG_FILE, "w") as f:
             json.dump(legacy_data, f)
 

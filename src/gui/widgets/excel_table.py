@@ -92,50 +92,49 @@ class ExcelTableWidget(QTableWidget):
 
     def paste_selection(self):
         """Incolla il contenuto degli appunti nella tabella."""
-        clipboard = QApplication.clipboard()
-        text = clipboard.text()
+        text = self._get_clipboard_text()
         if not text:
             return
 
-        rows = text.split("\n")
-        if rows and not rows[-1]:
-            rows.pop()
+        rows_data = text.split("\n")
+        if rows_data and not rows_data[-1]:
+            rows_data.pop()
 
-        current_row = self.currentRow()
-        current_col = self.currentColumn()
+        start_row, start_col = self._get_paste_start_pos()
 
-        if current_row < 0:
-            current_row = 0
-        if current_col < 0:
-            current_col = 0
-
-        for r_idx, row_text in enumerate(rows):
-            target_r = current_row + r_idx
+        for r_idx, row_text in enumerate(rows_data):
+            target_r = start_row + r_idx
             if target_r >= self.rowCount():
                 break
 
-            cols = row_text.split("\t")
-            for c_idx, cell_text in enumerate(cols):
-                target_c = current_col + c_idx
-                if target_c >= self.columnCount():
-                    break
-
-                if self.isColumnHidden(target_c):
+            cols_data = row_text.split("\t")
+            for c_idx, cell_text in enumerate(cols_data):
+                target_c = start_col + c_idx
+                if target_c >= self.columnCount() or self.isColumnHidden(target_c):
                     continue
+                self._paste_cell_data(target_r, target_c, cell_text.strip())
 
-                cell_text = cell_text.strip()
+    def _get_clipboard_text(self) -> str:
+        clipboard = QApplication.clipboard()
+        return clipboard.text() if clipboard else ""
 
-                widget = self.cellWidget(target_r, target_c)
-                if isinstance(widget, QComboBox):
-                    index = widget.findText(cell_text)
-                    if index >= 0:
-                        widget.setCurrentIndex(index)
-                else:
-                    item = self.item(target_r, target_c)
-                    if not item:
-                        item = QTableWidgetItem()
-                        self.setItem(target_r, target_c, item)
-                    item.setText(cell_text)
+    def _get_paste_start_pos(self) -> tuple[int, int]:
+        r, c = self.currentRow(), self.currentColumn()
+        return (max(0, r), max(0, c))
+
+    def _paste_cell_data(self, row: int, col: int, text: str):
+        """Aggiorna una cella specifica con il testo fornito."""
+        widget = self.cellWidget(row, col)
+        if isinstance(widget, QComboBox):
+            idx = widget.findText(text)
+            if idx >= 0:
+                widget.setCurrentIndex(idx)
+        else:
+            item = self.item(row, col)
+            if not item:
+                item = QTableWidgetItem()
+                self.setItem(row, col, item)
+            item.setText(text)
 
     def contextMenuEvent(self, event):
         """Menu contestuale predefinito per copia veloce (per tabelle read-only)."""
@@ -211,64 +210,65 @@ class ExcelTableWidget(QTableWidget):
             win.analyze_with_lyra(context)
 
     def copy_selection(self):
-        """Copia la selezione negli appunti in formato compatibile con Excel."""
-        selection = self.selectedRanges()
+        """Copia le celle selezionate negli appunti."""
+        selection = self.selectedIndexes()
         if not selection:
-            items = self.selectedItems()
-            if not items:
-                return
             return
 
-        rows = sorted(
-            {
-                r
-                for range_ in selection
-                for r in range(range_.topRow(), range_.bottomRow() + 1)
-            }
-        )
-        cols = sorted(
-            {
-                c
-                for range_ in selection
-                for c in range(range_.leftColumn(), range_.rightColumn() + 1)
-            }
-        )
-
+        rows, cols = self._get_selected_rows_cols(selection)
         if not rows or not cols:
             return
 
         tsv_rows = []
-
+        # 1. Header (se abilitato)
         if self.auto_copy_headers and len(self.selectedItems()) > 1:
-            header_row = []
-            for c in cols:
-                if not self.isColumnHidden(c):
-                    header_item = self.horizontalHeaderItem(c)
-                    header_text = header_item.text() if header_item else ""
-                    header_row.append(header_text)
-            tsv_rows.append("\t".join(header_row))
+            tsv_rows.append(self._build_header_tsv(cols))
 
+        # 2. Data Rows
         for r in rows:
-            if self.isRowHidden(r):
-                continue
-
-            row_data = []
-            for c in cols:
-                widget = self.cellWidget(r, c)
-                if isinstance(widget, QComboBox):
-                    text = widget.currentText()
-                else:
-                    item = self.item(r, c)
-                    text = item.text() if item else ""
-
-                text = text.replace("\t", " ").replace("\n", " ")
-                row_data.append(text)
-            tsv_rows.append("\t".join(row_data))
+            if not self.isRowHidden(r):
+                tsv_rows.append(self._get_row_as_tsv(r, cols))
 
         if tsv_rows:
-            tsv_data = "\n".join(tsv_rows)
-            QApplication.clipboard().setText(tsv_data)
+            QApplication.clipboard().setText("\n".join(tsv_rows))
             QToolTip.showText(QCursor.pos(), "✨ Copiato!", self)
+
+    def _get_selected_rows_cols(self, ranges) -> tuple[list[int], list[int]]:
+        """Estrae gli indici unici di riga e colonna dalla selezione."""
+        rows = set()
+        cols = set()
+        for item in ranges:
+            if hasattr(item, "topRow"):  # QTableWidgetSelectionRange
+                for r in range(item.topRow(), item.bottomRow() + 1):
+                    rows.add(r)
+                for c in range(item.leftColumn(), item.rightColumn() + 1):
+                    cols.add(c)
+            elif hasattr(item, "row"):  # QModelIndex
+                rows.add(item.row())
+                cols.add(item.column())
+        return sorted(rows), sorted(cols)
+
+    def _build_header_tsv(self, cols: list[int]) -> str:
+        headers = []
+        for c in cols:
+            if not self.isColumnHidden(c):
+                it = self.horizontalHeaderItem(c)
+                headers.append(it.text() if it else "")
+        return "\t".join(headers)
+
+    def _get_row_as_tsv(self, row: int, cols: list[int]) -> str:
+        data = []
+        for c in cols:
+            val = self._get_cell_value(row, c)
+            data.append(val.replace("\t", " ").replace("\n", " "))
+        return "\t".join(data)
+
+    def _get_cell_value(self, row: int, col: int) -> str:
+        widget = self.cellWidget(row, col)
+        if isinstance(widget, QComboBox):
+            return widget.currentText()
+        it = self.item(row, col)
+        return it.text() if it else ""
 
 
 class EditableDataTable(QWidget):
@@ -446,6 +446,7 @@ class EditableDataTable(QWidget):
         self.data_changed.emit()
 
     def get_data(self) -> list:
+        """Estrae tutti i dati dalla tabella come lista di dizionari."""
         data = []
         for row in range(self.table.rowCount()):
             row_data = {}
@@ -466,6 +467,12 @@ class EditableDataTable(QWidget):
         return data
 
     def set_data(self, data: list):
+        """
+        Popola la tabella con i dati forniti.
+
+        Args:
+            data: Lista di dizionari contenenti i valori per le colonne.
+        """
         self.table.blockSignals(True)
         self.table.setRowCount(0)
         for row_data in data:
@@ -488,8 +495,9 @@ class EditableDataTable(QWidget):
                     item = self.table.item(row, col)
                     if item:
                         item.setText(str(value))
-        while self.table.rowCount() < 5:
-            self._add_row()
+        if self.table.rowCount() == 0:
+            while self.table.rowCount() < 5:
+                self._add_row()
         self.table.blockSignals(False)
 
     def update_column_options(self, column_name: str, new_options: list):

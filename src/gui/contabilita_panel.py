@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QTableWidget,
     QTabWidget,
     QTreeWidget,
     QVBoxLayout,
@@ -46,6 +47,7 @@ class ContabilitaPanel(QWidget):
             self.refresh_tabs()
         except Exception as e:
             import traceback
+
             print(f"❌ Error refreshing tabs for ContabilitaPanel: {e}")
             traceback.print_exc()
 
@@ -55,11 +57,13 @@ class ContabilitaPanel(QWidget):
 
         self.main_tabs = QTabWidget()
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
-        self.main_tabs.setStyleSheet("""
+        self.main_tabs.setStyleSheet(
+            """
             QTabWidget::pane { border: 1px solid #dee2e6; border-radius: 6px; background-color: white; }
             QTabBar::tab { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px 20px; margin-right: 2px; border-top-left-radius: 6px; border-top-right-radius: 6px; color: #495057; font-weight: bold; font-size: 14px; }
             QTabBar::tab:selected { background: white; border-bottom-color: white; color: #0d6efd; }
-        """)
+        """
+        )
 
         self.selection_container = QWidget()
         selection_layout = QHBoxLayout(self.selection_container)
@@ -262,12 +266,10 @@ class ContabilitaPanel(QWidget):
                 )
 
     def _update_selection_total(self, widget):
+        """Calcola e visualizza i totali per le righe selezionate (Table o Tree)."""
         try:
             if isinstance(widget, QTreeWidget):
-                self.selection_count_label.setText(
-                    f"Selezionati: {len(widget.selectedItems())}"
-                )
-                self.selection_sum_label.setText("")
+                self._handle_tree_selection(widget)
                 return
 
             indexes = widget.selectionModel().selectedIndexes()
@@ -276,47 +278,58 @@ class ContabilitaPanel(QWidget):
                 self.selection_sum_label.setText("Totale ORE SP: 0")
                 return
 
-            target_col = -1
-            for c in range(widget.columnCount()):
-                h = widget.horizontalHeaderItem(c)
-                if h and ("ORE SP" in h.text().upper() or h.text().upper() == "ORE"):
-                    target_col = c
-                    break
+            target_col = self._find_ore_column(widget)
+            selected_rows, total_ore = self._calculate_selection_stats(
+                widget, indexes, target_col
+            )
 
-            selected_rows, total_ore = set(), 0.0
-            for idx in indexes:
-                row = idx.row()
-                if widget.isRowHidden(row) or (
-                    widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
-                ):
-                    continue
-                selected_rows.add(row)
+            fmt_ore = self._format_ore_display(total_ore)
+            self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
+            self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
+        except Exception:
+            pass
 
+    def _handle_tree_selection(self, tree: QTreeWidget):
+        self.selection_count_label.setText(f"Selezionati: {len(tree.selectedItems())}")
+        self.selection_sum_label.setText("")
+
+    def _find_ore_column(self, table: QTableWidget) -> int:
+        for c in range(table.columnCount()):
+            h = table.horizontalHeaderItem(c)
+            if h and ("ORE SP" in h.text().upper() or h.text().upper() == "ORE"):
+                return c
+        return -1
+
+    def _calculate_selection_stats(
+        self, widget, indexes, target_col
+    ) -> tuple[set[int], float]:
+        selected_rows, total_ore = set(), 0.0
+        for idx in indexes:
+            row = idx.row()
+            if widget.isRowHidden(row) or (
+                widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
+            ):
+                continue
+            selected_rows.add(row)
+
+        if target_col != -1:
             for row in selected_rows:
-                if target_col != -1 and widget.item(row, target_col):
+                it = widget.item(row, target_col)
+                if it:
                     try:
                         clean = (
-                            str(widget.item(row, target_col).text())
-                            .replace(".", "")
-                            .replace(",", ".")
-                            .strip()
+                            str(it.text()).replace(".", "").replace(",", ".").strip()
                         )
                         if clean:
                             total_ore += float(clean)
                     except Exception:
                         pass
+        return selected_rows, total_ore
 
-            fmt_ore = (
-                f"{int(total_ore)}"
-                if total_ore % 1 == 0
-                else f"{total_ore:,.2f}".replace(",", "X")
-                .replace(".", ",")
-                .replace("X", ".")
-            )
-            self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
-            self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
-        except Exception:
-            pass
+    def _format_ore_display(self, total: float) -> str:
+        if total % 1 == 0:
+            return str(int(total))
+        return f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     def start_import_process(self):
         config = config_manager.load_config()

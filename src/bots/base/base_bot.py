@@ -36,6 +36,16 @@ class BaseBot(ABC):
         timeout: int = Timeouts.DEFAULT,
         download_path: str = "",
     ):
+        """
+        Inizializza il bot base con credenziali e configurazioni driver.
+
+        Args:
+            username: Nome utente portale ISAB.
+            password: Password portale ISAB.
+            headless: Se True, avvia il browser senza interfaccia grafica.
+            timeout: Tempo di attesa default per Selenium.
+            download_path: Percorso dove scaricare i file.
+        """
         self.username = username
         self.password = password
         self.headless = headless
@@ -57,19 +67,23 @@ class BaseBot(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
+        """Restituisce il nome identificativo del bot."""
         pass
 
     @property
     @abstractmethod
     def description(self) -> str:
+        """Restituisce una descrizione testuale delle funzionalità del bot."""
         pass
 
     @property
     def status(self) -> BotStatus:
+        """Restituisce lo stato attuale della State Machine del bot."""
         return self._status
 
     @status.setter
     def status(self, value: BotStatus):
+        """Aggiorna lo stato del bot e logga il cambiamento."""
         if self._status != value:
             self._status = value
             self.log(f"Stato: {value.name}")
@@ -78,6 +92,11 @@ class BaseBot(ABC):
         """
         Esegue una validazione preventiva dei dati (Dry Run).
         Deve essere implementata dai bot derivati.
+
+        Args:
+            data: Lista di dizionari contenenti i dati da processare.
+        Returns:
+            tuple: (Successo, Messaggio di errore)
         """
         if not data:
             return False, "Nessun dato da elaborare."
@@ -86,7 +105,12 @@ class BaseBot(ABC):
         return True, ""
 
     def log(self, message: str):
-        """Log a message e inoltra al servizio Telegram."""
+        """
+        Logga un messaggio in console, nel widget log e via Telegram se configurato.
+
+        Args:
+            message: Testo del messaggio da loggare.
+        """
         print(f"[{self.name}] {message}")
         if self._log_callback:
             self._log_callback(message)
@@ -95,7 +119,7 @@ class BaseBot(ABC):
                 import re
 
                 clean_msg = re.sub(
-                    r"^[\\\[]\d{2}:\d{2}:\d{2}[\\\]]\s*", "", message.strip()
+                    r"^[\\\\[]\\d{2}:\\d{2}:\\d{2}[\\\\]]\\s*", "", message.strip()
                 )
                 self._telegram_service.send_message_sync(
                     f"🔹 *{self.name}*\n{clean_msg}"
@@ -104,149 +128,158 @@ class BaseBot(ABC):
                 pass
 
     def set_telegram_service(self, service: Any):
+        """Associa un servizio Telegram per l'invio delle notifiche push."""
         self._telegram_service = service
 
     def set_log_callback(self, callback: Callable[[str], None]):
+        """Imposta la callback per inoltrare i log all'interfaccia utente."""
         self._log_callback = callback
 
     def set_input_callback(self, callback: Callable[[str], str]):
+        """Imposta la callback per richiedere input interattivo all'utente."""
         self._input_callback = callback
 
     def request_stop(self):
+        """Segnala al bot di interrompere l'esecuzione alla prima occasione sicura."""
         self._stop_requested = True
         self.log("⚠️ Interruzione richiesta...")
 
     def _check_stop(self):
+        """Verifica se è stata richiesta l'interruzione e solleva InterruptedError."""
         if self._stop_requested:
             raise InterruptedError("Bot interrotto dall'utente")
 
     def _init_driver(self):
+        """Inizializzazione del driver Chrome con opzioni e configurazioni specifiche."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
 
+        options = self._get_chrome_options()
+        driver_path = self._get_chromedriver_path()
+        service = Service(driver_path) if driver_path else None
+
+        try:
+            # Type narrowing for mypy
+            if not service:
+                raise RuntimeError("Chromedriver service non disponibile")
+            self._setup_driver_instance(service, options)
+            self._configure_waits_and_pages()
+        except Exception as e:
+            self._handle_driver_error(e)
+
+    def _get_chrome_options(self) -> Options:
+        """Configura e restituisce le opzioni di Chrome per massimizzare stabilità e performance."""
         options = Options()
-        options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--disable-popup-blocking")
-        options.add_argument("--disable-blink-features=AutomationControlled")
+        # Argomenti standard
+        args = [
+            "--disable-features=DownloadBubble,DownloadBubbleV2",
+            "--disable-notifications",
+            "--disable-infobars",
+            "--disable-popup-blocking",
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--start-maximized",
+            "--no-restore-session-state",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--remote-debugging-port=9222",
+            "--disable-software-rasterizer",
+        ]
+        for arg in args:
+            options.add_argument(arg)
+
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
-        options.add_argument("--no-sandbox")
-        options.add_argument("--start-maximized")
-        options.add_argument("--no-restore-session-state")
 
+        # Gestione Headless
         config = config_manager.load_config()
-        # Headless logic: prioritize parameter, then config
-        is_headless = self.headless or config.get("browser_headless", False)
-        if is_headless:
+        if self.headless or config.get("browser_headless", False):
             self.headless = True
             options.add_argument("--headless=new")
             options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
 
+        # Directory Profilo e Preferenze
         profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
         options.add_argument(f"user-data-dir={profile_dir}")
+        options.add_experimental_option(
+            "prefs",
+            {
+                "profile.default_content_setting_values.automatic_downloads": 1,
+                "plugins.always_open_pdf_externally": True,
+                "download.prompt_for_download": False,
+            },
+        )
+        return options
 
-        prefs = {
-            "profile.default_content_setting_values.automatic_downloads": 1,
-            "plugins.always_open_pdf_externally": True,
-            "download.prompt_for_download": False,
-        }
-        options.add_experimental_option("prefs", prefs)
-
-    def _init_driver(self):
-        self.log("Inizializzazione browser...")
-        self.status = BotStatus.INITIALIZING
-
-        options = Options()
-        options.add_argument("--disable-features=DownloadBubble,DownloadBubbleV2")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--disable-popup-blocking")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option("useAutomationExtension", False)
-        options.add_argument("--no-sandbox")
-        options.add_argument("--start-maximized")
-        options.add_argument("--no-restore-session-state")
-
-        config = config_manager.load_config()
-        # Headless logic: prioritize parameter, then config
-        is_headless = self.headless or config.get("browser_headless", False)
-        if is_headless:
-            self.headless = True
-            options.add_argument("--headless=new")
-            options.add_argument(f"--window-size={BrowserConfig.WINDOW_SIZE}")
-
-        profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
-        options.add_argument(f"user-data-dir={profile_dir}")
-
-        prefs = {
-            "profile.default_content_setting_values.automatic_downloads": 1,
-            "plugins.always_open_pdf_externally": True,
-            "download.prompt_for_download": False,
-        }
-        options.add_experimental_option("prefs", prefs)
-
-        driver_path = None
-        service = None
-
-        # 1. Tentativo con ChromeDriverManager (Network)
+    def _get_chromedriver_path(self) -> Optional[str]:
+        """Tenta di ottenere il path di chromedriver scaricandolo automaticamente o via fallback locale."""
+        # 1. Automatico
         try:
             self.log("Verifica aggiornamenti driver...")
-            installed_path = ChromeDriverManager().install()
-            # Fix per alcuni ambienti Windows dove il path non ha .exe
-            if not installed_path.lower().endswith(".exe"):
-                potential_exe = list(Path(installed_path).parent.rglob("chromedriver.exe"))
-                if potential_exe:
-                    installed_path = str(potential_exe[0])
-            driver_path = installed_path
-            self.log(f"Driver scaricato: {driver_path}")
+            path = ChromeDriverManager().install()
+            if not path.lower().endswith(".exe"):
+                potential = list(Path(path).parent.rglob("chromedriver.exe"))
+                if potential:
+                    path = str(potential[0])
+            return path
         except Exception as e:
             self.log(f"⚠️ Impossibile scaricare driver automatico: {e}")
 
-        # 2. Tentativo Fallback Locale (Cartella 'drivers' o 'bin')
-        if not driver_path:
-            local_driver = Path("drivers") / "chromedriver.exe"
-            if local_driver.exists():
-                driver_path = str(local_driver.absolute())
-                self.log(f"Usando driver locale: {driver_path}")
+        # 2. Locale Fallback
+        local_driver = Path("drivers") / "chromedriver.exe"
+        if local_driver.exists():
+            path = str(local_driver.absolute())
+            self.log(f"Usando driver locale: {path}")
+            return path
+        return None
 
-        # 3. Tentativo creazione Service
-        if driver_path:
-            service = Service(driver_path)
+    def _setup_driver_instance(self, service: Service, options: Options):
+        """Crea l'istanza di webdriver.Chrome applicando tecniche anti-detection."""
+        self.driver = webdriver.Chrome(service=service, options=options)
+        # Anti-detection
+        self.driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument",
+            {
+                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            },
+        )
 
-        try:
-            # Se service è None, Selenium cercherà nel PATH
-            self.driver = webdriver.Chrome(service=service, options=options)
+    def _configure_waits_and_pages(self):
+        """Inizializza gli oggetti WebDriverWait per diverse durate e la LoginPage."""
+        if not self.driver:
+            return
+        self.wait = WebDriverWait(self.driver, self.timeout)
+        self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
+        self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
+        self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
 
-            # Anti-detection script
-            self.driver.execute_cdp_cmd(
-                "Page.addScriptToEvaluateOnNewDocument",
-                {
-                    "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-                },
+    def _handle_driver_error(self, e: Exception):
+        """Gestisce gli errori critici di avvio del driver Chrome."""
+        msg = f"❌ ERRORE CRITICO DRIVER: {e}"
+        self.log(msg)
+        err_str = str(e).lower()
+        if "chrome instance exited" in err_str:
+            self.log(
+                "💡 SUGGERIMENTO: Chrome è crashato all'avvio (Sandbox/Version Mismatch)."
             )
-
-            self.wait = WebDriverWait(self.driver, self.timeout)
-            self.popup_wait = WebDriverWait(self.driver, Timeouts.SHORT)
-            self.long_wait = WebDriverWait(self.driver, Timeouts.PAGE_LOAD)
-            self.login_page = LoginPage(self.driver, self.wait, self.log, self.ISAB_URL)
-
-        except Exception as e:
-            msg = f"❌ ERRORE CRITICO DRIVER: {e}"
-            self.log(msg)
-
-            # User-friendly hint
-            if "SessionNotCreatedException" in str(e) or "version" in str(e).lower():
-                self.log("💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta.")
-                self.log("   1. Aggiorna Google Chrome all'ultima versione.")
-                self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile e mettilo nella cartella 'drivers'.")
-
-            raise
+            self.log("   - Assicurati che Chrome sia aggiornato.")
+        elif "sessionnotcreatedexception" in err_str or "version" in err_str:
+            self.log(
+                "💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta."
+            )
+            self.log("   1. Aggiorna Google Chrome all'ultima versione.")
+            self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile.")
+        raise e
 
     def execute(self, data: List[Dict[str, Any]]) -> bool:
-        """Workflow completo: Validazione -> Browser -> Esecuzione."""
+        """
+        Esegue il workflow completo del bot: Validazione -> Accesso -> Esecuzione -> Cleanup.
+
+        Args:
+            data: Lista di dati da elaborare.
+        Returns:
+            bool: True se l'intera esecuzione ha avuto successo.
+        """
         self._stop_requested = False
         self.log(f"Avvio {self.name}...")
 
@@ -284,7 +317,7 @@ class BaseBot(ABC):
             self.cleanup()
 
     def _save_error_state(self, error_msg: str):
-        """Salva screenshot e sorgente HTML in caso di errore."""
+        """Salva uno screenshot e il sorgente HTML corrente per il debug post-mortem."""
         if not self.driver:
             return
 
@@ -309,22 +342,17 @@ class BaseBot(ABC):
 
             self.log(f"📸 Stato errore salvato in: {error_dir.name}")
 
-            # 3. Notifica Telegram con dettaglio (opzionale se il messaggio è troppo lungo)
-            if self._telegram_service:
-                # Invia solo il percorso dello screenshot per brevità
-                pass
-
         except Exception as e:
             self.log(f"⚠️ Impossibile salvare lo stato di errore: {e}")
 
     def _login(self) -> bool:
-        """Default login implementation using LoginPage."""
+        """Esegue il login al portale ISAB usando la LoginPage."""
         if self.login_page:
             return self.login_page.login(self.username, self.password)
         return False
 
     def _attendi_scomparsa_overlay(self, timeout=None):
-        """Proxy to LoginPage."""
+        """Attende che gli overlay di caricamento del portale ISAB scompaiano."""
         if self.login_page:
             if timeout:
                 return self.login_page._attendi_scomparsa_overlay(timeout)
@@ -332,44 +360,52 @@ class BaseBot(ABC):
         return True
 
     def _verify_login(self) -> bool:
-        """Proxy to verify login."""
+        """Verifica se l'utente è attualmente loggato analizzando l'UI."""
         if self.login_page:
             return self.login_page._verify_logged_in_via_ui()
         return False
 
     def _verify_logged_in_via_ui(self) -> bool:
-        """Alias for _verify_login to satisfy tests/legacy."""
+        """Alias per _verify_login compatibile con i test legacy."""
         return self._verify_login()
 
     def _logout(self) -> bool:
-        """Logout da ISAB."""
+        """Esegue il logout formale dal portale ISAB."""
         try:
+            if not self.wait:
+                return False
             self.log("🚪 Eseguo il logout...")
             # 1. Clicca su impostazioni (ingranaggio)
-            self.wait.until(EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)).click()
+            self.wait.until(
+                EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
+            ).click()
             time.sleep(0.5)
             # 2. Clicca su Esci
-            self.wait.until(EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)).click()
+            self.wait.until(
+                EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
+            ).click()
             self.log("✅ Logout effettuato.")
             return True
         except Exception as e:
             self.log(f"⚠️ Logout fallito: {e}")
             return False
 
-    def navigate_to_menu(self, menu_path: List[str]) -> bool:
-        """Navigate to a specific menu."""
+    def navigate_to_menu(self, _menu_path: List[str]) -> bool:
+        """Naviga verso un menu specifico del portale (Placeholder)."""
         # Placeholder - implement if needed or used
         return True
 
     def _handle_unsaved_changes_popup(self):
-        """Handle eventual 'unsaved changes' popup. Default implementation: do nothing."""
-        pass
+        """Gestisce eventuali popup di avviso per modifiche non salvate."""
+        return
 
     def _handle_session_popup(self):
-        """Gestisce popup di sessione scaduta/esistente."""
+        """Gestisce il popup di sessione multipla cliccando su 'SI'."""
         try:
             if self.popup_wait:
-                btn = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
+                btn = self.popup_wait.until(
+                    EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES)
+                )
                 btn.click()
                 self.log("✅ Popup sessione gestito (SI).")
                 return True
@@ -378,10 +414,12 @@ class BaseBot(ABC):
         return False
 
     def _handle_ok_popup(self):
-        """Gestisce popup OK generici."""
+        """Gestisce i popup generici di conferma (OK)."""
         try:
             if self.popup_wait:
-                btn = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_OK))
+                btn = self.popup_wait.until(
+                    EC.element_to_be_clickable(CommonLocators.POPUP_OK)
+                )
                 btn.click()
                 self.log("✅ Popup OK gestito.")
                 return True
@@ -390,6 +428,14 @@ class BaseBot(ABC):
         return False
 
     def _safe_login_with_retry(self, max_retries: int = 2) -> bool:
+        """
+        Tenta il login con un numero limitato di riprova in caso di errori driver.
+
+        Args:
+            max_retries: Numero massimo di tentativi.
+        Returns:
+            bool: True se il login ha avuto successo.
+        """
         for _attempt in range(1, max_retries + 1):
             self._check_stop()
             try:
@@ -405,6 +451,7 @@ class BaseBot(ABC):
         return False
 
     def cleanup(self):
+        """Chiude il browser e pulisce le risorse del driver."""
         if self.driver:
             try:
                 self.driver.quit()
@@ -414,4 +461,12 @@ class BaseBot(ABC):
 
     @abstractmethod
     def run(self, data: List[Dict[str, Any]]) -> bool:
+        """
+        Logica principale dell'automazione da implementare nelle sottoclassi.
+
+        Args:
+            data: Dati validati da processare.
+        Returns:
+            bool: True se l'esecuzione è completata correttamente.
+        """
         pass

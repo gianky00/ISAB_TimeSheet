@@ -27,16 +27,24 @@ class TestSafeWorkPDLBotDeep:
 
         data = [{"pdl_number": "123456/C", "print_enabled": False}]
 
-        with patch.object(bot, "_login", return_value=True), \
-             patch.object(bot, "_attendi_caricamento_sistema"), \
-             patch.object(bot, "_gestisci_alert_ricerca", return_value=False), \
-             patch.object(bot, "_attendi_scomparsa_overlay"), \
-             patch.object(bot, "_attendi_e_ritorna_nuovo_pdf", side_effect=[Path("p1.pdf"), Path("p2.pdf")]), \
-             patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True), \
-             patch("os.rename"), \
-             patch("os.path.exists", return_value=True), \
-             patch("fitz.open") as mock_fitz:
-
+        with (
+            patch.object(bot, "_login", return_value=True),
+            patch.object(bot, "_attendi_caricamento_sistema"),
+            patch.object(bot, "_gestisci_alert_ricerca", return_value=False),
+            patch.object(bot, "_attendi_scomparsa_overlay"),
+            patch.object(
+                bot,
+                "_attendi_e_ritorna_nuovo_pdf",
+                side_effect=[Path("p1.pdf"), Path("p2.pdf")],
+            ),
+            patch(
+                "src.utils.document_processor.DocumentProcessor.merge_pdfs",
+                return_value=True,
+            ),
+            patch("os.rename"),
+            patch("os.path.exists", return_value=True),
+            patch("fitz.open") as mock_fitz,
+        ):
             # Mock fitz doc
             mock_doc = MagicMock()
             mock_doc.page_count = 1

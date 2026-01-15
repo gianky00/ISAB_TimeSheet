@@ -38,7 +38,7 @@ class ContabilitaQueries:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = list(ExcelImporter.COLUMNS_MAPPING.values())
-                query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"
+                query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"  # nosec B608
                 cursor.execute(query, (year,))
                 rows = cursor.fetchall()
                 return rows
@@ -66,7 +66,7 @@ class ContabilitaQueries:
                     "ore",
                     "nome_file",
                 ]
-                query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"
+                query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
                 cursor.execute(query, (year,))
                 rows = cursor.fetchall()
                 return rows
@@ -82,7 +82,7 @@ class ContabilitaQueries:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = ExcelImporter.ATTIVITA_PROGRAMMATE_COLS
-                query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"
+                query = f"SELECT {', '.join(cols)} FROM attivita_programmate ORDER BY id ASC"  # nosec B608
                 cursor.execute(query)
                 rows = cursor.fetchall()
                 return rows
@@ -98,7 +98,7 @@ class ContabilitaQueries:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS
-                query = f"SELECT {', '.join(cols)} FROM certificati_campione ORDER BY id ASC"
+                query = f"SELECT {', '.join(cols)} FROM certificati_campione ORDER BY id ASC"  # nosec B608
                 cursor.execute(query)
                 rows = cursor.fetchall()
                 return rows
@@ -114,7 +114,7 @@ class ContabilitaQueries:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = ExcelImporter.SCARICO_ORE_COLS
-                query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"
+                query = f"SELECT {', '.join(cols)} FROM scarico_ore ORDER BY id DESC"  # nosec B608
                 cursor.execute(query)
                 rows = cursor.fetchall()
                 return rows

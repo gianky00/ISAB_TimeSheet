@@ -50,6 +50,7 @@ class AttivitaProgrammateTab(QWidget):
         self._load_data()
 
     def _setup_ui(self):
+        """Configura l'interfaccia utente del tab, inclusi filtri e tabella."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
         filter_layout = QHBoxLayout()
@@ -86,22 +87,24 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setWordWrap(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.table.cellDoubleClicked.connect(lambda r, c: self.table.selectRow(r))
-        self.table.setStyleSheet("""
-            QTableWidget { 
-                background-color: white; 
-                color: black; 
-                gridline-color: #e9ecef; 
-                font-size: 13px; 
-                border: 1px solid #dee2e6; 
-                selection-background-color: #0d6efd; 
-                selection-color: white; 
+        self.table.setStyleSheet(
+            """
+            QTableWidget {
+                background-color: white;
+                color: black;
+                gridline-color: #e9ecef;
+                font-size: 13px;
+                border: 1px solid #dee2e6;
+                selection-background-color: #0d6efd;
+                selection-color: white;
             }
             QTableWidget::item:selected {
                 background-color: #0d6efd;
                 color: white;
             }
             QHeaderView::section { background-color: #E1F5FE; color: #333333; padding: 10px 5px; border: none; border-right: 1px solid #B3E5FC; border-bottom: 3px solid #81D4FA; font-weight: bold; text-transform: uppercase; font-size: 11px; }
-        """)
+        """
+        )
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -125,6 +128,7 @@ class AttivitaProgrammateTab(QWidget):
         layout.addWidget(self.table)
 
     def refresh_data(self):
+        """Ricarica i dati dal database e aggiorna l'interfaccia."""
         self._load_data()
 
     def _load_data(self):
@@ -190,6 +194,7 @@ class AttivitaProgrammateTab(QWidget):
             combo.blockSignals(False)
 
     def apply_filters(self):
+        """Applica la logica di filtraggio combinata alla tabella delle attività."""
         f_ps, f_po = self.chk_ps.isChecked(), self.chk_po.isChecked()
         f_area, f_stato = self.combo_area.currentText(), self.combo_stato.currentText()
         for r in range(self.table.rowCount()):
@@ -234,6 +239,7 @@ class AttivitaProgrammateTab(QWidget):
         self.apply_filters()
 
     def filter_data(self, text):
+        """Esegue una ricerca testuale globale su tutte le colonne visibili."""
         search_terms = text.lower().split()
         cols = self.table.columnCount()
         self.apply_filters()

@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 from src.bots.base import BaseBot, BotStatus
 from src.bots.portale_fornitori.carico_ts import CaricoTSBot
 from src.bots.portale_fornitori.dettagli_oda import DettagliOdABot
+from src.bots.portale_fornitori.prenota_bp import PrenotaBPBot
 from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
 from src.bots.portale_fornitori.timbrature import TimbratureBot
 from src.bots.safework.pdl.bot import SafeWorkPDLBot
@@ -62,6 +63,17 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         ],
         "config_key": "last_oda_data",
         "warning": "⚠️ Il browser rimarrà aperto dopo l'esecuzione",
+    },
+    "prenota_bp": {
+        "class": PrenotaBPBot,
+        "name": "Prenota BP",
+        "description": "Prenotazione Badge Provvisori sul portale ISAB",
+        "icon": "🎫",
+        "columns": [
+            {"name": "Numero BP", "type": "text"},
+            {"name": "Note di Ritiro", "type": "text"},
+        ],
+        "config_key": "last_prenota_bp_data",
     },
     "timbrature": {
         "class": TimbratureBot,

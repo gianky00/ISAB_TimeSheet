@@ -51,6 +51,7 @@ class TestBotWorker:
 
     def test_worker_request_input(self, qtbot):
         mock_bot = MagicMock()
+
         # Simulate bot needing input
         def bot_side_effect(data):
             val = worker._request_input_wrapper("Enter code:")
@@ -73,24 +74,30 @@ class TestBotWorker:
 
         assert finished_mock.call_args[0][0] is True
 
+
 @pytest.fixture
 def mock_gui_deps():
-    with patch("src.gui.panels.AuditManager") as mock_audit, \
-         patch("src.gui.panels.StatsManager") as mock_stats, \
-         patch("src.gui.panels.config_manager") as mock_config, \
-         patch("src.gui.panels.get_asset_path", return_value="mock/path.svg"), \
-         patch("src.gui.panels.ToastManager") as mock_toast:
-
+    with (
+        patch("src.gui.panels.AuditManager") as mock_audit,
+        patch("src.gui.panels.StatsManager") as mock_stats,
+        patch("src.gui.panels.config_manager") as mock_config,
+        patch("src.gui.panels.get_asset_path", return_value="mock/path.svg"),
+        patch("src.gui.panels.ToastManager") as mock_toast,
+    ):
         # Setup mock config behavior
         mock_config.load_config.return_value = {"fornitori": ["F1", "F2"]}
-        mock_config.get_default_account.return_value = {"username": "user", "password": "pwd"}
+        mock_config.get_default_account.return_value = {
+            "username": "user",
+            "password": "pwd",
+        }
 
         yield {
             "audit": mock_audit,
             "stats": mock_stats,
             "config": mock_config,
-            "toast": mock_toast
+            "toast": mock_toast,
         }
+
 
 class TestBaseBotPanel:
     def test_initialization(self, qapp, qtbot, mock_gui_deps):
@@ -109,7 +116,9 @@ class TestBaseBotPanel:
         panel._on_start()
 
         mock_gui_deps["audit"].return_value.log_action.assert_called()
-        mock_gui_deps["stats"].return_value.increment_usage.assert_called_with("test_bot")
+        mock_gui_deps["stats"].return_value.increment_usage.assert_called_with(
+            "test_bot"
+        )
 
     def test_on_log_forward_to_telegram(self, qapp, qtbot, mock_gui_deps):
         panel = BaseBotPanel("bot", "Bot", "Desc")
@@ -129,10 +138,13 @@ class TestBaseBotPanel:
         container = {}
         event = MagicMock()
 
-        with patch("PyQt6.QtWidgets.QInputDialog.getText", return_value=("secret", True)):
+        with patch(
+            "PyQt6.QtWidgets.QInputDialog.getText", return_value=("secret", True)
+        ):
             panel._ask_user_input("Prompt", container, event)
             assert container["value"] == "secret"
             event.set.assert_called_once()
+
 
 class TestScaricaTSPanel:
     def test_validate_ready_success(self, qapp, qtbot, mock_gui_deps):
@@ -171,7 +183,9 @@ class TestScaricaTSPanel:
 
         panel.data_table.set_data([{"numero_oda": "123"}])
         panel.params_widget.get_fornitore = MagicMock(return_value="F")
-        panel.params_widget.get_dates = MagicMock(return_value=("01.01.2025", "01.01.2025"))
+        panel.params_widget.get_dates = MagicMock(
+            return_value=("01.01.2025", "01.01.2025")
+        )
         panel.params_widget.get_dest_path = MagicMock(return_value="/tmp")
 
         with patch.object(panel, "get_credentials", return_value=("user", "pass")):
@@ -180,6 +194,7 @@ class TestScaricaTSPanel:
         assert panel.worker is not None
         panel.worker.stop()
         panel.worker.wait()
+
 
 class TestCaricoTSPanel:
     def test_validate_ready(self, qapp, qtbot, mock_gui_deps):
@@ -206,6 +221,7 @@ class TestCaricoTSPanel:
         panel.worker.stop()
         panel.worker.wait()
 
+
 class TestTimbratureBotPanel:
     def test_load_save_data(self, qapp, qtbot, mock_gui_deps):
         panel = TimbratureBotPanel()
@@ -213,7 +229,9 @@ class TestTimbratureBotPanel:
 
         panel.autopilot_check.setChecked(True)
         panel._save_data()
-        mock_gui_deps["config"].set_config_value.assert_any_call("timbrature_autopilot_enabled", True)
+        mock_gui_deps["config"].set_config_value.assert_any_call(
+            "timbrature_autopilot_enabled", True
+        )
 
     @patch("src.bots.create_bot")
     def test_on_start(self, mock_create_bot, qapp, qtbot, mock_gui_deps):
@@ -231,9 +249,12 @@ class TestTimbratureBotPanel:
         panel.worker.stop()
         panel.worker.wait()
 
+
 class TestScaricoPDLPanel:
     @patch("src.bots.create_bot")
-    def test_telegram_send_after_finish(self, mock_create_bot, qapp, qtbot, mock_gui_deps):
+    def test_telegram_send_after_finish(
+        self, mock_create_bot, qapp, qtbot, mock_gui_deps
+    ):
         mock_bot = MagicMock()
         mock_bot.downloaded_files = ["/tmp/test.pdf"]
         mock_create_bot.return_value = mock_bot
@@ -247,12 +268,15 @@ class TestScaricoPDLPanel:
         panel.data_table.set_data([{"numero_pdl": "999"}])
         panel.merge_and_send_from_telegram = True
 
-        with patch.object(panel, "get_credentials", return_value=("u", "p")), \
-             patch("os.path.exists", return_value=True):
+        with (
+            patch.object(panel, "get_credentials", return_value=("u", "p")),
+            patch("os.path.exists", return_value=True),
+        ):
             panel._on_start()
             panel._on_worker_finished(True)
 
             mock_win.telegram.send_document_sync.assert_called()
+
 
 class TestTimbratureDBPanel:
     def test_refresh_data(self, qapp, qtbot, mock_gui_deps):
@@ -264,6 +288,7 @@ class TestTimbratureDBPanel:
             qtbot.addWidget(panel)
             panel.refresh_data()
             assert panel.model.rowCount() == 1
+
 
 class TestDettagliOdAPanel:
     def test_validate_ready(self, qapp, qtbot, mock_gui_deps):

@@ -5,7 +5,6 @@ from src.core.time_manager import get_network_time, get_trusted_time
 
 
 class TestCoreLogic:
-
     def test_stats_manager_singleton(self):
         s1 = StatsManager()
         s2 = StatsManager()

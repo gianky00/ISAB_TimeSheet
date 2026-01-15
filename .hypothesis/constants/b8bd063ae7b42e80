@@ -1,0 +1,4 @@
+# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\bots\__init__.py
+# hypothesis_version: 6.150.2
+
+['BOT_REGISTRY', 'BaseBot', 'BotStatus', 'C', 'Carico TS', 'CaricoTSBot', 'Codice Fiscale', 'Dettagli OdA', 'DettagliOdABot', 'F S', 'G T', 'Ingresso', 'M', 'NUMERO PDL', 'Nota D', 'Nota S', 'Note di Ritiro', 'Numero BP', 'Numero OdA', 'Posizione OdA', 'Prenota BP', 'SafeWorkPDLBot', 'ScaricaTSBot', 'Scarico PDL', 'Scarico TS', 'Sq', 'Str D', 'Str F D', 'Str F N', 'Str N', 'Timbrature', 'TimbratureBot', 'Tipo Prestazione', 'Uscita', 'carico_ts', 'class', 'columns', 'config_key', 'create_bot', 'description', 'dettagli_oda', 'get_available_bots', 'get_bot_info', 'icon', 'last_carico_ts_data', 'last_oda_data', 'last_pdl_data', 'last_prenota_bp_data', 'last_timbrature_data', 'last_ts_data', 'name', 'prenota_bp', 'scarico_pdl', 'scarico_ts', 'text', 'timbrature', 'type', 'warning', '⏱️', '🎫', '📋', '📤', '📥', '🛡️']

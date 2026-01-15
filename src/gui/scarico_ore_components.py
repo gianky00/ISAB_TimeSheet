@@ -1,6 +1,7 @@
 import json
 import pickle
 from pathlib import Path
+from typing import Dict, List, Optional
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QStandardItem, QStandardItemModel
@@ -38,6 +39,7 @@ class CacheWorker(QThread):
         self.data_source = data_source  # If provided, we build cache from this data.
 
     def run(self):
+        """Esegue l'operazione di caricamento o generazione della cache in background."""
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
@@ -58,14 +60,18 @@ class CacheWorker(QThread):
                 self.progress.emit("Caricamento cache...")
                 with open(self.cache_path, "rb") as f:
                     # Legacy support: check pickle structure
-                    loaded = pickle.load(f)
+                    # We use pickle for local trusted cache of complex data structures.
+                    loaded = pickle.load(f)  # nosec B301
                     if len(loaded) == 3:
                         # Old format: data, search, totals
                         # We must rebuild because 'data' is raw, we need 'display_data'
                         raw_data = loaded[0]
-                        display_data, search_index, float_totals, style_cache = (
-                            self._build_caches(raw_data)
-                        )
+                        (
+                            display_data,
+                            search_index,
+                            float_totals,
+                            style_cache,
+                        ) = self._build_caches(raw_data)
                     elif len(loaded) == 4:
                         # Version 2 format: raw_data, search, totals, style
                         # Checking if we need to rebuild (if data is not pre-formatted strings)
@@ -76,9 +82,12 @@ class CacheWorker(QThread):
                             and (d[0][0] is None or not isinstance(d[0][0], str))
                         ):
                             # Likely raw data or None, rebuild
-                            display_data, search_index, float_totals, style_cache = (
-                                self._build_caches(d)
-                            )
+                            (
+                                display_data,
+                                search_index,
+                                float_totals,
+                                style_cache,
+                            ) = self._build_caches(d)
                         else:
                             # Already formatted
                             display_data, search_index, float_totals, style_cache = (
@@ -103,7 +112,14 @@ class CacheWorker(QThread):
                 self.finished.emit([], [], [], [])
 
     def _build_style_cache_only(self, data):
-        """Helper to build only style cache from data."""
+        """
+        Costruisce solo la cache degli stili dai dati grezzi.
+
+        Args:
+            data: Dati grezzi estratti dal database.
+        Returns:
+            list: Lista di dizionari di stile o None.
+        """
         style_cache = []
         append_style = style_cache.append
 
@@ -124,106 +140,115 @@ class CacheWorker(QThread):
     def _build_caches(self, data):
         """
         Pre-computa tutto: Stringhe visualizzate, Indice ricerca, Totali, Stili.
-        Optimized for speed.
+
+        Args:
+            data: Dati grezzi da processare.
+        Returns:
+            tuple: (display_data, search_index, float_totals, style_cache)
         """
-        display_data = []  # List of list of strings
-        search_index = []
-        float_totals = []
-        style_cache = []
-
-        append_display = display_data.append
-        append_search = search_index.append
-        append_total = float_totals.append
-        append_style = style_cache.append
-
-        str_converter = str
+        display_data, search_index, float_totals, style_cache = [], [], [], []
 
         for row in data:
-            # --- 1. Display Strings & Search Index ---
-            # We want to format everything ONCE here.
+            # 1. Date & Display Strings
+            date_str = self._format_date_for_display(row[0])
+            disp_row, search_parts = self._process_row_fields(row, date_str)
 
-            # Date (Col 0)
-            val_0 = row[0]
-            str_0 = ""
-            if val_0:
-                s_val = str_converter(val_0)
-                if "-" in s_val:
-                    try:
-                        if len(s_val) >= 10 and s_val[4] == "-" and s_val[7] == "-":
-                            str_0 = f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
-                        else:
-                            parts = s_val.split(" ")[0].split("-")
-                            if len(parts) == 3:
-                                str_0 = f"{parts[2]}/{parts[1]}/{parts[0]}"
-                            else:
-                                str_0 = s_val
-                    except Exception:
-                        str_0 = s_val
-                else:
-                    str_0 = s_val
+            display_data.append(disp_row)
+            search_index.append(" ".join(search_parts).lower())
 
-            # Build Display Row (Cols 0-10)
-            display_row = [str_0]
-            search_parts = [str_0]
+            # 2. Totals
+            float_totals.append(self._parse_row_total(row[7]))
 
-            for i in range(1, 11):
-                val = row[i]
-                if val is None:
-                    d_val = ""
-                else:
-                    d_val = str_converter(val)
-
-                display_row.append(d_val)
-                if d_val:
-                    search_parts.append(d_val)
-
-            # Append full raw row just in case we need it? No, keep memory low.
-            # But wait, if we rebuild cache next time, do we have raw data?
-            # If we save PRE-FORMATTED data to disk, we lose raw data (e.g. floats are now strings).
-            # This means we CANNOT rebuild totals/styles correctly if we rely on raw types later?
-            # Float totals are stored separately. Styles are stored separately.
-            # So display_data being strings is fine for display and search.
-            # What if we need to export to Excel later with real types?
-            # The export usually uses the DB or the Table Model.
-            # If Table Model only has strings, export will have strings.
-            # User might want numbers.
-            # However, for PERFORMANCE of the VIEW, strings are key.
-            # If export is needed, we can load from DB again or keep raw data in memory (doubles RAM).
-            # For 130k rows, RAM is cheap (100MB).
-            # Let's keep display_data as the main source for the View.
-            # If needed, we can add raw_data later.
-
-            append_display(display_row)
-
-            # Search Index (lowercase joined)
-            append_search(" ".join(search_parts).lower())
-
-            # --- 2. Float Totals (Col 7) ---
-            val_7 = row[7]
-            try:
-                if isinstance(val_7, (int, float)):
-                    append_total(float(val_7))
-                else:
-                    append_total(parse_currency(val_7))
-            except Exception:
-                append_total(0.0)
-
-            # --- 3. Style Cache (Pre-parse JSON) ---
-            if len(row) > 11:
-                style_json = row[11]
-                if style_json:
-                    try:
-                        append_style(json.loads(style_json))
-                    except Exception:
-                        append_style(None)
-                else:
-                    append_style(None)
-            else:
-                append_style(None)
+            # 3. Styles
+            style_cache.append(self._parse_row_style(row))
 
         return display_data, search_index, float_totals, style_cache
 
+    def _format_date_for_display(self, val) -> str:
+        """
+        Parsa e formatta il valore data per la visualizzazione.
+
+        Args:
+            val: Valore data (stringa o datetime).
+        Returns:
+            str: Data formattata dd/mm/yyyy.
+        """
+        if not val:
+            return ""
+        s_val = str(val)
+        if "-" not in s_val:
+            return s_val
+
+        try:
+            if len(s_val) >= 10 and s_val[4] == "-" and s_val[7] == "-":
+                return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
+            parts = s_val.split(" ")[0].split("-")
+            return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == 3 else s_val
+        except Exception:
+            return s_val
+
+    def _process_row_fields(self, row, date_str) -> tuple[list[str], list[str]]:
+        """
+        Converte i campi in stringhe e prepara le parti per la ricerca.
+
+        Args:
+            row: Riga di dati grezzi.
+            date_str: Data già formattata.
+        Returns:
+            tuple: (dati_visualizzazione, termini_ricerca)
+        """
+        disp_row = [date_str]
+        search_parts = [date_str]
+        for i in range(1, 11):
+            val = row[i]
+            d_val = "" if val is None else str(val)
+            disp_row.append(d_val)
+            if d_val:
+                search_parts.append(d_val)
+        return disp_row, search_parts
+
+    def _parse_row_total(self, val) -> float:
+        """
+        Parsa in modo resiliente il totale ore in float.
+
+        Args:
+            val: Valore da parsare.
+        Returns:
+            float: Valore numerico o 0.0 in caso di errore.
+        """
+        try:
+            if isinstance(val, (int, float)):
+                return float(val)
+            return parse_currency(val)
+        except Exception:
+            return 0.0
+
+    def _parse_row_style(self, row) -> Optional[dict]:
+        """
+        Estrae e parsa il JSON degli stili se presente.
+
+        Args:
+            row: Riga di dati.
+        Returns:
+            dict: Dizionario degli stili o None.
+        """
+        if len(row) <= 11 or not row[11]:
+            return None
+        try:
+            return json.loads(row[11])
+        except Exception:
+            return None
+
     def _save_cache(self, data, search, totals, style_cache):
+        """
+        Salva i dati processati nel file di cache su disco.
+
+        Args:
+            data: Dati visualizzazione.
+            search: Indice ricerca.
+            totals: Totali numerici.
+            style_cache: Cache degli stili.
+        """
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.cache_path, "wb") as f:
@@ -268,6 +293,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
     loading_progress = pyqtSignal(str)
 
     def __init__(self, data=None):
+        """
+        Inizializza il modello e collega la cache globale se già caricata.
+
+        Args:
+            data: Dati iniziali opzionali.
+        """
         super().__init__()
         # Data references
         self._display_data = []
@@ -299,6 +330,12 @@ class ScaricoOreTableModel(QAbstractTableModel):
             self.update_data(data)
 
     def load_data_async(self, raw_data=None):
+        """
+        Avvia il caricamento asincrono dei dati.
+
+        Args:
+            raw_data: Dati grezzi da processare, se None carica dalla cache su disco.
+        """
         if self._global_cache["loaded"] and raw_data is None:
             self.cache_loaded.emit()
             return
@@ -315,6 +352,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._worker.start()
 
     def _on_worker_finished(self, display_data, search, totals, style_cache):
+        """Callback eseguito al termine del caricamento asincrono."""
         self.beginResetModel()
         self._display_data = display_data
         self._search_index = search
@@ -339,12 +377,19 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.cache_loaded.emit()
 
     def update_data(self, new_data):
+        """Aggiorna i dati del modello in modo asincrono."""
         self.load_data_async(new_data)
+
+    def set_data(self, data):
+        """Aggiornamento dati sincrono (principalmente per test)."""
+        worker = CacheWorker(self.CACHE_PATH)
+        display_data, search, totals, style_cache = worker._build_caches(data)
+        self._on_worker_finished(display_data, search, totals, style_cache)
 
     def set_filter(self, text, col_filters=None):
         """
         Applica filtri (testo globale e colonne) e aggiorna _visible_indices.
-        Operazione pura Python ottimizzata.
+        Operazione pura Python ottimizzata per grandi dataset.
         """
         text = text.lower().strip()
         search_terms = text.split() if text else []
@@ -385,7 +430,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.endResetModel()
 
     def get_float_total_for_visible(self):
-        """Sum totals for visible rows."""
+        """Calcola la somma dei totali per le righe attualmente visibili."""
         # This is fast: sum(list comprehension)
         # accessing _float_totals via index
         if not self._float_totals:
@@ -398,16 +443,19 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return total
 
     def rowCount(self, parent=None):
+        """Restituisce il numero di righe filtrate."""
         if parent is None:
             parent = QModelIndex()
         return self._filtered_count
 
     def columnCount(self, parent=None):
+        """Restituisce il numero di colonne del modello."""
         if parent is None:
             parent = QModelIndex()
         return len(self.COLUMNS)
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        """Restituisce il dato per l'indice e il ruolo richiesto."""
         if not index.isValid():
             return None
 
@@ -440,6 +488,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return None
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+        """Restituisce l'intestazione per la sezione e il ruolo richiesto."""
         if (
             orientation == Qt.Orientation.Horizontal
             and role == Qt.ItemDataRole.DisplayRole
@@ -448,6 +497,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return None
 
     def _get_style(self, real_row, col, style_type):
+        """Recupera lo stile (colore hex) dalla cache degli stili."""
         try:
             if real_row >= len(self._styles_cache):
                 return None
@@ -480,20 +530,38 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
 
 class FilterHeaderView(QHeaderView):
-    """Header con menu a discesa ottimizzato."""
+    """
+    Header personalizzato con supporto per menu di filtraggio a discesa.
+    Permette di cliccare sulle intestazioni per aprire popup di filtro specifici per colonna.
+    """
 
     def __init__(self, orientation, parent=None):
+        """
+        Inizializza l'header e abilita il click sulle sezioni.
+
+        Args:
+            orientation: Orientamento (Qt.Orientation.Horizontal).
+            parent: Widget genitore.
+        """
         super().__init__(orientation, parent)
         self.setSectionsClickable(True)
         self.setHighlightSections(True)
 
     def mouseReleaseEvent(self, event):
+        """Gestisce il rilascio del mouse per mostrare il menu di filtro."""
         idx = self.logicalIndexAt(event.pos())
         if idx >= 0:
             self._show_filter_menu(idx, event.globalPosition().toPoint())
         super().mouseReleaseEvent(event)
 
     def _show_filter_menu(self, col_index, global_pos):
+        """
+        Crea e visualizza il menu di filtraggio per la colonna specificata.
+
+        Args:
+            col_index: Indice della colonna.
+            global_pos: Posizione globale dove visualizzare il menu.
+        """
         # Access the real model directly
         # The view's model is now ScaricoOreTableModel (no proxy)
         model = self.model()
@@ -544,9 +612,19 @@ class FilterHeaderView(QHeaderView):
 
 
 class ListFilterPopupWidget(QWidget):
-    """Widget filtro con QListView e Search Bar per alte performance."""
+    """
+    Widget di popup per il filtraggio di liste di valori unici.
+    Include una barra di ricerca e opzioni di selezione rapida.
+    """
 
     def __init__(self, values, selected_values=None):
+        """
+        Inizializza il widget con i valori disponibili.
+
+        Args:
+            values: Lista di valori unici.
+            selected_values: Set di valori già selezionati (opzionale).
+        """
         super().__init__()
         self.values = values
         self.all_values = {str(v).lower() for v in values}
@@ -606,6 +684,7 @@ class ListFilterPopupWidget(QWidget):
         self.original_rows = [self.model.item(i) for i in range(self.model.rowCount())]
 
     def _filter_list(self, text):
+        """Filtra la lista in base al testo inserito."""
         text = text.lower()
         for i in range(self.model.rowCount()):
             item = self.model.item(i)
@@ -615,6 +694,7 @@ class ListFilterPopupWidget(QWidget):
                 self.list_view.setRowHidden(i, True)
 
     def select_all(self):
+        """Seleziona tutti i valori visibili nella lista."""
         self.model.blockSignals(True)
         for i in range(self.model.rowCount()):
             if not self.list_view.isRowHidden(i):
@@ -623,6 +703,7 @@ class ListFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def select_none(self):
+        """Deseleziona tutti i valori visibili nella lista."""
         self.model.blockSignals(True)
         for i in range(self.model.rowCount()):
             if not self.list_view.isRowHidden(i):
@@ -631,13 +712,16 @@ class ListFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def _on_item_changed(self, item):
+        """Callback eseguito al cambio di stato di un elemento."""
         pass
 
     def apply_filter(self):
+        """Segnala l'applicazione del filtro e chiude il menu."""
         self.applied = True
         self._close_menu()
 
     def get_selected_values(self):
+        """Restituisce la lista dei valori attualmente selezionati."""
         # Scan all items
         selected = []
         all_checked = True
@@ -654,6 +738,7 @@ class ListFilterPopupWidget(QWidget):
         return selected
 
     def _close_menu(self):
+        """Chiude ricorsivamente i menu QMenu genitori."""
         parent = self.parent()
         while parent:
             if isinstance(parent, QMenu):
@@ -666,6 +751,13 @@ class DateFilterPopupWidget(QWidget):
     """Widget filtro gerarchico per date (Anno -> Mese -> Giorno)."""
 
     def __init__(self, values, selected_values=None):
+        """
+        Inizializza il widget con le date disponibili.
+
+        Args:
+            values: Lista di stringhe data (dd/mm/yyyy).
+            selected_values: Lista di date già selezionate (opzionale).
+        """
         super().__init__()
         self.values = values  # list of "DD/MM/YYYY" strings
         self.applied = False
@@ -707,100 +799,114 @@ class DateFilterPopupWidget(QWidget):
         self._build_tree(values, selected_values)
 
     def _build_tree(self, values, selected_values):
-        # Structure: {Year: {Month: [Day, Day]}}
-        structure = {}
+        """Costruisce la struttura ad albero Anno -> Mese -> Giorno."""
         self.raw_dates = set(values)
-
-        for v in values:
-            if not v:
-                continue
-            try:
-                # v is DD/MM/YYYY
-                parts = v.split("/")
-                if len(parts) != 3:
-                    continue
-                _d, m, y = parts[0], parts[1], parts[2]
-
-                if y not in structure:
-                    structure[y] = {}
-                if m not in structure[y]:
-                    structure[y][m] = []
-                structure[y][m].append(v)  # Store full string in leaf
-            except Exception:
-                continue
+        structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(
+            values
+        )
 
         is_all_selected = selected_values is None
         selected_set = set(selected_values) if selected_values else set()
 
-        sorted_years = sorted(structure.keys(), reverse=True)
-
-        for y in sorted_years:
-            y_item = QStandardItem(y)
-            y_item.setCheckable(True)
-            y_item.setEditable(False)
-
-            months = structure[y]
-            y_checked_count = 0
-
-            for m in sorted(months.keys()):
-                m_name = self._get_month_name(m)
-                m_item = QStandardItem(f"{m_name} ({m})")
-                m_item.setCheckable(True)
-                m_item.setEditable(False)
-
-                days_list = months[m]
-                m_checked_count = 0
-
-                for date_str in sorted(days_list):
-                    # Display just the day part? Or date_str?
-                    # Let's display date_str but cleaner
-                    day_part = date_str.split("/")[0]
-                    d_item = QStandardItem(day_part)
-                    d_item.setCheckable(True)
-                    d_item.setEditable(False)
-                    d_item.setData(date_str, Qt.ItemDataRole.UserRole)  # Store value
-
-                    if is_all_selected or (date_str in selected_set):
-                        d_item.setCheckState(Qt.CheckState.Checked)
-                        m_checked_count += 1
-                    else:
-                        d_item.setCheckState(Qt.CheckState.Unchecked)
-
-                    m_item.appendRow(d_item)
-
-                # Set Month State
-                if m_checked_count == len(days_list):
-                    m_item.setCheckState(Qt.CheckState.Checked)
-                    y_checked_count += 1
-                elif m_checked_count > 0:
-                    m_item.setCheckState(Qt.CheckState.PartiallyChecked)
-                else:
-                    m_item.setCheckState(Qt.CheckState.Unchecked)
-
-                y_item.appendRow(m_item)
-
-            # Set Year State
-            if y_checked_count == len(months):
-                y_item.setCheckState(Qt.CheckState.Checked)
-            elif y_checked_count > 0:  # This logic is simple, ideally we check partial
-                # If any child is partial or checked, we are partial
-                y_item.setCheckState(Qt.CheckState.PartiallyChecked)
-            else:
-                # Check for deeper partials
-                has_partial = False
-                for r in range(y_item.rowCount()):
-                    if y_item.child(r).checkState() != Qt.CheckState.Unchecked:
-                        has_partial = True
-                        break
-                y_item.setCheckState(
-                    Qt.CheckState.PartiallyChecked
-                    if has_partial
-                    else Qt.CheckState.Unchecked
-                )
-
+        for y in sorted(structure.keys(), reverse=True):
+            y_item = self._create_year_item(
+                y, structure[y], selected_set, is_all_selected
+            )
             self.model.appendRow(y_item)
 
+    def _group_dates_by_hierarchy(
+        self, values: list
+    ) -> Dict[str, Dict[str, List[str]]]:
+        """Organizza le date in un dizionario Anno -> Mese -> [Date]."""
+        structure: Dict[str, Dict[str, List[str]]] = {}
+        for v in values:
+            if not v:
+                continue
+            try:
+                parts = v.split("/")
+                if len(parts) != 3:
+                    continue
+                _, m, y = parts
+                if y not in structure:
+                    structure[y] = {}
+                if m not in structure[y]:
+                    structure[y][m] = []
+                structure[y][m].append(v)
+            except Exception:
+                continue
+        return structure
+
+    def _create_year_item(
+        self, year, months_map, selected_set, is_all
+    ) -> QStandardItem:
+        """Crea il nodo anno e popola i mesi."""
+        y_item = QStandardItem(year)
+        y_item.setCheckable(True)
+        y_item.setEditable(False)
+
+        checked_months = 0
+        for m in sorted(months_map.keys()):
+            m_item = self._create_month_item(m, months_map[m], selected_set, is_all)
+            y_item.appendRow(m_item)
+            if m_item.checkState() == Qt.CheckState.Checked:
+                checked_months += 1
+
+        # Stato Anno
+        if checked_months == len(months_map):
+            y_item.setCheckState(Qt.CheckState.Checked)
+        elif checked_months > 0 or self._has_any_child_checked(y_item):
+            y_item.setCheckState(Qt.CheckState.PartiallyChecked)
+        else:
+            y_item.setCheckState(Qt.CheckState.Unchecked)
+
+        return y_item
+
+    def _create_month_item(
+        self, month_code, days, selected_set, is_all
+    ) -> QStandardItem:
+        """Crea il nodo mese e popola i giorni."""
+        m_name = self._get_month_name(month_code)
+        m_item = QStandardItem(f"{m_name} ({month_code})")
+        m_item.setCheckable(True)
+        m_item.setEditable(False)
+
+        checked_days = 0
+        for date_str in sorted(days):
+            day_part = date_str.split("/")[0]
+            d_item = QStandardItem(day_part)
+            d_item.setCheckable(True)
+            d_item.setEditable(False)
+            d_item.setData(date_str, Qt.ItemDataRole.UserRole)
+
+            state = (
+                Qt.CheckState.Checked
+                if (is_all or date_str in selected_set)
+                else Qt.CheckState.Unchecked
+            )
+            d_item.setCheckState(state)
+            if state == Qt.CheckState.Checked:
+                checked_days += 1
+            m_item.appendRow(d_item)
+
+        # Stato Mese
+        if checked_days == len(days):
+            m_item.setCheckState(Qt.CheckState.Checked)
+        elif checked_days > 0:
+            m_item.setCheckState(Qt.CheckState.PartiallyChecked)
+        else:
+            m_item.setCheckState(Qt.CheckState.Unchecked)
+        return m_item
+
+    def _has_any_child_checked(self, item: QStandardItem) -> bool:
+        """Verifica ricorsiva se almeno un figlio è selezionato."""
+        for r in range(item.rowCount()):
+            child = item.child(r)
+            if child and child.checkState() != Qt.CheckState.Unchecked:
+                return True
+        return False
+
     def _get_month_name(self, m_str):
+        """Converte il codice mese nel nome esteso in italiano."""
         names = {
             "01": "Gennaio",
             "02": "Febbraio",
@@ -818,6 +924,7 @@ class DateFilterPopupWidget(QWidget):
         return names.get(m_str, m_str)
 
     def _on_item_changed(self, item):
+        """Gestisce i cambiamenti di stato ricorsivamente (su e giù nell'albero)."""
         # Propagate changes down and up
         # Prevent recursion loops
         self.model.blockSignals(True)
@@ -834,12 +941,14 @@ class DateFilterPopupWidget(QWidget):
         self.model.blockSignals(False)
 
     def _set_children_state(self, item, state):
+        """Imposta lo stato di tutti i discendenti in modo ricorsivo."""
         for i in range(item.rowCount()):
             child = item.child(i)
             child.setCheckState(state)
             self._set_children_state(child, state)
 
     def _update_parent_state(self, item):
+        """Aggiorna lo stato del genitore in base ai suoi figli."""
         parent = item.parent()
         if not parent:
             return
@@ -865,6 +974,7 @@ class DateFilterPopupWidget(QWidget):
         self._update_parent_state(parent)
 
     def select_all(self):
+        """Seleziona ricorsivamente tutte le date nell'albero."""
         self.model.blockSignals(True)
         root = self.model.invisibleRootItem()
         self._set_children_state(root, Qt.CheckState.Checked)
@@ -872,6 +982,7 @@ class DateFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def select_none(self):
+        """Deseleziona ricorsivamente tutte le date nell'albero."""
         self.model.blockSignals(True)
         root = self.model.invisibleRootItem()
         self._set_children_state(root, Qt.CheckState.Unchecked)
@@ -879,10 +990,12 @@ class DateFilterPopupWidget(QWidget):
         self.model.layoutChanged.emit()
 
     def apply_filter(self):
+        """Segnala l'applicazione del filtro e chiude il menu."""
         self.applied = True
         self._close_menu()
 
     def get_selected_values(self):
+        """Traversa l'albero per trovare tutte le foglie (date) selezionate."""
         # Traverse tree to find selected leaves
         selected = []
         root = self.model.invisibleRootItem()
@@ -911,6 +1024,7 @@ class DateFilterPopupWidget(QWidget):
         return selected
 
     def _close_menu(self):
+        """Chiude ricorsivamente i menu QMenu genitori."""
         parent = self.parent()
         while parent:
             if isinstance(parent, QMenu):

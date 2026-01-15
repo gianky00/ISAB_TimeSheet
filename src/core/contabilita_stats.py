@@ -25,7 +25,7 @@ class ContabilitaStats:
 
     @classmethod
     def get_year_stats(cls, db_path: Path, year: int) -> YearStats:
-        """Calcola statistiche avanzate per l'anno specificato (Tabella Dati) + KPI Diretti/Indiretti."""
+        """Calcola statistiche avanzate per l'anno specificato."""
         data = ContabilitaQueries.get_data_by_year(db_path, year)
         giornaliere = ContabilitaQueries.get_giornaliere_by_year(db_path, year)
 
@@ -39,54 +39,67 @@ class ContabilitaStats:
             "ore_indirette": 0.0,
         }
 
-        commesse = []
-        if data:
-            for row in data:
-                try:
-                    n_prev = str(row[2]).strip()
-                    if not n_prev:
-                        continue
-                    if "totale" in n_prev.lower():
-                        continue
-
-                    val_prev = parse_currency(row[3])
-                    val_ore = parse_currency(row[9])
-
-                    stats["total_prev"] += val_prev
-                    stats["total_ore"] += val_ore
-                    stats["count_total"] += 1
-
-                    status = str(row[7]).strip().upper()
-                    if status:
-                        stats["status_counts"][status] = (
-                            stats["status_counts"].get(status, 0) + 1
-                        )
-
-                    if val_prev > 0:
-                        attivita = str(row[4]).strip() or "N/D"
-                        commesse.append((attivita, val_prev))
-                except Exception:
-                    pass
-
+        # 1. Processo Tabella Dati (KPI OdA)
+        commesse = cls._process_main_data(data, stats)
         stats["top_commesse"] = sorted(commesse, key=lambda x: x[1], reverse=True)[:5]
 
-        if giornaliere:
-            for row in giornaliere:
-                try:
-                    n_prev = str(row[4]).strip()
-                    odc = str(row[5]).strip()
-                    if n_prev.lower() == "nan":
-                        n_prev = ""
-                    if odc.lower() == "nan":
-                        odc = ""
-
-                    ore = parse_currency(row[9])
-
-                    if n_prev or odc:
-                        stats["ore_dirette"] += ore
-                    else:
-                        stats["ore_indirette"] += ore
-                except Exception:
-                    pass
+        # 2. Processo Giornaliere (KPI Diretti/Indiretti)
+        cls._process_giornaliere_stats(giornaliere, stats)
 
         return stats
+
+    @classmethod
+    def _process_main_data(cls, data, stats) -> List[tuple]:
+        """Processa i dati OdA principali per calcolare totali e status."""
+        commesse: list[tuple] = []
+        if not data:
+            return commesse
+
+        for row in data:
+            try:
+                n_prev = str(row[2]).strip()
+                if not n_prev or "totale" in n_prev.lower():
+                    continue
+
+                v_prev = parse_currency(row[3])
+                v_ore = parse_currency(row[9])
+
+                stats["total_prev"] += v_prev
+                stats["total_ore"] += v_ore
+                stats["count_total"] += 1
+
+                status = str(row[7]).strip().upper()
+                if status:
+                    stats["status_counts"][status] = (
+                        stats["status_counts"].get(status, 0) + 1
+                    )
+
+                if v_prev > 0:
+                    attivita = str(row[4]).strip() or "N/D"
+                    commesse.append((attivita, v_prev))
+            except Exception:
+                pass
+        return commesse
+
+    @classmethod
+    def _process_giornaliere_stats(cls, giornaliere, stats):
+        """Processa le timbrature giornaliere per distinguere ore dirette/indirette."""
+        if not giornaliere:
+            return
+
+        for row in giornaliere:
+            try:
+                n_prev = str(row[4]).strip()
+                odc = str(row[5]).strip()
+                ore = parse_currency(row[9])
+
+                is_direct = (n_prev and n_prev.lower() != "nan") or (
+                    odc and odc.lower() != "nan"
+                )
+
+                if is_direct:
+                    stats["ore_dirette"] += ore
+                else:
+                    stats["ore_indirette"] += ore
+            except Exception:
+                pass

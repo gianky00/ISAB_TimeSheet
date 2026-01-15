@@ -15,8 +15,9 @@ def reset_config_state(tmp_path):
     if config_path.exists():
         config_path.unlink()
 
-    with patch("src.core.config_manager.CONFIG_DIR", tmp_path), patch(
-        "src.core.config_manager.CONFIG_FILE", config_path
+    with (
+        patch("src.core.config_manager.CONFIG_DIR", tmp_path),
+        patch("src.core.config_manager.CONFIG_FILE", config_path),
     ):
         yield config_path
 
@@ -24,7 +25,6 @@ def reset_config_state(tmp_path):
 
 
 class TestConfigManager:
-
     def test_load_default_config(self, reset_config_state):
         config = config_manager.load_config()
         assert config["browser_timeout"] == 30

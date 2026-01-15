@@ -5,7 +5,10 @@ from src.gui.settings_panel import SettingsPanel
 
 
 class TestGUIMajorPanels:
-    @patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1", "F2"]})
+    @patch(
+        "src.gui.panels.config_manager.load_config",
+        return_value={"fornitori": ["F1", "F2"]},
+    )
     def test_carico_ts_panel_deep(self, mock_conf, qapp, qtbot):
         panel = CaricoTSPanel()
         qtbot.addWidget(panel)
@@ -23,23 +26,30 @@ class TestGUIMajorPanels:
                 panel._on_start()
             assert mock_start.called
 
-    @patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]})
+    @patch(
+        "src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]}
+    )
     def test_scarica_ts_panel_logic(self, mock_conf, qapp, qtbot):
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
 
         # Test folder selection via params_widget
-        with patch("PyQt6.QtWidgets.QFileDialog.getExistingDirectory", return_value="C:/Downloads"):
+        with patch(
+            "PyQt6.QtWidgets.QFileDialog.getExistingDirectory",
+            return_value="C:/Downloads",
+        ):
             panel.params_widget.browse_btn.click()
             assert panel.params_widget.dest_path_edit.text() == "C:/Downloads"
 
     def test_settings_panel_tabs(self, qapp, qtbot):
-        with patch("src.gui.settings_panel.config_manager.load_config", return_value={}):
+        with patch(
+            "src.gui.settings_panel.config_manager.load_config", return_value={}
+        ):
             panel = SettingsPanel()
             qtbot.addWidget(panel)
 
             # Switch between tabs
-            panel.tabs.setCurrentIndex(1) # Account
+            panel.tabs.setCurrentIndex(1)  # Account
             assert panel.tabs.currentIndex() == 1
 
             # Test save button connection

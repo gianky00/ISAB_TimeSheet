@@ -9,7 +9,7 @@ class SidebarButton(QPushButton):
         self.setText(f"{icon} {text}" if icon else text)
         self.setCheckable(True)
         self.setMinimumHeight(55)
-        self.setMinimumWidth(180)
+        self.setMinimumWidth(160)
         self._original_text = f"{icon} {text}" if icon else text
         self._update_style()
         self.toggled.connect(self._update_style)
@@ -31,10 +31,10 @@ class SidebarButton(QPushButton):
                     color: #ffffff;
                     border: 1px solid rgba(255, 255, 255, 0.3);
                     border-radius: 8px;
-                    padding: 12px 18px;
+                    padding: 12px 15px;
                     text-align: left;
                     font-weight: bold;
-                    font-size: 16px;
+                    font-size: 17px;
                 }
             """
             )
@@ -46,9 +46,9 @@ class SidebarButton(QPushButton):
                     color: #ffffff;
                     border: 1px solid transparent;
                     border-radius: 8px;
-                    padding: 12px 18px;
+                    padding: 12px 15px;
                     text-align: left;
-                    font-size: 16px;
+                    font-size: 17px;
                     font-weight: 500;
                 }
                 QPushButton:hover {

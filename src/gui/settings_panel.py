@@ -26,7 +26,6 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QMenu,
     QMessageBox,
-    QProgressBar,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -214,9 +213,9 @@ class StatisticsWidget(QWidget):
         # Table
         self.table = QTableWidget()
         self.table.verticalHeader().setVisible(False)
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(
-            ["Bot", "Esecuzioni", "Errori", "Successo", "Ultima Esecuzione"]
+            ["Bot", "Esecuzioni", "Errori", "Ultima Esecuzione"]
         )
         self.table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
@@ -317,20 +316,14 @@ class StatisticsWidget(QWidget):
 
         total_runs = sum(d.get("runs", 0) for d in stats.values())
         total_errors = sum(d.get("errors", 0) for d in stats.values())
-        success_rate = 0
         if total_runs > 0:
-            success_rate = ((total_runs - total_errors) / total_runs) * 100
+            ((total_runs - total_errors) / total_runs) * 100
 
         self.cards_layout.addWidget(
             self._create_summary_card("Esecuzioni Totali", total_runs, "#0d6efd", "🚀")
         )
         self.cards_layout.addWidget(
             self._create_summary_card("Errori Totali", total_errors, "#dc3545", "⚠️")
-        )
-        self.cards_layout.addWidget(
-            self._create_summary_card(
-                "Tasso Successo", f"{success_rate:.1f}%", "#198754", "📈"
-            )
         )
 
         # 2. Update Table
@@ -356,9 +349,8 @@ class StatisticsWidget(QWidget):
             last_run = data.get("last_run", "")
 
             # Calc rate
-            rate = 0
             if runs > 0:
-                rate = ((runs - errors) / runs) * 100
+                ((runs - errors) / runs) * 100
 
             # Format date
             last_run_display = "Mai"
@@ -380,29 +372,7 @@ class StatisticsWidget(QWidget):
                 err_item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             self.table.setItem(row, 2, err_item)
 
-            # Success Bar (Custom Widget inside Cell)
-            progress = QProgressBar()
-            progress.setRange(0, 100)
-            progress.setValue(int(rate))
-            progress.setTextVisible(True)
-            progress.setFormat(f"{rate:.1f}%")
-            progress.setStyleSheet(
-                f"""
-                QProgressBar {{
-                    border: 1px solid #dee2e6;
-                    border-radius: 4px;
-                    text-align: center;
-                    background-color: #f8f9fa;
-                    color: black;
-                }}
-                QProgressBar::chunk {{
-                    background-color: {"#198754" if rate > 80 else "#ffc107" if rate > 50 else "#dc3545"};
-                }}
-            """
-            )
-            self.table.setCellWidget(row, 3, progress)
-
-            self.table.setItem(row, 4, QTableWidgetItem(last_run_display))
+            self.table.setItem(row, 3, QTableWidgetItem(last_run_display))
 
 
 class SettingsPanel(QWidget):
@@ -956,15 +926,15 @@ class SettingsPanel(QWidget):
         action_layout.addWidget(self.unsaved_label)
 
         self.reset_btn = QPushButton("↩️ Annulla")
-        self.reset_btn.setVisible(False) # Nascosto
+        self.reset_btn.setVisible(False)  # Nascosto
         action_layout.addWidget(self.reset_btn)
 
         self.save_btn = QPushButton("💾 Salva impostazioni")
-        self.save_btn.setVisible(False) # Nascosto
+        self.save_btn.setVisible(False)  # Nascosto
         action_layout.addWidget(self.save_btn)
 
         config_layout.addWidget(self.action_container)
-        self.action_container.setVisible(False) # Nascondi l'intero container
+        self.action_container.setVisible(False)  # Nascondi l'intero container
 
         # Add Config Tab
         self.tabs.addTab(config_tab, "Configurazione")
@@ -1487,7 +1457,7 @@ class SettingsPanel(QWidget):
         """Metodo mantenuto per compatibilità, ora chiama il salvataggio diretto."""
         self._save_settings()
 
-    def _set_unsaved_changes(self, has_changes: bool):
+    def _set_unsaved_changes(self, _: bool):
         """Ora ridondante con il salvataggio automatico."""
         self._has_unsaved_changes = False
         self.unsaved_label.setVisible(False)
@@ -1620,7 +1590,7 @@ class SettingsPanel(QWidget):
         dlg = ConfirmationDialog(
             self,
             title="Conferma Eliminazione",
-            message=f"Sei sicuro di voler rimuovere '{item_name}'?"
+            message=f"Sei sicuro di voler rimuovere '{item_name}'?",
         )
         return dlg.exec() == QDialog.DialogCode.Accepted
 

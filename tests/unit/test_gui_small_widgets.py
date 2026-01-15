@@ -40,8 +40,7 @@ class TestSmallComponentsBoost:
             "title": "Titolo",
             "message": "Messaggio",
             "timestamp": "2024-01-01 12:00",
-            "read": False
+            "read": False,
         }
         item = NotificationItem(data)
         assert item is not None
-

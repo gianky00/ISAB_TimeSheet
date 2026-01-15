@@ -1,0 +1,4 @@
+# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\core\timesheet_processor.py
+# hypothesis_version: 6.150.2
+
+[1.2, '%Y%m%d-%H%M%S', '.', '0', 'A', 'A2', 'AC', 'B1', 'C1', 'D', 'Data', 'E', 'F', 'G', 'H', 'I', 'Ing', 'L', 'N1', 'O1', 'ORE_C', 'ORE_FEST_DIU', 'ORE_FEST_NOT', 'ORE_M', 'ORE_ST_DIU', 'ORE_ST_NOT', 'P1', 'POS', 'Pre', 'Q1', 'R1', 'S1', 'T1', 'Timesheet', 'TimesheetProcessor', 'Tot', 'U1', 'Usc', 'V1', 'W1', 'X', 'Z']

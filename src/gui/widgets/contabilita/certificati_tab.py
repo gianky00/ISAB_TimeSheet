@@ -63,13 +63,15 @@ class CertificatiCampioneTab(QWidget):
         self.tree.setAlternatingRowColors(True)
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.tree.setStyleSheet("""
+        self.tree.setStyleSheet(
+            """
             QTreeWidget { background-color: white; color: black; font-size: 13px; border: 1px solid #dee2e6; }
             QTreeWidget::item { color: black; padding: 4px; }
             QTreeWidget::item:selected { background-color: #0d6efd; color: white; }
             QTreeWidget::item:focus { background-color: #0d6efd; color: white; }
             QHeaderView::section { background-color: #E1F5FE; color: #333333; padding: 10px 5px; border: none; border-right: 1px solid #B3E5FC; border-bottom: 3px solid #81D4FA; font-weight: bold; text-transform: uppercase; font-size: 11px; }
-        """)
+        """
+        )
         h = self.tree.header()
         h.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.tree.setColumnWidth(0, 200)
@@ -101,9 +103,11 @@ class CertificatiCampioneTab(QWidget):
         layout.addWidget(self.tree)
 
     def refresh_data(self):
+        """Ricarica i certificati dal database."""
         self._load_data()
 
     def _load_data(self):
+        """Esegue la query e popola l'albero dei certificati raggruppati per costruttore."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
         self.tree.setSortingEnabled(False)
@@ -125,6 +129,7 @@ class CertificatiCampioneTab(QWidget):
         self.tree.sortByColumn(self.IDX_SCADENZA, Qt.SortOrder.AscendingOrder)
 
     def filter_data(self, text):
+        """Filtra l'albero dei certificati in base al testo di ricerca."""
         query = text.lower()
         for i in range(self.tree.topLevelItemCount()):
             parent = self.tree.topLevelItem(i)
@@ -267,8 +272,7 @@ try {
                 tmp_path = tmp.name
 
             subprocess.Popen(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path],
-                shell=True,
+                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path]
             )
         except Exception as e:
             QMessageBox.critical(self, "Errore", f"Impossibile avviare l'analisi:\n{e}")

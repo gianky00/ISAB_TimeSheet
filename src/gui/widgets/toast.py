@@ -16,9 +16,11 @@ from ..design.spacing import BorderRadius
 
 
 class Toast(QWidget):
-    """Notifica toast animata."""
+    """Notifica toast animata non bloccante."""
 
     class Type:
+        """Costanti per il tipo di notifica."""
+
         INFO = "info"
         SUCCESS = "success"
         WARNING = "warning"
@@ -38,6 +40,15 @@ class Toast(QWidget):
         duration: int = 3000,
         parent=None,
     ):
+        """
+        Inizializza il toast.
+
+        Args:
+            message: Il messaggio da visualizzare.
+            toast_type: Tipo di toast (info, success, warning, error).
+            duration: Durata della visualizzazione in millisecondi.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self._duration = duration
         self._type = toast_type
@@ -54,6 +65,7 @@ class Toast(QWidget):
         self._setup_animation()
 
     def _setup_ui(self, message: str):
+        """Configura l'interfaccia utente del toast con icone e colori."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
 
@@ -96,6 +108,7 @@ class Toast(QWidget):
         self.adjustSize()
 
     def _setup_animation(self):
+        """Configura le animazioni di fade-in e fade-out."""
         # Opacity effect
         self._opacity = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self._opacity)
@@ -114,7 +127,13 @@ class Toast(QWidget):
         self._fade_out.finished.connect(self.deleteLater)
 
     def show_at(self, x: int, y: int):
-        """Mostra toast in posizione specifica."""
+        """
+        Visualizza il toast in una posizione specifica e avvia il timer di auto-chiusura.
+
+        Args:
+            x: Coordinata X globale.
+            y: Coordinata Y globale.
+        """
         self.move(x, y)
         self.show()
         self._fade_in.start()
@@ -124,13 +143,17 @@ class Toast(QWidget):
 
 
 class ToastManager:
-    """Gestisce posizionamento e stacking toast."""
+    """
+    Singleton per la gestione del posizionamento e dello stacking dei toast.
+    Assicura che i toast multipli non si sovrappongano.
+    """
 
     _instance = None
     _active_toasts: list[Toast] = []
 
     @classmethod
     def instance(cls):
+        """Restituisce l'istanza singleton di ToastManager."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -138,7 +161,14 @@ class ToastManager:
     def show(
         self, message: str, toast_type: str = Toast.Type.INFO, duration: int = 3000
     ):
-        """Mostra un toast."""
+        """
+        Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
+
+        Args:
+            message: Messaggio da mostrare.
+            toast_type: Tipo di notifica.
+            duration: Durata in ms.
+        """
 
         parent = QApplication.activeWindow()
         toast = Toast(message, toast_type, duration, parent)
@@ -153,7 +183,7 @@ class ToastManager:
             x = geo.x() + (geo.width() - toast.width()) // 2
             # Stack downwards
             offset_y = sum([t.height() + 10 for t in self._active_toasts])
-            y = geo.y() + 80 + offset_y # Margine dall'alto (sotto header)
+            y = geo.y() + 80 + offset_y  # Margine dall'alto (sotto header)
         else:
             primary_screen = QApplication.primaryScreen()
             if primary_screen:
@@ -177,16 +207,20 @@ class ToastManager:
 
 # Funzioni helper globali
 def toast_info(message: str, duration: int = 3000):
+    """Visualizza un toast informativo."""
     ToastManager.instance().show(message, Toast.Type.INFO, duration)
 
 
 def toast_success(message: str, duration: int = 3000):
+    """Visualizza un toast di successo."""
     ToastManager.instance().show(message, Toast.Type.SUCCESS, duration)
 
 
 def toast_warning(message: str, duration: int = 3000):
+    """Visualizza un toast di avviso."""
     ToastManager.instance().show(message, Toast.Type.WARNING, duration)
 
 
 def toast_error(message: str, duration: int = 5000):
+    """Visualizza un toast di errore."""
     ToastManager.instance().show(message, Toast.Type.ERROR, duration)

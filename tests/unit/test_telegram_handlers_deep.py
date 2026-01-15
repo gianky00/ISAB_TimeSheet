@@ -11,6 +11,7 @@ def service():
     s.connected_chat_id = "123"
     return s
 
+
 class TestTelegramHandlersDeep:
     @pytest.mark.asyncio
     async def test_db_actions_strumentale_flow(self, service):
@@ -18,8 +19,13 @@ class TestTelegramHandlersDeep:
         mock_query.edit_message_text = AsyncMock()
 
         # Test year selection
-        with patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]):
-            await service._handle_db_actions("db_select_year_strumentale", mock_query, "123")
+        with patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[2024],
+        ):
+            await service._handle_db_actions(
+                "db_select_year_strumentale", mock_query, "123"
+            )
 
             # Check if 2024 is in the response text or markup
             # call_args[0] is positional args, [1] is kwargs

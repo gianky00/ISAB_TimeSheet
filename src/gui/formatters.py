@@ -6,18 +6,29 @@ class FastTableModel(QAbstractTableModel):
     Modello di dati ottimizzato per la massima reattività.
     Non crea widget per cella, ma fornisce i dati solo quando richiesto dalla vista.
     """
+
     def __init__(self, data=None, headers=None):
+        """
+        Inizializza il modello con dati e intestazioni.
+
+        Args:
+            data: Lista di liste contenente i dati della tabella.
+            headers: Lista di stringhe per le intestazioni delle colonne.
+        """
         super().__init__()
         self._data = data or []
         self._headers = headers or []
 
     def rowCount(self, parent=None):
+        """Restituisce il numero totale di righe."""
         return len(self._data)
 
     def columnCount(self, parent=None):
+        """Restituisce il numero totale di colonne."""
         return len(self._headers)
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        """Restituisce il dato per l'indice e il ruolo specificato."""
         if not index.isValid():
             return None
 
@@ -32,7 +43,11 @@ class FastTableModel(QAbstractTableModel):
         return None
 
     def headerData(self, section, orientation, role):
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+        """Restituisce l'etichetta dell'intestazione."""
+        if (
+            orientation == Qt.Orientation.Horizontal
+            and role == Qt.ItemDataRole.DisplayRole
+        ):
             return self._headers[section]
         return None
 

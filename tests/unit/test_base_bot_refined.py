@@ -7,11 +7,19 @@ from src.bots.base.base_bot import BaseBot
 
 class ConcreteDummyBot(BaseBot):
     @property
-    def name(self): return "Dummy"
+    def name(self):
+        return "Dummy"
+
     @property
-    def description(self): return "Desc"
-    def run(self, data): return True
-    def _handle_unsaved_changes_popup(self): pass
+    def description(self):
+        return "Desc"
+
+    def run(self, data):
+        return True
+
+    def _handle_unsaved_changes_popup(self):
+        pass
+
 
 class TestBaseBotRefined:
     def test_request_stop_logic(self):

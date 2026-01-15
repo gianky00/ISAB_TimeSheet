@@ -1,128 +1,182 @@
 #!/usr/bin/env python3
 """
-🚀 SyncroJob Pre-Flight Check
-=============================
-Questo script verifica che il sistema sia pronto per il rilascio.
-Controlla:
-1. Coerenza versioni (pyproject.toml vs code)
-2. Stato Git (Clean working tree)
-3. Integrità Test Suite
+🚀 SyncroJob Developer Toolbox & Pre-Flight Check
+================================================
+Un unico entry point per tutti i controlli di qualità, sicurezza e integrità.
+Tool integrati: Ruff, Bandit, Interrogate, Pytest, Pre-commit.
 """
 
+import argparse
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 # ANSI Colors
 GREEN = "\033[92m"
 RED = "\033[91m"
 YELLOW = "\033[93m"
+CYAN = "\033[96m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
 PROJECT_ROOT = Path(__file__).parent.parent
+VENV_BIN = (
+    PROJECT_ROOT / ".venv" / "Scripts"
+    if sys.platform == "win32"
+    else PROJECT_ROOT / ".venv" / "bin"
+)
+
 
 def print_step(msg):
-    print(f"\n{BOLD}🔍 {msg}{RESET}")
+    print(f"\n{BOLD}{CYAN}🔹 {msg}{RESET}")
+
 
 def print_ok(msg):
     print(f"{GREEN}✅ {msg}{RESET}")
 
+
 def print_fail(msg):
     print(f"{RED}❌ {msg}{RESET}")
 
-def get_pyproject_version():
-    content = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    match = re.search(r'version\s*=\s*"(.*?)"', content)
-    return match.group(1) if match else None
 
-def get_code_version():
-    content = (PROJECT_ROOT / "src/core/version.py").read_text(encoding="utf-8")
-    match = re.search(r'__version__\s*=\s*"(.*?)"', content)
-    return match.group(1) if match else None
+def get_bin(name):
+    """Restituisce il percorso dell'eseguibile nel venv o nel sistema."""
+    ext = ".exe" if sys.platform == "win32" else ""
+    venv_path = VENV_BIN / f"{name}{ext}"
+    return str(venv_path) if venv_path.exists() else name
+
 
 def check_versions():
-    print_step("Verifica allineamento versioni...")
-    v_toml = get_pyproject_version()
-    v_code = get_code_version()
+    print_step("VERSIONI: Verifica allineamento pyproject.toml vs code...")
+    try:
+        v_toml = re.search(
+            r'version\s*=\s*"(.*?)"',
+            (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"),
+        ).group(1)
+        v_code = re.search(
+            r'__version__\s*=\s*"(.*?)"',
+            (PROJECT_ROOT / "src/core/version.py").read_text(encoding="utf-8"),
+        ).group(1)
 
-    if v_toml == v_code:
-        print_ok(f"Versioni allineate: {v_toml}")
-        return True
-    else:
-        print_fail(f"Discrepanza versioni!\n   pyproject.toml: {v_toml}\n   version.py:     {v_code}")
+        if v_toml == v_code:
+            print_ok(f"Sincronizzate: {v_toml}")
+            return True
+        print_fail(f"Discrepanza! TOML: {v_toml}, CODE: {v_code}")
+        return False
+    except Exception as e:
+        print_fail(f"Errore lettura versioni: {e}")
         return False
 
-def check_git_status():
-    print_step("Verifica stato Git...")
-    result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
-    if not result.stdout.strip():
-        print_ok("Working tree pulito.")
-        return True
-    else:
-        print(f"{YELLOW}⚠️  Attenzione: Ci sono modifiche non committate.{RESET}")
-        print(f"{YELLOW}   Verranno incluse automaticamente nel commit di release.{RESET}")
-        return True # Non blocca più la release
 
-def check_requirements_sync():
-    print_step("Sincronizzazione requirements.txt...")
-    script_path = PROJECT_ROOT / "admin" / "sync_requirements.py"
-    # Esegue la sincronizzazione (senza --check) per assicurare l'allineamento
-    ret = subprocess.call([sys.executable, str(script_path)], cwd=PROJECT_ROOT)
+def run_ruff(fix=False):
+    print_step("RUFF: Controllo Qualità e Formattazione...")
+    cmd = [get_bin("ruff"), "check", ".", "--fix" if fix else ""]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+
+    # Formattazione
+    subprocess.call(
+        [get_bin("ruff"), "format", ".", "--check" if not fix else ""], cwd=PROJECT_ROOT
+    )
+
     if ret == 0:
-        print_ok("requirements.txt sincronizzato correttamente.")
+        print_ok("Codice pulito.")
         return True
-    else:
-        print_fail("Errore durante la sincronizzazione di requirements.txt!")
-        return False
+    return False
+
+
+def run_bandit():
+    print_step("BANDIT: Analisi Sicurezza...")
+    cmd = [get_bin("bandit"), "-r", "src/", "-ll", "-q"]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    if ret == 0:
+        print_ok("Nessuna vulnerabilità critica rilevata.")
+        return True
+    print_fail("Rilevati potenziali problemi di sicurezza.")
+    return False
+
+
+def run_interrogate():
+    print_step("INTERROGATE: Copertura Documentazione...")
+    cmd = [get_bin("interrogate"), ".", "-q"]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    if ret == 0:
+        print_ok("Documentazione adeguata.")
+        return True
+    print_fail("Mancano docstring in alcune parti del codice.")
+    return False
+
 
 def run_tests():
-    print_step("Esecuzione Test Suite (Robust Mode - Fail Fast)...")
-    # Utilizza il runner robusto che gestisce isolamento, report e retry
-    runner_script = PROJECT_ROOT / "tests" / "run_robust_tests.py"
-    # Aggiunto --exitfirst per fermarsi al primo errore (Fail-Fast)
-    cmd = [sys.executable, str(runner_script), "--reset", "--exitfirst"]
+    print_step("PYTEST: Esecuzione Test Suite (Robust Mode)...")
+    runner = PROJECT_ROOT / "tests" / "run_robust_tests.py"
+    cmd = [sys.executable, str(runner), "--reset", "--exitfirst"]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    return ret == 0
 
-    try:
-        # Eseguiamo subprocess lasciando l'output visibile
-        ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
-        if ret == 0:
-            print_ok("Tutti i test passati.")
-            return True
-        else:
-            print_fail("Test falliti. Controlla il report o l'output sopra. Build annullata.")
-            return False
-    except Exception as e:
-        print_fail(f"Errore esecuzione test: {e}")
-        return False
+
+def run_pre_commit():
+    print_step("PRE-COMMIT: Validazione finale hook...")
+    cmd = [get_bin("pre-commit"), "run", "--all-files"]
+    ret = subprocess.call(cmd, cwd=PROJECT_ROOT)
+    return ret == 0
+
+
+def sync_requirements():
+    print_step("REQUIREMENTS: Sincronizzazione requirements.txt...")
+    script = PROJECT_ROOT / "admin" / "sync_requirements.py"
+    ret = subprocess.call([sys.executable, str(script)], cwd=PROJECT_ROOT)
+    return ret == 0
+
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="SyncroJob Pre-Flight Check")
-    parser.add_argument("--skip-tests", action="store_true", help="Salta l'esecuzione dei test")
+    parser = argparse.ArgumentParser(description="SyncroJob Master Developer Tool")
+    parser.add_argument(
+        "--fix", action="store_true", help="Applica correzioni automatiche (Ruff)"
+    )
+    parser.add_argument("--fast", action="store_true", help="Salta i test pesanti")
+    parser.add_argument("--test-only", action="store_true", help="Esegue solo i test")
     args = parser.parse_args()
 
-    print(f"{BOLD}✈️  AVVIO PRE-FLIGHT CHECK...{RESET}")
+    start_time = time.time()
+    print(f"\n{BOLD}{YELLOW}🚀 SYNCROJOB MASTER CHECK AVVIATO{RESET}")
+    print(f"{ '='*50}")
 
-    checks = [
-        check_versions,
-        check_requirements_sync,
-        check_git_status
-    ]
-
-    if not args.skip_tests:
-        checks.append(run_tests)
+    if args.test_only:
+        success = run_tests()
     else:
-        print(f"{YELLOW}⚠️  SKIP: Esecuzione test saltata su richiesta utente.{RESET}")
+        # Pipeline completa
+        checks = [
+            (check_versions, []),
+            (sync_requirements, []),
+            (run_ruff, [args.fix]),
+            (run_bandit, []),
+            (run_interrogate, []),
+        ]
 
-    for check in checks:
-        if not check():
-            print(f"\n{RED}⛔ ABORT: Controllo fallito. Correggi gli errori e riprova.{RESET}")
-            sys.exit(1)
+        if not args.fast:
+            checks.append((run_tests, []))
+            checks.append((run_pre_commit, []))
 
-    print(f"\n{GREEN}{BOLD}🚀 READY FOR TAKEOFF! Tutte le verifiche superate.{RESET}")
-    sys.exit(0)
+        success = True
+        for func, f_args in checks:
+            if not func(*f_args):
+                success = False
+                print(f"\n{RED}🛑 Bloccato al passaggio: {func.__name__}{RESET}")
+                break
+
+    duration = time.time() - start_time
+    print(f"\n{'='*50}")
+    if success:
+        print(
+            f"{GREEN}{BOLD}✨ TUTTI I CONTROLLI PASSATI! (Tempo: {duration:.1f}s){RESET}"
+        )
+        sys.exit(0)
+    else:
+        print(f"{RED}{BOLD}❌ CONTROLLI FALLITI. Correggi gli errori sopra.{RESET}")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

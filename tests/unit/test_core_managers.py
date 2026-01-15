@@ -21,8 +21,9 @@ def mock_config(tmp_path):
     fake_file = fake_dir / "config.json"
 
     # Patch both the DIR and FILE constants in the module
-    with patch("src.core.config_manager.CONFIG_DIR", fake_dir), patch(
-        "src.core.config_manager.CONFIG_FILE", fake_file
+    with (
+        patch("src.core.config_manager.CONFIG_DIR", fake_dir),
+        patch("src.core.config_manager.CONFIG_FILE", fake_file),
     ):
         yield fake_file
 

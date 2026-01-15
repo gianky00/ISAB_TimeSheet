@@ -72,7 +72,11 @@ def test_valid_license(mock_time, mock_hw, mock_paths, mock_secrets):
     mock_time.return_value = (datetime(2025, 1, 1), True)
 
     # Create valid license
-    payload = {"Hardware ID": "HW123", "Scadenza Licenza": "01/01/2026", "Cliente": "Test Client"}
+    payload = {
+        "Hardware ID": "HW123",
+        "Scadenza Licenza": "01/01/2026",
+        "Cliente": "Test Client",
+    }
     create_mock_license(config_path, manifest_path, key, payload)
 
     status, msg = license_validator.get_detailed_license_status()

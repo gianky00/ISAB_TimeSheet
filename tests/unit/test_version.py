@@ -1,11 +1,14 @@
 import re
+
 from src.core import version
+
 
 def test_version_format():
     """Verifica formato versione Semantic Versioning like."""
     assert isinstance(version.__version__, str)
     # Formato X.Y.Z
     assert re.match(r"^\d+\.\d+\.\d+$", version.__version__)
+
 
 def test_app_constants():
     """Verifica costanti applicazione."""

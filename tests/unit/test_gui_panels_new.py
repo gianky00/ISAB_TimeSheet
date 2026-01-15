@@ -1,11 +1,9 @@
-
 import pytest
 
 from src.gui.panels import BaseBotPanel, ScaricaTSPanel
 
 
 class TestBotPanels:
-
     @pytest.fixture
     def app(self, qapp):
         return qapp

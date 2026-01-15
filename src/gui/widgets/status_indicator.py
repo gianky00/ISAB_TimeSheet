@@ -32,6 +32,13 @@ class StatusIndicator(QWidget):
         self.setToolTip("Pronto")
 
     def set_status(self, status: str, message: str = ""):
+        """
+        Aggiorna il colore e l'animazione dell'indicatore.
+
+        Args:
+            status: Il nuovo stato (running, success, error, idle).
+            message: Messaggio per il tooltip.
+        """
         self.setToolTip(message)
         if status == "running":
             self.current_color = QColor("#0d6efd")
@@ -52,6 +59,7 @@ class StatusIndicator(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        """Disegna il cerchio colorato dell'indicatore."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setBrush(QBrush(self.current_color))

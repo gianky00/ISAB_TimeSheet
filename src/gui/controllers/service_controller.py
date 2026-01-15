@@ -40,7 +40,7 @@ class ServiceController(QObject):
         # Scheduler (ogni 60s) per task pianificati
         self.scheduler_timer = QTimer(self)
         self.scheduler_timer.timeout.connect(self._check_scheduled_tasks)
-        self.scheduler_timer.start(60000) # 1 minuto
+        self.scheduler_timer.start(60000)  # 1 minuto
 
     def _check_scheduled_tasks(self):
         """Controlla se ci sono task pianificati da eseguire ora."""
@@ -62,7 +62,9 @@ class ServiceController(QObject):
                     # Verifica che non sia già in esecuzione
                     if panel.start_btn.isEnabled():
                         # Simula avvio
-                        panel.log_widget.append(f"⏰ Avvio pianificato automatico ({now})...")
+                        panel.log_widget.append(
+                            f"⏰ Avvio pianificato automatico ({now})..."
+                        )
                         panel._on_start()
 
     def _check_updates(self):

@@ -30,8 +30,9 @@ class DatabaseManager:
     DB_TIMBRATURE = CONFIG_DIR / "data" / "timbrature_Isab.db"
 
     def __new__(cls):
+        """Pattern Singleton per il gestore database."""
         if cls._instance is None:
-            cls._instance = super(DatabaseManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._ensure_dirs()
         return cls._instance
 
@@ -122,7 +123,11 @@ class DatabaseManager:
         logger.error(
             f"Failed to execute query after {retry_count} retries: {last_error}"
         )
-        raise last_error
+        if last_error:
+            raise last_error
+        raise sqlite3.OperationalError(
+            f"Failed to execute query after {retry_count} retries"
+        )
 
     def init_db(self):
         """Initializes schema for all databases using the migration system."""
@@ -176,7 +181,8 @@ class DatabaseManager:
     def _mig_contabilita_v1(conn: sqlite3.Connection):
         """Schema Iniziale Contabilità (v1)"""
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS contabilita (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 year INTEGER NOT NULL,
@@ -186,8 +192,10 @@ class DatabaseManager:
                 indirizzo_consuntivo TEXT, nome_file TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        cursor.execute("""
+        """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS giornaliere (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 year INTEGER NOT NULL,
@@ -196,8 +204,10 @@ class DatabaseManager:
                 ore TEXT, n_prev TEXT, nome_file TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        cursor.execute("""
+        """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS scarico_ore (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 data TEXT, pers1 TEXT, pers2 TEXT, odc TEXT, pos TEXT,
@@ -205,8 +215,10 @@ class DatabaseManager:
                 finito TEXT, commessa TEXT, styles TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        cursor.execute("""
+        """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS attivita_programmate (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ps TEXT, area TEXT, pdl TEXT, imp TEXT, descrizione TEXT,
@@ -215,8 +227,10 @@ class DatabaseManager:
                 personale TEXT, po TEXT, avviso TEXT, styles TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        cursor.execute("""
+        """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS certificati_campione (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 modello TEXT, costruttore TEXT, matricola TEXT,
@@ -224,13 +238,10 @@ class DatabaseManager:
                 scadenza TEXT, emissione TEXT, id_coemi TEXT, stato TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)"
+        """
         )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_year ON contabilita(year)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_data ON giornaliere(data)")
 
     @staticmethod
     def _mig_contabilita_v2(conn: sqlite3.Connection):
@@ -239,15 +250,9 @@ class DatabaseManager:
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_cont_n_prev ON contabilita(n_prev)"
         )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_cont_odc ON contabilita(odc)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_cont_tcl ON contabilita(tcl)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_giorn_odc ON giornaliere(odc)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_odc ON contabilita(odc)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_tcl ON contabilita(tcl)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_odc ON giornaliere(odc)")
 
     # ==========================================
     # DEFINIZIONE MIGRAZIONI TIMBRATURE
@@ -256,23 +261,25 @@ class DatabaseManager:
     def _mig_timbrature_v1(conn: sqlite3.Connection):
         """Schema Iniziale Timbrature (v1)"""
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS timbrature (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 data TEXT, ingresso TEXT, uscita TEXT,
                 nome TEXT, cognome TEXT, presenza_ts TEXT, sito_timbratura TEXT,
                 UNIQUE(data, ingresso, uscita, nome, cognome)
             )
-        """)
-        cursor.execute("""
+        """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS dipendenti (
                 nome TEXT, cognome TEXT, reparto TEXT, cantiere TEXT,
                 PRIMARY KEY (nome, cognome)
             )
-        """)
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)"
+        """
         )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
 
     @staticmethod
     def _mig_timbrature_v2(conn: sqlite3.Connection):
@@ -290,49 +297,56 @@ class DatabaseManager:
         """Implementazione FTS5 per ricerche veloci (v3)"""
         cursor = conn.cursor()
         # Tabella virtuale per Contabilità
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE VIRTUAL TABLE IF NOT EXISTS contabilita_fts USING fts5(
                 n_prev, attivita, odc, annotazioni,
                 content='contabilita',
                 content_rowid='id'
             )
-        """)
+        """
+        )
         # Trigger per mantenere sincronizzato l'indice FTS
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS contabilita_ai AFTER INSERT ON contabilita BEGIN
                 INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni)
                 VALUES (new.id, new.n_prev, new.attivita, new.odc, new.annotazioni);
             END;
-        """)
-        cursor.execute("""
+        """
+        )
+        cursor.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS contabilita_ad AFTER DELETE ON contabilita BEGIN
                 INSERT INTO contabilita_fts(contabilita_fts, rowid, n_prev, attivita, odc, annotazioni)
                 VALUES('delete', old.id, old.n_prev, old.attivita, old.odc, old.annotazioni);
             END;
-        """)
-        cursor.execute("""
+        """
+        )
+        cursor.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS contabilita_au AFTER UPDATE ON contabilita BEGIN
                 INSERT INTO contabilita_fts(contabilita_fts, rowid, n_prev, attivita, odc, annotazioni)
                 VALUES('delete', old.id, old.n_prev, old.attivita, old.odc, old.annotazioni);
                 INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni)
                 VALUES (new.id, new.n_prev, new.attivita, new.odc, new.annotazioni);
             END;
-        """)
+        """
+        )
 
         # Popolamento iniziale se la tabella non è vuota
-        cursor.execute("INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni) SELECT id, n_prev, attivita, odc, annotazioni FROM contabilita")
+        cursor.execute(
+            "INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni) SELECT id, n_prev, attivita, odc, annotazioni FROM contabilita"
+        )
 
     # Dizionari di Migrazione
     MIGRATIONS_CONTABILITA = {
         1: _mig_contabilita_v1,
         2: _mig_contabilita_v2,
-        3: _mig_contabilita_v3
+        3: _mig_contabilita_v3,
     }
 
-    MIGRATIONS_TIMBRATURE = {
-        1: _mig_timbrature_v1,
-        2: _mig_timbrature_v2
-    }
+    MIGRATIONS_TIMBRATURE = {1: _mig_timbrature_v1, 2: _mig_timbrature_v2}
 
 
 db_manager = DatabaseManager()

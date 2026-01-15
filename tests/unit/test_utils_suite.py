@@ -20,7 +20,6 @@ from src.utils.validators import InputValidator
 
 
 class TestUtilsHelpers:
-
     def test_sanitize_filename(self):
         assert sanitize_filename("normal_file.txt") == "normal_file.txt"
         assert sanitize_filename("File Con Spazi.pdf") == "File Con Spazi.pdf"
@@ -106,7 +105,6 @@ class TestUtilsHelpers:
 
 
 class TestUtilsParsing:
-
     def test_parse_currency(self):
         assert parse_currency("1.234,56") == 1234.56
         assert parse_currency("1234,56") == 1234.56
@@ -120,7 +118,6 @@ class TestUtilsParsing:
 
 
 class TestUtilsValidators:
-
     def test_validate_oda(self):
         assert InputValidator.validate_oda("12345ABC").valid is True
         assert InputValidator.validate_oda("").valid is False

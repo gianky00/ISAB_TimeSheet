@@ -15,6 +15,7 @@ import pytest
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
+
 # Set matplotlib backend to 'Agg' to avoid GUI issues during tests
 def pytest_sessionstart(session):
     """
@@ -22,6 +23,7 @@ def pytest_sessionstart(session):
     """
     try:
         import matplotlib
+
         matplotlib.use("Agg")
     except ImportError:
         pass
@@ -38,7 +40,10 @@ def pytest_configure(config):
 
     # Global mock for Selenium and ChromeDriverManager to avoid downloads/browser popups
     selenium_patcher = patch("selenium.webdriver.Chrome", return_value=MagicMock())
-    manager_patcher = patch("webdriver_manager.chrome.ChromeDriverManager.install", return_value="/mock/path/chromedriver")
+    manager_patcher = patch(
+        "webdriver_manager.chrome.ChromeDriverManager.install",
+        return_value="/mock/path/chromedriver",
+    )
 
     selenium_patcher.start()
     manager_patcher.start()
@@ -109,8 +114,9 @@ def _isolate_config(tmp_path):
     fake_dir.mkdir(parents=True, exist_ok=True)
     fake_file = fake_dir / "config.json"
 
-    with patch("src.core.config_manager.CONFIG_DIR", fake_dir), patch(
-        "src.core.config_manager.CONFIG_FILE", fake_file
+    with (
+        patch("src.core.config_manager.CONFIG_DIR", fake_dir),
+        patch("src.core.config_manager.CONFIG_FILE", fake_file),
     ):
         yield fake_file
 
@@ -163,7 +169,7 @@ def cleanup_widgets():
 
     # Force Python Garbage Collection
     gc.collect()
-    gc.collect() # Double collect for cyclic references
+    gc.collect()  # Double collect for cyclic references
 
 
 @pytest.fixture
@@ -177,7 +183,9 @@ def mock_ui_dependencies(mocker):
     mocker.patch("src.core.database.db_manager", mock_db)
 
     # Mock ContabilitaManager (Class Mock)
-    mock_contabilita_class = mocker.patch("src.core.contabilita_manager.ContabilitaManager")
+    mock_contabilita_class = mocker.patch(
+        "src.core.contabilita_manager.ContabilitaManager"
+    )
 
     # Configure Class Methods and Attributes
     mock_contabilita_class.DB_PATH = MagicMock()
@@ -192,7 +200,12 @@ def mock_ui_dependencies(mocker):
     # Mock TimbratureStorage
     # Force import to avoid AttributeError: module 'src' has no attribute 'bots'
     import src.bots.portale_fornitori.timbrature.storage
-    mocker.patch.object(src.bots.portale_fornitori.timbrature.storage, "TimbratureStorage", return_value=MagicMock())
+
+    mocker.patch.object(
+        src.bots.portale_fornitori.timbrature.storage,
+        "TimbratureStorage",
+        return_value=MagicMock(),
+    )
 
     # Mock LyraSentinel & Telegram
     mocker.patch("src.core.lyra_sentinel.LyraSentinel", return_value=MagicMock())
@@ -201,10 +214,7 @@ def mock_ui_dependencies(mocker):
     # Mock ConfigManager per evitare scritture reali
     mocker.patch("src.core.config_manager.save_config")
 
-    return {
-        "contabilita": mock_contabilita_instance,
-        "db": mock_db
-    }
+    return {"contabilita": mock_contabilita_instance, "db": mock_db}
 
 
 @pytest.fixture
@@ -225,8 +235,10 @@ def create_mock_html(tmp_path):
     """
     Crea un file HTML temporaneo per testare i selettori.
     """
+
     def _create(content, filename="test.html"):
         html_file = tmp_path / filename
         html_file.write_text(content, encoding="utf-8")
         return html_file
+
     return _create

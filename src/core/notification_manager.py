@@ -81,8 +81,12 @@ class NotificationManager(QObject):
         return self.notifications
 
     def get_unread_count(self) -> int:
-        """Restituisce il numero di notifiche non lette."""
-        return sum(1 for n in self.notifications if not n.get("read", False))
+        """Restituisce il numero di notifiche di errore non lette."""
+        return sum(
+            1
+            for n in self.notifications
+            if not n.get("read", False) and n.get("level") == "error"
+        )
 
     def mark_as_read(self, notification_id: str):
         """Segna una notifica come letta."""

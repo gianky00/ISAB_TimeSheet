@@ -4,6 +4,7 @@ Finestra principale dell'applicazione SyncroJob.
 Implementa Lazy Loading dei pannelli per prestazioni ottimali.
 """
 
+from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
+    QLabel,
     QLineEdit,
     QMainWindow,
     QProgressBar,
@@ -24,6 +26,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.backup_manager import BackupManager
+from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
 from src.core.telegram_bridge import TelegramUIBridge
@@ -41,6 +44,8 @@ from src.gui.widgets.update_banner import UpdateBanner
 
 
 class PageIndex(IntEnum):
+    """Indici delle pagine nello StackedWidget principale."""
+
     DASHBOARD = 0
     AUTOMAZIONI = 1
     LYRA = 2
@@ -51,7 +56,10 @@ class PageIndex(IntEnum):
 
 
 class MainWindow(QMainWindow):
-    """Finestra principale dell'applicazione SyncroJob."""
+    """
+    Finestra principale dell'applicazione.
+    Coordina i controller, la navigazione e il caricamento dei pannelli.
+    """
 
     def __init__(self):
         super().__init__()
@@ -185,7 +193,28 @@ class MainWindow(QMainWindow):
             return
 
         self.progress_bar.setVisible(False)
+        self._update_license_status_bar()
         self.status_bar.showMessage("SyncroJob è pronto. Tutti i servizi attivi.", 3000)
+
+    def _update_license_status_bar(self):
+        """Aggiorna le etichette della licenza nella status bar."""
+        license_info = get_license_info()
+        if license_info:
+            client = license_info.get("Cliente", "N/D")
+            expiry = license_info.get("Scadenza Licenza", "N/D")
+            config = config_manager.load_config()
+            last_login = config.get("last_login_date", "N/D")
+
+            # Update last login date
+            now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+            config_manager.set_config_value("last_login_date", now_str)
+
+            self.lbl_license.setText(f"👤 Licenza: {client}")
+            self.lbl_expiry.setText(f"📅 Scadenza: {expiry}")
+            self.lbl_last_login.setText(f"🔑 Ultimo accesso: {last_login}")
+
+            for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
+                lbl.setVisible(True)
 
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
@@ -242,15 +271,29 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
+        # License info in status bar (inizialmente nascoste)
+        self.lbl_license = QLabel()
+        self.lbl_expiry = QLabel()
+        self.lbl_last_login = QLabel()
+
+        for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
+            lbl.setVisible(False)
+            lbl.setStyleSheet("color: #495057; font-size: 12px; margin-right: 15px;")
+            self.status_bar.addWidget(lbl)
+
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         self.progress_bar.setMaximumWidth(200)
         self.status_bar.addPermanentWidget(self.progress_bar)
 
-        # Status Card Globale
-        self.global_status_card = StatusCard("Stato Globale")
-        self.global_status_card.setMinimumWidth(200)
-        self.status_bar.addPermanentWidget(self.global_status_card)
+        # Status Cards Separate
+        self.status_portale = StatusCard("Portale Fornitori")
+        self.status_portale.setMinimumWidth(180)
+        self.status_bar.addPermanentWidget(self.status_portale)
+
+        self.status_safework = StatusCard("SafeWork")
+        self.status_safework.setMinimumWidth(180)
+        self.status_bar.addPermanentWidget(self.status_safework)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -359,6 +402,7 @@ class MainWindow(QMainWindow):
 
     # Wrapper per compatibilità
     def navigate_to_panel(self, panel_key: str):
+        """Naviga verso il pannello specificato tramite chiave stringa."""
         self.navigation_controller.navigate_to_panel(panel_key)
 
     def _navigate_to(self, index: int):
@@ -401,12 +445,18 @@ class MainWindow(QMainWindow):
                 self.timbrature_db_panel.search_input.setText(query)
 
     def analyze_with_lyra(self, context_text: str):
+        """Passa il contesto a Lyra e naviga verso il pannello AI."""
         self.navigation_controller.analyze_with_lyra(context_text)
 
     def show_settings(self):
+        """Mostra il pannello delle impostazioni."""
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
     def closeEvent(self, event):
+        """
+        Gestisce l'evento di chiusura della finestra.
+        Se non forzata, nasconde l'applicazione nel tray.
+        """
         if self._force_quit:
             if self.telegram:
                 self.telegram.stop_service()

@@ -10,7 +10,8 @@ def setup_test_db(db_path, num_rows=10000):
         db_path.unlink()
 
     with sqlite3.connect(db_path) as conn:
-        conn.execute("""
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS contabilita (
                 year INTEGER,
                 data_prev TEXT,
@@ -28,17 +29,37 @@ def setup_test_db(db_path, num_rows=10000):
                 indirizzo_consuntivo TEXT,
                 nome_file TEXT
             )
-        """)
+        """
+        )
 
         # Populate with some dummy data
         # target_columns = ["year"] + [data_prev, mese, n_prev, totale_prev, attivita, tcl, odc, stato_attivita, tipologia, ore_sp, resa, annotazioni, indirizzo_consuntivo, nome_file]
         data = [
-            (2024, f"2024-01-{i%28+1:02d}", "Gennaio", f"P-{i}", 100.0, "Attività Test", "TCL", "ODC", "Aperto", "Tipo", 8.0, 12.5, "Nota", "C:\\test", "file.xlsx")
+            (
+                2024,
+                f"2024-01-{i % 28 + 1:02d}",
+                "Gennaio",
+                f"P-{i}",
+                100.0,
+                "Attività Test",
+                "TCL",
+                "ODC",
+                "Aperto",
+                "Tipo",
+                8.0,
+                12.5,
+                "Nota",
+                "C:\\test",
+                "file.xlsx",
+            )
             for i in range(num_rows)
         ]
-        conn.executemany("INSERT INTO contabilita VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
+        conn.executemany(
+            "INSERT INTO contabilita VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data
+        )
         conn.commit()
     return data
+
 
 def run_benchmark():
     db_path = Path("benchmark_sync.db")
@@ -50,7 +71,25 @@ def run_benchmark():
     new_data = existing_data[1000:]
     # Add 1000 new rows
     for i in range(1000):
-        new_data.append((2024, "2024-12-01", "Dicembre", f"NEW-{i}", 200.0, "Nuova", "TCL", "ODC", "Chiuso", "Tipo", 4.0, 50.0, "Nota", "C:\\test", "new.xlsx"))
+        new_data.append(
+            (
+                2024,
+                "2024-12-01",
+                "Dicembre",
+                f"NEW-{i}",
+                200.0,
+                "Nuova",
+                "TCL",
+                "ODC",
+                "Chiuso",
+                "Tipo",
+                4.0,
+                50.0,
+                "Nota",
+                "C:\\test",
+                "new.xlsx",
+            )
+        )
 
     print(f"Benchmarking with {num_rows} rows...")
 
@@ -67,6 +106,7 @@ def run_benchmark():
 
     if db_path.exists():
         db_path.unlink()
+
 
 if __name__ == "__main__":
     run_benchmark()

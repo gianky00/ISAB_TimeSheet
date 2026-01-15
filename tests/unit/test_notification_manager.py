@@ -1,3 +1,7 @@
+"""
+Tests for NotificationManager.
+"""
+
 from unittest.mock import patch
 
 import pytest
@@ -7,25 +11,18 @@ from src.core.notification_manager import NotificationManager
 
 @pytest.fixture
 def notification_manager(tmp_path):
+    """Fixture per il NotificationManager con file temporaneo."""
     # Reset singleton
     NotificationManager._instance = None
-
-    # Mock config_manager to return a temp path
     with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
         manager = NotificationManager.instance()
         yield manager
-        # Clean up
-        manager.clear_all()
-        NotificationManager._instance = None
-
-
-def test_singleton(notification_manager):
-    m2 = NotificationManager.instance()
-    assert notification_manager is m2
+    # Cleanup
+    NotificationManager._instance = None
 
 
 def test_add_notification(notification_manager):
-    notification_manager.add_notification("Test Title", "Test Message", "info")
+    notification_manager.add_notification("Test Title", "Test Message", level="info")
     notifications = notification_manager.get_notifications()
     assert len(notifications) == 1
     assert notifications[0]["title"] == "Test Title"
@@ -35,7 +32,7 @@ def test_add_notification(notification_manager):
 
 
 def test_mark_as_read(notification_manager):
-    notification_manager.add_notification("Test", "Msg")
+    notification_manager.add_notification("Test", "Msg", level="error")
     notifications = notification_manager.get_notifications()
     n_id = notifications[0]["id"]
 
@@ -49,8 +46,8 @@ def test_mark_as_read(notification_manager):
 
 
 def test_mark_all_as_read(notification_manager):
-    notification_manager.add_notification("1", "1")
-    notification_manager.add_notification("2", "2")
+    notification_manager.add_notification("1", "1", level="error")
+    notification_manager.add_notification("2", "2", level="error")
 
     assert notification_manager.get_unread_count() == 2
 

@@ -13,16 +13,21 @@ from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
 
 
 class DettagliOdABot(BaseBot):
+    """Bot per lo scarico dei dettagli degli Ordini di Acquisto (OdA) dal Portale Fornitori."""
+
     @staticmethod
     def get_name() -> str:
+        """Restituisce il nome del bot."""
         return "Dettagli OdA"
 
     @staticmethod
     def get_description() -> str:
+        """Restituisce una descrizione sintetica del bot."""
         return "Scarica dettaglio OdA (o lista generale se OdA vuoto)"
 
     @staticmethod
     def get_columns() -> list:
+        """Definisce le colonne richieste per l'input dei dati."""
         return [
             {"name": "Numero OdA", "type": "text"},
             {"name": "Numero Contratto", "type": "combo", "options": []},
@@ -62,6 +67,7 @@ class DettagliOdABot(BaseBot):
         return True, ""
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
+        """Esegue lo scarico dei dettagli per ogni Ordine di Acquisto fornito."""
         if isinstance(data, dict):
             rows = data.get("rows", [])
             self.data_da = data.get("data_da", self.data_da)
@@ -76,6 +82,11 @@ class DettagliOdABot(BaseBot):
             rows = [{"numero_oda": "", "numero_contratto": ""}]
 
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
+
+        if not self.driver:
+            return False
+        assert self.driver
+
         page = DettagliOdAPage(self.driver, self.log)
 
         # Define source (System Downloads) and destination (Configured Path)

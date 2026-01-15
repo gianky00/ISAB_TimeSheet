@@ -11,7 +11,10 @@ from src.core.telegram_manager import TelegramService
 def mock_config(mocker):
     """Mock config manager to return a test token and chat id."""
     mock_conf = mocker.patch("src.core.config_manager.load_config")
-    mock_conf.return_value = {"telegram_token": "TEST_TOKEN", "telegram_chat_id": "123456789"}
+    mock_conf.return_value = {
+        "telegram_token": "TEST_TOKEN",
+        "telegram_chat_id": "123456789",
+    }
     return mock_conf
 
 

@@ -1,4 +1,3 @@
-
 from src.core.contabilita_queries import ContabilitaQueries
 from src.gui.widgets.sidebar_button import SidebarButton
 
@@ -29,6 +28,7 @@ class TestFinalSimpleBoost:
 
     def test_modern_button_no_icon(self, qapp):
         from src.gui.widgets.modern_button import ModernButton
+
         btn = ModernButton("Text only")
         assert btn.text() == "Text only"
         # Check size logic

@@ -24,6 +24,7 @@ class PasswordManager:
     _SALT_FILE = _KEY_DIR / "encryption.salt"
 
     def __new__(cls):
+        """Pattern Singleton per il gestore delle password."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialize()
@@ -66,7 +67,7 @@ class PasswordManager:
             salt=salt,
             length=32,
             n=2
-            ** 14,  # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
+            **14,  # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
             r=8,
             p=1,
         )

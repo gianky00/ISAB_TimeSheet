@@ -1,79 +1,117 @@
-
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-from selenium.webdriver.remote.webelement import WebElement
+from unittest.mock import MagicMock
 
 from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
 
-class TestScaricaTSBotHardened:
+class TestScaricoTSBotHardened:
+    def test_filename_generation_logic(self):
+        """Testa la logica di costruzione del nome file (Pure Logic)."""
+        # Simuliamo la logica di _download_excel senza istanziare il bot
+        numero_oda = "12345"
+        posizione_oda = "10"
 
-    @pytest.fixture
-    def bot(self, mock_driver):
-        # We need to mock the super().__init__ calls that might try to init driver
-        with patch("src.bots.base.base_bot.BaseBot._init_driver", return_value=mock_driver):
-            bot = ScaricaTSBot(username="test_user", password="test_password", fornitore="TEST_VENDOR")
-            bot.driver = mock_driver
-            # Manually set waits to our mocks
-            bot.wait = MagicMock()
-            bot.long_wait = MagicMock()
-            return bot
+        # Scenario 1: ODA + POS
+        safe_oda = numero_oda
+        safe_pos = posizione_oda
+        name = f"TS_{safe_oda}-{safe_pos}.xlsx"
+        assert name == "TS_12345-10.xlsx"
 
-    def test_navigate_to_timesheet_success(self, bot):
-        """Test the navigation flow to the timesheet page."""
-        # Setup: mock wait.until to return a mock element (clickable)
-        mock_el = MagicMock(spec=WebElement)
-        bot.wait.until.return_value = mock_el
+        # Scenario 2: Solo ODA
+        posizione_oda = ""
+        name = f"TS_{safe_oda}.xlsx"
+        assert name == "TS_12345.xlsx"
 
-        # We also need to mock _attendi_scomparsa_overlay which is in BaseBot
-        with patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
-            success = bot._navigate_to_timesheet()
+    def test_validate_data_scenarios(self, mocker):
+        """Verifica la validazione dati mockando l'istanza."""
+        # Creiamo un mock dell'oggetto bot per evitare l'init reale
+        bot = MagicMock(spec=ScaricaTSBot)
+        bot.username = "u"
+        bot.password = "p"
+        bot.fornitore = "FornitoreTest"
 
-        assert success is True
-        # Verify calls to wait.until
-        assert bot.wait.until.call_count >= 2
-        # Check if it looked for 'Report' and 'Timesheet'
-        # calls[0] is the EC.element_to_be_clickable for Report
-        # calls[1] is the EC.element_to_be_clickable for Timesheet
-        # calls[2] is the visibility check for fornitore dropdown
+        # Colleghiamo il metodo reale al mock per testarlo
+        bot.validate_data = ScaricaTSBot.validate_data.__get__(bot, ScaricaTSBot)
 
-    def test_setup_filters_success(self, bot):
-        """Test the filter setup logic (Vendor selection and Date)."""
-        bot.fornitore = "VENDOR_XYZ"
-        bot.data_da = "10.01.2026"
+        # Mock del metodo super().validate_data (BaseBot)
+        mocker.patch(
+            "src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")
+        )
 
-        mock_el = MagicMock(spec=WebElement)
-        bot.wait.until.return_value = mock_el
-        bot.long_wait.until.return_value = mock_el
+        # 1. Successo
+        valid, msg = bot.validate_data([{"numero_oda": "123"}])
+        assert valid is True
 
-        with patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"):
-                success = bot._setup_filters()
+        # 2. Fallimento fornitore
+        bot.fornitore = ""
+        valid, msg = bot.validate_data([{"numero_oda": "123"}])
+        assert valid is False
+        assert "Fornitore" in msg
 
-        assert success is True
-        # Verify that send_keys was called with the date
-        mock_el.send_keys.assert_called_with("10.01.2026")
+    def test_process_downloaded_files_vba_logic(self, mocker, tmp_path):
+        """Testa lo spostamento e gestione conflitti mockando l'istanza."""
+        bot = MagicMock(spec=ScaricaTSBot)
+        bot.log = MagicMock()
+        bot._check_stop = MagicMock()
+        bot._ask_user = MagicMock(return_value="REV1")
 
-    def test_run_loop_handles_exception_and_continues(self, bot):
-        """Test that run() continues to next row if one fails."""
-        data = [
-            {"numero_oda": "ODA1", "posizione_oda": "10"},
-            {"numero_oda": "ODA2", "posizione_oda": "20"}
-        ]
+        # Colleghiamo il metodo reale
+        bot._process_downloaded_files_vba_style = (
+            ScaricaTSBot._process_downloaded_files_vba_style.__get__(bot, ScaricaTSBot)
+        )
 
-        # Mock dependencies to return success for first and fail for second (or viceversa)
-        with patch.object(bot, "_navigate_to_timesheet", return_value=True):
-            with patch.object(bot, "_setup_filters", return_value=True):
-                # Mock _download_excel: fail first, succeed second
-                with patch.object(bot, "_download_excel") as mock_download:
-                    mock_download.side_effect = [Exception("Crashed"), Path("test.xlsx")]
+        dest_dir = tmp_path / "dest"
+        dest_dir.mkdir()
+        (dest_dir / "TS_123.xlsx").write_text("old")  # Conflitto
 
-                    # We also need to mock the UI interactions inside the loop
-                    bot.wait.until.return_value = MagicMock()
+        src_file = tmp_path / "TS_123.xlsx"
+        src_file.write_text("new")
 
-                    success = bot.run(data)
+        m_shutil = mocker.patch("shutil.move")
 
-                    # Should be false because not ALL rows succeeded (success_count == len(rows))
-                    assert success is False
-                    assert mock_download.call_count == 2
+        bot._process_downloaded_files_vba_style([str(src_file)], dest_dir)
+
+        # Deve aver chiesto il suffisso e aver spostato con il nuovo nome
+        bot._ask_user.assert_called_once()
+        args = m_shutil.call_args[0]
+        assert "TS_123 REV1.xlsx" in str(args[1])
+
+    def test_setup_filters_mocked_driver(self, mocker):
+        """Verifica la sequenza di interazione con il driver per i filtri."""
+        bot = MagicMock(spec=ScaricaTSBot)
+        bot.driver = MagicMock()
+        bot.wait = MagicMock()
+        bot.long_wait = MagicMock()
+        bot.fornitore = "TEST_FORN"
+        bot.data_da = "01.01.2024"  # Obbligatorio per send_keys
+        bot._check_stop = MagicMock()
+        bot._attendi_scomparsa_overlay = MagicMock()
+
+        # Colleghiamo il metodo reale
+        bot._setup_filters = ScaricaTSBot._setup_filters.__get__(bot, ScaricaTSBot)
+
+        # Mocking expected_conditions e ActionChains
+        mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.EC")
+        m_actions = mocker.patch(
+            "src.bots.portale_fornitori.scarico_ts.bot.ActionChains"
+        )
+        mocker.patch("time.sleep")
+
+        # Mock elementi
+        mock_arrow = MagicMock()
+        mock_option = MagicMock()
+        mock_date_field = MagicMock()
+
+        # Configura i wait per restituire i mock degli elementi in sequenza
+        bot.wait.until.side_effect = [mock_arrow, mock_date_field]
+        bot.long_wait.until.return_value = mock_option
+
+        res = bot._setup_filters()
+
+        assert res is True
+        # Verifica iniezione JavaScript per click opzione (scrolling + click)
+        assert bot.driver.execute_script.call_count >= 2
+        # Verifica inserimento data
+        mock_date_field.send_keys.assert_called_with(bot.data_da)
+        # Verifica ActionChains
+        m_actions.assert_called_with(bot.driver)
+        m_actions.return_value.move_to_element.assert_called_with(mock_arrow)

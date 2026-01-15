@@ -103,7 +103,9 @@ class LoginPage:
             yes_btn = wait_popup.until(
                 EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES)
             )
-            self.log("⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.")
+            self.log(
+                "⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso."
+            )
             yes_btn.click()
             time.sleep(1)
         except TimeoutException:
@@ -143,28 +145,28 @@ class LoginPage:
             self._attendi_scomparsa_overlay(timeout_secondi=10)
 
             try:
+                # 1. Cerca il form di login (comportamento standard)
                 WebDriverWait(self.driver, 5).until(
                     EC.presence_of_element_located(LoginLocators.USERNAME_FIELD)
                 )
                 self._perform_login_form_action(username, password)
-
             except TimeoutException:
-                self.log("Campo Username non trovato. Verifico se già loggato...")
+                # 2. Se il form non c'è, controlla se siamo già loggati (fast-skip)
                 if self._verify_logged_in_via_ui():
                     self.log("✓ Rilevata sessione attiva (skip login).")
                     return True
-                else:
-                    self.log("⚠️ Username assente e sessione invalida/scaduta.")
-                    self.log("🔄 Ricarico la pagina per forzare il form di login...")
-                    self.driver.refresh()
-                    self._attendi_scomparsa_overlay(10)
 
-                    try:
-                        self._perform_login_form_action(username, password)
-                        return True
-                    except Exception as e:
-                        self.log(f"✗ Fallito recupero sessione: {e}")
-                        return False
+                self.log("⚠️ Username assente e sessione invalida/scaduta.")
+                self.log("🔄 Ricarico la pagina per forzare il form di login...")
+                self.driver.refresh()
+                self._attendi_scomparsa_overlay(10)
+
+                try:
+                    self._perform_login_form_action(username, password)
+                    return True
+                except Exception as e:
+                    self.log(f"✗ Fallito recupero sessione: {e}")
+                    return False
 
             self.log("✓ Login completato con successo")
             return True

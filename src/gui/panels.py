@@ -58,7 +58,10 @@ from src.utils.printing import get_installed_printers
 
 
 class BotWorker(QThread):
-    """Thread worker per eseguire i bot in background."""
+    """
+    Thread worker per eseguire i bot in background.
+    Gestisce i segnali di log, stato, conclusione e richieste di input interattivo.
+    """
 
     log_signal = pyqtSignal(str)
     status_signal = pyqtSignal(str)
@@ -66,6 +69,14 @@ class BotWorker(QThread):
     request_input_signal = pyqtSignal(str, dict, threading.Event)
 
     def __init__(self, bot, data, telegram_service=None):
+        """
+        Inizializza il worker del bot.
+
+        Args:
+            bot: L'istanza del bot da eseguire.
+            data: I dati di input per il bot.
+            telegram_service: Servizio opzionale per notifiche Telegram.
+        """
         super().__init__()
         self.bot = bot
         self.data = data
@@ -73,7 +84,7 @@ class BotWorker(QThread):
         self.telegram_service = telegram_service
 
     def run(self):
-        """Esegue il bot."""
+        """Avvia l'esecuzione del bot nel thread dedicato."""
         try:
             # Collega i callback
             self.bot.set_log_callback(self.log_signal.emit)
@@ -90,7 +101,15 @@ class BotWorker(QThread):
             self.finished_signal.emit(False)
 
     def _request_input_wrapper(self, prompt: str) -> str:
-        """Wrapper thread-safe per chiedere input alla GUI."""
+        """
+        Wrapper thread-safe per richiedere input all'utente tramite la GUI.
+        Blocca l'esecuzione del bot finché l'utente non risponde.
+
+        Args:
+            prompt: Messaggio da mostrare all'utente.
+        Returns:
+            str: Il valore inserito dall'utente.
+        """
         result_container: Dict[str, str] = {}
         event = threading.Event()
         self.request_input_signal.emit(prompt, result_container, event)
@@ -98,14 +117,17 @@ class BotWorker(QThread):
         return result_container.get("value", "")
 
     def stop(self):
-        """Richiede lo stop del bot."""
+        """Interrompe l'esecuzione del bot segnalando la richiesta di stop."""
         self._is_running = False
-        if self.bot:
+        if hasattr(self.bot, "request_stop"):
             self.bot.request_stop()
 
 
 class BaseBotPanel(QWidget):
-    """Pannello base per tutti i bot."""
+    """
+    Classe base per i pannelli di controllo dei bot.
+    Gestisce l'interfaccia comune: tabella dati, log, controlli di avvio/stop e report.
+    """
 
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
@@ -116,16 +138,27 @@ class BaseBotPanel(QWidget):
     status_changed = pyqtSignal(str, str)  # status, message
 
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
+        """
+        Inizializza il pannello base.
+
+        Args:
+            bot_id: Identificativo unico del bot.
+            bot_name: Nome visualizzato del bot.
+            bot_description: Descrizione delle funzionalità del bot.
+            parent: Widget genitore.
+        """
         super().__init__(parent)
         self.bot_id = bot_id
         self.bot_name = bot_name
         self.bot_description = bot_description
+
         self.worker = None
         self.start_time = None
-        self._setup_base_ui()
+        self._setup_ui()
+        self._connect_signals()
 
     def _setup_base_ui(self):
-        """Setup base UI."""
+        """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setSpacing(15)
 
@@ -172,10 +205,33 @@ class BaseBotPanel(QWidget):
 
         self.main_layout.addLayout(btn_layout)
 
+    def _setup_ui(self):
+        """
+        Inizializza l'interfaccia utente.
+        Deve essere sovrascritto nelle sottoclassi se necessario.
+        """
+        self._setup_base_ui()
+
     def _update_status(self, status: str, message: Optional[str] = None):
         """Aggiorna lo stato locale e emette il segnale."""
         self.status_card.setStatus(status, message)
         self.status_changed.emit(status, message if message else "")
+
+    def _connect_signals(self):
+        """Connette i segnali comuni ai callback del pannello."""
+        pass
+
+    def _on_log(self, message: str):
+        """Riceve un log dal bot e lo mostra nel widget."""
+        self.log_widget.append(message)
+
+    def _on_status(self, status: str):
+        """Riceve un aggiornamento di stato dal bot."""
+        self._update_status(status)
+
+    def get_bot_instance(self):
+        """Restituisce un'istanza del bot. Da implementare nelle sottoclassi."""
+        return None
 
     def get_current_status(self):
         """Ritorna lo stato corrente (status, message)."""
@@ -272,6 +328,11 @@ class BaseBotPanel(QWidget):
             status=status,
         )
 
+        # Update Status Card (Fix Global Status Stuck)
+        final_status = StatusCard.Status.SUCCESS if success else StatusCard.Status.ERROR
+        final_msg = "Completato" if success else "Errore"
+        self._update_status(final_status, final_msg)
+
         # Risultati per Telegram/UI (#2)
         if (
             self.worker
@@ -308,6 +369,10 @@ class BaseBotPanel(QWidget):
             self.worker.wait()
             self.worker = None
 
+    def _on_bot_finished(self, success: bool):
+        """Alias per _on_worker_finished (compatibilità test)."""
+        self._on_worker_finished(success)
+
     def _on_log(self, message: str):
         """Aggiunge un messaggio al log e lo inoltra a Telegram se importante."""
         self.log_widget.append(message)
@@ -337,7 +402,9 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
-    def _ask_user_input(self, prompt: str, result_container: dict, event: threading.Event):
+    def _ask_user_input(
+        self, prompt: str, result_container: dict, event: threading.Event
+    ):
         """Callback per input utente dal worker (thread-safe via signal)."""
         text, ok = QInputDialog.getText(self, "Richiesta Input", prompt)
         if ok:
@@ -422,9 +489,8 @@ class ScaricaTSPanel(BaseBotPanel):
             main_window.show_settings()
 
     def refresh_fornitori(self):
-        """Aggiorna la lista dei fornitori."""
-        if hasattr(self, "params_widget"):
-            self.params_widget.refresh_fornitori()
+        """Ricarica i fornitori nel pannello Scarica TS."""
+        self.params_widget.refresh_fornitori()
 
     def _load_saved_data(self):
         """Carica i dati salvati."""
@@ -468,14 +534,29 @@ class ScaricaTSPanel(BaseBotPanel):
             self.data_table.set_data([])
             self._save_data()
 
-    def validate_ready(self) -> tuple[bool, str]:
+    def get_bot_instance(self):
+        """Crea e restituisce un'istanza di ScaricaTSBot."""
+        from src.bots import create_bot
+
         username, password = self.get_credentials()
-        if not username or not password:
-            return False, "Credenziali ISAB mancanti."
+        data_da, _ = self.params_widget.get_dates()
+        config = config_manager.load_config()
+        return create_bot(
+            "scarico_ts",
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=self.params_widget.get_dest_path(),
+            data_da=data_da,
+            fornitore=self.params_widget.get_fornitore(),
+            elabora_ts=self.elabora_ts_check.isChecked(),
+        )
+
+    def validate_ready(self) -> tuple[bool, str]:
+        """Verifica che il pannello Scarica TS sia pronto per l'esecuzione."""
         if not self.data_table.get_data():
-            return False, "Nessun dato inserito."
-        if not self.params_widget.get_fornitore():
-            return False, "Fornitore mancante."
+            return False, "Nessun dato OdA inserito in tabella."
         return True, ""
 
     def _on_start(self):
@@ -486,36 +567,16 @@ class ScaricaTSPanel(BaseBotPanel):
         data = self.data_table.get_data()
         fornitore = self.params_widget.get_fornitore()
         data_da, _ = self.params_widget.get_dates()
-        download_path = self.params_widget.get_dest_path() or str(
-            Path.home() / "Downloads"
-        )
-
-        if not all([username, password, data, fornitore]):
-            ToastManager.instance().show("Verifica i parametri di avvio.", "warning")
-            self._update_status(StatusCard.Status.ERROR, "Parametri incompleti")
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
-            return
 
         self._save_data()
 
-        from src.bots import create_bot
-
-        config = config_manager.load_config()
-        bot = create_bot(
-            "scarico_ts",
-            username=username,
-            password=password,
-            headless=config.get("browser_headless", False),
-            timeout=config.get("browser_timeout", 30),
-            download_path=download_path,
-            data_da=data_da,
-            fornitore=fornitore,
-            elabora_ts=self.elabora_ts_check.isChecked(),
-        )
+        bot = self.get_bot_instance()
 
         if not bot:
-            ToastManager.instance().show("Errore creazione bot.", "error")
+            self.log_widget.append("❌ Errore creazione bot (parametri mancanti?)")
+            self._update_status(StatusCard.Status.ERROR, "Errore avvio")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
 
         bot_data = {
@@ -525,7 +586,11 @@ class ScaricaTSPanel(BaseBotPanel):
             "elabora_ts": self.elabora_ts_check.isChecked(),
         }
 
-        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
+        # Get telegram service safely
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -606,15 +671,8 @@ class DettagliOdAPanel(BaseBotPanel):
             main_window.show_settings()
 
     def refresh_fornitori(self):
-        if hasattr(self, "params_widget"):
-            self.params_widget.refresh_fornitori()
-
-        # Aggiorna anche i contratti nella tabella
-        config = config_manager.load_config()
-        contracts = config.get("contracts", [])
-        # Assicura che ci sia l'opzione vuota
-        options = [""] + contracts
-        self.data_table.update_column_options("Numero Contratto", options)
+        """Ricarica i fornitori nel pannello Dettagli OdA."""
+        self.params_widget.refresh_fornitori()
 
     def _load_saved_data(self):
         config = config_manager.load_config()
@@ -657,6 +715,7 @@ class DettagliOdAPanel(BaseBotPanel):
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
+        """Verifica se il pannello è pronto per l'avvio del bot."""
         username, password = self.get_credentials()
         if not username or not password:
             return False, "Credenziali ISAB mancanti."
@@ -707,13 +766,17 @@ class DettagliOdAPanel(BaseBotPanel):
             return
 
         bot_data = {
-            "rows": self.data_table.get_data(),
+            "rows": rows,
             "fornitore": fornitore,
             "data_da": data_da,
             "data_a": data_a,
         }
 
-        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
+        # Get telegram service safely
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -727,7 +790,165 @@ class DettagliOdAPanel(BaseBotPanel):
         self.bot_started.emit()
 
 
+class PrenotaBPPanel(BaseBotPanel):
+    """Pannello per il bot Prenota BP."""
+
+    def __init__(self, parent=None):
+        super().__init__(
+            bot_id="prenota_bp",
+            bot_name="🎫 Prenota BP",
+            bot_description="Gestisce la prenotazione dei Badge Provvisori sul portale.",
+            parent=parent,
+        )
+        self._setup_content()
+        # Defer data loading
+        QTimer.singleShot(10, self._safe_load_data)
+
+    def _safe_load_data(self):
+        try:
+            self._load_saved_data()
+        except Exception as e:
+            print(f"❌ Error loading data for PrenotaBPPanel: {e}")
+
+    def _setup_content(self):
+        """Configura il contenuto specifico del pannello."""
+        params_group = QGroupBox("Parametri Prenotazione")
+        params_layout = QVBoxLayout(params_group)
+        params_layout.setSpacing(10)
+
+        # Widget atomico per i parametri - Abilitato date range
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=False
+        )
+        self.params_widget.settings_requested.connect(self._open_settings)
+        self.params_widget.changed.connect(self._save_data)
+        params_layout.addWidget(self.params_widget)
+
+        params_layout.addSpacing(10)
+
+        table_toolbar = QHBoxLayout()
+        table_toolbar.addStretch()
+        self.clear_btn = ModernButton(
+            "Pulisci Tabella",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+            parent=self,
+        )
+        self.clear_btn.clicked.connect(self._clear_table)
+        table_toolbar.addWidget(self.clear_btn)
+        params_layout.addLayout(table_toolbar)
+
+        # Definiamo le nuove colonne: NUMERO BP e NOTE DI RITIRO
+        columns = [
+            {"name": "NUMERO BP", "type": "text"},
+            {"name": "NOTE DI RITIRO", "type": "text"},
+        ]
+        self.data_table = EditableDataTable(columns)
+        self.data_table.setMinimumHeight(200)
+        self.data_table.data_changed.connect(self._save_data)
+        params_layout.addWidget(self.data_table)
+
+        self.content_layout.addWidget(params_group)
+
+    def _open_settings(self):
+        """Apre le impostazioni."""
+        main_window = self.window()
+        if hasattr(main_window, "show_settings"):
+            main_window.show_settings()
+
+    def _load_saved_data(self):
+        config = config_manager.load_config()
+        saved_data = config.get("last_prenota_bp_data", [])
+        if saved_data:
+            self.data_table.set_data(saved_data)
+
+        # Usiamo set_dates (metodo corretto di BotParametersWidget)
+        date_da = config.get("last_prenota_date_from", "01.01.2024")
+        date_a = config.get("last_prenota_date_to", "31.12.2025")
+        self.params_widget.set_dates(date_da, date_a)
+
+    def _save_data(self):
+        data = self.data_table.get_data()
+        config_manager.set_config_value("last_prenota_bp_data", data)
+
+        # Usiamo get_dates (metodo corretto di BotParametersWidget)
+        date_da, date_a = self.params_widget.get_dates()
+        config_manager.set_config_value("last_prenota_date_from", date_da)
+        config_manager.set_config_value("last_prenota_date_to", date_a)
+
+    def _clear_table(self):
+        if (
+            QMessageBox.question(
+                self,
+                "Conferma",
+                "Cancellare tutti i dati dalla lista?",
+                QMessageBox.StandardButton.Yes,
+            )
+            == QMessageBox.StandardButton.Yes
+        ):
+            self.data_table.set_data([])
+            self._save_data()
+
+    def _on_start(self):
+        """Override: Prepara e avvia il worker specifico."""
+        # Validazione form
+        ready, msg = self.validate_ready()
+        if not ready:
+            QMessageBox.warning(self, "Attenzione", msg)
+            return
+
+        # Recupera dati e configura bot
+        from src.bots.portale_fornitori.prenota_bp.bot import PrenotaBPBot
+
+        username, password = self.get_credentials()
+        config = config_manager.load_config()
+
+        fornitore = self.params_widget.get_fornitore()
+        date_da, date_a = self.params_widget.get_dates()
+
+        bot = PrenotaBPBot(
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            fornitore=fornitore,
+            data_da=date_da,
+            data_a=date_a,
+        )
+
+        bot_data = {
+            "rows": self.data_table.get_data(),
+            "fornitore": fornitore,
+            "data_da": date_da,
+            "data_a": date_a,
+        }
+
+        # Get telegram service safely
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
+
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+
+        # UI Update
+        self._update_status(StatusCard.Status.RUNNING, "Esecuzione...")
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.log_widget.clear()
+        self.log_widget.append("▶ Avvio bot Prenota BP...")
+        self.worker.start()
+        self.bot_started.emit()
+
+
 class CaricoTSPanel(BaseBotPanel):
+    """
+    Pannello per l'automazione del caricamento dei TimeSheet (Carico TS).
+    Gestisce l'input dei dati e l'avvio del bot CaricoTSBot.
+    """
+
     """Pannello per il bot Carico TS."""
 
     def __init__(self, parent=None):
@@ -815,6 +1036,7 @@ class CaricoTSPanel(BaseBotPanel):
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
+        """Verifica se il pannello Carico TS ha credenziali e dati validi."""
         username, password = self.get_credentials()
         if not username or not password:
             return False, "Credenziali ISAB mancanti."
@@ -872,9 +1094,11 @@ class CaricoTSPanel(BaseBotPanel):
             ToastManager.instance().show("Impossibile creare il bot.", "error")
             return
 
-        self.worker = BotWorker(
-            bot, {"rows": data}, telegram_service=self.window().telegram
-        )
+        # Get telegram service safely
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        self.worker = BotWorker(bot, {"rows": data}, telegram_service=tg_service)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -890,6 +1114,11 @@ class CaricoTSPanel(BaseBotPanel):
 
 
 class ScaricoPDLPanel(BaseBotPanel):
+    """
+    Pannello per lo scarico massivo delle PDL da SafeWork.
+    Permette di inserire una lista di numeri PDL da processare.
+    """
+
     """Pannello per il bot Scarico PDL (SafeWork)."""
 
     def __init__(self, parent=None):
@@ -928,7 +1157,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(35)
         self.printer_combo.setMinimumWidth(150)
-        self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.printer_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         self.printer_combo.setStyleSheet(
             """
             QComboBox {
@@ -964,7 +1195,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.dest_path_edit = QLineEdit()
         self.dest_path_edit.setPlaceholderText("Download utente (default)")
         self.dest_path_edit.setReadOnly(True)
-        self.dest_path_edit.setMinimumWidth(200) # Ridotto per stare in riga
+        self.dest_path_edit.setMinimumWidth(200)  # Ridotto per stare in riga
 
         # Dynamic Width logic simplified/removed as we are in HBox with stretch
         # def update_width_pdl(): ...
@@ -1077,6 +1308,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             self._save_data()
 
     def validate_ready(self) -> tuple[bool, str]:
+        """Verifica se il pannello è pronto per l'avvio del bot."""
         username, password = self.get_credentials()
         if not username or not password:
             return False, "Credenziali SafeWork mancanti."
@@ -1168,7 +1400,11 @@ class ScaricoPDLPanel(BaseBotPanel):
             ToastManager.instance().show("Errore creazione bot.", "error")
             return
 
-        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
+        # Get telegram service safely
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
@@ -1186,21 +1422,27 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.bot_started.emit()
 
     def _on_worker_finished(self, success: bool):
-        """Gestione custom per invio file unito."""
+        """Gestione custom per invio file unito e segnalazione PdL inesistenti."""
         # Controlla se l'opzione di invio era attiva per questa esecuzione
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
 
-        # Catturiamo i file PRIMA di chiamare super() perché super() resetta self.worker
-        files_to_send = []
-        if (
-            success
-            and merge_and_send
-            and self.worker
-            and hasattr(self.worker.bot, "downloaded_files")
-        ):
+        # Catturiamo i file e i PdL mancanti PRIMA di chiamare super()
+        files_to_send: list = []
+        missing_list: list = []
+        if self.worker and hasattr(self.worker.bot, "downloaded_files"):
             files_to_send = self.worker.bot.downloaded_files
 
+        if self.worker and hasattr(self.worker.bot, "missing_pdls"):
+            missing_list = self.worker.bot.missing_pdls
+
         super()._on_worker_finished(success)
+
+        # Se ci sono PdL mancanti, aggiorniamo il messaggio della card (Normal condition)
+        if missing_list:
+            missing_str = ", ".join(missing_list)
+            self._update_status(
+                StatusCard.Status.SUCCESS, f"Completato (Inesistenti: {missing_str})"
+            )
 
         if success and merge_and_send and files_to_send:
             win = self.window()
@@ -1287,6 +1529,7 @@ class TimbratureBotPanel(BaseBotPanel):
             main_window.show_settings()
 
     def refresh_fornitori(self):
+        """Ricarica i fornitori nel pannello timbrature."""
         if hasattr(self, "params_widget"):
             self.params_widget.refresh_fornitori()
 
@@ -1327,6 +1570,7 @@ class TimbratureBotPanel(BaseBotPanel):
         )
 
     def validate_ready(self) -> tuple[bool, str]:
+        """Verifica se il pannello è pronto per l'avvio del bot."""
         username, password = self.get_credentials()
         if not username or not password:
             return False, "Credenziali ISAB mancanti."
@@ -1372,7 +1616,11 @@ class TimbratureBotPanel(BaseBotPanel):
 
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
-        self.worker = BotWorker(bot, bot_data, telegram_service=self.window().telegram)
+        # Get telegram service safely
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        self.worker = BotWorker(bot, bot_data, telegram_service=tg_service)
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished_custom)
@@ -1390,10 +1638,6 @@ class TimbratureBotPanel(BaseBotPanel):
             self.data_updated.emit()
 
 
-
-
-
-
 class TimbratureDBPanel(QWidget):
     """Pannello per la visualizzazione del Database Timbrature Isab ottimizzato."""
 
@@ -1409,18 +1653,21 @@ class TimbratureDBPanel(QWidget):
 
         # Model initialization
         self.headers = [
-            "Data", "Ingresso", "Uscita", "Nome", "Cognome",
-            "Presenza TS", "Sito", "Reparto", "Cantiere"
+            "Data",
+            "Ingresso",
+            "Uscita",
+            "Nome",
+            "Cognome",
+            "Presenza TS",
+            "Sito",
+            "Reparto",
+            "Cantiere",
         ]
         self.model = FastTableModel([], self.headers)
 
         self._setup_ui()
         # Pre-caricamento immediato e profondo
         QTimer.singleShot(50, self.refresh_data)
-
-
-
-
 
     def _setup_ui(self):
         """Configura l'interfaccia utente."""
@@ -1466,7 +1713,9 @@ class TimbratureDBPanel(QWidget):
             self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.currentIndexChanged.connect(lambda: self.refresh_data())
         self.reparto_filter.setMinimumWidth(150)
-        self.reparto_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.reparto_filter.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         search_layout.addWidget(self.reparto_filter)
 
         # Cantiere Filter
@@ -1476,7 +1725,9 @@ class TimbratureDBPanel(QWidget):
             self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.currentIndexChanged.connect(lambda: self.refresh_data())
         self.cantiere_filter.setMinimumWidth(150)
-        self.cantiere_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.cantiere_filter.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         search_layout.addWidget(self.cantiere_filter)
 
         # Import Button
@@ -1495,7 +1746,9 @@ class TimbratureDBPanel(QWidget):
         self.db_table.setModel(self.model)
         self.db_table.verticalHeader().setVisible(False)
         self.db_table.setAlternatingRowColors(True)
-        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.db_table.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.db_table.setSortingEnabled(True)
 
@@ -1755,8 +2008,6 @@ class TimbratureDBPanel(QWidget):
             self.settings_table.setCellWidget(i, 3, combo_cant)
 
         self.settings_table.blockSignals(False)
-
-
 
     def _import_excel_manually(self):
         file_path, _ = QFileDialog.getOpenFileName(

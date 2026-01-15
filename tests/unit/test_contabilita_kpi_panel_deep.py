@@ -4,22 +4,42 @@ from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
 
 
 class TestContabilitaKPIPanelDeep:
-    @patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024])
+    @patch(
+        "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+        return_value=[2024],
+    )
     @patch("src.core.contabilita_manager.ContabilitaManager.get_year_stats")
     @patch("src.core.contabilita_manager.ContabilitaManager.get_data_by_year")
-    def test_load_kpi_data_and_plotting(self, mock_get_data, mock_get_stats, mock_years, qapp, qtbot):
+    def test_load_kpi_data_and_plotting(
+        self, mock_get_data, mock_get_stats, mock_years, qapp, qtbot
+    ):
         # Mock stats
         mock_get_stats.return_value = {
             "total_prev": 10000.0,
             "total_ore": 100.0,
             "count_total": 5,
             "ore_dirette": 80.0,
-            "ore_indirette": 20.0
+            "ore_indirette": 20.0,
         }
 
         # Mock raw data for charts
         data = [
-            ("2024-01-01", "gennaio", "P1", "1000", "A1", "T1", "O1", "CHIUSA", "SQUADRA", "10", "1.0", "", "", "")
+            (
+                "2024-01-01",
+                "gennaio",
+                "P1",
+                "1000",
+                "A1",
+                "T1",
+                "O1",
+                "CHIUSA",
+                "SQUADRA",
+                "10",
+                "1.0",
+                "",
+                "",
+                "",
+            )
         ]
         mock_get_data.return_value = data
 

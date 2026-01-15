@@ -16,13 +16,17 @@ class TestTelegramCoreDeep:
         mock_context = MagicMock()
 
         mock_file = AsyncMock()
-        mock_file.download_as_bytearray = AsyncMock(return_value=bytearray(b"fake_audio"))
+        mock_file.download_as_bytearray = AsyncMock(
+            return_value=bytearray(b"fake_audio")
+        )
         mock_context.bot.get_file = AsyncMock(return_value=mock_file)
 
         mock_update.message.voice.file_id = "voice123"
         mock_update.message.reply_chat_action = AsyncMock()
 
-        with patch.object(service, "_process_with_ai", new_callable=AsyncMock) as mock_ai:
+        with patch.object(
+            service, "_process_with_ai", new_callable=AsyncMock
+        ) as mock_ai:
             await service._handle_voice(mock_update, mock_context)
             mock_ai.assert_called_once()
 
@@ -37,7 +41,9 @@ class TestTelegramCoreDeep:
         mock_update.message.caption = "test caption"
 
         mock_file = AsyncMock()
-        mock_file.download_as_bytearray = AsyncMock(return_value=bytearray(b"fake_photo"))
+        mock_file.download_as_bytearray = AsyncMock(
+            return_value=bytearray(b"fake_photo")
+        )
         mock_context.bot.get_file = AsyncMock(return_value=mock_file)
 
         mock_signal = MagicMock()
@@ -60,7 +66,9 @@ class TestTelegramCoreDeep:
 
         # Nav to Bots
         await service._handle_nav_actions("nav_bots", mock_query)
-        assert "🤖 *Seleziona Piattaforma*" in mock_query.edit_message_text.call_args[0][0]
+        assert (
+            "🤖 *Seleziona Piattaforma*" in mock_query.edit_message_text.call_args[0][0]
+        )
 
     def test_sync_send_methods(self, service):
         # Mock loop and app

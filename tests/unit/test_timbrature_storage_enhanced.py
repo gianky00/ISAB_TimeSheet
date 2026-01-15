@@ -12,7 +12,6 @@ from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 
 
 class TestTimbratureStorage:
-
     @pytest.fixture
     def storage(self, tmp_path):
         db_path = tmp_path / "test_timbrature.db"
@@ -29,7 +28,9 @@ class TestTimbratureStorage:
     def test_get_employees_from_timbrature(self, storage):
         # Need to insert timbratures first to get unique employees
         with sqlite3.connect(storage.db_path) as conn:
-            conn.execute("INSERT INTO timbrature (nome, cognome) VALUES ('MARIO', 'ROSSI')")
+            conn.execute(
+                "INSERT INTO timbrature (nome, cognome) VALUES ('MARIO', 'ROSSI')"
+            )
             conn.commit()
 
         with patch("src.core.config_manager.load_config", return_value={}):
@@ -38,11 +39,13 @@ class TestTimbratureStorage:
             assert employees[0]["nome"] == "MARIO"
 
     def test_update_employee_details(self, storage):
-        with patch("src.core.config_manager.load_config", return_value={}), patch(
-            "src.core.config_manager.set_config_value"
-        ) as mock_set:
-
-            storage.update_employee_details("MARIO", "ROSSI", reparto="STRUMENTALE", cantiere="ISAB SUD")
+        with (
+            patch("src.core.config_manager.load_config", return_value={}),
+            patch("src.core.config_manager.set_config_value") as mock_set,
+        ):
+            storage.update_employee_details(
+                "MARIO", "ROSSI", reparto="STRUMENTALE", cantiere="ISAB SUD"
+            )
 
             # Verify set_config_value called with correct mapping
             args, _ = mock_set.call_args

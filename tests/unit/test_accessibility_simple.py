@@ -11,9 +11,9 @@ class TestAccessibilitySimple:
         widget = MagicMock(spec=QWidget)
         # Mock focusPolicy to return NoFocus by default
         widget.focusPolicy.return_value = Qt.FocusPolicy.NoFocus
-        
+
         make_accessible(widget, "Test Widget", "Description")
-        
+
         widget.setAccessibleName.assert_called_with("Test Widget")
         widget.setAccessibleDescription.assert_called_with("Description")
         widget.setFocusPolicy.assert_called_with(Qt.FocusPolicy.TabFocus)

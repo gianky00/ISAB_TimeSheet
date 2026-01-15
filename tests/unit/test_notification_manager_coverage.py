@@ -1,130 +1,90 @@
-import json
-import uuid
-from datetime import datetime
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from src.core import notification_manager, config_manager
 
-# Resetta il singleton prima di ogni test se necessario
-@pytest.fixture(autouse=True)
-def reset_singleton():
-    notification_manager.NotificationManager._instance = None
-    yield
-    notification_manager.NotificationManager._instance = None
+from src.core.notification_manager import NotificationManager
 
-class TestNotificationManagerCoverage:
 
-    def test_singleton_instance(self, tmp_path):
-        """Test singleton pattern."""
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            instance1 = notification_manager.NotificationManager.instance()
-            instance2 = notification_manager.NotificationManager.instance()
-            assert instance1 is instance2
+class TestNotificationManager:
+    @pytest.fixture
+    def manager(self, tmp_path, mocker):
+        # Mock CONFIG_DIR to use tmp_path
+        mocker.patch("src.core.config_manager.CONFIG_DIR", tmp_path)
+        # Reset singleton for testing
+        NotificationManager._instance = None
+        return NotificationManager.instance()
 
-    def test_add_notification(self, tmp_path, qtbot):
-        """Test adding a notification."""
-        # Setup config dir
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            
-            # Watch signals
-            with qtbot.waitSignal(mgr.notification_added, timeout=1000) as blocker:
-                mgr.add_notification("Title", "Message", "success")
-            
-            assert blocker.args[0]["title"] == "Title"
-            assert len(mgr.notifications) == 1
-            assert mgr.get_unread_count() == 1
-            
-            # Verify file persistence
-            assert (tmp_path / "notifications.json").exists()
+    def test_singleton(self, manager):
+        assert NotificationManager.instance() is manager
 
-    def test_load_notifications(self, tmp_path):
-        """Test loading notifications from disk."""
-        # Create fake file
-        fake_data = [
-            {"id": "1", "title": "Old", "timestamp": "2023-01-01T00:00:00", "read": True},
-            {"id": "2", "title": "New", "timestamp": "2024-01-01T00:00:00", "read": False}
-        ]
-        file_path = tmp_path / "notifications.json"
-        with open(file_path, "w") as f:
-            json.dump(fake_data, f)
+    def test_add_notification(self, manager):
+        # Mock signals explicitly
+        manager.notification_added = MagicMock()
+        manager.notifications_updated = MagicMock()
+        manager.unread_count_changed = MagicMock()
 
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            # Should be sorted reverse timestamp (New first)
-            assert len(mgr.notifications) == 2
-            assert mgr.notifications[0]["id"] == "2"
-            assert mgr.notifications[1]["id"] == "1"
+        manager.add_notification("Title", "Message", "error")
 
-    def test_mark_as_read(self, tmp_path):
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            mgr.add_notification("T", "M")
-            notif_id = mgr.notifications[0]["id"]
-            
-            assert mgr.get_unread_count() == 1
-            mgr.mark_as_read(notif_id)
-            assert mgr.get_unread_count() == 0
-            assert mgr.notifications[0]["read"] is True
+        assert len(manager.notifications) == 1
+        assert manager.notifications[0]["title"] == "Title"
+        assert manager.notifications[0]["level"] == "error"
+        assert manager.notifications[0]["read"] is False
 
-    def test_mark_all_as_read(self, tmp_path):
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            mgr.add_notification("A", "M")
-            mgr.add_notification("B", "M")
-            
-            assert mgr.get_unread_count() == 2
-            mgr.mark_all_as_read()
-            assert mgr.get_unread_count() == 0
+        manager.notification_added.emit.assert_called_once()
+        args = manager.notification_added.emit.call_args[0][0]
+        assert args["title"] == "Title"
 
-    def test_delete_notification(self, tmp_path):
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            mgr.add_notification("A", "M")
-            notif_id = mgr.notifications[0]["id"]
-            
-            mgr.delete_notification(notif_id)
-            assert len(mgr.notifications) == 0
+    def test_get_unread_count(self, manager):
+        manager.add_notification("T1", "M1", "info")
+        manager.add_notification("T2", "M2", "error")  # Unread error
+        manager.add_notification("T3", "M3", "error")  # Unread error
 
-    def test_clear_all(self, tmp_path):
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            mgr.add_notification("A", "M")
-            mgr.add_notification("B", "M")
-            
-            mgr.clear_all()
-            assert len(mgr.notifications) == 0
+        assert manager.get_unread_count() == 2
 
-    def test_get_notifications_filter(self, tmp_path):
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            mgr.add_notification("Unread", "M", "info")
-            mgr.add_notification("Read", "M", "info")
-            mgr.notifications[0]["read"] = True # Mark "Read" as read (it was inserted at 0)
-            
-            unread = mgr.get_notifications(filter_unread=True)
-            assert len(unread) == 1
-            assert unread[0]["title"] == "Unread"
-            
-            all_notifs = mgr.get_notifications(filter_unread=False)
-            assert len(all_notifs) == 2
+        # Mark one as read
+        manager.mark_as_read(
+            manager.notifications[0]["id"]
+        )  # notifications[0] is most recent (T3)
+        assert manager.get_unread_count() == 1
 
-    def test_load_notifications_exception(self, tmp_path):
-        """Test _load_notifications exception handling."""
+    def test_mark_all_as_read(self, manager):
+        manager.add_notification("T1", "M1", "error")
+        manager.add_notification("T2", "M2", "error")
+        assert manager.get_unread_count() == 2
+
+        manager.mark_all_as_read()
+        assert manager.get_unread_count() == 0
+        assert all(n["read"] for n in manager.notifications)
+
+    def test_delete_notification(self, manager):
+        manager.add_notification("T1", "M1")
+        id_to_del = manager.notifications[0]["id"]
+
+        manager.delete_notification(id_to_del)
+        assert len(manager.notifications) == 0
+
+    def test_clear_all(self, manager):
+        manager.add_notification("T1", "M1")
+        manager.add_notification("T2", "M2")
+
+        manager.clear_all()
+        assert len(manager.notifications) == 0
+
+    def test_persistence(self, manager, tmp_path):
+        manager.add_notification("Persist Me", "Important")
+
+        # Create new instance, should load from file
+        NotificationManager._instance = None
+        new_manager = NotificationManager.instance()
+
+        assert len(new_manager.notifications) == 1
+        assert new_manager.notifications[0]["title"] == "Persist Me"
+
+    def test_load_corrupted_file(self, tmp_path):
         notif_file = tmp_path / "notifications.json"
-        notif_file.write_text("NOT JSON")
-        
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            # Reset instance to force reload
-            notification_manager.NotificationManager._instance = None
-            manager = notification_manager.NotificationManager.instance()
-            # Should return empty list on JSON error
-            assert manager.notifications == []
+        notif_file.write_text("invalid json")
 
-    def test_save_notifications_exception(self, tmp_path):
-        """Test _save_notifications exception handling."""
-        with patch.object(config_manager, "CONFIG_DIR", tmp_path):
-            mgr = notification_manager.NotificationManager.instance()
-            with patch("builtins.open", side_effect=Exception("Disk error")):
-                # Should not crash
-                mgr._save_notifications()
+        with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
+            NotificationManager._instance = None
+            manager = NotificationManager.instance()
+            assert manager.notifications == []

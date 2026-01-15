@@ -12,6 +12,7 @@ def telegram_service():
     service.connected_chat_id = "12345"
     return service
 
+
 @pytest.fixture
 def mock_update():
     update = MagicMock(spec=Update)
@@ -30,6 +31,7 @@ def mock_update():
     update.message = message
 
     return update
+
 
 class TestTelegramManagerLogic:
     def test_initialization(self, telegram_service):
@@ -91,7 +93,9 @@ class TestTelegramManagerLogic:
         telegram_service.user_states[chat_id] = None
         mock_update.message.text = "Scarica PDL 123"
 
-        with patch.object(telegram_service, "_process_with_ai", new_callable=AsyncMock) as mock_ai:
+        with patch.object(
+            telegram_service, "_process_with_ai", new_callable=AsyncMock
+        ) as mock_ai:
             await telegram_service._handle_text_input(mock_update, None)
             mock_ai.assert_called_once()
 
@@ -119,8 +123,13 @@ class TestTelegramManagerLogic:
         mock_query = MagicMock()
         mock_query.edit_message_text = AsyncMock()
 
-        with patch("src.core.contabilita_manager.ContabilitaManager.get_available_years", return_value=[2024]):
-            await telegram_service._handle_db_actions("db_select_year_strumentale", mock_query, 12345)
+        with patch(
+            "src.core.contabilita_manager.ContabilitaManager.get_available_years",
+            return_value=[2024],
+        ):
+            await telegram_service._handle_db_actions(
+                "db_select_year_strumentale", mock_query, 12345
+            )
             text = mock_query.edit_message_text.call_args[0][0]
             assert "Seleziona Anno" in text
 
@@ -135,16 +144,23 @@ class TestTelegramManagerLogic:
 
     @pytest.mark.asyncio
     async def test_handle_button_dispatcher(self, telegram_service, mock_update):
-        with patch.object(telegram_service, "_handle_nav_actions", new_callable=AsyncMock) as mock_nav, \
-             patch.object(telegram_service, "_handle_db_actions", new_callable=AsyncMock) as mock_db:
-
+        with (
+            patch.object(
+                telegram_service, "_handle_nav_actions", new_callable=AsyncMock
+            ) as mock_nav,
+            patch.object(
+                telegram_service, "_handle_db_actions", new_callable=AsyncMock
+            ) as mock_db,
+        ):
             # Create a real Message and CallbackQuery object if possible, or mock properly
             # We use a trick to pass isinstance(..., Message) by patching Message
             with patch("src.core.telegram_manager.Message", MagicMock):
                 query = MagicMock(spec=CallbackQuery)
                 query.data = "nav_bots"
                 query.answer = AsyncMock()
-                query.message = MagicMock() # Will pass isinstance because we patched Message
+                query.message = (
+                    MagicMock()
+                )  # Will pass isinstance because we patched Message
 
                 mock_update.callback_query = query
                 mock_update.effective_user.id = 12345

@@ -13,67 +13,74 @@ from . import version
 
 
 def check_for_updates(parent=None, silent=True, callback=None):
-    """
-    Controlla se è disponibile una nuova versione dell'applicazione.
-
-    Args:
-        parent: Widget parent per i dialog
-        silent (bool): Se True, non mostra notifiche se non ci sono aggiornamenti
-        callback (callable): Se fornito, chiama questa funzione con (version, url) invece di mostrare il dialog
-    """
+    """Controlla se è disponibile una nuova versione dell'applicazione."""
     url = version.UPDATE_URL
-
     if not url:
         return
 
     try:
         response = requests.get(url, timeout=5)
+        if response.status_code != 200:
+            return
 
-        if response.status_code == 200:
-            data = response.json()
-            remote_ver_str = data.get("version")
-            download_url = data.get("url")
-            changelog = data.get("changelog", "")
+        data = response.json()
+        remote_ver_str = data.get("version")
+        download_url = data.get("url")
+        changelog = data.get("changelog", "")
 
-            if remote_ver_str:
-                current_ver = pkg_version.parse(version.__version__)
-                remote_ver = pkg_version.parse(remote_ver_str)
+        if not remote_ver_str:
+            return
 
-                if remote_ver > current_ver:
-                    if callback:
-                        callback(remote_ver_str, download_url, changelog)
-                        return
+        if _is_newer_version(remote_ver_str):
+            _handle_update_found(
+                remote_ver_str, download_url, changelog, parent, callback
+            )
+        elif not silent:
+            QMessageBox.information(
+                parent,
+                "✅ Aggiornamento",
+                f"L'applicazione è aggiornata (v{version.__version__})",
+            )
 
-                    msg = (
-                        f"È disponibile una nuova versione!\n\n"
-                        f"Versione corrente: {version.__version__}\n"
-                        f"Nuova versione: {remote_ver_str}\n"
-                    )
-                    if changelog:
-                        msg += f"\nNovità:\n{changelog}\n"
-
-                    msg += "\nVuoi scaricarla ora?"
-
-                    reply = QMessageBox.question(
-                        parent,
-                        "🔄 Aggiornamento Disponibile",
-                        msg,
-                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    )
-
-                    if reply == QMessageBox.StandardButton.Yes:
-                        if download_url:
-                            webbrowser.open(download_url)
-                else:
-                    if not silent:
-                        QMessageBox.information(
-                            parent,
-                            "✅ Aggiornamento",
-                            f"L'applicazione è aggiornata (v{version.__version__})",
-                        )
     except Exception as e:
         if not silent:
             print(f"[ERRORE] Aggiornamento: {e}")
+
+
+def _is_newer_version(remote_ver_str: str) -> bool:
+    """Compara la versione remota con quella locale."""
+    try:
+        current_ver = pkg_version.parse(version.__version__)
+        remote_ver = pkg_version.parse(remote_ver_str)
+        return remote_ver > current_ver
+    except Exception:
+        return False
+
+
+def _handle_update_found(remote_ver, download_url, changelog, parent, callback):
+    """Notifica l'utente o esegue il callback per l'aggiornamento trovato."""
+    if callback:
+        callback(remote_ver, download_url, changelog)
+        return
+
+    msg = (
+        f"È disponibile una nuova versione!\n\n"
+        f"Versione corrente: {version.__version__}\n"
+        f"Nuova versione: {remote_ver}\n"
+    )
+    if changelog:
+        msg += f"\nNovità:\n{changelog}\n"
+    msg += "\nVuoi scaricarla ora?"
+
+    res = QMessageBox.question(
+        parent,
+        "🔄 Aggiornamento Disponibile",
+        msg,
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+    )
+
+    if res == QMessageBox.StandardButton.Yes and download_url:
+        webbrowser.open(download_url)
 
 
 if __name__ == "__main__":

@@ -20,14 +20,20 @@ def mock_db(tmp_path):
 
     with sqlite3.connect(db_path) as conn:
         # Contabilita
-        conn.execute("CREATE TABLE contabilita (n_prev TEXT, attivita TEXT, odc TEXT, year INTEGER)")
+        conn.execute(
+            "CREATE TABLE contabilita (n_prev TEXT, attivita TEXT, odc TEXT, year INTEGER)"
+        )
         conn.execute(
             "INSERT INTO contabilita VALUES ('123/2025', 'Manutenzione Valvole', '5400123456', 2025)"
         )
-        conn.execute("INSERT INTO contabilita VALUES ('124/2025', 'Ponteggi', '5400999999', 2025)")
+        conn.execute(
+            "INSERT INTO contabilita VALUES ('124/2025', 'Ponteggi', '5400999999', 2025)"
+        )
 
         # Giornaliere
-        conn.execute("CREATE TABLE giornaliere (data TEXT, personale TEXT, descrizione TEXT, year INTEGER)")
+        conn.execute(
+            "CREATE TABLE giornaliere (data TEXT, personale TEXT, descrizione TEXT, year INTEGER)"
+        )
         conn.execute(
             "INSERT INTO giornaliere VALUES ('2025-01-01', 'Mario Rossi', 'Lavoro su ponteggi', 2025)"
         )
@@ -41,8 +47,12 @@ def mock_db(tmp_path):
         )
 
         # Certificati
-        conn.execute("CREATE TABLE certificati_campione (modello TEXT, costruttore TEXT, matricola TEXT)")
-        conn.execute("INSERT INTO certificati_campione VALUES ('Multimetro', 'Fluke', 'SN-8888')")
+        conn.execute(
+            "CREATE TABLE certificati_campione (modello TEXT, costruttore TEXT, matricola TEXT)"
+        )
+        conn.execute(
+            "INSERT INTO certificati_campione VALUES ('Multimetro', 'Fluke', 'SN-8888')"
+        )
 
     return db_path
 
@@ -114,7 +124,10 @@ def test_search_extended_certificati(mock_db):
 
 def test_search_employees(mock_timbrature_db):
     """Test searching for employees in TimbratureStorage."""
-    with patch("src.bots.portale_fornitori.timbrature.storage.TimbratureStorage.DB_PATH", mock_timbrature_db):
+    with patch(
+        "src.bots.portale_fornitori.timbrature.storage.TimbratureStorage.DB_PATH",
+        mock_timbrature_db,
+    ):
         storage = TimbratureStorage(mock_timbrature_db)
         results = storage.search_employees("Bianchi")
         assert len(results) == 1

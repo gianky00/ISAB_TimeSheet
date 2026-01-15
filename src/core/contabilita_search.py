@@ -42,14 +42,14 @@ class ContabilitaSearch:
                     WHERE contabilita_fts MATCH ?
                     LIMIT 20
                 """
-                # Sanitizzazione semplice per FTS5 (evita errori se l'utente mette caratteri speciali)
+                # Sanitizzazione semplice per FTS5
                 fts_query = f'"{query}*"'
 
                 try:
                     cursor.execute(sql_fts, (fts_query,))
                     rows = cursor.fetchall()
                 except sqlite3.OperationalError:
-                    rows = [] # Fallback al LIKE se FTS5 fallisce
+                    rows = []  # Fallback al LIKE se FTS5 fallisce
 
                 # Se FTS5 non trova nulla o fallisce, usiamo LIKE come fallback
                 if not rows:
@@ -64,9 +64,7 @@ class ContabilitaSearch:
                     cursor.execute(sql_like, (like_query, like_query, like_query))
                     rows = cursor.fetchall()
 
-                logging.debug(
-                    f"[DEBUG] Search '{query}' found {len(rows)} matches"
-                )
+                logging.debug(f"[DEBUG] Search '{query}' found {len(rows)} matches")
 
                 for row in rows:
                     results.append(
@@ -84,98 +82,100 @@ class ContabilitaSearch:
 
     @classmethod
     def search_extended(
-        cls, db_path: Path, query: str, year: int = None, limit: int = 100
+        cls, db_path: Path, query: str, year: int | None = None, limit: int = 100
     ) -> Dict[str, List[Dict]]:
-        """
-        Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
-        Returns: Dict con liste di risultati per categoria.
-        """
-        if not db_path.exists():
-            return {}
-        query = query.strip().lower()
-        if len(query) < 2:  # Relaxed limit
+        """Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati)."""
+        if not db_path.exists() or len(query.strip()) < 2:
             return {}
 
+        query = query.strip().lower()
         out: Dict[str, List[Dict]] = {
             "GIORNALIERE": [],
             "CANTIERE": [],
             "CERTIFICATI": [],
         }
-        like_query = f"%{query}%"
-
-        def _fmt_date(val):
-            """Helper per formattare date ISO in IT."""
-            try:
-                if not val:
-                    return ""
-                dt = datetime.strptime(str(val).split()[0], "%Y-%m-%d")
-                return dt.strftime("%d/%m/%Y")
-            except Exception:
-                return str(val)
 
         try:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
 
-                # Params list building
-                g_params = [like_query, like_query]
-                g_where_year = ""
-                if year:
-                    g_where_year = " AND data LIKE ?"
-                    g_params.append(f"{year}-%")
-
-                # 1. Giornaliere (Cerca Personale o Descrizione)
-                sql_g = f"""SELECT DISTINCT data, personale, descrizione FROM giornaliere
-                           WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){g_where_year}
-                           ORDER BY data DESC LIMIT ?"""
-                g_params.append(limit)
-
-                cursor.execute(sql_g, g_params)
-                for r in cursor.fetchall():
-                    out["GIORNALIERE"].append(
-                        {
-                            "data": _fmt_date(r[0]),
-                            "personale": r[1],
-                            "descrizione": r[2],
-                        }
-                    )
-
-                # 2. Scarico Ore (Cantiere - Cerca Persone, Descrizione o Commessa)
-                s_params = [like_query, like_query, like_query]
-                s_where_year = ""
-                if year:
-                    s_where_year = " AND data LIKE ?"
-                    s_params.append(f"{year}-%")
-
-                sql_s = f"""SELECT DISTINCT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore
-                           WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){s_where_year}
-                           ORDER BY data DESC LIMIT ?"""
-                s_params.append(limit)
-
-                cursor.execute(sql_s, s_params)
-                for r in cursor.fetchall():
-                    out["CANTIERE"].append(
-                        {
-                            "data": _fmt_date(r[0]),
-                            "personale": r[1],
-                            "descrizione": r[2],
-                            "commessa": r[3],
-                            "totale_ore": r[4],
-                        }
-                    )
-
-                # 3. Certificati (Cerca Matricola, Costruttore, Modello) - Year ignored for Certificati usually
-                # But kept logic simple
-                c_params = [like_query, like_query, like_query, limit]
-                sql_c = """SELECT DISTINCT modello, costruttore, matricola FROM certificati_campione
-                           WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
-                cursor.execute(sql_c, c_params)
-                for r in cursor.fetchall():
-                    out["CERTIFICATI"].append(
-                        {"modello": r[0], "costruttore": r[1], "matricola": r[2]}
-                    )
+                # 1. Giornaliere
+                out["GIORNALIERE"] = cls._search_giornaliere(cursor, query, year, limit)
+                # 2. Scarico Ore (Cantiere)
+                out["CANTIERE"] = cls._search_scarico_ore(cursor, query, year, limit)
+                # 3. Certificati
+                out["CERTIFICATI"] = cls._search_certificati(cursor, query, limit)
 
         except Exception as e:
             logging.error(f"Extended Search Error: {e}")
 
         return out
+
+    @staticmethod
+    def _fmt_date(val):
+        """Helper per formattare date ISO in IT."""
+        try:
+            if not val:
+                return ""
+            dt = datetime.strptime(str(val).split()[0], "%Y-%m-%d")
+            return dt.strftime("%d/%m/%Y")
+        except Exception:
+            return str(val)
+
+    @classmethod
+    def _search_giornaliere(cls, cursor, query, year, limit) -> List[Dict]:
+        """Esegue la ricerca specifica nelle timbrature giornaliere."""
+        like = f"%{query}%"
+        params = [like, like]
+        where = ""
+        if year:
+            where = " AND data LIKE ?"
+            params.append(f"{year}-%")
+
+        sql = f"""SELECT data, personale, descrizione FROM giornaliere
+                  WHERE (lower(personale) LIKE ? OR lower(descrizione) LIKE ?){where}
+                  ORDER BY data DESC LIMIT ?"""  # nosec B608
+        params.append(limit)
+        cursor.execute(sql, params)
+        return [
+            {"data": cls._fmt_date(r[0]), "personale": r[1], "descrizione": r[2]}
+            for r in cursor.fetchall()
+        ]
+
+    @classmethod
+    def _search_scarico_ore(cls, cursor, query, year, limit) -> List[Dict]:
+        """Esegue la ricerca specifica nello scarico ore (cantiere)."""
+        like = f"%{query}%"
+        params = [like, like, like]
+        where = ""
+        if year:
+            where = " AND data LIKE ?"
+            params.append(f"{year}-%")
+
+        sql = f"""SELECT data, pers1, descrizione, commessa, totale_ore FROM scarico_ore
+                  WHERE (lower(pers1) LIKE ? OR lower(pers2) LIKE ? OR lower(descrizione) LIKE ?){where}
+                  ORDER BY data DESC LIMIT ?"""  # nosec B608
+        params.append(limit)
+        cursor.execute(sql, params)
+        return [
+            {
+                "data": cls._fmt_date(r[0]),
+                "personale": r[1],
+                "descrizione": r[2],
+                "commessa": r[3],
+                "totale_ore": r[4],
+            }
+            for r in cursor.fetchall()
+        ]
+
+    @classmethod
+    def _search_certificati(cls, cursor, query, limit) -> List[Dict]:
+        """Esegue la ricerca specifica nei certificati campione."""
+        like = f"%{query}%"
+        sql = """SELECT modello, costruttore, matricola FROM certificati_campione
+                 WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
+        cursor.execute(sql, [like, like, like, limit])
+        return [
+            {"modello": r[0], "costruttore": r[1], "matricola": r[2]}
+            for r in cursor.fetchall()
+        ]

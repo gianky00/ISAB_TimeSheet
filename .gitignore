@@ -9,7 +9,6 @@ build/
 .venv/
 venv/
 /admin/Crea Setup/Setup
-/admin/Crea Setup/Setup
 .env
 
 # Coverage reports
@@ -19,3 +18,14 @@ htmlcov/
 # Log files
 *.log
 .aider*
+/.mypy_cache
+/.ruff_cache
+/.pytest_cache
+.hypothesis/
+
+# Temp/Dev files
+temp/
+test.db
+test_cache.pkl
+.test_session_state.json
+*.pkl
