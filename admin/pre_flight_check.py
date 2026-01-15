@@ -224,16 +224,98 @@ def sync_requirements():
     return success
 
 
+def run_super_audit():
+    """Automatizza il ciclo di vita completo di un audit di qualita."""
+
+    print_step("SUPER AUDIT: Inizio processo automatizzato...")
+
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+
+    branch_name = f"audit/quality_{timestamp}"
+
+    # 1. Crea branch
+
+    print(f"🔹 Creazione branch: {branch_name}")
+
+    subprocess.call(["git", "checkout", "-b", branch_name], cwd=PROJECT_ROOT)
+
+    # 2. Esegue controlli
+
+    print("🔹 Esecuzione controlli qualità...")
+
+    # Qui chiamiamo la logica main internamente
+
+    # (Per semplicita' usiamo subprocess per isolare l'esecuzione)
+
+    ret = subprocess.call([sys.executable, __file__, "--fast"], cwd=PROJECT_ROOT)
+
+    if ret != 0:
+        print_fail("Audit fallito. Risolvi i problemi sul branch corrente.")
+
+        return False
+
+    # 3. Aggiornamento Versione (Auto-patch)
+
+    print("🔹 Incremento versione (patch)...")
+
+    subprocess.call(
+        [sys.executable, "admin/bump_version.py", "patch"], cwd=PROJECT_ROOT
+    )
+
+    # 4. Git operations
+
+    print("🔹 Finalizzazione release e merge su main...")
+
+    subprocess.call(["git", "add", "."], cwd=PROJECT_ROOT)
+
+    subprocess.call(
+        [
+            "git",
+            "commit",
+            "-m",
+            f"CHORE: automated quality audit and version bump {timestamp}",
+        ],
+        cwd=PROJECT_ROOT,
+    )
+
+    subprocess.call(["git", "checkout", "main"], cwd=PROJECT_ROOT)
+
+    subprocess.call(["git", "merge", branch_name], cwd=PROJECT_ROOT)
+
+    subprocess.call(["git", "branch", "-D", branch_name], cwd=PROJECT_ROOT)
+
+    print_ok("SUPER AUDIT COMPLETATO CON SUCCESSO!")
+
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="SyncroJob Developer Toolbox")
+
     parser.add_argument(
         "--fix", action="store_true", help="Applica correzioni automatiche"
     )
+
     parser.add_argument("--fast", action="store_true", help="Salta i test")
+
     parser.add_argument("--test-only", action="store_true", help="Esegue solo i test")
+
+    parser.add_argument(
+        "--super-audit",
+        action="store_true",
+        help="Esegue il ciclo completo di audit e upgrade",
+    )
+
     args = parser.parse_args()
 
+    if args.super_audit:
+        if run_super_audit():
+            sys.exit(0)
+
+        sys.exit(1)
+
     start_time = time.time()
+
     print(f"\n{BOLD}{YELLOW}🚀 SYNCROJOB MASTER CHECK (Versione AI-Safe){RESET}")
     print(f"{'=' * 60}")
 

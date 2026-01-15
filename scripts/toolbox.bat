@@ -28,12 +28,13 @@ echo.
 echo [ SYSTEM ]
 echo 10. RUN APP    (Avvio applicazione in modalita Dev)
 echo 11. CLEAN      (Pulizia ambiente virtuale ^& cache)
+echo 12. SUPER AUDIT (Branch - Quality - Version - Merge)
 echo.
 echo [q] ESCI
 echo.
 echo ============================================================
 
-set /p choice="Scegli un'operazione (1-11): "
+set /p choice="Scegli un'operazione (1-12): "
 
 set VENV_PYTHON=.venv\Scripts\python.exe
 set VENV_BIN=.venv\Scripts
@@ -114,6 +115,13 @@ if "%choice%"=="10" (
 if "%choice%"=="11" (
     echo [EXEC] Cleaning environment...
     !VENV_PYTHON! admin/clean_venv.py
+    pause
+    goto menu
+)
+
+if "%choice%"=="12" (
+    echo [EXEC] Starting Super Audit Lifecycle...
+    !VENV_PYTHON! admin/pre_flight_check.py --super-audit
     pause
     goto menu
 )
