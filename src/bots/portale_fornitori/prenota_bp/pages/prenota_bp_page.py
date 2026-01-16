@@ -204,6 +204,71 @@ class PrenotaBPPage:
         self._wait_for_overlay()
         self.log("Ricerca completata.")
 
+    def apri_dettagli_bp(self):
+        """Clicca sull'icona dettagli del primo BP in lista."""
+        self.log("Apertura dettagli BP...")
+        try:
+            self.wait_and_click(PrenotaBPLocators.ICON_DETTAGLI)
+            self._wait_for_overlay()
+            # Attesa apertura finestra
+            self.wait.until(
+                EC.visibility_of_element_located(PrenotaBPLocators.WINDOW_DETTAGLI)
+            )
+        except Exception as e:
+            self.log(f"Impossibile aprire i dettagli: {e}")
+            raise e
+
+    def verifica_disponibilita_materiali(self) -> bool:
+        """
+        Verifica se tutti i materiali sono disponibili controllando l'icona
+        nell'ultima colonna della griglia dettagli.
+        Returns:
+            bool: True se tutti i materiali sono disponibili, False altrimenti.
+        """
+        self.log("Verifica disponibilità materiali...")
+        try:
+            # Attende che le righe siano caricate
+            self.wait.until(
+                EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI)
+            )
+            rows = self.driver.find_elements(*PrenotaBPLocators.GRID_ROWS_DETTAGLI)
+        except TimeoutException:
+            self.log("⚠ Nessuna riga trovata nei dettagli o timeout.")
+            return False
+
+        if not rows:
+            self.log("⚠ Nessuna riga trovata nei dettagli.")
+            return False
+
+        all_ok = True
+        for i, row in enumerate(rows):
+            try:
+                # Cerca l'icona di spunta verde nella riga corrente
+                # Il locator è relativo (.//...)
+                row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
+                # self.log(f"  Riga {i+1}: Disponibile ✓") # Verbose
+            except Exception:
+                self.log(f"  Riga {i+1}: NON Disponibile ✗")
+                all_ok = False
+
+        if all_ok:
+            self.log("✓ Tutti i materiali sono disponibili.")
+        else:
+            self.log("✗ Alcuni materiali NON sono disponibili.")
+
+        return all_ok
+
+    def chiudi_dettagli_bp(self):
+        """Chiude la finestra dettagli."""
+        self.log("Chiusura finestra dettagli...")
+        try:
+            # Usa il bottone chiudi della finestra dettagli specifica
+            # Il locator generico potrebbe chiudere altro, ma qui ci fidiamo del contesto modale
+            self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP)
+            self._wait_for_overlay()
+        except Exception as e:
+            self.log(f"Errore chiusura dettagli: {e}")
+
     def prenota_nuovo_bp(self, numero_bp, note):
         """Esegue una singola prenotazione BP."""
         self.log(f"Inserimento nuova prenotazione: {numero_bp}")

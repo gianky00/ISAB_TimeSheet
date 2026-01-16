@@ -114,6 +114,42 @@ class PrenotaBPBot(BaseBot):
                         data_a=self.data_a,
                     )
 
+                    # Verifica Disponibilità Materiali
+                    try:
+                        page.apri_dettagli_bp()
+                        is_available = page.verifica_disponibilita_materiali()
+                        page.chiudi_dettagli_bp()
+
+                        if not is_available:
+                            self.log(
+                                f"⚠️ BP {num_bp} saltato: Materiali NON disponibili."
+                            )
+                            self.results.append(
+                                {
+                                    "NUMERO BP": num_bp,
+                                    "STATO": "SKIPPED",
+                                    "MSG": "Materiali non disponibili",
+                                }
+                            )
+                            continue
+
+                    except Exception as e:
+                        self.log(f"⚠ Errore verifica disponibilità per {num_bp}: {e}")
+                        # In caso di errore nella verifica, proviamo a chiudere se aperto e decidiamo se proseguire.
+                        # Per sicurezza saltiamo se la verifica fallisce.
+                        try:
+                            page.chiudi_dettagli_bp()
+                        except Exception:
+                            pass
+                        self.results.append(
+                            {
+                                "NUMERO BP": num_bp,
+                                "STATO": "ERROR_CHECK",
+                                "MSG": f"Check fallito: {e}",
+                            }
+                        )
+                        continue
+
                     page.prenota_nuovo_bp(num_bp, note)
                     self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
                     processed_count += 1

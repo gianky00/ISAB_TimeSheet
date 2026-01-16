@@ -59,3 +59,23 @@ class PrenotaBPLocators:
     )
     BT_SALVA = (By.XPATH, "//span[text()='Salva' or text()='Conferma']/ancestor::a")
     BT_CHIUDI_POPUP = (By.XPATH, "//div[contains(@class, 'x-tool-close')]")
+
+    # Dettagli BP
+    ICON_DETTAGLI = (
+        By.XPATH,
+        "//div[contains(@class, 'x-action-col-icon') and contains(@class, 'fa-info-circle')]",
+    )
+    # Finestra Dettagli
+    WINDOW_DETTAGLI = (
+        By.XPATH,
+        "//div[contains(@class, 'x-window') and .//div[contains(text(), 'Buono Di Prelievo')]]",
+    )
+    GRID_ROWS_DETTAGLI = (
+        By.XPATH,
+        "//div[contains(@class, 'x-window') and .//div[contains(text(), 'Buono Di Prelievo')]]//tr[contains(@class, 'x-grid-row')]",
+    )
+    # Cella "Materiale Disponibile" (Ultima colonna)
+    CELL_MATERIALE_DISPONIBILE = (
+        By.XPATH,
+        ".//td[contains(@class, 'x-grid-cell-last')]//span[contains(@class, 'fa-check') and contains(@style, 'LightGreen')]",
+    )
