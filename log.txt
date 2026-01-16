@@ -1,0 +1,47 @@
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/e1133e3e-a494-43b8-bf96-0adf66621996
+[44584:44956:0116/150217.588:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[44584:44956:0116/150217.810:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+Created TensorFlow Lite XNNPACK delegate for CPU.
+[44584:44956:0116/150217.833:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[Prenota BP] Navigazione a: https://portalefornitori.isab.com/Ui/
+[Prenota BP] Tentativo di login...
+[Prenota BP]  -> Overlay di caricamento scomparso.
+[Prenota BP] ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.
+[48748:11460:0116/150221.412:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
+[Prenota BP] Login effettuato. Attendo scomparsa overlay...
+[Prenota BP]  -> Overlay di caricamento scomparso.
+[Prenota BP] ✓ Login completato con successo
+[Prenota BP] Stato: RUNNING
+[Prenota BP] Avvio elaborazione per 1 BP (Fornitore: KK10608 - COEMI S.R.L.)
+[Prenota BP] Navigazione verso Gestione Buono di Prelievo...
+[Prenota BP] Espansione menu 'Buono di Prelievo'...
+[Prenota BP] Attesa caricamento filtri...
+[Prenota BP] Sezione Gestione BP caricata.
+[Prenota BP] Impostazione filtri di ricerca...
+[Prenota BP]   Selezione fornitore: 'KK10608 - COEMI S.R.L.'...
+[Prenota BP] Ricerca completata.
+[Prenota BP] Apertura dettagli BP...
+[Prenota BP] Gestione creazione richiesta...
+[Prenota BP] ⚠ Disponibili 16 su 21. Seleziono singolarmente.
+[Prenota BP] ⚠ Mismatch grave: Data=21, Checkers trovati=0. Potrebbe fallire la selezione.
+[Prenota BP] Errore: Indice riga 1 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 2 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 3 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 4 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 5 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 6 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 7 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 8 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 9 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 11 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 14 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 15 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 17 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 18 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 19 fuori range per i checker (0).
+[Prenota BP] Errore: Indice riga 20 fuori range per i checker (0).
+[Prenota BP] ⚠ Nessuna riga selezionata! Interrompo il flusso.
+[Prenota BP] Chiusura finestra dettagli...
+[Prenota BP] ✓ Elaborazione completata: 1/1 BP prenotati.
+[Prenota BP] Fine sessione Prenota BP.
+[Prenota BP] Stato: COMPLETED
