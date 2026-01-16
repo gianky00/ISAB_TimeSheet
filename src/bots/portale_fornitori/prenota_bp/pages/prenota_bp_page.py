@@ -218,6 +218,41 @@ class PrenotaBPPage:
             self.log(f"Impossibile aprire i dettagli: {e}")
             raise e
 
+    def debug_analyze_details_window(self):
+        """
+        Esegue una scansione completa del DOM della finestra dettagli e logga le informazioni
+        per il debugging e il reverse engineering.
+        """
+        self.log("\n--- DEBUG: ANALISI FINESTRA DETTAGLI ---")
+        try:
+            window = self.driver.find_element(*PrenotaBPLocators.WINDOW_DETTAGLI)
+            
+            # 1. Log dell'HTML grezzo della finestra (limitato per leggibilità)
+            html_content = window.get_attribute('innerHTML')
+            self.log(f"HTML Length: {len(html_content)}")
+            
+            # 2. Analisi delle righe e delle colonne
+            rows = window.find_elements(By.XPATH, ".//tr[contains(@class, 'x-grid-row')]")
+            self.log(f"Trovate {len(rows)} righe nella griglia.")
+
+            for i, row in enumerate(rows):
+                self.log(f"\n[RIGA {i+1}]")
+                cells = row.find_elements(By.TAG_NAME, "td")
+                for j, cell in enumerate(cells):
+                    cls = cell.get_attribute("class")
+                    style = cell.get_attribute("style")
+                    inner_text = cell.text
+                    inner_html = cell.get_attribute("innerHTML")
+                    
+                    self.log(f"  Col {j}: Class='{cls}'")
+                    # self.log(f"         Style='{style}'") # Verbose
+                    self.log(f"         Text='{inner_text}'")
+                    self.log(f"         HTML='{inner_html.strip()[:100]}...'") # Primi 100 char
+
+        except Exception as e:
+            self.log(f"Errore durante l'analisi di debug: {e}")
+        self.log("--- FINE DEBUG ---\n")
+
     def verifica_disponibilita_materiali(self) -> bool:
         """
         Verifica se tutti i materiali sono disponibili controllando l'icona

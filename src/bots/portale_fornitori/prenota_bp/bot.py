@@ -117,6 +117,10 @@ class PrenotaBPBot(BaseBot):
                     # Verifica Disponibilità Materiali
                     try:
                         page.apri_dettagli_bp()
+                        
+                        # DEBUG: Scansione richiesta dall'utente per analisi
+                        page.debug_analyze_details_window()
+                        
                         is_available = page.verifica_disponibilita_materiali()
                         page.chiudi_dettagli_bp()
 
