@@ -324,6 +324,8 @@ class TelegramService(QObject):
             self.data_received.emit("pdl", items)
         elif state == "WAITING_ODA":
             self.data_received.emit("oda", items)
+        elif state == "WAITING_BP":
+            self.data_received.emit("bp", items)
         elif state == "WAITING_AUTOPILOT_TIME":
             if re.match(r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$", items[0]):
                 self.command_received.emit("set_autopilot", {"time": items[0]})
@@ -524,6 +526,7 @@ class TelegramService(QObject):
                     )
                 ],
                 [InlineKeyboardButton("⏱️ Timbrature", callback_data="menu_timbrature")],
+                [InlineKeyboardButton("📦 Prenota BP", callback_data="menu_prenota_bp")],
                 [self._get_back_button("nav_bots")],
             ]
             await query.edit_message_text(
@@ -774,8 +777,10 @@ class TelegramService(QObject):
             "menu_oda_details": lambda: self._handle_menu_oda_details(query),
             "menu_carico": lambda: self._handle_menu_carico(query),
             "menu_timbrature": lambda: self._handle_menu_timbrature(query),
+            "menu_prenota_bp": lambda: self._handle_menu_prenota_bp(query, chat_id),
             "input_pdl": lambda: self._handle_input_pdl(query, chat_id),
             "input_oda": lambda: self._handle_input_oda(query, chat_id),
+            "input_bp": lambda: self._handle_input_bp(query, chat_id),
             "run_pdl_on": lambda: self._handle_run_pdl_on(query),
             "run_pdl_off": lambda: self._handle_run_pdl_off(query),
         }
@@ -783,6 +788,24 @@ class TelegramService(QObject):
             await handler()
             return True
         return False
+
+    async def _handle_menu_prenota_bp(self, query, chat_id):
+        keyboard = [
+            [InlineKeyboardButton("➕ Inserisci BP", callback_data="input_bp")],
+            [InlineKeyboardButton("▶ Avvia", callback_data="run_prenota_bp")],
+            [self._get_back_button("nav_portale")],
+        ]
+        await query.edit_message_text(
+            "📦 *Prenota BP*",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode=constants.ParseMode.MARKDOWN,
+        )
+
+    async def _handle_input_bp(self, query, chat_id):
+        self.user_states[chat_id] = "WAITING_BP"
+        await query.edit_message_text(
+            "⌨️ Inserisci BP (Formato: NUMERO [NOTE]):\nEs: `123456 Urgente`\nEs: `987654`"
+        )
 
     async def _handle_printer_selection(self, data, query, chat_id):
         sn = data.replace("sel_print_run_", "")
@@ -837,6 +860,7 @@ class TelegramService(QObject):
             "run_timbrature_today": ("run_timbrature", {"period": "today"}),
             "run_oda_details": ("run_oda_details", {}),
             "run_carico": ("run_carico", {}),
+            "run_prenota_bp": ("run_prenota_bp", {}),
             "list_pdl": ("list_pdl", {"chat_id": str(chat_id)}),
             "clear_pdl": ("clear_pdl", {}),
             "list_ts": ("list_ts", {"chat_id": str(chat_id)}),

@@ -114,33 +114,24 @@ class PrenotaBPBot(BaseBot):
                         data_a=self.data_a,
                     )
 
-                    # Verifica Disponibilità Materiali
+                    # Verifica e Creazione Richiesta da Dettagli
                     try:
                         page.apri_dettagli_bp()
                         
-                        # DEBUG: Scansione richiesta dall'utente per analisi
-                        page.debug_analyze_details_window()
+                        # La nuova logica gestisce selezione e click su "Crea Richiesta"
+                        page.gestisci_creazione_richiesta(note)
                         
-                        is_available = page.verifica_disponibilita_materiali()
-                        page.chiudi_dettagli_bp()
+                        # Tentativo di chiusura dettagli se rimasti aperti (clean up)
+                        try:
+                            page.chiudi_dettagli_bp()
+                        except Exception:
+                            pass
 
-                        if not is_available:
-                            self.log(
-                                f"⚠️ BP {num_bp} saltato: Materiali NON disponibili."
-                            )
-                            self.results.append(
-                                {
-                                    "NUMERO BP": num_bp,
-                                    "STATO": "SKIPPED",
-                                    "MSG": "Materiali non disponibili",
-                                }
-                            )
-                            continue
+                        self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
+                        processed_count += 1
 
                     except Exception as e:
-                        self.log(f"⚠ Errore verifica disponibilità per {num_bp}: {e}")
-                        # In caso di errore nella verifica, proviamo a chiudere se aperto e decidiamo se proseguire.
-                        # Per sicurezza saltiamo se la verifica fallisce.
+                        self.log(f"⚠️ Errore durante processamento dettagli per {num_bp}: {e}")
                         try:
                             page.chiudi_dettagli_bp()
                         except Exception:
@@ -148,15 +139,13 @@ class PrenotaBPBot(BaseBot):
                         self.results.append(
                             {
                                 "NUMERO BP": num_bp,
-                                "STATO": "ERROR_CHECK",
-                                "MSG": f"Check fallito: {e}",
+                                "STATO": "ERROR_PROC",
+                                "MSG": f"Err: {e}",
                             }
                         )
                         continue
-
-                    page.prenota_nuovo_bp(num_bp, note)
-                    self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
-                    processed_count += 1
+                        
+                    # page.prenota_nuovo_bp(num_bp, note) # RIMOSSO: Sostituito da flow Dettagli
                 except Exception as e:
                     self.log(f"✗ Errore su BP {num_bp}: {str(e)}")
                     self.results.append(

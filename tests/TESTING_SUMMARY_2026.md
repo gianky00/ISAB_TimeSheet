@@ -11,6 +11,7 @@ A targeted campaign was executed to increase test coverage and robustness for th
 
 ### 2. Core Logic Coverage
 - **TelegramManager**: Boosted coverage to **61%** via `tests/unit/test_telegram_manager_extended.py`, covering error handling, async loops, and utility interactions.
+- **Telegram Integration**: Added support for **Prenota BP Bot** via Telegram (`menu_prenota_bp`, `run_prenota_bp`, `input_bp` handlers).
 - **AuditManager**: Verified and boosted coverage to **67%** via `tests/unit/test_audit_manager_coverage.py`.
 
 ### 3. Bot Page Objects

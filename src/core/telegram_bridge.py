@@ -162,6 +162,8 @@ class TelegramUIBridge(QObject):
             self._handle_run_ts()
         elif command == "run_carico":
             self._handle_run_carico()
+        elif command == "run_prenota_bp":
+            self._handle_run_prenota_bp()
         elif command == "run_timbrature":
             self._handle_run_timbrature(params)
         elif command == "restart_app":
@@ -222,20 +224,31 @@ class TelegramUIBridge(QObject):
         self.mw.carico_panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Carico Timesheet.")
 
-    def _handle_run_timbrature(self, params):
-        self.mw.navigate_to_panel("timbrature")
-        period = params.get("period", "yesterday")
-        target_date = QDate.currentDate()
-        if period == "yesterday":
-            target_date = target_date.addDays(-1)
-        self.mw.timbrature_bot_panel.date_da_edit.setDate(target_date)
-        self.mw.timbrature_bot_panel.date_a_edit.setDate(target_date)
-        ready, msg = self.mw.timbrature_bot_panel.validate_ready()
+    def _handle_run_prenota_bp(self):
+        self.mw.navigate_to_panel("prenota_bp")
+        # In main_window.py navigate_to_panel("prenota_bp") maps to index (0, 3)
+        # We need to access the panel instance.
+        # It's inside mw.tab_fornitori (index 3)
+        
+        # Accessing via bot_controller helper would be cleaner but let's use direct access for now
+        # waiting for the UI to switch
+        QApplication.processEvents() 
+        
+        # Access panel
+        panel = self.mw.tab_fornitori.widget(3) # Index 3 as per map
+        
+        if not panel:
+             self.telegram.send_message_sync("⚠️ Errore interno: Pannello Prenota BP non trovato.")
+             return
+
+        ready, msg = panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(f"⚠️ Errore: {msg}")
+            self.telegram.send_message_sync(
+                f"⚠️ Impossibile avviare Prenota BP.\nMotivo: {msg}"
+            )
             return
-        self.mw.timbrature_bot_panel.start_btn.click()
-        self.telegram.send_message_sync(f"✅ Avvio Scarico Timbrature ({period}).")
+        panel.start_btn.click()
+        self.telegram.send_message_sync("✅ Avvio Prenotazione BP.")
 
     def _handle_restart_app(self):
         try:
@@ -321,28 +334,63 @@ class TelegramUIBridge(QObject):
     def _handle_data(self, data_type, items):
         """Gestisce l'inserimento dati da Telegram."""
         valid_items, duplicates, errors = [], 0, []
-        panel = self.mw.pdl_panel if data_type == "pdl" else self.mw.scarico_panel
-        field = "numero_pdl" if data_type == "pdl" else "numero_oda"
-        validator = (
-            InputValidator.validate_pdl
-            if data_type == "pdl"
-            else InputValidator.validate_oda
-        )
+        
+        # Determina pannello e validatore
+        if data_type == "pdl":
+            panel = self.mw.pdl_panel
+            field = "numero_pdl"
+            validator = InputValidator.validate_pdl
+        elif data_type == "oda":
+            panel = self.mw.scarico_panel
+            field = "numero_oda"
+            validator = InputValidator.validate_oda
+        elif data_type == "bp":
+            # Accesso al pannello prenota_bp (indice 3 nei tab fornitori)
+            # Inizializziamo se necessario
+            self.mw.navigate_to_panel("prenota_bp")
+            panel = self.mw.tab_fornitori.widget(3)
+            field = "numero_bp"
+            # Validatore fittizio per BP (accetta tutto per ora, o numeri)
+            # Creiamo una lambda che torna un oggetto simile a ValidationResult
+            class DummyResult:
+                def __init__(self, val): self.valid = True; self.sanitized_value = val
+            validator = lambda x: DummyResult(x)
+        else:
+            return
 
         existing = [str(row.get(field, "")) for row in panel.data_table.get_data()]
+        
         for item in items:
-            res = validator(item)
-            if res.valid:
-                val = res.sanitized_value
-                if val in existing or val in valid_items:
+            # Parsing specifico per BP (Numero + Note)
+            if data_type == "bp":
+                parts = item.split(" ", 1)
+                bp_num = parts[0].strip()
+                bp_note = parts[1].strip() if len(parts) > 1 else ""
+                
+                # Check esistenza
+                if bp_num in existing or any(v.get("numero_bp") == bp_num for v in valid_items):
                     duplicates += 1
                 else:
-                    valid_items.append(val)
+                    valid_items.append({"numero_bp": bp_num, "note_di_ritiro": bp_note})
             else:
-                errors.append(f"❌ `{item}`: {res.error}")
+                # Logica standard PDL/OdA
+                res = validator(item)
+                if res.valid:
+                    val = res.sanitized_value
+                    if val in existing or val in valid_items:
+                        duplicates += 1
+                    else:
+                        valid_items.append(val)
+                else:
+                    errors.append(f"❌ `{item}`: {res.error}")
 
         if valid_items:
-            panel.add_rows_simple([{field: v} for v in valid_items])
+            # Per BP è già dict, per altri è lista di stringhe
+            if data_type == "bp":
+                panel.add_rows_simple(valid_items)
+            else:
+                panel.add_rows_simple([{field: v} for v in valid_items])
+            
             self.mw.navigate_to_panel(panel.bot_id)
             self.mw.show_toast(f"Telegram: Aggiunti {len(valid_items)} elementi")
 
