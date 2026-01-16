@@ -8,9 +8,7 @@ class TestContabilitaImport(unittest.TestCase):
     @patch("src.core.contabilita_manager.DataSynchronizer")
     @patch("src.core.contabilita_manager.ExcelImporter")
     @patch("src.core.contabilita_manager.Path.exists")
-    def test_import_preventivi_dynamic_header(
-        self, mock_exists, mock_excel_importer, mock_data_synchronizer
-    ):
+    def test_import_preventivi_dynamic_header(self, mock_exists, mock_excel_importer, mock_data_synchronizer):
         # Setup mocks
         mock_exists.return_value = True
 
@@ -48,9 +46,7 @@ class TestContabilitaImport(unittest.TestCase):
         )  # 1 aggiunto, 0 rimosso
 
         # Execute
-        result, msg, added, removed = ContabilitaManager.import_data_from_excel(
-            "dummy.xlsx"
-        )
+        result, msg, added, removed = ContabilitaManager.import_data_from_excel("dummy.xlsx")
 
         # Assertions
         self.assertTrue(result, f"Import failed: {msg}")
@@ -58,9 +54,7 @@ class TestContabilitaImport(unittest.TestCase):
         self.assertEqual(removed, 0)
 
         # Verifica che ExcelImporter.import_contabilita_dati sia stato chiamato
-        mock_excel_importer.import_contabilita_dati.assert_called_once_with(
-            "dummy.xlsx", ANY
-        )
+        mock_excel_importer.import_contabilita_dati.assert_called_once_with("dummy.xlsx", ANY)
 
         # Verifica che DataSynchronizer.sync_contabilita_dati sia stato chiamato con i dati corretti
         mock_data_synchronizer.sync_contabilita_dati.assert_called_once_with(

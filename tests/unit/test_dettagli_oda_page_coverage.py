@@ -101,6 +101,4 @@ class TestDettagliOdaPageCoverage:
             page.expand_sidebar_if_collapsed()
 
         # Deve aver cliccato il pulsante di espansione
-        page.driver.execute_script.assert_called_with(
-            "arguments[0].click();", mock_expand_btn
-        )
+        page.driver.execute_script.assert_called_with("arguments[0].click();", mock_expand_btn)

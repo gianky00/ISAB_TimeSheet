@@ -75,17 +75,13 @@ class ContabilitaPanel(QWidget):
         self.selection_sum_label.setStyleSheet("color: #0d6efd; font-weight: bold;")
         selection_layout.addWidget(self.selection_count_label)
         selection_layout.addWidget(self.selection_sum_label)
-        self.main_tabs.setCornerWidget(
-            self.selection_container, Qt.Corner.TopRightCorner
-        )
+        self.main_tabs.setCornerWidget(self.selection_container, Qt.Corner.TopRightCorner)
 
         self.year_tabs_widget = QTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
         self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
-        self.tab_preventivi = self._create_tab_wrapper(
-            self.year_tabs_widget, "🔍 Cerca preventivi..."
-        )
+        self.tab_preventivi = self._create_tab_wrapper(self.year_tabs_widget, "🔍 Cerca preventivi...")
         self.main_tabs.addTab(self.tab_preventivi, "📂 Preventivi")
 
         self.giornaliere_tabs_widget = QTabWidget()
@@ -98,15 +94,11 @@ class ContabilitaPanel(QWidget):
         self.main_tabs.addTab(self.tab_giornaliere, "📂 Giornaliere")
 
         self.attivita_widget = AttivitaProgrammateTab()
-        self.tab_attivita = self._create_tab_wrapper(
-            self.attivita_widget, "🔍 Cerca attività..."
-        )
+        self.tab_attivita = self._create_tab_wrapper(self.attivita_widget, "🔍 Cerca attività...")
         self.main_tabs.addTab(self.tab_attivita, "📅 Attività Programmate")
 
         self.certificati_widget = CertificatiCampioneTab()
-        self.tab_certificati = self._create_tab_wrapper(
-            self.certificati_widget, "🔍 Cerca certificati..."
-        )
+        self.tab_certificati = self._create_tab_wrapper(self.certificati_widget, "🔍 Cerca certificati...")
         self.main_tabs.addTab(self.tab_certificati, "📜 Certificati Campione")
 
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
@@ -127,9 +119,7 @@ class ContabilitaPanel(QWidget):
         search_input.setStyleSheet(
             "QLineEdit { border: 1px solid #ced4da; border-radius: 4px; padding: 6px 12px; font-size: 14px; background-color: white; color: black; } QLineEdit:focus { border-color: #0d6efd; }"
         )
-        search_input.textChanged.connect(
-            lambda t: self._proxy_filter(content_widget, t)
-        )
+        search_input.textChanged.connect(lambda t: self._proxy_filter(content_widget, t))
         if isinstance(content_widget, QTabWidget):
             content_widget.currentChanged.connect(
                 lambda: self._proxy_filter(content_widget, search_input.text())
@@ -261,9 +251,7 @@ class ContabilitaPanel(QWidget):
                     target.tree.itemSelectionChanged.disconnect()
                 except Exception:
                     pass
-                target.tree.itemSelectionChanged.connect(
-                    lambda: self._update_selection_total(target.tree)
-                )
+                target.tree.itemSelectionChanged.connect(lambda: self._update_selection_total(target.tree))
 
     def _update_selection_total(self, widget):
         """Calcola e visualizza i totali per le righe selezionate (Table o Tree)."""
@@ -279,9 +267,7 @@ class ContabilitaPanel(QWidget):
                 return
 
             target_col = self._find_ore_column(widget)
-            selected_rows, total_ore = self._calculate_selection_stats(
-                widget, indexes, target_col
-            )
+            selected_rows, total_ore = self._calculate_selection_stats(widget, indexes, target_col)
 
             fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
@@ -300,15 +286,11 @@ class ContabilitaPanel(QWidget):
                 return c
         return -1
 
-    def _calculate_selection_stats(
-        self, widget, indexes, target_col
-    ) -> tuple[set[int], float]:
+    def _calculate_selection_stats(self, widget, indexes, target_col) -> tuple[set[int], float]:
         selected_rows, total_ore = set(), 0.0
         for idx in indexes:
             row = idx.row()
-            if widget.isRowHidden(row) or (
-                widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
-            ):
+            if widget.isRowHidden(row) or (widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"):
                 continue
             selected_rows.add(row)
 
@@ -317,9 +299,7 @@ class ContabilitaPanel(QWidget):
                 it = widget.item(row, target_col)
                 if it:
                     try:
-                        clean = (
-                            str(it.text()).replace(".", "").replace(",", ".").strip()
-                        )
+                        clean = str(it.text()).replace(".", "").replace(",", ".").strip()
                         if clean:
                             total_ore += float(clean)
                     except Exception:
@@ -360,9 +340,7 @@ class ContabilitaPanel(QWidget):
         if success:
             now = datetime.now().strftime("%d/%m/%Y %H:%M")
             time_str = (
-                f"{duration:.1f}s"
-                if duration < 60
-                else f"{int(duration // 60)}m {int(duration % 60)}s"
+                f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
             )
             status = f"✅ {now} <font color='green'><b>+{added}</b></font> <font color='red'><b>-{removed}</b></font> ({time_str})"
             self._last_status_html = status

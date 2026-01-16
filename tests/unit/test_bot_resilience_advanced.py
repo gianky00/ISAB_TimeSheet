@@ -73,9 +73,7 @@ class TestBotResilienceAdvanced:
 
     def test_execute_interrupted_error(self, bot):
         """Test: Gestione corretta dell'interruzione manuale dell'utente."""
-        with patch.object(
-            bot, "_safe_login_with_retry", side_effect=InterruptedError("Stop")
-        ):
+        with patch.object(bot, "_safe_login_with_retry", side_effect=InterruptedError("Stop")):
             result = bot.execute([{"data": 1}])
 
             assert result is False

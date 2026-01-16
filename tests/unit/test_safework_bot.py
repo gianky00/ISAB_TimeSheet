@@ -10,9 +10,7 @@ class TestSafeWorkBot:
     def bot(self):
         with (
             patch("src.bots.safework.base.SafeworkBaseBot._init_driver"),
-            patch(
-                "src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None
-            ),
+            patch("src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None),
         ):
             bot = SafeWorkPDLBot("u", "p")
             bot.driver = MagicMock()

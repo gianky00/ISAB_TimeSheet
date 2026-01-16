@@ -28,9 +28,7 @@ class TestLicenseValidatorAdvanced:
             "config": str(config_file),
             "manifest": str(manifest_file),
         }
-        mocker.patch(
-            "src.core.license_validator._get_license_paths", return_value=paths
-        )
+        mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
 
         # Patch os.path.exists per far credere che i file esistano sempre in questo test
         mock_exists = mocker.patch("src.core.license_validator.os.path.exists")
@@ -100,13 +98,9 @@ class TestLicenseValidatorAdvanced:
         manifest_file.write_text(json.dumps({"config.dat": conf_hash}))
 
         # 4. Mock HWID Corrente e Trusted Time
-        mocker.patch(
-            "src.core.license_validator.get_hardware_id", return_value="MY-HWID"
-        )
+        mocker.patch("src.core.license_validator.get_hardware_id", return_value="MY-HWID")
         mock_dt = datetime(2026, 1, 1)
-        mocker.patch(
-            "src.core.license_validator.get_trusted_time", return_value=(mock_dt, True)
-        )
+        mocker.patch("src.core.license_validator.get_trusted_time", return_value=(mock_dt, True))
 
         status, msg = get_detailed_license_status()
         assert status == LicenseStatus.VALID
@@ -115,12 +109,8 @@ class TestLicenseValidatorAdvanced:
         """Test: Fallimento se HWID nella licenza è diverso da quello attuale."""
         lic_dir, config_file, manifest_file = license_env
         payload = {"Hardware ID": "WRONG-ID", "Scadenza Licenza": "31/12/2099"}
-        mocker.patch(
-            "src.core.license_validator.get_license_info", return_value=payload
-        )
-        mocker.patch(
-            "src.core.license_validator.get_hardware_id", return_value="ACTUAL-ID"
-        )
+        mocker.patch("src.core.license_validator.get_license_info", return_value=payload)
+        mocker.patch("src.core.license_validator.get_hardware_id", return_value="ACTUAL-ID")
         mocker.patch(
             "src.core.license_validator._check_integrity_with_manifest",
             return_value=(LicenseStatus.VALID, ""),

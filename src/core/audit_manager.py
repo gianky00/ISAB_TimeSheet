@@ -81,9 +81,7 @@ class AuditManager:
 
             for col_name, col_type in columns_to_add:
                 try:
-                    conn.execute(
-                        f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_type}"
-                    )
+                    conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_type}")
                 except sqlite3.OperationalError:
                     pass
 
@@ -96,9 +94,7 @@ class AuditManager:
             except Exception:
                 pass
 
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)"
-            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
             conn.commit()
 
     def _get_current_user(self) -> str:
@@ -143,9 +139,7 @@ class AuditManager:
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1"
-                )
+                cursor.execute("SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1")
                 row = cursor.fetchone()
                 return row[0] if row and row[0] else "0" * 64
         except Exception:
@@ -169,12 +163,8 @@ class AuditManager:
             user_id = self._get_current_user()
 
             # Normalizzazione Enum/Stringa
-            status_val = (
-                status.value if isinstance(status, self.Status) else str(status)
-            )
-            severity_val = (
-                severity.value if isinstance(severity, self.Severity) else str(severity)
-            )
+            status_val = status.value if isinstance(status, self.Status) else str(status)
+            severity_val = severity.value if isinstance(severity, self.Severity) else str(severity)
 
             # Sanificazione Dati
             entity = entity if entity else "-"
@@ -207,9 +197,7 @@ class AuditManager:
                 conn.commit()
 
             # Notifica utente se richiesto
-            self._generate_notification_if_needed(
-                action, entity, status, severity, params, notify
-            )
+            self._generate_notification_if_needed(action, entity, status, severity, params, notify)
 
         except Exception as e:
             logger.error(f"Audit Log Error: {e}")
@@ -239,17 +227,12 @@ class AuditManager:
 
             # Normalizzazione per logica interna
             s_val = status.value if isinstance(status, self.Status) else str(status)
-            v_val = (
-                severity.value if isinstance(severity, self.Severity) else str(severity)
-            )
+            v_val = severity.value if isinstance(severity, self.Severity) else str(severity)
 
             level = "info"
             if s_val == self.Status.ERROR.value or v_val == self.Severity.HIGH.value:
                 level = "error"
-            elif (
-                s_val == self.Status.WARNING.value
-                or v_val == self.Severity.MEDIUM.value
-            ):
+            elif s_val == self.Status.WARNING.value or v_val == self.Severity.MEDIUM.value:
                 level = "warning"
             elif s_val == self.Status.SUCCESS.value:
                 level = "success"
@@ -305,9 +288,7 @@ class AuditManager:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?", (limit,)
-                )
+                cursor.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?", (limit,))
                 for row in cursor.fetchall():
                     logs.append(dict(row))
         except Exception as e:
@@ -321,8 +302,6 @@ class AuditManager:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
                 conn.commit()
-                self.log_action(
-                    "Sistema", "mantenimento", "Audit Database", {"clean_days": days}
-                )
+                self.log_action("Sistema", "mantenimento", "Audit Database", {"clean_days": days})
         except Exception as e:
             logger.error(f"Retention Policy Error: {e}")

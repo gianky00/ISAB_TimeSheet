@@ -54,9 +54,7 @@ def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_
     )
 
 
-def test_check_for_updates_new_version_download(
-    mocker, mock_app_version, mock_update_url
-):
+def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_update_url):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.1.0", "url": "http://download.url"}
@@ -74,9 +72,7 @@ def test_check_for_updates_new_version_download(
     # mock_audit_log.assert_called_once() # Removed as per implementation
 
 
-def test_check_for_updates_new_version_no_download(
-    mocker, mock_app_version, mock_update_url
-):
+def test_check_for_updates_new_version_no_download(mocker, mock_app_version, mock_update_url):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.1.0", "url": "http://download.url"}
@@ -115,9 +111,7 @@ def test_check_for_updates_timeout(mocker, mock_app_version, mock_update_url):
 
 
 def test_check_for_updates_request_exception(mocker, mock_app_version, mock_update_url):
-    mocker.patch(
-        "requests.get", side_effect=requests.RequestException("Connection error")
-    )
+    mocker.patch("requests.get", side_effect=requests.RequestException("Connection error"))
 
     mock_qmessagebox_info = mocker.patch("PyQt6.QtWidgets.QMessageBox.information")
     check_for_updates(silent=False)
@@ -137,9 +131,7 @@ def test_check_for_updates_silent_mode(mocker, mock_app_version, mock_update_url
     mock_qmessagebox_info.assert_not_called()
 
 
-def test_check_for_updates_no_download_url_provided(
-    mocker, mock_app_version, mock_update_url
-):
+def test_check_for_updates_no_download_url_provided(mocker, mock_app_version, mock_update_url):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.1.0", "url": None}
@@ -148,9 +140,7 @@ def test_check_for_updates_no_download_url_provided(
     mock_qmessagebox_question = mocker.patch("PyQt6.QtWidgets.QMessageBox.question")
     mock_qmessagebox_question.return_value = QMessageBox.StandardButton.Yes
     mock_webbrowser_open = mocker.patch("webbrowser.open")
-    mock_qmessagebox_information = mocker.patch(
-        "PyQt6.QtWidgets.QMessageBox.information"
-    )
+    mock_qmessagebox_information = mocker.patch("PyQt6.QtWidgets.QMessageBox.information")
 
     check_for_updates(silent=False)
 

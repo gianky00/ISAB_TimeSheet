@@ -79,9 +79,7 @@ class LyraWorker(QThread):
             import traceback
 
             error_details = traceback.format_exc()
-            self.finished.emit(
-                f"⚠️ Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}"
-            )
+            self.finished.emit(f"⚠️ Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}")
 
 
 class ModelListWorker(QThread):
@@ -135,9 +133,7 @@ class LyraPanel(QWidget):
 
         # Header
         header = QFrame()
-        header.setStyleSheet(
-            "background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;"
-        )
+        header.setStyleSheet("background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;")
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -168,16 +164,12 @@ class LyraPanel(QWidget):
         refresh_models_btn.setFixedSize(32, 32)
         refresh_models_btn.setIconSize(QSize(18, 18))
         refresh_models_btn.setToolTip("Aggiorna lista modelli")
-        refresh_models_btn.setStyleSheet(
-            "QPushButton { background-color: transparent; border: none; }"
-        )
+        refresh_models_btn.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
         refresh_models_btn.clicked.connect(self._fetch_models)
         h_layout.addWidget(refresh_models_btn)
 
         sub = QLabel("Esperta Contabile")
-        sub.setStyleSheet(
-            "color: rgba(255,255,255,0.8); margin-left: 10px;"
-        )  # Added margin for spacing
+        sub.setStyleSheet("color: rgba(255,255,255,0.8); margin-left: 10px;")  # Added margin for spacing
         h_layout.addWidget(sub)
 
         h_layout.addStretch()
@@ -418,11 +410,7 @@ class LyraPanel(QWidget):
 
     def _on_model_changed(self, model_name):
         """Salva il modello scelto nella configurazione globale."""
-        if (
-            model_name
-            and "Caricamento" not in model_name
-            and "mancante" not in model_name
-        ):
+        if model_name and "Caricamento" not in model_name and "mancante" not in model_name:
             config_manager.set_config_value("ai_model", model_name)
 
     def _populate_models_dropdown(self, models):
@@ -433,9 +421,7 @@ class LyraPanel(QWidget):
             # Filtra per i modelli che ci interessano di più
             pro_models = sorted([m for m in models if "pro" in m], reverse=True)
             flash_models = sorted([m for m in models if "flash" in m], reverse=True)
-            other_models = sorted(
-                [m for m in models if "pro" not in m and "flash" not in m]
-            )
+            other_models = sorted([m for m in models if "pro" not in m and "flash" not in m])
 
             ordered_models = pro_models + flash_models + other_models
             self.model_combo.addItems(ordered_models)
@@ -475,9 +461,7 @@ class LyraPanel(QWidget):
             self.attached_images = DocumentProcessor.get_pages_as_images(p)
 
             # Automatic prompt suggestion
-            self.input_field.setText(
-                "Analizza questo documento ed estrai i dati principali in una tabella."
-            )
+            self.input_field.setText("Analizza questo documento ed estrai i dati principali in una tabella.")
             self.input_field.setFocus()
         else:
             QMessageBox.warning(
@@ -533,9 +517,7 @@ class LyraPanel(QWidget):
         final_images = self.attached_images.copy()
 
         if self.attached_file:
-            self._append_message(
-                "Sistema", f"<i>[Documento allegato: {self.attached_file.name}]</i>"
-            )
+            self._append_message("Sistema", f"<i>[Documento allegato: {self.attached_file.name}]</i>")
             # If the PDF is text-searchable, we can also append the text to context
             if DocumentProcessor.is_pdf_searchable(self.attached_file):
                 pdf_text = DocumentProcessor.extract_text(self.attached_file)
@@ -649,9 +631,7 @@ class LyraPanel(QWidget):
                 printer.setOutputFileName(filename)
 
                 self.chat_area.document().print(printer)
-                QMessageBox.information(
-                    self, "Successo", "Chat esportata correttamente!"
-                )
+                QMessageBox.information(self, "Successo", "Chat esportata correttamente!")
             except Exception as e:
                 # Fallback: Save as HTML
                 html_file = filename.replace(".pdf", ".html")
@@ -666,25 +646,19 @@ class LyraPanel(QWidget):
     def _export_excel(self):
         """Esporta l'ultima tabella trovata nella cronologia chat in Excel."""
         if not self.last_table_data:
-            QMessageBox.warning(
-                self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare."
-            )
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
             return
 
         table_lines = self._extract_table_lines(self.last_table_data)
         if not table_lines:
-            QMessageBox.warning(
-                self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio."
-            )
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio.")
             return
 
         try:
             df = self._parse_markdown_table(table_lines)
             self._save_df_to_excel(df)
         except Exception as e:
-            QMessageBox.critical(
-                self, "Errore", f"Impossibile esportare la tabella: {e}"
-            )
+            QMessageBox.critical(self, "Errore", f"Impossibile esportare la tabella: {e}")
 
     def _extract_table_lines(self, text: str) -> List[str]:
         """Estrae le linee che compongono una tabella Markdown."""
@@ -724,6 +698,4 @@ class LyraPanel(QWidget):
         )
         if filename:
             df.to_excel(filename, index=False)
-            QMessageBox.information(
-                self, "Successo", "Tabella esportata correttamente!"
-            )
+            QMessageBox.information(self, "Successo", "Tabella esportata correttamente!")

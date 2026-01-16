@@ -227,9 +227,7 @@ class DashboardPanel(QWidget):
         header_row = QHBoxLayout()
 
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet(
-            "font-size: 18px; font-weight: 800; color: #212529; border: none;"
-        )
+        title_lbl.setStyleSheet("font-size: 18px; font-weight: 800; color: #212529; border: none;")
         header_row.addWidget(title_lbl)
 
         header_row.addStretch()
@@ -243,9 +241,7 @@ class DashboardPanel(QWidget):
         # Description
         desc_lbl = QLabel(desc)
         desc_lbl.setWordWrap(True)
-        desc_lbl.setStyleSheet(
-            "font-size: 13px; color: #6c757d; border: none; margin-bottom: 5px;"
-        )
+        desc_lbl.setStyleSheet("font-size: 13px; color: #6c757d; border: none; margin-bottom: 5px;")
         card_layout.addWidget(desc_lbl)
 
         card_layout.addStretch()
@@ -290,9 +286,7 @@ class DashboardPanel(QWidget):
 
             # Action Arrow
             arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(
-                f"font-size: 16px; color: {color}; font-weight: bold; border: none;"
-            )
+            arrow_lbl.setStyleSheet(f"font-size: 16px; color: {color}; font-weight: bold; border: none;")
             stats_row.addWidget(arrow_lbl)
 
             card_layout.addLayout(stats_row)
@@ -301,9 +295,7 @@ class DashboardPanel(QWidget):
             stats_row = QHBoxLayout()
             stats_row.addStretch()
             arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(
-                f"font-size: 16px; color: {color}; font-weight: bold; border: none;"
-            )
+            arrow_lbl.setStyleSheet(f"font-size: 16px; color: {color}; font-weight: bold; border: none;")
             stats_row.addWidget(arrow_lbl)
             card_layout.addLayout(stats_row)
 

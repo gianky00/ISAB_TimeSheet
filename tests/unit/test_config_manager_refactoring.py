@@ -103,9 +103,7 @@ def test_load_config_with_credentials_fallback(clean_config_env):
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
     with (
-        patch(
-            "src.core.secrets_manager.SecretsManager.get_credential", return_value=None
-        ),
+        patch("src.core.secrets_manager.SecretsManager.get_credential", return_value=None),
         patch("src.utils.security.password_manager.decrypt") as mock_decrypt,
     ):
         mock_decrypt.side_effect = lambda x: f"decrypted_{x}"
@@ -137,9 +135,7 @@ def test_save_config_with_keyring(clean_config_env):
     }
 
     with (
-        patch(
-            "src.core.secrets_manager.SecretsManager.is_available", return_value=True
-        ),
+        patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True),
         patch("src.core.secrets_manager.SecretsManager.store_credential") as mock_store,
     ):
         save_config(config)
@@ -160,12 +156,8 @@ def test_save_config_fallback_encryption(clean_config_env):
     config = {"accounts": [{"username": "user1", "password": "plain_password"}]}
 
     with (
-        patch(
-            "src.core.secrets_manager.SecretsManager.is_available", return_value=False
-        ),
-        patch(
-            "src.utils.security.password_manager.encrypt", return_value="encrypted_val"
-        ),
+        patch("src.core.secrets_manager.SecretsManager.is_available", return_value=False),
+        patch("src.utils.security.password_manager.encrypt", return_value="encrypted_val"),
     ):
         save_config(config)
 
@@ -183,9 +175,7 @@ def test_save_config_io_error(clean_config_env):
 def test_save_config_critical_exception(clean_config_env):
     """Test handling of unexpected exceptions during save."""
     config = {"test": "data"}
-    with patch(
-        "src.core.config_manager.json.dump", side_effect=Exception("Critical Failure")
-    ):
+    with patch("src.core.config_manager.json.dump", side_effect=Exception("Critical Failure")):
         save_config(config)
 
 

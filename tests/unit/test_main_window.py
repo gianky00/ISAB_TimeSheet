@@ -86,15 +86,11 @@ class TestMainWindow:
             window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
 
             # Test deep link navigation
-            window.navigate_to_panel(
-                "timbrature"
-            )  # Should go to Automazioni -> Timbrature (Tab 2)
+            window.navigate_to_panel("timbrature")  # Should go to Automazioni -> Timbrature (Tab 2)
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
 
             # Automazioni panel is at index 1
-            automazioni_panel = window.navigation_controller.get_panel(
-                PageIndex.AUTOMAZIONI
-            )
+            automazioni_panel = window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
             # Timbrature is at index 2 in Portale Fornitori (tab 0 of Automazioni)
             portale_fornitori_tab = automazioni_panel.widget(0)
             assert portale_fornitori_tab.currentIndex() == 2

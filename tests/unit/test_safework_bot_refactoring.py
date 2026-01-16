@@ -55,9 +55,7 @@ def mock_bot(tmp_path):
 
 def test_run_success_full_workflow(mock_bot, mocker, tmp_path):
     """Test workflow completo di successo per un PDL."""
-    data = [
-        {"pdl_number": "123456", "print_enabled": True, "printer_name": "TestPrinter"}
-    ]
+    data = [{"pdl_number": "123456", "print_enabled": True, "printer_name": "TestPrinter"}]
 
     mock_search_field = MagicMock()
     mock_bot.wait.until.return_value = mock_search_field
@@ -78,9 +76,7 @@ def test_run_success_full_workflow(mock_bot, mocker, tmp_path):
     mock_doc = MagicMock()
     mock_doc.page_count = 1
     mocker.patch("src.bots.safework.pdl.bot.fitz.open", return_value=mock_doc)
-    m_merge = mocker.patch(
-        "src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True
-    )
+    m_merge = mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
     mocker.patch("src.bots.safework.pdl.bot.print_pdf")
 
     success = mock_bot.run(data)
@@ -124,9 +120,7 @@ def test_run_alert_handled(mock_bot, mocker, tmp_path):
     mock_bot._attendi_e_ritorna_nuovo_pdf = MagicMock(side_effect=[str(p1), str(p2)])
 
     mocker.patch("src.bots.safework.pdl.bot.fitz.open")
-    mocker.patch(
-        "src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True
-    )
+    mocker.patch("src.utils.document_processor.DocumentProcessor.merge_pdfs", return_value=True)
 
     success = mock_bot.run(data)
     assert success is True

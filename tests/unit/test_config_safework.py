@@ -17,9 +17,7 @@ class TestConfigSafeWork:
     @patch("builtins.open", new_callable=MagicMock)
     @patch("json.load")
     @patch("json.dump")
-    def test_load_save_safework_accounts(
-        self, mock_dump, mock_load, mock_open, mock_secrets
-    ):
+    def test_load_save_safework_accounts(self, mock_dump, mock_load, mock_open, mock_secrets):
         # Force SecretsManager to return None (simulate not found in keyring)
         mock_secrets.get_credential.return_value = None
 
@@ -31,9 +29,7 @@ class TestConfigSafeWork:
         mock_load.return_value = config_data
 
         # Mock decrypt
-        with patch(
-            "src.utils.security.password_manager.decrypt", return_value="real_pw"
-        ):
+        with patch("src.utils.security.password_manager.decrypt", return_value="real_pw"):
             # We must be sure load_config doesn't use cache from previous tests
             config_manager._config_cache = None
             config = config_manager.load_config()
@@ -53,9 +49,7 @@ class TestConfigSafeWork:
 
         config = {"safework_accounts": [{"username": "user1", "password": "plain_pw"}]}
 
-        with patch(
-            "src.utils.security.password_manager.encrypt", return_value="encrypted_pw"
-        ):
+        with patch("src.utils.security.password_manager.encrypt", return_value="encrypted_pw"):
             config_manager.save_config(config)
 
             # Check what was dumped

@@ -75,18 +75,18 @@ class PrenotaBPLocators:
         By.XPATH,
         "//div[contains(@class, 'x-tabpanel-child') and not(contains(@class, 'x-hidden-offsets'))]//div[contains(@id, 'dettaglio_buono_di_prelievo_posizioni')]",
     )
-    
+
     GRID_ROWS_DETTAGLI = (
         By.XPATH,
         "//div[contains(@class, 'x-tabpanel-child') and not(contains(@class, 'x-hidden-offsets'))]//div[contains(@id, 'dettaglio_buono_di_prelievo_posizioni')]//tr[contains(@class, 'x-grid-row')]",
     )
-    
+
     # Locatore specifico per le righe che contengono il checkbox (gestione Locked Grids di ExtJS)
     GRID_CHECKER_ROWS = (
         By.XPATH,
         "//div[contains(@class, 'x-tabpanel-child') and not(contains(@class, 'x-hidden-offsets'))]//div[contains(@id, 'dettaglio_buono_di_prelievo_posizioni')]//tr[contains(@class, 'x-grid-row') and .//span[contains(@class, 'x-grid-checkcolumn')]]",
     )
-    
+
     # Locatore diretto ai Checkbox (per evitare problemi con gerarchie di righe/locked views)
     # Aggiornato dopo analisi HTML: è uno span con classe 'x-grid-checkcolumn'
     GRID_CHECKERS = (
@@ -120,6 +120,6 @@ class PrenotaBPLocators:
     FORM_ORA_INIZIO = (By.NAME, "RequestedPickUpStartHour")
     FORM_ORA_FINE = (By.NAME, "RequestedPickUpEndHour")
     FORM_NOTE = (By.NAME, "Note")
-    
+
     # Bottone conferma nel form richiesta (potrebbe essere lo stesso BT_SALVA generico, ma ne definiamo uno se specifico serve)
     # Per ora usiamo BT_SALVA che è generico.

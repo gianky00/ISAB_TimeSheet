@@ -49,7 +49,8 @@ class ContabilitaYearTab(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSortingEnabled(True)
         self.table.verticalHeader().setVisible(False)
-        self.table.setStyleSheet("""
+        self.table.setStyleSheet(
+            """
             QTableView {
                 background-color: white;
                 border: 1px solid #dee2e6;
@@ -65,7 +66,8 @@ class ContabilitaYearTab(QWidget):
                 font-weight: bold;
                 font-size: 11px;
             }
-        """)
+        """
+        )
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -93,9 +95,7 @@ class ContabilitaYearTab(QWidget):
             display_rows = []
             for row in db_data:
                 # Trasforma i dati in stringhe leggibili per il modello
-                display_row = [
-                    str(x) if x is not None else "" for x in row[: len(self.COLUMNS)]
-                ]
+                display_row = [str(x) if x is not None else "" for x in row[: len(self.COLUMNS)]]
                 display_rows.append(display_row)
 
             self.model.update_data(display_rows)

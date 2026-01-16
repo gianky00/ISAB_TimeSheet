@@ -46,9 +46,7 @@ class TestLyraClientCoverage:
         conn.execute(
             "CREATE TABLE timbrature (data TEXT, nome TEXT, cognome TEXT, ingresso TEXT, uscita TEXT)"
         )
-        conn.execute(
-            "INSERT INTO timbrature VALUES ('2024-01-01', 'G', 'A', '08:00', '17:00')"
-        )
+        conn.execute("INSERT INTO timbrature VALUES ('2024-01-01', 'G', 'A', '08:00', '17:00')")
         conn.commit()
         conn.close()
 
@@ -112,13 +110,8 @@ class TestLyraClientCoverage:
         }
         mocker.patch("requests.post", return_value=mock_resp)
 
-        res = client.analyze_media(
-            b"fake_audio_bytes", "Converti in JSON", mime_type="audio/ogg"
-        )
+        res = client.analyze_media(b"fake_audio_bytes", "Converti in JSON", mime_type="audio/ogg")
 
         assert "Voglio scaricare" in res
         payload = requests.post.call_args[1]["json"]
-        assert (
-            payload["contents"][0]["parts"][1]["inline_data"]["mime_type"]
-            == "audio/ogg"
-        )
+        assert payload["contents"][0]["parts"][1]["inline_data"]["mime_type"] == "audio/ogg"

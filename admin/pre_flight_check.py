@@ -23,11 +23,7 @@ BOLD = "\033[1m"
 
 PROJECT_ROOT = Path(__file__).parent.parent
 LOG_DIR = PROJECT_ROOT / "temp" / "logs"
-VENV_BIN = (
-    PROJECT_ROOT / ".venv" / "Scripts"
-    if sys.platform == "win32"
-    else PROJECT_ROOT / ".venv" / "bin"
-)
+VENV_BIN = PROJECT_ROOT / ".venv" / "Scripts" if sys.platform == "win32" else PROJECT_ROOT / ".venv" / "bin"
 
 
 def print_step(msg):
@@ -211,9 +207,7 @@ def run_tests():
     print_step("PYTEST: Esecuzione Test Suite...")
     runner = PROJECT_ROOT / "tests" / "run_robust_tests.py"
     # Per i test lasciamo l'output visibile perché è già filtrato dal nostro runner robusto
-    ret = subprocess.call(
-        [sys.executable, str(runner), "--reset", "--exitfirst"], cwd=PROJECT_ROOT
-    )
+    ret = subprocess.call([sys.executable, str(runner), "--reset", "--exitfirst"], cwd=PROJECT_ROOT)
     return ret == 0
 
 
@@ -258,9 +252,7 @@ def run_super_audit():
 
     print("🔹 Incremento versione (patch)...")
 
-    subprocess.call(
-        [sys.executable, "admin/bump_version.py", "patch"], cwd=PROJECT_ROOT
-    )
+    subprocess.call([sys.executable, "admin/bump_version.py", "patch"], cwd=PROJECT_ROOT)
 
     # 4. Git operations
 
@@ -292,9 +284,7 @@ def run_super_audit():
 def main():
     parser = argparse.ArgumentParser(description="SyncroJob Developer Toolbox")
 
-    parser.add_argument(
-        "--fix", action="store_true", help="Applica correzioni automatiche"
-    )
+    parser.add_argument("--fix", action="store_true", help="Applica correzioni automatiche")
 
     parser.add_argument("--fast", action="store_true", help="Salta i test")
 

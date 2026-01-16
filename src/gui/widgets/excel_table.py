@@ -24,9 +24,7 @@ class ExcelTableWidget(QTableWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.auto_copy_headers = (
-            False  # Flag per copiare automaticamente le intestazioni
-        )
+        self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
 
         # Abilita la selezione di celle (non righe intere)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
@@ -166,11 +164,7 @@ class ExcelTableWidget(QTableWidget):
         row_data = []
         for c in range(self.columnCount()):
             if not self.isColumnHidden(c):
-                header = (
-                    self.horizontalHeaderItem(c).text()
-                    if self.horizontalHeaderItem(c)
-                    else f"Col {c}"
-                )
+                header = self.horizontalHeaderItem(c).text() if self.horizontalHeaderItem(c) else f"Col {c}"
                 widget = self.cellWidget(row, c)
                 if isinstance(widget, QComboBox):
                     text = widget.currentText()
@@ -198,9 +192,7 @@ class ExcelTableWidget(QTableWidget):
             for c in range(self.columnCount()):
                 item = self.item(r, c)
                 if item and not self.isColumnHidden(c):
-                    row_data.append(
-                        f"{self.horizontalHeaderItem(c).text()}: {item.text()}"
-                    )
+                    row_data.append(f"{self.horizontalHeaderItem(c).text()}: {item.text()}")
             rows_text.append(" | ".join(row_data))
 
         context = "\n".join(rows_text)
@@ -330,9 +322,7 @@ class EditableDataTable(QWidget):
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        header.setDefaultAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-        )
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)

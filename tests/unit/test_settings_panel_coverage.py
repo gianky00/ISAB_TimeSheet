@@ -121,16 +121,11 @@ class TestSettingsPanelCoverage:
 
     def test_add_fornitore(self, panel, mock_config_manager):
         """Test adding a supplier."""
-        with patch(
-            "PyQt6.QtWidgets.QInputDialog.getText", return_value=("New Supplier", True)
-        ):
+        with patch("PyQt6.QtWidgets.QInputDialog.getText", return_value=("New Supplier", True)):
             panel._add_fornitore()
 
             # Check list widget
-            items = [
-                panel.fornitori_list.item(i).text()
-                for i in range(panel.fornitori_list.count())
-            ]
+            items = [panel.fornitori_list.item(i).text() for i in range(panel.fornitori_list.count())]
             assert "New Supplier" in items
 
             # Check save called

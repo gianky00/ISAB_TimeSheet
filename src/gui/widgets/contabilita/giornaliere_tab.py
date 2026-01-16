@@ -108,9 +108,7 @@ class GiornaliereYearTab(QWidget):
                         item.setTextAlignment(align_right)
                     self.table.setItem(row_idx, col_idx, item)
                 if len(row_data) > self.IDX_NOMEFILE and self.table.item(row_idx, 0):
-                    self.table.item(row_idx, 0).setData(
-                        Qt.ItemDataRole.UserRole, row_data[self.IDX_NOMEFILE]
-                    )
+                    self.table.item(row_idx, 0).setData(Qt.ItemDataRole.UserRole, row_data[self.IDX_NOMEFILE])
             self.table.resizeRowsToContents()
             self._add_totals_row()
             self._update_totals()
@@ -119,10 +117,7 @@ class GiornaliereYearTab(QWidget):
             self.table.setSortingEnabled(True)
 
     def _add_totals_row(self):
-        if (
-            self.table.rowCount() > 0
-            and self.table.item(self.table.rowCount() - 1, 0).text() == "TOTALI"
-        ):
+        if self.table.rowCount() > 0 and self.table.item(self.table.rowCount() - 1, 0).text() == "TOTALI":
             return
         row_idx = self.table.rowCount()
         self.table.insertRow(row_idx)
@@ -137,16 +132,13 @@ class GiornaliereYearTab(QWidget):
             it.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
             if c == self.COL_ORE:
-                it.setTextAlignment(
-                    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-                )
+                it.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.table.setItem(row_idx, c, it)
 
     def _update_totals(self):
         total_row_idx = (
             self.table.rowCount() - 1
-            if self.table.rowCount() > 0
-            and self.table.item(self.table.rowCount() - 1, 0).text() == "TOTALI"
+            if self.table.rowCount() > 0 and self.table.item(self.table.rowCount() - 1, 0).text() == "TOTALI"
             else -1
         )
         if total_row_idx == -1:
@@ -157,9 +149,7 @@ class GiornaliereYearTab(QWidget):
                 item = self.table.item(r, self.COL_ORE)
                 if item and item.text():
                     sum_ore += float(item.text().replace(",", "."))
-        self.table.item(total_row_idx, self.COL_ORE).setText(
-            self._format_number(sum_ore)
-        )
+        self.table.item(total_row_idx, self.COL_ORE).setText(self._format_number(sum_ore))
 
     def _format_number(self, val):
         try:
@@ -188,11 +178,7 @@ class GiornaliereYearTab(QWidget):
     def filter_data(self, text):
         """Filtra i dati dell'anno corrente in base alla ricerca testuale."""
         rows = self.table.rowCount()
-        data_rows = (
-            rows - 1
-            if rows > 0 and self.table.item(rows - 1, 0).text() == "TOTALI"
-            else rows
-        )
+        data_rows = rows - 1 if rows > 0 and self.table.item(rows - 1, 0).text() == "TOTALI" else rows
         search_terms = text.lower().split()
         cols = self.table.columnCount()
         for r in range(data_rows):
@@ -200,15 +186,9 @@ class GiornaliereYearTab(QWidget):
                 self.table.setRowHidden(r, False)
                 continue
             row_text = " ".join(
-                [
-                    self.table.item(r, c).text().lower()
-                    for c in range(cols)
-                    if self.table.item(r, c)
-                ]
+                [self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)]
             )
-            self.table.setRowHidden(
-                r, not all(term in row_text for term in search_terms)
-            )
+            self.table.setRowHidden(r, not all(term in row_text for term in search_terms))
         self._update_totals()
 
     def _show_context_menu(self, pos):

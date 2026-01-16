@@ -39,9 +39,7 @@ class AppInitializer:
 
             # Se la licenza non è valida o manca, tenta l'aggiornamento online
             if status != LicenseStatus.VALID:
-                logger.info(
-                    "Licenza non valida o mancante. Tentativo di aggiornamento online..."
-                )
+                logger.info("Licenza non valida o mancante. Tentativo di aggiornamento online...")
                 run_update()
                 status, msg = get_detailed_license_status()
 
@@ -52,9 +50,7 @@ class AppInitializer:
                 hw_id = get_hardware_id()
 
                 if grace_allowed:
-                    logger.info(
-                        f"Accesso consentito tramite periodo di grazia: {grace_msg}"
-                    )
+                    logger.info(f"Accesso consentito tramite periodo di grazia: {grace_msg}")
                     QMessageBox.warning(
                         None,
                         "Licenza - Modalità Provvisoria",
@@ -86,9 +82,7 @@ class AppInitializer:
             return True
         except Exception as e:
             logger.critical(f"Errore DB: {e}")
-            QMessageBox.critical(
-                None, "Errore Database", f"Impossibile inizializzare il DB:\n{e}"
-            )
+            QMessageBox.critical(None, "Errore Database", f"Impossibile inizializzare il DB:\n{e}")
             return False
 
     @staticmethod

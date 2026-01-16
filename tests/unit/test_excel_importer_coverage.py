@@ -14,9 +14,7 @@ def importer():
 def test_import_contabilita_file_not_found(importer):
     """Test gestione file inesistente."""
     with patch("pathlib.Path.exists", return_value=False):
-        success, msg, rows, years = importer.import_contabilita_dati(
-            "non_existent.xlsx"
-        )
+        success, msg, rows, years = importer.import_contabilita_dati("non_existent.xlsx")
         assert success is False
         assert "non trovato" in msg
         assert rows == []

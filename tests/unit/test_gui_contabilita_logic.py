@@ -45,9 +45,7 @@ class TestContabilitaTableLogic:
             # Actually, current _load_data in year_tab.py DOES NOT add a totals row yet.
             # It just converts db rows to display rows.
             model = tab.table.model()
-            assert (
-                model.rowCount() == 1
-            )  # Updated expectation based on current source code
+            assert model.rowCount() == 1  # Updated expectation based on current source code
 
             # Check values (column 3 is Totale, column 9 is Ore)
             # Row 0 is the data row

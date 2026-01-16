@@ -44,10 +44,7 @@ class FastTableModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role):
         """Restituisce l'etichetta dell'intestazione."""
-        if (
-            orientation == Qt.Orientation.Horizontal
-            and role == Qt.ItemDataRole.DisplayRole
-        ):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self._headers[section]
         return None
 

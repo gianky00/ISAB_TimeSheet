@@ -87,19 +87,12 @@ def test_get_license_key_priority():
             assert SecretsManager.get_license_key() == b"file"
 
             # Priority 3: Keyring
-            with patch.object(
-                SecretsManager, "_get_key_from_env_file", return_value=None
-            ):
+            with patch.object(SecretsManager, "_get_key_from_env_file", return_value=None):
                 assert SecretsManager.get_license_key() == b"keyring"
 
                 # Priority 4: Fallback
-                with patch.object(
-                    SecretsManager, "_get_key_from_keyring", return_value=None
-                ):
-                    assert (
-                        SecretsManager.get_license_key()
-                        == SecretsManager._get_fallback_key()
-                    )
+                with patch.object(SecretsManager, "_get_key_from_keyring", return_value=None):
+                    assert SecretsManager.get_license_key() == SecretsManager._get_fallback_key()
 
 
 def test_is_available():

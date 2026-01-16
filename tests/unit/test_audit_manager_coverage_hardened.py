@@ -25,9 +25,7 @@ class TestAuditManager:
 
     def test_log_action_and_integrity(self, manager):
         """Test logging an action and verifying chain integrity."""
-        manager.log_action(
-            "Test Action", "unit-test", entity="App", status=AuditManager.Status.SUCCESS
-        )
+        manager.log_action("Test Action", "unit-test", entity="App", status=AuditManager.Status.SUCCESS)
         manager.log_action(
             "Test Action 2",
             "unit-test",
@@ -69,9 +67,7 @@ class TestAuditManager:
         assert logs[0]["action"] == "Sistema"
 
     def test_notification_emission(self, manager):
-        with patch(
-            "src.core.notification_manager.NotificationManager.instance"
-        ) as mock_notif:
+        with patch("src.core.notification_manager.NotificationManager.instance") as mock_notif:
             manager.log_action("Action", notify=True)
             mock_notif.return_value.add_notification.assert_called_once()
 

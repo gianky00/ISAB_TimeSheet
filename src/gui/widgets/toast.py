@@ -55,9 +55,7 @@ class Toast(QWidget):
         self._palette = get_palette()
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.Tool
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -69,9 +67,7 @@ class Toast(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
 
-        icon, color_key = self.TYPE_CONFIG.get(
-            self._type, self.TYPE_CONFIG[self.Type.INFO]
-        )
+        icon, color_key = self.TYPE_CONFIG.get(self._type, self.TYPE_CONFIG[self.Type.INFO])
         accent = getattr(self._palette, color_key, self._palette.info)
 
         # Container
@@ -88,9 +84,7 @@ class Toast(QWidget):
 
         # Icon
         icon_label = QLabel(icon)
-        icon_label.setStyleSheet(
-            "font-size: 18px; border: none; background: transparent;"
-        )
+        icon_label.setStyleSheet("font-size: 18px; border: none; background: transparent;")
         layout.addWidget(icon_label)
 
         # Message
@@ -158,9 +152,7 @@ class ToastManager:
             cls._instance = cls()
         return cls._instance
 
-    def show(
-        self, message: str, toast_type: str = Toast.Type.INFO, duration: int = 3000
-    ):
+    def show(self, message: str, toast_type: str = Toast.Type.INFO, duration: int = 3000):
         """
         Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
 
@@ -197,9 +189,7 @@ class ToastManager:
         self._active_toasts.append(toast)
         # Remove from list when destroyed
         toast.destroyed.connect(
-            lambda: self._active_toasts.remove(toast)
-            if toast in self._active_toasts
-            else None
+            lambda: self._active_toasts.remove(toast) if toast in self._active_toasts else None
         )
 
         toast.show_at(x, y)

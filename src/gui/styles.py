@@ -71,15 +71,9 @@ class ThemeManager:
         palette.setColor(QPalette.ColorRole.HighlightedText, q(p.on_primary))
 
         # Stati disabilitati
-        palette.setColor(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, q(p.disabled)
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, q(p.disabled)
-        )
-        palette.setColor(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, q(p.disabled)
-        )
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, q(p.disabled))
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, q(p.disabled))
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, q(p.disabled))
 
         app.setPalette(palette)
 
@@ -97,9 +91,7 @@ class ThemeManager:
 
         # Se il file manca o è vuoto, applica uno stile minimo basato sulla palette
         if not qss_content:
-            qss_content = (
-                f"QMainWindow {{ background-color: {self.palette.background}; }}"
-            )
+            qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
 
         app.setStyleSheet(qss_content)
 

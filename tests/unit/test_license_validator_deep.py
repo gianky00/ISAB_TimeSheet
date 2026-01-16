@@ -76,9 +76,7 @@ class TestLicenseValidatorDeep:
         return_value=(LicenseStatus.VALID, ""),
     )
     @patch("os.path.exists", return_value=True)
-    def test_detailed_status_hardware_mismatch(
-        self, mock_exists, mock_integrity, mock_hwid, mock_info
-    ):
+    def test_detailed_status_hardware_mismatch(self, mock_exists, mock_integrity, mock_hwid, mock_info):
         mock_info.return_value = {"Hardware ID": "OTHER-HW", "Cliente": "C1"}
 
         status, msg = get_detailed_license_status()
@@ -117,8 +115,6 @@ class TestLicenseValidatorDeep:
         with patch("subprocess.check_output", side_effect=Exception("no lsblk")):
             mock_exists.side_effect = lambda p: p == "/etc/machine-id"
             with patch("builtins.open", MagicMock()) as mock_open:
-                mock_open.return_value.__enter__.return_value.read.return_value = (
-                    "MACHINE-ID-123"
-                )
+                mock_open.return_value.__enter__.return_value.read.return_value = "MACHINE-ID-123"
                 hwid = get_hardware_id()
                 assert hwid == "MACHINE-ID-123"

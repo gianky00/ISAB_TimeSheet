@@ -38,12 +38,8 @@ class TestContabilitaQueriesCoverage:
     def test_get_scarico_ore_data_sorting(self, db_path):
         """Verifica ordinamento decrescente (id DESC) per scarico ore."""
         manager = DatabaseManager()
-        manager.execute_query(
-            db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')"
-        )
-        manager.execute_query(
-            db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Ultima')"
-        )
+        manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')")
+        manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Ultima')")
 
         rows = ContabilitaQueries.get_scarico_ore_data(db_path)
         # La colonna 'descrizione' è all'indice 8 nel mapping SCARICO_ORE_COLS

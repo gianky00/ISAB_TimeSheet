@@ -43,9 +43,7 @@ class DataSynchronizer:
             # Normalizzazione dati: strip e stringa
             normalized_data = []
             for row in imported_data:
-                normalized_data.append(
-                    tuple(str(x).strip() if x is not None else "" for x in row)
-                )
+                normalized_data.append(tuple(str(x).strip() if x is not None else "" for x in row))
 
             cursor.executemany(query_insert, normalized_data)
 
@@ -124,10 +122,7 @@ class DataSynchronizer:
 
             if all_new_rows:
                 placeholders = ", ".join(["?"] * len(target_cols))
-                normalized = [
-                    tuple(str(x).strip() if x is not None else "" for x in r)
-                    for r in all_new_rows
-                ]
+                normalized = [tuple(str(x).strip() if x is not None else "" for x in r) for r in all_new_rows]
                 cursor.executemany(
                     f"INSERT INTO temp_giornaliere VALUES ({placeholders})",  # nosec B608
                     normalized,
@@ -172,32 +167,22 @@ class DataSynchronizer:
         return total_added, total_removed
 
     @classmethod
-    def sync_attivita_programmate(
-        cls, db_path: Path, rows_to_insert: List[Tuple]
-    ) -> Tuple[int, int]:
+    def sync_attivita_programmate(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
         """Sincronizzazione ottimizzata per attività programmate."""
         db_cols = list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ["styles"]
-        return cls._sync_generic(
-            db_path, "attivita_programmate", db_cols, rows_to_insert
-        )
+        return cls._sync_generic(db_path, "attivita_programmate", db_cols, rows_to_insert)
 
     @classmethod
-    def sync_scarico_ore(
-        cls, db_path: Path, rows_to_insert: List[Tuple]
-    ) -> Tuple[int, int]:
+    def sync_scarico_ore(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
         """Sincronizzazione ottimizzata per scarico ore."""
         db_cols = ExcelImporter.SCARICO_ORE_COLS
         return cls._sync_generic(db_path, "scarico_ore", db_cols, rows_to_insert)
 
     @classmethod
-    def sync_certificati_campione(
-        cls, db_path: Path, rows_to_insert: List[Tuple]
-    ) -> Tuple[int, int]:
+    def sync_certificati_campione(cls, db_path: Path, rows_to_insert: List[Tuple]) -> Tuple[int, int]:
         """Sincronizzazione ottimizzata per certificati campione."""
         target_cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS
-        return cls._sync_generic(
-            db_path, "certificati_campione", target_cols, rows_to_insert
-        )
+        return cls._sync_generic(db_path, "certificati_campione", target_cols, rows_to_insert)
 
     @classmethod
     def _sync_generic(
@@ -216,10 +201,7 @@ class DataSynchronizer:
 
             if new_data:
                 placeholders = ", ".join(["?"] * len(columns))
-                normalized = [
-                    tuple(str(x).strip() if x is not None else "" for x in r)
-                    for r in new_data
-                ]
+                normalized = [tuple(str(x).strip() if x is not None else "" for x in r) for r in new_data]
                 cursor.executemany(
                     f"INSERT INTO temp_{table_name} VALUES ({placeholders})",  # nosec B608
                     normalized,

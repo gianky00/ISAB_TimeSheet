@@ -128,9 +128,7 @@ class NavigationController(QObject):
             and not getattr(self.mw, "_timbrature_signals_connected", False)
         ):
             try:
-                self.mw.timbrature_bot_panel.data_updated.connect(
-                    self.mw.timbrature_db_panel.refresh_data
-                )
+                self.mw.timbrature_bot_panel.data_updated.connect(self.mw.timbrature_db_panel.refresh_data)
                 self.mw._timbrature_signals_connected = True
                 logger.info("Signal: Timbrature Bot -> DB connected.")
             except Exception as e:
@@ -205,6 +203,4 @@ class NavigationController(QObject):
     def analyze_with_lyra(self, context_text: str):
         """Passa alla vista Lyra."""
         self.navigate_to(2)
-        self.mw.lyra_panel.ask_lyra(
-            "Analizza questi dati e dimmi se ci sono anomalie.", context_text
-        )
+        self.mw.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie.", context_text)
