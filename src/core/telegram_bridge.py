@@ -351,27 +351,38 @@ class TelegramUIBridge(QObject):
             panel = self.mw.tab_fornitori.widget(3)
             field = "numero_bp"
             # Validatore fittizio per BP (accetta tutto per ora, o numeri)
-            # Creiamo una lambda che torna un oggetto simile a ValidationResult
             class DummyResult:
                 def __init__(self, val): self.valid = True; self.sanitized_value = val
             validator = lambda x: DummyResult(x)
+            
+            # CLEAR TABLE for BP (Replacement Mode)
+            existing = [] 
         else:
             return
 
-        existing = [str(row.get(field, "")) for row in panel.data_table.get_data()]
+        # existing logic for existing check... (skipped since we cleared for BP)
+        if data_type != "bp":
+             existing = [str(row.get(field, "")) for row in panel.data_table.get_data()]
         
         for item in items:
             # Parsing specifico per BP (Numero + Note)
             if data_type == "bp":
+                # Supporto per formato: "123456 note, 123457 note" già splittato da telegram_manager
+                # Qui item è una singola entry "123456 note"
+                # Rimuoviamo spazi extra
+                item = item.strip()
+                if not item: continue
+                
                 parts = item.split(" ", 1)
                 bp_num = parts[0].strip()
                 bp_note = parts[1].strip() if len(parts) > 1 else ""
                 
-                # Check esistenza
-                if bp_num in existing or any(v.get("numero_bp") == bp_num for v in valid_items):
+                # Check duplicati SOLO nel nuovo set (poiché sostituiamo)
+                if any(v.get("NUMERO BP") == bp_num for v in valid_items):
                     duplicates += 1
                 else:
-                    valid_items.append({"numero_bp": bp_num, "note_di_ritiro": bp_note})
+                    # Usiamo le chiavi esatte definite nel pannello: "NUMERO BP", "NOTE DI RITIRO"
+                    valid_items.append({"NUMERO BP": bp_num, "NOTE DI RITIRO": bp_note})
             else:
                 # Logica standard PDL/OdA
                 res = validator(item)
@@ -385,18 +396,21 @@ class TelegramUIBridge(QObject):
                     errors.append(f"❌ `{item}`: {res.error}")
 
         if valid_items:
-            # Per BP è già dict, per altri è lista di stringhe
+            # Per BP usiamo set_data per rimpiazzare
             if data_type == "bp":
-                panel.add_rows_simple(valid_items)
+                panel.data_table.set_data(valid_items)
+                # Forza salvataggio
+                if hasattr(panel, "_save_data"):
+                    panel._save_data()
             else:
                 panel.add_rows_simple([{field: v} for v in valid_items])
             
             self.mw.navigate_to_panel(panel.bot_id)
             self.mw.show_toast(f"Telegram: Aggiunti {len(valid_items)} elementi")
 
-        feedback = [f"✅ Aggiunti {len(valid_items)}"] if valid_items else []
+        feedback = [f"✅ Impostati {len(valid_items)}"] if valid_items else []
         if duplicates:
-            feedback.append(f"ℹ️ {duplicates} duplicati saltati")
+            feedback.append(f"ℹ️ {duplicates} duplicati ignorati")
         if errors:
             feedback.append("⚠️ Errori:\n" + "\n".join(errors[:5]))
         self.telegram.send_message_sync(
