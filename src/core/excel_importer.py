@@ -329,7 +329,9 @@ class ExcelImporter:
         """Helper per processare un singolo file giornaliera in parallelo."""
         year, file_path, lookup_map = args
         try:
-            df = cls._read_giornaliera_sheet(file_path)
+            # Decrittografia se necessaria
+            file_obj, _ = cls._decrypt_if_encrypted(file_path)
+            df = cls._read_giornaliera_sheet(file_obj)
             if df is None:
                 return (year, [], None)
 

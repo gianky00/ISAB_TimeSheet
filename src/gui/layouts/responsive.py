@@ -51,13 +51,27 @@ class ResponsiveContainer(QWidget):
         self._clear_layout()
         self._build_layout_by_mode()
 
-    def _clear_layout(self):
-        """Rimuove tutti gli elementi dal layout principale senza distruggere i widget."""
-        while self._main_layout.count():
-            self._main_layout.takeAt(0)
+    def _clear_layout(self, layout=None):
+        """Rimuove ricorsivamente tutti gli elementi dal layout senza distruggere i widget."""
+        if layout is None:
+            layout = self._main_layout
+
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.layout():
+                self._clear_layout(item.layout())
+                item.layout().deleteLater()
+            elif item.widget():
+                # Disaccoppia il widget dal layout ma non distruggerlo
+                item.widget().setParent(None)
+                item.widget().setParent(self)
 
     def _build_layout_by_mode(self):
         """Sceglie il metodo di costruzione del layout basandosi sul modo corrente."""
+        # Se non ci sono widget, non fare nulla
+        if not self._widgets:
+            return
+
         if self._current_mode == "mobile":
             self._add_widgets_stacked()
         elif self._current_mode == "tablet":

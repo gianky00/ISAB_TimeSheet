@@ -42,6 +42,15 @@ class StatusCard(QFrame):
 
         self._setup_ui(title)
         self._setup_animation()
+        # Stile base statico
+        self._base_style_template = f"""
+            StatusCard {{
+                background-color: {self._palette.surface};
+                border: 1px solid {self._palette.border};
+                border-radius: {BorderRadius.md}px;
+                border-left: 4px solid {{accent}};
+            }}
+        """
         self._apply_style()
 
     def _setup_ui(self, title: str):
@@ -136,14 +145,4 @@ class StatusCard(QFrame):
         )
 
         accent = getattr(self._palette, color_key, self._palette.primary)
-
-        self.setStyleSheet(
-            f"""
-            StatusCard {{
-                background-color: {self._palette.surface};
-                border: 1px solid {self._palette.border};
-                border-left: 4px solid {accent};
-                border-radius: {BorderRadius.md}px;
-            }}
-        """
-        )
+        self.setStyleSheet(self._base_style_template.format(accent=accent))

@@ -38,6 +38,9 @@ class HoverCard(QFrame):
         self.shadow.setColor(QColor(0, 0, 0, 40))
         self.setGraphicsEffect(self.shadow)
 
+        # Pulsante overlay per il click (creato dal parent o internamente)
+        self.click_btn = None
+
         self.setStyleSheet(
             f"""
             QFrame {{
@@ -45,6 +48,11 @@ class HoverCard(QFrame):
                 border-radius: 15px;
                 border: 1px solid #e9ecef;
                 border-left: 5px solid {color};
+            }}
+            QFrame:hover {{
+                background-color: #f8f9fa;
+                border: 1px solid {color}44;
+                border-left: 6px solid {color};
             }}
         """
         )
@@ -65,36 +73,30 @@ class HoverCard(QFrame):
         self.shadow.setYOffset(value)
         self.shadow.setBlurRadius(15 + (4 - value) * 2)
 
+    def set_click_callback(self, callback):
+        """Configura il pulsante trasparente sopra la card."""
+        if not self.click_btn:
+            self.click_btn = QPushButton(self)
+            self.click_btn.setStyleSheet("background: transparent; border: none;")
+            self.click_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.click_btn.show()
+        self.click_btn.clicked.connect(callback)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.click_btn:
+            self.click_btn.resize(event.size())
+
     def enterEvent(self, event):
         self.anim.setStartValue(self._y_offset)
         self.anim.setEndValue(8)
         self.anim.start()
-        self.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: #f8f9fa;
-                border-radius: 15px;
-                border: 1px solid {self.color}44;
-                border-left: 6px solid {self.color};
-            }}
-        """
-        )
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         self.anim.setStartValue(self._y_offset)
         self.anim.setEndValue(4)
         self.anim.start()
-        self.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: #ffffff;
-                border-radius: 15px;
-                border: 1px solid #e9ecef;
-                border-left: 5px solid {self.color};
-            }}
-        """
-        )
         super().leaveEvent(event)
 
 
@@ -394,13 +396,7 @@ class DashboardPanel(QWidget):
             card_layout.addLayout(stats_row)
 
         # Full Card Click Button Overlay
-        btn = QPushButton(card)
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn.setStyleSheet("background: transparent; border: none;")
-        btn.clicked.connect(lambda: self._navigate_to(action_key))
-
-        # Ensure button resizes with card
-        card.resizeEvent = lambda e: btn.resize(e.size())
+        card.set_click_callback(lambda: self._navigate_to(action_key))
 
         return card
 

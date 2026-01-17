@@ -1,8 +1,6 @@
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -50,14 +48,6 @@ class SidebarWidget(QFrame):
             }
         """
         )
-
-        # Aggiungi ombra per profondità
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setXOffset(5)
-        shadow.setYOffset(0)
-        shadow.setColor(QColor(0, 0, 0, 60))
-        self.setGraphicsEffect(shadow)
 
         self._setup_ui()
 
