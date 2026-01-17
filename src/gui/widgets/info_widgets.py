@@ -118,16 +118,23 @@ class KPIBigCard(QFrame):
         super().__init__(parent)
         self.info_content_callback = lambda: "Nessuna informazione disponibile."
         self.setStyleSheet(
-            "QFrame { background-color: white; border-radius: 12px; border: 1px solid #e9ecef; }"
+            f"""
+            QFrame {{
+                background-color: white;
+                border-radius: 15px;
+                border: 1px solid #e9ecef;
+                border-left: 5px solid {color};
+            }}
+        """
         )
         self.setMinimumWidth(200)
         self.setMinimumHeight(120)
 
         shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(15)
+        shadow.setBlurRadius(20)
         shadow.setXOffset(0)
-        shadow.setYOffset(4)
-        shadow.setColor(QColor(0, 0, 0, 30))
+        shadow.setYOffset(5)
+        shadow.setColor(QColor(0, 0, 0, 20))
         self.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(self)

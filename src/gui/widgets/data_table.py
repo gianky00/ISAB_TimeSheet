@@ -130,33 +130,30 @@ class DataTable(QWidget):
             QTableWidget {{
                 background-color: {p.surface};
                 alternate-background-color: {p.surface_variant};
-                gridline-color: {p.divider};
+                gridline-color: #f8f9fa;
                 border: 1px solid {p.border};
                 border-radius: 8px;
-                selection-background-color: #0d6efd;
-                selection-color: white;
+                selection-background-color: #e3f2fd;
+                selection-color: #0d6efd;
             }}
             QTableWidget::item {{
-                padding: 8px;
-                border: none;
-            }}
-            QTableWidget::item:focus {{
-                background-color: #0d6efd;
-                color: white;
+                padding: 8px 12px;
+                border-bottom: 1px solid #f1f3f5;
             }}
             QTableWidget::item:selected {{
-                background-color: #0d6efd;
-                color: white;
+                background-color: #e3f2fd;
+                color: #0d6efd;
+                border-left: 3px solid #0d6efd;
             }}
             QHeaderView::section {{
-                background-color: #E1F5FE;
-                color: #333333;
-                padding: 12px;
+                background-color: #f8f9fa;
+                color: #37474f;
+                padding: 10px;
                 border: none;
-                border-right: 1px solid #B3E5FC;
-                border-bottom: 3px solid #81D4FA;
+                border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
                 text-transform: uppercase;
+                font-size: 12px;
             }}
             QHeaderView::section:vertical {{
                 font-size: 10px;

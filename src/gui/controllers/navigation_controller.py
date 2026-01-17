@@ -6,7 +6,8 @@ Implementa il Lazy Loading per ottimizzare le prestazioni.
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation
+from PyQt6.QtWidgets import QGraphicsOpacityEffect
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,22 @@ class NavigationController(QObject):
                     return
 
         # Assicurati che il pannello di destinazione sia caricato
-        self.get_panel(index)
+        new_panel = self.get_panel(index)
+
+        # Transizione a dissolvenza (Fade Transition)
+        if new_panel:
+            # Applica l'effetto opacità se non presente
+            effect = new_panel.graphicsEffect()
+            if not isinstance(effect, QGraphicsOpacityEffect):
+                effect = QGraphicsOpacityEffect(new_panel)
+                new_panel.setGraphicsEffect(effect)
+
+            self.fade_anim = QPropertyAnimation(effect, b"opacity")
+            self.fade_anim.setDuration(250)
+            self.fade_anim.setStartValue(0.0)
+            self.fade_anim.setEndValue(1.0)
+            self.fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+            self.fade_anim.start()
 
         self.mw._current_page_index = index
         self.mw.page_stack.setCurrentIndex(index)

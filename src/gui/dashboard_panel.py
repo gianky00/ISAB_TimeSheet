@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, pyqtProperty
 from PyQt6.QtGui import QColor, QCursor
 from PyQt6.QtWidgets import (
     QFrame,
@@ -20,16 +20,118 @@ from src.gui.layouts.responsive import ResponsiveContainer
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
+class HoverCard(QFrame):
+    """Card con effetto hover lift e ombra dinamica."""
+
+    def __init__(self, color, parent=None):
+        super().__init__(parent)
+        self.color = color
+        self.setMinimumSize(250, 200)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+
+        # Shadow Setup
+        self.shadow = QGraphicsDropShadowEffect(self)
+        self.shadow.setBlurRadius(15)
+        self.shadow.setXOffset(0)
+        self.shadow.setYOffset(4)
+        self.shadow.setColor(QColor(0, 0, 0, 40))
+        self.setGraphicsEffect(self.shadow)
+
+        self.setStyleSheet(
+            f"""
+            QFrame {{
+                background-color: #ffffff;
+                border-radius: 15px;
+                border: 1px solid #e9ecef;
+                border-left: 5px solid {color};
+            }}
+        """
+        )
+
+        # Animation for Y Offset (Lift effect)
+        self._y_offset = 4
+        self.anim = QPropertyAnimation(self, b"yOffset")
+        self.anim.setDuration(200)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+    @pyqtProperty(int)
+    def yOffset(self):
+        return self._y_offset
+
+    @yOffset.setter
+    def yOffset(self, value):
+        self._y_offset = value
+        self.shadow.setYOffset(value)
+        self.shadow.setBlurRadius(15 + (4 - value) * 2)
+
+    def enterEvent(self, event):
+        self.anim.setStartValue(self._y_offset)
+        self.anim.setEndValue(8)
+        self.anim.start()
+        self.setStyleSheet(
+            f"""
+            QFrame {{
+                background-color: #f8f9fa;
+                border-radius: 15px;
+                border: 1px solid {self.color}44;
+                border-left: 6px solid {self.color};
+            }}
+        """
+        )
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.anim.setStartValue(self._y_offset)
+        self.anim.setEndValue(4)
+        self.anim.start()
+        self.setStyleSheet(
+            f"""
+            QFrame {{
+                background-color: #ffffff;
+                border-radius: 15px;
+                border: 1px solid #e9ecef;
+                border-left: 5px solid {self.color};
+            }}
+        """
+        )
+        super().leaveEvent(event)
+
+
 class DashboardPanel(QWidget):
     """Pannello Home con Mappa Modulare Interattiva Responsiva."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(40, 40, 40, 40)
-        self.layout.setSpacing(30)
+        self.layout.setContentsMargins(20, 20, 20, 20)
+        self.layout.setSpacing(0)
 
-        # Scroll Area for responsive content if it overflows
+        # Main Floating Container
+        self.main_container = QFrame()
+        self.main_container.setObjectName("mainDashboardContainer")
+        self.main_container.setStyleSheet(
+            """
+            QFrame#mainDashboardContainer {
+                background-color: #ffffff;
+                border-radius: 20px;
+                border: 1px solid #dee2e6;
+            }
+        """
+        )
+
+        container_shadow = QGraphicsDropShadowEffect()
+        container_shadow.setBlurRadius(30)
+        container_shadow.setXOffset(0)
+        container_shadow.setYOffset(10)
+        container_shadow.setColor(QColor(0, 0, 0, 20))
+        self.main_container.setGraphicsEffect(container_shadow)
+
+        self.container_layout = QVBoxLayout(self.main_container)
+        self.container_layout.setContentsMargins(30, 30, 30, 30)
+        self.container_layout.setSpacing(20)
+
+        # Scroll Area inside container
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
@@ -41,7 +143,9 @@ class DashboardPanel(QWidget):
         self.content_layout.setSpacing(30)
 
         self.scroll_area.setWidget(self.content_widget)
-        self.layout.addWidget(self.scroll_area)
+        self.container_layout.addWidget(self.scroll_area)
+
+        self.layout.addWidget(self.main_container)
 
         self.refresh_data()
 
@@ -189,34 +293,7 @@ class DashboardPanel(QWidget):
         self, title, desc, icon_path, color, action_key, runs, errors
     ):
         """Crea una card cliccabile ricca per un singolo modulo."""
-        card = QFrame()
-        # Responsive height fix?
-        card.setMinimumSize(250, 200)
-        card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        card.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-
-        # Shadow
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setXOffset(0)
-        shadow.setYOffset(5)
-        shadow.setColor(QColor(0, 0, 0, 20))
-        card.setGraphicsEffect(shadow)
-
-        # Stile Card
-        card.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: white;
-                border-radius: 16px;
-                border-left: 6px solid {color};
-            }}
-            QFrame:hover {{
-                background-color: #f8f9fa;
-            }}
-        """
-        )
-
+        card = HoverCard(color)
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(20, 20, 20, 20)
         card_layout.setSpacing(10)
@@ -226,7 +303,7 @@ class DashboardPanel(QWidget):
 
         title_lbl = QLabel(title)
         title_lbl.setStyleSheet(
-            "font-size: 18px; font-weight: 800; color: #212529; border: none;"
+            "font-size: 18px; font-weight: 800; color: #212529; border: none; background: transparent;"
         )
         header_row.addWidget(title_lbl)
 
@@ -235,6 +312,7 @@ class DashboardPanel(QWidget):
         icon_lbl = QLabel()
         icon_lbl.setFixedSize(32, 32)
         icon_lbl.setScaledContents(True)
+        icon_lbl.setStyleSheet("border: none; background: transparent;")
         # Apply black color filter
         pixmap = get_colored_icon(get_asset_path(icon_path), "#000000").pixmap(
             QSize(32, 32)
@@ -248,7 +326,7 @@ class DashboardPanel(QWidget):
         desc_lbl = QLabel(desc)
         desc_lbl.setWordWrap(True)
         desc_lbl.setStyleSheet(
-            "font-size: 13px; color: #6c757d; border: none; margin-bottom: 5px;"
+            "font-size: 13px; color: #6c757d; border: none; background: transparent; margin-bottom: 5px;"
         )
         card_layout.addWidget(desc_lbl)
 
@@ -258,16 +336,17 @@ class DashboardPanel(QWidget):
         if runs is not None:
             stats_row = QHBoxLayout()
 
-            # Runs Badge
-            runs_lbl = QLabel(f"Esecuzioni: {runs}")
-            runs_lbl.setToolTip("Esecuzioni")
+            # Runs Badge - Circled and subtle
+            runs_lbl = QLabel(str(runs))
+            runs_lbl.setToolTip(f"Esecuzioni: {runs}")
+            runs_lbl.setFixedSize(24, 24)
+            runs_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             runs_lbl.setStyleSheet(
                 """
                 background-color: #e9ecef;
                 color: #495057;
-                border-radius: 10px;
-                padding: 2px 8px;
-                font-size: 11px;
+                border-radius: 12px;
+                font-size: 10px;
                 font-weight: bold;
                 border: none;
             """
@@ -275,15 +354,16 @@ class DashboardPanel(QWidget):
             stats_row.addWidget(runs_lbl)
 
             if errors is not None and errors > 0:
-                err_lbl = QLabel(f"Errori: {errors}")
-                err_lbl.setToolTip("Errori")
+                err_lbl = QLabel(str(errors))
+                err_lbl.setToolTip(f"Errori: {errors}")
+                err_lbl.setFixedSize(24, 24)
+                err_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 err_lbl.setStyleSheet(
                     """
                     background-color: #f8d7da;
                     color: #721c24;
-                    border-radius: 10px;
-                    padding: 2px 8px;
-                    font-size: 11px;
+                    border-radius: 12px;
+                    font-size: 10px;
                     font-weight: bold;
                     border: none;
                 """
@@ -295,9 +375,9 @@ class DashboardPanel(QWidget):
             # Action Arrow
             arrow_lbl = QLabel()
             arrow_lbl.setPixmap(
-                get_colored_icon(get_asset_path(Icons.PLAY), "#000000").pixmap(16, 16)
+                get_colored_icon(get_asset_path(Icons.PLAY), color).pixmap(16, 16)
             )
-            arrow_lbl.setStyleSheet("border: none;")
+            arrow_lbl.setStyleSheet("border: none; background: transparent;")
             stats_row.addWidget(arrow_lbl)
 
             card_layout.addLayout(stats_row)
@@ -307,14 +387,15 @@ class DashboardPanel(QWidget):
             stats_row.addStretch()
             arrow_lbl = QLabel()
             arrow_lbl.setPixmap(
-                get_colored_icon(get_asset_path(Icons.PLAY), "#000000").pixmap(16, 16)
+                get_colored_icon(get_asset_path(Icons.PLAY), color).pixmap(16, 16)
             )
-            arrow_lbl.setStyleSheet("border: none;")
+            arrow_lbl.setStyleSheet("border: none; background: transparent;")
             stats_row.addWidget(arrow_lbl)
             card_layout.addLayout(stats_row)
 
         # Full Card Click Button Overlay
         btn = QPushButton(card)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setStyleSheet("background: transparent; border: none;")
         btn.clicked.connect(lambda: self._navigate_to(action_key))
 

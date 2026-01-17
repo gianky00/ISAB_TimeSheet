@@ -5,11 +5,13 @@ from typing import Any, List, Optional
 import markdown
 import pandas as pd
 from PyQt6.QtCore import QSize, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QColor
 from PyQt6.QtWidgets import (
+    QApplication,
     QComboBox,
     QFileDialog,
     QFrame,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -17,7 +19,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -28,6 +29,86 @@ from src.core.lyra_client import LyraClient
 from src.core.secrets_manager import SecretsManager
 from src.utils.document_processor import DocumentProcessor
 from src.utils.helpers import get_asset_path, get_colored_icon
+
+
+class MessageBubble(QFrame):
+    """Widget per una singola bolla di messaggio nella chat."""
+
+    def __init__(self, sender, text, is_lyra=True, parent=None):
+        super().__init__(parent)
+        self.is_lyra = is_lyra
+        self._setup_ui(sender, text)
+
+    def _setup_ui(self, sender, text):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Container per l'allineamento
+        container = QWidget()
+        container_layout = QHBoxLayout(container)
+        container_layout.setContentsMargins(10, 5, 10, 5)
+
+        # La bolla effettiva
+        bubble = QFrame()
+        bubble_layout = QVBoxLayout(bubble)
+        bubble_layout.setContentsMargins(15, 10, 15, 10)
+        bubble_layout.setSpacing(5)
+
+        # Colori e stili basati sul mittente
+        if self.is_lyra:
+            bg_color = "#f1f3f9"
+            text_color = "#212529"
+            sender_color = "#6f42c1"
+            bubble.setStyleSheet(
+                f"background-color: {bg_color}; border-radius: 15px; border-bottom-left-radius: 2px; border: 1px solid #dee2e6;"
+            )
+            container_layout.addWidget(bubble)
+            container_layout.addStretch()
+        else:
+            bg_color = "#6f42c1"
+            text_color = "#ffffff"
+            sender_color = "#e9ecef"
+            bubble.setStyleSheet(
+                f"background-color: {bg_color}; border-radius: 15px; border-bottom-right-radius: 2px;"
+            )
+            container_layout.addStretch()
+            container_layout.addWidget(bubble)
+
+        # Shadow
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(10)
+        shadow.setXOffset(0)
+        shadow.setYOffset(2)
+        shadow.setColor(QColor(0, 0, 0, 30))
+        bubble.setGraphicsEffect(shadow)
+
+        # Sender Label
+        lbl_sender = QLabel(sender)
+        lbl_sender.setStyleSheet(
+            f"font-weight: bold; font-size: 11px; color: {sender_color}; background: transparent; border: none;"
+        )
+        bubble_layout.addWidget(lbl_sender)
+
+        # Message Label (Markdown Support via RichText)
+        lbl_msg = QLabel()
+        lbl_msg.setWordWrap(True)
+        lbl_msg.setTextFormat(Qt.TextFormat.RichText)
+        lbl_msg.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+
+        # Formattazione Markdown per HTML
+        html_text = markdown.markdown(text, extensions=["tables", "fenced_code"])
+        # Custom styles for table inside bubble
+        if self.is_lyra:
+            style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 5px; border-color: #dee2e6;"'
+            html_text = html_text.replace("<table>", f"<table {style_table}>")
+
+        lbl_msg.setText(
+            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>{html_text}</div>"
+        )
+        lbl_msg.setStyleSheet("background: transparent; border: none;")
+        bubble_layout.addWidget(lbl_msg)
+
+        layout.addWidget(container)
 
 
 class LyraWorker(QThread):
@@ -207,22 +288,23 @@ class LyraPanel(QWidget):
 
         layout.addWidget(header)
 
-        # Chat History
-        self.chat_area = QTextEdit()
-        self.chat_area.setReadOnly(True)
-        # Custom CSS for Tables within QTextEdit
-        self.chat_area.setStyleSheet(
-            """
-            QTextEdit {
-                background-color: white;
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                padding: 10px;
-                font-size: 15px;
-            }
-        """
+        # Chat History - Now a Scroll Area for Bubbles
+        self.chat_scroll = QScrollArea()
+        self.chat_scroll.setWidgetResizable(True)
+        self.chat_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.chat_scroll.setStyleSheet(
+            "background-color: white; border: 1px solid #dee2e6; border-radius: 8px;"
         )
-        layout.addWidget(self.chat_area)
+
+        self.chat_container = QWidget()
+        self.chat_container.setStyleSheet("background-color: white;")
+        self.chat_layout = QVBoxLayout(self.chat_container)
+        self.chat_layout.setContentsMargins(5, 10, 5, 10)
+        self.chat_layout.setSpacing(5)
+        self.chat_layout.addStretch()
+
+        self.chat_scroll.setWidget(self.chat_container)
+        layout.addWidget(self.chat_scroll)
 
         # Tool Bar for Table Actions
         self.table_actions_layout = QHBoxLayout()
@@ -556,7 +638,7 @@ class LyraPanel(QWidget):
 
         self.input_field.setDisabled(True)
         self.attach_btn.setDisabled(True)
-        self.chat_area.setFocus()
+        self.chat_scroll.setFocus()
 
         # Preleva la chiave API nel thread principale e la passa al worker
         api_key = SecretsManager.get_gemini_api_key()
@@ -575,59 +657,23 @@ class LyraPanel(QWidget):
         self.attach_btn.setDisabled(False)
         self.input_field.setFocus()
 
-    def _format_markdown(self, text: str) -> str:
-        """
-        Converte il testo Markdown in HTML con stili per le tabelle.
-
-        Args:
-            text: Testo in formato Markdown.
-        Returns:
-            str: Testo formattato come HTML.
-        """
-        try:
-            # Enable 'tables' and 'fenced_code' extensions
-            html = markdown.markdown(text, extensions=["tables", "fenced_code"])
-
-            # Post-process for styling
-            style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 10px; border-color: #dee2e6;"'
-            style_th = 'style="background-color: #f8f9fa; color: #495057; font-weight: bold; padding: 8px;"'
-            style_td = 'style="padding: 8px;"'
-
-            html = html.replace("<table>", f"<table {style_table}>")
-            html = html.replace("<th>", f"<th {style_th}>")
-            html = html.replace("<td>", f"<td {style_td}>")
-
-            # Detect tables for export context
-            if "<table>" in html:
-                self.last_table_data = text
-                self.btn_export_last_table.setVisible(True)
-
-            return html
-        except Exception as e:
-            print(f"Markdown error: {e}")
-            return text
-
     def _append_message(self, sender, text):
-        """Aggiunge un messaggio alla cronologia della chat."""
-        color = "#6f42c1" if sender == "Lyra" else "#495057"
-        align = "left"
+        """Aggiunge un messaggio alla cronologia della chat usando le bolle."""
+        is_lyra = sender == "Lyra"
+        bubble = MessageBubble(sender, text, is_lyra=is_lyra)
 
-        formatted_html = self._format_markdown(text)
-
-        # Reduced margin-bottom from 15px to 5px to compact the view
-        html = f"""
-        <div style="margin-bottom: 20px; text-align: {align};">
-            <div style="font-weight: bold; color: {color}; font-size: 13px; margin-bottom: 2px;">{sender}</div>
-            <div style="font-size: 15px; line-height: 1.5; color: #212529;">
-                {formatted_html}
-            </div>
-        </div>
-        """
-        self.chat_area.append(html)
+        # Inserisce prima dello stretch finale
+        self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
 
         # Scroll to bottom
-        sb = self.chat_area.verticalScrollBar()
+        QApplication.processEvents()
+        sb = self.chat_scroll.verticalScrollBar()
         sb.setValue(sb.maximum())
+
+        # Check for tables in the text to enable export
+        if "<table>" in markdown.markdown(text, extensions=["tables"]):
+            self.last_table_data = text
+            self.btn_export_last_table.setVisible(True)
 
     def _export_chat(self):
         """Mostra il menu per esportare la chat in PDF o l'ultima tabella in Excel."""
@@ -659,25 +705,41 @@ class LyraPanel(QWidget):
         )
         if filename:
             try:
+                # Per esportare i widget bolla dobbiamo creare un documento temporaneo
+                from PyQt6.QtGui import QTextDocument
                 from PyQt6.QtPrintSupport import QPrinter
+
+                doc = QTextDocument()
+                html_content = "<h1>Cronologia Chat Lyra AI</h1>"
+
+                for i in range(self.chat_layout.count()):
+                    widget = self.chat_layout.itemAt(i).widget()
+                    if isinstance(widget, MessageBubble):
+                        # Trova la label del messaggio
+                        sender = widget.findChild(QLabel).text()
+                        # Questo è un po' hacky, ma cerchiamo la seconda label (il messaggio)
+                        labels = widget.findChildren(QLabel)
+                        if len(labels) >= 2:
+                            msg_html = labels[1].text()
+                            html_content += (
+                                f"<p><b>{sender}</b>:< br>{msg_html}</p><hr>"
+                            )
+
+                doc.setHtml(html_content)
 
                 printer = QPrinter(QPrinter.PrinterMode.HighResolution)
                 printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
                 printer.setOutputFileName(filename)
 
-                self.chat_area.document().print(printer)
+                doc.print(printer)
                 QMessageBox.information(
                     self, "Successo", "Chat esportata correttamente!"
                 )
             except Exception as e:
-                # Fallback: Save as HTML
-                html_file = filename.replace(".pdf", ".html")
-                with open(html_file, "w", encoding="utf-8") as f:
-                    f.write(self.chat_area.toHtml())
                 QMessageBox.warning(
                     self,
-                    "Info",
-                    f"PDF driver non trovato. Salvato come HTML: {html_file}\nErr: {e}",
+                    "Errore",
+                    f"Impossibile esportare in PDF: {e}",
                 )
 
     def _export_excel(self):

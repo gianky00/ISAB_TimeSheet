@@ -304,37 +304,33 @@ class EditableDataTable(QWidget):
             """
             QTableWidget {
                 border: 1px solid #dee2e6;
-                border-radius: 4px;
+                border-radius: 8px;
                 background-color: white;
                 color: black;
-                gridline-color: #e9ecef;
+                gridline-color: #f8f9fa;
                 font-size: 14px;
-                selection-background-color: #0d6efd;
-                selection-color: white;
+                selection-background-color: #e3f2fd;
+                selection-color: #0d6efd;
             }
             QTableWidget::item {
-                padding: 8px;
+                padding: 8px 12px;
                 color: black;
-                border: none;
+                border-bottom: 1px solid #f1f3f5;
             }
             QTableWidget::item:selected {
-                background-color: #0d6efd;
-                color: white;
-            }
-            QTableWidget::item:focus {
-                background-color: #0d6efd;
-                color: white;
-                border: none;
+                background-color: #e3f2fd;
+                color: #0d6efd;
+                border-left: 3px solid #0d6efd;
             }
             QHeaderView::section {
                 background-color: #f8f9fa;
-                color: black;
-                padding: 8px;
-                padding-left: 5px;
+                color: #37474f;
+                padding: 10px;
                 border: none;
                 border-bottom: 2px solid #dee2e6;
                 font-weight: bold;
-                font-size: 14px;
+                font-size: 13px;
+                text-transform: uppercase;
             }
         """
         )

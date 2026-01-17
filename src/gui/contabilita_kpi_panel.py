@@ -266,7 +266,7 @@ class ContabilitaKPIPanel(QWidget):
             """
             QWidget {
                 background-color: white;
-                border-radius: 12px;
+                border-radius: 15px;
                 border: 1px solid #e9ecef;
             }
         """
@@ -274,10 +274,10 @@ class ContabilitaKPIPanel(QWidget):
 
         # Ombra
         shadow = QGraphicsDropShadowEffect(container)
-        shadow.setBlurRadius(15)
+        shadow.setBlurRadius(20)
         shadow.setXOffset(0)
-        shadow.setYOffset(4)
-        shadow.setColor(QColor(0, 0, 0, 30))
+        shadow.setYOffset(5)
+        shadow.setColor(QColor(0, 0, 0, 20))
         container.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(container)
@@ -494,7 +494,8 @@ class ContabilitaKPIPanel(QWidget):
             self.canvas1.draw()
             return
 
-        colors = ["#0d6efd", "#198754", "#ffc107", "#dc3545", "#6f42c1", "#0dcaf0"]
+        # Brand Colors
+        colors = ["#4b6cb7", "#198754", "#ffc107", "#dc3545", "#6f42c1", "#0dcaf0"]
 
         # Create pie without labels and autopct (hidden by default)
         wedges, texts = ax.pie(
@@ -502,7 +503,11 @@ class ContabilitaKPIPanel(QWidget):
             labels=None,  # No static labels
             startangle=90,
             colors=colors[: len(counts)],
-            wedgeprops={"width": 0.6, "edgecolor": "w"},  # Donut style for cleaner look
+            wedgeprops={
+                "width": 0.5,
+                "edgecolor": "w",
+                "linewidth": 2,
+            },  # Cleaner donut
         )
 
         # ax.set_title('Distribuzione Stato Attività', fontsize=14, fontweight='bold', color='#495057', pad=20)
@@ -600,7 +605,8 @@ class ContabilitaKPIPanel(QWidget):
             label="Totale Prev (€)",
             color="#198754",
             align="center",
-            alpha=0.9,
+            alpha=0.8,
+            edgecolor="none",
         )
 
         ax2 = ax.twinx()
@@ -608,10 +614,12 @@ class ContabilitaKPIPanel(QWidget):
             x,
             grouped["ore_sp"],
             label="Ore Spese",
-            color="#0d6efd",
+            color="#4b6cb7",
             marker="o",
             linewidth=3,
             markersize=8,
+            markerfacecolor="white",
+            markeredgewidth=2,
         )
 
         ax.set_xticks(x)
@@ -676,9 +684,9 @@ class ContabilitaKPIPanel(QWidget):
             y + height / 2,
             grouped["totale_prev"],
             height,
-            label="Totale Preventivato (Ricavi)",
-            color="#20c997",
-            alpha=0.9,
+            label="Ricavi (Prev.)",
+            color="#198754",
+            alpha=0.8,
         )
 
         # Bar 2: Costi (Ore * Standard) - Red
@@ -686,9 +694,9 @@ class ContabilitaKPIPanel(QWidget):
             y - height / 2,
             grouped["Costo"],
             height,
-            label="Costo Stimato",
+            label="Costi Stimati",
             color="#dc3545",
-            alpha=0.8,
+            alpha=0.7,
         )
 
         ax.set_yticks(y)
@@ -768,10 +776,17 @@ class ContabilitaKPIPanel(QWidget):
 
         x = range(len(grouped))
         ax.plot(
-            x, grouped.values, color="#6f42c1", marker="o", linewidth=3, markersize=8
+            x,
+            grouped.values,
+            color="#182848",
+            marker="o",
+            linewidth=3,
+            markersize=8,
+            markerfacecolor="white",
+            markeredgewidth=2,
         )
 
-        ax.fill_between(x, grouped.values, color="#6f42c1", alpha=0.1)
+        ax.fill_between(x, grouped.values, color="#4b6cb7", alpha=0.1)
 
         ax.set_xticks(x)
         ax.set_xticklabels([m.capitalize()[:3] for m in grouped.index], rotation=45)
