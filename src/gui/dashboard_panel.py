@@ -1,6 +1,12 @@
 from datetime import datetime
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, pyqtProperty
+from PyQt6.QtCore import (  # type: ignore
+    QEasingCurve,
+    QPropertyAnimation,
+    QSize,
+    Qt,
+    pyqtProperty,
+)
 from PyQt6.QtGui import QColor, QCursor
 from PyQt6.QtWidgets import (
     QFrame,
@@ -63,11 +69,11 @@ class HoverCard(QFrame):
         self.anim.setDuration(200)
         self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    @pyqtProperty(int)
+    @pyqtProperty(int)  # type: ignore
     def yOffset(self):
         return self._y_offset
 
-    @yOffset.setter
+    @yOffset.setter  # type: ignore
     def yOffset(self, value):
         self._y_offset = value
         self.shadow.setYOffset(value)

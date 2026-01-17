@@ -57,7 +57,6 @@ class PageIndex(IntEnum):
 
 
 class MainWindow(QMainWindow):
-
     """
 
 

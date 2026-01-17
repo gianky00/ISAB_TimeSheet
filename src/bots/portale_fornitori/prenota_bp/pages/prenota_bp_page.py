@@ -421,7 +421,7 @@ class PrenotaBPPage:
                     )
                 except TimeoutException as e:
                     self.log(
-                        "⚠ Il form di richiesta non è apparso. Probabile errore nella selezione o pulsante disabilitato."
+                        "⚠ Il form di richiesta non è apparso. Probable errore nella selezione o pulsante disabilitato."
                     )
                     raise Exception("Form Richiesta non visibile") from e
 

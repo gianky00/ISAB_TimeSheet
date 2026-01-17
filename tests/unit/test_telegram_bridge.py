@@ -1,12 +1,7 @@
 import unittest
-from unittest.mock import MagicMock, call, patch
-import asyncio
-import subprocess  # Importato a livello di modulo ora
-import os
+from unittest.mock import MagicMock, patch
 
-from PyQt6.QtCore import QDate, QApplication  # Importato correttamente
-from PyQt6.QtWidgets import QWidget
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from PyQt6.QtCore import QApplication, QIODevice  # Importato correttamente
 
 from src.core.telegram_bridge import TelegramUIBridge
 
@@ -31,8 +26,16 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_telegram_service = MagicMock()
 
         # Explicitly mock signals and their connect method
-        for sig in ['log_signal', 'command_received', 'data_received', 'status_requested', 
-                   'screenshot_requested', 'query_received', 'photo_received', 'intent_received']:
+        for sig in [
+            "log_signal",
+            "command_received",
+            "data_received",
+            "status_requested",
+            "screenshot_requested",
+            "query_received",
+            "photo_received",
+            "intent_received",
+        ]:
             setattr(self.mock_telegram_service, sig, MagicMock())
             getattr(self.mock_telegram_service, sig).connect = MagicMock()
 
@@ -50,7 +53,11 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge = TelegramUIBridge(self.mock_main_window)
 
     def tearDown(self):
-        if hasattr(self, "app") and self.app is not None and not isinstance(self.app, MockQApplication):
+        if (
+            hasattr(self, "app")
+            and self.app is not None
+            and not isinstance(self.app, MockQApplication)
+        ):
             self.app.quit()
 
     def test_init(self):
@@ -118,22 +125,26 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_main_window.scarico_panel = MagicMock()
         self.mock_main_window.show_toast = MagicMock()
         self.mock_main_window.navigate_to_panel = MagicMock()
-        
-        self.mock_main_window.pdl_panel.data_table.get_data.return_value = [{"numero_pdl": "PDL001"}]
+
+        self.mock_main_window.pdl_panel.data_table.get_data.return_value = [
+            {"numero_pdl": "PDL001"}
+        ]
         MockInputValidator.validate_pdl.side_effect = [
             MagicMock(valid=True, sanitized_value="PDL002"),
             MagicMock(valid=True, sanitized_value="PDL001"),  # Duplicate
             MagicMock(valid=False, error="Invalid format"),
         ]
-        
+
         data_type = "pdl"
         items = ["PDL002", "PDL001", "INVALID_PDL"]
         self.bridge._handle_data(data_type, items)
-        
+
         self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with(
             [{"numero_pdl": "PDL002"}]
         )
-        self.mock_main_window.navigate_to_panel.assert_called_once_with("scarico_pdl") # Corrected expected value
+        self.mock_main_window.navigate_to_panel.assert_called_once_with(
+            "scarico_pdl"
+        )  # Corrected expected value
         self.mock_telegram_service.send_message_sync.assert_called_with(
             "✅ Aggiunti/Impostati 1\nℹ️ 1 duplicati ignorati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
         )
@@ -160,7 +171,9 @@ class TestTelegramUIBridge(unittest.TestCase):
     @patch("src.core.telegram_bridge.QPainter")
     @patch("src.core.telegram_bridge.QBuffer")
     @patch("src.core.telegram_bridge.QIODevice")
-    def test_handle_screenshot_app(self, MockQIODevice, MockQBuffer, MockQPainter, MockQPixmap, MockQGuiApplication):
+    def test_handle_screenshot_app(
+        self, MockQIODevice, MockQBuffer, MockQPainter, MockQPixmap, MockQGuiApplication
+    ):
         self.mock_main_window.grab.return_value = MagicMock()
         mock_buffer_instance = MagicMock()
         mock_buffer_instance.data.return_value.data.return_value = b"screenshot_bytes"
@@ -169,9 +182,15 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge._handle_screenshot(mode="app")
 
         self.mock_main_window.grab.assert_called_once()
-        mock_buffer_instance.open.assert_called_once_with(QIODevice.OpenModeFlag.WriteOnly)
-        self.mock_main_window.grab.return_value.save.assert_called_once_with(mock_buffer_instance, "PNG")
-        self.mock_telegram_service.send_photo_sync.assert_called_once_with(b"screenshot_bytes", caption="📸 **Screenshot: Solo App**")
+        mock_buffer_instance.open.assert_called_once_with(
+            QIODevice.OpenModeFlag.WriteOnly
+        )
+        self.mock_main_window.grab.return_value.save.assert_called_once_with(
+            mock_buffer_instance, "PNG"
+        )
+        self.mock_telegram_service.send_photo_sync.assert_called_once_with(
+            b"screenshot_bytes", caption="📸 **Screenshot: Solo App**"
+        )
 
     @patch("src.core.telegram_bridge.SecretsManager")
     @patch("src.core.telegram_bridge.threading.Thread")
@@ -191,7 +210,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         target_func()
         MockLyraClient.assert_called_once_with(api_key="fake_api_key")
         mock_lyra_client_instance.ask.assert_called_once_with("What is the weather?")
-        self.mock_telegram_service.send_message_sync.assert_any_call("🤖 **AI Coach**\n\nAI response")
+        self.mock_telegram_service.send_message_sync.assert_any_call(
+            "🤖 **AI Coach**\n\nAI response"
+        )
 
     @patch("src.core.telegram_bridge.SecretsManager")
     @patch("src.core.telegram_bridge.threading.Thread")
@@ -215,7 +236,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge._handle_photo(123, photo_bytes, caption)
 
         MockSecretsManager.get_gemini_api_key.assert_called_once()
-        self.mock_telegram_service.send_message_sync.assert_any_call("🔍 **Analisi Documento...**")
+        self.mock_telegram_service.send_message_sync.assert_any_call(
+            "🔍 **Analisi Documento...**"
+        )
         MockThread.assert_called_once()
 
         args, kwargs = MockThread.call_args
@@ -224,10 +247,15 @@ class TestTelegramUIBridge(unittest.TestCase):
 
         MockBase64.b64encode.assert_called_once_with(photo_bytes)
         MockLyraClient.assert_called_once_with(api_key="fake_api_key")
-        mock_lyra_client_instance.ask.assert_called_once_with("Estrai dati da questo rapportino. Tabella Markdown.\nNote: Analyze this image", images=["base64_photo_string"])
-        self.mock_telegram_service.send_message_sync.assert_any_call("📝 **Dati Estratti**\n\nPhoto analysis response")
+        mock_lyra_client_instance.ask.assert_called_once_with(
+            "Estrai dati da questo rapportino. Tabella Markdown.\nNote: Analyze this image",
+            images=["base64_photo_string"],
+        )
+        self.mock_telegram_service.send_message_sync.assert_any_call(
+            "📝 **Dati Estratti**\n\nPhoto analysis response"
+        )
 
-    @patch("subprocess.Popen") # Patched subprocess directly
+    @patch("subprocess.Popen")  # Patched subprocess directly
     @patch("src.core.telegram_bridge.os.path.abspath", return_value="avvio.bat")
     @patch("src.core.telegram_bridge.QApplication.quit")
     def test_handle_restart_app(self, mock_quit, mock_abspath, mock_popen):
@@ -235,24 +263,34 @@ class TestTelegramUIBridge(unittest.TestCase):
         mock_popen.assert_called_once()
         mock_quit.assert_called_once()
 
-    @patch("PyQt6.QtCore.QDate") # Correctly patching QDate
+    @patch("PyQt6.QtCore.QDate")  # Correctly patching QDate
     def test_handle_run_timbrature(self, MockQDate):
         self.mock_main_window.navigate_to_panel = MagicMock()
         self.mock_main_window.timbrature_bot_panel = MagicMock()
-        self.mock_main_window.timbrature_bot_panel.validate_ready.return_value = (True, "")
-        
+        self.mock_main_window.timbrature_bot_panel.validate_ready.return_value = (
+            True,
+            "",
+        )
+
         mock_date = MagicMock()
         mock_date.addDays.return_value = "yesterday_date"
         MockQDate.currentDate.return_value = mock_date
-        
+
         params = {"period": "yesterday"}
         self.bridge._handle_run_timbrature(params)
-        
+
         self.mock_main_window.navigate_to_panel.assert_called_once_with("timbrature")
-        self.mock_main_window.timbrature_bot_panel.date_da_edit.setDate.assert_called_once_with("yesterday_date")
-        self.mock_main_window.timbrature_bot_panel.date_a_edit.setDate.assert_called_once_with("yesterday_date")
+        self.mock_main_window.timbrature_bot_panel.date_da_edit.setDate.assert_called_once_with(
+            "yesterday_date"
+        )
+        self.mock_main_window.timbrature_bot_panel.date_a_edit.setDate.assert_called_once_with(
+            "yesterday_date"
+        )
         self.mock_main_window.timbrature_bot_panel.start_btn.click.assert_called_once()
-        self.mock_telegram_service.send_message_sync.assert_called_with("✅ Avvio Scarico Timbrature (ieri).")
+        self.mock_telegram_service.send_message_sync.assert_called_with(
+            "✅ Avvio Scarico Timbrature (ieri)."
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
