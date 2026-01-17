@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import os
-import subprocess
 import threading
 from datetime import datetime
 from typing import Any
