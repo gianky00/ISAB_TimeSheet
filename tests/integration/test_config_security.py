@@ -56,11 +56,7 @@ class TestConfigSecurity:
 
     def test_legacy_plaintext_migration(self):
         # 1. Scrivi una vecchia config manualmente
-        legacy_data = {
-            "accounts": [
-                {"username": "old", "password": "plaintext_pass", "default": True}
-            ]
-        }
+        legacy_data = {"accounts": [{"username": "old", "password": "plaintext_pass", "default": True}]}
         with open(config_manager.CONFIG_FILE, "w") as f:
             json.dump(legacy_data, f)
 

@@ -42,3 +42,52 @@ class BrowserConfig:
     WINDOW_SIZE = "1920,1080"
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     CACHE_DIR_NAME = "chrome_profile"
+
+
+class Icons:
+    """Relative paths for application icons."""
+
+    # Navigation
+    MENU = "assets/icons/menu.svg"
+    HOME = "assets/icons/home.svg"
+    SETTINGS = "assets/icons/settings.svg"
+    SETTINGS_DARK = "assets/icons/settings_dark.svg"
+    HELP = "assets/icons/help-circle.svg"
+
+    # Actions
+    PLAY = "assets/icons/play.svg"
+    STOP = "assets/icons/stop.svg"
+    REFRESH = "assets/icons/refresh.svg"
+    TRASH = "assets/icons/trash.svg"
+    EDIT = "assets/icons/edit.svg"
+    SAVE = "assets/icons/save.svg"
+    FOLDER = "assets/icons/folder.svg"
+    FOLDER_OPEN = "assets/icons/folder-open.svg"
+    CLOUD = "assets/icons/cloud.svg"
+    CLOUD_UPLOAD = "assets/icons/cloud-upload.svg"
+    UNDO = "assets/icons/undo.svg"
+    PLUS = "assets/icons/plus.svg"
+    SEARCH = "assets/icons/search.svg"
+    DOWNLOAD = "assets/icons/download.svg"
+    UPLOAD = "assets/icons/upload.svg"
+    SEND = "assets/icons/send.svg"
+
+    # Status
+    CHECK_CIRCLE = "assets/icons/check-circle.svg"
+    X_CIRCLE = "assets/icons/x-circle.svg"
+    ALERT = "assets/icons/alert-triangle.svg"
+    LOCK = "assets/icons/lock.svg"
+    EYE = "assets/icons/eye.svg"
+    BELL = "assets/icons/bell.svg"
+    STAR = "assets/icons/star.svg"
+
+    # Domain Specific
+    DATABASE = "assets/icons/database.svg"
+    CLOCK = "assets/icons/clock.svg"
+    LIST = "assets/icons/list.svg"
+    SHIELD = "assets/icons/shield.svg"
+    TICKET = "assets/icons/ticket.svg"
+    ROCKET = "assets/icons/rocket.svg"
+    CPU = "assets/icons/cpu.svg"
+    SPARKLES = "assets/icons/sparkles.svg"
+    CALENDAR = "assets/icons/calendar.svg"

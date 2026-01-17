@@ -28,9 +28,7 @@ class TestDettagliOdaBotDeep:
         bot.long_wait = MagicMock()
 
         # Mock page objects
-        with patch(
-            "src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage"
-        ) as mock_page_cls:
+        with patch("src.bots.portale_fornitori.dettagli_oda.bot.DettagliOdAPage") as mock_page_cls:
             mock_page = mock_page_cls.return_value
             mock_page.navigate_to_dettagli.return_value = True
             mock_page.setup_supplier.return_value = True

@@ -1,13 +1,7 @@
-"""
-Bot TS - Dashboard Panel
-Pannello "Mappa Applicazione" interattiva e modulare.
-Updated to use ResponsiveContainer.
-"""
-
 from datetime import datetime
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QCursor
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QColor, QCursor, QIcon
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
@@ -20,8 +14,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import Icons
 from src.core.stats_manager import StatsManager
 from src.gui.layouts.responsive import ResponsiveContainer
+from src.utils.helpers import get_asset_path
 
 
 class DashboardPanel(QWidget):
@@ -95,7 +91,7 @@ class DashboardPanel(QWidget):
             self._create_module_card(
                 "Dettagli OdA",
                 "Scarica dettagli ordini.",
-                "📋",
+                Icons.LIST,
                 "#6f42c1",
                 "dettagli_oda",
                 s_oda.get("runs", 0),
@@ -109,7 +105,7 @@ class DashboardPanel(QWidget):
             self._create_module_card(
                 "Scarico TS",
                 "Scarica timesheet.",
-                "📥",
+                Icons.DOWNLOAD,
                 "#0d6efd",
                 "scarico_ts",
                 s_sts.get("runs", 0),
@@ -123,7 +119,7 @@ class DashboardPanel(QWidget):
             self._create_module_card(
                 "Timbrature",
                 "Valida timbrature.",
-                "⏱️",
+                Icons.CLOCK,
                 "#fd7e14",
                 "timbrature",
                 s_tmb.get("runs", 0),
@@ -137,7 +133,7 @@ class DashboardPanel(QWidget):
             self._create_module_card(
                 "Carico TS",
                 "Upload finale.",
-                "📤",
+                Icons.UPLOAD,
                 "#198754",
                 "carico_ts",
                 s_cts.get("runs", 0),
@@ -152,7 +148,7 @@ class DashboardPanel(QWidget):
             self._create_module_card(
                 "Timbrature Isab",
                 "Database storico.",
-                "🗃️",
+                Icons.DATABASE,
                 "#20c997",
                 "db_timbrature",
                 None,
@@ -165,7 +161,7 @@ class DashboardPanel(QWidget):
             self._create_module_card(
                 "Strumentale",
                 "Contabilità & KPI.",
-                "📊",
+                Icons.DATABASE,  # Or chart?
                 "#ffc107",
                 "db_strumentale",
                 None,
@@ -178,7 +174,7 @@ class DashboardPanel(QWidget):
             self._create_module_card(
                 "DataEase",
                 "Scarico ore cantiere.",
-                "🏗️",
+                Icons.CPU,
                 "#0dcaf0",
                 "db_dataease",
                 None,
@@ -189,7 +185,7 @@ class DashboardPanel(QWidget):
         self.content_layout.addWidget(responsive_grid)
         self.content_layout.addStretch()
 
-    def _create_module_card(self, title, desc, icon, color, action_key, runs, errors):
+    def _create_module_card(self, title, desc, icon_path, color, action_key, runs, errors):
         """Crea una card cliccabile ricca per un singolo modulo."""
         card = QFrame()
         # Responsive height fix?
@@ -227,15 +223,17 @@ class DashboardPanel(QWidget):
         header_row = QHBoxLayout()
 
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet(
-            "font-size: 18px; font-weight: 800; color: #212529; border: none;"
-        )
+        title_lbl.setStyleSheet("font-size: 18px; font-weight: 800; color: #212529; border: none;")
         header_row.addWidget(title_lbl)
 
         header_row.addStretch()
 
-        icon_lbl = QLabel(icon)
-        icon_lbl.setStyleSheet(f"font-size: 28px; color: {color}; border: none;")
+        icon_lbl = QLabel()
+        icon_lbl.setFixedSize(32, 32)
+        icon_lbl.setScaledContents(True)
+        # Apply color filter via QIcon/Pixmap
+        pixmap = QIcon(get_asset_path(icon_path)).pixmap(QSize(32, 32))
+        icon_lbl.setPixmap(pixmap)
         header_row.addWidget(icon_lbl)
 
         card_layout.addLayout(header_row)
@@ -243,9 +241,7 @@ class DashboardPanel(QWidget):
         # Description
         desc_lbl = QLabel(desc)
         desc_lbl.setWordWrap(True)
-        desc_lbl.setStyleSheet(
-            "font-size: 13px; color: #6c757d; border: none; margin-bottom: 5px;"
-        )
+        desc_lbl.setStyleSheet("font-size: 13px; color: #6c757d; border: none; margin-bottom: 5px;")
         card_layout.addWidget(desc_lbl)
 
         card_layout.addStretch()
@@ -290,9 +286,7 @@ class DashboardPanel(QWidget):
 
             # Action Arrow
             arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(
-                f"font-size: 16px; color: {color}; font-weight: bold; border: none;"
-            )
+            arrow_lbl.setStyleSheet(f"font-size: 16px; color: {color}; font-weight: bold; border: none;")
             stats_row.addWidget(arrow_lbl)
 
             card_layout.addLayout(stats_row)
@@ -301,9 +295,7 @@ class DashboardPanel(QWidget):
             stats_row = QHBoxLayout()
             stats_row.addStretch()
             arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(
-                f"font-size: 16px; color: {color}; font-weight: bold; border: none;"
-            )
+            arrow_lbl.setStyleSheet(f"font-size: 16px; color: {color}; font-weight: bold; border: none;")
             stats_row.addWidget(arrow_lbl)
             card_layout.addLayout(stats_row)
 

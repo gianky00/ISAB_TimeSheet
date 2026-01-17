@@ -43,9 +43,7 @@ class CacheWorker(QThread):
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
-            display_data, search_index, float_totals, style_cache = self._build_caches(
-                self.data_source
-            )
+            display_data, search_index, float_totals, style_cache = self._build_caches(self.data_source)
             # Save to disk
             self.progress.emit("Salvataggio cache...")
             self._save_cache(display_data, search_index, float_totals, style_cache)
@@ -76,11 +74,7 @@ class CacheWorker(QThread):
                         # Version 2 format: raw_data, search, totals, style
                         # Checking if we need to rebuild (if data is not pre-formatted strings)
                         d, s, t, st = loaded
-                        if (
-                            d
-                            and len(d) > 0
-                            and (d[0][0] is None or not isinstance(d[0][0], str))
-                        ):
+                        if d and len(d) > 0 and (d[0][0] is None or not isinstance(d[0][0], str)):
                             # Likely raw data or None, rebuild
                             (
                                 display_data,
@@ -104,9 +98,7 @@ class CacheWorker(QThread):
                             [],
                         )
 
-                self.finished.emit(
-                    display_data, search_index, float_totals, style_cache
-                )
+                self.finished.emit(display_data, search_index, float_totals, style_cache)
             except Exception as e:
                 print(f"Error loading cache: {e}")
                 self.finished.emit([], [], [], [])
@@ -409,9 +401,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
                 # Pre-bind
                 s_idx = self._search_index
                 # Efficient intersection
-                indices = [
-                    i for i in indices if all(t in s_idx[i] for t in search_terms)
-                ]
+                indices = [i for i in indices if all(t in s_idx[i] for t in search_terms)]
 
             # 2. Column Filters
             if col_filters:
@@ -489,10 +479,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
         """Restituisce l'intestazione per la sezione e il ruolo richiesto."""
-        if (
-            orientation == Qt.Orientation.Horizontal
-            and role == Qt.ItemDataRole.DisplayRole
-        ):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self.COLUMNS[section]
         return None
 
@@ -801,22 +788,16 @@ class DateFilterPopupWidget(QWidget):
     def _build_tree(self, values, selected_values):
         """Costruisce la struttura ad albero Anno -> Mese -> Giorno."""
         self.raw_dates = set(values)
-        structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(
-            values
-        )
+        structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(values)
 
         is_all_selected = selected_values is None
         selected_set = set(selected_values) if selected_values else set()
 
         for y in sorted(structure.keys(), reverse=True):
-            y_item = self._create_year_item(
-                y, structure[y], selected_set, is_all_selected
-            )
+            y_item = self._create_year_item(y, structure[y], selected_set, is_all_selected)
             self.model.appendRow(y_item)
 
-    def _group_dates_by_hierarchy(
-        self, values: list
-    ) -> Dict[str, Dict[str, List[str]]]:
+    def _group_dates_by_hierarchy(self, values: list) -> Dict[str, Dict[str, List[str]]]:
         """Organizza le date in un dizionario Anno -> Mese -> [Date]."""
         structure: Dict[str, Dict[str, List[str]]] = {}
         for v in values:
@@ -836,9 +817,7 @@ class DateFilterPopupWidget(QWidget):
                 continue
         return structure
 
-    def _create_year_item(
-        self, year, months_map, selected_set, is_all
-    ) -> QStandardItem:
+    def _create_year_item(self, year, months_map, selected_set, is_all) -> QStandardItem:
         """Crea il nodo anno e popola i mesi."""
         y_item = QStandardItem(year)
         y_item.setCheckable(True)
@@ -861,9 +840,7 @@ class DateFilterPopupWidget(QWidget):
 
         return y_item
 
-    def _create_month_item(
-        self, month_code, days, selected_set, is_all
-    ) -> QStandardItem:
+    def _create_month_item(self, month_code, days, selected_set, is_all) -> QStandardItem:
         """Crea il nodo mese e popola i giorni."""
         m_name = self._get_month_name(month_code)
         m_item = QStandardItem(f"{m_name} ({month_code})")
@@ -878,11 +855,7 @@ class DateFilterPopupWidget(QWidget):
             d_item.setEditable(False)
             d_item.setData(date_str, Qt.ItemDataRole.UserRole)
 
-            state = (
-                Qt.CheckState.Checked
-                if (is_all or date_str in selected_set)
-                else Qt.CheckState.Unchecked
-            )
+            state = Qt.CheckState.Checked if (is_all or date_str in selected_set) else Qt.CheckState.Unchecked
             d_item.setCheckState(state)
             if state == Qt.CheckState.Checked:
                 checked_days += 1

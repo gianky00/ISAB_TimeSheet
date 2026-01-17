@@ -23,9 +23,7 @@ class TestTelegramHandlersDeep:
             "src.core.contabilita_manager.ContabilitaManager.get_available_years",
             return_value=[2024],
         ):
-            await service._handle_db_actions(
-                "db_select_year_strumentale", mock_query, "123"
-            )
+            await service._handle_db_actions("db_select_year_strumentale", mock_query, "123")
 
             # Check if 2024 is in the response text or markup
             # call_args[0] is positional args, [1] is kwargs

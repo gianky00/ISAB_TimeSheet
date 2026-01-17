@@ -136,10 +136,7 @@ class CertificatiCampioneTab(QWidget):
             parent_visible = False
             for j in range(parent.childCount()):
                 child = parent.child(j)
-                match = any(
-                    query in child.text(c).lower()
-                    for c in range(self.tree.columnCount())
-                )
+                match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
                 child.setHidden(not match)
                 if match:
                     parent_visible = True
@@ -160,12 +157,7 @@ class CertificatiCampioneTab(QWidget):
 
         mw = self.window()
         if isinstance(mw, MainWindow):
-            text = " | ".join(
-                [
-                    f"{self.HEADERS[c]}: {item.text(c)}"
-                    for c in range(self.tree.columnCount())
-                ]
-            )
+            text = " | ".join([f"{self.HEADERS[c]}: {item.text(c)}" for c in range(self.tree.columnCount())])
             mw.analyze_with_lyra(f"Certificato: {text}")
 
     def _run_analysis(self):
@@ -261,18 +253,12 @@ try {
     Show-CustomSummaryBox "Avviso Scadenze" $scad $prox $oggi $Global:ExcelFilePath
 } catch { [System.Windows.Forms.MessageBox]::Show($_.Exception.Message) }
 """
-        ps_script = ps_script_template.replace(
-            "__FILE_PATH_PLACEHOLDER__", path.replace("\\", "\\\\")
-        )
+        ps_script = ps_script_template.replace("__FILE_PATH_PLACEHOLDER__", path.replace("\\", "\\\\"))
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".ps1", delete=False, encoding="utf-8"
-            ) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as tmp:
                 tmp.write(ps_script)
                 tmp_path = tmp.name
 
-            subprocess.Popen(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path]
-            )
+            subprocess.Popen(["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path])
         except Exception as e:
             QMessageBox.critical(self, "Errore", f"Impossibile avviare l'analisi:\n{e}")

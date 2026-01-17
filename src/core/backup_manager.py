@@ -78,9 +78,7 @@ class BackupManager:
         clouds = BackupManager.detect_cloud_paths()
 
         # 1. Check user preference first
-        preferred = config.get(
-            "backup_cloud_provider"
-        )  # e.g. "OneDrive", "Google Drive", "Local"
+        preferred = config.get("backup_cloud_provider")  # e.g. "OneDrive", "Google Drive", "Local"
 
         if preferred and preferred in clouds:
             target = clouds[preferred] / "SyncroJob_Backups"

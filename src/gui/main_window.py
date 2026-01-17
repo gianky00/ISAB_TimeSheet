@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.backup_manager import BackupManager
+from src.core.constants import Icons
 from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
@@ -55,6 +56,8 @@ class PageIndex(IntEnum):
     NOTIFICATIONS = 6
 
 
+from src.core.version import __version__ as VERSION  # Importo la versione
+
 class MainWindow(QMainWindow):
     """
     Finestra principale dell'applicazione.
@@ -63,7 +66,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("SyncroJob")
+        self.setWindowTitle(f"SyncroJob v{VERSION}")  # Titolo con Versione
         self.setMinimumSize(1200, 800)
 
         # Configurazione Stili
@@ -209,9 +212,9 @@ class MainWindow(QMainWindow):
             now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
 
-            self.lbl_license.setText(f"👤 Licenza: {client}")
-            self.lbl_expiry.setText(f"📅 Scadenza: {expiry}")
-            self.lbl_last_login.setText(f"🔑 Ultimo accesso: {last_login}")
+            self.lbl_license.setText(f"Licenza: {client}")
+            self.lbl_expiry.setText(f"Scadenza: {expiry}")
+            self.lbl_last_login.setText(f"Ultimo accesso: {last_login}")
 
             for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
                 lbl.setVisible(True)
@@ -221,9 +224,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "sidebar"):
             self.sidebar.btn_lyra.set_badge(count)
         if count > 0:
-            ToastManager.instance().show(
-                f"⚠️ Lyra ha rilevato {count} anomalie", "warning"
-            )
+            ToastManager.instance().show(f"⚠️ Lyra ha rilevato {count} anomalie", "warning")
 
     def _show_update_banner(self, new_version, download_url, changelog):
         """Mostra un banner informativo per la nuova versione."""
@@ -237,9 +238,7 @@ class MainWindow(QMainWindow):
                 f"È uscita la versione {new_version}. Clicca qui per scaricarla.",
             )
 
-    def show_background_notification(
-        self, title: str, message: str, is_error: bool = False
-    ):
+    def show_background_notification(self, title: str, message: str, is_error: bool = False):
         """
         Mostra una notifica di sistema (Toast) se l'applicazione non è attiva.
         """
@@ -247,9 +246,7 @@ class MainWindow(QMainWindow):
 
         if not is_active and hasattr(self, "tray_controller"):
             icon = (
-                QSystemTrayIcon.MessageIcon.Critical
-                if is_error
-                else QSystemTrayIcon.MessageIcon.Information
+                QSystemTrayIcon.MessageIcon.Critical if is_error else QSystemTrayIcon.MessageIcon.Information
             )
             self.tray_controller.show_message(title, message, icon, 5000)
             QApplication.alert(self, 0)
@@ -303,9 +300,7 @@ class MainWindow(QMainWindow):
 
         # SIDEBAR
         self.sidebar = SidebarWidget()
-        self.sidebar.navigation_requested.connect(
-            self.navigation_controller.navigate_to
-        )
+        self.sidebar.navigation_requested.connect(self.navigation_controller.navigate_to)
         main_layout.addWidget(self.sidebar)
 
         # CONTENT AREA
@@ -318,9 +313,7 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.update_banner)
 
         self.global_search = QLineEdit()
-        self.global_search.setPlaceholderText(
-            "🔍 Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F"
-        )
+        self.global_search.setPlaceholderText("🔍 Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")
         self.global_search.setMinimumHeight(40)
         self.global_search.returnPressed.connect(
             lambda: self.search_controller.perform_search(self.global_search.text())
@@ -340,12 +333,8 @@ class MainWindow(QMainWindow):
 
     def _connect_signals(self):
         """Collega i segnali globali."""
-        NotificationManager.instance().unread_count_changed.connect(
-            self.sidebar.btn_notifications.set_badge
-        )
-        self.sidebar.btn_notifications.set_badge(
-            NotificationManager.instance().get_unread_count()
-        )
+        NotificationManager.instance().unread_count_changed.connect(self.sidebar.btn_notifications.set_badge)
+        self.sidebar.btn_notifications.set_badge(NotificationManager.instance().get_unread_count())
 
     def _setup_shortcuts(self):
         """Configura le scorciatoie da tastiera globali."""

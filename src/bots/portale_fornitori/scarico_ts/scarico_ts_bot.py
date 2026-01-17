@@ -83,11 +83,7 @@ class ScaricaTSBot(BaseBot):
 
         # 3. Process Rows
         success_count = 0
-        download_dir = (
-            Path(self.download_path)
-            if self.download_path
-            else Path.home() / "Downloads"
-        )
+        download_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
 
         for i, row in enumerate(rows, 1):
             self._check_stop()

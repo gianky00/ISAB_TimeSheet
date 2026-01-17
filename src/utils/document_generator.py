@@ -29,11 +29,7 @@ def generate_pdf_from_html(html_content: str, output_path: str, landscape: bool 
     printer.setOutputFileName(output_path)
     printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
 
-    orientation = (
-        QPageLayout.Orientation.Landscape
-        if landscape
-        else QPageLayout.Orientation.Portrait
-    )
+    orientation = QPageLayout.Orientation.Landscape if landscape else QPageLayout.Orientation.Portrait
     printer.setPageOrientation(orientation)
 
     doc.print(printer)

@@ -116,6 +116,4 @@ if __name__ == "__main__":
     ]
     for i, o in tests:
         res = parse_currency(i)
-        print(
-            f"In: {i!r} -> Out: {res} ({'OK' if res == o else 'FAIL expected ' + str(o)})"
-        )
+        print(f"In: {i!r} -> Out: {res} ({'OK' if res == o else 'FAIL expected ' + str(o)})")

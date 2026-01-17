@@ -62,14 +62,10 @@ class ContabilitaWorker(QThread):
     def _calculate_total_ops(self) -> int:
         """Calcola il numero totale di operazioni per la barra di progresso."""
         self.progress_signal.emit("⏳ Analisi carico di lavoro...")
-        sheets, files = ContabilitaManager.scan_workload(
-            self.file_path, self.giornaliere_path
-        )
+        sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
 
         attivita = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
-        certificati = (
-            1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
-        )
+        certificati = 1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
 
         total = sheets + files + attivita + certificati
         return total if total > 0 else 1
@@ -133,36 +129,24 @@ class ContabilitaWorker(QThread):
         if not self.attivita_path:
             return
 
-        success, msg, added, removed = ContabilitaManager.import_attivita_programmate(
-            self.attivita_path
-        )
+        success, msg, added, removed = ContabilitaManager.import_attivita_programmate(self.attivita_path)
         # Offset manuale per l'attivita (fine delle giornaliere)
-        sheets, files = ContabilitaManager.scan_workload(
-            self.file_path, self.giornaliere_path
-        )
+        sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
         self._emit_progress(1, sheets + files, state)
 
-        self._update_state(
-            state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}"
-        )
+        self._update_state(state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}")
 
     def _phase_import_certificati(self, state):
         if not self.certificati_path:
             return
 
-        success, msg, added, removed = ContabilitaManager.import_certificati_campione(
-            self.certificati_path
-        )
+        success, msg, added, removed = ContabilitaManager.import_certificati_campione(self.certificati_path)
         # Offset per certificati
-        sheets, files = ContabilitaManager.scan_workload(
-            self.file_path, self.giornaliere_path
-        )
+        sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
         att_task = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
         self._emit_progress(1, sheets + files + att_task, state)
 
-        self._update_state(
-            state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}"
-        )
+        self._update_state(state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}")
 
     def _update_state(self, state, success, added, removed, ok_msg, err_msg):
         state["added"] += added

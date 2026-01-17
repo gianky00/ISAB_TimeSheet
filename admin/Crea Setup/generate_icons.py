@@ -15,9 +15,7 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
     images = []
 
     for size in sizes:
-        img = _generate_icon_layer(
-            size, text, color_bg, color_text, font_path, accent_color
-        )
+        img = _generate_icon_layer(size, text, color_bg, color_text, font_path, accent_color)
         images.append(img)
 
     # Salvataggio ICO
@@ -86,11 +84,7 @@ def _draw_icon_text(draw, size, text, color, font_path):
 
     # Caricamento Font
     try:
-        font = (
-            ImageFont.truetype(font_path, font_size)
-            if font_path
-            else ImageFont.load_default()
-        )
+        font = ImageFont.truetype(font_path, font_size) if font_path else ImageFont.load_default()
     except Exception:
         font = ImageFont.load_default()
 
@@ -132,48 +126,29 @@ def main():
         print(f"Created directory: {assets_dir}")
 
     print("\n" + "=" * 50)
-    print("  BOT TS - ICON GENERATOR")
+    print("  SYNCROJOB - ICON GENERATOR")
     print("=" * 50 + "\n")
 
-    # Main App Icon - Modern blue with "TS" text
-    # Using a nice teal/cyan color for "timesheet" association
+    # Main App Icon - Modern Purple/Indigo (Matches Sidebar)
     create_modern_icon(
-        text="TS",
-        color_bg=(0, 150, 136, 255),  # Teal #009688
+        text="SJ",
+        color_bg=(102, 126, 234, 255),  # Brand Purple #667eea
         color_text=(255, 255, 255, 255),
         filename=os.path.join(assets_dir, "app.ico"),
-        accent_color=(0, 121, 107, 255),  # Darker teal
+        accent_color=(118, 75, 162, 255),  # Brand Dark Purple #764ba2
     )
 
-    # Bot Icon - Purple/violet for automation
+    # Setup/Installer Icon - Blue for "system/setup"
     create_modern_icon(
-        text="🤖",
-        color_bg=(103, 58, 183, 255),  # Deep Purple #673AB7
-        color_text=(255, 255, 255, 255),
-        filename=os.path.join(assets_dir, "bot.ico"),
-        accent_color=(81, 45, 168, 255),  # Darker purple
-    )
-
-    # Setup/Installer Icon - Green for "go/install"
-    create_modern_icon(
-        text="⚙",
-        color_bg=(76, 175, 80, 255),  # Green #4CAF50
+        text="SJ",
+        color_bg=(13, 110, 253, 255),  # Primary Blue #0d6efd
         color_text=(255, 255, 255, 255),
         filename=os.path.join(assets_dir, "setup.ico"),
-        accent_color=(56, 142, 60, 255),  # Darker green
-    )
-
-    # License Icon - Orange/amber for "key/license"
-    create_modern_icon(
-        text="🔑",
-        color_bg=(255, 152, 0, 255),  # Orange #FF9800
-        color_text=(255, 255, 255, 255),
-        filename=os.path.join(assets_dir, "license.ico"),
-        accent_color=(245, 124, 0, 255),  # Darker orange
+        accent_color=(10, 88, 202, 255),
     )
 
     print("\n" + "=" * 50)
-    print("  All icons generated successfully!")
+    print("  Icons regenerated successfully!")
     print("=" * 50 + "\n")
 
 

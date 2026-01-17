@@ -4,7 +4,7 @@ Tabella potenziata con funzionalità stile Excel.
 """
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence
+from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence, QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -18,15 +18,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import Icons
+from src.utils.helpers import get_asset_path
+
 
 class ExcelTableWidget(QTableWidget):
     """QTableWidget potenziato con funzionalità copia stile Excel."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.auto_copy_headers = (
-            False  # Flag per copiare automaticamente le intestazioni
-        )
+        self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
 
         # Abilita la selezione di celle (non righe intere)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
@@ -141,17 +142,13 @@ class ExcelTableWidget(QTableWidget):
         menu = QMenu(self)
 
         # Action: Analyze ROW with Lyra
-        lyra_row_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_row_action = QAction(QIcon(get_asset_path(Icons.SPARKLES)), "Analizza Riga con Lyra", self)
         lyra_row_action.triggered.connect(lambda: self._analyze_row_at(event.pos()))
         menu.addAction(lyra_row_action)
 
-        lyra_selection_action = QAction("✨ Analizza Selezione con Lyra", self)
+        lyra_selection_action = QAction(QIcon(get_asset_path(Icons.SPARKLES)), "Analizza Selezione con Lyra", self)
         lyra_selection_action.triggered.connect(self._analyze_selection)
-        menu.addAction(lyra_selection_action)
-
-        menu.addSeparator()
-
-        copy_action = QAction("📋 Copia", self)
+        copy_action = QAction(QIcon(get_asset_path(Icons.EDIT)), "Copia", self)
         copy_action.triggered.connect(self.copy_selection)
         menu.addAction(copy_action)
         menu.exec(event.globalPos())
@@ -166,11 +163,7 @@ class ExcelTableWidget(QTableWidget):
         row_data = []
         for c in range(self.columnCount()):
             if not self.isColumnHidden(c):
-                header = (
-                    self.horizontalHeaderItem(c).text()
-                    if self.horizontalHeaderItem(c)
-                    else f"Col {c}"
-                )
+                header = self.horizontalHeaderItem(c).text() if self.horizontalHeaderItem(c) else f"Col {c}"
                 widget = self.cellWidget(row, c)
                 if isinstance(widget, QComboBox):
                     text = widget.currentText()
@@ -198,9 +191,7 @@ class ExcelTableWidget(QTableWidget):
             for c in range(self.columnCount()):
                 item = self.item(r, c)
                 if item and not self.isColumnHidden(c):
-                    row_data.append(
-                        f"{self.horizontalHeaderItem(c).text()}: {item.text()}"
-                    )
+                    row_data.append(f"{self.horizontalHeaderItem(c).text()}: {item.text()}")
             rows_text.append(" | ".join(row_data))
 
         context = "\n".join(rows_text)
@@ -330,9 +321,7 @@ class EditableDataTable(QWidget):
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        header.setDefaultAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-        )
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -346,7 +335,7 @@ class EditableDataTable(QWidget):
     def _show_context_menu(self, position):
         menu = QMenu()
 
-        lyra_action = QAction("✨ Analizza con Lyra", self)
+        lyra_action = QAction(QIcon(get_asset_path(Icons.SPARKLES)), "Analizza con Lyra", self)
         lyra_action.triggered.connect(self.table._analyze_selection)
         menu.addAction(lyra_action)
         menu.addSeparator()

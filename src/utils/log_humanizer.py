@@ -76,8 +76,7 @@ class SmartLogTranslator:
         category = "info"
         for cat, keywords in mappings.items():
             if any(kw in lower_msg for kw in keywords) or (
-                cat in ["error", "success"]
-                and any(kw in message for kw in ["✗", "✓"] if kw in keywords)
+                cat in ["error", "success"] and any(kw in message for kw in ["✗", "✓"] if kw in keywords)
             ):
                 category = cat
                 break

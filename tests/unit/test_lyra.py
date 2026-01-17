@@ -4,9 +4,7 @@ import sys
 from unittest.mock import MagicMock, patch
 
 # Path hack
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
-)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src")))
 
 from src.core.lyra_client import LyraClient
 
@@ -17,9 +15,7 @@ class TestLyra:
         """Verify Lyra uses the correct model version."""
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "Risposta AI"}]}}]
-        }
+        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "Risposta AI"}]}}]}
         mock_post.return_value = mock_response
 
         # Specifichiamo un modello esplicito

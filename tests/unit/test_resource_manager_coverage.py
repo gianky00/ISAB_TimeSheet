@@ -7,14 +7,10 @@ class TestResourceManager:
     @pytest.fixture(autouse=True)
     def setup_test(self, tmp_path, mocker):
         # Mock PROJECT_ROOT and CONFIG_DIR
-        mocker.patch(
-            "src.utils.resource_manager.ResourceManager.PROJECT_ROOT", tmp_path
-        )
+        mocker.patch("src.utils.resource_manager.ResourceManager.PROJECT_ROOT", tmp_path)
         mocker.patch("src.utils.resource_manager.CONFIG_DIR", tmp_path / "config")
         # Update other class attrs derived from PROJECT_ROOT
-        mocker.patch(
-            "src.utils.resource_manager.ResourceManager.ASSETS_DIR", tmp_path / "assets"
-        )
+        mocker.patch("src.utils.resource_manager.ResourceManager.ASSETS_DIR", tmp_path / "assets")
         mocker.patch(
             "src.utils.resource_manager.ResourceManager.ICONS_DIR",
             tmp_path / "assets" / "icons",
@@ -23,9 +19,7 @@ class TestResourceManager:
             "src.utils.resource_manager.ResourceManager.STYLES_DIR",
             tmp_path / "assets" / "styles",
         )
-        mocker.patch(
-            "src.utils.resource_manager.ResourceManager.TEMP_DIR", tmp_path / "temp"
-        )
+        mocker.patch("src.utils.resource_manager.ResourceManager.TEMP_DIR", tmp_path / "temp")
         mocker.patch(
             "src.utils.resource_manager.ResourceManager.DATA_DIR",
             tmp_path / "config" / "data",

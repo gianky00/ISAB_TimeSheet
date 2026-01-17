@@ -44,9 +44,7 @@ class TestDataSynchronizerDetailed:
         ]
         years = [2024]
 
-        added, removed = DataSynchronizer.sync_giornaliere(
-            Path("fake.db"), new_rows, years
-        )
+        added, removed = DataSynchronizer.sync_giornaliere(Path("fake.db"), new_rows, years)
 
         assert added == 5
         assert removed == 2
@@ -59,9 +57,7 @@ class TestDataSynchronizerDetailed:
         conn, cursor = mock_db
         cursor.fetchone.side_effect = [(10,), (0,)]
 
-        added, removed = DataSynchronizer.sync_attivita_programmate(
-            Path("fake.db"), [("row", "style")]
-        )
+        added, removed = DataSynchronizer.sync_attivita_programmate(Path("fake.db"), [("row", "style")])
 
         assert added == 10
         assert removed == 0

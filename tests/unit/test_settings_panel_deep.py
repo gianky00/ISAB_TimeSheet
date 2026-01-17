@@ -8,9 +8,7 @@ from src.gui.settings_panel import SettingsPanel
 class TestSettingsPanelComplete:
     @pytest.fixture
     def panel(self, qapp):
-        with patch(
-            "src.gui.settings_panel.config_manager.load_config", return_value={}
-        ):
+        with patch("src.gui.settings_panel.config_manager.load_config", return_value={}):
             with patch(
                 "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
                 return_value="",

@@ -10,9 +10,7 @@ class TestSafeWorkBot:
     def bot(self):
         with (
             patch("src.bots.safework.base.SafeworkBaseBot._init_driver"),
-            patch(
-                "src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None
-            ),
+            patch("src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None),
         ):
             bot = SafeWorkPDLBot("u", "p")
             bot.driver = MagicMock()
@@ -24,8 +22,8 @@ class TestSafeWorkBot:
             return bot
 
     def test_name_and_description(self, bot):
-        assert bot.name == "scarico_pdl"
-        assert "SafeWork" in bot.description
+        assert bot.name == "Scarico PDL"
+        assert bot.description == "Scarica e stampa PDL da SafeWork"
 
     @patch("src.bots.safework.pdl.bot.time.sleep")
     def test_run_timing_sequence(self, mock_sleep, bot):

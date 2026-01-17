@@ -183,9 +183,7 @@ def mock_ui_dependencies(mocker):
     mocker.patch("src.core.database.db_manager", mock_db)
 
     # Mock ContabilitaManager (Class Mock)
-    mock_contabilita_class = mocker.patch(
-        "src.core.contabilita_manager.ContabilitaManager"
-    )
+    mock_contabilita_class = mocker.patch("src.core.contabilita_manager.ContabilitaManager")
 
     # Configure Class Methods and Attributes
     mock_contabilita_class.DB_PATH = MagicMock()

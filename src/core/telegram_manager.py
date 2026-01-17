@@ -55,9 +55,7 @@ class TelegramService(QObject):
         self.pdl_settings = {}  # Settings specifici per PDL (es. merge_all)
         self.pending_data = {}
         self._start_lock = threading.Lock()
-        self.ai_executor = ThreadPoolExecutor(
-            max_workers=3, thread_name_prefix="Telegram_AI"
-        )
+        self.ai_executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="Telegram_AI")
 
     def start_service(self):
         """Avvia o riavvia il servizio in modo thread-safe."""
@@ -75,9 +73,7 @@ class TelegramService(QObject):
                 return
 
             self.stop_event.clear()
-            self.thread = threading.Thread(
-                target=self._run_async_loop, args=(token,), daemon=True
-            )
+            self.thread = threading.Thread(target=self._run_async_loop, args=(token,), daemon=True)
             self.thread.start()
 
     def stop_service(self):
@@ -87,9 +83,7 @@ class TelegramService(QObject):
             self.stop_event.set()
             self.thread.join(timeout=12)
             if self.thread.is_alive():
-                self.log_signal.emit(
-                    "⚠️ Timeout: il thread di Telegram non si è fermato correttamente."
-                )
+                self.log_signal.emit("⚠️ Timeout: il thread di Telegram non si è fermato correttamente.")
             else:
                 self.log_signal.emit("Servizio Telegram fermato.")
 
@@ -132,21 +126,13 @@ class TelegramService(QObject):
             await self._shutdown_application()
 
     def _build_application(self, token: str) -> Application:
-        return (
-            Application.builder()
-            .token(token)
-            .read_timeout(10)
-            .connect_timeout(10)
-            .build()
-        )
+        return Application.builder().token(token).read_timeout(10).connect_timeout(10).build()
 
     def _add_handlers(self):
         self.app.add_handler(CommandHandler("start", self._cmd_start))
         self.app.add_handler(CommandHandler("status", self._cmd_status))
         self.app.add_handler(CommandHandler("stop", self._cmd_stop))
-        self.app.add_handler(
-            MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text_input)
-        )
+        self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_text_input))
         self.app.add_handler(MessageHandler(filters.PHOTO, self._handle_photo))
         self.app.add_handler(MessageHandler(filters.VOICE, self._handle_voice))
         self.app.add_handler(CallbackQueryHandler(self._handle_button))
@@ -182,14 +168,10 @@ class TelegramService(QObject):
             if self.loop and self.loop.is_running():
                 self.loop.close()
 
-    async def _handle_error(
-        self, update: object, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def _handle_error(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Gestisce gli errori globali del bot."""
         if isinstance(context.error, telegram.error.Conflict):
-            self.log_signal.emit(
-                "🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio."
-            )
+            self.log_signal.emit("🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio.")
             self.stop_event.set()
         elif isinstance(context.error, telegram.error.NetworkError):
             self.log_signal.emit(f"⚠️ Errore Rete Telegram: {context.error}")
@@ -206,9 +188,7 @@ class TelegramService(QObject):
                 ],
                 [
                     InlineKeyboardButton("✨ Lyra AI", callback_data="nav_lyra"),
-                    InlineKeyboardButton(
-                        "⚙️ Utility & Stato", callback_data="nav_utility"
-                    ),
+                    InlineKeyboardButton("⚙️ Utility & Stato", callback_data="nav_utility"),
                 ],
             ]
         )
@@ -239,9 +219,7 @@ class TelegramService(QObject):
             self.connected_chat_id = chat_id
             config_manager.set_config_value("telegram_chat_id", chat_id)
             if update.message:
-                await update.message.reply_text(
-                    f"✅ Dispositivo associato! Chat ID: {chat_id}"
-                )
+                await update.message.reply_text(f"✅ Dispositivo associato! Chat ID: {chat_id}")
 
         if not await self._check_auth(update):
             return
@@ -266,9 +244,7 @@ class TelegramService(QObject):
         if update.message:
             await update.message.reply_text("🛑 *Richiesta Stop Inviata*")
 
-    async def _handle_text_input(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
+    async def _handle_text_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if (
             not await self._check_auth(update)
             or not update.effective_chat
@@ -312,11 +288,7 @@ class TelegramService(QObject):
             self.query_received.emit(str(chat_id), text)
 
     async def _handle_sequential_input(self, chat_id, state, text, update):
-        items = [
-            i.strip()
-            for i in text.replace(",", "\n").replace(";", "\n").split("\n")
-            if i.strip()
-        ]
+        items = [i.strip() for i in text.replace(",", "\n").replace(";", "\n").split("\n") if i.strip()]
         if not items:
             return
 
@@ -334,9 +306,7 @@ class TelegramService(QObject):
                 return
 
         self.user_states[chat_id] = None
-        await update.message.reply_text(
-            "✅ Operazione completata.", reply_markup=self._get_main_keyboard()
-        )
+        await update.message.reply_text("✅ Operazione completata.", reply_markup=self._get_main_keyboard())
 
     async def _handle_voice(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
@@ -435,9 +405,7 @@ class TelegramService(QObject):
     def _is_bot_data(self, data: str) -> bool:
         """Verifica se il callback data appartiene alle azioni dei bot."""
         prefixes = ["menu_", "run_", "input_", "clear_", "list_", "confirm_"]
-        return (
-            any(data.startswith(p) for p in prefixes) or data == "toggle_merge_all_pdl"
-        )
+        return any(data.startswith(p) for p in prefixes) or data == "toggle_merge_all_pdl"
 
     def _is_utility_data(self, data: str) -> bool:
         """Verifica se il callback data appartiene alle utility."""
@@ -455,11 +423,7 @@ class TelegramService(QObject):
             )
         elif data == "nav_bots":
             keyboard = [
-                [
-                    InlineKeyboardButton(
-                        "🏭 Portale Fornitori", callback_data="nav_portale"
-                    )
-                ],
+                [InlineKeyboardButton("🏭 Portale Fornitori", callback_data="nav_portale")],
                 [InlineKeyboardButton("🛡️ SafeWork", callback_data="nav_safework")],
                 [self._get_back_button("menu_main")],
             ]
@@ -470,16 +434,8 @@ class TelegramService(QObject):
             )
         elif data == "nav_db":
             keyboard = [
-                [
-                    InlineKeyboardButton(
-                        "⏱️ Timbrature Isab", callback_data="db_info_timbrature"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "📊 Strumentale", callback_data="db_select_year_strumentale"
-                    )
-                ],
+                [InlineKeyboardButton("⏱️ Timbrature Isab", callback_data="db_info_timbrature")],
+                [InlineKeyboardButton("📊 Strumentale", callback_data="db_select_year_strumentale")],
                 [InlineKeyboardButton("🏗️ DataEase", callback_data="db_info_dataease")],
                 [self._get_back_button("menu_main")],
             ]
@@ -491,9 +447,7 @@ class TelegramService(QObject):
         elif data == "nav_lyra":
             await query.edit_message_text(
                 "✨ **Lyra AI Assistant**\n\nPuoi inviare vocali, foto di rapportini o domande sui dati.\n_Scrivi o parla direttamente qui!_",
-                reply_markup=InlineKeyboardMarkup(
-                    [[self._get_back_button("menu_main")]]
-                ),
+                reply_markup=InlineKeyboardMarkup([[self._get_back_button("menu_main")]]),
                 parse_mode=constants.ParseMode.MARKDOWN,
             )
         elif data == "nav_utility":
@@ -503,9 +457,7 @@ class TelegramService(QObject):
                     InlineKeyboardButton("📸 Screenshot", callback_data="screenshot"),
                 ],
                 [
-                    InlineKeyboardButton(
-                        "⚙️ Impostazioni", callback_data="menu_settings"
-                    ),
+                    InlineKeyboardButton("⚙️ Impostazioni", callback_data="menu_settings"),
                     InlineKeyboardButton("🛑 Stop Globale", callback_data="stop_all"),
                 ],
                 [InlineKeyboardButton("⚡ Manutenzione", callback_data="menu_power")],
@@ -520,11 +472,7 @@ class TelegramService(QObject):
             keyboard = [
                 [InlineKeyboardButton("📥 Scarico TS", callback_data="menu_ts")],
                 [InlineKeyboardButton("📤 Carico TS", callback_data="menu_carico")],
-                [
-                    InlineKeyboardButton(
-                        "📋 Dettagli OdA", callback_data="menu_oda_details"
-                    )
-                ],
+                [InlineKeyboardButton("📋 Dettagli OdA", callback_data="menu_oda_details")],
                 [InlineKeyboardButton("⏱️ Timbrature", callback_data="menu_timbrature")],
                 [InlineKeyboardButton("📦 Prenota BP", callback_data="menu_prenota_bp")],
                 [self._get_back_button("nav_bots")],
@@ -552,20 +500,14 @@ class TelegramService(QObject):
             if not years:
                 await query.edit_message_text(
                     "⚠️ Nessun anno disponibile nel database.",
-                    reply_markup=InlineKeyboardMarkup(
-                        [[self._get_back_button("nav_db")]]
-                    ),
+                    reply_markup=InlineKeyboardMarkup([[self._get_back_button("nav_db")]]),
                 )
                 return
 
             keyboard = []
             row = []
             for y in sorted(years, reverse=True):
-                row.append(
-                    InlineKeyboardButton(
-                        str(y), callback_data=f"db_year_strumentale_{y}"
-                    )
-                )
+                row.append(InlineKeyboardButton(str(y), callback_data=f"db_year_strumentale_{y}"))
                 if len(row) == 3:
                     keyboard.append(row)
                     row = []
@@ -584,9 +526,7 @@ class TelegramService(QObject):
             self.user_states[chat_id] = f"WAITING_DB_QUERY_{db_name.upper()}_{year}"
             await query.edit_message_text(
                 f"📊 **Strumentale {year}**\nCosa stai cercando? (es. nome fornitore, descrizione...)",
-                reply_markup=InlineKeyboardMarkup(
-                    [[self._get_back_button("db_select_year_strumentale")]]
-                ),
+                reply_markup=InlineKeyboardMarkup([[self._get_back_button("db_select_year_strumentale")]]),
                 parse_mode=constants.ParseMode.MARKDOWN,
             )
         elif data.startswith("db_info_"):
@@ -668,11 +608,7 @@ class TelegramService(QObject):
             "📤 *Carico TS*",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [
-                        InlineKeyboardButton(
-                            "▶ Avvia Carico", callback_data="run_carico"
-                        )
-                    ],
+                    [InlineKeyboardButton("▶ Avvia Carico", callback_data="run_carico")],
                     [self._get_back_button("nav_portale")],
                 ]
             ),
@@ -684,16 +620,8 @@ class TelegramService(QObject):
             "⏱️ *Timbrature*",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [
-                        InlineKeyboardButton(
-                            "🕒 Ieri", callback_data="run_timbrature_yesterday"
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "📅 Oggi", callback_data="run_timbrature_today"
-                        )
-                    ],
+                    [InlineKeyboardButton("🕒 Ieri", callback_data="run_timbrature_yesterday")],
+                    [InlineKeyboardButton("📅 Oggi", callback_data="run_timbrature_today")],
                     [self._get_back_button("nav_portale")],
                 ]
             ),
@@ -713,17 +641,11 @@ class TelegramService(QObject):
 
         printers = get_installed_printers()
         keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}"
-                )
-            ]
+            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")]
             for p in printers[:6]
         ]
         keyboard.append([self._get_back_button("menu_pdl")])
-        await query.edit_message_text(
-            "Seleziona la stampante:", reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await query.edit_message_text("Seleziona la stampante:", reply_markup=InlineKeyboardMarkup(keyboard))
 
     async def _handle_run_pdl_off(self, query):
         await query.edit_message_text(
@@ -736,11 +658,7 @@ class TelegramService(QObject):
                             callback_data="confirm_merge_yes_noprint",
                         )
                     ],
-                    [
-                        InlineKeyboardButton(
-                            "❌ No", callback_data="confirm_merge_no_noprint"
-                        )
-                    ],
+                    [InlineKeyboardButton("❌ No", callback_data="confirm_merge_no_noprint")],
                     [self._get_back_button("menu_pdl")],
                 ]
             ),
@@ -749,9 +667,7 @@ class TelegramService(QObject):
     async def _handle_bot_actions(self, data, query, chat_id, update, context):
         """Gestisce le azioni di controllo dei Bot con dispatch map."""
         # 1. Menu e Input diretti
-        if await self._handle_menu_and_input_dispatch(
-            data, query, chat_id, update, context
-        ):
+        if await self._handle_menu_and_input_dispatch(data, query, chat_id, update, context):
             return
 
         # 2. Selezione Stampante e Conferma Run PDL
@@ -764,9 +680,7 @@ class TelegramService(QObject):
         else:
             self._handle_direct_bot_commands(data, chat_id)
 
-    async def _handle_menu_and_input_dispatch(
-        self, data, query, chat_id, update, context
-    ) -> bool:
+    async def _handle_menu_and_input_dispatch(self, data, query, chat_id, update, context) -> bool:
         """Dispatcher per menu e input. Ritorna True se gestito."""
         map = {
             "menu_pdl": lambda: self._handle_menu_pdl(query, chat_id),
@@ -815,16 +729,8 @@ class TelegramService(QObject):
             f"Stampante: `{fpn}`. Vuoi il PDF unito in chat?",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [
-                        InlineKeyboardButton(
-                            "✅ Sì, invia", callback_data="confirm_merge_yes_print"
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "❌ No", callback_data="confirm_merge_no_print"
-                        )
-                    ],
+                    [InlineKeyboardButton("✅ Sì, invia", callback_data="confirm_merge_yes_print")],
+                    [InlineKeyboardButton("❌ No", callback_data="confirm_merge_no_print")],
                     [self._get_back_button("menu_pdl")],
                 ]
             ),
@@ -896,9 +802,7 @@ class TelegramService(QObject):
             ],
             [self._get_back_button("nav_utility")],
         ]
-        await query.edit_message_text(
-            "📸 Screenshot:", reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await query.edit_message_text("📸 Screenshot:", reply_markup=InlineKeyboardMarkup(keyboard))
 
     async def _show_power_menu(self, query):
         keyboard = [
@@ -906,9 +810,7 @@ class TelegramService(QObject):
             [InlineKeyboardButton("🔌 Test Net", callback_data="app_conn_test")],
             [self._get_back_button("nav_utility")],
         ]
-        await query.edit_message_text(
-            "⚡ Manutenzione:", reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await query.edit_message_text("⚡ Manutenzione:", reply_markup=InlineKeyboardMarkup(keyboard))
 
     def _handle_app_commands(self, data):
         if data == "app_restart":
@@ -927,10 +829,7 @@ class TelegramService(QObject):
     async def _show_settings_menu(self, query):
         config = config_manager.load_config()
         fornitori = config.get("fornitori", [])
-        keyboard = [
-            [InlineKeyboardButton(f"🏢 {f}", callback_data=f"set_forn_{f}")]
-            for f in fornitori[:6]
-        ]
+        keyboard = [[InlineKeyboardButton(f"🏢 {f}", callback_data=f"set_forn_{f}")] for f in fornitori[:6]]
         keyboard.extend(
             [
                 [InlineKeyboardButton("📅 Autopilot", callback_data="menu_autopilot")],
@@ -938,9 +837,7 @@ class TelegramService(QObject):
                 [self._get_back_button("nav_utility")],
             ]
         )
-        await query.edit_message_text(
-            "⚙️ Impostazioni:", reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await query.edit_message_text("⚙️ Impostazioni:", reply_markup=InlineKeyboardMarkup(keyboard))
 
     async def _show_autopilot_menu(self, query):
         keyboard = [
@@ -948,38 +845,27 @@ class TelegramService(QObject):
             [InlineKeyboardButton("🕒 Orario", callback_data="input_autopilot_time")],
             [self._get_back_button("menu_settings")],
         ]
-        await query.edit_message_text(
-            "📅 Autopilot:", reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await query.edit_message_text("📅 Autopilot:", reply_markup=InlineKeyboardMarkup(keyboard))
 
     async def _show_printers_menu(self, query):
         printers = get_installed_printers()
         keyboard = [
-            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"set_print_{p[:30]}")]
-            for p in printers[:6]
+            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"set_print_{p[:30]}")] for p in printers[:6]
         ]
         keyboard.append([self._get_back_button("menu_settings")])
-        await query.edit_message_text(
-            "🖨️ Stampanti:", reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await query.edit_message_text("🖨️ Stampanti:", reply_markup=InlineKeyboardMarkup(keyboard))
 
     async def _handle_setting_changes(self, data, query, chat_id):
         if data.startswith("set_forn_"):
-            self.command_received.emit(
-                "set_fornitore", {"fornitore": data.replace("set_forn_", "")}
-            )
+            self.command_received.emit("set_fornitore", {"fornitore": data.replace("set_forn_", "")})
         elif data == "toggle_autopilot":
-            enabled = not config_manager.load_config().get(
-                "timbrature_autopilot_enabled", False
-            )
+            enabled = not config_manager.load_config().get("timbrature_autopilot_enabled", False)
             self.command_received.emit("set_autopilot", {"enabled": enabled})
         elif data == "input_autopilot_time":
             self.user_states[chat_id] = "WAITING_AUTOPILOT_TIME"
             await query.edit_message_text("🕒 Inserisci orario (HH:MM):")
         elif data.startswith("set_print_"):
-            self.command_received.emit(
-                "set_printer", {"printer": data.replace("set_print_", "")}
-            )
+            self.command_received.emit("set_printer", {"printer": data.replace("set_print_", "")})
 
     def _get_full_printer_name(self, short_name: str) -> str:
         """Helper per recuperare il nome completo della stampante."""
@@ -1022,9 +908,7 @@ class TelegramService(QObject):
         if self.loop and self.loop.is_running() and self.connected_chat_id:
             try:
                 asyncio.run_coroutine_threadsafe(
-                    self._send_photo_async(
-                        self.connected_chat_id, photo_bytes, caption
-                    ),
+                    self._send_photo_async(self.connected_chat_id, photo_bytes, caption),
                     self.loop,
                 )
             except Exception as e:
@@ -1045,9 +929,7 @@ class TelegramService(QObject):
         if self.loop and self.loop.is_running() and self.connected_chat_id:
             try:
                 asyncio.run_coroutine_threadsafe(
-                    self._send_document_async(
-                        self.connected_chat_id, file_path, caption
-                    ),
+                    self._send_document_async(self.connected_chat_id, file_path, caption),
                     self.loop,
                 )
             except Exception as e:

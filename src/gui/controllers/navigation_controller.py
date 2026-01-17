@@ -128,13 +128,24 @@ class NavigationController(QObject):
             and not getattr(self.mw, "_timbrature_signals_connected", False)
         ):
             try:
-                self.mw.timbrature_bot_panel.data_updated.connect(
-                    self.mw.timbrature_db_panel.refresh_data
-                )
+                self.mw.timbrature_bot_panel.data_updated.connect(self.mw.timbrature_db_panel.refresh_data)
                 self.mw._timbrature_signals_connected = True
                 logger.info("Signal: Timbrature Bot -> DB connected.")
             except Exception as e:
                 logger.error(f"Signal Connection Failed: {e}")
+
+        # PDL Search -> PDL DB
+        if (
+            hasattr(self.mw, "pdl_search_panel")
+            and hasattr(self.mw, "pdl_db_panel")
+            and not getattr(self.mw, "_pdl_signals_connected", False)
+        ):
+            try:
+                self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
+                self.mw._pdl_signals_connected = True
+                logger.info("Signal: PDL Search -> DB connected.")
+            except Exception as e:
+                logger.error(f"Signal: PDL Search Connection Failed: {e}")
 
     def navigate_to(self, index: int):
         """Navigazione con Lazy Loading."""
@@ -205,6 +216,4 @@ class NavigationController(QObject):
     def analyze_with_lyra(self, context_text: str):
         """Passa alla vista Lyra."""
         self.navigate_to(2)
-        self.mw.lyra_panel.ask_lyra(
-            "Analizza questi dati e dimmi se ci sono anomalie.", context_text
-        )
+        self.mw.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie.", context_text)

@@ -1,6 +1,7 @@
 import asyncio
-import base64  # Moved from _handle_photo
+import base64
 import os
+import subprocess
 import threading
 from datetime import datetime
 from typing import Any
@@ -69,20 +70,14 @@ class TelegramUIBridge(QObject):
             valid = [i for i in items if InputValidator.validate_pdl(i).valid]
             if valid:
                 self.mw.pdl_panel.add_rows_simple(
-                    [
-                        {"numero_pdl": InputValidator.validate_pdl(v).sanitized_value}
-                        for v in valid
-                    ]
+                    [{"numero_pdl": InputValidator.validate_pdl(v).sanitized_value} for v in valid]
                 )
                 self.mw.show_toast(f"Telegram: aggiunti {len(valid)} PDL")
         elif obj == "oda":
             valid = [i for i in items if InputValidator.validate_oda(i).valid]
             if valid:
                 self.mw.scarico_panel.add_rows_simple(
-                    [
-                        {"numero_oda": InputValidator.validate_oda(v).sanitized_value}
-                        for v in valid
-                    ]
+                    [{"numero_oda": InputValidator.validate_oda(v).sanitized_value} for v in valid]
                 )
                 self.mw.show_toast(f"Telegram: aggiunti {len(valid)} OdA")
 
@@ -90,17 +85,10 @@ class TelegramUIBridge(QObject):
         self.telegram.pending_data[int(chat_id)] = {"action": "print", "items": items}
         printers = get_installed_printers()[:6]
         keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}"
-                )
-            ]
-            for p in printers
+            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")] for p in printers
         ]
 
-        self.telegram.send_message_sync(
-            "✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**"
-        )
+        self.telegram.send_message_sync("✅ Ho aggiunto i PDL. **Quale stampante utilizzo?**")
         coro = self.telegram.app.bot.send_message(
             chat_id=chat_id,
             text=f"✅ PDL {', '.join(items)} pronti. **Quale stampante uso?**",
@@ -119,12 +107,8 @@ class TelegramUIBridge(QObject):
     def _handle_intent_download_pdl(self, chat_id):
         keyboard = [
             [
-                InlineKeyboardButton(
-                    "✅ Sì, stampa", callback_data="confirm_print_yes"
-                ),
-                InlineKeyboardButton(
-                    "❌ No, solo download", callback_data="confirm_print_no"
-                ),
+                InlineKeyboardButton("✅ Sì, stampa", callback_data="confirm_print_yes"),
+                InlineKeyboardButton("❌ No, solo download", callback_data="confirm_print_no"),
             ]
         ]
         coro = self.telegram.app.bot.send_message(
@@ -175,22 +159,14 @@ class TelegramUIBridge(QObject):
         self.mw.navigate_to_panel("scarico_pdl")
         print_enabled = params.get("print", False)
         self.mw.pdl_panel.print_check.setChecked(print_enabled)
-        self.mw.pdl_panel.merge_and_send_from_telegram = params.get(
-            "merge_and_send", False
-        )
-        self.mw.pdl_panel.merge_all_session_from_telegram = params.get(
-            "merge_all", False
-        )
+        self.mw.pdl_panel.merge_and_send_from_telegram = params.get("merge_and_send", False)
+        self.mw.pdl_panel.merge_all_session_from_telegram = params.get("merge_all", False)
         ready, msg = self.mw.pdl_panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico PDL.\nMotivo: {msg}")
             return
         self.mw.pdl_panel.start_btn.click()
-        self.telegram.send_message_sync(
-            f"✅ Avvio Scarico PDL (Stampa={print_enabled})"
-        )
+        self.telegram.send_message_sync(f"✅ Avvio Scarico PDL (Stampa={print_enabled})")
 
     def _handle_list_pdl(self):
         data = self.mw.pdl_panel.data_table.get_data()
@@ -206,9 +182,7 @@ class TelegramUIBridge(QObject):
         self.mw.navigate_to_panel("scarico_ts")
         ready, msg = self.mw.scarico_panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Scarico TS.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Scarico TS.\nMotivo: {msg}")
             return
         self.mw.scarico_panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Scarico Timesheet.")
@@ -217,9 +191,7 @@ class TelegramUIBridge(QObject):
         self.mw.navigate_to_panel("carico_ts")
         ready, msg = self.mw.carico_panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Carico TS.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Carico TS.\nMotivo: {msg}")
             return
         self.mw.carico_panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Carico Timesheet.")
@@ -229,26 +201,51 @@ class TelegramUIBridge(QObject):
         # In main_window.py navigate_to_panel("prenota_bp") maps to index (0, 3)
         # We need to access the panel instance.
         # It's inside mw.tab_fornitori (index 3)
-        
+
         # Accessing via bot_controller helper would be cleaner but let's use direct access for now
         # waiting for the UI to switch
-        QApplication.processEvents() 
-        
+        QApplication.processEvents()
+
         # Access panel
-        panel = self.mw.tab_fornitori.widget(3) # Index 3 as per map
-        
+        panel = self.mw.tab_fornitori.widget(3)  # Index 3 as per map
+
         if not panel:
-             self.telegram.send_message_sync("⚠️ Errore interno: Pannello Prenota BP non trovato.")
-             return
+            self.telegram.send_message_sync("⚠️ Errore interno: Pannello Prenota BP non trovato.")
+            return
 
         ready, msg = panel.validate_ready()
         if not ready:
-            self.telegram.send_message_sync(
-                f"⚠️ Impossibile avviare Prenota BP.\nMotivo: {msg}"
-            )
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Prenota BP.\nMotivo: {msg}")
             return
         panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Prenotazione BP.")
+
+    def _handle_run_timbrature(self, params):
+        """Gestisce l'avvio del bot Timbrature."""
+        period = params.get("period", "today")
+        self.mw.navigate_to_panel("timbrature")
+        
+        # Access panel
+        panel = self.mw.timbrature_bot_panel
+        
+        # Imposta date
+        today = QDate.currentDate()
+        if period == "yesterday":
+            target = today.addDays(-1)
+            panel.date_da_edit.setDate(target)
+            panel.date_a_edit.setDate(target)
+        elif period == "today":
+            panel.date_da_edit.setDate(today)
+            panel.date_a_edit.setDate(today)
+            
+        ready, msg = panel.validate_ready()
+        if not ready:
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Timbrature.\nMotivo: {msg}")
+            return
+            
+        panel.start_btn.click()
+        period_str = "oggi" if period == "today" else "ieri"
+        self.telegram.send_message_sync(f"✅ Avvio Scarico Timbrature ({period_str}).")
 
     def _handle_restart_app(self):
         try:
@@ -273,9 +270,7 @@ class TelegramUIBridge(QObject):
         query_text = params.get("query", "")
         year_filter = params.get("year")
 
-        self.telegram.send_message_sync(
-            f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`..."
-        )
+        self.telegram.send_message_sync(f"🔍 Ricerca in corso in **{db_type}** per: `{query_text}`...")
 
         try:
             report_data = self._fetch_report_data(db_type, query_text, year_filter)
@@ -294,9 +289,7 @@ class TelegramUIBridge(QObject):
                 limit=500, filter_text=query
             )
         if db_type == "strumentale":
-            return ContabilitaManager.search_extended(
-                query, year=(int(year) if year else None), limit=500
-            )
+            return ContabilitaManager.search_extended(query, year=(int(year) if year else None), limit=500)
         return None
 
     def _generate_report_html(self, db_type, data) -> str:
@@ -333,89 +326,90 @@ class TelegramUIBridge(QObject):
 
     def _handle_data(self, data_type, items):
         """Gestisce l'inserimento dati da Telegram."""
-        valid_items, duplicates, errors = [], 0, []
-        
-        # Determina pannello e validatore
         if data_type == "pdl":
-            panel = self.mw.pdl_panel
-            field = "numero_pdl"
-            validator = InputValidator.validate_pdl
+            self._process_pdl_items(items)
         elif data_type == "oda":
-            panel = self.mw.scarico_panel
-            field = "numero_oda"
-            validator = InputValidator.validate_oda
+            self._process_oda_items(items)
         elif data_type == "bp":
-            # Accesso al pannello prenota_bp (indice 3 nei tab fornitori)
-            # Inizializziamo se necessario
-            self.mw.navigate_to_panel("prenota_bp")
-            panel = self.mw.tab_fornitori.widget(3)
-            field = "numero_bp"
-            # Validatore fittizio per BP (accetta tutto per ora, o numeri)
-            class DummyResult:
-                def __init__(self, val): self.valid = True; self.sanitized_value = val
-            validator = lambda x: DummyResult(x)
-            
-            # CLEAR TABLE for BP (Replacement Mode)
-            existing = [] 
-        else:
+            self._process_bp_items(items)
+
+    def _process_pdl_items(self, items):
+        """Processa i PDL da Telegram."""
+        valid_items, duplicates, errors = self._validate_and_filter_items(
+            items, "numero_pdl", InputValidator.validate_pdl, self.mw.pdl_panel
+        )
+        if valid_items:
+            self.mw.pdl_panel.add_rows_simple([{"numero_pdl": v} for v in valid_items])
+            self.mw.navigate_to_panel("scarico_pdl")
+        self._send_data_feedback(len(valid_items), duplicates, errors)
+
+    def _process_oda_items(self, items):
+        """Processa gli OdA da Telegram."""
+        valid_items, duplicates, errors = self._validate_and_filter_items(
+            items, "numero_oda", InputValidator.validate_oda, self.mw.scarico_panel
+        )
+        if valid_items:
+            self.mw.scarico_panel.add_rows_simple([{"numero_oda": v} for v in valid_items])
+            self.mw.navigate_to_panel("scarico_ts")
+        self._send_data_feedback(len(valid_items), duplicates, errors)
+
+    def _process_bp_items(self, items):
+        """Processa i BP da Telegram."""
+        self.mw.navigate_to_panel("prenota_bp")
+        panel = self.mw.tab_fornitori.widget(3)
+        if not panel:
             return
 
-        # existing logic for existing check... (skipped since we cleared for BP)
-        if data_type != "bp":
-             existing = [str(row.get(field, "")) for row in panel.data_table.get_data()]
-        
+        valid_items, duplicates = [], 0
+
         for item in items:
-            # Parsing specifico per BP (Numero + Note)
-            if data_type == "bp":
-                # Supporto per formato: "123456 note, 123457 note" già splittato da telegram_manager
-                # Qui item è una singola entry "123456 note"
-                # Rimuoviamo spazi extra
-                item = item.strip()
-                if not item: continue
-                
-                parts = item.split(" ", 1)
-                bp_num = parts[0].strip()
-                bp_note = parts[1].strip() if len(parts) > 1 else ""
-                
-                # Check duplicati SOLO nel nuovo set (poiché sostituiamo)
-                if any(v.get("NUMERO BP") == bp_num for v in valid_items):
-                    duplicates += 1
-                else:
-                    # Usiamo le chiavi esatte definite nel pannello: "NUMERO BP", "NOTE DI RITIRO"
-                    valid_items.append({"NUMERO BP": bp_num, "NOTE DI RITIRO": bp_note})
+            item = item.strip()
+            if not item:
+                continue
+            parts = item.split(" ", 1)
+            bp_num = parts[0].strip()
+            bp_note = parts[1].strip() if len(parts) > 1 else ""
+
+            if any(v.get("NUMERO BP") == bp_num for v in valid_items):
+                duplicates += 1
             else:
-                # Logica standard PDL/OdA
-                res = validator(item)
-                if res.valid:
-                    val = res.sanitized_value
-                    if val in existing or val in valid_items:
-                        duplicates += 1
-                    else:
-                        valid_items.append(val)
-                else:
-                    errors.append(f"❌ `{item}`: {res.error}")
+                valid_items.append({"NUMERO BP": bp_num, "NOTE DI RITIRO": bp_note})
 
         if valid_items:
-            # Per BP usiamo set_data per rimpiazzare
-            if data_type == "bp":
-                panel.data_table.set_data(valid_items)
-                # Forza salvataggio
-                if hasattr(panel, "_save_data"):
-                    panel._save_data()
-            else:
-                panel.add_rows_simple([{field: v} for v in valid_items])
-            
-            self.mw.navigate_to_panel(panel.bot_id)
-            self.mw.show_toast(f"Telegram: Aggiunti {len(valid_items)} elementi")
+            panel.data_table.set_data(valid_items)
+            if hasattr(panel, "_save_data"):
+                panel._save_data()
+            self.mw.show_toast(f"Telegram: Impostati {len(valid_items)} BP")
 
-        feedback = [f"✅ Impostati {len(valid_items)}"] if valid_items else []
+        self._send_data_feedback(len(valid_items), duplicates, [])
+
+    def _validate_and_filter_items(self, items, field, validator_func, panel):
+        """Valida e filtra i dati in ingresso."""
+        valid_items, duplicates, errors = [], 0, []
+        existing = [str(row.get(field, "")) for row in panel.data_table.get_data()]
+
+        for item in items:
+            res = validator_func(item)
+            if res.valid:
+                val = res.sanitized_value
+                if val in existing or val in valid_items:
+                    duplicates += 1
+                else:
+                    valid_items.append(val)
+            else:
+                errors.append(f"❌ `{item}`: {res.error}")
+        return valid_items, duplicates, errors
+
+    def _send_data_feedback(self, count_valid, duplicates, errors):
+        """Invia feedback a Telegram."""
+        feedback = []
+        if count_valid:
+            feedback.append(f"✅ Aggiunti/Impostati {count_valid}")
         if duplicates:
             feedback.append(f"ℹ️ {duplicates} duplicati ignorati")
         if errors:
             feedback.append("⚠️ Errori:\n" + "\n".join(errors[:5]))
-        self.telegram.send_message_sync(
-            "\n".join(feedback) if feedback else "⚠️ Nessun dato valido."
-        )
+        self.telegram.send_message_sync("\n".join(feedback) if feedback else "⚠️ Nessun dato valido.")
 
     def _handle_status(self, chat_id):
         panel = self.mw._get_active_bot_panel()
@@ -440,9 +434,7 @@ class TelegramUIBridge(QObject):
                 combined.fill(Qt.GlobalColor.black)
                 p = QPainter(combined)
                 for s in screens:
-                    p.drawPixmap(
-                        s.geometry().topLeft() - total_rect.topLeft(), s.grabWindow(0)
-                    )
+                    p.drawPixmap(s.geometry().topLeft() - total_rect.topLeft(), s.grabWindow(0))
                 p.end()
                 pixmap = combined
                 caption = f"Desktop ({len(screens)} monitor)"
@@ -450,9 +442,7 @@ class TelegramUIBridge(QObject):
             buf = QBuffer()
             buf.open(QIODevice.OpenModeFlag.WriteOnly)
             pixmap.save(buf, "PNG")
-            self.telegram.send_photo_sync(
-                buf.data().data(), caption=f"📸 **Screenshot: {caption}**"
-            )
+            self.telegram.send_photo_sync(buf.data().data(), caption=f"📸 **Screenshot: {caption}**")
         except Exception as e:
             self.telegram.send_message_sync(f"❌ Errore screenshot: {e}")
 

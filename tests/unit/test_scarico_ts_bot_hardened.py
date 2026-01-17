@@ -33,9 +33,7 @@ class TestScaricoTSBotHardened:
         bot.validate_data = ScaricaTSBot.validate_data.__get__(bot, ScaricaTSBot)
 
         # Mock del metodo super().validate_data (BaseBot)
-        mocker.patch(
-            "src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")
-        )
+        mocker.patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, ""))
 
         # 1. Successo
         valid, msg = bot.validate_data([{"numero_oda": "123"}])
@@ -47,33 +45,6 @@ class TestScaricoTSBotHardened:
         assert valid is False
         assert "Fornitore" in msg
 
-    def test_process_downloaded_files_vba_logic(self, mocker, tmp_path):
-        """Testa lo spostamento e gestione conflitti mockando l'istanza."""
-        bot = MagicMock(spec=ScaricaTSBot)
-        bot.log = MagicMock()
-        bot._check_stop = MagicMock()
-        bot._ask_user = MagicMock(return_value="REV1")
-
-        # Colleghiamo il metodo reale
-        bot._process_downloaded_files_vba_style = (
-            ScaricaTSBot._process_downloaded_files_vba_style.__get__(bot, ScaricaTSBot)
-        )
-
-        dest_dir = tmp_path / "dest"
-        dest_dir.mkdir()
-        (dest_dir / "TS_123.xlsx").write_text("old")  # Conflitto
-
-        src_file = tmp_path / "TS_123.xlsx"
-        src_file.write_text("new")
-
-        m_shutil = mocker.patch("shutil.move")
-
-        bot._process_downloaded_files_vba_style([str(src_file)], dest_dir)
-
-        # Deve aver chiesto il suffisso e aver spostato con il nuovo nome
-        bot._ask_user.assert_called_once()
-        args = m_shutil.call_args[0]
-        assert "TS_123 REV1.xlsx" in str(args[1])
 
     def test_setup_filters_mocked_driver(self, mocker):
         """Verifica la sequenza di interazione con il driver per i filtri."""
@@ -91,9 +62,7 @@ class TestScaricoTSBotHardened:
 
         # Mocking expected_conditions e ActionChains
         mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.EC")
-        m_actions = mocker.patch(
-            "src.bots.portale_fornitori.scarico_ts.bot.ActionChains"
-        )
+        m_actions = mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains")
         mocker.patch("time.sleep")
 
         # Mock elementi

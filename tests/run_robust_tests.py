@@ -72,9 +72,7 @@ class TestRunner:
     def signal_handler(self, sig, frame):
         if not self.interrupted:
             self.interrupted = True
-            Console.warning(
-                "\n\n🛑 Interrupt ricevuto! Salvataggio stato e chiusura in corso..."
-            )
+            Console.warning("\n\n🛑 Interrupt ricevuto! Salvataggio stato e chiusura in corso...")
             self.save_state()
             sys.exit(130)
 
@@ -126,11 +124,7 @@ class TestRunner:
         for line in result.stdout.splitlines():
             line = line.strip()
             # Un NodeID valido di pytest contiene '::' e non inizia con '=' o 'collected'
-            if (
-                "::" in line
-                and not line.startswith("=")
-                and not line.startswith("collected")
-            ):
+            if "::" in line and not line.startswith("=") and not line.startswith("collected"):
                 # Alcune righe potrebbero avere avvisi extra, prendiamo solo la prima parte
                 node_id = line.split()[0] if " " in line else line
                 if "::" in node_id:
@@ -181,9 +175,7 @@ class TestRunner:
 
         with open(REPORT_FILE, "w", encoding="utf-8") as f:
             f.write("# 📊 Test Execution Report\n\n")
-            f.write(
-                f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-            )
+            f.write(f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"**Duration:** {total_duration:.2f}s\n\n")
 
             f.write("## Summary\n")
@@ -217,9 +209,7 @@ class TestRunner:
 
         # 1. Tenta di mostrare dati esistenti
         try:
-            res = subprocess.run(
-                [sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR
-            )
+            res = subprocess.run([sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR)
             if res.returncode == 0:
                 return
         except Exception:
@@ -243,9 +233,7 @@ class TestRunner:
 
     def run(self):
         parser = argparse.ArgumentParser(description="🛡️ Robust Test Runner")
-        parser.add_argument(
-            "targets", nargs="*", help="File o directory di test specifici da eseguire."
-        )
+        parser.add_argument("targets", nargs="*", help="File o directory di test specifici da eseguire.")
         parser.add_argument(
             "--reset",
             action="store_true",
@@ -299,18 +287,14 @@ class TestRunner:
         if should_reset:
             # Pulizia dati copertura precedenti su reset
             try:
-                subprocess.run(
-                    [sys.executable, "-m", "coverage", "erase"], cwd=ROOT_DIR
-                )
+                subprocess.run([sys.executable, "-m", "coverage", "erase"], cwd=ROOT_DIR)
             except Exception:
                 pass
 
             self.files_map = self.discover_tests(targets)
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
             self.queue_files = sorted(self.files_map.keys())
-            Console.info(
-                f"Nuova sessione: {self.total_tests} test in {len(self.files_map)} file."
-            )
+            Console.info(f"Nuova sessione: {self.total_tests} test in {len(self.files_map)} file.")
             if STATE_FILE.exists():
                 os.remove(STATE_FILE)
         else:
@@ -335,9 +319,7 @@ class TestRunner:
                 self.files_map = self.discover_tests()
 
             self.total_tests = sum(len(ids) for ids in self.files_map.values())
-            Console.warning(
-                f"Ripresa sessione: {len(self.queue_files)} file rimanenti."
-            )
+            Console.warning(f"Ripresa sessione: {len(self.queue_files)} file rimanenti.")
 
         self.start_time = time.time()
 
@@ -353,13 +335,9 @@ class TestRunner:
                 continue
 
             test_count = len(node_ids)
-            progress_pct = (
-                (self.passed_tests + len(self.failed_tests)) / self.total_tests
-            ) * 100
+            progress_pct = ((self.passed_tests + len(self.failed_tests)) / self.total_tests) * 100
 
-            print(
-                f"\n📂 File: {Console.BOLD}{current_file}{Console.ENDC} ({test_count} tests)"
-            )
+            print(f"\n📂 File: {Console.BOLD}{current_file}{Console.ENDC} ({test_count} tests)")
             print(
                 f"   📊 Progress: {progress_pct:.1f}% | Passed: {self.passed_tests} | Failed: {len(self.failed_tests)}"
             )
@@ -422,9 +400,7 @@ class TestRunner:
             full_log = res.stdout + res.stderr
             error_msg = self._extract_error_message(lines)
 
-        self.failed_tests.append(
-            {"id": nid, "error": error_msg, "log": full_log, "full_output": full_log}
-        )
+        self.failed_tests.append({"id": nid, "error": error_msg, "log": full_log, "full_output": full_log})
 
         if getattr(self, "exitfirst", False):
             Console.error("\n⛔ EXITFIRST: Test fallito. Interruzione immediata.")
@@ -448,12 +424,8 @@ class TestRunner:
         # Mostra Report Copertura Finale
         Console.header("📊 COPERTURA FINALE")
         try:
-            subprocess.run(
-                [sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR
-            )
-            subprocess.run(
-                [sys.executable, "-m", "coverage", "html"], cwd=ROOT_DIR
-            )  # Genera anche HTML
+            subprocess.run([sys.executable, "-m", "coverage", "report", "-m"], cwd=ROOT_DIR)
+            subprocess.run([sys.executable, "-m", "coverage", "html"], cwd=ROOT_DIR)  # Genera anche HTML
             Console.info("Report HTML generato in htmlcov/index.html")
         except Exception as e:
             Console.error(f"Impossibile generare report copertura: {e}")

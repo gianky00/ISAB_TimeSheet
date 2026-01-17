@@ -54,9 +54,7 @@ def setup_test_db(db_path, num_rows=10000):
             )
             for i in range(num_rows)
         ]
-        conn.executemany(
-            "INSERT INTO contabilita VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data
-        )
+        conn.executemany("INSERT INTO contabilita VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
         conn.commit()
     return data
 
