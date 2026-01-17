@@ -1,3 +1,12 @@
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "vulture_whitelist.py",
+]
+
 [lint]
 select = [
     "E",  # pycodestyle errors
@@ -7,7 +16,7 @@ select = [
     "C",  # flake8-comprehensions
     "B",  # flake8-bugbear
 ]
-ignore = ["E501"] # Ignora "line too long", gestito da Black
+ignore = ["E501", "C901"] # Ignora "line too long" e complessità ciclomatica eccessiva
 
 [format]
 quote-style = "double"

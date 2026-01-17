@@ -1,170 +1,83 @@
-# SyncroJob
+# 🚀 SyncroJob Enterprise
 
-**Sistema di Automazione per Portale ISAB**
+**Piattaforma Integrata di Automazione e Gestione per Portale ISAB**
 
-Applicazione desktop per l'automazione delle operazioni sul portale fornitori ISAB, sviluppata da Giancarlo Allegretti.
+SyncroJob è una suite software avanzata progettata per automatizzare, monitorare e ottimizzare i flussi di lavoro aziendali sul portale fornitori ISAB e SafeWork.
 
-## 🚀 Funzionalità
+![SyncroJob Dashboard](layout.png)
 
-### Bot Disponibili
+## 🌟 Nuove Funzionalità (v2.0+)
 
-| Bot | Descrizione |
-|-----|-------------|
-| **📥 Scarico TS** | Download automatico dei timesheet per commessa/mese/anno |
-| **📋 Dettagli OdA** | Login automatico per consultazione Ordini di Acquisto |
+### 🧠 Intelligenza Artificiale & Automazione
+*   **Lyra Sentinel AI**: Monitoraggio proattivo delle anomalie nei dati e nei processi.
+*   **SafeWork Bot**: Automazione completa per la ricerca e l'esportazione PDL.
+*   **DataEase Sync**: Sincronizzazione intelligente dei dati di cantiere.
 
-### Caratteristiche
+### 🛡️ Sicurezza & Affidabilità
+*   **Audit Trail Certificato**: Registro immutabile di tutte le operazioni critiche.
+*   **Auto-Backup Cloud**: Salvataggio automatico e ripristino granulare dei dati.
+*   **Integrità Dati**: Validazione checksum in tempo reale.
 
-- ✅ Interfaccia grafica moderna (PyQt6)
-- ✅ Gestione multi-commessa con tabelle editabili
-- ✅ Menu contestuale per gestione righe (tasto destro)
-- ✅ Sistema di licenze con validazione hardware
-- ✅ Aggiornamenti automatici via Netlify
-- ✅ Configurazione credenziali e percorsi
-- ✅ Log dettagliato delle operazioni
+### 🎨 Command Center (Nuova UI)
+*   **Dashboard Modulare**: Accesso rapido a tutti i sottosistemi da un'unica vista.
+*   **Design Moderno**: Interfaccia responsiva con icone vettoriali e temi adattivi.
+*   **Notifiche Smart**: Centro notifiche unificato con filtri per priorità.
 
-## 📦 Installazione
+---
 
-### Utente Finale
+## 🤖 Moduli Operativi
 
-1. Scarica l'installer da [syncrojob.netlify.app](https://syncrojob.netlify.app)
-2. Esegui SyncroJob_Setup_x.x.x.exe
-3. Inserisci i file di licenza nella cartella indicata
-4. Avvia l'applicazione
+| Modulo | Descrizione | Stato |
+|--------|-------------|-------|
+| **📥 Scarico TS** | Download massivo timesheet (PDF/Excel) per commessa/periodo. | ✅ Attivo |
+| **📋 Dettagli OdA** | Analisi dettagliata Ordini di Acquisto e stati avanzamento. | ✅ Attivo |
+| **⏱️ Timbrature** | Gestione, validazione e storicizzazione timbrature dipendenti. | ✅ Attivo |
+| **🏗️ SafeWork** | Integrazione completa con il portale sicurezza (PDL/Permessi). | ✅ Attivo |
+| **📤 Carico TS** | Upload automatizzato dei timesheet validati. | ✅ Attivo |
 
-### Sviluppatore
+---
 
+## 📦 Installazione e Requisiti
+
+### Requisiti di Sistema
+*   **OS**: Windows 10/11 (64-bit)
+*   **Browser**: Google Chrome (Ultima versione)
+*   **Rete**: Connessione internet attiva (per Portali e Licenza)
+
+### Installazione Utente
+1.  Scarica l'ultimo installer da **[syncrojob.netlify.app](https://syncrojob.netlify.app)**.
+2.  Esegui `SyncroJob_Setup_vX.X.X.exe`.
+3.  Al primo avvio, il sistema configurerà automaticamente l'ambiente.
+
+---
+
+## 🛠️ Sviluppo
+
+### Setup Ambiente
 ```bash
 # Clone repository
 git clone https://github.com/gianky00/bot-ts.git
 cd bot-ts
 
-# Crea virtual environment
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
-
-# Installa dipendenze
+# Installazione dipendenze (Poetry consigliato)
+poetry install
+# Oppure via pip
 pip install -r requirements.txt
-
-# Avvia applicazione
-python main.py
 ```
 
-## 🛠️ Build & Release
+### Comandi Utili
+*   **Avvio App**: `python main.py`
+*   **Test Suite**: `pytest tests/`
+*   **Linting**: `ruff check .`
+*   **Type Check**: `mypy .`
+*   **Build Release**: `python "admin/Crea Setup/build_dist.py"`
 
-### Build Locale (senza deploy)
+---
 
-```batch
-release_patch_no_Deploy.bat [major|minor|patch]
-```
+## 🔑 Licenza e Supporto
 
-### Release Completa (con deploy Netlify)
+Software proprietario sviluppato da **Giancarlo Allegretti**.
+L'uso è consentito solo tramite licenza attiva validata su hardware specifico.
 
-```batch
-release_patch.bat [major|minor|patch]
-```
-
-### Struttura Output
-
-```
-admin/Crea Setup/Setup/
-├── BotTS_Setup_x.x.x.exe    # Installer
-└── netlify/
-    ├── version.json         # Info versione
-    └── index.html           # Redirect download
-```
-
-## 📁 Struttura Progetto
-
-```
-bot-ts/
-├── main.py                  # Entry point
-├── requirements.txt         # Dipendenze Python
-├── src/
-│   ├── core/               # Moduli core
-│   │   ├── version.py      # Versione app
-│   │   ├── config_manager.py
-│   │   ├── license_validator.py
-│   │   ├── license_updater.py
-│   │   └── app_updater.py
-│   ├── bots/               # Bot modulari
-│   │   ├── base/           # Classe base
-│   │   ├── scarico_ts/     # Bot Scarico TS
-│   │   └── dettagli_oda/   # Bot Dettagli OdA
-│   ├── gui/                # Interfaccia grafica
-│   │   ├── main_window.py
-│   │   ├── panels.py
-│   │   ├── widgets.py
-│   │   └── settings_panel.py
-│   └── utils/              # Utility
-├── admin/
-│   ├── bump_version.py     # Script versioning
-│   ├── Crea Licenze/       # Tool generazione licenze
-│   └── Crea Setup/         # Build scripts
-├── assets/                 # Icone (generate)
-└── tests/                  # Unit tests
-```
-
-## 🔑 Sistema Licenze
-
-### Generazione (Admin)
-
-```bash
-python admin/Crea\ Licenze/admin_license_gui.py
-```
-
-### File Licenza
-
-```
-%LOCALAPPDATA%\Programs\SyncroJob\Licenza\
-├── config.dat        # Dati licenza cifrati
-└── manifest.json     # Checksum integrità
-```
-
-### Repository Licenze
-
-Le licenze vengono distribuite tramite repository GitHub privato:
-`github.com/gianky00/intelleo-licenses/tree/main/licenses`
-
-## ⚙️ Configurazione
-
-### Percorso Dati
-
-- **Windows**: `%LOCALAPPDATA%\Programs\SyncroJob\`
-- **Linux**: `~/.local/share/SyncroJob/`
-
-### File Configurazione
-
-`config.json`:
-```json
-{
-    "download_path": "",
-    "isab_username": "",
-    "isab_password": "",
-    "browser_headless": false,
-    "browser_timeout": 30,
-    "last_ts_data": [],
-    "last_oda_data": []
-}
-```
-
-## 🧪 Testing
-
-```bash
-pytest tests/ -v
-```
-
-## 📋 Requisiti
-
-- Python 3.10+
-- Google Chrome (per automazione Selenium)
-- Windows 10/11 (target principale)
-
-## Licenza
-
-Software proprietario - Giancarlo Allegretti
-
-## Contatti
-
-Giancarlo Allegretti
+*   **Supporto Tecnico**: Integrato nell'app (Tab Help) o via Telegram.
+*   **Documentazione**: Vedi cartella `docs/`.

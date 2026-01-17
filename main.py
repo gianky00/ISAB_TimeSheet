@@ -41,7 +41,9 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 def handle_thread_exception(args):
     """Gestore globale per eccezioni nei thread secondari."""
-    error_msg = "".join(traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback))
+    error_msg = "".join(
+        traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback)
+    )
     logger.critical(f"UNHANDLED EXCEPTION (Thread: {args.thread.name}):\n{error_msg}")
 
     # Forza il flush

@@ -52,8 +52,12 @@ class TimbratureStorage:
                 )
             """
             )
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)"
+            )
             conn.commit()
 
     def _ensure_db_exists(self):
@@ -103,7 +107,9 @@ class TimbratureStorage:
             cursor = conn.cursor()
 
             # Ottieni tutti i dipendenti unici dalle timbrature
-            cursor.execute("SELECT DISTINCT nome, cognome FROM timbrature ORDER BY cognome, nome")
+            cursor.execute(
+                "SELECT DISTINCT nome, cognome FROM timbrature ORDER BY cognome, nome"
+            )
             rows = cursor.fetchall()
 
             employees = []
@@ -163,7 +169,9 @@ class TimbratureStorage:
             cursor.execute(sql, params)
             raw_rows = cursor.fetchall()
 
-            return self._enrich_and_filter_timb(raw_rows, mappings, filter_reparto, filter_cantiere, limit)
+            return self._enrich_and_filter_timb(
+                raw_rows, mappings, filter_reparto, filter_cantiere, limit
+            )
 
     def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
         query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
@@ -175,7 +183,10 @@ class TimbratureStorage:
         conditions = []
         for term in search_terms:
             search_term = self._normalize_search_date(term)
-            term_conditions = [f"{col} LIKE ?" for col in ["data", "nome", "cognome", "sito_timbratura"]]
+            term_conditions = [
+                f"{col} LIKE ?"
+                for col in ["data", "nome", "cognome", "sito_timbratura"]
+            ]
             params.extend([f"%{search_term}%"] * 4)
             conditions.append(f"({' OR '.join(term_conditions)})")
 
@@ -193,7 +204,9 @@ class TimbratureStorage:
                 pass
         return term
 
-    def _enrich_and_filter_timb(self, rows, mappings, f_rep, f_cant, limit) -> List[tuple]:
+    def _enrich_and_filter_timb(
+        self, rows, mappings, f_rep, f_cant, limit
+    ) -> List[tuple]:
         final = []
         for r in rows:
             nome, cognome = r[3], r[4]
@@ -210,7 +223,9 @@ class TimbratureStorage:
                 break
         return final
 
-    def import_excel(self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None) -> bool:
+    def import_excel(
+        self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None
+    ) -> bool:
         """Imports an Excel file into the database."""
 
         def log(m):
@@ -273,7 +288,9 @@ class TimbratureStorage:
         config = config_manager.load_config()
 
         # Logica di migrazione se mancano i dati nel config ma esiste il vecchio file
-        if "reparti" not in config or (not config.get("reparti") and not config.get("cantieri")):
+        if "reparti" not in config or (
+            not config.get("reparti") and not config.get("cantieri")
+        ):
             old_path = self.db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 try:
@@ -288,7 +305,9 @@ class TimbratureStorage:
                     pass
 
         return {
-            "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),
+            "reparti": config.get(
+                "reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
+            ),
             "cantieri": config.get("cantieri", []),
         }
 

@@ -7,7 +7,9 @@ from src.gui.notifications_panel import AuditLogWidget, NotificationsPanel
 
 class TestNotificationsPanelDeep:
     def test_refresh_notifications_with_data(self, qapp, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
+        with patch(
+            "src.core.notification_manager.NotificationManager.instance"
+        ) as mock_manager:
             mock_inst = mock_manager.return_value
             mock_inst.get_notifications.return_value = [
                 {
@@ -46,7 +48,9 @@ class TestNotificationsPanelDeep:
         assert panel.btn_errors.isChecked() is True
 
     def test_filter_errors_logic(self, qapp, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_manager:
+        with patch(
+            "src.core.notification_manager.NotificationManager.instance"
+        ) as mock_manager:
             mock_inst = mock_manager.return_value
             # Mock get_notifications to return a mix of info and error
             # Note: The panel calls get_notifications(filter_unread=...), so we mock that return

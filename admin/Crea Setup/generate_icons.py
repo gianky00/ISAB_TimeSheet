@@ -15,7 +15,9 @@ def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
     images = []
 
     for size in sizes:
-        img = _generate_icon_layer(size, text, color_bg, color_text, font_path, accent_color)
+        img = _generate_icon_layer(
+            size, text, color_bg, color_text, font_path, accent_color
+        )
         images.append(img)
 
     # Salvataggio ICO
@@ -84,7 +86,11 @@ def _draw_icon_text(draw, size, text, color, font_path):
 
     # Caricamento Font
     try:
-        font = ImageFont.truetype(font_path, font_size) if font_path else ImageFont.load_default()
+        font = (
+            ImageFont.truetype(font_path, font_size)
+            if font_path
+            else ImageFont.load_default()
+        )
     except Exception:
         font = ImageFont.load_default()
 

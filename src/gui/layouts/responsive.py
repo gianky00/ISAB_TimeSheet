@@ -12,20 +12,24 @@ class ResponsiveContainer(QWidget):
     BREAKPOINT_TABLET = 900
 
     def __init__(self, parent=None):
+        """Inizializza il container responsivo."""
         super().__init__(parent)
         self._widgets = []
         self._current_mode = None
         self._setup_layouts()
 
     def _setup_layouts(self):
+        """Configura il layout di base del container."""
         self._main_layout = QVBoxLayout(self)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
 
     def addWidget(self, widget: QWidget):
+        """Aggiunge un widget alla lista interna e aggiorna la visualizzazione."""
         self._widgets.append(widget)
         self._rebuild_layout()
 
     def resizeEvent(self, event):
+        """Gestisce il cambio di dimensioni della finestra aggiornando il layout se necessario."""
         super().resizeEvent(event)
         width = event.size().width()
 
@@ -35,6 +39,7 @@ class ResponsiveContainer(QWidget):
             self._rebuild_layout()
 
     def _get_mode(self, width: int) -> str:
+        """Determina la modalità di visualizzazione (mobile, tablet, desktop) in base alla larghezza."""
         if width < self.BREAKPOINT_MOBILE:
             return "mobile"
         elif width < self.BREAKPOINT_TABLET:

@@ -11,9 +11,13 @@ class TestAppInitializer:
     def mock_deps(self, mocker):
         return {
             "db": mocker.patch("src.core.app_initializer.db_manager"),
-            "license_status": mocker.patch("src.core.app_initializer.get_detailed_license_status"),
+            "license_status": mocker.patch(
+                "src.core.app_initializer.get_detailed_license_status"
+            ),
             "license_update": mocker.patch("src.core.app_initializer.run_update"),
-            "grace": mocker.patch("src.core.app_initializer.check_emergency_grace_period"),
+            "grace": mocker.patch(
+                "src.core.app_initializer.check_emergency_grace_period"
+            ),
             "msgbox": mocker.patch("src.core.app_initializer.QMessageBox"),
             "exit": mocker.patch("sys.exit"),
         }

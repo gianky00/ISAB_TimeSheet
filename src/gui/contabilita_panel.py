@@ -43,6 +43,7 @@ class ContabilitaPanel(QWidget):
         QTimer.singleShot(10, self._safe_refresh_tabs)
 
     def _safe_refresh_tabs(self):
+        """Esegue il refresh dei tab in modo sicuro catturando eventuali eccezioni."""
         try:
             self.refresh_tabs()
         except Exception as e:
@@ -52,6 +53,7 @@ class ContabilitaPanel(QWidget):
             traceback.print_exc()
 
     def _setup_ui(self):
+        """Inizializza l'interfaccia grafica del pannello contabilità."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
 
@@ -75,13 +77,17 @@ class ContabilitaPanel(QWidget):
         self.selection_sum_label.setStyleSheet("color: #0d6efd; font-weight: bold;")
         selection_layout.addWidget(self.selection_count_label)
         selection_layout.addWidget(self.selection_sum_label)
-        self.main_tabs.setCornerWidget(self.selection_container, Qt.Corner.TopRightCorner)
+        self.main_tabs.setCornerWidget(
+            self.selection_container, Qt.Corner.TopRightCorner
+        )
 
         self.year_tabs_widget = QTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
         self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
-        self.tab_preventivi = self._create_tab_wrapper(self.year_tabs_widget, "🔍 Cerca preventivi...")
+        self.tab_preventivi = self._create_tab_wrapper(
+            self.year_tabs_widget, "🔍 Cerca preventivi..."
+        )
         self.main_tabs.addTab(self.tab_preventivi, "📂 Preventivi")
 
         self.giornaliere_tabs_widget = QTabWidget()
@@ -94,11 +100,15 @@ class ContabilitaPanel(QWidget):
         self.main_tabs.addTab(self.tab_giornaliere, "📂 Giornaliere")
 
         self.attivita_widget = AttivitaProgrammateTab()
-        self.tab_attivita = self._create_tab_wrapper(self.attivita_widget, "🔍 Cerca attività...")
+        self.tab_attivita = self._create_tab_wrapper(
+            self.attivita_widget, "🔍 Cerca attività..."
+        )
         self.main_tabs.addTab(self.tab_attivita, "📅 Attività Programmate")
 
         self.certificati_widget = CertificatiCampioneTab()
-        self.tab_certificati = self._create_tab_wrapper(self.certificati_widget, "🔍 Cerca certificati...")
+        self.tab_certificati = self._create_tab_wrapper(
+            self.certificati_widget, "🔍 Cerca certificati..."
+        )
         self.main_tabs.addTab(self.tab_certificati, "📜 Certificati Campione")
 
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
@@ -108,6 +118,7 @@ class ContabilitaPanel(QWidget):
         layout.addWidget(self.main_tabs)
 
     def _create_tab_wrapper(self, content_widget, placeholder_text):
+        """Crea un contenitore standard per i tab con barra di ricerca e pulsante aggiorna."""
         wrapper = QWidget()
         layout = QVBoxLayout(wrapper)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -119,7 +130,9 @@ class ContabilitaPanel(QWidget):
         search_input.setStyleSheet(
             "QLineEdit { border: 1px solid #ced4da; border-radius: 4px; padding: 6px 12px; font-size: 14px; background-color: white; color: black; } QLineEdit:focus { border-color: #0d6efd; }"
         )
-        search_input.textChanged.connect(lambda t: self._proxy_filter(content_widget, t))
+        search_input.textChanged.connect(
+            lambda t: self._proxy_filter(content_widget, t)
+        )
         if isinstance(content_widget, QTabWidget):
             content_widget.currentChanged.connect(
                 lambda: self._proxy_filter(content_widget, search_input.text())
@@ -147,14 +160,17 @@ class ContabilitaPanel(QWidget):
         return wrapper
 
     def _proxy_filter(self, widget, text):
+        """Inoltra la richiesta di filtraggio al widget contenuto nel tab."""
         target = widget.currentWidget() if isinstance(widget, QTabWidget) else widget
         if hasattr(target, "filter_data"):
             target.filter_data(text)
 
     def _get_subtab_style(self):
+        """Restituisce il foglio di stile per i tab secondari (anni)."""
         return "QTabWidget::pane { border: none; } QTabBar::tab { background: #f1f3f5; padding: 6px 15px; margin-right: 2px; border-top-left-radius: 4px; border-top-right-radius: 4px; font-size: 13px; } QTabBar::tab:selected { background: #0d6efd; color: white; }"
 
     def _on_main_tab_changed(self, index):
+        """Gestisce il cambio del tab principale, nascondendo i totali se nel tab KPI."""
         if "Analisi KPI" in self.main_tabs.tabText(index):
             self.selection_container.hide()
         else:
@@ -216,6 +232,7 @@ class ContabilitaPanel(QWidget):
                 tab_widget.addTab(tab_class(year), str(year))
 
     def set_search_query(self, query):
+        """Imposta il testo di ricerca nel tab corrente."""
         search_edit = self.main_tabs.currentWidget().findChild(QLineEdit)
         if search_edit:
             search_edit.setText(query)
@@ -223,9 +240,11 @@ class ContabilitaPanel(QWidget):
             search_edit.selectAll()
 
     def _on_tab_changed(self, index):
+        """Gestisce il cambio di un tab secondario."""
         self._connect_selection_signal()
 
     def _connect_selection_signal(self):
+        """Collega i segnali di selezione della tabella/albero per il calcolo dei totali."""
         curr = self.main_tabs.currentWidget()
         target = None
         if curr == self.tab_preventivi:
@@ -251,7 +270,9 @@ class ContabilitaPanel(QWidget):
                     target.tree.itemSelectionChanged.disconnect()
                 except Exception:
                     pass
-                target.tree.itemSelectionChanged.connect(lambda: self._update_selection_total(target.tree))
+                target.tree.itemSelectionChanged.connect(
+                    lambda: self._update_selection_total(target.tree)
+                )
 
     def _update_selection_total(self, widget):
         """Calcola e visualizza i totali per le righe selezionate (Table o Tree)."""
@@ -267,7 +288,9 @@ class ContabilitaPanel(QWidget):
                 return
 
             target_col = self._find_ore_column(widget)
-            selected_rows, total_ore = self._calculate_selection_stats(widget, indexes, target_col)
+            selected_rows, total_ore = self._calculate_selection_stats(
+                widget, indexes, target_col
+            )
 
             fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
@@ -286,11 +309,15 @@ class ContabilitaPanel(QWidget):
                 return c
         return -1
 
-    def _calculate_selection_stats(self, widget, indexes, target_col) -> tuple[set[int], float]:
+    def _calculate_selection_stats(
+        self, widget, indexes, target_col
+    ) -> tuple[set[int], float]:
         selected_rows, total_ore = set(), 0.0
         for idx in indexes:
             row = idx.row()
-            if widget.isRowHidden(row) or (widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"):
+            if widget.isRowHidden(row) or (
+                widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
+            ):
                 continue
             selected_rows.add(row)
 
@@ -299,7 +326,9 @@ class ContabilitaPanel(QWidget):
                 it = widget.item(row, target_col)
                 if it:
                     try:
-                        clean = str(it.text()).replace(".", "").replace(",", ".").strip()
+                        clean = (
+                            str(it.text()).replace(".", "").replace(",", ".").strip()
+                        )
                         if clean:
                             total_ore += float(clean)
                     except Exception:
@@ -340,7 +369,9 @@ class ContabilitaPanel(QWidget):
         if success:
             now = datetime.now().strftime("%d/%m/%Y %H:%M")
             time_str = (
-                f"{duration:.1f}s" if duration < 60 else f"{int(duration // 60)}m {int(duration % 60)}s"
+                f"{duration:.1f}s"
+                if duration < 60
+                else f"{int(duration // 60)}m {int(duration % 60)}s"
             )
             status = f"✅ {now} <font color='green'><b>+{added}</b></font> <font color='red'><b>-{removed}</b></font> ({time_str})"
             self._last_status_html = status

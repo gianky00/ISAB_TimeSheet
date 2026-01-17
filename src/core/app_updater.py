@@ -32,7 +32,9 @@ def check_for_updates(parent=None, silent=True, callback=None):
             return
 
         if _is_newer_version(remote_ver_str):
-            _handle_update_found(remote_ver_str, download_url, changelog, parent, callback)
+            _handle_update_found(
+                remote_ver_str, download_url, changelog, parent, callback
+            )
         elif not silent:
             QMessageBox.information(
                 parent,

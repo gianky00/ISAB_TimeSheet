@@ -77,7 +77,9 @@ class TestTimbratureStorage:
         type(mock_df).columns = PropertyMock(return_value=mock_cols)
 
         # However, it's easier to just use a real DataFrame for data logic
-        real_df = pd.DataFrame([{"Data Timbratura": "2023-01-01", "Ora Ingresso": "08:00"}])
+        real_df = pd.DataFrame(
+            [{"Data Timbratura": "2023-01-01", "Ora Ingresso": "08:00"}]
+        )
         mock_read_excel.return_value = real_df
 
         # Mock iterrows (removed as we use real_df now)

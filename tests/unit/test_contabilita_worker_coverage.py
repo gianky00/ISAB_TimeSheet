@@ -68,7 +68,9 @@ class TestContabilitaWorker:
 
         worker.run()
 
-        worker.finished_signal.emit.assert_called_with(False, "Errore critico: DB Error", 0, 0, 0.0)
+        worker.finished_signal.emit.assert_called_with(
+            False, "Errore critico: DB Error", 0, 0, 0.0
+        )
 
     def test_phases_skipped_if_path_missing(self, worker, mock_manager):
         """Test that phases are skipped if paths are not provided or files don't exist."""

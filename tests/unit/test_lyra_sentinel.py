@@ -18,7 +18,9 @@ def mock_db_path(tmp_path):
     db_file = data_dir / "timbrature_Isab.db"
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE timbrature (id INTEGER PRIMARY KEY, uscita TEXT, data TEXT)")
+    cursor.execute(
+        "CREATE TABLE timbrature (id INTEGER PRIMARY KEY, uscita TEXT, data TEXT)"
+    )
     conn.commit()
     conn.close()
     return db_file

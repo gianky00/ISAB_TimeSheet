@@ -18,6 +18,7 @@ class LyraSentinel(QThread):
     anomalies_found = pyqtSignal(int)  # Emette il numero di anomalie trovate
 
     def run(self):
+        """Esegue i controlli di integrità in background su Timbrature e Contabilità."""
         anomaly_count = 0
 
         # 1. Check Timbrature (Uscite mancanti recenti)

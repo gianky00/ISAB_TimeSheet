@@ -131,13 +131,17 @@ class ScaricaTSBot(BaseBot):
         else:
             rows = data
 
-        self.log(f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})...")
+        self.log(
+            f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})..."
+        )
 
         source_dir = Path.home() / "Downloads"
         dest_dir = Path(self.download_path) if self.download_path else source_dir
         return rows, dest_dir
 
-    def _process_oda_rows(self, rows: List[Dict], dest_dir: Path) -> Tuple[int, List[str]]:
+    def _process_oda_rows(
+        self, rows: List[Dict], dest_dir: Path
+    ) -> Tuple[int, List[str]]:
         """Cicla sugli OdA ed esegue la ricerca e il download."""
         success_count = 0
         downloaded_files = []
@@ -153,7 +157,9 @@ class ScaricaTSBot(BaseBot):
 
             try:
                 if self._search_oda(numero_oda, posizione_oda):
-                    final_path = self._download_excel(source_dir, dest_dir, numero_oda, posizione_oda)
+                    final_path = self._download_excel(
+                        source_dir, dest_dir, numero_oda, posizione_oda
+                    )
                     if final_path:
                         success_count += 1
                         downloaded_files.append(str(final_path))
@@ -174,12 +180,18 @@ class ScaricaTSBot(BaseBot):
             var ev_ch = new Event('change', {bubbles:true}); el.dispatchEvent(ev_ch);
         """
         # Numero OdA
-        campo_num = self.wait.until(EC.presence_of_element_located((By.NAME, "NumeroOda")))
-        self.driver.execute_script("arguments[0].value = arguments[1];", campo_num, numero_oda)
+        campo_num = self.wait.until(
+            EC.presence_of_element_located((By.NAME, "NumeroOda"))
+        )
+        self.driver.execute_script(
+            "arguments[0].value = arguments[1];", campo_num, numero_oda
+        )
         self.driver.execute_script(js_dispatch, campo_num)
 
         # Posizione OdA
-        campo_pos = self.wait.until(EC.presence_of_element_located((By.NAME, "PosizioneOda")))
+        campo_pos = self.wait.until(
+            EC.presence_of_element_located((By.NAME, "PosizioneOda"))
+        )
         self.driver.execute_script(
             "arguments[0].value = ''; arguments[0].value = arguments[1];",
             campo_pos,
@@ -188,7 +200,9 @@ class ScaricaTSBot(BaseBot):
         self.driver.execute_script(js_dispatch, campo_pos)
 
         # Click Cerca
-        xpath_cerca = "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
+        xpath_cerca = (
+            "//a[contains(@class, 'x-btn')][.//span[normalize-space(text())='Cerca']]"
+        )
         self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath_cerca))).click()
 
         self._attendi_scomparsa_overlay(90)
@@ -217,17 +231,23 @@ class ScaricaTSBot(BaseBot):
         try:
             # Click su "Report"
             self.wait.until(
-                EC.element_to_be_clickable((By.XPATH, "//*[normalize-space(text())='Report']"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//*[normalize-space(text())='Report']")
+                )
             ).click()
             self._attendi_scomparsa_overlay()
 
             # Click su "Timesheet"
             timesheet_menu_xpath = "//span[contains(@id, 'generic_menu_button-') and contains(@id, '-btnEl')][.//span[text()='Timesheet']]"
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, timesheet_menu_xpath))).click()
+            self.wait.until(
+                EC.element_to_be_clickable((By.XPATH, timesheet_menu_xpath))
+            ).click()
 
             # Attendi che il dropdown Fornitore sia visibile
             fornitore_arrow_xpath = "//div[starts-with(@id, 'generic_refresh_combo_box-') and contains(@id, '-trigger-picker') and contains(@class, 'x-form-arrow-trigger')]"
-            self.wait.until(EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath)))
+            self.wait.until(
+                EC.visibility_of_element_located((By.XPATH, fornitore_arrow_xpath))
+            )
             self._attendi_scomparsa_overlay()
 
             return True
@@ -249,21 +269,27 @@ class ScaricaTSBot(BaseBot):
             fornitore_arrow_element = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, fornitore_arrow_xpath))
             )
-            ActionChains(self.driver).move_to_element(fornitore_arrow_element).click().perform()
+            ActionChains(self.driver).move_to_element(
+                fornitore_arrow_element
+            ).click().perform()
 
             # Seleziona l'opzione fornitore
             fornitore_option_xpath = f"//li[normalize-space(text())='{self.fornitore}']"
             fornitore_option = self.long_wait.until(
                 EC.presence_of_element_located((By.XPATH, fornitore_option_xpath))
             )
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option
+            )
             time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", fornitore_option)
 
             self._attendi_scomparsa_overlay()
 
             # Inserisci Data Da
-            campo_data_da = self.wait.until(EC.visibility_of_element_located((By.NAME, "DataTimesheetDa")))
+            campo_data_da = self.wait.until(
+                EC.visibility_of_element_located((By.NAME, "DataTimesheetDa"))
+            )
             campo_data_da.clear()
             campo_data_da.send_keys(self.data_da)
 
@@ -282,7 +308,11 @@ class ScaricaTSBot(BaseBot):
         assert self.wait and self.driver
 
         try:
-            files_before = {f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"}
+            files_before = {
+                f
+                for f in source_dir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".xlsx"
+            }
 
             # 1. Clicca tasto Excel
             if not self._click_excel_export_button():
@@ -295,7 +325,9 @@ class ScaricaTSBot(BaseBot):
                 return None
 
             # 3. Determina nome e destinazione
-            final_path = self._get_final_download_path(source_dir, dest_dir, numero_oda, posizione_oda)
+            final_path = self._get_final_download_path(
+                source_dir, dest_dir, numero_oda, posizione_oda
+            )
 
             # 4. Sposta/Rinomina
             return self._move_to_destination(downloaded_file, final_path)
@@ -317,7 +349,9 @@ class ScaricaTSBot(BaseBot):
             self.log(f"⚠️ Impossibile cliccare esportazione Excel: {e}")
             return False
 
-    def _wait_for_new_file(self, source_dir: Path, files_before: set, timeout: int = 25) -> Optional[Path]:
+    def _wait_for_new_file(
+        self, source_dir: Path, files_before: set, timeout: int = 25
+    ) -> Optional[Path]:
         """Attende la comparsa di un nuovo file .xlsx nella directory sorgente."""
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -328,7 +362,9 @@ class ScaricaTSBot(BaseBot):
                     continue
 
                 current_files = {
-                    f for f in source_dir.iterdir() if f.is_file() and f.suffix.lower() == ".xlsx"
+                    f
+                    for f in source_dir.iterdir()
+                    if f.is_file() and f.suffix.lower() == ".xlsx"
                 }
                 new_files = current_files - files_before
                 if new_files:
@@ -338,13 +374,17 @@ class ScaricaTSBot(BaseBot):
             time.sleep(0.5)
         return None
 
-    def _get_final_download_path(self, source_dir: Path, dest_dir: Path, oda: str, pos: str) -> Path:
+    def _get_final_download_path(
+        self, source_dir: Path, dest_dir: Path, oda: str, pos: str
+    ) -> Path:
         """Costruisce il percorso finale basato su ODA/POS e impostazione elabora_ts."""
         safe_oda = sanitize_filename(oda)
         safe_pos = sanitize_filename(pos)
 
         base_name = (
-            f"TS_{safe_oda}-{safe_pos}" if safe_pos and safe_pos != "unnamed_file" else f"TS_{safe_oda}"
+            f"TS_{safe_oda}-{safe_pos}"
+            if safe_pos and safe_pos != "unnamed_file"
+            else f"TS_{safe_oda}"
         )
         filename = f"{base_name}.xlsx"
 
@@ -380,5 +420,3 @@ class ScaricaTSBot(BaseBot):
 
         self.log(f"❌ Impossibile spostare il file in: {dest}")
         return None
-
-

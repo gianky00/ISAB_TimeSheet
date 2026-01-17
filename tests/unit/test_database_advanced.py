@@ -16,7 +16,9 @@ class TestDatabaseAdvanced:
     @pytest.fixture
     def manager(self, db_dir, mocker):
         # Override predefined paths for testing
-        mocker.patch.object(DatabaseManager, "DB_CONTABILITA", db_dir / "contabilita.db")
+        mocker.patch.object(
+            DatabaseManager, "DB_CONTABILITA", db_dir / "contabilita.db"
+        )
         mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", db_dir / "timbrature.db")
         return DatabaseManager()
 

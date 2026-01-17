@@ -52,7 +52,9 @@ class TestE2EWorkflowsHardened:
             df.to_excel(writer, sheet_name="DATI 2024", index=False)
 
         # 3. Importazione via ExcelImporter
-        success, msg, rows, years = ExcelImporter.import_contabilita_dati(str(excel_path))
+        success, msg, rows, years = ExcelImporter.import_contabilita_dati(
+            str(excel_path)
+        )
         assert success is True, f"Import fallito: {msg}"
         assert len(rows) > 0
 
@@ -76,7 +78,9 @@ class TestE2EWorkflowsHardened:
             "nome_file",
         ]
         placeholders = ", ".join(["?"] * len(cols))
-        insert_query = f"INSERT INTO contabilita ({', '.join(cols)}) VALUES ({placeholders})"
+        insert_query = (
+            f"INSERT INTO contabilita ({', '.join(cols)}) VALUES ({placeholders})"
+        )
 
         # Inserimento della prima riga importata
         # Assicuriamoci che la tupla abbia la lunghezza corretta (15 colonne)
@@ -88,7 +92,9 @@ class TestE2EWorkflowsHardened:
 
         # 5. Verifica indicizzazione FTS5 (Ricerca testuale "Meccanica")
         # Il trigger AI inserisce in contabilita_fts(rowid, n_prev, attivita, odc, annotazioni)
-        search_query = "SELECT attivita FROM contabilita_fts WHERE attivita MATCH 'Meccanica'"
+        search_query = (
+            "SELECT attivita FROM contabilita_fts WHERE attivita MATCH 'Meccanica'"
+        )
         results = db_mgr.execute_query(db_path, search_query)
 
         assert len(results) > 0, "Dato non trovato in FTS5 dopo l'inserimento!"

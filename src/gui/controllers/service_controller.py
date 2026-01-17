@@ -33,7 +33,9 @@ class ServiceController(QObject):
         QTimer.singleShot(3000, self._check_updates)
 
         # Collegamento notifiche globali -> Telegram
-        NotificationManager.instance().notification_added.connect(self._forward_notification_to_telegram)
+        NotificationManager.instance().notification_added.connect(
+            self._forward_notification_to_telegram
+        )
 
         # Scheduler (ogni 60s) per task pianificati
         self.scheduler_timer = QTimer(self)
@@ -60,12 +62,16 @@ class ServiceController(QObject):
                     # Verifica che non sia già in esecuzione
                     if panel.start_btn.isEnabled():
                         # Simula avvio
-                        panel.log_widget.append(f"⏰ Avvio pianificato automatico ({now})...")
+                        panel.log_widget.append(
+                            f"⏰ Avvio pianificato automatico ({now})..."
+                        )
                         panel._on_start()
 
     def _check_updates(self):
         """Controlla gli aggiornamenti in background."""
-        check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
+        check_for_updates(
+            parent=self.mw, silent=True, callback=self.mw._show_update_banner
+        )
 
     def _forward_notification_to_telegram(self, notification):
         """Inoltra notifiche importanti al bot Telegram."""

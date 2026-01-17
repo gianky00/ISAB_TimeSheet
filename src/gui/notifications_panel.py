@@ -3,7 +3,7 @@ SyncroJob - Notifications Panel
 Pannello per la visualizzazione delle notifiche.
 """
 
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QColor, QFont, QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -57,14 +57,18 @@ class AuditLogWidget(QWidget):
         toolbar.addWidget(self.integrity_icon)
 
         self.integrity_lbl = QLabel("Verifica in corso...")
-        self.integrity_lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold;")
+        self.integrity_lbl.setStyleSheet(
+            "color: #6c757d; font-size: 13px; font-weight: bold;"
+        )
         toolbar.addWidget(self.integrity_lbl)
 
         toolbar.addStretch()
 
         # Retention Info
         retention_lbl = QLabel("Policy: 90 Giorni")
-        retention_lbl.setStyleSheet("color: #adb5bd; font-size: 12px; margin-right: 10px;")
+        retention_lbl.setStyleSheet(
+            "color: #adb5bd; font-size: 12px; margin-right: 10px;"
+        )
         toolbar.addWidget(retention_lbl)
 
         refresh_btn = QPushButton(" Aggiorna e Valida")
@@ -121,12 +125,20 @@ class AuditLogWidget(QWidget):
         self.table.verticalHeader().setVisible(False)
 
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Timestamp
+        header.setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents
+        )  # Timestamp
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # User
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Action
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Entity
+        header.setSectionResizeMode(
+            2, QHeaderView.ResizeMode.ResizeToContents
+        )  # Action
+        header.setSectionResizeMode(
+            3, QHeaderView.ResizeMode.ResizeToContents
+        )  # Entity
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Params
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Status
+        header.setSectionResizeMode(
+            5, QHeaderView.ResizeMode.ResizeToContents
+        )  # Status
 
         layout.addWidget(self.table)
 
@@ -143,12 +155,16 @@ class AuditLogWidget(QWidget):
             pixmap = QIcon(get_asset_path(Icons.SHIELD)).pixmap(QSize(18, 18))
             self.integrity_icon.setPixmap(pixmap)
             self.integrity_lbl.setText("Database Integro (Certificato)")
-            self.integrity_lbl.setStyleSheet("color: #198754; font-size: 13px; font-weight: bold;")
+            self.integrity_lbl.setStyleSheet(
+                "color: #198754; font-size: 13px; font-weight: bold;"
+            )
         else:
             pixmap = QIcon(get_asset_path(Icons.ALERT)).pixmap(QSize(18, 18))
             self.integrity_icon.setPixmap(pixmap)
             self.integrity_lbl.setText("MANOMISSIONE RILEVATA!")
-            self.integrity_lbl.setStyleSheet("color: #dc3545; font-size: 13px; font-weight: bold;")
+            self.integrity_lbl.setStyleSheet(
+                "color: #dc3545; font-size: 13px; font-weight: bold;"
+            )
 
     def _populate_table(self, logs):
         for log in logs:
@@ -192,7 +208,13 @@ class AuditLogWidget(QWidget):
         status = str(log.get("status", "")).lower()
 
         # 1. Background (Severity)
-        bg = QColor("#fff5f5") if sev == "high" else QColor("#fff9f0") if sev == "medium" else None
+        bg = (
+            QColor("#fff5f5")
+            if sev == "high"
+            else QColor("#fff9f0")
+            if sev == "medium"
+            else None
+        )
         if bg:
             for it in items:
                 it.setBackground(bg)
@@ -303,10 +325,14 @@ class NotificationsPanel(QWidget):
         mark_read_btn.clicked.connect(self._mark_all_read)
         notif_toolbar.addWidget(mark_read_btn)
 
-        clear_btn = ModernButton("Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
+        clear_btn = ModernButton(
+            "Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL
+        )
         clear_btn.setMinimumWidth(120)
         clear_btn.setFixedHeight(40)
-        clear_btn.setToolTip("Elimina definitivamente i messaggi (l'audit rimarrà intatto)")
+        clear_btn.setToolTip(
+            "Elimina definitivamente i messaggi (l'audit rimarrà intatto)"
+        )
         clear_btn.clicked.connect(self._clear_notifications)
         notif_toolbar.addWidget(clear_btn)
 
@@ -435,7 +461,9 @@ class NotificationsPanel(QWidget):
         if not notifications:
             empty_lbl = QLabel("Nessuna notifica")
             empty_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            empty_lbl.setStyleSheet("color: #adb5bd; font-size: 16px; margin-top: 50px;")
+            empty_lbl.setStyleSheet(
+                "color: #adb5bd; font-size: 16px; margin-top: 50px;"
+            )
             self.scroll_layout.insertWidget(0, empty_lbl)
         else:
             for n in notifications:

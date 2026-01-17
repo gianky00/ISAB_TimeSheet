@@ -35,7 +35,9 @@ class TimbratureBot(BaseBot):
         """Metodo statico che restituisce la descrizione del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
-    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):
+    def __init__(
+        self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs
+    ):
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
@@ -71,7 +73,9 @@ class TimbratureBot(BaseBot):
             self.data_a = data.get("data_a", self.data_a)
             self.fornitore = data.get("fornitore", self.fornitore)
 
-        self.log(f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})...")
+        self.log(
+            f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})..."
+        )
 
         if not self.driver:
             return False

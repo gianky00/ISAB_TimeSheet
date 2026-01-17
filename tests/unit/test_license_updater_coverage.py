@@ -19,7 +19,9 @@ class TestLicenseUpdater:
     @pytest.fixture
     def mock_paths(self, tmp_path, mocker):
         license_dir = tmp_path / "Licenza"
-        mocker.patch("src.core.license_updater.get_license_dir", return_value=str(license_dir))
+        mocker.patch(
+            "src.core.license_updater.get_license_dir", return_value=str(license_dir)
+        )
         return license_dir
 
     def test_get_github_token(self):

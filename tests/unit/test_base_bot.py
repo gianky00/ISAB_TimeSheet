@@ -52,7 +52,9 @@ class TestBaseBotLogic:
         assert "--no-restore-session-state" in args
 
         # Verify user-data-dir uses config_manager path (not CWD)
-        user_data_arg = next((arg for arg in args if arg.startswith("user-data-dir=")), None)
+        user_data_arg = next(
+            (arg for arg in args if arg.startswith("user-data-dir=")), None
+        )
         assert user_data_arg is not None
         # It should contain syncrojob (part of the config dir path)
         assert "syncrojob" in user_data_arg.lower()

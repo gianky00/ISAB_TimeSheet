@@ -33,7 +33,9 @@ class TestBotTimingSequences:
     def mock_safework_bot(self):
         with (
             patch("src.bots.safework.base.SafeworkBaseBot._init_driver"),
-            patch("src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None),
+            patch(
+                "src.bots.safework.pdl.bot.SafeWorkPDLBot.__init__", return_value=None
+            ),
         ):
             bot = SafeWorkPDLBot("u", "p")
             bot.driver = MagicMock()
@@ -75,7 +77,9 @@ class TestBotTimingSequences:
             patch("time.sleep") as mock_sleep,
             patch.object(SafeWorkPDLBot, "_gestisci_alert_ricerca", return_value=False),
             patch.object(SafeWorkPDLBot, "_attendi_scomparsa_overlay"),
-            patch.object(SafeWorkPDLBot, "_attendi_e_ritorna_nuovo_pdf", return_value="f.pdf"),
+            patch.object(
+                SafeWorkPDLBot, "_attendi_e_ritorna_nuovo_pdf", return_value="f.pdf"
+            ),
             patch(
                 "src.utils.document_processor.DocumentProcessor.merge_pdfs",
                 return_value=True,
@@ -112,7 +116,9 @@ class TestBotTimingSequences:
             page.wait = MagicMock()
             page.wait.until.return_value = mock_el
 
-            with patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"):
+            with patch(
+                "src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"
+            ):
                 page.navigate_to_timbrature()
 
             calls = [c.args[0] for c in mock_sleep.call_args_list]

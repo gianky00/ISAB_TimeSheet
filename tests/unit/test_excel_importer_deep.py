@@ -54,7 +54,9 @@ class TestExcelImporterComprehensive:
 
         with patch("src.core.excel_importer.pd.read_excel", return_value=df):
             # Using dict() to avoid tool interpolation issues with {}
-            year, rows, err = ExcelImporter._process_single_giornaliera((2024, file1, {}))
+            year, rows, err = ExcelImporter._process_single_giornaliera(
+                (2024, file1, {})
+            )
 
             assert err is None
             # Code does iloc[:-1], so "Totale" row is dropped. 2 rows remain.

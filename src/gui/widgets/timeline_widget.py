@@ -109,16 +109,22 @@ class HorizontalLogItem(QWidget):
         top_row.addWidget(lbl_icon)
 
         lbl_time = QLabel(timestamp)
-        lbl_time.setStyleSheet("color: #adb5bd; font-size: 12px; font-family: monospace;")
+        lbl_time.setStyleSheet(
+            "color: #adb5bd; font-size: 12px; font-family: monospace;"
+        )
         top_row.addWidget(lbl_time)
 
         top_row.addStretch()
         layout.addLayout(top_row)
 
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 13px; color: #212529;")
+        self.lbl_human.setStyleSheet(
+            "font-weight: bold; font-size: 13px; color: #212529;"
+        )
         self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_human.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addWidget(self.lbl_human)
 
         layout.addStretch()
@@ -131,8 +137,12 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(30, 24)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #dc3545; color: white; border-radius: 4px; font-size: 12px;")
-            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path)))
+            btn.setStyleSheet(
+                "background-color: #dc3545; color: white; border-radius: 4px; font-size: 12px;"
+            )
+            btn.clicked.connect(
+                lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path))
+            )
             action_layout.addWidget(btn)
 
         if fixit_action == "ACCOUNT":
@@ -140,7 +150,9 @@ class HorizontalLogItem(QWidget):
             btn.setFixedSize(30, 24)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("background-color: #ffc107; color: black; border-radius: 4px; font-size: 12px;")
+            btn.setStyleSheet(
+                "background-color: #ffc107; color: black; border-radius: 4px; font-size: 12px;"
+            )
             btn.clicked.connect(self._open_settings)
             action_layout.addWidget(btn)
 
@@ -160,7 +172,9 @@ class HorizontalLogItem(QWidget):
                 btn.setStyleSheet(
                     "background-color: #17a2b8; color: white; border-radius: 4px; font-size: 12px;"
                 )
-                btn.clicked.connect(lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p)))
+                btn.clicked.connect(
+                    lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p))
+                )
                 action_layout.addWidget(btn)
 
         action_layout.addStretch()
@@ -381,7 +395,9 @@ class MissionReportCard(QFrame):
         title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
         title_color = "#198754" if status else "#dc3545"
         lbl_title = QLabel(title_text)
-        lbl_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {title_color};")
+        lbl_title.setStyleSheet(
+            f"font-size: 18px; font-weight: bold; color: {title_color};"
+        )
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_title)
 

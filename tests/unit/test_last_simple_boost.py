@@ -25,7 +25,9 @@ class TestLastSimpleBoost:
         ):
             # Setup open mock to return specific content
             with patch("src.gui.styles.open", create=True) as mock_open:
-                mock_open.return_value.__enter__.return_value.read.return_value = "QWidget { color: red; }"
+                mock_open.return_value.__enter__.return_value.read.return_value = (
+                    "QWidget { color: red; }"
+                )
                 apply_theme(qapp, "light")
                 assert "color: red" in qapp.styleSheet()
 

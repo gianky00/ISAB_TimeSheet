@@ -29,7 +29,9 @@ class TestGUIPanelsExtended:
                 mock_ask.assert_called_with("Ciao Lyra")
 
     def test_notifications_panel(self, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
+        with patch(
+            "src.core.notification_manager.NotificationManager.instance"
+        ) as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
             mock_manager.get_notifications.return_value = [
@@ -60,7 +62,9 @@ class TestGUIPanelsExtended:
         assert panel.search_edit.text() == "installazione"
 
     def test_notifications_clear_all(self, qtbot):
-        with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
+        with patch(
+            "src.core.notification_manager.NotificationManager.instance"
+        ) as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
 

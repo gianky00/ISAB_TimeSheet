@@ -11,13 +11,13 @@ class SidebarButton(QPushButton):
         self.label_text = text
         self.icon_path = icon_path
         self._collapsed = False
-        
+
         if icon_path:
             self.setIcon(QIcon(icon_path))
-        
+
         self.setCheckable(True)
         self.setMinimumHeight(55)
-        
+
         self._refresh_state()
         self._update_style()
         self.toggled.connect(self._update_style)
@@ -35,7 +35,7 @@ class SidebarButton(QPushButton):
             self.setIconSize(QSize(28, 28))
             self.setToolTip(self.label_text)
         else:
-            self.setText(f"   {self.label_text}") # Spazio extra per separare da icona
+            self.setText(f"   {self.label_text}")  # Spazio extra per separare da icona
             self.setIconSize(QSize(20, 20))
             self.setToolTip("")
 
@@ -54,7 +54,7 @@ class SidebarButton(QPushButton):
         align = "center" if self._collapsed else "left"
         # Padding ottimizzato per centrare l'icona quando collassato
         padding = "0px" if self._collapsed else "12px 15px"
-        
+
         base_style = f"""
             QPushButton {{
                 color: #ffffff;
@@ -64,17 +64,22 @@ class SidebarButton(QPushButton):
                 font-size: 15px;
             }}
         """
-        
+
         if self.isChecked():
-            self.setStyleSheet(base_style + """
+            self.setStyleSheet(
+                base_style
+                + """
                 QPushButton {
                     background-color: rgba(255, 255, 255, 0.25);
                     border: 1px solid rgba(255, 255, 255, 0.3);
                     font-weight: bold;
                 }
-            """)
+            """
+            )
         else:
-            self.setStyleSheet(base_style + """
+            self.setStyleSheet(
+                base_style
+                + """
                 QPushButton {
                     background-color: transparent;
                     border: 1px solid transparent;
@@ -83,4 +88,5 @@ class SidebarButton(QPushButton):
                 QPushButton:hover {
                     background-color: rgba(255, 255, 255, 0.15);
                 }
-            """)
+            """
+            )

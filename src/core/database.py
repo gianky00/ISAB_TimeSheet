@@ -58,7 +58,9 @@ class DatabaseManager:
         conn = None
         try:
             # check_same_thread=False is safe when using one connection per context/thread
-            conn = sqlite3.connect(uri, uri=True, timeout=timeout, check_same_thread=False)
+            conn = sqlite3.connect(
+                uri, uri=True, timeout=timeout, check_same_thread=False
+            )
 
             # Performance & Concurrency Optimizations
             if not read_only:
@@ -88,7 +90,9 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
-    def execute_query(self, db_path: Path, query: str, params: tuple = (), retry_count: int = 3) -> List[Any]:
+    def execute_query(
+        self, db_path: Path, query: str, params: tuple = (), retry_count: int = 3
+    ) -> List[Any]:
         """Executes a query with automatic retries and write synchronization."""
         is_write = not query.strip().upper().startswith("SELECT")
 
@@ -117,15 +121,23 @@ class DatabaseManager:
                     continue
                 raise
 
-        logger.error(f"Failed to execute query after {retry_count} retries: {last_error}")
+        logger.error(
+            f"Failed to execute query after {retry_count} retries: {last_error}"
+        )
         if last_error:
             raise last_error
-        raise sqlite3.OperationalError(f"Failed to execute query after {retry_count} retries")
+        raise sqlite3.OperationalError(
+            f"Failed to execute query after {retry_count} retries"
+        )
 
     def init_db(self):
         """Initializes schema for all databases using the migration system."""
-        self._run_migrations(self.DB_CONTABILITA, self.MIGRATIONS_CONTABILITA, "Contabilita")
-        self._run_migrations(self.DB_TIMBRATURE, self.MIGRATIONS_TIMBRATURE, "Timbrature")
+        self._run_migrations(
+            self.DB_CONTABILITA, self.MIGRATIONS_CONTABILITA, "Contabilita"
+        )
+        self._run_migrations(
+            self.DB_TIMBRATURE, self.MIGRATIONS_TIMBRATURE, "Timbrature"
+        )
         self._run_migrations(self.DB_PDL, self.MIGRATIONS_PDL, "PDL")
 
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
@@ -146,7 +158,9 @@ class DatabaseManager:
             target_ver = max(migrations.keys()) if migrations else 0
 
             if current_ver < target_ver:
-                logger.info(f"[{db_name}] Database outdated (v{current_ver}). Migrating to v{target_ver}...")
+                logger.info(
+                    f"[{db_name}] Database outdated (v{current_ver}). Migrating to v{target_ver}..."
+                )
 
                 try:
                     # Apply migrations sequentially
@@ -235,7 +249,9 @@ class DatabaseManager:
     def _mig_contabilita_v2(conn: sqlite3.Connection):
         """Ottimizzazione indici Contabilità (v2)"""
         cursor = conn.cursor()
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_n_prev ON contabilita(n_prev)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cont_n_prev ON contabilita(n_prev)"
+        )
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_odc ON contabilita(odc)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_cont_tcl ON contabilita(tcl)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_giorn_odc ON giornaliere(odc)")
@@ -271,8 +287,12 @@ class DatabaseManager:
     def _mig_timbrature_v2(conn: sqlite3.Connection):
         """Ottimizzazione indici Timbrature (v2)"""
         cursor = conn.cursor()
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cognome ON timbrature(cognome, nome)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_timb_nome_cognome ON timbrature(cognome, nome)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)"
+        )
 
     # ==========================================
     # DEFINIZIONE MIGRAZIONI PDL
