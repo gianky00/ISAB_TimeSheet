@@ -28,6 +28,7 @@ class DatabaseManager:
     # Predefined Paths
     DB_CONTABILITA = CONFIG_DIR / "data" / "contabilita.db"
     DB_TIMBRATURE = CONFIG_DIR / "data" / "timbrature_Isab.db"
+    DB_PDL = CONFIG_DIR / "data" / "pdl.db"
 
     def __new__(cls):
         """Pattern Singleton per il gestore database."""
@@ -125,6 +126,7 @@ class DatabaseManager:
         """Initializes schema for all databases using the migration system."""
         self._run_migrations(self.DB_CONTABILITA, self.MIGRATIONS_CONTABILITA, "Contabilita")
         self._run_migrations(self.DB_TIMBRATURE, self.MIGRATIONS_TIMBRATURE, "Timbrature")
+        self._run_migrations(self.DB_PDL, self.MIGRATIONS_PDL, "PDL")
 
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
         try:
@@ -272,6 +274,45 @@ class DatabaseManager:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cognome ON timbrature(cognome, nome)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_nome_cognome ON dipendenti(cognome, nome)")
 
+    # ==========================================
+    # DEFINIZIONE MIGRAZIONI PDL
+    # ==========================================
+    @staticmethod
+    def _mig_pdl_v1(conn: sqlite3.Connection):
+        """Schema Iniziale PDL (v1) basato su Ricerca.xlsx"""
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pdl (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                n_pdl TEXT,
+                data_creazione TEXT,
+                area TEXT,
+                unita TEXT,
+                ditta TEXT,
+                descrizione_lavoro TEXT,
+                tipologia TEXT,
+                stato TEXT,
+                apparecchiatura TEXT,
+                richiedente TEXT,
+                data_richiesta TEXT,
+                emittente TEXT,
+                data_emissione TEXT,
+                aprente TEXT,
+                data_apertura TEXT,
+                priorita TEXT,
+                contratto TEXT,
+                ordine TEXT,
+                sito TEXT,
+                importato_il TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_n_pdl ON pdl(n_pdl)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_sito ON pdl(sito)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_area ON pdl(area)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_stato ON pdl(stato)")
+
     @staticmethod
     def _mig_contabilita_v3(conn: sqlite3.Connection):
         """Implementazione FTS5 per ricerche veloci (v3)"""
@@ -327,6 +368,8 @@ class DatabaseManager:
     }
 
     MIGRATIONS_TIMBRATURE = {1: _mig_timbrature_v1, 2: _mig_timbrature_v2}
+
+    MIGRATIONS_PDL = {1: _mig_pdl_v1}
 
 
 db_manager = DatabaseManager()

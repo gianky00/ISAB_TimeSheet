@@ -2,8 +2,8 @@
 Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtGui import QBrush, QColor, QIcon
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
@@ -13,6 +13,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from src.core.constants import Icons
+from src.utils.helpers import get_asset_path
 
 from ..design.colors import get_palette
 from ..design.spacing import Spacing
@@ -76,7 +79,8 @@ class DataTable(QWidget):
         toolbar.addWidget(self._search_input, 1)
 
         # Actions
-        self._refresh_btn = QPushButton("↻ Aggiorna")
+        self._refresh_btn = QPushButton(" Aggiorna")
+        self._refresh_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(lambda: self.refresh())
         self._refresh_btn.setStyleSheet(

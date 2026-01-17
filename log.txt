@@ -1,47 +1,257 @@
-DevTools listening on ws://127.0.0.1:9222/devtools/browser/e1133e3e-a494-43b8-bf96-0adf66621996
-[44584:44956:0116/150217.588:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
-[44584:44956:0116/150217.810:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[INFO] Pulizia dei log di crash precedenti...
+=============================================
+   SyncroJob - Avvio da codici sorgenti
+=============================================
+
+[INFO] Verifica dipendenze...
+Requirement already satisfied: pip in c:\users\coemi\desktop\script\isab_timesheet\.venv\lib\site-packages (25.3)
+
+[INFO] Avvio applicazione...
+
+[Dettagli OdA] Avvio Dettagli OdA...
+[Dettagli OdA] Inizializzazione browser...
+[Dettagli OdA] Stato: INITIALIZING
+[Dettagli OdA] Verifica aggiornamenti driver...
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/8e8d0eef-7cc8-4c82-8bd2-1a9fd58fa0ee
+[15436:50412:0117/102505.847:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+Created TensorFlow Lite XNNPACK delegate for CPU.[15436:50412:0117/102506.105:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+
+[15436:50412:0117/102506.106:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[Dettagli OdA] Navigazione a: https://portalefornitori.isab.com/Ui/
+[Dettagli OdA] Tentativo di login...
+[Dettagli OdA]  -> Overlay di caricamento scomparso.
+[38684:36776:0117/102509.690:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
+[Dettagli OdA] Login effettuato. Attendo scomparsa overlay...
+[Dettagli OdA]  -> Overlay di caricamento scomparso.
+[Dettagli OdA] ✓ Login completato con successo
+[Dettagli OdA] Stato: RUNNING
+[Dettagli OdA] ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.
+[Dettagli OdA] 🚀 Avvio scarico dettagli per 1 OdA...
+[Dettagli OdA] Navigazione menu Report -> Oda...
+[Dettagli OdA] Selezione fornitore: KK10608 - COEMI S.R.L.
+[Dettagli OdA]   Cerca cliccato...
+[38684:36776:0117/102536.768:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: QUOTA_EXCEEDED
+[Dettagli OdA]   Risultati trovati: 0
+[Dettagli OdA]   Nessun risultato. Salto esportazione.
+[Dettagli OdA] ✨ Procedura conclusa.
+[Dettagli OdA] Stato: COMPLETED
+[Dettagli OdA] Avvio Dettagli OdA...
+[Dettagli OdA] Inizializzazione browser...
+[Dettagli OdA] Stato: INITIALIZING
+[Dettagli OdA] Verifica aggiornamenti driver...
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/1f7fb7f0-ff4f-49de-b1c5-ba271a6470dc
+[51048:53112:0117/102613.295:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[51048:53112:0117/102613.503:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[51048:53112:0117/102613.508:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
 Created TensorFlow Lite XNNPACK delegate for CPU.
-[44584:44956:0116/150217.833:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
-[Prenota BP] Navigazione a: https://portalefornitori.isab.com/Ui/
-[Prenota BP] Tentativo di login...
-[Prenota BP]  -> Overlay di caricamento scomparso.
-[Prenota BP] ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.
-[48748:11460:0116/150221.412:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
-[Prenota BP] Login effettuato. Attendo scomparsa overlay...
-[Prenota BP]  -> Overlay di caricamento scomparso.
-[Prenota BP] ✓ Login completato con successo
-[Prenota BP] Stato: RUNNING
-[Prenota BP] Avvio elaborazione per 1 BP (Fornitore: KK10608 - COEMI S.R.L.)
-[Prenota BP] Navigazione verso Gestione Buono di Prelievo...
-[Prenota BP] Espansione menu 'Buono di Prelievo'...
-[Prenota BP] Attesa caricamento filtri...
-[Prenota BP] Sezione Gestione BP caricata.
-[Prenota BP] Impostazione filtri di ricerca...
-[Prenota BP]   Selezione fornitore: 'KK10608 - COEMI S.R.L.'...
-[Prenota BP] Ricerca completata.
-[Prenota BP] Apertura dettagli BP...
-[Prenota BP] Gestione creazione richiesta...
-[Prenota BP] ⚠ Disponibili 16 su 21. Seleziono singolarmente.
-[Prenota BP] ⚠ Mismatch grave: Data=21, Checkers trovati=0. Potrebbe fallire la selezione.
-[Prenota BP] Errore: Indice riga 1 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 2 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 3 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 4 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 5 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 6 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 7 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 8 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 9 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 11 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 14 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 15 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 17 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 18 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 19 fuori range per i checker (0).
-[Prenota BP] Errore: Indice riga 20 fuori range per i checker (0).
-[Prenota BP] ⚠ Nessuna riga selezionata! Interrompo il flusso.
-[Prenota BP] Chiusura finestra dettagli...
-[Prenota BP] ✓ Elaborazione completata: 1/1 BP prenotati.
-[Prenota BP] Fine sessione Prenota BP.
-[Prenota BP] Stato: COMPLETED
+[Dettagli OdA] Navigazione a: https://portalefornitori.isab.com/Ui/
+[Dettagli OdA] Tentativo di login...
+[Dettagli OdA]  -> Overlay di caricamento scomparso.
+[Dettagli OdA] ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.
+[Dettagli OdA] Login effettuato. Attendo scomparsa overlay...
+[Dettagli OdA]  -> Overlay di caricamento scomparso.
+[Dettagli OdA] ✓ Login completato con successo
+[Dettagli OdA] Stato: RUNNING
+[Dettagli OdA] ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.
+[Dettagli OdA] 🚀 Avvio scarico dettagli per 1 OdA...
+[37656:8476:0117/102617.129:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
+[Dettagli OdA]   Menu laterale collassato, espansione in corso...
+[Dettagli OdA]   Menu espanso.
+[Dettagli OdA] Navigazione menu Report -> Oda...
+[Dettagli OdA] Selezione fornitore: KK10608 - COEMI S.R.L.
+[Dettagli OdA]   Cerca cliccato...
+[Dettagli OdA]   Risultati trovati: 4283
+[Dettagli OdA]   Esportazione lista generale...
+[37656:8476:0117/102640.037:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
+[Dettagli OdA]   ✓ Scaricato: ODA_Generale_al_01-01-2026.xlsx
+[Dettagli OdA] ✨ Procedura conclusa.
+[Dettagli OdA] Stato: COMPLETED
+[Dettagli OdA] Avvio Dettagli OdA...
+[Dettagli OdA] Inizializzazione browser...
+[Dettagli OdA] Stato: INITIALIZING
+[Dettagli OdA] Verifica aggiornamenti driver...
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/f024c646-6054-4f80-8fde-e6bfdf2ec302
+[13128:49192:0117/102704.751:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[13128:49192:0117/102704.959:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[13128:49192:0117/102704.962:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+Created TensorFlow Lite XNNPACK delegate for CPU.
+[Dettagli OdA] Navigazione a: https://portalefornitori.isab.com/Ui/
+[Dettagli OdA] Tentativo di login...
+[Dettagli OdA]  -> Overlay di caricamento scomparso.
+[Dettagli OdA] ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.
+[Dettagli OdA] Login effettuato. Attendo scomparsa overlay...
+[Dettagli OdA]  -> Overlay di caricamento scomparso.
+[41232:38928:0117/102708.557:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: QUOTA_EXCEEDED
+[Dettagli OdA] ✓ Login completato con successo
+[Dettagli OdA] Stato: RUNNING
+[Dettagli OdA] 🚀 Avvio scarico dettagli per 1 OdA...
+[Dettagli OdA] Navigazione menu Report -> Oda...
+[Dettagli OdA] Selezione fornitore: KK10608 - COEMI S.R.L.
+[Dettagli OdA]   Cerca cliccato...
+[Dettagli OdA]   Risultati trovati: 24
+[Dettagli OdA]   Apertura dettagli (OdA specifico)...
+[Dettagli OdA]   ✓ Scaricato: dettaglio_oda_5400258178.xlsx
+[Dettagli OdA] ✨ Procedura conclusa.
+[Dettagli OdA] Stato: COMPLETED
+[Scarico TS] Avvio Scarico TS...
+[Scarico TS] Inizializzazione browser...
+[Scarico TS] Stato: INITIALIZING
+[Scarico TS] Verifica aggiornamenti driver...
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/ae974f0b-5d82-4e15-b87b-1f16f07f4fd8
+[50928:48960:0117/102737.938:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[50928:48960:0117/102738.150:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+Created TensorFlow Lite XNNPACK delegate for CPU.
+[50928:48960:0117/102738.158:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[Scarico TS] Navigazione a: https://portalefornitori.isab.com/Ui/
+[Scarico TS] Tentativo di login...
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS] ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.
+[24696:51196:0117/102741.323:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
+[Scarico TS] Login effettuato. Attendo scomparsa overlay...
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS] ✓ Login completato con successo
+[Scarico TS] Stato: RUNNING
+[Scarico TS] 🚀 Inizio scarico TS per 1 OdA (Fornitore: KK10608 - COEMI S.R.L.)...
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS] ✅ Scaricato: TS_5400258178.xlsx
+[Scarico TS] ✨ Download completati: 1/1.
+[Scarico TS] ⚙️ Avvio elaborazione TS (Logica VBA) su 1 file...
+[Scarico TS]   ✅ Salvato in: 5400258178_10_TS.xlsx
+[Scarico TS] 🏁 Elaborazione conclusa: 1/1 completati.
+[Scarico TS] Stato: COMPLETED
+[Scarico TS] Avvio Scarico TS...
+[Scarico TS] Inizializzazione browser...
+[Scarico TS] Stato: INITIALIZING
+[Scarico TS] Verifica aggiornamenti driver...
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/688ce264-5751-4f57-9ebd-bc99336b3278
+[51500:49644:0117/102756.861:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[51500:49644:0117/102757.068:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[51500:49644:0117/102757.070:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+Created TensorFlow Lite XNNPACK delegate for CPU.
+[Scarico TS] Navigazione a: https://portalefornitori.isab.com/Ui/
+[Scarico TS] Tentativo di login...
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS] ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.
+[Scarico TS] Login effettuato. Attendo scomparsa overlay...
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[21100:47188:0117/102800.645:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
+[Scarico TS] ✓ Login completato con successo
+[Scarico TS] Stato: RUNNING
+[Scarico TS] 🚀 Inizio scarico TS per 1 OdA (Fornitore: KK10608 - COEMI S.R.L.)...
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS]  -> Overlay di caricamento scomparso.
+[Scarico TS] ✅ Scaricato: TS_5400258178.xlsx
+[Scarico TS] ✨ Download completati: 1/1.
+[Scarico TS] Stato: COMPLETED
+[Timbrature] Avvio Timbrature...
+[Timbrature] Inizializzazione browser...
+[Timbrature] Stato: INITIALIZING
+[Timbrature] Verifica aggiornamenti driver...
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/d02c2b5c-0f65-46cc-9e49-50aadd4c584c
+[36508:52648:0117/102817.902:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[36508:52648:0117/102818.111:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[36508:52648:0117/102818.112:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+Created TensorFlow Lite XNNPACK delegate for CPU.
+[Timbrature] Navigazione a: https://portalefornitori.isab.com/Ui/
+[Timbrature] Tentativo di login...
+[Timbrature]  -> Overlay di caricamento scomparso.
+[Timbrature] ⚠️ Rilevata sessione precedente. Clicco su 'Si' per forzare l'accesso.
+[Timbrature] Login effettuato. Attendo scomparsa overlay...
+[Timbrature]  -> Overlay di caricamento scomparso.
+[44416:49236:0117/102821.734:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: DEPRECATED_ENDPOINT
+[Timbrature] ✓ Login completato con successo
+[Timbrature] Stato: RUNNING
+[Timbrature] 🚀 Inizio recupero timbrature per KK10608 - COEMI S.R.L. (16.01.2026 - 16.01.2026)...
+[Timbrature] Navigazione verso pagina Timbrature...
+[Timbrature] Seleziono fornitore: KK10608 - COEMI S.R.L.
+[Timbrature] Imposto filtri data e flag...
+[Timbrature] Eseguo sequenza tasti e click su Cerca...
+[Timbrature] Attendo caricamento risultati...
+[Timbrature] Caricamento terminato.
+[Timbrature] Cerco pulsante Excel...
+[Timbrature] Clicco su Excel...
+[Timbrature] Attendo download...
+[Timbrature] ✅ Report scaricato! Sto analizzando i dati...
+[Timbrature] Importazione: 101 nuovi, 0 duplicati.
+[Timbrature] 💾 Dati salvati nel database con successo.
+[Timbrature] ✨ Procedura conclusa.
+[Timbrature] Stato: COMPLETED
+[Scarico PDL] Avvio Scarico PDL...
+[Scarico PDL] 🔍 Avvio validazione dati...
+[Scarico PDL] ✅ Riga 1: Trovato PDL 566832
+[Scarico PDL] ✅ Validazione completata con successo.
+[Scarico PDL] Inizializzazione browser...
+[Scarico PDL] Stato: INITIALIZING
+[Scarico PDL] Verifica aggiornamenti driver...
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/0297137b-cfcc-4283-901e-f14bccb2cf30
+[30904:52988:0117/102956.447:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+Created TensorFlow Lite XNNPACK delegate for CPU.
+[30904:52988:0117/102956.649:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[30904:52988:0117/102956.649:ERROR:gpu\ipc\service\gpu_channel_manager.cc:911] ContextResult::kFatalFailure: Failed to create shared context for virtualization.
+[Scarico PDL] 🌐 Navigazione verso l'URL SafeWork...
+[Scarico PDL] 📍 URL caricato. Titolo pagina: SafeWork 5
+[Scarico PDL] ⏳ Cerco pulsante selezione sito (ms-choice)...
+[Scarico PDL] ℹ️ Selezione sito non necessaria o fallita (proseguo): Message: stale element reference: stale element not found in the current frame
+  (Session info: chrome=143.0.7499.170); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#stale-element-reference-exception
+Stacktrace:
+Symbols not available. Dumping unresolved backtrace:
+        0x4b1213
+        0x4b1254
+        0x29e6dd
+        0x2a5323
+        0x2a7951
+        0x32e9fa
+        0x30b4ec
+        0x32db13
+        0x30b2e6
+        0x2dd321
+        0x2de1d4
+        0x705254
+        0x70080b
+        0x71d0ea
+        0x4cb118
+        0x4d311d
+        0x4b9518
+        0x4b96d9
+        0x4a3a68
+        0x76227ba9
+        0x775ec0cb
+        0x775ec04f
+
+[Scarico PDL] 🔐 Inserimento credenziali per utente: gallegretti95
+[Scarico PDL] ⌨️ Username inserito.
+[Scarico PDL] ⌨️ Password inserita.
+[Scarico PDL] 🖱️ Clic su pulsante Login...
+[Scarico PDL] ⏳ Attendo il caricamento del sistema (overlay/caricamento)...
+[Scarico PDL] ⏳ Attesa comparsa caricamento...
+[50312:42100:0117/103001.014:ERROR:google_apis\gcm\engine\registration_request.cc:292] Registration response error message: QUOTA_EXCEEDED
+[Scarico PDL] ⏳ Sistema in caricamento, attesa completamento...
+[Scarico PDL] ✅ Caricamento sistema completato.
+[Scarico PDL] ✅ Login a Safework completato. Dashboard pronta.
+[Scarico PDL] Stato: RUNNING
+[Scarico PDL] 🚀 Inizio elaborazione di 1 righe di dati.
+[Scarico PDL] --- Elaborazione Riga 1/1 ---
+[Scarico PDL] ℹ️ PDL auto-completato: 566832 -> 566832/C
+[Scarico PDL] 🔄 Ricerca PdL 566832/C in interfaccia...
+[Scarico PDL] 🔍 Controllo eventuali alert di errore ricerca...
+[Scarico PDL] 🖱️ Clic su OK per chiudere alert.
+[Scarico PDL] 🚩 ALERT RILEVATO: 'Alert Il PdL non è in programmazione. OK'
+[Scarico PDL] 🖱️ Clic su OK per chiudere alert.
+[Scarico PDL] ⚠️ Rilevato alert per 566832/C. Attesa resiliente...
+[Scarico PDL] ⬇️ Avvio scarico Parte Prima per PdL 566832/C...
+[Scarico PDL] ⏳ Polling cartella download (Ref Time: 1768642271)...
+[Scarico PDL] ❌ Nessun nuovo PDF trovato entro il timeout.
+[Scarico PDL] ✨ FINE ESECUZIONE: 0/1 PDL completati.
+[Scarico PDL] Stato: ERROR

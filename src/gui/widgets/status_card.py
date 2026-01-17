@@ -4,8 +4,12 @@ Card per visualizzare stato con icona e animazioni.
 
 from typing import Optional
 
-from PyQt6.QtCore import QPropertyAnimation, Qt, pyqtProperty  # type: ignore
+from PyQt6.QtCore import QPropertyAnimation, Qt, pyqtProperty, QSize  # type: ignore
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+
+from src.core.constants import Icons
+from src.utils.helpers import get_asset_path
 
 from ..design.colors import get_palette
 from ..design.spacing import BorderRadius, Spacing
@@ -24,11 +28,11 @@ class StatusCard(QFrame):
         WARNING = "warning"
 
     STATUS_CONFIG = {
-        Status.IDLE: ("⏸️", "In attesa", "secondary"),
-        Status.RUNNING: ("⏳", "In esecuzione...", "info"),
-        Status.SUCCESS: ("✅", "Completato", "success"),
-        Status.ERROR: ("❌", "Errore", "error"),
-        Status.WARNING: ("⚠️", "Attenzione", "warning"),
+        Status.IDLE: (Icons.CLOCK, "In attesa", "secondary"),  # Placeholder generic
+        Status.RUNNING: (Icons.REFRESH, "In esecuzione...", "info"),
+        Status.SUCCESS: (Icons.CHECK_CIRCLE, "Completato", "success"),
+        Status.ERROR: (Icons.X_CIRCLE, "Errore", "error"),
+        Status.WARNING: (Icons.ALERT, "Attenzione", "warning"),
     }
 
     def __init__(self, title: str = "", parent=None):
@@ -50,7 +54,8 @@ class StatusCard(QFrame):
         self._icon_label = QLabel()
         self._icon_label.setFixedSize(24, 24)
         self._icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._icon_label.setStyleSheet("font-size: 16px; border: none; background: transparent;")
+        self._icon_label.setStyleSheet("border: none; background: transparent;")
+        self._icon_label.setScaledContents(True)
         layout.addWidget(self._icon_label)
 
         # Text container
@@ -113,10 +118,15 @@ class StatusCard(QFrame):
 
     def _update_status_display(self, custom_message: Optional[str] = None):
         """Aggiorna icone e testi in base allo stato corrente."""
-        icon, default_msg, color_key = self.STATUS_CONFIG.get(
+        icon_path_const, default_msg, color_key = self.STATUS_CONFIG.get(
             self._status, self.STATUS_CONFIG[self.Status.IDLE]
         )
-        self._icon_label.setText(icon)
+        
+        # Load and set Pixmap
+        full_path = get_asset_path(icon_path_const)
+        pixmap = QIcon(full_path).pixmap(QSize(24, 24))
+        self._icon_label.setPixmap(pixmap)
+        
         self._status_label.setText(custom_message or default_msg)
         self._apply_style()
 

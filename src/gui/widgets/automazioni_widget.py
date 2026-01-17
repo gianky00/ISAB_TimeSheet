@@ -1,11 +1,15 @@
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTabWidget
 
+from src.core.constants import Icons
+from src.utils.helpers import get_asset_path
 from src.gui.panels import (
     CaricoTSPanel,
     DettagliOdAPanel,
     PrenotaBPPanel,
     ScaricaTSPanel,
     ScaricoPDLPanel,
+    RicercaPDLPanel,
     TimbratureBotPanel,
 )
 
@@ -29,16 +33,18 @@ class AutomazioniWidget(QTabWidget):
         self.panel_carico = CaricoTSPanel()
 
         # Aggiungi i tab a Portale Fornitori
-        self.tab_fornitori.addTab(self.panel_dettagli, "📋 Dettagli OdA")
-        self.tab_fornitori.addTab(self.panel_scarico, "📥 Scarico TS")
-        self.tab_fornitori.addTab(self.panel_timbrature, "⏱️ Timbrature")
-        self.tab_fornitori.addTab(self.panel_prenota, "🎫 Prenota BP")
-        self.tab_fornitori.addTab(self.panel_carico, "📤 Carico TS")
+        self.tab_fornitori.addTab(self.panel_dettagli, QIcon(get_asset_path(Icons.LIST)), "Dettagli OdA")
+        self.tab_fornitori.addTab(self.panel_scarico, QIcon(get_asset_path(Icons.DOWNLOAD)), "Scarico TS")
+        self.tab_fornitori.addTab(self.panel_timbrature, QIcon(get_asset_path(Icons.CLOCK)), "Timbrature")
+        self.tab_fornitori.addTab(self.panel_prenota, QIcon(get_asset_path(Icons.TICKET)), "Prenota BP")
+        self.tab_fornitori.addTab(self.panel_carico, QIcon(get_asset_path(Icons.UPLOAD)), "Carico TS")
 
         # --- TAB 2: SafeWork ---
         self.tab_safework = QTabWidget()
         self.panel_pdl = ScaricoPDLPanel()
-        self.tab_safework.addTab(self.panel_pdl, "🛡️ Scarico PDL")
+        self.panel_pdl_search = RicercaPDLPanel()
+        self.tab_safework.addTab(self.panel_pdl, QIcon(get_asset_path(Icons.SHIELD)), "Scarico PDL")
+        self.tab_safework.addTab(self.panel_pdl_search, QIcon(get_asset_path(Icons.SEARCH)), "Ricerca PDL")
 
         # Aggiunta tab principali
         self.addTab(self.tab_fornitori, "Portale Fornitori")
@@ -51,6 +57,7 @@ class AutomazioniWidget(QTabWidget):
         self.mw.timbrature_bot_panel = self.panel_timbrature
         self.mw.carico_panel = self.panel_carico
         self.mw.pdl_panel = self.panel_pdl
+        self.mw.pdl_search_panel = self.panel_pdl_search
         self.mw.tab_fornitori = self.tab_fornitori
         self.mw.tab_safework = self.tab_safework
 
@@ -64,5 +71,6 @@ class AutomazioniWidget(QTabWidget):
                     self.panel_timbrature,
                     self.panel_carico,
                     self.panel_pdl,
+                    self.panel_pdl_search,
                 ]
             )

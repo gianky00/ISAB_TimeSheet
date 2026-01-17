@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, QTimer, pyqtSignal
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QTextOption
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QMessageBox,
     QPushButton,
+    QStyledItemDelegate,
     QTableView,  # Moved from bottom
     QTableWidget,
     QTableWidgetItem,
@@ -39,6 +40,8 @@ from PyQt6.QtWidgets import (
 
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.core import config_manager
+from src.core.constants import Icons
+from src.core.database import db_manager
 from src.core.audit_manager import AuditManager
 from src.core.stats_manager import StatsManager
 from src.gui.formatters import FastTableModel  # Moved from bottom
@@ -184,7 +187,7 @@ class BaseBotPanel(QWidget):
             "Avvia",
             variant=ModernButton.Variant.SUCCESS,
             size=ModernButton.Size.LARGE,
-            icon=get_asset_path("assets/icons/play.svg"),
+            icon=get_asset_path(Icons.PLAY),
         )
         self.start_btn.setMinimumWidth(120)
         self.start_btn.clicked.connect(self._on_start)
@@ -194,7 +197,7 @@ class BaseBotPanel(QWidget):
             "Stop",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.LARGE,
-            icon=get_asset_path("assets/icons/stop.svg"),
+            icon=get_asset_path(Icons.STOP),
         )
         self.stop_btn.setMinimumWidth(100)
         self.stop_btn.setEnabled(False)
@@ -446,6 +449,7 @@ class ScaricaTSPanel(BaseBotPanel):
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -615,6 +619,7 @@ class DettagliOdAPanel(BaseBotPanel):
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -788,6 +793,7 @@ class PrenotaBPPanel(BaseBotPanel):
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
             parent=self,
         )
         self.clear_btn.clicked.connect(self._clear_table)
@@ -939,6 +945,7 @@ class CaricoTSPanel(BaseBotPanel):
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -1154,7 +1161,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         options_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(QIcon(get_asset_path("assets/icons/folder.svg")))
+        browse_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
         browse_btn.setIconSize(QSize(20, 20))
         browse_btn.setFixedSize(35, 35)
         browse_btn.clicked.connect(self._browse_dest_path)
@@ -1185,6 +1192,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -1403,6 +1411,314 @@ class ScaricoPDLPanel(BaseBotPanel):
             del self.merge_all_session_from_telegram
 
 
+class RicercaPDLPanel(BaseBotPanel):
+    """
+    Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork.
+    """
+    data_updated = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(
+            bot_id="pdl_search",
+            bot_name="🔍 Ricerca PDL",
+            bot_description="Ricerca ed esporta i PDL da SafeWork nel database locale.",
+            parent=parent,
+        )
+        self._setup_content()
+        QTimer.singleShot(10, self._load_saved_data)
+
+    def _setup_content(self):
+        params_group = QGroupBox("Parametri di Ricerca")
+        params_layout = QVBoxLayout(params_group)
+        params_layout.setSpacing(15)
+
+        # Riga unica per Flag e Sito
+        top_row = QHBoxLayout()
+        
+        # 1. Flag Escludi Chiusi
+        self.exclude_closed_check = QCheckBox("Escludi permessi chiusi, scaduti o eliminati")
+        self.exclude_closed_check.setChecked(True)
+        self.exclude_closed_check.stateChanged.connect(self._save_data)
+        top_row.addWidget(self.exclude_closed_check)
+        
+        top_row.addSpacing(20)
+
+        # 2. Selezione Sito
+        top_row.addWidget(QLabel("Sito:"))
+        self.site_combo = QComboBox()
+        self.site_combo.addItems(["Seleziona tutto", "IGCC", "ISAB Nord", "ISAB Sud"])
+        self.site_combo.setMinimumWidth(150)
+        self.site_combo.currentTextChanged.connect(self._save_data)
+        top_row.addWidget(self.site_combo)
+        
+        top_row.addStretch()
+        params_layout.addLayout(top_row)
+
+        self.content_layout.addWidget(params_group)
+        self.content_layout.addStretch()
+
+    def _load_saved_data(self):
+        config = config_manager.load_config()
+        self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
+        saved_site = config.get("pdl_search_site", "Seleziona tutto")
+        self.site_combo.setCurrentText(saved_site)
+
+    def _save_data(self):
+        config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
+        config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
+
+    def get_bot_instance(self):
+        from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+        username, password = self.get_credentials()
+        config = config_manager.load_config()
+        
+        return SafeWorkPDLSearchBot(
+            username=username,
+            password=password,
+            headless=config.get("browser_headless", False),
+            timeout=config.get("browser_timeout", 30),
+            download_path=config_manager.get_download_path()
+        )
+
+    def get_credentials(self) -> tuple:
+        """Override: Recupera credenziali SafeWork."""
+        # Prende il default da safework_accounts
+        config = config_manager.load_config()
+        accounts = config.get("safework_accounts", [])
+        if not accounts:
+            return "", ""
+
+        # Cerca il default
+        default_acc = next((a for a in accounts if a.get("default")), accounts[0])
+        return default_acc.get("username", ""), default_acc.get("password", "")
+
+    def _on_start(self):
+        super()._on_start()
+        bot = self.get_bot_instance()
+        if not bot:
+            return
+
+        bot_params = {
+            "exclude_closed": self.exclude_closed_check.isChecked(),
+            "site_selection": self.site_combo.currentText()
+        }
+
+        self.worker = BotWorker(bot, bot_params)
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.log_widget.clear()
+        self.log_widget.append(f"▶ Avvio Ricerca PDL ({self.site_combo.currentText()})...")
+        self.worker.start()
+        self.bot_started.emit()
+
+    def _on_worker_finished(self, success: bool):
+        super()._on_worker_finished(success)
+        if success:
+            self.data_updated.emit()
+
+class PDLDelegate(QStyledItemDelegate):
+    """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL."""
+    def __init__(self, date_columns, parent=None):
+        super().__init__(parent)
+        self.date_columns = date_columns
+
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        # Abilita il wrap per tutte le colonne tranne quelle date
+        if index.column() not in self.date_columns:
+            option.features |= option.ViewItemFeature.HasDisplay
+            option.displayAlignment = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            option.textElideMode = Qt.TextElideMode.ElideNone
+        else:
+            # Date: riga singola
+            option.textElideMode = Qt.TextElideMode.ElideRight
+
+class PDLDBPanel(QWidget):
+    """Pannello per la visualizzazione del Database PDL SafeWork con architettura Master-Detail."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # Colonne della Tabella (Vista Master)
+        self.master_headers = ["N° PDL", "Stato", "Data Creazione", "Area", "Unità", "Descrizione"]
+        
+        # Mapping completo per il Dettaglio (Tutte le 19 colonne + ID e Importazione)
+        self.full_headers = [
+            "ID", "N° PDL", "Data Creazione", "Area", "Unità", "Ditta", 
+            "Descrizione", "Tipologia", "Stato", "Apparecchiatura", 
+            "Richiedente", "Data Richiesta", "Emittente", "Data Emissione", 
+            "Aprente", "Data Apertura", "Priorità", "Contratto", "Ordine", "Sito", "Importato il"
+        ]
+        
+        self.model = FastTableModel([], self.master_headers)
+        self._raw_full_data = [] # Buffer per i dati completi
+        
+        # Timer per ricerca ritardata (Debounce)
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.refresh_data)
+        
+        self._setup_ui()
+        QTimer.singleShot(50, self.refresh_data)
+
+    def _setup_ui(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
+
+        # 1. Filtri (Top)
+        filter_layout = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("🔍 Cerca ovunque... (PDL, Ditta, Area, Descrizione...)")
+        self.search_input.textChanged.connect(lambda: self.search_timer.start(2000))
+        filter_layout.addWidget(self.search_input)
+
+        self.site_filter = QComboBox()
+        self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
+        self.site_filter.currentTextChanged.connect(self.refresh_data)
+        filter_layout.addWidget(self.site_filter)
+
+        refresh_btn = QPushButton("Aggiorna")
+        refresh_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
+        refresh_btn.clicked.connect(self.refresh_data)
+        filter_layout.addWidget(refresh_btn)
+        main_layout.addLayout(filter_layout)
+
+        # 2. Contenitore Splitter (Tabella | Dettaglio)
+        from PyQt6.QtWidgets import QSplitter, QScrollArea, QFormLayout
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        
+        # --- TABELLA (MASTER) ---
+        self.table = QTableView()
+        self.table.setModel(self.model)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)
+        self.table.setWordWrap(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setItemDelegate(PDLDelegate([2], self.table)) # Data Creazione è indice 2 in questa vista
+        
+        self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        header = self.table.horizontalHeader()
+        header.sectionClicked.connect(self._on_header_clicked)
+        
+        self.splitter.addWidget(self.table)
+
+        # --- PANNELLO DETTAGLIO (DETAIL) ---
+        detail_container = QWidget()
+        detail_layout = QVBoxLayout(detail_container)
+        detail_layout.setContentsMargins(5, 0, 5, 0)
+        
+        detail_title = QLabel("📄 Dettaglio Completo PDL")
+        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
+        detail_layout.addWidget(detail_title)
+        
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_content = QWidget()
+        self.form_layout = QFormLayout(scroll_content)
+        self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        self.form_layout.setSpacing(10)
+        
+        # Placeholder se nulla è selezionato
+        self.detail_labels = {}
+        for h in self.full_headers:
+            val_label = QLabel("-")
+            val_label.setWordWrap(True)
+            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.detail_labels[h] = val_label
+            self.form_layout.addRow(f"<b>{h}:</b>", val_label)
+            
+        scroll.setWidget(scroll_content)
+        detail_layout.addWidget(scroll)
+        
+        self.splitter.addWidget(detail_container)
+        self.splitter.setStretchFactor(0, 3) # Tabella più larga
+        self.splitter.setStretchFactor(1, 1) # Dettaglio più stretto
+        
+        main_layout.addWidget(self.splitter)
+
+    def _on_selection_changed(self, selected, deselected):
+        """Aggiorna il pannello dettaglio quando si seleziona una riga."""
+        indexes = self.table.selectionModel().selectedRows()
+        if not indexes:
+            return
+        
+        row_idx = indexes[0].row()
+        if row_idx < len(self._raw_full_data):
+            data = self._raw_full_data[row_idx]
+            # Mapping dati riga su labels dettaglio
+            for i, h in enumerate(self.full_headers):
+                val = str(data[i])
+                if val.lower() == "nan": val = ""
+                self.detail_labels[h].setText(val)
+
+    def _on_header_clicked(self, logical_index):
+        self.refresh_data(sort_col=logical_index)
+
+    def refresh_data(self, sort_col=None):
+        search_text = self.search_input.text().lower()
+        site_filter = self.site_filter.currentText()
+
+        # Query COMPLETA per il buffer dati, ma mostriamo solo subset in tabella
+        query = "SELECT id, n_pdl, data_creazione, area, unita, ditta, descrizione_lavoro, tipologia, stato, apparecchiatura, richiedente, data_richiesta, emittente, data_emissione, aprente, data_apertura, priorita, contratto, ordine, sito, importato_il FROM pdl WHERE 1=1"
+        params = []
+
+        if site_filter != "Tutti i siti":
+            query += " AND sito = ?"
+            params.append(site_filter)
+
+        if search_text:
+            query += " AND (n_pdl LIKE ? OR area LIKE ? OR descrizione_lavoro LIKE ? OR ditta LIKE ? OR richiedente LIKE ?)"
+            p = f"%{search_text}%"
+            params.extend([p, p, p, p, p])
+
+        # Ordinamento
+        order_map = {0: "n_pdl", 1: "stato", 2: "data_creazione", 3: "area", 4: "unita", 5: "descrizione_lavoro"}
+        if sort_col is not None and sort_col in order_map:
+            query += f" ORDER BY {order_map[sort_col]} ASC"
+        else:
+            query += " ORDER BY importato_il DESC"
+
+        query += " LIMIT 1000"
+
+        try:
+            full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+            self._raw_full_data = full_rows
+            
+            # Prepariamo la vista master (Sottoinsieme colonne)
+            # Indici: n_pdl(1), stato(8), data_creazione(2), area(3), unita(4), descrizione(6)
+            master_rows = []
+            for r in full_rows:
+                master_row = [r[1], r[8], r[2], r[3], r[4], r[6]]
+                cleaned_row = [("" if str(val).lower() == "nan" else val) for val in master_row]
+                master_rows.append(cleaned_row)
+            
+            self.model.update_data(master_rows)
+            
+            # Ottimizzazione Header Tabella
+            header = self.table.horizontalHeader()
+            for i in range(len(self.master_headers)):
+                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+
+            self.table.resizeColumnsToContents()
+            for i in range(len(self.master_headers)):
+                if i != 5: # Non Descrizione
+                    if header.sectionSize(i) > 180: header.resizeSection(i, 180)
+            
+            QTimer.singleShot(10, lambda: header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch))
+            if len(master_rows) < 200:
+                QTimer.singleShot(100, self.table.resizeRowsToContents)
+                
+        except Exception as e:
+            print(f"Errore caricamento PDL: {e}")
+
 class TimbratureBotPanel(BaseBotPanel):
     """Pannello per il bot Timbrature (Controlli e Log)."""
 
@@ -1603,12 +1919,12 @@ class TimbratureDBPanel(QWidget):
         # --- TAB 1: Database (Timbrature) ---
         self.tab_database = QWidget()
         self._setup_database_tab(self.tab_database)
-        self.tabs.addTab(self.tab_database, "🗄️ Database")
+        self.tabs.addTab(self.tab_database, QIcon(get_asset_path(Icons.DATABASE)), "Database")
 
         # --- TAB 2: Impostazioni (Dipendenti) ---
         self.tab_settings = QWidget()
         self._setup_settings_tab(self.tab_settings)
-        self.tabs.addTab(self.tab_settings, "⚙️ Impostazioni")
+        self.tabs.addTab(self.tab_settings, QIcon(get_asset_path(Icons.SETTINGS_DARK)), "Impostazioni")
 
         # Connect tab change
         self.tabs.currentChanged.connect(self._on_tab_changed)
@@ -1653,6 +1969,7 @@ class TimbratureDBPanel(QWidget):
             "Importa Excel",
             variant=ModernButton.Variant.SECONDARY,
             size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.PLUS),
         )
         import_btn.clicked.connect(self._import_excel_manually)
         search_layout.addWidget(import_btn)

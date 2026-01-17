@@ -3,8 +3,8 @@ SyncroJob - Notifications Panel
 Pannello per la visualizzazione delle notifiche.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QColor, QFont, QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -22,9 +22,11 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.audit_manager import AuditManager
+from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.notification_item import NotificationItem
+from src.utils.helpers import get_asset_path
 
 
 # Force file update - Refreshed
@@ -49,7 +51,12 @@ class AuditLogWidget(QWidget):
         info_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #212529;")
         toolbar.addWidget(info_lbl)
 
-        self.integrity_lbl = QLabel("🛡️ Verifica in corso...")
+        self.integrity_icon = QLabel()
+        self.integrity_icon.setFixedSize(18, 18)
+        self.integrity_icon.setScaledContents(True)
+        toolbar.addWidget(self.integrity_icon)
+
+        self.integrity_lbl = QLabel("Verifica in corso...")
         self.integrity_lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold;")
         toolbar.addWidget(self.integrity_lbl)
 
@@ -60,7 +67,8 @@ class AuditLogWidget(QWidget):
         retention_lbl.setStyleSheet("color: #adb5bd; font-size: 12px; margin-right: 10px;")
         toolbar.addWidget(retention_lbl)
 
-        refresh_btn = QPushButton("🔄 Aggiorna e Valida")
+        refresh_btn = QPushButton(" Aggiorna e Valida")
+        refresh_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         refresh_btn.setStyleSheet(
             """
@@ -132,10 +140,14 @@ class AuditLogWidget(QWidget):
 
     def _update_integrity_ui(self, is_valid: bool):
         if is_valid:
-            self.integrity_lbl.setText("✅ Database Integro (Certificato)")
+            pixmap = QIcon(get_asset_path(Icons.SHIELD)).pixmap(QSize(18, 18))
+            self.integrity_icon.setPixmap(pixmap)
+            self.integrity_lbl.setText("Database Integro (Certificato)")
             self.integrity_lbl.setStyleSheet("color: #198754; font-size: 13px; font-weight: bold;")
         else:
-            self.integrity_lbl.setText("⚠️ MANOMISSIONE RILEVATA!")
+            pixmap = QIcon(get_asset_path(Icons.ALERT)).pixmap(QSize(18, 18))
+            self.integrity_icon.setPixmap(pixmap)
+            self.integrity_lbl.setText("MANOMISSIONE RILEVATA!")
             self.integrity_lbl.setStyleSheet("color: #dc3545; font-size: 13px; font-weight: bold;")
 
     def _populate_table(self, logs):

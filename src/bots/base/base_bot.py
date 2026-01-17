@@ -197,14 +197,19 @@ class BaseBot(ABC):
         # Directory Profilo e Preferenze
         profile_dir = config_manager.CONFIG_DIR / "data" / BrowserConfig.CACHE_DIR_NAME
         options.add_argument(f"user-data-dir={profile_dir}")
-        options.add_experimental_option(
-            "prefs",
-            {
-                "profile.default_content_setting_values.automatic_downloads": 1,
-                "plugins.always_open_pdf_externally": True,
-                "download.prompt_for_download": False,
-            },
-        )
+
+        prefs = {
+            "profile.default_content_setting_values.automatic_downloads": 1,
+            "plugins.always_open_pdf_externally": True,
+            "download.prompt_for_download": False,
+        }
+
+        if self.download_path:
+            import os
+
+            prefs["download.default_directory"] = os.path.abspath(self.download_path)
+
+        options.add_experimental_option("prefs", prefs)
         return options
 
     def _get_chromedriver_path(self) -> Optional[str]:

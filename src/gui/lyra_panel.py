@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.lyra_client import LyraClient
 from src.core.secrets_manager import SecretsManager
 from src.utils.document_processor import DocumentProcessor
@@ -160,7 +161,7 @@ class LyraPanel(QWidget):
         h_layout.addWidget(self.model_combo)
 
         refresh_models_btn = QPushButton()
-        refresh_models_btn.setIcon(QIcon(get_asset_path("assets/icons/refresh.svg")))
+        refresh_models_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
         refresh_models_btn.setFixedSize(32, 32)
         refresh_models_btn.setIconSize(QSize(18, 18))
         refresh_models_btn.setToolTip("Aggiorna lista modelli")

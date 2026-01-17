@@ -5,6 +5,7 @@ QDateEdit personalizzato con popup calendario.
 
 from PyQt6.QtWidgets import QDateEdit
 
+from src.core.constants import Icons
 from src.utils.helpers import get_asset_path
 
 
@@ -17,7 +18,7 @@ class CalendarDateEdit(QDateEdit):
         self.setDisplayFormat("dd.MM.yyyy")
         self.setMinimumWidth(150)
 
-        icon_path = get_asset_path("assets/icons/calendar.svg").replace("\\", "/")
+        icon_path = get_asset_path(Icons.CALENDAR).replace("\\", "/")
 
         self.setStyleSheet(
             f"""

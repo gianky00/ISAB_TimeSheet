@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.backup_manager import BackupManager
+from src.core.constants import Icons
 from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
@@ -55,6 +56,8 @@ class PageIndex(IntEnum):
     NOTIFICATIONS = 6
 
 
+from src.core.version import __version__ as VERSION  # Importo la versione
+
 class MainWindow(QMainWindow):
     """
     Finestra principale dell'applicazione.
@@ -63,7 +66,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("SyncroJob")
+        self.setWindowTitle(f"SyncroJob v{VERSION}")  # Titolo con Versione
         self.setMinimumSize(1200, 800)
 
         # Configurazione Stili
@@ -209,9 +212,9 @@ class MainWindow(QMainWindow):
             now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
 
-            self.lbl_license.setText(f"👤 Licenza: {client}")
-            self.lbl_expiry.setText(f"📅 Scadenza: {expiry}")
-            self.lbl_last_login.setText(f"🔑 Ultimo accesso: {last_login}")
+            self.lbl_license.setText(f"Licenza: {client}")
+            self.lbl_expiry.setText(f"Scadenza: {expiry}")
+            self.lbl_last_login.setText(f"Ultimo accesso: {last_login}")
 
             for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
                 lbl.setVisible(True)

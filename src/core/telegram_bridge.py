@@ -1,11 +1,12 @@
 import asyncio
-import base64  # Moved from _handle_photo
+import base64
 import os
+import subprocess
 import threading
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import QBuffer, QIODevice, QObject, QRect, Qt
+from PyQt6.QtCore import QBuffer, QDate, QIODevice, QObject, QRect, Qt
 from PyQt6.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -218,6 +219,33 @@ class TelegramUIBridge(QObject):
             return
         panel.start_btn.click()
         self.telegram.send_message_sync("✅ Avvio Prenotazione BP.")
+
+    def _handle_run_timbrature(self, params):
+        """Gestisce l'avvio del bot Timbrature."""
+        period = params.get("period", "today")
+        self.mw.navigate_to_panel("timbrature")
+        
+        # Access panel
+        panel = self.mw.timbrature_bot_panel
+        
+        # Imposta date
+        today = QDate.currentDate()
+        if period == "yesterday":
+            target = today.addDays(-1)
+            panel.date_da_edit.setDate(target)
+            panel.date_a_edit.setDate(target)
+        elif period == "today":
+            panel.date_da_edit.setDate(today)
+            panel.date_a_edit.setDate(today)
+            
+        ready, msg = panel.validate_ready()
+        if not ready:
+            self.telegram.send_message_sync(f"⚠️ Impossibile avviare Timbrature.\nMotivo: {msg}")
+            return
+            
+        panel.start_btn.click()
+        period_str = "oggi" if period == "today" else "ieri"
+        self.telegram.send_message_sync(f"✅ Avvio Scarico Timbrature ({period_str}).")
 
     def _handle_restart_app(self):
         try:

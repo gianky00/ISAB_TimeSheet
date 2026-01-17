@@ -333,7 +333,7 @@ class TestTelegramUIBridge(unittest.TestCase):
         )
         self.mock_main_window.timbrature_bot_panel.start_btn.click.assert_called_once()
         self.mock_telegram_service.send_message_sync.assert_called_with(
-            "✅ Avvio Scarico Timbrature (yesterday)."
+            "✅ Avvio Scarico Timbrature (ieri)."
         )
 
     @patch("src.core.telegram_bridge.subprocess.Popen")
@@ -439,12 +439,10 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge._handle_data(data_type, items)
 
         self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with([{"numero_pdl": "PDL002"}])
-        self.mock_main_window.navigate_to_panel.assert_called_once_with(
-            self.mock_main_window.pdl_panel.bot_id
-        )
-        self.mock_main_window.show_toast.assert_called_once_with("Telegram: Aggiunti 1 elementi")
+        self.mock_main_window.navigate_to_panel.assert_called_once_with("scarico_pdl")
+        # Toast non viene chiamato in questo flusso, solo in intent
         self.mock_telegram_service.send_message_sync.assert_called_with(
-            "✅ Aggiunti 1\nℹ️ 1 duplicati saltati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
+            "✅ Aggiunti/Impostati 1\nℹ️ 1 duplicati ignorati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
         )
 
     def test_handle_status(self):

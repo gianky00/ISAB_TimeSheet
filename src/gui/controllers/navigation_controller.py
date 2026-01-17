@@ -134,6 +134,19 @@ class NavigationController(QObject):
             except Exception as e:
                 logger.error(f"Signal Connection Failed: {e}")
 
+        # PDL Search -> PDL DB
+        if (
+            hasattr(self.mw, "pdl_search_panel")
+            and hasattr(self.mw, "pdl_db_panel")
+            and not getattr(self.mw, "_pdl_signals_connected", False)
+        ):
+            try:
+                self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
+                self.mw._pdl_signals_connected = True
+                logger.info("Signal: PDL Search -> DB connected.")
+            except Exception as e:
+                logger.error(f"Signal: PDL Search Connection Failed: {e}")
+
     def navigate_to(self, index: int):
         """Navigazione con Lazy Loading."""
         if index == self.mw._current_page_index:
