@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 import markdown
 import pandas as pd
 from PyQt6.QtCore import QSize, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -27,7 +27,7 @@ from src.core.constants import Icons
 from src.core.lyra_client import LyraClient
 from src.core.secrets_manager import SecretsManager
 from src.utils.document_processor import DocumentProcessor
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class LyraWorker(QThread):
@@ -65,7 +65,7 @@ class LyraWorker(QThread):
         try:
             if not self.api_key:
                 self.finished.emit(
-                    "⚠️ Errore critico: Chiave API Gemini non trovata. Configurala nelle Impostazioni."
+                    "Errore critico: Chiave API Gemini non trovata. Configurala nelle Impostazioni."
                 )
                 return
 
@@ -81,7 +81,7 @@ class LyraWorker(QThread):
 
             error_details = traceback.format_exc()
             self.finished.emit(
-                f"⚠️ Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}"
+                f"Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}"
             )
 
 
@@ -142,7 +142,7 @@ class LyraPanel(QWidget):
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(0, 0, 0, 0)
 
-        title = QLabel("✨ Lyra AI")
+        title = QLabel("Lyra AI")
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
         h_layout.addWidget(title)
 
@@ -165,7 +165,9 @@ class LyraPanel(QWidget):
         h_layout.addWidget(self.model_combo)
 
         refresh_models_btn = QPushButton()
-        refresh_models_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
+        refresh_models_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
+        )
         refresh_models_btn.setFixedSize(32, 32)
         refresh_models_btn.setIconSize(QSize(18, 18))
         refresh_models_btn.setToolTip("Aggiorna lista modelli")
@@ -225,7 +227,10 @@ class LyraPanel(QWidget):
         # Tool Bar for Table Actions
         self.table_actions_layout = QHBoxLayout()
         self.table_actions_layout.setContentsMargins(0, 5, 0, 5)
-        self.btn_export_last_table = QPushButton("📊 Esporta Ultima Tabella Excel")
+        self.btn_export_last_table = QPushButton("Esporta ultima tabella Excel")
+        self.btn_export_last_table.setIcon(
+            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000")
+        )
         self.btn_export_last_table.setVisible(False)
         self.btn_export_last_table.setStyleSheet(
             """
@@ -259,13 +264,16 @@ class LyraPanel(QWidget):
         """
         )
         att_layout = QHBoxLayout(self.attachment_frame)
-        self.att_label = QLabel("📎 Documento allegato: nome_file.pdf")
+        self.att_label = QLabel("Documento allegato: nome_file.pdf")
         self.att_label.setStyleSheet("color: #4b2c85; font-weight: bold; border: none;")
         att_layout.addWidget(self.att_label)
 
         att_layout.addStretch()
 
-        self.btn_remove_att = QPushButton("✕")
+        self.btn_remove_att = QPushButton()
+        self.btn_remove_att.setIcon(
+            get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#000000")
+        )
         self.btn_remove_att.setFixedSize(24, 24)
         self.btn_remove_att.setStyleSheet(
             "background: transparent; color: #dc3545; font-weight: bold; border: none;"
@@ -334,8 +342,12 @@ class LyraPanel(QWidget):
         # Input Area
         input_layout = QHBoxLayout()
 
-        self.attach_btn = QPushButton("📎")
+        self.attach_btn = QPushButton()
+        self.attach_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.PLUS), "#000000")
+        )  # Use PLUS as a placeholder for attach
         self.attach_btn.setFixedSize(45, 45)
+        self.attach_btn.setIconSize(QSize(24, 24))
         self.attach_btn.setToolTip("Allega un documento (PDF)")
         self.attach_btn.setStyleSheet(
             """
@@ -467,7 +479,7 @@ class LyraPanel(QWidget):
         p = Path(file_path)
         if p.suffix.lower() == ".pdf":
             self.attached_file = p
-            self.att_label.setText(f"📎 PDF allegato: {p.name}")
+            self.att_label.setText(f"PDF allegato: {p.name}")
             self.attachment_frame.setVisible(True)
 
             # Pre-processing: converts PDF to images for better OCR if needed
@@ -621,11 +633,15 @@ class LyraPanel(QWidget):
         """Mostra il menu per esportare la chat in PDF o l'ultima tabella in Excel."""
         menu = QMenu(self)
 
-        pdf_action = QAction("📄 Esporta come PDF", self)
+        pdf_action = QAction("Esporta come PDF", self)
+        pdf_action.setIcon(get_colored_icon(get_asset_path(Icons.FILE_TEXT), "#000000"))
         pdf_action.triggered.connect(self._export_pdf)
         menu.addAction(pdf_action)
 
-        excel_action = QAction("📊 Esporta ultima tabella (Excel)", self)
+        excel_action = QAction("Esporta ultima tabella (Excel)", self)
+        excel_action.setIcon(
+            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000")
+        )
         excel_action.triggered.connect(self._export_excel)
         menu.addAction(excel_action)
 

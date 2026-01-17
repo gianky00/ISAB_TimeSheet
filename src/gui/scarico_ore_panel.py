@@ -25,8 +25,10 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.scarico_ore_components import FilterHeaderView, ScaricoOreTableModel
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ScaricoOreWorker(QThread):
@@ -73,7 +75,7 @@ class ScaricoOreWorker(QThread):
                     percent = 99  # Cap until actually finished
 
                 self.progress_signal.emit(
-                    f"⏳ Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s"
+                    f"Importazione: {percent}% completato ({current}/{real_total}) • Tempo stimato: {m}m {s}s"
                 )
 
         success, msg, added, removed = ContabilitaManager.import_scarico_ore(
@@ -98,7 +100,7 @@ class ScaricoOrePanel(QWidget):
         )
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
-        self.search_input.setPlaceholderText("⏳ Inizializzazione dati... attendere")
+        self.search_input.setPlaceholderText("Inizializzazione dati... attendere")
         self.search_input.setEnabled(False)
         QTimer.singleShot(50, self._load_data)
 
@@ -122,7 +124,7 @@ class ScaricoOrePanel(QWidget):
 
         # Search Bar
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("⏳ Inizializzazione...")
+        self.search_input.setPlaceholderText("Inizializzazione...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.setFixedWidth(400)
         # Ricerca su Invio
@@ -138,7 +140,10 @@ class ScaricoOrePanel(QWidget):
         toolbar.addStretch()
 
         # Update Button
-        self.update_btn = QPushButton("🔄 Aggiorna Dati")
+        self.update_btn = QPushButton(" Aggiorna Dati")
+        self.update_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
+        )
         self.update_btn.clicked.connect(self._start_update)
         toolbar.addWidget(self.update_btn)
 
@@ -264,7 +269,7 @@ class ScaricoOrePanel(QWidget):
             )
             return
 
-        self.status_label.setText("⏳ Calcolo stima tempi...")
+        self.status_label.setText("Calcolo stima tempi...")
         self.update_btn.setEnabled(False)
         self.table_view.setEnabled(False)
 
@@ -296,9 +301,7 @@ class ScaricoOrePanel(QWidget):
                 m, s = divmod(int(duration), 60)
                 time_str = f"{m}m {s}s"
 
-            final_status = (
-                f"✅ {timestamp} {added_str} {removed_str} (Tempo: {time_str})"
-            )
+            final_status = f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"
             self.status_label.setText(final_status)
             self._last_update_status = final_status
 
@@ -312,7 +315,7 @@ class ScaricoOrePanel(QWidget):
             ScaricoOreTableModel._global_cache["loaded"] = False
             self._load_data()
         else:
-            self.status_label.setText("❌ Errore")
+            self.status_label.setText("Errore")
             QMessageBox.critical(self, "Errore Aggiornamento", msg)
 
     def _perform_search(self):
@@ -346,12 +349,12 @@ class ScaricoOrePanel(QWidget):
         self.update_btn.setEnabled(not loading)
 
         if loading:
-            self.search_input.setPlaceholderText("⏳ Caricamento in corso... attendere")
+            self.search_input.setPlaceholderText("Caricamento in corso... attendere")
             self.table_view.setDisabled(True)
             QApplication.processEvents()
         else:
             self.search_input.setPlaceholderText(
-                "🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)"
+                "Filtra dati (es. scavullo 4041)... (Premi Invio)"
             )
             self.table_view.setDisabled(False)
 

@@ -3,7 +3,7 @@ Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 """
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QIcon
+from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
 from ..design.spacing import Spacing
@@ -59,7 +59,7 @@ class DataTable(QWidget):
 
         # Search
         self._search_input = QLineEdit()
-        self._search_input.setPlaceholderText("🔍 Cerca...")
+        self._search_input.setPlaceholderText("Cerca...")
         self._search_input.setClearButtonEnabled(True)
         self._search_input.textChanged.connect(self._filter_rows)
         # Apply modern style
@@ -80,7 +80,9 @@ class DataTable(QWidget):
 
         # Actions
         self._refresh_btn = QPushButton(" Aggiorna")
-        self._refresh_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
+        self._refresh_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
+        )
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(lambda: self.refresh())
         self._refresh_btn.setStyleSheet(

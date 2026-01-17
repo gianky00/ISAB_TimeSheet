@@ -31,8 +31,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets import InfoLabel, KPIBigCard
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 # Costante per il costo orario aziendale standard
 HOURLY_COST_STD = 30.00
@@ -62,7 +64,14 @@ class ContabilitaKPIPanel(QWidget):
 
         # --- Toolbar (Year Selector) ---
         toolbar = QHBoxLayout()
-        toolbar.addWidget(QLabel("📅 Analisi per Anno:"))
+
+        cal_icon = QLabel()
+        cal_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.CALENDAR), "#000000").pixmap(18, 18)
+        )
+        toolbar.addWidget(cal_icon)
+
+        toolbar.addWidget(QLabel("Analisi per Anno:"))
 
         self.year_combo = QComboBox()
         self.year_combo.setMinimumWidth(100)

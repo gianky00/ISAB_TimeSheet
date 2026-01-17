@@ -2,10 +2,11 @@
 Controller per la gestione della System Tray Icon.
 """
 
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from src.utils.helpers import get_app_icon_path
+from src.core.constants import Icons
+from src.utils.helpers import get_app_icon_path, get_asset_path, get_colored_icon
 
 
 class TrayController:
@@ -20,11 +21,12 @@ class TrayController:
         """Configura l'icona nella system tray."""
         icon_path = get_app_icon_path()
         if icon_path:
-            self.tray_icon.setIcon(QIcon(icon_path))
+            self.tray_icon.setIcon(get_colored_icon(icon_path, "#000000"))
 
         # Tray Menu
         tray_menu = QMenu()
-        show_action = QAction("🖥️ Mostra SyncroJob", self.mw)
+        show_action = QAction("Mostra SyncroJob", self.mw)
+        show_action.setIcon(get_colored_icon(get_asset_path(Icons.HOME), "#000000"))
         show_action.triggered.connect(self.mw.showMaximized)
         show_action.triggered.connect(self.mw.activateWindow)
         tray_menu.addAction(show_action)
@@ -35,7 +37,8 @@ class TrayController:
             self.mw._force_quit = True
             QApplication.instance().quit()
 
-        quit_action = QAction("❌ Esci", self.mw)
+        quit_action = QAction("Esci", self.mw)
+        quit_action.setIcon(get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#000000"))
         quit_action.triggered.connect(force_quit_app)
         tray_menu.addAction(quit_action)
 

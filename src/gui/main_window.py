@@ -56,11 +56,7 @@ class PageIndex(IntEnum):
     NOTIFICATIONS = 6
 
 
-
-
-
 class MainWindow(QMainWindow):
-
 
     """
 
@@ -306,8 +302,8 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
 
         # SIDEBAR
         self.sidebar = SidebarWidget()
@@ -327,7 +323,7 @@ class MainWindow(QMainWindow):
 
         self.global_search = QLineEdit()
         self.global_search.setPlaceholderText(
-            "🔍 Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F"
+            "Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F"
         )
         self.global_search.setMinimumHeight(40)
         self.global_search.returnPressed.connect(
@@ -401,7 +397,8 @@ class MainWindow(QMainWindow):
         if config.get("enable_auto_update_contabilita", False):
             # Assicuriamoci che il pannello sia caricato se dobbiamo avviarlo
             self.navigation_controller.get_panel(PageIndex.DATABASE)
-            self.contabilita_panel.start_import_process()
+            if hasattr(self, "contabilita_panel"):
+                self.contabilita_panel.start_import_process()
 
     def _on_download_update_clicked(self, url):
         import webbrowser

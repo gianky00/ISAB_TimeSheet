@@ -47,7 +47,7 @@ class HelpPanel(QWidget):
         )
         header_layout = QHBoxLayout(header)
 
-        title = QLabel("📖 Centro Assistenza SyncroJob")
+        title = QLabel("Centro Assistenza SyncroJob")
         title.setStyleSheet(
             "color: white; font-size: 22px; font-weight: bold; margin-left: 10px;"
         )
@@ -83,7 +83,7 @@ class HelpPanel(QWidget):
         sidebar_layout.addWidget(search_label)
 
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("🔍 Es. Scarico, Lyra, VPN...")
+        self.search_edit.setPlaceholderText("Es. Scarico, Lyra, VPN...")
         self.search_edit.setMinimumHeight(35)
         self.search_edit.setStyleSheet(
             """
@@ -155,18 +155,18 @@ class HelpPanel(QWidget):
     def _load_documentation(self):
         """Inizializza le sezioni della documentazione."""
         self.sections = [
-            ("🚀 Benvenuto", self._get_intro_md()),
-            ("🆕 Novità v2.1", self._get_news_md()),
-            ("✈️ Configurazione Telegram", self._get_telegram_md()),
-            ("📥 Scarico & Elaborazione", self._get_scarico_md()),
-            ("📋 Dettagli OdA", self._get_oda_md()),
-            ("⏱️ Timbrature & Autopilot", self._get_timbrature_md()),
-            ("📊 Strumentale & KPI", self._get_contabilita_md()),
-            ("✨ Lyra AI Assistant", self._get_lyra_md()),
-            ("⚡ Scorciatoie Veloci", self._get_shortcuts_md()),
-            ("🛠️ Risoluzione Problemi", self._get_troubleshooting_md()),
-            ("🔑 Sicurezza & Licenza", self._get_license_md()),
-            ("📞 Supporto & Contatti", self._get_contacts_md()),
+            ("Benvenuto", self._get_intro_md()),
+            ("Novità v2.1", self._get_news_md()),
+            ("Configurazione Telegram", self._get_telegram_md()),
+            ("Scarico & Elaborazione", self._get_scarico_md()),
+            ("Dettagli OdA", self._get_oda_md()),
+            ("Timbrature & Autopilot", self._get_timbrature_md()),
+            ("Strumentale & KPI", self._get_contabilita_md()),
+            ("Lyra AI Assistant", self._get_lyra_md()),
+            ("Scorciatoie Veloci", self._get_shortcuts_md()),
+            ("Risoluzione Problemi", self._get_troubleshooting_md()),
+            ("Sicurezza & Licenza", self._get_license_md()),
+            ("Supporto & Contatti", self._get_contacts_md()),
         ]
 
         for title, _ in self.sections:
@@ -438,5 +438,5 @@ Per una risoluzione veloce, invia sempre:
 2. Uno screenshot dell'errore (se presente).
 3. Il file di log (scaricabile da Impostazioni).
 
-*Grazie per aver scelto SyncroJob!* 🚀
+*Grazie per aver scelto SyncroJob!*
 """

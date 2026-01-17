@@ -3,7 +3,7 @@ SyncroJob - Info Widgets
 Dialoghi e card informative.
 """
 
-from PyQt6.QtCore import QPoint, QRect, Qt
+from PyQt6.QtCore import QPoint, QRect, QSize, Qt
 from PyQt6.QtGui import QColor, QCursor
 from PyQt6.QtWidgets import (
     QApplication,
@@ -15,6 +15,9 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
 )
+
+from src.core.constants import Icons
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class DetailedInfoDialog(QDialog):
@@ -61,10 +64,12 @@ class DetailedInfoDialog(QDialog):
 
 
 class InfoLabel(QPushButton):
-    """Bottone informativo accessibile (icona ⓘ)."""
+    """Bottone informativo accessibile (icona SVG)."""
 
     def __init__(self, title, get_text_callback, parent=None):
-        super().__init__("ⓘ", parent)
+        super().__init__("", parent)
+        self.setIcon(get_colored_icon(get_asset_path(Icons.HELP), "#000000"))
+        self.setIconSize(QSize(18, 18))
         self.title = title
         self.get_text_callback = get_text_callback
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))

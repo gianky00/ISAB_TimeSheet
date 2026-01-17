@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 # Widget per singola notifica
@@ -27,17 +29,17 @@ class NotificationItem(QFrame):
         level = self.notification.get("level", "info").lower()
         bg_color = "#ffffff"
         border_color = "#dee2e6"
-        icon = "ℹ️"
+        icon_path = Icons.HELP
 
         if level == "success":
             border_color = "#198754"
-            icon = "✅"
+            icon_path = Icons.CHECK_CIRCLE
         elif level == "warning":
             border_color = "#ffc107"
-            icon = "⚠️"
+            icon_path = Icons.ALERT
         elif level == "error":
             border_color = "#dc3545"
-            icon = "❌"
+            icon_path = Icons.X_CIRCLE
 
         if not self.notification.get("read", False):
             bg_color = "#f8f9fa"
@@ -68,7 +70,14 @@ class NotificationItem(QFrame):
         # Header: Icon + Title + Timestamp + Close
         header_layout = QHBoxLayout()
 
-        title_lbl = QLabel(f"{icon} {self.notification.get('title', 'Notifica')}")
+        # Icon
+        icon_lbl = QLabel()
+        icon = get_colored_icon(get_asset_path(icon_path), "#000000")
+        icon_lbl.setPixmap(icon.pixmap(QSize(18, 18)))
+        icon_lbl.setStyleSheet("border: none; background: transparent;")
+        header_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel(self.notification.get("title", "Notifica"))
         title_lbl.setStyleSheet(
             "font-weight: bold; font-size: 14px; border: none; background: transparent;"
         )
@@ -90,7 +99,9 @@ class NotificationItem(QFrame):
         header_layout.addWidget(time_lbl)
 
         # Delete Button
-        del_btn = QPushButton("×")
+        del_btn = QPushButton()
+        del_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
+        del_btn.setIconSize(QSize(14, 14))
         del_btn.setFixedSize(20, 20)
         del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         del_btn.setToolTip("Elimina")

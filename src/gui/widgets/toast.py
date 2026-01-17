@@ -2,7 +2,7 @@
 Sistema di notifiche toast non-blocking.
 """
 
-from PyQt6.QtCore import QPropertyAnimation, Qt, QTimer
+from PyQt6.QtCore import QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -10,6 +10,9 @@ from PyQt6.QtWidgets import (
     QLabel,
     QWidget,
 )
+
+from src.core.constants import Icons
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
 from ..design.spacing import BorderRadius
@@ -27,10 +30,10 @@ class Toast(QWidget):
         ERROR = "error"
 
     TYPE_CONFIG = {
-        Type.INFO: ("ℹ️", "info"),
-        Type.SUCCESS: ("✅", "success"),
-        Type.WARNING: ("⚠️", "warning"),
-        Type.ERROR: ("❌", "error"),
+        Type.INFO: (Icons.HELP, "info"),
+        Type.SUCCESS: (Icons.CHECK_CIRCLE, "success"),
+        Type.WARNING: (Icons.ALERT, "warning"),
+        Type.ERROR: (Icons.X_CIRCLE, "error"),
     }
 
     def __init__(
@@ -69,7 +72,7 @@ class Toast(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
 
-        icon, color_key = self.TYPE_CONFIG.get(
+        icon_path, color_key = self.TYPE_CONFIG.get(
             self._type, self.TYPE_CONFIG[self.Type.INFO]
         )
         accent = getattr(self._palette, color_key, self._palette.info)
@@ -87,10 +90,10 @@ class Toast(QWidget):
         )
 
         # Icon
-        icon_label = QLabel(icon)
-        icon_label.setStyleSheet(
-            "font-size: 18px; border: none; background: transparent;"
-        )
+        icon_label = QLabel()
+        icon = get_colored_icon(get_asset_path(icon_path), "#000000")
+        icon_label.setPixmap(icon.pixmap(QSize(20, 20)))
+        icon_label.setStyleSheet("border: none; background: transparent;")
         layout.addWidget(icon_label)
 
         # Message

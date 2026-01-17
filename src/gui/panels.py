@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, QTimer, pyqtSignal
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -56,7 +55,7 @@ from src.gui.widgets import (
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.status_card import StatusCard
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.printing import get_installed_printers
 
 
@@ -381,7 +380,7 @@ class BaseBotPanel(QWidget):
 
             clean_msg = re.sub(r"^[\[]\d{2}:\d{2}:\d{2}[\]]\s*", "", clean_msg)
 
-            tg_text = f"🔹 *{self.bot_name}*\n{clean_msg}"
+            tg_text = f"*{self.bot_name}*\n{clean_msg}"
             from typing import Any
 
             cast_win: Any = win
@@ -422,7 +421,7 @@ class ScaricaTSPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_id="scarico_ts",
-            bot_name="📥 Scarico TS",
+            bot_name="Scarico TS",
             bot_description="Tasto destro per aggiungere/rimuovere righe. Modifica i valori direttamente nelle celle.",
             parent=parent,
         )
@@ -465,7 +464,7 @@ class ScaricaTSPanel(BaseBotPanel):
             "Pulisci Tabella",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
-            icon=get_asset_path(Icons.TRASH),
+            icon=get_asset_path(Icons.TRASH),  # ModernButton handles coloring now
         )
         self.clear_btn.clicked.connect(self._clear_table)
         table_toolbar.addWidget(self.clear_btn)
@@ -595,7 +594,7 @@ class ScaricaTSPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append(f"▶ Avvio bot Scarico TS ({fornitore})")
+        self.log_widget.append(f"Avvio bot Scarico TS ({fornitore})")
         self.worker.start()
         self.bot_started.emit()
 
@@ -606,7 +605,7 @@ class DettagliOdAPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_id="dettagli_oda",
-            bot_name="📋 Dettagli OdA",
+            bot_name="Dettagli OdA",
             bot_description="Scarica automaticamente i dettagli degli Ordini d'Acquisto.",
             parent=parent,
         )
@@ -781,7 +780,7 @@ class DettagliOdAPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append(f"▶ Avvio bot Dettagli OdA ({fornitore})")
+        self.log_widget.append(f"Avvio bot Dettagli OdA ({fornitore})")
         self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
         self.worker.start()
         self.bot_started.emit()
@@ -793,7 +792,7 @@ class PrenotaBPPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_id="prenota_bp",
-            bot_name="🎫 Prenota BP",
+            bot_name="Prenota BP",
             bot_description="Gestisce la prenotazione dei Badge Provvisori sul portale.",
             parent=parent,
         )
@@ -936,7 +935,7 @@ class PrenotaBPPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append("▶ Avvio bot Prenota BP...")
+        self.log_widget.append("Avvio bot Prenota BP...")
         self.worker.start()
         self.bot_started.emit()
 
@@ -952,7 +951,7 @@ class CaricoTSPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_id="carico_ts",
-            bot_name="📤 Carico TS",
+            bot_name="Carico TS",
             bot_description="Upload automatico dei Timesheet sul portale ISAB",
             parent=parent,
         )
@@ -1106,7 +1105,7 @@ class CaricoTSPanel(BaseBotPanel):
         self.stop_btn.setEnabled(True)
 
         self.log_widget.clear()
-        self.log_widget.append("▶ Avvio bot Carico TS...")
+        self.log_widget.append("Avvio bot Carico TS...")
 
         self.worker.start()
         self.bot_started.emit()
@@ -1123,7 +1122,7 @@ class ScaricoPDLPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_id="scarico_pdl",
-            bot_name="🛡️ Scarico PDL",
+            bot_name="Scarico PDL",
             bot_description="Scarica e stampa i Permessi di Lavoro da SafeWork.",
             parent=parent,
         )
@@ -1203,7 +1202,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         options_layout.addWidget(self.dest_path_edit)
 
         browse_btn = QPushButton()
-        browse_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
+        browse_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
         browse_btn.setIconSize(QSize(20, 20))
         browse_btn.setFixedSize(35, 35)
         browse_btn.clicked.connect(self._browse_dest_path)
@@ -1412,11 +1411,11 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append("▶ Avvio Scarico PDL SafeWork...")
+        self.log_widget.append("Avvio Scarico PDL SafeWork...")
         if print_enabled:
-            self.log_widget.append(f"🖨️ Stampa attiva su: {printer_name}")
+            self.log_widget.append(f"Stampa attiva su: {printer_name}")
         if merge_and_send:
-            self.log_widget.append("📄 Unione PDF per Telegram attiva")
+            self.log_widget.append("Unione PDF per Telegram attiva")
 
         self.worker.start()
         self.bot_started.emit()
@@ -1451,16 +1450,14 @@ class ScaricoPDLPanel(BaseBotPanel):
                 from typing import Any
 
                 cast_win: Any = win
-                self._on_log(f"✉️ Invio di {len(files_to_send)} PDF a Telegram...")
+                self._on_log(f"Invio di {len(files_to_send)} PDF a Telegram...")
 
                 for file_path in files_to_send:
                     if os.path.exists(file_path):
-                        caption = (
-                            f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
-                        )
+                        caption = f"**PDL Scaricato**\n`{os.path.basename(file_path)}`"
                         cast_win.telegram.send_document_sync(file_path, caption)
 
-                self._on_log("✅ PDF inviati con successo.")
+                self._on_log("PDF inviati con successo.")
 
         # Pulisci l'attributo temporaneo dopo l'uso
         if hasattr(self, "merge_and_send_from_telegram"):
@@ -1479,7 +1476,7 @@ class RicercaPDLPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_id="pdl_search",
-            bot_name="🔍 Ricerca PDL",
+            bot_name="Ricerca PDL",
             bot_description="Ricerca ed esporta i PDL da SafeWork nel database locale.",
             parent=parent,
         )
@@ -1580,7 +1577,7 @@ class RicercaPDLPanel(BaseBotPanel):
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
         self.log_widget.append(
-            f"▶ Avvio Ricerca PDL ({self.site_combo.currentText()})..."
+            f"Avvio Ricerca PDL ({self.site_combo.currentText()})..."
         )
         self.worker.start()
         self.bot_started.emit()
@@ -1672,7 +1669,7 @@ class PDLDBPanel(QWidget):
         filter_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText(
-            "🔍 Cerca ovunque... (PDL, Ditta, Area, Descrizione...)"
+            "Cerca ovunque... (PDL, Ditta, Area, Descrizione...)"
         )
         self.search_input.textChanged.connect(lambda: self.search_timer.start(2000))
         filter_layout.addWidget(self.search_input)
@@ -1683,7 +1680,7 @@ class PDLDBPanel(QWidget):
         filter_layout.addWidget(self.site_filter)
 
         refresh_btn = QPushButton("Aggiorna")
-        refresh_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
+        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         refresh_btn.clicked.connect(self.refresh_data)
         filter_layout.addWidget(refresh_btn)
         main_layout.addLayout(filter_layout)
@@ -1719,7 +1716,7 @@ class PDLDBPanel(QWidget):
         detail_layout = QVBoxLayout(detail_container)
         detail_layout.setContentsMargins(5, 0, 5, 0)
 
-        detail_title = QLabel("📄 Dettaglio Completo PDL")
+        detail_title = QLabel("Dettaglio Completo PDL")
         detail_title.setStyleSheet(
             "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
         )
@@ -1852,7 +1849,7 @@ class TimbratureBotPanel(BaseBotPanel):
     def __init__(self, parent=None):
         super().__init__(
             bot_id="timbrature",
-            bot_name="⏱️ Timbrature",
+            bot_name="Timbrature",
             bot_description="Scarica e gestisci le timbrature del personale",
             parent=parent,
         )
@@ -1869,7 +1866,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
     def _setup_content(self):
         """Configura il contenuto specifico del pannello."""
-        params_group = QGroupBox("⚙️ Parametri")
+        params_group = QGroupBox("Parametri")
         params_layout = QVBoxLayout(params_group)
 
         # Widget atomico
@@ -1883,7 +1880,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.content_layout.addWidget(params_group)
 
         # Scheduler
-        sched_group = QGroupBox("📅 Pianifica")
+        sched_group = QGroupBox("Pianifica")
         sched_layout = QHBoxLayout(sched_group)
         self.autopilot_check = QCheckBox("Abilita download automatico")
         self.autopilot_check.stateChanged.connect(self._save_data)
@@ -2003,7 +2000,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append(f"▶ Avvio bot Timbrature ({fornitore})")
+        self.log_widget.append(f"Avvio bot Timbrature ({fornitore})")
         self.worker.start()
         self.bot_started.emit()
 
@@ -2057,7 +2054,9 @@ class TimbratureDBPanel(QWidget):
         self.tab_database = QWidget()
         self._setup_database_tab(self.tab_database)
         self.tabs.addTab(
-            self.tab_database, QIcon(get_asset_path(Icons.DATABASE)), "Database"
+            self.tab_database,
+            get_colored_icon(get_asset_path(Icons.DATABASE), "#000000"),
+            "Database",
         )
 
         # --- TAB 2: Impostazioni (Dipendenti) ---
@@ -2065,7 +2064,7 @@ class TimbratureDBPanel(QWidget):
         self._setup_settings_tab(self.tab_settings)
         self.tabs.addTab(
             self.tab_settings,
-            QIcon(get_asset_path(Icons.SETTINGS_DARK)),
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#000000"),
             "Impostazioni",
         )
 
@@ -2082,7 +2081,7 @@ class TimbratureDBPanel(QWidget):
 
         # Text Search
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Cerca per nome, cognome, data...")
+        self.search_input.setPlaceholderText("Cerca per nome, cognome, data...")
         self.search_input.setClearButtonEnabled(True)
         self.search_input.textChanged.connect(lambda: self.refresh_data())
         search_layout.addWidget(self.search_input)

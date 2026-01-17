@@ -4,7 +4,7 @@ Tabella potenziata con funzionalità stile Excel.
 """
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QIcon, QKeySequence
+from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ExcelTableWidget(QTableWidget):
@@ -145,16 +145,24 @@ class ExcelTableWidget(QTableWidget):
 
         # Action: Analyze ROW with Lyra
         lyra_row_action = QAction(
-            QIcon(get_asset_path(Icons.SPARKLES)), "Analizza Riga con Lyra", self
+            get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"),
+            "Analizza riga con Lyra",
+            self,
         )
         lyra_row_action.triggered.connect(lambda: self._analyze_row_at(event.pos()))
         menu.addAction(lyra_row_action)
 
         lyra_selection_action = QAction(
-            QIcon(get_asset_path(Icons.SPARKLES)), "Analizza Selezione con Lyra", self
+            get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"),
+            "Analizza selezione con Lyra",
+            self,
         )
         lyra_selection_action.triggered.connect(self._analyze_selection)
-        copy_action = QAction(QIcon(get_asset_path(Icons.EDIT)), "Copia", self)
+        menu.addAction(lyra_selection_action)
+
+        copy_action = QAction(
+            get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self
+        )
         copy_action.triggered.connect(self.copy_selection)
         menu.addAction(copy_action)
         menu.exec(event.globalPos())
@@ -234,7 +242,7 @@ class ExcelTableWidget(QTableWidget):
 
         if tsv_rows:
             QApplication.clipboard().setText("\n".join(tsv_rows))
-            QToolTip.showText(QCursor.pos(), "✨ Copiato!", self)
+            QToolTip.showText(QCursor.pos(), "Copiato!", self)
 
     def _get_selected_rows_cols(self, ranges) -> tuple[list[int], list[int]]:
         """Estrae gli indici unici di riga e colonna dalla selezione."""
@@ -350,37 +358,59 @@ class EditableDataTable(QWidget):
         menu = QMenu()
 
         lyra_action = QAction(
-            QIcon(get_asset_path(Icons.SPARKLES)), "Analizza con Lyra", self
+            get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"),
+            "Analizza con Lyra",
+            self,
         )
         lyra_action.triggered.connect(self.table._analyze_selection)
         menu.addAction(lyra_action)
         menu.addSeparator()
 
-        copy_action = QAction("📋 Copia", self)
+        copy_action = QAction(
+            get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self
+        )
         copy_action.triggered.connect(self.table.copy_selection)
         menu.addAction(copy_action)
 
-        paste_action = QAction("📝 Incolla", self)
+        paste_action = QAction(
+            get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"), "Incolla", self
+        )
         paste_action.triggered.connect(self.table.paste_selection)
         menu.addAction(paste_action)
 
         menu.addSeparator()
 
-        add_action = QAction("➕ Aggiungi riga", self)
+        add_action = QAction(
+            get_colored_icon(get_asset_path(Icons.PLUS), "#000000"),
+            "Aggiungi riga",
+            self,
+        )
         add_action.triggered.connect(self._add_row)
         menu.addAction(add_action)
 
-        add_above_action = QAction("⬆️ Aggiungi riga sopra", self)
+        add_above_action = QAction(
+            get_colored_icon(get_asset_path(Icons.PLUS), "#000000"),
+            "Aggiungi riga sopra",
+            self,
+        )
         add_above_action.triggered.connect(self._add_row_above)
         menu.addAction(add_above_action)
 
         menu.addSeparator()
 
-        remove_action = QAction("🗑️ Rimuovi riga", self)
+        remove_action = QAction(
+            get_colored_icon(get_asset_path(Icons.TRASH), "#000000"),
+            "Rimuovi riga",
+            self,
+        )
         remove_action.triggered.connect(self._remove_row)
         menu.addAction(remove_action)
 
-        clear_action = QAction("🧹 Pulisci tutto", self)
+        clear_action = QAction(
+            get_colored_icon(get_asset_path(Icons.TRASH), "#000000"),
+            "Pulisci tutto",
+            self,
+        )
         clear_action.triggered.connect(self._clear_all)
         menu.addAction(clear_action)
 

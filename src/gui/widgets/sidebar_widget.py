@@ -1,10 +1,17 @@
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import (
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+)
 
 from src.core.constants import Icons
 from src.gui.widgets.sidebar_button import SidebarButton
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class SidebarWidget(QFrame):
@@ -18,30 +25,40 @@ class SidebarWidget(QFrame):
         self._is_collapsed = False  # Partenza espansa per setup, poi collassiamo
 
         # Larghezze
-        self.expanded_width = 230  # Leggermente più largo per il testo
-        self.collapsed_width = 80
+        self.expanded_width = 210  # Leggermente più stretto
+        self.collapsed_width = 70
 
         self.setFixedWidth(self.expanded_width)
         self.setStyleSheet(
             """
             QFrame#sidebarFrame {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #667eea, stop:1 #764ba2);
-                border-right: 1px solid rgba(0,0,0,0.1);
+                    stop:0 #4b6cb7, stop:1 #182848);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 15px;
             }
             QLabel { color: white; background: transparent; }
             /* Stile per il pulsante toggle */
             QPushButton#toggleBtn {
-                background: transparent;
+                background: rgba(255, 255, 255, 0.1);
                 color: white;
                 border: none;
-                border-radius: 5px;
+                border-radius: 8px;
             }
             QPushButton#toggleBtn:hover {
-                background: rgba(255,255,255,0.2);
+                background: rgba(255, 255, 255, 0.2);
             }
         """
         )
+
+        # Aggiungi ombra per profondità
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setXOffset(5)
+        shadow.setYOffset(0)
+        shadow.setColor(QColor(0, 0, 0, 60))
+        self.setGraphicsEffect(shadow)
+
         self._setup_ui()
 
         # Collassa di default all'avvio
@@ -49,8 +66,8 @@ class SidebarWidget(QFrame):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 15, 10, 15)
-        layout.setSpacing(10)
+        layout.setContentsMargins(5, 20, 5, 20)
+        layout.setSpacing(8)
 
         # Header con Toggle e Logo
         header_container = QFrame()
@@ -59,19 +76,17 @@ class SidebarWidget(QFrame):
         header_layout.setSpacing(10)
 
         self.toggle_btn = QPushButton()
-        self.toggle_btn.setIcon(QIcon(get_asset_path(Icons.MENU)))
-        self.toggle_btn.setIconSize(
-            self.toggle_btn.sizeHint() * 1.5
-        )  # Icona menu un po' più grande
+        self.toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.MENU), "#ffffff"))
+        self.toggle_btn.setIconSize(QSize(20, 20))
         self.toggle_btn.setObjectName("toggleBtn")
-        self.toggle_btn.setFixedSize(45, 45)
+        self.toggle_btn.setFixedSize(38, 38)
         self.toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_btn.clicked.connect(self._toggle_sidebar)
 
         self.logo_label = QLabel("SyncroJob")
         self.logo_label.setObjectName("logoLabel")
         self.logo_label.setStyleSheet(
-            "font-size: 22px; font-weight: 800; border: none; margin-left: 5px;"
+            "font-size: 20px; font-weight: 900; letter-spacing: 1px; color: #ffffff; border: none; margin-left: 2px;"
         )
 
         header_layout.addWidget(self.toggle_btn, 0, Qt.AlignmentFlag.AlignCenter)

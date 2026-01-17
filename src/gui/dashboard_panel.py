@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QColor, QCursor, QIcon
+from PyQt6.QtGui import QColor, QCursor
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.stats_manager import StatsManager
 from src.gui.layouts.responsive import ResponsiveContainer
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class DashboardPanel(QWidget):
@@ -68,7 +68,7 @@ class DashboardPanel(QWidget):
 
         # Header
         header_layout = QVBoxLayout()
-        title = QLabel(f"👋 {greeting}, benvenuto in Timesheet Manager")
+        title = QLabel(f"{greeting}, benvenuto in Timesheet Manager")
         title.setStyleSheet("font-size: 32px; font-weight: 800; color: #343a40;")
         header_layout.addWidget(title)
 
@@ -235,8 +235,10 @@ class DashboardPanel(QWidget):
         icon_lbl = QLabel()
         icon_lbl.setFixedSize(32, 32)
         icon_lbl.setScaledContents(True)
-        # Apply color filter via QIcon/Pixmap
-        pixmap = QIcon(get_asset_path(icon_path)).pixmap(QSize(32, 32))
+        # Apply black color filter
+        pixmap = get_colored_icon(get_asset_path(icon_path), "#000000").pixmap(
+            QSize(32, 32)
+        )
         icon_lbl.setPixmap(pixmap)
         header_row.addWidget(icon_lbl)
 
@@ -257,7 +259,7 @@ class DashboardPanel(QWidget):
             stats_row = QHBoxLayout()
 
             # Runs Badge
-            runs_lbl = QLabel(f"🚀 {runs}")
+            runs_lbl = QLabel(f"Esecuzioni: {runs}")
             runs_lbl.setToolTip("Esecuzioni")
             runs_lbl.setStyleSheet(
                 """
@@ -273,7 +275,7 @@ class DashboardPanel(QWidget):
             stats_row.addWidget(runs_lbl)
 
             if errors is not None and errors > 0:
-                err_lbl = QLabel(f"⚠️ {errors}")
+                err_lbl = QLabel(f"Errori: {errors}")
                 err_lbl.setToolTip("Errori")
                 err_lbl.setStyleSheet(
                     """
@@ -291,10 +293,11 @@ class DashboardPanel(QWidget):
             stats_row.addStretch()
 
             # Action Arrow
-            arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(
-                f"font-size: 16px; color: {color}; font-weight: bold; border: none;"
+            arrow_lbl = QLabel()
+            arrow_lbl.setPixmap(
+                get_colored_icon(get_asset_path(Icons.PLAY), "#000000").pixmap(16, 16)
             )
+            arrow_lbl.setStyleSheet("border: none;")
             stats_row.addWidget(arrow_lbl)
 
             card_layout.addLayout(stats_row)
@@ -302,10 +305,11 @@ class DashboardPanel(QWidget):
             # For Databases (No stats), just show arrow at bottom right
             stats_row = QHBoxLayout()
             stats_row.addStretch()
-            arrow_lbl = QLabel("➜")
-            arrow_lbl.setStyleSheet(
-                f"font-size: 16px; color: {color}; font-weight: bold; border: none;"
+            arrow_lbl = QLabel()
+            arrow_lbl.setPixmap(
+                get_colored_icon(get_asset_path(Icons.PLAY), "#000000").pixmap(16, 16)
             )
+            arrow_lbl.setStyleSheet("border: none;")
             stats_row.addWidget(arrow_lbl)
             card_layout.addLayout(stats_row)
 

@@ -5,11 +5,10 @@ Card per visualizzare stato con icona e animazioni.
 from typing import Optional
 
 from PyQt6.QtCore import QPropertyAnimation, QSize, Qt, pyqtProperty  # type: ignore
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from src.core.constants import Icons
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
 from ..design.spacing import BorderRadius, Spacing
@@ -124,7 +123,7 @@ class StatusCard(QFrame):
 
         # Load and set Pixmap
         full_path = get_asset_path(icon_path_const)
-        pixmap = QIcon(full_path).pixmap(QSize(24, 24))
+        pixmap = get_colored_icon(full_path, "#000000").pixmap(QSize(24, 24))
         self._icon_label.setPixmap(pixmap)
 
         self._status_label.setText(custom_message or default_msg)

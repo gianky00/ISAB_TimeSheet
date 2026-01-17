@@ -14,8 +14,10 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets import ExcelTableWidget
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class GiornaliereYearTab(QWidget):
@@ -217,12 +219,16 @@ class GiornaliereYearTab(QWidget):
             return
         filename = self.table.item(item.row(), 0).data(Qt.ItemDataRole.UserRole)
         menu = QMenu(self)
-        lyra_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_action = QAction("Analizza riga con Lyra", self)
+        lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"))
         lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
         menu.addAction(lyra_action)
         menu.addSeparator()
         if filename:
-            action = QAction(f"📂 Apri {filename}", self)
+            action = QAction(f"Apri {filename}", self)
+            action.setIcon(
+                get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
+            )
             action.triggered.connect(lambda: self._open_giornaliera(filename))
             menu.addAction(action)
         else:

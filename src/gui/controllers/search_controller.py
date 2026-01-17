@@ -35,7 +35,7 @@ class SearchController(QObject):
         found_count += self._search_audit(query, results_menu)
 
         if found_count == 0:
-            self._add_disabled_action(results_menu, "❌ Nessun risultato trovato")
+            self._add_disabled_action(results_menu, "Nessun risultato trovato")
 
         pos = self.mw.global_search.mapToGlobal(
             QPoint(0, self.mw.global_search.height())
@@ -57,7 +57,7 @@ class SearchController(QObject):
             if not matches:
                 return 0
 
-            self._add_disabled_action(menu, "📊 CONTABILITÀ STRUMENTALE (OdA):")
+            self._add_disabled_action(menu, "CONTABILITÀ STRUMENTALE (OdA):")
             for oda in matches[:20]:
                 text = f"OdA {oda['codice_oda']} - {oda['descrizione'][:50]}..."
                 action = menu.addAction(text)
@@ -96,7 +96,7 @@ class SearchController(QObject):
         """Aggiunge i risultati delle Giornaliere al menu."""
         if not matches:
             return 0
-        self._add_disabled_action(menu, "📂 GIORNALIERE:")
+        self._add_disabled_action(menu, "GIORNALIERE:")
         for g in matches[:20]:
             text = f"{g['data']} - {g['personale']} - {g['descrizione'][:40]}..."
             action = menu.addAction(text)
@@ -113,7 +113,7 @@ class SearchController(QObject):
         """Aggiunge i risultati del Cantiere al menu."""
         if not matches:
             return 0
-        self._add_disabled_action(menu, "🏗️ CANTIERE (Scarico Ore):")
+        self._add_disabled_action(menu, "CANTIERE (Scarico Ore):")
         for c in matches[:20]:
             text = f"{c['data']} - {c['personale']} - {c['commessa']}"
             action = menu.addAction(text)
@@ -130,7 +130,7 @@ class SearchController(QObject):
         """Aggiunge i risultati dei Certificati al menu."""
         if not matches:
             return 0
-        self._add_disabled_action(menu, "📜 CERTIFICATI:")
+        self._add_disabled_action(menu, "CERTIFICATI:")
         for c in matches[:20]:
             text = f"{c['matricola']} - {c['modello']} ({c['costruttore']})"
             action = menu.addAction(text)
@@ -148,7 +148,7 @@ class SearchController(QObject):
             if not matches:
                 return 0
 
-            self._add_disabled_action(menu, "👥 DIPENDENTI:")
+            self._add_disabled_action(menu, "DIPENDENTI:")
             for emp in matches[:20]:
                 text = f"{emp['cognome']} {emp['nome']}"
                 action = menu.addAction(text)
@@ -176,7 +176,7 @@ class SearchController(QObject):
             if not matches:
                 return 0
 
-            self._add_disabled_action(menu, "🛡️ AUDIT LOG:")
+            self._add_disabled_action(menu, "AUDIT LOG:")
             for log in matches[:3]:
                 action = menu.addAction(f"{log['action']} - {log['entity']}")
                 if action:

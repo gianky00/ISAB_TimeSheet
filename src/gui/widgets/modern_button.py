@@ -7,6 +7,8 @@ from typing import Optional
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtProperty  # type: ignore
 from PyQt6.QtWidgets import QPushButton
 
+from src.utils.helpers import get_colored_icon
+
 from ..design.colors import get_palette
 
 
@@ -47,9 +49,7 @@ class ModernButton(QPushButton):
         self._apply_style()
 
         if icon:
-            from PyQt6.QtGui import QIcon
-
-            self.setIcon(QIcon(icon))
+            self.setIcon(get_colored_icon(icon, "#000000"))
             # Increase padding for icon
             self.setStyleSheet(
                 self.styleSheet()

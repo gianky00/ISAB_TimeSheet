@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QFont, QIcon
+from PyQt6.QtGui import QAction, QFont
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -42,7 +42,7 @@ from src.core.constants import Icons
 from src.core.secrets_manager import SecretsManager
 from src.core.stats_manager import StatsManager
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AccountDialog(QDialog):
@@ -72,7 +72,9 @@ class AccountDialog(QDialog):
         pass_layout.addWidget(self.password_edit)
 
         self.toggle_pass_btn = QPushButton()
-        self.toggle_pass_btn.setIcon(QIcon(get_asset_path(Icons.EYE)))
+        self.toggle_pass_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.EYE), "#000000")
+        )
         self.toggle_pass_btn.setIconSize(QSize(20, 20))
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
         self.toggle_pass_btn.setFixedSize(35, 35)
@@ -110,11 +112,15 @@ class AccountDialog(QDialog):
     def _toggle_password_visibility(self):
         if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.toggle_pass_btn.setIcon(QIcon(get_asset_path(Icons.LOCK)))
+            self.toggle_pass_btn.setIcon(
+                get_colored_icon(get_asset_path(Icons.LOCK), "#000000")
+            )
             self.toggle_pass_btn.setToolTip("Nascondi password")
         else:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.toggle_pass_btn.setIcon(QIcon(get_asset_path(Icons.EYE)))
+            self.toggle_pass_btn.setIcon(
+                get_colored_icon(get_asset_path(Icons.EYE), "#000000")
+            )
             self.toggle_pass_btn.setToolTip("Mostra password")
 
     def get_data(self):
@@ -257,7 +263,7 @@ class StatisticsWidget(QWidget):
 
         # Refresh Button
         refresh_btn = QPushButton("  Aggiorna Statistiche")
-        refresh_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
+        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         refresh_btn.setFixedWidth(200)
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         refresh_btn.setStyleSheet(
@@ -279,7 +285,7 @@ class StatisticsWidget(QWidget):
 
         self.refresh()
 
-    def _create_summary_card(self, title, value, color, icon=""):
+    def _create_summary_card(self, title, value, color, icon_path=None):
         card = QFrame()
         card.setStyleSheet(
             f"""
@@ -294,11 +300,23 @@ class StatisticsWidget(QWidget):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 15, 20, 15)
 
-        lbl_title = QLabel(f"{icon} {title}")
+        title_layout = QHBoxLayout()
+        title_layout.setSpacing(8)
+
+        if icon_path:
+            icon_lbl = QLabel()
+            icon_lbl.setPixmap(
+                get_colored_icon(get_asset_path(icon_path), "#000000").pixmap(16, 16)
+            )
+            title_layout.addWidget(icon_lbl)
+
+        lbl_title = QLabel(title)
         lbl_title.setStyleSheet(
             "color: #6c757d; font-size: 13px; font-weight: bold; border: none;"
         )
-        layout.addWidget(lbl_title)
+        title_layout.addWidget(lbl_title)
+        title_layout.addStretch()
+        layout.addLayout(title_layout)
 
         lbl_val = QLabel(str(value))
         lbl_val.setStyleSheet(
@@ -325,20 +343,24 @@ class StatisticsWidget(QWidget):
             ((total_runs - total_errors) / total_runs) * 100
 
         self.cards_layout.addWidget(
-            self._create_summary_card("Esecuzioni Totali", total_runs, "#0d6efd", "🚀")
+            self._create_summary_card(
+                "Esecuzioni Totali", total_runs, "#0d6efd", Icons.ROCKET
+            )
         )
         self.cards_layout.addWidget(
-            self._create_summary_card("Errori Totali", total_errors, "#dc3545", "⚠️")
+            self._create_summary_card(
+                "Errori Totali", total_errors, "#dc3545", Icons.X_CIRCLE
+            )
         )
 
         # 2. Update Table
         self.table.setRowCount(0)
 
         bot_names = {
-            "timbrature": "⏱️ Timbrature",
-            "scarico_ts": "📥 Scarico TS",
-            "carico_ts": "📤 Carico TS",
-            "dettagli_oda": "📋 Dettagli OdA",
+            "timbrature": "Timbrature",
+            "scarico_ts": "Scarico TS",
+            "carico_ts": "Carico TS",
+            "dettagli_oda": "Dettagli OdA",
         }
 
         sorted_keys = sorted(stats.keys())
@@ -447,7 +469,7 @@ class SettingsPanel(QWidget):
         scroll_layout.setSpacing(20)
 
         # --- Sezione Generale (Top Level) ---
-        general_group = self._create_group_box("⚙️ Generale")
+        general_group = self._create_group_box("Generale")
         general_layout = QVBoxLayout(general_group)
         self.groups.append(general_group)
 
@@ -467,7 +489,7 @@ class SettingsPanel(QWidget):
         lists_container.setSpacing(15)
 
         # 1. Sezione Account
-        account_group = self._create_group_box("🔐 Account ISAB")
+        account_group = self._create_group_box("Account ISAB")
         account_layout = QVBoxLayout(account_group)
         self.groups.append(account_group)
 
@@ -482,28 +504,28 @@ class SettingsPanel(QWidget):
 
         acc_btns = QHBoxLayout()
         add_acc_btn = QPushButton()
-        add_acc_btn.setIcon(QIcon(get_asset_path(Icons.PLUS)))
+        add_acc_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#000000"))
         add_acc_btn.setToolTip("Aggiungi Account")
         add_acc_btn.clicked.connect(self._add_account)
         self._style_mini_button(add_acc_btn, "#28a745")
         acc_btns.addWidget(add_acc_btn)
 
         edit_acc_btn = QPushButton()
-        edit_acc_btn.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+        edit_acc_btn.setIcon(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"))
         edit_acc_btn.setToolTip("Modifica Account")
         edit_acc_btn.clicked.connect(self._edit_account)
         self._style_mini_button(edit_acc_btn, "#0d6efd")
         acc_btns.addWidget(edit_acc_btn)
 
         remove_acc_btn = QPushButton()
-        remove_acc_btn.setIcon(QIcon(get_asset_path(Icons.TRASH)))
+        remove_acc_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
         remove_acc_btn.setToolTip("Rimuovi Account")
         remove_acc_btn.clicked.connect(self._remove_account)
         self._style_mini_button(remove_acc_btn, "#dc3545")
         acc_btns.addWidget(remove_acc_btn)
 
         set_def_btn = QPushButton()
-        set_def_btn.setIcon(QIcon(get_asset_path(Icons.STAR)))
+        set_def_btn.setIcon(get_colored_icon(get_asset_path(Icons.STAR), "#000000"))
         set_def_btn.setToolTip("Imposta Default")
         set_def_btn.clicked.connect(self._set_default_account)
         self._style_mini_button(set_def_btn, "#ffc107", text_color="black")
@@ -514,7 +536,7 @@ class SettingsPanel(QWidget):
         lists_container.addWidget(account_group)
 
         # 1.5 Sezione Account SafeWork (Nuova)
-        sw_account_group = self._create_group_box("🛡️ Account SafeWork")
+        sw_account_group = self._create_group_box("Account SafeWork")
         sw_account_layout = QVBoxLayout(sw_account_group)
         self.groups.append(sw_account_group)
 
@@ -531,28 +553,28 @@ class SettingsPanel(QWidget):
 
         sw_acc_btns = QHBoxLayout()
         add_sw_btn = QPushButton()
-        add_sw_btn.setIcon(QIcon(get_asset_path(Icons.PLUS)))
+        add_sw_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#000000"))
         add_sw_btn.setToolTip("Aggiungi Account SafeWork")
         add_sw_btn.clicked.connect(self._add_sw_account)
         self._style_mini_button(add_sw_btn, "#28a745")
         sw_acc_btns.addWidget(add_sw_btn)
 
         edit_sw_btn = QPushButton()
-        edit_sw_btn.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+        edit_sw_btn.setIcon(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"))
         edit_sw_btn.setToolTip("Modifica Account")
         edit_sw_btn.clicked.connect(self._edit_sw_account)
         self._style_mini_button(edit_sw_btn, "#0d6efd")
         sw_acc_btns.addWidget(edit_sw_btn)
 
         rem_sw_btn = QPushButton()
-        rem_sw_btn.setIcon(QIcon(get_asset_path(Icons.TRASH)))
+        rem_sw_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
         rem_sw_btn.setToolTip("Rimuovi Account")
         rem_sw_btn.clicked.connect(self._remove_sw_account)
         self._style_mini_button(rem_sw_btn, "#dc3545")
         sw_acc_btns.addWidget(rem_sw_btn)
 
         def_sw_btn = QPushButton()
-        def_sw_btn.setIcon(QIcon(get_asset_path(Icons.STAR)))
+        def_sw_btn.setIcon(get_colored_icon(get_asset_path(Icons.STAR), "#000000"))
         def_sw_btn.setToolTip("Imposta Default")
         def_sw_btn.clicked.connect(self._set_default_sw_account)
         self._style_mini_button(def_sw_btn, "#ffc107", text_color="black")
@@ -563,7 +585,7 @@ class SettingsPanel(QWidget):
         lists_container.addWidget(sw_account_group)
 
         # 2. Sezione Contratti
-        contract_group = self._create_group_box("📋 Contratti")
+        contract_group = self._create_group_box("Contratti")
         contract_layout = QVBoxLayout(contract_group)
         self.groups.append(contract_group)
 
@@ -584,21 +606,27 @@ class SettingsPanel(QWidget):
 
         contract_btns = QHBoxLayout()
         add_contract_btn = QPushButton()
-        add_contract_btn.setIcon(QIcon(get_asset_path(Icons.PLUS)))
+        add_contract_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.PLUS), "#000000")
+        )
         add_contract_btn.setToolTip("Aggiungi Contratto")
         add_contract_btn.clicked.connect(self._add_contract)
         self._style_mini_button(add_contract_btn, "#28a745")
         contract_btns.addWidget(add_contract_btn)
 
         edit_contract_btn = QPushButton()
-        edit_contract_btn.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+        edit_contract_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.EDIT), "#000000")
+        )
         edit_contract_btn.setToolTip("Modifica Contratto")
         edit_contract_btn.clicked.connect(self._edit_contract)
         self._style_mini_button(edit_contract_btn, "#0d6efd")
         contract_btns.addWidget(edit_contract_btn)
 
         remove_contract_btn = QPushButton()
-        remove_contract_btn.setIcon(QIcon(get_asset_path(Icons.TRASH)))
+        remove_contract_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.TRASH), "#000000")
+        )
         remove_contract_btn.setToolTip("Rimuovi Contratto")
         remove_contract_btn.clicked.connect(self._remove_contract)
         self._style_mini_button(remove_contract_btn, "#dc3545")
@@ -609,7 +637,7 @@ class SettingsPanel(QWidget):
         lists_container.addWidget(contract_group)
 
         # 3. Sezione Fornitori
-        fornitori_group = self._create_group_box("🏢 Fornitori")
+        fornitori_group = self._create_group_box("Fornitori")
         fornitori_layout = QVBoxLayout(fornitori_group)
         self.groups.append(fornitori_group)
 
@@ -630,21 +658,21 @@ class SettingsPanel(QWidget):
 
         fornitori_btn_layout = QHBoxLayout()
         add_forn_btn = QPushButton()
-        add_forn_btn.setIcon(QIcon(get_asset_path(Icons.PLUS)))
+        add_forn_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#000000"))
         add_forn_btn.setToolTip("Aggiungi Fornitore")
         add_forn_btn.clicked.connect(self._add_fornitore)
         self._style_mini_button(add_forn_btn, "#28a745")
         fornitori_btn_layout.addWidget(add_forn_btn)
 
         edit_forn_btn = QPushButton()
-        edit_forn_btn.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+        edit_forn_btn.setIcon(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"))
         edit_forn_btn.setToolTip("Modifica Fornitore")
         edit_forn_btn.clicked.connect(self._edit_fornitore)
         self._style_mini_button(edit_forn_btn, "#0d6efd")
         fornitori_btn_layout.addWidget(edit_forn_btn)
 
         rem_forn_btn = QPushButton()
-        rem_forn_btn.setIcon(QIcon(get_asset_path(Icons.TRASH)))
+        rem_forn_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
         rem_forn_btn.setToolTip("Rimuovi Fornitore")
         rem_forn_btn.clicked.connect(self._remove_fornitore)
         self._style_mini_button(rem_forn_btn, "#dc3545")
@@ -661,7 +689,7 @@ class SettingsPanel(QWidget):
         timbrature_lists_container.setSpacing(15)
 
         # 4. Sezione Reparti
-        reparti_group = self._create_group_box("🏢 Reparti (Timbrature)")
+        reparti_group = self._create_group_box("Reparti (Timbrature)")
         reparti_layout = QVBoxLayout(reparti_group)
         self.groups.append(reparti_group)
 
@@ -682,21 +710,21 @@ class SettingsPanel(QWidget):
 
         reparti_btn_layout = QHBoxLayout()
         add_rep_btn = QPushButton()
-        add_rep_btn.setIcon(QIcon(get_asset_path(Icons.PLUS)))
+        add_rep_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#000000"))
         add_rep_btn.setToolTip("Aggiungi Reparto")
         add_rep_btn.clicked.connect(self._add_reparto)
         self._style_mini_button(add_rep_btn, "#28a745")
         reparti_btn_layout.addWidget(add_rep_btn)
 
         edit_rep_btn = QPushButton()
-        edit_rep_btn.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+        edit_rep_btn.setIcon(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"))
         edit_rep_btn.setToolTip("Modifica Reparto")
         edit_rep_btn.clicked.connect(self._edit_reparto)
         self._style_mini_button(edit_rep_btn, "#0d6efd")
         reparti_btn_layout.addWidget(edit_rep_btn)
 
         rem_rep_btn = QPushButton()
-        rem_rep_btn.setIcon(QIcon(get_asset_path(Icons.TRASH)))
+        rem_rep_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
         rem_rep_btn.setToolTip("Rimuovi Reparto")
         rem_rep_btn.clicked.connect(self._remove_reparto)
         self._style_mini_button(rem_rep_btn, "#dc3545")
@@ -707,7 +735,7 @@ class SettingsPanel(QWidget):
         timbrature_lists_container.addWidget(reparti_group)
 
         # 5. Sezione Cantieri
-        cantieri_group = self._create_group_box("🏗️ Cantieri (Timbrature)")
+        cantieri_group = self._create_group_box("Cantieri (Timbrature)")
         cantieri_layout = QVBoxLayout(cantieri_group)
         self.groups.append(cantieri_group)
 
@@ -728,21 +756,21 @@ class SettingsPanel(QWidget):
 
         cantieri_btn_layout = QHBoxLayout()
         add_cant_btn = QPushButton()
-        add_cant_btn.setIcon(QIcon(get_asset_path(Icons.PLUS)))
+        add_cant_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#000000"))
         add_cant_btn.setToolTip("Aggiungi Cantiere")
         add_cant_btn.clicked.connect(self._add_cantiere)
         self._style_mini_button(add_cant_btn, "#28a745")
         cantieri_btn_layout.addWidget(add_cant_btn)
 
         edit_cant_btn = QPushButton()
-        edit_cant_btn.setIcon(QIcon(get_asset_path(Icons.EDIT)))
+        edit_cant_btn.setIcon(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"))
         edit_cant_btn.setToolTip("Modifica Cantiere")
         edit_cant_btn.clicked.connect(self._edit_cantiere)
         self._style_mini_button(edit_cant_btn, "#0d6efd")
         cantieri_btn_layout.addWidget(edit_cant_btn)
 
         rem_cant_btn = QPushButton()
-        rem_cant_btn.setIcon(QIcon(get_asset_path(Icons.TRASH)))
+        rem_cant_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
         rem_cant_btn.setToolTip("Rimuovi Cantiere")
         rem_cant_btn.clicked.connect(self._remove_cantiere)
         self._style_mini_button(rem_cant_btn, "#dc3545")
@@ -755,7 +783,7 @@ class SettingsPanel(QWidget):
         scroll_layout.addLayout(timbrature_lists_container)
 
         # --- Sezione Strumentale ---
-        contabilita_group = self._create_group_box("📊 Strumentale")
+        contabilita_group = self._create_group_box("Strumentale")
         contabilita_layout = QVBoxLayout(contabilita_group)
         self.groups.append(contabilita_group)
 
@@ -772,7 +800,10 @@ class SettingsPanel(QWidget):
         self._style_input(self.contabilita_path_edit)
         contabilita_path_layout.addWidget(self.contabilita_path_edit)
 
-        self.browse_contabilita_btn = QPushButton("📂 Sfoglia")
+        self.browse_contabilita_btn = QPushButton("Sfoglia")
+        self.browse_contabilita_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
+        )
         self.browse_contabilita_btn.setMinimumHeight(40)
         self.browse_contabilita_btn.setMinimumWidth(120)
         self.browse_contabilita_btn.clicked.connect(self._browse_contabilita_path)
@@ -806,8 +837,10 @@ class SettingsPanel(QWidget):
         self._style_input(self.giornaliere_path_edit)
         giornaliere_path_layout.addWidget(self.giornaliere_path_edit)
 
-        self.browse_giornaliere_btn = QPushButton("  Sfoglia")
-        self.browse_giornaliere_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER_OPEN)))
+        self.browse_giornaliere_btn = QPushButton("Sfoglia")
+        self.browse_giornaliere_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
+        )
         self.browse_giornaliere_btn.setMinimumHeight(40)
         self.browse_giornaliere_btn.setMinimumWidth(120)
         self.browse_giornaliere_btn.clicked.connect(self._browse_giornaliere_path)
@@ -832,8 +865,10 @@ class SettingsPanel(QWidget):
         self._style_input(self.attivita_path_edit)
         attivita_path_layout.addWidget(self.attivita_path_edit)
 
-        self.browse_attivita_btn = QPushButton("  Sfoglia")
-        self.browse_attivita_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER_OPEN)))
+        self.browse_attivita_btn = QPushButton("Sfoglia")
+        self.browse_attivita_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
+        )
         self.browse_attivita_btn.setMinimumHeight(40)
         self.browse_attivita_btn.setMinimumWidth(120)
         self.browse_attivita_btn.clicked.connect(self._browse_attivita_path)
@@ -858,8 +893,10 @@ class SettingsPanel(QWidget):
         self._style_input(self.certificati_path_edit)
         certificati_path_layout.addWidget(self.certificati_path_edit)
 
-        self.browse_certificati_btn = QPushButton("  Sfoglia")
-        self.browse_certificati_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER_OPEN)))
+        self.browse_certificati_btn = QPushButton("Sfoglia")
+        self.browse_certificati_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
+        )
         self.browse_certificati_btn.setMinimumHeight(40)
         self.browse_certificati_btn.setMinimumWidth(120)
         self.browse_certificati_btn.clicked.connect(self._browse_certificati_path)
@@ -870,7 +907,7 @@ class SettingsPanel(QWidget):
         scroll_layout.addWidget(contabilita_group)
 
         # --- Sezione Scarico Ore Cantiere (DataEase) ---
-        dataease_group = self._create_group_box("🏗️ Scarico Ore Cantiere (DataEase)")
+        dataease_group = self._create_group_box("Scarico Ore Cantiere (DataEase)")
         dataease_layout = QVBoxLayout(dataease_group)
         self.groups.append(dataease_group)
 
@@ -888,8 +925,10 @@ class SettingsPanel(QWidget):
         self._style_input(self.dataease_path_edit)
         dataease_path_layout.addWidget(self.dataease_path_edit)
 
-        self.browse_dataease_btn = QPushButton("  Sfoglia")
-        self.browse_dataease_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER_OPEN)))
+        self.browse_dataease_btn = QPushButton("Sfoglia")
+        self.browse_dataease_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
+        )
         self.browse_dataease_btn.setMinimumHeight(40)
         self.browse_dataease_btn.setMinimumWidth(120)
         self.browse_dataease_btn.clicked.connect(self._browse_dataease_path)
@@ -900,7 +939,7 @@ class SettingsPanel(QWidget):
         scroll_layout.addWidget(dataease_group)
 
         # --- Sezione Browser ---
-        browser_group = self._create_group_box("🌐 Impostazioni Browser")
+        browser_group = self._create_group_box("Impostazioni Browser")
         browser_layout = QVBoxLayout(browser_group)
         self.groups.append(browser_group)
 
@@ -920,7 +959,7 @@ class SettingsPanel(QWidget):
         browser_layout.addLayout(timeout_layout)
 
         # --- Sezione Diagnostica ---
-        diag_group = self._create_group_box("🛠️ Diagnostica & Licenza")
+        diag_group = self._create_group_box("Diagnostica & Licenza")
         diag_layout = QHBoxLayout(diag_group)
         diag_layout.setSpacing(15)
         self.groups.append(diag_group)
@@ -932,7 +971,9 @@ class SettingsPanel(QWidget):
         diag_layout.addStretch()
 
         open_folder_btn = QPushButton("  Apri Cartella Dati")
-        open_folder_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
+        open_folder_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
+        )
         open_folder_btn.clicked.connect(self._open_data_folder)
         self._style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)
@@ -948,18 +989,20 @@ class SettingsPanel(QWidget):
         action_layout = QHBoxLayout(self.action_container)
         action_layout.addStretch()
 
-        self.unsaved_label = QLabel("⚠️ Modifiche non salvate")
+        self.unsaved_label = QLabel("Modifiche non salvate")
         self.unsaved_label.setStyleSheet(
             "color: #dc3545; font-weight: bold; padding: 5px 10px; font-size: 15px;"
         )
         self.unsaved_label.setVisible(False)
         action_layout.addWidget(self.unsaved_label)
 
-        self.reset_btn = QPushButton("↩️ Annulla")
+        self.reset_btn = QPushButton("Annulla")
+        self.reset_btn.setIcon(get_colored_icon(get_asset_path(Icons.UNDO), "#000000"))
         self.reset_btn.setVisible(False)  # Nascosto
         action_layout.addWidget(self.reset_btn)
 
-        self.save_btn = QPushButton("💾 Salva impostazioni")
+        self.save_btn = QPushButton("Salva impostazioni")
+        self.save_btn.setIcon(get_colored_icon(get_asset_path(Icons.SAVE), "#000000"))
         self.save_btn.setVisible(False)  # Nascosto
         action_layout.addWidget(self.save_btn)
 
@@ -968,27 +1011,35 @@ class SettingsPanel(QWidget):
 
         # Add Config Tab
         self.tabs.addTab(
-            config_tab, QIcon(get_asset_path(Icons.SETTINGS_DARK)), "Configurazione"
+            config_tab,
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#000000"),
+            "Configurazione",
         )
 
         # --- TAB 2: Backup ---
         self.backup_tab = QWidget()
         self._setup_backup_tab(self.backup_tab)
         self.tabs.addTab(
-            self.backup_tab, QIcon(get_asset_path(Icons.CLOUD)), "Backup Cloud"
+            self.backup_tab,
+            get_colored_icon(get_asset_path(Icons.CLOUD), "#000000"),
+            "Backup Cloud",
         )
 
         # --- TAB 3: Statistiche ---
         self.stats_widget = StatisticsWidget()
         self.tabs.addTab(
-            self.stats_widget, QIcon(get_asset_path(Icons.ROCKET)), "Statistiche"
+            self.stats_widget,
+            get_colored_icon(get_asset_path(Icons.ROCKET), "#000000"),
+            "Statistiche",
         )
 
         # --- TAB 4: Telegram ---
         self.telegram_tab = QWidget()
         self._setup_telegram_tab(self.telegram_tab)
         self.tabs.addTab(
-            self.telegram_tab, QIcon(get_asset_path(Icons.SEND)), "Telegram"
+            self.telegram_tab,
+            get_colored_icon(get_asset_path(Icons.SEND), "#000000"),
+            "Telegram",
         )
 
         # Refresh stats when tab is clicked
@@ -1007,7 +1058,8 @@ class SettingsPanel(QWidget):
 
         header_layout.addStretch()
 
-        help_btn = QPushButton("📖 Guida alla configurazione")
+        help_btn = QPushButton("Guida alla configurazione")
+        help_btn.setIcon(get_colored_icon(get_asset_path(Icons.HELP), "#000000"))
         help_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         help_btn.clicked.connect(
             lambda: self.request_help_section.emit("Configurazione Telegram")
@@ -1099,7 +1151,9 @@ class SettingsPanel(QWidget):
         gemini_layout.addWidget(self.gemini_api_key_edit)
 
         self.gemini_toggle_btn = QPushButton()
-        self.gemini_toggle_btn.setIcon(QIcon(get_asset_path(Icons.EYE)))
+        self.gemini_toggle_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.EYE), "#000000")
+        )
         self.gemini_toggle_btn.setIconSize(QSize(20, 20))
         self.gemini_toggle_btn.setFixedSize(40, 40)
         self.gemini_toggle_btn.clicked.connect(self._toggle_gemini_visibility)
@@ -1136,10 +1190,14 @@ class SettingsPanel(QWidget):
         """Alterna la visibilità della Gemini API Key."""
         if self.gemini_api_key_edit.echoMode() == QLineEdit.EchoMode.Password:
             self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.gemini_toggle_btn.setIcon(QIcon(get_asset_path(Icons.LOCK)))
+            self.gemini_toggle_btn.setIcon(
+                get_colored_icon(get_asset_path(Icons.LOCK), "#000000")
+            )
         else:
             self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.gemini_toggle_btn.setIcon(QIcon(get_asset_path(Icons.EYE)))
+            self.gemini_toggle_btn.setIcon(
+                get_colored_icon(get_asset_path(Icons.EYE), "#000000")
+            )
 
     def _setup_backup_tab(self, parent_widget):
         layout = QVBoxLayout(parent_widget)
@@ -1180,12 +1238,12 @@ class SettingsPanel(QWidget):
 
         # Populate
         # Always add Local option first
-        self.cloud_combo.addItem("📂 Locale (Documenti)", "Local")
+        self.cloud_combo.addItem("Locale (Documenti)", "Local")
 
         # Add detected clouds
         if clouds:
             for name, path in clouds.items():
-                self.cloud_combo.addItem(f"☁️ {name} ({path})", name)
+                self.cloud_combo.addItem(f"{name} ({path})", name)
 
         # Load selection
         config = config_manager.load_config()
@@ -1219,7 +1277,9 @@ class SettingsPanel(QWidget):
         sett_layout.addStretch()  # Push buttons to the right
 
         backup_btn = QPushButton("  Esegui Backup Ora")
-        backup_btn.setIcon(QIcon(get_asset_path(Icons.CLOUD_UPLOAD)))
+        backup_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.CLOUD_UPLOAD), "#000000")
+        )
         # Removed setMinimumHeight(45) to reduce bulk
         backup_btn.setStyleSheet(
             """
@@ -1233,7 +1293,9 @@ class SettingsPanel(QWidget):
         sett_layout.addWidget(backup_btn)
 
         open_folder_btn = QPushButton("  Apri Cartella Backup")
-        open_folder_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
+        open_folder_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
+        )
         # Removed setMinimumHeight(45)
         open_folder_btn.setStyleSheet(
             """
@@ -1273,7 +1335,9 @@ class SettingsPanel(QWidget):
         restore_controls.addWidget(self.restore_combo)
 
         self.refresh_backups_btn = QPushButton()
-        self.refresh_backups_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
+        self.refresh_backups_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
+        )
         self.refresh_backups_btn.setToolTip("Aggiorna lista backup")
         self.refresh_backups_btn.setFixedSize(32, 32)  # Standard size
         self.refresh_backups_btn.clicked.connect(self._refresh_backups_list)
@@ -1281,7 +1345,9 @@ class SettingsPanel(QWidget):
         restore_controls.addWidget(self.refresh_backups_btn)
 
         self.restore_btn = QPushButton("  Ripristina")
-        self.restore_btn.setIcon(QIcon(get_asset_path(Icons.UNDO)))
+        self.restore_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.UNDO), "#000000")
+        )
         self.restore_btn.clicked.connect(self._restore_selected_backup)
         self._style_button(self.restore_btn)  # Use standard button style
         restore_controls.addWidget(self.restore_btn)
@@ -1593,8 +1659,10 @@ class SettingsPanel(QWidget):
         for acc in accounts:
             label = acc["username"]
             if acc.get("default"):
-                label += " (⭐ Default)"
+                label += " (Default)"
             item = QListWidgetItem(label)
+            if acc.get("default"):
+                item.setIcon(get_colored_icon(get_asset_path(Icons.STAR), "#000000"))
             item.setData(Qt.ItemDataRole.UserRole, acc)
             self.account_list.addItem(item)
 
@@ -1658,7 +1726,11 @@ class SettingsPanel(QWidget):
         item = self.account_list.itemAt(position)
 
         # Action Aggiungi sempre visibile
-        add_action = QAction("➕ Aggiungi account", self)
+        add_action = QAction(
+            get_colored_icon(get_asset_path(Icons.PLUS), "#000000"),
+            "Aggiungi account",
+            self,
+        )
         add_action.triggered.connect(self._add_account)
         menu.addAction(add_action)
 
@@ -1666,15 +1738,27 @@ class SettingsPanel(QWidget):
             self.account_list.setCurrentItem(item)
             menu.addSeparator()
 
-            edit_action = QAction("✏️ Modifica", self)
+            edit_action = QAction(
+                get_colored_icon(get_asset_path(Icons.EDIT), "#000000"),
+                "Modifica",
+                self,
+            )
             edit_action.triggered.connect(self._edit_account)
             menu.addAction(edit_action)
 
-            default_action = QAction("⭐ Imposta come Default", self)
+            default_action = QAction(
+                get_colored_icon(get_asset_path(Icons.STAR), "#000000"),
+                "Imposta come Default",
+                self,
+            )
             default_action.triggered.connect(self._set_default_account)
             menu.addAction(default_action)
 
-            remove_action = QAction("🗑️ Rimuovi", self)
+            remove_action = QAction(
+                get_colored_icon(get_asset_path(Icons.TRASH), "#000000"),
+                "Rimuovi",
+                self,
+            )
             remove_action.triggered.connect(self._remove_account)
             menu.addAction(remove_action)
 
@@ -1687,7 +1771,9 @@ class SettingsPanel(QWidget):
         menu = QMenu()
         item = list_widget.itemAt(position)
 
-        add_action = QAction("➕ Aggiungi", self)
+        add_action = QAction(
+            get_colored_icon(get_asset_path(Icons.PLUS), "#000000"), "Aggiungi", self
+        )
         add_action.triggered.connect(add_cb)
         menu.addAction(add_action)
 
@@ -1695,11 +1781,19 @@ class SettingsPanel(QWidget):
             list_widget.setCurrentItem(item)
             menu.addSeparator()
 
-            edit_action = QAction("✏️ Modifica", self)
+            edit_action = QAction(
+                get_colored_icon(get_asset_path(Icons.EDIT), "#000000"),
+                "Modifica",
+                self,
+            )
             edit_action.triggered.connect(edit_cb)
             menu.addAction(edit_action)
 
-            remove_action = QAction("🗑️ Rimuovi", self)
+            remove_action = QAction(
+                get_colored_icon(get_asset_path(Icons.TRASH), "#000000"),
+                "Rimuovi",
+                self,
+            )
             remove_action.triggered.connect(remove_cb)
             menu.addAction(remove_action)
 
@@ -1727,8 +1821,10 @@ class SettingsPanel(QWidget):
         for acc in accounts:
             label = acc["username"]
             if acc.get("default"):
-                label += " (⭐ Default)"
+                label += " (Default)"
             item = QListWidgetItem(label)
+            if acc.get("default"):
+                item.setIcon(get_colored_icon(get_asset_path(Icons.STAR), "#000000"))
             item.setData(Qt.ItemDataRole.UserRole, acc)
             self.sw_account_list.addItem(item)
 
@@ -1793,19 +1889,35 @@ class SettingsPanel(QWidget):
     def _show_sw_account_context_menu(self, position):
         menu = QMenu()
         item = self.sw_account_list.itemAt(position)
-        add_action = QAction("➕ Aggiungi account", self)
+        add_action = QAction(
+            get_colored_icon(get_asset_path(Icons.PLUS), "#000000"),
+            "Aggiungi account",
+            self,
+        )
         add_action.triggered.connect(self._add_sw_account)
         menu.addAction(add_action)
         if item:
             self.sw_account_list.setCurrentItem(item)
             menu.addSeparator()
-            edit_action = QAction("✏️ Modifica", self)
+            edit_action = QAction(
+                get_colored_icon(get_asset_path(Icons.EDIT), "#000000"),
+                "Modifica",
+                self,
+            )
             edit_action.triggered.connect(self._edit_sw_account)
             menu.addAction(edit_action)
-            default_action = QAction("⭐ Imposta Default", self)
+            default_action = QAction(
+                get_colored_icon(get_asset_path(Icons.STAR), "#000000"),
+                "Imposta Default",
+                self,
+            )
             default_action.triggered.connect(self._set_default_sw_account)
             menu.addAction(default_action)
-            remove_action = QAction("🗑️ Rimuovi", self)
+            remove_action = QAction(
+                get_colored_icon(get_asset_path(Icons.TRASH), "#000000"),
+                "Rimuovi",
+                self,
+            )
             remove_action.triggered.connect(self._remove_sw_account)
             menu.addAction(remove_action)
         menu.exec(self.sw_account_list.viewport().mapToGlobal(position))

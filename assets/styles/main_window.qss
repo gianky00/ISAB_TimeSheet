@@ -43,7 +43,7 @@ QFrame#sidebarFrame { /* Utilizziamo un objectName per identificare specificamen
 /* Stili per QLabel all'interno della sidebar */
 QLabel#logoLabel { /* objectName per il logo */
     color: white;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: bold;
     padding: 10px 0;
     background: transparent;

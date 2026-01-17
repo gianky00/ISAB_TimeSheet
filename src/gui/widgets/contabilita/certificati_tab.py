@@ -17,8 +17,10 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class CertificatiCampioneTab(QWidget):
@@ -96,7 +98,10 @@ class CertificatiCampioneTab(QWidget):
             btn.clicked.connect(func)
             toolbar.addWidget(btn)
         toolbar.addStretch()
-        self.btn_analyze = QPushButton("📊 Analizza")
+        self.btn_analyze = QPushButton("Analizza")
+        self.btn_analyze.setIcon(
+            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000")
+        )
         self.btn_analyze.clicked.connect(self._run_analysis)
         toolbar.addWidget(self.btn_analyze)
         layout.addLayout(toolbar)
@@ -150,7 +155,7 @@ class CertificatiCampioneTab(QWidget):
         if not item or item.parent() is None:
             return
         menu = QMenu(self)
-        menu.addAction(QAction("✨ Analizza con Lyra", self)).triggered.connect(
+        menu.addAction(QAction("Analizza con Lyra", self)).triggered.connect(
             lambda: self._analyze_item(item)
         )
         menu.exec(self.tree.viewport().mapToGlobal(pos))

@@ -31,6 +31,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import Icons
+from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import SmartLogTranslator
 
 
@@ -79,14 +81,14 @@ class HorizontalLogItem(QWidget):
                 tech_msg = tech_msg.replace(match.group(0), "").strip()
 
         icons = {
-            "start": "🚀",
-            "login": "🔐",
-            "search": "🔍",
-            "download": "📥",
-            "success": "✅",
-            "error": "❌",
-            "wait": "⏳",
-            "info": "ℹ️",
+            "start": Icons.ROCKET,
+            "login": Icons.LOCK,
+            "search": Icons.SEARCH,
+            "download": Icons.DOWNLOAD,
+            "success": Icons.CHECK_CIRCLE,
+            "error": Icons.X_CIRCLE,
+            "wait": Icons.CLOCK,
+            "info": Icons.HELP,
         }
         colors = {
             "start": "#0d6efd",
@@ -104,8 +106,10 @@ class HorizontalLogItem(QWidget):
         top_row = QHBoxLayout()
         top_row.setSpacing(5)
 
-        lbl_icon = QLabel(icons.get(category, "•"))
-        lbl_icon.setStyleSheet(f"font-size: 24px; color: {self.category_color};")
+        icon_path = icons.get(category, Icons.HELP)
+        lbl_icon = QLabel()
+        pixmap = get_colored_icon(get_asset_path(icon_path), "#000000").pixmap(24, 24)
+        lbl_icon.setPixmap(pixmap)
         top_row.addWidget(lbl_icon)
 
         lbl_time = QLabel(timestamp)
@@ -133,12 +137,13 @@ class HorizontalLogItem(QWidget):
         action_layout.setSpacing(5)
 
         if snapshot_path:
-            btn = QPushButton("📷")
+            btn = QPushButton()
+            btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#000000"))
             btn.setFixedSize(30, 24)
             btn.setToolTip("Apri Screenshot")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setStyleSheet(
-                "background-color: #dc3545; color: white; border-radius: 4px; font-size: 12px;"
+                "background-color: #dc3545; color: white; border-radius: 4px;"
             )
             btn.clicked.connect(
                 lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snapshot_path))
@@ -146,12 +151,13 @@ class HorizontalLogItem(QWidget):
             action_layout.addWidget(btn)
 
         if fixit_action == "ACCOUNT":
-            btn = QPushButton("🔧")
+            btn = QPushButton()
+            btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), "#000000"))
             btn.setFixedSize(30, 24)
             btn.setToolTip("Configura Account")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setStyleSheet(
-                "background-color: #ffc107; color: black; border-radius: 4px; font-size: 12px;"
+                "background-color: #ffc107; color: black; border-radius: 4px;"
             )
             btn.clicked.connect(self._open_settings)
             action_layout.addWidget(btn)
@@ -165,12 +171,15 @@ class HorizontalLogItem(QWidget):
             path = path.rstrip(".,';)]}").strip()
             if len(path) > 4 and "http" not in path and path not in seen:
                 seen.add(path)
-                btn = QPushButton("📂")
+                btn = QPushButton()
+                btn.setIcon(
+                    get_colored_icon(get_asset_path(Icons.FOLDER_OPEN), "#000000")
+                )
                 btn.setFixedSize(30, 24)
                 btn.setToolTip(f"Apri: {Path(path).name}")
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn.setStyleSheet(
-                    "background-color: #17a2b8; color: white; border-radius: 4px; font-size: 12px;"
+                    "background-color: #17a2b8; color: white; border-radius: 4px;"
                 )
                 btn.clicked.connect(
                     lambda c, p=path: QDesktopServices.openUrl(QUrl.fromLocalFile(p))
@@ -344,12 +353,13 @@ class LogWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         header_layout = QHBoxLayout()
-        label = QLabel("📋 Timeline Attività")
+        label = QLabel("Timeline Attività")
         label.setStyleSheet("font-weight: bold; font-size: 13px;")
         header_layout.addWidget(label)
         header_layout.addStretch()
 
-        clear_btn = QPushButton("🧹 Pulisci Log")
+        clear_btn = QPushButton("Pulisci Log")
+        clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#000000"))
         clear_btn.setMaximumWidth(120)
         clear_btn.setStyleSheet(
             "QPushButton { background-color: #6c757d; color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 11px; } QPushButton:hover { background-color: #5a6268; }"
@@ -392,7 +402,7 @@ class MissionReportCard(QFrame):
         )
 
         layout = QVBoxLayout(self)
-        title_text = "🎉 Missione Compiuta!" if status else "⚠️ Missione Terminata"
+        title_text = "Missione Compiuta!" if status else "Missione Terminata"
         title_color = "#198754" if status else "#dc3545"
         lbl_title = QLabel(title_text)
         lbl_title.setStyleSheet(
@@ -402,8 +412,8 @@ class MissionReportCard(QFrame):
         layout.addWidget(lbl_title)
 
         stats_layout = QHBoxLayout()
-        self._add_stat(stats_layout, "⏱️ Tempo", duration_str)
-        self._add_stat(stats_layout, "📊 Esito", "Successo" if status else "Errore")
+        self._add_stat(stats_layout, "Tempo", duration_str)
+        self._add_stat(stats_layout, "Esito", "Successo" if status else "Errore")
         layout.addLayout(stats_layout)
 
     def _add_stat(self, layout, label, value):

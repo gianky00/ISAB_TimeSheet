@@ -10,6 +10,8 @@ import sys
 from datetime import datetime
 from typing import List, Optional
 
+from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap
+
 
 def get_asset_path(relative_path: str) -> str:
     """
@@ -234,3 +236,30 @@ def sanitize_filename(filename: str) -> str:
         return "unnamed_file"
 
     return safe_filename
+
+
+def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
+    """
+    Carica un'icona SVG e ne cambia il colore.
+
+    Args:
+        icon_path: Percorso del file SVG.
+        color: Colore in formato hex (es. #FFFFFF).
+
+    Returns:
+        QIcon ricolorata.
+    """
+    if not os.path.exists(icon_path):
+        return QIcon()
+
+    pixmap = QPixmap(icon_path)
+    if pixmap.isNull():
+        return QIcon()
+
+    # Crea un pittore per ricolorare la pixmap
+    painter = QPainter(pixmap)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+    painter.fillRect(pixmap.rect(), QColor(color))
+    painter.end()
+
+    return QIcon(pixmap)

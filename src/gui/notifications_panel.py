@@ -4,7 +4,7 @@ Pannello per la visualizzazione delle notifiche.
 """
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QColor, QFont, QIcon
+from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -26,7 +26,7 @@ from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.notification_item import NotificationItem
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 # Force file update - Refreshed
@@ -72,7 +72,7 @@ class AuditLogWidget(QWidget):
         toolbar.addWidget(retention_lbl)
 
         refresh_btn = QPushButton(" Aggiorna e Valida")
-        refresh_btn.setIcon(QIcon(get_asset_path(Icons.REFRESH)))
+        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         refresh_btn.setStyleSheet(
             """
@@ -152,14 +152,18 @@ class AuditLogWidget(QWidget):
 
     def _update_integrity_ui(self, is_valid: bool):
         if is_valid:
-            pixmap = QIcon(get_asset_path(Icons.SHIELD)).pixmap(QSize(18, 18))
+            pixmap = get_colored_icon(get_asset_path(Icons.SHIELD), "#000000").pixmap(
+                QSize(18, 18)
+            )
             self.integrity_icon.setPixmap(pixmap)
             self.integrity_lbl.setText("Database Integro (Certificato)")
             self.integrity_lbl.setStyleSheet(
                 "color: #198754; font-size: 13px; font-weight: bold;"
             )
         else:
-            pixmap = QIcon(get_asset_path(Icons.ALERT)).pixmap(QSize(18, 18))
+            pixmap = get_colored_icon(get_asset_path(Icons.ALERT), "#000000").pixmap(
+                QSize(18, 18)
+            )
             self.integrity_icon.setPixmap(pixmap)
             self.integrity_lbl.setText("MANOMISSIONE RILEVATA!")
             self.integrity_lbl.setStyleSheet(
@@ -254,7 +258,7 @@ class NotificationsPanel(QWidget):
 
         # Header Area
         header_layout = QHBoxLayout()
-        title = QLabel("🔔 Centro Notifiche & Audit")
+        title = QLabel("Centro Notifiche & Audit")
         title.setStyleSheet("font-size: 24px; font-weight: bold; color: #212529;")
         header_layout.addWidget(title)
         header_layout.addStretch()

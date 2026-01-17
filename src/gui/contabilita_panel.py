@@ -21,12 +21,14 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.contabilita_worker import ContabilitaWorker
 from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ContabilitaPanel(QWidget):
@@ -86,35 +88,55 @@ class ContabilitaPanel(QWidget):
         self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.tab_preventivi = self._create_tab_wrapper(
-            self.year_tabs_widget, "🔍 Cerca preventivi..."
+            self.year_tabs_widget, "Cerca preventivi..."
         )
-        self.main_tabs.addTab(self.tab_preventivi, "📂 Preventivi")
+        self.main_tabs.addTab(
+            self.tab_preventivi,
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"),
+            "Preventivi",
+        )
 
         self.giornaliere_tabs_widget = QTabWidget()
         self.giornaliere_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
         self.giornaliere_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
         self.tab_giornaliere = self._create_tab_wrapper(
-            self.giornaliere_tabs_widget, "🔍 Cerca giornaliere..."
+            self.giornaliere_tabs_widget, "Cerca giornaliere..."
         )
-        self.main_tabs.addTab(self.tab_giornaliere, "📂 Giornaliere")
+        self.main_tabs.addTab(
+            self.tab_giornaliere,
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"),
+            "Giornaliere",
+        )
 
         self.attivita_widget = AttivitaProgrammateTab()
         self.tab_attivita = self._create_tab_wrapper(
-            self.attivita_widget, "🔍 Cerca attività..."
+            self.attivita_widget, "Cerca attività..."
         )
-        self.main_tabs.addTab(self.tab_attivita, "📅 Attività Programmate")
+        self.main_tabs.addTab(
+            self.tab_attivita,
+            get_colored_icon(get_asset_path(Icons.CALENDAR), "#000000"),
+            "Attività Programmate",
+        )
 
         self.certificati_widget = CertificatiCampioneTab()
         self.tab_certificati = self._create_tab_wrapper(
-            self.certificati_widget, "🔍 Cerca certificati..."
+            self.certificati_widget, "Cerca certificati..."
         )
-        self.main_tabs.addTab(self.tab_certificati, "📜 Certificati Campione")
+        self.main_tabs.addTab(
+            self.tab_certificati,
+            get_colored_icon(get_asset_path(Icons.FILE_TEXT), "#000000"),
+            "Certificati Campione",
+        )
 
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
 
         self.kpi_panel = ContabilitaKPIPanel()
-        self.main_tabs.addTab(self.kpi_panel, "📊 Analisi KPI")
+        self.main_tabs.addTab(
+            self.kpi_panel,
+            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000"),
+            "Analisi KPI",
+        )
         layout.addWidget(self.main_tabs)
 
     def _create_tab_wrapper(self, content_widget, placeholder_text):
@@ -147,7 +169,8 @@ class ContabilitaPanel(QWidget):
         self.status_labels.append(status_lbl)
         toolbar.addWidget(status_lbl)
         toolbar.addStretch()
-        update_btn = QPushButton("🔄 Aggiorna Dati")
+        update_btn = QPushButton(" Aggiorna Dati")
+        update_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         update_btn.setStyleSheet(
             "QPushButton { background-color: #0d6efd; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 13px; } QPushButton:hover { background-color: #0b5ed7; }"
@@ -345,12 +368,12 @@ class ContabilitaPanel(QWidget):
         path = config.get("contabilita_file_path", "")
         if not path or not os.path.exists(path):
             for lbl in self.status_labels:
-                lbl.setText("⚠️ File non trovato.")
+                lbl.setText("File non trovato.")
             return
         for btn in self.update_buttons:
             btn.setDisabled(True)
         for lbl in self.status_labels:
-            lbl.setText("🔄 Aggiornamento...")
+            lbl.setText("Aggiornamento...")
         self.worker = ContabilitaWorker(
             path,
             config.get("giornaliere_path", ""),
@@ -373,14 +396,14 @@ class ContabilitaPanel(QWidget):
                 if duration < 60
                 else f"{int(duration // 60)}m {int(duration % 60)}s"
             )
-            status = f"✅ {now} <font color='green'><b>+{added}</b></font> <font color='red'><b>-{removed}</b></font> ({time_str})"
+            status = f"{now} <font color='green'><b>+{added}</b></font> <font color='red'><b>-{removed}</b></font> ({time_str})"
             self._last_status_html = status
             for lbl in self.status_labels:
                 lbl.setText(status)
             self.refresh_tabs()
         else:
             for lbl in self.status_labels:
-                lbl.setText(f"❌ Errore: {msg}")
+                lbl.setText(f"Errore: {msg}")
             QMessageBox.warning(self, "Errore", msg)
         self.worker = None
         for btn in self.update_buttons:

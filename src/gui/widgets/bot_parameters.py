@@ -6,7 +6,6 @@ Widget riutilizzabile per i parametri comuni dei bot (Fornitore, Date, Percorso)
 from typing import Optional
 
 from PyQt6.QtCore import QDate, QSize, pyqtSignal
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -20,7 +19,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.constants import Icons
-from src.utils.helpers import get_asset_path
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 from .calendar_date_edit import CalendarDateEdit
 
@@ -65,7 +64,9 @@ class BotParametersWidget(QWidget):
 
         # Pulsante Settings
         self.settings_btn = QPushButton()
-        self.settings_btn.setIcon(QIcon(get_asset_path(Icons.SETTINGS_DARK)))
+        self.settings_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#000000")
+        )
         self.settings_btn.setIconSize(QSize(24, 24))
         self.settings_btn.setFixedSize(40, 40)
         self.settings_btn.setToolTip("Gestisci fornitori")
@@ -102,7 +103,9 @@ class BotParametersWidget(QWidget):
             self.main_row_layout.addWidget(self.dest_path_edit)
 
             self.browse_btn = QPushButton()
-            self.browse_btn.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
+            self.browse_btn.setIcon(
+                get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
+            )
             self.browse_btn.setIconSize(QSize(24, 24))
             self.browse_btn.setFixedSize(40, 40)
             self.browse_btn.clicked.connect(self._browse_path)

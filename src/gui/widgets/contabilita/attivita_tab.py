@@ -17,9 +17,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.excel_importer import ExcelImporter
 from src.gui.widgets import ExcelTableWidget
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class AttivitaProgrammateTab(QWidget):
@@ -259,7 +261,8 @@ class AttivitaProgrammateTab(QWidget):
 
     def _show_context_menu(self, pos):
         menu = QMenu(self)
-        lyra_action = QAction("✨ Analizza Riga con Lyra", self)
+        lyra_action = QAction("Analizza riga con Lyra", self)
+        lyra_action.setIcon(get_colored_icon(get_asset_path(Icons.SPARKLES), "#000000"))
         lyra_action.triggered.connect(lambda: self.table._analyze_row_at(pos))
         menu.addAction(lyra_action)
         menu.exec(self.table.viewport().mapToGlobal(pos))

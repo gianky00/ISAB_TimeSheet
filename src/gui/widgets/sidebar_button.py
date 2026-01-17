@@ -1,6 +1,7 @@
 from PyQt6.QtCore import QSize
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QPushButton
+
+from src.utils.helpers import get_colored_icon
 
 
 class SidebarButton(QPushButton):
@@ -13,10 +14,10 @@ class SidebarButton(QPushButton):
         self._collapsed = False
 
         if icon_path:
-            self.setIcon(QIcon(icon_path))
+            self.setIcon(get_colored_icon(icon_path, "#ffffff"))
 
         self.setCheckable(True)
-        self.setMinimumHeight(55)
+        self.setMinimumHeight(48)
 
         self._refresh_state()
         self._update_style()
@@ -32,11 +33,11 @@ class SidebarButton(QPushButton):
         """Aggiorna testo e dimensione icona in base allo stato."""
         if self._collapsed:
             self.setText("")
-            self.setIconSize(QSize(28, 28))
+            self.setIconSize(QSize(22, 22))
             self.setToolTip(self.label_text)
         else:
             self.setText(f"   {self.label_text}")  # Spazio extra per separare da icona
-            self.setIconSize(QSize(20, 20))
+            self.setIconSize(QSize(18, 18))
             self.setToolTip("")
 
     def set_badge(self, count: int):
@@ -57,11 +58,17 @@ class SidebarButton(QPushButton):
 
         base_style = f"""
             QPushButton {{
-                color: #ffffff;
-                border-radius: 8px;
+                color: rgba(255, 255, 255, 0.85);
+                border-radius: 10px;
                 padding: {padding};
                 text-align: {align};
-                font-size: 15px;
+                font-size: 14px;
+                font-weight: 500;
+                margin: 2px 5px;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(255, 255, 255, 0.1);
+                color: #ffffff;
             }}
         """
 
@@ -70,8 +77,10 @@ class SidebarButton(QPushButton):
                 base_style
                 + """
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0.25);
-                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    background-color: rgba(255, 255, 255, 0.2);
+                    border-left: 3px solid #ffffff;
+                    border-radius: 0px 10px 10px 0px;
+                    color: #ffffff;
                     font-weight: bold;
                 }
             """
@@ -82,11 +91,7 @@ class SidebarButton(QPushButton):
                 + """
                 QPushButton {
                     background-color: transparent;
-                    border: 1px solid transparent;
-                    font-weight: 500;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0.15);
+                    border: none;
                 }
             """
             )

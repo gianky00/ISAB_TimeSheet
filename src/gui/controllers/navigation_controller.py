@@ -203,18 +203,20 @@ class NavigationController(QObject):
 
         if panel_key in bot_map:
             main_idx, sub_idx = bot_map[panel_key]
-            self.navigate_to(1)
-            self.mw.automazioni_widget.setCurrentIndex(main_idx)
-            if main_idx == 0:
-                self.mw.tab_fornitori.setCurrentIndex(sub_idx)
-            elif main_idx == 1:
-                self.mw.tab_safework.setCurrentIndex(sub_idx)
+            self.navigate_to(1)  # Assicura caricamento AutomazioniWidget
+            if hasattr(self.mw, "automazioni_widget"):
+                self.mw.automazioni_widget.setCurrentIndex(main_idx)
+                if main_idx == 0 and hasattr(self.mw, "tab_fornitori"):
+                    self.mw.tab_fornitori.setCurrentIndex(sub_idx)
+                elif main_idx == 1 and hasattr(self.mw, "tab_safework"):
+                    self.mw.tab_safework.setCurrentIndex(sub_idx)
             return
 
         db_map = {"db_timbrature": 0, "db_strumentale": 1, "db_dataease": 2}
         if panel_key in db_map:
-            self.navigate_to(3)
-            self.mw.database_widget.setCurrentIndex(db_map[panel_key])
+            self.navigate_to(3)  # Assicura caricamento DatabaseWidget
+            if hasattr(self.mw, "database_widget"):
+                self.mw.database_widget.setCurrentIndex(db_map[panel_key])
             return
 
     def analyze_with_lyra(self, context_text: str):

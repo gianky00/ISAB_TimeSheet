@@ -63,7 +63,7 @@ class ServiceController(QObject):
                     if panel.start_btn.isEnabled():
                         # Simula avvio
                         panel.log_widget.append(
-                            f"⏰ Avvio pianificato automatico ({now})..."
+                            f"Avvio pianificato automatico ({now})..."
                         )
                         panel._on_start()
 
@@ -82,7 +82,8 @@ class ServiceController(QObject):
         if level in ["success", "error", "warning"]:
             title = notification.get("title", "Notifica")
             msg = notification.get("message", "")
-            icon = "✅" if level == "success" else "❌" if level == "error" else "⚠️"
-
+            icon = (
+                "[OK]" if level == "success" else "[ERR]" if level == "error" else "[!]"
+            )
             text = f"{icon} *{title}*\n{msg}"
             self.telegram.send_message_sync(text)
