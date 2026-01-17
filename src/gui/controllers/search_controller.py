@@ -37,7 +37,9 @@ class SearchController(QObject):
         if found_count == 0:
             self._add_disabled_action(results_menu, "❌ Nessun risultato trovato")
 
-        pos = self.mw.global_search.mapToGlobal(QPoint(0, self.mw.global_search.height()))
+        pos = self.mw.global_search.mapToGlobal(
+            QPoint(0, self.mw.global_search.height())
+        )
         results_menu.exec(pos)
 
     def _add_disabled_action(self, menu: QMenu, text: str):
@@ -60,7 +62,9 @@ class SearchController(QObject):
                 text = f"OdA {oda['codice_oda']} - {oda['descrizione'][:50]}..."
                 action = menu.addAction(text)
                 if action:
-                    action.triggered.connect(lambda _, o=oda["codice_oda"]: self.mw._navigate_to_oda(o))
+                    action.triggered.connect(
+                        lambda _, o=oda["codice_oda"]: self.mw._navigate_to_oda(o)
+                    )
             menu.addSeparator()
             return len(matches[:20])
         except Exception:
@@ -73,14 +77,22 @@ class SearchController(QObject):
 
             ext_matches = ContabilitaManager.search_extended(query)
             count = 0
-            count += self._add_giornaliere_matches(query, menu, ext_matches.get("GIORNALIERE"))
-            count += self._add_cantiere_matches(query, menu, ext_matches.get("CANTIERE"))
-            count += self._add_certificati_matches(query, menu, ext_matches.get("CERTIFICATI"))
+            count += self._add_giornaliere_matches(
+                query, menu, ext_matches.get("GIORNALIERE")
+            )
+            count += self._add_cantiere_matches(
+                query, menu, ext_matches.get("CANTIERE")
+            )
+            count += self._add_certificati_matches(
+                query, menu, ext_matches.get("CERTIFICATI")
+            )
             return count
         except Exception:
             return 0
 
-    def _add_giornaliere_matches(self, query: str, menu: QMenu, matches: Optional[list]) -> int:
+    def _add_giornaliere_matches(
+        self, query: str, menu: QMenu, matches: Optional[list]
+    ) -> int:
         """Aggiunge i risultati delle Giornaliere al menu."""
         if not matches:
             return 0
@@ -89,11 +101,15 @@ class SearchController(QObject):
             text = f"{g['data']} - {g['personale']} - {g['descrizione'][:40]}..."
             action = menu.addAction(text)
             if action:
-                action.triggered.connect(lambda _, q=query: self.mw._navigate_to_extended(1, q))
+                action.triggered.connect(
+                    lambda _, q=query: self.mw._navigate_to_extended(1, q)
+                )
         menu.addSeparator()
         return len(matches[:20])
 
-    def _add_cantiere_matches(self, query: str, menu: QMenu, matches: Optional[list]) -> int:
+    def _add_cantiere_matches(
+        self, query: str, menu: QMenu, matches: Optional[list]
+    ) -> int:
         """Aggiunge i risultati del Cantiere al menu."""
         if not matches:
             return 0
@@ -102,11 +118,15 @@ class SearchController(QObject):
             text = f"{c['data']} - {c['personale']} - {c['commessa']}"
             action = menu.addAction(text)
             if action:
-                action.triggered.connect(lambda _, q=query: self.mw._navigate_to_dataease(q))
+                action.triggered.connect(
+                    lambda _, q=query: self.mw._navigate_to_dataease(q)
+                )
         menu.addSeparator()
         return len(matches[:20])
 
-    def _add_certificati_matches(self, query: str, menu: QMenu, matches: Optional[list]) -> int:
+    def _add_certificati_matches(
+        self, query: str, menu: QMenu, matches: Optional[list]
+    ) -> int:
         """Aggiunge i risultati dei Certificati al menu."""
         if not matches:
             return 0
@@ -115,7 +135,9 @@ class SearchController(QObject):
             text = f"{c['matricola']} - {c['modello']} ({c['costruttore']})"
             action = menu.addAction(text)
             if action:
-                action.triggered.connect(lambda _, q=query: self.mw._navigate_to_extended(3, q))
+                action.triggered.connect(
+                    lambda _, q=query: self.mw._navigate_to_extended(3, q)
+                )
         menu.addSeparator()
         return len(matches[:20])
 
@@ -131,7 +153,9 @@ class SearchController(QObject):
                 text = f"{emp['cognome']} {emp['nome']}"
                 action = menu.addAction(text)
                 if action:
-                    action.triggered.connect(lambda _, q=text: self.mw._navigate_to_timbrature(q))
+                    action.triggered.connect(
+                        lambda _, q=text: self.mw._navigate_to_timbrature(q)
+                    )
             menu.addSeparator()
             return len(matches[:20])
         except Exception:
@@ -146,7 +170,8 @@ class SearchController(QObject):
             matches = [
                 log
                 for log in audit_logs
-                if query.lower() in str(log["action"]).lower() or query.lower() in str(log["entity"]).lower()
+                if query.lower() in str(log["action"]).lower()
+                or query.lower() in str(log["entity"]).lower()
             ]
             if not matches:
                 return 0

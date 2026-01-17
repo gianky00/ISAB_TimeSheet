@@ -16,9 +16,17 @@ def panel(qapp):
 
 def test_context_menu_setup(panel):
     """Test that list widgets have context menu policy set correctly."""
-    assert panel.account_list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
-    assert panel.contract_list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
-    assert panel.fornitori_list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
+    assert (
+        panel.account_list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
+    )
+    assert (
+        panel.contract_list.contextMenuPolicy()
+        == Qt.ContextMenuPolicy.CustomContextMenu
+    )
+    assert (
+        panel.fornitori_list.contextMenuPolicy()
+        == Qt.ContextMenuPolicy.CustomContextMenu
+    )
 
 
 def test_generic_menu_callback_structure(panel):

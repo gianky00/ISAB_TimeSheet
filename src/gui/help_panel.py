@@ -48,12 +48,16 @@ class HelpPanel(QWidget):
         header_layout = QHBoxLayout(header)
 
         title = QLabel("📖 Centro Assistenza SyncroJob")
-        title.setStyleSheet("color: white; font-size: 22px; font-weight: bold; margin-left: 10px;")
+        title.setStyleSheet(
+            "color: white; font-size: 22px; font-weight: bold; margin-left: 10px;"
+        )
         header_layout.addWidget(title)
         header_layout.addStretch()
 
         version_hint = QLabel("Documentazione Ufficiale v2.1.26")
-        version_hint.setStyleSheet("color: rgba(255,255,255,0.6); font-size: 13px; margin-right: 15px;")
+        version_hint.setStyleSheet(
+            "color: rgba(255,255,255,0.6); font-size: 13px; margin-right: 15px;"
+        )
         header_layout.addWidget(version_hint)
 
         layout.addWidget(header)
@@ -67,11 +71,15 @@ class HelpPanel(QWidget):
         sidebar_layout.setContentsMargins(10, 15, 10, 15)
         sidebar_layout.setSpacing(10)
         sidebar.setFixedWidth(280)
-        sidebar.setStyleSheet("background-color: #f8f9fa; border-right: 1px solid #dee2e6;")
+        sidebar.setStyleSheet(
+            "background-color: #f8f9fa; border-right: 1px solid #dee2e6;"
+        )
 
         # Barra di Ricerca
         search_label = QLabel("CERCA NELLA GUIDA")
-        search_label.setStyleSheet("font-size: 10px; font-weight: bold; color: #6c757d; margin-left: 5px;")
+        search_label.setStyleSheet(
+            "font-size: 10px; font-weight: bold; color: #6c757d; margin-left: 5px;"
+        )
         sidebar_layout.addWidget(search_label)
 
         self.search_edit = QLineEdit()

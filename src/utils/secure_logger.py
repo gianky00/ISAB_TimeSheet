@@ -18,7 +18,9 @@ class SensitiveDataFilter(logging.Filter):
         ),
         # Token/API keys
         (
-            re.compile(r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?', re.I),
+            re.compile(
+                r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?', re.I
+            ),
             r"\1=***MASKED***",
         ),
         # Codici fiscali

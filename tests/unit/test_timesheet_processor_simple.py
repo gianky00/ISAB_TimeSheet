@@ -13,7 +13,9 @@ class TestTimesheetProcessorSimple:
         file_path.write_text("dummy")
 
         # Mock openpyxl
-        with patch("src.core.timesheet_processor.openpyxl.load_workbook") as mock_load_workbook:
+        with patch(
+            "src.core.timesheet_processor.openpyxl.load_workbook"
+        ) as mock_load_workbook:
             # Setup mock workbook and worksheet
             mock_wb = MagicMock()
             mock_ws = MagicMock()
@@ -44,7 +46,9 @@ class TestTimesheetProcessorSimple:
             mock_ws.columns = []
 
             # Execution
-            success, msg = TimesheetProcessor.process_and_move(file_path, dest_dir=tmp_path)
+            success, msg = TimesheetProcessor.process_and_move(
+                file_path, dest_dir=tmp_path
+            )
 
             # Verification
             assert success is True, f"Processing failed: {msg}"

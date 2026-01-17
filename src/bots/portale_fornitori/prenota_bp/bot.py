@@ -100,7 +100,9 @@ class PrenotaBPBot(BaseBot):
                 note = self._get_row_value(row, "Note di Ritiro").strip()
 
                 if not num_bp:
-                    self.log(f"Riga {i + 1}: Numero BP mancante o colonna errata, salto.")
+                    self.log(
+                        f"Riga {i + 1}: Numero BP mancante o colonna errata, salto."
+                    )
                     continue
 
                 try:
@@ -129,7 +131,9 @@ class PrenotaBPBot(BaseBot):
                         processed_count += 1
 
                     except Exception as e:
-                        self.log(f"⚠️ Errore durante processamento dettagli per {num_bp}: {e}")
+                        self.log(
+                            f"⚠️ Errore durante processamento dettagli per {num_bp}: {e}"
+                        )
                         try:
                             page.chiudi_dettagli_bp()
                         except Exception:
@@ -146,9 +150,13 @@ class PrenotaBPBot(BaseBot):
                     # page.prenota_nuovo_bp(num_bp, note) # RIMOSSO: Sostituito da flow Dettagli
                 except Exception as e:
                     self.log(f"✗ Errore su BP {num_bp}: {str(e)}")
-                    self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
+                    self.results.append(
+                        {"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)}
+                    )
 
-            self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
+            self.log(
+                f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati."
+            )
             return True
 
         except Exception as e:

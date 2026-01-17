@@ -66,7 +66,8 @@ class PasswordManager:
         kdf = Scrypt(
             salt=salt,
             length=32,
-            n=2**14,  # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
+            n=2
+            ** 14,  # Ridotto per performance su macchine lente, aumentare a 2**17 se possibile
             r=8,
             p=1,
         )

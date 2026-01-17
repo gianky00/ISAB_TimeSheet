@@ -1,10 +1,10 @@
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from src.core.constants import Icons
-from src.utils.helpers import get_asset_path
 from src.gui.widgets.sidebar_button import SidebarButton
+from src.utils.helpers import get_asset_path
 
 
 class SidebarWidget(QFrame):
@@ -15,12 +15,12 @@ class SidebarWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("sidebarFrame")
-        self._is_collapsed = False # Partenza espansa per setup, poi collassiamo
-        
+        self._is_collapsed = False  # Partenza espansa per setup, poi collassiamo
+
         # Larghezze
-        self.expanded_width = 230 # Leggermente più largo per il testo
+        self.expanded_width = 230  # Leggermente più largo per il testo
         self.collapsed_width = 80
-        
+
         self.setFixedWidth(self.expanded_width)
         self.setStyleSheet(
             """
@@ -43,7 +43,7 @@ class SidebarWidget(QFrame):
         """
         )
         self._setup_ui()
-        
+
         # Collassa di default all'avvio
         QTimer.singleShot(0, self._toggle_sidebar)
 
@@ -57,23 +57,27 @@ class SidebarWidget(QFrame):
         header_layout = QHBoxLayout(header_container)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(10)
-        
+
         self.toggle_btn = QPushButton()
         self.toggle_btn.setIcon(QIcon(get_asset_path(Icons.MENU)))
-        self.toggle_btn.setIconSize(self.toggle_btn.sizeHint() * 1.5) # Icona menu un po' più grande
+        self.toggle_btn.setIconSize(
+            self.toggle_btn.sizeHint() * 1.5
+        )  # Icona menu un po' più grande
         self.toggle_btn.setObjectName("toggleBtn")
         self.toggle_btn.setFixedSize(45, 45)
         self.toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_btn.clicked.connect(self._toggle_sidebar)
-        
+
         self.logo_label = QLabel("SyncroJob")
         self.logo_label.setObjectName("logoLabel")
-        self.logo_label.setStyleSheet("font-size: 22px; font-weight: 800; border: none; margin-left: 5px;")
-        
+        self.logo_label.setStyleSheet(
+            "font-size: 22px; font-weight: 800; border: none; margin-left: 5px;"
+        )
+
         header_layout.addWidget(self.toggle_btn, 0, Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(self.logo_label)
         header_layout.addStretch()
-        
+
         layout.addWidget(header_container)
 
         # Separatore
@@ -110,7 +114,9 @@ class SidebarWidget(QFrame):
         layout.addSpacing(10)
 
         # Impostazioni
-        self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
+        self.btn_settings = SidebarButton(
+            "Impostazioni", get_asset_path(Icons.SETTINGS)
+        )
         layout.addWidget(self.btn_settings)
 
         # Map buttons to indices
@@ -135,14 +141,16 @@ class SidebarWidget(QFrame):
     def _toggle_sidebar(self):
         """Espande o collassa la sidebar."""
         self._is_collapsed = not self._is_collapsed
-        target_width = self.collapsed_width if self._is_collapsed else self.expanded_width
-        
+        target_width = (
+            self.collapsed_width if self._is_collapsed else self.expanded_width
+        )
+
         self.setFixedWidth(target_width)
-        
+
         # Gestione visibilità elementi
         self.logo_label.setVisible(not self._is_collapsed)
         self.separator.setVisible(not self._is_collapsed)
-        
+
         # Aggiorna pulsanti
         for btn in self.nav_buttons:
             btn.set_collapsed(self._is_collapsed)

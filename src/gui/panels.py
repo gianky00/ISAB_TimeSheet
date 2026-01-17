@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, QTimer, pyqtSignal
-from PyQt6.QtGui import QIcon, QTextOption
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -40,9 +40,9 @@ from PyQt6.QtWidgets import (
 
 from src.bots.portale_fornitori.timbrature.storage import TimbratureStorage
 from src.core import config_manager
+from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.core.database import db_manager
-from src.core.audit_manager import AuditManager
 from src.core.stats_manager import StatsManager
 from src.gui.formatters import FastTableModel  # Moved from bottom
 
@@ -135,7 +135,9 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
-    bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results (e.g. file paths)
+    bot_results_ready = pyqtSignal(
+        str, list
+    )  # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str)  # status, message
 
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
@@ -313,7 +315,9 @@ class BaseBotPanel(QWidget):
             params={
                 "durata": duration_str,
                 "dettagli": (
-                    "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
+                    "Esecuzione completata correttamente"
+                    if success
+                    else "Esecuzione fallita o interrotta"
                 ),
             },
             status=status,
@@ -325,7 +329,11 @@ class BaseBotPanel(QWidget):
         self._update_status(final_status, final_msg)
 
         # Risultati per Telegram/UI (#2)
-        if self.worker and hasattr(self.worker.bot, "downloaded_files") and self.worker.bot.downloaded_files:
+        if (
+            self.worker
+            and hasattr(self.worker.bot, "downloaded_files")
+            and self.worker.bot.downloaded_files
+        ):
             self.bot_results_ready.emit(self.bot_id, self.worker.bot.downloaded_files)
 
         self.bot_finished.emit(success)
@@ -338,7 +346,11 @@ class BaseBotPanel(QWidget):
                 if success
                 else "Si è verificato un errore durante l'esecuzione."
             )
-            title = f"{self.bot_name} - Completato" if success else f"{self.bot_name} - Errore"
+            title = (
+                f"{self.bot_name} - Completato"
+                if success
+                else f"{self.bot_name} - Errore"
+            )
             # Use getattr or Any cast to avoid mypy error on dynamic method
             from typing import Any
 
@@ -385,7 +397,9 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
-    def _ask_user_input(self, prompt: str, result_container: dict, event: threading.Event):
+    def _ask_user_input(
+        self, prompt: str, result_container: dict, event: threading.Event
+    ):
         """Callback per input utente dal worker (thread-safe via signal)."""
         text, ok = QInputDialog.getText(self, "Richiesta Input", prompt)
         if ok:
@@ -430,7 +444,9 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Usiamo il widget atomico per i parametri comuni
-        self.params_widget = BotParametersWidget(show_date_range=False, show_dest_path=True)
+        self.params_widget = BotParametersWidget(
+            show_date_range=False, show_dest_path=True
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -497,13 +513,20 @@ class ScaricaTSPanel(BaseBotPanel):
         date_da, _ = self.params_widget.get_dates()
         config_manager.set_config_value("last_ts_data", self.data_table.get_data())
         config_manager.set_config_value("last_ts_date", date_da)
-        config_manager.set_config_value("last_ts_fornitore", self.params_widget.get_fornitore())
-        config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
+        config_manager.set_config_value(
+            "last_ts_fornitore", self.params_widget.get_fornitore()
+        )
+        config_manager.set_config_value(
+            "path_scarico_ts", self.params_widget.get_dest_path()
+        )
         config_manager.set_config_value("elabora_ts", self.elabora_ts_check.isChecked())
 
     def _clear_table(self):
         """Pulisce la tabella."""
-        if QMessageBox.question(self, "Conferma", "Svuotare la tabella?") == QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(self, "Conferma", "Svuotare la tabella?")
+            == QMessageBox.StandardButton.Yes
+        ):
             self.data_table.set_data([])
             self._save_data()
 
@@ -605,7 +628,9 @@ class DettagliOdAPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Widget atomico per i parametri
-        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=True)
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=True
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -669,13 +694,20 @@ class DettagliOdAPanel(BaseBotPanel):
         date_da, date_a = self.params_widget.get_dates()
 
         config_manager.set_config_value("last_oda_data", data)
-        config_manager.set_config_value("last_oda_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value(
+            "last_oda_fornitore", self.params_widget.get_fornitore()
+        )
         config_manager.set_config_value("last_oda_date_da", date_da)
         config_manager.set_config_value("last_oda_date_a", date_a)
-        config_manager.set_config_value("path_dettagli_oda", self.params_widget.get_dest_path())
+        config_manager.set_config_value(
+            "path_dettagli_oda", self.params_widget.get_dest_path()
+        )
 
     def _clear_table(self):
-        if QMessageBox.question(self, "Conferma", "Svuotare la tabella?") == QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(self, "Conferma", "Svuotare la tabella?")
+            == QMessageBox.StandardButton.Yes
+        ):
             self.data_table.set_data([])
             self._save_data()
 
@@ -695,7 +727,9 @@ class DettagliOdAPanel(BaseBotPanel):
         username, password = self.get_credentials()
         fornitore = self.params_widget.get_fornitore()
         data_da, data_a = self.params_widget.get_dates()
-        download_path = self.params_widget.get_dest_path() or str(Path.home() / "Downloads")
+        download_path = self.params_widget.get_dest_path() or str(
+            Path.home() / "Downloads"
+        )
 
         rows = self.data_table.get_data()
         self.log_widget.append(f"[DEBUG] Rows retrieved: {len(rows)}")
@@ -780,7 +814,9 @@ class PrenotaBPPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Widget atomico per i parametri - Abilitato date range
-        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=False
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -990,7 +1026,9 @@ class CaricoTSPanel(BaseBotPanel):
     def _clear_table(self):
         """Pulisce la tabella."""
         if (
-            QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?")
+            QMessageBox.question(
+                self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"
+            )
             == QMessageBox.StandardButton.Yes
         ):
             self.data_table.set_data([])
@@ -1019,7 +1057,9 @@ class CaricoTSPanel(BaseBotPanel):
         username, password = self.get_credentials()
 
         if not username or not password:
-            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
+            ToastManager.instance().show(
+                "Configura le credenziali ISAB nelle Impostazioni.", "warning"
+            )
             self._update_status(StatusCard.Status.ERROR, "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
@@ -1116,7 +1156,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(35)
         self.printer_combo.setMinimumWidth(150)
-        self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.printer_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         self.printer_combo.setStyleSheet(
             """
             QComboBox {
@@ -1241,9 +1283,15 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _save_data(self):
         data = self.data_table.get_data()
         config_manager.set_config_value("last_pdl_data", data)
-        config_manager.set_config_value("pdl_print_enabled", self.print_check.isChecked())
-        config_manager.set_config_value("pdl_merge_all_session", self.merge_all_check.isChecked())
-        config_manager.set_config_value("pdl_printer_name", self.printer_combo.currentText())
+        config_manager.set_config_value(
+            "pdl_print_enabled", self.print_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "pdl_merge_all_session", self.merge_all_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "pdl_printer_name", self.printer_combo.currentText()
+        )
         config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
 
     def _clear_table(self):
@@ -1288,8 +1336,12 @@ class ScaricoPDLPanel(BaseBotPanel):
         username, password = self.get_credentials()
 
         if not username or not password:
-            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
-            self._update_status(StatusCard.Status.ERROR, "Credenziali SafeWork mancanti")
+            ToastManager.instance().show(
+                "Configura le credenziali SafeWork nelle Impostazioni.", "warning"
+            )
+            self._update_status(
+                StatusCard.Status.ERROR, "Credenziali SafeWork mancanti"
+            )
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
@@ -1307,7 +1359,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Il valore viene passato da Telegram tramite un attributo temporaneo
         merge_and_send = getattr(self, "merge_and_send_from_telegram", False)
         # Checkbox UI per merge sessione
-        merge_all_session = getattr(self, "merge_all_session_from_telegram", self.merge_all_check.isChecked())
+        merge_all_session = getattr(
+            self, "merge_all_session_from_telegram", self.merge_all_check.isChecked()
+        )
 
         bot_data = []
         for row in raw_data:
@@ -1386,7 +1440,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         # Se ci sono PdL mancanti, aggiorniamo il messaggio della card (Normal condition)
         if missing_list:
             missing_str = ", ".join(missing_list)
-            self._update_status(StatusCard.Status.SUCCESS, f"Completato (Inesistenti: {missing_str})")
+            self._update_status(
+                StatusCard.Status.SUCCESS, f"Completato (Inesistenti: {missing_str})"
+            )
 
         if success and merge_and_send and files_to_send:
             win = self.window()
@@ -1399,7 +1455,9 @@ class ScaricoPDLPanel(BaseBotPanel):
 
                 for file_path in files_to_send:
                     if os.path.exists(file_path):
-                        caption = f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
+                        caption = (
+                            f"📄 **PDL Scaricato**\n`{os.path.basename(file_path)}`"
+                        )
                         cast_win.telegram.send_document_sync(file_path, caption)
 
                 self._on_log("✅ PDF inviati con successo.")
@@ -1415,6 +1473,7 @@ class RicercaPDLPanel(BaseBotPanel):
     """
     Pannello per la ricerca ed esportazione massiva dei PDL da SafeWork.
     """
+
     data_updated = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -1434,13 +1493,15 @@ class RicercaPDLPanel(BaseBotPanel):
 
         # Riga unica per Flag e Sito
         top_row = QHBoxLayout()
-        
+
         # 1. Flag Escludi Chiusi
-        self.exclude_closed_check = QCheckBox("Escludi permessi chiusi, scaduti o eliminati")
+        self.exclude_closed_check = QCheckBox(
+            "Escludi permessi chiusi, scaduti o eliminati"
+        )
         self.exclude_closed_check.setChecked(True)
         self.exclude_closed_check.stateChanged.connect(self._save_data)
         top_row.addWidget(self.exclude_closed_check)
-        
+
         top_row.addSpacing(20)
 
         # 2. Selezione Sito
@@ -1450,7 +1511,7 @@ class RicercaPDLPanel(BaseBotPanel):
         self.site_combo.setMinimumWidth(150)
         self.site_combo.currentTextChanged.connect(self._save_data)
         top_row.addWidget(self.site_combo)
-        
+
         top_row.addStretch()
         params_layout.addLayout(top_row)
 
@@ -1459,25 +1520,32 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _load_saved_data(self):
         config = config_manager.load_config()
-        self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
+        self.exclude_closed_check.setChecked(
+            config.get("pdl_search_exclude_closed", True)
+        )
         saved_site = config.get("pdl_search_site", "Seleziona tutto")
         self.site_combo.setCurrentText(saved_site)
 
     def _save_data(self):
-        config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
-        config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
+        config_manager.set_config_value(
+            "pdl_search_exclude_closed", self.exclude_closed_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "pdl_search_site", self.site_combo.currentText()
+        )
 
     def get_bot_instance(self):
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
+
         username, password = self.get_credentials()
         config = config_manager.load_config()
-        
+
         return SafeWorkPDLSearchBot(
             username=username,
             password=password,
             headless=config.get("browser_headless", False),
             timeout=config.get("browser_timeout", 30),
-            download_path=config_manager.get_download_path()
+            download_path=config_manager.get_download_path(),
         )
 
     def get_credentials(self) -> tuple:
@@ -1500,7 +1568,7 @@ class RicercaPDLPanel(BaseBotPanel):
 
         bot_params = {
             "exclude_closed": self.exclude_closed_check.isChecked(),
-            "site_selection": self.site_combo.currentText()
+            "site_selection": self.site_combo.currentText(),
         }
 
         self.worker = BotWorker(bot, bot_params)
@@ -1511,7 +1579,9 @@ class RicercaPDLPanel(BaseBotPanel):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.log_widget.clear()
-        self.log_widget.append(f"▶ Avvio Ricerca PDL ({self.site_combo.currentText()})...")
+        self.log_widget.append(
+            f"▶ Avvio Ricerca PDL ({self.site_combo.currentText()})..."
+        )
         self.worker.start()
         self.bot_started.emit()
 
@@ -1520,8 +1590,10 @@ class RicercaPDLPanel(BaseBotPanel):
         if success:
             self.data_updated.emit()
 
+
 class PDLDelegate(QStyledItemDelegate):
     """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL."""
+
     def __init__(self, date_columns, parent=None):
         super().__init__(parent)
         self.date_columns = date_columns
@@ -1531,11 +1603,14 @@ class PDLDelegate(QStyledItemDelegate):
         # Abilita il wrap per tutte le colonne tranne quelle date
         if index.column() not in self.date_columns:
             option.features |= option.ViewItemFeature.HasDisplay
-            option.displayAlignment = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            option.displayAlignment = (
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
             option.textElideMode = Qt.TextElideMode.ElideNone
         else:
             # Date: riga singola
             option.textElideMode = Qt.TextElideMode.ElideRight
+
 
 class PDLDBPanel(QWidget):
     """Pannello per la visualizzazione del Database PDL SafeWork con architettura Master-Detail."""
@@ -1543,24 +1618,48 @@ class PDLDBPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         # Colonne della Tabella (Vista Master)
-        self.master_headers = ["N° PDL", "Stato", "Data Creazione", "Area", "Unità", "Descrizione"]
-        
+        self.master_headers = [
+            "N° PDL",
+            "Stato",
+            "Data Creazione",
+            "Area",
+            "Unità",
+            "Descrizione",
+        ]
+
         # Mapping completo per il Dettaglio (Tutte le 19 colonne + ID e Importazione)
         self.full_headers = [
-            "ID", "N° PDL", "Data Creazione", "Area", "Unità", "Ditta", 
-            "Descrizione", "Tipologia", "Stato", "Apparecchiatura", 
-            "Richiedente", "Data Richiesta", "Emittente", "Data Emissione", 
-            "Aprente", "Data Apertura", "Priorità", "Contratto", "Ordine", "Sito", "Importato il"
+            "ID",
+            "N° PDL",
+            "Data Creazione",
+            "Area",
+            "Unità",
+            "Ditta",
+            "Descrizione",
+            "Tipologia",
+            "Stato",
+            "Apparecchiatura",
+            "Richiedente",
+            "Data Richiesta",
+            "Emittente",
+            "Data Emissione",
+            "Aprente",
+            "Data Apertura",
+            "Priorità",
+            "Contratto",
+            "Ordine",
+            "Sito",
+            "Importato il",
         ]
-        
+
         self.model = FastTableModel([], self.master_headers)
-        self._raw_full_data = [] # Buffer per i dati completi
-        
+        self._raw_full_data = []  # Buffer per i dati completi
+
         # Timer per ricerca ritardata (Debounce)
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.refresh_data)
-        
+
         self._setup_ui()
         QTimer.singleShot(50, self.refresh_data)
 
@@ -1572,7 +1671,9 @@ class PDLDBPanel(QWidget):
         # 1. Filtri (Top)
         filter_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Cerca ovunque... (PDL, Ditta, Area, Descrizione...)")
+        self.search_input.setPlaceholderText(
+            "🔍 Cerca ovunque... (PDL, Ditta, Area, Descrizione...)"
+        )
         self.search_input.textChanged.connect(lambda: self.search_timer.start(2000))
         filter_layout.addWidget(self.search_input)
 
@@ -1588,9 +1689,10 @@ class PDLDBPanel(QWidget):
         main_layout.addLayout(filter_layout)
 
         # 2. Contenitore Splitter (Tabella | Dettaglio)
-        from PyQt6.QtWidgets import QSplitter, QScrollArea, QFormLayout
+        from PyQt6.QtWidgets import QFormLayout, QScrollArea, QSplitter
+
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        
+
         # --- TABELLA (MASTER) ---
         self.table = QTableView()
         self.table.setModel(self.model)
@@ -1602,46 +1704,52 @@ class PDLDBPanel(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setItemDelegate(PDLDelegate([2], self.table)) # Data Creazione è indice 2 in questa vista
-        
+        self.table.setItemDelegate(
+            PDLDelegate([2], self.table)
+        )  # Data Creazione è indice 2 in questa vista
+
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         header = self.table.horizontalHeader()
         header.sectionClicked.connect(self._on_header_clicked)
-        
+
         self.splitter.addWidget(self.table)
 
         # --- PANNELLO DETTAGLIO (DETAIL) ---
         detail_container = QWidget()
         detail_layout = QVBoxLayout(detail_container)
         detail_layout.setContentsMargins(5, 0, 5, 0)
-        
+
         detail_title = QLabel("📄 Dettaglio Completo PDL")
-        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
+        detail_title.setStyleSheet(
+            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
+        )
         detail_layout.addWidget(detail_title)
-        
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll_content = QWidget()
         self.form_layout = QFormLayout(scroll_content)
         self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.form_layout.setSpacing(10)
-        
+
         # Placeholder se nulla è selezionato
         self.detail_labels = {}
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            val_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
-            
+
         scroll.setWidget(scroll_content)
         detail_layout.addWidget(scroll)
-        
+
         self.splitter.addWidget(detail_container)
-        self.splitter.setStretchFactor(0, 3) # Tabella più larga
-        self.splitter.setStretchFactor(1, 1) # Dettaglio più stretto
-        
+        self.splitter.setStretchFactor(0, 3)  # Tabella più larga
+        self.splitter.setStretchFactor(1, 1)  # Dettaglio più stretto
+
         main_layout.addWidget(self.splitter)
 
     def _on_selection_changed(self, selected, deselected):
@@ -1649,14 +1757,15 @@ class PDLDBPanel(QWidget):
         indexes = self.table.selectionModel().selectedRows()
         if not indexes:
             return
-        
+
         row_idx = indexes[0].row()
         if row_idx < len(self._raw_full_data):
             data = self._raw_full_data[row_idx]
             # Mapping dati riga su labels dettaglio
             for i, h in enumerate(self.full_headers):
                 val = str(data[i])
-                if val.lower() == "nan": val = ""
+                if val.lower() == "nan":
+                    val = ""
                 self.detail_labels[h].setText(val)
 
     def _on_header_clicked(self, logical_index):
@@ -1680,7 +1789,14 @@ class PDLDBPanel(QWidget):
             params.extend([p, p, p, p, p])
 
         # Ordinamento
-        order_map = {0: "n_pdl", 1: "stato", 2: "data_creazione", 3: "area", 4: "unita", 5: "descrizione_lavoro"}
+        order_map = {
+            0: "n_pdl",
+            1: "stato",
+            2: "data_creazione",
+            3: "area",
+            4: "unita",
+            5: "descrizione_lavoro",
+        }
         if sort_col is not None and sort_col in order_map:
             query += f" ORDER BY {order_map[sort_col]} ASC"
         else:
@@ -1689,19 +1805,23 @@ class PDLDBPanel(QWidget):
         query += " LIMIT 1000"
 
         try:
-            full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+            full_rows = db_manager.execute_query(
+                db_manager.DB_PDL, query, tuple(params)
+            )
             self._raw_full_data = full_rows
-            
+
             # Prepariamo la vista master (Sottoinsieme colonne)
             # Indici: n_pdl(1), stato(8), data_creazione(2), area(3), unita(4), descrizione(6)
             master_rows = []
             for r in full_rows:
                 master_row = [r[1], r[8], r[2], r[3], r[4], r[6]]
-                cleaned_row = [("" if str(val).lower() == "nan" else val) for val in master_row]
+                cleaned_row = [
+                    ("" if str(val).lower() == "nan" else val) for val in master_row
+                ]
                 master_rows.append(cleaned_row)
-            
+
             self.model.update_data(master_rows)
-            
+
             # Ottimizzazione Header Tabella
             header = self.table.horizontalHeader()
             for i in range(len(self.master_headers)):
@@ -1709,15 +1829,20 @@ class PDLDBPanel(QWidget):
 
             self.table.resizeColumnsToContents()
             for i in range(len(self.master_headers)):
-                if i != 5: # Non Descrizione
-                    if header.sectionSize(i) > 180: header.resizeSection(i, 180)
-            
-            QTimer.singleShot(10, lambda: header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch))
+                if i != 5:  # Non Descrizione
+                    if header.sectionSize(i) > 180:
+                        header.resizeSection(i, 180)
+
+            QTimer.singleShot(
+                10,
+                lambda: header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch),
+            )
             if len(master_rows) < 200:
                 QTimer.singleShot(100, self.table.resizeRowsToContents)
-                
+
         except Exception as e:
             print(f"Errore caricamento PDL: {e}")
+
 
 class TimbratureBotPanel(BaseBotPanel):
     """Pannello per il bot Timbrature (Controlli e Log)."""
@@ -1748,7 +1873,9 @@ class TimbratureBotPanel(BaseBotPanel):
         params_layout = QVBoxLayout(params_group)
 
         # Widget atomico
-        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=False
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -1789,10 +1916,14 @@ class TimbratureBotPanel(BaseBotPanel):
 
         # Default dates: ALWAYS Yesterday
         yesterday = QDate.currentDate().addDays(-1)
-        self.params_widget.set_dates(yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy"))
+        self.params_widget.set_dates(
+            yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy")
+        )
 
         # Autopilot
-        self.autopilot_check.setChecked(config.get("timbrature_autopilot_enabled", False))
+        self.autopilot_check.setChecked(
+            config.get("timbrature_autopilot_enabled", False)
+        )
         saved_time = config.get("timbrature_autopilot_time", "09:00")
         self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
 
@@ -1801,11 +1932,17 @@ class TimbratureBotPanel(BaseBotPanel):
             return
 
         date_da, date_a = self.params_widget.get_dates()
-        config_manager.set_config_value("last_timbrature_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value(
+            "last_timbrature_fornitore", self.params_widget.get_fornitore()
+        )
         config_manager.set_config_value("last_timbrature_date_da", date_da)
         config_manager.set_config_value("last_timbrature_date_a", date_a)
-        config_manager.set_config_value("timbrature_autopilot_enabled", self.autopilot_check.isChecked())
-        config_manager.set_config_value("timbrature_autopilot_time", self.time_edit.time().toString("HH:mm"))
+        config_manager.set_config_value(
+            "timbrature_autopilot_enabled", self.autopilot_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "timbrature_autopilot_time", self.time_edit.time().toString("HH:mm")
+        )
 
     def validate_ready(self) -> tuple[bool, str]:
         """Verifica se il pannello è pronto per l'avvio del bot."""
@@ -1919,12 +2056,18 @@ class TimbratureDBPanel(QWidget):
         # --- TAB 1: Database (Timbrature) ---
         self.tab_database = QWidget()
         self._setup_database_tab(self.tab_database)
-        self.tabs.addTab(self.tab_database, QIcon(get_asset_path(Icons.DATABASE)), "Database")
+        self.tabs.addTab(
+            self.tab_database, QIcon(get_asset_path(Icons.DATABASE)), "Database"
+        )
 
         # --- TAB 2: Impostazioni (Dipendenti) ---
         self.tab_settings = QWidget()
         self._setup_settings_tab(self.tab_settings)
-        self.tabs.addTab(self.tab_settings, QIcon(get_asset_path(Icons.SETTINGS_DARK)), "Impostazioni")
+        self.tabs.addTab(
+            self.tab_settings,
+            QIcon(get_asset_path(Icons.SETTINGS_DARK)),
+            "Impostazioni",
+        )
 
         # Connect tab change
         self.tabs.currentChanged.connect(self._on_tab_changed)
@@ -1951,7 +2094,9 @@ class TimbratureDBPanel(QWidget):
             self.reparto_filter.addItem(rep, rep)
         self.reparto_filter.currentIndexChanged.connect(lambda: self.refresh_data())
         self.reparto_filter.setMinimumWidth(150)
-        self.reparto_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.reparto_filter.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         search_layout.addWidget(self.reparto_filter)
 
         # Cantiere Filter
@@ -1961,7 +2106,9 @@ class TimbratureDBPanel(QWidget):
             self.cantiere_filter.addItem(cant, cant)
         self.cantiere_filter.currentIndexChanged.connect(lambda: self.refresh_data())
         self.cantiere_filter.setMinimumWidth(150)
-        self.cantiere_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.cantiere_filter.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         search_layout.addWidget(self.cantiere_filter)
 
         # Import Button
@@ -1981,7 +2128,9 @@ class TimbratureDBPanel(QWidget):
         self.db_table.setModel(self.model)
         self.db_table.verticalHeader().setVisible(False)
         self.db_table.setAlternatingRowColors(True)
-        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.db_table.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.db_table.setSortingEnabled(True)
 
@@ -2047,7 +2196,9 @@ class TimbratureDBPanel(QWidget):
 
         layout.addLayout(header_layout)
 
-        sub = QLabel("Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente.")
+        sub = QLabel(
+            "Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente."
+        )
         sub.setStyleSheet("color: #6c757d; margin-bottom: 5px;")
         layout.addWidget(sub)
 
@@ -2057,7 +2208,9 @@ class TimbratureDBPanel(QWidget):
 
         # Load saved state
         config = config_manager.load_config()
-        self.filter_empty_cb.setChecked(config.get("timbrature_filter_empty_only", False))
+        self.filter_empty_cb.setChecked(
+            config.get("timbrature_filter_empty_only", False)
+        )
 
         self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
         filter_layout.addWidget(self.filter_empty_cb)
@@ -2068,7 +2221,9 @@ class TimbratureDBPanel(QWidget):
         self.settings_table = QTableWidget()
         self.settings_table.verticalHeader().setVisible(False)
         self.settings_table.setColumnCount(4)
-        self.settings_table.setHorizontalHeaderLabels(["Nome", "Cognome", "Reparto", "Cantiere"])
+        self.settings_table.setHorizontalHeaderLabels(
+            ["Nome", "Cognome", "Reparto", "Cantiere"]
+        )
 
         header = self.settings_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -2077,7 +2232,9 @@ class TimbratureDBPanel(QWidget):
 
     def _on_filter_empty_changed(self, state):
         """Save preference and reload settings table."""
-        config_manager.set_config_value("timbrature_filter_empty_only", self.filter_empty_cb.isChecked())
+        config_manager.set_config_value(
+            "timbrature_filter_empty_only", self.filter_empty_cb.isChecked()
+        )
         self._load_settings_data()
 
     def _on_tab_changed(self, index):
@@ -2199,13 +2356,17 @@ class TimbratureDBPanel(QWidget):
             combo_rep = QComboBox()
             combo_rep.addItems([""] + self.reparti)
             combo_rep.setCurrentText(emp["reparto"])
-            combo_rep.setStyleSheet("QComboBox { border: none; background: transparent; }")
+            combo_rep.setStyleSheet(
+                "QComboBox { border: none; background: transparent; }"
+            )
 
             # Cantiere (ComboBox)
             combo_cant = QComboBox()
             combo_cant.addItems([""] + self.cantieri)
             combo_cant.setCurrentText(emp["cantiere"])
-            combo_cant.setStyleSheet("QComboBox { border: none; background: transparent; }")
+            combo_cant.setStyleSheet(
+                "QComboBox { border: none; background: transparent; }"
+            )
 
             # Connect signals with closures
             nome = emp["nome"]
@@ -2213,12 +2374,16 @@ class TimbratureDBPanel(QWidget):
 
             # Update Reparto
             combo_rep.currentTextChanged.connect(
-                lambda text, n=nome, c=cognome: self.storage.update_employee_details(n, c, reparto=text)
+                lambda text, n=nome, c=cognome: self.storage.update_employee_details(
+                    n, c, reparto=text
+                )
             )
 
             # Update Cantiere
             combo_cant.currentTextChanged.connect(
-                lambda text, n=nome, c=cognome: self.storage.update_employee_details(n, c, cantiere=text)
+                lambda text, n=nome, c=cognome: self.storage.update_employee_details(
+                    n, c, cantiere=text
+                )
             )
 
             self.settings_table.setCellWidget(i, 2, combo_rep)
@@ -2251,7 +2416,9 @@ class TimbratureDBPanel(QWidget):
                     params={"file": Path(file_path).name},
                 )
                 self.refresh_data()
-                ToastManager.instance().show("Dati importati correttamente nel database.", "success")
+                ToastManager.instance().show(
+                    "Dati importati correttamente nel database.", "success"
+                )
                 self._load_settings_data()
             else:
                 ToastManager.instance().show("Impossibile importare il file.", "error")

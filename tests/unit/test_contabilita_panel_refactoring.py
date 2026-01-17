@@ -25,7 +25,9 @@ def panel(qtbot, mock_ui_dependencies, mocker):
         "src.gui.widgets.contabilita.certificati_tab.CertificatiCampioneTab",
         return_value=QWidget(),
     )
-    mocker.patch("src.gui.contabilita_kpi_panel.ContabilitaKPIPanel", return_value=QWidget())
+    mocker.patch(
+        "src.gui.contabilita_kpi_panel.ContabilitaKPIPanel", return_value=QWidget()
+    )
     mocker.patch("PyQt6.QtCore.QTimer.singleShot")
     p = ContabilitaPanel()
     qtbot.addWidget(p)

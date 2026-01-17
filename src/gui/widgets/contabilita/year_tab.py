@@ -95,7 +95,9 @@ class ContabilitaYearTab(QWidget):
             display_rows = []
             for row in db_data:
                 # Trasforma i dati in stringhe leggibili per il modello
-                display_row = [str(x) if x is not None else "" for x in row[: len(self.COLUMNS)]]
+                display_row = [
+                    str(x) if x is not None else "" for x in row[: len(self.COLUMNS)]
+                ]
                 display_rows.append(display_row)
 
             self.model.update_data(display_rows)

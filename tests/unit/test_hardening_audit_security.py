@@ -116,7 +116,9 @@ INSERT INTO audit_logs
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)
         mocker.patch("src.utils.security.PasswordManager._KEY_DIR", sec_dir)
-        mocker.patch("src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key")
+        mocker.patch(
+            "src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key"
+        )
 
         with patch("src.utils.security.PasswordManager._instance", None):
             pm = PasswordManager()

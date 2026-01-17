@@ -81,6 +81,9 @@ line-length = 110
 mypy_path = "."
 explicit_package_bases = true
 namespace_packages = true
+exclude = ["build", "dist", "vulture_whitelist.py", "admin", "tests"]
+ignore_missing_imports = true
+check_untyped_defs = false
 
 [tool.deptry]
 ignore = ["DEP001", "DEP002", "DEP003"]

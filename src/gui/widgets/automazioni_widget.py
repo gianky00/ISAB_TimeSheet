@@ -2,16 +2,16 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTabWidget
 
 from src.core.constants import Icons
-from src.utils.helpers import get_asset_path
 from src.gui.panels import (
     CaricoTSPanel,
     DettagliOdAPanel,
     PrenotaBPPanel,
+    RicercaPDLPanel,
     ScaricaTSPanel,
     ScaricoPDLPanel,
-    RicercaPDLPanel,
     TimbratureBotPanel,
 )
+from src.utils.helpers import get_asset_path
 
 
 class AutomazioniWidget(QTabWidget):
@@ -33,18 +33,32 @@ class AutomazioniWidget(QTabWidget):
         self.panel_carico = CaricoTSPanel()
 
         # Aggiungi i tab a Portale Fornitori
-        self.tab_fornitori.addTab(self.panel_dettagli, QIcon(get_asset_path(Icons.LIST)), "Dettagli OdA")
-        self.tab_fornitori.addTab(self.panel_scarico, QIcon(get_asset_path(Icons.DOWNLOAD)), "Scarico TS")
-        self.tab_fornitori.addTab(self.panel_timbrature, QIcon(get_asset_path(Icons.CLOCK)), "Timbrature")
-        self.tab_fornitori.addTab(self.panel_prenota, QIcon(get_asset_path(Icons.TICKET)), "Prenota BP")
-        self.tab_fornitori.addTab(self.panel_carico, QIcon(get_asset_path(Icons.UPLOAD)), "Carico TS")
+        self.tab_fornitori.addTab(
+            self.panel_dettagli, QIcon(get_asset_path(Icons.LIST)), "Dettagli OdA"
+        )
+        self.tab_fornitori.addTab(
+            self.panel_scarico, QIcon(get_asset_path(Icons.DOWNLOAD)), "Scarico TS"
+        )
+        self.tab_fornitori.addTab(
+            self.panel_timbrature, QIcon(get_asset_path(Icons.CLOCK)), "Timbrature"
+        )
+        self.tab_fornitori.addTab(
+            self.panel_prenota, QIcon(get_asset_path(Icons.TICKET)), "Prenota BP"
+        )
+        self.tab_fornitori.addTab(
+            self.panel_carico, QIcon(get_asset_path(Icons.UPLOAD)), "Carico TS"
+        )
 
         # --- TAB 2: SafeWork ---
         self.tab_safework = QTabWidget()
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
-        self.tab_safework.addTab(self.panel_pdl, QIcon(get_asset_path(Icons.SHIELD)), "Scarico PDL")
-        self.tab_safework.addTab(self.panel_pdl_search, QIcon(get_asset_path(Icons.SEARCH)), "Ricerca PDL")
+        self.tab_safework.addTab(
+            self.panel_pdl, QIcon(get_asset_path(Icons.SHIELD)), "Scarico PDL"
+        )
+        self.tab_safework.addTab(
+            self.panel_pdl_search, QIcon(get_asset_path(Icons.SEARCH)), "Ricerca PDL"
+        )
 
         # Aggiunta tab principali
         self.addTab(self.tab_fornitori, "Portale Fornitori")

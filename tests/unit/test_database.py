@@ -53,7 +53,9 @@ class TestDatabaseManager:
 
     def test_execute_query(self, manager, db_path):
         # Create table
-        manager.execute_query(db_path, "CREATE TABLE test (id INTEGER PRIMARY KEY, val TEXT)")
+        manager.execute_query(
+            db_path, "CREATE TABLE test (id INTEGER PRIMARY KEY, val TEXT)"
+        )
 
         # Insert
         manager.execute_query(db_path, "INSERT INTO test (val) VALUES (?)", ("foo",))

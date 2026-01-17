@@ -40,7 +40,9 @@ def test_setup_filters(mock_driver):
     with (
         patch("time.sleep"),
         patch("selenium.webdriver.support.ui.WebDriverWait.until") as mock_wait,
-        patch("src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains") as mock_chains,
+        patch(
+            "src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains"
+        ) as mock_chains,
         patch.object(page, "_wait_for_overlay"),
     ):
         mock_wait.return_value = MagicMock()
@@ -94,7 +96,9 @@ def test_download_excel_logic(mock_driver, tmp_path):
         mock_btn = MagicMock()
         mock_btn.click.side_effect = side_effect_click
 
-        with patch("selenium.webdriver.support.ui.WebDriverWait.until", return_value=mock_btn):
+        with patch(
+            "selenium.webdriver.support.ui.WebDriverWait.until", return_value=mock_btn
+        ):
             res = page._download_excel(tmp_path, "ODA123", "10")
             assert res is True
             assert (tmp_path / "ODA123-10.xlsx").exists()

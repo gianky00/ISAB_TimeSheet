@@ -26,7 +26,9 @@ class TestGUIMajorPanels:
                 panel._on_start()
             assert mock_start.called
 
-    @patch("src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]})
+    @patch(
+        "src.gui.panels.config_manager.load_config", return_value={"fornitori": ["F1"]}
+    )
     def test_scarica_ts_panel_logic(self, mock_conf, qapp, qtbot):
         panel = ScaricaTSPanel()
         qtbot.addWidget(panel)
@@ -40,7 +42,9 @@ class TestGUIMajorPanels:
             assert panel.params_widget.dest_path_edit.text() == "C:/Downloads"
 
     def test_settings_panel_tabs(self, qapp, qtbot):
-        with patch("src.gui.settings_panel.config_manager.load_config", return_value={}):
+        with patch(
+            "src.gui.settings_panel.config_manager.load_config", return_value={}
+        ):
             panel = SettingsPanel()
             qtbot.addWidget(panel)
 

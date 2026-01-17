@@ -152,7 +152,9 @@ class AttivitaProgrammateTab(QWidget):
                         s = ""
                     if col_idx == 12 and s:
                         try:
-                            s = datetime.strptime(s.split(" ")[0], "%Y-%m-%d").strftime("%d/%m/%Y")
+                            s = datetime.strptime(s.split(" ")[0], "%Y-%m-%d").strftime(
+                                "%d/%m/%Y"
+                            )
                         except Exception:
                             pass
                     item = QTableWidgetItem(s)
@@ -197,24 +199,34 @@ class AttivitaProgrammateTab(QWidget):
         f_area, f_stato = self.combo_area.currentText(), self.combo_stato.currentText()
         for r in range(self.table.rowCount()):
             hide = False
-            if f_ps and (not self.table.item(r, 0) or not self.table.item(r, 0).text().strip()):
+            if f_ps and (
+                not self.table.item(r, 0) or not self.table.item(r, 0).text().strip()
+            ):
                 hide = True
             if (
                 not hide
                 and f_po
-                and (not self.table.item(r, 14) or not self.table.item(r, 14).text().strip())
+                and (
+                    not self.table.item(r, 14)
+                    or not self.table.item(r, 14).text().strip()
+                )
             ):
                 hide = True
             if (
                 not hide
                 and f_area != "Tutte"
-                and (not self.table.item(r, 1) or self.table.item(r, 1).text() != f_area)
+                and (
+                    not self.table.item(r, 1) or self.table.item(r, 1).text() != f_area
+                )
             ):
                 hide = True
             if (
                 not hide
                 and f_stato != "Tutti"
-                and (not self.table.item(r, 10) or self.table.item(r, 10).text() != f_stato)
+                and (
+                    not self.table.item(r, 10)
+                    or self.table.item(r, 10).text() != f_stato
+                )
             ):
                 hide = True
             self.table.setRowHidden(r, hide)
@@ -236,7 +248,11 @@ class AttivitaProgrammateTab(QWidget):
                 continue
             if text:
                 row_text = " ".join(
-                    [self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)]
+                    [
+                        self.table.item(r, c).text().lower()
+                        for c in range(cols)
+                        if self.table.item(r, c)
+                    ]
                 )
                 if not all(term in row_text for term in search_terms):
                     self.table.setRowHidden(r, True)

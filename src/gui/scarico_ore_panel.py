@@ -32,7 +32,9 @@ from src.gui.scarico_ore_components import FilterHeaderView, ScaricoOreTableMode
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background dei dati di Scarico Ore Cantiere."""
 
-    finished_signal = pyqtSignal(bool, str, int, int, float)  # Successo, Messaggio, Aggiunti, Rimossi, Durata
+    finished_signal = pyqtSignal(
+        bool, str, int, int, float
+    )  # Successo, Messaggio, Aggiunti, Rimossi, Durata
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str):
@@ -91,7 +93,9 @@ class ScaricoOrePanel(QWidget):
         """Inizializza l'interfaccia e avvia il caricamento asincrono della cache."""
         super().__init__(parent)
         self.worker = None
-        self._last_update_status = None  # Store the status string to persist after reload
+        self._last_update_status = (
+            None  # Store the status string to persist after reload
+        )
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
         self.search_input.setPlaceholderText("⏳ Inizializzazione dati... attendere")
@@ -157,7 +161,9 @@ class ScaricoOrePanel(QWidget):
         header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
         self.table_view.setHorizontalHeader(header)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap
+        )
 
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
@@ -190,7 +196,9 @@ class ScaricoOrePanel(QWidget):
         self.tabs.addTab(self.scarico_tab, "Scarico Ore")
 
         # Connect selection changes
-        self.table_view.selectionModel().selectionChanged.connect(self._update_selection_totals)
+        self.table_view.selectionModel().selectionChanged.connect(
+            self._update_selection_totals
+        )
 
     def _format_number(self, value: float) -> str:
         """Formatta un numero: intero se non ha decimali, altrimenti 2 decimali."""
@@ -288,7 +296,9 @@ class ScaricoOrePanel(QWidget):
                 m, s = divmod(int(duration), 60)
                 time_str = f"{m}m {s}s"
 
-            final_status = f"✅ {timestamp} {added_str} {removed_str} (Tempo: {time_str})"
+            final_status = (
+                f"✅ {timestamp} {added_str} {removed_str} (Tempo: {time_str})"
+            )
             self.status_label.setText(final_status)
             self._last_update_status = final_status
 
@@ -340,7 +350,9 @@ class ScaricoOrePanel(QWidget):
             self.table_view.setDisabled(True)
             QApplication.processEvents()
         else:
-            self.search_input.setPlaceholderText("🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)")
+            self.search_input.setPlaceholderText(
+                "🔍 Filtra dati (es. scavullo 4041)... (Premi Invio)"
+            )
             self.table_view.setDisabled(False)
 
     def _on_loading_progress(self, msg):

@@ -32,7 +32,9 @@ class UpdateBanner(QFrame):
         """Mostra il banner con le informazioni dell'aggiornamento."""
         self._download_url = download_url
         self.update_label.setText(f"🚀 Nuova versione disponibile: v{version}")
-        self.update_label.setToolTip(f"Novità:\n{changelog}" if changelog else "Clicca per scaricare")
+        self.update_label.setToolTip(
+            f"Novità:\n{changelog}" if changelog else "Clicca per scaricare"
+        )
         self.setVisible(True)
 
     def _on_download_clicked(self):

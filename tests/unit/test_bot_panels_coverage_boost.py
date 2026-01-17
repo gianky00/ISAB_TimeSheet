@@ -57,7 +57,9 @@ def test_employee_detail_update(timbrature_db_panel, qtbot):
     combo_rep.setCurrentText("NUOVO_REPARTO")
 
     # Verify call
-    panel.storage.update_employee_details.assert_called_with("Mario", "Rossi", reparto="NUOVO_REPARTO")
+    panel.storage.update_employee_details.assert_called_with(
+        "Mario", "Rossi", reparto="NUOVO_REPARTO"
+    )
 
 
 def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):

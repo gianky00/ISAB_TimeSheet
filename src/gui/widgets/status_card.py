@@ -4,8 +4,8 @@ Card per visualizzare stato con icona e animazioni.
 
 from typing import Optional
 
-from PyQt6.QtCore import QPropertyAnimation, Qt, pyqtProperty, QSize  # type: ignore
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtCore import QPropertyAnimation, QSize, Qt, pyqtProperty  # type: ignore
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from src.core.constants import Icons
@@ -121,18 +121,20 @@ class StatusCard(QFrame):
         icon_path_const, default_msg, color_key = self.STATUS_CONFIG.get(
             self._status, self.STATUS_CONFIG[self.Status.IDLE]
         )
-        
+
         # Load and set Pixmap
         full_path = get_asset_path(icon_path_const)
         pixmap = QIcon(full_path).pixmap(QSize(24, 24))
         self._icon_label.setPixmap(pixmap)
-        
+
         self._status_label.setText(custom_message or default_msg)
         self._apply_style()
 
     def _apply_style(self):
         """Applica il foglio di stile QSS dinamico con il colore dell'accento di stato."""
-        _, _, color_key = self.STATUS_CONFIG.get(self._status, self.STATUS_CONFIG[self.Status.IDLE])
+        _, _, color_key = self.STATUS_CONFIG.get(
+            self._status, self.STATUS_CONFIG[self.Status.IDLE]
+        )
 
         accent = getattr(self._palette, color_key, self._palette.primary)
 

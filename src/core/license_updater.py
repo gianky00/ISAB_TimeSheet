@@ -108,7 +108,8 @@ def check_grace_period():
 
     if not os.path.exists(token_path):
         raise Exception(
-            "Nessuna validazione online precedente.\n" "Connessione internet richiesta per il primo avvio."
+            "Nessuna validazione online precedente.\n"
+            "Connessione internet richiesta per il primo avvio."
         )
 
     try:

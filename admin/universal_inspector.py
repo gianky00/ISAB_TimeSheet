@@ -46,7 +46,9 @@ class BotArchitect:
         if os.path.exists(INSPECTOR_DIR):
             shutil.rmtree(INSPECTOR_DIR)
         os.makedirs(INSPECTOR_DIR)
-        self.log_to_console("🚀 ISPETTORE PRONTO. Cartella log_inspector inizializzata.")
+        self.log_to_console(
+            "🚀 ISPETTORE PRONTO. Cartella log_inspector inizializzata."
+        )
 
     def log_to_console(self, text):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {text}")
@@ -64,28 +66,38 @@ class BotArchitect:
         config_frame = ttk.Frame(notebook)
         notebook.add(config_frame, text=" ⚙️ Setup ")
 
-        ttk.Label(config_frame, text="Inizia Sessione di Analisi", font=("Arial", 12, "bold")).pack(pady=20)
+        ttk.Label(
+            config_frame, text="Inizia Sessione di Analisi", font=("Arial", 12, "bold")
+        ).pack(pady=20)
 
         selected_url = tk.StringVar()
         ttk.Label(config_frame, text="Seleziona Portale Target:").pack(pady=5)
-        combo = ttk.Combobox(config_frame, textvariable=selected_url, state="readonly", width=40)
+        combo = ttk.Combobox(
+            config_frame, textvariable=selected_url, state="readonly", width=40
+        )
         combo["values"] = list(URL_MAP.keys())
         combo.current(0)
         combo.pack(pady=5)
 
-        ttk.Label(config_frame, text="Output: admin/log_inspector/", foreground="blue").pack(pady=10)
+        ttk.Label(
+            config_frame, text="Output: admin/log_inspector/", foreground="blue"
+        ).pack(pady=10)
 
         def on_confirm():
             root.quit()
             root.destroy()
 
-        ttk.Button(config_frame, text="🚀 AVVIA ISPEZIONE", command=on_confirm).pack(side="bottom", pady=30)
+        ttk.Button(config_frame, text="🚀 AVVIA ISPEZIONE", command=on_confirm).pack(
+            side="bottom", pady=30
+        )
 
         # --- TAB 2: GUIDA ---
         guide_frame = ttk.Frame(notebook)
         notebook.add(guide_frame, text=" 📖 Guida ")
 
-        guide_text = scrolledtext.ScrolledText(guide_frame, wrap=tk.WORD, font=("Consolas", 10))
+        guide_text = scrolledtext.ScrolledText(
+            guide_frame, wrap=tk.WORD, font=("Consolas", 10)
+        )
         guide_text.pack(expand=True, fill="both", padx=5, pady=5)
 
         instructions = """
@@ -134,17 +146,23 @@ class BotArchitect:
             if portal_name != "Safework"
             else self.config.get("safework_accounts", [])
         )
-        acc = next((a for a in accounts if a.get("default")), accounts[0] if accounts else None)
+        acc = next(
+            (a for a in accounts if a.get("default")), accounts[0] if accounts else None
+        )
         if not acc:
             return
         u, p = acc.get("username"), acc.get("password")
         try:
             if portal_name == "Safework":
                 WebDriverWait(self.driver, 15).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[@class='ms-choice']"))
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "//button[@class='ms-choice']")
+                    )
                 ).click()
                 WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, "//span[normalize-space()='ISAB Sud']"))
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "//span[normalize-space()='ISAB Sud']")
+                    )
                 ).click()
                 self.driver.find_element(By.ID, "inpUtente").send_keys(u)
                 self.driver.find_element(By.ID, "inpPassword").send_keys(p)
@@ -174,7 +192,9 @@ class BotArchitect:
 
         self.log_to_console(f"📸 SNAPSHOT {self.state_counter}: {state_name}")
         self.driver.save_screenshot(os.path.join(state_path, "view.png"))
-        with open(os.path.join(state_path, "structure.html"), "w", encoding="utf-8") as f:
+        with open(
+            os.path.join(state_path, "structure.html"), "w", encoding="utf-8"
+        ) as f:
             f.write(self.driver.page_source)
 
         elements = self.driver.execute_script(self._get_ultimate_scanner_js())

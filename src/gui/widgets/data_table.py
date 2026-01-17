@@ -2,7 +2,7 @@
 Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QIcon
 from PyQt6.QtWidgets import (
     QHBoxLayout,

@@ -294,7 +294,9 @@ def deploy_netlify(netlify_dir):
     try:
         subprocess.run(["netlify", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli")
+        print(
+            "[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli"
+        )
         return False
 
     # Deploy
@@ -320,7 +322,9 @@ def deploy_netlify(netlify_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
-    parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify deployment")
+    parser.add_argument(
+        "--no-deploy", action="store_true", help="Skip Netlify deployment"
+    )
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
     args = parser.parse_args()
 

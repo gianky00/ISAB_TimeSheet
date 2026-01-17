@@ -1,21 +1,23 @@
+import glob
 import os
 import time
-import glob
-import traceback
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
-from typing import List, Dict, Any, Optional
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.base import SafeworkBaseBot
 from src.core.database import db_manager
 
+
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
     """Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork."""
 
-    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+    def __init__(
+        self, username, password, headless=False, timeout=30, download_path=""
+    ):
         super().__init__(username, password, headless, timeout, download_path)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
 
@@ -64,11 +66,15 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
         try:
             self.log(f"🔐 Inserimento credenziali per utente: {self.username}")
-            u_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente")))
+            u_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpUtente"))
+            )
             u_field.clear()
             u_field.send_keys(self.username)
 
-            p_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword")))
+            p_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpPassword"))
+            )
             p_field.clear()
             p_field.send_keys(self.password)
 
@@ -89,10 +95,14 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
         return True
 
-    def run(self, params: Dict[str, Any]) -> bool:
+    def run(self, data: List[Dict[str, Any]]) -> bool:
         """Esegue la ricerca e l'esportazione dei PDL."""
         # NOTA: _login() viene chiamato automaticamente da BaseBot prima di run()
-        
+        if not self.driver or not self.wait:
+            self.log("❌ Driver non inizializzato correttamente.")
+            return False
+
+        params = data[0] if data else {}
         exclude_closed = params.get("exclude_closed", True)
         site_selection = params.get("site_selection", "Seleziona tutto")
 
@@ -100,10 +110,12 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         try:
             self.log("🏠 Clic su Home Page...")
             # Attendi che il tasto home sia cliccabile
-            btn_home = self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-actHomePage")))
+            btn_home = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "topIcon-actHomePage"))
+            )
             btn_home.click()
             self.log("⏳ Attesa caricamento Home Page...")
-            time.sleep(3) # Attesa generica post-click Home
+            time.sleep(3)  # Attesa generica post-click Home
             self._attendi_scomparsa_overlay()
         except Exception as e:
             self.log(f"⚠️ Errore clic Home Page: {e}")
@@ -112,10 +124,12 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         try:
             self.log("🔍 Clic su Ricerca PdL (sideBar)...")
             # Attendi che il tasto ricerca sia cliccabile
-            btn_ricerca = self.wait.until(EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL")))
+            btn_ricerca = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL"))
+            )
             btn_ricerca.click()
             self.log("⏳ Attesa caricamento pagina Ricerca...")
-            time.sleep(3) # Attesa generica post-click Ricerca
+            time.sleep(3)  # Attesa generica post-click Ricerca
             self._attendi_scomparsa_overlay()
         except Exception as e:
             self.log(f"❌ Errore apertura Ricerca PdL: {e}")
@@ -123,7 +137,9 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
         # 3. Gestione Flag "Escludi chiusi"
         try:
-            checkbox = self.wait.until(EC.presence_of_element_located((By.ID, "fldEscludiChiusi")))
+            checkbox = self.wait.until(
+                EC.presence_of_element_located((By.ID, "fldEscludiChiusi"))
+            )
             is_checked = checkbox.is_selected()
             if is_checked != exclude_closed:
                 self.log(f"🖱️ Impostazione checkbox 'Escludi chiusi' a {exclude_closed}")
@@ -133,20 +149,24 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.log(f"⚠️ Errore gestione checkbox: {e}")
 
         # 4. Iterazione Siti
-        sites_to_process = self.sites if site_selection == "Seleziona tutto" else [site_selection]
-        
+        sites_to_process = (
+            self.sites if site_selection == "Seleziona tutto" else [site_selection]
+        )
+
         for site in sites_to_process:
             if not self._select_site_and_search(site):
                 self.log(f"❌ Errore ricerca per sito {site}")
                 continue
-            
+
             excel_file = self._export_excel(site)
             if excel_file:
                 self._import_to_db(excel_file)
                 # Eliminazione file dopo importazione
                 try:
                     os.remove(excel_file)
-                    self.log(f"🗑️ File temporaneo rimosso: {os.path.basename(excel_file)}")
+                    self.log(
+                        f"🗑️ File temporaneo rimosso: {os.path.basename(excel_file)}"
+                    )
                 except Exception as e:
                     self.log(f"⚠️ Impossibile rimuovere il file {excel_file}: {e}")
             else:
@@ -156,13 +176,26 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
     def _select_site_and_search(self, site_name: str) -> bool:
         """Seleziona il sito dal menu e clicca Cerca."""
+        if not self.wait:
+            return False
         try:
             self.log(f"🏢 Selezione sito: {site_name}")
-            site_dropdown = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'ISAB Sud') or contains(text(), 'ISAB Nord') or contains(text(), 'IGCC') or contains(text(), 'Sito')]")))
+            site_dropdown = self.wait.until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        "//span[contains(text(), 'ISAB Sud') or contains(text(), 'ISAB Nord') or contains(text(), 'IGCC') or contains(text(), 'Sito')]",
+                    )
+                )
+            )
             site_dropdown.click()
             time.sleep(1)
 
-            option = self.wait.until(EC.element_to_be_clickable((By.XPATH, f"//li//span[text()='{site_name}']")))
+            option = self.wait.until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, f"//li//span[text()='{site_name}']")
+                )
+            )
             option.click()
             time.sleep(1)
 
@@ -176,18 +209,23 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
     def _export_excel(self, site_name: str) -> Optional[str]:
         """Esporta e attende download."""
+        if not self.wait:
+            return None
         try:
             self.log(f"📥 Esportazione Excel per {site_name}...")
             ts_start = time.time()
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnEsporta"))).click()
-            
+
             timeout = 600
             end_time = time.time() + timeout
             while time.time() < end_time:
                 files = glob.glob(os.path.join(self.download_path, "Ricerca*.xlsx"))
                 new_files = [f for f in files if os.path.getmtime(f) > ts_start]
                 if new_files:
-                    if not any(f.endswith(".crdownload") for f in glob.glob(os.path.join(self.download_path, "*"))):
+                    if not any(
+                        f.endswith(".crdownload")
+                        for f in glob.glob(os.path.join(self.download_path, "*"))
+                    ):
                         latest_file = max(new_files, key=os.path.getmtime)
                         return latest_file
                 time.sleep(2)
@@ -199,28 +237,44 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
     def _import_to_db(self, file_path: str):
         """Importazione massiva in SQLite."""
         try:
-            self.log(f"🗄️ Importazione in database...")
+            self.log("🗄️ Importazione in database...")
             df = pd.read_excel(file_path)
             mapping = {
-                'N° PDL': 'n_pdl', 'DATA CREAZIONE': 'data_creazione', 'AREA': 'area',
-                'UNITÀ': 'unita', 'DITTA': 'ditta', 'DESCRIZIONE DEL LAVORO': 'descrizione_lavoro',
-                'TIPOLOGIA': 'tipologia', 'STATO': 'stato', 'APPARECCHIATURA': 'apparecchiatura',
-                'RICHIEDENTE': 'richiedente', 'DATA RICHIESTA': 'data_richiesta',
-                'EMITTENTE': 'emittente', 'DATA EMISSIONE': 'data_emissione',
-                'APRENTE': 'aprente', 'DATA APERTURA': 'data_apertura',
-                'PRIORITÀ': 'priorita', 'CONTRATTO': 'contratto', 'ORDINE': 'ordine', 'SITO': 'sito'
+                "N° PDL": "n_pdl",
+                "DATA CREAZIONE": "data_creazione",
+                "AREA": "area",
+                "UNITÀ": "unita",
+                "DITTA": "ditta",
+                "DESCRIZIONE DEL LAVORO": "descrizione_lavoro",
+                "TIPOLOGIA": "tipologia",
+                "STATO": "stato",
+                "APPARECCHIATURA": "apparecchiatura",
+                "RICHIEDENTE": "richiedente",
+                "DATA RICHIESTA": "data_richiesta",
+                "EMITTENTE": "emittente",
+                "DATA EMISSIONE": "data_emissione",
+                "APRENTE": "aprente",
+                "DATA APERTURA": "data_apertura",
+                "PRIORITÀ": "priorita",
+                "CONTRATTO": "contratto",
+                "ORDINE": "ordine",
+                "SITO": "sito",
             }
             df.rename(columns=mapping, inplace=True)
             for col in mapping.values():
-                if col not in df.columns: df[col] = ""
-            
-            data_to_insert = [tuple(str(val) for val in row) for row in df[list(mapping.values())].values]
+                if col not in df.columns:
+                    df[col] = ""
 
-            query = f"INSERT INTO pdl ({', '.join(mapping.values())}) VALUES ({', '.join(['?']*len(mapping))})"
-            
+            data_to_insert = [
+                tuple(str(val) for val in row)
+                for row in df[list(mapping.values())].values
+            ]
+
+            query = f"INSERT INTO pdl ({', '.join(mapping.values())}) VALUES ({', '.join(['?'] * len(mapping))})"
+
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)
-            
+
             self.log(f"✅ {len(data_to_insert)} righe importate.")
         except Exception as e:
             self.log(f"❌ Errore importazione: {e}")

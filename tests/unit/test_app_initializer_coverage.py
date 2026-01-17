@@ -11,9 +11,13 @@ class TestAppInitializerCoverage:
     def mock_license(self, mocker):
         """Mock per le funzioni di licenza."""
         return {
-            "get_status": mocker.patch("src.core.app_initializer.get_detailed_license_status"),
+            "get_status": mocker.patch(
+                "src.core.app_initializer.get_detailed_license_status"
+            ),
             "run_update": mocker.patch("src.core.app_initializer.run_update"),
-            "check_grace": mocker.patch("src.core.app_initializer.check_emergency_grace_period"),
+            "check_grace": mocker.patch(
+                "src.core.app_initializer.check_emergency_grace_period"
+            ),
             "get_hwid": mocker.patch("src.core.app_initializer.get_hardware_id"),
         }
 

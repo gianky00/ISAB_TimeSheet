@@ -40,7 +40,9 @@ class TestSearchControllerCoverage(unittest.TestCase):
 
     @patch("src.core.contabilita_manager.ContabilitaManager")
     def test_search_oda_found(self, MockCM):
-        MockCM.search_oda.return_value = [{"codice_oda": "123", "descrizione": "Test OdA"}]
+        MockCM.search_oda.return_value = [
+            {"codice_oda": "123", "descrizione": "Test OdA"}
+        ]
         menu = MagicMock()
 
         count = self.controller._search_oda("123", menu)
@@ -60,7 +62,9 @@ class TestSearchControllerCoverage(unittest.TestCase):
         MockCM.search_extended.return_value = {
             "GIORNALIERE": [{"data": "2023", "personale": "P1", "descrizione": "D1"}],
             "CANTIERE": [{"data": "2023", "personale": "P2", "commessa": "C1"}],
-            "CERTIFICATI": [{"matricola": "M1", "modello": "Mod1", "costruttore": "Cost1"}],
+            "CERTIFICATI": [
+                {"matricola": "M1", "modello": "Mod1", "costruttore": "Cost1"}
+            ],
         }
         menu = MagicMock()
 
@@ -73,7 +77,9 @@ class TestSearchControllerCoverage(unittest.TestCase):
 
     @patch("src.bots.portale_fornitori.timbrature.storage.TimbratureStorage")
     def test_search_employees_found(self, MockStorage):
-        MockStorage.return_value.search_employees.return_value = [{"cognome": "Rossi", "nome": "Mario"}]
+        MockStorage.return_value.search_employees.return_value = [
+            {"cognome": "Rossi", "nome": "Mario"}
+        ]
         menu = MagicMock()
 
         count = self.controller._search_employees("Rossi", menu)
@@ -108,5 +114,10 @@ class TestSearchControllerCoverage(unittest.TestCase):
 
         self.controller._search_oda.assert_called()
         # "No results" should NOT be added
-        self.assertFalse(any("Nessun risultato" in str(call) for call in mock_menu.addAction.mock_calls))
+        self.assertFalse(
+            any(
+                "Nessun risultato" in str(call)
+                for call in mock_menu.addAction.mock_calls
+            )
+        )
         mock_menu.exec.assert_called()

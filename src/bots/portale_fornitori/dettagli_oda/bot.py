@@ -107,7 +107,9 @@ class DettagliOdABot(BaseBot):
                 self.log("❌ Fornitore non selezionabile.")
                 continue
 
-            if page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir):
+            if page.process_oda(
+                oda, contract, self.data_da, self.data_a, source_dir, dest_dir
+            ):
                 success += 1
 
             time.sleep(1)
