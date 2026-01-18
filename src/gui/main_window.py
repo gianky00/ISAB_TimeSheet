@@ -358,9 +358,9 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         """Configura l'interfaccia con Placeholders per Lazy Loading."""
         self.status_bar = QStatusBar()
-        # Increased height for better visibility
+        # Optimized height for compact footer
         self.status_bar.setStyleSheet(
-            "QStatusBar { background: #FFFFFF; border-top: 1px solid #E0E0E0; min-height: 90px; }"
+            "QStatusBar { background: #FFFFFF; border-top: 1px solid #E0E0E0; min-height: 65px; }"
         )
         self.setStatusBar(self.status_bar)
 

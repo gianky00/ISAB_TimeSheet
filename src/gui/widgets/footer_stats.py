@@ -6,16 +6,17 @@ Implementa logica a due fasi: FASE 1 (Boot) e FASE 2 (Operativo).
 
 import os
 import time
+from pathlib import Path
 from typing import Optional
 
 import psutil
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QProgressBar,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -61,8 +62,8 @@ class StartupConsole(QLabel):
             QLabel {
                 color: #546E7A;
                 font-family: 'Segoe UI Semibold';
-                font-size: 11px;
-                padding: 0 20px;
+                font-size: 10px;
+                padding: 0 15px;
                 background: transparent;
             }
         """
@@ -74,7 +75,7 @@ class StartupConsole(QLabel):
         color = "#dc3545" if is_error else "#546E7A"
         self.setText(message)
         self.setStyleSheet(
-            f"color: {color}; font-family: 'Segoe UI Semibold'; font-size: 11px; padding: 0 20px;"
+            f"color: {color}; font-family: 'Segoe UI Semibold'; font-size: 10px; padding: 0 15px;"
         )
         self._log_queue.append((message, is_error))
         # Mantieni solo gli ultimi 100 messaggi
@@ -96,94 +97,120 @@ class StartupConsole(QLabel):
 
 class FooterLeftWidget(QWidget):
     """
-    Parte sinistra del footer: alterna tra FASE 1 (Telemetria) e FASE 2 (Business Info).
+    Parte sinistra del footer: Business Info (Cliente, Scadenza, Ultimo Accesso, Accounts).
+    Layout orizzontale ottimizzato con icone per gli account.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(15, 8, 0, 8)
-        layout.setSpacing(20)
+        layout.setContentsMargins(12, 4, 0, 4)
+        layout.setSpacing(16)
 
-        # FASE 2: Business Info Items - Colonna 1 (Cliente/Scadenza verticale)
-        col1_widget = QWidget()
-        col1_layout = QVBoxLayout(col1_widget)
-        col1_layout.setContentsMargins(0, 0, 0, 0)
-        col1_layout.setSpacing(8)
+        # Cliente
+        self.client_item = QLabel()
+        self.client_item.setStyleSheet(
+            "color: #0d6efd; font-weight: bold; font-size: 12px; background: transparent;"
+        )
+        layout.addWidget(self.client_item)
 
-        self.client_item = FooterItemWidget("CLIENTE:", color="#0d6efd")
-        self.client_item.lbl_tag.setStyleSheet(
-            "color: #0d6efd; font-weight: bold; font-size: 13px; background: transparent;"
-        )
-        self.client_item.lbl_val.setStyleSheet(
-            "color: #212529; font-size: 13px; font-weight: 600; background: transparent;"
-        )
-        col1_layout.addWidget(self.client_item)
-
-        self.expiry_item = FooterItemWidget("SCADENZA:", color="#6c757d")
-        self.expiry_item.lbl_tag.setStyleSheet(
-            "color: #6c757d; font-weight: bold; font-size: 12px; background: transparent;"
-        )
-        self.expiry_item.lbl_val.setStyleSheet(
-            "color: #495057; font-size: 12px; background: transparent;"
-        )
-        col1_layout.addWidget(self.expiry_item)
-
-        layout.addWidget(col1_widget)
         self._add_separator(layout)
 
-        # FASE 2: Accesso/Account - Colonna 2 (Ultimo Accesso + Account verticale)
-        col2_widget = QWidget()
-        col2_layout = QVBoxLayout(col2_widget)
-        col2_layout.setContentsMargins(0, 0, 0, 0)
-        col2_layout.setSpacing(8)
+        # Scadenza
+        self.expiry_item = QLabel()
+        self.expiry_item.setStyleSheet(
+            "color: #6c757d; font-weight: 600; font-size: 11px; background: transparent;"
+        )
+        layout.addWidget(self.expiry_item)
 
-        self.last_login_item = FooterItemWidget("ULTIMO ACCESSO:", color="#6c757d")
-        self.last_login_item.lbl_tag.setStyleSheet(
-            "color: #6c757d; font-weight: bold; font-size: 12px; background: transparent;"
-        )
-        self.last_login_item.lbl_val.setStyleSheet(
-            "color: #495057; font-size: 12px; background: transparent;"
-        )
-        col2_layout.addWidget(self.last_login_item)
+        self._add_separator(layout)
 
-        # Account Info (FASE 2) - Portale Fornitori sopra, SafeWork sotto
-        self.portale_item = FooterItemWidget("Portale Fornitori:", color="#1565C0")
-        self.portale_item.lbl_tag.setStyleSheet(
-            "color: #1565C0; font-weight: bold; font-size: 12px; background: transparent;"
+        # Ultimo Accesso
+        self.last_login_item = QLabel()
+        self.last_login_item.setStyleSheet(
+            "color: #495057; font-weight: 600; font-size: 11px; background: transparent;"
         )
-        self.portale_item.lbl_val.setStyleSheet(
-            "color: #1565C0; font-size: 12px; font-weight: 600; background: transparent;"
-        )
-        col2_layout.addWidget(self.portale_item)
+        layout.addWidget(self.last_login_item)
 
-        self.safe_item = FooterItemWidget("SafeWork:", color="#D81B60")
-        self.safe_item.lbl_tag.setStyleSheet(
-            "color: #D81B60; font-weight: bold; font-size: 12px; background: transparent;"
-        )
-        self.safe_item.lbl_val.setStyleSheet(
-            "color: #D81B60; font-size: 12px; font-weight: 600; background: transparent;"
-        )
-        col2_layout.addWidget(self.safe_item)
+        self._add_separator(layout)
 
-        layout.addWidget(col2_widget)
+        # Portale Fornitori con icona
+        portale_container = QWidget()
+        portale_layout = QHBoxLayout(portale_container)
+        portale_layout.setContentsMargins(0, 0, 0, 0)
+        portale_layout.setSpacing(6)
+
+        self.portale_icon = QLabel()
+        self.portale_icon.setFixedSize(16, 16)
+        self._set_icon(self.portale_icon, "globe.svg", "#1565C0")
+        portale_layout.addWidget(self.portale_icon)
+
+        self.portale_item = QLabel()
+        self.portale_item.setStyleSheet(
+            "color: #1565C0; font-weight: 600; font-size: 11px; background: transparent;"
+        )
+        portale_layout.addWidget(self.portale_item)
+        layout.addWidget(portale_container)
+
+        self._add_separator(layout)
+
+        # SafeWork con icona
+        safe_container = QWidget()
+        safe_layout = QHBoxLayout(safe_container)
+        safe_layout.setContentsMargins(0, 0, 0, 0)
+        safe_layout.setSpacing(6)
+
+        self.safe_icon = QLabel()
+        self.safe_icon.setFixedSize(16, 16)
+        self._set_icon(self.safe_icon, "shield.svg", "#D81B60")
+        safe_layout.addWidget(self.safe_icon)
+
+        self.safe_item = QLabel()
+        self.safe_item.setStyleSheet(
+            "color: #D81B60; font-weight: 600; font-size: 11px; background: transparent;"
+        )
+        safe_layout.addWidget(self.safe_item)
+        layout.addWidget(safe_container)
+
         layout.addStretch()
-
         self.refresh_accounts()
+
+    @staticmethod
+    def _set_icon(label: QLabel, icon_name: str, color: str):
+        """Carica un'icona SVG e la colora."""
+        icon_path = Path(f"assets/icons/{icon_name}")
+        if icon_path.exists():
+            with open(icon_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            # Sostituisci il colore nell'SVG
+            svg_content = svg_content.replace(
+                'stroke="currentColor"', f'stroke="{color}"'
+            )
+            svg_content = svg_content.replace('stroke="black"', f'stroke="{color}"')
+            svg_content = svg_content.replace('fill="currentColor"', f'fill="{color}"')
+            svg_content = svg_content.replace('fill="black"', f'fill="{color}"')
+
+            # Converte SVG a pixmap
+            pixmap = QPixmap()
+            pixmap.loadFromData(svg_content.encode())
+            if not pixmap.isNull():
+                label.setPixmap(
+                    pixmap.scaledToWidth(16, Qt.TransformationMode.SmoothTransformation)
+                )
 
     def _add_separator(self, layout):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
-        line.setFixedHeight(18)
-        line.setStyleSheet("color: #CFD8DC; border-left: 1px solid #CFD8DC;")
+        line.setFixedHeight(14)
+        line.setStyleSheet("color: #E0E0E0; border-left: 1px solid #E0E0E0;")
         layout.addWidget(line)
 
     def update_info(self, client: str, expiry: str, last_login: str = ""):
         """Aggiorna le info di business (FASE 2)."""
-        self.client_item.set_text(client)
-        self.expiry_item.set_text(expiry)
+        self.client_item.setText(f"<b>{client}</b>")
+        self.expiry_item.setText(f"Scad: {expiry}")
         if last_login:
-            self.last_login_item.set_text(last_login)
+            self.last_login_item.setText(f"Acc: {last_login}")
 
     def refresh_accounts(self):
         """Aggiorna lo stato dei bot account."""
@@ -194,8 +221,8 @@ class FooterLeftWidget(QWidget):
         portale_user = self._get_default_account(accounts)
         safe_user = self._get_default_account(safework)
 
-        self.portale_item.set_text(portale_user or "N.C.")
-        self.safe_item.set_text(safe_user or "N.C.")
+        self.portale_item.setText(portale_user or "N.C.")
+        self.safe_item.setText(safe_user or "N.C.")
 
     @staticmethod
     def _get_default_account(accounts: list) -> Optional[str]:
@@ -430,7 +457,7 @@ class FooterStatsManager(QWidget):
             "✓ Sistema SyncroJob pronto. Infrastruttura operativa completamente caricata e sincronizzata."
         )
         self.center_console.setStyleSheet(
-            """color: #2E7D32; font-family: 'Segoe UI Semibold'; font-size: 12px; padding: 0 20px; font-weight: 600;"""
+            """color: #2E7D32; font-family: 'Segoe UI Semibold'; font-size: 11px; padding: 0 15px; font-weight: 600;"""
         )
         self.right_widget.show_operational()
         if client_name or expiry or last_login:
