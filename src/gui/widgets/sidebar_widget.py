@@ -43,6 +43,7 @@ class SidebarGroup(QWidget):
 
         self.header_btn.clicked.connect(self.toggle_group)
         self.children_btns = []
+        self._was_expanded = False  # Memorizza stato apertura prima del collasso
 
     def add_child(self, btn: SidebarButton):
         self.content_layout.addWidget(btn)
@@ -51,6 +52,8 @@ class SidebarGroup(QWidget):
     def toggle_group(self):
         is_visible = self.content_area.isVisible()
         self.content_area.setVisible(not is_visible)
+        # Aggiorna anche lo stato memorizzato
+        self._was_expanded = not is_visible
 
     def set_collapsed(self, collapsed):
         self.header_btn.set_collapsed(collapsed)
@@ -58,7 +61,12 @@ class SidebarGroup(QWidget):
             btn.set_collapsed(collapsed)
 
         if collapsed:
+            # Salva lo stato corrente prima di collassare
+            self._was_expanded = self.content_area.isVisible()
             self.content_area.setVisible(False)
+        else:
+            # Ripristina lo stato salvato quando si espande
+            self.content_area.setVisible(self._was_expanded)
 
     def set_active_index(self, index, group_indices):
         """Gestisce lo stato attivo del gruppo e dei figli."""
@@ -77,6 +85,7 @@ class SidebarWidget(QFrame):
 
     navigation_requested = pyqtSignal(int)
     automation_tab_requested = pyqtSignal(int)  # 0: Fornitori, 1: Safework
+    notifications_tab_requested = pyqtSignal(int)  # 0: Notifiche, 1: Audit
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -93,8 +102,9 @@ class SidebarWidget(QFrame):
             """
             QFrame#sidebarFrame {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #263238, stop:1 #37474F); /* Dark Blue Grey Theme */
+                    stop:0 #1E293B, stop:1 #0F172A); /* Dark Navy Blue Theme */
                 border-right: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
             }
             QLabel { color: white; background: transparent; }
         """
@@ -133,7 +143,6 @@ class SidebarWidget(QFrame):
         for btn in [
             self.btn_home,
             self.btn_lyra,
-            self.btn_notifications,
             self.btn_help,
             self.btn_settings,
         ]:
@@ -142,6 +151,7 @@ class SidebarWidget(QFrame):
         # Aggiorna Gruppi
         self.group_db.set_collapsed(self._is_collapsed)
         self.group_automazioni.set_collapsed(self._is_collapsed)
+        self.group_notifiche.set_collapsed(self._is_collapsed)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -234,10 +244,14 @@ class SidebarWidget(QFrame):
         self.btn_lyra.clicked.connect(lambda: self._handle_click(2))
         layout.addWidget(self.btn_lyra)
 
-        # 9: Notifiche
-        self.btn_notifications = SidebarButton("Notifiche", get_asset_path(Icons.BELL))
-        self.btn_notifications.clicked.connect(lambda: self._handle_click(9))
-        layout.addWidget(self.btn_notifications)
+        # -- GRUPPO NOTIFICHE (Livello 1) --
+        self.group_notifiche = SidebarGroup("Notifiche", get_asset_path(Icons.BELL))
+        layout.addWidget(self.group_notifiche)
+
+        # Figlio: Audit
+        self.btn_audit = SidebarChildButton("Audit", get_asset_path(Icons.SHIELD))
+        self.btn_audit.clicked.connect(lambda: self._handle_notifications_click(1))
+        self.group_notifiche.add_child(self.btn_audit)
 
         # 8: Guida
         self.btn_help = SidebarButton("Guida", get_asset_path(Icons.HELP))
@@ -266,6 +280,13 @@ class SidebarWidget(QFrame):
         self.navigation_requested.emit(1)  # Vai a Pagina Automazioni
         self.automation_tab_requested.emit(tab_index)  # Cambia tab interno
 
+    def _handle_notifications_click(self, tab_index):
+        """Gestisce il click sui figli di Notifiche (indice pagina 9 fissa)."""
+        self.navigation_requested.emit(9)  # Vai a Pagina Notifiche
+        self.notifications_tab_requested.emit(
+            tab_index
+        )  # Cambia tab interno (0: Notifiche, 1: Audit)
+
     def set_active_button(self, index: int):
         """Aggiorna lo stato checked dei pulsanti."""
 
@@ -275,7 +296,6 @@ class SidebarWidget(QFrame):
             2: self.btn_lyra,
             7: self.btn_settings,
             8: self.btn_help,
-            9: self.btn_notifications,
         }
 
         # Reset pulsanti semplici
@@ -285,6 +305,14 @@ class SidebarWidget(QFrame):
         # Gestione Gruppo Database (Indici 3, 4, 5, 6)
         db_indices = [3, 4, 5, 6]
         self.group_db.set_active_index(index, db_indices)
+
+        # Gestione Gruppo Notifiche (Indice 9)
+        if index == 9:
+            self.group_notifiche.set_active_index(9, [999])  # Illumina header
+            self.group_notifiche.header_btn.setChecked(True)
+        else:
+            self.group_notifiche.header_btn.setChecked(False)
+            self.btn_audit.setChecked(False)
 
         # Gestione Gruppo Automazioni (Indice 1)
         # Qui è più complesso perché dipende dal tab interno, non solo dalla pagina.

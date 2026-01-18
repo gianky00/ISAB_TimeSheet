@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from PyQt6.QtCore import (  # type: ignore
     QEasingCurve,
     QPropertyAnimation,
@@ -136,8 +134,8 @@ class DashboardPanel(QWidget):
         self.main_container.setGraphicsEffect(container_shadow)
 
         self.container_layout = QVBoxLayout(self.main_container)
-        self.container_layout.setContentsMargins(30, 30, 30, 30)
-        self.container_layout.setSpacing(20)
+        self.container_layout.setContentsMargins(20, 20, 20, 20)
+        self.container_layout.setSpacing(12)
 
         # Scroll Area inside container
         self.scroll_area = QScrollArea()
@@ -148,7 +146,7 @@ class DashboardPanel(QWidget):
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(30)
+        self.content_layout.setSpacing(15)
 
         self.scroll_area.setWidget(self.content_widget)
         self.container_layout.addWidget(self.scroll_area)
@@ -174,13 +172,9 @@ class DashboardPanel(QWidget):
                     self._clear_layout(item.layout())
 
     def _setup_ui(self):
-        # Dynamic Greeting
-        hour = datetime.now().hour
-        greeting = "Buongiorno" if 5 <= hour < 18 else "Buonasera"
-
         # Header
         header_layout = QVBoxLayout()
-        title = QLabel(f"{greeting}, benvenuto in Timesheet Manager")
+        title = QLabel("Dashboard Operativa - Panoramica Attività")
         title.setStyleSheet("font-size: 32px; font-weight: 800; color: #343a40;")
         header_layout.addWidget(title)
 

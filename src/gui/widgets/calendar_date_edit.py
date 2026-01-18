@@ -25,7 +25,7 @@ class CalendarDateEdit(QDateEdit):
             QDateEdit {{
                 border: 1px solid #ced4da;
                 border-radius: 4px;
-                padding: 5px 10px;
+                padding: 5px 45px 5px 10px;
                 font-size: 14px;
                 background-color: white;
                 color: black;
@@ -36,7 +36,7 @@ class CalendarDateEdit(QDateEdit):
             QDateEdit::drop-down {{
                 subcontrol-origin: padding;
                 subcontrol-position: top right;
-                width: 34px;
+                width: 40px;
                 border-left-width: 1px;
                 border-left-color: #ced4da;
                 border-left-style: solid;
@@ -46,8 +46,8 @@ class CalendarDateEdit(QDateEdit):
             }}
             QDateEdit::down-arrow {{
                 image: url({icon_path});
-                width: 20px;
-                height: 20px;
+                width: 18px;
+                height: 18px;
             }}
             QDateEdit::drop-down:hover {{
                 background-color: #e9ecef;

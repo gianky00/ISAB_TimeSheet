@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from src.core.constants import Icons
@@ -13,16 +13,25 @@ class StatusCard(QFrame):
                     | [Stato]      |
     """
 
+    clicked = pyqtSignal()
+
     def __init__(self, title, status="In attesa", parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
+        self.setCursor(
+            Qt.CursorShape.PointingHandCursor
+        )  # Cursore pointer per indicare cliccabilità
         self.setStyleSheet(
             """
             StatusCard {
                 background-color: #FFFFFF;
                 border: 1px solid #E0E0E0;
                 border-radius: 8px;
+            }
+            StatusCard:hover {
+                background-color: #F8F9FA;
+                border-color: #009688;
             }
             """
         )
@@ -111,3 +120,8 @@ class StatusCard(QFrame):
             )
         else:
             self._meta_label.setVisible(False)
+
+    def mousePressEvent(self, event):
+        """Emette il segnale clicked quando la card viene cliccata."""
+        self.clicked.emit()
+        super().mousePressEvent(event)

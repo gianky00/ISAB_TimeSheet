@@ -32,6 +32,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.constants import Icons
+from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import SmartLogTranslator
 
@@ -75,10 +76,10 @@ class HorizontalLogItem(QWidget):
         self, tech_msg: str
     ) -> tuple[Optional[str], Optional[str], str]:
         snap, fixit = None, None
-        if m := re.search(r"[IMG:(.*?)]", tech_msg):
+        if m := re.search(r"\[IMG:(.*?)\]", tech_msg):
             snap = m.group(1)
             tech_msg = tech_msg.replace(m.group(0), "").strip()
-        if m := re.search(r"[FIXIT:(.*?)]", tech_msg):
+        if m := re.search(r"\[FIXIT:(.*?)\]", tech_msg):
             fixit = m.group(1)
             tech_msg = tech_msg.replace(m.group(0), "").strip()
         return snap, fixit, tech_msg
@@ -272,9 +273,11 @@ class LogWidget(QWidget):
         header = QHBoxLayout()
         header.addWidget(QLabel("<b>Timeline Attività</b>"))
         header.addStretch()
-        btn = QPushButton("Pulisci Log")
-        btn.setStyleSheet(
-            "background-color: #6c757d; color: white; border-radius: 4px; padding: 2px 8px; font-size: 11px;"
+        btn = ModernButton(
+            "Pulisci Log",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+            icon=get_asset_path(Icons.TRASH),
         )
         btn.clicked.connect(self.clear)
         header.addWidget(btn)
