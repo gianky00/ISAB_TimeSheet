@@ -97,82 +97,85 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """Esegue la ricerca e l'esportazione dei PDL."""
-        # NOTA: _login() viene chiamato automaticamente da BaseBot prima di run()
         if not self.driver or not self.wait:
             self.log("❌ Driver non inizializzato correttamente.")
             return False
 
         params = data[0] if data else {}
-        exclude_closed = params.get("exclude_closed", True)
-        site_selection = params.get("site_selection", "Seleziona tutto")
 
-        # 1. Clic su Home Page
+        # 1. Navigazione e Setup
+        if not self._naviga_a_ricerca():
+            return False
+
+        # 2. Filtri
+        self._configura_filtri(params.get("exclude_closed", True))
+
+        # 3. Elaborazione Siti
+        site_selection = params.get("site_selection", "Seleziona tutto")
+        self._processa_siti(site_selection)
+
+        return True
+
+    def _naviga_a_ricerca(self) -> bool:
+        """Naviga verso la pagina di ricerca."""
+        if not self.wait or not self.driver:
+            return False
         try:
             self.log("🏠 Clic su Home Page...")
-            # Attendi che il tasto home sia cliccabile
             btn_home = self.wait.until(
                 EC.element_to_be_clickable((By.ID, "topIcon-actHomePage"))
             )
             btn_home.click()
-            self.log("⏳ Attesa caricamento Home Page...")
-            time.sleep(3)  # Attesa generica post-click Home
+            time.sleep(3)
             self._attendi_scomparsa_overlay()
-        except Exception as e:
-            self.log(f"⚠️ Errore clic Home Page: {e}")
 
-        # 2. Clic su Ricerca PdL
-        try:
             self.log("🔍 Clic su Ricerca PdL (sideBar)...")
-            # Attendi che il tasto ricerca sia cliccabile
             btn_ricerca = self.wait.until(
                 EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL"))
             )
             btn_ricerca.click()
-            self.log("⏳ Attesa caricamento pagina Ricerca...")
-            time.sleep(3)  # Attesa generica post-click Ricerca
+            time.sleep(3)
             self._attendi_scomparsa_overlay()
+            return True
         except Exception as e:
-            self.log(f"❌ Errore apertura Ricerca PdL: {e}")
+            self.log(f"❌ Errore navigazione ricerca: {e}")
             return False
 
-        # 3. Gestione Flag "Escludi chiusi"
+    def _configura_filtri(self, exclude_closed: bool):
+        """Imposta i filtri di ricerca."""
+        if not self.wait or not self.driver:
+            return
         try:
             checkbox = self.wait.until(
                 EC.presence_of_element_located((By.ID, "fldEscludiChiusi"))
             )
-            is_checked = checkbox.is_selected()
-            if is_checked != exclude_closed:
+            if checkbox.is_selected() != exclude_closed:
                 self.log(f"🖱️ Impostazione checkbox 'Escludi chiusi' a {exclude_closed}")
                 self.driver.execute_script("arguments[0].click();", checkbox)
                 time.sleep(1)
         except Exception as e:
             self.log(f"⚠️ Errore gestione checkbox: {e}")
 
-        # 4. Iterazione Siti
-        sites_to_process = (
-            self.sites if site_selection == "Seleziona tutto" else [site_selection]
-        )
-
-        for site in sites_to_process:
-            if not self._select_site_and_search(site):
-                self.log(f"❌ Errore ricerca per sito {site}")
-                continue
-
-            excel_file = self._export_excel(site)
-            if excel_file:
-                self._import_to_db(excel_file)
-                # Eliminazione file dopo importazione
-                try:
-                    os.remove(excel_file)
-                    self.log(
-                        f"🗑️ File temporaneo rimosso: {os.path.basename(excel_file)}"
-                    )
-                except Exception as e:
-                    self.log(f"⚠️ Impossibile rimuovere il file {excel_file}: {e}")
+    def _processa_siti(self, site_selection: str):
+        """Cicla sui siti e importa i dati."""
+        sites = self.sites if site_selection == "Seleziona tutto" else [site_selection]
+        for site in sites:
+            if self._select_site_and_search(site):
+                if excel_file := self._export_excel(site):
+                    self._import_to_db(excel_file)
+                    self._cleanup_temp_file(excel_file)
+                else:
+                    self.log(f"⚠️ Nessun file esportato per {site}")
             else:
-                self.log(f"⚠️ Nessun file esportato per {site}")
+                self.log(f"❌ Errore ricerca per sito {site}")
 
-        return True
+    def _cleanup_temp_file(self, file_path: str):
+        """Rimuove file temporaneo."""
+        try:
+            os.remove(file_path)
+            self.log(f"🗑️ File temporaneo rimosso: {os.path.basename(file_path)}")
+        except Exception as e:
+            self.log(f"⚠️ Impossibile rimuovere il file {file_path}: {e}")
 
     def _select_site_and_search(self, site_name: str) -> bool:
         """Seleziona il sito dal menu e clicca Cerca."""
@@ -265,12 +268,34 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 if col not in df.columns:
                     df[col] = ""
 
+            # Whitelist validation for column names
+            valid_columns = [
+                "numero",
+                "stato",
+                "lavoro",
+                "area",
+                "unita",
+                "apparecchiatura",
+                "richiedente",
+                "data_richiesta",
+                "emittente",
+                "data_emissione",
+                "aprente",
+                "data_apertura",
+                "priorita",
+                "contratto",
+                "ordine",
+                "sito",
+            ]
+            columns = [c for c in mapping.values() if c in valid_columns]
+
             data_to_insert = [
-                tuple(str(val) for val in row)
-                for row in df[list(mapping.values())].values
+                tuple(str(val) for val in row) for row in df[columns].values
             ]
 
-            query = f"INSERT INTO pdl ({', '.join(mapping.values())}) VALUES ({', '.join(['?'] * len(mapping))})"
+            placeholders = ", ".join(["?"] * len(columns))
+            col_names = ", ".join(columns)
+            query = f"INSERT INTO pdl ({col_names}) VALUES ({placeholders})"  # nosec B608
 
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)

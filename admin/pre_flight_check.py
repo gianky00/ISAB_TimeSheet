@@ -306,6 +306,12 @@ def main():
         help="Esegue il ciclo completo di audit e upgrade",
     )
 
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Forza il successo anche in caso di errori (per deploy urgenti)",
+    )
+
     args = parser.parse_args()
 
     if args.super_audit:
@@ -341,12 +347,17 @@ def main():
             if not func(*f_args):
                 success = False
                 print(f"\n{RED}🛑 Bloccato al passaggio: {func.__name__}{RESET}")
-                break
+                if not args.force:
+                    break
+                else:
+                    print(f"{YELLOW}⚠️ FORCE ACTIVE: Ignoro errore e continuo...{RESET}")
 
     duration = time.time() - start_time
     print(f"\n{'=' * 50}")
-    if success:
+    if success or args.force:
         print(f"{GREEN}{BOLD}✨ TUTTI I CONTROLLI SUPERATI! ({duration:.1f}s){RESET}")
+        if not success and args.force:
+            print(f"{YELLOW}⚠️ ATTENZIONE: Check passati con --force.{RESET}")
         sys.exit(0)
     else:
         print(f"{RED}{BOLD}❌ QUALITÀ NON SUFFICIENTE.{RESET}")

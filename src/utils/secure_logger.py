@@ -33,6 +33,11 @@ class SensitiveDataFilter(logging.Filter):
             re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"),
             "***CARD_MASKED***",
         ),
+        # Email addresses
+        (
+            re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
+            "***EMAIL_MASKED***",
+        ),
     ]
 
     def filter(self, record: logging.LogRecord) -> bool:

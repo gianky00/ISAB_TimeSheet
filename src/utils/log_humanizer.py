@@ -57,12 +57,21 @@ class SmartLogTranslator:
 
     @staticmethod
     def humanize(message: str) -> tuple[str, str, str]:
-        """
-        Analizza il messaggio tecnico e restituisce (human_msg, tech_msg, category).
-        """
-        lower_msg = message.lower()
+        """Analizza il messaggio tecnico e restituisce (human_msg, tech_msg, category)."""
+        category = SmartLogTranslator._detect_category(message)
 
-        # Mapping keyword -> categoria
+        if category in SmartLogTranslator.TEMPLATES:
+            human_msg = random.choice(SmartLogTranslator.TEMPLATES[category])
+        else:
+            human_msg = message
+
+        tech_msg = SmartLogTranslator._inject_tags(message, category)
+        return human_msg, tech_msg, category
+
+    @staticmethod
+    def _detect_category(message: str) -> str:
+        """Determina la categoria del messaggio basandosi sulle keyword."""
+        lower_msg = message.lower()
         mappings = {
             "error": ["errore", "fallit", "exception", "eccezion", "✗"],
             "start": ["avvio", "start"],
@@ -73,23 +82,20 @@ class SmartLogTranslator:
             "wait": ["attes", "wait"],
         }
 
-        category = "info"
         for cat, keywords in mappings.items():
-            if any(kw in lower_msg for kw in keywords) or (
-                cat in ["error", "success"]
-                and any(kw in message for kw in ["✗", "✓"] if kw in keywords)
+            if any(kw in lower_msg for kw in keywords):
+                return cat
+            # Check case-sensitive icons for success/error
+            if cat in ["error", "success"] and any(
+                kw in message for kw in ["✗", "✓"] if kw in keywords
             ):
-                category = cat
-                break
+                return cat
+        return "info"
 
-        human_msg = (
-            random.choice(SmartLogTranslator.TEMPLATES[category])
-            if category in SmartLogTranslator.TEMPLATES
-            else message
-        )
-
-        # Rich Tags Injection
-        if "credenziali" in lower_msg or ("login" in lower_msg and category == "error"):
-            message += " [FIXIT:ACCOUNT]"
-
-        return human_msg, message, category
+    @staticmethod
+    def _inject_tags(message: str, category: str) -> str:
+        """Inietta tag tecnici per suggerire azioni alla UI."""
+        lower_msg = message.lower()
+        if "credenziali" in lower_msg or (category == "error" and "login" in lower_msg):
+            return f"{message} [FIXIT:ACCOUNT]"
+        return message

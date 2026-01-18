@@ -156,7 +156,7 @@ class AuditLogWidget(QWidget):
                 QSize(18, 18)
             )
             self.integrity_icon.setPixmap(pixmap)
-            self.integrity_lbl.setText("Database Integro (Certificato)")
+            self.integrity_lbl.setText("✅ Database Integro (Certificato)")
             self.integrity_lbl.setStyleSheet(
                 "color: #198754; font-size: 13px; font-weight: bold;"
             )
@@ -165,7 +165,7 @@ class AuditLogWidget(QWidget):
                 QSize(18, 18)
             )
             self.integrity_icon.setPixmap(pixmap)
-            self.integrity_lbl.setText("MANOMISSIONE RILEVATA!")
+            self.integrity_lbl.setText("⚠️ MANOMISSIONE RILEVATA!")
             self.integrity_lbl.setStyleSheet(
                 "color: #dc3545; font-size: 13px; font-weight: bold;"
             )
@@ -253,48 +253,18 @@ class NotificationsPanel(QWidget):
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(30, 30, 30, 30)
-        main_layout.setSpacing(20)
-
-        # Header Area
-        header_layout = QHBoxLayout()
-        title = QLabel("Centro Notifiche & Audit")
-        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #212529;")
-        header_layout.addWidget(title)
-        header_layout.addStretch()
-        main_layout.addLayout(header_layout)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(10)
 
         # Tab Widget
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet(
-            """
-            QTabWidget::pane {
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                background-color: white;
-            }
-            QTabBar::tab {
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                padding: 10px 25px;
-                margin-right: 2px;
-                color: #495057;
-                font-weight: bold;
-                font-size: 14px;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom-color: white;
-                color: #0d6efd;
-            }
-        """
-        )
+        self.tabs.setProperty("class", "Level2Tabs")  # Clean Standard Style
         main_layout.addWidget(self.tabs)
 
         # --- TAB 1: MESSAGGI ---
         self.notif_tab = QWidget()
         notif_layout = QVBoxLayout(self.notif_tab)
-        notif_layout.setContentsMargins(15, 15, 15, 15)
+        notif_layout.setContentsMargins(0, 10, 0, 0)  # Top spacing
 
         # Toolbar Notifiche
         notif_toolbar = QHBoxLayout()
@@ -353,17 +323,25 @@ class NotificationsPanel(QWidget):
         self.scroll.setWidget(self.scroll_content)
         notif_layout.addWidget(self.scroll)
 
-        self.tabs.addTab(self.notif_tab, "Messaggi Operativi")
+        self.tabs.addTab(
+            self.notif_tab,
+            get_colored_icon(get_asset_path(Icons.BELL), "#546E7A"),
+            "Notifiche",
+        )
 
         # --- TAB 2: AUDIT ---
         self.audit_tab = AuditLogWidget()
-        self.tabs.addTab(self.audit_tab, "Registro Attività (Audit)")
+        self.tabs.addTab(
+            self.audit_tab,
+            get_colored_icon(get_asset_path(Icons.SHIELD), "#546E7A"),
+            "Audit",
+        )
 
         # Refresh audit when tab selected
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
     def _on_tab_changed(self, index):
-        if self.tabs.tabText(index) == "Registro Attività (Audit)":
+        if self.tabs.tabText(index) == "Audit":
             self.audit_tab.refresh()
 
     def _clear_notifications(self):

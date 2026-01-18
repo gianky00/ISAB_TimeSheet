@@ -8,6 +8,19 @@ from typing import Optional
 
 from PyQt6.QtCore import QObject
 
+# Importiamo PageIndex localmente o usiamo interi per evitare circular imports
+# PageIndex mappa:
+# 0: DASHBOARD
+# 1: AUTOMAZIONI
+# 2: LYRA
+# 3: TIMBRATURE
+# 4: STRUMENTALE
+# 5: DATAEASE
+# 6: ANAGRAFICHE
+# 7: SETTINGS
+# 8: HELP
+# 9: NOTIFICATIONS
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,46 +56,75 @@ class NavigationController(QObject):
 
     def _create_panel_by_index(self, index: int) -> Optional[QObject]:
         """Factory method per la creazione dei pannelli in base all'indice."""
-        if index == 0:
-            from src.gui.dashboard_panel import DashboardPanel
+        creators = {
+            0: self._create_dashboard,
+            1: self._create_automazioni,
+            2: self._create_lyra,
+            3: self._create_timbrature,
+            4: self._create_strumentale,
+            5: self._create_dataease,
+            6: self._create_anagrafiche,
+            7: self._create_settings_panel,
+            8: self._create_help,
+            9: self._create_notifications,
+        }
 
-            self.mw.dashboard_panel = DashboardPanel()
-            return self.mw.dashboard_panel
+        creator = creators.get(index)
+        return creator() if creator else None
 
-        if index == 1:
-            from src.gui.widgets.automazioni_widget import AutomazioniWidget
+    def _create_dashboard(self):
+        from src.gui.dashboard_panel import DashboardPanel
 
-            self.mw.automazioni_widget = AutomazioniWidget(self.mw)
-            return self.mw.automazioni_widget
+        self.mw.dashboard_panel = DashboardPanel()
+        return self.mw.dashboard_panel
 
-        if index == 2:
-            from src.gui.lyra_panel import LyraPanel
+    def _create_automazioni(self):
+        from src.gui.widgets.automazioni_widget import AutomazioniWidget
 
-            self.mw.lyra_panel = LyraPanel()
-            return self.mw.lyra_panel
+        self.mw.automazioni_widget = AutomazioniWidget(self.mw)
+        return self.mw.automazioni_widget
 
-        if index == 3:
-            from src.gui.widgets.database_widget import DatabaseWidget
+    def _create_lyra(self):
+        from src.gui.lyra_panel import LyraPanel
 
-            self.mw.database_widget = DatabaseWidget(self.mw)
-            return self.mw.database_widget
+        self.mw.lyra_panel = LyraPanel()
+        return self.mw.lyra_panel
 
-        if index == 4:
-            return self._create_settings_panel()
+    def _create_timbrature(self):
+        from src.gui.panels import TimbratureDBPanel
 
-        if index == 5:
-            from src.gui.help_panel import HelpPanel
+        self.mw.timbrature_db_panel = TimbratureDBPanel()
+        return self.mw.timbrature_db_panel
 
-            self.mw.help_panel = HelpPanel()
-            return self.mw.help_panel
+    def _create_strumentale(self):
+        from src.gui.contabilita_panel import ContabilitaPanel
 
-        if index == 6:
-            from src.gui.notifications_panel import NotificationsPanel
+        self.mw.contabilita_panel = ContabilitaPanel()
+        return self.mw.contabilita_panel
 
-            self.mw.notifications_panel = NotificationsPanel()
-            return self.mw.notifications_panel
+    def _create_dataease(self):
+        from src.gui.scarico_ore_panel import ScaricoOrePanel
 
-        return None
+        self.mw.scarico_ore_panel = ScaricoOrePanel()
+        return self.mw.scarico_ore_panel
+
+    def _create_anagrafiche(self):
+        from src.gui.panels import PDLDBPanel
+
+        self.mw.pdl_db_panel = PDLDBPanel()
+        return self.mw.pdl_db_panel
+
+    def _create_help(self):
+        from src.gui.help_panel import HelpPanel
+
+        self.mw.help_panel = HelpPanel()
+        return self.mw.help_panel
+
+    def _create_notifications(self):
+        from src.gui.notifications_panel import NotificationsPanel
+
+        self.mw.notifications_panel = NotificationsPanel()
+        return self.mw.notifications_panel
 
     def _create_settings_panel(self) -> QObject:
         """Crea e configura il pannello impostazioni."""
@@ -157,8 +199,8 @@ class NavigationController(QObject):
             self.mw.sidebar.set_active_button(index)
             return
 
-        # Controllo salvataggio impostazioni se stiamo lasciando il pannello 4
-        if self.mw._current_page_index == 4 and hasattr(self.mw, "settings_panel"):
+        # Controllo salvataggio impostazioni se stiamo lasciando il pannello SETTINGS (7)
+        if self.mw._current_page_index == 7 and hasattr(self.mw, "settings_panel"):
             if self.mw.settings_panel.has_unsaved_changes():
                 if not self.mw.settings_panel.prompt_save_if_needed():
                     self.mw.sidebar.set_active_button(self.mw._current_page_index)
@@ -167,41 +209,24 @@ class NavigationController(QObject):
         # Assicurati che il pannello di destinazione sia caricato
         self.get_panel(index)
 
-        # Transizione rimossa per stabilità (evita conflitti QPainter con i GraphicsEffect interni)
-        # if new_panel:
-        #     effect = new_panel.graphicsEffect()
-        #     if not isinstance(effect, QGraphicsOpacityEffect):
-        #         effect = QGraphicsOpacityEffect(new_panel)
-        #         new_panel.setGraphicsEffect(effect)
-        #
-        #     self.fade_anim = QPropertyAnimation(effect, b"opacity")
-        #     self.fade_anim.setDuration(250)
-        #     self.fade_anim.setStartValue(0.0)
-        #     self.fade_anim.setEndValue(1.0)
-        #     self.fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-        #     self.fade_anim.start()
-
         self.mw._current_page_index = index
         self.mw.page_stack.setCurrentIndex(index)
         self.mw.sidebar.set_active_button(index)
 
     def navigate_to_extended(self, tab_idx, query):
         """Naviga a un tab specifico di Contabilità."""
-        self.navigate_to(3)  # Assicura caricamento DatabaseWidget
-        self.mw.database_widget.setCurrentIndex(1)  # Contabilità
+        self.navigate_to(4)  # STRUMENTALE
         self.mw.contabilita_panel.main_tabs.setCurrentIndex(tab_idx)
         self.mw.contabilita_panel.set_search_query(query)
 
     def navigate_to_dataease(self, query):
         """Naviga a Scarico Ore (DataEase)."""
-        self.navigate_to(3)
-        self.mw.database_widget.setCurrentIndex(2)
+        self.navigate_to(5)  # DATAEASE
         self.mw.scarico_ore_panel.search_input.setText(query)
 
     def navigate_to_timbrature(self, query):
         """Naviga a Timbrature DB."""
-        self.navigate_to(3)
-        self.mw.database_widget.setCurrentIndex(0)
+        self.navigate_to(3)  # TIMBRATURE
         self.mw.timbrature_db_panel.search_input.setText(query)
 
     def navigate_to_panel(self, panel_key: str):
@@ -217,7 +242,7 @@ class NavigationController(QObject):
 
         if panel_key in bot_map:
             main_idx, sub_idx = bot_map[panel_key]
-            self.navigate_to(1)  # Assicura caricamento AutomazioniWidget
+            self.navigate_to(1)  # AUTOMAZIONI
             if hasattr(self.mw, "automazioni_widget"):
                 self.mw.automazioni_widget.setCurrentIndex(main_idx)
                 if main_idx == 0 and hasattr(self.mw, "tab_fornitori"):
@@ -226,16 +251,14 @@ class NavigationController(QObject):
                     self.mw.tab_safework.setCurrentIndex(sub_idx)
             return
 
-        db_map = {"db_timbrature": 0, "db_strumentale": 1, "db_dataease": 2}
+        db_map = {"db_timbrature": 3, "db_strumentale": 4, "db_dataease": 5}
         if panel_key in db_map:
-            self.navigate_to(3)  # Assicura caricamento DatabaseWidget
-            if hasattr(self.mw, "database_widget"):
-                self.mw.database_widget.setCurrentIndex(db_map[panel_key])
+            self.navigate_to(db_map[panel_key])
             return
 
     def analyze_with_lyra(self, context_text: str):
         """Passa alla vista Lyra."""
-        self.navigate_to(2)
+        self.navigate_to(2)  # LYRA
         self.mw.lyra_panel.ask_lyra(
             "Analizza questi dati e dimmi se ci sono anomalie.", context_text
         )

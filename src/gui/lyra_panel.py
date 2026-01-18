@@ -522,31 +522,34 @@ class LyraPanel(QWidget):
 
     def _populate_models_dropdown(self, models):
         """Popola il menu a discesa con i modelli AI filtrati e ordinati."""
-        self.model_combo.blockSignals(True)  # Evita loop durante popolamento
+        self.model_combo.blockSignals(True)
         self.model_combo.clear()
-        if models:
-            # Filtra per i modelli che ci interessano di più
-            pro_models = sorted([m for m in models if "pro" in m], reverse=True)
-            flash_models = sorted([m for m in models if "flash" in m], reverse=True)
-            other_models = sorted(
-                [m for m in models if "pro" not in m and "flash" not in m]
-            )
 
-            ordered_models = pro_models + flash_models + other_models
-            self.model_combo.addItems(ordered_models)
-
-            # Carica quello salvato
-            saved_model = config_manager.get_config_value("ai_model", "")
-            if saved_model and saved_model in ordered_models:
-                self.model_combo.setCurrentText(saved_model)
-            elif pro_models:
-                self.model_combo.setCurrentText(pro_models[0])
-
-            self.model_combo.setEnabled(True)
-        else:
+        if not models:
             self.model_combo.addItem("Nessun modello trovato")
             self.model_combo.setEnabled(False)
+            self.model_combo.blockSignals(False)
+            return
+
+        ordered_models = self._sort_ai_models(models)
+        self.model_combo.addItems(ordered_models)
+
+        # Selezione automatica
+        saved_model = config_manager.get_config_value("ai_model", "")
+        if saved_model in ordered_models:
+            self.model_combo.setCurrentText(saved_model)
+        else:
+            self.model_combo.setCurrentIndex(0)
+
+        self.model_combo.setEnabled(True)
         self.model_combo.blockSignals(False)
+
+    def _sort_ai_models(self, models: list) -> list:
+        """Ordina i modelli per priorità: Pro -> Flash -> Others."""
+        pro = sorted([m for m in models if "pro" in m], reverse=True)
+        flash = sorted([m for m in models if "flash" in m], reverse=True)
+        others = sorted([m for m in models if "pro" not in m and "flash" not in m])
+        return pro + flash + others
 
     def _attach_file(self):
         """Apre un dialogo per selezionare e allegare un file PDF o immagine."""

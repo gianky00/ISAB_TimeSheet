@@ -329,9 +329,11 @@ class StatisticsWidget(QWidget):
     def refresh(self):
         """Ricarica le statistiche."""
         stats = StatsManager().get_all_stats()
+        self._refresh_summary_cards(stats)
+        self._refresh_stats_table(stats)
 
-        # 1. Update Cards
-        # Clear previous cards
+    def _refresh_summary_cards(self, stats: dict):
+        """Aggiorna le card di riepilogo in alto."""
         while self.cards_layout.count():
             item = self.cards_layout.takeAt(0)
             if item.widget():
@@ -339,8 +341,6 @@ class StatisticsWidget(QWidget):
 
         total_runs = sum(d.get("runs", 0) for d in stats.values())
         total_errors = sum(d.get("errors", 0) for d in stats.values())
-        if total_runs > 0:
-            ((total_runs - total_errors) / total_runs) * 100
 
         self.cards_layout.addWidget(
             self._create_summary_card(
@@ -353,9 +353,9 @@ class StatisticsWidget(QWidget):
             )
         )
 
-        # 2. Update Table
+    def _refresh_stats_table(self, stats: dict):
+        """Aggiorna la tabella di dettaglio attività."""
         self.table.setRowCount(0)
-
         bot_names = {
             "timbrature": "Timbrature",
             "scarico_ts": "Scarico TS",
@@ -363,28 +363,19 @@ class StatisticsWidget(QWidget):
             "dettagli_oda": "Dettagli OdA",
         }
 
-        sorted_keys = sorted(stats.keys())
-
-        for bot_id in sorted_keys:
+        for bot_id in sorted(stats.keys()):
             data = stats[bot_id]
             row = self.table.rowCount()
             self.table.insertRow(row)
 
             name = bot_names.get(bot_id, bot_id.capitalize())
-            runs = data.get("runs", 0)
-            errors = data.get("errors", 0)
+            runs, errors = data.get("runs", 0), data.get("errors", 0)
             last_run = data.get("last_run", "")
 
-            # Calc rate
-            if runs > 0:
-                ((runs - errors) / runs) * 100
-
-            # Format date
+            # Formattazione data
             last_run_display = "Mai"
             if last_run:
                 try:
-                    from datetime import datetime
-
                     dt = datetime.fromisoformat(last_run)
                     last_run_display = dt.strftime("%d/%m/%Y %H:%M")
                 except Exception:
@@ -398,7 +389,6 @@ class StatisticsWidget(QWidget):
                 err_item.setForeground(Qt.GlobalColor.red)
                 err_item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             self.table.setItem(row, 2, err_item)
-
             self.table.setItem(row, 3, QTableWidgetItem(last_run_display))
 
 
@@ -429,35 +419,17 @@ class SettingsPanel(QWidget):
         """Configura l'interfaccia."""
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(15)
+        main_layout.setContentsMargins(15, 15, 15, 15)
 
         # Tabs
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet(
-            """
-            QTabWidget::pane {
-                border: 1px solid #dee2e6;
-                background-color: white;
-            }
-            QTabBar::tab {
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                padding: 8px 20px;
-                margin-right: 2px;
-                color: #495057;
-                font-weight: bold;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom-color: white;
-                color: #0d6efd;
-            }
-        """
-        )
+        self.tabs.setProperty("class", "Level2Tabs")  # Clean Standard Style
         main_layout.addWidget(self.tabs)
 
         # --- TAB 1: Configurazione ---
         config_tab = QWidget()
         config_layout = QVBoxLayout(config_tab)
+        config_layout.setContentsMargins(0, 10, 0, 0)  # Top Spacing
 
         # Scroll area per il contenuto config
         self.scroll = QScrollArea()
@@ -1012,7 +984,7 @@ class SettingsPanel(QWidget):
         # Add Config Tab
         self.tabs.addTab(
             config_tab,
-            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#000000"),
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#546E7A"),
             "Configurazione",
         )
 
@@ -1021,7 +993,7 @@ class SettingsPanel(QWidget):
         self._setup_backup_tab(self.backup_tab)
         self.tabs.addTab(
             self.backup_tab,
-            get_colored_icon(get_asset_path(Icons.CLOUD), "#000000"),
+            get_colored_icon(get_asset_path(Icons.CLOUD), "#546E7A"),
             "Backup Cloud",
         )
 
@@ -1029,7 +1001,7 @@ class SettingsPanel(QWidget):
         self.stats_widget = StatisticsWidget()
         self.tabs.addTab(
             self.stats_widget,
-            get_colored_icon(get_asset_path(Icons.ROCKET), "#000000"),
+            get_colored_icon(get_asset_path(Icons.ROCKET), "#546E7A"),
             "Statistiche",
         )
 
@@ -1038,7 +1010,7 @@ class SettingsPanel(QWidget):
         self._setup_telegram_tab(self.telegram_tab)
         self.tabs.addTab(
             self.telegram_tab,
-            get_colored_icon(get_asset_path(Icons.SEND), "#000000"),
+            get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"),
             "Telegram",
         )
 

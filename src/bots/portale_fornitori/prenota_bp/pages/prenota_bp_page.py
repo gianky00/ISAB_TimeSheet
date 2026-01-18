@@ -4,7 +4,7 @@ Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 
 import time
 from datetime import datetime, timedelta
-from typing import Callable, Optional
+from typing import Callable, List, Optional, Tuple
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -298,151 +298,106 @@ class PrenotaBPPage:
         time.sleep(1)
 
     def gestisci_creazione_richiesta(self, note: str):
-        """
-        Gestisce la selezione dei materiali, la creazione della richiesta e la compilazione del form.
-
-        Flow:
-        1. Seleziona materiali (Tutti o Parziali).
-        2. Clicca Crea Richiesta.
-        3. Compila Form (Data, Ora, Note).
-        4. Salva.
-        """
+        """Gestisce la selezione dei materiali, la creazione della richiesta e la compilazione del form."""
         self.log("Gestione creazione richiesta...")
 
-        # 1. Analisi disponibilità
+        # 1. Analisi
+        available_indices, total_rows = self._analizza_disponibilita()
+        if total_rows == 0:
+            return
+
+        # 2. Selezione
+        if not self._esegui_selezione(available_indices, total_rows):
+            return
+
+        # 3. Form
+        self._compila_form_richiesta(note)
+
+    def _analizza_disponibilita(self) -> Tuple[List[int], int]:
+        """Recupera le righe disponibili per la richiesta."""
         try:
             self.wait.until(
                 EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI)
             )
-            # Recuperiamo le righe "Data" (quelle con l'icona disponibilità)
             data_rows = self.driver.find_elements(*PrenotaBPLocators.GRID_ROWS_DETTAGLI)
-        except Exception:
-            self.log("⚠ Nessuna riga trovata per la richiesta.")
-            return
 
-        available_indices = []
-        for i, row in enumerate(data_rows):
-            try:
-                row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
-                available_indices.append(i)
-            except Exception:
-                pass
-
-        total_rows = len(data_rows)
-        count_available = len(available_indices)
-
-        if total_rows == 0:
-            self.log("⚠ Nessuna riga da processare.")
-            return
-
-        all_available = count_available == total_rows
-
-        # 2. Selezione
-        if all_available:
-            self.log(
-                "✓ Tutti i materiali disponibili. Seleziono tutto (Header Checkbox)."
-            )
-            try:
-                self.wait_and_click(PrenotaBPLocators.HEADER_CHECKBOX_SELECT_ALL)
-            except Exception as e:
-                self.log(f"Errore click seleziona tutto: {e}")
-        else:
-            self.log(
-                f"⚠ Disponibili {count_available} su {total_rows}. Seleziono singolarmente."
-            )
-
-            # Recuperiamo direttamente i checkbox (presumendo ordine visuale identico)
-            try:
-                checkers = self.driver.find_elements(*PrenotaBPLocators.GRID_CHECKERS)
-            except Exception:
-                checkers = []
-
-            # Validazione consistenza griglia
-            # Nota: i checkers potrebbero essere di più se ci sono altre griglie, ma il locator è scopato al tab visibile.
-            if len(checkers) < total_rows:
-                self.log(
-                    f"⚠ Mismatch grave: Data={total_rows}, Checkers trovati={len(checkers)}. Potrebbe fallire la selezione."
-                )
-
-            # Iterazione per selezione puntuale
-            count_selected = 0
-            for idx in available_indices:
+            indices = []
+            for i, row in enumerate(data_rows):
                 try:
-                    # Usiamo l'elemento checker corrispondente
-                    if idx < len(checkers):
-                        checker = checkers[idx]
-
-                        self.driver.execute_script(
-                            "arguments[0].scrollIntoView({block: 'center'});", checker
-                        )
-                        time.sleep(0.1)
-                        # Click sicuro
-                        try:
-                            checker.click()
-                        except Exception:
-                            self.driver.execute_script("arguments[0].click();", checker)
-
-                        count_selected += 1
-                        time.sleep(0.05)
-                    else:
-                        self.log(
-                            f"Errore: Indice riga {idx} fuori range per i checker ({len(checkers)})."
-                        )
-                except Exception as e:
-                    self.log(f"Errore selezione riga {idx + 1}: {e}")
-
-            if count_selected == 0:
-                self.log("⚠ Nessuna riga selezionata! Interrompo il flusso.")
-                return
-
-        # 3. Crea Richiesta e Compilazione Form
-        if count_available > 0:
-            self.log("Click su 'Crea Richiesta'...")
-            try:
-                self.wait_and_click(PrenotaBPLocators.BT_CREA_RICHIESTA)
-                self._wait_for_overlay()
-
-                # Calcolo Data e Ore
-                now = datetime.now()
-                data_oggi = now.strftime("%d/%m/%Y")
-                ora_attuale = now.strftime("%H%M")
-                ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")
-
-                self.log(
-                    f"Compilazione Form Richiesta: {data_oggi} {ora_attuale}-{ora_fine}"
-                )
-
-                # Verifica che il form sia effettivamente apparso prima di compilare
-                try:
-                    self.wait.until(
-                        EC.visibility_of_element_located(
-                            PrenotaBPLocators.FORM_DATA_RITIRO
-                        )
-                    )
-                except TimeoutException as e:
-                    self.log(
-                        "⚠ Il form di richiesta non è apparso. Probable errore nella selezione o pulsante disabilitato."
-                    )
-                    raise Exception("Form Richiesta non visibile") from e
-
-                self.wait_and_fill(PrenotaBPLocators.FORM_DATA_RITIRO, data_oggi)
-                self.wait_and_fill(PrenotaBPLocators.FORM_ORA_INIZIO, ora_attuale)
-                self.wait_and_fill(PrenotaBPLocators.FORM_ORA_FINE, ora_fine)
-                self.wait_and_fill(PrenotaBPLocators.FORM_NOTE, note)
-
-                # Conferma / Salva
-                self.log("Salvataggio richiesta...")
-                self.wait_and_click(PrenotaBPLocators.BT_SALVA)
-                self._wait_for_overlay()
-                self.log("Richiesta creata e salvata con successo.")
-
-            except Exception as e:
-                self.log(f"Errore nel flusso 'Crea Richiesta': {e}")
-                # Tenta chiusura form se rimasto aperto
-                try:
-                    self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
+                    row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
+                    indices.append(i)
                 except Exception:
                     pass
-                raise e
-        else:
-            self.log("Nessun materiale disponibile. Richiesta non creata.")
+            return indices, len(data_rows)
+        except Exception:
+            self.log("⚠ Nessuna riga trovata per la richiesta.")
+            return [], 0
+
+    def _esegui_selezione(self, available_indices: List[int], total_rows: int) -> bool:
+        """Esegue il click sui materiali disponibili."""
+        count_available = len(available_indices)
+        if count_available == 0:
+            self.log("⚠ Nessun materiale disponibile.")
+            return False
+
+        if count_available == total_rows:
+            self.log("✓ Tutti i materiali disponibili. Seleziono tutto.")
+            self.wait_and_click(PrenotaBPLocators.HEADER_CHECKBOX_SELECT_ALL)
+            return True
+
+        self.log(
+            f"⚠ Disponibili {count_available} su {total_rows}. Selezione puntuale."
+        )
+        checkers = self.driver.find_elements(*PrenotaBPLocators.GRID_CHECKERS)
+
+        count_selected = 0
+        for idx in available_indices:
+            if idx < len(checkers):
+                self._click_safe(checkers[idx])
+                count_selected += 1
+                time.sleep(0.05)
+
+        return count_selected > 0
+
+    def _compila_form_richiesta(self, note: str):
+        """Compila e salva il form di richiesta."""
+        self.log("Click su 'Crea Richiesta'...")
+        try:
+            self.wait_and_click(PrenotaBPLocators.BT_CREA_RICHIESTA)
+            self._wait_for_overlay()
+
+            now = datetime.now()
+            data_oggi = now.strftime("%d/%m/%Y")
+            ora_attuale = now.strftime("%H%M")
+            ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")
+
+            self.wait.until(
+                EC.visibility_of_element_located(PrenotaBPLocators.FORM_DATA_RITIRO)
+            )
+            self.wait_and_fill(PrenotaBPLocators.FORM_DATA_RITIRO, data_oggi)
+            self.wait_and_fill(PrenotaBPLocators.FORM_ORA_INIZIO, ora_attuale)
+            self.wait_and_fill(PrenotaBPLocators.FORM_ORA_FINE, ora_fine)
+            self.wait_and_fill(PrenotaBPLocators.FORM_NOTE, note)
+
+            self.log("Salvataggio richiesta...")
+            self.wait_and_click(PrenotaBPLocators.BT_SALVA)
+            self._wait_for_overlay()
+            self.log("Richiesta creata e salvata con successo.")
+        except Exception as e:
+            self.log(f"Errore nel flusso 'Crea Richiesta': {e}")
+            try:
+                self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
+            except Exception:
+                pass
+            raise e
+
+    def _click_safe(self, element):
+        """Esegue un click sicuro tramite scroll e JS fallback."""
+        try:
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center'});", element
+            )
+            time.sleep(0.1)
+            element.click()
+        except Exception:
+            self.driver.execute_script("arguments[0].click();", element)

@@ -19,10 +19,16 @@ class AutomazioniWidget(QTabWidget):
     def __init__(self, main_window):
         super().__init__()
         self.mw = main_window
-        self.setTabPosition(QTabWidget.TabPosition.North)
+        # Nascondiamo la barra dei tab superiore perché la navigazione è ora nella Sidebar
+        self.tabBar().hide()
+        self.setDocumentMode(True)  # Rimuove i bordi extra del frame
+        self.setStyleSheet(
+            "QTabWidget::pane { border: none; }"
+        )  # Pulizia visuale totale
 
         # --- TAB 1: Portale Fornitori ---
         self.tab_fornitori = QTabWidget()
+        self.tab_fornitori.setProperty("class", "Level2Tabs")  # Clean Style
 
         # Istanzia TUTTI i pannelli subito
         self.panel_dettagli = DettagliOdAPanel()
@@ -34,42 +40,44 @@ class AutomazioniWidget(QTabWidget):
         # Aggiungi i tab a Portale Fornitori
         self.tab_fornitori.addTab(
             self.panel_dettagli,
-            get_colored_icon(get_asset_path(Icons.LIST), "#000000"),
+            get_colored_icon(get_asset_path(Icons.LIST), "#546E7A"),
             "Dettagli OdA",
         )
         self.tab_fornitori.addTab(
             self.panel_scarico,
-            get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#000000"),
+            get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#546E7A"),
             "Scarico TS",
         )
         self.tab_fornitori.addTab(
             self.panel_timbrature,
-            get_colored_icon(get_asset_path(Icons.CLOCK), "#000000"),
+            get_colored_icon(get_asset_path(Icons.CLOCK), "#546E7A"),
             "Timbrature",
         )
         self.tab_fornitori.addTab(
             self.panel_prenota,
-            get_colored_icon(get_asset_path(Icons.TICKET), "#000000"),
+            get_colored_icon(get_asset_path(Icons.TICKET), "#546E7A"),
             "Prenota BP",
         )
         self.tab_fornitori.addTab(
             self.panel_carico,
-            get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"),
+            get_colored_icon(get_asset_path(Icons.UPLOAD), "#546E7A"),
             "Carico TS",
         )
 
         # --- TAB 2: SafeWork ---
         self.tab_safework = QTabWidget()
+        self.tab_safework.setProperty("class", "Level2Tabs")  # Clean Style
+
         self.panel_pdl = ScaricoPDLPanel()
         self.panel_pdl_search = RicercaPDLPanel()
         self.tab_safework.addTab(
             self.panel_pdl,
-            get_colored_icon(get_asset_path(Icons.SHIELD), "#000000"),
+            get_colored_icon(get_asset_path(Icons.SHIELD), "#546E7A"),
             "Scarico PDL",
         )
         self.tab_safework.addTab(
             self.panel_pdl_search,
-            get_colored_icon(get_asset_path(Icons.SEARCH), "#000000"),
+            get_colored_icon(get_asset_path(Icons.SEARCH), "#546E7A"),
             "Ricerca PDL",
         )
 

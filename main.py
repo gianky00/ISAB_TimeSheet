@@ -79,6 +79,11 @@ if src_path not in sys.path:
 
 
 def main():
+    import warnings
+
+    # Suppress openpyxl "Unknown extension" warning
+    warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+
     from PyQt6.QtWidgets import QApplication, QMessageBox
 
     from src.core.app_initializer import AppInitializer

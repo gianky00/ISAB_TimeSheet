@@ -387,47 +387,44 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._on_worker_finished(display_data, search, totals, style_cache)
 
     def set_filter(self, text, col_filters=None):
-        """
-        Applica filtri (testo globale e colonne) e aggiorna _visible_indices.
-        Operazione pura Python ottimizzata per grandi dataset.
-        """
+        """Applica filtri (testo globale e colonne) e aggiorna _visible_indices."""
         text = text.lower().strip()
         search_terms = text.split() if text else []
 
         self.beginResetModel()
 
-        # Optimize: if no filters, just range
         if not search_terms and not col_filters:
             self._visible_indices = list(range(len(self._display_data)))
         else:
-            # Filter Logic
-            # We use list comprehension for speed
-            indices = range(len(self._display_data))
-
+            indices = list(range(len(self._display_data)))
             # 1. Global Search
-            if search_terms:
-                # Pre-bind
-                s_idx = self._search_index
-                # Efficient intersection
-                indices = [
-                    i for i in indices if all(t in s_idx[i] for t in search_terms)
-                ]
-
+            indices = self._apply_global_search(indices, search_terms)
             # 2. Column Filters
-            if col_filters:
-                # col_filters: {col_idx: set(lowercase_values)}
-                for col, allowed in col_filters.items():
-                    # allowed is a set of lowercase strings
-                    # Data is in self._display_data[i][col] (string)
-                    # We need to lower it? Yes.
-                    # This part is slower, O(N).
-                    d_data = self._display_data
-                    indices = [i for i in indices if d_data[i][col].lower() in allowed]
-
+            indices = self._apply_column_filters(indices, col_filters)
             self._visible_indices = indices
 
         self._filtered_count = len(self._visible_indices)
         self.endResetModel()
+
+    def _apply_global_search(self, indices: List[int], terms: List[str]) -> List[int]:
+        """Filtra gli indici in base ai termini di ricerca globale."""
+        if not terms:
+            return indices
+        s_idx = self._search_index
+        return [i for i in indices if all(t in s_idx[i] for t in terms)]
+
+    def _apply_column_filters(
+        self, indices: List[int], col_filters: Optional[dict]
+    ) -> List[int]:
+        """Filtra gli indici in base ai filtri per colonna."""
+        if not col_filters:
+            return indices
+
+        filtered = indices
+        d_data = self._display_data
+        for col, allowed in col_filters.items():
+            filtered = [i for i in filtered if d_data[i][col].lower() in allowed]
+        return filtered
 
     def get_float_total_for_visible(self):
         """Calcola la somma dei totali per le righe attualmente visibili."""

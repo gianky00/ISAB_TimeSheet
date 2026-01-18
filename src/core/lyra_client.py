@@ -71,98 +71,86 @@ class LyraClient:
     def _get_system_context(self) -> str:
         """Raccoglie i dati dai database locali per il contesto AI."""
         context = []
+        context.append(self._get_contabilita_context())
+        context.append(self._get_timbrature_context())
+        return "\n".join(context)
 
-        # --- 1. Contabilità Strumentale ---
+    def _get_contabilita_context(self) -> str:
+        """Raccoglie dati contabilità per il contesto AI."""
         try:
             years = ContabilitaManager.get_available_years()
-            if years:
-                latest_year = max(years)
-                stats = ContabilitaManager.get_year_stats(latest_year)
+            if not years:
+                return "=== CONTABILITÀ ===\nNessun dato disponibile."
 
-                # Calcoli derivati
-                margine = stats["total_prev"] - (
-                    stats["total_ore"] * 30.0
-                )  # Costo std 30
-                marginalita = (
-                    (margine / stats["total_prev"] * 100)
-                    if stats["total_prev"] > 0
-                    else 0
-                )
+            latest_year = max(years)
+            stats = ContabilitaManager.get_year_stats(latest_year)
+            margine = stats["total_prev"] - (stats["total_ore"] * 30.0)
+            marginalita = (
+                (margine / stats["total_prev"] * 100) if stats["total_prev"] > 0 else 0
+            )
 
-                context.append(f"=== REPORT CONTABILITÀ ({latest_year}) ===")
-                context.append(
-                    f"- Valore Totale Preventivato: € {stats['total_prev']:,.2f}"
-                )
-                context.append(f"- Ore Spese Totali: {stats['total_ore']:,.1f} h")
-                context.append(
-                    f"- Margine Operativo Stimato (vs Costo €30/h): € {margine:,.2f} ({marginalita:.1f}%)"
-                )
-                context.append(f"- Totale Commesse: {stats['count_total']}")
+            lines = [
+                f"=== REPORT CONTABILITÀ ({latest_year}) ===",
+                f"- Valore Totale Preventivato: € {stats['total_prev']:,.2f}",
+                f"- Ore Spese Totali: {stats['total_ore']:,.1f} h",
+                f"- Margine Operativo Stimato (vs Costo €30/h): € {margine:,.2f} ({marginalita:.1f}%)",
+                f"- Totale Commesse: {stats['count_total']}",
+                "- Stato Avanzamento:",
+            ]
+            for status, count in stats.get("status_counts", {}).items():
+                if count > 0:
+                    lines.append(f"  • {status}: {count}")
 
-                context.append("- Stato Avanzamento:")
-                for status, count in stats.get("status_counts", {}).items():
-                    if count > 0:
-                        context.append(f"  • {status}: {count}")
-
-                context.append("- Top 5 Commesse (per Valore):")
-                for name, val in stats.get("top_commesse", []):
-                    # Tronca nomi troppo lunghi
-                    short_name = (name[:35] + "..") if len(name) > 35 else name
-                    context.append(f"  • {short_name}: € {val:,.0f}")
-            else:
-                context.append("=== CONTABILITÀ ===\nNessun dato disponibile.")
+            lines.append("- Top 5 Commesse (per Valore):")
+            for name, val in stats.get("top_commesse", []):
+                short_name = (name[:35] + "..") if len(name) > 35 else name
+                lines.append(f"  • {short_name}: € {val:,.0f}")
+            return "\n".join(lines)
         except Exception as e:
-            context.append(f"Errore lettura Contabilità: {e}")
+            return f"Errore lettura Contabilità: {e}"
 
-        # --- 2. Timbrature ---
+    def _get_timbrature_context(self) -> str:
+        """Raccoglie dati timbrature per il contesto AI."""
         try:
             db_path = CONFIG_DIR / "data" / "timbrature_Isab.db"
-            if db_path.exists():
-                conn = sqlite3.connect(db_path)
-                cursor = conn.cursor()
+            if not db_path.exists():
+                return "\n=== TIMBRATURE ===\nDatabase non trovato."
 
-                # Totali
+            with sqlite3.connect(db_path) as conn:
+                cursor = conn.cursor()
                 cursor.execute("SELECT COUNT(*) FROM timbrature")
                 total_count = cursor.fetchone()[0]
-
-                # Ultime attività
                 cursor.execute(
                     "SELECT data, nome, cognome, ingresso, uscita FROM timbrature ORDER BY data DESC, ingresso DESC LIMIT 5"
                 )
                 last_entries = cursor.fetchall()
-
-                # Anomalie (es. Uscita mancante negli ultimi 30gg)
-                # Semplice check: se uscita è vuota o null e data < oggi
                 cursor.execute(
                     "SELECT COUNT(*) FROM timbrature WHERE (uscita IS NULL OR uscita = '') AND data < date('now')"
                 )
                 missing_out = cursor.fetchone()[0]
 
-                conn.close()
-
-                context.append("\n=== REPORT TIMBRATURE ===")
-                context.append(f"- Record Totali: {total_count}")
-                if missing_out > 0:
-                    context.append(
-                        f"- ⚠️ ATTENZIONE: Rilevate {missing_out} timbrature con uscita mancante (anomalie)."
-                    )
-                else:
-                    context.append("- Nessuna anomalia (uscite mancanti) rilevata.")
-
-                context.append("- Ultime 5 Attività Registrate:")
-                for entry in last_entries:
-                    d, n, c, i, u = entry
-                    u_str = u if u else "---"
-                    context.append(f"  • {d}: {n} {c} ({i} -> {u_str})")
+            lines = ["\n=== REPORT TIMBRATURE ===", f"- Record Totali: {total_count}"]
+            if missing_out > 0:
+                lines.append(
+                    f"- ⚠️ ATTENZIONE: Rilevate {missing_out} timbrature con uscita mancante."
+                )
             else:
-                context.append("\n=== TIMBRATURE ===\nDatabase non trovato.")
-        except Exception as e:
-            context.append(f"Errore lettura Timbrature: {e}")
+                lines.append("- Nessuna anomalia (uscite mancanti) rilevata.")
 
-        return "\n".join(context)
+            lines.append("- Ultime 5 Attività Registrate:")
+            for entry in last_entries:
+                d, n, c, i, u = entry
+                initials = f"{n[0]}. {c[0]}." if n and c else "N.D."
+                lines.append(f"  • {d}: {initials} ({i} -> {u if u else '---'})")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"Errore lettura Timbrature: {e}"
 
     def ask(
-        self, question: str, extra_context: str = "", images: Optional[List[Any]] = None
+        self,
+        question: str,
+        extra_context: str = "",
+        images: Optional[List[Any]] = None,
     ) -> str:
         """Invia una domanda a Gemini con il contesto ed eventuali immagini."""
         try:
@@ -224,7 +212,10 @@ class LyraClient:
             return f"Si è verificato un errore critico: {str(e)}"
 
     def analyze_media(
-        self, media_bytes: bytes, prompt: str, mime_type: str = "image/png"
+        self,
+        media_bytes: bytes,
+        prompt: str,
+        mime_type: str = "image/png",
     ) -> str:
         """Invia un file multimediale (audio/immagine) a Gemini per analisi."""
         import base64

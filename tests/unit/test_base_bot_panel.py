@@ -21,7 +21,6 @@ from src.gui.widgets import (
     EditableDataTable,
     ModernButton,
 )
-from src.gui.widgets.status_card import StatusCard
 
 
 class TestBaseBotPanel(unittest.TestCase):
@@ -59,8 +58,6 @@ class TestBaseBotPanel(unittest.TestCase):
         # Patch StatusCard in src.gui.panels
         self.patcher_status_card = patch("src.gui.panels.StatusCard")
         self.mock_status_card_class = self.patcher_status_card.start()
-        # Bind real Enum to Mock class so code using StatusCard.Status works
-        self.mock_status_card_class.Status = StatusCard.Status
 
         self.mock_status_card_instance = MagicMock()
         self.mock_status_card_class.return_value = self.mock_status_card_instance
@@ -273,12 +270,12 @@ class TestBaseBotPanel(unittest.TestCase):
         # self.mock_qtimer_singleshot.assert_called_once() # Removed as it's not called here
 
     def test_update_status(self):
-        self.panel._update_status(StatusCard.Status.RUNNING, "Bot is running")
+        self.panel._update_status("#0d6efd", "Bot is running")
         self.mock_status_card_instance.setStatus.assert_called_once_with(
-            StatusCard.Status.RUNNING, "Bot is running"
+            "#0d6efd", "Bot is running"
         )
         self.panel.status_changed.emit.assert_called_once_with(
-            StatusCard.Status.RUNNING, "Bot is running"
+            "#0d6efd", "Bot is running"
         )
 
     def test_get_current_status(self):
@@ -336,7 +333,7 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_log_widget_instance.timeline.set_mood.assert_called_once_with(
             "running"
         )
-        self.panel._update_status.assert_called_once_with(StatusCard.Status.RUNNING)
+        self.panel._update_status.assert_called_once_with("#0d6efd")
         self.mock_audit_manager_instance.log_action.assert_called_once_with(
             action="Avvio Automazione",
             category="automazione",
@@ -358,7 +355,7 @@ class TestBaseBotPanel(unittest.TestCase):
             "[AVVISO] Stop richiesto..."
         )
         self.panel._update_status.assert_called_once_with(
-            StatusCard.Status.WARNING, "Arresto richiesto..."
+            "#ffc107", "Arresto richiesto..."
         )
 
     @patch("src.gui.panels.datetime")

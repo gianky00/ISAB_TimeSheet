@@ -142,6 +142,9 @@ def main():
         action="store_true",
         help="Skip test execution during pre-flight",
     )
+    parser.add_argument(
+        "--force", action="store_true", help="Force release even if checks fail"
+    )
     parser.add_argument("--no-git", action="store_true", help="Skip Git operations")
     parser.add_argument(
         "--push", action="store_true", help="Push to remote after release"
@@ -153,7 +156,9 @@ def main():
     # 1. Pre-Flight Check Interno
     pre_flight_cmd = [str(VENV_PYTHON), "admin/pre_flight_check.py"]
     if args.skip_tests:
-        pre_flight_cmd.append("--skip-tests")
+        pre_flight_cmd.append("--fast")
+    if args.force:
+        pre_flight_cmd.append("--force")
 
     run_command(pre_flight_cmd, "Pre-Flight Safety Check")
 

@@ -4,13 +4,13 @@ import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import telegram
 from PyQt6.QtCore import QObject, pyqtSignal
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    Message,
     Update,
     constants,
 )
@@ -95,23 +95,7 @@ class TelegramService(QObject):
 
     def _run_async_loop(self, token):
         """Loop principale asincrono del bot Telegram."""
-        res = self._execute_loop(self._main_loop_logic)
-
-        # Supporto critico per mock asincroni nei test
-        if res is not None and hasattr(res, "__await__"):
-            import threading
-
-            done = threading.Event()
-
-            def run_mock():
-                asyncio.run(res)
-                done.set()
-
-            # Eseguiamo il mock in un thread separato per non bloccare il loop del test
-            # e attendiamo la sincronizzazione.
-            t = threading.Thread(target=run_mock, daemon=True)
-            t.start()
-            t.join(timeout=5.0)
+        self._execute_loop(self._main_loop_logic)
 
     async def _main_loop_logic(self):
         """Logica interna del loop asincrono (separata per testabilità)."""
@@ -183,7 +167,9 @@ class TelegramService(QObject):
                 self.loop.close()
 
     async def _handle_error(
-        self, update: object, context: ContextTypes.DEFAULT_TYPE
+        self,
+        update: object,
+        context: ContextTypes.DEFAULT_TYPE,
     ) -> None:
         """Gestisce gli errori globali del bot."""
         if isinstance(context.error, telegram.error.Conflict):
@@ -234,24 +220,64 @@ class TelegramService(QObject):
             return
 
         chat_id = str(update.effective_chat.id)
+        config = config_manager.load_config()
+        saved_chat_id = config.get("telegram_chat_id", "")
 
-        if not self.connected_chat_id:
-            self.connected_chat_id = chat_id
-            config_manager.set_config_value("telegram_chat_id", chat_id)
-            if update.message:
-                await update.message.reply_text(
-                    f"✅ Dispositivo associato! Chat ID: {chat_id}"
-                )
+        # 1. Verifica associazione esistente
+        if saved_chat_id:
+            if chat_id != saved_chat_id:
+                if update.message:
+                    await update.message.reply_text(
+                        "⛔ Questo bot è già associato a un altro dispositivo."
+                    )
+                return
+        else:
+            # 2. Gestione nuovo accoppiamento
+            if not await self._handle_initial_pairing(update, context, config, chat_id):
+                return
 
-        if not await self._check_auth(update):
-            return
-
+        # 3. Menu principale
         if update.message:
             await update.message.reply_text(
                 "🚀 *SyncroJob Command Center*",
                 reply_markup=self._get_main_keyboard(),
                 parse_mode=constants.ParseMode.MARKDOWN,
             )
+
+    async def _handle_initial_pairing(
+        self,
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+        config: dict,
+        chat_id: str,
+    ) -> bool:
+        """Gestisce il primo accoppiamento tramite OTP."""
+        args = context.args
+        pairing_code = config.get("telegram_pairing_code", "")
+
+        if not pairing_code:
+            if update.message:
+                await update.message.reply_text(
+                    "⚠️ Errore: Codice non trovato nell'app desktop."
+                )
+            return False
+
+        if args and args[0] == pairing_code:
+            self.connected_chat_id = chat_id
+            config_manager.set_config_value("telegram_chat_id", chat_id)
+            config_manager.set_config_value("telegram_pairing_code", "")
+            if update.message:
+                await update.message.reply_text(
+                    f"✅ Dispositivo associato!\nChat ID: {chat_id}"
+                )
+            return True
+
+        if update.message:
+            await update.message.reply_text(
+                "🔒 *SyncroJob Security*\n\nInserisci il codice dell'app desktop.\nEsempio: `/start 123456`",
+                parse_mode=constants.ParseMode.MARKDOWN,
+            )
+        return False
 
     async def _cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self._check_auth(update):
@@ -267,7 +293,9 @@ class TelegramService(QObject):
             await update.message.reply_text("🛑 *Richiesta Stop Inviata*")
 
     async def _handle_text_input(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+        self,
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
     ):
         if (
             not await self._check_auth(update)
@@ -408,21 +436,17 @@ class TelegramService(QObject):
     async def _handle_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Gestisce tutti i callback dei bottoni inline."""
         query = update.callback_query
-        if not query or not query.message or not isinstance(query.message, Message):
-            return
-        if (
-            self.connected_chat_id
-            and update.effective_user
-            and str(update.effective_user.id) != self.connected_chat_id
-        ):
-            return
-        await query.answer()
-        chat_id = query.message.chat_id
-        data = query.data
-        if not data:
+        if not await self._validate_button_query(update, query):
             return
 
-        # Dispatcher per ridurre la complessità C901
+        # Type checking guard for Mypy
+        if not query or not query.data or not update.effective_chat:
+            return
+
+        chat_id = update.effective_chat.id
+        data = query.data
+
+        # Dispatcher
         if data == "menu_main" or data.startswith("nav_"):
             await self._handle_nav_actions(data, query)
         elif data.startswith("db_"):
@@ -431,6 +455,18 @@ class TelegramService(QObject):
             await self._handle_bot_actions(data, query, chat_id, update, context)
         elif self._is_utility_data(data):
             await self._handle_utility_actions(data, query, chat_id)
+
+    async def _validate_button_query(self, update: Update, query: Any) -> bool:
+        """Valida la query del bottone e l'autorizzazione."""
+        if not query or not query.message:
+            return False
+
+        if self.connected_chat_id and update.effective_user:
+            if str(update.effective_user.id) != self.connected_chat_id:
+                return False
+
+        await query.answer()
+        return bool(query.data)
 
     def _is_bot_data(self, data: str) -> bool:
         """Verifica se il callback data appartiene alle azioni dei bot."""
@@ -769,7 +805,12 @@ class TelegramService(QObject):
             self._handle_direct_bot_commands(data, chat_id)
 
     async def _handle_menu_and_input_dispatch(
-        self, data, query, chat_id, update, context
+        self,
+        data,
+        query,
+        chat_id,
+        update,
+        context,
     ) -> bool:
         """Dispatcher per menu e input. Ritorna True se gestito."""
         map = {

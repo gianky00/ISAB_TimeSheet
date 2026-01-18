@@ -4,7 +4,7 @@ Gestisce la sincronizzazione dei dati importati con il database.
 """
 
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from src.core.database import db_manager
 from src.core.excel_importer import ExcelImporter
@@ -13,79 +13,99 @@ from src.core.excel_importer import ExcelImporter
 class DataSynchronizer:
     """Gestore per la sincronizzazione dei dati con il database ottimizzato tramite SQL."""
 
+    @staticmethod
+    def _validate_identifier(name: str):
+        """Valida che un identificatore SQL (tabella o colonna) sia sicuro."""
+        import re
+
+        if not re.match(r"^[a-zA-Z0-9_]+$", name):
+            raise ValueError(f"Identificatore SQL non sicuro: {name}")
+        return name
+
+    @classmethod
+    def _create_temp_table(cls, cursor, table_name: str, columns: List[str]):
+        """Crea una tabella temporanea validata."""
+        safe_name = cls._validate_identifier(table_name)
+        cursor.execute(f"DROP TABLE IF EXISTS temp_{safe_name}")  # nosec B608
+        cols_def = ", ".join([f'"{cls._validate_identifier(c)}" TEXT' for c in columns])
+        cursor.execute(f"CREATE TEMPORARY TABLE temp_{safe_name} ({cols_def})")  # nosec B608
+
+    @classmethod
+    def _get_diff_count(
+        cls, cursor, table_name: str, columns: List[str], year: Optional[int] = None
+    ) -> Tuple[int, int]:
+        """Calcola record aggiunti e rimossi tramite EXCEPT SQL."""
+        safe_table = cls._validate_identifier(table_name)
+        safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
+        safe_cast_cols = ", ".join(
+            [f'CAST("{cls._validate_identifier(c)}" AS TEXT)' for c in columns]
+        )
+
+        where_clause = "WHERE year = ?" if year is not None else ""
+        params = (year,) if year is not None else ()
+
+        # Aggiunti
+        q_added = f"SELECT COUNT(*) FROM (SELECT {safe_cols} FROM temp_{safe_table} {where_clause} EXCEPT SELECT {safe_cast_cols} FROM {safe_table} {where_clause})"  # nosec B608
+        cursor.execute(q_added, params + params)
+        added = cursor.fetchone()[0]
+
+        # Rimossi
+        q_removed = f"SELECT COUNT(*) FROM (SELECT {safe_cast_cols} FROM {safe_table} {where_clause} EXCEPT SELECT {safe_cols} FROM temp_{safe_table} {where_clause})"  # nosec B608
+        cursor.execute(q_removed, params + params)
+        removed = cursor.fetchone()[0]
+
+        return added, removed
+
+    @classmethod
+    def _replace_data(
+        cls, cursor, table_name: str, columns: List[str], year: Optional[int] = None
+    ):
+        """Esegue la sostituzione atomica dei dati."""
+        safe_table = cls._validate_identifier(table_name)
+        safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
+
+        if year is not None:
+            cursor.execute(f"DELETE FROM {safe_table} WHERE year = ?", (year,))  # nosec B608
+            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table} WHERE year = ?"  # nosec B608
+            cursor.execute(q_ins, (year,))
+        else:
+            cursor.execute(f"DELETE FROM {safe_table}")  # nosec B608
+            q_ins = f"INSERT INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table}"  # nosec B608
+            cursor.execute(q_ins)
+
     @classmethod
     def sync_contabilita_dati(
         cls, db_path: Path, imported_data: List[Tuple], imported_years: List[int]
     ) -> Tuple[int, int]:
-        """
-        Sincronizza i dati della tabella 'contabilita' nel database.
-        Usa tabelle temporanee per calcolare il diff in SQL per massima velocità.
-        """
         if not imported_data:
             return 0, 0
 
-        total_added = 0
-        total_removed = 0
-        target_columns = ["year"] + list(ExcelImporter.COLUMNS_MAPPING.values())
+        target_columns = ["year"] + [
+            cls._validate_identifier(c) for c in ExcelImporter.COLUMNS_MAPPING.values()
+        ]
+        total_added, total_removed = 0, 0
 
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
+            cls._create_temp_table(cursor, "contabilita", target_columns)
 
-            # 1. Crea tabella temporanea per l'import
-            cursor.execute("DROP TABLE IF EXISTS temp_contabilita")
-            cols_def = ", ".join([f'"{c}" TEXT' for c in target_columns])
-            cursor.execute(f"CREATE TEMPORARY TABLE temp_contabilita ({cols_def})")  # nosec B608
-
-            # 2. Inserimento massivo dei nuovi dati (tutto come stringa per confronto coerente)
             placeholders = ", ".join(["?"] * len(target_columns))
-            query_insert = f"INSERT INTO temp_contabilita VALUES ({placeholders})"  # nosec B608
+            data = [
+                tuple(str(x).strip() if x is not None else "" for x in r)
+                for r in imported_data
+            ]
+            cursor.executemany(
+                f"INSERT INTO temp_contabilita VALUES ({placeholders})",  # nosec B608
+                data,
+            )
 
-            # Normalizzazione dati: strip e stringa
-            normalized_data = []
-            for row in imported_data:
-                normalized_data.append(
-                    tuple(str(x).strip() if x is not None else "" for x in row)
-                )
-
-            cursor.executemany(query_insert, normalized_data)
-
-            # 3. Calcolo diff per ogni anno
             for year in imported_years:
-                year_str = str(year)
-
-                # Righe aggiunte: presenti in temp_contabilita ma non in contabilita
-                # Usiamo CAST o stringhe per garantire coerenza
-                query_added = f"""
-                    SELECT COUNT(*) FROM (
-                        SELECT {", ".join([f'"{c}"' for c in target_columns])} FROM temp_contabilita WHERE year = ?
-                        EXCEPT
-                        SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in target_columns])} FROM contabilita WHERE year = ?
-                    )
-                """  # nosec B608
-                cursor.execute(query_added, (year_str, year))
-                total_added += cursor.fetchone()[0]
-
-                # Righe rimosse: presenti in contabilita ma non in temp_contabilita
-                query_removed = f"""
-                    SELECT COUNT(*) FROM (
-                        SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in target_columns])} FROM contabilita WHERE year = ?
-                        EXCEPT
-                        SELECT {", ".join([f'"{c}"' for c in target_columns])} FROM temp_contabilita WHERE year = ?
-                    )
-                """  # nosec B608
-                cursor.execute(query_removed, (year, year_str))
-                total_removed += cursor.fetchone()[0]
-
-                # 4. Sostituzione atomica per l'anno
-                cursor.execute("DELETE FROM contabilita WHERE year = ?", (year,))
-                cursor.execute(
-                    f"""
-                    INSERT INTO contabilita ({", ".join([f'"{c}"' for c in target_columns])})
-                    SELECT {", ".join([f'"{c}"' for c in target_columns])} FROM temp_contabilita WHERE year = ?
-                """,  # nosec B608
-                    (year_str,),
+                added, removed = cls._get_diff_count(
+                    cursor, "contabilita", target_columns, year
                 )
-
+                total_added += added
+                total_removed += removed
+                cls._replace_data(cursor, "contabilita", target_columns, year)
             conn.commit()
 
         return total_added, total_removed
@@ -94,7 +114,6 @@ class DataSynchronizer:
     def sync_giornaliere(
         cls, db_path: Path, all_new_rows: List[Tuple], years_to_clear: List[int]
     ) -> Tuple[int, int]:
-        """Sincronizzazione ottimizzata per giornaliere."""
         if not all_new_rows and not years_to_clear:
             return 0, 0
 
@@ -112,61 +131,30 @@ class DataSynchronizer:
             "n_prev",
             "nome_file",
         ]
-        total_added = 0
-        total_removed = 0
+        total_added, total_removed = 0, 0
 
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
-
-            cursor.execute("DROP TABLE IF EXISTS temp_giornaliere")
-            cols_def = ", ".join([f'"{c}" TEXT' for c in target_cols])
-            cursor.execute(f"CREATE TEMPORARY TABLE temp_giornaliere ({cols_def})")  # nosec B608
+            cls._create_temp_table(cursor, "giornaliere", target_cols)
 
             if all_new_rows:
                 placeholders = ", ".join(["?"] * len(target_cols))
-                normalized = [
+                data = [
                     tuple(str(x).strip() if x is not None else "" for x in r)
                     for r in all_new_rows
                 ]
                 cursor.executemany(
                     f"INSERT INTO temp_giornaliere VALUES ({placeholders})",  # nosec B608
-                    normalized,
+                    data,
                 )
 
             for year in years_to_clear:
-                year_str = str(year)
-
-                # Added
-                query_added = f"""
-                    SELECT COUNT(*) FROM (
-                        SELECT {", ".join([f'"{c}"' for c in target_cols])} FROM temp_giornaliere WHERE year = ?
-                        EXCEPT
-                        SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in target_cols])} FROM giornaliere WHERE year = ?
-                    )
-                """  # nosec B608
-                cursor.execute(query_added, (year_str, year))
-                total_added += cursor.fetchone()[0]
-
-                # Removed
-                query_removed = f"""
-                    SELECT COUNT(*) FROM (
-                        SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in target_cols])} FROM giornaliere WHERE year = ?
-                        EXCEPT
-                        SELECT {", ".join([f'"{c}"' for c in target_cols])} FROM temp_giornaliere WHERE year = ?
-                    )
-                """  # nosec B608
-                cursor.execute(query_removed, (year, year_str))
-                total_removed += cursor.fetchone()[0]
-
-                cursor.execute("DELETE FROM giornaliere WHERE year = ?", (year,))
-                cursor.execute(
-                    f"""
-                    INSERT INTO giornaliere ({", ".join([f'"{c}"' for c in target_cols])})
-                    SELECT {", ".join([f'"{c}"' for c in target_cols])} FROM temp_giornaliere WHERE year = ?
-                """,  # nosec B608
-                    (year_str,),
+                added, removed = cls._get_diff_count(
+                    cursor, "giornaliere", target_cols, year
                 )
-
+                total_added += added
+                total_removed += removed
+                cls._replace_data(cursor, "giornaliere", target_cols, year)
             conn.commit()
 
         return total_added, total_removed
@@ -175,7 +163,6 @@ class DataSynchronizer:
     def sync_attivita_programmate(
         cls, db_path: Path, rows_to_insert: List[Tuple]
     ) -> Tuple[int, int]:
-        """Sincronizzazione ottimizzata per attività programmate."""
         db_cols = list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ["styles"]
         return cls._sync_generic(
             db_path, "attivita_programmate", db_cols, rows_to_insert
@@ -185,75 +172,39 @@ class DataSynchronizer:
     def sync_scarico_ore(
         cls, db_path: Path, rows_to_insert: List[Tuple]
     ) -> Tuple[int, int]:
-        """Sincronizzazione ottimizzata per scarico ore."""
-        db_cols = ExcelImporter.SCARICO_ORE_COLS
-        return cls._sync_generic(db_path, "scarico_ore", db_cols, rows_to_insert)
+        return cls._sync_generic(
+            db_path, "scarico_ore", ExcelImporter.SCARICO_ORE_COLS, rows_to_insert
+        )
 
     @classmethod
     def sync_certificati_campione(
         cls, db_path: Path, rows_to_insert: List[Tuple]
     ) -> Tuple[int, int]:
-        """Sincronizzazione ottimizzata per certificati campione."""
-        target_cols = ExcelImporter.CERTIFICATI_CAMPIONE_COLS
         return cls._sync_generic(
-            db_path, "certificati_campione", target_cols, rows_to_insert
+            db_path,
+            "certificati_campione",
+            ExcelImporter.CERTIFICATI_CAMPIONE_COLS,
+            rows_to_insert,
         )
 
     @classmethod
     def _sync_generic(
         cls, db_path: Path, table_name: str, columns: List[str], new_data: List[Tuple]
     ) -> Tuple[int, int]:
-        """Metodo generico per sincronizzazione tabelle intere."""
-        total_added = 0
-        total_removed = 0
-
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
-
-            cursor.execute(f"DROP TABLE IF EXISTS temp_{table_name}")  # nosec B608
-            cols_def = ", ".join([f'"{c}" TEXT' for c in columns])
-            cursor.execute(f"CREATE TEMPORARY TABLE temp_{table_name} ({cols_def})")  # nosec B608
-
+            cls._create_temp_table(cursor, table_name, columns)
             if new_data:
                 placeholders = ", ".join(["?"] * len(columns))
-                normalized = [
+                data = [
                     tuple(str(x).strip() if x is not None else "" for x in r)
                     for r in new_data
                 ]
                 cursor.executemany(
-                    f"INSERT INTO temp_{table_name} VALUES ({placeholders})",  # nosec B608
-                    normalized,
+                    f"INSERT INTO temp_{cls._validate_identifier(table_name)} VALUES ({placeholders})",  # nosec B608
+                    data,
                 )
-
-            # Added
-            query_added = f"""
-                SELECT COUNT(*) FROM (
-                    SELECT {", ".join([f'"{c}"' for c in columns])} FROM temp_{table_name}
-                    EXCEPT
-                    SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in columns])} FROM {table_name}
-                )
-            """  # nosec B608
-            cursor.execute(query_added)
-            total_added = cursor.fetchone()[0]
-
-            # Removed
-            query_removed = f"""
-                SELECT COUNT(*) FROM (
-                    SELECT {", ".join([f'CAST("{c}" AS TEXT)' for c in columns])} FROM {table_name}
-                    EXCEPT
-                    SELECT {", ".join([f'"{c}"' for c in columns])} FROM temp_{table_name}
-                )
-            """  # nosec B608
-            cursor.execute(query_removed)
-            total_removed = cursor.fetchone()[0]
-
-            cursor.execute(f"DELETE FROM {table_name}")  # nosec B608
-            query_finalize = f"""
-                INSERT INTO {table_name} ({", ".join([f'"{c}"' for c in columns])})
-                SELECT {", ".join([f'"{c}"' for c in columns])} FROM temp_{table_name}
-            """  # nosec B608
-            cursor.execute(query_finalize)
-
+            added, removed = cls._get_diff_count(cursor, table_name, columns)
+            cls._replace_data(cursor, table_name, columns)
             conn.commit()
-
-        return total_added, total_removed
+            return added, removed
