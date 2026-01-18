@@ -115,13 +115,17 @@ class MainWindow(QMainWindow):
 
     def _preload_background(self):
         """Avvia la sequenza di caricamento incrementale PROFONDO con feedback visivo."""
-        # Nascondi i widget del footer standard
+        # Nascondi i widget del footer standard (FASE 2)
         self.footer_left.setVisible(False)
-        self.footer_right.setVisible(False)
 
-        # Mostra i widget "Hacker Mode"
+        # Mostra i widget "Hacker Mode" (FASE 1)
         self.startup_console.setVisible(True)
         self.boot_telemetry.setVisible(True)
+
+        # Mostra la progress bar (FASE 1)
+        self.footer_right.setVisible(True)
+        self.footer_right.show_loading()
+        self.footer_right.set_global_progress(0)
 
         # Helper per creare filler logs "Professional Engineering"
         def mk_steps(action, label, ctx="SYS"):
@@ -230,10 +234,12 @@ class MainWindow(QMainWindow):
         action, description = self._preload_tasks.pop(0)
         self._completed_preload += 1
 
-        # Aggiorna Console
+        # Aggiorna Console e Progress Bar
         self.startup_console.set_log(
             description, self._completed_preload, self._total_preload
         )
+        progress_pct = int((self._completed_preload / self._total_preload) * 100)
+        self.footer_right.set_global_progress(progress_pct)
 
         # Esegui azione (se presente)
         delay = 30  # Default delay (molto veloce per effetto scrolling)
@@ -257,13 +263,13 @@ class MainWindow(QMainWindow):
         if sip.isdeleted(self):
             return
 
-        # Ripristina Footer Standard
+        # Ripristina Footer Standard (FASE 2)
         self.startup_console.setVisible(False)
         self.boot_telemetry.setVisible(False)  # Nascondi Telemetry
 
         self.status_bar.clearMessage()
         self.footer_left.setVisible(True)  # Torna visibile
-        self.footer_right.setVisible(True)  # Torna visibile
+        self.footer_right.show_operational()  # Nascondi progress bar, mostra status cards
 
         self._update_license_status_bar()
 
@@ -272,9 +278,9 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(
             500,
             lambda: ToastManager.instance().show(
-                "<b>SyncroJob è pronto. Tutti i servizi sono operativi.</b>",
+                "<center><b>Sistema inizializzato e pronto all'uso</b><br/>Tutti i moduli sono operativi. Enjoy!</center>",
                 "success",
-                4000,
+                5000,
                 position="bottom",
             ),
         )
@@ -294,6 +300,7 @@ class MainWindow(QMainWindow):
         if license_info:
             client = license_info.get("Cliente", "N/D")
             expiry = license_info.get("Scadenza Licenza", "N/D")
+            hw_id = license_info.get("Hardware ID", "N/D")
             config = config_manager.load_config()
             last_login = config.get("last_login_date", "N/D")
 
@@ -302,7 +309,7 @@ class MainWindow(QMainWindow):
             config_manager.set_config_value("last_login_date", now_str)
 
             # Usa il nuovo widget grafico sinistro
-            self.footer_left.update_info(client, expiry, last_login)
+            self.footer_left.update_info(client, expiry, last_login, hw_id)
             self.footer_left.setVisible(True)
 
     def _on_anomalies_found(self, count):
@@ -358,7 +365,7 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         """Configura l'interfaccia con Placeholders per Lazy Loading."""
         self.status_bar = QStatusBar()
-        # Increased height for stacked layout
+        # Optimized height for compact footer
         self.status_bar.setStyleSheet(
             "QStatusBar { background: #FFFFFF; border-top: 1px solid #E0E0E0; min-height: 65px; }"
         )
