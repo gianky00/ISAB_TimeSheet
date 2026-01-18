@@ -263,15 +263,17 @@ class MainWindow(QMainWindow):
         if sip.isdeleted(self):
             return
 
-        # Ripristina Footer Standard (FASE 2)
+        # Ripristina Footer Standard (FASE 2) con animazione fade-in
         self.startup_console.setVisible(False)
         self.boot_telemetry.setVisible(False)  # Nascondi Telemetry
 
         self.status_bar.clearMessage()
-        self.footer_left.setVisible(True)  # Torna visibile
         self.footer_right.show_operational()  # Nascondi progress bar, mostra status cards
 
         self._update_license_status_bar()
+
+        # Animazione fade-in per il footer sinistro
+        self.footer_left.fade_in(400)
 
         # FINAL: Show visible TOAST instead of status bar message
         # Delay increased to 500ms to ensure UI is stable and Toast appears ON TOP
@@ -365,9 +367,24 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         """Configura l'interfaccia con Placeholders per Lazy Loading."""
         self.status_bar = QStatusBar()
-        # Optimized height for compact footer
+        # Footer con gradiente sfumato e bordo superiore accentuato
         self.status_bar.setStyleSheet(
-            "QStatusBar { background: #FFFFFF; border-top: 1px solid #E0E0E0; min-height: 65px; }"
+            """
+            QStatusBar {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #FFFFFF,
+                    stop:1 #F5F5F5
+                );
+                border-top: 2px solid qlineargradient(
+                    x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #E0E0E0,
+                    stop:0.5 #BDBDBD,
+                    stop:1 #E0E0E0
+                );
+                min-height: 65px;
+            }
+        """
         )
         self.setStatusBar(self.status_bar)
 

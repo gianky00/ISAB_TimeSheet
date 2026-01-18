@@ -9,9 +9,10 @@ import time
 from typing import Optional
 
 import psutil
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
@@ -89,6 +90,31 @@ class StartupConsole(QLabel):
         self.log(message)
 
 
+class ClickableLabel(QLabel):
+    """Label con hover effect per dati interattivi."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._base_style = ""
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def setBaseStyle(self, style: str):
+        self._base_style = style
+        self.setStyleSheet(style)
+
+    def enterEvent(self, event):
+        # Hover: sfondo leggero e sottolineatura
+        self.setStyleSheet(
+            self._base_style
+            + " background: rgba(0,0,0,0.05); border-radius: 3px; padding: 2px 4px;"
+        )
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setStyleSheet(self._base_style)
+        super().leaveEvent(event)
+
+
 class FooterLeftWidget(QWidget):
     """
     Parte sinistra del footer: Business Info con layout verticale ottimizzato.
@@ -103,6 +129,11 @@ class FooterLeftWidget(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 2, 0, 2)
         layout.setSpacing(20)
+
+        # Opacity effect per fade-in
+        self._opacity_effect = QGraphicsOpacityEffect(self)
+        self._opacity_effect.setOpacity(1.0)
+        self.setGraphicsEffect(self._opacity_effect)
 
         # Colonna 1: Cliente / Scadenza (verticale)
         col1 = QWidget()
@@ -146,20 +177,20 @@ class FooterLeftWidget(QWidget):
 
         self._add_separator(layout)
 
-        # Colonna 3: Portale Fornitori / SafeWork (verticale)
+        # Colonna 3: Portale Fornitori / SafeWork (verticale) - con hover
         col3 = QWidget()
         col3_layout = QVBoxLayout(col3)
         col3_layout.setContentsMargins(0, 0, 0, 0)
         col3_layout.setSpacing(2)
 
-        self.portale_item = QLabel()
-        self.portale_item.setStyleSheet(
+        self.portale_item = ClickableLabel()
+        self.portale_item.setBaseStyle(
             f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
         col3_layout.addWidget(self.portale_item)
 
-        self.safe_item = QLabel()
-        self.safe_item.setStyleSheet(
+        self.safe_item = ClickableLabel()
+        self.safe_item.setBaseStyle(
             f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
         col3_layout.addWidget(self.safe_item)
@@ -169,11 +200,37 @@ class FooterLeftWidget(QWidget):
         self.refresh_accounts()
 
     def _add_separator(self, layout):
+        """Separatore elegante con gradiente verticale."""
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
-        line.setFixedHeight(14)
-        line.setStyleSheet("color: #E0E0E0; border-left: 1px solid #E0E0E0;")
+        line.setFixedHeight(32)
+        line.setFixedWidth(2)
+        line.setStyleSheet(
+            """
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 transparent,
+                    stop:0.3 #BDBDBD,
+                    stop:0.7 #BDBDBD,
+                    stop:1 transparent
+                );
+                border: none;
+            }
+        """
+        )
         layout.addWidget(line)
+
+    def fade_in(self, duration: int = 400):
+        """Animazione fade-in per transizione FASE 1 → FASE 2."""
+        self._opacity_effect.setOpacity(0.0)
+        self.setVisible(True)
+        self._fade_anim = QPropertyAnimation(self._opacity_effect, b"opacity")
+        self._fade_anim.setDuration(duration)
+        self._fade_anim.setStartValue(0.0)
+        self._fade_anim.setEndValue(1.0)
+        self._fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._fade_anim.start()
 
     def update_info(
         self, client: str, expiry: str, last_login: str = "", hw_id: str = ""
@@ -363,11 +420,25 @@ class BootTelemetryWidget(QWidget):
         self.timer.timeout.connect(self._update_stats)
 
     def _add_separator(self, layout):
-        """Aggiunge un separatore verticale."""
+        """Separatore elegante con gradiente verticale."""
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
-        line.setFixedHeight(28)
-        line.setStyleSheet("color: #CCCCCC; border-left: 1px solid #CCCCCC;")
+        line.setFixedHeight(32)
+        line.setFixedWidth(2)
+        line.setStyleSheet(
+            """
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 transparent,
+                    stop:0.3 #9E9E9E,
+                    stop:0.7 #9E9E9E,
+                    stop:1 transparent
+                );
+                border: none;
+            }
+        """
+        )
         layout.addWidget(line)
 
     def showEvent(self, event):
@@ -438,7 +509,13 @@ class BootTelemetryWidget(QWidget):
             self.lbl_ram.setText(f"RAM: {ram.percent:.1f}% ({ram_used:.1f}GB)")
             net_stats = psutil.net_if_stats()
             net_connected = any(stats.isup for stats in net_stats.values())
-            self.lbl_net.setText(f"NET: {'Online' if net_connected else 'Offline'}")
+            # Badge colorato: verde = Online, rosso = Offline
+            if net_connected:
+                self.lbl_net.setText("NET: <span style='color:#4CAF50'>●</span> Online")
+            else:
+                self.lbl_net.setText(
+                    "NET: <span style='color:#F44336'>●</span> Offline"
+                )
 
             # Col 6: THR / PID
             self.lbl_threads.setText(f"THR: {self.process.num_threads()}")
