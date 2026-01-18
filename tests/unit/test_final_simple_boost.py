@@ -4,14 +4,21 @@ from src.gui.widgets.sidebar_button import SidebarButton
 
 class TestFinalSimpleBoost:
     def test_sidebar_button_badge(self, qapp):
-        btn = SidebarButton("Test", icon="🏠")
-        assert "🏠" in btn.text()
+        # SidebarButton expects an icon_path, not unicode char.
+        # But we just test logic here, passing empty or dummy path.
+        btn = SidebarButton("Test", icon_path="dummy.svg")
 
+        # Check text format (spaces + text)
+        assert "Test" in btn.text()
+
+        # Check badge logic: append " (N)"
         btn.set_badge(5)
-        assert "🔴 5" in btn.text()
+        # Implementation: f"   {self.label_text} ({count})"
+        assert "(5)" in btn.text()
 
         btn.set_badge(0)
-        assert "🔴" not in btn.text()
+        assert "(0)" not in btn.text()
+        assert "Test" in btn.text()
 
     def test_contabilita_queries_exceptions(self, tmp_path):
         # Create a file that is NOT a database to trigger exception

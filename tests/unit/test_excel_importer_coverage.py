@@ -62,7 +62,7 @@ def test_import_contabilita_valid_data(importer):
 
         assert rows[0][0] == 2025
         row_str = str(rows[0])
-        assert "01/01/2025" in row_str
+        assert "2025-01-01" in row_str
         assert "Manutenzione" in row_str
 
 

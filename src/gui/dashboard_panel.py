@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from PyQt6.QtCore import (  # type: ignore
     QEasingCurve,
     QPropertyAnimation,
@@ -174,7 +176,12 @@ class DashboardPanel(QWidget):
     def _setup_ui(self):
         # Header
         header_layout = QVBoxLayout()
-        title = QLabel("Dashboard Operativa - Panoramica Attività")
+
+        # Greeting Logic
+        hour = datetime.now().hour
+        greeting = "Buongiorno" if 5 <= hour < 18 else "Buonasera"
+
+        title = QLabel(f"{greeting}! Dashboard Operativa")
         title.setStyleSheet("font-size: 32px; font-weight: 800; color: #343a40;")
         header_layout.addWidget(title)
 

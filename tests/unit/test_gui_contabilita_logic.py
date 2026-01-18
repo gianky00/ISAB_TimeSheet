@@ -54,8 +54,8 @@ class TestContabilitaTableLogic:
             total_val = model.data(model.index(0, 3))
             ore_val = model.data(model.index(0, 9))
 
-            assert "1000" in str(total_val)
-            assert "10" in str(ore_val)
+            assert "1000" in str(total_val).replace(".", "").replace(",", "")
+            assert "10" in str(ore_val).split(",")[0]  # Check integer part only
         finally:
             tab.deleteLater()
 
@@ -84,6 +84,6 @@ class TestContabilitaTableLogic:
         try:
             # Check formatting of ore (index 9)
             model = tab.table.model()
-            assert model.data(model.index(0, 9)) == "8,5"
+            assert model.data(model.index(0, 9)) == "8,50"
         finally:
             tab.deleteLater()

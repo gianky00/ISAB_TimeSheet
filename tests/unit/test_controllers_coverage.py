@@ -61,7 +61,7 @@ class TestControllersCoverage:
     def test_navigation_controller_settings_dirty_check(self, mw, mocker):
         """Verifica blocco navigazione se impostazioni non salvate."""
         ctrl = NavigationController(mw)
-        mw._current_page_index = 4
+        mw._current_page_index = 7
 
         mw.settings_panel = MagicMock()
         mw.settings_panel.has_unsaved_changes.return_value = True

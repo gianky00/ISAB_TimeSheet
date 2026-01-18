@@ -324,7 +324,9 @@ class ExcelImporter:
 
                 # 2. Gestione Date
                 elif col == "data_prev":
-                    df[col] = pd.to_datetime(df[col], errors="coerce")
+                    df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime(
+                        "%Y-%m-%d"
+                    )
 
                 # 3. Pulizia stringhe per il resto
                 else:

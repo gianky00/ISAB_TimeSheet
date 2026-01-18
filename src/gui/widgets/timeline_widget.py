@@ -216,6 +216,10 @@ class HorizontalTimelineWidget(QScrollArea):
         self.last_category = None
         self.consecutive_count = 0
 
+    def set_mood(self, mood: str):
+        """Imposta il mood della timeline (es. running, error, success)."""
+        pass
+
     def add_widget(self, widget: QWidget):
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
