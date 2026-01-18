@@ -719,28 +719,16 @@ class MainWindow(QMainWindow):
 
     def _navigate_to_settings_config(self):
         """Naviga al pannello Impostazioni -> tab Configurazione."""
+        # STEP 1: Forza il caricamento del pannello PRIMA di navigare
+        _ = self.navigation_controller.get_panel(PageIndex.SETTINGS)
+
+        # STEP 2: Naviga al pannello (ora sicuramente caricato)
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
-        # Usa retry mechanism per assicurarsi che il pannello sia caricato
-        self._config_tab_retry_count = 0
-        self._set_config_tab()
 
-    def _set_config_tab(self):
-        """Helper per impostare il tab Configurazione dopo il caricamento del pannello."""
+        # STEP 3: Imposta il tab immediatamente (il pannello è già caricato)
         if hasattr(self, "settings_panel") and self.settings_panel is not None:
-            # Pannello caricato, imposta il tab
-            self.settings_panel.tabs.setCurrentIndex(0)  # Tab Configurazione
-        else:
-            # Pannello non ancora caricato, riprova fino a 10 volte (1 secondo totale)
-            self._config_tab_retry_count += 1
-            if self._config_tab_retry_count < 10:
-                QTimer.singleShot(100, self._set_config_tab)
-            else:
-                # Fallback: forza il caricamento
-                from src.utils.secure_logger import SecureLogger
-
-                SecureLogger().warning(
-                    "Settings panel not loaded after 1s, forcing navigation"
-                )
+            # Usa QTimer per assicurare che l'UI sia aggiornata prima di cambiare tab
+            QTimer.singleShot(50, lambda: self.settings_panel.tabs.setCurrentIndex(0))
 
     def _toggle_footer_stats(self):
         """Toggle tra System Metrics (boot_telemetry) e License Info (footer_left)."""
