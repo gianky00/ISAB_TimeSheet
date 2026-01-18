@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QProgressBar,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -101,39 +102,71 @@ class FooterLeftWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 5, 0, 5)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 8, 0, 8)
+        layout.setSpacing(20)
 
-        # FASE 2: Business Info Items
-        self.client_item = FooterItemWidget("CLIENTE:")
-        layout.addWidget(self.client_item)
+        # FASE 2: Business Info Items - Colonna 1 (Cliente/Scadenza verticale)
+        col1_widget = QWidget()
+        col1_layout = QVBoxLayout(col1_widget)
+        col1_layout.setContentsMargins(0, 0, 0, 0)
+        col1_layout.setSpacing(8)
 
-        self.expiry_item = FooterItemWidget("SCADENZA:")
-        layout.addWidget(self.expiry_item)
+        self.client_item = FooterItemWidget("CLIENTE:", color="#0d6efd")
+        self.client_item.lbl_tag.setStyleSheet(
+            "color: #0d6efd; font-weight: bold; font-size: 13px; background: transparent;"
+        )
+        self.client_item.lbl_val.setStyleSheet(
+            "color: #212529; font-size: 13px; font-weight: 600; background: transparent;"
+        )
+        col1_layout.addWidget(self.client_item)
 
+        self.expiry_item = FooterItemWidget("SCADENZA:", color="#6c757d")
+        self.expiry_item.lbl_tag.setStyleSheet(
+            "color: #6c757d; font-weight: bold; font-size: 12px; background: transparent;"
+        )
+        self.expiry_item.lbl_val.setStyleSheet(
+            "color: #495057; font-size: 12px; background: transparent;"
+        )
+        col1_layout.addWidget(self.expiry_item)
+
+        layout.addWidget(col1_widget)
         self._add_separator(layout)
 
-        self.last_login_item = FooterItemWidget("ULTIMO ACCESSO:")
-        layout.addWidget(self.last_login_item)
+        # FASE 2: Accesso/Account - Colonna 2 (Ultimo Accesso + Account verticale)
+        col2_widget = QWidget()
+        col2_layout = QVBoxLayout(col2_widget)
+        col2_layout.setContentsMargins(0, 0, 0, 0)
+        col2_layout.setSpacing(8)
 
-        self._add_separator(layout)
+        self.last_login_item = FooterItemWidget("ULTIMO ACCESSO:", color="#6c757d")
+        self.last_login_item.lbl_tag.setStyleSheet(
+            "color: #6c757d; font-weight: bold; font-size: 12px; background: transparent;"
+        )
+        self.last_login_item.lbl_val.setStyleSheet(
+            "color: #495057; font-size: 12px; background: transparent;"
+        )
+        col2_layout.addWidget(self.last_login_item)
 
-        # OS Info cluster (sempre visibile)
-        import platform
-
-        os_name = "Windows" if os.name == "nt" else platform.system()
-        self.os_item = FooterItemWidget("OS:", value=os_name, color="#455A64")
-        layout.addWidget(self.os_item)
-
-        self._add_separator(layout)
-
-        # Account Info (FASE 2)
-        self.isab_item = FooterItemWidget("ISAB:", color="#1565C0")
-        layout.addWidget(self.isab_item)
+        # Account Info (FASE 2) - Portale Fornitori sopra, SafeWork sotto
+        self.portale_item = FooterItemWidget("Portale Fornitori:", color="#1565C0")
+        self.portale_item.lbl_tag.setStyleSheet(
+            "color: #1565C0; font-weight: bold; font-size: 12px; background: transparent;"
+        )
+        self.portale_item.lbl_val.setStyleSheet(
+            "color: #1565C0; font-size: 12px; font-weight: 600; background: transparent;"
+        )
+        col2_layout.addWidget(self.portale_item)
 
         self.safe_item = FooterItemWidget("SafeWork:", color="#D81B60")
-        layout.addWidget(self.safe_item)
+        self.safe_item.lbl_tag.setStyleSheet(
+            "color: #D81B60; font-weight: bold; font-size: 12px; background: transparent;"
+        )
+        self.safe_item.lbl_val.setStyleSheet(
+            "color: #D81B60; font-size: 12px; font-weight: 600; background: transparent;"
+        )
+        col2_layout.addWidget(self.safe_item)
 
+        layout.addWidget(col2_widget)
         layout.addStretch()
 
         self.refresh_accounts()
@@ -158,10 +191,10 @@ class FooterLeftWidget(QWidget):
         accounts = config.get("accounts", [])
         safework = config.get("safework_accounts", [])
 
-        isab_user = self._get_default_account(accounts)
+        portale_user = self._get_default_account(accounts)
         safe_user = self._get_default_account(safework)
 
-        self.isab_item.set_text(isab_user or "N.C.")
+        self.portale_item.set_text(portale_user or "N.C.")
         self.safe_item.set_text(safe_user or "N.C.")
 
     @staticmethod
@@ -305,23 +338,39 @@ class FooterRightWidget(QWidget):
     def __init__(self, status_portale, status_safework, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 10, 0)
-        layout.setSpacing(12)
+        layout.setContentsMargins(0, 0, 15, 0)
+        layout.setSpacing(15)
         layout.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        # Progress Bar (FASE 1: Loading)
+        # Progress Bar (FASE 1: Loading) - visibile solo durante il boot
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(True)  # Visibile in FASE 1
-        self.progress_bar.setMaximumHeight(8)
-        self.progress_bar.setFixedWidth(150)
+        self.progress_bar.setMaximumHeight(10)
+        self.progress_bar.setFixedWidth(180)
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setStyleSheet(
             """
-            QProgressBar { border: 1px solid #E0E0E0; border-radius: 4px; background: #F5F5F5; }
-            QProgressBar::chunk { background-color: #0d6efd; border-radius: 3px; }
+            QProgressBar {
+                border: 1px solid #0d6efd;
+                border-radius: 5px;
+                background: #E7F1FF;
+                padding: 1px;
+            }
+            QProgressBar::chunk {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                           stop:0 #0d6efd, stop:1 #0051ba);
+                border-radius: 4px;
+            }
         """
         )
         layout.addWidget(self.progress_bar)
+
+        # Progress Label
+        self.progress_label = QLabel("0%")
+        self.progress_label.setStyleSheet(
+            "color: #0d6efd; font-weight: bold; font-size: 13px; background: transparent; min-width: 35px;"
+        )
+        layout.addWidget(self.progress_label)
 
         # Status Cards (FASE 2: Operational)
         self.status_portale = status_portale
@@ -330,22 +379,22 @@ class FooterRightWidget(QWidget):
         layout.addWidget(status_safework)
 
     def set_global_progress(self, value: int):
-        """Aggiorna la progress bar (FASE 1)."""
-        if value < 0:
-            self.progress_bar.setVisible(False)
-        else:
-            self.progress_bar.setVisible(True)
-            self.progress_bar.setValue(min(value, 100))
+        """Aggiorna la progress bar (FASE 1) con percentuale."""
+        value = max(0, min(value, 100))
+        self.progress_bar.setValue(value)
+        self.progress_label.setText(f"{value}%")
 
     def show_loading(self):
         """Mostra la progress bar (FASE 1: Boot)."""
         self.progress_bar.setVisible(True)
+        self.progress_label.setVisible(True)
         self.status_portale.setVisible(False)
         self.status_safework.setVisible(False)
 
     def show_operational(self):
-        """Mostra i status cards (FASE 2: Operativo)."""
+        """Mostra i status cards (FASE 2: Operativo) e nasconde la progress bar."""
         self.progress_bar.setVisible(False)
+        self.progress_label.setVisible(False)
         self.status_portale.setVisible(True)
         self.status_safework.setVisible(True)
 
@@ -378,10 +427,10 @@ class FooterStatsManager(QWidget):
         """
         self.phase = "operational"
         self.center_console.setText(
-            "SyncroJob operativo. Tutti i moduli caricati correttamente."
+            "✓ Sistema SyncroJob pronto. Infrastruttura operativa completamente caricata e sincronizzata."
         )
         self.center_console.setStyleSheet(
-            """color: #2E7D32; font-family: 'Segoe UI Semibold'; font-size: 11px; padding: 0 20px;"""
+            """color: #2E7D32; font-family: 'Segoe UI Semibold'; font-size: 12px; padding: 0 20px; font-weight: 600;"""
         )
         self.right_widget.show_operational()
         if client_name or expiry or last_login:

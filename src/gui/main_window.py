@@ -272,9 +272,9 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(
             500,
             lambda: ToastManager.instance().show(
-                "<b>SyncroJob è pronto. Tutti i servizi sono operativi.</b>",
+                "<b>✓ Sistema inizializzato e pronto all'uso</b><br/>Tutti i moduli operativi • Infrastruttura sincronizzata",
                 "success",
-                4000,
+                5000,
                 position="bottom",
             ),
         )
@@ -358,9 +358,9 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         """Configura l'interfaccia con Placeholders per Lazy Loading."""
         self.status_bar = QStatusBar()
-        # Increased height for stacked layout
+        # Increased height for better visibility
         self.status_bar.setStyleSheet(
-            "QStatusBar { background: #FFFFFF; border-top: 1px solid #E0E0E0; min-height: 65px; }"
+            "QStatusBar { background: #FFFFFF; border-top: 1px solid #E0E0E0; min-height: 90px; }"
         )
         self.setStatusBar(self.status_bar)
 
