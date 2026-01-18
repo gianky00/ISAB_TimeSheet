@@ -300,40 +300,8 @@ class EditableDataTable(QWidget):
         self.table.setColumnCount(len(self.columns))
         self.table.setHorizontalHeaderLabels([c["name"] for c in self.columns])
 
-        self.table.setStyleSheet(
-            """
-            QTableWidget {
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                background-color: white;
-                color: black;
-                gridline-color: #f8f9fa;
-                font-size: 14px;
-                selection-background-color: #e3f2fd;
-                selection-color: #0d6efd;
-            }
-            QTableWidget::item {
-                padding: 8px 12px;
-                color: black;
-                border-bottom: 1px solid #f1f3f5;
-            }
-            QTableWidget::item:selected {
-                background-color: #e3f2fd;
-                color: #0d6efd;
-                border-left: 3px solid #0d6efd;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                color: #37474f;
-                padding: 10px;
-                border: none;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-                font-size: 13px;
-                text-transform: uppercase;
-            }
-        """
-        )
+        # Removed hardcoded stylesheet to rely on global light.qss
+        # This ensures selection colors and borders are consistent app-wide
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)

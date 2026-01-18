@@ -43,6 +43,7 @@ from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.core.database import db_manager
 from src.core.stats_manager import StatsManager
+from src.gui.design.spacing import Spacing  # Added import
 from src.gui.formatters import FastTableModel  # Moved from bottom
 
 # Import UI Components
@@ -162,9 +163,10 @@ class BaseBotPanel(QWidget):
     def _setup_base_ui(self):
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setSpacing(15)
-
-        # Header removed as per new design
+        self.main_layout.setContentsMargins(
+            Spacing.md, Spacing.md, Spacing.md, Spacing.md
+        )
+        self.main_layout.setSpacing(Spacing.md)
 
         # Status Card (Model only, not in layout)
         self.status_card = StatusCard("Stato Attività")
@@ -174,6 +176,7 @@ class BaseBotPanel(QWidget):
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(Spacing.md)
         self.main_layout.addWidget(self.content_widget)
 
         # Log
@@ -182,6 +185,7 @@ class BaseBotPanel(QWidget):
 
         # Buttons
         btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(Spacing.sm)
         btn_layout.addStretch()
 
         self.start_btn = ModernButton(

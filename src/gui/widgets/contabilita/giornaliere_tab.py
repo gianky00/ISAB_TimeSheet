@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QFont
@@ -16,6 +15,7 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
+from src.gui.formatters import format_date_it, format_number_smart
 from src.gui.widgets import ExcelTableWidget
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -37,6 +37,7 @@ class GiornaliereYearTab(QWidget):
     ]
     COL_DATA = 0
     COL_ORE = 9
+    COL_DESC = 3
     IDX_NOMEFILE = 10
 
     def __init__(self, year: int, parent=None):
@@ -52,39 +53,38 @@ class GiornaliereYearTab(QWidget):
         self.table = ExcelTableWidget()
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
-        self.table.setWordWrap(True)
-        self.table.setStyleSheet(
-            """
-            QTableWidget {
-                background-color: white;
-                color: black;
-                gridline-color: #e9ecef;
-                font-size: 13px;
-                border: 1px solid #dee2e6;
-                selection-background-color: #0d6efd;
-                selection-color: white;
-            }
-            QTableWidget::item:selected {
-                background-color: #0d6efd;
-                color: white;
-            }
-            QHeaderView::section { background-color: #E1F5FE; color: #333333; padding: 10px 5px; border: none; border-right: 1px solid #B3E5FC; border-bottom: 3px solid #81D4FA; font-weight: bold; text-transform: uppercase; font-size: 11px; }
-        """
-        )
+
+        # --- Ottimizzazione Layout ---
+        self.table.setWordWrap(True)  # Abilita testo a capo
+        self.table.setTextElideMode(
+            Qt.TextElideMode.ElideNone
+        )  # Evita i puntini di sospensione
+
+        # --- Configurazione Selezione ---
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.table.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        # Remove hardcoded stylesheet (uses global light.qss)
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.table.setColumnWidth(0, 100)
-        self.table.setColumnWidth(1, 200)
-        self.table.setColumnWidth(2, 100)
-        self.table.setColumnWidth(3, 300)
-        self.table.setColumnWidth(4, 80)
-        self.table.setColumnWidth(5, 120)
-        self.table.setColumnWidth(6, 80)
-        self.table.setColumnWidth(7, 80)
-        self.table.setColumnWidth(8, 80)
-        self.table.setColumnWidth(9, 80)
+
+        # Impostazione larghezze
+        self.table.setColumnWidth(0, 95)  # Data
+        self.table.setColumnWidth(1, 180)  # Personale
+        self.table.setColumnWidth(2, 80)  # TCL
+        self.table.setColumnWidth(3, 350)  # Descrizione (abbastanza larga per wrap)
+        self.table.setColumnWidth(4, 80)  # N Prev
+        self.table.setColumnWidth(5, 110)  # ODC
+        self.table.setColumnWidth(6, 80)  # PDL
+        self.table.setColumnWidth(7, 70)  # Inizio
+        self.table.setColumnWidth(8, 70)  # Fine
+        self.table.setColumnWidth(9, 80)  # Ore
+
+        # La descrizione si espande ma permette il wrap
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -105,20 +105,41 @@ class GiornaliereYearTab(QWidget):
             for row_idx, row_data in enumerate(data):
                 for col_idx in range(len(self.COLUMNS)):
                     val = row_data[col_idx]
-                    item = QTableWidgetItem(self._format_value(col_idx, val))
+                    formatted_val = self._format_value(col_idx, val)
+                    item = QTableWidgetItem(formatted_val)
+
+                    # Allineamento Numeri
                     if col_idx == self.COL_ORE:
                         item.setTextAlignment(align_right)
+
                     self.table.setItem(row_idx, col_idx, item)
+
                 if len(row_data) > self.IDX_NOMEFILE and self.table.item(row_idx, 0):
                     self.table.item(row_idx, 0).setData(
                         Qt.ItemDataRole.UserRole, row_data[self.IDX_NOMEFILE]
                     )
+
+            # Cruciale per il WordWrap: ridimensiona altezze righe dopo il popolamento
             self.table.resizeRowsToContents()
             self._add_totals_row()
             self._update_totals()
         finally:
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)
+
+    def _format_value(self, col_idx, val):
+        if val is None or str(val).lower() == "nan":
+            return ""
+
+        if col_idx == self.COL_DATA:
+            return format_date_it(val)
+        if col_idx == self.COL_ORE:
+            return format_number_smart(val)
+        return str(val).strip()
+
+    def _format_number(self, val):
+        """Usa il formattatore smart per i totali."""
+        return format_number_smart(val)
 
     def _add_totals_row(self):
         if (
@@ -158,34 +179,15 @@ class GiornaliereYearTab(QWidget):
             if not self.table.isRowHidden(r):
                 item = self.table.item(r, self.COL_ORE)
                 if item and item.text():
-                    sum_ore += float(item.text().replace(",", "."))
+                    try:
+                        # Pulisce la stringa formattata per fare la somma
+                        clean_val = item.text().replace(".", "").replace(",", ".")
+                        sum_ore += float(clean_val)
+                    except Exception:
+                        pass
         self.table.item(total_row_idx, self.COL_ORE).setText(
             self._format_number(sum_ore)
         )
-
-    def _format_number(self, val):
-        try:
-            v = round(float(val), 2)
-            s_v = f"{v:g}".replace(".", ",")
-            return s_v
-        except Exception:
-            return str(val)
-
-    def _format_value(self, col_idx, val):
-        if not val:
-            return ""
-        s = str(val).strip()
-        if s.lower() == "nan":
-            return ""
-        if col_idx == self.COL_DATA:
-            for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
-                try:
-                    return datetime.strptime(s.split(" ")[0], fmt).strftime("%d/%m/%Y")
-                except Exception:
-                    continue
-        if col_idx == self.COL_ORE:
-            return self._format_number(val)
-        return s
 
     def filter_data(self, text):
         """Filtra i dati dell'anno corrente in base alla ricerca testuale."""

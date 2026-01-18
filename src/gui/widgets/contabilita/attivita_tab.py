@@ -87,26 +87,12 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        self.table.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )  # Standardized selection behavior
         self.table.cellDoubleClicked.connect(lambda r, c: self.table.selectRow(r))
-        self.table.setStyleSheet(
-            """
-            QTableWidget {
-                background-color: white;
-                color: black;
-                gridline-color: #e9ecef;
-                font-size: 13px;
-                border: 1px solid #dee2e6;
-                selection-background-color: #0d6efd;
-                selection-color: white;
-            }
-            QTableWidget::item:selected {
-                background-color: #0d6efd;
-                color: white;
-            }
-            QHeaderView::section { background-color: #E1F5FE; color: #333333; padding: 10px 5px; border: none; border-right: 1px solid #B3E5FC; border-bottom: 3px solid #81D4FA; font-weight: bold; text-transform: uppercase; font-size: 11px; }
-        """
-        )
+
+        # Remove hardcoded stylesheet
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)

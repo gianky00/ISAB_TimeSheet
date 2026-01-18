@@ -94,36 +94,39 @@ QLineEdit:disabled {
     color: #9E9E9E;
 }
 
-/* === TABLES === */
-QTableWidget {
+/* === TABLES (QTableWidget & QTableView) === */
+QTableWidget, QTableView {
     background-color: #FFFFFF;
     alternate-background-color: #FAFAFA;
     gridline-color: #EEEEEE;
     border: 1px solid #E0E0E0;
     border-radius: 8px;
-    selection-background-color: #00968833; /* Semi-transparent Primary */
-    selection-color: #212121;
+    selection-background-color: #00968850; /* Stronger Teal (30% opacity) for visibility */
+    selection-color: #212121; /* Keep text black for readability over colors */
+    outline: none;
 }
 
-QTableWidget::item {
-    padding: 4px 8px; /* Reduced padding to give more space to content/editor */
+QTableWidget::item, QTableView::item {
+    padding: 10px 12px;
     border-bottom: 1px solid #F5F5F5;
 }
 
-QTableWidget::item:selected {
-    background-color: #00968833;
+/* Clear Selection: Visible background + Solid Border */
+QTableWidget::item:selected, QTableView::item:selected {
+    background-color: #00968850; /* Matches selection-background-color */
     color: #212121;
+    border: 1px solid #009688; /* Full border to clearly mark selection */
+    border-left: 4px solid #009688; /* Thicker left accent */
 }
 
-QTableWidget::item:focus {
-    background-color: #00968833; /* Maintain consistency */
-    color: #212121;
-    border: none;
+/* Indicator for focused selection */
+QTableWidget::item:focus, QTableView::item:focus {
+    background-color: #00968860; /* Slightly darker on focus */
 }
 
 QHeaderView::section {
-    background-color: #E1F5FE; /* Light Celeste */
-    color: #333333; /* Dark Gray for contrast */
+    background-color: #E1F5FE; /* Standard Light Blue Header */
+    color: #333333;
     padding: 12px 15px;
     border: none;
     border-right: 1px solid #B3E5FC;
@@ -136,39 +139,47 @@ QHeaderView::section {
 QHeaderView::section:vertical {
     background-color: #F5F5F5;
     color: #9E9E9E;
-    font-size: 10px; /* Smaller row numbers */
+    font-size: 10px;
     padding: 0px 5px;
     border-right: 1px solid #E0E0E0;
 }
 
 QHeaderView::section:hover {
-    background-color: #B3E5FC; /* Slightly darker blue on hover */
+    background-color: #B3E5FC;
 }
 
-/* === TABS === */
+/* === TABS (Modern Material) === */
 QTabWidget::pane {
-    border: 1px solid #E0E0E0;
-    border-radius: 8px;
+    border: none; /* Remove border around content pane for cleaner look */
     background-color: #FFFFFF;
+    border-top: 1px solid #E0E0E0; /* Subtle separator line */
+}
+
+QTabWidget::tab-bar {
+    alignment: left;
 }
 
 QTabBar::tab {
-    background-color: #F5F5F5;
-    color: #757575;
+    background-color: transparent;
+    color: #607D8B; /* Blue Grey */
     padding: 12px 24px;
-    margin-right: 4px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    margin-bottom: -1px; /* Overlap with pane border */
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase; /* Modern app feel */
+    min-width: 120px; /* Consistent width */
 }
 
 QTabBar::tab:selected {
-    background-color: #FFFFFF;
-    color: #009688;
-    border-bottom: 2px solid #009688;
+    color: #009688; /* Teal */
+    border-bottom: 3px solid #009688;
+    background-color: #F1F8E9; /* Very subtle tint */
 }
 
 QTabBar::tab:hover:!selected {
-    background-color: #EEEEEE;
+    color: #00796B;
+    background-color: #E0F2F1; /* Light hover tint */
 }
 
 /* === SCROLLBARS === */

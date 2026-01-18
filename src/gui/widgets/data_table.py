@@ -114,54 +114,21 @@ class DataTable(QWidget):
 
         # Header sizing
         header = self._table.horizontalHeader()
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+
         for i, col in enumerate(self._columns):
             if "width" in col:
                 self._table.setColumnWidth(i, col["width"])
             else:
-                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
-        self._apply_table_style()
+        # Remove redundant _apply_table_style call or keep it empty for future needs
+        # self._apply_table_style()
         layout.addWidget(self._table)
 
     def _apply_table_style(self):
-        p = self._palette
-        self._table.setStyleSheet(
-            f"""
-            QTableWidget {{
-                background-color: {p.surface};
-                alternate-background-color: {p.surface_variant};
-                gridline-color: #f8f9fa;
-                border: 1px solid {p.border};
-                border-radius: 8px;
-                selection-background-color: #e3f2fd;
-                selection-color: #0d6efd;
-            }}
-            QTableWidget::item {{
-                padding: 8px 12px;
-                border-bottom: 1px solid #f1f3f5;
-            }}
-            QTableWidget::item:selected {{
-                background-color: #e3f2fd;
-                color: #0d6efd;
-                border-left: 3px solid #0d6efd;
-            }}
-            QHeaderView::section {{
-                background-color: #f8f9fa;
-                color: #37474f;
-                padding: 10px;
-                border: none;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-                text-transform: uppercase;
-                font-size: 12px;
-            }}
-            QHeaderView::section:vertical {{
-                font-size: 10px;
-                color: #9E9E9E;
-                background-color: #F5F5F5;
-            }}
-        """
-        )
+        """Redundant with global QSS. Can be used for very specific overrides if needed."""
+        pass
 
     def setData(self, data: list[dict]):
         """Popola la tabella con dati."""

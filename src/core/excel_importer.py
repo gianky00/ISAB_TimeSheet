@@ -303,11 +303,34 @@ class ExcelImporter:
 
             # Preparazione finale dati
             target_columns = ["year"] + list(cls.COLUMNS_MAPPING.values())
-            df = df[target_columns].fillna("")
+            df = df[target_columns].copy()
 
-            # Conversione stringhe e pulizia
-            cols_to_str = [c for c in df.columns if c != "year"]
-            df[cols_to_str] = df[cols_to_str].astype(str).apply(lambda x: x.str.strip())
+            # --- Gestione Tipi Intelligente ---
+            for col in df.columns:
+                if col == "year":
+                    continue
+
+                # 1. Tenta conversione numerica per colonne che dovrebbero essere numeri
+                if col in ["totale_prev", "ore_sp", "resa"]:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+                    # Arrotonda a 2 decimali per eliminare rumore (es. .00000000001)
+                    df[col] = df[col].round(2)
+
+                # 2. Gestione Date
+                elif col == "data_prev":
+                    df[col] = pd.to_datetime(df[col], errors="coerce")
+
+                # 3. Pulizia stringhe per il resto
+                else:
+                    df[col] = (
+                        df[col]
+                        .astype(str)
+                        .str.strip()
+                        .replace(r"(?i)^nan$", "", regex=True)
+                    )
+
+            # Riempie i NaN rimasti con valori sicuri per il DB
+            df = df.fillna("")
 
             return list(df.itertuples(index=False, name=None))
         except Exception as e:

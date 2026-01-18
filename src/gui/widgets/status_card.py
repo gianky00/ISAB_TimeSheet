@@ -40,17 +40,23 @@ class StatusCard(QFrame):
         self._palette = get_palette()
         self._pulse_opacity = 1.0
 
-        self._setup_ui(title)
-        self._setup_animation()
-        # Stile base statico
+        # Stile base statico - MUST BE DEFINED BEFORE _setup_ui because _setup_ui -> _update_status -> _apply_style
+        # Double escaping required:
+        # 1. f-string consumes one level {{ -> {
+        # 2. str.format requires {{ -> {
+        # So we need {{{{ -> {{ -> { for CSS braces
+        # And {{accent}} -> {accent} for format placeholder
         self._base_style_template = f"""
-            StatusCard {{
+            StatusCard {{{{
                 background-color: {self._palette.surface};
                 border: 1px solid {self._palette.border};
                 border-radius: {BorderRadius.md}px;
                 border-left: 4px solid {{accent}};
-            }}
+            }}}}
         """
+
+        self._setup_ui(title)
+        self._setup_animation()
         self._apply_style()
 
     def _setup_ui(self, title: str):
