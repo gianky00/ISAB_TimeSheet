@@ -3,7 +3,14 @@
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(.venvScriptspython.exe adminrelease.py auto --deploy)",
+      "Bash(\".venv/Scripts/python.exe\" admin/release.py auto --deploy)",
+      "Bash(\".venv/Scripts/python.exe\" admin/release.py auto --deploy --force --skip-tests)",
+      "Bash(\".venv/Scripts/ruff.exe\" format admin/pre_flight_check.py admin/release.py)",
+      "Bash(\".venv/Scripts/python.exe\" admin/release.py auto --deploy --force)",
+      "Bash(\".venv/Scripts/ruff.exe\" format admin/bump_version.py tests/run_robust_tests.py)",
+      "Bash(\".venv/Scripts/ruff.exe\" format \"admin/Crea Setup/generate_icons.py\")"
     ]
   }
 }

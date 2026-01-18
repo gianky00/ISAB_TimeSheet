@@ -7,6 +7,7 @@ Tool: Ruff, Bandit, Interrogate, Pytest, Mypy, Xenon, Vulture, Codespell.
 """
 
 import argparse
+import io
 import re
 import subprocess
 import sys
@@ -290,6 +291,11 @@ def run_super_audit():
 
 
 def main():
+    # Fix encoding for Windows console to support emoji
+    if sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+
     parser = argparse.ArgumentParser(description="SyncroJob Developer Toolbox")
 
     parser.add_argument(
