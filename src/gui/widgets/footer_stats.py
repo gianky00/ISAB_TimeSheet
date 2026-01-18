@@ -6,17 +6,15 @@ Implementa logica a due fasi: FASE 1 (Boot) e FASE 2 (Operativo).
 
 import os
 import time
-from pathlib import Path
 from typing import Optional
 
 import psutil
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QProgressBar,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -72,10 +70,10 @@ class StartupConsole(QLabel):
 
     def log(self, message: str, is_error: bool = False):
         """Registra un messaggio nel log della console."""
-        color = "#dc3545" if is_error else "#546E7A"
+        color = "#cc0000" if is_error else "#000000"
         self.setText(message)
         self.setStyleSheet(
-            f"color: {color}; font-family: 'Segoe UI Semibold'; font-size: 10px; padding: 0 15px;"
+            f"color: {color}; font-family: 'Consolas', monospace; font-size: 13px; padding: 0 10px;"
         )
         self._log_queue.append((message, is_error))
         # Mantieni solo gli ultimi 100 messaggi
@@ -87,116 +85,88 @@ class StartupConsole(QLabel):
         return self._log_queue
 
     def set_log(self, message: str, current: int = 0, total: int = 0):
-        """Compatibilità con main_window.py - mostra il messaggio con barra di progresso."""
+        """Compatibilità con main_window.py - mostra il messaggio."""
         self.log(message)
-        if total > 0:
-            # Potrebbe essere esteso per mostrare la barra di progresso nel testo
-            pct = (current / total * 100) if total > 0 else 0
-            self.setText(f"{message} ({pct:.0f}%)")
 
 
 class FooterLeftWidget(QWidget):
     """
-    Parte sinistra del footer: Business Info (Cliente, Scadenza, Ultimo Accesso, Accounts).
-    Layout orizzontale ottimizzato con icone per gli account.
+    Parte sinistra del footer: Business Info con layout verticale ottimizzato.
+    Colonna 1: Cliente/Scadenza | Colonna 2: Ultimo Accesso | Colonna 3: Portale/SafeWork
     """
+
+    # Colore unificato nero
+    TEXT_COLOR = "#000000"
 
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 4, 0, 4)
-        layout.setSpacing(16)
+        layout.setContentsMargins(12, 2, 0, 2)
+        layout.setSpacing(20)
 
-        # Cliente
+        # Colonna 1: Cliente / Scadenza (verticale)
+        col1 = QWidget()
+        col1_layout = QVBoxLayout(col1)
+        col1_layout.setContentsMargins(0, 0, 0, 0)
+        col1_layout.setSpacing(2)
+
         self.client_item = QLabel()
         self.client_item.setStyleSheet(
-            "color: #0d6efd; font-weight: bold; font-size: 12px; background: transparent;"
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
-        layout.addWidget(self.client_item)
+        col1_layout.addWidget(self.client_item)
 
-        self._add_separator(layout)
-
-        # Scadenza
         self.expiry_item = QLabel()
         self.expiry_item.setStyleSheet(
-            "color: #6c757d; font-weight: 600; font-size: 11px; background: transparent;"
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
-        layout.addWidget(self.expiry_item)
+        col1_layout.addWidget(self.expiry_item)
+        layout.addWidget(col1)
 
         self._add_separator(layout)
 
-        # Ultimo Accesso
+        # Colonna 2: HW ID / Ultimo Accesso (verticale)
+        col2 = QWidget()
+        col2_layout = QVBoxLayout(col2)
+        col2_layout.setContentsMargins(0, 0, 0, 0)
+        col2_layout.setSpacing(2)
+
+        self.hw_id_item = QLabel()
+        self.hw_id_item.setStyleSheet(
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
+        )
+        col2_layout.addWidget(self.hw_id_item)
+
         self.last_login_item = QLabel()
         self.last_login_item.setStyleSheet(
-            "color: #495057; font-weight: 600; font-size: 11px; background: transparent;"
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
-        layout.addWidget(self.last_login_item)
+        col2_layout.addWidget(self.last_login_item)
+        layout.addWidget(col2)
 
         self._add_separator(layout)
 
-        # Portale Fornitori con icona
-        portale_container = QWidget()
-        portale_layout = QHBoxLayout(portale_container)
-        portale_layout.setContentsMargins(0, 0, 0, 0)
-        portale_layout.setSpacing(6)
-
-        self.portale_icon = QLabel()
-        self.portale_icon.setFixedSize(16, 16)
-        self._set_icon(self.portale_icon, "globe.svg", "#1565C0")
-        portale_layout.addWidget(self.portale_icon)
+        # Colonna 3: Portale Fornitori / SafeWork (verticale)
+        col3 = QWidget()
+        col3_layout = QVBoxLayout(col3)
+        col3_layout.setContentsMargins(0, 0, 0, 0)
+        col3_layout.setSpacing(2)
 
         self.portale_item = QLabel()
         self.portale_item.setStyleSheet(
-            "color: #1565C0; font-weight: 600; font-size: 11px; background: transparent;"
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
-        portale_layout.addWidget(self.portale_item)
-        layout.addWidget(portale_container)
-
-        self._add_separator(layout)
-
-        # SafeWork con icona
-        safe_container = QWidget()
-        safe_layout = QHBoxLayout(safe_container)
-        safe_layout.setContentsMargins(0, 0, 0, 0)
-        safe_layout.setSpacing(6)
-
-        self.safe_icon = QLabel()
-        self.safe_icon.setFixedSize(16, 16)
-        self._set_icon(self.safe_icon, "shield.svg", "#D81B60")
-        safe_layout.addWidget(self.safe_icon)
+        col3_layout.addWidget(self.portale_item)
 
         self.safe_item = QLabel()
         self.safe_item.setStyleSheet(
-            "color: #D81B60; font-weight: 600; font-size: 11px; background: transparent;"
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
-        safe_layout.addWidget(self.safe_item)
-        layout.addWidget(safe_container)
+        col3_layout.addWidget(self.safe_item)
+        layout.addWidget(col3)
 
         layout.addStretch()
         self.refresh_accounts()
-
-    @staticmethod
-    def _set_icon(label: QLabel, icon_name: str, color: str):
-        """Carica un'icona SVG e la colora."""
-        icon_path = Path(f"assets/icons/{icon_name}")
-        if icon_path.exists():
-            with open(icon_path, "r", encoding="utf-8") as f:
-                svg_content = f.read()
-            # Sostituisci il colore nell'SVG
-            svg_content = svg_content.replace(
-                'stroke="currentColor"', f'stroke="{color}"'
-            )
-            svg_content = svg_content.replace('stroke="black"', f'stroke="{color}"')
-            svg_content = svg_content.replace('fill="currentColor"', f'fill="{color}"')
-            svg_content = svg_content.replace('fill="black"', f'fill="{color}"')
-
-            # Converte SVG a pixmap
-            pixmap = QPixmap()
-            pixmap.loadFromData(svg_content.encode())
-            if not pixmap.isNull():
-                label.setPixmap(
-                    pixmap.scaledToWidth(16, Qt.TransformationMode.SmoothTransformation)
-                )
 
     def _add_separator(self, layout):
         line = QFrame()
@@ -205,12 +175,16 @@ class FooterLeftWidget(QWidget):
         line.setStyleSheet("color: #E0E0E0; border-left: 1px solid #E0E0E0;")
         layout.addWidget(line)
 
-    def update_info(self, client: str, expiry: str, last_login: str = ""):
+    def update_info(
+        self, client: str, expiry: str, last_login: str = "", hw_id: str = ""
+    ):
         """Aggiorna le info di business (FASE 2)."""
-        self.client_item.setText(f"<b>{client}</b>")
-        self.expiry_item.setText(f"Scad: {expiry}")
+        self.client_item.setText(f"<b>Cliente:</b> {client}")
+        self.expiry_item.setText(f"<b>Scadenza:</b> {expiry}")
+        if hw_id:
+            self.hw_id_item.setText(f"<b>HW ID:</b> {hw_id}")
         if last_login:
-            self.last_login_item.setText(f"Acc: {last_login}")
+            self.last_login_item.setText(f"<b>Ultimo Accesso:</b> {last_login}")
 
     def refresh_accounts(self):
         """Aggiorna lo stato dei bot account."""
@@ -221,8 +195,10 @@ class FooterLeftWidget(QWidget):
         portale_user = self._get_default_account(accounts)
         safe_user = self._get_default_account(safework)
 
-        self.portale_item.setText(portale_user or "N.C.")
-        self.safe_item.setText(safe_user or "N.C.")
+        self.portale_item.setText(
+            f"<b>🌐 Portale Fornitori:</b> {portale_user or 'N.C.'}"
+        )
+        self.safe_item.setText(f"<b>🛡️ SafeWork:</b> {safe_user or 'N.C.'}")
 
     @staticmethod
     def _get_default_account(accounts: list) -> Optional[str]:
@@ -244,14 +220,17 @@ class FooterLeftWidget(QWidget):
 class BootTelemetryWidget(QWidget):
     """
     Telemetria avanzata real-time (FASE 1: Boot).
-    Mostra: Host, IP, CPU, RAM, Lag.
+    Layout verticale con dati di sistema professionali.
     """
+
+    # Colore unificato nero
+    TEXT_COLOR = "#000000"
 
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 2, 10, 2)
-        layout.setSpacing(15)
+        layout.setContentsMargins(12, 2, 10, 2)
+        layout.setSpacing(20)
 
         self.process = psutil.Process(os.getpid())
         self.last_net = psutil.net_io_counters()
@@ -259,32 +238,137 @@ class BootTelemetryWidget(QWidget):
         self.last_time = time.time()
         self.session_id = hex(int(time.time()))[2:].upper()
 
-        self.font_style = "font-family: 'Consolas', 'Monospace'; font-size: 10px; background: transparent;"
+        self.font_style = f"font-family: 'Consolas', monospace; font-size: 13px; color: {self.TEXT_COLOR}; background: transparent;"
 
-        # Host
+        # Colonna 1: OS / ARCH (Sistema)
+        col1 = QWidget()
+        col1_layout = QVBoxLayout(col1)
+        col1_layout.setContentsMargins(0, 0, 0, 0)
+        col1_layout.setSpacing(2)
+
+        self.lbl_os = QLabel()
+        self.lbl_os.setStyleSheet(self.font_style)
+        col1_layout.addWidget(self.lbl_os)
+
+        self.lbl_arch = QLabel()
+        self.lbl_arch.setStyleSheet(self.font_style)
+        col1_layout.addWidget(self.lbl_arch)
+        layout.addWidget(col1)
+
+        self._add_separator(layout)
+
+        # Colonna 2: HOST / IP (Rete)
+        col2 = QWidget()
+        col2_layout = QVBoxLayout(col2)
+        col2_layout.setContentsMargins(0, 0, 0, 0)
+        col2_layout.setSpacing(2)
+
         self.lbl_host = QLabel()
-        layout.addWidget(self.lbl_host)
+        self.lbl_host.setStyleSheet(self.font_style)
+        col2_layout.addWidget(self.lbl_host)
 
-        # IP (simulato con localhost)
         self.lbl_ip = QLabel()
-        layout.addWidget(self.lbl_ip)
+        self.lbl_ip.setStyleSheet(self.font_style)
+        col2_layout.addWidget(self.lbl_ip)
+        layout.addWidget(col2)
 
-        # CPU
+        self._add_separator(layout)
+
+        # Colonna 3: CORE / FREQ (CPU Info)
+        col3 = QWidget()
+        col3_layout = QVBoxLayout(col3)
+        col3_layout.setContentsMargins(0, 0, 0, 0)
+        col3_layout.setSpacing(2)
+
+        self.lbl_core = QLabel()
+        self.lbl_core.setStyleSheet(self.font_style)
+        col3_layout.addWidget(self.lbl_core)
+
+        self.lbl_freq = QLabel()
+        self.lbl_freq.setStyleSheet(self.font_style)
+        col3_layout.addWidget(self.lbl_freq)
+        layout.addWidget(col3)
+
+        self._add_separator(layout)
+
+        # Colonna 4: CPU / TEMP (Performance)
+        col4 = QWidget()
+        col4_layout = QVBoxLayout(col4)
+        col4_layout.setContentsMargins(0, 0, 0, 0)
+        col4_layout.setSpacing(2)
+
         self.lbl_cpu = QLabel()
-        layout.addWidget(self.lbl_cpu)
+        self.lbl_cpu.setStyleSheet(self.font_style)
+        col4_layout.addWidget(self.lbl_cpu)
 
-        # RAM
+        self.lbl_temp = QLabel()
+        self.lbl_temp.setStyleSheet(self.font_style)
+        col4_layout.addWidget(self.lbl_temp)
+        layout.addWidget(col4)
+
+        self._add_separator(layout)
+
+        # Colonna 5: RAM / NET (Risorse)
+        col5 = QWidget()
+        col5_layout = QVBoxLayout(col5)
+        col5_layout.setContentsMargins(0, 0, 0, 0)
+        col5_layout.setSpacing(2)
+
         self.lbl_ram = QLabel()
-        layout.addWidget(self.lbl_ram)
+        self.lbl_ram.setStyleSheet(self.font_style)
+        col5_layout.addWidget(self.lbl_ram)
 
-        # Lag (Context Switches)
-        self.lbl_lag = QLabel()
-        layout.addWidget(self.lbl_lag)
+        self.lbl_net = QLabel()
+        self.lbl_net.setStyleSheet(self.font_style)
+        col5_layout.addWidget(self.lbl_net)
+        layout.addWidget(col5)
+
+        self._add_separator(layout)
+
+        # Colonna 6: THR / PID (Processo)
+        col6 = QWidget()
+        col6_layout = QVBoxLayout(col6)
+        col6_layout.setContentsMargins(0, 0, 0, 0)
+        col6_layout.setSpacing(2)
+
+        self.lbl_threads = QLabel()
+        self.lbl_threads.setStyleSheet(self.font_style)
+        col6_layout.addWidget(self.lbl_threads)
+
+        self.lbl_pid = QLabel()
+        self.lbl_pid.setStyleSheet(self.font_style)
+        col6_layout.addWidget(self.lbl_pid)
+        layout.addWidget(col6)
+
+        self._add_separator(layout)
+
+        # Colonna 7: SID / I/O (Sessione)
+        col7 = QWidget()
+        col7_layout = QVBoxLayout(col7)
+        col7_layout.setContentsMargins(0, 0, 0, 0)
+        col7_layout.setSpacing(2)
+
+        self.lbl_session = QLabel()
+        self.lbl_session.setStyleSheet(self.font_style)
+        col7_layout.addWidget(self.lbl_session)
+
+        self.lbl_io = QLabel()
+        self.lbl_io.setStyleSheet(self.font_style)
+        col7_layout.addWidget(self.lbl_io)
+        layout.addWidget(col7)
 
         layout.addStretch()
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_stats)
+
+    def _add_separator(self, layout):
+        """Aggiunge un separatore verticale."""
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFixedHeight(28)
+        line.setStyleSheet("color: #CCCCCC; border-left: 1px solid #CCCCCC;")
+        layout.addWidget(line)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -298,63 +382,210 @@ class BootTelemetryWidget(QWidget):
     def _update_stats(self):
         """Aggiorna le statistiche di sistema in real-time."""
         try:
+            import platform
+            import socket
+
             now = time.time()
             dt = now - self.last_time
             if dt <= 0:
                 return
 
-            # Host
-            import socket
+            # Col 1: OS / ARCH
+            os_info = platform.system()
+            os_release = platform.release()
+            self.lbl_os.setText(f"OS: {os_info} {os_release}")
+            self.lbl_arch.setText(f"ARCH: {platform.machine()}")
 
+            # Col 2: HOST / IP
             hostname = socket.gethostname()
-            self.lbl_host.setText(
-                f"<span style='color:#607D8B'>HOST:</span> <span style='color:#1565C0'>{hostname}</span>"
-            )
-            self.lbl_host.setStyleSheet(self.font_style)
-
-            # IP (Localhost)
+            self.lbl_host.setText(f"HOST: {hostname}")
             try:
                 ip_addr = socket.gethostbyname(hostname)
             except Exception:
                 ip_addr = "127.0.0.1"
-            self.lbl_ip.setText(
-                f"<span style='color:#607D8B'>IP:</span> <span style='color:#1565C0'>{ip_addr}</span>"
-            )
-            self.lbl_ip.setStyleSheet(self.font_style)
+            self.lbl_ip.setText(f"IP: {ip_addr}")
 
-            # CPU %
+            # Col 3: CORE / FREQ
+            cpu_count = psutil.cpu_count(logical=True)
+            self.lbl_core.setText(f"CORE: {cpu_count}")
+            cpu_freq = psutil.cpu_freq()
+            if cpu_freq:
+                freq_ghz = cpu_freq.current / 1000
+                self.lbl_freq.setText(f"FREQ: {freq_ghz:.2f} GHz")
+            else:
+                self.lbl_freq.setText("FREQ: N/A")
+
+            # Col 4: CPU / TEMP
             cpu_pct = psutil.cpu_percent(interval=0.1)
-            cpu_color = (
-                "#2E7D32" if cpu_pct < 50 else "#E65100" if cpu_pct < 80 else "#dc3545"
-            )
-            self.lbl_cpu.setText(
-                f"<span style='color:#607D8B'>CPU:</span> <span style='color:{cpu_color}'>{cpu_pct:.1f}%</span>"
-            )
-            self.lbl_cpu.setStyleSheet(self.font_style)
+            self.lbl_cpu.setText(f"CPU: {cpu_pct:.1f}%")
+            # Temperatura CPU (Windows: richiede librerie esterne, usiamo fallback)
+            try:
+                temps = psutil.sensors_temperatures()
+                if temps:
+                    for _name, entries in temps.items():
+                        if entries:
+                            temp_val = entries[0].current
+                            self.lbl_temp.setText(f"TEMP: {temp_val:.0f}°C")
+                            break
+                else:
+                    self.lbl_temp.setText("TEMP: N/A")
+            except Exception:
+                self.lbl_temp.setText("TEMP: N/A")
 
-            # RAM
+            # Col 5: RAM / NET
             ram = psutil.virtual_memory()
-            ram_pct = ram.percent
-            ram_color = (
-                "#2E7D32" if ram_pct < 50 else "#E65100" if ram_pct < 80 else "#dc3545"
-            )
-            self.lbl_ram.setText(
-                f"<span style='color:#607D8B'>RAM:</span> <span style='color:{ram_color}'>{ram_pct:.1f}%</span>"
-            )
-            self.lbl_ram.setStyleSheet(self.font_style)
+            ram_used = ram.used / (1024**3)
+            self.lbl_ram.setText(f"RAM: {ram.percent:.1f}% ({ram_used:.1f}GB)")
+            net_stats = psutil.net_if_stats()
+            net_connected = any(stats.isup for stats in net_stats.values())
+            self.lbl_net.setText(f"NET: {'Online' if net_connected else 'Offline'}")
 
-            # Lag (Context Switches per secondo)
-            ctx = psutil.cpu_stats().ctx_switches
-            ctx_s = int((ctx - self.last_ctx) / dt)
-            self.last_ctx = ctx
-            self.lbl_lag.setText(
-                f"<span style='color:#607D8B'>LAG:</span> <span style='color:#E65100'>{ctx_s}/s</span>"
+            # Col 6: THR / PID
+            self.lbl_threads.setText(f"THR: {self.process.num_threads()}")
+            self.lbl_pid.setText(f"PID: {os.getpid()}")
+
+            # Col 7: SID / I/O
+            self.lbl_session.setText(f"SID: {self.session_id}")
+            net = psutil.net_io_counters()
+            io_rate = (
+                (
+                    net.bytes_recv
+                    - self.last_net.bytes_recv
+                    + net.bytes_sent
+                    - self.last_net.bytes_sent
+                )
+                / dt
+                / 1024
             )
-            self.lbl_lag.setStyleSheet(self.font_style)
+            self.last_net = net
+            self.lbl_io.setText(f"I/O: {io_rate:.1f} KB/s")
 
             self.last_time = now
         except Exception:
             pass
+
+
+class AnimatedProgressBar(QWidget):
+    """
+    Progress bar animata con striature, shimmer e bordo pulsante.
+    Effetto hacker-style professionale.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(220, 18)
+
+        self._value = 0
+        self._stripe_offset = 0
+        self._shimmer_pos = -50
+        self._border_alpha = 255
+        self._border_direction = -5  # Direzione pulsazione
+
+        # Timer per animazioni (leggero, 30 FPS)
+        self._anim_timer = QTimer(self)
+        self._anim_timer.timeout.connect(self._animate)
+        self._anim_timer.setInterval(33)  # ~30 FPS
+
+    def setValue(self, value: int):
+        self._value = max(0, min(value, 100))
+        self.update()
+
+    def value(self) -> int:
+        return self._value
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._anim_timer.start()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        self._anim_timer.stop()
+
+    def _animate(self):
+        """Aggiorna le animazioni."""
+        # Striature che scorrono
+        self._stripe_offset = (self._stripe_offset + 2) % 20
+
+        # Shimmer che attraversa
+        self._shimmer_pos += 4
+        if self._shimmer_pos > self.width() + 50:
+            self._shimmer_pos = -50
+
+        # Bordo pulsante
+        self._border_alpha += self._border_direction
+        if self._border_alpha <= 100:
+            self._border_direction = 5
+        elif self._border_alpha >= 255:
+            self._border_direction = -5
+
+        self.update()
+
+    def paintEvent(self, event):
+        from PyQt6.QtCore import QRectF
+        from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QPen
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        w, h = self.width(), self.height()
+        radius = 4
+
+        # 1. Sfondo
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(224, 224, 224))  # #E0E0E0
+        painter.drawRoundedRect(QRectF(0, 0, w, h), radius, radius)
+
+        # 2. Chunk (parte riempita)
+        chunk_width = int((self._value / 100) * (w - 4))
+        if chunk_width > 0:
+            chunk_rect = QRectF(2, 2, chunk_width, h - 4)
+
+            # Gradiente base nero
+            painter.setBrush(QColor(0, 0, 0))
+            painter.drawRoundedRect(chunk_rect, radius - 1, radius - 1)
+
+            # 3. Striature diagonali animate
+            painter.setClipRect(chunk_rect)
+            stripe_color = QColor(60, 60, 60)  # Grigio scuro per contrasto
+            painter.setBrush(stripe_color)
+            painter.setPen(Qt.PenStyle.NoPen)
+
+            stripe_width = 10
+            for x in range(-20 + self._stripe_offset, int(chunk_width) + 20, 20):
+                points = [
+                    (x, h),
+                    (x + stripe_width, h),
+                    (x + stripe_width + 15, 0),
+                    (x + 15, 0),
+                ]
+                from PyQt6.QtCore import QPointF
+                from PyQt6.QtGui import QPolygonF
+
+                polygon = QPolygonF([QPointF(p[0] + 2, p[1]) for p in points])
+                painter.drawPolygon(polygon)
+
+            # 4. Shimmer (riflesso luminoso)
+            painter.setClipRect(chunk_rect)
+            shimmer_gradient = QLinearGradient(
+                self._shimmer_pos, 0, self._shimmer_pos + 50, 0
+            )
+            shimmer_gradient.setColorAt(0.0, QColor(255, 255, 255, 0))
+            shimmer_gradient.setColorAt(0.5, QColor(255, 255, 255, 80))
+            shimmer_gradient.setColorAt(1.0, QColor(255, 255, 255, 0))
+            painter.setBrush(shimmer_gradient)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(chunk_rect, radius - 1, radius - 1)
+
+            painter.setClipping(False)
+
+        # 5. Bordo pulsante
+        border_color = QColor(0, 0, 0, self._border_alpha)
+        pen = QPen(border_color, 2)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), radius, radius)
+
+        painter.end()
 
 
 class FooterRightWidget(QWidget):
@@ -369,34 +600,17 @@ class FooterRightWidget(QWidget):
         layout.setSpacing(15)
         layout.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        # Progress Bar (FASE 1: Loading) - visibile solo durante il boot
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(True)  # Visibile in FASE 1
-        self.progress_bar.setMaximumHeight(10)
-        self.progress_bar.setFixedWidth(180)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setStyleSheet(
-            """
-            QProgressBar {
-                border: 1px solid #0d6efd;
-                border-radius: 5px;
-                background: #E7F1FF;
-                padding: 1px;
-            }
-            QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                           stop:0 #0d6efd, stop:1 #0051ba);
-                border-radius: 4px;
-            }
-        """
-        )
+        # Progress Bar Animata (FASE 1: Loading)
+        self.progress_bar = AnimatedProgressBar()
+        self.progress_bar.setVisible(False)
         layout.addWidget(self.progress_bar)
 
         # Progress Label
         self.progress_label = QLabel("0%")
         self.progress_label.setStyleSheet(
-            "color: #0d6efd; font-weight: bold; font-size: 13px; background: transparent; min-width: 35px;"
+            "color: #000000; font-family: 'Consolas', monospace; font-weight: bold; font-size: 13px; background: transparent; min-width: 45px;"
         )
+        self.progress_label.setVisible(False)
         layout.addWidget(self.progress_label)
 
         # Status Cards (FASE 2: Operational)
@@ -417,6 +631,9 @@ class FooterRightWidget(QWidget):
         self.progress_label.setVisible(True)
         self.status_portale.setVisible(False)
         self.status_safework.setVisible(False)
+        # Ensure progress bar is properly displayed
+        self.progress_bar.raise_()
+        self.progress_label.raise_()
 
     def show_operational(self):
         """Mostra i status cards (FASE 2: Operativo) e nasconde la progress bar."""
@@ -457,7 +674,7 @@ class FooterStatsManager(QWidget):
             "✓ Sistema SyncroJob pronto. Infrastruttura operativa completamente caricata e sincronizzata."
         )
         self.center_console.setStyleSheet(
-            """color: #2E7D32; font-family: 'Segoe UI Semibold'; font-size: 11px; padding: 0 15px; font-weight: 600;"""
+            """color: #000000; font-family: 'Segoe UI Semibold'; font-size: 13px; padding: 0 10px; font-weight: 600;"""
         )
         self.right_widget.show_operational()
         if client_name or expiry or last_login:
