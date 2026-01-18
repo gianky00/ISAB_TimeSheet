@@ -305,36 +305,27 @@ class ScaricaTSBot(BaseBot):
         """Scarica il file Excel, lo rinomina e lo sposta."""
         if not self.wait or not self.driver:
             return None
-        assert self.wait and self.driver
 
-        try:
-            files_before = {
-                f
-                for f in source_dir.iterdir()
-                if f.is_file() and f.suffix.lower() == ".xlsx"
-            }
-
-            # 1. Clicca tasto Excel
-            if not self._click_excel_export_button():
-                return None
-
-            # 2. Attendi download
-            downloaded_file = self._wait_for_new_file(source_dir, files_before)
-            if not downloaded_file or not downloaded_file.exists():
-                self.log("⚠️ File non trovato dopo il download.")
-                return None
-
-            # 3. Determina nome e destinazione
-            final_path = self._get_final_download_path(
-                source_dir, dest_dir, numero_oda, posizione_oda
-            )
-
-            # 4. Sposta/Rinomina
-            return self._move_to_destination(downloaded_file, final_path)
-
-        except Exception as e:
-            self.log(f"❌ Problema durante il download: {e}")
+        # 1. Clicca tasto Excel
+        files_before = {
+            f
+            for f in source_dir.iterdir()
+            if f.is_file() and f.suffix.lower() == ".xlsx"
+        }
+        if not self._click_excel_export_button():
             return None
+
+        # 2. Attendi download
+        downloaded_file = self._wait_for_new_file(source_dir, files_before)
+        if not downloaded_file:
+            self.log("⚠️ File non scaricato nel tempo stabilito.")
+            return None
+
+        # 3. Finalizzazione (Determina nome e Sposta)
+        final_path = self._get_final_download_path(
+            source_dir, dest_dir, numero_oda, posizione_oda
+        )
+        return self._move_to_destination(downloaded_file, final_path)
 
     def _click_excel_export_button(self) -> bool:
         """Individua e clicca il pulsante di esportazione Excel."""

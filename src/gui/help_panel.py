@@ -3,18 +3,23 @@ SyncroJob - Help Panel
 Pannello Guida rivisitato con stile moderno, ricerca integrata e contenuti aggiornati.
 """
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
     QSplitter,
     QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
+
+from src.core.constants import Icons
+from src.core.version import __version__ as VERSION
+from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class HelpPanel(QWidget):
@@ -34,67 +39,76 @@ class HelpPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Header Hero
+        # Header Hero Moderno
         header = QFrame()
-        header.setFixedHeight(80)
+        header.setFixedHeight(100)
         header.setStyleSheet(
             """
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4b6cb7, stop:1 #182848);
-                border-bottom: 2px solid #0d6efd;
+                background-color: #FFFFFF;
+                border-bottom: 1px solid #E0E0E0;
             }
         """
         )
         header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(30, 0, 30, 0)
 
-        title = QLabel("Centro Assistenza SyncroJob")
-        title.setStyleSheet(
-            "color: white; font-size: 22px; font-weight: bold; margin-left: 10px;"
-        )
-        header_layout.addWidget(title)
+        title_container = QVBoxLayout()
+        title_container.setSpacing(2)
+
+        title = QLabel("Knowledge Base")
+        title.setStyleSheet("color: #263238; font-size: 24px; font-weight: 800;")
+
+        subtitle = QLabel(f"Documentazione Ufficiale SyncroJob v{VERSION}")
+        subtitle.setStyleSheet("color: #78909C; font-size: 13px; font-weight: 500;")
+
+        title_container.addStretch()
+        title_container.addWidget(title)
+        title_container.addWidget(subtitle)
+        title_container.addStretch()
+
+        header_layout.addLayout(title_container)
         header_layout.addStretch()
 
-        version_hint = QLabel("Documentazione Ufficiale v2.1.26")
-        version_hint.setStyleSheet(
-            "color: rgba(255,255,255,0.6); font-size: 13px; margin-right: 15px;"
+        # Icona Decorativa
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(
+            get_colored_icon(get_asset_path(Icons.HELP), "#009688").pixmap(48, 48)
         )
-        header_layout.addWidget(version_hint)
+        header_layout.addWidget(icon_lbl)
 
         layout.addWidget(header)
 
         # Splitter per Indice e Contenuto
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.setStyleSheet(
+            "QSplitter::handle { background-color: #ECEFF1; width: 1px; }"
+        )
 
         # Sidebar Sinistra
         sidebar = QWidget()
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(10, 15, 10, 15)
-        sidebar_layout.setSpacing(10)
-        sidebar.setFixedWidth(280)
-        sidebar.setStyleSheet(
-            "background-color: #f8f9fa; border-right: 1px solid #dee2e6;"
-        )
+        sidebar_layout.setContentsMargins(20, 25, 20, 20)
+        sidebar_layout.setSpacing(15)
+        sidebar.setFixedWidth(320)
+        sidebar.setStyleSheet("background-color: #FAFAFA;")
 
         # Barra di Ricerca
-        search_label = QLabel("CERCA NELLA GUIDA")
-        search_label.setStyleSheet(
-            "font-size: 10px; font-weight: bold; color: #6c757d; margin-left: 5px;"
-        )
-        sidebar_layout.addWidget(search_label)
-
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Es. Scarico, Lyra, VPN...")
-        self.search_edit.setMinimumHeight(35)
+        self.search_edit.setPlaceholderText("Cerca nella guida...")
+        self.search_edit.setMinimumHeight(42)
         self.search_edit.setStyleSheet(
             """
             QLineEdit {
-                border: 1px solid #ced4da;
-                border-radius: 6px;
-                padding: 5px 10px;
+                border: 1px solid #CFD8DC;
+                border-radius: 8px;
+                padding: 0 15px;
                 background-color: white;
+                font-size: 14px;
             }
             QLineEdit:focus {
-                border-color: #0d6efd;
+                border-color: #009688;
+                background-color: white;
             }
         """
         )
@@ -103,31 +117,36 @@ class HelpPanel(QWidget):
 
         # Indice Laterale
         self.index_list = QListWidget()
+        self.index_list.setIconSize(QSize(20, 20))
         self.index_list.setStyleSheet(
             """
             QListWidget {
                 background-color: transparent;
                 border: none;
-                font-size: 14px;
-                color: #495057;
+                outline: none;
             }
             QListWidget::item {
-                padding: 12px 10px;
-                border-radius: 6px;
-                margin-bottom: 2px;
+                padding: 12px 15px;
+                border-radius: 10px;
+                margin-bottom: 4px;
+                color: #455A64;
+                font-weight: 500;
+                font-size: 14px;
             }
             QListWidget::item:selected {
-                background-color: #e7f1ff;
-                color: #0d6efd;
-                font-weight: bold;
+                background-color: #E0F2F1;
+                color: #00796B;
+                font-weight: 700;
             }
             QListWidget::item:hover:!selected {
-                background-color: #e9ecef;
+                background-color: #F5F5F5;
             }
         """
         )
         self.index_list.currentRowChanged.connect(self._on_index_changed)
-        sidebar_layout.addWidget(self.index_list)
+        sidebar_layout.addWidget(self.index_list, 1)  # Force stretch to 1
+
+        # sidebar_layout.addStretch() # Removed to allow list expansion
 
         # Browser Documentazione
         self.browser = QTextBrowser()
@@ -138,10 +157,11 @@ class HelpPanel(QWidget):
             QTextBrowser {
                 background-color: white;
                 border: none;
-                padding: 40px;
-                font-size: 15px;
-                line-height: 1.7;
-                color: #212529;
+                padding: 50px 60px;
+                font-family: 'Segoe UI', system-ui, sans-serif;
+                font-size: 16px;
+                line-height: 1.8;
+                color: #263238;
             }
         """
         )
@@ -155,288 +175,206 @@ class HelpPanel(QWidget):
     def _load_documentation(self):
         """Inizializza le sezioni della documentazione."""
         self.sections = [
-            ("Benvenuto", self._get_intro_md()),
-            ("Novità v2.1", self._get_news_md()),
-            ("Configurazione Telegram", self._get_telegram_md()),
-            ("Scarico & Elaborazione", self._get_scarico_md()),
-            ("Dettagli OdA", self._get_oda_md()),
-            ("Timbrature & Autopilot", self._get_timbrature_md()),
-            ("Strumentale & KPI", self._get_contabilita_md()),
-            ("Lyra AI Assistant", self._get_lyra_md()),
-            ("Scorciatoie Veloci", self._get_shortcuts_md()),
-            ("Risoluzione Problemi", self._get_troubleshooting_md()),
-            ("Sicurezza & Licenza", self._get_license_md()),
-            ("Supporto & Contatti", self._get_contacts_md()),
+            ("Benvenuto", self._get_intro_md(), Icons.HOME),
+            ("Novità", self._get_news_md(), Icons.SPARKLES),
+            ("Configurazione Telegram", self._get_telegram_md(), Icons.SEND),
+            ("Scarico & Elaborazione", self._get_scarico_md(), Icons.DOWNLOAD),
+            ("Dettagli OdA", self._get_oda_md(), Icons.LIST),
+            ("Timbrature & Autopilot", self._get_timbrature_md(), Icons.CLOCK),
+            ("Strumentale & KPI", self._get_contabilita_md(), Icons.BAR_CHART),
+            ("Lyra AI Assistant", self._get_lyra_md(), Icons.CPU),
+            ("Scorciatoie Veloci", self._get_shortcuts_md(), Icons.ROCKET),
+            ("Risoluzione Problemi", self._get_troubleshooting_md(), Icons.ALERT),
+            ("Sicurezza & Licenza", self._get_license_md(), Icons.SHIELD),
+            ("Supporto & Contatti", self._get_contacts_md(), Icons.USER),
         ]
 
-        for title, _ in self.sections:
-            self.index_list.addItem(title)
+        for title, _content, icon_key in self.sections:
+            item = QListWidgetItem(title)
+            item.setIcon(get_colored_icon(get_asset_path(icon_key), "#546E7A"))
+            self.index_list.addItem(item)
 
-        self.index_list.setCurrentRow(0)
+        self.index_list.currentRowChanged.connect(self._on_index_changed)
 
     def _on_index_changed(self, row):
         if row < 0:
             return
-
-        # Ottieni il titolo visualizzato nell'item
         item = self.index_list.item(row)
         if not item:
             return
-
         title = item.text()
-
-        # Trova il contenuto originale corrispondente al titolo
-        for section_title, content in self.sections:
+        for section_title, content, _ in self.sections:
             if section_title == title:
                 self.browser.setMarkdown(content)
                 break
 
     def _filter_index(self, text):
-        """Filtra l'indice in base alla ricerca."""
         text = text.lower()
         self.index_list.clear()
-        for title, _ in self.sections:
+        for title, _content, icon_key in self.sections:
             if text in title.lower():
-                self.index_list.addItem(title)
-
+                item = QListWidgetItem(title)
+                item.setIcon(get_colored_icon(get_asset_path(icon_key), "#546E7A"))
+                self.index_list.addItem(item)
         if self.index_list.count() > 0:
             self.index_list.setCurrentRow(0)
 
     def open_section(self, section_title: str):
-        """Naviga programmaticamente a una sezione specifica."""
         for i in range(self.index_list.count()):
             if section_title.lower() in self.index_list.item(i).text().lower():
                 self.index_list.setCurrentRow(i)
                 break
 
     def _get_intro_md(self):
-        return """
-# Benvenuto in SyncroJob v2.1
+        return f"""
+# Benvenuto in SyncroJob v{VERSION}
 
-SyncroJob è l'ecosistema definitivo per l'automazione dei processi amministrativi e tecnici legati all'appalto ISAB.
+La piattaforma integrata per la gestione automatizzata dell'appalto ISAB.
 
-### 🌟 Visione del Progetto
-L'obiettivo è trasformare ore di lavoro manuale ripetitivo in pochi minuti di supervisione automatizzata, garantendo al contempo una qualità del dato superiore grazie all'integrazione di **intelligenza artificiale** e **database locali ultra-veloci**.
+### 🚀 Nuova Navigazione
+L'interfaccia è stata ridisegnata per massimizzare la produttività:
+* **Sidebar Laterale**: Accesso rapido a tutti i database e strumenti. Clicca su **"Database"** per espandere i moduli.
+* **Auto-Focus**: La barra laterale si chiude automaticamente quando selezioni uno strumento, lasciando tutto lo spazio ai tuoi dati.
+* **Toolbar Unificata**: Cerca, filtra e aggiorna i dati direttamente dalla barra superiore di ogni tabella.
 
-### 🏗️ Architettura
-L'applicazione è suddivisa in tre aree principali:
-1. **Automazioni (Bot)**: Robot software che navigano sui portali web al posto tuo.
-2. **Database & Analisi**: Gestione massiva di dati storici (Contabilità, Timbrature).
-3. **Lyra AI**: L'assistente virtuale che ti aiuta a interrogare i dati in linguaggio naturale.
-
----
-### 🚦 Primi Passi
-* Assicurati che la **VPN** sia collegata.
-* Verifica le tue credenziali in **Impostazioni > Account**.
-* Inizia importando i dati base (OdA o Timbrature) per popolare il sistema.
+### 🏗️ Moduli Principali
+1. **Automazioni**: I Bot che lavorano per te (Portale Fornitori & SafeWork).
+2. **Timbrature**: Database presenze incrociato con anagrafiche.
+3. **Strumentale**: Controllo economico (Preventivi, Giornaliere, KPI).
+4. **DataEase**: Sincronizzazione avanzata per lo scarico ore cantiere.
+5. **PDL**: Ricerca e gestione Permessi di Lavoro.
 """
 
     def _get_news_md(self):
-        return """
-# 🆕 Novità Versione 2.1.26
+        return f"""
+# 🆕 Novità Versione {VERSION}
 
-L'aggiornamento odierno introduce cambiamenti radicali per migliorare la velocità operativa.
+### ⚡ Navigazione "Clean Line"
+Abbiamo eliminato i vecchi tab ingombranti. Ora l'interfaccia è pulita, veloce e reattiva. I dati sono i protagonisti assoluti.
 
-### ⚡ Addio Macro Excel (VBA)
-Abbiamo migrato la logica di calcolo e rinomina dei file Timesheet direttamente in **Python**.
-* **Più veloce**: Non è più necessario aprire Excel visibilmente per processare i file.
-* **Integrato**: Tutto avviene all'interno del pannello "Scarico TS".
-* **Senza Errori**: Gestione automatica dei conflitti di nomi e delle cartelle mancanti.
+### ☁️ Modulo DataEase
+Nuova integrazione completa per lo **Scarico Ore Cantiere**.
+* Sincronizzazione diretta dal file Excel DataEase.
+* Calcolo automatico dei totali.
+* Selezione intelligente per somme rapide.
 
-### 🎨 Restyling Interfaccia
-* **Date Unificate**: I selettori data ora mostrano un'icona calendario e sono allineati ai fornitori.
-* **Layout Compatti**: Parametri più vicini per ridurre i movimenti del mouse.
-* **Visualizzazione Fusion**: UI coerente su Windows 10 e 11.
-
-### 🤖 Miglioramenti Bot
-* **Scarico TS Batch**: I file vengono elaborati in blocco solo al termine di tutti i download.
-* **Resilienza**: Migliorata la gestione dei caricamenti infiniti sul portale ISAB.
+### 🛡️ Integrazione SafeWork
+Il modulo PDL è ora potenziato:
+* Scarica massivamente i permessi in PDF.
+* Unisci più permessi in un unico file per l'invio.
+* Stampa diretta senza aprire il browser.
 """
 
     def _get_telegram_md(self):
         return """
-# ✈️ Configurazione Bot Telegram
+# 📱 Controllo Remoto Telegram
 
-Il controllo remoto ti permette di interagire con SyncroJob ovunque tu sia tramite l'app Telegram. Per garantire il corretto funzionamento in ambienti multi-PC, **ogni installazione deve avere il proprio bot dedicato**.
+Gestisci SyncroJob dal tuo smartphone. Ricevi notifiche in tempo reale e invia comandi ai bot.
 
-### 1. Creazione del Bot (Uno per ogni PC)
-1. Apri Telegram e cerca **@BotFather**.
-2. Scrivi il comando `/newbot`.
-3. Scegli un **Nome** (es. `SyncroJob Ufficio Luca`).
-4. Scegli uno **Username** univoco che finisca per bot (es. `luca_isab_bot`).
-5. BotFather ti fornirà un **API TOKEN** (una stringa lunga di numeri e lettere).
-
-### 2. Collegamento all'App
-1. Copia il Token e incollalo in **Impostazioni > Telegram** su questo PC.
-2. Clicca su **Salva Impostazioni**.
-3. Il servizio si avvierà automaticamente.
-
-### 3. Autorizzazione (Chat ID)
-Per motivi di sicurezza, il bot risponderà solo a te (il proprietario).
-1. Apri la chat del tuo nuovo bot su Telegram.
-2. Premi il tasto **AVVIA** (o scrivi `/start`).
-3. L'App SyncroJob riconoscerà il tuo ID e lo salverà come "Autorizzato".
-4. Da questo momento, vedrai apparire il menu dei comandi sullo smartphone.
-
-> ⚠️ **Nota Multi-PC**: Non usare lo stesso Token su due PC diversi, altrimenti il bot smetterà di rispondere a causa di conflitti di connessione.
+### Configurazione Rapida
+1. Crea un bot con **@BotFather** su Telegram.
+2. Incolla il Token in **Impostazioni > Telegram**.
+3. Invia `/start` al tuo bot dallo smartphone.
 """
 
     def _get_scarico_md(self):
         return """
-# 📥 Scarico TS & Elaborazione
+# 📥 Scarico & Carico TS
 
-Questa sezione permette di automatizzare il recupero dei timesheet dal portale ISAB.
+Gestione completa del ciclo di vita dei Timesheet.
 
-### Flusso Operativo
-1. Seleziona il **Fornitore** e la **Data Da**.
-2. Inserisci i numeri **OdA** nella tabella.
-3. Seleziona la **Destinazione** (dove salvare i file).
-4. Attiva **"Elabora TS"** se desideri che il sistema esegua i calcoli automatici (ex VBA).
+### Scarico TS (Download)
+Automatizza il recupero dei file Excel dal portale.
+* **Elaborazione Automatica**: Il sistema calcola i totali e rinomina i file secondo lo standard aziendale.
 
-### ⚙️ Cosa fa il flag "Elabora TS"?
-Quando attivo, al termine dello scarico, Python apre ogni file Excel scaricato e:
-* Analizza il foglio **"Timesheet"**.
-* Conta il numero di **POS univoci** presenti.
-* Esegue eventuali logiche di controllo congruenza.
-* Mostra un riepilogo dettagliato nei log dell'app.
-
-> 💡 **Tip**: Puoi lasciare l'App in background durante lo scarico. Una notifica ti avviserà al termine.
+### Carico TS (Upload)
+Carica massivamente i dati sul portale compilerà il form web riga per riga.
 """
 
     def _get_oda_md(self):
         return """
-# 📋 Gestione Dettagli OdA
+# 📋 Dettagli OdA & Prenotazioni
 
-Il bot Dettagli OdA è fondamentale per popolare il database interno con le informazioni degli ordini d'acquisto.
+### Database OdA
+Scarica i dettagli completi (descrizioni, quantità residue, scadenze) per alimentare la ricerca globale di SyncroJob.
 
-### Funzionalità
-* Estrae: Posizione OdA, Descrizione, Quantità Residua, Scadenza.
-* **Sincronizzazione**: Salva tutto nel DB locale per permettere ricerche istantanee.
-* **Filtri Temporali**: Puoi limitare lo scarico a ordini creati in un determinato periodo.
-
-### 🔍 Utilizzo del Database
-Una volta scaricati i dettagli, puoi trovarli nei pannelli di ricerca:
-* Usa la barra di ricerca globale per trovare un OdA partendo da una parola chiave nella descrizione.
-* I dati rimangono disponibili anche offline.
+### Prenota BP
+Prenota massivamente i Badge Provvisori inserendo nomi e date direttamente nell'app.
 """
 
     def _get_timbrature_md(self):
         return """
-# ⏱️ Timbrature & Autopilot
+# ⏱️ Timbrature
 
-Gestisci il flusso delle presenze ISAB in modo professionale.
+Il cuore della gestione presenze.
 
-### 🗓️ Autopilot (Scheduler)
-Configura l'App per scaricare le timbrature ogni giorno automaticamente.
-* Vai in **Timbrature > Autopilot**.
-* Scegli un orario (es. 08:30).
-* Il sistema scaricherà le timbrature di "Ieri" ogni mattina se l'app è aperta.
+### Database
+Visualizza tutte le timbrature storicizzate con filtri per Reparto o Cantiere.
 
-### 📊 Integrazione Database
-Le timbrature vengono incrociate con l'anagrafica dipendenti:
-* **Reparto/Cantiere**: Assegna una volta sola il reparto a un dipendente per averlo sempre categorizzato correttamente nei report.
-* **Alert Uscite**: Il sistema evidenzia le timbrature senza orario di uscita.
+### Autopilot
+Il sistema può scaricare le timbrature ogni mattina in autonomia all'orario desiderato.
 """
 
     def _get_contabilita_md(self):
         return """
-# 📊 Strumentale & KPI
+# 📊 Strumentale (Contabilità)
 
-Il modulo Contabilità analizza i dati storici e correnti per fornire una visione economica dell'appalto.
+Visione economica completa dell'appalto.
 
-### 📈 Pannello KPI
-Visualizza metriche in tempo reale:
-* Ore totali caricate per cantiere/reparto.
-* Efficienza dei team.
-* Alert su budget OdA in esaurimento.
-
-### 🛠️ Gestione Strumentale
-Permette di importare il file "Bilancio Strumentale" per incrociare le ore caricate con quelle effettivamente pagate.
-* **Importazione Intelligente**: Riconosce automaticamente i nuovi record aggiunti al foglio Excel.
+### Sezioni
+* **Preventivi**: Elenco preventivi con stato e importi.
+* **Giornaliere**: Dettaglio ore lavorate giorno per giorno.
+* **KPI**: Grafici interattivi per monitorare l'andamento mensile.
 """
 
     def _get_lyra_md(self):
         return """
-# ✨ Lyra AI Assistant
+# ✨ Lyra AI
 
-Lyra non è un semplice chatbot, ma un'estensione intelligente del tuo lavoro.
+Il tuo assistente analista personale basato su intelligenza artificiale.
 
-### 🧠 Capacità di Lyra
-* **Analisi Dati**: *"Chi ha lavorato più di 10 ore ieri?"*
-* **Riepiloghi**: *"Fammi un sommario dell'OdA 4041"*.
-* **Troubleshooting**: Chiedi a Lyra come risolvere un errore del browser.
-
-### 🛡️ Lyra Sentinel
-Un guardiano silenzioso che analizza il database in background.
-Se Sentinel trova qualcosa di strano (es. un dipendente che ha timbrato ma non ha ore caricate in contabilità), ti invierà una notifica immediata.
+### Cosa può fare?
+* **Analisi Dati**: Seleziona delle righe e chiedi a Lyra di trovarne le anomalie.
+* **Ricerca Intelligente**: Interroga i tuoi database in linguaggio naturale.
 """
 
     def _get_shortcuts_md(self):
         return """
-# ⚡ Scorciatoie e Produttività
+# ⚡ Scorciatoie
 
-Velocizza il tuo lavoro con i comandi rapidi.
-
-### Tastiera
-* **F5**: Refresh dati o Start Bot nel pannello attivo.
-* **ESC**: Chiude i dialoghi o pulisce la ricerca.
-* **Ctrl + C / Ctrl + V**: Copia e Incolla stile Excel nelle tabelle bot.
-* **Ctrl + F**: Sposta il cursore sulla barra di ricerca.
-
-### Mouse
-* **Tasto Destro**: Menu contestuale su tutte le tabelle (Analizza con Lyra, Elimina, Copia).
-* **Doppio Click**: Apre il dettaglio di un record nelle tabelle database.
+* **F5**: Aggiorna i dati nel pannello corrente.
+* **Ctrl + F**: Attiva la barra di ricerca.
+* **Ctrl + C**: Copia le righe selezionate.
+* **Tasto Destro**: Menu contestuale esteso.
 """
 
     def _get_troubleshooting_md(self):
         return """
 # 🛠️ Risoluzione Problemi
 
-### 🌐 VPN e Portale
-Se il bot fallisce il login:
-1. Verifica se riesci ad accedere manualmente a `portale.isab.com` da Chrome.
-2. Controlla che le credenziali siano corrette (occhio a scadenze password ISAB).
-
-### 🖥️ Problemi Browser
-* **"Chrome non trovato"**: Assicurati che Chrome sia installato nel percorso standard.
-* **Bot Bloccato**: Se il portale è molto lento, aumenta il **Timeout** nelle Impostazioni (consigliato 45-60s per connessioni lente).
-
-### 🧹 Pulizia Totale
-In caso di problemi persistenti, puoi usare **Impostazioni > Diagnostica > Apri cartella dati** ed eliminare il file `config.json` (Attenzione: perderai le impostazioni salvate).
+### Il Bot non parte?
+1. Controlla che Chrome sia chiuso.
+2. Verifica la connessione VPN ISAB.
+3. Controlla le credenziali in Impostazioni.
 """
 
     def _get_license_md(self):
         return """
-# 🔑 Sicurezza e Licenza
+# 🔑 Licenza
 
-SyncroJob adotta standard di sicurezza enterprise.
-
-### Protezione Dati
-* **Password**: Salvate nel portachiavi di sistema di Windows (Windows Credentials Manager), mai in chiaro nei file.
-* **Database**: Dati criptati a riposo.
-
-### Gestione Licenza
-La licenza è associata al tuo **Hardware ID**.
-* **Validità**: Controllabile nella barra laterale.
-* **Rinnovo**: L'app scarica automaticamente i rinnovi dal server se disponibile una connessione internet.
+SyncroJob è protetto da licenza digitale legata all'hardware.
+Il rinnovo avviene automaticamente alla scadenza.
 """
 
     def _get_contacts_md(self):
         return """
-# 📞 Supporto e Sviluppo
+# 📞 Contatti & Supporto
 
-Hai bisogno di assistenza o vuoi richiedere una nuova funzionalità?
+Per assistenza tecnica, segnalazione bug o richieste personalizzazioni:
 
-### 👤 Sviluppatore
-**Giancarlo Allegretti**
-* **Email**: support@syncrojob.it
-* **Web**: [projectjob-bot.netlify.app](https://projectjob-bot.netlify.app)
+### Giancarlo Allegretti
+* **Email**: gianky.allegretti@gmail.com
+* **Sviluppo**: Python / Qt6 / AI Integration
 
-### 🐛 Segnala un Bug
-Per una risoluzione veloce, invia sempre:
-1. Una descrizione dell'operazione che stavi facendo.
-2. Uno screenshot dell'errore (se presente).
-3. Il file di log (scaricabile da Impostazioni).
-
-*Grazie per aver scelto SyncroJob!*
+> Grazie per aver scelto SyncroJob per ottimizzare il tuo lavoro quotidiano.
 """

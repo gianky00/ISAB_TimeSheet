@@ -11,7 +11,6 @@ from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
-    QFrame,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -111,49 +110,81 @@ class ScaricoOrePanel(QWidget):
 
         # 1. Create Tabs (DataEase Wrapper)
         self.tabs = QTabWidget()
-        # ... styling ...
-        main_layout.addWidget(self.tabs)
+        self.tabs.setProperty("class", "Level2Tabs")  # Standard Style
 
-        # 2. "Scarico Ore" Tab
-        self.scarico_tab = QWidget()
-        scarico_layout = QVBoxLayout(self.scarico_tab)
-        scarico_layout.setContentsMargins(10, 10, 10, 10)
+        # --- UNIFIED TOOLBAR (Corner Widget) ---
+        self.toolbar_container = QWidget()
+        toolbar_layout = QHBoxLayout(self.toolbar_container)
+        toolbar_layout.setContentsMargins(0, 0, 0, 0)
+        toolbar_layout.setSpacing(15)
 
-        # --- Toolbar ---
-        toolbar = QHBoxLayout()
+        # Totals Labels
+        self.lbl_count = QLabel("Righe: 0")
+        self.lbl_count.setStyleSheet(
+            "color: #607D8B; font-weight: 600; font-size: 12px;"
+        )
+
+        self.lbl_selection_total = QLabel("Selezionato: 0")
+        self.lbl_selection_total.setStyleSheet(
+            "color: #009688; font-weight: 600; font-size: 12px;"
+        )
+
+        self.lbl_total_hours = QLabel("Totale Ore: 0")
+        self.lbl_total_hours.setStyleSheet(
+            "color: #455A64; font-weight: 700; font-size: 12px;"
+        )
 
         # Search Bar
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Inizializzazione...")
+        self.search_input.setPlaceholderText("Cerca nei dati...")
         self.search_input.setClearButtonEnabled(True)
-        self.search_input.setFixedWidth(400)
-        # Ricerca su Invio
-        self.search_input.returnPressed.connect(self._perform_search)
-
-        toolbar.addWidget(self.search_input)
-        toolbar.addStretch()
+        self.search_input.setFixedWidth(250)
+        self.search_input.returnPressed.connect(
+            self._perform_search
+        )  # Manteniamo returnPressed per performance su grandi dati
 
         # Status Label
         self.status_label = QLabel("Inizializzazione...")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        toolbar.addWidget(self.status_label)
-        toolbar.addStretch()
+        self.status_label.setStyleSheet("color: #78909C; font-size: 12px;")
 
         # Update Button
-        self.update_btn = QPushButton(" Aggiorna Dati")
+        self.update_btn = QPushButton("Aggiorna")
         self.update_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
         )
+        self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.update_btn.setFixedSize(100, 32)
         self.update_btn.clicked.connect(self._start_update)
-        toolbar.addWidget(self.update_btn)
 
-        scarico_layout.addLayout(toolbar)
+        # Add widgets to toolbar
+        toolbar_layout.addWidget(self.lbl_count)
+        toolbar_layout.addWidget(self.lbl_selection_total)
+        toolbar_layout.addWidget(self.lbl_total_hours)
+        toolbar_layout.addSpacing(10)
+        toolbar_layout.addWidget(self.search_input)
+        toolbar_layout.addWidget(self.status_label)
+        toolbar_layout.addWidget(self.update_btn)
+
+        self.tabs.setCornerWidget(self.toolbar_container, Qt.Corner.TopRightCorner)
+        main_layout.addWidget(self.tabs)
+
+        # 2. "Scarico Ore" Tab Content (Only Table)
+        self.scarico_tab = QWidget()
+        scarico_layout = QVBoxLayout(self.scarico_tab)
+        scarico_layout.setContentsMargins(
+            0, 10, 0, 0
+        )  # Top margin for spacing from tabs
 
         # --- Virtual Table View ---
         self.table_view = QTableView()
         self.table_view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QTableView.SelectionMode.ExtendedSelection)
         self.table_view.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
+
+        # Style Fix
+        self.table_view.setAlternatingRowColors(True)
+        self.table_view.verticalHeader().setVisible(False)
 
         # Models
         self.source_model = ScaricoOreTableModel([])
@@ -172,33 +203,15 @@ class ScaricoOrePanel(QWidget):
 
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
-        self.table_view.verticalHeader().setVisible(False)
 
         scarico_layout.addWidget(self.table_view)
 
-        # --- Footer Bar for Totals ---
-        self.footer_frame = QFrame()
-        footer_layout = QHBoxLayout(self.footer_frame)
-        self.lbl_count = QLabel("Righe: 0")
-        self.lbl_total_hours = QLabel("Totale Ore: 0")
-        self.lbl_selection_total = QLabel("Totale selezionato: 0")
-
-        footer_layout.addWidget(self.lbl_count)
-        footer_layout.addStretch()
-        footer_layout.addWidget(self.lbl_selection_total)
-        footer_layout.addSpacing(20)
-        footer_layout.addWidget(self.lbl_total_hours)
-
-        scarico_layout.addWidget(self.footer_frame)
-
-        # Info label
-        self.info_label = QLabel(
-            "Visualizzazione completa. Clicca sulle intestazioni per filtrare. Copia con Ctrl+C."
-        )
-        scarico_layout.addWidget(self.info_label)
-
         # Add Tab
-        self.tabs.addTab(self.scarico_tab, "Scarico Ore")
+        self.tabs.addTab(
+            self.scarico_tab,
+            get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#546E7A"),
+            "Dati Scaricati",
+        )
 
         # Connect selection changes
         self.table_view.selectionModel().selectionChanged.connect(

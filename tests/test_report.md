@@ -1,32 +1,33 @@
 # 📊 Test Execution Report
 
-**Date:** 2026-01-17 12:44:18
-**Duration:** 3.85s
+**Date:** 2026-01-18 15:49:33
+**Duration:** 205.45s
 
 ## Summary
 | Metric | Count |
 |---|---|
-| 🧪 Total | 1038 |
-| ✅ Passed | 1034 |
-| ❌ Failed | 4 |
+| 🧪 Total | 1025 |
+| ✅ Passed | 158 |
+| ❌ Failed | 1 |
 | ⏩ Skipped | 0 |
 
 ## ❌ Failures Details
-### `tests/unit/test_safework_bot.py::TestSafeWorkBot::test_name_and_description`
-**Error:** `FAILED tests/unit/test_safework_bot.py::TestSafeWorkBot::test_name_and_description`
+### `tests/unit/test_bot_panels_deep.py::test_base_bot_panel_logic`
+**Error:** `FAILED tests/unit/test_bot_panels_deep.py::test_base_bot_panel_logic - Attrib...`
 
 <details><summary>Full Output</summary>
 
 ```text
 F                                                                        [100%]
 ================================== FAILURES ===================================
-__________________ TestSafeWorkBot.test_name_and_description __________________
-tests\unit\test_safework_bot.py:25: in test_name_and_description
-    assert bot.name == "scarico_pdl"
-E   AssertionError: assert 'Scarico PDL' == 'scarico_pdl'
-E     
-E     - scarico_pdl
-E     + Scarico PDL
+__________________________ test_base_bot_panel_logic __________________________
+tests\unit\test_bot_panels_deep.py:24: in test_base_bot_panel_logic
+    status, msg = panel.get_current_status()
+src\gui\panels.py:239: in get_current_status
+    return self.status_card._status, msg
+E   AttributeError: 'StatusCard' object has no attribute '_status'
+---------------------------- Captured Qt messages -----------------------------
+QtWarningMsg: Could not parse stylesheet of object QFrame(0x1fc4002fca0)
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -34,663 +35,124 @@ Name                                                                 Stmts   Mis
 --------------------------------------------------------------------------------------------------
 src\bots\__init__.py                                                    20      6    70%   112, 126-130
 src\bots\base\__init__.py                                                2      0   100%
-src\bots\base\base_bot.py                                              266     54    80%   71, 77, 123-124, 136, 160, 219, 230, 244, 312, 335-336, 342, 346-350, 356, 360, 366, 375-377, 386, 390-398, 402-410, 429-433, 438-442, 454
-src\bots\base\login_page.py                                             94      7    93%   89-93, 101, 150-151
+src\bots\base\base_bot.py                                              270     68    75%   71, 77, 127-128, 140, 164, 212-214, 228, 239, 255, 313-315, 327, 350-351, 357, 361-365, 371, 375, 379-396, 401, 405, 409-419, 423-433, 452-456, 461-465, 477
+src\bots\base\login_page.py                                             94     74    21%   45-61, 65-95, 99-115, 119-125, 132-179
 src\bots\portale_fornitori\carico_ts\__init__.py                         2      0   100%
-src\bots\portale_fornitori\carico_ts\bot.py                             48     15    69%   56, 60-72, 86, 92, 95, 101
+src\bots\portale_fornitori\carico_ts\bot.py                             48     28    42%   52, 56, 60-72, 77-101
 src\bots\portale_fornitori\carico_ts\locators.py                         6      0   100%
-src\bots\portale_fornitori\carico_ts\pages\carico_ts_page.py            60     15    75%   34-43, 52-54, 77-79, 116-118
+src\bots\portale_fornitori\carico_ts\pages\carico_ts_page.py            60     46    23%   28-30, 34-43, 47-56, 67-87, 98-130
 src\bots\portale_fornitori\common\locators.py                           15      0   100%
 src\bots\portale_fornitori\dettagli_oda\__init__.py                      2      0   100%
-src\bots\portale_fornitori\dettagli_oda\bot.py                          65      9    86%   42, 61, 64, 77, 87, 104-105, 107-108
+src\bots\portale_fornitori\dettagli_oda\bot.py                          65     43    34%   38, 42, 51-54, 60-67, 71-118
 src\bots\portale_fornitori\dettagli_oda\locators.py                     19      0   100%
-src\bots\portale_fornitori\dettagli_oda\pages\dettagli_oda_page.py     216     70    68%   49-56, 91-94, 105-119, 136-138, 152-153, 156-157, 170-172, 232, 251-257, 274-278, 287-295, 317-318, 332, 336-337, 340-342, 352-353, 355-356, 370-371, 381-384
+src\bots\portale_fornitori\dettagli_oda\pages\dettagli_oda_page.py     216    147    32%   51-58, 69-102, 113-133, 137-177, 181-194, 258, 281-287, 306-310, 321-329, 333-354, 364-382, 386-398, 402-417, 421-434
 src\bots\portale_fornitori\prenota_bp\__init__.py                        1      0   100%
-src\bots\portale_fornitori\prenota_bp\bot.py                            87     73    16%   19, 26, 30, 42-51, 56-63, 68-159
+src\bots\portale_fornitori\prenota_bp\bot.py                            86     70    19%   19, 26, 30, 42-51, 56-63, 67-95, 99-104, 108-135
 src\bots\portale_fornitori\prenota_bp\locators.py                       33      0   100%
-src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py         250    226    10%   28-31, 35, 39-44, 56-85, 96-102, 107-114, 118-149, 153-190, 194-202, 211-240, 244-251, 255-278, 290-412
+src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py         239    211    12%   30-33, 37, 41-46, 58-89, 100-106, 111-118, 122-157, 163-206, 210-220, 229-260, 264-271, 275-298, 302-314, 318-334, 338-360, 364-392, 396-403
 src\bots\portale_fornitori\scarico_ts\__init__.py                        2      0   100%
-src\bots\portale_fornitori\scarico_ts\bot.py                           226    140    38%   59, 78-80, 84-99, 103-120, 124-138, 142-163, 167-195, 199-208, 212-237, 242, 272-274, 281, 289, 298-305, 310, 316-318, 333-335, 343-363, 367-382
+src\bots\portale_fornitori\scarico_ts\bot.py                           221    183    17%   55, 59, 71-74, 78-80, 84-99, 103-120, 124-140, 146-169, 173-209, 213-222, 226-257, 261-300, 306-328, 332-341, 347-366, 372-394, 398-413
 src\bots\portale_fornitori\scarico_ts\locators.py                       10      0   100%
-src\bots\portale_fornitori\scarico_ts\pages\scarico_ts_page.py         104     57    45%   38-45, 64-66, 91-93, 97-126, 130-171
+src\bots\portale_fornitori\scarico_ts\pages\scarico_ts_page.py         107     58    46%   40-47, 74-76, 109-111, 117-156, 162-187, 193-203, 209-218
+src\bots\portale_fornitori\scarico_ts\scarico_ts_bot.py                 61     42    31%   25, 30, 35, 42, 46, 50-53, 59-114
 src\bots\portale_fornitori\timbrature\__init__.py                        2      0   100%
-src\bots\portale_fornitori\timbrature\bot.py                            75     49    35%   26, 31, 36, 47-63, 69-113, 120-121
+src\bots\portale_fornitori\timbrature\bot.py                            75     55    27%   21, 26, 31, 36, 41-45, 49-65, 71-117, 124-125
 src\bots\portale_fornitori\timbrature\locators.py                       11      0   100%
-src\bots\portale_fornitori\timbrature\pages\timbrature_page.py         170    105    38%   39-57, 77-79, 83-146, 163-164, 175-176, 179, 198-199, 204-205, 210-236, 240-251, 255-285
-src\bots\portale_fornitori\timbrature\storage.py                       171     90    47%   69-92, 98-126, 136-148, 174-183, 186-194, 199-210, 225-226, 240-242, 250, 254-255, 268-269, 279-288, 297-298
+src\bots\portale_fornitori\timbrature\pages\timbrature_page.py         170    144    15%   37, 41-59, 63-83, 87-154, 158-223, 228-256, 260-273, 277-311
+src\bots\portale_fornitori\timbrature\storage.py                       171    109    36%   73-96, 102-132, 142-154, 164-172, 177-194, 197-205, 210-224, 240-241, 255-257, 265, 269-270, 283-284, 288-307, 316-317
 src\bots\safework\base.py                                               43     28    35%   22-50, 54-70, 74, 78
 src\bots\safework\pdl\__init__.py                                        0      0   100%
-src\bots\safework\pdl\bot.py                                           403    223    45%   25, 30, 35, 45, 56-78, 82-89, 93-103, 107-132, 136-195, 203-204, 223-227, 239-240, 247, 252, 257-258, 277, 283, 292-294, 297-299, 302-307, 316, 327-329, 333, 341-343, 357, 364, 375-377, 381, 387-388, 392-406, 411, 419-420, 437-441, 444-445, 450-461, 469, 487-489, 500-505, 510-539, 542-556
+src\bots\safework\pdl\bot.py                                           403    358    11%   25, 30, 35, 40, 45, 56-78, 82-89, 93-103, 107-132, 136-199, 203-208, 212-239, 243-272, 276-284, 288-319, 323-355, 359-371, 375-400, 404-420, 424-434, 438-459, 463-477, 484-527, 530-559, 562-578
 src\core\__init__.py                                                     2      0   100%
-src\core\app_initializer.py                                             60      5    92%   71-76
-src\core\app_updater.py                                                 46      2    96%   32, 85
-src\core\audit_manager.py                                              156     30    81%   94-95, 114-130, 145-146, 202-203, 234, 236, 246-247, 271, 281-282, 294-295, 306-307
-src\core\backup_manager.py                                             119     25    79%   41-42, 53, 68, 70, 84-86, 91, 98, 154-163, 183-186, 194, 200-202, 209, 227-228
-src\core\config_manager.py                                             177     13    93%   111, 124-125, 136, 199, 207-208, 261, 278-279, 324-325, 330
-src\core\constants.py                                                   23      0   100%
-src\core\contabilita_manager.py                                        107     22    79%   28, 38, 78, 99-100, 118, 131-132, 141-148, 157-162, 175, 208, 217, 225
-src\core\contabilita_queries.py                                         87      4    95%   52, 80, 96, 112
-src\core\contabilita_search.py                                          91     72    21%   25-81, 88-112, 117-123, 128-140, 147-159, 173-177
-src\core\contabilita_stats.py                                           61      4    93%   78-79, 100-101
-src\core\contabilita_worker.py                                          80      4    95%   77, 91-92, 158
-src\core\data_synchronizer.py                                           99      3    97%   97, 184-185
-src\core\database.py                                                   141     10    93%   117-122, 132-133, 159-161
-src\core\excel_importer.py                                             586     67    89%   23-24, 31-33, 135-136, 267, 307-309, 333, 338, 364-365, 376-380, 394, 403, 415, 478, 488, 504, 507, 511, 541, 570-571, 599-600, 640, 643, 655-656, 670, 707, 720, 761, 797, 836, 839-842, 850-851, 858, 862-863, 882, 896-897, 947-948, 958-960, 975, 990-991, 1007-1008, 1017-1019
-src\core\license_updater.py                                            159     22    86%   99-102, 150, 166-167, 198-199, 204-206, 213, 230, 251-253, 289-291, 295-298
-src\core\license_validator.py                                          197     19    90%   90-112, 136-138, 165, 185-186, 216
-src\core\lyra_client.py                                                129     20    84%   22, 67-69, 105-107, 150-152, 203-204, 208-212, 244, 252-254
-src\core\lyra_sentinel.py                                               32      4    88%   37-38, 49-50
-src\core\notification_manager.py                                        77      2    97%   52-53
-src\core\secrets_manager.py                                            111     62    44%   27-42, 46-52, 56-70, 74-76, 80-86, 90-142, 147, 152, 157, 172-173, 180-181, 188-189, 196-197, 202-208
-src\core\stats_manager.py                                               48      7    85%   42-44, 49, 62, 64, 77
-src\core\telegram_bridge.py                                            333    273    18%   46-64, 68-81, 84-104, 107-126, 129-132, 136-155, 158-168, 171-174, 177-178, 181-187, 190-196, 199-220, 223-229, 232-237, 241-256, 259-265, 268-281, 284-297, 301-306, 310-316, 320-326, 330-356, 360-373, 377-384, 387-393, 396-419, 422-434, 437-454
-src\core\telegram_manager.py                                           529    434    18%   62-77, 81-88, 92-108, 112-126, 129, 132-139, 142-155, 159-169, 173-179, 183, 197, 200-210, 213-228, 235-238, 241-245, 248-271, 274-281, 284-288, 291-309, 312-321, 324-363, 366-376, 380-403, 407-408, 412-414, 418-490, 498-535, 542-560, 567-572, 575-584, 591-600, 607, 619, 632-633, 636-637, 640-648, 651, 670-681, 685-704, 707-712, 719-720, 725-728, 741-758, 763-776, 780-795, 798-805, 808-813, 816-819, 822-827, 830-840, 843-848, 851-856, 859-868, 872-875, 884-894, 904-915, 925-936, 939-949, 952-963, 966-978
-src\core\time_manager.py                                                19      1    95%   31
-src\core\timesheet_processor.py                                        104     83    20%   25-65, 70-80, 85-90, 95-105, 111-147, 152-162, 167-171
+src\core\app_initializer.py                                             72      6    92%   53, 97-102
+src\core\app_updater.py                                                 46      2    96%   32, 87
+src\core\audit_manager.py                                              164     33    80%   96-97, 119-123, 127-139, 156-157, 219-220, 242, 244, 261-263, 285, 295-296, 310-311, 324-325
+src\core\backup_manager.py                                             140     30    79%   44, 47, 58-60, 70, 83, 92, 94, 109-111, 116, 120, 123, 179-188, 208-211, 219, 225-227, 234, 252-253
+src\core\config_manager.py                                             177     63    64%   74, 111, 116-117, 124-125, 133-147, 156-157, 176-177, 199, 203-208, 225-228, 233-234, 246, 261, 271-284, 289-299, 304-308, 320-325, 330
+src\core\constants.py                                                   69      0   100%
+src\core\contabilita_manager.py                                        107     60    44%   28, 33, 38, 47-59, 76-136, 145-154, 163-172, 181-190, 195, 200, 205, 210, 215, 220, 229, 239, 244
+src\core\contabilita_queries.py                                         87     70    20%   19-30, 35-46, 51-74, 79-90, 95-106, 111-122
+src\core\contabilita_search.py                                          91     72    21%   25-81, 88-112, 117-123, 128-140, 148-160, 174-178
+src\core\contabilita_stats.py                                           61     42    31%   29-49, 54-82, 87-105
+src\core\contabilita_worker.py                                          80     64    20%   22-27, 31-60, 64-75, 79-89, 94-102, 112-123, 133-145, 150-163, 168-174
+src\core\data_synchronizer.py                                          104     79    24%   19-23, 28-31, 38-57, 64-74, 80-111, 117-160, 166-167, 175, 183, 194-210
+src\core\database.py                                                   152     84    45%   56, 77-88, 97-129, 146-147, 150, 161-177, 185-246, 251-257, 265-284, 289-293, 303-334, 339-379
+src\core\excel_importer.py                                             613    506    17%   23-24, 31-33, 130-148, 153-158, 163-170, 175-189, 194-214, 225-265, 272-289, 294-344, 349-352, 359-402, 407-419, 424-436, 441-479, 485-507, 519-539, 549-565, 572-592, 601-620, 625-635, 640-660, 666-683, 692-710, 715-735, 742-769, 775-798, 816-824, 829-842, 847-850, 856-880, 889-907, 912-916, 923-926, 931-947, 954-978, 983-987, 992-998, 1004-1031, 1036-1056, 1061-1063, 1068-1079, 1084-1104
+src\core\license_updater.py                                            159    138    13%   22-64, 69-70, 75, 80, 85-102, 107-151, 156-200, 205-207, 212-218, 223-243, 248-255, 260-278, 283-292, 296-299
+src\core\license_validator.py                                          197    148    25%   36-40, 49-56, 67-71, 97-124, 130-154, 159-166, 180-206, 216-243, 254-255, 264-288, 293-311, 316-364, 369-372, 377-380
+src\core\lyra_client.py                                                128    113    12%   21-37, 55-69, 73-76, 80-110, 114-147, 156-212, 221-259
+src\core\lyra_sentinel.py                                               32      9    72%   38-39, 45-51
+src\core\notification_manager.py                                        77     55    29%   25-27, 30-32, 36-45, 49-53, 60-75, 79-81, 85, 93-100, 104-113, 117-122, 126-129
+src\core\secrets_manager.py                                            102     63    38%   27-41, 45-51, 55-69, 73-75, 79-85, 90, 95, 100, 105, 110-116, 121-124, 131-132, 137-140, 145-151
+src\core\stats_manager.py                                               48     36    25%   22-25, 29, 33-49, 53, 57-68, 72-80, 84
+src\core\telegram_bridge.py                                            342    290    15%   27-29, 33-42, 46-64, 68-71, 75-82, 86-93, 96-123, 126-149, 152-155, 159-174, 177-193, 198-201, 204-205, 208-216, 219-227, 230-255, 259-284, 287-293, 296-301, 305-322, 325-333, 336-349, 352-365, 369-374, 378-384, 388-396, 400-426, 430-443, 447-454, 459-465, 468-495, 498-510, 513-530
+src\core\telegram_manager.py                                           545    458    16%   48-58, 64-81, 85-94, 98, 102-116, 119, 128-137, 140-153, 157-167, 175-183, 187, 203, 206-216, 219-241, 255-280, 283-286, 289-293, 300-323, 326-333, 336-340, 343-365, 370-379, 382-421, 424-434, 438-457, 461-469, 473-474, 480-482, 486-582, 590-635, 642-660, 667-672, 675-684, 691-700, 707, 723, 744-745, 748-749, 752-764, 769, 792-805, 816-835, 838-843, 850-851, 856-859, 880-897, 902-915, 919-934, 937-944, 949-954, 959-962, 965-970, 973-986, 991-996, 1001-1007, 1012-1025, 1031-1034, 1043-1053, 1063-1076, 1086-1099, 1102-1112, 1115-1126, 1129-1141
+src\core\time_manager.py                                                19     14    26%   21-37, 50-56
+src\core\timesheet_processor.py                                        104     83    20%   25-67, 72-82, 87-92, 99-109, 115-151, 156-166, 171-175
 src\core\version.py                                                      4      0   100%
 src\gui\__init__.py                                                      0      0   100%
 src\gui\accessibility.py                                                18      0   100%
-src\gui\contabilita_kpi_panel.py                                       375     40    89%   49-50, 342, 466-468, 499-513, 516-529, 564, 619-627, 638, 730-732, 770
-src\gui\contabilita_panel.py                                           256     69    73%   48-52, 194-198, 202-205, 211-213, 219-223, 236, 238, 244-245, 250-254, 265-267, 275-276, 287, 294, 305-306, 311, 315-333, 336-337, 340-356
-src\gui\controllers\bot_controller.py                                   37      8    78%   59-67
-src\gui\controllers\navigation_controller.py                           121     27    78%   59-62, 73-85, 134-135, 166-168, 172-174, 193-194, 197-201
-src\gui\controllers\search_controller.py                               116     84    28%   18-41, 56, 66-67, 71-81, 85-94, 98-107, 111-120, 124-138, 142-161
-src\gui\controllers\service_controller.py                               43     34    21%   18-21, 26-41, 45-64, 68, 72-82
-src\gui\controllers\tray_controller.py                                  35      8    77%   35-36, 47-52, 56
-src\gui\dashboard_panel.py                                             120     12    90%   61-66, 270-283, 314-316
+src\gui\contabilita_kpi_panel.py                                       380    354     7%   47-58, 61-252, 262-305, 309-323, 327-345, 349, 353-475, 479-566, 569-639, 643-739, 742-809, 813-922
+src\gui\contabilita_panel.py                                           247    213    14%   38-45, 49-55, 59-163, 167-174, 178, 182, 206-222, 226-247, 252-276, 280-282, 286-289, 293-318, 324-344, 347-348, 351-355, 360-381, 384-386, 389-406, 410, 413-424
+src\gui\controllers\bot_controller.py                                   37     29    22%   17-20, 24-32, 36-39, 46-55, 59-67
+src\gui\controllers\navigation_controller.py                           137    110    20%   34-35, 39-55, 59-73, 76-79, 82-85, 88-91, 94-97, 100-103, 106-109, 112-115, 118-121, 124-127, 131-137, 141-145, 149-155, 167-194, 198-214, 218-220, 224-225, 229-230, 234-257, 261-262
+src\gui\controllers\search_controller.py                               116    101    13%   13-14, 18-43, 47-49, 53-71, 75-91, 97-108, 114-125, 131-142, 146-162, 166-186
+src\gui\controllers\service_controller.py                               43     34    21%   18-21, 26-43, 47-68, 72, 78-89
+src\gui\controllers\tray_controller.py                                  38     29    24%   16-18, 22-47, 50-55, 61
+src\gui\dashboard_panel.py                                             180    155    14%   33-70, 74, 78-80, 84-89, 92-94, 97-100, 103-106, 113-158, 162-163, 167-174, 178-298, 304-407, 411-413
 src\gui\design\colors.py                                                27      0   100%
 src\gui\design\spacing.py                                               25      0   100%
-src\gui\formatters.py                                                   27      0   100%
-src\gui\help_panel.py                                                  105      7    93%   176, 192, 195, 199-202
-src\gui\layouts\responsive.py                                           54      7    87%   29-35, 59
-src\gui\lyra_panel.py                                                  335    155    54%   56-60, 64-82, 99-108, 398-401, 414, 418-440, 444-448, 452-467, 475-477, 481-484, 488-491, 495-496, 502, 515-535, 542-545, 571-572, 575-577, 603-618, 622-640, 648-661, 665-677, 681-692, 696-701
-src\gui\main_window.py                                                 259    100    61%   163, 166-167, 179-180, 190-197, 201-217, 221-224, 228-233, 242-249, 253, 346-356, 360-361, 364-365, 368-375, 378-382, 385-387, 396, 400-406, 410-415, 419-423, 427-431, 435, 439, 447-453, 455-456
-src\gui\notifications_panel.py                                         208      7    97%   175-176, 195, 324-325, 372, 408
-src\gui\panels.py                                                     1072    222    79%   113-117, 224, 261, 419-421, 463-465, 484, 491, 502-504, 545-549, 593-595, 636-638, 657, 661, 673-675, 683, 688-748, 768-769, 811-813, 819, 836-846, 851-899, 924-926, 981, 985-990, 996, 1000, 1006-1007, 1023-1030, 1046-1047, 1090-1092, 1129, 1201-1209, 1212-1215, 1221, 1227-1229, 1242-1252, 1256-1264, 1269-1276, 1283-1287, 1291-1294, 1338-1339, 1355, 1403, 1425-1427, 1459-1461, 1485, 1496-1501, 1510-1514, 1536-1537, 1558-1560, 1645, 1701-1702, 1767-1770, 1774-1776, 1803-1810, 1813-1820, 1921, 1926, 1942-1943
-src\gui\scarico_ore_components.py                                      531    251    53%   43-104, 115-130, 141-157, 168-180, 192-200, 211-216, 227-232, 244-249, 313-319, 322, 332-333, 336, 373, 377-379, 386-420, 426-433, 438, 444, 449-478, 488-516, 539-542, 554-592, 655, 663, 703, 707-708, 729-734, 805, 809, 816-817, 836-839, 867-870, 875-879, 903-914, 918-921, 925-947, 951-955, 959-963, 967-968, 985, 993, 997, 1001-1006
-src\gui\scarico_ore_panel.py                                           263    160    39%   40-42, 47-81, 197-199, 203-211, 215-238, 242-244, 248-266, 277-306, 310-315, 319-331, 343-344, 353-360, 365-366, 373-378, 382-401, 405-408, 412-433
-src\gui\settings_panel.py                                             1145    380    67%   50-104, 107-114, 117, 124-182, 303-305, 351-352, 359-360, 1042-1055, 1059-1064, 1116-1118, 1215-1217, 1220-1227, 1230-1233, 1241-1243, 1252-1257, 1263-1294, 1418, 1428, 1432-1436, 1439-1450, 1453-1461, 1464-1475, 1478-1489, 1492-1503, 1528-1544, 1548-1553, 1556-1566, 1570-1594, 1598-1617, 1620-1626, 1639-1644, 1647-1655, 1658-1670, 1673-1684, 1687-1693, 1698-1699, 1703-1720, 1724-1728, 1731-1736, 1739-1746, 1750-1757, 1760-1765, 1768-1772, 1776-1781, 1784-1789, 1792-1796, 1800-1805, 1808-1813, 1816-1823, 1856, 1861, 1866, 1871, 1887, 1918, 1927, 1936-1943, 1946-1963
-src\gui\styles.py                                                       58      3    95%   89-90, 94
-src\gui\toast.py                                                        45      0   100%
+src\gui\formatters.py                                                   93     59    37%   11-28, 38-69, 74, 96-99, 105, 114-134, 155-161, 165-166
+src\gui\help_panel.py                                                  120     96    20%   32-35, 38-173, 177-197, 200-209, 212-220, 223-226, 229, 249, 269, 281, 295, 306, 319, 331, 342, 352, 362, 370
+src\gui\layouts\responsive.py                                           64     50    22%   16-19, 23-24, 28-29, 33-39, 43-47, 51-52, 56-67, 72-80, 84-86, 90-100
+src\gui\lyra_panel.py                                                  397    349    12%   38-40, 43-111, 138-142, 146-164, 178-179, 183-192, 204-212, 216-492, 499-512, 516-521, 525-545, 549-552, 556-560, 564-581, 589-591, 595-598, 602-605, 609-610, 614-619, 629-651, 658-661, 665-679, 683-702, 706-742, 750-767, 773-785, 789-800, 804-809
+src\gui\main_window.py                                                 307    239    22%   74-114, 119-216, 220-251, 255-289, 293-306, 310-313, 319-324, 335-344, 348, 352-356, 360-445, 449-452, 458-462, 466-488, 492-493, 496-497, 501-531, 534-548, 551-556, 559-561, 566, 570, 574-576, 580-583, 587-589, 593-595, 600-604, 611, 618-628
+src\gui\notifications_panel.py                                         213     99    54%   207-208, 233, 243-252, 255-341, 344-345, 349-392, 395-398, 421-425, 428, 432-453
+src\gui\panels.py                                                     1306    744    43%   83-87, 91-104, 116-120, 124-126, 232, 269, 316, 364, 368, 435-437, 482-484, 503, 510, 525-530, 534-539, 561-599, 617-621, 665-667, 671, 674-686, 690, 706-711, 715-721, 724-786, 793-801, 804-807, 811-848, 852-854, 857-865, 868-874, 877-887, 892-940, 965-967, 1023, 1027-1034, 1038-1046, 1050-1051, 1055-1111, 1123-1131, 1134-1138, 1142-1247, 1250-1258, 1261-1264, 1267-1280, 1283-1294, 1297-1307, 1311-1319, 1324-1331, 1334-1355, 1359-1373, 1377-1397, 1401-1415, 1419-1428, 1432-1456, 1460-1462, 1466-1480, 1484-1486, 1497-1504, 1507-1536, 1539-1544, 1547-1550, 1555-1560, 1571-1578, 1581-1583, 1590-1591, 1594-1604, 1611-1656, 1659-1745, 1749-1761, 1764, 1768-1779, 1783-1813, 1817-1824, 1828-1841, 1852-1861, 1864-1868, 1872-1899, 1902-1904, 1908-1909, 1912-1935, 1939-1957, 1961-1966, 1970-2020, 2023-2025, 2086, 2094, 2172-2181, 2254-2261, 2265-2267, 2294-2301, 2304-2311, 2420, 2425, 2443-2444
+src\gui\scarico_ore_components.py                                      539    469    13%   37-39, 43-112, 123-138, 149-165, 176-188, 200-208, 219-224, 235-240, 252-257, 302-330, 339-352, 356-377, 381, 385-387, 391-407, 411-414, 420-427, 433-440, 444-446, 450-452, 456-485, 489-494, 498-526, 543-545, 549-552, 564-602, 625-681, 685-691, 695-700, 704-709, 713, 717-718, 723-735, 739-744, 758-796, 800-812, 818-834, 840-859, 865-895, 899-903, 907-921, 927-938, 942-945, 949-971, 975-979, 983-987, 991-992, 997-1021, 1025-1030
+src\gui\scarico_ore_panel.py                                           269    236    12%   43-45, 50-84, 95-104, 108-217, 223-225, 229-237, 241-264, 268-270, 274-292, 303-332, 336-341, 345-357, 361-372, 376-377, 381-388, 392-406, 410-429, 433-436, 440-461
+src\gui\settings_panel.py                                             1197   1109     7%   52-110, 113-124, 127, 134-192, 199-200, 203-286, 289-327, 331-333, 337-350, 358-392, 406-416, 420-1018, 1021-1140, 1144-1157, 1163-1170, 1175-1333, 1337-1339, 1342-1349, 1352-1355, 1359-1381, 1385-1416, 1419-1420, 1423-1441, 1444, 1462, 1481, 1499-1501, 1522-1537, 1541, 1545-1547, 1551, 1555-1559, 1562-1573, 1576-1584, 1587-1598, 1601-1612, 1615-1626, 1630-1639, 1642-1649, 1653-1671, 1675-1680, 1683-1693, 1697-1737, 1743-1772, 1775-1781, 1784-1788, 1792-1801, 1804-1812, 1815-1829, 1832-1843, 1846-1852, 1855-1859, 1862-1895, 1899-1907, 1910-1917, 1920-1927, 1931-1940, 1943-1950, 1953-1960, 1964-1969, 1972-1979, 1982-1989, 1993-1998, 2001-2008, 2011-2018, 2022-2079, 2083-2151, 2154-2161, 2164-2181
+src\gui\styles.py                                                       58      3    95%   95-96, 100
+src\gui\toast.py                                                        45     39    13%   16-61, 65-83, 87-90
 src\gui\widgets\__init__.py                                             12      0   100%
-src\gui\widgets\automazioni_widget.py                                   33      0   100%
-src\gui\widgets\bot_parameters.py                                      112      5    96%   145, 164, 175, 197-198
-src\gui\widgets\calendar_date_edit.py                                   10      0   100%
-src\gui\widgets\contabilita\attivita_tab.py                            161     40    75%   152, 162-166, 191, 196-220, 223-227, 231-242, 245-249
-src\gui\widgets\contabilita\certificati_tab.py                         111     38    66%   125, 127, 133-143, 146-153, 156-161, 165-264
-src\gui\widgets\contabilita\giornaliere_tab.py                         164     41    75%   94, 121, 145, 159-160, 167, 172-173, 188-191, 195-210, 213-229
-src\gui\widgets\contabilita\helpers.py                                  33     12    64%   22-25, 29-34, 40-41
-src\gui\widgets\contabilita\year_tab.py                                 46      4    91%   86, 103-104, 108
-src\gui\widgets\data_table.py                                          106      0   100%
-src\gui\widgets\database_widget.py                                      17      0   100%
-src\gui\widgets\excel_table.py                                         324     95    71%   61-68, 84, 95, 99, 106, 112, 139-155, 159-181, 187, 212, 217, 234-237, 244-249, 261, 337-372, 383, 416, 425-428, 431-433, 482-483, 504, 517
-src\gui\widgets\info_widgets.py                                         91     38    58%   24-55, 58, 76-100
-src\gui\widgets\modern_button.py                                        62     10    84%   68-69, 75-78, 82-85
-src\gui\widgets\notification_item.py                                    61      9    85%   33-34, 36-37, 56, 117-119, 122
-src\gui\widgets\sidebar_button.py                                       19      0   100%
-src\gui\widgets\sidebar_widget.py                                       53      0   100%
-src\gui\widgets\status_card.py                                          68      0   100%
-src\gui\widgets\status_indicator.py                                     42      6    86%   63-68
-src\gui\widgets\timeline_widget.py                                     238     59    75%   76-79, 139-145, 153-164, 172-174, 178-180, 197-216, 238-243, 271-281, 313
-src\gui\widgets\toast.py                                                85      9    89%   174-178, 187, 201, 206, 211, 216
-src\gui\widgets\update_banner.py                                        29      7    76%   33-36, 39-41
+src\gui\widgets\automazioni_widget.py                                   42     42     0%   1-101
+src\gui\widgets\bot_parameters.py                                      112     13    88%   153, 157-159, 169-172, 183, 205-208
+src\gui\widgets\calendar_date_edit.py                                   11      0   100%
+src\gui\widgets\contabilita\attivita_tab.py                            192    167    13%   51-53, 57-121, 124, 127-140, 143-156, 159-169, 172-177, 180-198, 201-257, 260-264, 267-282, 285-290
+src\gui\widgets\contabilita\certificati_tab.py                         113     91    19%   55-57, 60-101, 105, 109-127, 131-144, 147-154, 157-167, 171-276
+src\gui\widgets\contabilita\giornaliere_tab.py                         165    138    16%   44-47, 51-92, 96, 99-128, 131-138, 142, 145-166, 169-188, 194-216, 219-238, 241-257
+src\gui\widgets\contabilita\helpers.py                                  33     26    21%   11-31, 34-39, 42-47
+src\gui\widgets\contabilita\year_tab.py                                 48     36    25%   38-54, 57-83, 87, 91-109, 113
+src\gui\widgets\data_table.py                                          108     86    20%   46-50, 53-127, 131, 135-136, 139-164, 167-173, 177-185, 188-190, 194-211, 215, 219
+src\gui\widgets\excel_table.py                                         324    212    35%   49-62, 66-73, 77-94, 98-118, 121-122, 125-126, 130-140, 144-168, 172-198, 202-221, 225-245, 249-260, 263-268, 271-275, 278-282, 322-381, 390-396, 425, 434-437, 440-442, 487-492, 498-499, 505-529
+src\gui\widgets\footer_stats.py                                        187    163    13%   27-46, 49, 59-97, 100-104, 107-109, 113-119, 123-125, 137-154, 164-202, 205-207, 217-272, 275-277, 280-355
+src\gui\widgets\info_widgets.py                                         95     80    16%   27-60, 63, 70-78, 83-111, 118-168, 171, 174
+src\gui\widgets\modern_button.py                                        62     11    82%   71-72, 78-81, 85-88, 150
+src\gui\widgets\notification_item.py                                    70     59    16%   20-23, 26-130, 134-136, 139
+src\gui\widgets\sidebar_button.py                                       41     32    22%   11-24, 28-30, 34-41, 46-51, 55-89
+src\gui\widgets\sidebar_widget.py                                      159    133    16%   13-20, 27-45, 48-49, 52-53, 56-61, 65-72, 82-106, 110-112, 116-118, 122-125, 129-144, 147-254, 258, 262, 266-267, 273-300
+src\gui\widgets\status_card.py                                          50      5    90%   95-111
+src\gui\widgets\status_indicator.py                                     42     35    17%   18-32, 42-59, 63-68
+src\gui\widgets\timeline_widget.py                                     189    123    35%   43-72, 77-84, 87-124, 127-144, 147-152, 155-168, 171-172, 175-177, 190-204, 219-229, 232-247, 252-257, 263, 286, 294-321
+src\gui\widgets\toast.py                                                91     64    30%   55-68, 72-111, 116-130, 140-145, 160-162, 181-218, 224, 229, 234, 239
+src\gui\widgets\update_banner.py                                        35     25    29%   14-18, 21-39, 43-48, 51-53
 src\utils\__init__.py                                                    2      0   100%
-src\utils\document_generator.py                                         13      0   100%
-src\utils\document_processor.py                                         64      7    89%   12-13, 65-66, 84-86
-src\utils\helpers.py                                                    79     17    78%   36, 69-70, 125, 138-152, 227
-src\utils\log_humanizer.py                                              16      0   100%
-src\utils\parsing.py                                                    53      4    92%   102-119
-src\utils\printing.py                                                   82     14    83%   20-22, 36-38, 49-50, 112-115, 139-140
-src\utils\resource_manager.py                                           33      1    97%   18
-src\utils\secure_logger.py                                              22      5    77%   42, 47-50
-src\utils\security.py                                                   85     12    86%   39-42, 83-87, 114-116
+src\utils\document_generator.py                                         13     10    23%   11-39
+src\utils\document_processor.py                                         64     21    67%   12-13, 22-31, 48-49, 65-66, 73-74, 84-86
+src\utils\helpers.py                                                    94     54    43%   23, 36-40, 56-78, 91-93, 98, 125-126, 134, 147-161, 175-177, 192-199, 214, 236, 253-256
+src\utils\log_humanizer.py                                              27     18    33%   61-69, 74-93, 98-101
+src\utils\parsing.py                                                    53     46    13%   13-33, 39-51, 56-66, 71-79, 84-97, 102-119
+src\utils\printing.py                                                   82     68    17%   17-22, 27-38, 46-50, 61-144
+src\utils\resource_manager.py                                           33      9    73%   18, 35-38, 43-44, 49-50
+src\utils\secure_logger.py                                              22     10    55%   44-51, 54-57
+src\utils\security.py                                                   85     30    65%   39-42, 58-59, 84-88, 108, 110, 115-117, 122, 125-130, 134-140
 src\utils\validators.py                                                 73     51    30%   34-52, 57-68, 73-88, 94-179, 184-200, 205-208
 --------------------------------------------------------------------------------------------------
-TOTAL                                                                13654   4413    68%
+TOTAL                                                                14761  10563    28%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_safework_bot.py::TestSafeWorkBot::test_name_and_description
-1 failed in 9.06s
-Exception ignored in atexit callback: <function cleanup_numbered_dir at 0x000001C4A25C71A0>
-Traceback (most recent call last):
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 374, in cleanup_numbered_dir
-    cleanup_dead_symlinks(root)
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 359, in cleanup_dead_symlinks
-    if not left_dir.resolve().exists():
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 860, in exists
-    self.stat(follow_symlinks=follow_symlinks)
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 840, in stat
-    return os.stat(self, follow_symlinks=follow_symlinks)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-PermissionError: [WinError 5] Accesso negato: 'C:\\Users\\Coemi\\AppData\\Local\\Temp\\pytest-of-Allegretti\\pytest-current'
-
-```
-</details>
-
----
-### `tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_data_pdl`
-**Error:** `FAILED tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_data_pdl`
-
-<details><summary>Full Output</summary>
-
-```text
-F                                                                        [100%]
-================================== FAILURES ===================================
-__________________ TestTelegramUIBridge.test_handle_data_pdl __________________
-C:\Program Files\Python312\Lib\unittest\mock.py:949: in assert_called_with
-    raise AssertionError(_error_message()) from cause
-E   AssertionError: expected call not found.
-E   Expected: navigate_to_panel(<MagicMock name='mock.pdl_panel.bot_id' id='1885935844336'>)
-E     Actual: navigate_to_panel('scarico_pdl')
-
-During handling of the above exception, another exception occurred:
-C:\Program Files\Python312\Lib\unittest\mock.py:961: in assert_called_once_with
-    return self.assert_called_with(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AssertionError: expected call not found.
-E   Expected: navigate_to_panel(<MagicMock name='mock.pdl_panel.bot_id' id='1885935844336'>)
-E     Actual: navigate_to_panel('scarico_pdl')
-E   
-E   pytest introspection follows:
-E   
-E   Args:
-E   assert ('scarico_pdl',) == (<MagicMock n...5935844336'>,)
-E     
-E     At index 0 diff: 'scarico_pdl' != <MagicMock name='mock.pdl_panel.bot_id' id='1885935844336'>
-E     Use -v to get more diff
-
-During handling of the above exception, another exception occurred:
-tests\unit\test_telegram_bridge.py:442: in test_handle_data_pdl
-    self.mock_main_window.navigate_to_panel.assert_called_once_with(
-E   AssertionError: expected call not found.
-E   Expected: navigate_to_panel(<MagicMock name='mock.pdl_panel.bot_id' id='1885935844336'>)
-E     Actual: navigate_to_panel('scarico_pdl')
-E   
-E   pytest introspection follows:
-E   
-E   Args:
-E   assert ('scarico_pdl',) == (<MagicMock n...5935844336'>,)
-E     
-E     At index 0 diff: 'scarico_pdl' != <MagicMock name='mock.pdl_panel.bot_id' id='1885935844336'>
-E     Use -v to get more diff
-=============================== tests coverage ================================
-______________ coverage: platform win32, python 3.12.10-final-0 _______________
-
-Name                                                                 Stmts   Miss  Cover   Missing
---------------------------------------------------------------------------------------------------
-src\bots\__init__.py                                                    20      6    70%   112, 126-130
-src\bots\base\__init__.py                                                2      0   100%
-src\bots\base\base_bot.py                                              266     52    80%   71, 77, 123-124, 136, 160, 219, 230, 244, 312, 335-336, 342, 347-349, 356, 360, 366, 375-377, 386, 390-398, 402-410, 429-433, 438-442, 454
-src\bots\base\login_page.py                                             94      7    93%   89-93, 101, 150-151
-src\bots\portale_fornitori\carico_ts\__init__.py                         2      0   100%
-src\bots\portale_fornitori\carico_ts\bot.py                             48     15    69%   56, 60-72, 86, 92, 95, 101
-src\bots\portale_fornitori\carico_ts\locators.py                         6      0   100%
-src\bots\portale_fornitori\carico_ts\pages\carico_ts_page.py            60     15    75%   34-43, 52-54, 77-79, 116-118
-src\bots\portale_fornitori\common\locators.py                           15      0   100%
-src\bots\portale_fornitori\dettagli_oda\__init__.py                      2      0   100%
-src\bots\portale_fornitori\dettagli_oda\bot.py                          65      9    86%   42, 61, 64, 77, 87, 104-105, 107-108
-src\bots\portale_fornitori\dettagli_oda\locators.py                     19      0   100%
-src\bots\portale_fornitori\dettagli_oda\pages\dettagli_oda_page.py     216     70    68%   49-56, 91-94, 105-119, 136-138, 152-153, 156-157, 170-172, 232, 251-257, 274-278, 287-295, 317-318, 332, 336-337, 340-342, 352-353, 355-356, 370-371, 381-384
-src\bots\portale_fornitori\prenota_bp\__init__.py                        1      0   100%
-src\bots\portale_fornitori\prenota_bp\bot.py                            87     73    16%   19, 26, 30, 42-51, 56-63, 68-159
-src\bots\portale_fornitori\prenota_bp\locators.py                       33      0   100%
-src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py         250    226    10%   28-31, 35, 39-44, 56-85, 96-102, 107-114, 118-149, 153-190, 194-202, 211-240, 244-251, 255-278, 290-412
-src\bots\portale_fornitori\scarico_ts\__init__.py                        2      0   100%
-src\bots\portale_fornitori\scarico_ts\bot.py                           226     41    82%   59, 78-80, 91, 97, 107, 118-120, 152, 160-161, 168, 207, 213, 222-233, 242, 281, 289, 303-305, 310, 316-318, 358-361, 377-382
-src\bots\portale_fornitori\scarico_ts\locators.py                       10      0   100%
-src\bots\portale_fornitori\scarico_ts\pages\scarico_ts_page.py         104     20    81%   44-45, 64-66, 91-93, 124-126, 147, 158-160, 166-171
-src\bots\portale_fornitori\scarico_ts\scarico_ts_bot.py                 61     14    77%   25, 30, 35, 42, 46, 60, 62-63, 68-69, 78, 82, 95-96
-src\bots\portale_fornitori\timbrature\__init__.py                        2      0   100%
-src\bots\portale_fornitori\timbrature\bot.py                            75     49    35%   26, 31, 36, 47-63, 69-113, 120-121
-src\bots\portale_fornitori\timbrature\locators.py                       11      0   100%
-src\bots\portale_fornitori\timbrature\pages\timbrature_page.py         170    105    38%   39-57, 77-79, 83-146, 163-164, 175-176, 179, 198-199, 204-205, 210-236, 240-251, 255-285
-src\bots\portale_fornitori\timbrature\storage.py                       171     77    55%   71, 90-91, 98-126, 136-148, 174-183, 186-194, 199-210, 225-226, 240-242, 250, 254-255, 268-269, 279-288, 297-298
-src\bots\safework\base.py                                               43     19    56%   23, 29-30, 46-47, 54-70, 74, 78
-src\bots\safework\pdl\__init__.py                                        0      0   100%
-src\bots\safework\pdl\bot.py                                           403    128    68%   25, 30, 35, 45, 74-76, 88-89, 93-103, 114-115, 125, 128-129, 136-195, 226-227, 239-240, 283, 292-294, 306-307, 316, 327-329, 341-343, 364, 375-377, 387-388, 392-406, 411, 419-420, 440-441, 444-445, 460-461, 469, 487-489, 500-505, 511, 525-526, 536-538
-src\core\__init__.py                                                     2      0   100%
-src\core\app_initializer.py                                             60      5    92%   71-76
-src\core\app_updater.py                                                 46      2    96%   32, 85
-src\core\audit_manager.py                                              156     30    81%   94-95, 114-130, 145-146, 202-203, 234, 236, 246-247, 271, 281-282, 294-295, 306-307
-src\core\backup_manager.py                                             119     24    80%   41-42, 53, 68, 70, 84-86, 91, 98, 154-163, 183-186, 194, 200-202, 227-228
-src\core\config_manager.py                                             177     13    93%   111, 124-125, 136, 199, 207-208, 261, 278-279, 324-325, 330
-src\core\constants.py                                                   23      0   100%
-src\core\contabilita_manager.py                                        107     20    81%   28, 38, 78, 99-100, 118, 131-132, 141-148, 157-162, 175, 208
-src\core\contabilita_queries.py                                         87      4    95%   52, 80, 96, 112
-src\core\contabilita_search.py                                          91     14    85%   26-27, 50, 78-79, 109-110, 119, 122-123, 132-133, 151-152
-src\core\contabilita_stats.py                                           61      4    93%   78-79, 100-101
-src\core\contabilita_worker.py                                          80      4    95%   77, 91-92, 158
-src\core\data_synchronizer.py                                           99      3    97%   97, 184-185
-src\core\database.py                                                   141     10    93%   117-122, 132-133, 159-161
-src\core\excel_importer.py                                             586     67    89%   23-24, 31-33, 135-136, 267, 307-309, 333, 338, 364-365, 376-380, 394, 403, 415, 478, 488, 504, 507, 511, 541, 570-571, 599-600, 640, 643, 655-656, 670, 707, 720, 761, 797, 836, 839-842, 850-851, 858, 862-863, 882, 896-897, 947-948, 958-960, 975, 990-991, 1007-1008, 1017-1019
-src\core\license_updater.py                                            159     22    86%   99-102, 150, 166-167, 198-199, 204-206, 213, 230, 251-253, 289-291, 295-298
-src\core\license_validator.py                                          197     19    90%   90-112, 136-138, 165, 185-186, 216
-src\core\lyra_client.py                                                129     19    85%   22, 67-69, 105-107, 151-152, 203-204, 208-212, 244, 252-254
-src\core\lyra_sentinel.py                                               32      4    88%   37-38, 49-50
-src\core\notification_manager.py                                        77      2    97%   52-53
-src\core\secrets_manager.py                                            111     13    88%   66-69, 84-85, 140-142, 188-189, 196-197
-src\core\stats_manager.py                                               48      4    92%   49, 62, 64, 77
-src\core\telegram_bridge.py                                            333    104    69%   100, 122, 140-155, 165-166, 184-185, 193-194, 199-220, 223-229, 250-251, 255-256, 265, 276, 281, 285-286, 297, 303-306, 320-326, 330-356, 401-412, 418-419, 424-425, 431-432, 439-440, 451-452
-src\core\telegram_manager.py                                           529    434    18%   62-77, 81-88, 92-108, 112-126, 129, 132-139, 142-155, 159-169, 173-179, 183, 197, 200-210, 213-228, 235-238, 241-245, 248-271, 274-281, 284-288, 291-309, 312-321, 324-363, 366-376, 380-403, 407-408, 412-414, 418-490, 498-535, 542-560, 567-572, 575-584, 591-600, 607, 619, 632-633, 636-637, 640-648, 651, 670-681, 685-704, 707-712, 719-720, 725-728, 741-758, 763-776, 780-795, 798-805, 808-813, 816-819, 822-827, 830-840, 843-848, 851-856, 859-868, 872-875, 884-894, 904-915, 925-936, 939-949, 952-963, 966-978
-src\core\time_manager.py                                                19      1    95%   31
-src\core\timesheet_processor.py                                        104     83    20%   25-65, 70-80, 85-90, 95-105, 111-147, 152-162, 167-171
-src\core\version.py                                                      4      0   100%
-src\gui\__init__.py                                                      0      0   100%
-src\gui\accessibility.py                                                18      0   100%
-src\gui\contabilita_kpi_panel.py                                       375     40    89%   49-50, 342, 466-468, 499-513, 516-529, 564, 619-627, 638, 730-732, 770
-src\gui\contabilita_panel.py                                           256     56    78%   48-52, 197-198, 219-223, 238, 244-245, 250-254, 275-276, 287, 294, 305-306, 311, 315-333, 336-337, 340-356
-src\gui\controllers\bot_controller.py                                   37      8    78%   59-67
-src\gui\controllers\navigation_controller.py                           121     27    78%   59-62, 73-85, 134-135, 166-168, 172-174, 193-194, 197-201
-src\gui\controllers\search_controller.py                               116     12    90%   56, 80-81, 86, 99, 112, 127, 137-138, 152, 160-161
-src\gui\controllers\service_controller.py                               43      0   100%
-src\gui\controllers\tray_controller.py                                  35      8    77%   35-36, 47-52, 56
-src\gui\dashboard_panel.py                                             120     12    90%   61-66, 270-283, 314-316
-src\gui\design\colors.py                                                27      0   100%
-src\gui\design\spacing.py                                               25      0   100%
-src\gui\formatters.py                                                   27      0   100%
-src\gui\help_panel.py                                                  105      7    93%   176, 192, 195, 199-202
-src\gui\layouts\responsive.py                                           54      7    87%   29-35, 59
-src\gui\lyra_panel.py                                                  335    155    54%   56-60, 64-82, 99-108, 398-401, 414, 418-440, 444-448, 452-467, 475-477, 481-484, 488-491, 495-496, 502, 515-535, 542-545, 571-572, 575-577, 603-618, 622-640, 648-661, 665-677, 681-692, 696-701
-src\gui\main_window.py                                                 259    100    61%   163, 166-167, 179-180, 190-197, 201-217, 221-224, 228-233, 242-249, 253, 346-356, 360-361, 364-365, 368-375, 378-382, 385-387, 396, 400-406, 410-415, 419-423, 427-431, 435, 439, 447-453, 455-456
-src\gui\notifications_panel.py                                         208      7    97%   175-176, 195, 324-325, 372, 408
-src\gui\panels.py                                                     1072    222    79%   113-117, 224, 261, 419-421, 463-465, 484, 491, 502-504, 545-549, 593-595, 636-638, 657, 661, 673-675, 683, 688-748, 768-769, 811-813, 819, 836-846, 851-899, 924-926, 981, 985-990, 996, 1000, 1006-1007, 1023-1030, 1046-1047, 1090-1092, 1129, 1201-1209, 1212-1215, 1221, 1227-1229, 1242-1252, 1256-1264, 1269-1276, 1283-1287, 1291-1294, 1338-1339, 1355, 1403, 1425-1427, 1459-1461, 1485, 1496-1501, 1510-1514, 1536-1537, 1558-1560, 1645, 1701-1702, 1767-1770, 1774-1776, 1803-1810, 1813-1820, 1921, 1926, 1942-1943
-src\gui\scarico_ore_components.py                                      531    159    70%   43-104, 115-130, 169, 177-180, 215-216, 231-232, 244-249, 322, 332-333, 336, 373, 409-415, 427, 450, 456, 465-478, 488-516, 539-542, 554-592, 655, 663, 703, 707-708, 729-734, 805, 809, 816-817, 839, 870, 879, 903-914, 925-947, 967-968, 1001-1006
-src\gui\scarico_ore_panel.py                                           263     74    72%   40-42, 47-81, 211, 218-219, 232-233, 237-238, 242-244, 248-266, 288-289, 299-300, 305-306, 310-315, 323-324, 354, 365-366, 373-378, 405-408, 415
-src\gui\settings_panel.py                                             1145    318    72%   117, 124-182, 303-305, 351-352, 359-360, 1042-1055, 1059-1064, 1116-1118, 1215-1217, 1227, 1230-1233, 1241-1243, 1252-1257, 1263-1294, 1439-1450, 1453-1461, 1464-1475, 1478-1489, 1492-1503, 1528-1544, 1548-1553, 1556-1566, 1570-1594, 1598-1617, 1620-1626, 1639-1644, 1647-1655, 1658-1670, 1673-1684, 1687-1693, 1698-1699, 1703-1720, 1724-1728, 1731-1736, 1739-1746, 1754-1755, 1760-1765, 1768-1772, 1776-1781, 1784-1789, 1792-1796, 1800-1805, 1808-1813, 1816-1823, 1866, 1871, 1887, 1918, 1937-1941, 1946-1963
-src\gui\styles.py                                                       58      3    95%   89-90, 94
-src\gui\toast.py                                                        45      0   100%
-src\gui\widgets\__init__.py                                             12      0   100%
-src\gui\widgets\automazioni_widget.py                                   33      0   100%
-src\gui\widgets\bot_parameters.py                                      112      5    96%   145, 164, 175, 197-198
-src\gui\widgets\calendar_date_edit.py                                   10      0   100%
-src\gui\widgets\contabilita\attivita_tab.py                            161     40    75%   152, 162-166, 191, 196-220, 223-227, 231-242, 245-249
-src\gui\widgets\contabilita\certificati_tab.py                         111     38    66%   125, 127, 133-143, 146-153, 156-161, 165-264
-src\gui\widgets\contabilita\giornaliere_tab.py                         164     40    76%   121, 145, 159-160, 167, 172-173, 188-191, 195-210, 213-229
-src\gui\widgets\contabilita\helpers.py                                  33     12    64%   22-25, 29-34, 40-41
-src\gui\widgets\contabilita\year_tab.py                                 46      3    93%   103-104, 108
-src\gui\widgets\data_table.py                                          106      0   100%
-src\gui\widgets\database_widget.py                                      17      0   100%
-src\gui\widgets\excel_table.py                                         324     95    71%   61-68, 84, 95, 99, 106, 112, 139-155, 159-181, 187, 212, 217, 234-237, 244-249, 261, 337-372, 383, 416, 425-428, 431-433, 482-483, 504, 517
-src\gui\widgets\info_widgets.py                                         91     38    58%   24-55, 58, 76-100
-src\gui\widgets\modern_button.py                                        62     10    84%   68-69, 75-78, 82-85
-src\gui\widgets\notification_item.py                                    61      9    85%   33-34, 36-37, 56, 117-119, 122
-src\gui\widgets\sidebar_button.py                                       19      0   100%
-src\gui\widgets\sidebar_widget.py                                       53      0   100%
-src\gui\widgets\status_card.py                                          68      0   100%
-src\gui\widgets\status_indicator.py                                     42      6    86%   63-68
-src\gui\widgets\timeline_widget.py                                     238     59    75%   76-79, 139-145, 153-164, 172-174, 178-180, 197-216, 238-243, 271-281, 313
-src\gui\widgets\toast.py                                                85      9    89%   174-178, 187, 201, 206, 211, 216
-src\gui\widgets\update_banner.py                                        29      7    76%   33-36, 39-41
-src\utils\__init__.py                                                    2      0   100%
-src\utils\document_generator.py                                         13      0   100%
-src\utils\document_processor.py                                         64      7    89%   12-13, 65-66, 84-86
-src\utils\helpers.py                                                    79     17    78%   36, 69-70, 125, 138-152, 227
-src\utils\log_humanizer.py                                              16      0   100%
-src\utils\parsing.py                                                    53      4    92%   102-119
-src\utils\printing.py                                                   82     14    83%   20-22, 36-38, 49-50, 112-115, 139-140
-src\utils\resource_manager.py                                           33      1    97%   18
-src\utils\secure_logger.py                                              22      5    77%   42, 47-50
-src\utils\security.py                                                   85      9    89%   39-42, 83-87
-src\utils\validators.py                                                 73     46    37%   35, 42-44, 52, 57-68, 73-88, 94-179, 184-200, 205-208
---------------------------------------------------------------------------------------------------
-TOTAL                                                                13715   3520    74%
-Coverage HTML written to dir htmlcov
-=========================== short test summary info ===========================
-FAILED tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_data_pdl
-1 failed in 11.36s
-Exception ignored in atexit callback: <function cleanup_numbered_dir at 0x000001B702CB71A0>
-Traceback (most recent call last):
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 374, in cleanup_numbered_dir
-    cleanup_dead_symlinks(root)
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 359, in cleanup_dead_symlinks
-    if not left_dir.resolve().exists():
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 860, in exists
-    self.stat(follow_symlinks=follow_symlinks)
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 840, in stat
-    return os.stat(self, follow_symlinks=follow_symlinks)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-PermissionError: [WinError 5] Accesso negato: 'C:\\Users\\Coemi\\AppData\\Local\\Temp\\pytest-of-Allegretti\\pytest-current'
-
-```
-</details>
-
----
-### `tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_restart_app`
-**Error:** `FAILED tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_restart_app`
-
-<details><summary>Full Output</summary>
-
-```text
-F                                                                        [100%]
-================================== FAILURES ===================================
-________________ TestTelegramUIBridge.test_handle_restart_app _________________
-C:\Program Files\Python312\Lib\unittest\mock.py:1393: in patched
-    with self.decoration_helper(patched,
-C:\Program Files\Python312\Lib\contextlib.py:137: in __enter__
-    return next(self.gen)
-           ^^^^^^^^^^^^^^
-C:\Program Files\Python312\Lib\unittest\mock.py:1375: in decoration_helper
-    arg = exit_stack.enter_context(patching)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Program Files\Python312\Lib\contextlib.py:526: in enter_context
-    result = _enter(cm)
-             ^^^^^^^^^^
-C:\Program Files\Python312\Lib\unittest\mock.py:1451: in __enter__
-    self.target = self.getter()
-                  ^^^^^^^^^^^^^
-C:\Program Files\Python312\Lib\pkgutil.py:528: in resolve_name
-    result = getattr(result, p)
-             ^^^^^^^^^^^^^^^^^^
-E   AttributeError: module 'src.core.telegram_bridge' has no attribute 'subprocess'
-=============================== tests coverage ================================
-______________ coverage: platform win32, python 3.12.10-final-0 _______________
-
-Name                                                                 Stmts   Miss  Cover   Missing
---------------------------------------------------------------------------------------------------
-src\bots\__init__.py                                                    20      6    70%   112, 126-130
-src\bots\base\__init__.py                                                2      0   100%
-src\bots\base\base_bot.py                                              266     52    80%   71, 77, 123-124, 136, 160, 219, 230, 244, 312, 335-336, 342, 347-349, 356, 360, 366, 375-377, 386, 390-398, 402-410, 429-433, 438-442, 454
-src\bots\base\login_page.py                                             94      7    93%   89-93, 101, 150-151
-src\bots\portale_fornitori\carico_ts\__init__.py                         2      0   100%
-src\bots\portale_fornitori\carico_ts\bot.py                             48     15    69%   56, 60-72, 86, 92, 95, 101
-src\bots\portale_fornitori\carico_ts\locators.py                         6      0   100%
-src\bots\portale_fornitori\carico_ts\pages\carico_ts_page.py            60     15    75%   34-43, 52-54, 77-79, 116-118
-src\bots\portale_fornitori\common\locators.py                           15      0   100%
-src\bots\portale_fornitori\dettagli_oda\__init__.py                      2      0   100%
-src\bots\portale_fornitori\dettagli_oda\bot.py                          65      9    86%   42, 61, 64, 77, 87, 104-105, 107-108
-src\bots\portale_fornitori\dettagli_oda\locators.py                     19      0   100%
-src\bots\portale_fornitori\dettagli_oda\pages\dettagli_oda_page.py     216     70    68%   49-56, 91-94, 105-119, 136-138, 152-153, 156-157, 170-172, 232, 251-257, 274-278, 287-295, 317-318, 332, 336-337, 340-342, 352-353, 355-356, 370-371, 381-384
-src\bots\portale_fornitori\prenota_bp\__init__.py                        1      0   100%
-src\bots\portale_fornitori\prenota_bp\bot.py                            87     73    16%   19, 26, 30, 42-51, 56-63, 68-159
-src\bots\portale_fornitori\prenota_bp\locators.py                       33      0   100%
-src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py         250    226    10%   28-31, 35, 39-44, 56-85, 96-102, 107-114, 118-149, 153-190, 194-202, 211-240, 244-251, 255-278, 290-412
-src\bots\portale_fornitori\scarico_ts\__init__.py                        2      0   100%
-src\bots\portale_fornitori\scarico_ts\bot.py                           226     41    82%   59, 78-80, 91, 97, 107, 118-120, 152, 160-161, 168, 207, 213, 222-233, 242, 281, 289, 303-305, 310, 316-318, 358-361, 377-382
-src\bots\portale_fornitori\scarico_ts\locators.py                       10      0   100%
-src\bots\portale_fornitori\scarico_ts\pages\scarico_ts_page.py         104     20    81%   44-45, 64-66, 91-93, 124-126, 147, 158-160, 166-171
-src\bots\portale_fornitori\scarico_ts\scarico_ts_bot.py                 61     14    77%   25, 30, 35, 42, 46, 60, 62-63, 68-69, 78, 82, 95-96
-src\bots\portale_fornitori\timbrature\__init__.py                        2      0   100%
-src\bots\portale_fornitori\timbrature\bot.py                            75     49    35%   26, 31, 36, 47-63, 69-113, 120-121
-src\bots\portale_fornitori\timbrature\locators.py                       11      0   100%
-src\bots\portale_fornitori\timbrature\pages\timbrature_page.py         170    105    38%   39-57, 77-79, 83-146, 163-164, 175-176, 179, 198-199, 204-205, 210-236, 240-251, 255-285
-src\bots\portale_fornitori\timbrature\storage.py                       171     77    55%   71, 90-91, 98-126, 136-148, 174-183, 186-194, 199-210, 225-226, 240-242, 250, 254-255, 268-269, 279-288, 297-298
-src\bots\safework\base.py                                               43     19    56%   23, 29-30, 46-47, 54-70, 74, 78
-src\bots\safework\pdl\__init__.py                                        0      0   100%
-src\bots\safework\pdl\bot.py                                           403    128    68%   25, 30, 35, 45, 74-76, 88-89, 93-103, 114-115, 125, 128-129, 136-195, 226-227, 239-240, 283, 292-294, 306-307, 316, 327-329, 341-343, 364, 375-377, 387-388, 392-406, 411, 419-420, 440-441, 444-445, 460-461, 469, 487-489, 500-505, 511, 525-526, 536-538
-src\core\__init__.py                                                     2      0   100%
-src\core\app_initializer.py                                             60      5    92%   71-76
-src\core\app_updater.py                                                 46      2    96%   32, 85
-src\core\audit_manager.py                                              156     30    81%   94-95, 114-130, 145-146, 202-203, 234, 236, 246-247, 271, 281-282, 294-295, 306-307
-src\core\backup_manager.py                                             119     24    80%   41-42, 53, 68, 70, 84-86, 91, 98, 154-163, 183-186, 194, 200-202, 227-228
-src\core\config_manager.py                                             177     13    93%   111, 124-125, 136, 199, 207-208, 261, 278-279, 324-325, 330
-src\core\constants.py                                                   23      0   100%
-src\core\contabilita_manager.py                                        107     20    81%   28, 38, 78, 99-100, 118, 131-132, 141-148, 157-162, 175, 208
-src\core\contabilita_queries.py                                         87      4    95%   52, 80, 96, 112
-src\core\contabilita_search.py                                          91     14    85%   26-27, 50, 78-79, 109-110, 119, 122-123, 132-133, 151-152
-src\core\contabilita_stats.py                                           61      4    93%   78-79, 100-101
-src\core\contabilita_worker.py                                          80      4    95%   77, 91-92, 158
-src\core\data_synchronizer.py                                           99      3    97%   97, 184-185
-src\core\database.py                                                   141     10    93%   117-122, 132-133, 159-161
-src\core\excel_importer.py                                             586     67    89%   23-24, 31-33, 135-136, 267, 307-309, 333, 338, 364-365, 376-380, 394, 403, 415, 478, 488, 504, 507, 511, 541, 570-571, 599-600, 640, 643, 655-656, 670, 707, 720, 761, 797, 836, 839-842, 850-851, 858, 862-863, 882, 896-897, 947-948, 958-960, 975, 990-991, 1007-1008, 1017-1019
-src\core\license_updater.py                                            159     22    86%   99-102, 150, 166-167, 198-199, 204-206, 213, 230, 251-253, 289-291, 295-298
-src\core\license_validator.py                                          197     19    90%   90-112, 136-138, 165, 185-186, 216
-src\core\lyra_client.py                                                129     19    85%   22, 67-69, 105-107, 151-152, 203-204, 208-212, 244, 252-254
-src\core\lyra_sentinel.py                                               32      4    88%   37-38, 49-50
-src\core\notification_manager.py                                        77      2    97%   52-53
-src\core\secrets_manager.py                                            111     13    88%   66-69, 84-85, 140-142, 188-189, 196-197
-src\core\stats_manager.py                                               48      4    92%   49, 62, 64, 77
-src\core\telegram_bridge.py                                            333    104    69%   100, 122, 140-155, 165-166, 184-185, 193-194, 199-220, 223-229, 250-251, 255-256, 265, 276, 281, 285-286, 297, 303-306, 320-326, 330-356, 401-412, 418-419, 424-425, 431-432, 439-440, 451-452
-src\core\telegram_manager.py                                           529    434    18%   62-77, 81-88, 92-108, 112-126, 129, 132-139, 142-155, 159-169, 173-179, 183, 197, 200-210, 213-228, 235-238, 241-245, 248-271, 274-281, 284-288, 291-309, 312-321, 324-363, 366-376, 380-403, 407-408, 412-414, 418-490, 498-535, 542-560, 567-572, 575-584, 591-600, 607, 619, 632-633, 636-637, 640-648, 651, 670-681, 685-704, 707-712, 719-720, 725-728, 741-758, 763-776, 780-795, 798-805, 808-813, 816-819, 822-827, 830-840, 843-848, 851-856, 859-868, 872-875, 884-894, 904-915, 925-936, 939-949, 952-963, 966-978
-src\core\time_manager.py                                                19      1    95%   31
-src\core\timesheet_processor.py                                        104     83    20%   25-65, 70-80, 85-90, 95-105, 111-147, 152-162, 167-171
-src\core\version.py                                                      4      0   100%
-src\gui\__init__.py                                                      0      0   100%
-src\gui\accessibility.py                                                18      0   100%
-src\gui\contabilita_kpi_panel.py                                       375     40    89%   49-50, 342, 466-468, 499-513, 516-529, 564, 619-627, 638, 730-732, 770
-src\gui\contabilita_panel.py                                           256     56    78%   48-52, 197-198, 219-223, 238, 244-245, 250-254, 275-276, 287, 294, 305-306, 311, 315-333, 336-337, 340-356
-src\gui\controllers\bot_controller.py                                   37      8    78%   59-67
-src\gui\controllers\navigation_controller.py                           121     27    78%   59-62, 73-85, 134-135, 166-168, 172-174, 193-194, 197-201
-src\gui\controllers\search_controller.py                               116     12    90%   56, 80-81, 86, 99, 112, 127, 137-138, 152, 160-161
-src\gui\controllers\service_controller.py                               43      0   100%
-src\gui\controllers\tray_controller.py                                  35      8    77%   35-36, 47-52, 56
-src\gui\dashboard_panel.py                                             120     12    90%   61-66, 270-283, 314-316
-src\gui\design\colors.py                                                27      0   100%
-src\gui\design\spacing.py                                               25      0   100%
-src\gui\formatters.py                                                   27      0   100%
-src\gui\help_panel.py                                                  105      7    93%   176, 192, 195, 199-202
-src\gui\layouts\responsive.py                                           54      7    87%   29-35, 59
-src\gui\lyra_panel.py                                                  335    155    54%   56-60, 64-82, 99-108, 398-401, 414, 418-440, 444-448, 452-467, 475-477, 481-484, 488-491, 495-496, 502, 515-535, 542-545, 571-572, 575-577, 603-618, 622-640, 648-661, 665-677, 681-692, 696-701
-src\gui\main_window.py                                                 259    100    61%   163, 166-167, 179-180, 190-197, 201-217, 221-224, 228-233, 242-249, 253, 346-356, 360-361, 364-365, 368-375, 378-382, 385-387, 396, 400-406, 410-415, 419-423, 427-431, 435, 439, 447-453, 455-456
-src\gui\notifications_panel.py                                         208      7    97%   175-176, 195, 324-325, 372, 408
-src\gui\panels.py                                                     1072    222    79%   113-117, 224, 261, 419-421, 463-465, 484, 491, 502-504, 545-549, 593-595, 636-638, 657, 661, 673-675, 683, 688-748, 768-769, 811-813, 819, 836-846, 851-899, 924-926, 981, 985-990, 996, 1000, 1006-1007, 1023-1030, 1046-1047, 1090-1092, 1129, 1201-1209, 1212-1215, 1221, 1227-1229, 1242-1252, 1256-1264, 1269-1276, 1283-1287, 1291-1294, 1338-1339, 1355, 1403, 1425-1427, 1459-1461, 1485, 1496-1501, 1510-1514, 1536-1537, 1558-1560, 1645, 1701-1702, 1767-1770, 1774-1776, 1803-1810, 1813-1820, 1921, 1926, 1942-1943
-src\gui\scarico_ore_components.py                                      531    159    70%   43-104, 115-130, 169, 177-180, 215-216, 231-232, 244-249, 322, 332-333, 336, 373, 409-415, 427, 450, 456, 465-478, 488-516, 539-542, 554-592, 655, 663, 703, 707-708, 729-734, 805, 809, 816-817, 839, 870, 879, 903-914, 925-947, 967-968, 1001-1006
-src\gui\scarico_ore_panel.py                                           263     74    72%   40-42, 47-81, 211, 218-219, 232-233, 237-238, 242-244, 248-266, 288-289, 299-300, 305-306, 310-315, 323-324, 354, 365-366, 373-378, 405-408, 415
-src\gui\settings_panel.py                                             1145    318    72%   117, 124-182, 303-305, 351-352, 359-360, 1042-1055, 1059-1064, 1116-1118, 1215-1217, 1227, 1230-1233, 1241-1243, 1252-1257, 1263-1294, 1439-1450, 1453-1461, 1464-1475, 1478-1489, 1492-1503, 1528-1544, 1548-1553, 1556-1566, 1570-1594, 1598-1617, 1620-1626, 1639-1644, 1647-1655, 1658-1670, 1673-1684, 1687-1693, 1698-1699, 1703-1720, 1724-1728, 1731-1736, 1739-1746, 1754-1755, 1760-1765, 1768-1772, 1776-1781, 1784-1789, 1792-1796, 1800-1805, 1808-1813, 1816-1823, 1866, 1871, 1887, 1918, 1937-1941, 1946-1963
-src\gui\styles.py                                                       58      3    95%   89-90, 94
-src\gui\toast.py                                                        45      0   100%
-src\gui\widgets\__init__.py                                             12      0   100%
-src\gui\widgets\automazioni_widget.py                                   33      0   100%
-src\gui\widgets\bot_parameters.py                                      112      5    96%   145, 164, 175, 197-198
-src\gui\widgets\calendar_date_edit.py                                   10      0   100%
-src\gui\widgets\contabilita\attivita_tab.py                            161     40    75%   152, 162-166, 191, 196-220, 223-227, 231-242, 245-249
-src\gui\widgets\contabilita\certificati_tab.py                         111     38    66%   125, 127, 133-143, 146-153, 156-161, 165-264
-src\gui\widgets\contabilita\giornaliere_tab.py                         164     40    76%   121, 145, 159-160, 167, 172-173, 188-191, 195-210, 213-229
-src\gui\widgets\contabilita\helpers.py                                  33     12    64%   22-25, 29-34, 40-41
-src\gui\widgets\contabilita\year_tab.py                                 46      3    93%   103-104, 108
-src\gui\widgets\data_table.py                                          106      0   100%
-src\gui\widgets\database_widget.py                                      17      0   100%
-src\gui\widgets\excel_table.py                                         324     95    71%   61-68, 84, 95, 99, 106, 112, 139-155, 159-181, 187, 212, 217, 234-237, 244-249, 261, 337-372, 383, 416, 425-428, 431-433, 482-483, 504, 517
-src\gui\widgets\info_widgets.py                                         91     38    58%   24-55, 58, 76-100
-src\gui\widgets\modern_button.py                                        62     10    84%   68-69, 75-78, 82-85
-src\gui\widgets\notification_item.py                                    61      9    85%   33-34, 36-37, 56, 117-119, 122
-src\gui\widgets\sidebar_button.py                                       19      0   100%
-src\gui\widgets\sidebar_widget.py                                       53      0   100%
-src\gui\widgets\status_card.py                                          68      0   100%
-src\gui\widgets\status_indicator.py                                     42      6    86%   63-68
-src\gui\widgets\timeline_widget.py                                     238     59    75%   76-79, 139-145, 153-164, 172-174, 178-180, 197-216, 238-243, 271-281, 313
-src\gui\widgets\toast.py                                                85      9    89%   174-178, 187, 201, 206, 211, 216
-src\gui\widgets\update_banner.py                                        29      7    76%   33-36, 39-41
-src\utils\__init__.py                                                    2      0   100%
-src\utils\document_generator.py                                         13      0   100%
-src\utils\document_processor.py                                         64      7    89%   12-13, 65-66, 84-86
-src\utils\helpers.py                                                    79     17    78%   36, 69-70, 125, 138-152, 227
-src\utils\log_humanizer.py                                              16      0   100%
-src\utils\parsing.py                                                    53      4    92%   102-119
-src\utils\printing.py                                                   82     14    83%   20-22, 36-38, 49-50, 112-115, 139-140
-src\utils\resource_manager.py                                           33      1    97%   18
-src\utils\secure_logger.py                                              22      5    77%   42, 47-50
-src\utils\security.py                                                   85      9    89%   39-42, 83-87
-src\utils\validators.py                                                 73     46    37%   35, 42-44, 52, 57-68, 73-88, 94-179, 184-200, 205-208
---------------------------------------------------------------------------------------------------
-TOTAL                                                                13715   3520    74%
-Coverage HTML written to dir htmlcov
-=========================== short test summary info ===========================
-FAILED tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_restart_app
-1 failed in 11.14s
-Exception ignored in atexit callback: <function cleanup_numbered_dir at 0x00000162619971A0>
-Traceback (most recent call last):
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 374, in cleanup_numbered_dir
-    cleanup_dead_symlinks(root)
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 359, in cleanup_dead_symlinks
-    if not left_dir.resolve().exists():
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 860, in exists
-    self.stat(follow_symlinks=follow_symlinks)
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 840, in stat
-    return os.stat(self, follow_symlinks=follow_symlinks)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-PermissionError: [WinError 5] Accesso negato: 'C:\\Users\\Coemi\\AppData\\Local\\Temp\\pytest-of-Allegretti\\pytest-current'
-
-```
-</details>
-
----
-### `tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_run_timbrature`
-**Error:** `FAILED tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_run_timbrature`
-
-<details><summary>Full Output</summary>
-
-```text
-F                                                                        [100%]
-================================== FAILURES ===================================
-_______________ TestTelegramUIBridge.test_handle_run_timbrature _______________
-C:\Program Files\Python312\Lib\unittest\mock.py:1393: in patched
-    with self.decoration_helper(patched,
-C:\Program Files\Python312\Lib\contextlib.py:137: in __enter__
-    return next(self.gen)
-           ^^^^^^^^^^^^^^
-C:\Program Files\Python312\Lib\unittest\mock.py:1375: in decoration_helper
-    arg = exit_stack.enter_context(patching)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Program Files\Python312\Lib\contextlib.py:526: in enter_context
-    result = _enter(cm)
-             ^^^^^^^^^^
-C:\Program Files\Python312\Lib\unittest\mock.py:1467: in __enter__
-    original, local = self.get_original()
-                      ^^^^^^^^^^^^^^^^^^^
-C:\Program Files\Python312\Lib\unittest\mock.py:1437: in get_original
-    raise AttributeError(
-E   AttributeError: <module 'src.core.telegram_bridge' from 'C:\\Users\\Coemi\\Desktop\\SCRIPT\\ISAB_TimeSheet\\src\\core\\telegram_bridge.py'> does not have the attribute 'QDate'
-=============================== tests coverage ================================
-______________ coverage: platform win32, python 3.12.10-final-0 _______________
-
-Name                                                                 Stmts   Miss  Cover   Missing
---------------------------------------------------------------------------------------------------
-src\bots\__init__.py                                                    20      6    70%   112, 126-130
-src\bots\base\__init__.py                                                2      0   100%
-src\bots\base\base_bot.py                                              266     52    80%   71, 77, 123-124, 136, 160, 219, 230, 244, 312, 335-336, 342, 347-349, 356, 360, 366, 375-377, 386, 390-398, 402-410, 429-433, 438-442, 454
-src\bots\base\login_page.py                                             94      7    93%   89-93, 101, 150-151
-src\bots\portale_fornitori\carico_ts\__init__.py                         2      0   100%
-src\bots\portale_fornitori\carico_ts\bot.py                             48     15    69%   56, 60-72, 86, 92, 95, 101
-src\bots\portale_fornitori\carico_ts\locators.py                         6      0   100%
-src\bots\portale_fornitori\carico_ts\pages\carico_ts_page.py            60     15    75%   34-43, 52-54, 77-79, 116-118
-src\bots\portale_fornitori\common\locators.py                           15      0   100%
-src\bots\portale_fornitori\dettagli_oda\__init__.py                      2      0   100%
-src\bots\portale_fornitori\dettagli_oda\bot.py                          65      9    86%   42, 61, 64, 77, 87, 104-105, 107-108
-src\bots\portale_fornitori\dettagli_oda\locators.py                     19      0   100%
-src\bots\portale_fornitori\dettagli_oda\pages\dettagli_oda_page.py     216     70    68%   49-56, 91-94, 105-119, 136-138, 152-153, 156-157, 170-172, 232, 251-257, 274-278, 287-295, 317-318, 332, 336-337, 340-342, 352-353, 355-356, 370-371, 381-384
-src\bots\portale_fornitori\prenota_bp\__init__.py                        1      0   100%
-src\bots\portale_fornitori\prenota_bp\bot.py                            87     73    16%   19, 26, 30, 42-51, 56-63, 68-159
-src\bots\portale_fornitori\prenota_bp\locators.py                       33      0   100%
-src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py         250    226    10%   28-31, 35, 39-44, 56-85, 96-102, 107-114, 118-149, 153-190, 194-202, 211-240, 244-251, 255-278, 290-412
-src\bots\portale_fornitori\scarico_ts\__init__.py                        2      0   100%
-src\bots\portale_fornitori\scarico_ts\bot.py                           226     41    82%   59, 78-80, 91, 97, 107, 118-120, 152, 160-161, 168, 207, 213, 222-233, 242, 281, 289, 303-305, 310, 316-318, 358-361, 377-382
-src\bots\portale_fornitori\scarico_ts\locators.py                       10      0   100%
-src\bots\portale_fornitori\scarico_ts\pages\scarico_ts_page.py         104     20    81%   44-45, 64-66, 91-93, 124-126, 147, 158-160, 166-171
-src\bots\portale_fornitori\scarico_ts\scarico_ts_bot.py                 61     14    77%   25, 30, 35, 42, 46, 60, 62-63, 68-69, 78, 82, 95-96
-src\bots\portale_fornitori\timbrature\__init__.py                        2      0   100%
-src\bots\portale_fornitori\timbrature\bot.py                            75     49    35%   26, 31, 36, 47-63, 69-113, 120-121
-src\bots\portale_fornitori\timbrature\locators.py                       11      0   100%
-src\bots\portale_fornitori\timbrature\pages\timbrature_page.py         170    105    38%   39-57, 77-79, 83-146, 163-164, 175-176, 179, 198-199, 204-205, 210-236, 240-251, 255-285
-src\bots\portale_fornitori\timbrature\storage.py                       171     77    55%   71, 90-91, 98-126, 136-148, 174-183, 186-194, 199-210, 225-226, 240-242, 250, 254-255, 268-269, 279-288, 297-298
-src\bots\safework\base.py                                               43     19    56%   23, 29-30, 46-47, 54-70, 74, 78
-src\bots\safework\pdl\__init__.py                                        0      0   100%
-src\bots\safework\pdl\bot.py                                           403    128    68%   25, 30, 35, 45, 74-76, 88-89, 93-103, 114-115, 125, 128-129, 136-195, 226-227, 239-240, 283, 292-294, 306-307, 316, 327-329, 341-343, 364, 375-377, 387-388, 392-406, 411, 419-420, 440-441, 444-445, 460-461, 469, 487-489, 500-505, 511, 525-526, 536-538
-src\core\__init__.py                                                     2      0   100%
-src\core\app_initializer.py                                             60      5    92%   71-76
-src\core\app_updater.py                                                 46      2    96%   32, 85
-src\core\audit_manager.py                                              156     30    81%   94-95, 114-130, 145-146, 202-203, 234, 236, 246-247, 271, 281-282, 294-295, 306-307
-src\core\backup_manager.py                                             119     24    80%   41-42, 53, 68, 70, 84-86, 91, 98, 154-163, 183-186, 194, 200-202, 227-228
-src\core\config_manager.py                                             177     13    93%   111, 124-125, 136, 199, 207-208, 261, 278-279, 324-325, 330
-src\core\constants.py                                                   23      0   100%
-src\core\contabilita_manager.py                                        107     20    81%   28, 38, 78, 99-100, 118, 131-132, 141-148, 157-162, 175, 208
-src\core\contabilita_queries.py                                         87      4    95%   52, 80, 96, 112
-src\core\contabilita_search.py                                          91     14    85%   26-27, 50, 78-79, 109-110, 119, 122-123, 132-133, 151-152
-src\core\contabilita_stats.py                                           61      4    93%   78-79, 100-101
-src\core\contabilita_worker.py                                          80      4    95%   77, 91-92, 158
-src\core\data_synchronizer.py                                           99      3    97%   97, 184-185
-src\core\database.py                                                   141     10    93%   117-122, 132-133, 159-161
-src\core\excel_importer.py                                             586     67    89%   23-24, 31-33, 135-136, 267, 307-309, 333, 338, 364-365, 376-380, 394, 403, 415, 478, 488, 504, 507, 511, 541, 570-571, 599-600, 640, 643, 655-656, 670, 707, 720, 761, 797, 836, 839-842, 850-851, 858, 862-863, 882, 896-897, 947-948, 958-960, 975, 990-991, 1007-1008, 1017-1019
-src\core\license_updater.py                                            159     22    86%   99-102, 150, 166-167, 198-199, 204-206, 213, 230, 251-253, 289-291, 295-298
-src\core\license_validator.py                                          197     19    90%   90-112, 136-138, 165, 185-186, 216
-src\core\lyra_client.py                                                129     19    85%   22, 67-69, 105-107, 151-152, 203-204, 208-212, 244, 252-254
-src\core\lyra_sentinel.py                                               32      4    88%   37-38, 49-50
-src\core\notification_manager.py                                        77      2    97%   52-53
-src\core\secrets_manager.py                                            111     13    88%   66-69, 84-85, 140-142, 188-189, 196-197
-src\core\stats_manager.py                                               48      4    92%   49, 62, 64, 77
-src\core\telegram_bridge.py                                            333    104    69%   100, 122, 140-155, 165-166, 184-185, 193-194, 199-220, 223-229, 250-251, 255-256, 265, 276, 281, 285-286, 297, 303-306, 320-326, 330-356, 401-412, 418-419, 424-425, 431-432, 439-440, 451-452
-src\core\telegram_manager.py                                           529    434    18%   62-77, 81-88, 92-108, 112-126, 129, 132-139, 142-155, 159-169, 173-179, 183, 197, 200-210, 213-228, 235-238, 241-245, 248-271, 274-281, 284-288, 291-309, 312-321, 324-363, 366-376, 380-403, 407-408, 412-414, 418-490, 498-535, 542-560, 567-572, 575-584, 591-600, 607, 619, 632-633, 636-637, 640-648, 651, 670-681, 685-704, 707-712, 719-720, 725-728, 741-758, 763-776, 780-795, 798-805, 808-813, 816-819, 822-827, 830-840, 843-848, 851-856, 859-868, 872-875, 884-894, 904-915, 925-936, 939-949, 952-963, 966-978
-src\core\time_manager.py                                                19      1    95%   31
-src\core\timesheet_processor.py                                        104     83    20%   25-65, 70-80, 85-90, 95-105, 111-147, 152-162, 167-171
-src\core\version.py                                                      4      0   100%
-src\gui\__init__.py                                                      0      0   100%
-src\gui\accessibility.py                                                18      0   100%
-src\gui\contabilita_kpi_panel.py                                       375     40    89%   49-50, 342, 466-468, 499-513, 516-529, 564, 619-627, 638, 730-732, 770
-src\gui\contabilita_panel.py                                           256     56    78%   48-52, 197-198, 219-223, 238, 244-245, 250-254, 275-276, 287, 294, 305-306, 311, 315-333, 336-337, 340-356
-src\gui\controllers\bot_controller.py                                   37      8    78%   59-67
-src\gui\controllers\navigation_controller.py                           121     27    78%   59-62, 73-85, 134-135, 166-168, 172-174, 193-194, 197-201
-src\gui\controllers\search_controller.py                               116     12    90%   56, 80-81, 86, 99, 112, 127, 137-138, 152, 160-161
-src\gui\controllers\service_controller.py                               43      0   100%
-src\gui\controllers\tray_controller.py                                  35      8    77%   35-36, 47-52, 56
-src\gui\dashboard_panel.py                                             120     12    90%   61-66, 270-283, 314-316
-src\gui\design\colors.py                                                27      0   100%
-src\gui\design\spacing.py                                               25      0   100%
-src\gui\formatters.py                                                   27      0   100%
-src\gui\help_panel.py                                                  105      7    93%   176, 192, 195, 199-202
-src\gui\layouts\responsive.py                                           54      7    87%   29-35, 59
-src\gui\lyra_panel.py                                                  335    155    54%   56-60, 64-82, 99-108, 398-401, 414, 418-440, 444-448, 452-467, 475-477, 481-484, 488-491, 495-496, 502, 515-535, 542-545, 571-572, 575-577, 603-618, 622-640, 648-661, 665-677, 681-692, 696-701
-src\gui\main_window.py                                                 259    100    61%   163, 166-167, 179-180, 190-197, 201-217, 221-224, 228-233, 242-249, 253, 346-356, 360-361, 364-365, 368-375, 378-382, 385-387, 396, 400-406, 410-415, 419-423, 427-431, 435, 439, 447-453, 455-456
-src\gui\notifications_panel.py                                         208      7    97%   175-176, 195, 324-325, 372, 408
-src\gui\panels.py                                                     1072    222    79%   113-117, 224, 261, 419-421, 463-465, 484, 491, 502-504, 545-549, 593-595, 636-638, 657, 661, 673-675, 683, 688-748, 768-769, 811-813, 819, 836-846, 851-899, 924-926, 981, 985-990, 996, 1000, 1006-1007, 1023-1030, 1046-1047, 1090-1092, 1129, 1201-1209, 1212-1215, 1221, 1227-1229, 1242-1252, 1256-1264, 1269-1276, 1283-1287, 1291-1294, 1338-1339, 1355, 1403, 1425-1427, 1459-1461, 1485, 1496-1501, 1510-1514, 1536-1537, 1558-1560, 1645, 1701-1702, 1767-1770, 1774-1776, 1803-1810, 1813-1820, 1921, 1926, 1942-1943
-src\gui\scarico_ore_components.py                                      531    159    70%   43-104, 115-130, 169, 177-180, 215-216, 231-232, 244-249, 322, 332-333, 336, 373, 409-415, 427, 450, 456, 465-478, 488-516, 539-542, 554-592, 655, 663, 703, 707-708, 729-734, 805, 809, 816-817, 839, 870, 879, 903-914, 925-947, 967-968, 1001-1006
-src\gui\scarico_ore_panel.py                                           263     74    72%   40-42, 47-81, 211, 218-219, 232-233, 237-238, 242-244, 248-266, 288-289, 299-300, 305-306, 310-315, 323-324, 354, 365-366, 373-378, 405-408, 415
-src\gui\settings_panel.py                                             1145    318    72%   117, 124-182, 303-305, 351-352, 359-360, 1042-1055, 1059-1064, 1116-1118, 1215-1217, 1227, 1230-1233, 1241-1243, 1252-1257, 1263-1294, 1439-1450, 1453-1461, 1464-1475, 1478-1489, 1492-1503, 1528-1544, 1548-1553, 1556-1566, 1570-1594, 1598-1617, 1620-1626, 1639-1644, 1647-1655, 1658-1670, 1673-1684, 1687-1693, 1698-1699, 1703-1720, 1724-1728, 1731-1736, 1739-1746, 1754-1755, 1760-1765, 1768-1772, 1776-1781, 1784-1789, 1792-1796, 1800-1805, 1808-1813, 1816-1823, 1866, 1871, 1887, 1918, 1937-1941, 1946-1963
-src\gui\styles.py                                                       58      3    95%   89-90, 94
-src\gui\toast.py                                                        45      0   100%
-src\gui\widgets\__init__.py                                             12      0   100%
-src\gui\widgets\automazioni_widget.py                                   33      0   100%
-src\gui\widgets\bot_parameters.py                                      112      5    96%   145, 164, 175, 197-198
-src\gui\widgets\calendar_date_edit.py                                   10      0   100%
-src\gui\widgets\contabilita\attivita_tab.py                            161     40    75%   152, 162-166, 191, 196-220, 223-227, 231-242, 245-249
-src\gui\widgets\contabilita\certificati_tab.py                         111     38    66%   125, 127, 133-143, 146-153, 156-161, 165-264
-src\gui\widgets\contabilita\giornaliere_tab.py                         164     40    76%   121, 145, 159-160, 167, 172-173, 188-191, 195-210, 213-229
-src\gui\widgets\contabilita\helpers.py                                  33     12    64%   22-25, 29-34, 40-41
-src\gui\widgets\contabilita\year_tab.py                                 46      3    93%   103-104, 108
-src\gui\widgets\data_table.py                                          106      0   100%
-src\gui\widgets\database_widget.py                                      17      0   100%
-src\gui\widgets\excel_table.py                                         324     95    71%   61-68, 84, 95, 99, 106, 112, 139-155, 159-181, 187, 212, 217, 234-237, 244-249, 261, 337-372, 383, 416, 425-428, 431-433, 482-483, 504, 517
-src\gui\widgets\info_widgets.py                                         91     38    58%   24-55, 58, 76-100
-src\gui\widgets\modern_button.py                                        62     10    84%   68-69, 75-78, 82-85
-src\gui\widgets\notification_item.py                                    61      9    85%   33-34, 36-37, 56, 117-119, 122
-src\gui\widgets\sidebar_button.py                                       19      0   100%
-src\gui\widgets\sidebar_widget.py                                       53      0   100%
-src\gui\widgets\status_card.py                                          68      0   100%
-src\gui\widgets\status_indicator.py                                     42      6    86%   63-68
-src\gui\widgets\timeline_widget.py                                     238     59    75%   76-79, 139-145, 153-164, 172-174, 178-180, 197-216, 238-243, 271-281, 313
-src\gui\widgets\toast.py                                                85      9    89%   174-178, 187, 201, 206, 211, 216
-src\gui\widgets\update_banner.py                                        29      7    76%   33-36, 39-41
-src\utils\__init__.py                                                    2      0   100%
-src\utils\document_generator.py                                         13      0   100%
-src\utils\document_processor.py                                         64      7    89%   12-13, 65-66, 84-86
-src\utils\helpers.py                                                    79     17    78%   36, 69-70, 125, 138-152, 227
-src\utils\log_humanizer.py                                              16      0   100%
-src\utils\parsing.py                                                    53      4    92%   102-119
-src\utils\printing.py                                                   82     14    83%   20-22, 36-38, 49-50, 112-115, 139-140
-src\utils\resource_manager.py                                           33      1    97%   18
-src\utils\secure_logger.py                                              22      5    77%   42, 47-50
-src\utils\security.py                                                   85      9    89%   39-42, 83-87
-src\utils\validators.py                                                 73     46    37%   35, 42-44, 52, 57-68, 73-88, 94-179, 184-200, 205-208
---------------------------------------------------------------------------------------------------
-TOTAL                                                                13715   3520    74%
-Coverage HTML written to dir htmlcov
-=========================== short test summary info ===========================
-FAILED tests/unit/test_telegram_bridge.py::TestTelegramUIBridge::test_handle_run_timbrature
-1 failed in 11.32s
-Exception ignored in atexit callback: <function cleanup_numbered_dir at 0x00000289168271A0>
-Traceback (most recent call last):
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 374, in cleanup_numbered_dir
-    cleanup_dead_symlinks(root)
-  File "C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py", line 359, in cleanup_dead_symlinks
-    if not left_dir.resolve().exists():
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 860, in exists
-    self.stat(follow_symlinks=follow_symlinks)
-  File "C:\Program Files\Python312\Lib\pathlib.py", line 840, in stat
-    return os.stat(self, follow_symlinks=follow_symlinks)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-PermissionError: [WinError 5] Accesso negato: 'C:\\Users\\Coemi\\AppData\\Local\\Temp\\pytest-of-Allegretti\\pytest-current'
+FAILED tests/unit/test_bot_panels_deep.py::test_base_bot_panel_logic - Attrib...
+1 failed in 6.12s
 
 ```
 </details>

@@ -30,7 +30,29 @@ class AppInitializer:
         if not AppInitializer._init_db():
             sys.exit(1)
 
+        # 3. Sicurezza Telegram
+        AppInitializer._init_telegram_security()
+
         return True
+
+    @staticmethod
+    def _init_telegram_security():
+        """Genera un codice di accoppiamento se Telegram non è configurato."""
+        import random
+
+        from src.core import config_manager
+
+        config = config_manager.load_config()
+        if not config.get("telegram_chat_id"):
+            # Genera un codice a 6 cifre se non esiste già un pairing pendente
+            if not config.get("telegram_pairing_code"):
+                code = str(random.randint(100000, 999999))
+                config_manager.set_config_value("telegram_pairing_code", code)
+                logger.info(f"Generato nuovo pairing code Telegram: {code}")
+            else:
+                logger.info(
+                    f"Pairing code Telegram esistente: {config.get('telegram_pairing_code')}"
+                )
 
     @staticmethod
     def _check_license():

@@ -162,15 +162,20 @@ class ToastManager:
         return cls._instance
 
     def show(
-        self, message: str, toast_type: str = Toast.Type.INFO, duration: int = 3000
+        self,
+        message: str,
+        toast_type: str = Toast.Type.INFO,
+        duration: int = 3000,
+        position: str = "top",
     ):
         """
-        Crea e visualizza un nuovo toast, calcolando la posizione corretta nello stack.
+        Crea e visualizza un nuovo toast.
 
         Args:
             message: Messaggio da mostrare.
             toast_type: Tipo di notifica.
             duration: Durata in ms.
+            position: "top" (default) o "bottom" (sopra il footer).
         """
 
         parent = QApplication.activeWindow()
@@ -179,23 +184,28 @@ class ToastManager:
         # Clean up closed toasts from list
         self._active_toasts = [t for t in self._active_toasts if t.isVisible()]
 
-        # Posiziona in ALTO CENTRALE
         if parent:
-            # Map parent geometry to global
             geo = parent.geometry()
             x = geo.x() + (geo.width() - toast.width()) // 2
-            # Stack downwards
-            offset_y = sum([t.height() + 10 for t in self._active_toasts])
-            y = geo.y() + 80 + offset_y  # Margine dall'alto (sotto header)
+
+            if position == "bottom":
+                # Posiziona in BASSO (sopra status bar/footer)
+                # Footer è 65px + margine 10px = 75px dal fondo
+                bottom_margin = 75
+                y = geo.y() + geo.height() - bottom_margin - toast.height()
+            else:
+                # Posiziona in ALTO CENTRALE (Default)
+                offset_y = sum([t.height() + 10 for t in self._active_toasts])
+                y = geo.y() + 80 + offset_y
         else:
+            # Fallback (senza parent)
             primary_screen = QApplication.primaryScreen()
             if primary_screen:
                 screen = primary_screen.geometry()
                 x = (screen.width() - toast.width()) // 2
-                offset_y = sum([t.height() + 10 for t in self._active_toasts])
-                y = 80 + offset_y
+                y = 80 if position == "top" else (screen.height() - 150)
             else:
-                x, y = 0, 0  # Fallback
+                x, y = 0, 0
 
         self._active_toasts.append(toast)
         # Remove from list when destroyed

@@ -64,104 +64,72 @@ class PrenotaBPBot(BaseBot):
 
     def run(self, data: Any):
         """Esecuzione principale del bot."""
-        # Gestione dati come in Scarico TS (se passati come dict con 'rows')
-        if isinstance(data, dict):
-            rows = data.get("rows", [])
-            self.data_da = data.get("data_da") or self.data_da
-            self.data_a = data.get("data_a") or self.data_a
-            self.fornitore = data.get("fornitore") or self.fornitore
-        else:
-            rows = data
-
+        rows = self._init_run_data(data)
         if not rows:
-            self.log("Nessun dato da processare.")
             return True
-
         if not self.driver:
             return False
-        assert self.driver
 
         self.log(f"Avvio elaborazione per {len(rows)} BP (Fornitore: {self.fornitore})")
         page = PrenotaBPPage(self.driver, self.log)
 
         try:
-            # 1. Navigazione (Il login è già stato gestito da BaseBot.execute)
             page.navigate_to_gestione_bp()
-
-            # 2. Ciclo Elaborazione
-
             processed_count = 0
             for i, row in enumerate(rows):
                 if self._stop_requested:
                     self.log("⚠️ Stop richiesto dall'utente.")
                     break
-
-                num_bp = self._get_row_value(row, "Numero BP").strip()
-                note = self._get_row_value(row, "Note di Ritiro").strip()
-
-                if not num_bp:
-                    self.log(
-                        f"Riga {i + 1}: Numero BP mancante o colonna errata, salto."
-                    )
-                    continue
-
-                try:
-                    # Filtraggio specifico per il BP corrente (Selezione Fornitore robusta)
-                    page.filtra_buoni_prelievo(
-                        fornitore=self.fornitore,
-                        numero_bp=num_bp,
-                        data_da=self.data_da,
-                        data_a=self.data_a,
-                    )
-
-                    # Verifica e Creazione Richiesta da Dettagli
-                    try:
-                        page.apri_dettagli_bp()
-
-                        # La nuova logica gestisce selezione e click su "Crea Richiesta"
-                        page.gestisci_creazione_richiesta(note)
-
-                        # Tentativo di chiusura dettagli se rimasti aperti (clean up)
-                        try:
-                            page.chiudi_dettagli_bp()
-                        except Exception:
-                            pass
-
-                        self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
-                        processed_count += 1
-
-                    except Exception as e:
-                        self.log(
-                            f"⚠️ Errore durante processamento dettagli per {num_bp}: {e}"
-                        )
-                        try:
-                            page.chiudi_dettagli_bp()
-                        except Exception:
-                            pass
-                        self.results.append(
-                            {
-                                "NUMERO BP": num_bp,
-                                "STATO": "ERROR_PROC",
-                                "MSG": f"Err: {e}",
-                            }
-                        )
-                        continue
-
-                    # page.prenota_nuovo_bp(num_bp, note) # RIMOSSO: Sostituito da flow Dettagli
-                except Exception as e:
-                    self.log(f"✗ Errore su BP {num_bp}: {str(e)}")
-                    self.results.append(
-                        {"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)}
-                    )
+                if self._process_single_bp(page, i, row):
+                    processed_count += 1
 
             self.log(
                 f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati."
             )
             return True
-
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {str(e)}")
             traceback.print_exc()
             return False
         finally:
             self.log("Fine sessione Prenota BP.")
+
+    def _init_run_data(self, data: Any) -> List[dict]:
+        """Inizializza i parametri della sessione."""
+        if isinstance(data, dict):
+            self.data_da = data.get("data_da") or self.data_da
+            self.data_a = data.get("data_a") or self.data_a
+            self.fornitore = data.get("fornitore") or self.fornitore
+            return data.get("rows", [])
+        return data
+
+    def _process_single_bp(self, page: PrenotaBPPage, index: int, row: dict) -> bool:
+        """Elabora un singolo buono prelievo."""
+        num_bp = self._get_row_value(row, "Numero BP").strip()
+        note = self._get_row_value(row, "Note di Ritiro").strip()
+
+        if not num_bp:
+            self.log(f"Riga {index + 1}: Numero BP mancante, salto.")
+            return False
+
+        try:
+            page.filtra_buoni_prelievo(
+                self.fornitore, num_bp, self.data_da, self.data_a
+            )
+            page.apri_dettagli_bp()
+            page.gestisci_creazione_richiesta(note)
+            try:
+                page.chiudi_dettagli_bp()
+            except Exception:
+                pass
+
+            self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
+            return True
+        except Exception as e:
+            self.log(f"✗ Errore su BP {num_bp}: {str(e)}")
+            try:
+                page.chiudi_dettagli_bp()
+            except Exception:
+                pass
+            self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
+            return False

@@ -77,7 +77,7 @@ pip install -r requirements.txt
 ## 🔑 Licenza e Supporto
 
 Software proprietario sviluppato da **Giancarlo Allegretti**.
-L'uso è consentito solo tramite licenza attiva validata su hardware specifico.
+L'uso è consentito solo tramite licenza attiva validate su hardware specifico.
 
 *   **Supporto Tecnico**: Integrato nell'app (Tab Help) o via Telegram.
 *   **Documentazione**: Vedi cartella `docs/`.

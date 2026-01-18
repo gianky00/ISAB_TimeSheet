@@ -60,145 +60,166 @@ class ContabilitaPanel(QWidget):
         layout.setContentsMargins(15, 15, 15, 15)
 
         self.main_tabs = QTabWidget()
+        self.main_tabs.setProperty("class", "Level2Tabs")  # Clean Line Style
         self.main_tabs.currentChanged.connect(self._on_main_tab_changed)
-        self.main_tabs.setStyleSheet(
-            """
-            QTabWidget::pane { border: 1px solid #dee2e6; border-radius: 6px; background-color: white; }
-            QTabBar::tab { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px 20px; margin-right: 2px; border-top-left-radius: 6px; border-top-right-radius: 6px; color: #495057; font-weight: bold; font-size: 14px; }
-            QTabBar::tab:selected { background: white; border-bottom-color: white; color: #0d6efd; }
-        """
-        )
 
-        self.selection_container = QWidget()
-        selection_layout = QHBoxLayout(self.selection_container)
-        selection_layout.setContentsMargins(0, 0, 10, 0)
-        selection_layout.setSpacing(15)
+        # --- UNIFIED TOOLBAR (Corner Widget) ---
+        self.toolbar_container = QWidget()
+        toolbar_layout = QHBoxLayout(self.toolbar_container)
+        toolbar_layout.setContentsMargins(0, 0, 0, 0)
+        toolbar_layout.setSpacing(10)
+
+        # Totali Selezione
         self.selection_count_label = QLabel("Righe: 0")
-        self.selection_count_label.setStyleSheet("color: #6c757d; font-weight: bold;")
-        self.selection_sum_label = QLabel("Totale ORE SP: 0")
-        self.selection_sum_label.setStyleSheet("color: #0d6efd; font-weight: bold;")
-        selection_layout.addWidget(self.selection_count_label)
-        selection_layout.addWidget(self.selection_sum_label)
-        self.main_tabs.setCornerWidget(
-            self.selection_container, Qt.Corner.TopRightCorner
+        self.selection_count_label.setStyleSheet(
+            "color: #607D8B; font-weight: 600; font-size: 12px;"
+        )
+        self.selection_sum_label = QLabel("Totale ORE: 0")
+        self.selection_sum_label.setStyleSheet(
+            "color: #009688; font-weight: 700; font-size: 12px;"
         )
 
+        # Search Input
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Cerca nei dati...")
+        self.search_input.setClearButtonEnabled(True)
+        self.search_input.setFixedWidth(250)
+        self.search_input.textChanged.connect(self._on_search_changed)
+
+        # Status Label
+        self.status_lbl = QLabel("Pronto")
+        self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_lbl.setStyleSheet("color: #78909C; font-size: 12px;")
+
+        # Update Button
+        self.update_btn = QPushButton("Aggiorna")
+        self.update_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
+        )
+        self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.update_btn.setFixedSize(100, 32)  # Compact
+        self.update_btn.clicked.connect(self.start_import_process)
+
+        toolbar_layout.addWidget(self.selection_count_label)
+        toolbar_layout.addSpacing(10)
+        toolbar_layout.addWidget(self.selection_sum_label)
+        toolbar_layout.addSpacing(20)
+        toolbar_layout.addWidget(self.search_input)
+        toolbar_layout.addWidget(self.status_lbl)
+        toolbar_layout.addWidget(self.update_btn)
+
+        self.main_tabs.setCornerWidget(self.toolbar_container, Qt.Corner.TopRightCorner)
+
+        # --- TABS ---
+
+        # 1. Preventivi
         self.year_tabs_widget = QTabWidget()
         self.year_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
         self.year_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.year_tabs_widget.currentChanged.connect(self._on_tab_changed)
-        self.tab_preventivi = self._create_tab_wrapper(
-            self.year_tabs_widget, "Cerca preventivi..."
-        )
         self.main_tabs.addTab(
-            self.tab_preventivi,
-            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"),
+            self.year_tabs_widget,
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#546E7A"),
             "Preventivi",
         )
 
+        # 2. Giornaliere
         self.giornaliere_tabs_widget = QTabWidget()
         self.giornaliere_tabs_widget.setTabPosition(QTabWidget.TabPosition.South)
         self.giornaliere_tabs_widget.setStyleSheet(self._get_subtab_style())
         self.giornaliere_tabs_widget.currentChanged.connect(self._on_tab_changed)
-        self.tab_giornaliere = self._create_tab_wrapper(
-            self.giornaliere_tabs_widget, "Cerca giornaliere..."
-        )
         self.main_tabs.addTab(
-            self.tab_giornaliere,
-            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"),
+            self.giornaliere_tabs_widget,
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#546E7A"),
             "Giornaliere",
         )
 
+        # 3. Attività
         self.attivita_widget = AttivitaProgrammateTab()
-        self.tab_attivita = self._create_tab_wrapper(
-            self.attivita_widget, "Cerca attività..."
-        )
         self.main_tabs.addTab(
-            self.tab_attivita,
-            get_colored_icon(get_asset_path(Icons.CALENDAR), "#000000"),
+            self.attivita_widget,
+            get_colored_icon(get_asset_path(Icons.CALENDAR), "#546E7A"),
             "Attività Programmate",
         )
 
+        # 4. Certificati
         self.certificati_widget = CertificatiCampioneTab()
-        self.tab_certificati = self._create_tab_wrapper(
-            self.certificati_widget, "Cerca certificati..."
-        )
         self.main_tabs.addTab(
-            self.tab_certificati,
-            get_colored_icon(get_asset_path(Icons.FILE_TEXT), "#000000"),
+            self.certificati_widget,
+            get_colored_icon(get_asset_path(Icons.FILE_TEXT), "#546E7A"),
             "Certificati Campione",
         )
 
+        # 5. KPI
         from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
 
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(
             self.kpi_panel,
-            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000"),
+            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#546E7A"),
             "Analisi KPI",
         )
+
         layout.addWidget(self.main_tabs)
 
-    def _create_tab_wrapper(self, content_widget, placeholder_text):
-        """Crea un contenitore standard per i tab con barra di ricerca e pulsante aggiorna."""
-        wrapper = QWidget()
-        layout = QVBoxLayout(wrapper)
-        layout.setContentsMargins(10, 10, 10, 10)
-        toolbar = QHBoxLayout()
-        search_input = QLineEdit()
-        search_input.setPlaceholderText(placeholder_text)
-        search_input.setClearButtonEnabled(True)
-        search_input.setFixedWidth(400)
-        search_input.setStyleSheet(
-            "QLineEdit { border: 1px solid #ced4da; border-radius: 4px; padding: 6px 12px; font-size: 14px; background-color: white; color: black; } QLineEdit:focus { border-color: #0d6efd; }"
-        )
-        search_input.textChanged.connect(
-            lambda t: self._proxy_filter(content_widget, t)
-        )
-        if isinstance(content_widget, QTabWidget):
-            content_widget.currentChanged.connect(
-                lambda: self._proxy_filter(content_widget, search_input.text())
-            )
-        toolbar.addWidget(search_input)
-        toolbar.addStretch()
-        status_lbl = QLabel(self._last_status_html)
-        status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        status_lbl.setStyleSheet(
-            "QLabel { color: #495057; font-size: 14px; font-weight: 500; padding: 5px 10px; background-color: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6; }"
-        )
-        self.status_labels.append(status_lbl)
-        toolbar.addWidget(status_lbl)
-        toolbar.addStretch()
-        update_btn = QPushButton(" Aggiorna Dati")
-        update_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        update_btn.setStyleSheet(
-            "QPushButton { background-color: #0d6efd; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 13px; } QPushButton:hover { background-color: #0b5ed7; }"
-        )
-        update_btn.clicked.connect(self.start_import_process)
-        self.update_buttons.append(update_btn)
-        toolbar.addWidget(update_btn)
-        layout.addLayout(toolbar)
-        layout.addWidget(content_widget)
-        return wrapper
+    def _on_search_changed(self, text):
+        """Applica il filtro al widget attualmente visibile."""
+        current_widget = self.main_tabs.currentWidget()
+
+        # Se è un TabWidget (Preventivi/Giornaliere), prendi il tab interno corrente (Anno)
+        if isinstance(current_widget, QTabWidget):
+            current_widget = current_widget.currentWidget()
+
+        if hasattr(current_widget, "filter_data"):
+            current_widget.filter_data(text)
 
     def _proxy_filter(self, widget, text):
-        """Inoltra la richiesta di filtraggio al widget contenuto nel tab."""
-        target = widget.currentWidget() if isinstance(widget, QTabWidget) else widget
-        if hasattr(target, "filter_data"):
-            target.filter_data(text)
+        # Deprecato ma mantenuto se servisse logica complessa
+        pass
 
     def _get_subtab_style(self):
         """Restituisce il foglio di stile per i tab secondari (anni)."""
-        return "QTabWidget::pane { border: none; } QTabBar::tab { background: #f1f3f5; padding: 6px 15px; margin-right: 2px; border-top-left-radius: 4px; border-top-right-radius: 4px; font-size: 13px; } QTabBar::tab:selected { background: #0d6efd; color: white; }"
+        return """
+            QTabWidget::pane { border: none; border-top: 1px solid #E0E0E0; }
+            QTabBar::tab {
+                background: transparent;
+                color: #78909C;
+                padding: 6px 16px;
+                margin-bottom: -1px;
+                border-bottom: 2px solid transparent;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            QTabBar::tab:selected {
+                color: #009688;
+                border-bottom: 2px solid #009688;
+                background-color: #FAFAFA;
+            }
+            QTabBar::tab:hover:!selected {
+                color: #00796B;
+            }
+        """
 
     def _on_main_tab_changed(self, index):
-        """Gestisce il cambio del tab principale, nascondendo i totali se nel tab KPI."""
+        """Gestisce il cambio del tab principale."""
+        # Pulisci ricerca al cambio tab per evitare confusione
+        self.search_input.blockSignals(True)
+        self.search_input.clear()
+        self.search_input.blockSignals(False)
+
         if "Analisi KPI" in self.main_tabs.tabText(index):
-            self.selection_container.hide()
+            self.selection_count_label.hide()
+            self.selection_sum_label.hide()
+            self.search_input.hide()
         else:
-            self.selection_container.show()
+            self.selection_count_label.show()
+            self.selection_sum_label.show()
+            self.search_input.show()
             self._connect_selection_signal()
+
+        # Refocus ricerca
+        if self.search_input.isVisible():
+            self.search_input.setFocus()
 
     def refresh_tabs(self):
         """Aggiornamento incrementale dei tab per evitare flickering."""
@@ -256,27 +277,28 @@ class ContabilitaPanel(QWidget):
 
     def set_search_query(self, query):
         """Imposta il testo di ricerca nel tab corrente."""
-        search_edit = self.main_tabs.currentWidget().findChild(QLineEdit)
-        if search_edit:
-            search_edit.setText(query)
-            search_edit.setFocus()
-            search_edit.selectAll()
+        self.search_input.setText(query)
+        self.search_input.setFocus()
+        self.search_input.selectAll()
 
     def _on_tab_changed(self, index):
         """Gestisce il cambio di un tab secondario."""
         self._connect_selection_signal()
+        # Riapplica filtro se c'è testo
+        if self.search_input.text():
+            self._on_search_changed(self.search_input.text())
 
     def _connect_selection_signal(self):
         """Collega i segnali di selezione della tabella/albero per il calcolo dei totali."""
         curr = self.main_tabs.currentWidget()
         target = None
-        if curr == self.tab_preventivi:
+        if curr == self.year_tabs_widget:  # Preventivi
             target = self.year_tabs_widget.currentWidget()
-        elif curr == self.tab_giornaliere:
+        elif curr == self.giornaliere_tabs_widget:  # Giornaliere
             target = self.giornaliere_tabs_widget.currentWidget()
-        elif curr == self.tab_attivita:
+        elif curr == self.attivita_widget:
             target = self.attivita_widget
-        elif curr == self.tab_certificati:
+        elif curr == self.certificati_widget:
             target = self.certificati_widget
 
         if target:
@@ -307,7 +329,7 @@ class ContabilitaPanel(QWidget):
             indexes = widget.selectionModel().selectedIndexes()
             if not indexes:
                 self.selection_count_label.setText("Righe: 0")
-                self.selection_sum_label.setText("Totale ORE SP: 0")
+                self.selection_sum_label.setText("Totale ORE: 0")
                 return
 
             target_col = self._find_ore_column(widget)
@@ -317,7 +339,7 @@ class ContabilitaPanel(QWidget):
 
             fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
-            self.selection_sum_label.setText(f"Totale ORE SP: {fmt_ore}")
+            self.selection_sum_label.setText(f"Totale ORE: {fmt_ore}")
         except Exception:
             pass
 
@@ -367,13 +389,12 @@ class ContabilitaPanel(QWidget):
         config = config_manager.load_config()
         path = config.get("contabilita_file_path", "")
         if not path or not os.path.exists(path):
-            for lbl in self.status_labels:
-                lbl.setText("File non trovato.")
+            self.status_lbl.setText("File non trovato.")
             return
-        for btn in self.update_buttons:
-            btn.setDisabled(True)
-        for lbl in self.status_labels:
-            lbl.setText("Aggiornamento...")
+
+        self.update_btn.setDisabled(True)
+        self.status_lbl.setText("Aggiornamento...")
+
         self.worker = ContabilitaWorker(
             path,
             config.get("giornaliere_path", ""),
@@ -381,30 +402,23 @@ class ContabilitaPanel(QWidget):
             config.get("certificati_campione_path", ""),
         )
         self.worker.finished_signal.connect(self._on_import_finished)
-        self.worker.progress_signal.connect(self._update_all_status_labels)
+        self.worker.progress_signal.connect(self.status_lbl.setText)
         self.worker.start()
 
     def _update_all_status_labels(self, text):
-        for lbl in self.status_labels:
-            lbl.setText(text)
+        # Legacy compat
+        self.status_lbl.setText(text)
 
     def _on_import_finished(self, success, msg, added, removed, duration):
         if success:
-            now = datetime.now().strftime("%d/%m/%Y %H:%M")
-            time_str = (
-                f"{duration:.1f}s"
-                if duration < 60
-                else f"{int(duration // 60)}m {int(duration % 60)}s"
-            )
-            status = f"{now} <font color='green'><b>+{added}</b></font> <font color='red'><b>-{removed}</b></font> ({time_str})"
+            now = datetime.now().strftime("%H:%M")
+            # Short status for toolbar
+            status = f"Aggiornato {now} (+{added}/-{removed})"
             self._last_status_html = status
-            for lbl in self.status_labels:
-                lbl.setText(status)
+            self.status_lbl.setText(status)
             self.refresh_tabs()
         else:
-            for lbl in self.status_labels:
-                lbl.setText(f"Errore: {msg}")
+            self.status_lbl.setText("Errore")
             QMessageBox.warning(self, "Errore", msg)
         self.worker = None
-        for btn in self.update_buttons:
-            btn.setDisabled(False)
+        self.update_btn.setDisabled(False)

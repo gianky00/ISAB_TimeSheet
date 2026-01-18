@@ -165,55 +165,54 @@ class ScaricoTSPage:
                 for f in download_dir.iterdir()
                 if f.is_file() and f.suffix.lower() == ".xlsx"
             }
-
-            # Click Export
             self.wait.until(
                 EC.element_to_be_clickable(ScaricoTSLocators.EXPORT_EXCEL_BUTTON)
             ).click()
 
-            # Wait for file
-            downloaded_file = None
-            start_time = time.time()
-            while time.time() - start_time < Timeouts.DOWNLOAD:
-                current_files = {
-                    f
-                    for f in download_dir.iterdir()
-                    if f.is_file() and f.suffix.lower() == ".xlsx"
-                }
-                new_files = current_files - files_before
-                if new_files:
-                    downloaded_file = max(
-                        list(new_files), key=lambda f: f.stat().st_mtime
-                    )
-                    break
-                time.sleep(0.5)
-
-            if downloaded_file and downloaded_file.exists():
-                # Rename
-                pos_suffix = f"-{oda_position}" if oda_position else ""
-                new_name = f"{oda_number}{pos_suffix}.xlsx"
-                new_path = download_dir / new_name
-
-                # Handle duplicates
-                counter = 1
-                while (
-                    new_path.exists()
-                    and new_path.resolve() != downloaded_file.resolve()
-                ):
-                    timestamp = time.strftime("%Y%m%d-%H%M%S")
-                    new_path = (
-                        download_dir
-                        / f"{oda_number}{pos_suffix}-{timestamp}_{counter}.xlsx"
-                    )
-                    counter += 1
-
-                downloaded_file.rename(new_path)
-                self.log(f"  ✓ File scaricato: {new_path.name}")
-                return True
-            else:
+            downloaded_file = self._wait_for_download(download_dir, files_before)
+            if not downloaded_file:
                 self.log("  ✗ Download fallito o file non trovato.")
                 return False
+
+            # Rename logic
+            new_path = self._resolve_unique_path(
+                download_dir, oda_number, oda_position, downloaded_file
+            )
+            downloaded_file.rename(new_path)
+            self.log(f"  ✓ File scaricato: {new_path.name}")
+            return True
 
         except Exception as e:
             self.log(f"  ✗ Errore click download: {e}")
             return False
+
+    def _wait_for_download(
+        self, download_dir: Path, files_before: set
+    ) -> Optional[Path]:
+        """Polls for new .xlsx file."""
+        start_time = time.time()
+        while time.time() - start_time < Timeouts.DOWNLOAD:
+            current_files = {
+                f
+                for f in download_dir.iterdir()
+                if f.is_file() and f.suffix.lower() == ".xlsx"
+            }
+            if new_files := current_files - files_before:
+                return max(list(new_files), key=lambda f: f.stat().st_mtime)
+            time.sleep(0.5)
+        return None
+
+    def _resolve_unique_path(
+        self, download_dir: Path, oda: str, pos: str, current_file: Path
+    ) -> Path:
+        """Ensures a non-colliding filename."""
+        pos_suffix = f"-{pos}" if pos else ""
+        new_name = f"{oda}{pos_suffix}.xlsx"
+        new_path = download_dir / new_name
+
+        counter = 1
+        while new_path.exists() and new_path.resolve() != current_file.resolve():
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            new_path = download_dir / f"{oda}{pos_suffix}-{timestamp}_{counter}.xlsx"
+            counter += 1
+        return new_path

@@ -94,36 +94,39 @@ QLineEdit:disabled {
     color: #9E9E9E;
 }
 
-/* === TABLES === */
-QTableWidget {
+/* === TABLES (QTableWidget & QTableView) === */
+QTableWidget, QTableView {
     background-color: #FFFFFF;
     alternate-background-color: #FAFAFA;
     gridline-color: #EEEEEE;
     border: 1px solid #E0E0E0;
     border-radius: 8px;
-    selection-background-color: #00968833; /* Semi-transparent Primary */
-    selection-color: #212121;
+    selection-background-color: #00968850; /* Stronger Teal (30% opacity) for visibility */
+    selection-color: #212121; /* Keep text black for readability over colors */
+    outline: none;
 }
 
-QTableWidget::item {
-    padding: 4px 8px; /* Reduced padding to give more space to content/editor */
+QTableWidget::item, QTableView::item {
+    padding: 10px 12px;
     border-bottom: 1px solid #F5F5F5;
 }
 
-QTableWidget::item:selected {
-    background-color: #00968833;
+/* Clear Selection: Visible background + Solid Border */
+QTableWidget::item:selected, QTableView::item:selected {
+    background-color: #00968850; /* Matches selection-background-color */
     color: #212121;
+    border: 1px solid #009688; /* Full border to clearly mark selection */
+    border-left: 4px solid #009688; /* Thicker left accent */
 }
 
-QTableWidget::item:focus {
-    background-color: #00968833; /* Maintain consistency */
-    color: #212121;
-    border: none;
+/* Indicator for focused selection */
+QTableWidget::item:focus, QTableView::item:focus {
+    background-color: #00968860; /* Slightly darker on focus */
 }
 
 QHeaderView::section {
-    background-color: #E1F5FE; /* Light Celeste */
-    color: #333333; /* Dark Gray for contrast */
+    background-color: #E1F5FE; /* Standard Light Blue Header */
+    color: #333333;
     padding: 12px 15px;
     border: none;
     border-right: 1px solid #B3E5FC;
@@ -136,40 +139,47 @@ QHeaderView::section {
 QHeaderView::section:vertical {
     background-color: #F5F5F5;
     color: #9E9E9E;
-    font-size: 10px; /* Smaller row numbers */
+    font-size: 10px;
     padding: 0px 5px;
     border-right: 1px solid #E0E0E0;
 }
 
 QHeaderView::section:hover {
-    background-color: #B3E5FC; /* Slightly darker blue on hover */
+    background-color: #B3E5FC;
 }
 
-/* === TABS === */
-QTabWidget::pane {
-    border: 1px solid #E0E0E0;
-    border-radius: 8px;
-    background-color: #FFFFFF;
+/* === LEVEL 2 TABS (Sottomenu) === */
+QTabWidget[class="Level2Tabs"]::pane {
+    border: none;
+    border-top: 1px solid #CFD8DC; /* Thin separator line */
+    background: white;
 }
 
-QTabBar::tab {
-    background-color: #F5F5F5;
-    color: #757575;
-    padding: 12px 24px;
+QTabWidget[class="Level2Tabs"] > QTabBar::tab {
+    background: transparent;
+    color: #546E7A; /* Blue Grey */
+    border: none;
+    border-bottom: 3px solid transparent; /* Reserve space for indicator */
+    padding: 10px 16px;
     margin-right: 4px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 110px;
 }
 
-QTabBar::tab:selected {
-    background-color: #FFFFFF;
-    color: #009688;
-    border-bottom: 2px solid #009688;
+QTabWidget[class="Level2Tabs"] > QTabBar::tab:selected {
+    color: #00897B; /* Teal Accent */
+    border-bottom: 3px solid #00897B;
+    background-color: transparent; /* No background change, clean look */
 }
 
-QTabBar::tab:hover:!selected {
-    background-color: #EEEEEE;
+QTabWidget[class="Level2Tabs"] > QTabBar::tab:hover:!selected {
+    color: #00897B;
+    background-color: #F5F5F5; /* Subtle hover */
+    border-radius: 4px 4px 0 0;
 }
+
+/* Fix for icons in tabs (handled by Qt automatically, but ensures color contrast if SVG allows) */
 
 /* === SCROLLBARS === */
 QScrollBar:vertical {

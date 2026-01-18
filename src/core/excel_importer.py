@@ -129,9 +129,15 @@ class ExcelImporter:
         """Tenta di decifrare un file Excel se protetto da password."""
         if msoffcrypto:
             try:
+                from src.core import config_manager
+
+                config = config_manager.load_config()
+                # Recupera password da config, default "coemi"
+                pwd = config.get("excel_decryption_password", "coemi")
+
                 with open(file_path, "rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")
+                    office_file.load_key(password=pwd)
                     temp_decrypted = io.BytesIO()
                     office_file.decrypt(temp_decrypted)
                     temp_decrypted.seek(0)
@@ -303,11 +309,34 @@ class ExcelImporter:
 
             # Preparazione finale dati
             target_columns = ["year"] + list(cls.COLUMNS_MAPPING.values())
-            df = df[target_columns].fillna("")
+            df = df[target_columns].copy()
 
-            # Conversione stringhe e pulizia
-            cols_to_str = [c for c in df.columns if c != "year"]
-            df[cols_to_str] = df[cols_to_str].astype(str).apply(lambda x: x.str.strip())
+            # --- Gestione Tipi Intelligente ---
+            for col in df.columns:
+                if col == "year":
+                    continue
+
+                # 1. Tenta conversione numerica per colonne che dovrebbero essere numeri
+                if col in ["totale_prev", "ore_sp", "resa"]:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+                    # Arrotonda a 2 decimali per eliminare rumore (es. .00000000001)
+                    df[col] = df[col].round(2)
+
+                # 2. Gestione Date
+                elif col == "data_prev":
+                    df[col] = pd.to_datetime(df[col], errors="coerce")
+
+                # 3. Pulizia stringhe per il resto
+                else:
+                    df[col] = (
+                        df[col]
+                        .astype(str)
+                        .str.strip()
+                        .replace(r"(?i)^nan$", "", regex=True)
+                    )
+
+            # Riempie i NaN rimasti con valori sicuri per il DB
+            df = df.fillna("")
 
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
@@ -329,7 +358,9 @@ class ExcelImporter:
         """Helper per processare un singolo file giornaliera in parallelo."""
         year, file_path, lookup_map = args
         try:
-            df = cls._read_giornaliera_sheet(file_path)
+            # Decrittografia se necessaria
+            file_obj, _ = cls._decrypt_if_encrypted(file_path)
+            df = cls._read_giornaliera_sheet(file_obj)
             if df is None:
                 return (year, [], None)
 
@@ -796,18 +827,27 @@ class ExcelImporter:
     def _get_cell_style(cell: Any) -> Optional[Dict[str, str]]:
         """Estrae i colori (HEX) dalla cella."""
         style = {}
+
         # Foreground
-        if cell.font and cell.font.color and cell.font.color.type == "rgb":
-            rgb = str(cell.font.color.rgb)
-            style["fg"] = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+        if fg := ExcelImporter._extract_rgb_color(
+            cell.font.color if cell.font else None
+        ):
+            style["fg"] = fg
 
         # Background
-        if cell.fill and cell.fill.patternType == "solid" and cell.fill.start_color:
-            if cell.fill.start_color.type == "rgb":
-                rgb = str(cell.fill.start_color.rgb)
-                style["bg"] = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+        if cell.fill and cell.fill.patternType == "solid":
+            if bg := ExcelImporter._extract_rgb_color(cell.fill.start_color):
+                style["bg"] = bg
 
         return style if style else None
+
+    @staticmethod
+    def _extract_rgb_color(color_obj: Any) -> Optional[str]:
+        """Estrae il codice HEX da un oggetto colore OpenPyXL."""
+        if color_obj and color_obj.type == "rgb":
+            rgb = str(color_obj.rgb)
+            return f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+        return None
 
     @classmethod
     def _is_scarico_row_valid(cls, row_vals: Dict[str, str]) -> bool:
@@ -848,59 +888,42 @@ class ExcelImporter:
         """Importa il file Certificati Campione e restituisce le righe."""
         path = Path(file_path)
         if not path.exists():
-            return False, f"File Certificati Campione non trovato: {file_path}", []
+            return False, f"File non trovato: {file_path}", []
 
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
+                xls = pd.ExcelFile(path)
+                sheet_name = cls._find_certificati_sheet(xls)
+                if not sheet_name:
+                    return False, "Nessun foglio trovato.", []
 
-                try:
-                    xls = pd.ExcelFile(path)
-                    sheet_name = None
-
-                    for name_raw in xls.sheet_names:
-                        name = str(name_raw)
-                        name_lower = name.lower()
-                        if (
-                            "strumenti campione" in name_lower
-                            or "isab sud" in name_lower
-                        ):
-                            sheet_name = name
-                            break
-
-                    if not sheet_name and xls.sheet_names:
-                        sheet_name = str(xls.sheet_names[0])
-
-                    if not sheet_name:
-                        return False, "Nessun foglio trovato nel file Excel.", []
-
-                except Exception as e:
-                    return False, f"Errore apertura file Excel: {e}", []
-
-                try:
-                    df_preview = pd.read_excel(
-                        path, sheet_name=sheet_name, header=None, nrows=20
-                    )
-                    header_row_idx = cls._detect_certificati_header(df_preview)
-
-                    df = pd.read_excel(
-                        path, sheet_name=sheet_name, header=header_row_idx
-                    )
-
-                except Exception as e:
-                    return (
-                        False,
-                        f"Errore lettura file Certificati (sheet: {sheet_name}): {e}",
-                        [],
-                    )
-
+                df, header_idx = cls._read_certificati_data(path, sheet_name)
                 if df.empty:
                     return False, "Foglio vuoto.", []
 
-                return cls._process_certificati_df(df, sheet_name, header_row_idx)
-
+                return cls._process_certificati_df(df, sheet_name, header_idx)
         except Exception as e:
-            return False, f"Errore importazione Certificati Campione: {e}", []
+            return False, f"Errore importazione Certificati: {e}", []
+
+    @classmethod
+    def _find_certificati_sheet(cls, xls: pd.ExcelFile) -> Optional[str]:
+        """Trova il foglio corretto per i certificati."""
+        for name in xls.sheet_names:
+            n_low = str(name).lower()
+            if "strumenti campione" in n_low or "isab sud" in n_low:
+                return str(name)
+        return str(xls.sheet_names[0]) if xls.sheet_names else None
+
+    @classmethod
+    def _read_certificati_data(
+        cls, path: Path, sheet_name: str
+    ) -> Tuple[pd.DataFrame, int]:
+        """Legge i dati individuando l'intestazione."""
+        df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=20)
+        header_idx = cls._detect_certificati_header(df_preview)
+        df = pd.read_excel(path, sheet_name=sheet_name, header=header_idx)
+        return df, header_idx
 
     @classmethod
     def _detect_certificati_header(cls, df_preview: pd.DataFrame) -> int:
@@ -1035,39 +1058,47 @@ class ExcelImporter:
     @classmethod
     def scan_workload(cls, file_path: str, giornaliere_path: str) -> Tuple[int, int]:
         """Scansiona rapidamente il carico di lavoro (fogli e file) per stima ETA."""
-        sheets = 0
-        files = 0
-
-        p_file = Path(file_path)
-        if file_path and p_file.exists():
-            try:
-                with zipfile.ZipFile(p_file, "r") as z:
-                    if "xl/workbook.xml" in z.namelist():
-                        wb_xml = z.read("xl/workbook.xml").decode("utf-8")
-                        sheet_names = re.findall(r'name="([^"]+)"', wb_xml)
-                        sheets = len(
-                            [s for s in sheet_names if re.search(r"(\d{4})", s)]
-                        )
-            except Exception:
-                sheets = 1
-
-        p_giorn = Path(giornaliere_path)
-        if giornaliere_path and p_giorn.exists():
-            current_year = datetime.now().year
-            for folder in p_giorn.iterdir():
-                if folder.is_dir():
-                    match = re.match(
-                        r"Giornaliere\s+(\d{4})", folder.name, re.IGNORECASE
-                    )
-                    if match:
-                        year = int(match.group(1))
-                        if year >= current_year:
-                            files += len(
-                                [
-                                    f
-                                    for f in folder.glob("*.xls*")
-                                    if not f.name.startswith("~$")
-                                ]
-                            )
-
+        sheets = cls._scan_excel_sheets(file_path)
+        files = cls._scan_giornaliere_files(giornaliere_path)
         return sheets, files
+
+    @classmethod
+    def _scan_excel_sheets(cls, file_path: str) -> int:
+        """Conta i fogli validi nell'Excel principale."""
+        p_file = Path(file_path)
+        if not file_path or not p_file.exists():
+            return 0
+        try:
+            with zipfile.ZipFile(p_file, "r") as z:
+                if "xl/workbook.xml" not in z.namelist():
+                    return 1
+                wb_xml = z.read("xl/workbook.xml").decode("utf-8")
+                sheet_names = re.findall(r'name="([^"]+)"', wb_xml)
+                return len([s for s in sheet_names if re.search(r"(\d{4})", s)])
+        except Exception:
+            return 1
+
+    @classmethod
+    def _scan_giornaliere_files(cls, giornaliere_path: str) -> int:
+        """Conta i file validi nelle cartelle giornaliere."""
+        p_giorn = Path(giornaliere_path)
+        if not giornaliere_path or not p_giorn.exists():
+            return 0
+
+        count = 0
+        current_year = datetime.now().year
+        for folder in p_giorn.iterdir():
+            if not folder.is_dir():
+                continue
+            match = re.match(r"Giornaliere\s+(\d{4})", folder.name, re.IGNORECASE)
+            if not match:
+                continue
+
+            year = int(match.group(1))
+            if year < current_year:
+                continue
+
+            for file_path in folder.glob("*.xls*"):
+                if not file_path.name.startswith("~$"):
+                    count += 1
+        return count

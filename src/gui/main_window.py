@@ -4,6 +4,7 @@ Finestra principale dell'applicazione SyncroJob.
 Implementa Lazy Loading dei pannelli per prestazioni ottimali.
 """
 
+import random  # NEW IMPORT
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
@@ -13,10 +14,8 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
-    QLabel,
     QLineEdit,
     QMainWindow,
-    QProgressBar,
     QStackedWidget,
     QStatusBar,
     QSystemTrayIcon,
@@ -38,6 +37,12 @@ from src.gui.controllers.search_controller import SearchController
 from src.gui.controllers.service_controller import ServiceController
 from src.gui.controllers.tray_controller import TrayController
 from src.gui.styles import apply_theme
+from src.gui.widgets.footer_stats import (  # NEW IMPORT
+    BootTelemetryWidget,
+    FooterLeftWidget,
+    FooterRightWidget,
+    StartupConsole,
+)
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.status_card import StatusCard
 from src.gui.widgets.toast import ToastManager
@@ -50,17 +55,17 @@ class PageIndex(IntEnum):
     DASHBOARD = 0
     AUTOMAZIONI = 1
     LYRA = 2
-    DATABASE = 3
-    SETTINGS = 4
-    HELP = 5
-    NOTIFICATIONS = 6
+    TIMBRATURE = 3
+    STRUMENTALE = 4
+    DATAEASE = 5
+    ANAGRAFICHE = 6
+    SETTINGS = 7
+    HELP = 8
+    NOTIFICATIONS = 9
 
 
 class MainWindow(QMainWindow):
-
     """
-
-
     Finestra principale dell'applicazione.
     Coordina i controller, la navigazione e il caricamento dei pannelli.
     """
@@ -110,54 +115,105 @@ class MainWindow(QMainWindow):
 
     def _preload_background(self):
         """Avvia la sequenza di caricamento incrementale PROFONDO con feedback visivo."""
-        # Coda di caricamento: (Azione, Descrizione)
-        self._preload_tasks = [
-            (
-                lambda: self.navigation_controller.get_panel(PageIndex.DATABASE),
-                "Inizializzazione Database",
-            ),
-            (
-                lambda: self.timbrature_db_panel.refresh_data(),
-                "Popolamento Timbrature Isab",
-            ),
-            (
-                lambda: self.contabilita_panel.refresh_tabs(),
-                "Caricamento Registro Strumentale",
-            ),
-            (
-                lambda: self.scarico_ore_panel._start_update(),
-                "Sincronizzazione DataEase",
-            ),
-            (
+        # Nascondi i widget del footer standard
+        self.footer_left.setVisible(False)
+        self.footer_right.setVisible(False)
+
+        # Mostra i widget "Hacker Mode"
+        self.startup_console.setVisible(True)
+        self.boot_telemetry.setVisible(True)
+
+        # Helper per creare filler logs "Professional Engineering"
+        def mk_steps(action, label, ctx="SYS"):
+            steps = []
+            # Genera ID transazione esadecimale (realistico per tracing)
+            tx_id = f"{random.randint(0, 0xFFFF):04X}"
+
+            steps.append(
+                (None, f"[{ctx}] Resolving dependencies for {label} (TX-{tx_id})...")
+            )
+            steps.append((None, f"[{ctx}] Injecting service context into {label}..."))
+            steps.append(
+                (action, f"[{ctx}] Initializing worker threads for {label}...")
+            )
+            return steps
+
+        # Coda di caricamento: Lista di (Azione/None, Messaggio)
+        self._preload_tasks = []
+
+        # 1. CORE
+        self._preload_tasks.extend(mk_steps(None, "Service Container", "CORE"))
+
+        # 2. TIMBRATURE
+        self._preload_tasks.extend(
+            mk_steps(
+                lambda: self.navigation_controller.get_panel(PageIndex.TIMBRATURE),
+                "Timesheet Repository",
+                "ORM",
+            )
+        )
+
+        # 3. STRUMENTALE
+        self._preload_tasks.extend(
+            mk_steps(
+                lambda: self.navigation_controller.get_panel(PageIndex.STRUMENTALE),
+                "Asset Registry Module",
+                "DATA",
+            )
+        )
+
+        # 4. DATAEASE
+        self._preload_tasks.extend(
+            mk_steps(
+                lambda: self.navigation_controller.get_panel(PageIndex.DATAEASE),
+                "DataEase Sync Bridge",
+                "IPC",
+            )
+        )
+
+        # 5. ANAGRAFICHE
+        self._preload_tasks.extend(
+            mk_steps(
+                lambda: self.navigation_controller.get_panel(PageIndex.ANAGRAFICHE),
+                "HR Directory Service",
+                "LDAP",
+            )
+        )
+
+        # 6. AUTOMAZIONI
+        self._preload_tasks.extend(
+            mk_steps(
                 lambda: self.navigation_controller.get_panel(PageIndex.AUTOMAZIONI),
-                "Preparazione Motori Automazione",
-            ),
-            (
+                "Task Scheduler Engine",
+                "PROC",
+            )
+        )
+
+        # 7. LYRA
+        self._preload_tasks.extend(
+            mk_steps(
                 lambda: self.navigation_controller.get_panel(PageIndex.LYRA),
-                "Avvio Analisi Lyra",
-            ),
-            (
+                "Lyra Analysis Engine",
+                "AI",
+            )
+        )
+
+        # 8. SETTINGS & FINAL
+        self._preload_tasks.extend(
+            mk_steps(
                 lambda: self.navigation_controller.get_panel(PageIndex.SETTINGS),
-                "Configurazione Preferenze",
-            ),
-            (
-                lambda: self.navigation_controller.get_panel(PageIndex.NOTIFICATIONS),
-                "Centro Notifiche",
-            ),
-            (
-                lambda: self.navigation_controller.get_panel(PageIndex.HELP),
-                "Guida e Documentazione",
-            ),
-        ]
+                "User Configuration",
+                "CFG",
+            )
+        )
+        self._preload_tasks.append((None, "[SYS] Pre-warming application cache..."))
+        self._preload_tasks.append((None, "[SYS] Event Loop Started. SYSTEM READY."))
+
         self._total_preload = len(self._preload_tasks)
+        self._completed_preload = 0
 
-        # Attiva indicatori
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, self._total_preload)
-        self.progress_bar.setValue(0)
-
-        # Avvia la catena
-        QTimer.singleShot(100, self._process_next_preload)
+        # Avvia la catena (Molto rapida)
+        QTimer.singleShot(50, self._process_next_preload)
 
     def _process_next_preload(self):
         """Esegue il prossimo task di precaricamento senza bloccare la UI."""
@@ -172,22 +228,27 @@ class MainWindow(QMainWindow):
 
         # Estrai il prossimo task
         action, description = self._preload_tasks.pop(0)
+        self._completed_preload += 1
 
-        # Feedback Utente
-        self.status_bar.showMessage(f"Ottimizzazione: {description}...")
-        self.progress_bar.setValue(self._total_preload - len(self._preload_tasks))
+        # Aggiorna Console
+        self.startup_console.set_log(
+            description, self._completed_preload, self._total_preload
+        )
 
-        # Esegui azione (Safe)
-        try:
-            action()
-        except Exception as e:
-            print(f"Error during deep preload of {description}: {e}")
+        # Esegui azione (se presente)
+        delay = 30  # Default delay (molto veloce per effetto scrolling)
+        if action:
+            try:
+                action()
+                delay = 50  # Un po' più lento per le azioni vere
+            except Exception as e:
+                print(f"Error during deep preload of {description}: {e}")
 
         # TRUCCO PER REATTIVITÀ: Forza l'app a gestire i click e il mouse PRIMA del prossimo task
         QApplication.processEvents()
 
-        # Pianifica il prossimo step con un delay leggermente superiore per fluidità
-        QTimer.singleShot(300, self._process_next_preload)
+        # Pianifica il prossimo step
+        QTimer.singleShot(delay, self._process_next_preload)
 
     def _finalize_preload(self):
         """Conclude la sequenza di caricamento."""
@@ -196,9 +257,36 @@ class MainWindow(QMainWindow):
         if sip.isdeleted(self):
             return
 
-        self.progress_bar.setVisible(False)
+        # Ripristina Footer Standard
+        self.startup_console.setVisible(False)
+        self.boot_telemetry.setVisible(False)  # Nascondi Telemetry
+
+        self.status_bar.clearMessage()
+        self.footer_left.setVisible(True)  # Torna visibile
+        self.footer_right.setVisible(True)  # Torna visibile
+
         self._update_license_status_bar()
-        self.status_bar.showMessage("SyncroJob è pronto. Tutti i servizi attivi.", 3000)
+
+        # FINAL: Show visible TOAST instead of status bar message
+        # Delay increased to 500ms to ensure UI is stable and Toast appears ON TOP
+        QTimer.singleShot(
+            500,
+            lambda: ToastManager.instance().show(
+                "<b>SyncroJob è pronto. Tutti i servizi sono operativi.</b>",
+                "success",
+                4000,
+                position="bottom",
+            ),
+        )
+
+        # Connect Autopilot Real-time updates
+        if hasattr(self, "timbrature_bot_panel"):
+            try:
+                self.timbrature_bot_panel.autopilot_changed.connect(
+                    self._update_autopilot_status_ui
+                )
+            except Exception:
+                pass
 
     def _update_license_status_bar(self):
         """Aggiorna le etichette della licenza nella status bar."""
@@ -213,12 +301,9 @@ class MainWindow(QMainWindow):
             now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
             config_manager.set_config_value("last_login_date", now_str)
 
-            self.lbl_license.setText(f"Licenza: {client}")
-            self.lbl_expiry.setText(f"Scadenza: {expiry}")
-            self.lbl_last_login.setText(f"Ultimo accesso: {last_login}")
-
-            for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
-                lbl.setVisible(True)
+            # Usa il nuovo widget grafico sinistro
+            self.footer_left.update_info(client, expiry, last_login)
+            self.footer_left.setVisible(True)
 
     def _on_anomalies_found(self, count):
         """Gestisce le anomalie trovate da Lyra."""
@@ -273,31 +358,41 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         """Configura l'interfaccia con Placeholders per Lazy Loading."""
         self.status_bar = QStatusBar()
+        # Increased height for stacked layout
+        self.status_bar.setStyleSheet(
+            "QStatusBar { background: #FFFFFF; border-top: 1px solid #E0E0E0; min-height: 65px; }"
+        )
         self.setStatusBar(self.status_bar)
 
-        # License info in status bar (inizialmente nascoste)
-        self.lbl_license = QLabel()
-        self.lbl_expiry = QLabel()
-        self.lbl_last_login = QLabel()
+        # 1. LEFT: Mega Widget (Cliente, Scadenza, Login, Accounts)
+        self.footer_left = FooterLeftWidget()
+        self.footer_left.setVisible(True)
+        self.status_bar.addWidget(self.footer_left)
 
-        for lbl in [self.lbl_license, self.lbl_expiry, self.lbl_last_login]:
-            lbl.setVisible(False)
-            lbl.setStyleSheet("color: #495057; font-size: 12px; margin-right: 15px;")
-            self.status_bar.addWidget(lbl)
+        # 1b. LEFT: Boot Telemetry (Hacker Mode)
+        self.boot_telemetry = BootTelemetryWidget()
+        self.boot_telemetry.setVisible(True)
+        self.status_bar.addWidget(self.boot_telemetry)
 
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setMaximumWidth(200)
-        self.status_bar.addPermanentWidget(self.progress_bar)
+        # 3. STARTUP CONSOLE (Centrale)
+        self.startup_console = StartupConsole()
+        self.startup_console.setVisible(True)
+        self.status_bar.addWidget(self.startup_console, 1)
 
-        # Status Cards Separate
+        # 2. RIGHT: Status Cards (Contenute in FooterRightWidget)
         self.status_portale = StatusCard("Portale Fornitori")
-        self.status_portale.setMinimumWidth(180)
-        self.status_bar.addPermanentWidget(self.status_portale)
-
         self.status_safework = StatusCard("SafeWork")
-        self.status_safework.setMinimumWidth(180)
-        self.status_bar.addPermanentWidget(self.status_safework)
+
+        self.footer_right = FooterRightWidget(self.status_portale, self.status_safework)
+        self.status_bar.addPermanentWidget(self.footer_right)
+
+        # Initial Autopilot Status Update
+        self._update_autopilot_status_ui()
+
+        # Timer per il countdown Autopilot (aggiorna ogni minuto)
+        self.autopilot_timer = QTimer(self)
+        self.autopilot_timer.timeout.connect(self._update_autopilot_status_ui)
+        self.autopilot_timer.start(60000)  # 60 secondi
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -309,6 +404,9 @@ class MainWindow(QMainWindow):
         self.sidebar = SidebarWidget()
         self.sidebar.navigation_requested.connect(
             self.navigation_controller.navigate_to
+        )
+        self.sidebar.automation_tab_requested.connect(
+            self._handle_automation_tab_change
         )
         main_layout.addWidget(self.sidebar)
 
@@ -333,7 +431,7 @@ class MainWindow(QMainWindow):
 
         # Page Stack con Placeholder
         self.page_stack = QStackedWidget()
-        for i in range(7):
+        for i in range(11):  # Increased range for new pages
             placeholder = QWidget()
             # Inseriamo un layout per indicare il caricamento se necessario
             self.page_stack.addWidget(placeholder)
@@ -360,18 +458,30 @@ class MainWindow(QMainWindow):
         self.shortcut_search.activated.connect(self._handle_ctrl_f)
 
     def _handle_f5(self):
-        """Gestisce F5."""
+        """Gestisce F5 tramite dispatch map."""
         idx = self.page_stack.currentIndex()
-        if idx == PageIndex.DASHBOARD and hasattr(self, "dashboard_panel"):
-            self.dashboard_panel.refresh_data()
-        elif idx == PageIndex.DATABASE and hasattr(self, "database_widget"):
-            tab_idx = self.database_widget.currentIndex()
-            if tab_idx == 0:
-                self.timbrature_db_panel.refresh_data()
-            elif tab_idx == 1:
-                self.contabilita_panel.refresh_tabs()
-            elif tab_idx == 2:
-                self.scarico_ore_panel._start_update()
+
+        refresh_actions = {
+            PageIndex.DASHBOARD: lambda: self.dashboard_panel.refresh_data()
+            if hasattr(self, "dashboard_panel")
+            else None,
+            PageIndex.TIMBRATURE: lambda: self.timbrature_db_panel.refresh_data()
+            if hasattr(self, "timbrature_db_panel")
+            else None,
+            PageIndex.STRUMENTALE: lambda: self.contabilita_panel.refresh_tabs()
+            if hasattr(self, "contabilita_panel")
+            else None,
+            PageIndex.DATAEASE: lambda: self.scarico_ore_panel._start_update()
+            if hasattr(self, "scarico_ore_panel")
+            else None,
+            PageIndex.ANAGRAFICHE: lambda: self.pdl_db_panel.refresh_data()
+            if hasattr(self, "pdl_db_panel")
+            else None,
+        }
+
+        action = refresh_actions.get(idx)
+        if action:
+            action()
 
     def _handle_ctrl_f(self):
         """Gestisce Ctrl+F."""
@@ -382,6 +492,40 @@ class MainWindow(QMainWindow):
         self.navigation_controller.navigate_to(PageIndex.HELP)
         self.help_panel.open_section(section_title)
 
+    def _update_autopilot_status_ui(self):
+        """Aggiorna le card di stato con countdown e info bot."""
+        from PyQt6.QtCore import QTime
+
+        config = config_manager.load_config()
+
+        # --- Portale Fornitori (Bot: Timbrature) ---
+        if config.get("timbrature_autopilot_enabled", False):
+            target_time_str = config.get("timbrature_autopilot_time", "09:00")
+            target_time = QTime.fromString(target_time_str, "HH:mm")
+            now = QTime.currentTime()
+
+            # Calcolo tempo residuo
+            secs_to = now.secsTo(target_time)
+            if secs_to < 0:
+                # Se l'orario è già passato, calcola per domani
+                secs_to += 24 * 3600
+
+            hours = secs_to // 3600
+            mins = (secs_to % 3600) // 60
+
+            if hours > 0:
+                countdown = f"tra {hours}h {mins}m"
+            else:
+                countdown = f"tra {mins}m"
+
+            self.status_portale.setAutopilot(True, f"TIMBRATURE: {countdown}")
+        else:
+            self.status_portale.setAutopilot(False)
+
+        # --- SafeWork (Pianificazioni future) ---
+        # Al momento SafeWork non ha un autopilot programmabile da UI
+        self.status_safework.setAutopilot(False)
+
     def _on_settings_saved(self):
         if hasattr(self, "scarico_panel"):
             self.scarico_panel.refresh_fornitori()
@@ -389,14 +533,21 @@ class MainWindow(QMainWindow):
             self.dettagli_panel.refresh_fornitori()
         if hasattr(self, "timbrature_bot_panel"):
             self.timbrature_bot_panel.refresh_fornitori()
+
         self.telegram.start_service()
+        self._update_autopilot_status_ui()  # Update UI cards
+
+        # Aggiorna account visualizzati nel footer sinistro
+        if hasattr(self, "footer_left"):
+            self.footer_left.refresh_accounts()
+
         ToastManager.instance().show("Impostazioni salvate!", "success")
 
     def _check_and_start_contabilita_update(self):
         config = config_manager.load_config()
         if config.get("enable_auto_update_contabilita", False):
             # Assicuriamoci che il pannello sia caricato se dobbiamo avviarlo
-            self.navigation_controller.get_panel(PageIndex.DATABASE)
+            self.navigation_controller.get_panel(PageIndex.STRUMENTALE)
             if hasattr(self, "contabilita_panel"):
                 self.contabilita_panel.start_import_process()
 
@@ -416,42 +567,40 @@ class MainWindow(QMainWindow):
 
     def _navigate_to_oda(self, oda_code: str):
         """Naviga verso la contabilità e cerca un OdA specifico."""
-        self.navigation_controller.navigate_to(PageIndex.DATABASE)
-        # Il pannello database ha diversi tab (Timbrature, Contabilità, Scarico Ore)
-        # Assumiamo che tab 1 sia Contabilità (da verificare nel widget)
-        if hasattr(self, "database_widget"):
-            self.database_widget.setCurrentIndex(1)
-            if hasattr(self, "contabilita_panel"):
-                self.contabilita_panel.set_search_query(oda_code)
+        self.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
+        if hasattr(self, "contabilita_panel"):
+            self.contabilita_panel.set_search_query(oda_code)
 
     def _navigate_to_extended(self, tab_idx: int, query: str):
         """Naviga verso un sub-tab specifico del pannello Contabilità."""
-        self.navigation_controller.navigate_to(PageIndex.DATABASE)
-        if hasattr(self, "database_widget"):
-            self.database_widget.setCurrentIndex(1)
-            if hasattr(self, "contabilita_panel"):
-                self.contabilita_panel.main_tabs.setCurrentIndex(tab_idx)
-                self.contabilita_panel.set_search_query(query)
+        self.navigation_controller.navigate_to(PageIndex.STRUMENTALE)
+        if hasattr(self, "contabilita_panel"):
+            self.contabilita_panel.main_tabs.setCurrentIndex(tab_idx)
+            self.contabilita_panel.set_search_query(query)
 
     def _navigate_to_dataease(self, query: str):
         """Naviga verso il pannello Scarico Ore (DataEase)."""
-        self.navigation_controller.navigate_to(PageIndex.DATABASE)
-        if hasattr(self, "database_widget"):
-            self.database_widget.setCurrentIndex(2)
-            if hasattr(self, "scarico_ore_panel"):
-                self.scarico_ore_panel.set_search_query(query)
+        self.navigation_controller.navigate_to(PageIndex.DATAEASE)
+        if hasattr(self, "scarico_ore_panel"):
+            self.scarico_ore_panel.set_search_query(query)
 
     def _navigate_to_timbrature(self, query: str):
         """Naviga verso il database Timbrature."""
-        self.navigation_controller.navigate_to(PageIndex.DATABASE)
-        if hasattr(self, "database_widget"):
-            self.database_widget.setCurrentIndex(0)
-            if hasattr(self, "timbrature_db_panel"):
-                self.timbrature_db_panel.search_input.setText(query)
+        self.navigation_controller.navigate_to(PageIndex.TIMBRATURE)
+        if hasattr(self, "timbrature_db_panel"):
+            self.timbrature_db_panel.search_input.setText(query)
+
+    def _handle_automation_tab_change(self, tab_index: int):
+        """Gestisce il cambio tab interno per il pannello Automazioni."""
+        # 1. Naviga al pannello Automazioni se non ci siamo già
+        self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI)
+
+        # 2. Imposta il tab corretto
+        if hasattr(self, "automazioni_widget"):
+            self.automazioni_widget.setCurrentIndex(tab_index)
 
     def analyze_with_lyra(self, context_text: str):
-        """Passa il contesto a Lyra e naviga verso il pannello AI."""
-        self.navigation_controller.analyze_with_lyra(context_text)
+        """Passa al contesto Lyra."""
 
     def show_settings(self):
         """Mostra il pannello delle impostazioni."""

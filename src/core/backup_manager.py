@@ -8,7 +8,7 @@ import os
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from src.core.audit_manager import AuditManager
 from src.core.config_manager import CONFIG_DIR, load_config
@@ -31,45 +31,68 @@ class BackupManager:
     @staticmethod
     def detect_cloud_paths() -> Dict[str, Path]:
         """Rileva le cartelle dei servizi cloud installati."""
-        user_home = Path.home()
         paths = {}
 
-        # 1. OneDrive (Priorità assoluta per Windows)
+        # Sequenza di rilevamento
+        if onedrive := BackupManager._detect_onedrive():
+            paths["OneDrive"] = onedrive
+
+        if gdrive := BackupManager._detect_gdrive():
+            paths["Google Drive"] = gdrive
+
+        if dropbox := BackupManager._detect_dropbox():
+            paths["Dropbox"] = dropbox
+
+        if mega := BackupManager._detect_mega():
+            paths["MEGA"] = mega
+
+        return paths
+
+    @staticmethod
+    def _detect_onedrive() -> Optional[Path]:
+        """Rileva percorso OneDrive."""
+        user_home = Path.home()
         onedrive_env = os.environ.get("OneDrive")
         if onedrive_env and os.path.isdir(onedrive_env):
-            paths["OneDrive"] = Path(onedrive_env)
-        elif (user_home / "OneDrive").is_dir():
-            paths["OneDrive"] = user_home / "OneDrive"
+            return Path(onedrive_env)
+        if (user_home / "OneDrive").is_dir():
+            return user_home / "OneDrive"
+        return None
 
-        # 2. Google Drive (Virtual Drive G: or User Folder)
-        # Check standard virtual drive mount points
+    @staticmethod
+    def _detect_gdrive() -> Optional[Path]:
+        """Rileva percorso Google Drive."""
         for drive in ["G:/Il mio Drive", "G:/My Drive", "G:/"]:
             if os.path.exists(drive):
-                paths["Google Drive"] = Path(drive)
-                break
+                return Path(drive)
+        user_home = Path.home()
+        if (user_home / "Google Drive").is_dir():
+            return user_home / "Google Drive"
+        return None
 
-        # Fallback to user folder if virtual drive not found
-        if "Google Drive" not in paths and (user_home / "Google Drive").is_dir():
-            paths["Google Drive"] = user_home / "Google Drive"
-
-        # 3. Dropbox (Standard & Business/Personal variants)
+    @staticmethod
+    def _detect_dropbox() -> Optional[Path]:
+        """Rileva percorso Dropbox."""
+        user_home = Path.home()
         for db_path in [
             user_home / "Dropbox",
             user_home / "Dropbox (Personal)",
             user_home / "Dropbox (Business)",
         ]:
             if db_path.is_dir():
-                paths["Dropbox"] = db_path
-                break
+                return db_path
+        return None
 
-        # 4. MEGA (MEGAsync)
+    @staticmethod
+    def _detect_mega() -> Optional[Path]:
+        """Rileva percorso MEGA."""
+        user_home = Path.home()
         mega_path = user_home / "MEGAsync"
         if mega_path.is_dir():
-            paths["MEGA"] = mega_path
-        elif (user_home / "MEGA").is_dir():
-            paths["MEGA"] = user_home / "MEGA"
-
-        return paths
+            return mega_path
+        if (user_home / "MEGA").is_dir():
+            return user_home / "MEGA"
+        return None
 
     @staticmethod
     def get_backup_dir() -> Path:

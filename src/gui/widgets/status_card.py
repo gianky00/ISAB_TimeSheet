@@ -1,149 +1,113 @@
-"""
-Card per visualizzare stato con icona e animazioni.
-"""
-
-from typing import Optional
-
-from PyQt6.QtCore import QPropertyAnimation, QSize, Qt, pyqtProperty  # type: ignore
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from src.core.constants import Icons
+from src.gui.design.colors import LIGHT
 from src.utils.helpers import get_asset_path, get_colored_icon
-
-from ..design.colors import get_palette
-from ..design.spacing import BorderRadius, Spacing
 
 
 class StatusCard(QFrame):
-    """Card per mostrare stato operazione."""
+    """
+    Card per la status bar che mostra lo stato di un servizio.
+    Layout: [Icona] | [Titolo]     | [BADGE AUTOPILOT]
+                    | [Stato]      |
+    """
 
-    class Status:
-        """Costanti per definire lo stato visualizzato nella card."""
-
-        IDLE = "idle"
-        RUNNING = "running"
-        SUCCESS = "success"
-        ERROR = "error"
-        WARNING = "warning"
-
-    STATUS_CONFIG = {
-        Status.IDLE: (Icons.CLOCK, "In attesa", "secondary"),  # Placeholder generic
-        Status.RUNNING: (Icons.REFRESH, "In esecuzione...", "info"),
-        Status.SUCCESS: (Icons.CHECK_CIRCLE, "Completato", "success"),
-        Status.ERROR: (Icons.X_CIRCLE, "Errore", "error"),
-        Status.WARNING: (Icons.ALERT, "Attenzione", "warning"),
-    }
-
-    def __init__(self, title: str = "", parent=None):
+    def __init__(self, title, status="In attesa", parent=None):
         super().__init__(parent)
-        self._status = self.Status.IDLE
-        self._palette = get_palette()
-        self._pulse_opacity = 1.0
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setFrameShadow(QFrame.Shadow.Raised)
+        self.setStyleSheet(
+            """
+            StatusCard {
+                background-color: #FFFFFF;
+                border: 1px solid #E0E0E0;
+                border-radius: 8px;
+            }
+            """
+        )
 
-        self._setup_ui(title)
-        self._setup_animation()
-        self._apply_style()
-
-    def _setup_ui(self, title: str):
+        self._palette = LIGHT
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(Spacing.sm, Spacing.xxs, Spacing.sm, Spacing.xxs)
-        layout.setSpacing(Spacing.xs)
+        layout.setContentsMargins(12, 4, 12, 4)
+        layout.setSpacing(12)
 
-        # Icon
-        self._icon_label = QLabel()
-        self._icon_label.setFixedSize(24, 24)
-        self._icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._icon_label.setStyleSheet("border: none; background: transparent;")
-        self._icon_label.setScaledContents(True)
-        layout.addWidget(self._icon_label)
+        # 1. Icona colorata (Barra verticale decorativa)
+        self._icon_bar = QFrame()
+        self._icon_bar.setFixedWidth(4)
+        self._icon_bar.setStyleSheet(
+            f"background-color: {self._palette.primary}; border-radius: 2px;"
+        )
+        layout.addWidget(self._icon_bar)
 
-        # Text container
+        icon_lbl = QLabel()
+        icon_lbl.setFixedSize(20, 20)
+        icon_lbl.setScaledContents(True)
+        icon_lbl.setPixmap(
+            get_colored_icon(
+                get_asset_path(Icons.CLOCK), self._palette.on_surface
+            ).pixmap(20, 20)
+        )
+        layout.addWidget(icon_lbl)
+
+        # 2. Colonna Centrale: Titolo e Stato
         text_layout = QVBoxLayout()
         text_layout.setSpacing(0)
+        text_layout.setContentsMargins(0, 0, 0, 0)
+        text_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         self._title_label = QLabel(title)
         self._title_label.setStyleSheet(
-            f"font-weight: 600; font-size: 13px; color: {self._palette.on_surface}; border: none; background: transparent;"
+            f"font-weight: 700; font-size: 13px; color: {self._palette.on_surface}; border: none; background: transparent;"
         )
-
-        self._status_label = QLabel()
-        self._status_label.setStyleSheet(
-            f"font-size: 11px; color: {self._palette.on_surface}; opacity: 0.7; border: none; background: transparent;"
-        )
-
         text_layout.addWidget(self._title_label)
-        text_layout.addWidget(self._status_label)
-        layout.addLayout(text_layout, 1)
 
-        self._update_status_display()
-
-    def _setup_animation(self):
-        """Inizializza l'animazione di pulsazione per lo stato 'RUNNING'."""
-        self._pulse_anim = QPropertyAnimation(self, b"pulseOpacity")
-        self._pulse_anim.setDuration(1000)
-        self._pulse_anim.setLoopCount(-1)  # Infinite
-        self._pulse_anim.setStartValue(1.0)
-        self._pulse_anim.setEndValue(0.5)
-
-    def get_pulse_opacity(self) -> float:
-        """Restituisce il valore corrente dell'opacità di pulsazione."""
-        return self._pulse_opacity
-
-    def set_pulse_opacity(self, value: float):
-        """Imposta il valore dell'opacità di pulsazione."""
-        self._pulse_opacity = value
-        # Update just the icon opacity via stylesheet would be expensive,
-        # so we trigger a repaint or set style on icon only if needed.
-        pass
-
-    pulseOpacity = pyqtProperty(float, fget=get_pulse_opacity, fset=set_pulse_opacity)
-
-    def setStatus(self, status: str, message: Optional[str] = None):
-        """
-        Imposta lo stato della card e aggiorna l'interfaccia.
-
-        Args:
-            status: Il nuovo stato (idle, running, success, error, warning).
-            message: Messaggio personalizzato opzionale.
-        """
         self._status = status
-        self._update_status_display(message)
-
-        if status == self.Status.RUNNING:
-            self._pulse_anim.start()
-        else:
-            self._pulse_anim.stop()
-            self._pulse_opacity = 1.0
-
-    def _update_status_display(self, custom_message: Optional[str] = None):
-        """Aggiorna icone e testi in base allo stato corrente."""
-        icon_path_const, default_msg, color_key = self.STATUS_CONFIG.get(
-            self._status, self.STATUS_CONFIG[self.Status.IDLE]
+        self._status_label = QLabel(status)
+        self._status_label.setStyleSheet(
+            f"font-size: 11px; color: {self._palette.on_surface}; opacity: 0.8; border: none; background: transparent;"
         )
+        text_layout.addWidget(self._status_label)
 
-        # Load and set Pixmap
-        full_path = get_asset_path(icon_path_const)
-        pixmap = get_colored_icon(full_path, "#000000").pixmap(QSize(24, 24))
-        self._icon_label.setPixmap(pixmap)
+        layout.addLayout(text_layout)
 
-        self._status_label.setText(custom_message or default_msg)
-        self._apply_style()
+        # 3. Spacer elastico (spinge il badge a destra)
+        layout.addStretch()
 
-    def _apply_style(self):
-        """Applica il foglio di stile QSS dinamico con il colore dell'accento di stato."""
-        _, _, color_key = self.STATUS_CONFIG.get(
-            self._status, self.STATUS_CONFIG[self.Status.IDLE]
-        )
+        # 4. Badge Autopilot (Grande, a destra)
+        self._meta_label = QLabel()
+        self._meta_label.setVisible(False)
+        self._meta_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._meta_label)
 
-        accent = getattr(self._palette, color_key, self._palette.primary)
+    def setStatus(self, message: str, status_id: str | None = None):
+        """Imposta il testo di stato e opzionalmente il colore dell'indicatore."""
+        self._status_label.setText(message)
+        if status_id:
+            self._status = status_id
+            self._icon_bar.setStyleSheet(
+                f"background-color: {status_id if status_id.startswith('#') else self._palette.primary}; border-radius: 2px;"
+            )
 
-        self.setStyleSheet(
-            f"""
-            StatusCard {{
-                background-color: {self._palette.surface};
-                border: 1px solid {self._palette.border};
-                border-left: 4px solid {accent};
-                border-radius: {BorderRadius.md}px;
-            }}
+    def setAutopilot(self, active: bool, text: str = ""):
         """
-        )
+        Imposta l'indicatore dell'autopilot.
+        Ora il badge è posizionato a destra e occupa visivamente più spazio verticale.
+        """
+        if active:
+            self._meta_label.setText(text.upper() or "AUTO")
+            self._meta_label.setVisible(True)
+            # Stile "Big Badge": font 11px, grassetto, padding generoso
+            self._meta_label.setStyleSheet(
+                """
+                font-size: 11px;
+                font-weight: 800;
+                color: #1B5E20;
+                background-color: #C8E6C9;
+                border-radius: 6px;
+                padding: 6px 10px;
+                border: 1px solid #A5D6A7;
+                """
+            )
+        else:
+            self._meta_label.setVisible(False)

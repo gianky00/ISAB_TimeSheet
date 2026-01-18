@@ -102,13 +102,14 @@ class AuditManager:
             conn.commit()
 
     def _get_current_user(self) -> str:
-        """Recupera l'utente corrente con massima robustezza (Environment + standard + Windows API fallback)."""
-        # 1. Tentativo tramite variabili d'ambiente (veloce)
-        user = os.environ.get("USERNAME") or os.environ.get("USER")
-        if user and user.lower() != "none" and user != "":
-            return user
+        """Recupera l'utente corrente con massima robustezza."""
+        # 1. Environment variables
+        for env_var in ["USERNAME", "USER"]:
+            user = os.environ.get(env_var)
+            if user and user.lower() != "none":
+                return user
 
-        # 2. Tentativo tramite modulo standard
+        # 2. Modulo getpass
         try:
             import getpass
 
@@ -118,19 +119,23 @@ class AuditManager:
         except Exception:
             pass
 
-        # 3. Tentativo tramite Windows API (Win32)
-        if os.name == "nt":
-            try:
-                import ctypes
+        # 3. Windows API
+        return self._get_win32_user()
 
-                advapi32 = ctypes.windll.advapi32
-                buffer = ctypes.create_unicode_buffer(256)
-                size = ctypes.c_uint(len(buffer))
-                if advapi32.GetUserNameW(buffer, ctypes.byref(size)):
-                    return buffer.value
-            except Exception:
-                pass
+    def _get_win32_user(self) -> str:
+        """Helper specifico per Windows."""
+        if os.name != "nt":
+            return "unknown"
+        try:
+            import ctypes
 
+            advapi32 = ctypes.windll.advapi32
+            buffer = ctypes.create_unicode_buffer(256)
+            size = ctypes.c_uint(len(buffer))
+            if advapi32.GetUserNameW(buffer, ctypes.byref(size)):
+                return buffer.value
+        except Exception:
+            pass
         return "unknown"
 
     def _calculate_hash(self, data_str: str, prev_hash: str) -> str:
@@ -223,47 +228,39 @@ class AuditManager:
         params: Any,
         notify: bool,
     ):
-        """
-        Analizza i parametri dell'azione e genera una notifica utente se richiesto.
+        if not notify:
+            return
 
-        Args:
-            action: L'azione eseguita.
-            entity: L'entità coinvolta.
-            status: Esito dell'operazione.
-            severity: Grado di importanza dell'evento.
-            params: Parametri aggiuntivi dell'azione.
-            notify: Se True, invia effettivamente la notifica.
-        """
-        if notify:
-            from src.core.notification_manager import NotificationManager
+        from src.core.notification_manager import NotificationManager
 
-            # Normalizzazione per logica interna
-            s_val = status.value if isinstance(status, self.Status) else str(status)
-            v_val = (
-                severity.value if isinstance(severity, self.Severity) else str(severity)
-            )
+        s_val = status.value if isinstance(status, self.Status) else str(status)
+        v_val = severity.value if isinstance(severity, self.Severity) else str(severity)
 
-            level = "info"
-            if s_val == self.Status.ERROR.value or v_val == self.Severity.HIGH.value:
-                level = "error"
-            elif (
-                s_val == self.Status.WARNING.value
-                or v_val == self.Severity.MEDIUM.value
-            ):
-                level = "warning"
-            elif s_val == self.Status.SUCCESS.value:
-                level = "success"
+        # Level mapping
+        level = "info"
+        if s_val == self.Status.ERROR.value or v_val == self.Severity.HIGH.value:
+            level = "error"
+        elif s_val == self.Status.WARNING.value or v_val == self.Severity.MEDIUM.value:
+            level = "warning"
+        elif s_val == self.Status.SUCCESS.value:
+            level = "success"
 
-            title = f"{action}: {entity}"
-            # Crea un messaggio leggibile dai parametri
-            msg = f"Operazione completata con esito: {s_val.upper()}."
-            if params and isinstance(params, dict):
-                if "nuova" in params:
-                    msg = f"Versione aggiornata a {params['nuova']}"
-                elif "righe" in params:
-                    msg = f"Elaborate {params['righe']} righe."
+        msg = self._build_notification_message(s_val, params)
+        NotificationManager.instance().add_notification(
+            f"{action}: {entity}", msg, level=level
+        )
 
-            NotificationManager.instance().add_notification(title, msg, level=level)
+    def _build_notification_message(self, status_val: str, params: Any) -> str:
+        """Helper per costruire il messaggio della notifica."""
+        msg = f"Operazione completata con esito: {status_val.upper()}."
+        if not (params and isinstance(params, dict)):
+            return msg
+
+        if "nuova" in params:
+            return f"Versione aggiornata a {params['nuova']}"
+        if "righe" in params:
+            return f"Elaborate {params['righe']} righe."
+        return msg
 
     def verify_integrity(self) -> bool:
         """

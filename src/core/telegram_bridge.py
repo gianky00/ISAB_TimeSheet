@@ -66,25 +66,31 @@ class TelegramUIBridge(QObject):
     def _process_intent_data(self, obj, items):
         """Valida e aggiunge dati ai pannelli corrispondenti."""
         if obj == "pdl":
-            valid = [i for i in items if InputValidator.validate_pdl(i).valid]
-            if valid:
-                self.mw.pdl_panel.add_rows_simple(
-                    [
-                        {"numero_pdl": InputValidator.validate_pdl(v).sanitized_value}
-                        for v in valid
-                    ]
-                )
-                self.mw.show_toast(f"Telegram: aggiunti {len(valid)} PDL")
+            self._add_pdl_from_telegram(items)
         elif obj == "oda":
-            valid = [i for i in items if InputValidator.validate_oda(i).valid]
-            if valid:
-                self.mw.scarico_panel.add_rows_simple(
-                    [
-                        {"numero_oda": InputValidator.validate_oda(v).sanitized_value}
-                        for v in valid
-                    ]
-                )
-                self.mw.show_toast(f"Telegram: aggiunti {len(valid)} OdA")
+            self._add_oda_from_telegram(items)
+
+    def _add_pdl_from_telegram(self, items: list):
+        """Helper per aggiungere PDL."""
+        valid = [i for i in items if InputValidator.validate_pdl(i).valid]
+        if valid:
+            rows = [
+                {"numero_pdl": InputValidator.validate_pdl(v).sanitized_value}
+                for v in valid
+            ]
+            self.mw.pdl_panel.add_rows_simple(rows)
+            self.mw.show_toast(f"Telegram: aggiunti {len(valid)} PDL")
+
+    def _add_oda_from_telegram(self, items: list):
+        """Helper per aggiungere OdA."""
+        valid = [i for i in items if InputValidator.validate_oda(i).valid]
+        if valid:
+            rows = [
+                {"numero_oda": InputValidator.validate_oda(v).sanitized_value}
+                for v in valid
+            ]
+            self.mw.scarico_panel.add_rows_simple(rows)
+            self.mw.show_toast(f"Telegram: aggiunti {len(valid)} OdA")
 
     def _handle_intent_print_pdl(self, chat_id, items):
         self.telegram.pending_data[int(chat_id)] = {"action": "print", "items": items}
@@ -149,27 +155,23 @@ class TelegramUIBridge(QObject):
             self._handle_command("run_timbrature", {"period": "today"})
 
     def _handle_command(self, command, params):
-        """Gestisce i comandi testuali da Telegram."""
-        if command == "search_db_pdf":
-            self._handle_search_db_pdf(params)
-        elif command == "run_pdl":
-            self._handle_run_pdl(params)
-        elif command == "list_pdl":
-            self._handle_list_pdl()
-        elif command == "clear_pdl":
-            self._handle_clear_pdl()
-        elif command == "run_ts":
-            self._handle_run_ts()
-        elif command == "run_carico":
-            self._handle_run_carico()
-        elif command == "run_prenota_bp":
-            self._handle_run_prenota_bp()
-        elif command == "run_timbrature":
-            self._handle_run_timbrature(params)
-        elif command == "restart_app":
-            self._handle_restart_app()
-        elif command == "stop_all":
-            self._handle_stop_all()
+        """Gestisce i comandi testuali da Telegram tramite dispatch map."""
+        cmd_map = {
+            "search_db_pdf": lambda p: self._handle_search_db_pdf(p),
+            "run_pdl": lambda p: self._handle_run_pdl(p),
+            "list_pdl": lambda _: self._handle_list_pdl(),
+            "clear_pdl": lambda _: self._handle_clear_pdl(),
+            "run_ts": lambda _: self._handle_run_ts(),
+            "run_carico": lambda _: self._handle_run_carico(),
+            "run_prenota_bp": lambda _: self._handle_run_prenota_bp(),
+            "run_timbrature": lambda p: self._handle_run_timbrature(p),
+            "restart_app": lambda _: self._handle_restart_app(),
+            "stop_all": lambda _: self._handle_stop_all(),
+        }
+
+        handler = cmd_map.get(command)
+        if handler:
+            handler(params)
 
     def _handle_run_pdl(self, params):
         self.mw.navigate_to_panel("scarico_pdl")

@@ -38,8 +38,7 @@ class SecretsManager:
         if key:
             return key
 
-        # 4. Fallback hardcoded
-        return cls._get_fallback_key()
+        return None
 
     @classmethod
     def _get_key_from_env(cls) -> bytes | None:
@@ -81,62 +80,6 @@ class SecretsManager:
             stored = keyring.get_password(cls.APP_NAME, "license_key")
             if stored:
                 return base64.urlsafe_b64decode(stored)
-        except Exception:
-            pass
-        return None
-
-    @classmethod
-    def _get_fallback_key(cls) -> bytes | None:
-        try:
-            # 8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek=
-            chars = [
-                56,
-                107,
-                72,
-                115,
-                95,
-                114,
-                109,
-                119,
-                113,
-                97,
-                82,
-                85,
-                107,
-                49,
-                65,
-                81,
-                76,
-                71,
-                88,
-                54,
-                53,
-                103,
-                52,
-                65,
-                69,
-                107,
-                87,
-                85,
-                68,
-                97,
-                112,
-                87,
-                86,
-                115,
-                77,
-                70,
-                85,
-                81,
-                112,
-                78,
-                57,
-                69,
-                107,
-                61,
-            ]
-            key_str = "".join(chr(c) for c in chars)
-            return base64.urlsafe_b64decode(key_str)
         except Exception:
             pass
         return None
