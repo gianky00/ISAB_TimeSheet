@@ -4,6 +4,8 @@ Widget Autopilot per visualizzare e configurare eventi programmati dei bot.
 
 from PyQt6.QtCore import (
     QEasingCurve,
+    QParallelAnimationGroup,
+    QPoint,
     QPropertyAnimation,
     QSequentialAnimationGroup,
     QSize,
@@ -15,6 +17,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QFrame,
     QGraphicsOpacityEffect,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -317,6 +320,16 @@ class AutopilotConfigCard(QFrame):
             # Usa un timer per evitare loop di refresh durante il cambio
             QTimer.singleShot(100, self.parent_widget.refresh_events)
 
+        # Aggiorna anche il footer
+        if (
+            self.parent_widget
+            and hasattr(self.parent_widget, "footer_left_widget")
+            and self.parent_widget.footer_left_widget
+        ):
+            QTimer.singleShot(
+                100, self.parent_widget.footer_left_widget.refresh_accounts
+            )
+
 
 class AutopilotWidget(QWidget):
     """
@@ -326,6 +339,7 @@ class AutopilotWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._config_mode = False  # False = visualizzazione, True = configurazione
+        self.footer_left_widget = None  # Riferimento al footer per aggiornamenti
         self._setup_ui()
 
         # Timer per aggiornare i bot programmati ogni minuto
@@ -333,7 +347,18 @@ class AutopilotWidget(QWidget):
         self.refresh_timer.timeout.connect(self.refresh_events)
         self.refresh_timer.start(60000)  # 60 secondi
 
+    def set_footer_widget(self, footer_left_widget):
+        """Imposta il riferimento al footer widget per gli aggiornamenti."""
+        self.footer_left_widget = footer_left_widget
+
     def _setup_ui(self):
+        # Imposta size policy per non influenzare altri widget nella stessa riga
+        from PyQt6.QtWidgets import QSizePolicy
+
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self.setMinimumWidth(600)  # Larghezza fissa per 2 colonne
+        self.setMaximumWidth(600)
+
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(8)
@@ -356,7 +381,8 @@ class AutopilotWidget(QWidget):
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.config_btn.setToolTip("Configura pianificazioni automatiche")
+        # Rimuovi tooltip per evitare sfondo nero
+        # self.config_btn.setToolTip("Configura pianificazioni automatiche")
         self.config_btn.setStyleSheet(
             """
             QPushButton {
@@ -371,6 +397,11 @@ class AutopilotWidget(QWidget):
             QPushButton:pressed {
                 background-color: #dee2e6;
             }
+            /* Rimuovi completamente tooltip styling */
+            QPushButton QToolTip {
+                background-color: transparent;
+                border: none;
+            }
         """
         )
         self.config_btn.clicked.connect(self._toggle_mode)
@@ -379,16 +410,20 @@ class AutopilotWidget(QWidget):
 
         main_layout.addLayout(header_layout)
 
-        # Container per i due widget (view e config)
+        # Container per i due widget (view e config) - LAYOUT A 2 COLONNE
         self.view_widget = QWidget()
-        self.view_layout = QVBoxLayout(self.view_widget)
+        self.view_layout = QGridLayout(self.view_widget)
         self.view_layout.setContentsMargins(0, 4, 0, 0)
         self.view_layout.setSpacing(8)
+        self.view_layout.setColumnStretch(0, 1)  # Colonna 1 stretch
+        self.view_layout.setColumnStretch(1, 1)  # Colonna 2 stretch
 
         self.config_widget = QWidget()
-        self.config_layout = QVBoxLayout(self.config_widget)
+        self.config_layout = QGridLayout(self.config_widget)
         self.config_layout.setContentsMargins(0, 4, 0, 0)
         self.config_layout.setSpacing(8)
+        self.config_layout.setColumnStretch(0, 1)  # Colonna 1 stretch
+        self.config_layout.setColumnStretch(1, 1)  # Colonna 2 stretch
 
         # Inizialmente mostra solo view
         main_layout.addWidget(self.view_widget)
@@ -401,8 +436,11 @@ class AutopilotWidget(QWidget):
         self._refresh_config()
 
     def _toggle_mode(self):
-        """Toggle tra modalità visualizzazione e configurazione con animazione."""
+        """Toggle tra modalità visualizzazione e configurazione con animazione spettacolare."""
         self._config_mode = not self._config_mode
+
+        # Animazione spettacolare del pulsante ingranaggio
+        self._animate_gear_button()
 
         if self._config_mode:
             # Passaggio a config mode
@@ -412,6 +450,127 @@ class AutopilotWidget(QWidget):
             self._animate_transition(self.config_widget, self.view_widget)
             # Refresh events dopo aver configurato
             QTimer.singleShot(600, self.refresh_events)
+
+    def _animate_gear_button(self):
+        """
+        Crea un'animazione SPETTACOLARE per il pulsante ingranaggio.
+        Combina: Scale bounce drammatico, Shake horizontale, Pulsazione colore multi-fase.
+        """
+        # Salva posizione originale
+        original_pos = self.config_btn.pos()
+        original_style = self.config_btn.styleSheet()
+
+        # === ANIMAZIONE PARALLELA (tutto insieme) ===
+        parallel_group = QParallelAnimationGroup(self)
+
+        # 1. SHAKE EFFECT (movimento orizzontale rapido)
+        shake_anim = QPropertyAnimation(self.config_btn, b"pos", self)
+        shake_anim.setDuration(500)
+        shake_anim.setKeyValueAt(0.0, original_pos)
+        shake_anim.setKeyValueAt(
+            0.1, QPoint(original_pos.x() + 3, original_pos.y())
+        )  # Destra
+        shake_anim.setKeyValueAt(
+            0.2, QPoint(original_pos.x() - 3, original_pos.y())
+        )  # Sinistra
+        shake_anim.setKeyValueAt(
+            0.3, QPoint(original_pos.x() + 2, original_pos.y())
+        )  # Destra
+        shake_anim.setKeyValueAt(
+            0.4, QPoint(original_pos.x() - 2, original_pos.y())
+        )  # Sinistra
+        shake_anim.setKeyValueAt(
+            0.5, QPoint(original_pos.x() + 1, original_pos.y())
+        )  # Destra
+        shake_anim.setKeyValueAt(1.0, original_pos)  # Torna normale
+        shake_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        parallel_group.addAnimation(shake_anim)
+
+        # 2. PULSAZIONE DRAMMATICA con scala (zoom in/out/bounce)
+        # Sequenza: 1.0 -> 1.5 (GRANDE) -> 0.8 -> 1.0 (bounce)
+        scale_sequence = QSequentialAnimationGroup(self)
+
+        # Scale UP DRAMMATICO (zoom in molto grande)
+        scale_up = QPropertyAnimation(self.config_btn, b"iconSize", self)
+        scale_up.setDuration(200)
+        scale_up.setStartValue(QSize(20, 20))
+        scale_up.setEndValue(QSize(30, 30))  # +50% size!
+        scale_up.setEasingCurve(QEasingCurve.Type.OutCubic)
+        scale_sequence.addAnimation(scale_up)
+
+        # Scale DOWN (zoom out piccolo)
+        scale_down = QPropertyAnimation(self.config_btn, b"iconSize", self)
+        scale_down.setDuration(150)
+        scale_down.setStartValue(QSize(30, 30))
+        scale_down.setEndValue(QSize(16, 16))  # -20% size
+        scale_down.setEasingCurve(QEasingCurve.Type.InCubic)
+        scale_sequence.addAnimation(scale_down)
+
+        # Scale NORMALIZE con BOUNCE ELASTICO (ritorno drammatico)
+        scale_normal = QPropertyAnimation(self.config_btn, b"iconSize", self)
+        scale_normal.setDuration(400)
+        scale_normal.setStartValue(QSize(16, 16))
+        scale_normal.setEndValue(QSize(20, 20))
+        scale_normal.setEasingCurve(
+            QEasingCurve.Type.OutElastic
+        )  # ELASTIC = Super bounce!
+        scale_sequence.addAnimation(scale_normal)
+
+        parallel_group.addAnimation(scale_sequence)
+
+        # 3. CAMBIO COLORE MULTI-FASE (effetto arcobaleno)
+        # Sequenza: grigio -> blu -> viola -> verde -> grigio
+        def set_blue():
+            self.config_btn.setStyleSheet(
+                """
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #0d6efd, stop:1 #0a58ca);
+                    border: 3px solid #0d6efd;
+                    border-radius: 16px;
+                }
+            """
+            )
+
+        def set_purple():
+            self.config_btn.setStyleSheet(
+                """
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #8b5cf6, stop:1 #7c3aed);
+                    border: 3px solid #8b5cf6;
+                    border-radius: 16px;
+                }
+            """
+            )
+
+        def set_green():
+            self.config_btn.setStyleSheet(
+                """
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #10b981, stop:1 #059669);
+                    border: 3px solid #10b981;
+                    border-radius: 16px;
+                }
+            """
+            )
+
+        def restore_color():
+            self.config_btn.setStyleSheet(original_style)
+
+        # Timer per cambio colore rapido (caleidoscopio)
+        QTimer.singleShot(0, set_blue)  # Blu immediato
+        QTimer.singleShot(200, set_purple)  # Viola a 200ms
+        QTimer.singleShot(400, set_green)  # Verde a 400ms
+        QTimer.singleShot(750, restore_color)  # Ritorno normale a 750ms
+
+        # === AVVIA ANIMAZIONE ===
+        parallel_group.start()
+
+        # Mantieni riferimenti per evitare garbage collection
+        self._gear_animation = parallel_group
+        self._gear_shake_anim = shake_anim
 
     def _animate_transition(self, from_widget, to_widget):
         """
@@ -474,7 +633,7 @@ class AutopilotWidget(QWidget):
         self._to_effect = to_effect
 
     def refresh_events(self):
-        """Ricarica gli eventi programmati dai bot (modalità visualizzazione)."""
+        """Ricarica gli eventi programmati dai bot (modalità visualizzazione) con layout a 2 colonne."""
         # Pulisci eventi esistenti
         while self.view_layout.count() > 0:
             item = self.view_layout.takeAt(0)
@@ -495,10 +654,35 @@ class AutopilotWidget(QWidget):
                     "time": target_time,
                     "icon": Icons.CLOCK,
                     "color": "#fd7e14",
+                    "site": "portale_fornitori",
                 }
             )
 
-        # Qui puoi aggiungere altri bot quando saranno disponibili
+        # Bot Scarico OdA Generale (Portale Fornitori)
+        if config.get("scarico_oda_generale_autopilot_enabled", False):
+            target_time = config.get("scarico_oda_generale_autopilot_time", "09:00")
+            events.append(
+                {
+                    "name": "Scarico OdA Generale",
+                    "time": target_time,
+                    "icon": Icons.DOWNLOAD,
+                    "color": "#0d6efd",
+                    "site": "portale_fornitori",
+                }
+            )
+
+        # Bot Ricerca PDL (SafeWork)
+        if config.get("ricerca_pdl_autopilot_enabled", False):
+            target_time = config.get("ricerca_pdl_autopilot_time", "09:00")
+            events.append(
+                {
+                    "name": "Ricerca PDL",
+                    "time": target_time,
+                    "icon": Icons.SEARCH,
+                    "color": "#198754",
+                    "site": "safework",
+                }
+            )
 
         # Se non ci sono eventi, mostra messaggio
         if not events:
@@ -518,18 +702,21 @@ class AutopilotWidget(QWidget):
             """
             )
             empty_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.view_layout.addWidget(empty_lbl)
+            # Span su 2 colonne
+            self.view_layout.addWidget(empty_lbl, 0, 0, 1, 2)
             return
 
-        # Aggiungi event cards
-        for event in events:
+        # Aggiungi event cards in griglia 2 colonne
+        for idx, event in enumerate(events):
             card = AutopilotEventCard(
                 event["name"], event["time"], event["icon"], event["color"], self
             )
-            self.view_layout.addWidget(card)
+            row = idx // 2  # Riga
+            col = idx % 2  # Colonna (0 o 1)
+            self.view_layout.addWidget(card, row, col)
 
     def _refresh_config(self):
-        """Ricarica le configurazioni dei bot (modalità configurazione)."""
+        """Ricarica le configurazioni dei bot (modalità configurazione) con layout a 2 colonne."""
         # Pulisci config esistenti
         while self.config_layout.count() > 0:
             item = self.config_layout.takeAt(0)
@@ -543,13 +730,29 @@ class AutopilotWidget(QWidget):
                 "name": "Timbrature Automatiche",
                 "icon": Icons.CLOCK,
                 "color": "#fd7e14",
+                "site": "portale_fornitori",
             },
-            # Aggiungi altri bot qui in futuro
+            {
+                "id": "scarico_oda_generale",
+                "name": "Scarico OdA Generale",
+                "icon": Icons.DOWNLOAD,
+                "color": "#0d6efd",
+                "site": "portale_fornitori",
+            },
+            {
+                "id": "ricerca_pdl",
+                "name": "Ricerca PDL",
+                "icon": Icons.SEARCH,
+                "color": "#198754",
+                "site": "safework",
+            },
         ]
 
-        # Aggiungi config cards
-        for bot in bots:
+        # Aggiungi config cards in griglia 2 colonne
+        for idx, bot in enumerate(bots):
             card = AutopilotConfigCard(
                 bot["id"], bot["name"], bot["icon"], bot["color"], self
             )
-            self.config_layout.addWidget(card)
+            row = idx // 2  # Riga
+            col = idx % 2  # Colonna (0 o 1)
+            self.config_layout.addWidget(card, row, col)

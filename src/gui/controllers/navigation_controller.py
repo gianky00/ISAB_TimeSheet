@@ -78,6 +78,15 @@ class NavigationController(QObject):
         from src.gui.dashboard_panel import DashboardPanel
 
         self.mw.dashboard_panel = DashboardPanel()
+
+        # Connetti AutopilotWidget al footer per aggiornamenti in tempo reale
+        if hasattr(self.mw, "footer_left") and hasattr(
+            self.mw.dashboard_panel, "autopilot_widget"
+        ):
+            self.mw.dashboard_panel.autopilot_widget.set_footer_widget(
+                self.mw.footer_left
+            )
+
         return self.mw.dashboard_panel
 
     def _create_automazioni(self):
