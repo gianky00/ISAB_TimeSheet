@@ -1015,6 +1015,23 @@ class ExcelImporter:
                     .fillna("")
                 )
 
+            # Helper for European numbers (1.234,56 -> 1234.56)
+            def clean_euro_num(x):
+                if pd.isna(x) or str(x).strip() == "":
+                    return 0.0
+                if isinstance(x, (int, float)):
+                    return float(x)
+                s = str(x).strip()
+                # If contains both . and , assume . is thousand, , is decimal
+                if "." in s and "," in s:
+                    s = s.replace(".", "").replace(",", ".")
+                elif "," in s:
+                    s = s.replace(",", ".")
+                try:
+                    return float(s)
+                except ValueError:
+                    return 0.0
+
             for num_col in [
                 "qta",
                 "valore_netto_pos",
@@ -1023,9 +1040,11 @@ class ExcelImporter:
                 "quantita",
                 "prezzo_lordo",
             ]:
-                df[num_col] = pd.to_numeric(df[num_col], errors="coerce").fillna(0.0)
+                # Use apply with cleaner function
+                df[num_col] = df[num_col].apply(clean_euro_num)
 
-            for int_col in [
+            # IDs as Strings to avoid overflow/precision loss
+            for str_col in [
                 "oda",
                 "pos_oda",
                 "num_riga",
@@ -1034,8 +1053,12 @@ class ExcelImporter:
                 "contratto",
                 "posizione_contratto",
             ]:
-                df[int_col] = (
-                    pd.to_numeric(df[int_col], errors="coerce").fillna(0).astype(int)
+                df[str_col] = (
+                    df[str_col]
+                    .fillna(0)
+                    .astype(str)
+                    .str.replace(r"\.0$", "", regex=True) # remove .0 from floats
+                    .str.strip()
                 )
 
             string_cols = [

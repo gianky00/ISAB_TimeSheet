@@ -347,9 +347,9 @@ class DatabaseManager:
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS storico_oda (
-                oda INTEGER,
-                pos_oda INTEGER,
-                num_riga INTEGER,
+                oda TEXT,
+                pos_oda TEXT,
+                num_riga TEXT,
                 org_acq TEXT,
                 data_oda TEXT,
                 stato TEXT,
@@ -361,16 +361,16 @@ class DatabaseManager:
                 valore_netto_pos REAL,
                 valore_residuo REAL,
                 valore_netto_oda REAL,
-                divisione INTEGER,
-                destinatario INTEGER,
+                divisione TEXT,
+                destinatario TEXT,
                 nome_destinatario TEXT,
                 codice_fornitore TEXT,
                 descrizione_fornitore TEXT,
                 emittente_fattura TEXT,
                 desc_emittente_fattura TEXT,
                 contract_card TEXT,
-                contratto INTEGER,
-                posizione_contratto INTEGER,
+                contratto TEXT,
+                posizione_contratto TEXT,
                 gruppo_acquisti TEXT,
                 indicatore_rilascio TEXT,
                 stato_rilascio TEXT,
@@ -393,6 +393,15 @@ class DatabaseManager:
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_oda_contratto ON storico_oda(contratto)"
         )
+
+    @staticmethod
+    def _mig_storico_oda_v2(conn: sqlite3.Connection):
+        """Fix tipi colonne per evitare overflow (v2)"""
+        # Poiché SQLite non supporta ALTER COLUMN facilmente, e i dati sono corrotti/cache,
+        # ricreiamo la tabella.
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS storico_oda")
+        DatabaseManager._mig_storico_oda_v1(conn)
 
     @staticmethod
     def _mig_contabilita_v3(conn: sqlite3.Connection):
@@ -452,7 +461,7 @@ class DatabaseManager:
 
     MIGRATIONS_PDL = {1: _mig_pdl_v1}
 
-    MIGRATIONS_STORICO_ODA = {1: _mig_storico_oda_v1}
+    MIGRATIONS_STORICO_ODA = {1: _mig_storico_oda_v1, 2: _mig_storico_oda_v2}
 
 
 db_manager = DatabaseManager()
