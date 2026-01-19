@@ -493,10 +493,10 @@ class MainWindow(QMainWindow):
         # Initial Autopilot Status Update
         self._update_autopilot_status_ui()
 
-        # Timer per il countdown Autopilot (aggiorna ogni minuto)
+        # Timer per il countdown Autopilot (aggiorna ogni 30 secondi)
         self.autopilot_timer = QTimer(self)
         self.autopilot_timer.timeout.connect(self._update_autopilot_status_ui)
-        self.autopilot_timer.start(60000)  # 60 secondi
+        self.autopilot_timer.start(30000)  # 30 secondi
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -638,7 +638,10 @@ class MainWindow(QMainWindow):
         for site, name, enabled_key, time_key in tasks:
             if config.get(enabled_key, False):
                 target_time_str = config.get(time_key, "09:00")
+                # Supporto sia per "09:00" che per "9:00"
                 target_time = QTime.fromString(target_time_str, "HH:mm")
+                if not target_time.isValid():
+                    target_time = QTime.fromString(target_time_str, "H:mm")
 
                 if not target_time.isValid():
                     continue
