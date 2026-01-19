@@ -41,6 +41,7 @@ class Toast(QWidget):
         message: str,
         toast_type: str = Type.INFO,
         duration: int = 3000,
+        pulse: bool = False,
         parent=None,
     ):
         """
@@ -50,11 +51,13 @@ class Toast(QWidget):
             message: Il messaggio da visualizzare.
             toast_type: Tipo di toast (info, success, warning, error).
             duration: Durata della visualizzazione in millisecondi.
+            pulse: Se True, abilita animazione pulsante.
             parent: Widget genitore.
         """
         super().__init__(parent)
         self._duration = duration
         self._type = toast_type
+        self._pulse = pulse
         self._palette = get_palette()
 
         self.setWindowFlags(
@@ -69,18 +72,24 @@ class Toast(QWidget):
 
     def _setup_ui(self, message: str):
         """Configura l'interfaccia utente del toast con icone e colori."""
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
+        # Main layout for the Window
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)  # Spazio per l'ombra o scale
+
+        # Inner Container for content
+        self.container = QWidget()
+        container_layout = QHBoxLayout(self.container)
+        container_layout.setContentsMargins(16, 12, 16, 12)
 
         icon_path, color_key = self.TYPE_CONFIG.get(
             self._type, self.TYPE_CONFIG[self.Type.INFO]
         )
         accent = getattr(self._palette, color_key, self._palette.info)
 
-        # Container
-        self.setStyleSheet(
+        # Style moved to container
+        self.container.setStyleSheet(
             f"""
-            Toast {{
+            QWidget {{
                 background-color: {self._palette.surface};
                 border: 1px solid {self._palette.border};
                 border-left: 4px solid {accent};
@@ -94,7 +103,7 @@ class Toast(QWidget):
         icon = get_colored_icon(get_asset_path(icon_path), "#000000")
         icon_label.setPixmap(icon.pixmap(QSize(20, 20)))
         icon_label.setStyleSheet("border: none; background: transparent;")
-        layout.addWidget(icon_label)
+        container_layout.addWidget(icon_label)
 
         # Message
         msg_label = QLabel(message)
@@ -106,13 +115,14 @@ class Toast(QWidget):
             background: transparent;
         """
         )
-        layout.addWidget(msg_label)
+        container_layout.addWidget(msg_label)
 
+        main_layout.addWidget(self.container)
         self.adjustSize()
 
     def _setup_animation(self):
-        """Configura le animazioni di fade-in e fade-out."""
-        # Opacity effect
+        """Configura le animazioni di fade-in e fade-out (e pulse se attivo)."""
+        # 1. Opacity Effect (Outer Window)
         self._opacity = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self._opacity)
 
@@ -129,6 +139,22 @@ class Toast(QWidget):
         self._fade_out.setEndValue(0.0)
         self._fade_out.finished.connect(self.deleteLater)
 
+        # 2. Pulse Animation (Inner Container) if requested
+        if self._pulse:
+            from PyQt6.QtWidgets import QGraphicsScaleEffect
+            from PyQt6.QtCore import QEasingCurve
+
+            self._scale_effect = QGraphicsScaleEffect(self.container)
+            self.container.setGraphicsEffect(self._scale_effect)
+            
+            self._pulse_anim = QPropertyAnimation(self._scale_effect, b"scale")
+            self._pulse_anim.setDuration(800)
+            self._pulse_anim.setStartValue(1.0)
+            self._pulse_anim.setKeyValueAt(0.5, 1.05) # Scale up 5%
+            self._pulse_anim.setEndValue(1.0)
+            self._pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+            self._pulse_anim.setLoopCount(-1) # Infinite loop
+            
     def show_at(self, x: int, y: int):
         """
         Visualizza il toast in una posizione specifica e avvia il timer di auto-chiusura.
@@ -140,6 +166,9 @@ class Toast(QWidget):
         self.move(x, y)
         self.show()
         self._fade_in.start()
+        
+        if self._pulse and hasattr(self, "_pulse_anim"):
+            self._pulse_anim.start()
 
         # Auto-hide
         QTimer.singleShot(self._duration, self._fade_out.start)
@@ -167,6 +196,7 @@ class ToastManager:
         toast_type: str = Toast.Type.INFO,
         duration: int = 3000,
         position: str = "top",
+        pulse: bool = False,
     ):
         """
         Crea e visualizza un nuovo toast.
@@ -176,10 +206,11 @@ class ToastManager:
             toast_type: Tipo di notifica.
             duration: Durata in ms.
             position: "top" (default) o "bottom" (sopra il footer).
+            pulse: Se True, attiva animazione pulsante.
         """
 
         parent = QApplication.activeWindow()
-        toast = Toast(message, toast_type, duration, parent)
+        toast = Toast(message, toast_type, duration, pulse, parent)
 
         # Clean up closed toasts from list
         self._active_toasts = [t for t in self._active_toasts if t.isVisible()]

@@ -322,6 +322,7 @@ class MainWindow(QMainWindow):
                 "success",
                 5000,
                 position="bottom",
+                pulse=True
             ),
         )
 
