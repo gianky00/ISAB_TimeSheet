@@ -20,6 +20,7 @@ from PyQt6.QtCore import QObject
 # 7: SETTINGS
 # 8: HELP
 # 9: NOTIFICATIONS
+# 10: STORICO_ODA
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class NavigationController(QObject):
             7: self._create_settings_panel,
             8: self._create_help,
             9: self._create_notifications,
+            10: self._create_storico_oda,
         }
 
         creator = creators.get(index)
@@ -113,6 +115,12 @@ class NavigationController(QObject):
 
         self.mw.pdl_db_panel = PDLDBPanel()
         return self.mw.pdl_db_panel
+
+    def _create_storico_oda(self):
+        from src.gui.storico_oda_panel import StoricoOdaPanel
+
+        self.mw.storico_oda_panel = StoricoOdaPanel()
+        return self.mw.storico_oda_panel
 
     def _create_help(self):
         from src.gui.help_panel import HelpPanel

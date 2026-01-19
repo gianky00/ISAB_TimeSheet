@@ -989,6 +989,9 @@ class ExcelImporter:
                  return False, "Nessuna colonna riconosciuta.", []
 
             df.rename(columns=rename_map, inplace=True)
+            
+            # Remove duplicate columns (keep first) to avoid Series/DataFrame type errors
+            df = df.loc[:, ~df.columns.duplicated()]
 
             # Ensure all columns exist
             for db_col in cls.STORICO_ODA_COLS:

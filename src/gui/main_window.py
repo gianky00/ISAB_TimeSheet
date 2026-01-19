@@ -64,6 +64,7 @@ class PageIndex(IntEnum):
     SETTINGS = 7
     HELP = 8
     NOTIFICATIONS = 9
+    STORICO_ODA = 10
 
 
 class MainWindow(QMainWindow):
@@ -581,6 +582,9 @@ class MainWindow(QMainWindow):
             else None,
             PageIndex.ANAGRAFICHE: lambda: self.pdl_db_panel.refresh_data()
             if hasattr(self, "pdl_db_panel")
+            else None,
+            PageIndex.STORICO_ODA: lambda: self.storico_oda_panel.refresh_data()
+            if hasattr(self, "storico_oda_panel")
             else None,
         }
 
