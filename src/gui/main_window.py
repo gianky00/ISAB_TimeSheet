@@ -493,10 +493,10 @@ class MainWindow(QMainWindow):
         # Initial Autopilot Status Update
         self._update_autopilot_status_ui()
 
-        # Timer per il countdown Autopilot (aggiorna ogni 2 secondi)
+        # Timer per il countdown Autopilot (aggiorna ogni 5 secondi)
         self.autopilot_timer = QTimer(self)
         self.autopilot_timer.timeout.connect(self._update_autopilot_status_ui)
-        self.autopilot_timer.start(2000)  # 2 secondi
+        self.autopilot_timer.start(5000)  # 5 secondi
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
