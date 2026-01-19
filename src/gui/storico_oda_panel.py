@@ -6,7 +6,7 @@ Pannello per la visualizzazione del Database Storico OdA con architettura Master
 from typing import Any, List, Tuple
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
+from PyQt6.QtGui import QStandardItem, QStandardItemModel, QFont
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFormLayout,
@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
+    QStyledItemDelegate,
+    QStyle
 )
 
 from src.core.constants import Icons
@@ -28,16 +30,87 @@ from src.gui.formatters import format_currency_smart, format_date_it
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
+class ChildDescriptionDelegate(QStyledItemDelegate):
+    """Delegate per estendere il testo della descrizione (Col 1) sulla colonna successiva per i figli."""
+
+    def __init__(self, tree_view):
+        super().__init__(tree_view)
+        self.tree = tree_view
+
+    def paint(self, painter, option, index):
+        # Verifica se siamo in una riga figlia
+        if index.parent().isValid():
+            col = index.column()
+            # Gestione Colonna 1 (Descrizione) e Colonna 2 (Pos, che è vuota per i figli)
+            if col == 1 or col == 2:
+                # Recupera i dati dalla colonna 1 (dove c'è il testo)
+                # Se siamo alla col 2, dobbiamo prendere i dati dalla col 1 (sibling)
+                if col == 1:
+                    text = index.data()
+                else:
+                    # Col 2: Prendi testo dalla col 1
+                    sibling = index.sibling(index.row(), 1)
+                    text = sibling.data()
+
+                # Calcola larghezze
+                width_col1 = self.tree.columnWidth(1)
+                width_col2 = self.tree.columnWidth(2)
+                
+                painter.save()
+
+                # Gestione Selezione (Background)
+                # Il background viene disegnato dalla view di solito, ma per sicurezza ridisegniamo
+                # se vogliamo stile custom o se l'estensione crea artefatti.
+                # Qui ci limitiamo a gestire il testo.
+                
+                if option.state & QStyle.StateFlag.State_Selected:
+                    painter.setPen(option.palette.highlightedText().color())
+                else:
+                    painter.setPen(option.palette.text().color())
+
+                # Calcolo Rettangolo di Disegno "Totale" (spanning col 1 + 2)
+                # L'obiettivo è disegnare il testo in un rettangolo che copre entrambe le colonne,
+                # ma traslato correttamente in base alla colonna corrente.
+                
+                if col == 1:
+                    # Siamo in Col 1: Rettangolo è (rect.x, rect.y, w1 + w2, h)
+                    draw_rect = option.rect.adjusted(0, 0, width_col2, 0)
+                else:
+                    # Siamo in Col 2: Rettangolo deve "iniziare" dalla Col 1 visivamente
+                    # rect.x è l'inizio della Col 2.
+                    # Vogliamo disegnare allo stesso offset assoluto di Col 1.
+                    # draw_rect deve essere spostato a sinistra di width_col1 ed esteso a destra
+                    draw_rect = option.rect.adjusted(-width_col1, 0, 0, 0)
+                    # La larghezza del draw_rect diventa width_col2 + width_col1?
+                    # No, rect.adjusted modifica le coordinate.
+                    # option.rect (Col2) ha width = w2.
+                    # Adjusted(-w1, 0, 0, 0) -> x = x - w1, width = w2 + w1.
+                    # Questo è corretto. Il testo verrà disegnato a partire dall'inizio di Col 1.
+                
+                # Disegno
+                # Impostiamo il clipping al rect della cella corrente per evitare sbavature su altre colonne
+                # (anche se il drawText clippa, è meglio essere espliciti se usiamo rect più grandi)
+                painter.setClipRect(option.rect)
+                
+                # Align Left per iniziare sempre da sinistra (inizio Col 1)
+                painter.drawText(draw_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
+                
+                painter.restore()
+                return
+
+        super().paint(painter, option, index)
+
+
 class StoricoOdaPanel(QWidget):
     """Pannello per la visualizzazione del Database Storico OdA con Tree View (Grouped)."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         # Colonne della TreeView (Master)
-        # Order: OdA, Data OdA, Pos, Valore Netto, Stato
+        # Sequence: Data OdA, OdA, Pos, Valore Netto, Stato
         self.master_headers = [
-            "OdA",
             "Data OdA",
+            "OdA",
             "Pos",
             "Valore Netto",
             "Stato",
@@ -125,13 +198,21 @@ class StoricoOdaPanel(QWidget):
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tree.setAnimated(True)
-
+        # Disabilita default double click expansion per gestirla manualmente su tutte le colonne
+        self.tree.setExpandsOnDoubleClick(False)
+        
         # Selection
         self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        self.tree.expanded.connect(self._on_item_expanded)
+        self.tree.collapsed.connect(self._on_item_collapsed)
+        self.tree.doubleClicked.connect(self._on_tree_double_clicked)
 
         # Header Styling
         header = self.tree.header()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        
+        # Custom Delegate per visualizzazione estesa descrizione
+        self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
         self.splitter.addWidget(self.tree)
 
@@ -207,6 +288,41 @@ class StoricoOdaPanel(QWidget):
             # Let's see how populate_tree attaches data.
             pass
 
+    def _on_item_expanded(self, index):
+        """Imposta il font in grassetto quando il gruppo viene espanso."""
+        self._set_row_bold(index, True)
+
+    def _on_item_collapsed(self, index):
+        """Rimuove il grassetto quando il gruppo viene collassato."""
+        self._set_row_bold(index, False)
+
+    def _on_tree_double_clicked(self, index):
+        """Gestisce il doppio click per espandere/collassare la riga (su qualsiasi colonna)."""
+        if not index.isValid():
+            return
+        
+        # QStandardItemModel attaches children ONLY to Column 0 items.
+        # Clicking on Col 1, 2... returns an index for an item that technically has NO children.
+        # We must redirect the expand/collapse action to the sibling at Column 0.
+        source_index = index.sibling(index.row(), 0)
+        
+        if self.tree.isExpanded(source_index):
+            self.tree.collapse(source_index)
+        else:
+            self.tree.expand(source_index)
+
+    def _set_row_bold(self, parent_index, bold: bool):
+        """Helper per cambiare lo stile di tutte le colonne della riga."""
+        model = self.tree.model()
+        row = parent_index.row()
+        bold_font = QFont()
+        bold_font.setBold(bold)
+        
+        for col in range(self.model.columnCount()):
+            item = self.model.item(row, col)
+            if item:
+                item.setFont(bold_font)
+
     def refresh_data(self):
         """Aggiorna i dati della tabella."""
         query, params = self._build_query()
@@ -239,18 +355,36 @@ class StoricoOdaPanel(QWidget):
         params = []
 
         if search_text:
+            # Search in ALL relevant columns
             query += """ AND (
-                CAST(oda AS TEXT) LIKE ? OR
-                descrizione LIKE ? OR
-                descrizione_fornitore LIKE ? OR
+                CAST(oda AS TEXT) LIKE ? OR 
+                descrizione LIKE ? OR 
+                descrizione_fornitore LIKE ? OR 
                 CAST(contratto AS TEXT) LIKE ? OR
-                codice_fornitore LIKE ?
+                codice_fornitore LIKE ? OR
+                CAST(pos_oda AS TEXT) LIKE ? OR
+                stato LIKE ? OR
+                cat_contab LIKE ? OR
+                qta LIKE ? OR
+                uom LIKE ? OR
+                data_consegna LIKE ? OR
+                nome_destinatario LIKE ? OR
+                emittente_fattura LIKE ? OR
+                desc_emittente_fattura LIKE ? OR
+                contract_card LIKE ? OR
+                gruppo_acquisti LIKE ? OR
+                indicatore_rilascio LIKE ? OR
+                stato_rilascio LIKE ? OR
+                attivita LIKE ? OR
+                CAST(num_riga AS TEXT) LIKE ? OR
+                testo_breve LIKE ?
             )"""
             p = f"%{search_text}%"
-            params.extend([p, p, p, p, p])
+            # Number of placeholders must match columns above (21)
+            params.extend([p] * 21)
 
         # Order by ODA, POS, NUM_RIGA so grouping is easy
-        query += " ORDER BY oda DESC, pos_oda ASC, num_riga ASC LIMIT 3000"
+        query += " ORDER BY oda DESC, pos_oda ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
         return query, params
 
     def _populate_tree(self, full_rows: List[Tuple]):
@@ -270,35 +404,46 @@ class StoricoOdaPanel(QWidget):
 
             # Create Parent Group if not exists
             if group_key not in groups:
-                # Parent columns: OdA, Data OdA, Pos, Valore Netto, Stato
-                item_oda = QStandardItem(str(oda))
+                # Parent columns: Data OdA, OdA, Pos, Valore Netto, Stato
                 item_data = QStandardItem(format_date_it(str(r[1])))
+                item_oda = QStandardItem(str(oda))
                 item_pos = QStandardItem(str(pos))
                 item_val = QStandardItem(format_currency_smart(str(r[10])))
                 item_stato = QStandardItem(str(r[4]))
-
-                # Make parent strictly read-only
-                for it in [item_oda, item_data, item_pos, item_val, item_stato]:
+                
+                # Parent items (initially not bold until expanded)
+                for it in [item_data, item_oda, item_pos, item_val, item_stato]:
                     it.setEditable(False)
 
                 # Store full data on the parent too (representative of the position)
-                item_oda.setData(r, Qt.ItemDataRole.UserRole)
+                # Store on first column (Data OdA)
+                item_data.setData(r, Qt.ItemDataRole.UserRole)
 
-                self.model.appendRow([item_oda, item_data, item_pos, item_val, item_stato])
-                groups[group_key] = item_oda
+                self.model.appendRow([item_data, item_oda, item_pos, item_val, item_stato])
+                groups[group_key] = item_data
 
             parent_item = groups[group_key]
 
             # Create Child Row (The detailed line)
             # Child layout mapping to columns:
-            # Col 0 (OdA) -> "Riga: {num_riga}"
-            # Col 1 (Data) -> {Testo Breve} or {Descrizione}
+            # Col 0 (Data) -> "Riga: {num_riga}"
+            # Col 1 (OdA) -> {Testo Breve} or {Descrizione}
             # Col 2 (Pos) -> ""
             # Col 3 (Valore) -> {Prezzo Lordo}
             # Col 4 (Stato) -> {Quantita} {UOM}
 
             num_riga = r[27]
-            desc = r[31] if r[31] else r[6] # Testo breve pref, else descrizione
+            
+            # Robust Text Extraction
+            raw_testo = str(r[31]).strip() if r[31] else ""
+            raw_desc = str(r[6]).strip() if r[6] else ""
+            
+            # Use Testo Breve if valid (not "nan", not empty), else Descrizione
+            if raw_testo and raw_testo.lower() != "nan":
+                desc = raw_testo
+            else:
+                desc = raw_desc
+
             prezzo = r[30]
             qta = r[28]
             uom = r[29]
