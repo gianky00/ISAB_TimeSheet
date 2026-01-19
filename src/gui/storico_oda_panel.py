@@ -6,7 +6,7 @@ Pannello per la visualizzazione del Database Storico OdA con architettura Master
 from typing import Any, List, Tuple
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
+from PyQt6.QtGui import QStandardItem, QStandardItemModel, QFont
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFormLayout,
@@ -20,12 +20,50 @@ from PyQt6.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
+    QStyledItemDelegate,
+    QStyle
 )
 
 from src.core.constants import Icons
 from src.core.database import db_manager
 from src.gui.formatters import format_currency_smart, format_date_it
 from src.utils.helpers import get_asset_path, get_colored_icon
+
+
+class ChildDescriptionDelegate(QStyledItemDelegate):
+    """Delegate per estendere il testo della descrizione (Col 1) sulla colonna successiva per i figli."""
+
+    def __init__(self, tree_view):
+        super().__init__(tree_view)
+        self.tree = tree_view
+
+    def paint(self, painter, option, index):
+        if index.column() == 1 and index.parent().isValid():
+            # È una riga figlia, colonna Descrizione.
+            # Estendi il rettangolo per includere la larghezza della colonna successiva (Pos)
+            next_col_width = self.tree.columnWidth(2)
+            
+            painter.save()
+            
+            # Setup rect esteso
+            full_rect = option.rect.adjusted(0, 0, next_col_width, 0)
+            
+            # Gestione stato selezione
+            if option.state & QStyle.State.State_Selected:
+                painter.fillRect(option.rect, option.palette.highlight())
+                painter.setPen(option.palette.highlightedText().color())
+            else:
+                painter.setPen(option.palette.text().color())
+                # Disegna sfondo (opzionale, solitamente gestito dalla view)
+            
+            # Disegna Testo
+            text = index.data()
+            # Usa TextWordWrap se necessario, o ElideRight
+            painter.drawText(full_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
+            
+            painter.restore()
+        else:
+            super().paint(painter, option, index)
 
 
 class StoricoOdaPanel(QWidget):
@@ -132,6 +170,9 @@ class StoricoOdaPanel(QWidget):
         # Header Styling
         header = self.tree.header()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        
+        # Custom Delegate per visualizzazione estesa descrizione
+        self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
         self.splitter.addWidget(self.tree)
 
@@ -250,7 +291,7 @@ class StoricoOdaPanel(QWidget):
             params.extend([p, p, p, p, p])
 
         # Order by ODA, POS, NUM_RIGA so grouping is easy
-        query += " ORDER BY oda DESC, pos_oda ASC, num_riga ASC LIMIT 3000"
+        query += " ORDER BY oda DESC, pos_oda ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
         return query, params
 
     def _populate_tree(self, full_rows: List[Tuple]):
@@ -276,10 +317,13 @@ class StoricoOdaPanel(QWidget):
                 item_pos = QStandardItem(str(pos))
                 item_val = QStandardItem(format_currency_smart(str(r[10])))
                 item_stato = QStandardItem(str(r[4]))
-
-                # Make parent strictly read-only
+                
+                # Make parent bold
+                bold_font = QFont()
+                bold_font.setBold(True)
                 for it in [item_oda, item_data, item_pos, item_val, item_stato]:
                     it.setEditable(False)
+                    it.setFont(bold_font)
 
                 # Store full data on the parent too (representative of the position)
                 item_oda.setData(r, Qt.ItemDataRole.UserRole)
