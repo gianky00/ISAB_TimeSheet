@@ -139,6 +139,12 @@ AVAILABLE_ACTIONS = {
         "color": "#fd7e14",
         "path": ["DataBase"],
     },
+    "nav_storico_oda": {
+        "text": "Storico OdA",
+        "icon": Icons.FILE_TEXT,
+        "color": "#fd7e14",
+        "path": ["DataBase"],
+    },
     # ============================================================
     # PRIMO LIVELLO: Lyra AI (selectable root)
     # ============================================================

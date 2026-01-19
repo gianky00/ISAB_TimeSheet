@@ -184,6 +184,11 @@ class DashboardPanel(QWidget):
         # ============================================================
         # DATABASE > STRUMENTALE
         # ============================================================
+        elif key == "nav_storico_oda":
+            # DataBase > Storico OdA (page 10)
+            if hasattr(main_window, "_navigate_to"):
+                main_window._navigate_to(10)
+
         elif key.startswith("nav_sub_strumentale_"):
             # Strumentale Sub-Tabs
             try:
