@@ -237,6 +237,11 @@ class SidebarWidget(QFrame):
         self.btn_pdl.clicked.connect(lambda: self._handle_child_click(6))
         self.group_db.add_child(self.btn_pdl)
 
+        # 10: Storico OdA
+        self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
+        self.btn_storico_oda.clicked.connect(lambda: self._handle_child_click(10))
+        self.group_db.add_child(self.btn_storico_oda)
+
         layout.addStretch()
 
         # 2: Lyra AI
@@ -302,8 +307,8 @@ class SidebarWidget(QFrame):
         for idx, btn in buttons_map.items():
             btn.setChecked(idx == index)
 
-        # Gestione Gruppo Database (Indici 3, 4, 5, 6)
-        db_indices = [3, 4, 5, 6]
+        # Gestione Gruppo Database (Indici 3, 4, 5, 6, 10)
+        db_indices = [3, 4, 5, 6, 10]
         self.group_db.set_active_index(index, db_indices)
 
         # Gestione Gruppo Notifiche (Indice 9)

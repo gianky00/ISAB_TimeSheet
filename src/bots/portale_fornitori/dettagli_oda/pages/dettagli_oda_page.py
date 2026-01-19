@@ -201,7 +201,7 @@ class DettagliOdAPage:
         date_a: str,
         source_dir: Path,
         dest_dir: Path,
-    ) -> bool:
+    ) -> Optional[Path]:
         """
         Compila il form di ricerca per un OdA e avvia l'esportazione dei dati.
 
@@ -213,7 +213,7 @@ class DettagliOdAPage:
             source_dir: Directory di download del browser.
             dest_dir: Directory di destinazione finale.
         Returns:
-            bool: True se l'operazione è completata con successo.
+            Optional[Path]: Il percorso del file scaricato se successo, altrimenti None.
         """
         try:
             # 1. Fill Form
@@ -280,7 +280,9 @@ class DettagliOdAPage:
                     if count == 0:
                         self.log("  Nessun risultato. Salto esportazione.")
                         self._close_all_tabs()
-                        return True
+                        # Return dummy True or None? Logic expects Path or False.
+                        # If no results, we technically finished "processing" but no file.
+                        return None
                 else:
                     self.log(f"  ⚠️ Impossibile parsare risultati: {count_text}")
             except Exception as e:
@@ -310,13 +312,13 @@ class DettagliOdAPage:
                 target_filename = f"ODA_Generale_al_{safe_date_a}.xlsx"
 
             # Export and Download (using source and dest dirs)
-            res = self._download(
+            final_path = self._download(
                 source_dir, dest_dir, target_filename, export_btn_locator
             )
 
             # Cleanup
             self._close_all_tabs()
-            return res
+            return final_path
 
         except Exception as e:
             self.log(f"  ✗ Errore processamento: {e}")
@@ -326,7 +328,7 @@ class DettagliOdAPage:
                 self._close_all_tabs()
             except Exception:
                 pass
-            return False
+            return None
 
     def _close_all_tabs(self):
         """Chiude tutte le schede aperte nel portale cliccando sull'icona X."""
@@ -359,7 +361,7 @@ class DettagliOdAPage:
         dest_dir: Path,
         target_filename: str,
         button_locator: tuple,
-    ) -> bool:
+    ) -> Optional[Path]:
         """Esegue il download, attende il file e lo sposta nella cartella finale."""
         try:
             files_before = {
@@ -369,17 +371,17 @@ class DettagliOdAPage:
             }
 
             if not self._click_export_button(button_locator):
-                return False
+                return None
 
             downloaded_file = self._wait_for_download(source_dir, files_before)
             if not downloaded_file:
                 self.log("  ✗ File non trovato nella cartella Download.")
-                return False
+                return None
 
             return self._finalize_download(downloaded_file, dest_dir, target_filename)
         except Exception as e:
             self.log(f"  ✗ Errore download: {e}")
-            return False
+            return None
 
     def _click_export_button(self, locator: tuple) -> bool:
         """Tenta di cliccare il pulsante di esportazione Excel gestendo intercettazioni."""
@@ -416,7 +418,7 @@ class DettagliOdAPage:
             time.sleep(0.5)
         return None
 
-    def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> bool:
+    def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Optional[Path]:
         """Sposta il file scaricato nella destinazione finale rinominandolo."""
         import shutil
 
@@ -431,4 +433,4 @@ class DettagliOdAPage:
 
         shutil.move(str(src), str(target_path))
         self.log(f"  ✓ Scaricato: {target_path.name}")
-        return True
+        return target_path

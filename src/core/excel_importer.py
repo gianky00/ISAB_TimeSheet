@@ -124,6 +124,44 @@ class ExcelImporter:
 
     CERTIFICATI_CAMPIONE_COLS = list(CERTIFICATI_CAMPIONE_MAPPING.values())
 
+    # Mapping Storico OdA
+    STORICO_ODA_MAPPING = {
+        "Org. Acq.": "org_acq",
+        "Data OdA": "data_oda",
+        "OdA": "oda",
+        "Pos OdA": "pos_oda",
+        "Stato": "stato",
+        "Cat. Contab.": "cat_contab",
+        "Descrizione": "descrizione",
+        "Qta": "qta",
+        "UOM": "uom",
+        "Data Consegna": "data_consegna",
+        "Valore Netto Pos. ODA": "valore_netto_pos",
+        "Valore Residuo ODA": "valore_residuo",
+        "Valore Netto ODA": "valore_netto_oda",
+        "Divisione": "divisione",
+        "Destinatario": "destinatario",
+        "Nome Destinatario": "nome_destinatario",
+        "Codice Fornitore": "codice_fornitore",
+        "Descrizione Fornitore": "descrizione_fornitore",
+        "Emittente Fattura": "emittente_fattura",
+        "Descrizione Emittente Fattura": "desc_emittente_fattura",
+        "Contract Card": "contract_card",
+        "Contratto": "contratto",
+        "Posizione Contratto": "posizione_contratto",
+        "Gruppo Acquisti": "gruppo_acquisti",
+        "Indicatore Rilascio": "indicatore_rilascio",
+        "Stato Rilascio": "stato_rilascio",
+        "Attività": "attivita",  # Matches Attivit via robust check
+        "Num riga": "num_riga",
+        "Quantità": "quantita",  # Matches Quantit
+        "Unità di Mis": "unita_mis",  # Matches Unit di Mis
+        "Prezzo lordo": "prezzo_lordo",
+        "Testo breve": "testo_breve",
+    }
+
+    STORICO_ODA_COLS = list(STORICO_ODA_MAPPING.values())
+
     @staticmethod
     def _decrypt_if_encrypted(file_path: Path) -> Tuple[Any, bool]:
         """Tenta di decifrare un file Excel se protetto da password."""
@@ -907,6 +945,156 @@ class ExcelImporter:
                 return cls._process_certificati_df(df, sheet_name, header_idx)
         except Exception as e:
             return False, f"Errore importazione Certificati: {e}", []
+
+    @classmethod
+    def import_storico_oda(
+        cls,
+        file_path: str,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
+    ) -> Tuple[bool, str, List[Tuple]]:
+        """Importa il file Storico OdA."""
+        path = Path(file_path)
+        if not path.exists():
+            return False, f"File non trovato: {file_path}", []
+
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Attempt to read 'Formato PF' sheet
+                try:
+                    df = pd.read_excel(path, sheet_name="Formato PF")
+                except ValueError:
+                    # Fallback to first sheet if not found
+                    df = pd.read_excel(path, sheet_name=0)
+
+            if df.empty:
+                return False, "Foglio vuoto.", []
+
+            # Normalize Columns
+            df.columns = [str(c).strip() for c in df.columns]
+            rename_map = {}
+            for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
+                for col in df.columns:
+                    # Robust matching for special chars
+                    if excel_col == col:
+                        rename_map[col] = db_col
+                        break
+                    # Fallback for "Attività" vs "Attivit..." or "Quantità" vs "Quantit..."
+                    # We match if the first 4 chars match and length is similar
+                    if len(excel_col) >= 4 and col.startswith(excel_col[:4]):
+                         # Special handling for "Unità di Mis" vs "Unit..."
+                         if excel_col.startswith("Unit") and col.startswith("Unit"):
+                             rename_map[col] = db_col
+                             break
+                         
+                         if abs(len(col) - len(excel_col)) <= 2:
+                             rename_map[col] = db_col
+                             break
+
+            if not rename_map:
+                 return False, "Nessuna colonna riconosciuta.", []
+
+            df.rename(columns=rename_map, inplace=True)
+            
+            # Remove duplicate columns (keep first) to avoid Series/DataFrame type errors
+            df = df.loc[:, ~df.columns.duplicated()]
+
+            # Ensure all columns exist
+            for db_col in cls.STORICO_ODA_COLS:
+                if db_col not in df.columns:
+                    df[db_col] = ""
+
+            # Filter only DB columns
+            df = df[cls.STORICO_ODA_COLS]
+
+            # Cleaning
+            for date_col in ["data_oda", "data_consegna"]:
+                df[date_col] = (
+                    pd.to_datetime(df[date_col], errors="coerce")
+                    .dt.strftime("%Y-%m-%d")
+                    .fillna("")
+                )
+
+            # Helper for European numbers (1.234,56 -> 1234.56)
+            def clean_euro_num(x):
+                if pd.isna(x) or str(x).strip() == "":
+                    return 0.0
+                if isinstance(x, (int, float)):
+                    return float(x)
+                s = str(x).strip()
+                # If contains both . and , assume . is thousand, , is decimal
+                if "." in s and "," in s:
+                    s = s.replace(".", "").replace(",", ".")
+                elif "," in s:
+                    s = s.replace(",", ".")
+                try:
+                    return float(s)
+                except ValueError:
+                    return 0.0
+
+            for num_col in [
+                "qta",
+                "valore_netto_pos",
+                "valore_residuo",
+                "valore_netto_oda",
+                "quantita",
+                "prezzo_lordo",
+            ]:
+                # Use apply with cleaner function
+                df[num_col] = df[num_col].apply(clean_euro_num)
+
+            # IDs as Strings to avoid overflow/precision loss
+            for str_col in [
+                "oda",
+                "pos_oda",
+                "num_riga",
+                "divisione",
+                "destinatario",
+                "contratto",
+                "posizione_contratto",
+            ]:
+                df[str_col] = (
+                    df[str_col]
+                    .fillna(0)
+                    .astype(str)
+                    .str.replace(r"\.0$", "", regex=True) # remove .0 from floats
+                    .str.strip()
+                )
+
+            string_cols = [
+                c
+                for c in df.columns
+                if c
+                not in [
+                    "data_oda",
+                    "data_consegna",
+                    "qta",
+                    "valore_netto_pos",
+                    "valore_residuo",
+                    "valore_netto_oda",
+                    "quantita",
+                    "prezzo_lordo",
+                    "oda",
+                    "pos_oda",
+                    "num_riga",
+                    "divisione",
+                    "destinatario",
+                    "contratto",
+                    "posizione_contratto",
+                ]
+            ]
+            df[string_cols] = (
+                df[string_cols]
+                .astype(str)
+                .fillna("")
+                .apply(lambda x: x.str.strip().replace("nan", ""))
+            )
+
+            rows = list(df.itertuples(index=False, name=None))
+            return True, f"Importate {len(rows)} righe.", rows
+
+        except Exception as e:
+            return False, f"Errore importazione Storico OdA: {e}", []
 
     @classmethod
     def _find_certificati_sheet(cls, xls: pd.ExcelFile) -> Optional[str]:

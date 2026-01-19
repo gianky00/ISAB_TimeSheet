@@ -10,6 +10,7 @@ from src.bots.base import BaseBot
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
     DettagliOdAPage,
 )
+from src.core.oda_manager import OdaManager
 
 
 class DettagliOdABot(BaseBot):
@@ -89,6 +90,9 @@ class DettagliOdABot(BaseBot):
 
         page = DettagliOdAPage(self.driver, self.log)
 
+        # Inizializza DB Storico ODA
+        OdaManager.init_db()
+
         # Define source (System Downloads) and destination (Configured Path)
         source_dir = Path.home() / "Downloads"
         dest_dir = Path(self.download_path) if self.download_path else source_dir
@@ -107,10 +111,20 @@ class DettagliOdABot(BaseBot):
                 self.log("❌ Fornitore non selezionabile.")
                 continue
 
-            if page.process_oda(
+            downloaded_path = page.process_oda(
                 oda, contract, self.data_da, self.data_a, source_dir, dest_dir
-            ):
+            )
+
+            if downloaded_path:
                 success += 1
+                # Se è un ODA Generico (senza numero OdA), importiamo nel DB
+                if not oda:
+                    self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
+                    ok, msg, added, _ = OdaManager.import_oda_from_excel(str(downloaded_path))
+                    if ok:
+                        self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
+                    else:
+                        self.log(f"⚠️ Errore importazione: {msg}")
 
             time.sleep(1)
 

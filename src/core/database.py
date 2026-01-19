@@ -29,6 +29,7 @@ class DatabaseManager:
     DB_CONTABILITA = CONFIG_DIR / "data" / "contabilita.db"
     DB_TIMBRATURE = CONFIG_DIR / "data" / "timbrature_Isab.db"
     DB_PDL = CONFIG_DIR / "data" / "pdl.db"
+    DB_STORICO_ODA = CONFIG_DIR / "data" / "storico_oda.db"
 
     def __new__(cls):
         """Pattern Singleton per il gestore database."""
@@ -139,6 +140,9 @@ class DatabaseManager:
             self.DB_TIMBRATURE, self.MIGRATIONS_TIMBRATURE, "Timbrature"
         )
         self._run_migrations(self.DB_PDL, self.MIGRATIONS_PDL, "PDL")
+        self._run_migrations(
+            self.DB_STORICO_ODA, self.MIGRATIONS_STORICO_ODA, "Storico OdA"
+        )
 
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
         try:
@@ -333,6 +337,72 @@ class DatabaseManager:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_area ON pdl(area)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_stato ON pdl(stato)")
 
+    # ==========================================
+    # DEFINIZIONE MIGRAZIONI STORICO ODA
+    # ==========================================
+    @staticmethod
+    def _mig_storico_oda_v1(conn: sqlite3.Connection):
+        """Schema Iniziale Storico OdA (v1)"""
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS storico_oda (
+                oda TEXT,
+                pos_oda TEXT,
+                num_riga TEXT,
+                org_acq TEXT,
+                data_oda TEXT,
+                stato TEXT,
+                cat_contab TEXT,
+                descrizione TEXT,
+                qta REAL,
+                uom TEXT,
+                data_consegna TEXT,
+                valore_netto_pos REAL,
+                valore_residuo REAL,
+                valore_netto_oda REAL,
+                divisione TEXT,
+                destinatario TEXT,
+                nome_destinatario TEXT,
+                codice_fornitore TEXT,
+                descrizione_fornitore TEXT,
+                emittente_fattura TEXT,
+                desc_emittente_fattura TEXT,
+                contract_card TEXT,
+                contratto TEXT,
+                posizione_contratto TEXT,
+                gruppo_acquisti TEXT,
+                indicatore_rilascio TEXT,
+                stato_rilascio TEXT,
+                attivita TEXT,
+                quantita REAL,
+                unita_mis TEXT,
+                prezzo_lordo REAL,
+                testo_breve TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (oda, pos_oda, num_riga)
+            )
+        """
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_oda_data_oda ON storico_oda(data_oda)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_oda_fornitore ON storico_oda(codice_fornitore)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_oda_contratto ON storico_oda(contratto)"
+        )
+
+    @staticmethod
+    def _mig_storico_oda_v2(conn: sqlite3.Connection):
+        """Fix tipi colonne per evitare overflow (v2)"""
+        # Poiché SQLite non supporta ALTER COLUMN facilmente, e i dati sono corrotti/cache,
+        # ricreiamo la tabella.
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS storico_oda")
+        DatabaseManager._mig_storico_oda_v1(conn)
+
     @staticmethod
     def _mig_contabilita_v3(conn: sqlite3.Connection):
         """Implementazione FTS5 per ricerche veloci (v3)"""
@@ -390,6 +460,8 @@ class DatabaseManager:
     MIGRATIONS_TIMBRATURE = {1: _mig_timbrature_v1, 2: _mig_timbrature_v2}
 
     MIGRATIONS_PDL = {1: _mig_pdl_v1}
+
+    MIGRATIONS_STORICO_ODA = {1: _mig_storico_oda_v1, 2: _mig_storico_oda_v2}
 
 
 db_manager = DatabaseManager()
