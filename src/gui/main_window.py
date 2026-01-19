@@ -603,38 +603,71 @@ class MainWindow(QMainWindow):
         self.help_panel.open_section(section_title)
 
     def _update_autopilot_status_ui(self):
-        """Aggiorna le card di stato con countdown e info bot."""
+        """Aggiorna le card di stato con il countdown del task più imminente."""
         from PyQt6.QtCore import QTime
 
         config = config_manager.load_config()
 
-        # --- Portale Fornitori (Bot: Timbrature) ---
-        if config.get("timbrature_autopilot_enabled", False):
-            target_time_str = config.get("timbrature_autopilot_time", "09:00")
-            target_time = QTime.fromString(target_time_str, "HH:mm")
-            now = QTime.currentTime()
+        # Lista di tutti i task autopilot possibili
+        # (Sito, Nome Display, Enabled Key, Time Key)
+        tasks = [
+            (
+                "PF",
+                "TIMBRATURE",
+                "timbrature_autopilot_enabled",
+                "timbrature_autopilot_time",
+            ),
+            (
+                "PF",
+                "SCARICO ODA",
+                "scarico_oda_generale_autopilot_enabled",
+                "scarico_oda_generale_autopilot_time",
+            ),
+            (
+                "SW",
+                "RICERCA PDL",
+                "ricerca_pdl_autopilot_enabled",
+                "ricerca_pdl_autopilot_time",
+            ),
+        ]
 
-            # Calcolo tempo residuo
-            secs_to = now.secsTo(target_time)
-            if secs_to < 0:
-                # Se l'orario è già passato, calcola per domani
-                secs_to += 24 * 3600
+        now = QTime.currentTime()
+        min_secs = float("inf")
+        imminent_task = None
 
-            hours = secs_to // 3600
-            mins = (secs_to % 3600) // 60
+        for site, name, enabled_key, time_key in tasks:
+            if config.get(enabled_key, False):
+                target_time_str = config.get(time_key, "09:00")
+                target_time = QTime.fromString(target_time_str, "HH:mm")
 
-            if hours > 0:
-                countdown = f"tra {hours}h {mins}m"
-            else:
-                countdown = f"tra {mins}m"
+                if not target_time.isValid():
+                    continue
 
-            self.status_portale.setAutopilot(True, f"TIMBRATURE: {countdown}")
-        else:
-            self.status_portale.setAutopilot(False)
+                secs_to = now.secsTo(target_time)
+                if secs_to < 0:
+                    secs_to += 24 * 3600
 
-        # --- SafeWork (Pianificazioni future) ---
-        # Al momento SafeWork non ha un autopilot programmabile da UI
+                if secs_to < min_secs:
+                    min_secs = secs_to
+                    imminent_task = (site, name, secs_to)
+
+        # Reset cards
+        self.status_portale.setAutopilot(False)
         self.status_safework.setAutopilot(False)
+
+        # Update imminent task
+        if imminent_task:
+            site, name, secs = imminent_task
+            hours = secs // 3600
+            mins = (secs % 3600) // 60
+
+            countdown_text = f"TRA {hours}H {mins}M" if hours > 0 else f"TRA {mins}M"
+            full_text = f"{name}: {countdown_text}"
+
+            if site == "PF":
+                self.status_portale.setAutopilot(True, full_text)
+            else:
+                self.status_safework.setAutopilot(True, full_text)
 
     def _on_settings_saved(self):
         if hasattr(self, "scarico_panel"):
