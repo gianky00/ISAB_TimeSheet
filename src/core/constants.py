@@ -96,6 +96,8 @@ class Icons:
     CALENDAR = "assets/icons/calendar.svg"
     USER = "assets/icons/user.svg"
     USERS = "assets/icons/users.svg"
+    DIPENDENTI = "assets/icons/users.svg"
+    PDL = "assets/icons/building.svg"
     FILE_TEXT = "assets/icons/file-text.svg"
     BAR_CHART = "assets/icons/bar-chart.svg"
     BUILDING = "assets/icons/building.svg"

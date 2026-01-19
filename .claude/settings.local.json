@@ -15,7 +15,8 @@
       "Bash(\".venv/Scripts/python.exe\" \"admin/Crea Setup/build_dist.py\")",
       "Bash(python:*)",
       "Bash(dir:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(ruff check:*)"
     ]
   }
 }

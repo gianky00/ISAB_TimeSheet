@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.auth_monitor import check_expiring_isab_authorizations
 from src.core.backup_manager import BackupManager
 from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
@@ -65,6 +66,7 @@ class PageIndex(IntEnum):
     HELP = 8
     NOTIFICATIONS = 9
     STORICO_ODA = 10
+    DIPENDENTI = 11
 
 
 class MainWindow(QMainWindow):
@@ -184,6 +186,15 @@ class MainWindow(QMainWindow):
                 lambda: self.navigation_controller.get_panel(PageIndex.ANAGRAFICHE),
                 "HR Directory Service",
                 "LDAP",
+            )
+        )
+
+        # 5b. DIPENDENTI
+        self._preload_tasks.extend(
+            mk_steps(
+                lambda: self.navigation_controller.get_panel(PageIndex.DIPENDENTI),
+                "Employee Records",
+                "HR",
             )
         )
 
@@ -334,6 +345,45 @@ class MainWindow(QMainWindow):
                 )
             except Exception:
                 pass
+
+        # Monitoraggio Abilitazioni ISAB (Proattivo)
+        QTimer.singleShot(2000, self._check_isab_authorizations)
+
+    def _check_isab_authorizations(self):
+        """Verifica dipendenti con abilitazione ISAB in scadenza e mostra notifica."""
+        try:
+            expiring = check_expiring_isab_authorizations()
+
+            # Aggiorna Badge Sidebar Dipendenti (Somma di Scaduti + In Scadenza)
+            total_alerts = len(expiring)
+            if hasattr(self, "sidebar") and hasattr(self.sidebar, "btn_dipendenti"):
+                self.sidebar.btn_dipendenti.set_badge(total_alerts)
+
+            if not expiring:
+                return
+
+            scaduti = [d for d in expiring if d["stato"] == "SCADUTA"]
+            in_scadenza = [d for d in expiring if d["stato"] == "IN SCADENZA"]
+
+            msg = "<b>Monitoraggio Abilitazioni ISAB</b><br/>"
+            if scaduti:
+                msg += f"🔴 {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
+            if in_scadenza:
+                msg += f"🟠 {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
+
+            msg += (
+                "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
+            )
+
+            ToastManager.instance().show(
+                msg,
+                "warning" if in_scadenza or scaduti else "info",
+                8000,
+                position="bottom_right",
+            )
+
+        except Exception as e:
+            print(f"Errore monitoraggio autorizzazioni: {e}")
 
     def _update_license_status_bar(self):
         """Aggiorna le etichette della licenza nella status bar."""
@@ -538,7 +588,7 @@ class MainWindow(QMainWindow):
 
         # Page Stack con Placeholder
         self.page_stack = QStackedWidget()
-        for i in range(11):  # Increased range for new pages
+        for i in range(12):  # Increased range for new pages
             placeholder = QWidget()
             # Inseriamo un layout per indicare il caricamento se necessario
             self.page_stack.addWidget(placeholder)
@@ -586,6 +636,9 @@ class MainWindow(QMainWindow):
             else None,
             PageIndex.STORICO_ODA: lambda: self.storico_oda_panel.refresh_data()
             if hasattr(self, "storico_oda_panel")
+            else None,
+            PageIndex.DIPENDENTI: lambda: self.dipendenti_panel.refresh_data()
+            if hasattr(self, "dipendenti_panel")
             else None,
         }
 

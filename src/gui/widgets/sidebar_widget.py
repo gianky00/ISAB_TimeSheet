@@ -233,9 +233,16 @@ class SidebarWidget(QFrame):
         self.group_db.add_child(self.btn_dataease)
 
         # 6: PDL (ex Anagrafiche)
-        self.btn_pdl = SidebarChildButton("PDL", get_asset_path(Icons.USERS))
+        self.btn_pdl = SidebarChildButton("PDL", get_asset_path(Icons.PDL))
         self.btn_pdl.clicked.connect(lambda: self._handle_child_click(6))
         self.group_db.add_child(self.btn_pdl)
+
+        # 11: Dipendenti (Users)
+        self.btn_dipendenti = SidebarChildButton(
+            "Dipendenti", get_asset_path(Icons.DIPENDENTI)
+        )
+        self.btn_dipendenti.clicked.connect(lambda: self._handle_child_click(11))
+        self.group_db.add_child(self.btn_dipendenti)
 
         # 10: Storico OdA
         self.btn_storico_oda = SidebarChildButton(
@@ -309,8 +316,8 @@ class SidebarWidget(QFrame):
         for idx, btn in buttons_map.items():
             btn.setChecked(idx == index)
 
-        # Gestione Gruppo Database (Indici 3, 4, 5, 6, 10)
-        db_indices = [3, 4, 5, 6, 10]
+        # Gestione Gruppo Database (Indici 3, 4, 5, 6, 10, 11)
+        db_indices = [3, 4, 5, 6, 10, 11]
         self.group_db.set_active_index(index, db_indices)
 
         # Gestione Gruppo Notifiche (Indice 9)

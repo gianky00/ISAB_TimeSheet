@@ -21,6 +21,7 @@ from PyQt6.QtCore import QObject
 # 8: HELP
 # 9: NOTIFICATIONS
 # 10: STORICO_ODA
+# 11: DIPENDENTI
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,7 @@ class NavigationController(QObject):
             8: self._create_help,
             9: self._create_notifications,
             10: self._create_storico_oda,
+            11: self._create_dipendenti,
         }
 
         creator = creators.get(index)
@@ -130,6 +132,12 @@ class NavigationController(QObject):
 
         self.mw.storico_oda_panel = StoricoOdaPanel()
         return self.mw.storico_oda_panel
+
+    def _create_dipendenti(self):
+        from src.gui.dipendenti_panel import DipendentiPanel
+
+        self.mw.dipendenti_panel = DipendentiPanel()
+        return self.mw.dipendenti_panel
 
     def _create_help(self):
         from src.gui.help_panel import HelpPanel
@@ -268,7 +276,13 @@ class NavigationController(QObject):
                     self.mw.tab_safework.setCurrentIndex(sub_idx)
             return
 
-        db_map = {"db_timbrature": 3, "db_strumentale": 4, "db_dataease": 5}
+        db_map = {
+            "db_timbrature": 3,
+            "db_strumentale": 4,
+            "db_dataease": 5,
+            "db_dipendenti": 11,
+            "nav_page_11": 11,
+        }
         if panel_key in db_map:
             self.navigate_to(db_map[panel_key])
             return
