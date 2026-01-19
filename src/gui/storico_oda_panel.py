@@ -49,7 +49,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
             full_rect = option.rect.adjusted(0, 0, next_col_width, 0)
             
             # Gestione stato selezione
-            if option.state & QStyle.State.State_Selected:
+            if option.state & QStyle.StateFlag.State_Selected:
                 painter.fillRect(option.rect, option.palette.highlight())
                 painter.setPen(option.palette.highlightedText().color())
             else:
