@@ -166,6 +166,8 @@ class StoricoOdaPanel(QWidget):
 
         # Selection
         self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        self.tree.expanded.connect(self._on_item_expanded)
+        self.tree.collapsed.connect(self._on_item_collapsed)
 
         # Header Styling
         header = self.tree.header()
@@ -248,6 +250,26 @@ class StoricoOdaPanel(QWidget):
             # Let's see how populate_tree attaches data.
             pass
 
+    def _on_item_expanded(self, index):
+        """Imposta il font in grassetto quando il gruppo viene espanso."""
+        self._set_row_bold(index, True)
+
+    def _on_item_collapsed(self, index):
+        """Rimuove il grassetto quando il gruppo viene collassato."""
+        self._set_row_bold(index, False)
+
+    def _set_row_bold(self, parent_index, bold: bool):
+        """Helper per cambiare lo stile di tutte le colonne della riga."""
+        model = self.tree.model()
+        row = parent_index.row()
+        bold_font = QFont()
+        bold_font.setBold(bold)
+        
+        for col in range(self.model.columnCount()):
+            item = self.model.item(row, col)
+            if item:
+                item.setFont(bold_font)
+
     def refresh_data(self):
         """Aggiorna i dati della tabella."""
         query, params = self._build_query()
@@ -318,12 +340,9 @@ class StoricoOdaPanel(QWidget):
                 item_val = QStandardItem(format_currency_smart(str(r[10])))
                 item_stato = QStandardItem(str(r[4]))
                 
-                # Make parent bold
-                bold_font = QFont()
-                bold_font.setBold(True)
+                # Parent items (initially not bold until expanded)
                 for it in [item_oda, item_data, item_pos, item_val, item_stato]:
                     it.setEditable(False)
-                    it.setFont(bold_font)
 
                 # Store full data on the parent too (representative of the position)
                 item_oda.setData(r, Qt.ItemDataRole.UserRole)
