@@ -632,8 +632,11 @@ class MainWindow(QMainWindow):
         ]
 
         now = QTime.currentTime()
-        min_secs = float("inf")
-        imminent_task = None
+        # Monitoriamo il task più imminente per OGNI sito
+        imminent_pf = None  # (nome, secondi)
+        imminent_sw = None  # (nome, secondi)
+        min_secs_pf = float("inf")
+        min_secs_sw = float("inf")
 
         for site, name, enabled_key, time_key in tasks:
             if config.get(enabled_key, False):
@@ -650,27 +653,33 @@ class MainWindow(QMainWindow):
                 if secs_to < 0:
                     secs_to += 24 * 3600
 
-                if secs_to < min_secs:
-                    min_secs = secs_to
-                    imminent_task = (site, name, secs_to)
+                if site == "PF":
+                    if secs_to < min_secs_pf:
+                        min_secs_pf = secs_to
+                        imminent_pf = (name, secs_to)
+                elif site == "SW":
+                    if secs_to < min_secs_sw:
+                        min_secs_sw = secs_to
+                        imminent_sw = (name, secs_to)
 
-        # Reset cards
-        self.status_portale.setAutopilot(False)
-        self.status_safework.setAutopilot(False)
-
-        # Update imminent task
-        if imminent_task:
-            site, name, secs = imminent_task
+        # Helper per formattare il countdown
+        def format_countdown(name, secs):
             hours = secs // 3600
             mins = (secs % 3600) // 60
-
             countdown_text = f"TRA {hours}H {mins}M" if hours > 0 else f"TRA {mins}M"
-            full_text = f"{name}: {countdown_text}"
+            return f"{name}: {countdown_text}"
 
-            if site == "PF":
-                self.status_portale.setAutopilot(True, full_text)
-            else:
-                self.status_safework.setAutopilot(True, full_text)
+        # Aggiorna Portale Fornitori
+        if imminent_pf:
+            self.status_portale.setAutopilot(True, format_countdown(*imminent_pf))
+        else:
+            self.status_portale.setAutopilot(False)
+
+        # Aggiorna SafeWork
+        if imminent_sw:
+            self.status_safework.setAutopilot(True, format_countdown(*imminent_sw))
+        else:
+            self.status_safework.setAutopilot(False)
 
     def _on_settings_saved(self):
         if hasattr(self, "scarico_panel"):
