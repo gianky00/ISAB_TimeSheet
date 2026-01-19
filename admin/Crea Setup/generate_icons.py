@@ -1,169 +1,486 @@
 """
-Bot TS - Icon Generator
-Genera icone moderne per l'applicazione e l'installer.
+Script per generare icone professionali per SyncroJob Enterprise.
+Design: Digital Precision - Esagoni tecnologici con elementi AI e automazione.
+Questo script è stato unificato per funzionare sia dalla root che dalla cartella admin.
 """
 
-import io
-import os
-import sys
+import math
+from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
-# Fix encoding for Windows console to support emoji
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
-
-
-def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):
-    """Genera un'icona moderna multi-dimensione in formato ICO."""
-    sizes = [(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)]
-    font_path = _find_system_font()
-    images = []
-
-    for size in sizes:
-        img = _generate_icon_layer(
-            size, text, color_bg, color_text, font_path, accent_color
-        )
-        images.append(img)
-
-    # Salvataggio ICO
-    try:
-        images[0].save(filename, format="ICO", sizes=sizes, append_images=images[1:])
-        print(f"✓ Generated: {filename}")
-    except OSError as e:
-        print(f"⚠️ Errore salvataggio {filename}: {e}")
+# Palette Colori Premium - High Contrast Tech
+DEEP_NAVY = (15, 25, 45)  # Sfondo scuro
+MEDIUM_BLUE = (50, 120, 190)  # Blu medio
+BRIGHT_CYAN = (100, 220, 255)  # Cyan brillante
+NEON_CYAN = (150, 240, 255)  # Cyan neon
+ULTRA_BRIGHT = (220, 250, 255)  # Bianco-cyan
+GLOW_BLUE = (80, 200, 255)  # Blu per glow
 
 
-def _find_system_font() -> str:
-    """Restituisce il primo font TTF valido trovato nel sistema."""
-    paths = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "C:/Windows/Fonts/arialbd.ttf",
-        "C:/Windows/Fonts/seguisb.ttf",
-        "C:/Windows/Fonts/arial.ttf",
-    ]
-    for p in paths:
-        if os.path.exists(p):
-            return p
-    return None
+def get_assets_path():
+    """Trova la cartella assets in modo robusto."""
+    current_dir = Path(__file__).resolve().parent
+
+    # Cerca risalendo le directory
+    for parent in [current_dir] + list(current_dir.parents):
+        assets = parent / "assets"
+        if assets.exists() and assets.is_dir():
+            return assets
+
+    # Fallback: crea nella root del progetto o corrente
+    # Se siamo in admin/Crea Setup, assets è in ../../assets
+    fallback_assets = current_dir / "assets"
+    fallback_assets.mkdir(parents=True, exist_ok=True)
+    return fallback_assets
 
 
-def _generate_icon_layer(size, text, bg, fg, font_path, accent) -> Image.Image:
-    """Crea una singola immagine per una specifica dimensione dell'icona."""
-    width, height = size
-    img = Image.new("RGBA", size, (0, 0, 0, 0))
+def draw_hexagon_points(center_x, center_y, size, rotation=0):
+    """Genera i punti di un esagono."""
+    points = []
+    for i in range(6):
+        angle = math.radians(60 * i + rotation)
+        x = center_x + size * math.cos(angle)
+        y = center_y + size * math.sin(angle)
+        points.append((x, y))
+    return points
+
+
+def create_complex_app_icon(target_size):
+    """
+    Icona principale dell'applicazione.
+    Design: Esagono tecnologico con nucleo AI centrale e elementi orbitali.
+    """
+    # Lavoriamo a 1024px per massima qualità
+    canvas = 1024
+    img = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
+    center = canvas // 2
 
-    # Sfondo Arrotondato
-    radius = int(width * 0.18)
-    draw.rounded_rectangle([0, 0, width, height], radius=radius, fill=bg)
+    # === CERCHIO DI SFONDO SCURO ===
+    outer_radius = canvas * 0.47
 
-    # Decorazioni
-    if accent and width >= 32:
-        _draw_accent_stripe(draw, width, height, radius, accent)
-
-    # Testo
-    _draw_icon_text(draw, size, text, fg, font_path)
-
-    # Riflesso Superiore
-    if width >= 32:
-        img = _apply_highlight_overlay(img, size, radius)
-
-    return img
-
-
-def _draw_accent_stripe(draw, w, h, radius, color):
-    """Disegna la striscia di accento sul fondo dell'icona."""
-    stripe_h = int(h * 0.12)
-    if stripe_h <= 0 or h <= radius * 2:
-        return
-
-    # Arrotondamento fondo
-    draw.rounded_rectangle([0, h - radius * 2, w, h], radius=radius, fill=color)
-    # Riempimento rettangolo
-    if h - radius > h - stripe_h:
-        draw.rectangle([0, h - stripe_h, w, h - radius], fill=color)
-
-
-def _draw_icon_text(draw, size, text, color, font_path):
-    """Renderizza il testo centrato con una leggera ombra."""
-    w, h = size
-    font_size = int(h * 0.35) if len(text) <= 2 else int(h * 0.28)
-
-    # Caricamento Font
-    try:
-        font = (
-            ImageFont.truetype(font_path, font_size)
-            if font_path
-            else ImageFont.load_default()
+    # Gradiente radiale per sfondo
+    for i in range(50):
+        r = outer_radius * (1 - i * 0.02)
+        ratio = i / 50
+        color = (
+            int(DEEP_NAVY[0] + ratio * 40),
+            int(DEEP_NAVY[1] + ratio * 100),
+            int(DEEP_NAVY[2] + ratio * 150),
+            255,
         )
-    except Exception:
-        font = ImageFont.load_default()
+        draw.ellipse([center - r, center - r, center + r, center + r], fill=color)
 
-    # Calcolo Posizione
-    try:
-        bbox = draw.textbbox((0, 0), text, font=font)
-        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    except Exception:
-        tw, th = draw.textsize(text, font=font)
+    # === STRUTTURA ESAGONALE ===
+    hex_size = canvas * 0.35
 
-    tx, ty = (w - tw) / 2, (h - th) / 2 - (h * 0.08)
+    # Glow esterno dell'esagono
+    for i in range(20, 0, -1):
+        scale = 1 + (i * 0.02)
+        hex_points = draw_hexagon_points(center, center, hex_size * scale, 30)
+        alpha = int(180 / (i + 1))
+        draw.polygon(hex_points, fill=(*GLOW_BLUE, alpha))
 
-    # Disegno Ombra + Testo
-    offset = max(1, int(w * 0.01))
-    draw.text((tx + offset, ty + offset), text, fill=(0, 0, 0, 50), font=font)
-    draw.text((tx, ty), text, fill=color, font=font)
+    # Esagono principale con gradiente
+    for layer in range(15):
+        scale = 1 - (layer * 0.05)
+        scaled_points = draw_hexagon_points(center, center, hex_size * scale, 30)
+        ratio = layer / 15
+        color = (int(40 + ratio * 140), int(140 + ratio * 80), 255, 255)
+        draw.polygon(scaled_points, fill=color)
 
+    # Bordo spesso dell'esagono
+    border_width = int(canvas * 0.020)
+    for offset in range(border_width):
+        inner_hex = draw_hexagon_points(center, center, hex_size - offset, 30)
+        draw.polygon(inner_hex, outline=NEON_CYAN)
 
-def _apply_highlight_overlay(img, size, radius) -> Image.Image:
-    """Aggiunge un gradiente di luce sulla metà superiore dell'icona."""
-    overlay = Image.new("RGBA", size, (255, 255, 255, 0))
-    draw = ImageDraw.Draw(overlay)
-    draw.rounded_rectangle(
-        [2, 2, size[0] - 2, size[1] // 2],
-        radius=max(0, radius - 2),
-        fill=(255, 255, 255, 25),
-    )
-    return Image.alpha_composite(img, overlay)
+    # === SFERA CENTRALE (Nucleo AI) ===
+    sphere_radius = canvas * 0.16
 
+    # Glow della sfera
+    for i in range(25, 0, -1):
+        r = sphere_radius * (1 + i * 0.05)
+        alpha = int(200 / (i + 1))
+        draw.ellipse(
+            [center - r, center - r, center + r, center + r], fill=(*BRIGHT_CYAN, alpha)
+        )
 
-def main():
-    # Determine assets directory
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    root_dir = os.path.dirname(os.path.dirname(script_dir))
-    assets_dir = os.path.join(root_dir, "assets")
+    # Gradiente della sfera
+    for i in range(20):
+        r = sphere_radius * (1 - i * 0.045)
+        ratio = i / 20
+        color = (int(150 + ratio * 100), int(220 + ratio * 30), 255, 255)
+        draw.ellipse([center - r, center - r, center + r, center + r], fill=color)
 
-    if not os.path.exists(assets_dir):
-        os.makedirs(assets_dir)
-        print(f"Created directory: {assets_dir}")
-
-    print("\n" + "=" * 50)
-    print("  SYNCROJOB - ICON GENERATOR")
-    print("=" * 50 + "\n")
-
-    # Main App Icon - Modern Purple/Indigo (Matches Sidebar)
-    create_modern_icon(
-        text="SJ",
-        color_bg=(102, 126, 234, 255),  # Brand Purple #667eea
-        color_text=(255, 255, 255, 255),
-        filename=os.path.join(assets_dir, "app.ico"),
-        accent_color=(118, 75, 162, 255),  # Brand Dark Purple #764ba2
-    )
-
-    # Setup/Installer Icon - Blue for "system/setup"
-    create_modern_icon(
-        text="SJ",
-        color_bg=(13, 110, 253, 255),  # Primary Blue #0d6efd
-        color_text=(255, 255, 255, 255),
-        filename=os.path.join(assets_dir, "setup.ico"),
-        accent_color=(10, 88, 202, 255),
+    # Highlight spot (riflesso)
+    highlight_r = sphere_radius * 0.3
+    highlight_offset_x = -sphere_radius * 0.2
+    highlight_offset_y = -sphere_radius * 0.2
+    draw.ellipse(
+        [
+            center + highlight_offset_x - highlight_r,
+            center + highlight_offset_y - highlight_r,
+            center + highlight_offset_x + highlight_r,
+            center + highlight_offset_y + highlight_r,
+        ],
+        fill=(255, 255, 255, 255),
     )
 
-    print("\n" + "=" * 50)
-    print("  Icons regenerated successfully!")
-    print("=" * 50 + "\n")
+    # === ELEMENTI ORBITALI (Indicatori di Automazione) ===
+    orbit_radius = hex_size * 0.75
+    element_size = canvas * 0.055
+    angles = [0, 120, 240]
+
+    for angle_deg in angles:
+        angle = math.radians(angle_deg)
+        x = center + orbit_radius * math.cos(angle)
+        y = center + orbit_radius * math.sin(angle)
+
+        # Glow dell'elemento
+        for i in range(10, 0, -1):
+            glow_r = element_size * (1 + i * 0.3)
+            alpha = int(200 / (i + 1))
+            draw.ellipse(
+                [x - glow_r, y - glow_r, x + glow_r, y + glow_r],
+                fill=(*GLOW_BLUE, alpha),
+            )
+
+        # Elemento con gradiente
+        for i in range(5):
+            e_r = element_size * (1 - i * 0.15)
+            brightness = 180 + i * 15
+            draw.ellipse(
+                [x - e_r, y - e_r, x + e_r, y + e_r], fill=(brightness, 245, 255, 255)
+            )
+
+    # === LINEE DI CONNESSIONE tra elementi ===
+    circuit_width = int(canvas * 0.008)
+
+    for i in range(3):
+        angle1 = math.radians(angles[i])
+        angle2 = math.radians(angles[(i + 1) % 3])
+
+        x1 = center + orbit_radius * math.cos(angle1)
+        y1 = center + orbit_radius * math.sin(angle1)
+        x2 = center + orbit_radius * math.cos(angle2)
+        y2 = center + orbit_radius * math.sin(angle2)
+
+        # Glow delle linee
+        for w in range(4, 0, -1):
+            width = circuit_width * (w * 2)
+            alpha = int(150 / (w + 1))
+            draw.line([(x1, y1), (x2, y2)], fill=(*GLOW_BLUE, alpha), width=width)
+
+        # Linea principale
+        draw.line([(x1, y1), (x2, y2)], fill=NEON_CYAN, width=circuit_width)
+
+    # === MARCATORI ANGOLARI (Precisione Tecnica) ===
+    corner_size = canvas * 0.04
+    corner_width = canvas * 0.008
+    margin = canvas * 0.08
+
+    corners = [
+        (margin, margin),
+        (canvas - margin, margin),
+        (margin, canvas - margin),
+        (canvas - margin, canvas - margin),
+    ]
+
+    for cx, cy in corners:
+        # Glow dei marcatori
+        for i in range(3, 0, -1):
+            s = corner_size * (1 + i * 0.3)
+            w = corner_width * (1 + i * 0.5)
+            alpha = int(150 / (i + 1))
+            # Verticale
+            draw.rectangle([cx - w, cy - s, cx + w, cy + s], fill=(*NEON_CYAN, alpha))
+            # Orizzontale
+            draw.rectangle([cx - s, cy - w, cx + s, cy + w], fill=(*NEON_CYAN, alpha))
+
+        # Marcatori principali
+        draw.rectangle(
+            [cx - corner_width, cy - corner_size, cx + corner_width, cy + corner_size],
+            fill=ULTRA_BRIGHT,
+        )
+        draw.rectangle(
+            [cx - corner_size, cy - corner_width, cx + corner_size, cy + corner_width],
+            fill=ULTRA_BRIGHT,
+        )
+
+    # Resize finale con anti-aliasing
+    return img.resize((target_size, target_size), Image.Resampling.LANCZOS)
+
+
+def create_complex_setup_icon(target_size):
+    """
+    Icona del setup/installer.
+    Design: Esagoni in assemblaggio con arco di progresso e particelle.
+    """
+    canvas = 1024
+    img = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    center = canvas // 2
+
+    # === SFONDO SCURO ===
+    outer_radius = canvas * 0.47
+
+    for i in range(50):
+        r = outer_radius * (1 - i * 0.02)
+        ratio = i / 50
+        color = (
+            int(DEEP_NAVY[0] + ratio * 35),
+            int(DEEP_NAVY[1] + ratio * 90),
+            int(DEEP_NAVY[2] + ratio * 140),
+            255,
+        )
+        draw.ellipse([center - r, center - r, center + r, center + r], fill=color)
+
+    # === TRE ESAGONI IN FORMAZIONE TRIANGOLARE ===
+    hex_size = canvas * 0.13
+
+    # Posizioni degli esagoni (formazione triangolare)
+    hex_data = [
+        (center, center * 0.55, 1.0),  # Top - completamente assemblato
+        (center - canvas * 0.17, center + canvas * 0.13, 0.7),  # Bottom left
+        (center + canvas * 0.17, center + canvas * 0.13, 0.7),  # Bottom right
+    ]
+
+    for hx, hy, completeness in hex_data:
+        # Glow dell'esagono
+        for i in range(18, 0, -1):
+            scale = 1 + (i * 0.08)
+            points = draw_hexagon_points(hx, hy, hex_size * scale, 30)
+            alpha = int((150 / (i + 1)) * completeness)
+            draw.polygon(points, fill=(*BRIGHT_CYAN, alpha))
+
+        # Layers dell'esagono
+        for layer in range(12):
+            scale = 1 - (layer * 0.07)
+            points = draw_hexagon_points(hx, hy, hex_size * scale, 30)
+
+            ratio = layer / 12
+            brightness = int(completeness * (160 + ratio * 60))
+            g_val = int(completeness * (210 + ratio * 30))
+
+            draw.polygon(points, fill=(brightness, g_val, 255, 255))
+
+        # Centro luminoso
+        if completeness > 0.6:
+            center_size = hex_size * 0.35
+            points = draw_hexagon_points(hx, hy, center_size, 30)
+            draw.polygon(points, fill=(*ULTRA_BRIGHT, int(255 * completeness)))
+
+    # === LINEE DI CONNESSIONE ===
+    line_width = int(canvas * 0.015)
+
+    connections = [
+        (hex_data[0][:2], hex_data[1][:2], 0.9),
+        (hex_data[0][:2], hex_data[2][:2], 0.9),
+        (hex_data[1][:2], hex_data[2][:2], 0.6),
+    ]
+
+    for (x1, y1), (x2, y2), strength in connections:
+        # Glow
+        for i in range(8, 0, -1):
+            width = int(line_width * (1 + i * 0.4))
+            alpha = int((180 / (i + 1)) * strength)
+            draw.line([(x1, y1), (x2, y2)], fill=(*GLOW_BLUE, alpha), width=width)
+
+        # Linea principale
+        draw.line(
+            [(x1, y1), (x2, y2)],
+            fill=(*NEON_CYAN, int(255 * strength)),
+            width=line_width,
+        )
+
+    # === NODO CENTRALE ===
+    node_r = canvas * 0.04
+
+    for i in range(8, 0, -1):
+        r = node_r * (1 + i * 0.4)
+        alpha = int(200 / (i + 1))
+        draw.ellipse(
+            [center - r, center - r, center + r, center + r], fill=(*BRIGHT_CYAN, alpha)
+        )
+
+    # Gradiente del nodo
+    for i in range(4):
+        r = node_r * (1 - i * 0.2)
+        brightness = 200 + i * 15
+        draw.ellipse(
+            [center - r, center - r, center + r, center + r],
+            fill=(brightness, 245, 255, 255),
+        )
+
+    # === ARCO DI PROGRESSO ===
+    arc_r = canvas * 0.38
+    arc_width = int(canvas * 0.032)
+    bbox = [center - arc_r, center - arc_r, center + arc_r, center + arc_r]
+
+    # Glow dell'arco
+    for i in range(10, 0, -1):
+        width = int(arc_width * (1 + i * 0.4))
+        alpha = int(150 / (i + 1))
+        draw.arc(bbox, start=-30, end=240, fill=(*GLOW_BLUE, alpha), width=width)
+
+    # Arco segmentato (effetto caricamento)
+    segment_count = 30
+    for seg in range(segment_count):
+        start = -30 + (seg * 270 / segment_count)
+        end = start + (270 / segment_count) * 0.8
+
+        progress = seg / segment_count
+        brightness = int(120 + progress * 100)
+
+        draw.arc(
+            bbox,
+            start=int(start),
+            end=int(end),
+            fill=(brightness, 235, 255, 255),
+            width=arc_width,
+        )
+
+    # Endpoint dell'arco
+    for angle_deg in [-30, 240]:
+        angle = math.radians(angle_deg)
+        ex = center + arc_r * math.cos(angle)
+        ey = center + arc_r * math.sin(angle)
+
+        endpoint_r = arc_width * 1.4
+
+        # Glow endpoint
+        for i in range(6, 0, -1):
+            r = endpoint_r * (1 + i * 0.4)
+            alpha = int(200 / (i + 1))
+            draw.ellipse([ex - r, ey - r, ex + r, ey + r], fill=(*BRIGHT_CYAN, alpha))
+
+        # Endpoint solido
+        draw.ellipse(
+            [ex - endpoint_r, ey - endpoint_r, ex + endpoint_r, ey + endpoint_r],
+            fill=ULTRA_BRIGHT,
+        )
+
+    # === PARTICELLE DI DATI ===
+    particle_count = 12
+    particle_r = canvas * 0.014
+
+    for i in range(particle_count):
+        angle_deg = -30 + (i * 270 / particle_count)
+        angle = math.radians(angle_deg)
+        px = center + arc_r * math.cos(angle)
+        py = center + arc_r * math.sin(angle)
+
+        # Draw head particle
+        draw.ellipse(
+            [px - particle_r, py - particle_r, px + particle_r, py + particle_r],
+            fill=ULTRA_BRIGHT,
+        )
+
+        # Scia della particella
+        for trail in range(3, 0, -1):
+            trail_angle = math.radians(angle_deg - trail * 10)
+            tx = center + arc_r * math.cos(trail_angle)
+            ty = center + arc_r * math.sin(trail_angle)
+
+            pr = particle_r * (1.5 - trail * 0.3)
+            alpha = int(220 / (trail + 1))
+
+            draw.ellipse(
+                [tx - pr, ty - pr, tx + pr, ty + pr], fill=(*ULTRA_BRIGHT, alpha)
+            )
+
+    # === MARCATORI ANGOLARI ===
+    corner_size = canvas * 0.035
+    corner_width = canvas * 0.007
+    margin = canvas * 0.08
+
+    corners = [
+        (margin, margin),
+        (canvas - margin, margin),
+        (margin, canvas - margin),
+        (canvas - margin, canvas - margin),
+    ]
+
+    for cx, cy in corners:
+        # Glow
+        for i in range(3, 0, -1):
+            s = corner_size * (1 + i * 0.3)
+            w = corner_width * (1 + i * 0.5)
+            alpha = int(140 / (i + 1))
+            draw.rectangle([cx - w, cy - s, cx + w, cy + s], fill=(*NEON_CYAN, alpha))
+            draw.rectangle([cx - s, cy - w, cx + s, cy + w], fill=(*NEON_CYAN, alpha))
+
+        # Marcatori principali
+        draw.rectangle(
+            [cx - corner_width, cy - corner_size, cx + corner_width, cy + corner_size],
+            fill=ULTRA_BRIGHT,
+        )
+        draw.rectangle(
+            [cx - corner_size, cy - corner_width, cx + corner_size, cy + corner_width],
+            fill=ULTRA_BRIGHT,
+        )
+
+    # Resize finale
+    return img.resize((target_size, target_size), Image.Resampling.LANCZOS)
+
+
+def generate_icons():
+    """Genera entrambe le icone in formato .ico multi-risoluzione."""
+    assets_dir = get_assets_path()
+
+    print("=" * 60)
+    print("🎨 SyncroJob Enterprise - Icon Generator")
+    print("Design: Digital Precision (Hexagonal Tech)")
+    print(f"Directory di output: {assets_dir}")
+    print("=" * 60)
+
+    sizes = [256, 128, 64, 48, 32, 16]
+
+    # Genera App Icon
+    print("\n[1/2] Generazione app.ico...")
+    app_imgs = []
+    for size in sizes:
+        print(f"  → Rendering {size}x{size}px...")
+        app_imgs.append(create_complex_app_icon(size))
+
+    app_ico_path = assets_dir / "app.ico"
+    app_imgs[0].save(
+        app_ico_path,
+        format="ICO",
+        sizes=[(s, s) for s in sizes],
+        append_images=app_imgs[1:],
+    )
+    print(f"  ✓ {app_ico_path}")
+
+    # Genera Setup Icon
+    print("\n[2/2] Generazione setup.ico...")
+    setup_imgs = []
+    for size in sizes:
+        print(f"  → Rendering {size}x{size}px...")
+        setup_imgs.append(create_complex_setup_icon(size))
+
+    setup_ico_path = assets_dir / "setup.ico"
+    setup_imgs[0].save(
+        setup_ico_path,
+        format="ICO",
+        sizes=[(s, s) for s in sizes],
+        append_images=setup_imgs[1:],
+    )
+    print(f"  ✓ {setup_ico_path}")
+
+    print("\n" + "=" * 60)
+    print("✨ Icone generate con successo!")
+    print("\nDesign Features:")
+    print("  • Esagoni tecnologici (integrazione sistemi)")
+    print("  • Nucleo AI centrale luminoso")
+    print("  • Elementi orbitali connessi (automazione)")
+    print("  • Arco di progresso (setup)")
+    print("  • Schema colori: Deep Navy → Bright Cyan")
+    print("  • Effetti glow e gradiente per profondità")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
-    main()
+    generate_icons()

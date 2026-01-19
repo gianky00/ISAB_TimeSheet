@@ -19,16 +19,39 @@ class QuickActionsConfigDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Configura Azioni Rapide")
-        self.setMinimumSize(500, 600)  # Increased size and flexible width
-        self.setModal(True)
+        self.setFixedSize(450, 500)  # Dimensioni più compatte e fisse
         self.setModal(True)
 
         # AGGRESSIVE LOCAL OVERRIDE to ensure Dark Mode doesn't leak
         self.setStyleSheet(
             """
-            QDialog { background-color: #ffffff; color: #000000; }
-            QLabel { color: #000000; background-color: transparent; }
-            QCheckBox { color: #000000; background-color: transparent; }
+            QDialog {
+                background-color: #ffffff;
+                color: #000000;
+            }
+            QLabel {
+                color: #000000;
+                background-color: transparent;
+            }
+            QCheckBox {
+                color: #000000;
+                background-color: transparent;
+            }
+            QPushButton {
+                background-color: #0d6efd;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: 600;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+            QPushButton:pressed {
+                background-color: #0a58ca;
+            }
         """
         )
 
@@ -70,12 +93,40 @@ class QuickActionsConfigDialog(QDialog):
 
         # Populate Tree
         self._populate_tree()
-        self.tree.expandAll()  # Show all by default for visibility
+        # NON espandere di default - l'utente espande manualmente
 
-        # Buttons
+        # Buttons (Salva e Annulla)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        # Traduci i pulsanti in italiano
+        ok_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        ok_btn.setText("Salva")
+        ok_btn.setMinimumHeight(36)
+
+        cancel_btn = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        cancel_btn.setText("Annulla")
+        cancel_btn.setMinimumHeight(36)
+        cancel_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #6c757d;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: 600;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #5c636a;
+            }
+            QPushButton:pressed {
+                background-color: #565e64;
+            }
+        """
+        )
+
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -103,16 +154,11 @@ class QuickActionsConfigDialog(QDialog):
             name = path_tuple[-1]
             item = QTreeWidgetItem(parent_item)
             item.setText(0, name)
-            item.setFlags(
-                item.flags()
-                | Qt.ItemFlag.ItemIsUserCheckable
-                | Qt.ItemFlag.ItemIsAutoTristate
-            )
-            item.setCheckState(
-                0, Qt.CheckState.Unchecked
-            )  # Start unchecked, will update if children checked
+            # Nodi padre: NON selezionabili dall'utente (solo le foglie)
+            # Rimuovere ItemIsUserCheckable per renderli non cliccabili
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
 
-            # Style for Group Items
+            # Style for Group Items (bold, dark gray)
             item.setForeground(0, Qt.GlobalColor.darkGray)
             font = item.font(0)
             font.setBold(True)

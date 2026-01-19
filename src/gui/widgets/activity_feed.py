@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QScrollArea,
@@ -18,50 +19,88 @@ from src.utils.log_humanizer import friendly_time_delta
 
 class ActivityItem(QFrame):
     """
-    Rappresenta una singola voce nella timeline orizzontale (Compact).
+    Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
     """
 
     def __init__(self, log_entry: dict, parent=None):
         super().__init__(parent)
+        self.log_entry = log_entry
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setStyleSheet(
-            """
-            QFrame {
-                background-color: #ffffff;
-                border-radius: 6px;
-                border: 1px solid #e9ecef;
-            }
-            QFrame:hover {
-                background-color: #f1f3f5;
-                border-color: #ced4da;
-            }
-        """
-        )
-        self.setFixedWidth(280)  # Widen to accommodate more text
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 6, 10, 6)
-        layout.setSpacing(10)
-
-        # 1. Icona Stato (Successo/Errore/Warning)
+        # Determina il colore in base allo status
         status = log_entry.get("status", "success").lower()
         if status == "error":
-            icon_color = "#dc3545"  # Rosso
+            self.border_color = "#dc3545"
+            self.bg_gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fff5f5, stop:1 #ffffff)"
+        elif status == "warning":
+            self.border_color = "#ffc107"
+            self.bg_gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fffaf0, stop:1 #ffffff)"
+        else:
+            self.border_color = "#198754"
+            self.bg_gradient = "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f0fdf4, stop:1 #ffffff)"
+
+        self.setStyleSheet(
+            f"""
+            ActivityItem {{
+                background: {self.bg_gradient};
+                border-radius: 12px;
+                border-left: 4px solid {self.border_color};
+                border-top: 1px solid #e9ecef;
+                border-right: 1px solid #e9ecef;
+                border-bottom: 1px solid #e9ecef;
+            }}
+            ActivityItem:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #ffffff);
+                border-left: 4px solid {self.border_color};
+                border-top: 1px solid #ced4da;
+                border-right: 1px solid #ced4da;
+                border-bottom: 1px solid #ced4da;
+            }}
+        """
+        )
+        self.setFixedWidth(300)  # Leggermente più largo
+
+        # Ombra moderna (box-shadow simulato con QGraphicsDropShadowEffect)
+        # Non possiamo usare direttamente box-shadow in Qt, ma possiamo simularlo
+        # con l'effetto opacity
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(12)
+
+        # 1. Badge Stato con Icona (Stile Moderno)
+        status = log_entry.get("status", "success").lower()
+        if status == "error":
+            icon_color = "#ffffff"
+            badge_bg = "#dc3545"
             icon_path = Icons.ALERT_CIRCLE
         elif status == "warning":
-            icon_color = "#ffc107"  # Giallo
+            icon_color = "#000000"
+            badge_bg = "#ffc107"
             icon_path = Icons.ALERT_TRIANGLE
         else:
-            icon_color = "#198754"  # Verde
+            icon_color = "#ffffff"
+            badge_bg = "#198754"
             icon_path = Icons.CHECK_CIRCLE
 
-        icon_lbl = QLabel()
-        icon_lbl.setFixedSize(16, 16)
-        icon_lbl.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(16, 16)
+        # Badge container
+        badge = QLabel()
+        badge.setFixedSize(32, 32)
+        badge.setPixmap(
+            get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 20)
         )
-        icon_lbl.setStyleSheet("border: none; background: transparent;")
-        layout.addWidget(icon_lbl)
+        badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        badge.setStyleSheet(
+            f"""
+            QLabel {{
+                background-color: {badge_bg};
+                border-radius: 16px;
+                border: none;
+                padding: 6px;
+            }}
+        """
+        )
+        layout.addWidget(badge)
 
         # 2. Contenuto Testuale (Action + Time)
         text_layout = QVBoxLayout()
@@ -78,27 +117,66 @@ class ActivityItem(QFrame):
 
         action_lbl = QLabel(full_text)
         action_lbl.setStyleSheet(
-            "font-weight: bold; font-size: 13px; color: #343a40; border: none; background: transparent;"
+            """
+            QLabel {
+                font-weight: 600;
+                font-size: 14px;
+                color: #212529;
+                border: none;
+                background: transparent;
+            }
+        """
         )
-        action_lbl.setWordWrap(True)  # NO TRUNCATION
+        action_lbl.setWordWrap(True)
         action_lbl.setToolTip(full_text)
         text_layout.addWidget(action_lbl)
 
-        # Time
+        # Time con icona
         ts_str = log_entry.get("timestamp", "")
         try:
             ts = datetime.fromisoformat(ts_str)
-            time_str = friendly_time_delta(ts)
+            time_str = f"🕐 {friendly_time_delta(ts)}"
         except ValueError:
-            time_str = "--"
+            time_str = "🕐 --"
 
         time_lbl = QLabel(time_str)
         time_lbl.setStyleSheet(
-            "font-size: 11px; color: #adb5bd; border: none; background: transparent;"
+            """
+            QLabel {
+                font-size: 12px;
+                color: #868e96;
+                border: none;
+                background: transparent;
+                font-weight: 500;
+            }
+        """
         )
         text_layout.addWidget(time_lbl)
 
         layout.addLayout(text_layout)
+
+        # Animazione fade-in
+        self.opacity_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.opacity_effect)
+
+        self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.fade_in_animation.setDuration(600)
+        self.fade_in_animation.setStartValue(0.0)
+        self.fade_in_animation.setEndValue(1.0)
+        self.fade_in_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        # Rimuovi l'effect dopo l'animazione per evitare problemi con hover
+        self.fade_in_animation.finished.connect(self._remove_opacity_effect)
+
+    def _remove_opacity_effect(self):
+        """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""
+        self.setGraphicsEffect(None)
+
+    def showEvent(self, event):
+        """Avvia l'animazione quando il widget viene mostrato."""
+        super().showEvent(event)
+        if self.opacity_effect is not None:
+            self.fade_in_animation.start()
 
 
 class ActivityFeed(QWidget):
@@ -108,7 +186,7 @@ class ActivityFeed(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(70)  # +40% (from 50px)
+        self.setFixedHeight(90)  # Aumentato per le card più alte
         self._setup_ui()
 
         self.timer = QTimer(self)
@@ -122,18 +200,56 @@ class ActivityFeed(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        # Label "Ultime Attività:"
-        title = QLabel("Feed:")
+        # Label "Feed Attività" con stile moderno
+        title = QLabel("📊 Feed Attività")
         title.setStyleSheet(
-            "font-size: 12px; font-weight: bold; color: #6c757d; margin-right: 5px;"
+            """
+            QLabel {
+                font-size: 14px;
+                font-weight: 700;
+                color: #495057;
+                margin-right: 8px;
+                padding: 4px 8px;
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                border: 1px solid #e9ecef;
+            }
+        """
         )
         layout.addWidget(title)
 
-        # Scroll Area Orizzontale
+        # Scroll Area Orizzontale con scrollbar moderna
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll_area.setStyleSheet("background: transparent;")
+        self.scroll_area.setStyleSheet(
+            """
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+            QScrollBar:horizontal {
+                border: none;
+                background: #f8f9fa;
+                height: 8px;
+                border-radius: 4px;
+                margin: 0px;
+            }
+            QScrollBar::handle:horizontal {
+                background: #ced4da;
+                border-radius: 4px;
+                min-width: 40px;
+            }
+            QScrollBar::handle:horizontal:hover {
+                background: #adb5bd;
+            }
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+                border: none;
+                background: none;
+                width: 0px;
+            }
+        """
+        )
         self.scroll_area.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
@@ -164,8 +280,21 @@ class ActivityFeed(QWidget):
         logs = AuditManager().get_logs(limit=10)
 
         if not logs:
-            empty_lbl = QLabel("Nessuna attività recente.")
-            empty_lbl.setStyleSheet("color: #adb5bd; font-size: 11px;")
+            empty_lbl = QLabel("✨ Nessuna attività recente")
+            empty_lbl.setStyleSheet(
+                """
+                QLabel {
+                    color: #868e96;
+                    font-size: 13px;
+                    font-weight: 500;
+                    font-style: italic;
+                    padding: 10px 20px;
+                    background-color: #f8f9fa;
+                    border-radius: 8px;
+                    border: 1px dashed #dee2e6;
+                }
+            """
+            )
             self.feed_layout.insertWidget(0, empty_lbl)
             return
 
