@@ -152,10 +152,10 @@ class ExcelImporter:
         "Gruppo Acquisti": "gruppo_acquisti",
         "Indicatore Rilascio": "indicatore_rilascio",
         "Stato Rilascio": "stato_rilascio",
-        "Attività": "attivita",
+        "Attività": "attivita",  # Matches Attivit via robust check
         "Num riga": "num_riga",
-        "Quantità": "quantita",
-        "Unità di Mis": "unita_mis",
+        "Quantità": "quantita",  # Matches Quantit
+        "Unità di Mis": "unita_mis",  # Matches Unit di Mis
         "Prezzo lordo": "prezzo_lordo",
         "Testo breve": "testo_breve",
     }
@@ -979,11 +979,17 @@ class ExcelImporter:
                     if excel_col == col:
                         rename_map[col] = db_col
                         break
-                    # Fallback for "Attività" vs "Attivit..."
-                    if len(excel_col) > 4 and col.startswith(excel_col[:4]):
-                         # Check if remaining length is similar (approximate match)
+                    # Fallback for "Attività" vs "Attivit..." or "Quantità" vs "Quantit..."
+                    # We match if the first 4 chars match and length is similar
+                    if len(excel_col) >= 4 and col.startswith(excel_col[:4]):
+                         # Special handling for "Unità di Mis" vs "Unit..."
+                         if excel_col.startswith("Unit") and col.startswith("Unit"):
+                             rename_map[col] = db_col
+                             break
+                         
                          if abs(len(col) - len(excel_col)) <= 2:
                              rename_map[col] = db_col
+                             break
 
             if not rename_map:
                  return False, "Nessuna colonna riconosciuta.", []

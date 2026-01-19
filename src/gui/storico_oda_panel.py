@@ -44,51 +44,49 @@ class StoricoOdaPanel(QWidget):
             "Stato",
         ]
 
-        # Mapping completo per il Dettaglio
-        self.full_headers = [
-            "OdA",
-            "Pos OdA",
-            "Num Riga",
-            "Org. Acq.",
-            "Data OdA",
-            "Stato",
-            "Cat. Contab.",
-            "Descrizione",
-            "Qta",
-            "UOM",
-            "Data Consegna",
-            "Valore Netto Pos.",
-            "Valore Residuo",
-            "Valore Netto OdA",
-            "Divisione",
-            "Destinatario",
-            "Nome Destinatario",
-            "Codice Fornitore",
-            "Descrizione Fornitore",
-            "Emittente Fattura",
-            "Desc. Emittente",
-            "Contract Card",
-            "Contratto",
-            "Posizione Contratto",
-            "Gruppo Acquisti",
-            "Indicatore Rilascio",
-            "Stato Rilascio",
-            "Attività",
-            "Quantità",
-            "Unità di Mis",
-            "Prezzo lordo",
-            "Testo breve",
-            "Aggiornato il",
-        ]
-
-        self.model = FastTableModel([], self.master_headers)
-
-        # Formattatori
-        self.model.set_column_formatter(4, format_date_it)  # Data OdA
-        self.model.set_column_formatter(7, format_currency_smart)  # Valore Netto
-
-        self._raw_full_data = []  # Buffer per i dati completi
-
+                # Mapping completo per il Dettaglio
+                self.full_headers = [
+                    "Org. Acq.",
+                    "Data OdA",
+                    "OdA",
+                    "Pos OdA",
+                    "Stato",
+                    "Cat. Contab.",
+                    "Descrizione",
+                    "Qta",
+                    "UOM",
+                    "Data Consegna",
+                    "Valore Netto Pos. ODA",
+                    "Valore Residuo ODA",
+                    "Valore Netto ODA",
+                    "Divisione",
+                    "Destinatario",
+                    "Nome Destinatario",
+                    "Codice Fornitore",
+                    "Descrizione Fornitore",
+                    "Emittente Fattura",
+                    "Descrizione Emittente Fattura",
+                    "Contract Card",
+                    "Contratto",
+                    "Posizione Contratto",
+                    "Gruppo Acquisti",
+                    "Indicatore Rilascio",
+                    "Stato Rilascio",
+                    "Attività",
+                    "Num riga",
+                    "Quantità",
+                    "Unità di Mis",
+                    "Prezzo lordo",
+                    "Testo breve",
+                ]
+        
+                self.model = FastTableModel([], self.master_headers)
+                
+                # Formattatori
+                self.model.set_column_formatter(4, format_date_it)  # Data OdA
+                self.model.set_column_formatter(7, format_currency_smart)  # Valore Netto
+                
+                self._raw_full_data = []  # Buffer per i dati completi
         # Timer per ricerca ritardata (Debounce)
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
@@ -191,101 +189,103 @@ class StoricoOdaPanel(QWidget):
         # We need to store full data in the model or link them.
 
         # ISSUE: FastTableModel sorts `self._data`. If I keep `_raw_full_data` separate, they go out of sync on sort.
-        # FIX: The `_raw_full_data` should be stored IN the model or accessed via a unique ID.
-        # For simplicity, let's look up the full row using the Primary Key (OdA, Pos, Riga).
-
-        master_row = self.model._data[row_idx]
-        key = (master_row[0], master_row[1], master_row[2]) # oda, pos, riga
-
-        # Find in _raw_full_data (inefficient but safe for now, better use a dict)
-        full_data = next((r for r in self._raw_full_data if (r[0], r[1], r[2]) == key), None)
-
-        if full_data:
-            for i, h in enumerate(self.full_headers):
-                if i < len(full_data):
-                    val = str(full_data[i])
-                    if val.lower() == "nan" or val == "None":
-                        val = ""
-
-                    # Apply specific formatting for detail view
-                    if "Data" in h:
-                        val = format_date_it(val)
-                    elif "Valore" in h or "Prezzo" in h:
-                        val = format_currency_smart(val)
-
-                    self.detail_labels[h].setText(val)
-
-    def _on_header_clicked(self, logical_index):
-        self.model.sort(logical_index, self.table.horizontalHeader().sortIndicatorOrder())
-
-    def refresh_data(self):
-        """Aggiorna i dati della tabella."""
-        query, params = self._build_query()
-
-        try:
-            full_rows = db_manager.execute_query(
-                db_manager.DB_STORICO_ODA, query, tuple(params)
-            )
-            self._raw_full_data = full_rows
-            master_rows = self._process_rows(full_rows)
-            self.model.update_data(master_rows)
-            self.table.resizeColumnsToContents()
-        except Exception as e:
-            print(f"Errore caricamento Storico OdA: {e}")
-
-    def _build_query(self) -> Tuple[str, List[Any]]:
-        """Costruisce la query SQL."""
-        search_text = self.search_input.text().lower().strip()
-
-        query = """
-            SELECT
-                oda, pos_oda, num_riga, org_acq, data_oda, stato, cat_contab, descrizione,
-                qta, uom, data_consegna, valore_netto_pos, valore_residuo, valore_netto_oda,
-                divisione, destinatario, nome_destinatario, codice_fornitore, descrizione_fornitore,
-                emittente_fattura, desc_emittente_fattura, contract_card, contratto,
-                posizione_contratto, gruppo_acquisti, indicatore_rilascio, stato_rilascio,
-                attivita, quantita, unita_mis, prezzo_lordo, testo_breve, updated_at
-            FROM storico_oda
-            WHERE 1=1
-        """
-        params = []
-
-        if search_text:
-            query += """ AND (
-                CAST(oda AS TEXT) LIKE ? OR
-                descrizione LIKE ? OR
-                descrizione_fornitore LIKE ? OR
-                CAST(contratto AS TEXT) LIKE ? OR
-                codice_fornitore LIKE ?
-            )"""
-            p = f"%{search_text}%"
-            params.extend([p, p, p, p, p])
-
-        query += " ORDER BY data_oda DESC LIMIT 2000"
-        return query, params
-
-    def _process_rows(self, full_rows: List[Tuple]) -> List[List[Any]]:
-        """Pulisce e formatta le righe per la visualizzazione Master."""
-        master_rows = []
-        for r in full_rows:
-            # Mapping Full -> Master
-            # 0:oda, 1:pos, 2:riga, 18:fornitore, 4:data, 7:desc, 8:qta, 9:uom, 11:valore, 5:stato
-
-            # Combine Qta + UOM
-            qta_str = f"{r[8]} {r[9]}" if r[8] else ""
-
-            row = [
-                r[0], # OdA
-                r[1], # Pos
-                r[2], # Riga
-                r[18], # Fornitore
-                r[4], # Data OdA
-                r[7], # Descrizione
-                qta_str, # Qta
-                r[11], # Valore Netto Pos
-                r[5], # Stato
-            ]
-            master_rows.append(
-                [("" if str(val).lower() == "nan" or val is None else val) for val in row]
-            )
-        return master_rows
+                # FIX: The `_raw_full_data` should be stored IN the model or accessed via a unique ID.
+                # For simplicity, let's look up the full row using the Primary Key (OdA, Pos, Riga).
+                
+                master_row = self.model._data[row_idx]
+                key = (master_row[0], master_row[1], master_row[2]) # oda, pos, riga
+                
+                # Find in _raw_full_data (inefficient but safe for now, better use a dict)
+                # Note: In _raw_full_data, indices are: OdA=2, Pos=3, Riga=27 (based on _build_query)
+                full_data = next((r for r in self._raw_full_data if (r[2], r[3], r[27]) == key), None)
+                
+                if full_data:
+                    for i, h in enumerate(self.full_headers):
+                        if i < len(full_data):
+                            val = str(full_data[i])
+                            if val.lower() == "nan" or val == "None":
+                                val = ""
+                            
+                            # Apply specific formatting for detail view
+                            if "Data" in h:
+                                val = format_date_it(val)
+                            elif "Valore" in h or "Prezzo" in h:
+                                val = format_currency_smart(val)
+                                
+                            self.detail_labels[h].setText(val)
+        
+            def _on_header_clicked(self, logical_index):
+                self.model.sort(logical_index, self.table.horizontalHeader().sortIndicatorOrder())
+        
+            def refresh_data(self):
+                """Aggiorna i dati della tabella."""
+                query, params = self._build_query()
+        
+                try:
+                    full_rows = db_manager.execute_query(
+                        db_manager.DB_STORICO_ODA, query, tuple(params)
+                    )
+                    self._raw_full_data = full_rows
+                    master_rows = self._process_rows(full_rows)
+                    self.model.update_data(master_rows)
+                    self.table.resizeColumnsToContents()
+                except Exception as e:
+                    print(f"Errore caricamento Storico OdA: {e}")
+        
+            def _build_query(self) -> Tuple[str, List[Any]]:
+                """Costruisce la query SQL."""
+                search_text = self.search_input.text().lower().strip()
+                
+                # Select columns in the exact order of self.full_headers
+                query = """
+                    SELECT 
+                        org_acq, data_oda, oda, pos_oda, stato, cat_contab, descrizione, 
+                        qta, uom, data_consegna, valore_netto_pos, valore_residuo, valore_netto_oda, 
+                        divisione, destinatario, nome_destinatario, codice_fornitore, descrizione_fornitore, 
+                        emittente_fattura, desc_emittente_fattura, contract_card, contratto, 
+                        posizione_contratto, gruppo_acquisti, indicatore_rilascio, stato_rilascio, 
+                        attivita, num_riga, quantita, unita_mis, prezzo_lordo, testo_breve
+                    FROM storico_oda 
+                    WHERE 1=1
+                """
+                params = []
+        
+                if search_text:
+                    query += """ AND (
+                        CAST(oda AS TEXT) LIKE ? OR 
+                        descrizione LIKE ? OR 
+                        descrizione_fornitore LIKE ? OR 
+                        CAST(contratto AS TEXT) LIKE ? OR
+                        codice_fornitore LIKE ?
+                    )"""
+                    p = f"%{search_text}%"
+                    params.extend([p, p, p, p, p])
+        
+                query += " ORDER BY data_oda DESC LIMIT 2000"
+                return query, params
+        
+            def _process_rows(self, full_rows: List[Tuple]) -> List[List[Any]]:
+                """Pulisce e formatta le righe per la visualizzazione Master."""
+                master_rows = []
+                for r in full_rows:
+                    # Mapping Full -> Master
+                    # OdA=2, Pos=3, Riga=27, Fornitore=17, Data=1, Desc=6, Qta=7, UOM=8, Valore=10, Stato=4
+                    
+                    # Combine Qta + UOM
+                    qta_str = f"{r[7]} {r[8]}" if r[7] else ""
+                    
+                    row = [
+                        r[2], # OdA
+                        r[3], # Pos
+                        r[27], # Riga (num_riga)
+                        r[17], # Fornitore (descrizione_fornitore)
+                        r[1], # Data OdA
+                        r[6], # Descrizione
+                        qta_str, # Qta
+                        r[10], # Valore Netto Pos
+                        r[4], # Stato
+                    ]
+                    master_rows.append(
+                        [("" if str(val).lower() == "nan" or val is None else val) for val in row]
+                    )
+                return master_rows
