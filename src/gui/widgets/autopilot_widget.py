@@ -242,10 +242,7 @@ class AutopilotConfigCard(QFrame):
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 #0d6efd, stop:1 #0a58ca);
                 border-color: #0d6efd;
-            }
-            QCheckBox::indicator:checked::after {
-                content: "✓";
-                color: white;
+                image: url(assets/icons/check.svg);
             }
         """
         )
