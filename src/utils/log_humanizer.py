@@ -4,6 +4,26 @@ Converte messaggi di log tecnici in frasi umane e colloquiali.
 """
 
 import random
+from datetime import datetime
+
+
+def friendly_time_delta(dt):
+    """Restituisce una stringa amichevole per il delta temporale (es. '5 min fa')."""
+    now = datetime.now()
+    diff = now - dt
+
+    if diff.days > 0:
+        return dt.strftime("%d/%m")
+
+    seconds = diff.total_seconds()
+    if seconds < 60:
+        return "Adesso"
+    elif seconds < 3600:
+        minutes = int(seconds / 60)
+        return f"{minutes} min fa"
+    else:
+        hours = int(seconds / 3600)
+        return f"{hours}h fa"
 
 
 class SmartLogTranslator:

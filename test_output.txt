@@ -1,0 +1,271 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.1, pluggy-1.6.0 -- C:\Program Files\Python312\python.exe
+cachedir: .pytest_cache
+PyQt6 6.8.0 -- Qt runtime 6.8.2 -- Qt compiled 6.8.1
+rootdir: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.12.0, asyncio-1.3.0, cov-7.0.0, mock-3.15.1, qt-4.5.0, langsmith-0.5.2, pyfakefs-6.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 5 items
+
+tests/unit/test_dashboard_full.py::TestDashboardComponents::test_quick_actions_signals PASSED [ 20%]
+tests/unit/test_dashboard_full.py::TestDashboardComponents::test_activity_feed_refresh PASSED [ 40%]
+tests/unit/test_dashboard_full.py::TestDashboardPanelFull::test_dashboard_initialization FAILED [ 60%]
+tests/unit/test_dashboard_full.py::TestDashboardPanelFull::test_dashboard_quick_action_integration FAILED [ 80%]
+tests/unit/test_dashboard_full.py::TestQuickActionsConfig::test_dialog_load_save PASSED [100%]
+
+================================== FAILURES ===================================
+____________ TestDashboardPanelFull.test_dashboard_initialization _____________
+
+self = <test_dashboard_full.TestDashboardPanelFull object at 0x0000022B7F1F0560>
+qapp = <PyQt6.QtWidgets.QApplication object at 0x0000022B7F1E1770>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x0000022B7EC2EC30>
+
+    def test_dashboard_initialization(self, qapp, mocker):
+        """Verify the dashboard assembles all parts correctly."""
+        # Mock Stats
+        mocker.patch(
+            "src.core.stats_manager.StatsManager.get_all_stats",
+            return_value={}
+        )
+        # Mock Audit
+        mocker.patch(
+            "src.core.audit_manager.AuditManager.get_logs",
+            return_value=[]
+        )
+
+>       panel = DashboardPanel()
+                ^^^^^^^^^^^^^^^^
+
+tests\unit\test_dashboard_full.py:91:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <src.gui.dashboard_panel.DashboardPanel object at 0x0000022B7F1E32F0>
+parent = None
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(20, 20, 20, 20)
+        self.layout.setSpacing(0)
+
+        # Main Floating Container
+        self.main_container = QFrame()
+        self.main_container.setObjectName("mainDashboardContainer")
+        self.main_container.setStyleSheet(
+            """
+            QFrame#mainDashboardContainer {
+                background-color: #ffffff;
+                border-radius: 20px;
+                border: 1px solid #dee2e6;
+            }
+        """
+        )
+
+        container_shadow = QGraphicsDropShadowEffect()
+        container_shadow.setBlurRadius(30)
+        container_shadow.setXOffset(0)
+        container_shadow.setYOffset(10)
+        container_shadow.setColor(QColor(0, 0, 0, 20))
+        self.main_container.setGraphicsEffect(container_shadow)
+
+        self.container_layout = QVBoxLayout(self.main_container)
+        self.container_layout.setContentsMargins(25, 25, 25, 25)
+        self.container_layout.setSpacing(20)
+
+        # Scroll Area inside container
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setStyleSheet("background: transparent;")
+
+        self.content_widget = QWidget()
+        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(25)
+
+        self.scroll_area.setWidget(self.content_widget)
+        self.container_layout.addWidget(self.scroll_area)
+
+        self.layout.addWidget(self.main_container)
+
+        # SubWidgets references
+        self.activity_feed = None
+        self.chart = None
+
+>       self._setup_ui()
+        ^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardPanel' object has no attribute '_setup_ui'
+
+src\gui\dashboard_panel.py:92: AttributeError
+_______ TestDashboardPanelFull.test_dashboard_quick_action_integration ________
+
+self = <test_dashboard_full.TestDashboardPanelFull object at 0x0000022B7F1F0950>
+qapp = <PyQt6.QtWidgets.QApplication object at 0x0000022B7F1E1770>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x0000022B7EC2C0E0>
+qtbot = <pytestqt.qtbot.QtBot object at 0x0000022B7EC2C650>
+
+    def test_dashboard_quick_action_integration(self, qapp, mocker, qtbot):
+        """Verify Quick Action click triggers navigation on MainWindow."""
+        # Mock Stats & Audit to avoid side effects
+        mocker.patch("src.core.stats_manager.StatsManager.get_all_stats", return_value={})
+        mocker.patch("src.core.audit_manager.AuditManager.get_logs", return_value=[])
+
+>       panel = DashboardPanel()
+                ^^^^^^^^^^^^^^^^
+
+tests\unit\test_dashboard_full.py:111:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <src.gui.dashboard_panel.DashboardPanel object at 0x0000022B7EC10730>
+parent = None
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(20, 20, 20, 20)
+        self.layout.setSpacing(0)
+
+        # Main Floating Container
+        self.main_container = QFrame()
+        self.main_container.setObjectName("mainDashboardContainer")
+        self.main_container.setStyleSheet(
+            """
+            QFrame#mainDashboardContainer {
+                background-color: #ffffff;
+                border-radius: 20px;
+                border: 1px solid #dee2e6;
+            }
+        """
+        )
+
+        container_shadow = QGraphicsDropShadowEffect()
+        container_shadow.setBlurRadius(30)
+        container_shadow.setXOffset(0)
+        container_shadow.setYOffset(10)
+        container_shadow.setColor(QColor(0, 0, 0, 20))
+        self.main_container.setGraphicsEffect(container_shadow)
+
+        self.container_layout = QVBoxLayout(self.main_container)
+        self.container_layout.setContentsMargins(25, 25, 25, 25)
+        self.container_layout.setSpacing(20)
+
+        # Scroll Area inside container
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setStyleSheet("background: transparent;")
+
+        self.content_widget = QWidget()
+        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(25)
+
+        self.scroll_area.setWidget(self.content_widget)
+        self.container_layout.addWidget(self.scroll_area)
+
+        self.layout.addWidget(self.main_container)
+
+        # SubWidgets references
+        self.activity_feed = None
+        self.chart = None
+
+>       self._setup_ui()
+        ^^^^^^^^^^^^^^
+E       AttributeError: 'DashboardPanel' object has no attribute '_setup_ui'
+
+src\gui\dashboard_panel.py:92: AttributeError
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.10-final-0 _______________
+
+Name                                      Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------
+src\bots\__init__.py                         20     20     0%   6-133
+src\bots\base\__init__.py                     2      2     0%   5-7
+src\bots\base\base_bot.py                   270    270     0%   6-477
+src\bots\base\login_page.py                  94     94     0%   6-179
+src\core\__init__.py                          2      0   100%
+src\core\app_initializer.py                  72     72     0%   1-124
+src\core\app_updater.py                      46     46     0%   6-87
+src\core\audit_manager.py                   164    130    21%   47-50, 54-102, 107-123, 127-139, 143-144, 148-157, 173-220, 231-249, 255-263, 273-296, 300-312, 316-325
+src\core\backup_manager.py                  140    140     0%   6-253
+src\core\config_manager.py                  178    122    31%   72, 82, 94-100, 114-133, 141-155, 164-165, 173-185, 190-191, 196-219, 224-236, 247-249, 254, 259-274, 279-292, 297-307, 312-316, 321-323, 328-333, 338
+src\core\constants.py                        74      0   100%
+src\core\contabilita_manager.py             107    107     0%   6-244
+src\core\contabilita_queries.py              87     87     0%   6-122
+src\core\contabilita_search.py               91     91     0%   6-178
+src\core\contabilita_stats.py                61     61     0%   6-105
+src\core\contabilita_worker.py               80     80     0%   1-174
+src\core\data_synchronizer.py               104    104     0%   6-210
+src\core\database.py                        152    152     0%   6-395
+src\core\excel_importer.py                  613    613     0%   6-1106
+src\core\license_updater.py                 159    159     0%   6-299
+src\core\license_validator.py               197    197     0%   6-380
+src\core\lyra_client.py                     128    128     0%   6-259
+src\core\lyra_sentinel.py                    32     32     0%   6-53
+src\core\notification_manager.py             77     55    29%   25-27, 30-32, 36-45, 49-53, 60-75, 79-81, 85, 93-100, 104-113, 117-122, 126-129
+src\core\secrets_manager.py                 102     65    36%   27-41, 45-51, 55-69, 73-75, 79-85, 90, 95, 100, 105, 110-116, 121-124, 129-132, 137-140, 145-151
+src\core\stats_manager.py                    48     36    25%   22-25, 29, 33-49, 53, 57-68, 72-80, 84
+src\core\telegram_bridge.py                 342    342     0%   1-530
+src\core\telegram_manager.py                545    545     0%   1-1141
+src\core\time_manager.py                     19     19     0%   6-56
+src\core\timesheet_processor.py             104    104     0%   6-175
+src\core\version.py                           4      4     0%   6-9
+src\gui\__init__.py                           0      0   100%
+src\gui\accessibility.py                     18     18     0%   5-49
+src\gui\contabilita_kpi_panel.py            380    380     0%   8-922
+src\gui\contabilita_panel.py                247    247     0%   6-424
+src\gui\dashboard_panel.py                   66     17    74%   95-97, 101, 105-106, 111-123
+src\gui\design\colors.py                     27      1    96%   105
+src\gui\design\spacing.py                    25      0   100%
+src\gui\dialogs\quick_actions_config.py      41      0   100%
+src\gui\formatters.py                        93     93     0%   1-168
+src\gui\help_panel.py                       120    120     0%   6-370
+src\gui\layouts\responsive.py                64     50    22%   16-19, 23-24, 28-29, 33-39, 43-47, 51-52, 56-67, 72-80, 84-86, 90-100
+src\gui\lyra_panel.py                       397    397     0%   1-809
+src\gui\main_window.py                      372    372     0%   7-770
+src\gui\notifications_panel.py              216    216     0%   6-473
+src\gui\panels.py                          1308   1308     0%   6-2451
+src\gui\scarico_ore_components.py           539    539     0%   1-1030
+src\gui\scarico_ore_panel.py                269    269     0%   7-461
+src\gui\settings_panel.py                  1197   1197     0%   7-2181
+src\gui\styles.py                            60     60     0%   6-138
+src\gui\toast.py                             45     45     0%   6-90
+src\gui\widgets\__init__.py                  12      0   100%
+src\gui\widgets\activity_feed.py             97      8    92%   53-54, 93-94, 158-161
+src\gui\widgets\automazioni_widget.py        42     42     0%   1-101
+src\gui\widgets\bot_parameters.py           112     89    21%   41-45, 48-116, 126-133, 137, 153, 157-159, 163-172, 177, 181-183, 187-191, 201-208, 212, 216-217
+src\gui\widgets\calendar_date_edit.py        11      6    45%   16-23
+src\gui\widgets\data_table.py               108     86    20%   46-50, 53-127, 131, 135-136, 139-164, 167-173, 177-185, 188-190, 194-211, 215, 219
+src\gui\widgets\excel_table.py              324    288    11%   29-38, 49-62, 66-73, 77-94, 98-118, 121-122, 125-126, 130-140, 144-168, 172-198, 202-221, 225-245, 249-260, 263-268, 271-275, 278-282, 291-293, 296-319, 322-381, 384-387, 390-396, 399-431, 434-437, 440-442, 445, 449-466, 475-500, 505-529
+src\gui\widgets\footer_stats.py             440    440     0%   7-768
+src\gui\widgets\info_widgets.py              95     80    16%   27-60, 63, 70-78, 83-111, 118-168, 171, 174
+src\gui\widgets\modern_button.py             62     36    42%   42-54, 61-63, 67, 71-72, 78-81, 85-88, 92-100, 104-109, 113-152
+src\gui\widgets\notification_item.py         70     59    16%   20-23, 26-130, 134-136, 139
+src\gui\widgets\quick_actions.py             67     12    82%   110-121, 127-129
+src\gui\widgets\sidebar_button.py            41     41     0%   1-89
+src\gui\widgets\sidebar_widget.py           175    175     0%   1-328
+src\gui\widgets\simple_chart.py              63     63     0%   1-101
+src\gui\widgets\status_card.py               57     46    19%   19-90, 94-97, 106-122, 126-127
+src\gui\widgets\status_indicator.py          42     35    17%   18-32, 42-59, 63-68
+src\gui\widgets\timeline_widget.py          191    155    19%   44-73, 78-85, 88-125, 128-145, 148-153, 156-169, 172-173, 176-178, 183-188, 191-205, 210-217, 221, 224-234, 237-252, 257-262, 265-269, 274-290, 293, 296, 301-328
+src\gui\widgets\toast.py                     91     64    30%   55-68, 72-111, 116-130, 140-145, 160-162, 181-218, 224, 229, 234, 239
+src\gui\widgets\update_banner.py             35     35     0%   1-53
+src\utils\__init__.py                         2      0   100%
+src\utils\document_generator.py              13     13     0%   5-39
+src\utils\document_processor.py              64     64     0%   6-86
+src\utils\helpers.py                         94     62    34%   23, 36-40, 56-78, 91-93, 98, 125-126, 134, 147-161, 175-177, 192-199, 213-238, 253-256
+src\utils\log_humanizer.py                   41     26    37%   17-25, 81-89, 94-113, 118-121
+src\utils\parsing.py                         53     53     0%   6-119
+src\utils\printing.py                        82     82     0%   1-144
+src\utils\resource_manager.py                33     33     0%   6-60
+src\utils\secure_logger.py                   22     22     0%   5-68
+src\utils\security.py                        85     85     0%   6-147
+src\utils\validators.py                      73     73     0%   5-208
+-----------------------------------------------------------------------
+TOTAL                                     12295  11479     7%
+Coverage HTML written to dir htmlcov
+=========================== short test summary info ===========================
+FAILED tests/unit/test_dashboard_full.py::TestDashboardPanelFull::test_dashboard_initialization - AttributeError: 'DashboardPanel' object has no attribute '_setup_ui'
+FAILED tests/unit/test_dashboard_full.py::TestDashboardPanelFull::test_dashboard_quick_action_integration - AttributeError: 'DashboardPanel' object has no attribute '_setup_ui'
+========================= 2 failed, 3 passed in 3.66s =========================

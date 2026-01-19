@@ -272,7 +272,7 @@ class TestBaseBotPanel(unittest.TestCase):
     def test_update_status(self):
         self.panel._update_status("#0d6efd", "Bot is running")
         self.mock_status_card_instance.setStatus.assert_called_once_with(
-            "#0d6efd", "Bot is running"
+            "Bot is running", "#0d6efd"
         )
         self.panel.status_changed.emit.assert_called_once_with(
             "#0d6efd", "Bot is running"

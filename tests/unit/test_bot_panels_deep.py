@@ -60,7 +60,7 @@ def test_carico_ts_panel_deep(qtbot, mock_ui_deps):
 
     # Test reset
     panel.log_widget.clear()
-    panel.log_widget.append_log("Test")
+    panel.log_widget.append("Test")
     panel._on_stop()  # Should stop worker if exists
 
 

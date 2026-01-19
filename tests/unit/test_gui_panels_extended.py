@@ -19,7 +19,7 @@ class TestGUIPanelsExtended:
         ):
             panel = LyraPanel()
             qtbot.addWidget(panel)
-            assert panel.chat_area is not None
+            assert panel.chat_scroll is not None
             assert panel.input_field is not None
 
             # Test typing and sending (logic level)

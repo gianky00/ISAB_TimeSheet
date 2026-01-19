@@ -105,16 +105,27 @@ class AuditLogWidget(QWidget):
                 border: 1px solid #dee2e6;
                 border-radius: 8px;
                 background-color: white;
-                gridline-color: #f8f9fa;
+                gridline-color: #e9ecef;
                 font-size: 13px;
             }
+            QTableWidget::item {
+                padding: 8px 12px;
+                border-bottom: 1px solid #f1f3f5;
+            }
             QHeaderView::section {
-                background-color: #f8f9fa;
-                padding: 12px;
+                background-color: #e9ecef;
+                padding: 14px 12px;
                 border: none;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-                color: #495057;
+                border-bottom: 2px solid #adb5bd;
+                border-right: 1px solid #dee2e6;
+                font-weight: 700;
+                font-size: 12px;
+                color: #212529;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            QHeaderView::section:last {
+                border-right: none;
             }
         """
         )
@@ -123,6 +134,9 @@ class AuditLogWidget(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(
+            40
+        )  # Altezza righe per leggibilità
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(
@@ -226,12 +240,18 @@ class AuditLogWidget(QWidget):
         # 2. Action Font (Bold)
         items[2].setFont(QFont("Arial", 9, QFont.Weight.Bold))
 
-        # 3. Status Color (Foreground)
-        if status == "error" or sev == "high":
+        # 3. Status Color (Foreground) - Logica esplicita per SUCCESS/ERROR
+        if status == "success":
+            # SUCCESS deve essere VERDE
+            items[5].setForeground(QColor("#198754"))
+        elif status == "error" or sev == "high":
+            # ERROR deve essere ROSSO
             items[5].setForeground(QColor("#dc3545"))
         elif status == "warning" or sev == "medium":
+            # WARNING deve essere ARANCIO
             items[5].setForeground(QColor("#fd7e14"))
         else:
+            # Default: VERDE per stati sconosciuti
             items[5].setForeground(QColor("#198754"))
         items[5].setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 

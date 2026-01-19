@@ -20,6 +20,8 @@ APP_NAME = "SyncroJob"
 
 CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
 CONFIG_FILE = CONFIG_DIR / "config.json"
+# Root del progetto (assumendo src/core/config_manager.py)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 _config_cache: Optional[Dict[str, Any]] = None
 _config_lock = threading.RLock()  # Lock per accesso thread-safe
 
@@ -45,6 +47,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "cantieri": [],
     "employee_mappings": {},
     "ai_model": "gemini-1.5-pro",
+    "quick_actions": ["nav_scarico_ts", "nav_lyra", "cmd_sync", "cmd_open_folder"],
     "statistics": {},
 }
 

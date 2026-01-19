@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import io
 import json
 import os
 import signal
@@ -8,6 +9,11 @@ import sys
 import time
 from collections import defaultdict
 from pathlib import Path
+
+# Fix encoding for Windows console to support emoji
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 # --- CONFIGURAZIONE ---
 ROOT_DIR = Path(__file__).parent.parent

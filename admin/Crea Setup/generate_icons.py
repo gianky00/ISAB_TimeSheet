@@ -3,9 +3,16 @@ Bot TS - Icon Generator
 Genera icone moderne per l'applicazione e l'installer.
 """
 
+import io
 import os
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
+
+# Fix encoding for Windows console to support emoji
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 
 def create_modern_icon(text, color_bg, color_text, filename, accent_color=None):

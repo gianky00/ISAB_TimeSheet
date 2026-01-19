@@ -4,6 +4,7 @@ Sostituisce i vecchi script .bat con un processo robusto e cross-platform.
 """
 
 import argparse
+import io
 import json
 import subprocess
 import sys
@@ -128,6 +129,11 @@ def detect_bump_type():
 
 
 def main():
+    # Fix encoding for Windows console to support emoji
+    if sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+
     parser = argparse.ArgumentParser(description="SyncroJob Automated Release Tool")
     parser.add_argument(
         "type",

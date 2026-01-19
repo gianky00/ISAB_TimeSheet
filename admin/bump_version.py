@@ -3,9 +3,15 @@ Bot TS - Version Bumper
 Incrementa la versione dell'applicazione.
 """
 
+import io
 import os
 import re
 import sys
+
+# Fix encoding for Windows console to support emoji
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 
 def bump_version(part="patch"):

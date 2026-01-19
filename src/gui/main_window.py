@@ -9,13 +9,15 @@ from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLineEdit,
     QMainWindow,
+    QPushButton,
     QStackedWidget,
     QStatusBar,
     QSystemTrayIcon,
@@ -263,9 +265,41 @@ class MainWindow(QMainWindow):
         if sip.isdeleted(self):
             return
 
-        # Ripristina Footer Standard (FASE 2) con animazione fade-in
-        self.startup_console.setVisible(False)
-        self.boot_telemetry.setVisible(False)  # Nascondi Telemetry
+        # Ripristina Footer Standard (FASE 2) con animazioni fade-out/fade-in
+        # Animazione fade-out per startup_console
+        console_effect = QGraphicsOpacityEffect(self.startup_console)
+        self.startup_console.setGraphicsEffect(console_effect)
+        console_anim = QPropertyAnimation(console_effect, b"opacity")
+        console_anim.setDuration(600)
+        console_anim.setStartValue(1.0)
+        console_anim.setEndValue(0.0)
+        console_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+        console_anim.finished.connect(lambda: self.startup_console.setVisible(False))
+        console_anim.start()
+
+        # Animazione fade-out per boot_telemetry con reset opacity al termine
+        telemetry_effect = QGraphicsOpacityEffect(self.boot_telemetry)
+        self.boot_telemetry.setGraphicsEffect(telemetry_effect)
+        telemetry_anim = QPropertyAnimation(telemetry_effect, b"opacity")
+        telemetry_anim.setDuration(600)
+        telemetry_anim.setStartValue(1.0)
+        telemetry_anim.setEndValue(0.0)
+        telemetry_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+
+        def hide_and_reset_telemetry():
+            self.boot_telemetry.setVisible(False)
+            # Rimuovi l'effect e reset opacity per permettere toggle futuro
+            self.boot_telemetry.setGraphicsEffect(None)
+            # Stop timer per risparmiare risorse
+            if self.boot_telemetry.timer.isActive():
+                self.boot_telemetry.timer.stop()
+
+        telemetry_anim.finished.connect(hide_and_reset_telemetry)
+        telemetry_anim.start()
+
+        # Mantieni le animazioni come attributi per evitare garbage collection
+        self._console_anim = console_anim
+        self._telemetry_anim = telemetry_anim
 
         self.status_bar.clearMessage()
         self.footer_right.show_operational()  # Nascondi progress bar, mostra status cards
@@ -274,6 +308,9 @@ class MainWindow(QMainWindow):
 
         # Animazione fade-in per il footer sinistro
         self.footer_left.fade_in(400)
+
+        # Assicura che lo stato del toggle sia corretto (footer_left visibile)
+        self._footer_stats_mode = False
 
         # FINAL: Show visible TOAST instead of status bar message
         # Delay increased to 500ms to ensure UI is stable and Toast appears ON TOP
@@ -388,6 +425,40 @@ class MainWindow(QMainWindow):
         )
         self.setStatusBar(self.status_bar)
 
+        # Toggle Button per Footer Stats (sinistra)
+        from src.core.constants import Icons
+        from src.utils.helpers import get_asset_path, get_colored_icon
+
+        self.footer_toggle_btn = QPushButton()
+        self.footer_toggle_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.ACTIVITY), "#000000")
+        )
+        self.footer_toggle_btn.setIconSize(QSize(20, 20))
+        self.footer_toggle_btn.setFixedSize(40, 40)
+        self.footer_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.footer_toggle_btn.setToolTip("Toggle System Metrics / License Info")
+        self.footer_toggle_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: transparent;
+                border: none;
+                border-radius: 8px;
+                margin: 0 5px;
+            }
+            QPushButton:hover {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+            QPushButton:pressed {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+        """
+        )
+        self.footer_toggle_btn.clicked.connect(self._toggle_footer_stats)
+        self.status_bar.addWidget(self.footer_toggle_btn)
+
+        # Stato toggle: False = footer_left visibile, True = boot_telemetry visibile
+        self._footer_stats_mode = False
+
         # 1. LEFT: Mega Widget (Cliente, Scadenza, Login, Accounts)
         self.footer_left = FooterLeftWidget()
         self.footer_left.setVisible(True)
@@ -406,6 +477,10 @@ class MainWindow(QMainWindow):
         # 2. RIGHT: Status Cards (Contenute in FooterRightWidget)
         self.status_portale = StatusCard("Portale Fornitori")
         self.status_safework = StatusCard("SafeWork")
+
+        # Connessione click per navigare a Impostazioni -> Configurazione
+        self.status_portale.clicked.connect(self._navigate_to_settings_config)
+        self.status_safework.clicked.connect(self._navigate_to_settings_config)
 
         self.footer_right = FooterRightWidget(self.status_portale, self.status_safework)
         self.status_bar.addPermanentWidget(self.footer_right)
@@ -431,6 +506,9 @@ class MainWindow(QMainWindow):
         )
         self.sidebar.automation_tab_requested.connect(
             self._handle_automation_tab_change
+        )
+        self.sidebar.notifications_tab_requested.connect(
+            self._handle_notifications_tab_change
         )
         main_layout.addWidget(self.sidebar)
 
@@ -467,9 +545,9 @@ class MainWindow(QMainWindow):
     def _connect_signals(self):
         """Collega i segnali globali."""
         NotificationManager.instance().unread_count_changed.connect(
-            self.sidebar.btn_notifications.set_badge
+            self.sidebar.group_notifiche.header_btn.set_badge
         )
-        self.sidebar.btn_notifications.set_badge(
+        self.sidebar.group_notifiche.header_btn.set_badge(
             NotificationManager.instance().get_unread_count()
         )
 
@@ -623,12 +701,56 @@ class MainWindow(QMainWindow):
         if hasattr(self, "automazioni_widget"):
             self.automazioni_widget.setCurrentIndex(tab_index)
 
+    def _handle_notifications_tab_change(self, tab_index: int):
+        """Gestisce il cambio tab interno per il pannello Notifiche."""
+        # 1. Naviga al pannello Notifiche se non ci siamo già
+        self.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS)
+
+        # 2. Imposta il tab corretto (0: Notifiche, 1: Audit)
+        if hasattr(self, "notifications_panel"):
+            self.notifications_panel.tabs.setCurrentIndex(tab_index)
+
     def analyze_with_lyra(self, context_text: str):
         """Passa al contesto Lyra."""
 
     def show_settings(self):
         """Mostra il pannello delle impostazioni."""
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
+
+    def _navigate_to_settings_config(self):
+        """Naviga al pannello Impostazioni -> tab Configurazione."""
+        # STEP 1: Forza il caricamento del pannello PRIMA di navigare
+        _ = self.navigation_controller.get_panel(PageIndex.SETTINGS)
+
+        # STEP 2: Naviga al pannello (ora sicuramente caricato)
+        self.navigation_controller.navigate_to(PageIndex.SETTINGS)
+
+        # STEP 3: Imposta il tab immediatamente (il pannello è già caricato)
+        if hasattr(self, "settings_panel") and self.settings_panel is not None:
+            # Usa QTimer per assicurare che l'UI sia aggiornata prima di cambiare tab
+            QTimer.singleShot(50, lambda: self.settings_panel.tabs.setCurrentIndex(0))
+
+    def _toggle_footer_stats(self):
+        """Toggle tra System Metrics (boot_telemetry) e License Info (footer_left)."""
+        self._footer_stats_mode = not self._footer_stats_mode
+
+        if self._footer_stats_mode:
+            # Mostra boot_telemetry, nascondi footer_left
+            self.footer_left.setVisible(False)
+            self.boot_telemetry.setVisible(True)
+            # Assicura che non ci siano effetti residui di opacity
+            self.boot_telemetry.setGraphicsEffect(None)
+            # Restart timer e forza update immediato
+            if not self.boot_telemetry.timer.isActive():
+                self.boot_telemetry.timer.start(1000)
+            self.boot_telemetry._update_stats()  # Update immediato
+        else:
+            # Mostra footer_left, nascondi boot_telemetry
+            self.boot_telemetry.setVisible(False)
+            self.footer_left.setVisible(True)
+            # Stop timer per risparmiare risorse
+            if self.boot_telemetry.timer.isActive():
+                self.boot_telemetry.timer.stop()
 
     def closeEvent(self, event):
         """

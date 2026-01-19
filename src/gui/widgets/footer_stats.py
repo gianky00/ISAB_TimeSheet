@@ -348,7 +348,7 @@ class BootTelemetryWidget(QWidget):
 
         self._add_separator(layout)
 
-        # Colonna 4: CPU / TEMP (Performance)
+        # Colonna 4: CPU / UPTIME (Performance)
         col4 = QWidget()
         col4_layout = QVBoxLayout(col4)
         col4_layout.setContentsMargins(0, 0, 0, 0)
@@ -358,9 +358,9 @@ class BootTelemetryWidget(QWidget):
         self.lbl_cpu.setStyleSheet(self.font_style)
         col4_layout.addWidget(self.lbl_cpu)
 
-        self.lbl_temp = QLabel()
-        self.lbl_temp.setStyleSheet(self.font_style)
-        col4_layout.addWidget(self.lbl_temp)
+        self.lbl_uptime = QLabel()
+        self.lbl_uptime.setStyleSheet(self.font_style)
+        col4_layout.addWidget(self.lbl_uptime)
         layout.addWidget(col4)
 
         self._add_separator(layout)
@@ -486,22 +486,23 @@ class BootTelemetryWidget(QWidget):
             else:
                 self.lbl_freq.setText("FREQ: N/A")
 
-            # Col 4: CPU / TEMP
+            # Col 4: CPU / UPTIME
             cpu_pct = psutil.cpu_percent(interval=0.1)
             self.lbl_cpu.setText(f"CPU: {cpu_pct:.1f}%")
-            # Temperatura CPU (Windows: richiede librerie esterne, usiamo fallback)
+            # Uptime del sistema
             try:
-                temps = psutil.sensors_temperatures()
-                if temps:
-                    for _name, entries in temps.items():
-                        if entries:
-                            temp_val = entries[0].current
-                            self.lbl_temp.setText(f"TEMP: {temp_val:.0f}°C")
-                            break
+                boot_time = psutil.boot_time()
+                uptime_seconds = now - boot_time
+                hours = int(uptime_seconds // 3600)
+                minutes = int((uptime_seconds % 3600) // 60)
+                if hours >= 24:
+                    days = hours // 24
+                    hours = hours % 24
+                    self.lbl_uptime.setText(f"UPTIME: {days}d {hours}h")
                 else:
-                    self.lbl_temp.setText("TEMP: N/A")
+                    self.lbl_uptime.setText(f"UPTIME: {hours}h {minutes}m")
             except Exception:
-                self.lbl_temp.setText("TEMP: N/A")
+                self.lbl_uptime.setText("UPTIME: N/A")
 
             # Col 5: RAM / NET
             ram = psutil.virtual_memory()
