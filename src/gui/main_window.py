@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.auth_monitor import check_expiring_isab_authorizations
 from src.core.backup_manager import BackupManager
 from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
@@ -65,6 +66,7 @@ class PageIndex(IntEnum):
     HELP = 8
     NOTIFICATIONS = 9
     STORICO_ODA = 10
+    DIPENDENTI = 11
 
 
 class MainWindow(QMainWindow):
@@ -184,6 +186,15 @@ class MainWindow(QMainWindow):
                 lambda: self.navigation_controller.get_panel(PageIndex.ANAGRAFICHE),
                 "HR Directory Service",
                 "LDAP",
+            )
+        )
+
+        # 5b. DIPENDENTI
+        self._preload_tasks.extend(
+            mk_steps(
+                lambda: self.navigation_controller.get_panel(PageIndex.DIPENDENTI),
+                "Employee Records",
+                "HR",
             )
         )
 
@@ -334,6 +345,45 @@ class MainWindow(QMainWindow):
                 )
             except Exception:
                 pass
+
+        # Monitoraggio Abilitazioni ISAB (Proattivo)
+        QTimer.singleShot(2000, self._check_isab_authorizations)
+
+    def _check_isab_authorizations(self):
+        """Verifica dipendenti con abilitazione ISAB in scadenza e mostra notifica."""
+        try:
+            expiring = check_expiring_isab_authorizations()
+
+            # Aggiorna Badge Sidebar Dipendenti (Somma di Scaduti + In Scadenza)
+            total_alerts = len(expiring)
+            if hasattr(self, "sidebar") and hasattr(self.sidebar, "btn_dipendenti"):
+                self.sidebar.btn_dipendenti.set_badge(total_alerts)
+
+            if not expiring:
+                return
+
+            scaduti = [d for d in expiring if d["stato"] == "SCADUTA"]
+            in_scadenza = [d for d in expiring if d["stato"] == "IN SCADENZA"]
+
+            msg = "<b>Monitoraggio Abilitazioni ISAB</b><br/>"
+            if scaduti:
+                msg += f"🔴 {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
+            if in_scadenza:
+                msg += f"🟠 {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
+
+            msg += (
+                "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
+            )
+
+            ToastManager.instance().show(
+                msg,
+                "warning" if in_scadenza or scaduti else "info",
+                8000,
+                position="bottom_right",
+            )
+
+        except Exception as e:
+            print(f"Errore monitoraggio autorizzazioni: {e}")
 
     def _update_license_status_bar(self):
         """Aggiorna le etichette della licenza nella status bar."""
@@ -493,10 +543,10 @@ class MainWindow(QMainWindow):
         # Initial Autopilot Status Update
         self._update_autopilot_status_ui()
 
-        # Timer per il countdown Autopilot (aggiorna ogni minuto)
+        # Timer per il countdown Autopilot (aggiorna ogni 5 secondi)
         self.autopilot_timer = QTimer(self)
         self.autopilot_timer.timeout.connect(self._update_autopilot_status_ui)
-        self.autopilot_timer.start(60000)  # 60 secondi
+        self.autopilot_timer.start(5000)  # 5 secondi
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -538,7 +588,7 @@ class MainWindow(QMainWindow):
 
         # Page Stack con Placeholder
         self.page_stack = QStackedWidget()
-        for i in range(11):  # Increased range for new pages
+        for i in range(12):  # Increased range for new pages
             placeholder = QWidget()
             # Inseriamo un layout per indicare il caricamento se necessario
             self.page_stack.addWidget(placeholder)
@@ -587,6 +637,9 @@ class MainWindow(QMainWindow):
             PageIndex.STORICO_ODA: lambda: self.storico_oda_panel.refresh_data()
             if hasattr(self, "storico_oda_panel")
             else None,
+            PageIndex.DIPENDENTI: lambda: self.dipendenti_panel.refresh_data()
+            if hasattr(self, "dipendenti_panel")
+            else None,
         }
 
         action = refresh_actions.get(idx)
@@ -603,38 +656,83 @@ class MainWindow(QMainWindow):
         self.help_panel.open_section(section_title)
 
     def _update_autopilot_status_ui(self):
-        """Aggiorna le card di stato con countdown e info bot."""
+        """Aggiorna le card di stato con il countdown del task più imminente."""
         from PyQt6.QtCore import QTime
 
         config = config_manager.load_config()
 
-        # --- Portale Fornitori (Bot: Timbrature) ---
-        if config.get("timbrature_autopilot_enabled", False):
-            target_time_str = config.get("timbrature_autopilot_time", "09:00")
-            target_time = QTime.fromString(target_time_str, "HH:mm")
-            now = QTime.currentTime()
+        # Lista di tutti i task autopilot possibili
+        # (Sito, Nome Display, Enabled Key, Time Key)
+        tasks = [
+            (
+                "PF",
+                "TIMBRATURE",
+                "timbrature_autopilot_enabled",
+                "timbrature_autopilot_time",
+            ),
+            (
+                "PF",
+                "SCARICO ODA",
+                "scarico_oda_generale_autopilot_enabled",
+                "scarico_oda_generale_autopilot_time",
+            ),
+            (
+                "SW",
+                "RICERCA PDL",
+                "ricerca_pdl_autopilot_enabled",
+                "ricerca_pdl_autopilot_time",
+            ),
+        ]
 
-            # Calcolo tempo residuo
-            secs_to = now.secsTo(target_time)
-            if secs_to < 0:
-                # Se l'orario è già passato, calcola per domani
-                secs_to += 24 * 3600
+        now = QTime.currentTime()
+        # Monitoriamo il task più imminente per OGNI sito
+        imminent_pf = None  # (nome, secondi)
+        imminent_sw = None  # (nome, secondi)
+        min_secs_pf = float("inf")
+        min_secs_sw = float("inf")
 
-            hours = secs_to // 3600
-            mins = (secs_to % 3600) // 60
+        for site, name, enabled_key, time_key in tasks:
+            if config.get(enabled_key, False):
+                target_time_str = config.get(time_key, "09:00")
+                # Supporto sia per "09:00" che per "9:00"
+                target_time = QTime.fromString(target_time_str, "HH:mm")
+                if not target_time.isValid():
+                    target_time = QTime.fromString(target_time_str, "H:mm")
 
-            if hours > 0:
-                countdown = f"tra {hours}h {mins}m"
-            else:
-                countdown = f"tra {mins}m"
+                if not target_time.isValid():
+                    continue
 
-            self.status_portale.setAutopilot(True, f"TIMBRATURE: {countdown}")
+                secs_to = now.secsTo(target_time)
+                if secs_to < 0:
+                    secs_to += 24 * 3600
+
+                if site == "PF":
+                    if secs_to < min_secs_pf:
+                        min_secs_pf = secs_to
+                        imminent_pf = (name, secs_to)
+                elif site == "SW":
+                    if secs_to < min_secs_sw:
+                        min_secs_sw = secs_to
+                        imminent_sw = (name, secs_to)
+
+        # Helper per formattare il countdown
+        def format_countdown(name, secs):
+            hours = secs // 3600
+            mins = (secs % 3600) // 60
+            countdown_text = f"TRA {hours}H {mins}M" if hours > 0 else f"TRA {mins}M"
+            return f"{name}: {countdown_text}"
+
+        # Aggiorna Portale Fornitori
+        if imminent_pf:
+            self.status_portale.setAutopilot(True, format_countdown(*imminent_pf))
         else:
             self.status_portale.setAutopilot(False)
 
-        # --- SafeWork (Pianificazioni future) ---
-        # Al momento SafeWork non ha un autopilot programmabile da UI
-        self.status_safework.setAutopilot(False)
+        # Aggiorna SafeWork
+        if imminent_sw:
+            self.status_safework.setAutopilot(True, format_countdown(*imminent_sw))
+        else:
+            self.status_safework.setAutopilot(False)
 
     def _on_settings_saved(self):
         if hasattr(self, "scarico_panel"):

@@ -135,7 +135,13 @@ AVAILABLE_ACTIONS = {
     # ============================================================
     "nav_page_6": {
         "text": "PDL",
-        "icon": Icons.USERS,
+        "icon": Icons.PDL,
+        "color": "#fd7e14",
+        "path": ["DataBase"],
+    },
+    "nav_page_11": {
+        "text": "Dipendenti",
+        "icon": Icons.DIPENDENTI,
         "color": "#fd7e14",
         "path": ["DataBase"],
     },

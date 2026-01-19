@@ -30,6 +30,7 @@ class DatabaseManager:
     DB_TIMBRATURE = CONFIG_DIR / "data" / "timbrature_Isab.db"
     DB_PDL = CONFIG_DIR / "data" / "pdl.db"
     DB_STORICO_ODA = CONFIG_DIR / "data" / "storico_oda.db"
+    DB_DIPENDENTI = CONFIG_DIR / "data" / "anagrafica_dipendenti.db"
 
     def __new__(cls):
         """Pattern Singleton per il gestore database."""
@@ -142,6 +143,9 @@ class DatabaseManager:
         self._run_migrations(self.DB_PDL, self.MIGRATIONS_PDL, "PDL")
         self._run_migrations(
             self.DB_STORICO_ODA, self.MIGRATIONS_STORICO_ODA, "Storico OdA"
+        )
+        self._run_migrations(
+            self.DB_DIPENDENTI, self.MIGRATIONS_DIPENDENTI, "Dipendenti"
         )
 
     def _get_db_version(self, conn: sqlite3.Connection) -> int:
@@ -403,6 +407,31 @@ class DatabaseManager:
         cursor.execute("DROP TABLE IF EXISTS storico_oda")
         DatabaseManager._mig_storico_oda_v1(conn)
 
+    # ==========================================
+    # DEFINIZIONE MIGRAZIONI DIPENDENTI
+    # ==========================================
+    @staticmethod
+    def _mig_dipendenti_v1(conn: sqlite3.Connection):
+        """Schema Iniziale Dipendenti (v1)"""
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS dipendenti (
+                id_risorsa INTEGER PRIMARY KEY,
+                cognome TEXT NOT NULL,
+                nome TEXT NOT NULL,
+                data_nascita TEXT,
+                badge TEXT,
+                data_assunzione TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_dip_cognome_nome ON dipendenti(cognome, nome)"
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_badge ON dipendenti(badge)")
+
     @staticmethod
     def _mig_contabilita_v3(conn: sqlite3.Connection):
         """Implementazione FTS5 per ricerche veloci (v3)"""
@@ -462,6 +491,8 @@ class DatabaseManager:
     MIGRATIONS_PDL = {1: _mig_pdl_v1}
 
     MIGRATIONS_STORICO_ODA = {1: _mig_storico_oda_v1, 2: _mig_storico_oda_v2}
+
+    MIGRATIONS_DIPENDENTI = {1: _mig_dipendenti_v1}
 
 
 db_manager = DatabaseManager()

@@ -261,7 +261,7 @@ class FooterLeftWidget(QWidget):
             self.last_login_item.setText(f"<b>Ultimo Accesso:</b> {last_login}")
 
     def refresh_accounts(self):
-        """Aggiorna lo stato dei bot account e task autopilot."""
+        """Aggiorna lo stato dei bot account."""
         config = config_manager.load_config()
         accounts = config.get("accounts", [])
         safework = config.get("safework_accounts", [])
@@ -269,90 +269,12 @@ class FooterLeftWidget(QWidget):
         portale_user = self._get_default_account(accounts)
         safe_user = self._get_default_account(safework)
 
-        # Ottieni i task autopilot più recenti per ogni sito
-        portale_task = self._get_next_autopilot_task("portale_fornitori", config)
-        safework_task = self._get_next_autopilot_task("safework", config)
-
-        # Formatta label con task autopilot
+        # Formatta label puliti (senza task countdown)
         portale_text = f"<b>🌐 Portale Fornitori:</b> {portale_user or 'N.C.'}"
-        if portale_task:
-            portale_text += f" <span style='color: #0d6efd;'>| {portale_task}</span>"
-
         safework_text = f"<b>🛡️ SafeWork:</b> {safe_user or 'N.C.'}"
-        if safework_task:
-            safework_text += f" <span style='color: #198754;'>| {safework_task}</span>"
 
         self.portale_item.setText(portale_text)
         self.safe_item.setText(safework_text)
-
-    def _get_next_autopilot_task(self, site: str, config: dict) -> str:
-        """
-        Ottiene il prossimo task autopilot per un sito specifico.
-        Ritorna la stringa formattata tipo "TIMBRATURE: TRA 13H 25M".
-        """
-        from datetime import datetime
-
-        # Mappa bot_id -> (nome_display, config_keys)
-        if site == "portale_fornitori":
-            bots = [
-                (
-                    "timbrature",
-                    "TIMBRATURE",
-                    "timbrature_autopilot_enabled",
-                    "timbrature_autopilot_time",
-                ),
-                (
-                    "scarico_oda_generale",
-                    "SCARICO ODA",
-                    "scarico_oda_generale_autopilot_enabled",
-                    "scarico_oda_generale_autopilot_time",
-                ),
-            ]
-        elif site == "safework":
-            bots = [
-                (
-                    "ricerca_pdl",
-                    "RICERCA PDL",
-                    "ricerca_pdl_autopilot_enabled",
-                    "ricerca_pdl_autopilot_time",
-                )
-            ]
-        else:
-            return ""
-
-        # Trova il bot con il tempo più vicino
-        now = datetime.now()
-        next_task = None
-        min_seconds = float("inf")
-
-        for _, display_name, enabled_key, time_key in bots:
-            if not config.get(enabled_key, False):
-                continue
-
-            target_time_str = config.get(time_key, "09:00")
-            try:
-                target_hour, target_min = map(int, target_time_str.split(":"))
-                target = now.replace(
-                    hour=target_hour, minute=target_min, second=0, microsecond=0
-                )
-
-                # Se l'orario è già passato oggi, calcola per domani
-                if target < now:
-                    from datetime import timedelta
-
-                    target += timedelta(days=1)
-
-                seconds_to_target = (target - now).total_seconds()
-
-                if seconds_to_target < min_seconds:
-                    min_seconds = seconds_to_target
-                    hours = int(seconds_to_target // 3600)
-                    minutes = int((seconds_to_target % 3600) // 60)
-                    next_task = f"{display_name}: TRA {hours}H {minutes}M"
-            except Exception:
-                continue
-
-        return next_task or ""
 
     @staticmethod
     def _get_default_account(accounts: list) -> Optional[str]:
