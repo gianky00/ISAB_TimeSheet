@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.config_manager import BASE_DIR
 from src.gui.widgets.activity_feed import ActivityFeed
+from src.gui.widgets.autopilot_widget import AutopilotWidget
 from src.gui.widgets.quick_actions import QuickActions
 
 
@@ -93,6 +94,9 @@ class DashboardPanel(QWidget):
         if hasattr(self, "quick_actions"):
             self.quick_actions.refresh_actions()
 
+        if hasattr(self, "autopilot_widget"):
+            self.autopilot_widget.refresh_events()
+
     def _setup_ui(self):
         # 1. Header Section (Greeting Only, Clean)
         header_row = QHBoxLayout()
@@ -103,8 +107,8 @@ class DashboardPanel(QWidget):
         title = QLabel(f"{greeting}! Dashboard Operativa")
         title.setStyleSheet("font-size: 28px; font-weight: 800; color: #343a40;")
 
-        subtitle = QLabel("Overview Attività")
-        subtitle.setStyleSheet("font-size: 16px; color: #6c757d;")
+        subtitle = QLabel("Feed Attività")
+        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d;")
 
         greeting_col.addWidget(title)
         greeting_col.addWidget(subtitle)
@@ -117,10 +121,20 @@ class DashboardPanel(QWidget):
         self.activity_feed = ActivityFeed()
         self.content_layout.addWidget(self.activity_feed)
 
-        # 3. Quick Actions Row (NO MODULES AFTER THIS)
+        # 3. Quick Actions Row + Autopilot (Side by Side)
+        actions_row = QHBoxLayout()
+        actions_row.setSpacing(20)
+
+        # Quick Actions (Left)
         self.quick_actions = QuickActions()
         self.quick_actions.action_clicked.connect(self._handle_quick_action)
-        self.content_layout.addWidget(self.quick_actions)
+        actions_row.addWidget(self.quick_actions, stretch=2)
+
+        # Autopilot Widget (Right)
+        self.autopilot_widget = AutopilotWidget()
+        actions_row.addWidget(self.autopilot_widget, stretch=1)
+
+        self.content_layout.addLayout(actions_row)
 
         self.content_layout.addStretch()
 

@@ -297,7 +297,7 @@ def _check_integrity_with_manifest(paths: dict) -> Tuple[LicenseStatus, str]:
         # Verifica hash config.dat
         if _calculate_sha256(paths["config"]) != manifest.get("config.dat"):
             msg = "Integrità licenza compromessa (config.dat)"
-            AuditManager().log_action(
+            AuditManager.instance().log_action(
                 "Violazione Licenza",
                 category="sicurezza",
                 entity="File Config",
@@ -328,7 +328,7 @@ def _validate_license_data(paths: dict) -> Tuple[LicenseStatus, str]:
 
         if norm_current != norm_license and "UNKNOWN" not in current_hw_id:
             msg = f"Hardware ID non valido\nAtteso: {license_hw_id}\nRilevato: {current_hw_id}"
-            AuditManager().log_action(
+            AuditManager.instance().log_action(
                 "Mismatch Hardware",
                 category="sicurezza",
                 entity="Licenza",

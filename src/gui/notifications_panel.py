@@ -35,7 +35,7 @@ class AuditLogWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.manager = AuditManager()
+        self.manager = AuditManager.instance()
         self._setup_ui()
         self.refresh()
 

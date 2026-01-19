@@ -156,7 +156,7 @@ class BackupManager:
 
             if file_count > 0:
                 # Audit
-                AuditManager().log_action(
+                AuditManager.instance().log_action(
                     action="Backup Creato",
                     category="sistema",
                     entity="BackupManager",
@@ -178,7 +178,7 @@ class BackupManager:
 
         except Exception as e:
             logger.error(f"Backup Error: {e}")
-            AuditManager().log_action(
+            AuditManager.instance().log_action(
                 "Errore Backup",
                 category="sistema",
                 status="error",
@@ -241,7 +241,7 @@ class BackupManager:
             with zipfile.ZipFile(zip_path, "r") as zipf:
                 zipf.extractall(CONFIG_DIR)
 
-            AuditManager().log_action(
+            AuditManager.instance().log_action(
                 "Ripristino Backup",
                 category="sistema",
                 params={"file": Path(zip_path).name},

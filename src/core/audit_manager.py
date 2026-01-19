@@ -17,6 +17,25 @@ from src.core.config_manager import CONFIG_DIR
 logger = logging.getLogger(__name__)
 
 
+# Classe separata per i segnali (evita problemi con singleton)
+class AuditSignals:
+    """Singleton per i segnali di AuditManager (compatibile con PyQt6)."""
+
+    _instance = None
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            from PyQt6.QtCore import QObject, pyqtSignal
+
+            class _Signals(QObject):
+                log_added = pyqtSignal(dict)
+                logs_updated = pyqtSignal()
+
+            cls._instance = _Signals()
+        return cls._instance
+
+
 class AuditManager:
     """
     Manager per l'Audit Log con meccanismi di integrità e severità.
@@ -42,12 +61,18 @@ class AuditManager:
         ERROR = "error"
         WARNING = "warning"
 
-    def __new__(cls):
-        """Implementazione del pattern Singleton per garantire un unico gestore audit."""
+    @classmethod
+    def instance(cls):
+        """Restituisce l'istanza singleton di AuditManager."""
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._init_db()
+            cls._instance = cls()
         return cls._instance
+
+    def __init__(self):
+        """Inizializza il manager (chiamato solo una volta dal singleton)."""
+        self._init_db()
+        # Accesso ai segnali tramite AuditSignals.instance()
+        self.signals = AuditSignals.instance()
 
     def _init_db(self):
         """Inizializza il database con supporto alla severità e migrazione automatica."""
@@ -210,6 +235,20 @@ class AuditManager:
                     ),
                 )
                 conn.commit()
+
+            # Emetti segnale per notificare che è stato aggiunto un nuovo log
+            log_entry = {
+                "timestamp": timestamp,
+                "user_id": user_id,
+                "action": action,
+                "category": category,
+                "entity": entity,
+                "params": params_json,
+                "status": status_val,
+                "severity": severity_val,
+            }
+            self.signals.log_added.emit(log_entry)
+            self.signals.logs_updated.emit()
 
             # Notifica utente se richiesto
             self._generate_notification_if_needed(

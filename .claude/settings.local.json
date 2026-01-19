@@ -13,7 +13,9 @@
       "Bash(\".venv/Scripts/ruff.exe\" format \"admin/Crea Setup/generate_icons.py\")",
       "Bash(git tag:*)",
       "Bash(\".venv/Scripts/python.exe\" \"admin/Crea Setup/build_dist.py\")",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(find:*)"
     ]
   }
 }

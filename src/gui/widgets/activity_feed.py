@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.log_humanizer import friendly_time_delta
@@ -189,34 +188,15 @@ class ActivityFeed(QWidget):
         self.setFixedHeight(90)  # Aumentato per le card più alte
         self._setup_ui()
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(
-            self.refresh_feed
-        )  # Refresh full feed to update logs
-        self.timer.start(30000)
+        # Connetti al segnale dell'AuditManager per aggiornamenti in tempo reale
+        from src.core.audit_manager import AuditManager
+
+        AuditManager.instance().signals.log_added.connect(self._on_new_log_added)
 
     def _setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
-
-        # Label "Feed Attività" con stile moderno
-        title = QLabel("📊 Feed Attività")
-        title.setStyleSheet(
-            """
-            QLabel {
-                font-size: 14px;
-                font-weight: 700;
-                color: #495057;
-                margin-right: 8px;
-                padding: 4px 8px;
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                border: 1px solid #e9ecef;
-            }
-        """
-        )
-        layout.addWidget(title)
 
         # Scroll Area Orizzontale con scrollbar moderna
         self.scroll_area = QScrollArea()
@@ -268,6 +248,11 @@ class ActivityFeed(QWidget):
 
         self.refresh_feed()
 
+    def _on_new_log_added(self, log_entry: dict):
+        """Chiamato quando viene aggiunto un nuovo log all'AuditManager."""
+        # Refresh della feed per mostrare il nuovo log
+        self.refresh_feed()
+
     def refresh_feed(self):
         """Ricarica i log dall'AuditManager."""
         # Pulisci: remove all but stretch (last item)
@@ -277,7 +262,9 @@ class ActivityFeed(QWidget):
                 item.widget().deleteLater()
 
         # Limit to 10 latest
-        logs = AuditManager().get_logs(limit=10)
+        from src.core.audit_manager import AuditManager
+
+        logs = AuditManager.instance().get_logs(limit=10)
 
         if not logs:
             empty_lbl = QLabel("✨ Nessuna attività recente")
