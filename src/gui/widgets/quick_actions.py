@@ -310,7 +310,7 @@ class QuickActions(QWidget):
                 "nav_carico_ts",
             ]
 
-        # Calcola quanti pulsanti per riga (max 2 righe, max 5 per riga per evitare scroll orizzontale)
+        # Calcola quanti pulsanti per riga (max 5 per riga per evitare scroll orizzontale)
         num_actions = len(saved_keys)
         MAX_BUTTONS_PER_ROW = 5  # Limite per evitare scroll orizzontale
 
@@ -318,8 +318,8 @@ class QuickActions(QWidget):
             # Se ci sono 5 o meno, una riga sola
             buttons_per_row = num_actions
         else:
-            # Più di 5, distribuisci su 2 righe, max 5 per riga
-            buttons_per_row = min(MAX_BUTTONS_PER_ROW, (num_actions + 1) // 2)
+            # Più di 5, distribuisci su righe multiple, max 5 per riga
+            buttons_per_row = MAX_BUTTONS_PER_ROW
 
         row = 0
         col = 0
@@ -338,8 +338,7 @@ class QuickActions(QWidget):
                 if col >= buttons_per_row:
                     col = 0
                     row += 1
-                    if row >= 2:  # Max 2 righe
-                        break
+                    # Nessun limite di righe, l'utente può vedere tutte le azioni configurate
 
     def _create_action_handler(self, key):
         """Crea un handler per il click che cattura correttamente il valore di key."""

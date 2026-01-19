@@ -166,7 +166,7 @@ class SearchController(QObject):
         try:
             from src.core.audit_manager import AuditManager
 
-            audit_logs = AuditManager().get_logs(limit=100)
+            audit_logs = AuditManager.instance().get_logs(limit=100)
             matches = [
                 log
                 for log in audit_logs

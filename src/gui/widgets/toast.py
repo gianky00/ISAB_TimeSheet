@@ -2,13 +2,20 @@
 Sistema di notifiche toast non-blocking.
 """
 
-from PyQt6.QtCore import QPropertyAnimation, QSize, Qt, QTimer, QPointF
+from PyQt6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    QSize,
+    Qt,
+    QTimer,
+    QVariantAnimation,
+)
 from PyQt6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
     QHBoxLayout,
-    QVBoxLayout,
     QLabel,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -142,20 +149,33 @@ class Toast(QWidget):
 
         # 2. Pulse Animation (Inner Container) if requested
         if self._pulse:
-            from PyQt6.QtWidgets import QGraphicsScaleEffect
-            from PyQt6.QtCore import QEasingCurve
+            # Store original size for scaling
+            self._original_container_size = None
 
-            self._scale_effect = QGraphicsScaleEffect(self.container)
-            self.container.setGraphicsEffect(self._scale_effect)
-            
-            self._pulse_anim = QPropertyAnimation(self._scale_effect, b"scale")
+            # Use QVariantAnimation to animate scale factor
+            self._pulse_anim = QVariantAnimation(self)
             self._pulse_anim.setDuration(800)
             self._pulse_anim.setStartValue(1.0)
-            self._pulse_anim.setKeyValueAt(0.5, 1.05) # Scale up 5%
+            self._pulse_anim.setKeyValueAt(0.5, 1.05)  # Scale up 5%
             self._pulse_anim.setEndValue(1.0)
             self._pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
-            self._pulse_anim.setLoopCount(-1) # Infinite loop
-            
+            self._pulse_anim.setLoopCount(-1)  # Infinite loop
+
+            # Connect to value changed to apply scale
+            self._pulse_anim.valueChanged.connect(self._apply_scale)
+
+    def _apply_scale(self, scale_factor: float):
+        """Applica il fattore di scala al container per l'effetto pulsante."""
+        if self._original_container_size is None:
+            return
+
+        # Calculate new size based on scale factor
+        new_width = int(self._original_container_size.width() * scale_factor)
+        new_height = int(self._original_container_size.height() * scale_factor)
+
+        # Resize container (this creates the pulsing effect)
+        self.container.setFixedSize(new_width, new_height)
+
     def show_at(self, x: int, y: int):
         """
         Visualizza il toast in una posizione specifica e avvia il timer di auto-chiusura.
@@ -165,17 +185,15 @@ class Toast(QWidget):
             y: Coordinata Y globale.
         """
         self.move(x, y)
-        
-        # Aggiorna l'origine della pulsazione al centro del container
-        if self._pulse and hasattr(self, "_scale_effect"):
-            # Assicura che il layout sia aggiornato
+
+        # Store original container size for pulse animation
+        if self._pulse and hasattr(self, "_pulse_anim"):
             self.container.adjustSize()
-            rect = self.container.rect()
-            self._scale_effect.setOrigin(QPointF(rect.width() / 2.0, rect.height() / 2.0))
+            self._original_container_size = self.container.size()
 
         self.show()
         self._fade_in.start()
-        
+
         if self._pulse and hasattr(self, "_pulse_anim"):
             self._pulse_anim.start()
 

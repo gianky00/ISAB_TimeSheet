@@ -187,7 +187,7 @@ class LyraClient:
                     # Audit Token Usage
                     usage = result.get("usageMetadata", {})
                     if usage:
-                        AuditManager().log_action(
+                        AuditManager.instance().log_action(
                             "Consumo Token AI",
                             category="lyra",
                             entity=self.model,
@@ -246,7 +246,7 @@ class LyraClient:
                 # Audit usage
                 usage = result.get("usageMetadata", {})
                 if usage:
-                    AuditManager().log_action(
+                    AuditManager.instance().log_action(
                         "Consumo Token Media AI",
                         category="lyra",
                         entity=model,

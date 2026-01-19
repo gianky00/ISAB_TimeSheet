@@ -282,7 +282,7 @@ class BaseBotPanel(QWidget):
         self._update_status("#0d6efd")
 
         # Audit & Stats
-        AuditManager().log_action(
+        AuditManager.instance().log_action(
             action="Avvio Automazione",
             category="automazione",
             entity=self.bot_name,
@@ -336,7 +336,7 @@ class BaseBotPanel(QWidget):
             else "Esecuzione fallita o interrotta"
         )
 
-        AuditManager().log_action(
+        AuditManager.instance().log_action(
             action="Completamento Automazione",
             category="automazione",
             entity=self.bot_name,
@@ -2434,7 +2434,7 @@ class TimbratureDBPanel(QWidget):
             success = self.storage.import_excel(file_path, gui_log)
 
             if success:
-                AuditManager().log_action(
+                AuditManager.instance().log_action(
                     "Importazione Manuale Timbrature",
                     category="database",
                     params={"file": Path(file_path).name},
