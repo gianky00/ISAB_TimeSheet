@@ -134,13 +134,15 @@ class DashboardPanel(QWidget):
             main_window.navigate_to_panel(key)
 
     def _handle_quick_action(self, key):
-        """Gestisce i click delle azioni rapide."""
+        """Gestisce i click delle azioni rapide con navigazione completa."""
         main_window = self.window()
 
+        # ============================================================
+        # COMANDI GENERALI
+        # ============================================================
         if key == "cmd_sync":
             self.refresh_data()
             if hasattr(main_window, "service_controller"):
-                # Trigger sync via service controller if possible, or just UI refresh
                 pass
 
         elif key == "cmd_open_folder":
@@ -151,34 +153,37 @@ class DashboardPanel(QWidget):
             else:
                 subprocess.run(["xdg-open", str(output_dir)])
 
-        # --- NEW NAVIGATION HANDLERS ---
-        elif key.startswith("nav_page_"):
-            # Simple Page Navigation
-            try:
-                page_idx = int(key.split("_")[-1])
-                if hasattr(main_window, "_navigate_to"):
-                    main_window._navigate_to(page_idx)
-            except ValueError:
-                pass
+        # ============================================================
+        # AUTOMAZIONI > PORTALE FORNITORI
+        # ============================================================
+        elif key == "nav_dettagli_oda":
+            # Automazioni (1) > Portale Fornitori (tab 0) > Dettagli OdA
+            if hasattr(main_window, "_handle_automation_tab_change"):
+                main_window._handle_automation_tab_change(0)
 
-        elif key.startswith("nav_sub_timbrature_"):
-            # Timbrature Sub-Tabs
-            try:
-                tab_idx = int(key.split("_")[-1])
-                if hasattr(main_window, "_navigate_to"):
-                    main_window._navigate_to(3)  # Timbrature Page
-                    # Wait for load then switch tab (requires custom method on MW or direct access)
-                    # Since MW doesn't have specific handler for timbrature tabs, we do it safely:
-                    # Using QTimer to allow page load
-                    QTimer.singleShot(
-                        100,
-                        lambda: self._switch_tab_safe(
-                            main_window, "timbrature_db_panel", tab_idx
-                        ),
-                    )
-            except ValueError:
-                pass
+        elif key == "nav_scarico_ts":
+            # Automazioni (1) > Portale Fornitori (tab 0) > Scarico TS
+            if hasattr(main_window, "_handle_automation_tab_change"):
+                main_window._handle_automation_tab_change(0)
 
+        elif key == "nav_carico_ts":
+            # Automazioni (1) > Portale Fornitori (tab 0) > Carico TS
+            if hasattr(main_window, "_handle_automation_tab_change"):
+                main_window._handle_automation_tab_change(0)
+
+        elif key == "pf_timbrature":
+            # Automazioni (1) > Portale Fornitori (tab 0) > Timbrature
+            if hasattr(main_window, "_handle_automation_tab_change"):
+                main_window._handle_automation_tab_change(0)
+
+        elif key == "pf_prenota_bp":
+            # Automazioni (1) > Portale Fornitori (tab 0) > Prenota BP
+            if hasattr(main_window, "_handle_automation_tab_change"):
+                main_window._handle_automation_tab_change(0)
+
+        # ============================================================
+        # DATABASE > STRUMENTALE
+        # ============================================================
         elif key.startswith("nav_sub_strumentale_"):
             # Strumentale Sub-Tabs
             try:
@@ -194,8 +199,19 @@ class DashboardPanel(QWidget):
             except ValueError:
                 pass
 
+        # ============================================================
+        # LYRA AI
+        # ============================================================
+        elif key == "nav_page_2" or key == "nav_lyra_ask":
+            # Lyra AI (2)
+            if hasattr(main_window, "_navigate_to"):
+                main_window._navigate_to(2)
+
+        # ============================================================
+        # NOTIFICHE
+        # ============================================================
         elif key.startswith("nav_sub_notifiche_"):
-            # Notifiche Sub-tabs
+            # Notifiche Sub-tabs (0: Messaggi, 1: Audit)
             try:
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_handle_notifications_tab_change"):
@@ -203,21 +219,80 @@ class DashboardPanel(QWidget):
             except ValueError:
                 pass
 
+        # ============================================================
+        # IMPOSTAZIONI
+        # ============================================================
+        elif key == "settings_configurazione":
+            # Impostazioni (7) > Configurazione (tab 0)
+            if hasattr(main_window, "_navigate_to"):
+                main_window._navigate_to(7)
+                QTimer.singleShot(
+                    100,
+                    lambda: self._switch_tab_safe(main_window, "settings_panel", 0),
+                )
+
+        elif key == "settings_backup_cloud":
+            # Impostazioni (7) > Backup Cloud (tab 1)
+            if hasattr(main_window, "_navigate_to"):
+                main_window._navigate_to(7)
+                QTimer.singleShot(
+                    100,
+                    lambda: self._switch_tab_safe(main_window, "settings_panel", 1),
+                )
+
+        elif key == "settings_statistiche":
+            # Impostazioni (7) > Statistiche (tab 2)
+            if hasattr(main_window, "_navigate_to"):
+                main_window._navigate_to(7)
+                QTimer.singleShot(
+                    100,
+                    lambda: self._switch_tab_safe(main_window, "settings_panel", 2),
+                )
+
+        elif key == "settings_telegram":
+            # Impostazioni (7) > Telegram (tab 3)
+            if hasattr(main_window, "_navigate_to"):
+                main_window._navigate_to(7)
+                QTimer.singleShot(
+                    100,
+                    lambda: self._switch_tab_safe(main_window, "settings_panel", 3),
+                )
+
+        # ============================================================
+        # NAVIGAZIONE GENERICA (FALLBACK)
+        # ============================================================
+        elif key.startswith("nav_page_"):
+            # Simple Page Navigation per tutte le altre pagine
+            try:
+                page_idx = int(key.split("_")[-1])
+                if hasattr(main_window, "_navigate_to"):
+                    main_window._navigate_to(page_idx)
+            except ValueError:
+                pass
+
+        elif key.startswith("nav_sub_timbrature_"):
+            # Timbrature Sub-Tabs
+            try:
+                tab_idx = int(key.split("_")[-1])
+                if hasattr(main_window, "_navigate_to"):
+                    main_window._navigate_to(3)  # Timbrature Page
+                    QTimer.singleShot(
+                        100,
+                        lambda: self._switch_tab_safe(
+                            main_window, "timbrature_db_panel", tab_idx
+                        ),
+                    )
+            except ValueError:
+                pass
+
         elif key.startswith("nav_sub_automazioni_"):
-            # Automazioni Sub-tabs
+            # Automazioni Sub-tabs (legacy)
             try:
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_handle_automation_tab_change"):
                     main_window._handle_automation_tab_change(tab_idx)
             except ValueError:
                 pass
-
-        elif key == "nav_lyra_ask":
-            # Direct Lyra Action
-            if hasattr(main_window, "_navigate_to"):
-                main_window._navigate_to(2)  # Lyra Page
-
-        # Fallback for legacy/other keys
 
     def _switch_tab_safe(self, main_window, panel_attr, tab_idx):
         """Helper to switch tabs on a target panel if it exists."""

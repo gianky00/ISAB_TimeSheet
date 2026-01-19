@@ -1,10 +1,9 @@
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QFrame,
-    QHBoxLayout,
+    QGridLayout,
     QLabel,
     QPushButton,
-    QScrollArea,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -52,178 +51,148 @@ class ActionChip(QPushButton):
         )
 
 
-# Registry of all available actions (Parents, Children, Sub-tabs)
-# Colors used for Icons only.
-# Registry with Hierarchy (Path)
-# Path format: (Root, Child, ...) - excludes self text
-# Registry with Hierarchy (Path)
-# Path format: (Root, Child, ...) - excludes self text
-# Registry with Hierarchy (Path)
-# Path format: (Root, Child, ...) - excludes self text
+# Registry of all available actions with 3-level hierarchy
+# Path format: [Level1, Level2] - excludes the action text itself
+# Level 1 & 2 are non-selectable groups, Level 3 items are selectable
 AVAILABLE_ACTIONS = {
-    # --- GENERAL ---
-    "cmd_sync": {
-        "text": "Sync Dati",
-        "icon": Icons.REFRESH,
-        "color": "#198754",
-        "path": ["Comandi"],
-    },
-    "cmd_open_folder": {
-        "text": "Apri Output",
-        "icon": Icons.FOLDER,
-        "color": "#6c757d",
-        "path": ["Comandi"],
-    },
-    # --- PORTALE FORNITORI ---
-    # L1: Portale Fornitori -> L2: Dashboard -> L3: Items
-    "nav_sub_automazioni_0": {
-        "text": "Apri Dashboard",
-        "icon": Icons.GLOBE,
-        "color": "#d63384",
-        "path": ["Portale Fornitori", "Dashboard Portale Fornitori"],
+    # ============================================================
+    # PRIMO LIVELLO: Automazioni > SECONDO LIVELLO: Portale Fornitori
+    # ============================================================
+    "nav_dettagli_oda": {
+        "text": "Dettagli OdA",
+        "icon": Icons.LIST,
+        "color": "#6610f2",
+        "path": ["Automazioni", "Portale Fornitori"],
     },
     "nav_scarico_ts": {
         "text": "Scarico TS",
         "icon": Icons.DOWNLOAD,
         "color": "#0d6efd",
-        "path": ["Portale Fornitori", "Dashboard Portale Fornitori"],
+        "path": ["Automazioni", "Portale Fornitori"],
     },
     "nav_carico_ts": {
         "text": "Carico TS",
         "icon": Icons.UPLOAD,
         "color": "#20c997",
-        "path": ["Portale Fornitori", "Dashboard Portale Fornitori"],
+        "path": ["Automazioni", "Portale Fornitori"],
     },
-    "nav_dettagli_oda": {
-        "text": "Dettagli OdA",
-        "icon": Icons.LIST,
-        "color": "#6610f2",
-        "path": ["Portale Fornitori", "Dashboard Portale Fornitori"],
+    "pf_timbrature": {
+        "text": "Timbrature",
+        "icon": Icons.CLOCK,
+        "color": "#fd7e14",
+        "path": ["Automazioni", "Portale Fornitori"],
     },
-    # --- SAFEWORK ---
-    # L1: SafeWork -> L2: Dashboard -> L3: Items
-    "nav_sub_automazioni_1": {
-        "text": "Apri Dashboard",
-        "icon": Icons.SHIELD,
-        "color": "#d63384",
-        "path": ["SafeWork", "Dashboard SafeWork"],
+    "pf_prenota_bp": {
+        "text": "Prenota BP",
+        "icon": Icons.CALENDAR,
+        "color": "#198754",
+        "path": ["Automazioni", "Portale Fornitori"],
     },
-    "nav_scarico_pdl": {
-        "text": "Scarico PDL",
+    # ============================================================
+    # PRIMO LIVELLO: DataBase > SECONDO LIVELLO: Strumentale
+    # ============================================================
+    "nav_sub_strumentale_0": {
+        "text": "Preventivi",
+        "icon": Icons.FOLDER,
+        "color": "#fd7e14",
+        "path": ["DataBase", "Strumentale"],
+    },
+    "nav_sub_strumentale_1": {
+        "text": "Giornaliere",
+        "icon": Icons.FOLDER,
+        "color": "#fd7e14",
+        "path": ["DataBase", "Strumentale"],
+    },
+    "nav_sub_strumentale_2": {
+        "text": "Attività Programmate",
+        "icon": Icons.CALENDAR,
+        "color": "#fd7e14",
+        "path": ["DataBase", "Strumentale"],
+    },
+    "nav_sub_strumentale_3": {
+        "text": "Certificati Campione",
+        "icon": Icons.FILE_TEXT,
+        "color": "#fd7e14",
+        "path": ["DataBase", "Strumentale"],
+    },
+    "nav_sub_strumentale_4": {
+        "text": "Analisi KPI",
+        "icon": Icons.BAR_CHART,
+        "color": "#fd7e14",
+        "path": ["DataBase", "Strumentale"],
+    },
+    # ============================================================
+    # PRIMO LIVELLO: DataBase > SECONDO LIVELLO: DataEase
+    # ============================================================
+    "nav_page_5": {
+        "text": "DataEase",
         "icon": Icons.DOWNLOAD,
-        "color": "#d63384",
-        "path": ["SafeWork", "Dashboard SafeWork"],
+        "color": "#fd7e14",
+        "path": ["DataBase"],
     },
-    # --- LYRA ---
+    # ============================================================
+    # PRIMO LIVELLO: DataBase > SECONDO LIVELLO: PDL
+    # ============================================================
+    "nav_page_6": {
+        "text": "PDL",
+        "icon": Icons.USERS,
+        "color": "#fd7e14",
+        "path": ["DataBase"],
+    },
+    # ============================================================
+    # PRIMO LIVELLO: Lyra AI (selectable root)
+    # ============================================================
     "nav_page_2": {
         "text": "Lyra AI",
         "icon": Icons.SPARKLES,
         "color": "#6f42c1",
         "path": [],
     },
-    "nav_lyra_ask": {
-        "text": "Chiedi a Lyra",
-        "icon": Icons.MESSAGE_SQUARE,
-        "color": "#6f42c1",
-        "path": ["Lyra AI"],
-    },
-    # --- DATABASE: TIMBRATURE ---
-    # User: "Stessa cosa lo fai per database" -> Database -> Timbrature (Dashboard) -> Items
-    "nav_page_3": {
-        "text": "Apri Dashboard",
-        "icon": Icons.CLOCK,
-        "color": "#fd7e14",
-        "path": ["Database", "Timbrature"],
-    },
-    "nav_sub_timbrature_0": {
-        "text": "Archivio",
-        "icon": Icons.DATABASE,
-        "color": "#fd7e14",
-        "path": ["Database", "Timbrature"],
-    },
-    "nav_sub_timbrature_1": {
-        "text": "Impostazioni Dipendenti",
-        "icon": Icons.SETTINGS,
-        "color": "#fd7e14",
-        "path": ["Database", "Timbrature"],
-    },
-    # --- DATABASE: STRUMENTALE ---
-    "nav_page_4": {
-        "text": "Apri Dashboard",
-        "icon": Icons.FOLDER,
-        "color": "#fd7e14",
-        "path": ["Database", "Strumentale"],
-    },
-    "nav_sub_strumentale_0": {
-        "text": "Preventivi",
-        "icon": Icons.FOLDER,
-        "color": "#fd7e14",
-        "path": ["Database", "Strumentale"],
-    },
-    "nav_sub_strumentale_1": {
-        "text": "Giornaliere",
-        "icon": Icons.FOLDER,
-        "color": "#fd7e14",
-        "path": ["Database", "Strumentale"],
-    },
-    "nav_sub_strumentale_2": {
-        "text": "Attività Programmate",
-        "icon": Icons.CALENDAR,
-        "color": "#fd7e14",
-        "path": ["Database", "Strumentale"],
-    },
-    "nav_sub_strumentale_3": {
-        "text": "Certificati Campione",
-        "icon": Icons.FILE_TEXT,
-        "color": "#fd7e14",
-        "path": ["Database", "Strumentale"],
-    },
-    "nav_sub_strumentale_4": {
-        "text": "Analisi KPI",
-        "icon": Icons.BAR_CHART,
-        "color": "#fd7e14",
-        "path": ["Database", "Strumentale"],
-    },
-    # --- DATABASE: ALTRI ---
-    "nav_page_5": {
-        "text": "DataEase",
-        "icon": Icons.DOWNLOAD,
-        "color": "#fd7e14",
-        "path": ["Database", "Altri"],
-    },
-    "nav_page_6": {
-        "text": "PDL",
-        "icon": Icons.USERS,
-        "color": "#fd7e14",
-        "path": ["Database", "Altri"],
-    },
-    # --- NOTIFICHE ---
-    "nav_page_9": {
-        "text": "Apri Dashboard",
-        "icon": Icons.BELL,
-        "color": "#ffc107",
-        "path": ["Notifiche"],
-    },
-    "nav_sub_notifiche_0": {
-        "text": "Messaggi",
-        "icon": Icons.BELL,
-        "color": "#ffc107",
-        "path": ["Notifiche"],
-    },
+    # ============================================================
+    # PRIMO LIVELLO: Notifiche > SECONDO LIVELLO: Audit
+    # ============================================================
     "nav_sub_notifiche_1": {
-        "text": "Audit Logs",
+        "text": "Audit",
         "icon": Icons.SHIELD,
         "color": "#ffc107",
         "path": ["Notifiche"],
     },
-    # --- SETTINGS / GUIDE ---
-    "nav_page_7": {
-        "text": "Impostazioni",
+    # ============================================================
+    # PRIMO LIVELLO: Impostazioni > SECONDO LIVELLO: Items
+    # ============================================================
+    "settings_configurazione": {
+        "text": "Configurazione",
         "icon": Icons.SETTINGS,
         "color": "#adb5bd",
+        "path": ["Impostazioni"],
+    },
+    "settings_backup_cloud": {
+        "text": "Backup Cloud",
+        "icon": Icons.CLOUD,
+        "color": "#adb5bd",
+        "path": ["Impostazioni"],
+    },
+    "settings_statistiche": {
+        "text": "Statistiche",
+        "icon": Icons.BAR_CHART,
+        "color": "#adb5bd",
+        "path": ["Impostazioni"],
+    },
+    "settings_telegram": {
+        "text": "Telegram",
+        "icon": Icons.MESSAGE_SQUARE,
+        "color": "#adb5bd",
+        "path": ["Impostazioni"],
+    },
+    # ============================================================
+    # PRIMO LIVELLO: Guida (selectable root)
+    # ============================================================
+    "nav_page_8": {
+        "text": "Guida",
+        "icon": Icons.HELP,
+        "color": "#0dcaf0",
         "path": [],
     },
-    "nav_page_8": {"text": "Guida", "icon": Icons.HELP, "color": "#0dcaf0", "path": []},
 }
 
 
@@ -241,32 +210,29 @@ class QuickActions(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)  # Reduced spacing (User Request)
+        layout.setSpacing(2)  # Spazio minimo tra titolo e pulsanti
 
         title = QLabel("Azioni Rapide")
         title.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 2px;"
+            "font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;"
         )
         layout.addWidget(title)
 
-        # Scroll Area per le chips
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll_area.setStyleSheet("background: transparent;")
-        self.scroll_area.setFixedHeight(50)  # Reduced height for cleaner look
-        self.scroll_area.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        # Grid Layout per 2 righe (no scroll)
+        self.chips_widget = QWidget()
+        self.chips_widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        self.chips_layout = QGridLayout(self.chips_widget)
+        self.chips_layout.setContentsMargins(
+            0, 4, 0, 0
+        )  # Margine minimo sopra i pulsanti
+        self.chips_layout.setSpacing(8)  # Spazio tra i pulsanti
+        self.chips_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
         )
 
-        self.chips_widget = QWidget()
-        self.chips_layout = QHBoxLayout(self.chips_widget)
-        self.chips_layout.setContentsMargins(0, 5, 0, 5)
-        self.chips_layout.setSpacing(8)
-        self.chips_layout.addStretch()  # Allinea a sinistra (stretch alla fine)
-
-        self.scroll_area.setWidget(self.chips_widget)
-        layout.addWidget(self.scroll_area)
+        layout.addWidget(self.chips_widget)
 
         # Context Menu Policy
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -281,6 +247,32 @@ class QuickActions(QWidget):
         from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog
 
         menu = QMenu(self)
+
+        # Stile light theme per il menu contestuale
+        menu.setStyleSheet(
+            """
+            QMenu {
+                background-color: #ffffff;
+                color: #212529;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                padding: 5px;
+            }
+            QMenu::item {
+                padding: 8px 20px;
+                border-radius: 4px;
+                background-color: transparent;
+            }
+            QMenu::item:selected {
+                background-color: #f8f9fa;
+                color: #212529;
+            }
+            QMenu::item:pressed {
+                background-color: #e9ecef;
+            }
+        """
+        )
+
         action_cfg = menu.addAction(
             get_colored_icon(get_asset_path(Icons.SETTINGS), "#495057"),
             "Personalizza Azioni...",
@@ -294,9 +286,9 @@ class QuickActions(QWidget):
                 self.refresh_actions()
 
     def refresh_actions(self):
-        """Ricarica le azioni dalla configurazione."""
-        # Clean existing chips (except stretch)
-        while self.chips_layout.count() > 1:
+        """Ricarica le azioni dalla configurazione e le dispone su max 2 righe."""
+        # Clean existing chips
+        while self.chips_layout.count() > 0:
             item = self.chips_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
@@ -305,17 +297,44 @@ class QuickActions(QWidget):
         saved_keys = get_config_value("quick_actions", [])
         if not saved_keys:
             # Default set if nothing configured
-            saved_keys = ["nav_page_0", "nav_page_3", "cmd_sync", "nav_page_2"]
+            saved_keys = [
+                "nav_page_2",
+                "nav_dettagli_oda",
+                "nav_scarico_ts",
+                "nav_carico_ts",
+            ]
+
+        # Calcola quanti pulsanti per riga (max 2 righe, max 5 per riga per evitare scroll orizzontale)
+        num_actions = len(saved_keys)
+        MAX_BUTTONS_PER_ROW = 5  # Limite per evitare scroll orizzontale
+
+        if num_actions <= MAX_BUTTONS_PER_ROW:
+            # Se ci sono 5 o meno, una riga sola
+            buttons_per_row = num_actions
+        else:
+            # Più di 5, distribuisci su 2 righe, max 5 per riga
+            buttons_per_row = min(MAX_BUTTONS_PER_ROW, (num_actions + 1) // 2)
+
+        row = 0
+        col = 0
 
         for key in saved_keys:
             if key in AVAILABLE_ACTIONS:
                 meta = AVAILABLE_ACTIONS[key]
-                self._add_action(meta["text"], meta["icon"], meta["color"], key)
+                btn = ActionChip(meta["text"], meta["icon"], meta["color"], self)
+                # Usa una closure corretta per catturare il valore di key
+                btn.clicked.connect(self._create_action_handler(key))
 
-    def _add_action(self, text, icon, color, key):
-        """Aggiunge una chip alla lista."""
-        btn = ActionChip(text, icon, color)
-        btn.clicked.connect(lambda: self.action_clicked.emit(key))
+                # Aggiungi al grid
+                self.chips_layout.addWidget(btn, row, col)
 
-        # Inserisci prima dello stretch
-        self.chips_layout.insertWidget(self.chips_layout.count() - 1, btn)
+                col += 1
+                if col >= buttons_per_row:
+                    col = 0
+                    row += 1
+                    if row >= 2:  # Max 2 righe
+                        break
+
+    def _create_action_handler(self, key):
+        """Crea un handler per il click che cattura correttamente il valore di key."""
+        return lambda: self.action_clicked.emit(key)

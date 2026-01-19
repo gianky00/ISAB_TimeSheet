@@ -2,7 +2,6 @@
 Baseline tests for Icon Generator.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -10,18 +9,20 @@ from pathlib import Path
 script_path = Path(__file__).parent.parent.parent / "admin" / "Crea Setup"
 sys.path.append(str(script_path))
 
-from generate_icons import create_modern_icon  # noqa: E402
+from generate_icons import generate_icons  # noqa: E402
 
 
-def test_icon_generation_output(tmp_path):
-    """Test that the icon file is physically created and has content."""
-    filename = str(tmp_path / "test_icon.ico")
-    text = "TS"
-    bg = (0, 150, 136, 255)
-    txt_color = (255, 255, 255, 255)
-    accent = (0, 121, 107, 255)
+def test_icon_generation_output(tmp_path, monkeypatch):
+    """Test that the icon files are physically created in the assets directory."""
+    # Mock get_assets_path to use tmp_path
+    monkeypatch.setattr("generate_icons.get_assets_path", lambda: tmp_path)
 
-    create_modern_icon(text, bg, txt_color, filename, accent)
+    generate_icons()
 
-    assert os.path.exists(filename)
-    assert os.path.getsize(filename) > 0
+    app_ico = tmp_path / "app.ico"
+    setup_ico = tmp_path / "setup.ico"
+
+    assert app_ico.exists()
+    assert app_ico.stat().st_size > 0
+    assert setup_ico.exists()
+    assert setup_ico.stat().st_size > 0

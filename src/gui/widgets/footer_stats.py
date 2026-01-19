@@ -9,7 +9,7 @@ import time
 from typing import Optional
 
 import psutil
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -114,12 +114,20 @@ class ClickableLabel(QLabel):
         self.setStyleSheet(self._base_style)
         super().leaveEvent(event)
 
+    def mousePressEvent(self, event):
+        # Nota: ClickableLabel non ha signal - solo visual feedback
+        super().mousePressEvent(event)
+
 
 class FooterLeftWidget(QWidget):
     """
     Parte sinistra del footer: Business Info con layout verticale ottimizzato.
     Colonna 1: Cliente/Scadenza | Colonna 2: Ultimo Accesso | Colonna 3: Portale/SafeWork
     """
+
+    # Signal emessi quando si clicca sui label
+    portale_clicked = pyqtSignal()
+    safework_clicked = pyqtSignal()
 
     # Colore unificato nero
     TEXT_COLOR = "#000000"
@@ -187,12 +195,14 @@ class FooterLeftWidget(QWidget):
         self.portale_item.setBaseStyle(
             f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
+        self.portale_item.mousePressEvent = lambda e: self.portale_clicked.emit()
         col3_layout.addWidget(self.portale_item)
 
         self.safe_item = ClickableLabel()
         self.safe_item.setBaseStyle(
             f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
         )
+        self.safe_item.mousePressEvent = lambda e: self.safework_clicked.emit()
         col3_layout.addWidget(self.safe_item)
         layout.addWidget(col3)
 
@@ -223,6 +233,11 @@ class FooterLeftWidget(QWidget):
 
     def fade_in(self, duration: int = 400):
         """Animazione fade-in per transizione FASE 1 → FASE 2."""
+        # Stop existing animation if any
+        if hasattr(self, "_fade_anim") and self._fade_anim is not None:
+            self._fade_anim.stop()
+            self._fade_anim.deleteLater()
+
         self._opacity_effect.setOpacity(0.0)
         self.setVisible(True)
         self._fade_anim = QPropertyAnimation(self._opacity_effect, b"opacity")

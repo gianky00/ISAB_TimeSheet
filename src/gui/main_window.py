@@ -462,6 +462,9 @@ class MainWindow(QMainWindow):
         # 1. LEFT: Mega Widget (Cliente, Scadenza, Login, Accounts)
         self.footer_left = FooterLeftWidget()
         self.footer_left.setVisible(True)
+        # Connessione click per navigare a Impostazioni -> Configurazione
+        self.footer_left.portale_clicked.connect(self._navigate_to_settings_config)
+        self.footer_left.safework_clicked.connect(self._navigate_to_settings_config)
         self.status_bar.addWidget(self.footer_left)
 
         # 1b. LEFT: Boot Telemetry (Hacker Mode)
