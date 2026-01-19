@@ -64,15 +64,23 @@ class AuditManager:
     @classmethod
     def instance(cls):
         """Restituisce l'istanza singleton di AuditManager."""
+        return cls()
+
+    def __new__(cls):
+        """Pattern Singleton per l'Audit Manager."""
         if cls._instance is None:
-            cls._instance = cls()
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
         return cls._instance
 
     def __init__(self):
         """Inizializza il manager (chiamato solo una volta dal singleton)."""
+        if getattr(self, "_initialized", False):
+            return
         self._init_db()
         # Accesso ai segnali tramite AuditSignals.instance()
         self.signals = AuditSignals.instance()
+        self._initialized = True
 
     def _init_db(self):
         """Inizializza il database con supporto alla severità e migrazione automatica."""

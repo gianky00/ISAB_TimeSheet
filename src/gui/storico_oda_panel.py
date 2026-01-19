@@ -270,31 +270,28 @@ class StoricoOdaPanel(QWidget):
 
         index = indexes[0]
         item = self.model.itemFromIndex(index)
-        if not item:
+        if not item or not item.data(Qt.ItemDataRole.UserRole):
             return
 
-        # Retrieve full data stored in UserRole
         full_data = item.data(Qt.ItemDataRole.UserRole)
+        for i, h in enumerate(self.full_headers):
+            if i < len(full_data):
+                val = self._format_detail_value(h, full_data[i])
+                self.detail_labels[h].setText(val)
 
-        if full_data:
-            for i, h in enumerate(self.full_headers):
-                if i < len(full_data):
-                    val = str(full_data[i])
-                    if val.lower() == "nan" or val == "None":
-                        val = ""
+    def _format_detail_value(self, header: str, value: Any) -> str:
+        """Helper per formattare il valore nel pannello dettagli."""
+        val = str(value)
+        if val.lower() == "nan" or val == "none":
+            return ""
 
-                    # Apply specific formatting for detail view
-                    if "Data" in h:
-                        val = format_date_it(val)
-                    elif "Valore" in h or "Prezzo" in h:
-                        val = format_currency_smart(val)
+        # Apply specific formatting
+        if "Data" in header:
+            return format_date_it(val)
+        elif "Valore" in header or "Prezzo" in header:
+            return format_currency_smart(val)
 
-                    self.detail_labels[h].setText(val)
-        else:
-            # If parent item selected (without specific row data, or aggregate), clear details or show summary?
-            # Usually parent has the first row data as representative or aggregate.
-            # Let's see how populate_tree attaches data.
-            pass
+        return val
 
     def _on_item_expanded(self, index):
         """Imposta il font in grassetto quando il gruppo viene espanso."""

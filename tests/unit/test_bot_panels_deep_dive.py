@@ -80,13 +80,21 @@ def mock_gui_deps():
     with (
         patch("src.gui.panels.AuditManager") as mock_audit,
         patch("src.gui.panels.StatsManager") as mock_stats,
-        patch("src.gui.panels.config_manager") as mock_config,
+        patch("src.core.config_manager") as mock_config_core,
+        patch("src.gui.panels.config_manager", new=mock_config_core),
+        patch("src.gui.widgets.bot_parameters.config_manager", new=mock_config_core),
         patch("src.gui.panels.get_asset_path", return_value="mock/path.svg"),
         patch("src.gui.panels.ToastManager") as mock_toast,
     ):
+        # Setup mock behavior for singletons
+
+        mock_audit.instance.return_value = mock_audit.return_value
+
         # Setup mock config behavior
-        mock_config.load_config.return_value = {"fornitori": ["F1", "F2"]}
-        mock_config.get_default_account.return_value = {
+
+        mock_config_core.load_config.return_value = {"fornitori": ["F1", "F2"]}
+
+        mock_config_core.get_default_account.return_value = {
             "username": "user",
             "password": "pwd",
         }
@@ -94,7 +102,7 @@ def mock_gui_deps():
         yield {
             "audit": mock_audit,
             "stats": mock_stats,
-            "config": mock_config,
+            "config": mock_config_core,
             "toast": mock_toast,
         }
 
@@ -227,10 +235,17 @@ class TestTimbratureBotPanel:
         panel = TimbratureBotPanel()
         qtbot.addWidget(panel)
 
-        panel.autopilot_check.setChecked(True)
+        # Attendi che il timer di caricamento (10ms) finisca per stabilizzare lo stato
+        qtbot.wait(100)
+
+        # Resetta il mock per ignorare le chiamate durante l'inizializzazione
+        mock_gui_deps["config"].set_config_value.reset_mock()
+
+        panel.params_widget.set_fornitore("F1")
         panel._save_data()
+
         mock_gui_deps["config"].set_config_value.assert_any_call(
-            "timbrature_autopilot_enabled", True
+            "last_timbrature_fornitore", "F1"
         )
 
     @patch("src.bots.create_bot")

@@ -36,31 +36,43 @@ class TestDettagliOdaPageCoverage:
         # 2. Presenza di .crdownload al primo controllo
         # 3. Comparsa del file .xlsx finale al secondo controllo
         mock_iter = mocker.patch("pathlib.Path.iterdir")
-        mocker.patch("time.time", side_effect=[100, 101, 102, 103, 104, 105, 200])
+        mocker.patch("time.time", side_effect=range(100, 200))
         mocker.patch("time.sleep")
         mocker.patch("shutil.move")
+        mocker.patch("os.path.exists", return_value=True)
 
         # Mock per Path.exists: deve restituire True per il file finale
-        # Usiamo un mock per l'oggetto Path restituito da max()
         mock_file = mocker.MagicMock(spec=Path)
-        mock_file.exists.return_value = True
         mock_file.suffix = ".xlsx"
-        mock_file.stat.return_value.st_mtime = 1000
-        mock_file.name = "file.xlsx"
+        mock_file.name = "test.xlsx"
+        mock_file.is_file.return_value = True
+        mock_file.stat.return_value.st_mtime = 1500
+        mock_file.__str__.return_value = "source/test.xlsx"
+        mock_file.parent = source_dir
 
         mock_iter.side_effect = [
             [],  # files_before
             [mocker.MagicMock(suffix=".crdownload")],  # primo giro loop: in corso
             [mock_file],  # secondo giro loop: finito
             [mock_file],  # terzo giro: conferma
+            [mock_file],  # quarto giro
         ]
 
         # Mock del bottone export
         page.wait = MagicMock()
         page.wait.until.return_value = MagicMock()
+        page._wait_for_overlay = MagicMock()
 
-        res = page._download(source_dir, dest_dir, "test.xlsx", ("id", "btn"))
-        assert res is True
+        # Evita loop in _close_all_tabs
+        mock_close_btn = MagicMock()
+        mock_close_btn.is_displayed.return_value = False
+        with patch.object(page.driver, "find_element", return_value=mock_close_btn):
+            res = page.process_oda(
+                "123", "C1", "01.01.2024", "01.01.2025", source_dir, dest_dir
+            )
+
+        assert isinstance(res, Path)
+        assert res.name == "dettaglio_oda_123.xlsx"
 
     def test_navigate_to_dettagli_second_row_retry(self, page):
         """Verifica la strategia di robustezza per righe successive alla prima."""

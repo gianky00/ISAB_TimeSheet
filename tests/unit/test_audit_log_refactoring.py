@@ -10,9 +10,12 @@ from src.gui.notifications_panel import AuditLogWidget
 @pytest.fixture
 def audit_widget(qtbot, mocker):
     # Mock manager to avoid real DB access
-    m_manager = mocker.patch("src.gui.notifications_panel.AuditManager")
-    m_manager.return_value.verify_integrity.return_value = True
-    m_manager.return_value.get_logs.return_value = [
+    # We must mock the .instance() call as it's a singleton
+    m_manager_class = mocker.patch("src.gui.notifications_panel.AuditManager")
+    m_instance = m_manager_class.instance.return_value
+
+    m_instance.verify_integrity.return_value = True
+    m_instance.get_logs.return_value = [
         {
             "timestamp": "2025-01-13T10:00:00",
             "user_id": "admin",

@@ -69,9 +69,9 @@ class TestControllersCoverage:
 
         ctrl.navigate_to(0)
 
-        # Deve essere rimasto sulla pagina 4
+        # Deve essere rimasto sulla pagina 7
         mw.page_stack.setCurrentIndex.assert_not_called()
-        mw.sidebar.set_active_button.assert_called_with(4)
+        mw.sidebar.set_active_button.assert_called_with(7)
 
     def test_bot_controller_panel_status_sync(self, mw, mocker):
         """Verifica sincronizzazione stato per SafeWork e Portale Fornitori."""

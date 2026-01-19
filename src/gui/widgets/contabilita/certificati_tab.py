@@ -1,9 +1,11 @@
 import os
 import subprocess
 import tempfile
+from collections import defaultdict
+from datetime import datetime
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QBrush, QColor, QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -20,7 +22,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.utils.helpers import get_asset_path
 
 
 class CertificatiCampioneTab(QWidget):
@@ -59,44 +61,129 @@ class CertificatiCampioneTab(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 10, 0, 0)
+
+        # Tree widget configuration
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(self.HEADERS)
         self.tree.setWordWrap(True)
         self.tree.setAlternatingRowColors(True)
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.tree.setAnimated(True)  # Animazione per expand/collapse
 
-        # Remove hardcoded stylesheet
+        # Header configuration con larghezza dinamica per evitare troncamenti
         h = self.tree.header()
-        h.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.tree.setColumnWidth(0, 200)
-        self.tree.setColumnWidth(1, 120)
-        self.tree.setColumnWidth(2, 120)
-        self.tree.setColumnWidth(3, 120)
-        self.tree.setColumnWidth(4, 80)
-        self.tree.setColumnWidth(5, 140)
-        self.tree.setColumnWidth(6, 120)
-        self.tree.setColumnWidth(7, 120)
-        self.tree.setColumnWidth(8, 100)
-        h.setSectionResizeMode(9, QHeaderView.ResizeMode.Stretch)
+        # Imposta tutte le colonne a ResizeToContents per adattarsi al contenuto
+        for col in range(10):
+            h.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
+        # L'ultima colonna (Stato) può anche espandersi
+        h.setStretchLastSection(True)
+
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self._show_context_menu)
 
-        toolbar = QHBoxLayout()
-        for text, func in [
-            ("Espandi Tutto", self.tree.expandAll),
-            ("Comprimi Tutto", self.tree.collapseAll),
-        ]:
-            btn = QPushButton(text)
-            btn.clicked.connect(func)
-            toolbar.addWidget(btn)
-        toolbar.addStretch()
-        self.btn_analyze = QPushButton("Analizza")
-        self.btn_analyze.setIcon(
-            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000")
+        # Stile personalizzato per il tree
+        self.tree.setStyleSheet(
+            """
+            QTreeWidget {
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                background-color: white;
+                outline: none;
+            }
+            QTreeWidget::item {
+                padding: 8px 4px;
+                border-bottom: 1px solid #f3f4f6;
+            }
+            QTreeWidget::item:hover {
+                background-color: #f9fafb;
+            }
+            QTreeWidget::item:selected {
+                background-color: #e0f2fe;
+                color: #0c4a6e;
+            }
+            QHeaderView::section {
+                background-color: #f8fafc;
+                padding: 10px 8px;
+                border: none;
+                border-bottom: 2px solid #e2e8f0;
+                border-right: 1px solid #e5e7eb;
+                font-weight: bold;
+                color: #475569;
+            }
+        """
         )
+
+        # Toolbar con pulsanti migliorati
+        toolbar = QHBoxLayout()
+
+        # Gruppo espansione
+        btn_expand = QPushButton("Espandi Tutto")
+        btn_expand.setIcon(QIcon(get_asset_path(Icons.FOLDER_OPEN)))
+        btn_expand.clicked.connect(self.tree.expandAll)
+        btn_expand.setStyleSheet(
+            """
+            QPushButton {
+                padding: 8px 16px;
+                background-color: #f1f5f9;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                font-weight: 500;
+                color: #000000;
+            }
+            QPushButton:hover {
+                background-color: #e2e8f0;
+            }
+        """
+        )
+
+        btn_collapse = QPushButton("Comprimi Tutto")
+        btn_collapse.setIcon(QIcon(get_asset_path(Icons.FOLDER)))
+        btn_collapse.clicked.connect(self.tree.collapseAll)
+        btn_collapse.setStyleSheet(
+            """
+            QPushButton {
+                padding: 8px 16px;
+                background-color: #f1f5f9;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                font-weight: 500;
+                color: #000000;
+            }
+            QPushButton:hover {
+                background-color: #e2e8f0;
+            }
+        """
+        )
+
+        toolbar.addWidget(btn_expand)
+        toolbar.addWidget(btn_collapse)
+        toolbar.addStretch()
+
+        # Pulsante analisi con stile migliorato
+        self.btn_analyze = QPushButton("Analizza Scadenze")
+        self.btn_analyze.setIcon(QIcon(get_asset_path(Icons.BAR_CHART)))
         self.btn_analyze.clicked.connect(self._run_analysis)
+        self.btn_analyze.setStyleSheet(
+            """
+            QPushButton {
+                padding: 8px 20px;
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: #2563eb;
+            }
+            QPushButton:pressed {
+                background-color: #1d4ed8;
+            }
+        """
+        )
         toolbar.addWidget(self.btn_analyze)
+
         layout.addLayout(toolbar)
         layout.addWidget(self.tree)
 
@@ -105,26 +192,236 @@ class CertificatiCampioneTab(QWidget):
         self._load_data()
 
     def _load_data(self):
-        """Esegue la query e popola l'albero dei certificati raggruppati per costruttore."""
+        """Esegue la query e popola l'albero dei certificati raggruppati per matricola con logica intelligente."""
         data = ContabilitaManager.get_certificati_campione_data()
         self.tree.clear()
         self.tree.setSortingEnabled(False)
-        groups = {}
+
+        # Step 1: Raggruppa per matricola
+        matricola_groups = defaultdict(list)
         for r in data:
-            costruttore = r[self.IDX_COSTRUTTORE] or "Altro"
-            if costruttore not in groups:
-                groups[costruttore] = SortableTreeWidgetItem(self.tree, [costruttore])
-                groups[costruttore].setFirstColumnSpanned(True)
-            row_item = SortableTreeWidgetItem(
-                groups[costruttore], [str(x) if x is not None else "" for x in r]
+            matricola = r[self.IDX_MATRICOLA] or "N/D"
+            matricola_groups[matricola].append(r)
+
+        # Step 2: Crea una lista di gruppi con metadati per ordinamento
+        groups_with_priority = []
+
+        for matricola, certificates in matricola_groups.items():
+            # Ordina per data di emissione (più recente in alto)
+            def parse_date(cert):
+                date_str = cert[self.IDX_EMISSIONE] or ""
+                try:
+                    if "/" in date_str:
+                        return datetime.strptime(date_str, "%d/%m/%Y")
+                    return datetime.min
+                except Exception:
+                    return datetime.min
+
+            certificates_sorted = sorted(certificates, key=parse_date, reverse=True)
+
+            # Step 3: Determina lo stato del certificato più recente (PRIMO della lista)
+            latest_cert = certificates_sorted[0]
+            modello = latest_cert[self.IDX_MODELLO] or "N/D"
+            costruttore = latest_cert[self.IDX_COSTRUTTORE] or "N/D"
+
+            # Calcola giorni alla scadenza per il certificato più recente
+            days_to_expiry, status_dot_icon = self._calculate_days_and_status(
+                latest_cert[self.IDX_SCADENZA]
             )
-            status = r[self.IDX_STATO]
-            if status == "SCADUTO":
-                row_item.setBackground(self.IDX_STATO, Qt.GlobalColor.red)
-            elif status == "IN SCADENZA":
-                row_item.setBackground(self.IDX_STATO, Qt.GlobalColor.yellow)
-        self.tree.setSortingEnabled(True)
-        self.tree.sortByColumn(self.IDX_SCADENZA, Qt.SortOrder.AscendingOrder)
+
+            # Aggiungi alla lista con priorità per ordinamento
+            # Priorità: scaduti (negativo) < prossimi alla scadenza (0-15) < medi (16-30) < attivi (>30)
+            priority = days_to_expiry if days_to_expiry is not None else 9999
+            groups_with_priority.append(
+                {
+                    "matricola": matricola,
+                    "costruttore": costruttore,
+                    "modello": modello,
+                    "certificates": certificates_sorted,
+                    "days_to_expiry": days_to_expiry,
+                    "status_dot_icon": status_dot_icon,
+                    "priority": priority,
+                }
+            )
+
+        # Step 4: Ordina i gruppi per priorità (scaduti prima)
+        groups_with_priority.sort(key=lambda x: x["priority"])
+
+        # Step 5: Crea i nodi padre e figli
+        for group in groups_with_priority:
+            matricola = group["matricola"]
+            costruttore = group["costruttore"]
+            modello = group["modello"]
+            certificates_sorted = group["certificates"]
+            days_to_expiry = group["days_to_expiry"]
+            status_dot_icon = group["status_dot_icon"]
+
+            # Costruisci label padre con icone separator e info giorni
+            # Punto 4: Mostra giorni anche quando compresso
+            days_text = self._format_days_text_short(days_to_expiry)
+
+            parent_label = (
+                f"{matricola}  •  {costruttore}  •  {modello}  •  {days_text}"
+            )
+            parent_item = SortableTreeWidgetItem(self.tree, [parent_label])
+            parent_item.setFirstColumnSpanned(True)
+
+            # Pallino di stato sul padre (visibile anche quando compresso)
+            parent_item.setIcon(0, QIcon(get_asset_path(status_dot_icon)))
+
+            # Punto 6: Grassetto solo se espanso (inizialmente no)
+            # Salviamo lo stato per gestirlo dinamicamente
+            parent_item.setData(0, Qt.ItemDataRole.UserRole, {"days": days_to_expiry})
+
+            # Step 6: Aggiungi i certificati come figli
+            for idx, cert in enumerate(certificates_sorted):
+                row_item = SortableTreeWidgetItem(
+                    parent_item, [str(x) if x is not None else "" for x in cert]
+                )
+
+                # LOGICA INTELLIGENTE:
+                # - Il PRIMO certificato (idx == 0) è quello "attivo" con stato reale
+                # - TUTTI gli altri (idx > 0) sono STORICO senza alert
+                is_current = idx == 0
+
+                if is_current:
+                    # Certificato corrente: mostra stato reale con pallino
+                    self._apply_current_certificate_styling(
+                        row_item, cert, days_to_expiry, status_dot_icon
+                    )
+                else:
+                    # Certificato storico: sempre grigio, nessun alert
+                    self._apply_historical_certificate_styling(row_item, cert)
+
+        self.tree.setSortingEnabled(False)  # Disabilita sorting per mantenere ordine
+        # IMPORTANTE: Comprimi tutto di default (punto 5)
+        self.tree.collapseAll()
+
+        # Connetti segnale per gestire grassetto dinamico
+        self.tree.itemExpanded.connect(self._on_item_expanded)
+        self.tree.itemCollapsed.connect(self._on_item_collapsed)
+
+    def _calculate_days_and_status(self, scadenza_str):
+        """
+        Calcola i giorni alla scadenza e ritorna il pallino di stato appropriato.
+
+        Returns:
+            tuple: (giorni_alla_scadenza, icona_pallino)
+        """
+        try:
+            if not scadenza_str or scadenza_str == "":
+                return None, Icons.STATUS_DOT_GRAY
+
+            # Parsing data italiana
+            scadenza_date = datetime.strptime(scadenza_str, "%d/%m/%Y")
+            today = datetime.now()
+            delta = scadenza_date - today
+            days = delta.days
+
+            # Determina il pallino basato sui giorni
+            if days < 0:
+                # Scaduto
+                return days, Icons.STATUS_DOT_RED
+            elif 0 <= days <= 15:
+                # Scadenza entro 15 giorni
+                return days, Icons.STATUS_DOT_ORANGE
+            elif 16 <= days <= 30:
+                # Scadenza tra 16-30 giorni
+                return days, Icons.STATUS_DOT_YELLOW
+            else:
+                # Attivo oltre 30 giorni
+                return days, Icons.STATUS_DOT_GREEN
+
+        except Exception:
+            return None, Icons.STATUS_DOT_GRAY
+
+    def _apply_current_certificate_styling(
+        self, item, cert, days_to_expiry, status_dot_icon
+    ):
+        """Applica styling al certificato CORRENTE (più recente) con stato reale."""
+        # Colori e stati basati sui giorni alla scadenza
+        # AGGIORNATO: Colori più distintivi per migliore visibilità
+        if days_to_expiry is None:
+            status_text = "N/D"
+            bg_color = QColor("#f3f4f6")
+            text_color = QColor("#6b7280")
+        elif days_to_expiry < 0:
+            # ROSSO SCURO per scaduti
+            status_text = f"Scaduto da {abs(days_to_expiry)} giorni"
+            bg_color = QColor("#fee2e2")
+            text_color = QColor("#dc2626")  # Rosso più scuro
+        elif 0 <= days_to_expiry <= 15:
+            # ARANCIONE SCURO per urgenza massima (0-15 giorni)
+            status_text = f"Scade tra {days_to_expiry} giorni"
+            bg_color = QColor("#fed7aa")
+            text_color = QColor("#ea580c")  # Arancione scuro distintivo
+        elif 16 <= days_to_expiry <= 30:
+            # GIALLO CHIARO/BRILLANTE per attenzione (16-30 giorni)
+            status_text = f"Scade tra {days_to_expiry} giorni"
+            bg_color = QColor("#fef9c3")  # Giallo chiaro nel background
+            text_color = QColor("#ca8a04")  # Giallo scuro nel testo per contrasto
+        else:
+            # VERDE per attivi (>30 giorni)
+            status_text = f"Attivo ({days_to_expiry} giorni rimanenti)"
+            bg_color = QColor("#d1fae5")
+            text_color = QColor("#10b981")
+
+        # Applica background
+        for col in range(self.tree.columnCount()):
+            item.setBackground(col, QBrush(bg_color))
+
+        # Applica pallino e testo stato
+        item.setIcon(self.IDX_STATO, QIcon(get_asset_path(status_dot_icon)))
+        item.setText(self.IDX_STATO, status_text)
+        item.setForeground(self.IDX_STATO, QBrush(text_color))
+
+        # Punto 6: Font bold per certificato corrente (più recente)
+        font = item.font(self.IDX_STATO)
+        font.setBold(True)
+        item.setFont(self.IDX_STATO, font)
+
+    def _apply_historical_certificate_styling(self, item, cert):
+        """Applica styling ai certificati STORICI (nessun alert)."""
+        # Background grigio molto chiaro
+        bg_color = QColor("#fafafa")
+        for col in range(self.tree.columnCount()):
+            item.setBackground(col, QBrush(bg_color))
+
+        # Pallino grigio e testo STORICO
+        item.setIcon(self.IDX_STATO, QIcon(get_asset_path(Icons.STATUS_DOT_GRAY)))
+        item.setText(self.IDX_STATO, "STORICO")
+        item.setForeground(self.IDX_STATO, QBrush(QColor("#9ca3af")))
+
+        # Tooltip informativo
+        tooltip = "Certificato storico - Esiste un certificato più recente per questa matricola"
+        item.setToolTip(self.IDX_STATO, tooltip)
+
+    def _format_days_text_short(self, days):
+        """Formatta il testo dei giorni in versione breve per il nodo padre."""
+        if days is None:
+            return "N/D"
+        elif days < 0:
+            return f"🔴 Scaduto ({abs(days)}gg fa)"  # Rosso scuro
+        elif 0 <= days <= 15:
+            return f"🟠 Scade tra {days}gg"  # Arancione scuro (urgente)
+        elif 16 <= days <= 30:
+            return f"🟡 Scade tra {days}gg"  # Giallo chiaro (attenzione)
+        else:
+            return f"✅ Attivo ({days}gg rim.)"  # Verde
+
+    def _on_item_expanded(self, item):
+        """Gestisce l'evento di espansione: applica grassetto."""
+        if item.parent() is None:  # Solo per nodi padre
+            font = item.font(0)
+            font.setBold(True)
+            item.setFont(0, font)
+
+    def _on_item_collapsed(self, item):
+        """Gestisce l'evento di compressione: rimuove grassetto."""
+        if item.parent() is None:  # Solo per nodi padre
+            font = item.font(0)
+            font.setBold(False)
+            item.setFont(0, font)
 
     def filter_data(self, text):
         """Filtra l'albero dei certificati in base al testo di ricerca."""

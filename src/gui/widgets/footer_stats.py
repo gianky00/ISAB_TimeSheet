@@ -132,6 +132,8 @@ class FooterLeftWidget(QWidget):
     # Colore unificato nero
     TEXT_COLOR = "#000000"
 
+    _fade_anim: Optional[QPropertyAnimation]
+
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
