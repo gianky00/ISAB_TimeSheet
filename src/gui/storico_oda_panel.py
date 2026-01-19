@@ -1,45 +1,44 @@
 """
 SyncroJob - Storico OdA Panel
-Pannello per la visualizzazione del Database Storico OdA con architettura Master-Detail.
+Pannello per la visualizzazione del Database Storico OdA con architettura Master-Detail e raggruppamento (QTreeView).
 """
 
 from typing import Any, List, Tuple
 
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFormLayout,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
     QPushButton,
     QScrollArea,
     QSplitter,
-    QTableView,
+    QTreeView,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.core.database import db_manager
-from src.gui.formatters import FastTableModel, format_currency_smart, format_date_it
+from src.gui.formatters import format_currency_smart, format_date_it
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class StoricoOdaPanel(QWidget):
-    """Pannello per la visualizzazione del Database Storico OdA."""
+    """Pannello per la visualizzazione del Database Storico OdA con Tree View (Grouped)."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # Colonne della Tabella (Vista Master)
+        # Colonne della TreeView (Master)
+        # Order: OdA, Data OdA, Pos, Valore Netto, Stato
         self.master_headers = [
             "OdA",
-            "Pos",
-            "Riga",
-            "Fornitore",
             "Data OdA",
-            "Descrizione",
-            "Qta",
+            "Pos",
             "Valore Netto",
             "Stato",
         ]
@@ -80,12 +79,10 @@ class StoricoOdaPanel(QWidget):
             "Testo breve",
         ]
 
-        self.model = FastTableModel([], self.master_headers)
-        
-        # Formattatori
-        self.model.set_column_formatter(4, format_date_it)  # Data OdA
-        self.model.set_column_formatter(7, format_currency_smart)  # Valore Netto
-        
+        # Use QStandardItemModel for Tree grouping
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(self.master_headers)
+
         self._raw_full_data = []  # Buffer per i dati completi
 
         # Timer per ricerca ritardata (Debounce)
@@ -116,26 +113,27 @@ class StoricoOdaPanel(QWidget):
         filter_layout.addWidget(refresh_btn)
         main_layout.addLayout(filter_layout)
 
-        # 2. Contenitore Splitter (Tabella | Dettaglio)
+        # 2. Contenitore Splitter (Tree | Dettaglio)
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # --- TABELLA (MASTER) ---
-        self.table = QTableView()
-        self.table.setModel(self.model)
-        self.table.setAlternatingRowColors(True)
-        self.table.setSortingEnabled(True)
-        self.table.setWordWrap(False)
-        self.table.verticalHeader().setVisible(False)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        # --- TREE VIEW (MASTER) ---
+        self.tree = QTreeView()
+        self.tree.setModel(self.model)
+        self.tree.setAlternatingRowColors(True)
+        self.tree.setSortingEnabled(False) # Grouping logic handles sort
+        self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.tree.setAnimated(True)
 
-        self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
-        header = self.table.horizontalHeader()
-        header.sectionClicked.connect(self._on_header_clicked)
+        # Selection
+        self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)
 
-        self.splitter.addWidget(self.table)
+        # Header Styling
+        header = self.tree.header()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+        self.splitter.addWidget(self.tree)
 
         # --- PANNELLO DETTAGLIO (DETAIL) ---
         detail_container = QWidget()
@@ -176,47 +174,38 @@ class StoricoOdaPanel(QWidget):
         main_layout.addWidget(self.splitter)
 
     def _on_selection_changed(self, selected, _deselected):
-        """Aggiorna il pannello dettaglio quando si seleziona una riga."""
-        indexes = self.table.selectionModel().selectedRows()
+        """Aggiorna il pannello dettaglio quando si seleziona un item."""
+        indexes = self.tree.selectionModel().selectedRows()
         if not indexes:
             return
 
-        row_idx = indexes[0].row()
-        # Ensure mapping is correct even after sorting
-        # We need to find the raw data index corresponding to the sorted/filtered view
-        # FastTableModel sorts the _data in place, so row_idx maps directly to self.model._data
-        # But wait, self._raw_full_data is parallel to self.model._data ONLY if we sort both or use proxy.
-        # Current FastTableModel implementation: self._data IS the master_rows list.
-        # We need to store full data in the model or link them.
+        index = indexes[0]
+        item = self.model.itemFromIndex(index)
+        if not item:
+            return
 
-        # ISSUE: FastTableModel sorts `self._data`. If I keep `_raw_full_data` separate, they go out of sync on sort.
-        # FIX: The `_raw_full_data` should be stored IN the model or accessed via a unique ID.
-        # For simplicity, let's look up the full row using the Primary Key (OdA, Pos, Riga).
-        
-        master_row = self.model._data[row_idx]
-        key = (master_row[0], master_row[1], master_row[2]) # oda, pos, riga
-        
-        # Find in _raw_full_data (inefficient but safe for now, better use a dict)
-        # Note: In _raw_full_data, indices are: OdA=2, Pos=3, Riga=27 (based on _build_query)
-        full_data = next((r for r in self._raw_full_data if (r[2], r[3], r[27]) == key), None)
-        
+        # Retrieve full data stored in UserRole
+        full_data = item.data(Qt.ItemDataRole.UserRole)
+
         if full_data:
             for i, h in enumerate(self.full_headers):
                 if i < len(full_data):
                     val = str(full_data[i])
                     if val.lower() == "nan" or val == "None":
                         val = ""
-                    
+
                     # Apply specific formatting for detail view
                     if "Data" in h:
                         val = format_date_it(val)
                     elif "Valore" in h or "Prezzo" in h:
                         val = format_currency_smart(val)
-                        
-                    self.detail_labels[h].setText(val)
 
-    def _on_header_clicked(self, logical_index):
-        self.model.sort(logical_index, self.table.horizontalHeader().sortIndicatorOrder())
+                    self.detail_labels[h].setText(val)
+        else:
+            # If parent item selected (without specific row data, or aggregate), clear details or show summary?
+            # Usually parent has the first row data as representative or aggregate.
+            # Let's see how populate_tree attaches data.
+            pass
 
     def refresh_data(self):
         """Aggiorna i dati della tabella."""
@@ -227,66 +216,106 @@ class StoricoOdaPanel(QWidget):
                 db_manager.DB_STORICO_ODA, query, tuple(params)
             )
             self._raw_full_data = full_rows
-            master_rows = self._process_rows(full_rows)
-            self.model.update_data(master_rows)
-            self.table.resizeColumnsToContents()
+            self._populate_tree(full_rows)
         except Exception as e:
             print(f"Errore caricamento Storico OdA: {e}")
 
     def _build_query(self) -> Tuple[str, List[Any]]:
         """Costruisce la query SQL."""
         search_text = self.search_input.text().lower().strip()
-        
+
         # Select columns in the exact order of self.full_headers
         query = """
-            SELECT 
-                org_acq, data_oda, oda, pos_oda, stato, cat_contab, descrizione, 
-                qta, uom, data_consegna, valore_netto_pos, valore_residuo, valore_netto_oda, 
-                divisione, destinatario, nome_destinatario, codice_fornitore, descrizione_fornitore, 
-                emittente_fattura, desc_emittente_fattura, contract_card, contratto, 
-                posizione_contratto, gruppo_acquisti, indicatore_rilascio, stato_rilascio, 
+            SELECT
+                org_acq, data_oda, oda, pos_oda, stato, cat_contab, descrizione,
+                qta, uom, data_consegna, valore_netto_pos, valore_residuo, valore_netto_oda,
+                divisione, destinatario, nome_destinatario, codice_fornitore, descrizione_fornitore,
+                emittente_fattura, desc_emittente_fattura, contract_card, contratto,
+                posizione_contratto, gruppo_acquisti, indicatore_rilascio, stato_rilascio,
                 attivita, num_riga, quantita, unita_mis, prezzo_lordo, testo_breve
-            FROM storico_oda 
+            FROM storico_oda
             WHERE 1=1
         """
         params = []
 
         if search_text:
             query += """ AND (
-                CAST(oda AS TEXT) LIKE ? OR 
-                descrizione LIKE ? OR 
-                descrizione_fornitore LIKE ? OR 
+                CAST(oda AS TEXT) LIKE ? OR
+                descrizione LIKE ? OR
+                descrizione_fornitore LIKE ? OR
                 CAST(contratto AS TEXT) LIKE ? OR
                 codice_fornitore LIKE ?
             )"""
             p = f"%{search_text}%"
             params.extend([p, p, p, p, p])
 
-        query += " ORDER BY data_oda DESC LIMIT 2000"
+        # Order by ODA, POS, NUM_RIGA so grouping is easy
+        query += " ORDER BY oda DESC, pos_oda ASC, num_riga ASC LIMIT 3000"
         return query, params
 
-    def _process_rows(self, full_rows: List[Tuple]) -> List[List[Any]]:
-        """Pulisce e formatta le righe per la visualizzazione Master."""
-        master_rows = []
+    def _populate_tree(self, full_rows: List[Tuple]):
+        """Popola il modello ad albero raggruppando per ODA + POS."""
+        self.model.removeRows(0, self.model.rowCount())
+
+        groups = {} # (oda, pos) -> ParentItem
+
         for r in full_rows:
-            # Mapping Full -> Master
-            # OdA=2, Pos=3, Riga=27, Fornitore=17, Data=1, Desc=6, Qta=7, UOM=8, Valore=10, Stato=4
-            
-            # Combine Qta + UOM
-            qta_str = f"{r[7]} {r[8]}" if r[7] else ""
-            
-            row = [
-                r[2], # OdA
-                r[3], # Pos
-                r[27], # Riga (num_riga)
-                r[17], # Fornitore (descrizione_fornitore)
-                r[1], # Data OdA
-                r[6], # Descrizione
-                qta_str, # Qta
-                r[10], # Valore Netto Pos
-                r[4], # Stato
-            ]
-            master_rows.append(
-                [("" if str(val).lower() == "nan" or val is None else val) for val in row]
-            )
-        return master_rows
+            # Indices based on _build_query / self.full_headers
+            # oda=2, data=1, pos=3, valore=10, stato=4
+            # num_riga=27, descrizione=6, testo_breve=31, prezzo=30, qta=28, uom=29
+
+            oda = r[2]
+            pos = r[3]
+            group_key = (oda, pos)
+
+            # Create Parent Group if not exists
+            if group_key not in groups:
+                # Parent columns: OdA, Data OdA, Pos, Valore Netto, Stato
+                item_oda = QStandardItem(str(oda))
+                item_data = QStandardItem(format_date_it(str(r[1])))
+                item_pos = QStandardItem(str(pos))
+                item_val = QStandardItem(format_currency_smart(str(r[10])))
+                item_stato = QStandardItem(str(r[4]))
+
+                # Make parent strictly read-only
+                for it in [item_oda, item_data, item_pos, item_val, item_stato]:
+                    it.setEditable(False)
+
+                # Store full data on the parent too (representative of the position)
+                item_oda.setData(r, Qt.ItemDataRole.UserRole)
+
+                self.model.appendRow([item_oda, item_data, item_pos, item_val, item_stato])
+                groups[group_key] = item_oda
+
+            parent_item = groups[group_key]
+
+            # Create Child Row (The detailed line)
+            # Child layout mapping to columns:
+            # Col 0 (OdA) -> "Riga: {num_riga}"
+            # Col 1 (Data) -> {Testo Breve} or {Descrizione}
+            # Col 2 (Pos) -> ""
+            # Col 3 (Valore) -> {Prezzo Lordo}
+            # Col 4 (Stato) -> {Quantita} {UOM}
+
+            num_riga = r[27]
+            desc = r[31] if r[31] else r[6] # Testo breve pref, else descrizione
+            prezzo = r[30]
+            qta = r[28]
+            uom = r[29]
+
+            c_riga = QStandardItem(f"Riga: {num_riga}")
+            c_desc = QStandardItem(str(desc))
+            c_empty = QStandardItem("")
+            c_prezzo = QStandardItem(format_currency_smart(str(prezzo)))
+            c_qta = QStandardItem(f"{qta} {uom}" if qta else "")
+
+            # Child Read-only
+            for it in [c_riga, c_desc, c_empty, c_prezzo, c_qta]:
+                it.setEditable(False)
+                # Visual distinction
+                it.setForeground(Qt.GlobalColor.darkGray)
+
+            # Store data on child
+            c_riga.setData(r, Qt.ItemDataRole.UserRole)
+
+            parent_item.appendRow([c_riga, c_desc, c_empty, c_prezzo, c_qta])
