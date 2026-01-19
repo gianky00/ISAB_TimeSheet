@@ -2,7 +2,7 @@
 Sistema di notifiche toast non-blocking.
 """
 
-from PyQt6.QtCore import QPropertyAnimation, QSize, Qt, QTimer
+from PyQt6.QtCore import QPropertyAnimation, QSize, Qt, QTimer, QPointF
 from PyQt6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -165,6 +165,14 @@ class Toast(QWidget):
             y: Coordinata Y globale.
         """
         self.move(x, y)
+        
+        # Aggiorna l'origine della pulsazione al centro del container
+        if self._pulse and hasattr(self, "_scale_effect"):
+            # Assicura che il layout sia aggiornato
+            self.container.adjustSize()
+            rect = self.container.rect()
+            self._scale_effect.setOrigin(QPointF(rect.width() / 2.0, rect.height() / 2.0))
+
         self.show()
         self._fade_in.start()
         
