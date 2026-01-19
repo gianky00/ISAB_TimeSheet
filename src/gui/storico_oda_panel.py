@@ -301,13 +301,15 @@ class StoricoOdaPanel(QWidget):
         if not index.isValid():
             return
         
-        # Forza toggle espansione su qualsiasi colonna
-        # Nota: QTreeView di default espande solo sulla colonna con l'indicatore (spesso 0).
-        # Qui lo forziamo ovunque.
-        if self.tree.isExpanded(index):
-            self.tree.collapse(index)
+        # QStandardItemModel attaches children ONLY to Column 0 items.
+        # Clicking on Col 1, 2... returns an index for an item that technically has NO children.
+        # We must redirect the expand/collapse action to the sibling at Column 0.
+        source_index = index.sibling(index.row(), 0)
+        
+        if self.tree.isExpanded(source_index):
+            self.tree.collapse(source_index)
         else:
-            self.tree.expand(index)
+            self.tree.expand(source_index)
 
     def _set_row_bold(self, parent_index, bold: bool):
         """Helper per cambiare lo stile di tutte le colonne della riga."""
