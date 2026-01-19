@@ -75,9 +75,9 @@ class ResponsiveContainer(QWidget):
         if self._current_mode == "mobile":
             self._add_widgets_stacked()
         elif self._current_mode == "tablet":
-            self._add_widgets_grid(cols=2)
-        else:
             self._add_widgets_grid(cols=3)
+        else:
+            self._add_widgets_grid(cols=6)
 
     def _add_widgets_stacked(self):
         """Disposizione verticale (1 colonna)."""

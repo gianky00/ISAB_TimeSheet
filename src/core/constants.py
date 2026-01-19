@@ -100,3 +100,7 @@ class Icons:
     BUILDING = "assets/icons/building.svg"
     ACTIVITY = "assets/icons/activity.svg"
     GLOBE = "assets/icons/globe.svg"
+    MESSAGE_SQUARE = "assets/icons/message-square.svg"
+    ALERT_CIRCLE = "assets/icons/alert-circle.svg"
+    ALERT_TRIANGLE = "assets/icons/alert-triangle.svg"
+    SMART_TOY = "assets/icons/sparkles.svg"  # Fallback/Alias for AI
