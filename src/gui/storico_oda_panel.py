@@ -189,20 +189,21 @@ class StoricoOdaPanel(QWidget):
         # 2. Contenitore Splitter (Tree | Dettaglio)
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
 
-                # --- TREE VIEW (MASTER) ---
-                self.tree = QTreeView()
-                self.tree.setModel(self.model)
-                self.tree.setAlternatingRowColors(True)
-                self.tree.setSortingEnabled(False) # Grouping logic handles sort
-                self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-                self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-                self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-                self.tree.setAnimated(True)
-                # Disabilita default double click expansion per gestirla manualmente su tutte le colonne
-                self.tree.setExpandsOnDoubleClick(False)
-                
-                # Selection
-                self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)        self.tree.expanded.connect(self._on_item_expanded)
+        # --- TREE VIEW (MASTER) ---
+        self.tree = QTreeView()
+        self.tree.setModel(self.model)
+        self.tree.setAlternatingRowColors(True)
+        self.tree.setSortingEnabled(False) # Grouping logic handles sort
+        self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.tree.setAnimated(True)
+        # Disabilita default double click expansion per gestirla manualmente su tutte le colonne
+        self.tree.setExpandsOnDoubleClick(False)
+        
+        # Selection
+        self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        self.tree.expanded.connect(self._on_item_expanded)
         self.tree.collapsed.connect(self._on_item_collapsed)
         self.tree.doubleClicked.connect(self._on_tree_double_clicked)
 
@@ -351,36 +352,37 @@ class StoricoOdaPanel(QWidget):
         """
         params = []
 
-                if search_text:
-                    # Search in ALL relevant columns
-                    query += """ AND (
-                        CAST(oda AS TEXT) LIKE ? OR 
-                        descrizione LIKE ? OR 
-                        descrizione_fornitore LIKE ? OR 
-                        CAST(contratto AS TEXT) LIKE ? OR
-                        codice_fornitore LIKE ? OR
-                        CAST(pos_oda AS TEXT) LIKE ? OR
-                        stato LIKE ? OR
-                        cat_contab LIKE ? OR
-                        qta LIKE ? OR
-                        uom LIKE ? OR
-                        data_consegna LIKE ? OR
-                        nome_destinatario LIKE ? OR
-                        emittente_fattura LIKE ? OR
-                        desc_emittente_fattura LIKE ? OR
-                        contract_card LIKE ? OR
-                        gruppo_acquisti LIKE ? OR
-                        indicatore_rilascio LIKE ? OR
-                        stato_rilascio LIKE ? OR
-                        attivita LIKE ? OR
-                        CAST(num_riga AS TEXT) LIKE ? OR
-                        testo_breve LIKE ?
-                    )"""
-                    p = f"%{search_text}%"
-                    # Number of placeholders must match columns above (21)
-                    params.extend([p] * 21)
-        
-                # Order by ODA, POS, NUM_RIGA so grouping is easy        query += " ORDER BY oda DESC, pos_oda ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
+        if search_text:
+            # Search in ALL relevant columns
+            query += """ AND (
+                CAST(oda AS TEXT) LIKE ? OR 
+                descrizione LIKE ? OR 
+                descrizione_fornitore LIKE ? OR 
+                CAST(contratto AS TEXT) LIKE ? OR
+                codice_fornitore LIKE ? OR
+                CAST(pos_oda AS TEXT) LIKE ? OR
+                stato LIKE ? OR
+                cat_contab LIKE ? OR
+                qta LIKE ? OR
+                uom LIKE ? OR
+                data_consegna LIKE ? OR
+                nome_destinatario LIKE ? OR
+                emittente_fattura LIKE ? OR
+                desc_emittente_fattura LIKE ? OR
+                contract_card LIKE ? OR
+                gruppo_acquisti LIKE ? OR
+                indicatore_rilascio LIKE ? OR
+                stato_rilascio LIKE ? OR
+                attivita LIKE ? OR
+                CAST(num_riga AS TEXT) LIKE ? OR
+                testo_breve LIKE ?
+            )"""
+            p = f"%{search_text}%"
+            # Number of placeholders must match columns above (21)
+            params.extend([p] * 21)
+
+        # Order by ODA, POS, NUM_RIGA so grouping is easy
+        query += " ORDER BY oda DESC, pos_oda ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
         return query, params
 
     def _populate_tree(self, full_rows: List[Tuple]):
