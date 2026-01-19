@@ -21,7 +21,7 @@ class ActivityItem(QFrame):
     Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
     """
 
-    def __init__(self, log_entry: dict, parent=None):
+    def __init__(self, log_entry: dict, parent=None, animate=True):
         super().__init__(parent)
         self.log_entry = log_entry
         self.setFrameShape(QFrame.Shape.NoFrame)
@@ -154,18 +154,22 @@ class ActivityItem(QFrame):
 
         layout.addLayout(text_layout)
 
-        # Animazione fade-in
-        self.opacity_effect = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity_effect)
+        # Animazione fade-in (solo se richiesta)
+        if animate:
+            self.opacity_effect = QGraphicsOpacityEffect(self)
+            self.setGraphicsEffect(self.opacity_effect)
 
-        self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
-        self.fade_in_animation.setDuration(600)
-        self.fade_in_animation.setStartValue(0.0)
-        self.fade_in_animation.setEndValue(1.0)
-        self.fade_in_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+            self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+            self.fade_in_animation.setDuration(600)
+            self.fade_in_animation.setStartValue(0.0)
+            self.fade_in_animation.setEndValue(1.0)
+            self.fade_in_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # Rimuovi l'effect dopo l'animazione per evitare problemi con hover
-        self.fade_in_animation.finished.connect(self._remove_opacity_effect)
+            # Rimuovi l'effect dopo l'animazione per evitare problemi con hover
+            self.fade_in_animation.finished.connect(self._remove_opacity_effect)
+        else:
+            self.opacity_effect = None
+            self.fade_in_animation = None
 
     def _remove_opacity_effect(self):
         """Rimuove l'effetto opacity dopo l'animazione per evitare interferenze."""
@@ -174,7 +178,7 @@ class ActivityItem(QFrame):
     def showEvent(self, event):
         """Avvia l'animazione quando il widget viene mostrato."""
         super().showEvent(event)
-        if self.opacity_effect is not None:
+        if self.opacity_effect is not None and self.fade_in_animation is not None:
             self.fade_in_animation.start()
 
 
@@ -186,6 +190,7 @@ class ActivityFeed(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedHeight(90)  # Aumentato per le card più alte
+        self._refreshing = False  # Flag per evitare refresh multipli
         self._setup_ui()
 
         # Connetti al segnale dell'AuditManager per aggiornamenti in tempo reale
@@ -255,37 +260,54 @@ class ActivityFeed(QWidget):
 
     def refresh_feed(self):
         """Ricarica i log dall'AuditManager."""
-        # Pulisci: remove all but stretch (last item)
-        while self.feed_layout.count() > 1:
-            item = self.feed_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        # Limit to 10 latest
-        from src.core.audit_manager import AuditManager
-
-        logs = AuditManager.instance().get_logs(limit=10)
-
-        if not logs:
-            empty_lbl = QLabel("✨ Nessuna attività recente")
-            empty_lbl.setStyleSheet(
-                """
-                QLabel {
-                    color: #868e96;
-                    font-size: 13px;
-                    font-weight: 500;
-                    font-style: italic;
-                    padding: 10px 20px;
-                    background-color: #f8f9fa;
-                    border-radius: 8px;
-                    border: 1px dashed #dee2e6;
-                }
-            """
-            )
-            self.feed_layout.insertWidget(0, empty_lbl)
+        # Evita refresh multipli simultanei
+        if self._refreshing:
             return
 
-        for log in logs:
-            item = ActivityItem(log)
-            # Insert at beginning (left)
-            self.feed_layout.insertWidget(self.feed_layout.count() - 1, item)
+        self._refreshing = True
+        try:
+            # Pulisci: remove all but stretch (last item)
+            while self.feed_layout.count() > 1:
+                item = self.feed_layout.takeAt(0)
+                if item.widget():
+                    widget = item.widget()
+                    # Ferma animazioni e rimuovi effetti prima di eliminare
+                    if (
+                        hasattr(widget, "fade_in_animation")
+                        and widget.fade_in_animation is not None
+                    ):
+                        widget.fade_in_animation.stop()
+                    if widget.graphicsEffect():
+                        widget.setGraphicsEffect(None)
+                    widget.deleteLater()
+
+            # Limit to 10 latest
+            from src.core.audit_manager import AuditManager
+
+            logs = AuditManager.instance().get_logs(limit=10)
+
+            if not logs:
+                empty_lbl = QLabel("✨ Nessuna attività recente")
+                empty_lbl.setStyleSheet(
+                    """
+                    QLabel {
+                        color: #868e96;
+                        font-size: 13px;
+                        font-weight: 500;
+                        font-style: italic;
+                        padding: 10px 20px;
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                        border: 1px dashed #dee2e6;
+                    }
+                """
+                )
+                self.feed_layout.insertWidget(0, empty_lbl)
+                return
+
+            for log in logs:
+                item = ActivityItem(log, animate=False)  # Disabilita animazione
+                # Insert at beginning (left)
+                self.feed_layout.insertWidget(self.feed_layout.count() - 1, item)
+        finally:
+            self._refreshing = False

@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTime, QTimer, pyqtSignal
+from PyQt6.QtCore import QDate, QSize, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -32,7 +32,6 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
-    QTimeEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -1889,21 +1888,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
         self.content_layout.addWidget(params_group)
 
-        # Scheduler
-        sched_group = QGroupBox("Pianifica")
-        sched_layout = QHBoxLayout(sched_group)
-        self.autopilot_check = QCheckBox("Abilita download automatico")
-        self.autopilot_check.stateChanged.connect(self._save_data)
-        sched_layout.addWidget(self.autopilot_check)
-        sched_layout.addSpacing(20)
-        sched_layout.addWidget(QLabel("Alle ore:"))
-        self.time_edit = QTimeEdit()
-        self.time_edit.setTime(QTime(9, 0))
-        self.time_edit.setDisplayFormat("HH:mm")
-        self.time_edit.timeChanged.connect(self._save_data)
-        sched_layout.addWidget(self.time_edit)
-        sched_layout.addStretch()
-        self.content_layout.addWidget(sched_group)
+        # Scheduler rimosso: ora la pianificazione si gestisce dall'Autopilot nella Dashboard
 
     def _open_settings(self):
         main_window = self.window()
@@ -1930,14 +1915,6 @@ class TimbratureBotPanel(BaseBotPanel):
             self.params_widget.set_dates(
                 yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy")
             )
-
-            # Autopilot
-            # Non serve più blockSignals perché abbiamo _is_loading
-            is_enabled = config.get("timbrature_autopilot_enabled", False)
-            self.autopilot_check.setChecked(is_enabled)
-
-            saved_time = config.get("timbrature_autopilot_time", "09:00")
-            self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
         finally:
             self._is_loading = False  # Fine blocco salvataggio
 
@@ -1955,13 +1932,6 @@ class TimbratureBotPanel(BaseBotPanel):
         )
         config_manager.set_config_value("last_timbrature_date_da", date_da)
         config_manager.set_config_value("last_timbrature_date_a", date_a)
-        config_manager.set_config_value(
-            "timbrature_autopilot_enabled", self.autopilot_check.isChecked()
-        )
-        config_manager.set_config_value(
-            "timbrature_autopilot_time", self.time_edit.time().toString("HH:mm")
-        )
-        self.autopilot_changed.emit()  # Notify Main Window
 
     def validate_ready(self) -> tuple[bool, str]:
         """Verifica se il pannello è pronto per l'avvio del bot."""
