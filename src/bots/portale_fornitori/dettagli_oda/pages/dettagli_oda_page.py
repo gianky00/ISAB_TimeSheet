@@ -418,7 +418,9 @@ class DettagliOdAPage:
             time.sleep(0.5)
         return None
 
-    def _finalize_download(self, src: Path, dest_dir: Path, target_name: str) -> Optional[Path]:
+    def _finalize_download(
+        self, src: Path, dest_dir: Path, target_name: str
+    ) -> Optional[Path]:
         """Sposta il file scaricato nella destinazione finale rinominandolo."""
         import shutil
 

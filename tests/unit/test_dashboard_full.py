@@ -40,9 +40,11 @@ class TestDashboardComponents:
 
     def test_activity_feed_refresh(self, qapp, mocker):
         """Verify ActivityFeed handles data from AuditManager."""
-        # Mock AuditManager
-        mock_audit = mocker.patch("src.gui.widgets.activity_feed.AuditManager")
-        mock_audit.return_value.get_logs.return_value = [
+        # Mock AuditManager at its source
+        mock_audit_class = mocker.patch("src.core.audit_manager.AuditManager")
+        mock_instance = mock_audit_class.instance.return_value
+
+        mock_instance.get_logs.return_value = [
             {
                 "action": "Test Action",
                 "entity": "Test Entity",
@@ -127,10 +129,10 @@ class TestQuickActionsConfig:
 
         from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog
 
-        # Mock get_config_value
+        # Mock get_config_value with real keys from AVAILABLE_ACTIONS
         mocker.patch(
             "src.gui.dialogs.quick_actions_config.get_config_value",
-            return_value=["cmd_sync"],
+            return_value=["nav_dettagli_oda"],
         )
         mock_set = mocker.patch("src.gui.dialogs.quick_actions_config.set_config_value")
 
@@ -147,8 +149,8 @@ class TestQuickActionsConfig:
                 iterator += 1
             return None
 
-        # Check initial state (cmd_sync checked)
-        sync_item = find_item("cmd_sync")
+        # Check initial state (nav_dettagli_oda checked)
+        sync_item = find_item("nav_dettagli_oda")
         assert sync_item is not None
         assert sync_item.checkState(0) == Qt.CheckState.Checked
 
@@ -164,5 +166,5 @@ class TestQuickActionsConfig:
         call_args = mock_set.call_args
         assert call_args[0][0] == "quick_actions"
         saved_list = call_args[0][1]
-        assert "cmd_sync" in saved_list
+        assert "nav_dettagli_oda" in saved_list
         assert "nav_page_2" in saved_list

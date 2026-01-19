@@ -60,7 +60,7 @@ class TestDettagliOdABot:
         page_instance = MockPage.return_value
         page_instance.navigate_to_dettagli.return_value = True
         page_instance.setup_supplier.return_value = True
-        page_instance.process_oda.return_value = True
+        page_instance.process_oda.return_value = Path("dummy.xlsx")
 
         # Test with empty rows list
         result = dettagli_bot.run(

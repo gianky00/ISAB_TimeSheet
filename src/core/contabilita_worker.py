@@ -40,6 +40,7 @@ class ContabilitaWorker(QThread):
                 "messages": [],
                 "success": False,
                 "total_ops": total_ops,
+                "initial_total_ops": total_ops,  # Salva stima iniziale
             }
 
             # Esecuzione fasi
@@ -74,18 +75,42 @@ class ContabilitaWorker(QThread):
         total = sheets + files + attivita + certificati
         return total if total > 0 else 1
 
-    def _emit_progress(self, processed, offset, state):
-        """Calcola ed emette il progresso globale con ETA."""
+    def _emit_progress(self, processed, offset, state, phase_total=None):
+        """
+        Calcola ed emette il progresso globale con ETA accurato.
+
+        Args:
+            processed: Operazioni processate nella fase corrente
+            offset: Offset globale (operazioni delle fasi precedenti)
+            state: Stato condiviso
+            phase_total: Totale operazioni previste per la fase corrente (usato per aggiornare stima)
+        """
         current = offset + processed
+
+        # Aggiorna dinamicamente il totale se abbiamo info più accurate dalla fase
+        if phase_total and phase_total > 0:
+            # Stima migliorata: offset + totale_fase_corrente + stime_fasi_successive
+            estimated_remaining = max(
+                0, state.get("initial_total_ops", 10) - offset - phase_total
+            )
+            state["total_ops"] = offset + phase_total + estimated_remaining
+
+        # Fallback: se current supera total_ops, aggiorna
         if current > state["total_ops"]:
             state["total_ops"] = current
 
         elapsed = time.time() - self.start_time
         if current > 0 and elapsed > 0:
             rate = current / elapsed
-            eta = (state["total_ops"] - current) / rate
+            remaining = max(0, state["total_ops"] - current)
+            eta = remaining / rate if rate > 0 else 0
             m, s = divmod(int(eta), 60)
-            percent = min(99, int((current / state["total_ops"]) * 100))
+            percent = min(
+                99,
+                int((current / state["total_ops"]) * 100)
+                if state["total_ops"] > 0
+                else 0,
+            )
             self.progress_signal.emit(
                 f"⏳ Importazione: {percent}% completato ({current}/{state['total_ops']}) • ETA: {m}m {s}s"
             )
@@ -97,7 +122,7 @@ class ContabilitaWorker(QThread):
 
         success, msg, added, removed = ContabilitaManager.import_data_from_excel(
             self.file_path,
-            progress_callback=lambda c, t: self._emit_progress(c, 0, state),
+            progress_callback=lambda c, t: self._emit_progress(c, 0, state, t),
         )
         self._update_state(
             state,
@@ -118,7 +143,7 @@ class ContabilitaWorker(QThread):
 
         success, msg, added, removed = ContabilitaManager.import_giornaliere(
             self.giornaliere_path,
-            progress_callback=lambda c, t: self._emit_progress(c, sheets, state),
+            progress_callback=lambda c, t: self._emit_progress(c, sheets, state, t),
         )
         self._update_state(
             state,

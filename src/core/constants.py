@@ -105,3 +105,19 @@ class Icons:
     ALERT_CIRCLE = "assets/icons/alert-circle.svg"
     ALERT_TRIANGLE = "assets/icons/alert-triangle.svg"
     SMART_TOY = "assets/icons/sparkles.svg"  # Fallback/Alias for AI
+
+    # Certificates
+    CERTIFICATE_ACTIVE = "assets/icons/certificate_active.svg"
+    CERTIFICATE_EXPIRING = "assets/icons/certificate_expiring.svg"
+    CERTIFICATE_EXPIRED = "assets/icons/certificate_expired.svg"
+    CERTIFICATE_ARCHIVED = "assets/icons/certificate_archived.svg"
+
+    # Status Dots
+    STATUS_DOT_RED = "assets/icons/status_dot_red.svg"
+    STATUS_DOT_ORANGE = "assets/icons/status_dot_orange.svg"
+    STATUS_DOT_YELLOW = "assets/icons/status_dot_yellow.svg"
+    STATUS_DOT_GREEN = "assets/icons/status_dot_green.svg"
+    STATUS_DOT_GRAY = "assets/icons/status_dot_gray.svg"
+
+    # UI Elements
+    SEPARATOR_DOT = "assets/icons/separator_dot.svg"

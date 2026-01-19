@@ -97,7 +97,29 @@ class ContabilitaPanel(QWidget):
             get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
         )
         self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.update_btn.setFixedSize(100, 32)  # Compact
+        self.update_btn.setFixedSize(110, 34)  # Slightly larger
+        self.update_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #2563eb;
+            }
+            QPushButton:pressed {
+                background-color: #1d4ed8;
+            }
+            QPushButton:disabled {
+                background-color: #94a3b8;
+            }
+        """
+        )
         self.update_btn.clicked.connect(self.start_import_process)
 
         toolbar_layout.addWidget(self.selection_count_label)

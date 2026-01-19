@@ -34,7 +34,9 @@ class TestDettagliOdaBotDeep:
             mock_page = mock_page_cls.return_value
             mock_page.navigate_to_dettagli.return_value = True
             mock_page.setup_supplier.return_value = True
-            mock_page.process_oda.return_value = True
+            from pathlib import Path
+
+            mock_page.process_oda.return_value = Path("dummy_oda.xlsx")
 
             data = {
                 "rows": [],  # Empty rows

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
 from PyQt6.QtWidgets import (
@@ -20,6 +21,9 @@ class ActivityItem(QFrame):
     """
     Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
     """
+
+    opacity_effect: Optional[QGraphicsOpacityEffect]
+    fade_in_animation: Optional[QPropertyAnimation]
 
     def __init__(self, log_entry: dict, parent=None, animate=True):
         super().__init__(parent)

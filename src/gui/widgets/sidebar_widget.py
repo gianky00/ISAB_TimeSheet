@@ -238,7 +238,9 @@ class SidebarWidget(QFrame):
         self.group_db.add_child(self.btn_pdl)
 
         # 10: Storico OdA
-        self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
+        self.btn_storico_oda = SidebarChildButton(
+            "Storico OdA", get_asset_path(Icons.FILE_TEXT)
+        )
         self.btn_storico_oda.clicked.connect(lambda: self._handle_child_click(10))
         self.group_db.add_child(self.btn_storico_oda)
 

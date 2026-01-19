@@ -963,143 +963,135 @@ class ExcelImporter:
             return False, f"File non trovato: {file_path}", []
 
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                # Attempt to read 'Formato PF' sheet
-                try:
-                    df = pd.read_excel(path, sheet_name="Formato PF")
-                except ValueError:
-                    # Fallback to first sheet if not found
-                    df = pd.read_excel(path, sheet_name=0)
-
+            # 1. Lettura Excel
+            df = cls._read_storico_oda_excel(path)
             if df.empty:
                 return False, "Foglio vuoto.", []
 
-            # Normalize Columns
-            df.columns = [str(c).strip() for c in df.columns]
-            rename_map = {}
-            for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
-                for col in df.columns:
-                    # Robust matching for special chars
-                    if excel_col == col:
-                        rename_map[col] = db_col
-                        break
-                    # Fallback for "Attività" vs "Attivit..." or "Quantità" vs "Quantit..."
-                    # We match if the first 4 chars match and length is similar
-                    if len(excel_col) >= 4 and col.startswith(excel_col[:4]):
-                        # Special handling for "Unità di Mis" vs "Unit..."
-                        if excel_col.startswith("Unit") and col.startswith("Unit"):
-                            rename_map[col] = db_col
-                            break
-
-                        if abs(len(col) - len(excel_col)) <= 2:
-                            rename_map[col] = db_col
-                            break
-
+            # 2. Mappatura Colonne
+            rename_map = cls._map_storico_oda_columns(df)
             if not rename_map:
                 return False, "Nessuna colonna riconosciuta.", []
 
             df.rename(columns=rename_map, inplace=True)
-
-            # Remove duplicate columns (keep first) to avoid Series/DataFrame type errors
             df = df.loc[:, ~df.columns.duplicated()]
 
-            # Ensure all columns exist
-            for db_col in cls.STORICO_ODA_COLS:
-                if db_col not in df.columns:
-                    df[db_col] = ""
+            # 3. Normalizzazione e Pulizia
+            cls._normalize_storico_oda_df(df)
+            cls._clean_storico_oda_data(df)
 
-            # Filter only DB columns
-            df = df[cls.STORICO_ODA_COLS]
-
-            # Cleaning
-            for date_col in ["data_oda", "data_consegna"]:
-                df[date_col] = (
-                    pd.to_datetime(df[date_col], errors="coerce")
-                    .dt.strftime("%Y-%m-%d")
-                    .fillna("")
-                )
-
-            # Helper for European numbers (1.234,56 -> 1234.56)
-            def clean_euro_num(x):
-                if pd.isna(x) or str(x).strip() == "":
-                    return 0.0
-                if isinstance(x, (int, float)):
-                    return float(x)
-                s = str(x).strip()
-                # If contains both . and , assume . is thousand, , is decimal
-                if "." in s and "," in s:
-                    s = s.replace(".", "").replace(",", ".")
-                elif "," in s:
-                    s = s.replace(",", ".")
-                try:
-                    return float(s)
-                except ValueError:
-                    return 0.0
-
-            for num_col in [
-                "qta",
-                "valore_netto_pos",
-                "valore_residuo",
-                "valore_netto_oda",
-                "quantita",
-                "prezzo_lordo",
-            ]:
-                # Use apply with cleaner function
-                df[num_col] = df[num_col].apply(clean_euro_num)
-
-            # IDs as Strings to avoid overflow/precision loss
-            for str_col in [
-                "oda",
-                "pos_oda",
-                "num_riga",
-                "divisione",
-                "destinatario",
-                "contratto",
-                "posizione_contratto",
-            ]:
-                df[str_col] = (
-                    df[str_col]
-                    .fillna(0)
-                    .astype(str)
-                    .str.replace(r"\.0$", "", regex=True)  # remove .0 from floats
-                    .str.strip()
-                )
-
-            string_cols = [
-                c
-                for c in df.columns
-                if c
-                not in [
-                    "data_oda",
-                    "data_consegna",
-                    "qta",
-                    "valore_netto_pos",
-                    "valore_residuo",
-                    "valore_netto_oda",
-                    "quantita",
-                    "prezzo_lordo",
-                    "oda",
-                    "pos_oda",
-                    "num_riga",
-                    "divisione",
-                    "destinatario",
-                    "contratto",
-                    "posizione_contratto",
-                ]
-            ]
-            df[string_cols] = (
-                df[string_cols]
-                .astype(str)
-                .fillna("")
-                .apply(lambda x: x.str.strip().replace("nan", ""))
-            )
-
-            rows = list(df.itertuples(index=False, name=None))
-            return True, f"Importate {len(rows)} righe.", rows
+            # 4. Conversione in tuple
+            data = [tuple(x) for x in df.to_numpy()]
+            return True, f"Trovate {len(data)} righe.", data
 
         except Exception as e:
             return False, f"Errore importazione Storico OdA: {e}", []
+
+    @classmethod
+    def _read_storico_oda_excel(cls, path: Path) -> pd.DataFrame:
+        """Legge il file excel tentando diversi fogli."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                return pd.read_excel(path, sheet_name="Formato PF")
+            except ValueError:
+                return pd.read_excel(path, sheet_name=0)
+
+    @classmethod
+    def _map_storico_oda_columns(cls, df: pd.DataFrame) -> dict:
+        """Mappa le colonne dell'Excel a quelle del DB."""
+        df.columns = [str(c).strip() for c in df.columns]
+        rename_map = {}
+        for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
+            for col in df.columns:
+                if excel_col == col:
+                    rename_map[col] = db_col
+                    break
+                # Fallback matching
+                if len(excel_col) >= 4 and col.startswith(excel_col[:4]):
+                    if excel_col.startswith("Unit") and col.startswith("Unit"):
+                        rename_map[col] = db_col
+                        break
+                    if abs(len(col) - len(excel_col)) <= 2:
+                        rename_map[col] = db_col
+                        break
+        return rename_map
+
+    @classmethod
+    def _normalize_storico_oda_df(cls, df: pd.DataFrame):
+        """Assicura che tutte le colonne richieste esistano e filtra solo quelle del DB."""
+        for db_col in cls.STORICO_ODA_COLS:
+            if db_col not in df.columns:
+                df[db_col] = ""
+
+        # Filtra solo le colonne del DB (in-place modification via drop)
+        cols_to_drop = [c for c in df.columns if c not in cls.STORICO_ODA_COLS]
+        if cols_to_drop:
+            df.drop(columns=cols_to_drop, inplace=True)
+
+    @classmethod
+    def _clean_storico_oda_data(cls, df: pd.DataFrame):
+        """Pulisce date, numeri e ID."""
+        # Date
+        for date_col in ["data_oda", "data_consegna"]:
+            df[date_col] = (
+                pd.to_datetime(df[date_col], errors="coerce")
+                .dt.strftime("%Y-%m-%d")
+                .fillna("")
+            )
+
+        # Numeri
+        num_cols = [
+            "qta",
+            "valore_netto_pos",
+            "valore_residuo",
+            "valore_netto_oda",
+            "quantita",
+            "prezzo_lordo",
+        ]
+        for num_col in num_cols:
+            df[num_col] = df[num_col].apply(cls._clean_euro_num)
+
+        # IDs
+        id_cols = [
+            "oda",
+            "pos_oda",
+            "num_riga",
+            "divisione",
+            "destinatario",
+            "contratto",
+            "posizione_contratto",
+        ]
+        for str_col in id_cols:
+            df[str_col] = (
+                df[str_col]
+                .fillna(0)
+                .astype(str)
+                .str.replace(r"\\.0$", "", regex=True)
+                .str.strip()
+            )
+
+        # Altre stringhe
+        for col in df.columns:
+            if col not in num_cols + ["data_oda", "data_consegna"] + id_cols:
+                df[col] = df[col].fillna("").astype(str).str.strip()
+
+    @staticmethod
+    def _clean_euro_num(x):
+        """Helper for European numbers (1.234,56 -> 1234.56)."""
+        if pd.isna(x) or str(x).strip() == "":
+            return 0.0
+        if isinstance(x, (int, float)):
+            return float(x)
+        s = str(x).strip()
+        if "." in s and "," in s:
+            s = s.replace(".", "").replace(",", ".")
+        elif "," in s:
+            s = s.replace(",", ".")
+        try:
+            return float(s)
+        except ValueError:
+            return 0.0
 
     @classmethod
     def _find_certificati_sheet(cls, xls: pd.ExcelFile) -> Optional[str]:

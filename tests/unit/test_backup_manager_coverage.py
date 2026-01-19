@@ -39,6 +39,7 @@ class TestBackupManager:
 
         # Mock AuditManager
         mock_audit = mocker.patch("src.core.backup_manager.AuditManager")
+        mock_audit.instance.return_value = mock_audit.return_value
 
         # Set backup dir to a subdirectory
         backup_dir = tmp_path / "backups"

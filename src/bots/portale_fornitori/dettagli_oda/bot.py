@@ -69,19 +69,7 @@ class DettagliOdABot(BaseBot):
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """Esegue lo scarico dei dettagli per ogni Ordine di Acquisto fornito."""
-        if isinstance(data, dict):
-            rows = data.get("rows", [])
-            self.data_da = data.get("data_da", self.data_da)
-            self.data_a = data.get("data_a", self.data_a)
-            self.fornitore = data.get("fornitore", self.fornitore)
-        else:
-            rows = data
-
-        # Se non ci sono righe, aggiungiamo una riga vuota per far partire la ricerca generale
-        if not rows:
-            self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
-            rows = [{"numero_oda": "", "numero_contratto": ""}]
-
+        rows = self._prepare_rows(data)
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
 
         if not self.driver:
@@ -89,8 +77,6 @@ class DettagliOdABot(BaseBot):
         assert self.driver
 
         page = DettagliOdAPage(self.driver, self.log)
-
-        # Inizializza DB Storico ODA
         OdaManager.init_db()
 
         # Define source (System Downloads) and destination (Configured Path)
@@ -98,35 +84,65 @@ class DettagliOdABot(BaseBot):
         dest_dir = Path(self.download_path) if self.download_path else source_dir
 
         success = 0
-
         for i, row in enumerate(rows, 1):
-            self._check_stop()
-            oda = str(row.get("numero_oda", "")).strip()
-            contract = str(row.get("numero_contratto", "")).strip()
-
-            if not page.navigate_to_dettagli(is_first_row=(i == 1)):
-                self.log("❌ Problema nella navigazione.")
-                continue
-            if not page.setup_supplier(self.fornitore):
-                self.log("❌ Fornitore non selezionabile.")
-                continue
-
-            downloaded_path = page.process_oda(
-                oda, contract, self.data_da, self.data_a, source_dir, dest_dir
-            )
-
-            if downloaded_path:
+            if self._process_single_oda(page, row, i, source_dir, dest_dir):
                 success += 1
-                # Se è un ODA Generico (senza numero OdA), importiamo nel DB
-                if not oda:
-                    self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
-                    ok, msg, added, _ = OdaManager.import_oda_from_excel(str(downloaded_path))
-                    if ok:
-                        self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
-                    else:
-                        self.log(f"⚠️ Errore importazione: {msg}")
-
-            time.sleep(1)
 
         self.log("✨ Procedura conclusa.")
         return success == len(rows)
+
+    def _prepare_rows(self, data: Any) -> List[Dict[str, Any]]:
+        """Prepara la lista di righe da processare."""
+        if isinstance(data, dict):
+            self.data_da = data.get("data_da", self.data_da)
+            self.data_a = data.get("data_a", self.data_a)
+            self.fornitore = data.get("fornitore", self.fornitore)
+            rows = data.get("rows", [])
+        else:
+            rows = data
+
+        if not rows:
+            self.log("ℹ️ Nessun OdA specificato. Avvio ricerca per lista generale.")
+            return [{"numero_oda": "", "numero_contratto": ""}]
+        return rows
+
+    def _process_single_oda(
+        self,
+        page: DettagliOdAPage,
+        row: dict,
+        index: int,
+        source_dir: Path,
+        dest_dir: Path,
+    ) -> bool:
+        """Processa un singolo OdA."""
+        self._check_stop()
+        oda = str(row.get("numero_oda", "")).strip()
+        contract = str(row.get("numero_contratto", "")).strip()
+
+        if not page.navigate_to_dettagli(is_first_row=(index == 1)):
+            self.log("❌ Problema nella navigazione.")
+            return False
+        if not page.setup_supplier(self.fornitore):
+            self.log("❌ Fornitore non selezionabile.")
+            return False
+
+        downloaded_path = page.process_oda(
+            oda, contract, self.data_da, self.data_a, source_dir, dest_dir
+        )
+
+        if downloaded_path:
+            # Se è un ODA Generico (senza numero OdA), importiamo nel DB
+            if not oda:
+                self._import_oda_to_db(downloaded_path)
+            time.sleep(1)
+            return True
+        return False
+
+    def _import_oda_to_db(self, downloaded_path: Path):
+        """Helper per l'importazione nel database."""
+        self.log(f"📥 Avvio importazione in Storico OdA da {downloaded_path.name}...")
+        ok, msg, added, _ = OdaManager.import_oda_from_excel(str(downloaded_path))
+        if ok:
+            self.log(f"✅ Importazione completata: {msg} (Upd/Ins: {added})")
+        else:
+            self.log(f"⚠️ Errore importazione: {msg}")

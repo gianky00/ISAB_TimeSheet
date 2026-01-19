@@ -42,9 +42,13 @@ class TestBaseBotPanel(unittest.TestCase):
 
         # Patch AuditManager and StatsManager classes in src.gui.panels where they are imported
         self.mock_audit_manager_instance = MagicMock()
+        mock_audit_class = MagicMock()
+        mock_audit_class.instance.return_value = self.mock_audit_manager_instance
+        mock_audit_class.return_value = self.mock_audit_manager_instance
+
         self.patcher_panels_audit_manager = patch(
             "src.gui.panels.AuditManager",
-            new=MagicMock(return_value=self.mock_audit_manager_instance),
+            new=mock_audit_class,
         )
         self.patcher_panels_audit_manager.start()
 
