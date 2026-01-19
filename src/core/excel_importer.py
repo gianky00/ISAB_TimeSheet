@@ -450,11 +450,16 @@ class ExcelImporter:
                 return pd.read_excel(file_path, sheet_name="RIASSUNTO")
             except ValueError:
                 return None
+            except zipfile.BadZipFile:
+                # File non valido o corrotto
+                return None
             except Exception:
                 try:
                     return pd.read_excel(
                         file_path, sheet_name="RIASSUNTO", engine="openpyxl"
                     )
+                except zipfile.BadZipFile:
+                    return None
                 except Exception as e:
                     raise e
 
@@ -982,20 +987,20 @@ class ExcelImporter:
                     # Fallback for "Attività" vs "Attivit..." or "Quantità" vs "Quantit..."
                     # We match if the first 4 chars match and length is similar
                     if len(excel_col) >= 4 and col.startswith(excel_col[:4]):
-                         # Special handling for "Unità di Mis" vs "Unit..."
-                         if excel_col.startswith("Unit") and col.startswith("Unit"):
-                             rename_map[col] = db_col
-                             break
-                         
-                         if abs(len(col) - len(excel_col)) <= 2:
-                             rename_map[col] = db_col
-                             break
+                        # Special handling for "Unità di Mis" vs "Unit..."
+                        if excel_col.startswith("Unit") and col.startswith("Unit"):
+                            rename_map[col] = db_col
+                            break
+
+                        if abs(len(col) - len(excel_col)) <= 2:
+                            rename_map[col] = db_col
+                            break
 
             if not rename_map:
-                 return False, "Nessuna colonna riconosciuta.", []
+                return False, "Nessuna colonna riconosciuta.", []
 
             df.rename(columns=rename_map, inplace=True)
-            
+
             # Remove duplicate columns (keep first) to avoid Series/DataFrame type errors
             df = df.loc[:, ~df.columns.duplicated()]
 
@@ -1057,7 +1062,7 @@ class ExcelImporter:
                     df[str_col]
                     .fillna(0)
                     .astype(str)
-                    .str.replace(r"\.0$", "", regex=True) # remove .0 from floats
+                    .str.replace(r"\.0$", "", regex=True)  # remove .0 from floats
                     .str.strip()
                 )
 
@@ -1259,13 +1264,19 @@ class ExcelImporter:
         if not file_path or not p_file.exists():
             return 0
         try:
+            # Check if valid zip before opening
+            if not zipfile.is_zipfile(p_file):
+                # Maybe old xls format (OLE)
+                return 1
+
             with zipfile.ZipFile(p_file, "r") as z:
                 if "xl/workbook.xml" not in z.namelist():
                     return 1
                 wb_xml = z.read("xl/workbook.xml").decode("utf-8")
                 sheet_names = re.findall(r'name="([^"]+)"', wb_xml)
                 return len([s for s in sheet_names if re.search(r"(\d{4})", s)])
-        except Exception:
+        except Exception as e:
+            logging.debug(f"Scan excel sheets error: {e}")
             return 1
 
     @classmethod

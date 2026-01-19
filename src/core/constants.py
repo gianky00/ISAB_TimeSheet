@@ -73,6 +73,7 @@ class Icons:
     SEND = "assets/icons/send.svg"
 
     # Status
+    CHECK = "assets/icons/check.svg"
     CHECK_CIRCLE = "assets/icons/check-circle.svg"
     X_CIRCLE = "assets/icons/x-circle.svg"
     ALERT = "assets/icons/alert-triangle.svg"

@@ -6,7 +6,7 @@ Pannello per la visualizzazione del Database Storico OdA con architettura Master
 from typing import Any, List, Tuple
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QStandardItem, QStandardItemModel, QFont
+from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QFormLayout,
@@ -17,11 +17,11 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSplitter,
+    QStyle,
+    QStyledItemDelegate,
     QTreeView,
     QVBoxLayout,
     QWidget,
-    QStyledItemDelegate,
-    QStyle
 )
 
 from src.core.constants import Icons
@@ -55,47 +55,55 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                 # Calcola larghezze
                 width_col1 = self.tree.columnWidth(1)
                 width_col2 = self.tree.columnWidth(2)
-                
-                painter.save()
 
-                # Gestione Selezione (Background)
-                # Il background viene disegnato dalla view di solito, ma per sicurezza ridisegniamo
-                # se vogliamo stile custom o se l'estensione crea artefatti.
-                # Qui ci limitiamo a gestire il testo.
-                
-                if option.state & QStyle.StateFlag.State_Selected:
-                    painter.setPen(option.palette.highlightedText().color())
-                else:
-                    painter.setPen(option.palette.text().color())
+                # Removed save/restore to fix "2 saved states" error
+                # painter.save()
+                try:
+                    # Gestione Selezione (Background)
+                    # Il background viene disegnato dalla view di solito, ma per sicurezza ridisegniamo
+                    # se vogliamo stile custom o se l'estensione crea artefatti.
+                    # Qui ci limitiamo a gestire il testo.
 
-                # Calcolo Rettangolo di Disegno "Totale" (spanning col 1 + 2)
-                # L'obiettivo è disegnare il testo in un rettangolo che copre entrambe le colonne,
-                # ma traslato correttamente in base alla colonna corrente.
-                
-                if col == 1:
-                    # Siamo in Col 1: Rettangolo è (rect.x, rect.y, w1 + w2, h)
-                    draw_rect = option.rect.adjusted(0, 0, width_col2, 0)
-                else:
-                    # Siamo in Col 2: Rettangolo deve "iniziare" dalla Col 1 visivamente
-                    # rect.x è l'inizio della Col 2.
-                    # Vogliamo disegnare allo stesso offset assoluto di Col 1.
-                    # draw_rect deve essere spostato a sinistra di width_col1 ed esteso a destra
-                    draw_rect = option.rect.adjusted(-width_col1, 0, 0, 0)
-                    # La larghezza del draw_rect diventa width_col2 + width_col1?
-                    # No, rect.adjusted modifica le coordinate.
-                    # option.rect (Col2) ha width = w2.
-                    # Adjusted(-w1, 0, 0, 0) -> x = x - w1, width = w2 + w1.
-                    # Questo è corretto. Il testo verrà disegnato a partire dall'inizio di Col 1.
-                
-                # Disegno
-                # Impostiamo il clipping al rect della cella corrente per evitare sbavature su altre colonne
-                # (anche se il drawText clippa, è meglio essere espliciti se usiamo rect più grandi)
-                painter.setClipRect(option.rect)
-                
-                # Align Left per iniziare sempre da sinistra (inizio Col 1)
-                painter.drawText(draw_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
-                
-                painter.restore()
+                    if option.state & QStyle.StateFlag.State_Selected:
+                        painter.setPen(option.palette.highlightedText().color())
+                    else:
+                        painter.setPen(option.palette.text().color())
+
+                    # Calcolo Rettangolo di Disegno "Totale" (spanning col 1 + 2)
+                    # L'obiettivo è disegnare il testo in un rettangolo che copre entrambe le colonne,
+                    # ma traslato correttamente in base alla colonna corrente.
+
+                    if col == 1:
+                        # Siamo in Col 1: Rettangolo è (rect.x, rect.y, w1 + w2, h)
+                        draw_rect = option.rect.adjusted(0, 0, width_col2, 0)
+                    else:
+                        # Siamo in Col 2: Rettangolo deve "iniziare" dalla Col 1 visivamente
+                        # rect.x è l'inizio della Col 2.
+                        # Vogliamo disegnare allo stesso offset assoluto di Col 1.
+                        # draw_rect deve essere spostato a sinistra di width_col1 ed esteso a destra
+                        draw_rect = option.rect.adjusted(-width_col1, 0, 0, 0)
+                        # La larghezza del draw_rect diventa width_col2 + width_col1?
+                        # No, rect.adjusted modifica le coordinate.
+                        # option.rect (Col2) ha width = w2.
+                        # Adjusted(-w1, 0, 0, 0) -> x = x - w1, width = w2 + w1.
+                        # Questo è corretto. Il testo verrà disegnato a partire dall'inizio di Col 1.
+
+                    # Disegno
+                    # Impostiamo il clipping al rect della cella corrente per evitare sbavature su altre colonne
+                    # (anche se il drawText clippa, è meglio essere espliciti se usiamo rect più grandi)
+                    painter.setClipRect(option.rect)
+
+                    # Align Left per iniziare sempre da sinistra (inizio Col 1)
+                    painter.drawText(
+                        draw_rect,
+                        Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                        text,
+                    )
+
+                finally:
+                    # Manually reset clipping
+                    painter.setClipping(False)
+                    # painter.restore()
                 return
 
         super().paint(painter, option, index)
@@ -193,14 +201,14 @@ class StoricoOdaPanel(QWidget):
         self.tree = QTreeView()
         self.tree.setModel(self.model)
         self.tree.setAlternatingRowColors(True)
-        self.tree.setSortingEnabled(False) # Grouping logic handles sort
+        self.tree.setSortingEnabled(False)  # Grouping logic handles sort
         self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tree.setAnimated(True)
         # Disabilita default double click expansion per gestirla manualmente su tutte le colonne
         self.tree.setExpandsOnDoubleClick(False)
-        
+
         # Selection
         self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)
         self.tree.expanded.connect(self._on_item_expanded)
@@ -210,9 +218,9 @@ class StoricoOdaPanel(QWidget):
         # Header Styling
         header = self.tree.header()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        
+
         # Custom Delegate per visualizzazione estesa descrizione
-        self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
+        # self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
         self.splitter.addWidget(self.tree)
 
@@ -300,12 +308,12 @@ class StoricoOdaPanel(QWidget):
         """Gestisce il doppio click per espandere/collassare la riga (su qualsiasi colonna)."""
         if not index.isValid():
             return
-        
+
         # QStandardItemModel attaches children ONLY to Column 0 items.
         # Clicking on Col 1, 2... returns an index for an item that technically has NO children.
         # We must redirect the expand/collapse action to the sibling at Column 0.
         source_index = index.sibling(index.row(), 0)
-        
+
         if self.tree.isExpanded(source_index):
             self.tree.collapse(source_index)
         else:
@@ -313,11 +321,10 @@ class StoricoOdaPanel(QWidget):
 
     def _set_row_bold(self, parent_index, bold: bool):
         """Helper per cambiare lo stile di tutte le colonne della riga."""
-        model = self.tree.model()
         row = parent_index.row()
         bold_font = QFont()
         bold_font.setBold(bold)
-        
+
         for col in range(self.model.columnCount()):
             item = self.model.item(row, col)
             if item:
@@ -357,9 +364,9 @@ class StoricoOdaPanel(QWidget):
         if search_text:
             # Search in ALL relevant columns
             query += """ AND (
-                CAST(oda AS TEXT) LIKE ? OR 
-                descrizione LIKE ? OR 
-                descrizione_fornitore LIKE ? OR 
+                CAST(oda AS TEXT) LIKE ? OR
+                descrizione LIKE ? OR
+                descrizione_fornitore LIKE ? OR
                 CAST(contratto AS TEXT) LIKE ? OR
                 codice_fornitore LIKE ? OR
                 CAST(pos_oda AS TEXT) LIKE ? OR
@@ -384,14 +391,16 @@ class StoricoOdaPanel(QWidget):
             params.extend([p] * 21)
 
         # Order by ODA, POS, NUM_RIGA so grouping is easy
-        query += " ORDER BY oda DESC, pos_oda ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
+        query += (
+            " ORDER BY oda DESC, pos_oda ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
+        )
         return query, params
 
     def _populate_tree(self, full_rows: List[Tuple]):
         """Popola il modello ad albero raggruppando per ODA + POS."""
         self.model.removeRows(0, self.model.rowCount())
 
-        groups = {} # (oda, pos) -> ParentItem
+        groups = {}  # (oda, pos) -> ParentItem
 
         for r in full_rows:
             # Indices based on _build_query / self.full_headers
@@ -410,7 +419,7 @@ class StoricoOdaPanel(QWidget):
                 item_pos = QStandardItem(str(pos))
                 item_val = QStandardItem(format_currency_smart(str(r[10])))
                 item_stato = QStandardItem(str(r[4]))
-                
+
                 # Parent items (initially not bold until expanded)
                 for it in [item_data, item_oda, item_pos, item_val, item_stato]:
                     it.setEditable(False)
@@ -419,7 +428,9 @@ class StoricoOdaPanel(QWidget):
                 # Store on first column (Data OdA)
                 item_data.setData(r, Qt.ItemDataRole.UserRole)
 
-                self.model.appendRow([item_data, item_oda, item_pos, item_val, item_stato])
+                self.model.appendRow(
+                    [item_data, item_oda, item_pos, item_val, item_stato]
+                )
                 groups[group_key] = item_data
 
             parent_item = groups[group_key]
@@ -433,11 +444,11 @@ class StoricoOdaPanel(QWidget):
             # Col 4 (Stato) -> {Quantita} {UOM}
 
             num_riga = r[27]
-            
+
             # Robust Text Extraction
             raw_testo = str(r[31]).strip() if r[31] else ""
             raw_desc = str(r[6]).strip() if r[6] else ""
-            
+
             # Use Testo Breve if valid (not "nan", not empty), else Descrizione
             if raw_testo and raw_testo.lower() != "nan":
                 desc = raw_testo
