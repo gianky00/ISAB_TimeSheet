@@ -188,6 +188,18 @@ class DataSynchronizer:
         )
 
     @classmethod
+    def sync_storico_oda(
+        cls, db_path: Path, rows_to_insert: List[Tuple]
+    ) -> Tuple[int, int]:
+        """Sincronizza i dati Storico OdA in modalità Upsert (non cancella storico)."""
+        return cls._sync_upsert(
+            db_path,
+            "storico_oda",
+            ExcelImporter.STORICO_ODA_COLS,
+            rows_to_insert,
+        )
+
+    @classmethod
     def _sync_generic(
         cls, db_path: Path, table_name: str, columns: List[str], new_data: List[Tuple]
     ) -> Tuple[int, int]:
@@ -208,3 +220,34 @@ class DataSynchronizer:
             cls._replace_data(cursor, table_name, columns)
             conn.commit()
             return added, removed
+
+    @classmethod
+    def _sync_upsert(
+        cls, db_path: Path, table_name: str, columns: List[str], new_data: List[Tuple]
+    ) -> Tuple[int, int]:
+        """Esegue Upsert (Insert or Replace) per aggiornare o aggiungere record."""
+        if not new_data:
+            return 0, 0
+
+        with db_manager.get_connection(db_path) as conn:
+            cursor = conn.cursor()
+            safe_table = cls._validate_identifier(table_name)
+            safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
+            placeholders = ", ".join(["?"] * len(columns))
+
+            query = f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) VALUES ({placeholders})"  # nosec B608
+
+            data = [
+                tuple(str(x).strip() if x is not None else "" for x in r)
+                for r in new_data
+            ]
+
+            try:
+                cursor.executemany(query, data)
+                conn.commit()
+                # Con INSERT OR REPLACE difficile distinguere insert da update preciso senza query extra.
+                # Ritorniamo il numero di righe processate come "added" per semplicità.
+                return len(data), 0
+            except Exception as e:
+                # Log error or re-raise
+                raise e
