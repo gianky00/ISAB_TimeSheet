@@ -22,6 +22,7 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.core.excel_importer import ExcelImporter
 from src.gui.widgets import ExcelTableWidget
+from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -150,7 +151,7 @@ class AttivitaProgrammateTab(QWidget):
         for col_idx in range(len(self.COLUMNS)):
             val = row_data[col_idx]
             text = self._format_cell_text(col_idx, val)
-            item = QTableWidgetItem(text)
+            item = SortableTableWidgetItem(text)
             if col_idx < len(db_keys):
                 self._apply_item_style(item, row_styles.get(db_keys[col_idx]))
             self.table.setItem(row_idx, col_idx, item)

@@ -1,6 +1,6 @@
-# SyncroJob Enterprise
+# SyncroJob Enterprise - Developer Context
 
-**SyncroJob** is an advanced integrated software suite designed to automate, monitor, and optimize business workflows on the ISAB supplier portal and SafeWork. It features a modern PyQt6-based GUI and uses Selenium/automation bots to handle complex tasks like timesheet downloading, purchase order analysis, and personnel management.
+**SyncroJob Enterprise** is an advanced integrated software suite designed to automate, monitor, and optimize business workflows on the ISAB supplier portal and SafeWork. It features a modern PyQt6-based GUI and uses Selenium/automation bots to handle complex tasks like timesheet downloading, purchase order analysis, and personnel management.
 
 ## 📂 Project Structure
 
@@ -99,6 +99,22 @@ To create a standalone executable (EXE) and setup installer:
 ```bash
 python "admin/Crea Setup/build_dist.py"
 ```
+
+## 📐 Architecture & Patterns
+
+### 1. Singleton Managers
+Core services like `AuditManager` and `NotificationManager` use a strict Singleton pattern.
+*   **Usage:** ALWAYS access via `.instance()`, never instantiate directly.
+*   **Signals:** Signals are decoupled into a nested `MySignals` class to avoid QObject multi-inheritance issues.
+    *   Example: `AuditManager.instance().signals.log_added.connect(...)`
+
+### 2. Bot Architecture
+All bots reside in `src/bots/` and inherit from `BaseBot`.
+*   **Structure:** Logic is separated into `pages/` (Page Object Model) and `locators.py`.
+*   **State:** Bots use `BotStatus` enum (IDLE, RUNNING, ERROR, etc.).
+
+### 3. GUI Lazy Loading
+The `MainWindow` uses lazy loading for its panels to improve startup time. Panels are instantiated only when first accessed via the `NavigationController`.
 
 ## 📝 Conventions
 

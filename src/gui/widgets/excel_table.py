@@ -12,13 +12,13 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QMenu,
     QTableWidget,
-    QTableWidgetItem,
     QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
+from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -135,9 +135,10 @@ class ExcelTableWidget(QTableWidget):
         else:
             item = self.item(row, col)
             if not item:
-                item = QTableWidgetItem()
+                item = SortableTableWidgetItem(text)
                 self.setItem(row, col, item)
-            item.setText(text)
+            else:
+                item.setText(text)
 
     def contextMenuEvent(self, event):
         """Menu contestuale predefinito per copia veloce (per tabelle read-only)."""
@@ -427,7 +428,7 @@ class EditableDataTable(QWidget):
                 self.table.setCellWidget(row, col, combo)
             else:
                 default_val = column.get("default", "")
-                item = QTableWidgetItem(str(default_val))
+                item = SortableTableWidgetItem(default_val)
                 self.table.setItem(row, col, item)
 
     def _remove_row(self):

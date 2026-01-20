@@ -32,17 +32,36 @@ class NotificationManager(QObject):
         self.notifications = self._load_notifications()
 
     def _load_notifications(self) -> list:
-        """Carica le notifiche dal file JSON."""
+        """Carica le notifiche dal file JSON con migrazione automatica."""
         if not self.notifications_file.exists():
             return []
         try:
             with open(self.notifications_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
+                # Applica migrazione per retrocompatibilità
+                data = [self._migrate_notification(n) for n in data]
                 # Ordina per timestamp (più recenti prima)
                 return sorted(data, key=lambda x: x.get("timestamp", ""), reverse=True)
         except Exception as e:
             print(f"Errore caricamento notifiche: {e}")
             return []
+
+    def _migrate_notification(self, notif: dict) -> dict:
+        """Migra notifica vecchia al nuovo schema con valori default."""
+        defaults = {
+            "category": "system",
+            "priority": "low",
+            "source": "Sistema",
+            "pinned": False,
+            "snoozed_until": None,
+            "archived": False,
+            "tags": [],
+            "metadata": {},
+            "actions": [],
+            "related_id": None,
+        }
+        # Merge: existing fields override defaults
+        return {**defaults, **notif}
 
     def _save_notifications(self):
         """Salva le notifiche su file."""
@@ -52,10 +71,33 @@ class NotificationManager(QObject):
         except Exception as e:
             print(f"Errore salvataggio notifiche: {e}")
 
-    def add_notification(self, title: str, message: str, level: str = "info"):
+    def add_notification(
+        self,
+        title: str,
+        message: str,
+        level: str = "info",
+        category: str = "system",
+        priority: str = "low",
+        source: str = "Sistema",
+        tags: list = None,
+        metadata: dict = None,
+        actions: list = None,
+        related_id: str = None,
+    ):
         """
-        Aggiunge una nuova notifica.
-        level: 'info', 'success', 'warning', 'error'
+        Aggiunge una nuova notifica con schema esteso.
+
+        Args:
+            title: Titolo notifica
+            message: Messaggio dettagliato
+            level: info, success, warning, error
+            category: bot, system, user, database, api
+            priority: low, medium, high
+            source: Sorgente notifica (es. "Bot Scarico TS")
+            tags: Lista di tag personalizzati
+            metadata: Metadati aggiuntivi
+            actions: Lista di action buttons [{label, key, variant, icon}]
+            related_id: ID di entità correlata (es. audit log ID)
         """
         notification = {
             "id": str(uuid.uuid4()),
@@ -64,6 +106,17 @@ class NotificationManager(QObject):
             "level": level,
             "timestamp": datetime.now().isoformat(),
             "read": False,
+            # Nuovi campi
+            "category": category,
+            "priority": priority,
+            "source": source,
+            "pinned": False,
+            "snoozed_until": None,
+            "archived": False,
+            "tags": tags or [],
+            "metadata": metadata or {},
+            "actions": actions or [],
+            "related_id": related_id,
         }
 
         self.notifications.insert(0, notification)
@@ -127,3 +180,121 @@ class NotificationManager(QObject):
         self._save_notifications()
         self.notifications_updated.emit()
         self.unread_count_changed.emit(0)
+
+    # === NUOVI METODI (Fase 2) ===
+
+    def update_notification(self, notification_id: str, updates: dict):
+        """
+        Aggiorna campi specifici di una notifica.
+
+        Args:
+            notification_id: ID notifica da aggiornare
+            updates: Dict con campi da aggiornare {campo: valore}
+        """
+        for n in self.notifications:
+            if n["id"] == notification_id:
+                n.update(updates)
+                self._save_notifications()
+                self.notifications_updated.emit()
+                break
+
+    def pin_notification(self, notification_id: str, pinned: bool = True):
+        """Fissa/rimuovi pin da notifica."""
+        self.update_notification(notification_id, {"pinned": pinned})
+
+    def snooze_notification(self, notification_id: str, until: datetime):
+        """Posponi notifica fino a timestamp."""
+        self.update_notification(notification_id, {"snoozed_until": until.isoformat()})
+
+    def archive_notification(self, notification_id: str):
+        """Archivia notifica."""
+        self.update_notification(notification_id, {"archived": True})
+
+    def add_tag(self, notification_id: str, tag: str):
+        """Aggiungi tag a notifica."""
+        for n in self.notifications:
+            if n["id"] == notification_id:
+                if tag not in n.get("tags", []):
+                    n.setdefault("tags", []).append(tag)
+                    self._save_notifications()
+                    self.notifications_updated.emit()
+                break
+
+    def get_filtered_notifications(
+        self,
+        levels: list = None,
+        categories: list = None,
+        priorities: list = None,
+        show_archived: bool = False,
+    ) -> list:
+        """
+        Ottieni notifiche con filtri avanzati.
+
+        Args:
+            levels: Lista livelli da includere (error, warning, success, info)
+            categories: Lista categorie da includere
+            priorities: Lista priorità da includere
+            show_archived: Mostra notifiche archiviate
+        """
+        filtered = self.notifications
+
+        if not show_archived:
+            filtered = [n for n in filtered if not n.get("archived", False)]
+
+        if levels:
+            filtered = [n for n in filtered if n.get("level") in levels]
+
+        if categories:
+            filtered = [n for n in filtered if n.get("category") in categories]
+
+        if priorities:
+            filtered = [n for n in filtered if n.get("priority") in priorities]
+
+        return filtered
+
+    def search_notifications(self, query: str) -> list:
+        """
+        Ricerca full-text nelle notifiche.
+
+        Args:
+            query: Stringa di ricerca (case-insensitive)
+
+        Returns:
+            Lista notifiche che matchano la query
+        """
+        query_lower = query.lower()
+        results = []
+
+        for n in self.notifications:
+            # Search in title, message, tags
+            if (
+                query_lower in n.get("title", "").lower()
+                or query_lower in n.get("message", "").lower()
+                or any(query_lower in tag.lower() for tag in n.get("tags", []))
+            ):
+                results.append(n)
+
+        return results
+
+    def bulk_operation(self, notification_ids: list, operation: str, **kwargs):
+        """
+        Esegui operazione bulk su multiple notifiche.
+
+        Args:
+            notification_ids: Lista ID notifiche
+            operation: Operazione da eseguire (mark_read, delete, archive, pin)
+            **kwargs: Parametri aggiuntivi per operazione
+        """
+        for notif_id in notification_ids:
+            if operation == "mark_read":
+                self.mark_as_read(notif_id)
+            elif operation == "delete":
+                self.delete_notification(notif_id)
+            elif operation == "archive":
+                self.archive_notification(notif_id)
+            elif operation == "pin":
+                self.pin_notification(notif_id, kwargs.get("pinned", True))
+
+        # Emit signals once after bulk operation
+        self.notifications_updated.emit()
+        self.unread_count_changed.emit(self.get_unread_count())

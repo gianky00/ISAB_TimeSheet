@@ -8,16 +8,18 @@ import json
 import logging
 import os
 import sqlite3
+import time
+import traceback
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List
+from types import TracebackType
+from typing import Any, Dict, List, Optional, Type
 
 from src.core.config_manager import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 
 
-# Classe separata per i segnali (evita problemi con singleton)
 class AuditSignals:
     """Singleton per i segnali di AuditManager (compatibile con PyQt6)."""
 
@@ -36,6 +38,67 @@ class AuditSignals:
         return cls._instance
 
 
+class AuditTimer:
+    """
+    Context Manager per misurare la durata delle operazioni e
+    catturare automaticamente eccezioni per l'audit log.
+    """
+
+    def __init__(
+        self,
+        action: str,
+        category: str = "general",
+        entity: str = "",
+        module: str = "",
+        notify: bool = False,
+    ):
+        self.action = action
+        self.category = category
+        self.entity = entity
+        self.module = module
+        self.notify = notify
+        self.start_time = 0.0
+        self.audit_manager = AuditManager.instance()
+
+    def __enter__(self):
+        self.start_time = time.time()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ):
+        duration_ms = int((time.time() - self.start_time) * 1000)
+        status = AuditManager.Status.SUCCESS
+        severity = AuditManager.Severity.LOW
+        error_code = None
+        params = {"duration_str": f"{duration_ms}ms"}
+
+        if exc_type:
+            status = AuditManager.Status.ERROR
+            severity = AuditManager.Severity.HIGH
+            error_code = exc_type.__name__
+            params["error_details"] = str(exc_val)
+            params["traceback"] = "".join(traceback.format_tb(exc_tb))
+
+        self.audit_manager.log_action(
+            action=self.action,
+            category=self.category,
+            entity=self.entity,
+            params=params,
+            status=status,
+            severity=severity,
+            duration_ms=duration_ms,
+            module=self.module,
+            error_code=error_code,
+            notify=self.notify,
+        )
+        # Non sopprimiamo l'eccezione, la lasciamo propagare
+        return False
+
+
 class AuditManager:
     """
     Manager per l'Audit Log con meccanismi di integrità e severità.
@@ -45,47 +108,38 @@ class AuditManager:
     DB_PATH = CONFIG_DIR / "data" / "audit_log.db"
     _SALT = "SyncroJob_Secure_Audit_2026"
 
-    # Livelli di severità
     class Severity(Enum):
-        """Livelli di criticità di un evento di audit."""
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
 
-        LOW = "low"  # Info, operazioni normali
-        MEDIUM = "medium"  # Modifiche config, avvisi
-        HIGH = "high"  # Errori, manomissioni, licenza fallita
-
-    # Stati delle operazioni
     class Status(Enum):
-        """Stato finale di un'operazione registrata."""
-
         SUCCESS = "success"
         ERROR = "error"
         WARNING = "warning"
 
     @classmethod
     def instance(cls):
-        """Restituisce l'istanza singleton di AuditManager."""
         return cls()
 
     def __new__(cls):
-        """Pattern Singleton per l'Audit Manager."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
     def __init__(self):
-        """Inizializza il manager (chiamato solo una volta dal singleton)."""
         if getattr(self, "_initialized", False):
             return
         self._init_db()
-        # Accesso ai segnali tramite AuditSignals.instance()
         self.signals = AuditSignals.instance()
         self._initialized = True
 
     def _init_db(self):
-        """Inizializza il database con supporto alla severità e migrazione automatica."""
+        """Inizializza il database e migra lo schema se necessario."""
         self.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.DB_PATH) as conn:
+            # Creazione Tabella Base
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -98,75 +152,57 @@ class AuditManager:
                     params TEXT,
                     status TEXT DEFAULT 'success',
                     severity TEXT DEFAULT 'low',
-                    row_hash TEXT
+                    row_hash TEXT,
+                    duration_ms INTEGER DEFAULT 0,
+                    module TEXT DEFAULT '',
+                    error_code TEXT DEFAULT ''
                 )
             """
             )
 
-            # Migrazione dinamica per database esistenti
-            columns_to_add = [
-                ("user_id", "TEXT"),
-                ("entity", "TEXT"),
-                ("params", "TEXT"),
-                ("severity", "TEXT DEFAULT 'low'"),
-                ("row_hash", "TEXT"),
-            ]
+            # --- MIGRAZIONE AUTOMATICA ---
+            # Verifica colonne esistenti
+            cursor = conn.execute("PRAGMA table_info(audit_logs)")
+            existing_cols = {row[1] for row in cursor.fetchall()}
 
-            for col_name, col_type in columns_to_add:
-                try:
-                    conn.execute(
-                        f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_type}"
-                    )
-                except sqlite3.OperationalError:
-                    pass
+            # Colonne da aggiungere se mancano
+            new_columns = {
+                "duration_ms": "INTEGER DEFAULT 0",
+                "module": "TEXT DEFAULT ''",
+                "error_code": "TEXT DEFAULT ''",
+                "user_id": "TEXT",  # Legacy checks
+                "entity": "TEXT",
+                "params": "TEXT",
+                "severity": "TEXT DEFAULT 'low'",
+                "row_hash": "TEXT",
+            }
 
-            # PULIZIA DATI: Corregge eventuali record 'None' o nulli nel database
-            try:
-                conn.execute(
-                    "UPDATE audit_logs SET user_id = 'unknown' WHERE user_id IS NULL OR user_id = 'None' OR user_id = ''"
-                )
-                conn.commit()
-            except Exception:
-                pass
+            for col_name, col_def in new_columns.items():
+                if col_name not in existing_cols:
+                    try:
+                        print(f"[AUDIT] Migrazione: Aggiunta colonna {col_name}...")
+                        conn.execute(
+                            f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}"
+                        )
+                    except sqlite3.OperationalError as e:
+                        print(f"[AUDIT] Errore migrazione {col_name}: {e}")
 
+            # Indici
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)"
             )
             conn.commit()
 
     def _get_current_user(self) -> str:
-        """Recupera l'utente corrente con massima robustezza."""
-        # 1. Environment variables
+        """Recupera l'utente corrente."""
         for env_var in ["USERNAME", "USER"]:
             user = os.environ.get(env_var)
             if user and user.lower() != "none":
                 return user
-
-        # 2. Modulo getpass
         try:
             import getpass
 
-            user = getpass.getuser()
-            if user and user.lower() != "none":
-                return user
-        except Exception:
-            pass
-
-        # 3. Windows API
-        return self._get_win32_user()
-
-    def _get_win32_user(self) -> str:
-        """Helper specifico per Windows."""
-        if os.name != "nt":
-            return "unknown"
-        try:
-            import ctypes
-
-            advapi32 = ctypes.windll.advapi32
-            buffer = ctypes.create_unicode_buffer(256)
-            size = ctypes.c_uint(len(buffer))
-            if advapi32.GetUserNameW(buffer, ctypes.byref(size)):
-                return buffer.value
+            return getpass.getuser()
         except Exception:
             pass
         return "unknown"
@@ -177,7 +213,6 @@ class AuditManager:
         return hashlib.sha256(payload.encode()).hexdigest()
 
     def _get_last_hash(self) -> str:
-        """Recupera l'hash dell'ultima riga inserita."""
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 cursor = conn.cursor()
@@ -197,16 +232,18 @@ class AuditManager:
         params: Any = None,
         status: Any = Status.SUCCESS,
         severity: Any = Severity.LOW,
+        duration_ms: int = 0,
+        module: str = "",
+        error_code: str = None,
         notify: bool = False,
     ):
         """
-        Registra un'azione dettagliata nell'audit log con hashing.
-        Opzionalmente genera una notifica utente.
+        Registra un'azione dettagliata nell'audit log.
         """
         try:
             user_id = self._get_current_user()
 
-            # Normalizzazione Enum/Stringa
+            # Normalizzazione
             status_val = (
                 status.value if isinstance(status, self.Status) else str(status)
             )
@@ -214,22 +251,26 @@ class AuditManager:
                 severity.value if isinstance(severity, self.Severity) else str(severity)
             )
 
-            # Sanificazione Dati
-            entity = entity if entity else "-"
-            category = category if category else "general"
+            # Defaults
+            entity = entity or "-"
+            category = category or "general"
+            module = module or ""
+            error_code = error_code or ""
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now().isoformat()
 
             prev_hash = self._get_last_hash()
-            # Include severity in the hash string
-            data_to_hash = f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status_val}|{severity_val}"
+
+            # Hash payload esteso
+            data_to_hash = f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status_val}|{severity_val}|{duration_ms}|{module}|{error_code}"
             current_hash = self._calculate_hash(data_to_hash, prev_hash)
 
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.execute(
                     """INSERT INTO audit_logs
-                       (timestamp, user_id, action, category, entity, params, status, severity, row_hash)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       (timestamp, user_id, action, category, entity, params, status, severity,
+                        duration_ms, module, error_code, row_hash)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         timestamp,
                         user_id,
@@ -239,12 +280,15 @@ class AuditManager:
                         params_json,
                         status_val,
                         severity_val,
+                        duration_ms,
+                        module,
+                        error_code,
                         current_hash,
                     ),
                 )
                 conn.commit()
 
-            # Emetti segnale per notificare che è stato aggiunto un nuovo log
+            # Segnali
             log_entry = {
                 "timestamp": timestamp,
                 "user_id": user_id,
@@ -254,119 +298,157 @@ class AuditManager:
                 "params": params_json,
                 "status": status_val,
                 "severity": severity_val,
+                "duration_ms": duration_ms,
+                "module": module,
+                "error_code": error_code,
             }
             self.signals.log_added.emit(log_entry)
             self.signals.logs_updated.emit()
 
-            # Notifica utente se richiesto
-            self._generate_notification_if_needed(
-                action, entity, status, severity, params, notify
-            )
+            if notify:
+                self._generate_notification(
+                    action, entity, status_val, severity_val, params
+                )
 
         except Exception as e:
             logger.error(f"Audit Log Error: {e}")
+            traceback.print_exc()
 
-    def _generate_notification_if_needed(
-        self,
-        action: str,
-        entity: str,
-        status: Any,
-        severity: Any,
-        params: Any,
-        notify: bool,
-    ):
-        if not notify:
-            return
-
+    def _generate_notification(self, action, entity, status_val, severity_val, params):
         from src.core.notification_manager import NotificationManager
 
-        s_val = status.value if isinstance(status, self.Status) else str(status)
-        v_val = severity.value if isinstance(severity, self.Severity) else str(severity)
-
-        # Level mapping
         level = "info"
-        if s_val == self.Status.ERROR.value or v_val == self.Severity.HIGH.value:
+        if status_val == "error" or severity_val == "high":
             level = "error"
-        elif s_val == self.Status.WARNING.value or v_val == self.Severity.MEDIUM.value:
+        elif status_val == "warning" or severity_val == "medium":
             level = "warning"
-        elif s_val == self.Status.SUCCESS.value:
+        elif status_val == "success":
             level = "success"
 
-        msg = self._build_notification_message(s_val, params)
+        msg = f"Esito: {status_val.upper()}"
+        if params and isinstance(params, dict) and "error_details" in params:
+            msg = params["error_details"]
+
         NotificationManager.instance().add_notification(
             f"{action}: {entity}", msg, level=level
         )
 
-    def _build_notification_message(self, status_val: str, params: Any) -> str:
-        """Helper per costruire il messaggio della notifica."""
-        msg = f"Operazione completata con esito: {status_val.upper()}."
-        if not (params and isinstance(params, dict)):
-            return msg
-
-        if "nuova" in params:
-            return f"Versione aggiornata a {params['nuova']}"
-        if "righe" in params:
-            return f"Elaborate {params['righe']} righe."
-        return msg
-
     def verify_integrity(self) -> bool:
-        """
-        Verifica l'integrità della catena di hash nel database dell'audit log.
-        Rileva manomissioni manuali ai record storici.
-
-        Returns:
-            bool: True se tutti gli hash sono validi.
-        """
+        """Verifica la catena di hash."""
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM audit_logs ORDER BY id ASC")
-                rows = cursor.fetchall()
+                rows = conn.execute(
+                    "SELECT * FROM audit_logs ORDER BY id ASC"
+                ).fetchall()
 
                 prev_hash = "0" * 64
                 for row in rows:
-                    # Se il record non ha hash (legacy), non lo validiamo ma aggiorniamo il prev_hash
-                    # per non romperla catena futura. Se ha un hash, deve essere corretto.
                     if not row["row_hash"]:
                         continue
 
-                    # I dati nel DB sono stringhe, l'hash deve riflettere questo
-                    data_to_hash = f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}"
-                    expected_hash = self._calculate_hash(data_to_hash, prev_hash)
+                    # NOTA: Per i record vecchi (migrati), i campi nuovi saranno DEFAULT (0 o "").
+                    # Se l'hash originale non li includeva, questo controllo fallirà per i vecchi record.
+                    # Questo è inevitabile in una migrazione sicura a meno di ricalcolare gli hash (che è illegale per l'audit).
+                    # Accettiamo che i log pre-migrazione possano fallire la verifica in questa versione V2.
 
-                    if row["row_hash"] != expected_hash:
-                        return False
+                    # Costruiamo stringa hash V2
+                    # Se il DB ha colonne aggiunte con default, sqlite le restituisce.
+                    data = f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}|{row['duration_ms']}|{row['module']}|{row['error_code']}"
+
+                    # Tentativo 1: Hash V2
+                    calc_hash = self._calculate_hash(data, prev_hash)
+
+                    if row["row_hash"] != calc_hash:
+                        # Tentativo 2: Hash Legacy (senza nuovi campi) per retrocompatibilità
+                        data_legacy = f"{row['timestamp']}|{row['user_id']}|{row['action']}|{row['category']}|{row['entity']}|{row['params']}|{row['status']}|{row['severity']}"
+                        calc_hash_legacy = self._calculate_hash(data_legacy, prev_hash)
+
+                        if row["row_hash"] != calc_hash_legacy:
+                            return False  # Hash non valido né V2 né Legacy
+
                     prev_hash = row["row_hash"]
                 return True
         except Exception:
             return False
 
     def get_logs(self, limit: int = 200) -> List[Dict[str, Any]]:
-        """Recupera i log con i nuovi campi."""
-        logs = []
-        try:
-            with sqlite3.connect(self.DB_PATH) as conn:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?", (limit,)
-                )
-                for row in cursor.fetchall():
-                    logs.append(dict(row))
-        except Exception as e:
-            logger.error(f"Errore recupero audit logs: {e}")
+        """Recupera i log recenti (Compatibilità Legacy)."""
+        logs, _ = self.get_filtered_logs(limit=limit)
         return logs
 
-    def run_retention_policy(self, days: int = 90):
-        """Esegue la pulizia basata sulla data di retention."""
+    def get_filtered_logs(
+        self,
+        start_date=None,
+        end_date=None,
+        levels=None,
+        category=None,
+        search_text=None,
+        limit=50,
+        offset=0,
+    ):
+        logs = []
+        total = 0
         try:
-            cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+            query = "SELECT * FROM audit_logs WHERE 1=1"
+            c_query = "SELECT COUNT(*) FROM audit_logs WHERE 1=1"
+            params = []
+
+            if start_date:
+                query += " AND timestamp >= ?"
+                c_query += " AND timestamp >= ?"
+                params.append(start_date.isoformat())
+            if end_date:
+                e_date = end_date + timedelta(days=1)
+                query += " AND timestamp < ?"
+                c_query += " AND timestamp < ?"
+                params.append(e_date.isoformat())
+            if levels and "ALL" not in levels:
+                pl = ",".join(["?"] * len(levels))
+                query += f" AND severity IN ({pl})"
+                c_query += f" AND severity IN ({pl})"
+                params.extend(levels)
+            if category and category != "Tutte":
+                query += " AND category = ?"
+                c_query += " AND category = ?"
+                params.append(category)
+            if search_text:
+                sp = f"%{search_text}%"
+                clause = " AND (action LIKE ? OR entity LIKE ? OR params LIKE ? OR error_code LIKE ? OR module LIKE ?)"
+                query += clause
+                c_query += clause
+                params.extend([sp] * 5)
+
+            with sqlite3.connect(self.DB_PATH) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                total = cur.execute(c_query, params).fetchone()[0]
+
+                query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+                params.extend([limit, offset])
+
+                cur.execute(query, params)
+                logs = [dict(r) for r in cur.fetchall()]
+
+        except Exception as e:
+            logger.error(f"Filter Error: {e}")
+
+        return logs, total
+
+    def get_categories(self):
+        try:
+            with sqlite3.connect(self.DB_PATH) as conn:
+                res = conn.execute(
+                    "SELECT DISTINCT category FROM audit_logs ORDER BY category"
+                )
+                return [r[0] for r in res if r[0]]
+        except Exception:
+            return []
+
+    def run_retention_policy(self, days=90):
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
-                conn.commit()
-                self.log_action(
-                    "Sistema", "mantenimento", "Audit Database", {"clean_days": days}
-                )
-        except Exception as e:
-            logger.error(f"Retention Policy Error: {e}")
+        except Exception:
+            pass
