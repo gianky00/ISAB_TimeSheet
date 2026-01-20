@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QMenu,
     QMessageBox,
-    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -17,6 +16,7 @@ from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.formatters import format_date_it, format_number_smart
 from src.gui.widgets import ExcelTableWidget
+from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -106,7 +106,7 @@ class GiornaliereYearTab(QWidget):
                 for col_idx in range(len(self.COLUMNS)):
                     val = row_data[col_idx]
                     formatted_val = self._format_value(col_idx, val)
-                    item = QTableWidgetItem(formatted_val)
+                    item = SortableTableWidgetItem(formatted_val)
 
                     # Allineamento Numeri
                     if col_idx == self.COL_ORE:
@@ -149,13 +149,13 @@ class GiornaliereYearTab(QWidget):
             return
         row_idx = self.table.rowCount()
         self.table.insertRow(row_idx)
-        item = QTableWidgetItem("TOTALI")
+        item = SortableTableWidgetItem("TOTALI")
         item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
         item.setBackground(Qt.GlobalColor.lightGray)
         item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.table.setItem(row_idx, 0, item)
         for c in range(1, self.table.columnCount()):
-            it = QTableWidgetItem("")
+            it = SortableTableWidgetItem("")
             it.setBackground(Qt.GlobalColor.lightGray)
             it.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)

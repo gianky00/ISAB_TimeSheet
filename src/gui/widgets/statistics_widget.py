@@ -9,13 +9,13 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QTableWidget,
-    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
 from src.core.stats_manager import StatsManager
+from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -208,12 +208,22 @@ class StatisticsWidget(QWidget):
                 except Exception:
                     last_run_display = last_run
 
-            self.table.setItem(row, 0, QTableWidgetItem(name))
-            self.table.setItem(row, 1, QTableWidgetItem(str(runs)))
+            self.table.setItem(row, 0, SortableTableWidgetItem(name))
+            self.table.setItem(
+                row,
+                1,
+                SortableTableWidgetItem(
+                    runs, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                ),
+            )
 
-            err_item = QTableWidgetItem(str(errors))
+            err_item = SortableTableWidgetItem(
+                errors, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            )
             if errors > 0:
                 err_item.setForeground(Qt.GlobalColor.red)
                 err_item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             self.table.setItem(row, 2, err_item)
-            self.table.setItem(row, 3, QTableWidgetItem(last_run_display))
+            self.table.setItem(row, 3, SortableTableWidgetItem(last_run_display))
+
+        self.table.setSortingEnabled(True)

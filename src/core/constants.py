@@ -84,6 +84,7 @@ class Icons:
     STAR = "assets/icons/star.svg"
     KEY = "assets/icons/key.svg"
     SHIELD = "assets/icons/shield.svg"
+    INFO = "assets/icons/info.svg"
 
     # Domain Specific
     DATABASE = "assets/icons/database.svg"

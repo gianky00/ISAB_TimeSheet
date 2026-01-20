@@ -9,12 +9,12 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QLineEdit,
     QPushButton,
-    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.constants import Icons
+from src.gui.widgets.sortable_table_item import SortableTableWidgetItem
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 from ..design.colors import get_palette
@@ -148,7 +148,7 @@ class DataTable(QWidget):
                 key = col.get("key", col["name"].lower())
                 value = str(row_data.get(key, ""))
 
-                item = QTableWidgetItem(value)
+                item = SortableTableWidgetItem(value)
 
                 # Editabilità
                 if not col.get("editable", True):

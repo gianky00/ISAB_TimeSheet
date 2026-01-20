@@ -150,15 +150,64 @@ class FastTableModel(QAbstractTableModel):
         """Ordinamento personalizzato basato sui dati GREZZI (non stringhe formattate)."""
         self.layoutAboutToBeChanged.emit()
         try:
-            # Funzione chiave per gestire None e tipi misti
+            # Funzione chiave per gestire None e tipi misti ed evitare TypeError (int < str)
+            # Restituisce una tupla (priorità, valore)
+            # Priorità: 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
             def sort_key(row):
                 val = row[column]
+
+                # 0. Gestione None
                 if val is None:
-                    return "" if order == Qt.SortOrder.AscendingOrder else "zzzzzz"
-                # Tenta conversione numerica per stringhe che sembrano numeri
-                if isinstance(val, str) and val.replace(".", "").isdigit():
-                    return float(val)
-                return val
+                    return (0, 0)
+
+                # 1. Numeri diretti
+                if isinstance(val, (int, float)):
+                    return (1, val)
+
+                # 2. Stringhe (parsing)
+                if isinstance(val, str):
+                    val_str = val.strip()
+                    if not val_str:
+                        return (0, 0)
+
+                    # Tentativo Numero
+                    try:
+                        clean_val = val_str.replace("€", "").replace("$", "").strip()
+                        if "," in clean_val and "." in clean_val:
+                            if clean_val.find(".") < clean_val.find(","):
+                                clean_val = clean_val.replace(".", "").replace(",", ".")
+                            else:
+                                clean_val = clean_val.replace(",", "")
+                        elif "," in clean_val:
+                            clean_val = clean_val.replace(",", ".")
+                        return (1, float(clean_val))
+                    except ValueError:
+                        pass
+
+                    # Tentativo Data -> Timestamp (così confrontiamo come numeri)
+                    date_formats = (
+                        "%d/%m/%Y",
+                        "%Y-%m-%d",
+                        "%d-%m-%Y",
+                        "%Y/%m/%d",
+                        "%d/%m/%Y %H:%M:%S",
+                        "%Y-%m-%d %H:%M:%S",
+                    )
+                    for fmt in date_formats:
+                        try:
+                            dt = datetime.strptime(val_str, fmt)
+                            return (1, dt.timestamp())
+                        except ValueError:
+                            continue
+
+                    # Fallback Stringa
+                    return (2, val_str.lower())
+
+                # 3. Altri tipi (es. datetime oggetti)
+                if isinstance(val, datetime):
+                    return (1, val.timestamp())
+
+                return (2, str(val))
 
             reverse = order == Qt.SortOrder.DescendingOrder
             self._data.sort(key=sort_key, reverse=reverse)
