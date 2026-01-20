@@ -58,11 +58,14 @@ def get_hardware_id():
 
 def _get_windows_hardware_id():
     """Helper to get hardware ID on Windows."""
+    # Definisce il flag per nascondere la finestra del processo (Windows)
+    CREATE_NO_WINDOW = 0x08000000
+
     # 1. Try WMIC (Legacy)
     try:
         cmd = ["wmic", "diskdrive", "get", "serialnumber"]
         output = subprocess.check_output(
-            cmd, shell=False, stderr=subprocess.DEVNULL
+            cmd, shell=False, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
         ).decode()
         parts = output.strip().split("\n")
         if len(parts) > 1:
@@ -81,12 +84,9 @@ def _get_windows_hardware_id():
             "Get-CimInstance -Class Win32_DiskDrive | "
             "Select-Object -ExpandProperty SerialNumber",
         ]
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
         output = (
             subprocess.check_output(
-                cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL
+                cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
             )
             .decode()
             .strip()
@@ -106,12 +106,9 @@ def _get_windows_hardware_id():
             "Get-CimInstance -Class Win32_ComputerSystemProduct | "
             "Select-Object -ExpandProperty UUID",
         ]
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
         output = (
             subprocess.check_output(
-                cmd, startupinfo=startupinfo, stderr=subprocess.DEVNULL
+                cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
             )
             .decode()
             .strip()
