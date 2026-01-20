@@ -5,13 +5,20 @@ Richiede Graphviz installato nel sistema (https://graphviz.org/download/).
 """
 
 import os
+import sys
 from pathlib import Path
 
+# Aggiunge Graphviz al PATH se su Windows
+if sys.platform == "win32":
+    graphviz_path = r"C:\Program Files\Graphviz\bin"
+    if graphviz_path not in os.environ["PATH"]:
+        os.environ["PATH"] += os.pathsep + graphviz_path
+
 from diagrams import Cluster, Diagram, Edge
+from diagrams.generic.database import SQL
 from diagrams.generic.device import Tablet
 from diagrams.generic.network import Firewall
 from diagrams.onprem.client import User
-from diagrams.onprem.database import Sqlite
 from diagrams.programming.language import Python
 
 # Percorso di output
@@ -36,7 +43,7 @@ with Diagram(
     with Cluster("SyncroJob Application (PyQt6)"):
         with Cluster("Core Engine"):
             core = Python("Core Logic")
-            db = Sqlite("Local Cache\n(Audit / Data)")
+            db = SQL("Local Cache\n(Audit / Data)")
             config = Python("Config Manager")
 
         with Cluster("GUI Panels"):

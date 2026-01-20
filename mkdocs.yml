@@ -3,7 +3,6 @@ site_description: Documentazione tecnica per SyncroJob, l'automazione ISAB.
 theme:
   name: material
   palette:
-    # Modalità chiara
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: teal
@@ -11,7 +10,6 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Passa a modalità scura
-    # Modalità scura
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: teal
@@ -38,14 +36,13 @@ plugins:
             show_source: true
 
 nav:
-  - Home: README.md
+  - Home: index.md
   - Guide:
       - 'Setup e Installazione': GEMINI.md
       - 'Convenzioni Codice': CLAUDE.md
   - Architettura:
-      - 'Overview': .gemini/ARCHITECT.md
-      - 'Design': .gemini/DESIGN.md
+      - 'Overview': ARCHITECT.md
+      - 'Design': DESIGN.md
   - Testing:
-      - 'Strategia 2026': tests/TESTING_PLAN_2026.md
-      - 'Summary': tests/TESTING_SUMMARY_2026.md
-  - Changelog: CHANGELOG.md # Se esiste, altrimenti verrà ignorato
+      - 'Strategia 2026': TESTING_PLAN_2026.md
+      - 'Summary': TESTING_SUMMARY_2026.md

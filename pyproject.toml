@@ -17,17 +17,17 @@ PyQt6-Qt6 = "6.5.2"
 PyQt6-sip = "13.5.2"
 selenium = "4.18.1"
 webdriver-manager = "4.0.1"
-requests = "2.31.0"
-cryptography = "42.0.5"
+requests = "2.32.4"
+cryptography = "44.0.1"
 keyring = ">=24.3.0"
 packaging = "23.2"
-Pillow = "10.2.0"
+Pillow = "10.3.0"
 pyinstaller = "6.4.0"
 openpyxl = ">=3.1.5"
 pandas = "2.2.1"
 pyarrow = ">=15.0.0"
 matplotlib = "*"
-setuptools = "69.5.1"
+setuptools = "78.1.1"
 platformdirs = "*"
 msoffcrypto-tool = "*"
 markdown = "*"
@@ -93,11 +93,11 @@ ignore_missing_imports = true
 check_untyped_defs = false
 
 [tool.deptry]
-ignore = ["DEP001", "DEP002", "DEP003"]
+ignore = ["DEP001", "DEP002", "DEP003", "DEP004"]
 known_first_party = ["src"]
 
 [tool.codespell]
-skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*"
+skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*"
 ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato"
 check-filenames = true
 

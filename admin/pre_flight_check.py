@@ -99,7 +99,7 @@ def check_versions() -> Tuple[bool, str, float]:
         ).group(1)
         v_code = re.search(
             r'__version__\s*=\s*"(.*?)"',
-            (PROJECT_ROOT / "src/core/__init__.py").read_text(encoding="utf-8"),
+            (PROJECT_ROOT / "src/core/version.py").read_text(encoding="utf-8"),
         ).group(1)
 
         duration = time.time() - start_t
