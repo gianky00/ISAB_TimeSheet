@@ -81,6 +81,17 @@ if src_path not in sys.path:
 def main():
     import warnings
 
+    # Setup Icecream for debugging (DX)
+    try:
+        from icecream import ic
+
+        ic.configureOutput(prefix="DEBUG| ", includeContext=True)
+        import builtins
+
+        builtins.ic = ic  # type: ignore
+    except ImportError:
+        pass
+
     # Suppress openpyxl "Unknown extension" warning
     warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 

@@ -1,5 +1,5 @@
 """
-Sistema di notifiche toast non-blocking.
+Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati.
 """
 
 from PyQt6.QtCore import (
@@ -27,7 +27,7 @@ from ..design.spacing import BorderRadius
 
 
 class Toast(QWidget):
-    """Notifica toast animata non bloccante."""
+    """Notifica toast animata non bloccante con supporto pausa al passaggio del mouse."""
 
     class Type:
         """Costanti per il tipo di notifica."""
@@ -52,16 +52,6 @@ class Toast(QWidget):
         pulse: bool = False,
         parent=None,
     ):
-        """
-        Inizializza il toast.
-
-        Args:
-            message: Il messaggio da visualizzare.
-            toast_type: Tipo di toast (info, success, warning, error).
-            duration: Durata della visualizzazione in millisecondi.
-            pulse: Se True, abilita animazione pulsante.
-            parent: Widget genitore.
-        """
         super().__init__(parent)
         self._duration = duration
         self._type = toast_type
@@ -75,16 +65,22 @@ class Toast(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
+        # Abilita il tracking del mouse per l'hover
+        self.setMouseTracking(True)
+
         self._setup_ui(message)
         self._setup_animation()
 
+        # Timer di chiusura persistente per permettere pausa/riavvio
+        self._hide_timer = QTimer(self)
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(self._fade_out.start)
+
     def _setup_ui(self, message: str):
         """Configura l'interfaccia utente del toast con icone e colori."""
-        # Main layout for the Window
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)  # Spazio per l'ombra o scale
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
-        # Inner Container for content
         self.container = QWidget()
         container_layout = QHBoxLayout(self.container)
         container_layout.setContentsMargins(16, 12, 16, 12)
@@ -94,7 +90,6 @@ class Toast(QWidget):
         )
         accent = getattr(self._palette, color_key, self._palette.info)
 
-        # Style moved to container
         self.container.setStyleSheet(
             f"""
             QWidget {{
@@ -106,14 +101,12 @@ class Toast(QWidget):
         """
         )
 
-        # Icon
         icon_label = QLabel()
         icon = get_colored_icon(get_asset_path(icon_path), "#000000")
         icon_label.setPixmap(icon.pixmap(QSize(20, 20)))
         icon_label.setStyleSheet("border: none; background: transparent;")
         container_layout.addWidget(icon_label)
 
-        # Message
         msg_label = QLabel(message)
         msg_label.setStyleSheet(
             f"""
@@ -129,64 +122,52 @@ class Toast(QWidget):
         self.adjustSize()
 
     def _setup_animation(self):
-        """Configura le animazioni di fade-in e fade-out (e pulse se attivo)."""
-        # 1. Opacity Effect (Outer Window)
+        """Configura le animazioni di fade-in e fade-out."""
         self._opacity = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self._opacity)
 
-        # Fade in animation
         self._fade_in = QPropertyAnimation(self._opacity, b"opacity")
         self._fade_in.setDuration(200)
         self._fade_in.setStartValue(0.0)
         self._fade_in.setEndValue(1.0)
 
-        # Fade out animation
         self._fade_out = QPropertyAnimation(self._opacity, b"opacity")
         self._fade_out.setDuration(300)
         self._fade_out.setStartValue(1.0)
         self._fade_out.setEndValue(0.0)
         self._fade_out.finished.connect(self.deleteLater)
 
-        # 2. Pulse Animation (Inner Container) if requested
         if self._pulse:
-            # Store original size for scaling
             self._original_container_size = None
-
-            # Use QVariantAnimation to animate scale factor
             self._pulse_anim = QVariantAnimation(self)
             self._pulse_anim.setDuration(800)
             self._pulse_anim.setStartValue(1.0)
-            self._pulse_anim.setKeyValueAt(0.5, 1.05)  # Scale up 5%
+            self._pulse_anim.setKeyValueAt(0.5, 1.05)
             self._pulse_anim.setEndValue(1.0)
             self._pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
-            self._pulse_anim.setLoopCount(-1)  # Infinite loop
-
-            # Connect to value changed to apply scale
+            self._pulse_anim.setLoopCount(-1)
             self._pulse_anim.valueChanged.connect(self._apply_scale)
 
     def _apply_scale(self, scale_factor: float):
-        """Applica il fattore di scala al container per l'effetto pulsante."""
         if self._original_container_size is None:
             return
-
-        # Calculate new size based on scale factor
         new_width = int(self._original_container_size.width() * scale_factor)
         new_height = int(self._original_container_size.height() * scale_factor)
-
-        # Resize container (this creates the pulsing effect)
         self.container.setFixedSize(new_width, new_height)
 
+    def enterEvent(self, event):
+        """Ferma il timer di chiusura quando il mouse entra nel toast."""
+        if self._hide_timer.isActive():
+            self._hide_timer.stop()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Riavvia il timer di chiusura quando il mouse esce dal toast."""
+        self._hide_timer.start(self._duration)
+        super().leaveEvent(event)
+
     def show_at(self, x: int, y: int):
-        """
-        Visualizza il toast in una posizione specifica e avvia il timer di auto-chiusura.
-
-        Args:
-            x: Coordinata X globale.
-            y: Coordinata Y globale.
-        """
         self.move(x, y)
-
-        # Store original container size for pulse animation
         if self._pulse and hasattr(self, "_pulse_anim"):
             self.container.adjustSize()
             self._original_container_size = self.container.size()
@@ -197,22 +178,18 @@ class Toast(QWidget):
         if self._pulse and hasattr(self, "_pulse_anim"):
             self._pulse_anim.start()
 
-        # Auto-hide
-        QTimer.singleShot(self._duration, self._fade_out.start)
+        # Avvia timer di chiusura
+        self._hide_timer.start(self._duration)
 
 
 class ToastManager:
-    """
-    Singleton per la gestione del posizionamento e dello stacking dei toast.
-    Assicura che i toast multipli non si sovrappongano.
-    """
+    """Singleton per la gestione dei toast."""
 
     _instance = None
     _active_toasts: list[Toast] = []
 
     @classmethod
     def instance(cls):
-        """Restituisce l'istanza singleton di ToastManager."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -225,38 +202,20 @@ class ToastManager:
         position: str = "top",
         pulse: bool = False,
     ):
-        """
-        Crea e visualizza un nuovo toast.
-
-        Args:
-            message: Messaggio da mostrare.
-            toast_type: Tipo di notifica.
-            duration: Durata in ms.
-            position: "top" (default) o "bottom" (sopra il footer).
-            pulse: Se True, attiva animazione pulsante.
-        """
-
         parent = QApplication.activeWindow()
         toast = Toast(message, toast_type, duration, pulse, parent)
-
-        # Clean up closed toasts from list
         self._active_toasts = [t for t in self._active_toasts if t.isVisible()]
 
         if parent:
             geo = parent.geometry()
             x = geo.x() + (geo.width() - toast.width()) // 2
-
             if position == "bottom":
-                # Posiziona in BASSO (sopra status bar/footer)
-                # Footer è 65px + margine 10px = 75px dal fondo
                 bottom_margin = 75
                 y = geo.y() + geo.height() - bottom_margin - toast.height()
             else:
-                # Posiziona in ALTO CENTRALE (Default)
                 offset_y = sum([t.height() + 10 for t in self._active_toasts])
                 y = geo.y() + 80 + offset_y
         else:
-            # Fallback (senza parent)
             primary_screen = QApplication.primaryScreen()
             if primary_screen:
                 screen = primary_screen.geometry()
@@ -266,32 +225,29 @@ class ToastManager:
                 x, y = 0, 0
 
         self._active_toasts.append(toast)
-        # Remove from list when destroyed
         toast.destroyed.connect(
             lambda: self._active_toasts.remove(toast)
             if toast in self._active_toasts
             else None
         )
-
         toast.show_at(x, y)
 
 
-# Funzioni helper globali
+# Funzioni helper globali con NUOVI TEMPI
 def toast_info(message: str, duration: int = 3000):
-    """Visualizza un toast informativo."""
     ToastManager.instance().show(message, Toast.Type.INFO, duration)
 
 
-def toast_success(message: str, duration: int = 3000):
-    """Visualizza un toast di successo."""
+def toast_success(message: str, duration: int = 2000):
+    """Visualizza un toast di successo (Veloce: 2s)."""
     ToastManager.instance().show(message, Toast.Type.SUCCESS, duration)
 
 
-def toast_warning(message: str, duration: int = 3000):
-    """Visualizza un toast di avviso."""
+def toast_warning(message: str, duration: int = 10000):
+    """Visualizza un toast di avviso (Lungo: 10s)."""
     ToastManager.instance().show(message, Toast.Type.WARNING, duration)
 
 
-def toast_error(message: str, duration: int = 5000):
-    """Visualizza un toast di errore."""
+def toast_error(message: str, duration: int = 10000):
+    """Visualizza un toast di errore (Lungo: 10s)."""
     ToastManager.instance().show(message, Toast.Type.ERROR, duration)

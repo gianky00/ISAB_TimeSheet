@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-🚀 SyncroJob Master Developer Tool & Pre-Flight Check
-===================================================
-Gestione avanzata della qualità con output sintetico per AI.
-Tool: Ruff, Bandit, Interrogate, Pytest, Mypy, Xenon, Vulture, Codespell.
+🚀 SyncroJob Master Developer Tool & Pre-Flight Check (Rich Edition)
+====================================================================
+Suite di controllo qualità, sicurezza e integrità potenziata con Rich.
+Tool: Ruff, Bandit, Interrogate, Pytest, Mypy, Xenon, Vulture, Codespell, Deptry, Pip-Audit.
 """
 
 import argparse
@@ -13,15 +13,19 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import List, Tuple
 
-# ANSI Colors
-GREEN = "\033[92m"
-RED = "\033[91m"
-YELLOW = "\033[93m"
-CYAN = "\033[96m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
+# Rich Imports
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.progress import Progress, SpinnerColumn, TextColumn
+    from rich.table import Table
+except ImportError:
+    print("❌ Rich non installato. Esegui 'poetry install' prima.")
+    sys.exit(1)
 
+# Configurazione Base
 PROJECT_ROOT = Path(__file__).parent.parent
 LOG_DIR = PROJECT_ROOT / "temp" / "logs"
 VENV_BIN = (
@@ -30,31 +34,26 @@ VENV_BIN = (
     else PROJECT_ROOT / ".venv" / "bin"
 )
 
-
-def print_step(msg):
-    print(f"\n{BOLD}{CYAN}🔹 {msg}{RESET}")
-
-
-def print_ok(msg):
-    print(f"{GREEN}✅ {msg}{RESET}")
-
-
-def print_fail(msg):
-    print(f"{RED}❌ {msg}{RESET}")
+console = Console()
 
 
 def get_bin(name):
+    """Recupera il percorso dell'eseguibile nel venv."""
     ext = ".exe" if sys.platform == "win32" else ""
     venv_path = VENV_BIN / f"{name}{ext}"
     return str(venv_path) if venv_path.exists() else name
 
 
-def run_tool(name, cmd, cwd=PROJECT_ROOT):
-    """Esegue un tool, cattura l'output e mostra solo un sommario in caso di errore."""
+def run_tool(
+    name: str, cmd: List[str], label: str, cwd=PROJECT_ROOT
+) -> Tuple[bool, str, float]:
+    """Esegue un tool e restituisce (successo, output, durata)."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = LOG_DIR / f"{name}.log"
+    start_t = time.time()
 
     try:
+        # Esecuzione subprocess
         result = subprocess.run(
             cmd,
             cwd=cwd,
@@ -63,28 +62,36 @@ def run_tool(name, cmd, cwd=PROJECT_ROOT):
             encoding="utf-8",
             errors="ignore",
         )
+        duration = time.time() - start_t
 
+        # Scrittura Log
         with open(log_file, "w", encoding="utf-8") as f:
+            f.write(f"CMD: {' '.join(cmd)}\n")
+            f.write(f"EXIT: {result.returncode}\n")
+            f.write("=" * 40 + "\n")
             f.write(result.stdout)
             f.write("\n" + "=" * 40 + "\n")
             f.write(result.stderr)
 
         if result.returncode == 0:
-            return True, ""
+            return True, "", duration
 
+        # Preparazione Sommario Errore
         output = result.stdout if result.stdout.strip() else result.stderr
         lines = output.splitlines()
-        summary = "\n".join(lines[:12])
-        if len(lines) > 12:
-            summary += f"\n... (altre {len(lines) - 12} righe nel log: {log_file.name})"
+        summary = "\n".join(lines[:15])
+        if len(lines) > 15:
+            summary += f"\n... (vedi {log_file.name} per altri {len(lines) - 15} righe)"
 
-        return False, summary
+        return False, summary, duration
+
     except Exception as e:
-        return False, f"Eccezione durante l'esecuzione: {e}"
+        return False, f"Eccezione critica: {e}", time.time() - start_t
 
 
-def check_versions():
-    print_step("VERSIONI: Verifica allineamento pyproject.toml vs code...")
+def check_versions() -> Tuple[bool, str, float]:
+    """Verifica sincronizzazione versioni."""
+    start_t = time.time()
     try:
         v_toml = re.search(
             r'version\s*=\s*"(.*?)"',
@@ -94,65 +101,48 @@ def check_versions():
             r'__version__\s*=\s*"(.*?)"',
             (PROJECT_ROOT / "src/core/version.py").read_text(encoding="utf-8"),
         ).group(1)
+
+        duration = time.time() - start_t
         if v_toml == v_code:
-            print_ok(f"Sincronizzate: {v_toml}")
-            return True
-        print_fail(f"Discrepanza! TOML: {v_toml}, CODE: {v_code}")
-        return False
+            return True, f"v{v_toml}", duration
+        return False, f"Discrepanza! TOML: {v_toml} != CODE: {v_code}", duration
     except Exception as e:
-        print_fail(f"Errore lettura versioni: {e}")
-        return False
+        return False, str(e), time.time() - start_t
+
+
+def sync_requirements() -> Tuple[bool, str, float]:
+    """Sincronizza requirements.txt."""
+    script = PROJECT_ROOT / "admin" / "sync_requirements.py"
+    return run_tool("sync_req", [sys.executable, str(script)], "Requirements")
+
+
+# --- WRAPPER TOOL ---
 
 
 def run_ruff(fix=False):
-    print_step("RUFF: Controllo Qualità e Formattazione...")
     cmd = [get_bin("ruff"), "check", ".", "--fix" if fix else ""]
     cmd = [c for c in cmd if c]
-    success, output = run_tool("ruff_check", cmd)
+    success, out, dur = run_tool("ruff_check", cmd, "Ruff Lint")
     if not success:
-        print_fail("Problemi Ruff (Linter):")
-        print(output)
-        return False
+        return False, out, dur
 
     fmt_cmd = [get_bin("ruff"), "format", ".", "--check" if not fix else ""]
     fmt_cmd = [c for c in fmt_cmd if c]
-    success, output = run_tool("ruff_format", fmt_cmd)
-    if not success:
-        print_fail("Problemi Ruff (Formatter):")
-        print(output)
-        return False
-
-    print_ok("Codice pulito e formattato.")
-    return True
+    s2, o2, d2 = run_tool("ruff_format", fmt_cmd, "Ruff Format")
+    return s2, o2, dur + d2
 
 
 def run_mypy():
-    print_step("MYPY: Controllo Statico dei Tipi...")
     cmd = [get_bin("mypy"), "src", "--ignore-missing-imports", "--no-error-summary"]
-    success, output = run_tool("mypy", cmd)
-    if success:
-        print_ok("Nessun errore di tipizzazione trovato.")
-        return True
-    print_fail("Rilevati errori di tipo:")
-    print(output)
-    return False
+    return run_tool("mypy", cmd, "Mypy Types")
 
 
 def run_bandit():
-    print_step("BANDIT: Analisi Sicurezza...")
     cmd = [get_bin("bandit"), "-r", "src/", "-ll", "-q"]
-    success, output = run_tool("bandit", cmd)
-    if success:
-        print_ok("Sicurezza verificata.")
-        return True
-    print_fail("Potenziali falle di sicurezza:")
-    print(output)
-    return False
+    return run_tool("bandit", cmd, "Bandit Security")
 
 
 def run_xenon():
-    print_step("XENON: Analisi Complessità...")
-    # Ripristiniamo il rigore: Grado B come limite massimo per tutto
     cmd = [
         get_bin("xenon"),
         "--max-absolute",
@@ -163,210 +153,158 @@ def run_xenon():
         "A",
         "src",
     ]
-    success, output = run_tool("xenon", cmd)
-    if success:
-        print_ok("Codice manutenibile.")
-        return True
-    print_fail("Codice troppo complesso:")
-    print(output)
-    return False
+    return run_tool("xenon", cmd, "Xenon Complexity")
 
 
 def run_vulture():
-    print_step("VULTURE: Ricerca Codice Morto...")
     cmd = [get_bin("vulture"), "src", "--min-confidence", "80"]
-    success, output = run_tool("vulture", cmd)
-    if success:
-        print_ok("Nessun codice morto rilevato.")
-        return True
-    print_fail("Trovato potenziale codice inutilizzato:")
-    print(output)
-    return False
+    return run_tool("vulture", cmd, "Vulture Dead Code")
 
 
 def run_codespell():
-    print_step("CODESPELL: Controllo battitura...")
     cmd = [get_bin("codespell")]
-    success, output = run_tool("codespell", cmd)
-    if success:
-        print_ok("Battitura corretta.")
-        return True
-    print_fail("Errori di battitura rilevati:")
-    print(output)
-    return False
+    return run_tool("codespell", cmd, "Codespell Typos")
 
 
 def run_interrogate():
-    print_step("INTERROGATE: Copertura Docstring...")
     cmd = [get_bin("interrogate"), ".", "-q"]
-    success, output = run_tool("interrogate", cmd)
-    if success:
-        print_ok("Documentazione presente.")
-        return True
-    print_fail("Mancano docstring:")
-    print(output)
-    return False
+    return run_tool("interrogate", cmd, "Interrogate Docs")
+
+
+def run_deptry():
+    """Verifica dipendenze inutilizzate o mancanti."""
+    cmd = [get_bin("deptry"), "."]
+    return run_tool("deptry", cmd, "Deptry Dependencies")
+
+
+def run_pip_audit():
+    """Verifica vulnerabilità nelle dipendenze installate."""
+    # --desc stampa la descrizione della vuln, --progress-spinner=off pulisce l'output
+    cmd = [get_bin("pip-audit"), "--desc", "--progress-spinner", "off"]
+    return run_tool("pip_audit", cmd, "Pip-Audit Vulnerabilities")
 
 
 def run_tests():
-    print_step("PYTEST: Esecuzione Test Suite...")
     runner = PROJECT_ROOT / "tests" / "run_robust_tests.py"
-    # Per i test lasciamo l'output visibile perché è già filtrato dal nostro runner robusto
-    ret = subprocess.call(
-        [sys.executable, str(runner), "--reset", "--exitfirst"], cwd=PROJECT_ROOT
-    )
-    return ret == 0
+    cmd = [sys.executable, str(runner), "--reset", "--exitfirst"]
+    return run_tool("pytest", cmd, "Pytest Suite")
 
 
-def sync_requirements():
-    print_step("REQUIREMENTS: Sincronizzazione...")
-    script = PROJECT_ROOT / "admin" / "sync_requirements.py"
-    success, _ = run_tool("sync_req", [sys.executable, str(script)])
-    return success
-
-
-def run_super_audit():
-    """Automatizza il ciclo di vita completo di un audit di qualita."""
-
-    print_step("SUPER AUDIT: Inizio processo automatizzato...")
-
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-
-    branch_name = f"audit/quality_{timestamp}"
-
-    # 1. Crea branch
-
-    print(f"🔹 Creazione branch: {branch_name}")
-
-    subprocess.call(["git", "checkout", "-b", branch_name], cwd=PROJECT_ROOT)
-
-    # 2. Esegue controlli
-
-    print("🔹 Esecuzione controlli qualità...")
-
-    # Qui chiamiamo la logica main internamente
-
-    # (Per semplicita' usiamo subprocess per isolare l'esecuzione)
-
-    ret = subprocess.call([sys.executable, __file__, "--fast"], cwd=PROJECT_ROOT)
-
-    if ret != 0:
-        print_fail("Audit fallito. Risolvi i problemi sul branch corrente.")
-
-        return False
-
-    # 3. Aggiornamento Versione (Auto-patch)
-
-    print("🔹 Incremento versione (patch)...")
-
-    subprocess.call(
-        [sys.executable, "admin/bump_version.py", "patch"], cwd=PROJECT_ROOT
-    )
-
-    # 4. Git operations
-
-    print("🔹 Finalizzazione release e merge su main...")
-
-    subprocess.call(["git", "add", "."], cwd=PROJECT_ROOT)
-
-    subprocess.call(
-        [
-            "git",
-            "commit",
-            "-m",
-            f"CHORE: automated quality audit and version bump {timestamp}",
-        ],
-        cwd=PROJECT_ROOT,
-    )
-
-    subprocess.call(["git", "checkout", "main"], cwd=PROJECT_ROOT)
-
-    subprocess.call(["git", "merge", branch_name], cwd=PROJECT_ROOT)
-
-    subprocess.call(["git", "branch", "-D", branch_name], cwd=PROJECT_ROOT)
-
-    print_ok("SUPER AUDIT COMPLETATO CON SUCCESSO!")
-
-    return True
+# --- MAIN EXECUTION ---
 
 
 def main():
-    # Fix encoding for Windows console to support emoji
+    # Fix encoding windows
     if sys.platform == "win32":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
     parser = argparse.ArgumentParser(description="SyncroJob Developer Toolbox")
-
+    parser.add_argument("--fix", action="store_true", help="Applica fix automatici")
+    parser.add_argument("--fast", action="store_true", help="Salta i test lenti")
+    parser.add_argument("--test-only", action="store_true", help="Solo test")
     parser.add_argument(
-        "--fix", action="store_true", help="Applica correzioni automatiche"
+        "--super-audit", action="store_true", help="Audit completo + bump"
     )
-
-    parser.add_argument("--fast", action="store_true", help="Salta i test")
-
-    parser.add_argument("--test-only", action="store_true", help="Esegue solo i test")
-
-    parser.add_argument(
-        "--super-audit",
-        action="store_true",
-        help="Esegue il ciclo completo di audit e upgrade",
-    )
-
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Forza il successo anche in caso di errori (per deploy urgenti)",
-    )
-
+    parser.add_argument("--force", action="store_true", help="Ignora errori")
     args = parser.parse_args()
 
-    if args.super_audit:
-        if run_super_audit():
-            sys.exit(0)
+    # Header
+    console.print(
+        Panel.fit(
+            "[bold yellow]🚀 SYNCROJOB ENTERPRISE PRE-FLIGHT CHECK[/bold yellow]\n"
+            "[italic]Quality, Security, Integrity & Documentation[/italic]",
+            border_style="blue",
+        )
+    )
 
-        sys.exit(1)
-
-    start_time = time.time()
-
-    print(f"\n{BOLD}{YELLOW}🚀 SYNCROJOB MASTER CHECK (Versione AI-Safe){RESET}")
-    print(f"{'=' * 60}")
+    # Definizione Controlli
+    checks = []
 
     if args.test_only:
-        success = run_tests()
+        checks.append(("🧪 Testing", run_tests))
     else:
-        checks = [
-            (check_versions, []),
-            (sync_requirements, []),
-            (run_ruff, [args.fix]),
-            (run_codespell, []),
-            (run_mypy, []),
-            (run_bandit, []),
-            (run_xenon, []),
-            (run_vulture, []),
-            (run_interrogate, []),
-        ]
-        if not args.fast:
-            checks.append((run_tests, []))
+        # Fase 1: Integrità
+        checks.append(("📦 Versions", lambda: check_versions()))
+        checks.append(("🔄 Requirements", lambda: sync_requirements()))
+        checks.append(("📦 Dependencies (Deptry)", lambda: run_deptry()))
 
-        success = True
-        for func, f_args in checks:
-            if not func(*f_args):
-                success = False
-                print(f"\n{RED}🛑 Bloccato al passaggio: {func.__name__}{RESET}")
+        # Fase 2: Qualità Codice
+        checks.append(("✨ Lint & Format (Ruff)", lambda: run_ruff(args.fix)))
+        checks.append(("🔤 Typos (Codespell)", lambda: run_codespell()))
+        checks.append(("📐 Types (Mypy)", lambda: run_mypy()))
+        checks.append(("🧠 Complexity (Xenon)", lambda: run_xenon()))
+        checks.append(("💀 Dead Code (Vulture)", lambda: run_vulture()))
+        checks.append(("📝 Documentation (Interrogate)", lambda: run_interrogate()))
+
+        # Fase 3: Sicurezza
+        checks.append(("🛡️ SAST Security (Bandit)", lambda: run_bandit()))
+        checks.append(("🦠 Dependency Vulns (Pip-Audit)", lambda: run_pip_audit()))
+
+        # Fase 4: Test (se non fast)
+        if not args.fast:
+            checks.append(("🧪 Unit Tests", lambda: run_tests()))
+
+    # Esecuzione
+    results = []
+    overall_success = True
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        for label, func in checks:
+            task_id = progress.add_task(f"Esecuzione {label}...", total=None)
+            success, msg, duration = func()
+            progress.remove_task(task_id)
+
+            status_icon = "✅" if success else "❌"
+            status_style = "green" if success else "bold red"
+
+            results.append(
+                {"label": label, "success": success, "msg": msg, "duration": duration}
+            )
+
+            if not success:
+                overall_success = False
+                console.print(
+                    f"[{status_style}]{status_icon} {label} fallito in {duration:.2f}s[/{status_style}]"
+                )
+                console.print(Panel(msg, title=f"Errore: {label}", border_style="red"))
                 if not args.force:
                     break
-                else:
-                    print(f"{YELLOW}⚠️ FORCE ACTIVE: Ignoro errore e continuo...{RESET}")
+            else:
+                console.print(f"[green]✅ {label} completato ({duration:.2f}s)[/green]")
 
-    duration = time.time() - start_time
-    print(f"\n{'=' * 50}")
-    if success or args.force:
-        print(f"{GREEN}{BOLD}✨ TUTTI I CONTROLLI SUPERATI! ({duration:.1f}s){RESET}")
-        if not success and args.force:
-            print(f"{YELLOW}⚠️ ATTENZIONE: Check passati con --force.{RESET}")
+    # Riepilogo Finale
+    console.print("\n")
+    table = Table(title="Riepilogo Pre-Flight Check", border_style="blue")
+    table.add_column("Controllo", style="cyan")
+    table.add_column("Stato", justify="center")
+    table.add_column("Tempo", justify="right")
+
+    for r in results:
+        status = "[green]PASS[/green]" if r["success"] else "[bold red]FAIL[/bold red]"
+        table.add_row(r["label"], status, f"{r['duration']:.2f}s")
+
+    console.print(table)
+
+    if overall_success or args.force:
+        console.print(
+            Panel(
+                "[bold green]✨ SISTEMA PRONTO AL DECOLLO![/bold green]",
+                border_style="green",
+            )
+        )
         sys.exit(0)
     else:
-        print(f"{RED}{BOLD}❌ QUALITÀ NON SUFFICIENTE.{RESET}")
+        console.print(
+            Panel(
+                "[bold red]⛔ CONTROLLI FALLITI - REVISIONE NECESSARIA[/bold red]",
+                border_style="red",
+            )
+        )
         sys.exit(1)
 
 

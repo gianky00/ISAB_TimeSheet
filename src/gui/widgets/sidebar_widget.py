@@ -316,8 +316,10 @@ class SidebarWidget(QFrame):
         for idx, btn in buttons_map.items():
             btn.setChecked(idx == index)
 
-        # Gestione Gruppo Database (Indici 3, 4, 5, 6, 10, 11)
-        db_indices = [3, 4, 5, 6, 10, 11]
+        # Gestione Gruppo Database (Indici 3, 4, 5, 6, 11, 10)
+        # IMPORTANTE: ordine corrisponde all'ordine di aggiunta dei children_btns
+        # Timbrature(3), Strumentale(4), Dataease(5), PDL(6), Dipendenti(11), Storico OdA(10)
+        db_indices = [3, 4, 5, 6, 11, 10]
         self.group_db.set_active_index(index, db_indices)
 
         # Gestione Gruppo Notifiche (Indice 9)

@@ -95,7 +95,10 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setColumnCount(len(self.COLUMNS))
         self.table.setHorizontalHeaderLabels(self.COLUMNS)
         self.table.setWordWrap(True)
+        self.table.setTextElideMode(Qt.TextElideMode.ElideNone)  # No troncamento
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.table.cellDoubleClicked.connect(lambda r, c: self.table.selectRow(r))
 
         self.table.auto_copy_headers = True
@@ -114,6 +117,15 @@ class AttivitaProgrammateTab(QWidget):
         self.table.setColumnWidth(12, 100)
         self.table.setColumnWidth(13, 150)
         self.table.setColumnWidth(15, 250)
+
+        # Estendi colonne con testo lungo per riempire spazio orizzontale
+        header.setSectionResizeMode(
+            4, QHeaderView.ResizeMode.Stretch
+        )  # DESCRIZIONE ATTIVITA'
+        header.setSectionResizeMode(
+            11, QHeaderView.ResizeMode.Stretch
+        )  # STATO ATTIVITA'
+        header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)  # AVVISO
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)

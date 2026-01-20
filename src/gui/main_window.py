@@ -98,6 +98,11 @@ class MainWindow(QMainWindow):
         self.tray_controller = TrayController(self)
         self.search_controller = SearchController(self)
         self.navigation_controller = NavigationController(self)
+
+        # --- GESTIONE TOAST MULTI-THREAD ---
+        NotificationManager.instance().request_toast.connect(
+            lambda msg, t, d: ToastManager.instance().show(msg, t, d)
+        )
         self.bot_controller = BotController(self, self.telegram)
         self.service_controller = ServiceController(self, self.telegram, self.sentinel)
 

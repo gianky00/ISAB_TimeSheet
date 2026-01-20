@@ -1,0 +1,48 @@
+site_name: SyncroJob Enterprise Docs
+site_description: Documentazione tecnica per SyncroJob, l'automazione ISAB.
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Passa a modalità scura
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: lime
+      toggle:
+        icon: material/weather-night
+        name: Passa a modalità chiara
+  features:
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_root_heading: true
+            show_source: true
+
+nav:
+  - Home: index.md
+  - Guide:
+      - 'Setup e Installazione': GEMINI.md
+      - 'Convenzioni Codice': CLAUDE.md
+  - Architettura:
+      - 'Overview': ARCHITECT.md
+      - 'Design': DESIGN.md
+  - Testing:
+      - 'Strategia 2026': TESTING_PLAN_2026.md
+      - 'Summary': TESTING_SUMMARY_2026.md

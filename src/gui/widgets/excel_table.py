@@ -31,10 +31,8 @@ class ExcelTableWidget(QTableWidget):
             False  # Flag per copiare automaticamente le intestazioni
         )
 
-        # Abilita la selezione di celle (non righe intere)
-        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
-        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        # Assicura che il click selezioni la riga anche se clicco su una cella non editabile
+        # Non impostiamo SelectionBehavior/Mode qui per permettere alle istanze di configurarlo
+        # Assicura che il click selezioni anche se clicco su una cella non editabile
         self.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked
             | QAbstractItemView.EditTrigger.EditKeyPressed

@@ -61,9 +61,9 @@ class ContabilitaYearTab(QWidget):
         self.table.setModel(self.model)
         self.table.setAlternatingRowColors(True)
 
-        # --- Configurazione Selezione (Identica a DataEase) ---
+        # --- Configurazione Selezione (Single row, come richiesto) ---
         self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QTableView.SelectionMode.ExtendedSelection)
+        self.table.setSelectionMode(QTableView.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
 
         self.table.setSortingEnabled(True)
@@ -77,8 +77,11 @@ class ContabilitaYearTab(QWidget):
         self.table.setColumnWidth(0, 90)
         self.table.setColumnWidth(2, 80)
         self.table.setColumnWidth(4, 300)
+        self.table.setColumnWidth(11, 250)
 
-        header.setStretchLastSection(True)
+        # Estendi colonne con testo lungo per riempire spazio orizzontale
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # ATTIVITA'
+        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # ANNOTAZIONI
 
         layout.addWidget(self.table)
 

@@ -17,6 +17,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from src.core.schemas import validate_contabilita, validate_giornaliere
+
 # Tentativo di importare msoffcrypto
 try:
     import msoffcrypto  # type: ignore
@@ -245,10 +247,16 @@ class ExcelImporter:
                 # Euristiche extra
                 if "PREV" in norm_col and "DATA" in norm_col:
                     rename_map[col] = "data_prev"
-                elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
-                    rename_map[col] = "n_prev"
-
         df.rename(columns=rename_map, inplace=True)
+
+        # Validazione Pandera (Contabilità)
+        try:
+            df = validate_contabilita(df)
+        except Exception as e:
+            logging.warning(
+                f"Validazione Pandera Contabilità fallita (uso fallback): {e})"
+            )
+
         return df
 
     @classmethod
@@ -355,7 +363,7 @@ class ExcelImporter:
                     continue
 
                 # 1. Tenta conversione numerica per colonne che dovrebbero essere numeri
-                if col in ["totale_prev", "ore_sp", "resa"]:
+                if col in ["totale_prev", "ore_sp"]:
                     df[col] = pd.to_numeric(df[col], errors="coerce")
                     # Arrotonda a 2 decimali per eliminare rumore (es. .00000000001)
                     df[col] = df[col].round(2)
@@ -366,7 +374,25 @@ class ExcelImporter:
                         "%Y-%m-%d"
                     )
 
-                # 3. Pulizia stringhe per il resto
+                # 3. Gestione colonna RESA (mista: numeri o stringhe)
+                elif col == "resa":
+                    # Converti numeri quando possibile, mantieni stringhe altrimenti
+                    df[col] = df[col].apply(
+                        lambda x: (
+                            str(round(float(x), 2))
+                            if pd.notna(x)
+                            and str(x)
+                            .replace(".", "")
+                            .replace(",", "")
+                            .replace("-", "")
+                            .isdigit()
+                            else str(x).strip()
+                            if pd.notna(x)
+                            else ""
+                        )
+                    )
+
+                # 4. Pulizia stringhe per il resto
                 else:
                     df[col] = (
                         df[col]
@@ -468,16 +494,31 @@ class ExcelImporter:
         """Applica il mapping delle colonne specifico per le giornaliere."""
         df.columns = [str(c).strip() for c in df.columns]
         rename_map = {}
+
+        # Costruisci il mapping con euristica per match fuzzy
         for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
-            for c in df.columns:
-                if c.upper() == excel_col.upper():
-                    rename_map[c] = db_col
-                    break
+            if excel_col in df.columns:
+                rename_map[excel_col] = db_col
+            else:
+                # Match case-insensitive
+                for col in df.columns:
+                    if col.upper() == excel_col.upper():
+                        rename_map[col] = db_col
+                        break
 
         if not rename_map:
             return None
 
         df.rename(columns=rename_map, inplace=True)
+
+        # Validazione Pandera (Giornaliere)
+        try:
+            df = validate_giornaliere(df)
+        except Exception as e:
+            logging.warning(
+                f"Validazione Pandera Giornaliere fallita (uso fallback): {e}"
+            )
+
         return df
 
     @classmethod
@@ -486,18 +527,33 @@ class ExcelImporter:
         if df.empty:
             return df
 
-        df = df.iloc[:-1]  # Rimuovi riga totali
-        if "personale" in df.columns:
-            df = df[~df["personale"].str.contains("Totale", na=False, case=False)]
+        # Rimuovi ultima riga (spesso è una riga di totali)
+        if len(df) > 0:
+            df = df.iloc[:-1]
 
-        # Drop righe completamente vuote nelle colonne chiave
-        check_cols = [
-            c
-            for c in df.columns
-            if c in cls.GIORNALIERE_MAPPING.values() and c != "data"
-        ]
-        if check_cols:
-            df.dropna(how="all", subset=check_cols, inplace=True)
+        if df.empty:
+            return df
+
+        # Filtra righe con "Totale" in qualsiasi colonna stringa
+        for col in df.columns:
+            if df[col].dtype == "object":  # Colonne testuali
+                mask = df[col].astype(str).str.contains("Totale", na=False, case=False)
+                df = df[~mask]
+
+        if df.empty:
+            return df
+
+        # Rimuovi righe con campi critici vuoti (data, personale, ore devono essere presenti)
+        critical_cols = []
+        if "data" in df.columns:
+            critical_cols.append("data")
+        if "personale" in df.columns:
+            critical_cols.append("personale")
+        if "ore" in df.columns:
+            critical_cols.append("ore")
+
+        if critical_cols:
+            df.dropna(subset=critical_cols, how="any", inplace=True)
 
         if df.empty:
             return df
@@ -777,14 +833,23 @@ class ExcelImporter:
         wb_file.seek(0)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
-            return openpyxl.load_workbook(wb_file, data_only=True, read_only=False)
+            # Performance optimizations: keep_vba=False, keep_links=False
+            return openpyxl.load_workbook(
+                wb_file,
+                data_only=True,
+                read_only=False,
+                keep_vba=False,
+                keep_links=False,
+            )
 
     @classmethod
     def _process_all_scarico_rows(
         cls, ws, progress_callback: Optional[Callable]
     ) -> List[Tuple]:
-        """Cicla sulle righe del foglio scarico ore."""
-        rows_to_insert = []
+        """
+        Cicla sulle righe del foglio scarico ore.
+        ULTRA-OTTIMIZZATO per performance massime su file grandi (130k+ righe).
+        """
         start_row = 6
         col_keys = [
             "data",
@@ -801,45 +866,61 @@ class ExcelImporter:
         ]
         total_rows = ws.max_row
 
+        # Pre-allocate list for optimal performance
+        rows_to_insert = []
+        rows_to_insert_append = rows_to_insert.append  # Cache method lookup
+
+        # Process all rows with minimal overhead
+        progress_interval = 5000  # Update progress even less frequently
         for row_idx, row in enumerate(
-            ws.iter_rows(min_row=start_row, min_col=2, max_col=12), start=start_row
+            ws.iter_rows(min_row=start_row, min_col=2, max_col=12, values_only=False),
+            start=start_row,
         ):
-            if progress_callback and row_idx % 200 == 0:
+            # Update progress very infrequently to minimize overhead
+            if progress_callback and row_idx % progress_interval == 0:
                 progress_callback(row_idx, total_rows)
 
+            # Process row with optimized logic
             db_row = cls._process_scarico_ore_row(row, col_keys)
             if db_row:
-                rows_to_insert.append(db_row)
+                rows_to_insert_append(db_row)  # Use cached method
 
         return rows_to_insert
 
     @classmethod
     def _process_scarico_ore_row(cls, row, col_keys) -> Optional[Tuple]:
-        """Processa una singola riga estraendo valori e stili."""
-        # Check preliminare: riga vuota?
+        """
+        Processa una singola riga estraendo valori e stili.
+        OTTIMIZZATO per minimizzare allocazioni e chiamate costose.
+        """
+        # Fast empty check (check solo primi 8 valori critici)
+        first_8_cells = row[:8]
         if all(
-            c.value is None or str(c.value).strip() == ""
-            for i, c in enumerate(row)
-            if i <= 7
+            c.value is None or (isinstance(c.value, str) and not c.value.strip())
+            for c in first_8_cells
         ):
             return None
 
-        row_vals = {}
-        row_styles = {}
+        # Extract values (allocate dict once)
+        row_vals = {
+            key: cls._format_scarico_cell_value(key, row[i].value)
+            for i, key in enumerate(col_keys)
+        }
 
-        for i, key in enumerate(col_keys):
-            cell = row[i]
-            val = cls._format_scarico_cell_value(key, cell.value)
-            row_vals[key] = val
-
-            # Estrazione stili (colori)
-            style = cls._get_cell_style(cell)
-            if style:
-                row_styles[key] = style
-
+        # Early validation before expensive style extraction
         if not cls._is_scarico_row_valid(row_vals):
             return None
 
+        # Extract styles only for valid rows (expensive operation)
+        row_styles = {}
+        for i, key in enumerate(col_keys):
+            # Skip style extraction for empty cells (optimization)
+            if row_vals[key]:
+                style = cls._get_cell_style(row[i])
+                if style:
+                    row_styles[key] = style
+
+        # Build tuple directly (avoid dict lookups)
         return (
             row_vals["data"],
             row_vals["pers1"],
@@ -870,29 +951,32 @@ class ExcelImporter:
 
     @staticmethod
     def _get_cell_style(cell: Any) -> Optional[Dict[str, str]]:
-        """Estrae i colori (HEX) dalla cella."""
+        """
+        Estrae i colori (HEX) dalla cella.
+        OTTIMIZZATO per ridurre accessi alle proprietà lazy di OpenPyXL.
+        """
         style = {}
 
-        # Foreground
-        if fg := ExcelImporter._extract_rgb_color(
-            cell.font.color if cell.font else None
-        ):
-            style["fg"] = fg
+        # Fast path: check if cell has any styling at all
+        try:
+            # Foreground color (cache font reference)
+            font = cell.font
+            if font and font.color and font.color.type == "rgb":
+                rgb = str(font.color.rgb)
+                style["fg"] = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
 
-        # Background
-        if cell.fill and cell.fill.patternType == "solid":
-            if bg := ExcelImporter._extract_rgb_color(cell.fill.start_color):
-                style["bg"] = bg
+            # Background color (cache fill reference)
+            fill = cell.fill
+            if fill and fill.patternType == "solid":
+                start_color = fill.start_color
+                if start_color and start_color.type == "rgb":
+                    rgb = str(start_color.rgb)
+                    style["bg"] = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+        except (AttributeError, TypeError):
+            # Ignore cells without proper style attributes
+            pass
 
         return style if style else None
-
-    @staticmethod
-    def _extract_rgb_color(color_obj: Any) -> Optional[str]:
-        """Estrae il codice HEX da un oggetto colore OpenPyXL."""
-        if color_obj and color_obj.type == "rgb":
-            rgb = str(color_obj.rgb)
-            return f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
-        return None
 
     @classmethod
     def _is_scarico_row_valid(cls, row_vals: Dict[str, str]) -> bool:
