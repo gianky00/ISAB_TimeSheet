@@ -17,6 +17,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from src.core.schemas import validate_contabilita, validate_giornaliere
+
 # Tentativo di importare msoffcrypto
 try:
     import msoffcrypto  # type: ignore
@@ -245,10 +247,16 @@ class ExcelImporter:
                 # Euristiche extra
                 if "PREV" in norm_col and "DATA" in norm_col:
                     rename_map[col] = "data_prev"
-                elif "PREV" in norm_col and ("N" in norm_col or "NUM" in norm_col):
-                    rename_map[col] = "n_prev"
-
         df.rename(columns=rename_map, inplace=True)
+
+        # Validazione Pandera (Contabilità)
+        try:
+            df = validate_contabilita(df)
+        except Exception as e:
+            logging.warning(
+                f"Validazione Pandera Contabilità fallita (uso fallback): {e})"
+            )
+
         return df
 
     @classmethod
@@ -468,16 +476,19 @@ class ExcelImporter:
         """Applica il mapping delle colonne specifico per le giornaliere."""
         df.columns = [str(c).strip() for c in df.columns]
         rename_map = {}
-        for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():
-            for c in df.columns:
-                if c.upper() == excel_col.upper():
-                    rename_map[c] = db_col
-                    break
-
         if not rename_map:
             return None
 
         df.rename(columns=rename_map, inplace=True)
+
+        # Validazione Pandera (Giornaliere)
+        try:
+            df = validate_giornaliere(df)
+        except Exception as e:
+            logging.warning(
+                f"Validazione Pandera Giornaliere fallita (uso fallback): {e}"
+            )
+
         return df
 
     @classmethod

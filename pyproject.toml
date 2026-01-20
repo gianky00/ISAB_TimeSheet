@@ -34,6 +34,7 @@ markdown = "*"
 pymupdf = "*"
 pywin32 = { version = "*", platform = "win32" }
 python-telegram-bot = "*"
+pandera = "^0.28.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.0.2"
