@@ -121,6 +121,10 @@ class StatusCard(QFrame):
         else:
             self._meta_label.setVisible(False)
 
+    def _update_status_display(self, message: str):
+        """Aggiorna solo il testo dello stato (per compatibilità)."""
+        self._status_label.setText(message)
+
     def mousePressEvent(self, event):
         """Emette il segnale clicked quando la card viene cliccata."""
         self.clicked.emit()

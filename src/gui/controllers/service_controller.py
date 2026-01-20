@@ -185,17 +185,29 @@ class ServiceController(QObject):
 
         # Connetti segnale di completamento per gestire la coda
         if hasattr(panel, "status_changed"):
+            # Rimuovi eventuali callback precedenti di ServiceController per questo pannello
+            # per evitare esecuzioni multiple, senza disconnettere altri listener (es. BotController)
+            if hasattr(panel, "_service_callback") and panel._service_callback:
+                try:
+                    panel.status_changed.disconnect(panel._service_callback)
+                except Exception:
+                    pass
+
             # Crea una funzione di callback che cattura bot_id e site
             def on_bot_finished(status, message):
-                if status in ["completed", "error", "stopped"]:
+                # Note: status is the color code from BaseBotPanel
+                # #2E7D32 = Success, #C62828 = Error, #ffc107 = Stopped/Pending
+                is_finished = status in ["completed", "error", "stopped"] or status in [
+                    "#2E7D32",
+                    "#C62828",
+                    "#ffc107",
+                ]
+
+                if is_finished:
                     self._on_bot_completed(bot_id, site, panel)
 
-            # Disconnetti eventuali connessioni precedenti per evitare duplicati
-            try:
-                panel.status_changed.disconnect()
-            except Exception:
-                pass
-
+            # Salva il riferimento per poterlo scollegare in futuro
+            panel._service_callback = on_bot_finished
             panel.status_changed.connect(on_bot_finished)
 
         # Avvia il bot
@@ -215,11 +227,13 @@ class ServiceController(QObject):
         if bot_id in self.running_bots_by_site[site]:
             self.running_bots_by_site[site].remove(bot_id)
 
-        # Disconnetti il segnale per evitare loop
-        try:
-            panel.status_changed.disconnect()
-        except Exception:
-            pass
+        # Disconnetti solo la callback specifica di questo controller
+        if hasattr(panel, "_service_callback") and panel._service_callback:
+            try:
+                panel.status_changed.disconnect(panel._service_callback)
+                panel._service_callback = None
+            except Exception:
+                pass
 
         # Controlla se ci sono bot in coda per questo sito
         if self.pending_bots_by_site[site]:

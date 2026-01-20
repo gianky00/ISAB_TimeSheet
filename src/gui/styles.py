@@ -72,9 +72,7 @@ class ThemeManager:
             palette.setColor(
                 group, QPalette.ColorRole.AlternateBase, q(p.surface_variant)
             )
-            palette.setColor(
-                group, QPalette.ColorRole.ToolTipBase, q(p.on_surface)
-            )  # Tooltip params inverted in Fusion often
+            palette.setColor(group, QPalette.ColorRole.ToolTipBase, q(p.surface))
             palette.setColor(group, QPalette.ColorRole.Button, q(p.surface))
 
             # Text / Foreground
@@ -87,9 +85,7 @@ class ThemeManager:
             palette.setColor(group, QPalette.ColorRole.WindowText, txt_col)
             palette.setColor(group, QPalette.ColorRole.Text, txt_col)
             palette.setColor(group, QPalette.ColorRole.ButtonText, txt_col)
-            palette.setColor(
-                group, QPalette.ColorRole.ToolTipText, q(p.surface)
-            )  # Inverted
+            palette.setColor(group, QPalette.ColorRole.ToolTipText, q(p.on_surface))
             palette.setColor(group, QPalette.ColorRole.PlaceholderText, q(p.disabled))
 
             # Accents
@@ -223,8 +219,10 @@ class ThemeManager:
             /* Tooltips */
             QToolTip {
                 background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #ced4da;
+                color: #424242;
+                border: 1px solid #bdbdbd;
+                border-radius: 4px;
+                padding: 5px;
             }
         """
         app.setStyleSheet(qss_content + global_overrides)

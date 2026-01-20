@@ -59,6 +59,13 @@ class ActivityItem(QFrame):
                 border-right: 1px solid #ced4da;
                 border-bottom: 1px solid #ced4da;
             }}
+            QToolTip {{
+                background-color: #ffffff;
+                color: #212529;
+                border: 1px solid #bdbdbd;
+                border-radius: 4px;
+                padding: 5px;
+            }}
         """
         )
         self.setFixedWidth(300)  # Leggermente più largo
@@ -131,8 +138,10 @@ class ActivityItem(QFrame):
         """
         )
         action_lbl.setWordWrap(True)
-        action_lbl.setToolTip(full_text)
         text_layout.addWidget(action_lbl)
+
+        # Tooltip sull'intero widget per coerenza
+        self.setToolTip(full_text)
 
         # Time con icona
         ts_str = log_entry.get("timestamp", "")

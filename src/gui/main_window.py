@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.audit_manager import AuditManager
 from src.core.auth_monitor import check_expiring_isab_authorizations
 from src.core.backup_manager import BackupManager
 from src.core.license_validator import get_license_info
@@ -519,9 +520,11 @@ class MainWindow(QMainWindow):
         # 1. LEFT: Mega Widget (Cliente, Scadenza, Login, Accounts)
         self.footer_left = FooterLeftWidget()
         self.footer_left.setVisible(True)
-        # Connessione click per navigare a Impostazioni -> Configurazione
-        self.footer_left.portale_clicked.connect(self._navigate_to_settings_config)
-        self.footer_left.safework_clicked.connect(self._navigate_to_settings_config)
+        # Connessione click per switch account o navigazione
+        self.footer_left.portale_clicked.connect(lambda: self._switch_account("isab"))
+        self.footer_left.safework_clicked.connect(
+            lambda: self._switch_account("safework")
+        )
         self.status_bar.addWidget(self.footer_left)
 
         # 1b. LEFT: Boot Telemetry (Hacker Mode)
@@ -538,9 +541,9 @@ class MainWindow(QMainWindow):
         self.status_portale = StatusCard("Portale Fornitori")
         self.status_safework = StatusCard("SafeWork")
 
-        # Connessione click per navigare a Impostazioni -> Configurazione
-        self.status_portale.clicked.connect(self._navigate_to_settings_config)
-        self.status_safework.clicked.connect(self._navigate_to_settings_config)
+        # Connessione click per switch account o navigazione
+        self.status_portale.clicked.connect(lambda: self._switch_account("isab"))
+        self.status_safework.clicked.connect(lambda: self._switch_account("safework"))
 
         self.footer_right = FooterRightWidget(self.status_portale, self.status_safework)
         self.status_bar.addPermanentWidget(self.footer_right)
@@ -840,6 +843,35 @@ class MainWindow(QMainWindow):
         if hasattr(self, "settings_panel") and self.settings_panel is not None:
             # Usa QTimer per assicurare che l'UI sia aggiornata prima di cambiare tab
             QTimer.singleShot(50, lambda: self.settings_panel.tabs.setCurrentIndex(0))
+
+    def _switch_account(self, service_type: str):
+        """Switcha l'account di default tra quelli disponibili."""
+        success, new_user = config_manager.switch_default_account(service_type)
+
+        if success:
+            # Refresh UI Footer
+            self.footer_left.refresh_accounts()
+
+            # Mostra toast
+            portal_name = "Portale Fornitori" if service_type == "isab" else "SafeWork"
+            ToastManager.instance().show(
+                f"Account {portal_name} cambiato in: {new_user}", "info"
+            )
+
+            # Se il pannello impostazioni è aperto, ricaricalo
+            if hasattr(self, "settings_panel") and self.settings_panel is not None:
+                self.settings_panel.load_settings()
+
+            # Audit
+            AuditManager.instance().log_action(
+                action="Switch Account",
+                category="config",
+                entity=portal_name,
+                params={"username": new_user},
+            )
+        else:
+            # Se non ci sono altri account, naviga alle impostazioni come prima
+            self._navigate_to_settings_config()
 
     def _toggle_footer_stats(self):
         """Toggle tra System Metrics (boot_telemetry) e License Info (footer_left)."""

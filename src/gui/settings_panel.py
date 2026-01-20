@@ -72,7 +72,7 @@ class SettingsPanel(QWidget):
         self.save_timer.timeout.connect(self._save_settings)
 
         self._setup_ui()
-        self._load_settings()
+        self.load_settings()
         self._connect_change_signals()
 
     def _setup_ui(self):
@@ -1908,7 +1908,7 @@ class SettingsPanel(QWidget):
         self.worker.start()
 
     # --- Load & Save ---
-    def _load_settings(self):
+    def load_settings(self):
         config = config_manager.load_config()
 
         # Blocca segnali per evitare loop di salvataggio durante il caricamento

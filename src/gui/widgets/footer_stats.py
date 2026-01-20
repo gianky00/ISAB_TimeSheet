@@ -103,10 +103,10 @@ class ClickableLabel(QLabel):
         self.setStyleSheet(style)
 
     def enterEvent(self, event):
-        # Hover: sfondo leggero e sottolineatura
+        # Hover: sfondo leggero (solid per evitare problemi di rendering)
         self.setStyleSheet(
             self._base_style
-            + " background: rgba(0,0,0,0.05); border-radius: 3px; padding: 2px 4px;"
+            + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
         )
         super().enterEvent(event)
 
@@ -275,6 +275,21 @@ class FooterLeftWidget(QWidget):
 
         self.portale_item.setText(portale_text)
         self.safe_item.setText(safework_text)
+
+        # Tooltips dinamici basati sul numero di account
+        if len(accounts) > 1:
+            self.portale_item.setToolTip(
+                f"Clicca per switchare account (Trovati: {len(accounts)})"
+            )
+        else:
+            self.portale_item.setToolTip("Clicca per gestire gli account")
+
+        if len(safework) > 1:
+            self.safe_item.setToolTip(
+                f"Clicca per switchare account (Trovati: {len(safework)})"
+            )
+        else:
+            self.safe_item.setToolTip("Clicca per gestire gli account SafeWork")
 
     @staticmethod
     def _get_default_account(accounts: list) -> Optional[str]:
