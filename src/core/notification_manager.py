@@ -6,6 +6,7 @@ Gestisce le notifiche dell'applicazione.
 import json
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -79,10 +80,10 @@ class NotificationManager(QObject):
         category: str = "system",
         priority: str = "low",
         source: str = "Sistema",
-        tags: list = None,
-        metadata: dict = None,
-        actions: list = None,
-        related_id: str = None,
+        tags: Optional[list] = None,
+        metadata: Optional[dict] = None,
+        actions: Optional[list] = None,
+        related_id: Optional[str] = None,
     ):
         """
         Aggiunge una nuova notifica con schema esteso.
@@ -222,9 +223,9 @@ class NotificationManager(QObject):
 
     def get_filtered_notifications(
         self,
-        levels: list = None,
-        categories: list = None,
-        priorities: list = None,
+        levels: Optional[list] = None,
+        categories: Optional[list] = None,
+        priorities: Optional[list] = None,
         show_archived: bool = False,
     ) -> list:
         """

@@ -234,7 +234,7 @@ class AuditManager:
         severity: Any = Severity.LOW,
         duration_ms: int = 0,
         module: str = "",
-        error_code: str = None,
+        error_code: Optional[str] = None,
         notify: bool = False,
     ):
         """

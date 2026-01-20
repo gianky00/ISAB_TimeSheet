@@ -850,24 +850,7 @@ class DipendentiPanel(QWidget):
         """Aggiorna i dati della tabella Dipendenti."""
         search_text = self.search_input.text().lower()
 
-        # Update Counters logic
-        from src.core.auth_monitor import check_expiring_isab_authorizations
-
-        try:
-            expiring = check_expiring_isab_authorizations()
-            scaduti = len([d for d in expiring if d["stato"] == "SCADUTA"])
-            in_scadenza = len([d for d in expiring if d["stato"] == "IN SCADENZA"])
-
-            # Query per gli operativi (chi ha accesso <= 20gg)
-            query_ok = "SELECT COUNT(*) FROM (SELECT MAX(data) as d FROM timbrature GROUP BY cognome, nome) WHERE (julianday('now') - julianday(d)) <= 20"
-            res_ok = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_ok)
-            operativi = res_ok[0][0] if res_ok else 0
-
-            self.card_ok.setValue(operativi)
-            self.card_warning.setValue(in_scadenza)
-            self.card_expired.setValue(scaduti)
-        except Exception as e:
-            logger.error(f"Errore aggiornamento contatori ISAB: {e}")
+        self._update_isab_counters()
 
         query = """
             SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at
@@ -892,52 +875,7 @@ class DipendentiPanel(QWidget):
                 db_manager.DB_DIPENDENTI, query, tuple(params)
             )
 
-            # Dizionario per accesso rapido all'ultimo accesso
-            # Recuperiamo tutti gli ultimi accessi ISAB in una volta
-            query_timb = "SELECT MAX(data), cognome, nome FROM timbrature GROUP BY UPPER(cognome), UPPER(nome)"
-            last_access_map = {}
-            accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
-            today = datetime.now()
-            for d_str, cog, nom in accessi:
-                if d_str:
-                    try:
-                        d_dt = datetime.strptime(d_str, "%Y-%m-%d")
-                        diff = (today - d_dt).days
-                        last_access_map[
-                            (cog.upper().strip(), nom.upper().strip())
-                        ] = diff
-                    except Exception:
-                        pass
-
-            # Preparazione dati per tabella master (subset di colonne)
-            master_rows = []
-            filtered_full_rows = []
-
-            for r in full_rows:
-                cog_key = (str(r[1]).upper().strip(), str(r[2]).upper().strip())
-                diff_days = last_access_map.get(cog_key)
-
-                inactivation_val = None
-                if diff_days is not None:
-                    inactivation_val = 30 - diff_days
-
-                # Applica il filtro se attivo
-                if self.current_filter:
-                    if diff_days is None:
-                        continue  # Salta chi non ha mai fatto accesso
-
-                    if self.current_filter == "ok" and diff_days > 20:
-                        continue
-                    elif self.current_filter == "warning" and (
-                        diff_days <= 20 or diff_days > 30
-                    ):
-                        continue
-                    elif self.current_filter == "expired" and diff_days <= 30:
-                        continue
-
-                # inattivazione(new), id(0), cognome(1), nome(2), badge(4), assunzione(5)
-                master_rows.append([inactivation_val, r[0], r[1], r[2], r[4], r[5]])
-                filtered_full_rows.append(r)
+            master_rows, filtered_full_rows = self._process_employee_rows(full_rows)
 
             # Aggiorna il buffer dei dati completi con i dati filtrati
             self._raw_full_data = filtered_full_rows
@@ -948,6 +886,74 @@ class DipendentiPanel(QWidget):
 
         except Exception as e:
             logger.error(f"Errore caricamento dipendenti: {e}")
+
+    def _update_isab_counters(self):
+        """Aggiorna i contatori delle card ISAB."""
+        from src.core.auth_monitor import check_expiring_isab_authorizations
+
+        try:
+            expiring = check_expiring_isab_authorizations()
+            scaduti = len([d for d in expiring if d["stato"] == "SCADUTA"])
+            in_scadenza = len([d for d in expiring if d["stato"] == "IN SCADENZA"])
+
+            # Query per gli operativi (chi ha accesso <= 20gg)
+            query_ok = "SELECT COUNT(*) FROM (SELECT MAX(data) as d FROM timbrature GROUP BY cognome, nome) WHERE (julianday('now') - julianday(d)) <= 20"
+            res_ok = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_ok)
+            operativi = res_ok[0][0] if res_ok else 0
+
+            self.card_ok.setValue(operativi)
+            self.card_warning.setValue(in_scadenza)
+            self.card_expired.setValue(scaduti)
+        except Exception as e:
+            logger.error(f"Errore aggiornamento contatori ISAB: {e}")
+
+    def _process_employee_rows(self, full_rows):
+        """Elabora le righe dipendenti calcolando scadenza e applicando filtri."""
+        # Dizionario per accesso rapido all'ultimo accesso
+        # Recuperiamo tutti gli ultimi accessi ISAB in una volta
+        query_timb = "SELECT MAX(data), cognome, nome FROM timbrature GROUP BY UPPER(cognome), UPPER(nome)"
+        last_access_map = {}
+        accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
+        today = datetime.now()
+        for d_str, cog, nom in accessi:
+            if d_str:
+                try:
+                    d_dt = datetime.strptime(d_str, "%Y-%m-%d")
+                    diff = (today - d_dt).days
+                    last_access_map[(cog.upper().strip(), nom.upper().strip())] = diff
+                except Exception:
+                    pass
+
+        master_rows = []
+        filtered_full_rows = []
+
+        for r in full_rows:
+            cog_key = (str(r[1]).upper().strip(), str(r[2]).upper().strip())
+            diff_days = last_access_map.get(cog_key)
+
+            inactivation_val = None
+            if diff_days is not None:
+                inactivation_val = 30 - diff_days
+
+            # Applica il filtro se attivo
+            if self.current_filter:
+                if diff_days is None:
+                    continue  # Salta chi non ha mai fatto accesso
+
+                if self.current_filter == "ok" and diff_days > 20:
+                    continue
+                elif self.current_filter == "warning" and (
+                    diff_days <= 20 or diff_days > 30
+                ):
+                    continue
+                elif self.current_filter == "expired" and diff_days <= 30:
+                    continue
+
+            # inattivazione(new), id(0), cognome(1), nome(2), badge(4), assunzione(5)
+            master_rows.append([inactivation_val, r[0], r[1], r[2], r[4], r[5]])
+            filtered_full_rows.append(r)
+
+        return master_rows, filtered_full_rows
 
     def _on_import_clicked(self):
         """Gestisce l'importazione del file CSV."""

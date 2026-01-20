@@ -5,7 +5,7 @@ Supporta High (con pulse animation), Medium e Low.
 
 from typing import Optional
 
-from PyQt6.QtCore import QVariantAnimation, pyqtProperty
+from PyQt6.QtCore import QVariantAnimation, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 

@@ -454,7 +454,7 @@ class AutopilotWidget(QWidget):
     def _animate_gear_button(self):
         """
         Crea un'animazione SPETTACOLARE per il pulsante ingranaggio.
-        Combina: Scale bounce drammatico, Shake horizontale, Pulsazione colore multi-fase.
+        # Combina: Scale bounce drammatico, Shake orizzontale, Pulsazione colore multi-fase.
         """
         # Salva posizione originale
         original_pos = self.config_btn.pos()
