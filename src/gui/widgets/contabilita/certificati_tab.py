@@ -566,8 +566,10 @@ try {
                 tmp.write(ps_script)
                 tmp_path = tmp.name
 
+            CREATE_NO_WINDOW = 0x08000000
             subprocess.Popen(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path]
+                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path],
+                creationflags=CREATE_NO_WINDOW,
             )
         except Exception as e:
             QMessageBox.critical(self, "Errore", f"Impossibile avviare l'analisi:\n{e}")

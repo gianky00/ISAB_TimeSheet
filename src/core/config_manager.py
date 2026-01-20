@@ -302,6 +302,42 @@ def set_default_account(username: str):
         save_config(config)
 
 
+def switch_default_account(service_type: str = "isab") -> tuple[bool, Optional[str]]:
+    """
+    Switcha l'account di default in modo circolare.
+    service_type: 'isab' o 'safework'
+    Ritorna (successo, nuovo_username)
+    """
+    config = load_config()
+    key = "accounts" if service_type == "isab" else "safework_accounts"
+    accounts = config.get(key, [])
+
+    if len(accounts) < 2:
+        return False, None
+
+    # Trova l'indice del default attuale
+    current_idx = -1
+    for i, acc in enumerate(accounts):
+        if acc.get("default"):
+            current_idx = i
+            break
+
+    # Se non c'è default, prendi il primo
+    if current_idx == -1:
+        current_idx = 0
+
+    # Prossimo indice circolare
+    next_idx = (current_idx + 1) % len(accounts)
+
+    # Reset tutti i default
+    for i, acc in enumerate(accounts):
+        acc["default"] = i == next_idx
+
+    config[key] = accounts
+    save_config(config)
+    return True, accounts[next_idx].get("username")
+
+
 def get_default_account() -> Optional[Dict[str, str]]:
     """Restituisce l'account di default."""
     accounts = get_accounts()

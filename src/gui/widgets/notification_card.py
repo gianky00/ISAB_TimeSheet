@@ -130,6 +130,13 @@ class NotificationCard(QFrame):
                 border-right: 1px solid #ced4da;
                 border-bottom: 1px solid #ced4da;
             }}
+            QToolTip {{
+                background-color: #ffffff;
+                color: #212529;
+                border: 1px solid #bdbdbd;
+                border-radius: 4px;
+                padding: 5px;
+            }}
         """
         )
 

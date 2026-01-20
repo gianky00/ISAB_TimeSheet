@@ -46,13 +46,17 @@ class BotController(QObject):
         sender = self.sender()
         bot_id = getattr(sender, "bot_id", "")
 
+        # SafeWork bots list
+        safework_bots = ["scarico_pdl", "pdl_search"]
+
         # Update the correct status card based on bot_id
-        if bot_id in ["scarico_pdl"]:  # SafeWork bots
+        # Note: status is the color code, message is the text
+        if bot_id in safework_bots:
             if hasattr(self.mw, "status_safework"):
-                self.mw.status_safework.setStatus(status, message)
+                self.mw.status_safework.setStatus(message, status)
         else:  # Default to Portale Fornitori bots
             if hasattr(self.mw, "status_portale"):
-                self.mw.status_portale.setStatus(status, message)
+                self.mw.status_portale.setStatus(message, status)
 
     def _get_active_bot_panel(self):
         """Determina quale pannello bot è attualmente visibile nella UI."""

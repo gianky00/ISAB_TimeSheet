@@ -264,34 +264,19 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 "SITO": "sito",
             }
             df.rename(columns=mapping, inplace=True)
+
+            # Garantisce che tutte le colonne del mapping esistano nel DataFrame
             for col in mapping.values():
                 if col not in df.columns:
                     df[col] = ""
 
-            # Whitelist validation for column names
-            valid_columns = [
-                "numero",
-                "stato",
-                "lavoro",
-                "area",
-                "unita",
-                "apparecchiatura",
-                "richiedente",
-                "data_richiesta",
-                "emittente",
-                "data_emissione",
-                "aprente",
-                "data_apertura",
-                "priorita",
-                "contratto",
-                "ordine",
-                "sito",
-            ]
-            columns = [c for c in mapping.values() if c in valid_columns]
+            # Sostituisce i valori NaN con stringhe vuote per evitare "nan" nel DB
+            df.fillna("", inplace=True)
 
-            data_to_insert = [
-                tuple(str(val) for val in row) for row in df[columns].values
-            ]
+            # Utilizza tutte le colonne definite nel mapping (che corrispondono al DB)
+            columns = list(mapping.values())
+
+            data_to_insert = [tuple(row) for row in df[columns].values]
 
             placeholders = ", ".join(["?"] * len(columns))
             col_names = ", ".join(columns)
@@ -300,6 +285,8 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)
 
-            self.log(f"✅ {len(data_to_insert)} righe importate.")
+            self.log(
+                f"✅ {len(data_to_insert)} righe importate correttamente nel database."
+            )
         except Exception as e:
             self.log(f"❌ Errore importazione: {e}")

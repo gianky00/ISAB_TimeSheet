@@ -397,10 +397,12 @@ class AutopilotWidget(QWidget):
             QPushButton:pressed {
                 background-color: #dee2e6;
             }
-            /* Rimuovi completamente tooltip styling */
-            QPushButton QToolTip {
-                background-color: transparent;
-                border: none;
+            QToolTip {
+                background-color: #ffffff;
+                color: #212529;
+                border: 1px solid #bdbdbd;
+                border-radius: 4px;
+                padding: 5px;
             }
         """
         )
