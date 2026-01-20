@@ -23,15 +23,15 @@ class DipendenteSchema(pa.DataFrameModel):
 class GiornaliereSchema(pa.DataFrameModel):
     """Schema di validazione per i file Giornaliera."""
 
-    data: Series[pd.Timestamp] = pa.Field(coerce=True)
-    personale: Series[str] = pa.Field(nullable=False)
+    data: Series[pd.Timestamp] = pa.Field(coerce=True, nullable=True)
+    personale: Series[str] = pa.Field(nullable=True)
     descrizione: Series[str] = pa.Field(nullable=True)
     tcl: Series[str] = pa.Field(coerce=True, nullable=True)
     odc: Series[str] = pa.Field(coerce=True, nullable=True)
     pdl: Series[str] = pa.Field(coerce=True, nullable=True)
     inizio: Series[str] = pa.Field(nullable=True)
     fine: Series[str] = pa.Field(nullable=True)
-    ore: Series[float] = pa.Field(coerce=True)
+    ore: Series[float] = pa.Field(coerce=True, nullable=True)
     n_prev: Series[str] = pa.Field(coerce=True, nullable=True)
 
     class Config:
@@ -52,7 +52,7 @@ class ContabilitaSchema(pa.DataFrameModel):
     stato_attivita: Series[str] = pa.Field(nullable=True)
     tipologia: Series[str] = pa.Field(nullable=True)
     ore_sp: Series[float] = pa.Field(coerce=True, default=0.0)
-    resa: Series[float] = pa.Field(coerce=True, nullable=True)
+    resa: Series[str] = pa.Field(coerce=True, nullable=True)
     annotazioni: Series[str] = pa.Field(nullable=True)
     indirizzo_consuntivo: Series[str] = pa.Field(nullable=True)
     nome_file: Series[str] = pa.Field(nullable=True)

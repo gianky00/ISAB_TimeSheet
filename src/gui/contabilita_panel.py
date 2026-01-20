@@ -89,7 +89,8 @@ class ContabilitaPanel(QWidget):
         # Status Label
         self.status_lbl = QLabel("Pronto")
         self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_lbl.setStyleSheet("color: #78909C; font-size: 12px;")
+        self.status_lbl.setStyleSheet("font-size: 12px;")
+        self.status_lbl.setTextFormat(Qt.TextFormat.RichText)
 
         # Update Button
         self.update_btn = QPushButton("Aggiorna")
@@ -433,11 +434,19 @@ class ContabilitaPanel(QWidget):
 
     def _on_import_finished(self, success, msg, added, removed, duration):
         if success:
-            now = datetime.now().strftime("%H:%M")
-            # Short status for toolbar
-            status = f"Aggiornato {now} (+{added}/-{removed})"
-            self._last_status_html = status
-            self.status_lbl.setText(status)
+            timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+            added_str = f"<font color='green'><b>+{added}</b></font>"
+            removed_str = f"<font color='red'><b>-{removed}</b></font>"
+
+            if duration < 60:
+                time_str = f"{duration:.1f}s"
+            else:
+                m, s = divmod(int(duration), 60)
+                time_str = f"{m}m {s}s"
+
+            final_status = f"{timestamp} {added_str} {removed_str} (Tempo: {time_str})"
+            self._last_status_html = final_status
+            self.status_lbl.setText(final_status)
             self.refresh_tabs()
         else:
             self.status_lbl.setText("Errore")

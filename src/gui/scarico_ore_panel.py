@@ -146,7 +146,8 @@ class ScaricoOrePanel(QWidget):
         # Status Label
         self.status_label = QLabel("Inizializzazione...")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_label.setStyleSheet("color: #78909C; font-size: 12px;")
+        self.status_label.setStyleSheet("font-size: 12px;")
+        self.status_label.setTextFormat(Qt.TextFormat.RichText)
 
         # Update Button
         self.update_btn = QPushButton("Aggiorna")
@@ -154,7 +155,29 @@ class ScaricoOrePanel(QWidget):
             get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
         )
         self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.update_btn.setFixedSize(100, 32)
+        self.update_btn.setFixedSize(110, 34)
+        self.update_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #2563eb;
+            }
+            QPushButton:pressed {
+                background-color: #1d4ed8;
+            }
+            QPushButton:disabled {
+                background-color: #94a3b8;
+            }
+        """
+        )
         self.update_btn.clicked.connect(self._start_update)
 
         # Add widgets to toolbar

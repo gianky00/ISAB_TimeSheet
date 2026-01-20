@@ -60,9 +60,9 @@ class GiornaliereYearTab(QWidget):
             Qt.TextElideMode.ElideNone
         )  # Evita i puntini di sospensione
 
-        # --- Configurazione Selezione ---
+        # --- Configurazione Selezione (Single row, come richiesto) ---
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Remove hardcoded stylesheet (uses global light.qss)
