@@ -3,7 +3,7 @@ NotificationToolbar - Barra degli strumenti per filtrare, cercare e ordinare not
 Include filter chips, search bar, sort dropdown e bulk actions menu.
 """
 
-from typing import Optional
+from typing import Dict, Optional
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -135,7 +135,7 @@ class NotificationToolbar(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self._filter_chips = {}
+        self._filter_chips: Dict[str, FilterChip] = {}
         self._current_filter = "all"
         self._debounce_timer = QTimer()
         self._debounce_timer.setSingleShot(True)

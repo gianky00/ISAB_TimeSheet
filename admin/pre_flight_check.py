@@ -156,7 +156,7 @@ def run_xenon():
     cmd = [
         get_bin("xenon"),
         "--max-absolute",
-        "B",
+        "C",
         "--max-modules",
         "B",
         "--max-average",

@@ -6,7 +6,7 @@ Pannello per la visualizzazione delle notifiche e Audit Log Dashboard.
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from PyQt6.QtCore import QDate, Qt, QTimer
 from PyQt6.QtGui import QGuiApplication
@@ -80,7 +80,7 @@ class AuditDetailDialog(QDialog):
             pass
 
         dur_ms = data.get("duration_ms", 0) or 0
-        dur_str = f"{dur_ms}ms" if dur_ms < 1000 else f"{dur_ms/1000:.2f}s"
+        dur_str = f"{dur_ms}ms" if dur_ms < 1000 else f"{dur_ms / 1000:.2f}s"
 
         err_code = data.get("error_code") or "Nessuno"
         module = data.get("module") or "Generico"
@@ -88,9 +88,9 @@ class AuditDetailDialog(QDialog):
         info_text = f"""
         <table style="font-size: 14px; margin-bottom: 10px;" cellspacing="5">
             <tr><td><b>Data:</b></td><td>{ts}</td><td><b>Modulo:</b></td><td>{module}</td></tr>
-            <tr><td><b>Utente:</b></td><td>{data.get('user_id', '-')}</td><td><b>Durata:</b></td><td>{dur_str}</td></tr>
-            <tr><td><b>Azione:</b></td><td>{data.get('action', '-')}</td><td><b>Cod. Errore:</b></td><td>{err_code}</td></tr>
-            <tr><td><b>Entità:</b></td><td>{data.get('entity', '-')}</td><td><b>Stato:</b></td><td>{data.get('status', '-')}</td></tr>
+            <tr><td><b>Utente:</b></td><td>{data.get("user_id", "-")}</td><td><b>Durata:</b></td><td>{dur_str}</td></tr>
+            <tr><td><b>Azione:</b></td><td>{data.get("action", "-")}</td><td><b>Cod. Errore:</b></td><td>{err_code}</td></tr>
+            <tr><td><b>Entità:</b></td><td>{data.get("entity", "-")}</td><td><b>Stato:</b></td><td>{data.get("status", "-")}</td></tr>
         </table>
         """
         lbl = QLabel(info_text)
@@ -603,31 +603,7 @@ class NotificationsPanel(QWidget):
         ):
             notifs = self._cached_filter_result
         else:
-            # Get notifications based on filter
-            if self.current_filter == "unread":
-                notifs = self.manager.get_notifications(filter_unread=True)
-            else:
-                notifs = self.manager.get_notifications(filter_unread=False)
-
-            # Apply level filter
-            if self.current_filter == "error":
-                notifs = [n for n in notifs if n.get("level") == "error"]
-            elif self.current_filter == "warning":
-                notifs = [n for n in notifs if n.get("level") == "warning"]
-            elif self.current_filter == "info":
-                notifs = [n for n in notifs if n.get("level") == "info"]
-
-            # Apply search filter
-            if self.current_search:
-                notifs = [
-                    n
-                    for n in notifs
-                    if self.current_search in n.get("title", "").lower()
-                    or self.current_search in n.get("message", "").lower()
-                ]
-
-            # Sort notifications
-            notifs = self._sort_notifications(notifs)
+            notifs = self._get_filtered_sorted_notifications()
 
             # Cache result
             self._cached_filter_result = notifs
@@ -651,6 +627,40 @@ class NotificationsPanel(QWidget):
         grouped = self._group_notifications_by_time(notifs)
 
         # Render groups
+        self._render_groups(grouped, disable_animations)
+
+    def _get_filtered_sorted_notifications(self) -> List[Dict[str, Any]]:
+        """Restituisce le notifiche filtrate e ordinate."""
+        # Get notifications based on filter
+        if self.current_filter == "unread":
+            notifs = self.manager.get_notifications(filter_unread=True)
+        else:
+            notifs = self.manager.get_notifications(filter_unread=False)
+
+        # Apply level filter
+        if self.current_filter == "error":
+            notifs = [n for n in notifs if n.get("level") == "error"]
+        elif self.current_filter == "warning":
+            notifs = [n for n in notifs if n.get("level") == "warning"]
+        elif self.current_filter == "info":
+            notifs = [n for n in notifs if n.get("level") == "info"]
+
+        # Apply search filter
+        if self.current_search:
+            notifs = [
+                n
+                for n in notifs
+                if self.current_search in n.get("title", "").lower()
+                or self.current_search in n.get("message", "").lower()
+            ]
+
+        # Sort notifications
+        return self._sort_notifications(notifs)
+
+    def _render_groups(
+        self, grouped: Dict[str, Dict[str, Any]], disable_animations: bool
+    ):
+        """Renderizza i gruppi di notifiche nella scroll area."""
         for group_key, group_data in grouped.items():
             if not group_data["notifications"]:
                 continue
@@ -724,12 +734,13 @@ class NotificationsPanel(QWidget):
             )
         return notifs
 
-    def _group_notifications_by_time(self, notifs: list) -> dict:
+    def _group_notifications_by_time(self, notifs: list) -> Dict[str, Dict[str, Any]]:
         """Group notifications by time buckets."""
         from datetime import datetime
 
         now = datetime.now()
-        groups = {
+        # Initialize with explicit types to satisfy mypy
+        groups: Dict[str, Dict[str, Any]] = {
             "pinned": {"title": "Fissate", "icon": "📌", "notifications": []},
             "today": {"title": "Oggi", "icon": "📅", "notifications": []},
             "yesterday": {"title": "Ieri", "icon": "📆", "notifications": []},
@@ -740,6 +751,7 @@ class NotificationsPanel(QWidget):
         for notif in notifs:
             # Check if pinned
             if notif.get("pinned", False):
+                # Explicit list append
                 groups["pinned"]["notifications"].append(notif)
                 continue
 

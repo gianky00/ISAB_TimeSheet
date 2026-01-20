@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from PyQt6.QtCore import QAbstractTableModel, Qt
@@ -56,67 +57,99 @@ class AuditTableModel(QAbstractTableModel):
 
         log = self._logs[index.row()]
         col = index.column()
-        status = str(log.get("status", "success")).lower()
-        severity = str(log.get("severity", "low")).lower()
 
-        # --- TESTO ---
         if role == Qt.ItemDataRole.DisplayRole:
-            if col == 0:
-                return ""
-            if col == 1:
-                return self._format_timestamp(log.get("timestamp"))
-            if col == 2:
-                return self._format_duration(log.get("duration_ms", 0))
-            if col == 3:
-                return str(log.get("module", "-") or "-")
-            if col == 4:
-                return str(log.get("category", "-"))
-            if col == 5:
-                return str(log.get("action", "-"))
-            if col == 6:
-                # Priorità a error_code se c'è, altrimenti entity
-                err = log.get("error_code")
-                return str(err) if err else str(log.get("entity", "-"))
-            if col == 7:
-                return self._extract_message(log)
+            return self._get_display_data(log, col)
 
-        # --- ICONE ---
-        if role == Qt.ItemDataRole.DecorationRole and col == 0:
-            if status == "success":
-                return self._icons["success"]
-            if status == "error":
-                return self._icons["error"]
-            return self._icons.get(severity, self._icons["low"])
+        if role == Qt.ItemDataRole.DecorationRole:
+            return self._get_decoration_data(log, col)
 
-        # --- STILI ---
         if role == Qt.ItemDataRole.BackgroundRole:
-            if status == "error":
-                return QColor("#fff5f5")  # Red tint
-            if severity == "medium":
-                return QColor("#fff9f0")  # Orange tint
+            return self._get_background_data(log)
 
         if role == Qt.ItemDataRole.ForegroundRole:
-            if col == 6 and log.get("error_code"):  # Error Code Red
-                return QColor("#dc3545")
-            if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops
-                return QColor("#fd7e14")
+            return self._get_foreground_data(log, col)
 
         if role == Qt.ItemDataRole.FontRole:
-            if col == 5:  # Action Bold
-                f = QFont()
-                f.setBold(True)
-                return f
-            if col == 6 and log.get("error_code"):  # Error Code Bold
-                f = QFont()
-                f.setBold(True)
-                return f
+            return self._get_font_data(log, col)
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
-            if col in [0, 2]:
-                return Qt.AlignmentFlag.AlignCenter
-            return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            return self._get_alignment_data(col)
 
         return None
+
+    def _get_display_data(self, log, col):
+        """Restituisce il testo da mostrare per ogni colonna."""
+        if col == 0:
+            return ""
+        if col == 1:
+            return self._format_timestamp(log.get("timestamp"))
+        if col == 2:
+            return self._format_duration(log.get("duration_ms", 0))
+        if col == 3:
+            return str(log.get("module", "-") or "-")
+        if col == 4:
+            return str(log.get("category", "-"))
+        if col == 5:
+            return str(log.get("action", "-"))
+        if col == 6:
+            # Priorità a error_code se c'è, altrimenti entity
+            err = log.get("error_code")
+            return str(err) if err else str(log.get("entity", "-"))
+        if col == 7:
+            return self._extract_message(log)
+        return None
+
+    def _get_decoration_data(self, log, col):
+        """Restituisce l'icona per la colonna di stato."""
+        if col != 0:
+            return None
+
+        status = str(log.get("status", "success")).lower()
+        if status == "success":
+            return self._icons["success"]
+        if status == "error":
+            return self._icons["error"]
+
+        severity = str(log.get("severity", "low")).lower()
+        return self._icons.get(severity, self._icons["low"])
+
+    def _get_background_data(self, log):
+        """Restituisce il colore di sfondo della riga."""
+        status = str(log.get("status", "success")).lower()
+        if status == "error":
+            return QColor("#fff5f5")  # Red tint
+
+        severity = str(log.get("severity", "low")).lower()
+        if severity == "medium":
+            return QColor("#fff9f0")  # Orange tint
+        return None
+
+    def _get_foreground_data(self, log, col):
+        """Restituisce il colore del testo."""
+        if col == 6 and log.get("error_code"):  # Error Code Red
+            return QColor("#dc3545")
+        if col == 2 and (log.get("duration_ms", 0) or 0) > 5000:  # Slow ops
+            return QColor("#fd7e14")
+        return None
+
+    def _get_font_data(self, log, col):
+        """Restituisce il font (es. grassetto)."""
+        if col == 5:  # Action Bold
+            f = QFont()
+            f.setBold(True)
+            return f
+        if col == 6 and log.get("error_code"):  # Error Code Bold
+            f = QFont()
+            f.setBold(True)
+            return f
+        return None
+
+    def _get_alignment_data(self, col):
+        """Restituisce l'allineamento della cella."""
+        if col in [0, 2]:
+            return Qt.AlignmentFlag.AlignCenter
+        return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
     def headerData(self, section, orientation, role):
         if (
@@ -139,12 +172,10 @@ class AuditTableModel(QAbstractTableModel):
             return "-"
         if ms < 1000:
             return f"{ms}ms"
-        return f"{ms/1000:.1f}s"
+        return f"{ms / 1000:.1f}s"
 
     def _extract_message(self, log):
         # Cerca il messaggio più utile nel JSON params
-        import json
-
         p_str = log.get("params", "{}")
         try:
             p = json.loads(p_str) if isinstance(p_str, str) else p_str
