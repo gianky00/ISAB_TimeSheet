@@ -7,8 +7,7 @@ Include gestione lista fornitori, tracking modifiche non salvate e statistiche.
 from datetime import datetime
 from pathlib import Path
 
-import requests
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -43,6 +42,7 @@ from src.gui.dialogs.account_dialog import AccountDialog
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.widgets.statistics_widget import StatisticsWidget
 from src.gui.widgets.toast import ToastManager
+from src.gui.workers.connection_worker import ConnectionTestWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -64,6 +64,12 @@ class SettingsPanel(QWidget):
         self.scroll = None
         self.scroll_content = None
         self.groups = []  # Store group boxes to prevent premature GC
+
+        # Timer per Debounce Salvataggio
+        self.save_timer = QTimer()
+        self.save_timer.setSingleShot(True)
+        self.save_timer.setInterval(800)  # 800ms di attesa
+        self.save_timer.timeout.connect(self._save_settings)
 
         self._setup_ui()
         self._load_settings()
@@ -148,7 +154,7 @@ class SettingsPanel(QWidget):
         vbox_general.addWidget(browser_group)
 
         vbox_general.addStretch()
-        self.toolbox.addItem(page_general, "Generale & Browser")
+        self.toolbox.addItem(page_general, "Generale Browser")
 
         # --- PAGE 2: Liste Dati ---
         # Usiamo una scroll area interna per le liste perché occupano spazio
@@ -627,7 +633,7 @@ class SettingsPanel(QWidget):
 
         vbox_paths.addWidget(dataease_group)
         vbox_paths.addStretch()
-        self.toolbox.addItem(page_paths, "Percorsi File & Integrazioni")
+        self.toolbox.addItem(page_paths, "Percorsi File Integrazioni")
 
         # --- PAGE 4: Diagnostica ---
         page_diag = QWidget()
@@ -656,6 +662,8 @@ class SettingsPanel(QWidget):
         vbox_diag.addWidget(diag_group)
         vbox_diag.addStretch()
         self.toolbox.addItem(page_diag, "Diagnostica")
+
+        self.toolbox.setCurrentIndex(-1)  # Inizia con tutto collassato
 
         config_layout.addWidget(self.toolbox)
 
@@ -801,22 +809,28 @@ class SettingsPanel(QWidget):
         tg_id_layout = QHBoxLayout()
         tg_id_layout.addWidget(self.tg_chat_id_edit)
 
-        self.tg_reset_btn = QPushButton("Scollega")
-        self.tg_reset_btn.setFixedWidth(80)
+        self.tg_reset_btn = QPushButton(" Scollega Dispositivo")
+        self.tg_reset_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.TRASH), "#dc3545")
+        )
+        self.tg_reset_btn.setFixedWidth(180)
         self.tg_reset_btn.setMinimumHeight(40)
+        self.tg_reset_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.tg_reset_btn.clicked.connect(self._reset_telegram_pairing)
         self.tg_reset_btn.setStyleSheet(
             """
             QPushButton {
-                background-color: #f8f9fa;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
+                background-color: white;
+                border: 2px solid #dc3545;
+                border-radius: 6px;
                 color: #dc3545;
                 font-weight: bold;
+                font-size: 13px;
+                padding: 5px;
             }
             QPushButton:hover {
-                background-color: #fff5f5;
-                border-color: #dc3545;
+                background-color: #dc3545;
+                color: white;
             }
         """
         )
@@ -1239,44 +1253,54 @@ class SettingsPanel(QWidget):
         """
         )
 
-    def _connect_change_signals(self):
-        # Generale
-        self.headless_check.stateChanged.connect(self._save_settings)
+        def _connect_change_signals(self):
+            # Generale
 
-        # Browser
-        self.timeout_spin.valueChanged.connect(self._save_settings)
+            self.headless_check.stateChanged.connect(self._save_settings)
 
-        # Strumentale (Save on editing finished to avoid spamming disk)
-        self.contabilita_path_edit.textChanged.connect(self._save_settings)
-        self.contabilita_path_edit.textChanged.connect(
-            lambda: self._validate_path(self.contabilita_path_edit)
-        )
+            # Browser
 
-        self.giornaliere_path_edit.textChanged.connect(self._save_settings)
-        self.giornaliere_path_edit.textChanged.connect(
-            lambda: self._validate_path(self.giornaliere_path_edit)
-        )
+            self.timeout_spin.valueChanged.connect(self._save_settings)
 
-        self.attivita_path_edit.textChanged.connect(self._save_settings)
-        self.attivita_path_edit.textChanged.connect(
-            lambda: self._validate_path(self.attivita_path_edit)
-        )
+            # Strumentale (Save on debounce to avoid lag)
 
-        self.certificati_path_edit.textChanged.connect(self._save_settings)
-        self.certificati_path_edit.textChanged.connect(
-            lambda: self._validate_path(self.certificati_path_edit)
-        )
+            self.contabilita_path_edit.textChanged.connect(self._debounce_save)
 
-        self.dataease_path_edit.textChanged.connect(self._save_settings)
-        self.dataease_path_edit.textChanged.connect(
-            lambda: self._validate_path(self.dataease_path_edit)
-        )
+            self.contabilita_path_edit.textChanged.connect(
+                lambda: self._validate_path(self.contabilita_path_edit)
+            )
 
-        self.auto_update_contabilita_check.stateChanged.connect(self._save_settings)
+            self.giornaliere_path_edit.textChanged.connect(self._debounce_save)
 
-        # Telegram
-        self.tg_token_edit.editingFinished.connect(self._save_settings)
-        self.gemini_api_key_edit.editingFinished.connect(self._save_settings)
+            self.giornaliere_path_edit.textChanged.connect(
+                lambda: self._validate_path(self.giornaliere_path_edit)
+            )
+
+            self.attivita_path_edit.textChanged.connect(self._debounce_save)
+
+            self.attivita_path_edit.textChanged.connect(
+                lambda: self._validate_path(self.attivita_path_edit)
+            )
+
+            self.certificati_path_edit.textChanged.connect(self._debounce_save)
+
+            self.certificati_path_edit.textChanged.connect(
+                lambda: self._validate_path(self.certificati_path_edit)
+            )
+
+            self.dataease_path_edit.textChanged.connect(self._debounce_save)
+
+            self.dataease_path_edit.textChanged.connect(
+                lambda: self._validate_path(self.dataease_path_edit)
+            )
+
+            self.auto_update_contabilita_check.stateChanged.connect(self._save_settings)
+
+            # Telegram - Debounce here too
+
+            self.tg_token_edit.textChanged.connect(self._debounce_save)
+
+            self.gemini_api_key_edit.textChanged.connect(self._debounce_save)
 
     def _on_change(self):
         """Metodo mantenuto per compatibilità, ora chiama il salvataggio diretto."""
@@ -1792,31 +1816,85 @@ class SettingsPanel(QWidget):
                 """
             )
 
+    def _debounce_save(self):
+        """Avvia il timer per il salvataggio ritardato."""
+        self.save_timer.start()
+
+    def _show_styled_message(self, title, message, icon_type="info"):
+        """Mostra un QMessageBox con lo stile dell'applicazione."""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+
+        if icon_type == "success":
+            msg_box.setIcon(QMessageBox.Icon.Information)
+        elif icon_type == "error":
+            msg_box.setIcon(QMessageBox.Icon.Critical)
+        else:
+            msg_box.setIcon(QMessageBox.Icon.Information)
+
+        # Stile coerente con ConfirmationDialog
+        msg_box.setStyleSheet(
+            """
+            QMessageBox {
+                background-color: white;
+                font-size: 15px;
+            }
+            QLabel {
+                color: #212529;
+                font-weight: 500;
+            }
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+                padding: 8px 20px;
+                min-width: 80px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+        """
+        )
+        msg_box.exec()
+
+    def _validate_all_paths(self):
+        """Esegue la validazione su tutti i campi percorso noti."""
+        widgets = [
+            self.contabilita_path_edit,
+            self.giornaliere_path_edit,
+            self.attivita_path_edit,
+            self.certificati_path_edit,
+            self.dataease_path_edit,
+        ]
+        for w in widgets:
+            self._validate_path(w)
+
+    def showEvent(self, event):
+        """Override dell'evento di visualizzazione per aggiornare le validazioni."""
+        super().showEvent(event)
+        self._validate_all_paths()
+
+    def _handle_test_result(self, success, title, message):
+        """Gestisce il risultato del worker di test connessione."""
+        self.test_tg_btn.setEnabled(True)
+        self.test_gemini_btn.setEnabled(True)
+
+        icon = "success" if success else "error"
+        self._show_styled_message(title, message, icon)
+
     def _test_telegram_connection(self):
         token = self.tg_token_edit.text().strip()
         if not token:
             QMessageBox.warning(self, "Errore", "Inserisci un token Telegram.")
             return
 
-        try:
-            url = f"https://api.telegram.org/bot{token}/getMe"
-            resp = requests.get(url, timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                if data.get("ok"):
-                    bot_name = data["result"]["first_name"]
-                    username = data["result"]["username"]
-                    QMessageBox.information(
-                        self, "Successo", f"Connesso a: {bot_name} (@{username})"
-                    )
-                else:
-                    QMessageBox.warning(
-                        self, "Errore API", f"Risposta negativa: {data}"
-                    )
-            else:
-                QMessageBox.warning(self, "Errore HTTP", f"Status: {resp.status_code}")
-        except Exception as e:
-            QMessageBox.critical(self, "Eccezione", f"Errore di connessione: {e}")
+        self.test_tg_btn.setEnabled(False)
+        self.worker = ConnectionTestWorker("telegram", token)
+        self.worker.result_ready.connect(self._handle_test_result)
+        self.worker.start()
 
     def _test_gemini_connection(self):
         key = self.gemini_api_key_edit.text().strip()
@@ -1824,22 +1902,10 @@ class SettingsPanel(QWidget):
             QMessageBox.warning(self, "Errore", "Inserisci una API Key Gemini.")
             return
 
-        try:
-            # Simple list models check
-            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
-            resp = requests.get(url, timeout=5)
-            if resp.status_code == 200:
-                QMessageBox.information(
-                    self, "Successo", "API Key valida! Connessione stabilita."
-                )
-            else:
-                QMessageBox.warning(
-                    self,
-                    "Errore",
-                    f"API Key non valida o errore server.\nStatus: {resp.status_code}",
-                )
-        except Exception as e:
-            QMessageBox.critical(self, "Eccezione", f"Errore di connessione: {e}")
+        self.test_gemini_btn.setEnabled(False)
+        self.worker = ConnectionTestWorker("gemini", key)
+        self.worker.result_ready.connect(self._handle_test_result)
+        self.worker.start()
 
     # --- Load & Save ---
     def _load_settings(self):
@@ -1982,6 +2048,45 @@ class SettingsPanel(QWidget):
 
         # Emetti segnale per aggiornare il resto dell'app
         self.settings_saved.emit()
+
+    def _connect_change_signals(self):
+        # Generale
+        self.headless_check.stateChanged.connect(self._save_settings)
+
+        # Browser
+        self.timeout_spin.valueChanged.connect(self._save_settings)
+
+        # Strumentale (Save on debounce to avoid lag)
+        self.contabilita_path_edit.textChanged.connect(self._debounce_save)
+        self.contabilita_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.contabilita_path_edit)
+        )
+
+        self.giornaliere_path_edit.textChanged.connect(self._debounce_save)
+        self.giornaliere_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.giornaliere_path_edit)
+        )
+
+        self.attivita_path_edit.textChanged.connect(self._debounce_save)
+        self.attivita_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.attivita_path_edit)
+        )
+
+        self.certificati_path_edit.textChanged.connect(self._debounce_save)
+        self.certificati_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.certificati_path_edit)
+        )
+
+        self.dataease_path_edit.textChanged.connect(self._debounce_save)
+        self.dataease_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.dataease_path_edit)
+        )
+
+        self.auto_update_contabilita_check.stateChanged.connect(self._save_settings)
+
+        # Telegram - Debounce here too
+        self.tg_token_edit.textChanged.connect(self._debounce_save)
+        self.gemini_api_key_edit.textChanged.connect(self._debounce_save)
 
     def _reset_settings(self):
         if self._has_unsaved_changes:
