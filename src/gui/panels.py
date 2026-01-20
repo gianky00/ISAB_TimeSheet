@@ -1571,6 +1571,44 @@ class RicercaPDLPanel(BaseBotPanel):
             download_path=config_manager.get_download_path(),
         )
 
+    def _on_start(self):
+        """Avvia il bot Ricerca PDL."""
+        super()._on_start()
+        username, password = self.get_credentials()
+
+        if not username or not password:
+            ToastManager.instance().show(
+                "Configura le credenziali SafeWork nelle Impostazioni.", "warning"
+            )
+            self._update_status("#C62828", "Credenziali mancanti")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            return
+
+        bot = self.get_bot_instance()
+        if not bot:
+            return
+
+        bot_data = {
+            "exclude_closed": self.exclude_closed_check.isChecked(),
+            "site_selection": self.site_combo.currentText(),
+        }
+
+        main_win = self.window()
+        tg_service = getattr(main_win, "telegram", None) if main_win else None
+
+        self.worker = BotWorker(bot, [bot_data], telegram_service=tg_service)
+        self.worker.log_signal.connect(self._on_log)
+        self.worker.status_signal.connect(self._on_status)
+        self.worker.finished_signal.connect(self._on_worker_finished)
+
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.log_widget.clear()
+        self.log_widget.append("Avvio Ricerca PDL SafeWork...")
+        self.worker.start()
+        self.bot_started.emit()
+
     def get_credentials(self) -> tuple:
         """Override: Recupera credenziali SafeWork."""
         # Prende il default da safework_accounts
