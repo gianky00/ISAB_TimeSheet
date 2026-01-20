@@ -7,8 +7,9 @@ Include gestione lista fornitori, tracking modifiche non salvate e statistiche.
 from datetime import datetime
 from pathlib import Path
 
+import requests
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -18,7 +19,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QGroupBox,
     QHBoxLayout,
-    QHeaderView,
     QInputDialog,
     QLabel,
     QLineEdit,
@@ -29,9 +29,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSpinBox,
-    QTableWidget,
-    QTableWidgetItem,
     QTabWidget,
+    QToolBox,
     QVBoxLayout,
     QWidget,
 )
@@ -40,356 +39,11 @@ from src.core import config_manager
 from src.core.backup_manager import BackupManager
 from src.core.constants import Icons
 from src.core.secrets_manager import SecretsManager
-from src.core.stats_manager import StatsManager
+from src.gui.dialogs.account_dialog import AccountDialog
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+from src.gui.widgets.statistics_widget import StatisticsWidget
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
-
-
-class AccountDialog(QDialog):
-    """Dialog per aggiungere/modificare un account."""
-
-    def __init__(self, parent=None, username="", password=""):
-        super().__init__(parent)
-        self.setWindowTitle("Account ISAB")
-        self.setFixedWidth(350)
-        self.setStyleSheet("font-size: 15px;")
-
-        layout = QFormLayout(self)
-
-        self.username_edit = QLineEdit(username)
-        self.username_edit.setMinimumHeight(35)
-        layout.addRow("Username:", self.username_edit)
-
-        self.password_edit = QLineEdit(password)
-        self.password_edit.setMinimumHeight(35)
-        self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-
-        # Password layout with toggle
-        pass_layout = QHBoxLayout()
-        pass_layout.setContentsMargins(0, 0, 0, 0)
-        pass_layout.setSpacing(5)
-
-        pass_layout.addWidget(self.password_edit)
-
-        self.toggle_pass_btn = QPushButton()
-        self.toggle_pass_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.EYE), "#000000")
-        )
-        self.toggle_pass_btn.setIconSize(QSize(20, 20))
-        self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
-        self.toggle_pass_btn.setFixedSize(35, 35)
-        self.toggle_pass_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.toggle_pass_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: white;
-                border: 1px solid black;
-                border-radius: 4px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #f8f9fa;
-            }
-        """
-        )
-        self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
-        pass_layout.addWidget(self.toggle_pass_btn)
-
-        layout.addRow("Password:", pass_layout)
-
-        btns = QHBoxLayout()
-        ok_btn = QPushButton("Salva")
-        ok_btn.setMinimumHeight(35)
-        ok_btn.clicked.connect(self.accept)
-        cancel_btn = QPushButton("Annulla")
-        cancel_btn.setMinimumHeight(35)
-        cancel_btn.clicked.connect(self.reject)
-        btns.addWidget(ok_btn)
-        btns.addWidget(cancel_btn)
-
-        layout.addRow(btns)
-
-    def _toggle_password_visibility(self):
-        if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:
-            self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.LOCK), "#000000")
-            )
-            self.toggle_pass_btn.setToolTip("Nascondi password")
-        else:
-            self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.EYE), "#000000")
-            )
-            self.toggle_pass_btn.setToolTip("Mostra password")
-
-    def get_data(self):
-        return self.username_edit.text(), self.password_edit.text()
-
-
-class ConfirmationDialog(QDialog):
-    """Dialog di conferma personalizzato con lo stesso layout di AccountDialog."""
-
-    def __init__(self, parent=None, title="Conferma", message="Sei sicuro?"):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setFixedWidth(350)
-        self.setStyleSheet("font-size: 15px; background-color: white;")
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(20)
-
-        # Messaggio
-        self.msg_label = QLabel(message)
-        self.msg_label.setWordWrap(True)
-        self.msg_label.setStyleSheet("color: #212529; font-weight: 500;")
-        layout.addWidget(self.msg_label)
-
-        # Pulsanti
-        btns = QHBoxLayout()
-        btns.setSpacing(10)
-
-        self.ok_btn = QPushButton("Elimina")
-        self.ok_btn.setMinimumHeight(40)
-        self.ok_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """
-        )
-        self.ok_btn.clicked.connect(self.accept)
-
-        self.cancel_btn = QPushButton("Annulla")
-        self.cancel_btn.setMinimumHeight(40)
-        self.cancel_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #f8f9fa;
-                color: #212529;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #e9ecef;
-            }
-        """
-        )
-        self.cancel_btn.clicked.connect(self.reject)
-
-        btns.addWidget(self.ok_btn)
-        btns.addWidget(self.cancel_btn)
-
-        layout.addLayout(btns)
-
-
-class StatisticsWidget(QWidget):
-    """Widget per visualizzare le statistiche di utilizzo."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._setup_ui()
-
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-
-        # Header
-        info = QLabel("Statistiche di Utilizzo Globale")
-        info.setStyleSheet("font-size: 20px; font-weight: bold; color: #212529;")
-        layout.addWidget(info)
-
-        # Summary Cards Container
-        self.cards_layout = QHBoxLayout()
-        self.cards_layout.setSpacing(15)
-        layout.addLayout(self.cards_layout)
-
-        # Table Title
-        table_title = QLabel("Dettaglio Attività")
-        table_title.setStyleSheet(
-            "font-size: 16px; font-weight: bold; margin-top: 10px; color: #495057;"
-        )
-        layout.addWidget(table_title)
-
-        # Table
-        self.table = QTableWidget()
-        self.table.verticalHeader().setVisible(False)
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(
-            ["Bot", "Esecuzioni", "Errori", "Ultima Esecuzione"]
-        )
-        self.table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
-        self.table.setStyleSheet(
-            """
-            QTableWidget {
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                background-color: white;
-                font-size: 14px;
-                selection-background-color: #0d6efd;
-                selection-color: white;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                padding: 12px;
-                border-bottom: 2px solid #dee2e6;
-                font-weight: bold;
-                color: #495057;
-            }
-            QTableWidget::item {
-                padding: 10px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            QTableWidget::item:selected {
-                background-color: #0d6efd;
-                color: white;
-            }
-        """
-        )
-        self.table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
-        self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        layout.addWidget(self.table)
-
-        # Refresh Button
-        refresh_btn = QPushButton("  Aggiorna Statistiche")
-        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.setFixedWidth(200)
-        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: white;
-                color: black;
-                border: 1px solid black;
-                border-radius: 6px;
-                padding: 10px 20px;
-                font-weight: bold;
-                font-size: 14px;
-            }
-            QPushButton:hover { background-color: #f0f0f0; }
-        """
-        )
-        refresh_btn.clicked.connect(self.refresh)
-        layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignRight)
-
-        self.refresh()
-
-    def _create_summary_card(self, title, value, color, icon_path=None):
-        card = QFrame()
-        card.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: white;
-                border: 1px solid #dee2e6;
-                border-left: 5px solid {color};
-                border-radius: 8px;
-            }}
-        """
-        )
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(20, 15, 20, 15)
-
-        title_layout = QHBoxLayout()
-        title_layout.setSpacing(8)
-
-        if icon_path:
-            icon_lbl = QLabel()
-            icon_lbl.setPixmap(
-                get_colored_icon(get_asset_path(icon_path), "#000000").pixmap(16, 16)
-            )
-            title_layout.addWidget(icon_lbl)
-
-        lbl_title = QLabel(title)
-        lbl_title.setStyleSheet(
-            "color: #6c757d; font-size: 13px; font-weight: bold; border: none;"
-        )
-        title_layout.addWidget(lbl_title)
-        title_layout.addStretch()
-        layout.addLayout(title_layout)
-
-        lbl_val = QLabel(str(value))
-        lbl_val.setStyleSheet(
-            f"color: {color}; font-size: 28px; font-weight: 800; border: none;"
-        )
-        layout.addWidget(lbl_val)
-
-        return card
-
-    def refresh(self):
-        """Ricarica le statistiche."""
-        stats = StatsManager().get_all_stats()
-        self._refresh_summary_cards(stats)
-        self._refresh_stats_table(stats)
-
-    def _refresh_summary_cards(self, stats: dict):
-        """Aggiorna le card di riepilogo in alto."""
-        while self.cards_layout.count():
-            item = self.cards_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        total_runs = sum(d.get("runs", 0) for d in stats.values())
-        total_errors = sum(d.get("errors", 0) for d in stats.values())
-
-        self.cards_layout.addWidget(
-            self._create_summary_card(
-                "Esecuzioni Totali", total_runs, "#0d6efd", Icons.ROCKET
-            )
-        )
-        self.cards_layout.addWidget(
-            self._create_summary_card(
-                "Errori Totali", total_errors, "#dc3545", Icons.X_CIRCLE
-            )
-        )
-
-    def _refresh_stats_table(self, stats: dict):
-        """Aggiorna la tabella di dettaglio attività."""
-        self.table.setRowCount(0)
-        bot_names = {
-            "timbrature": "Timbrature",
-            "scarico_ts": "Scarico TS",
-            "carico_ts": "Carico TS",
-            "dettagli_oda": "Dettagli OdA",
-        }
-
-        for bot_id in sorted(stats.keys()):
-            data = stats[bot_id]
-            row = self.table.rowCount()
-            self.table.insertRow(row)
-
-            name = bot_names.get(bot_id, bot_id.capitalize())
-            runs, errors = data.get("runs", 0), data.get("errors", 0)
-            last_run = data.get("last_run", "")
-
-            # Formattazione data
-            last_run_display = "Mai"
-            if last_run:
-                try:
-                    dt = datetime.fromisoformat(last_run)
-                    last_run_display = dt.strftime("%d/%m/%Y %H:%M")
-                except Exception:
-                    last_run_display = last_run
-
-            self.table.setItem(row, 0, QTableWidgetItem(name))
-            self.table.setItem(row, 1, QTableWidgetItem(str(runs)))
-
-            err_item = QTableWidgetItem(str(errors))
-            if errors > 0:
-                err_item.setForeground(Qt.GlobalColor.red)
-                err_item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-            self.table.setItem(row, 2, err_item)
-            self.table.setItem(row, 3, QTableWidgetItem(last_run_display))
 
 
 class SettingsPanel(QWidget):
@@ -431,21 +85,38 @@ class SettingsPanel(QWidget):
         config_layout = QVBoxLayout(config_tab)
         config_layout.setContentsMargins(0, 10, 0, 0)  # Top Spacing
 
-        # Scroll area per il contenuto config
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        # Toolbox (Accordion)
+        self.toolbox = QToolBox()
+        self.toolbox.setStyleSheet(
+            """
+            QToolBox::tab {
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 5px;
+                color: #495057;
+                font-weight: bold;
+                padding: 5px 15px;
+                min-height: 45px;
+            }
+            QToolBox::tab:selected {
+                background: #e7f1ff;
+                color: #0d6efd;
+                border-color: #0d6efd;
+            }
+        """
+        )
 
-        self.scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(self.scroll_content)
-        scroll_layout.setSpacing(20)
+        # --- PAGE 1: Generale & Browser ---
+        page_general = QWidget()
+        vbox_general = QVBoxLayout(page_general)
+        vbox_general.setSpacing(20)
 
-        # --- Sezione Generale (Top Level) ---
+        # Generale Group
         general_group = self._create_group_box("Generale")
         general_layout = QVBoxLayout(general_group)
         self.groups.append(general_group)
 
-        self.headless_check = QCheckBox("Esegui in modalità Headless (Nascosta)")
+        self.headless_check = QCheckBox("Nascondi browser dei bot")
         self.headless_check.setToolTip(
             "Se attivato, il browser verrà eseguito in background senza mostrare la finestra."
         )
@@ -453,10 +124,44 @@ class SettingsPanel(QWidget):
             "QCheckBox { padding: 5px; font-size: 15px; font-weight: bold; color: #d63384; }"
         )
         general_layout.addWidget(self.headless_check)
+        vbox_general.addWidget(general_group)
 
-        scroll_layout.addWidget(general_group)
+        # Browser Group
+        browser_group = self._create_group_box("Impostazioni Browser")
+        browser_layout = QVBoxLayout(browser_group)
+        self.groups.append(browser_group)
 
-        # --- CONTAINER ORIZZONTALE PER LISTE ---
+        timeout_layout = QHBoxLayout()
+        timeout_label = QLabel("Timeout (secondi):")
+        timeout_label.setStyleSheet("font-size: 15px;")
+        timeout_layout.addWidget(timeout_label)
+
+        self.timeout_spin = QSpinBox()
+        self.timeout_spin.setRange(10, 120)
+        self.timeout_spin.setValue(30)
+        self.timeout_spin.setMinimumHeight(40)
+        self.timeout_spin.setMinimumWidth(100)
+        self._style_input(self.timeout_spin)
+        timeout_layout.addWidget(self.timeout_spin)
+        timeout_layout.addStretch()
+        browser_layout.addLayout(timeout_layout)
+        vbox_general.addWidget(browser_group)
+
+        vbox_general.addStretch()
+        self.toolbox.addItem(page_general, "Generale & Browser")
+
+        # --- PAGE 2: Liste Dati ---
+        # Usiamo una scroll area interna per le liste perché occupano spazio
+        page_lists = QWidget()
+        vbox_lists = QVBoxLayout(page_lists)
+        scroll_lists = QScrollArea()
+        scroll_lists.setWidgetResizable(True)
+        scroll_lists.setFrameShape(QFrame.Shape.NoFrame)
+        lists_content = QWidget()
+        vbox_lists_content = QVBoxLayout(lists_content)
+        vbox_lists_content.setSpacing(20)
+
+        # CONTAINER ORIZZONTALE 1 (Account)
         lists_container = QHBoxLayout()
         lists_container.setSpacing(15)
 
@@ -555,6 +260,11 @@ class SettingsPanel(QWidget):
         sw_account_layout.addLayout(sw_acc_btns)
 
         lists_container.addWidget(sw_account_group)
+        vbox_lists_content.addLayout(lists_container)
+
+        # CONTAINER ORIZZONTALE 2 (Contratti e Fornitori)
+        lists_container_2 = QHBoxLayout()
+        lists_container_2.setSpacing(15)
 
         # 2. Sezione Contratti
         contract_group = self._create_group_box("Contratti")
@@ -606,7 +316,7 @@ class SettingsPanel(QWidget):
         contract_btns.addStretch()
         contract_layout.addLayout(contract_btns)
 
-        lists_container.addWidget(contract_group)
+        lists_container_2.addWidget(contract_group)
 
         # 3. Sezione Fornitori
         fornitori_group = self._create_group_box("Fornitori")
@@ -652,11 +362,10 @@ class SettingsPanel(QWidget):
         fornitori_btn_layout.addStretch()
         fornitori_layout.addLayout(fornitori_btn_layout)
 
-        lists_container.addWidget(fornitori_group)
+        lists_container_2.addWidget(fornitori_group)
+        vbox_lists_content.addLayout(lists_container_2)
 
-        scroll_layout.addLayout(lists_container)
-
-        # --- CONTAINER ORIZZONTALE PER LISTE TIMBRATURE ---
+        # CONTAINER ORIZZONTALE 3 (Reparti e Cantieri)
         timbrature_lists_container = QHBoxLayout()
         timbrature_lists_container.setSpacing(15)
 
@@ -751,8 +460,16 @@ class SettingsPanel(QWidget):
         cantieri_layout.addLayout(cantieri_btn_layout)
 
         timbrature_lists_container.addWidget(cantieri_group)
+        vbox_lists_content.addLayout(timbrature_lists_container)
 
-        scroll_layout.addLayout(timbrature_lists_container)
+        vbox_lists_content.addStretch()
+        scroll_lists.setWidget(lists_content)
+        vbox_lists.addWidget(scroll_lists)
+        self.toolbox.addItem(page_lists, "Gestione Liste Dati")
+
+        # --- PAGE 3: Percorsi File ---
+        page_paths = QWidget()
+        vbox_paths = QVBoxLayout(page_paths)
 
         # --- Sezione Strumentale ---
         contabilita_group = self._create_group_box("Strumentale")
@@ -876,7 +593,7 @@ class SettingsPanel(QWidget):
         certificati_path_layout.addWidget(self.browse_certificati_btn)
         contabilita_layout.addLayout(certificati_path_layout)
 
-        scroll_layout.addWidget(contabilita_group)
+        vbox_paths.addWidget(contabilita_group)
 
         # --- Sezione Scarico Ore Cantiere (DataEase) ---
         dataease_group = self._create_group_box("Scarico Ore Cantiere (DataEase)")
@@ -908,27 +625,13 @@ class SettingsPanel(QWidget):
         dataease_path_layout.addWidget(self.browse_dataease_btn)
         dataease_layout.addLayout(dataease_path_layout)
 
-        scroll_layout.addWidget(dataease_group)
+        vbox_paths.addWidget(dataease_group)
+        vbox_paths.addStretch()
+        self.toolbox.addItem(page_paths, "Percorsi File & Integrazioni")
 
-        # --- Sezione Browser ---
-        browser_group = self._create_group_box("Impostazioni Browser")
-        browser_layout = QVBoxLayout(browser_group)
-        self.groups.append(browser_group)
-
-        timeout_layout = QHBoxLayout()
-        timeout_label = QLabel("Timeout (secondi):")
-        timeout_label.setStyleSheet("font-size: 15px;")
-        timeout_layout.addWidget(timeout_label)
-
-        self.timeout_spin = QSpinBox()
-        self.timeout_spin.setRange(10, 120)
-        self.timeout_spin.setValue(30)
-        self.timeout_spin.setMinimumHeight(40)
-        self.timeout_spin.setMinimumWidth(100)
-        self._style_input(self.timeout_spin)
-        timeout_layout.addWidget(self.timeout_spin)
-        timeout_layout.addStretch()
-        browser_layout.addLayout(timeout_layout)
+        # --- PAGE 4: Diagnostica ---
+        page_diag = QWidget()
+        vbox_diag = QVBoxLayout(page_diag)
 
         # --- Sezione Diagnostica ---
         diag_group = self._create_group_box("Diagnostica & Licenza")
@@ -950,11 +653,11 @@ class SettingsPanel(QWidget):
         self._style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)
 
-        scroll_layout.addWidget(diag_group)
+        vbox_diag.addWidget(diag_group)
+        vbox_diag.addStretch()
+        self.toolbox.addItem(page_diag, "Diagnostica")
 
-        scroll_layout.addStretch()
-        self.scroll.setWidget(self.scroll_content)
-        config_layout.addWidget(self.scroll)
+        config_layout.addWidget(self.toolbox)
 
         # --- Pulsanti azione (Config Tab) - NASCOSTI (Salvataggio Automatico) ---
         self.action_container = QWidget()
@@ -1067,6 +770,7 @@ class SettingsPanel(QWidget):
         gl = QFormLayout(group)
         gl.setSpacing(15)
 
+        # Telegram Token Row with Test Button
         self.tg_token_edit = QLineEdit()
         self.tg_token_edit.setPlaceholderText(
             "Inserisci il Token fornito da @BotFather"
@@ -1075,7 +779,18 @@ class SettingsPanel(QWidget):
         self.tg_token_edit.setMinimumHeight(40)
         self.tg_token_edit.textChanged.connect(self._on_change)
         self._style_input(self.tg_token_edit)
-        gl.addRow("API Token:", self.tg_token_edit)
+
+        tg_token_layout = QHBoxLayout()
+        tg_token_layout.addWidget(self.tg_token_edit)
+
+        self.test_tg_btn = QPushButton("Test")
+        self.test_tg_btn.setToolTip("Verifica connessione Telegram")
+        self.test_tg_btn.setFixedSize(60, 40)
+        self.test_tg_btn.clicked.connect(self._test_telegram_connection)
+        self._style_button(self.test_tg_btn)
+        tg_token_layout.addWidget(self.test_tg_btn)
+
+        gl.addRow("API Token:", tg_token_layout)
 
         self.tg_chat_id_edit = QLineEdit()
         self.tg_chat_id_edit.setPlaceholderText("In attesa del primo messaggio...")
@@ -1133,6 +848,13 @@ class SettingsPanel(QWidget):
             "background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;"
         )
         gemini_layout.addWidget(self.gemini_toggle_btn)
+
+        self.test_gemini_btn = QPushButton("Test")
+        self.test_gemini_btn.setToolTip("Verifica connessione Gemini")
+        self.test_gemini_btn.setFixedSize(60, 40)
+        self.test_gemini_btn.clicked.connect(self._test_gemini_connection)
+        self._style_button(self.test_gemini_btn)
+        gemini_layout.addWidget(self.test_gemini_btn)
 
         gl.addRow("Gemini API Key:", gemini_layout)
 
@@ -1526,11 +1248,31 @@ class SettingsPanel(QWidget):
 
         # Strumentale (Save on editing finished to avoid spamming disk)
         self.contabilita_path_edit.textChanged.connect(self._save_settings)
+        self.contabilita_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.contabilita_path_edit)
+        )
+
         self.giornaliere_path_edit.textChanged.connect(self._save_settings)
+        self.giornaliere_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.giornaliere_path_edit)
+        )
+
         self.attivita_path_edit.textChanged.connect(self._save_settings)
+        self.attivita_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.attivita_path_edit)
+        )
+
         self.certificati_path_edit.textChanged.connect(self._save_settings)
-        self.auto_update_contabilita_check.stateChanged.connect(self._save_settings)
+        self.certificati_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.certificati_path_edit)
+        )
+
         self.dataease_path_edit.textChanged.connect(self._save_settings)
+        self.dataease_path_edit.textChanged.connect(
+            lambda: self._validate_path(self.dataease_path_edit)
+        )
+
+        self.auto_update_contabilita_check.stateChanged.connect(self._save_settings)
 
         # Telegram
         self.tg_token_edit.editingFinished.connect(self._save_settings)
@@ -2017,6 +1759,88 @@ class SettingsPanel(QWidget):
                 self.cantieri_list.takeItem(row)
                 self._save_settings()
 
+    def _validate_path(self, line_edit):
+        """Cambia il bordo in base all'esistenza del file/cartella."""
+        path_str = line_edit.text().strip()
+        if not path_str:
+            self._style_input(line_edit)
+            return
+
+        path = Path(path_str)
+        if path.exists():
+            line_edit.setStyleSheet(
+                """
+                QLineEdit {
+                    border: 2px solid #28a745;
+                    border-radius: 4px;
+                    padding: 10px;
+                    font-size: 15px;
+                    background-color: #f0fff4;
+                }
+                """
+            )
+        else:
+            line_edit.setStyleSheet(
+                """
+                QLineEdit {
+                    border: 2px solid #dc3545;
+                    border-radius: 4px;
+                    padding: 10px;
+                    font-size: 15px;
+                    background-color: #fff5f5;
+                }
+                """
+            )
+
+    def _test_telegram_connection(self):
+        token = self.tg_token_edit.text().strip()
+        if not token:
+            QMessageBox.warning(self, "Errore", "Inserisci un token Telegram.")
+            return
+
+        try:
+            url = f"https://api.telegram.org/bot{token}/getMe"
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("ok"):
+                    bot_name = data["result"]["first_name"]
+                    username = data["result"]["username"]
+                    QMessageBox.information(
+                        self, "Successo", f"Connesso a: {bot_name} (@{username})"
+                    )
+                else:
+                    QMessageBox.warning(
+                        self, "Errore API", f"Risposta negativa: {data}"
+                    )
+            else:
+                QMessageBox.warning(self, "Errore HTTP", f"Status: {resp.status_code}")
+        except Exception as e:
+            QMessageBox.critical(self, "Eccezione", f"Errore di connessione: {e}")
+
+    def _test_gemini_connection(self):
+        key = self.gemini_api_key_edit.text().strip()
+        if not key:
+            QMessageBox.warning(self, "Errore", "Inserisci una API Key Gemini.")
+            return
+
+        try:
+            # Simple list models check
+            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                QMessageBox.information(
+                    self, "Successo", "API Key valida! Connessione stabilita."
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Errore",
+                    f"API Key non valida o errore server.\nStatus: {resp.status_code}",
+                )
+        except Exception as e:
+            QMessageBox.critical(self, "Eccezione", f"Errore di connessione: {e}")
+
     # --- Load & Save ---
     def _load_settings(self):
         config = config_manager.load_config()
@@ -2032,10 +1856,19 @@ class SettingsPanel(QWidget):
 
         # Contabilita
         self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
+        self._validate_path(self.contabilita_path_edit)
+
         self.giornaliere_path_edit.setText(config.get("giornaliere_path", ""))
+        self._validate_path(self.giornaliere_path_edit)
+
         self.attivita_path_edit.setText(config.get("attivita_programmate_path", ""))
+        self._validate_path(self.attivita_path_edit)
+
         self.certificati_path_edit.setText(config.get("certificati_campione_path", ""))
-        self.dataease_path_edit.setText(config.get("dataease_path", ""))  # New
+        self._validate_path(self.certificati_path_edit)
+
+        self.dataease_path_edit.setText(config.get("dataease_path", ""))
+        self._validate_path(self.dataease_path_edit)
         self.auto_update_contabilita_check.setChecked(
             config.get("enable_auto_update_contabilita", True)
         )
