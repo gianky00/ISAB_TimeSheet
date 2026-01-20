@@ -20,6 +20,7 @@ class NotificationManager(QObject):
     notification_added = pyqtSignal(dict)
     notifications_updated = pyqtSignal()
     unread_count_changed = pyqtSignal(int)
+    request_toast = pyqtSignal(str, str, int)  # messaggio, tipo, durata
 
     @classmethod
     def instance(cls):
@@ -84,49 +85,58 @@ class NotificationManager(QObject):
         metadata: Optional[dict] = None,
         actions: Optional[list] = None,
         related_id: Optional[str] = None,
+        show_toast: bool = False,
     ):
         """
         Aggiunge una nuova notifica con schema esteso.
-
-        Args:
-            title: Titolo notifica
-            message: Messaggio dettagliato
-            level: info, success, warning, error
-            category: bot, system, user, database, api
-            priority: low, medium, high
-            source: Sorgente notifica (es. "Bot Scarico TS")
-            tags: Lista di tag personalizzati
-            metadata: Metadati aggiuntivi
-            actions: Lista di action buttons [{label, key, variant, icon}]
-            related_id: ID di entità correlata (es. audit log ID)
         """
-        notification = {
-            "id": str(uuid.uuid4()),
+        id_notif = str(uuid.uuid4())
+        notif = {
+            "id": id_notif,
             "title": title,
             "message": message,
             "level": level,
-            "timestamp": datetime.now().isoformat(),
-            "read": False,
-            # Nuovi campi
             "category": category,
             "priority": priority,
             "source": source,
+            "timestamp": datetime.now().isoformat(),
+            "read": False,
+            "archived": False,
             "pinned": False,
             "snoozed_until": None,
-            "archived": False,
             "tags": tags or [],
             "metadata": metadata or {},
             "actions": actions or [],
             "related_id": related_id,
         }
 
-        self.notifications.insert(0, notification)
+        self.notifications.insert(0, notif)
         self._save_notifications()
 
-        # Emetti segnali
-        self.notification_added.emit(notification)
+        # Emissione segnali
+        self.notification_added.emit(notif)
         self.notifications_updated.emit()
         self.unread_count_changed.emit(self.get_unread_count())
+
+        # Se richiesto, richiede la visualizzazione del toast tramite segnale
+        if show_toast:
+            # Determinazione durata basata sul livello (Enterprise standards)
+            duration_map = {
+                "success": 2000,
+                "warning": 10000,
+                "error": 10000,
+                "info": 3000,
+            }
+            duration = duration_map.get(level, 3000)
+
+            # Puliamo il messaggio per il toast (niente HTML pesante)
+            clean_msg = (
+                message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
+            )
+            if len(clean_msg) > 120:
+                clean_msg = clean_msg[:117] + "..."
+
+            self.request_toast.emit(f"{title}: {clean_msg}", level, duration)
 
     def get_notifications(self, filter_unread: bool = False) -> list:
         """Restituisce la lista delle notifiche."""
