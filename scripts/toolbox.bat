@@ -1,40 +1,50 @@
 @echo off
 setlocal enabledelayedexpansion
-title SyncroJob - Master Developer Toolbox
+title SyncroJob - Master Developer Toolbox (Enterprise Edition)
 cd /d "%~dp0"
 cd ..
 
 :menu
 cls
 echo ============================================================
-echo 🚀 SYNCROJOB - MASTER DEVELOPER TOOLBOX
+echo 🚀 SYNCROJOB - MASTER DEVELOPER TOOLBOX (ENTERPRISE)
 echo ============================================================
 echo.
 echo [ QUALITY ^& INTEGRITY ]
-echo  1. FULL CHECK (Qualita, Sicurezza, Test, Hook) - Pre-commit
-echo  2. FAST CHECK (Qualita ^& Sicurezza senza Test)
-echo  3. ONLY TESTS (Esecuzione completa suite di test)
-echo  4. FIX STYLE  (Correzione automatica Ruff)
+echo  1. FULL CHECK (Qualita, Sicurezza, Deps, Test) - Rich UI
+echo  2. FAST CHECK (Senza Test) - Rapido per commit
+echo  3. ONLY TESTS (Pytest Suite)
+echo  4. FIX STYLE  (Auto-fix Ruff)
 echo.
-echo [ DEPLOYMENT ^& RELEASE ]
-echo  5. RELEASE    (Auto-bump, Icons, Build ^& Tags)
-echo  6. DEPLOY     (Release ^& Deploy to Netlify)
+echo [ DEEP TESTING ^& ARCHITECTURE ]
+echo  5. MUTATION TEST (Mutmut - Lento ma profondo)
+echo  6. COVERAGE HTML (Report Copertura)
+echo  7. GEN DIAGRAM   (Genera schema architettura PNG)
 echo.
-echo [ BOT DEVELOPMENT ]
-echo  7. INSPECTOR  (Universal Inspector - Web Analysis UI)
-echo  8. SECRETS    (Gestione API Keys ^& Secrets GUI)
-echo  9. PROFILING  (Analisi performance con Scalene)
+echo [ DOCUMENTATION ]
+echo  8. BUILD DOCS    (MkDocs - Genera sito statico)
+echo  9. SERVE DOCS    (MkDocs - Anteprima live)
+echo.
+echo [ VERSIONING ^& DEPLOY ]
+echo 10. COMMIT WIZARD (Commitizen - Guida al commit standard)
+echo 11. BUMP VERSION  (Commitizen - Auto-incremento versione)
+echo 12. RELEASE       (Legacy Release script)
+echo 13. DEPLOY        (Release ^& Deploy to Netlify)
+echo.
+echo [ TOOLS ]
+echo 14. INSPECTOR     (Universal Inspector)
+echo 15. SECRETS       (Secrets Manager)
+echo 16. PROFILING     (Scalene Performance)
 echo.
 echo [ SYSTEM ]
-echo 10. RUN APP    (Avvio applicazione in modalita Dev)
-echo 11. CLEAN      (Pulizia ambiente virtuale ^& cache)
-echo 12. SUPER AUDIT (Branch - Quality - Version - Merge)
+echo 17. RUN APP       (Dev Mode - Icecream enabled)
+echo 18. CLEAN         (Pulizia cache)
 echo.
 echo [q] ESCI
 echo.
 echo ============================================================
 
-set /p choice="Scegli un'operazione (1-12): "
+set /p choice="Scegli (1-18): "
 
 set VENV_PYTHON=.venv\Scripts\python.exe
 set VENV_BIN=.venv\Scripts
@@ -46,82 +56,115 @@ if not exist !VENV_PYTHON! (
 )
 
 if "%choice%"=="1" (
-    echo [EXEC] Full Pre-flight Check...
     !VENV_PYTHON! admin/pre_flight_check.py
     pause
     goto menu
 )
 
 if "%choice%"=="2" (
-    echo [EXEC] Fast Quality Check...
     !VENV_PYTHON! admin/pre_flight_check.py --fast
     pause
     goto menu
 )
 
 if "%choice%"=="3" (
-    echo [EXEC] Running Test Suite...
     !VENV_PYTHON! admin/pre_flight_check.py --test-only
     pause
     goto menu
 )
 
 if "%choice%"=="4" (
-    echo [EXEC] Fixing style and formatting...
     !VENV_PYTHON! admin/pre_flight_check.py --fix --fast
     pause
     goto menu
 )
 
 if "%choice%"=="5" (
-    echo [EXEC] Starting Automated Release...
-    !VENV_PYTHON! admin/release.py auto
+    echo [EXEC] Running Mutation Testing...
+    !VENV_BIN!\mutmut run
+    !VENV_BIN!\mutmut results
     pause
     goto menu
 )
 
 if "%choice%"=="6" (
-    echo [EXEC] Starting Release with Cloud Deploy...
-    !VENV_PYTHON! admin/release.py auto --deploy
+    echo [EXEC] Generating Coverage Report...
+    !VENV_BIN!\pytest --cov=src --cov-report=html
+    start htmlcov/index.html
     pause
     goto menu
 )
 
 if "%choice%"=="7" (
-    echo [EXEC] Opening Universal Inspector...
-    !VENV_PYTHON! admin/universal_inspector.py
-    goto menu
-)
-
-if "%choice%"=="8" (
-    echo [EXEC] Opening Secrets Manager...
-    !VENV_PYTHON! admin/manage_secrets_gui.py
-    goto menu
-)
-
-if "%choice%"=="9" (
-    echo [EXEC] Starting Profiling...
-    !VENV_BIN!\scalene.exe run --html --output profiling_report.html main.py
+    echo [EXEC] Generating Architecture Diagram...
+    !VENV_PYTHON! docs/generate_architecture.py
     pause
     goto menu
 )
 
+if "%choice%"=="8" (
+    echo [EXEC] Building Documentation...
+    !VENV_BIN!\mkdocs build
+    echo Docs generate in 'site/'
+    pause
+    goto menu
+)
+
+if "%choice%"=="9" (
+    echo [EXEC] Serving Documentation at http://127.0.0.1:8000
+    !VENV_BIN!\mkdocs serve
+    goto menu
+)
+
 if "%choice%"=="10" (
-    echo [EXEC] Launching Application...
-    !VENV_PYTHON! main.py
+    echo [INFO] Premi CTRL+F per interagire con il terminale se necessario.
+    !VENV_BIN!\cz commit
+    pause
     goto menu
 )
 
 if "%choice%"=="11" (
-    echo [EXEC] Cleaning environment...
-    !VENV_PYTHON! admin/clean_venv.py
+    echo [EXEC] Auto-bumping version and generating changelog...
+    !VENV_BIN!\cz bump --changelog
     pause
     goto menu
 )
 
 if "%choice%"=="12" (
-    echo [EXEC] Starting Super Audit Lifecycle...
-    !VENV_PYTHON! admin/pre_flight_check.py --super-audit
+    !VENV_PYTHON! admin/release.py auto
+    pause
+    goto menu
+)
+
+if "%choice%"=="13" (
+    !VENV_PYTHON! admin/release.py auto --deploy
+    pause
+    goto menu
+)
+
+if "%choice%"=="14" (
+    !VENV_PYTHON! admin/universal_inspector.py
+    goto menu
+)
+
+if "%choice%"=="15" (
+    !VENV_PYTHON! admin/manage_secrets_gui.py
+    goto menu
+)
+
+if "%choice%"=="16" (
+    !VENV_BIN!\scalene.exe run --html --output profiling_report.html main.py
+    pause
+    goto menu
+)
+
+if "%choice%"=="17" (
+    !VENV_PYTHON! main.py
+    goto menu
+)
+
+if "%choice%"=="18" (
+    !VENV_PYTHON! admin/clean_venv.py
     pause
     goto menu
 )

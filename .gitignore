@@ -30,3 +30,6 @@ test_cache.pkl
 .test_session_state.json
 *.pkl
 claude/risolvere footer.json
+site/
+profiling_report.html
+architecture.png

@@ -58,6 +58,13 @@ xenon = "^0.9.3"
 deptry = "^0.24.0"
 codespell = "^2.4.1"
 interrogate = "^1.7.0"
+pip-audit = "^2.10.0"
+rich = "^14.2.0"
+mkdocs-material = "^9.7.1"
+mkdocstrings = {extras = ["python"], version = "^1.0.1"}
+commitizen = "^4.12.0"
+icecream = "^2.1.9"
+diagrams = "^0.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -111,3 +118,12 @@ color = true
 [tool.bandit]
 skips = ["B608"]
 exclude = ["src/bots/safework/pdl/search_bot.py"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "1.5.0"
+tag_format = "v$version"
+version_files = [
+    "src/core/version.py:__version__",
+    "pyproject.toml:version"
+]
