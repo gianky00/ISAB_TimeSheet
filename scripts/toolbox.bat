@@ -38,16 +38,19 @@ echo 16. PROFILING     (Scalene Performance)
 echo 17. DB MAINTAIN   (SQLite Vacuum & Check)
 echo 18. RAW METRICS   (Radon CC & MI)
 echo 19. CLEAN CODE    (Eradicate - Remove commented code)
+echo 20. SECURITY AUDIT(Pip-audit - Vulnerability scan)
+echo 21. MODERNIZE CODE(Refurb - Modern Python suggestions)
+echo 22. PROJECT STATS (Pygount - Lines of code & stats)
 echo.
 echo [ SYSTEM ]
-echo 20. RUN APP       (Dev Mode - Icecream enabled)
-echo 21. CLEAN         (Pulizia cache)
+echo 23. RUN APP       (Dev Mode - Icecream enabled)
+echo 24. CLEAN         (Pulizia cache)
 echo.
 echo [q] ESCI
 echo.
 echo ============================================================
 
-set /p choice="Scegli (1-21): "
+set /p choice="Scegli (1-24): "
 
 set VENV_PYTHON=.venv\Scripts\python.exe
 set VENV_BIN=.venv\Scripts
@@ -187,11 +190,32 @@ if "%choice%"=="19" (
 )
 
 if "%choice%"=="20" (
-    !VENV_PYTHON! main.py
+    echo [EXEC] Pip-audit - Scanning for vulnerabilities...
+    !VENV_BIN!\pip-audit
+    pause
     goto menu
 )
 
 if "%choice%"=="21" (
+    echo [EXEC] Refurb - Suggesting modern improvements...
+    !VENV_BIN!\refurb src
+    pause
+    goto menu
+)
+
+if "%choice%"=="22" (
+    echo [EXEC] Pygount - Project Statistics...
+    !VENV_BIN!\pygount --suffix=py --format=summary src
+    pause
+    goto menu
+)
+
+if "%choice%"=="23" (
+    !VENV_PYTHON! main.py
+    goto menu
+)
+
+if "%choice%"=="24" (
     !VENV_PYTHON! admin/clean_venv.py
     pause
     goto menu
