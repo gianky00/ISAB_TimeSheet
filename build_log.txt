@@ -1,0 +1,839 @@
+============================================================
+  SYNCROJOB BUILD SCRIPT - v1.5.0
+============================================================
+[BUILD] Cleaning previous builds...
+  Error removing C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\dist: [WinError 5] Accesso negato: 'C:\\Users\\Coemi\\Desktop\\SCRIPT\\ISAB_TimeSheet\\dist\\SyncroJob\\_internal\\bcrypt\\_bcrypt.pyd'
+  Removed: C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build
+[BUILD] Running PyArmor obfuscation...
+
+[EXEC] C:\Program Files\Python312\python.exe -m pyarmor.cli gen --output C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf --recursive C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\src C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\main.py
+INFO     Python 3.12.10
+INFO     Pyarmor 9.2.0 (basic), 009329, licenza_armor_basic
+INFO     Platform windows.x86_64
+INFO     search inputs ...
+INFO     find package at C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\src
+INFO     find script C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\main.py
+INFO     find 2 top resources
+INFO     start to generate runtime files
+INFO     target platforms {'windows.amd64'}
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\pyarmor_runtime_009329\pyarmor_runtime.pyd
+INFO     generate runtime files OK
+INFO     start to obfuscate scripts
+INFO     process resource "src"
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\__init__.py
+INFO     obfuscating file base_bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\base\base_bot.py
+INFO     obfuscating file login_page.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\base\login_page.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\base\__init__.py
+INFO     obfuscating file bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\carico_ts\bot.py
+INFO     obfuscating file locators.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\carico_ts\locators.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\carico_ts\__init__.py
+INFO     obfuscating file carico_ts_page.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\carico_ts\pages\carico_ts_page.py
+INFO     obfuscating file locators.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\common\locators.py
+INFO     obfuscating file bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\dettagli_oda\bot.py
+INFO     obfuscating file locators.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\dettagli_oda\locators.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\dettagli_oda\__init__.py
+INFO     obfuscating file dettagli_oda_page.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\dettagli_oda\pages\dettagli_oda_page.py
+INFO     obfuscating file bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\prenota_bp\bot.py
+INFO     obfuscating file locators.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\prenota_bp\locators.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\prenota_bp\__init__.py
+INFO     obfuscating file prenota_bp_page.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\prenota_bp\pages\prenota_bp_page.py
+INFO     obfuscating file bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\scarico_ts\bot.py
+INFO     obfuscating file locators.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\scarico_ts\locators.py
+INFO     obfuscating file scarico_ts_bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\scarico_ts\scarico_ts_bot.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\scarico_ts\__init__.py
+INFO     obfuscating file scarico_ts_page.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\scarico_ts\pages\scarico_ts_page.py
+INFO     obfuscating file bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\timbrature\bot.py
+INFO     obfuscating file locators.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\timbrature\locators.py
+INFO     obfuscating file storage.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\timbrature\storage.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\timbrature\__init__.py
+INFO     obfuscating file timbrature_page.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\portale_fornitori\timbrature\pages\timbrature_page.py
+INFO     obfuscating file base.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\safework\base.py
+INFO     obfuscating file bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\safework\pdl\bot.py
+INFO     obfuscating file search_bot.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\safework\pdl\search_bot.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\bots\safework\pdl\__init__.py
+INFO     obfuscating file app_initializer.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\app_initializer.py
+INFO     obfuscating file app_updater.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\app_updater.py
+INFO     obfuscating file audit_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\audit_manager.py
+INFO     obfuscating file auth_monitor.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\auth_monitor.py
+INFO     obfuscating file backup_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\backup_manager.py
+INFO     obfuscating file config_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\config_manager.py
+INFO     obfuscating file constants.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\constants.py
+INFO     obfuscating file contabilita_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\contabilita_manager.py
+INFO     obfuscating file contabilita_queries.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\contabilita_queries.py
+INFO     obfuscating file contabilita_search.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\contabilita_search.py
+INFO     obfuscating file contabilita_stats.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\contabilita_stats.py
+INFO     obfuscating file contabilita_worker.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\contabilita_worker.py
+INFO     obfuscating file database.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\database.py
+INFO     obfuscating file data_synchronizer.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\data_synchronizer.py
+INFO     obfuscating file excel_importer.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\excel_importer.py
+INFO     obfuscating file license_updater.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\license_updater.py
+INFO     obfuscating file license_validator.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\license_validator.py
+INFO     obfuscating file lyra_client.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\lyra_client.py
+INFO     obfuscating file lyra_sentinel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\lyra_sentinel.py
+INFO     obfuscating file notification_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\notification_manager.py
+INFO     obfuscating file oda_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\oda_manager.py
+INFO     obfuscating file schemas.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\schemas.py
+INFO     obfuscating file secrets_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\secrets_manager.py
+INFO     obfuscating file stats_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\stats_manager.py
+INFO     obfuscating file telegram_bridge.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\telegram_bridge.py
+INFO     obfuscating file telegram_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\telegram_manager.py
+INFO     obfuscating file timesheet_processor.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\timesheet_processor.py
+INFO     obfuscating file time_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\time_manager.py
+INFO     obfuscating file version.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\version.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\core\__init__.py
+INFO     obfuscating file accessibility.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\accessibility.py
+INFO     obfuscating file contabilita_kpi_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\contabilita_kpi_panel.py
+INFO     obfuscating file contabilita_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\contabilita_panel.py
+INFO     obfuscating file dashboard_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\dashboard_panel.py
+INFO     obfuscating file dipendenti_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\dipendenti_panel.py
+INFO     obfuscating file formatters.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\formatters.py
+INFO     obfuscating file help_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\help_panel.py
+INFO     obfuscating file lyra_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\lyra_panel.py
+INFO     obfuscating file main_window.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\main_window.py
+INFO     obfuscating file notifications_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\notifications_panel.py
+INFO     obfuscating file panels.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\panels.py
+INFO     obfuscating file scarico_ore_components.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\scarico_ore_components.py
+INFO     obfuscating file scarico_ore_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\scarico_ore_panel.py
+INFO     obfuscating file settings_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\settings_panel.py
+INFO     obfuscating file storico_oda_panel.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\storico_oda_panel.py
+INFO     obfuscating file styles.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\styles.py
+INFO     obfuscating file toast.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\toast.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\__init__.py
+INFO     obfuscating file bot_controller.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\controllers\bot_controller.py
+INFO     obfuscating file navigation_controller.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\controllers\navigation_controller.py
+INFO     obfuscating file search_controller.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\controllers\search_controller.py
+INFO     obfuscating file service_controller.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\controllers\service_controller.py
+INFO     obfuscating file tray_controller.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\controllers\tray_controller.py
+INFO     obfuscating file colors.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\design\colors.py
+INFO     obfuscating file spacing.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\design\spacing.py
+INFO     obfuscating file typography.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\design\typography.py
+INFO     obfuscating file account_dialog.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\dialogs\account_dialog.py
+INFO     obfuscating file confirmation_dialog.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\dialogs\confirmation_dialog.py
+INFO     obfuscating file quick_actions_config.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\dialogs\quick_actions_config.py
+INFO     obfuscating file responsive.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\layouts\responsive.py
+INFO     obfuscating file audit_model.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\models\audit_model.py
+INFO     obfuscating file activity_feed.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\activity_feed.py
+INFO     obfuscating file automazioni_widget.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\automazioni_widget.py
+INFO     obfuscating file autopilot_widget.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\autopilot_widget.py
+INFO     obfuscating file bot_parameters.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\bot_parameters.py
+INFO     obfuscating file calendar_date_edit.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\calendar_date_edit.py
+INFO     obfuscating file data_table.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\data_table.py
+INFO     obfuscating file excel_table.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\excel_table.py
+INFO     obfuscating file footer_stats.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\footer_stats.py
+INFO     obfuscating file info_widgets.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\info_widgets.py
+INFO     obfuscating file modern_button.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\modern_button.py
+INFO     obfuscating file notification_card.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\notification_card.py
+INFO     obfuscating file notification_group_header.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\notification_group_header.py
+INFO     obfuscating file notification_item.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\notification_item.py
+INFO     obfuscating file notification_toolbar.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\notification_toolbar.py
+INFO     obfuscating file priority_badge.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\priority_badge.py
+INFO     obfuscating file quick_actions.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\quick_actions.py
+INFO     obfuscating file sidebar_button.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\sidebar_button.py
+INFO     obfuscating file sidebar_widget.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\sidebar_widget.py
+INFO     obfuscating file simple_chart.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\simple_chart.py
+INFO     obfuscating file sortable_table_item.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\sortable_table_item.py
+INFO     obfuscating file statistics_widget.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\statistics_widget.py
+INFO     obfuscating file status_card.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\status_card.py
+INFO     obfuscating file status_indicator.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\status_indicator.py
+INFO     obfuscating file timeline_widget.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\timeline_widget.py
+INFO     obfuscating file toast.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\toast.py
+INFO     obfuscating file update_banner.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\update_banner.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\__init__.py
+INFO     obfuscating file attivita_tab.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\contabilita\attivita_tab.py
+INFO     obfuscating file certificati_tab.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\contabilita\certificati_tab.py
+INFO     obfuscating file giornaliere_tab.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\contabilita\giornaliere_tab.py
+INFO     obfuscating file helpers.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\contabilita\helpers.py
+INFO     obfuscating file year_tab.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\widgets\contabilita\year_tab.py
+INFO     obfuscating file connection_worker.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\gui\workers\connection_worker.py
+INFO     obfuscating file document_generator.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\document_generator.py
+INFO     obfuscating file document_processor.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\document_processor.py
+INFO     obfuscating file helpers.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\helpers.py
+INFO     obfuscating file log_humanizer.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\log_humanizer.py
+INFO     obfuscating file parsing.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\parsing.py
+INFO     obfuscating file printing.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\printing.py
+INFO     obfuscating file resource_manager.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\resource_manager.py
+INFO     obfuscating file secure_logger.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\secure_logger.py
+INFO     obfuscating file security.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\security.py
+INFO     obfuscating file validators.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\validators.py
+INFO     obfuscating file __init__.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src\utils\__init__.py
+INFO     process resource "main"
+INFO     obfuscating file main.py
+INFO     write C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\main.py
+INFO     obfuscate scripts OK
+[BUILD] PyArmor obfuscation completed.
+[BUILD] Running PyInstaller (Obfuscated: True)...
+[BUILD] Analyzing source code for dependencies...
+[BUILD] Detected 210 hidden imports.
+
+[EXEC] C:\Program Files\Python312\python.exe -m PyInstaller --name SyncroJob --onedir --windowed --noconfirm --clean --add-data C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\src;src --add-data C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\assets;assets --icon C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\assets\app.ico --hidden-import PIL --hidden-import PIL.Image --hidden-import PIL.ImageTk --hidden-import PyQt6 --hidden-import PyQt6.QtCore --hidden-import PyQt6.QtGui --hidden-import PyQt6.QtNetwork --hidden-import PyQt6.QtPrintSupport --hidden-import PyQt6.QtSvg --hidden-import PyQt6.QtWebEngineCore --hidden-import PyQt6.QtWebEngineWidgets --hidden-import PyQt6.QtWidgets --hidden-import abc --hidden-import argparse --hidden-import ast --hidden-import asyncio --hidden-import base64 --hidden-import bdb --hidden-import bisect --hidden-import bot --hidden-import bot_parameters --hidden-import bz2 --hidden-import calendar --hidden-import calendar_date_edit --hidden-import certifi --hidden-import charset_normalizer --hidden-import cmd --hidden-import code --hidden-import codecs --hidden-import codeop --hidden-import collections --hidden-import concurrent --hidden-import configparser --hidden-import contextlib --hidden-import contextvars --hidden-import copy --hidden-import copyreg --hidden-import cryptography --hidden-import cryptography.fernet --hidden-import cryptography.hazmat --hidden-import cryptography.hazmat.backends --hidden-import cryptography.hazmat.backends.openssl --hidden-import cryptography.hazmat.bindings --hidden-import cryptography.hazmat.primitives --hidden-import cryptography.hazmat.primitives.ciphers --hidden-import cryptography.hazmat.primitives.ciphers.algorithms --hidden-import cryptography.hazmat.primitives.ciphers.modes --hidden-import cryptography.hazmat.primitives.kdf --hidden-import cryptography.hazmat.primitives.kdf.pbkdf2 --hidden-import cryptography.hazmat.primitives.kdf.scrypt --hidden-import cryptography.x509 --hidden-import csv --hidden-import ctypes --hidden-import data_table --hidden-import dataclasses --hidden-import datetime --hidden-import decimal --hidden-import design --hidden-import difflib --hidden-import dis --hidden-import doctest --hidden-import email --hidden-import encodings --hidden-import enum --hidden-import excel_table --hidden-import fitz --hidden-import fnmatch --hidden-import fractions --hidden-import ftplib --hidden-import functools --hidden-import genericpath --hidden-import getopt --hidden-import getpass --hidden-import gettext --hidden-import glob --hidden-import gzip --hidden-import hashlib --hidden-import heapq --hidden-import helpers --hidden-import hmac --hidden-import html --hidden-import http --hidden-import idna --hidden-import importlib --hidden-import importlib_metadata --hidden-import info_widgets --hidden-import inspect --hidden-import io --hidden-import ipaddress --hidden-import json --hidden-import keyring --hidden-import keyring.backends --hidden-import keyring.util --hidden-import keyword --hidden-import linecache --hidden-import locale --hidden-import locators --hidden-import logging --hidden-import lzma --hidden-import markdown --hidden-import matplotlib --hidden-import matplotlib.backends --hidden-import matplotlib.backends.backend_qtagg --hidden-import matplotlib.pyplot --hidden-import mimetypes --hidden-import modern_button --hidden-import msoffcrypto --hidden-import multiprocessing --hidden-import netrc --hidden-import notification_item --hidden-import ntpath --hidden-import nturl2path --hidden-import numbers --hidden-import numpy --hidden-import opcode --hidden-import openpyxl --hidden-import operator --hidden-import os --hidden-import packaging --hidden-import pages --hidden-import pandas --hidden-import pandas._libs --hidden-import pandas.io.formats.style --hidden-import pandera --hidden-import pandera.api --hidden-import pandera.backends --hidden-import pandera.engines --hidden-import pathlib --hidden-import pdb --hidden-import pickle --hidden-import pkg_resources --hidden-import pkgutil --hidden-import platform --hidden-import platformdirs --hidden-import plistlib --hidden-import posixpath --hidden-import pprint --hidden-import psutil --hidden-import py_compile --hidden-import pydoc --hidden-import pydoc_data --hidden-import pyexpat --hidden-import queue --hidden-import quopri --hidden-import random --hidden-import re --hidden-import reprlib --hidden-import requests --hidden-import runpy --hidden-import secrets --hidden-import select --hidden-import selectors --hidden-import selenium --hidden-import selenium.webdriver --hidden-import selenium.webdriver.common --hidden-import selenium.webdriver.support --hidden-import setuptools --hidden-import shlex --hidden-import shutil --hidden-import signal --hidden-import socket --hidden-import socketserver --hidden-import sqlite3 --hidden-import ssl --hidden-import stat --hidden-import statistics --hidden-import status_card --hidden-import status_indicator --hidden-import string --hidden-import struct --hidden-import subprocess --hidden-import sysconfig --hidden-import tarfile --hidden-import telegram --hidden-import telegram.constants --hidden-import telegram.error --hidden-import telegram.ext --hidden-import tempfile --hidden-import test --hidden-import textwrap --hidden-import threading --hidden-import timeline_widget --hidden-import tkinter --hidden-import toast --hidden-import token --hidden-import tokenize --hidden-import tomllib --hidden-import traceback --hidden-import tracemalloc --hidden-import tty --hidden-import types --hidden-import typing --hidden-import typing_extensions --hidden-import unicodedata --hidden-import unittest --hidden-import urllib --hidden-import urllib3 --hidden-import uuid --hidden-import warnings --hidden-import weakref --hidden-import webbrowser --hidden-import webdriver_manager --hidden-import win32con --hidden-import win32print --hidden-import win32ui --hidden-import xml --hidden-import xmlrpc --hidden-import zipfile --hidden-import zipimport --hidden-import zipp --collect-submodules selenium --collect-submodules webdriver_manager --collect-submodules markdown --collect-submodules matplotlib --collect-submodules telegram --collect-submodules pandera --collect-all pandera --collect-all telegram --collect-all markdown --collect-all matplotlib --collect-all PyQt6 --collect-all cryptography C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\main.py
+575 INFO: PyInstaller: 6.4.0, contrib hooks: 2025.9
+575 INFO: Python: 3.12.10
+629 INFO: Platform: Windows-11-10.0.22621-SP0
+630 INFO: wrote C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\SyncroJob.spec
+632 INFO: Removing temporary files and cleaning cache in C:\Users\Coemi\AppData\Local\pyinstaller
+817 WARNING: Failed to collect submodules for 'matplotlib.tests' because importing 'matplotlib.tests' raised: OSError: The baseline image directory does not exist. This is most likely because the test data is not installed. You may need to install matplotlib from source to get the test data.
+1420 WARNING: Failed to collect submodules for 'pandera.api.pyspark' because importing 'pandera.api.pyspark' raised: ModuleNotFoundError: No module named 'pyspark'
+1565 WARNING: Failed to collect submodules for 'pandera.api.pyspark' because importing 'pandera.api.pyspark' raised: ModuleNotFoundError: No module named 'pyspark'
+828 WARNING: Failed to collect submodules for 'matplotlib.tests' because importing 'matplotlib.tests' raised: OSError: The baseline image directory does not exist. This is most likely because the test data is not installed. You may need to install matplotlib from source to get the test data.
+34095 INFO: Extending PYTHONPATH with paths
+['C:\\Users\\Coemi\\Desktop\\SCRIPT\\ISAB_TimeSheet\\build\\obf']
+34648 INFO: Appending 'binaries' from .spec
+34662 INFO: Appending 'datas' from .spec
+35017 INFO: checking Analysis
+35017 INFO: Building Analysis because Analysis-00.toc is non existent
+35017 INFO: Initializing module dependency graph...
+35017 INFO: Caching module graph hooks...
+35039 INFO: Analyzing base_library.zip ...
+37962 INFO: Loading module hook 'hook-encodings.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+41024 INFO: Loading module hook 'hook-pickle.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+42220 INFO: Loading module hook 'hook-heapq.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+42884 INFO: Caching module dependency graph...
+43060 INFO: Running Analysis Analysis-00.toc
+43060 INFO: Looking for Python shared library...
+43075 INFO: Using Python shared library: C:\Program Files\Python312\python312.dll
+43075 INFO: Analyzing C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\obf\main.py
+43079 INFO: Analyzing hidden import 'PIL'
+43081 INFO: Loading module hook 'hook-PIL.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+43085 INFO: Analyzing hidden import 'PIL.Image'
+43227 INFO: Loading module hook 'hook-PIL.Image.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+44000 INFO: Loading module hook 'hook-numpy.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\numpy\\_pyinstaller'...
+45054 INFO: Loading module hook 'hook-difflib.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+45397 INFO: Loading module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+45652 INFO: Loading module hook 'hook-xml.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+46605 INFO: Loading module hook 'hook-platform.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+46639 INFO: Loading module hook 'hook-sysconfig.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+47329 INFO: Loading module hook 'hook-psutil.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+49462 INFO: Loading module hook 'hook-xml.etree.cElementTree.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+49562 INFO: Loading module hook 'hook-xml.dom.domreg.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+50077 INFO: Loading module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+50352 INFO: Analyzing hidden import 'PIL.ImageTk'
+50359 INFO: Analyzing hidden import 'PyQt6'
+50361 INFO: Loading module hook 'hook-PyQt6.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+50503 INFO: Analyzing hidden import 'PyQt6.QtCore'
+50504 INFO: Analyzing hidden import 'PyQt6.QtGui'
+50505 INFO: Analyzing hidden import 'PyQt6.QtNetwork'
+50505 INFO: Analyzing hidden import 'PyQt6.QtPrintSupport'
+50505 INFO: Analyzing hidden import 'PyQt6.QtSvg'
+50506 INFO: Analyzing hidden import 'PyQt6.QtWebEngineCore'
+50506 INFO: Analyzing hidden import 'PyQt6.QtWebEngineWidgets'
+50506 INFO: Analyzing hidden import 'PyQt6.QtWidgets'
+50506 INFO: Analyzing hidden import 'bot'
+50507 ERROR: Hidden import 'bot' not found
+50507 INFO: Analyzing hidden import 'bot_parameters'
+50508 ERROR: Hidden import 'bot_parameters' not found
+50508 INFO: Analyzing hidden import 'calendar_date_edit'
+50509 ERROR: Hidden import 'calendar_date_edit' not found
+50509 INFO: Analyzing hidden import 'certifi'
+50510 INFO: Loading module hook 'hook-certifi.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+50521 INFO: Analyzing hidden import 'charset_normalizer'
+50523 INFO: Loading module hook 'hook-charset_normalizer.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+50621 INFO: Analyzing hidden import 'configparser'
+50665 INFO: Analyzing hidden import 'cryptography'
+50667 INFO: Loading module hook 'hook-cryptography.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+52576 INFO: hook-cryptography: cryptography does not seem to be using dynamically linked OpenSSL.
+52578 INFO: Analyzing hidden import 'cryptography.fernet'
+52891 INFO: Loading module hook 'hook-bcrypt.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+53102 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.kdf'
+53104 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.kdf.pbkdf2'
+53108 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.kdf.scrypt'
+53111 INFO: Analyzing hidden import 'data_table'
+53112 ERROR: Hidden import 'data_table' not found
+53112 INFO: Analyzing hidden import 'design'
+53113 ERROR: Hidden import 'design' not found
+53113 INFO: Analyzing hidden import 'excel_table'
+53114 ERROR: Hidden import 'excel_table' not found
+53114 INFO: Analyzing hidden import 'fitz'
+59005 INFO: Loading module hook 'hook-lxml.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+61203 INFO: Loading module hook 'hook-pandas.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+63938 INFO: Loading module hook 'hook-pytz.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+64412 INFO: Loading module hook 'hook-pkg_resources.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+66974 INFO: Loading module hook 'hook-pyarrow.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+68852 INFO: Loading module hook 'hook-urllib3.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+70056 INFO: Loading module hook 'hook-fsspec.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+72664 INFO: Loading module hook 'hook-scipy.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+72717 INFO: Loading module hook 'hook-pytest.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+73216 INFO: Loading module hook 'hook-pygments.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+75993 INFO: Loading module hook 'hook-py.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+76289 INFO: Loading module hook 'hook-packaging.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+78084 INFO: Loading module hook 'hook-pycparser.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+79005 INFO: Loading module hook 'hook-setuptools.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+81674 INFO: Processing pre-safe import module hook distutils from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module\\hook-distutils.py'.
+83570 INFO: Loading module hook 'hook-setuptools.msvc.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+83627 INFO: Loading module hook 'hook-importlib_metadata.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+85808 INFO: Loading module hook 'hook-torch.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+3644 WARNING: Failed to collect submodules for 'torch.utils.tensorboard' because importing 'torch.utils.tensorboard' raised: ModuleNotFoundError: No module named 'tensorboard'
+W0121 14:05:26.351000 73324 torch\distributed\elastic\multiprocessing\redirects.py:29] NOTE: Redirects are currently not supported in Windows or MacOs.
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\utils\hooks\__init__.py:653: DeprecationWarning: `torch.distributed._sharding_spec` will be deprecated, use `torch.distributed._shard.sharding_spec` instead
+  __import__(name)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\utils\hooks\__init__.py:653: DeprecationWarning: `torch.distributed._sharded_tensor` will be deprecated, use `torch.distributed._shard.sharded_tensor` instead
+  __import__(name)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\utils\hooks\__init__.py:653: DeprecationWarning: `torch.distributed._shard.checkpoint` will be deprecated, use `torch.distributed.checkpoint` instead
+  __import__(name)
+107095 INFO: hook-torch: this torch build does not depend on MKL...
+108968 INFO: Loading module hook 'hook-matplotlib.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+109550 INFO: Processing pre-safe import module hook gi from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module\\hook-gi.py'.
+110911 INFO: Loading module hook 'hook-jinja2.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+111647 INFO: Loading module hook 'hook-matplotlib.backends.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+113738 INFO: Loading module hook 'hook-dateutil.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+113882 INFO: Processing pre-safe import module hook six.moves from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module\\hook-six.moves.py'.
+127817 INFO: Loading module hook 'hook-scipy.linalg.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+130723 INFO: Loading module hook 'hook-scipy.sparse.csgraph.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+131202 INFO: Loading module hook 'hook-scipy.spatial.transform.rotation.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+149010 INFO: Loading module hook 'hook-transformers.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+154852 INFO: Loading module hook 'hook-pydantic.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\pydantic\experimental\__init__.py:7: PydanticExperimentalWarning: This module is experimental, its contents are subject to change and deprecation.
+  warnings.warn(
+158237 INFO: Loading module hook 'hook-zoneinfo.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+161530 INFO: Loading module hook 'hook-anyio.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+164476 INFO: Processing pre-safe import module hook tensorflow from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module\\hook-tensorflow.py'.
+166190 INFO: Processing pre-safe import module hook win32com from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module\\hook-win32com.py'.
+166280 INFO: Loading module hook 'hook-win32com.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+166283 INFO: Loading module hook 'hook-pythoncom.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+166392 INFO: Loading module hook 'hook-pywintypes.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+175112 INFO: Loading module hook 'hook-sqlite3.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+177943 INFO: Loading module hook 'hook-regex.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+180158 INFO: Loading module hook 'hook-soundfile.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+181825 INFO: Loading module hook 'hook-scipy.io.matlab.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+183112 INFO: Loading module hook 'hook-sklearn.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+184102 INFO: Loading module hook 'hook-sklearn.utils.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+184890 INFO: Loading module hook 'hook-sklearn.metrics.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+189018 INFO: Loading module hook 'hook-sklearn.metrics.cluster.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+189270 INFO: Loading module hook 'hook-sklearn.cluster.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+189369 INFO: Loading module hook 'hook-sklearn.metrics.pairwise.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+189771 INFO: Loading module hook 'hook-sklearn.neighbors.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+189924 INFO: Loading module hook 'hook-sklearn.linear_model.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+194101 INFO: Loading module hook 'hook-pandas.io.formats.style.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+197436 INFO: Loading module hook 'hook-openpyxl.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+199919 INFO: Loading module hook 'hook-pandas.plotting.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+228589 INFO: Loading module hook 'hook-nltk.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+256459 INFO: Loading module hook 'hook-sqlalchemy.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+264107 INFO: Loading module hook 'hook-importlib_resources.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+264588 INFO: Analyzing hidden import 'helpers'
+264589 ERROR: Hidden import 'helpers' not found
+264589 INFO: Analyzing hidden import 'info_widgets'
+264590 ERROR: Hidden import 'info_widgets' not found
+264590 INFO: Analyzing hidden import 'keyring'
+264591 INFO: Loading module hook 'hook-keyring.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+265779 INFO: Analyzing hidden import 'locators'
+265780 ERROR: Hidden import 'locators' not found
+265780 INFO: Analyzing hidden import 'markdown'
+265781 INFO: Loading module hook 'hook-markdown.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+266828 INFO: Analyzing hidden import 'matplotlib.backends.backend_qtagg'
+266948 INFO: Analyzing hidden import 'modern_button'
+266949 ERROR: Hidden import 'modern_button' not found
+266949 INFO: Analyzing hidden import 'msoffcrypto'
+266952 INFO: Loading module hook 'hook-msoffcrypto.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+267200 INFO: Analyzing hidden import 'notification_item'
+267201 ERROR: Hidden import 'notification_item' not found
+267201 INFO: Analyzing hidden import 'pages'
+267202 ERROR: Hidden import 'pages' not found
+267202 INFO: Analyzing hidden import 'pandera'
+267637 INFO: Loading module hook 'hook-shapely.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+268464 INFO: Analyzing hidden import 'platformdirs'
+268475 INFO: Loading module hook 'hook-platformdirs.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+268520 INFO: Analyzing hidden import 'selenium'
+268522 INFO: Analyzing hidden import 'selenium.webdriver'
+268524 INFO: Loading module hook 'hook-selenium.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+269228 INFO: Analyzing hidden import 'status_card'
+269229 ERROR: Hidden import 'status_card' not found
+269229 INFO: Analyzing hidden import 'status_indicator'
+269230 ERROR: Hidden import 'status_indicator' not found
+269230 INFO: Analyzing hidden import 'telegram'
+272645 INFO: Analyzing hidden import 'telegram.ext'
+273119 INFO: Loading module hook 'hook-apscheduler.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+274183 INFO: Analyzing hidden import 'test'
+274184 INFO: Analyzing hidden import 'timeline_widget'
+274185 ERROR: Hidden import 'timeline_widget' not found
+274185 INFO: Analyzing hidden import 'toast'
+274186 ERROR: Hidden import 'toast' not found
+274186 INFO: Analyzing hidden import 'webdriver_manager'
+274187 INFO: Analyzing hidden import 'win32print'
+274189 INFO: Analyzing hidden import 'win32ui'
+274191 INFO: Analyzing hidden import 'selenium.webdriver.common.bidi'
+274193 INFO: Analyzing hidden import 'selenium.webdriver.common.bidi.cdp'
+274382 INFO: Analyzing hidden import 'selenium.webdriver.common.bidi.console'
+274383 INFO: Analyzing hidden import 'selenium.webdriver.common.log'
+274389 INFO: Analyzing hidden import 'selenium.webdriver.common.window'
+274391 INFO: Analyzing hidden import 'selenium.webdriver.safari.permissions'
+274392 INFO: Analyzing hidden import 'selenium.webdriver.support.abstract_event_listener'
+274395 INFO: Analyzing hidden import 'selenium.webdriver.support.color'
+274432 INFO: Analyzing hidden import 'selenium.webdriver.support.event_firing_webdriver'
+274449 INFO: Analyzing hidden import 'selenium.webdriver.support.events'
+274451 INFO: Analyzing hidden import 'selenium.webdriver.support.expected_conditions'
+274473 INFO: Analyzing hidden import 'selenium.webdriver.support.select'
+274483 INFO: Analyzing hidden import 'selenium.webdriver.support.ui'
+274488 INFO: Analyzing hidden import 'webdriver_manager.chrome'
+274535 INFO: Analyzing hidden import 'webdriver_manager.drivers.edge'
+274538 INFO: Analyzing hidden import 'webdriver_manager.drivers.firefox'
+274541 INFO: Analyzing hidden import 'webdriver_manager.drivers.ie'
+274545 INFO: Analyzing hidden import 'webdriver_manager.drivers.opera'
+274548 INFO: Analyzing hidden import 'webdriver_manager.firefox'
+274550 INFO: Analyzing hidden import 'webdriver_manager.microsoft'
+274553 INFO: Analyzing hidden import 'webdriver_manager.opera'
+274556 INFO: Analyzing hidden import 'markdown.__main__'
+274562 INFO: Analyzing hidden import 'markdown.extensions.abbr'
+274571 INFO: Analyzing hidden import 'markdown.extensions.admonition'
+274578 INFO: Analyzing hidden import 'markdown.extensions.attr_list'
+274586 INFO: Analyzing hidden import 'markdown.extensions.codehilite'
+274596 INFO: Analyzing hidden import 'markdown.extensions.def_list'
+274601 INFO: Analyzing hidden import 'markdown.extensions.extra'
+274604 INFO: Analyzing hidden import 'markdown.extensions.fenced_code'
+274613 INFO: Analyzing hidden import 'markdown.extensions.footnotes'
+274633 INFO: Analyzing hidden import 'markdown.extensions.legacy_attrs'
+274638 INFO: Analyzing hidden import 'markdown.extensions.legacy_em'
+274640 INFO: Analyzing hidden import 'markdown.extensions.md_in_html'
+274659 INFO: Analyzing hidden import 'markdown.extensions.meta'
+274663 INFO: Analyzing hidden import 'markdown.extensions.nl2br'
+274665 INFO: Analyzing hidden import 'markdown.extensions.sane_lists'
+274668 INFO: Analyzing hidden import 'markdown.extensions.smarty'
+274677 INFO: Analyzing hidden import 'markdown.extensions.tables'
+274687 INFO: Analyzing hidden import 'markdown.extensions.toc'
+274708 INFO: Analyzing hidden import 'markdown.extensions.wikilinks'
+274713 INFO: Analyzing hidden import 'markdown.test_tools'
+274721 INFO: Analyzing hidden import 'matplotlib._animation_data'
+274722 INFO: Analyzing hidden import 'matplotlib._internal_utils'
+274725 INFO: Analyzing hidden import 'matplotlib._type1font'
+274758 INFO: Analyzing hidden import 'matplotlib.animation'
+274808 INFO: Analyzing hidden import 'matplotlib.backends._backend_gtk'
+274821 INFO: Analyzing hidden import 'matplotlib.backends._backend_pdf_ps'
+274830 INFO: Analyzing hidden import 'matplotlib.backends._backend_tk'
+274883 INFO: Analyzing hidden import 'matplotlib.backends.backend_cairo'
+274912 INFO: Analyzing hidden import 'matplotlib.backends.backend_gtk3'
+274937 INFO: Analyzing hidden import 'matplotlib.backends.backend_gtk3agg'
+274942 INFO: Analyzing hidden import 'matplotlib.backends.backend_gtk3cairo'
+274945 INFO: Analyzing hidden import 'matplotlib.backends.backend_gtk4'
+274982 INFO: Analyzing hidden import 'matplotlib.backends.backend_gtk4agg'
+274985 INFO: Analyzing hidden import 'matplotlib.backends.backend_gtk4cairo'
+274987 INFO: Analyzing hidden import 'matplotlib.backends.backend_macosx'
+274996 INFO: Analyzing hidden import 'matplotlib.backends.backend_mixed'
+274999 INFO: Analyzing hidden import 'matplotlib.backends.backend_nbagg'
+275010 INFO: Analyzing hidden import 'matplotlib.backends.backend_pdf'
+275118 INFO: Analyzing hidden import 'matplotlib.backends.backend_pgf'
+275161 INFO: Analyzing hidden import 'matplotlib.backends.backend_ps'
+275228 INFO: Analyzing hidden import 'matplotlib.backends.backend_qt5'
+275230 INFO: Analyzing hidden import 'matplotlib.backends.backend_qt5agg'
+275231 INFO: Analyzing hidden import 'matplotlib.backends.backend_qt5cairo'
+275235 INFO: Analyzing hidden import 'matplotlib.backends.backend_svg'
+275289 INFO: Analyzing hidden import 'matplotlib.backends.backend_template'
+275293 INFO: Analyzing hidden import 'matplotlib.backends.backend_tkagg'
+275295 INFO: Analyzing hidden import 'matplotlib.backends.backend_tkcairo'
+275297 INFO: Analyzing hidden import 'matplotlib.backends.backend_wx'
+275361 INFO: Analyzing hidden import 'matplotlib.backends.backend_wxagg'
+275364 INFO: Analyzing hidden import 'matplotlib.backends.backend_wxcairo'
+275367 INFO: Analyzing hidden import 'matplotlib.sankey'
+275396 INFO: Analyzing hidden import 'matplotlib.sphinxext'
+275397 INFO: Analyzing hidden import 'matplotlib.sphinxext.figmpl_directive'
+275409 INFO: Analyzing hidden import 'matplotlib.sphinxext.mathmpl'
+275418 INFO: Analyzing hidden import 'matplotlib.sphinxext.plot_directive'
+275445 INFO: Analyzing hidden import 'matplotlib.sphinxext.roles'
+275451 INFO: Analyzing hidden import 'matplotlib.testing'
+275457 INFO: Analyzing hidden import 'matplotlib.testing._markers'
+275483 INFO: Analyzing hidden import 'matplotlib.testing.conftest'
+275507 INFO: Analyzing hidden import 'matplotlib.testing.jpl_units'
+275548 INFO: Analyzing hidden import 'matplotlib.testing.widgets'
+275551 INFO: Analyzing hidden import 'telegram.__main__'
+275554 INFO: Analyzing hidden import 'telegram._utils.warnings_transition'
+275557 INFO: Analyzing hidden import 'pandera.accessors.polars_accessor'
+275557 INFO: Analyzing hidden import 'pandera.accessors.pyspark_sql_accessor'
+275650 INFO: Analyzing hidden import 'pandera.api.ibis'
+275651 INFO: Analyzing hidden import 'pandera.api.ibis.components'
+275736 INFO: Analyzing hidden import 'pandera.api.ibis.model'
+275748 INFO: Analyzing hidden import 'pandera.api.polars'
+275749 INFO: Analyzing hidden import 'pandera.api.polars.components'
+275865 INFO: Analyzing hidden import 'pandera.api.polars.model'
+275896 INFO: Analyzing hidden import 'pandera.backends.polars.error_formatters'
+275897 INFO: Analyzing hidden import 'pandera.extensions'
+275898 INFO: Analyzing hidden import 'pandera.ibis'
+275899 INFO: Analyzing hidden import 'pandera.mypy'
+275905 INFO: Analyzing hidden import 'pandera.polars'
+275907 INFO: Analyzing hidden import 'pandera.pyspark'
+275943 INFO: Analyzing hidden import 'pandera.typing.fastapi'
+275952 INFO: Analyzing hidden import 'PyQt6.QAxContainer'
+275952 INFO: Analyzing hidden import 'PyQt6.QtBluetooth'
+275953 INFO: Analyzing hidden import 'PyQt6.QtDBus'
+275953 INFO: Analyzing hidden import 'PyQt6.QtDesigner'
+275953 INFO: Analyzing hidden import 'PyQt6.QtHelp'
+275954 INFO: Analyzing hidden import 'PyQt6.QtMultimedia'
+275954 INFO: Analyzing hidden import 'PyQt6.QtMultimediaWidgets'
+275954 INFO: Analyzing hidden import 'PyQt6.QtNfc'
+275955 INFO: Analyzing hidden import 'PyQt6.QtOpenGL'
+275955 INFO: Analyzing hidden import 'PyQt6.QtOpenGLWidgets'
+275955 INFO: Analyzing hidden import 'PyQt6.QtPdf'
+275956 INFO: Analyzing hidden import 'PyQt6.QtPdfWidgets'
+275956 INFO: Analyzing hidden import 'PyQt6.QtPositioning'
+275956 INFO: Analyzing hidden import 'PyQt6.QtQml'
+275957 INFO: Analyzing hidden import 'PyQt6.QtQuick'
+275957 INFO: Analyzing hidden import 'PyQt6.QtQuick3D'
+275957 INFO: Analyzing hidden import 'PyQt6.QtQuickWidgets'
+275958 INFO: Analyzing hidden import 'PyQt6.QtRemoteObjects'
+275958 INFO: Analyzing hidden import 'PyQt6.QtSensors'
+275959 INFO: Analyzing hidden import 'PyQt6.QtSerialPort'
+275959 INFO: Analyzing hidden import 'PyQt6.QtSpatialAudio'
+275960 INFO: Analyzing hidden import 'PyQt6.QtSql'
+275961 INFO: Analyzing hidden import 'PyQt6.QtSvgWidgets'
+275962 INFO: Analyzing hidden import 'PyQt6.QtTest'
+275962 INFO: Analyzing hidden import 'PyQt6.QtTextToSpeech'
+275963 INFO: Analyzing hidden import 'PyQt6.QtWebChannel'
+275963 INFO: Analyzing hidden import 'PyQt6.QtWebEngineQuick'
+275963 INFO: Analyzing hidden import 'PyQt6.QtWebSockets'
+275964 INFO: Analyzing hidden import 'PyQt6.QtXml'
+275964 INFO: Analyzing hidden import 'PyQt6.lupdate'
+275971 INFO: Loading module hook 'hook-PyQt6.uic.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+276307 INFO: Analyzing hidden import 'PyQt6.lupdate.pylupdate'
+276312 INFO: Analyzing hidden import 'PyQt6.uic.pyuic'
+276319 INFO: Analyzing hidden import 'cryptography.hazmat.backends.openssl.decode_asn1'
+276320 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.cmac'
+276321 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.kdf.concatkdf'
+276329 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.kdf.hkdf'
+276334 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.kdf.kbkdf'
+276345 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.kdf.x963kdf'
+276348 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.keywrap'
+276356 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.poly1305'
+276358 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.serialization.pkcs7'
+276376 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.twofactor'
+276378 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.twofactor.hotp'
+276383 INFO: Analyzing hidden import 'cryptography.hazmat.primitives.twofactor.totp'
+276386 INFO: Analyzing hidden import 'cryptography.x509.ocsp'
+276403 INFO: Processing module hooks...
+276723 INFO: Loading module hook 'hook-black.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+278474 INFO: Loading module hook 'hook-blib2to3.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+279632 INFO: Loading module hook 'hook-lxml.etree.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+279724 INFO: Loading module hook 'hook-lxml.isoschematron.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+281073 INFO: Loading module hook 'hook-sklearn.tree.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+290504 INFO: Loading module hook 'hook-distutils.command.check.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+290505 INFO: Loading module hook 'hook-distutils.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+290508 INFO: Loading module hook 'hook-distutils.util.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+290513 WARNING: Hidden import "importlib_resources.trees" not found!
+290543 INFO: Loading module hook 'hook-win32ctypes.core.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+291547 INFO: Loading module hook 'hook-matplotlib.backends.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+291547 INFO: Matplotlib backend selection method: automatic discovery of used backends
+291587 INFO: Discovered Matplotlib backend(s) via `matplotlib.use()` call in module 'sympy.testing.runtests': ['Agg', 'Agg']
+291611 INFO: The following Matplotlib backends were discovered by scanning for `matplotlib.use()` calls: ['Agg']. If your backend of choice is not in this list, either add a `matplotlib.use()` call to your code, or configure the backend collection via hook options (see: https://pyinstaller.org/en/stable/hooks-config.html#matplotlib-hooks).
+291611 INFO: Selected matplotlib backends: ['Agg']
+292242 INFO: Loading module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+295575 INFO: Loading module hook 'hook-PyQt6.QAxContainer.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+295679 INFO: Loading module hook 'hook-PyQt6.QtBluetooth.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+295775 INFO: Loading module hook 'hook-PyQt6.QtCore.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+295950 INFO: Loading module hook 'hook-PyQt6.QtDBus.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+296056 INFO: Loading module hook 'hook-PyQt6.QtDesigner.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+296201 WARNING: QtLibraryInfo(PyQt6): could not find translations with base name 'designer'! These translations will not be collected.
+296201 INFO: Loading module hook 'hook-PyQt6.QtGui.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+296535 INFO: Loading module hook 'hook-PyQt6.QtHelp.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+296644 INFO: Loading module hook 'hook-PyQt6.QtMultimedia.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+296838 INFO: Loading module hook 'hook-PyQt6.QtMultimediaWidgets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+296944 INFO: Loading module hook 'hook-PyQt6.QtNetwork.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+297237 INFO: Loading module hook 'hook-PyQt6.QtNfc.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+297356 INFO: Loading module hook 'hook-PyQt6.QtOpenGL.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+297522 INFO: Loading module hook 'hook-PyQt6.QtOpenGLWidgets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+297626 INFO: Loading module hook 'hook-PyQt6.QtPdf.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+297750 INFO: Loading module hook 'hook-PyQt6.QtPdfWidgets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+297860 INFO: Loading module hook 'hook-PyQt6.QtPositioning.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+298016 INFO: Loading module hook 'hook-PyQt6.QtPrintSupport.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+298128 INFO: Loading module hook 'hook-PyQt6.QtQml.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299059 INFO: Loading module hook 'hook-PyQt6.QtQuick.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299203 INFO: Loading module hook 'hook-PyQt6.QtQuick3D.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299322 INFO: Loading module hook 'hook-PyQt6.QtQuickWidgets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299438 INFO: Loading module hook 'hook-PyQt6.QtRemoteObjects.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299546 INFO: Loading module hook 'hook-PyQt6.QtSensors.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299675 INFO: Loading module hook 'hook-PyQt6.QtSerialPort.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299781 INFO: Loading module hook 'hook-PyQt6.QtSpatialAudio.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+299890 INFO: Loading module hook 'hook-PyQt6.QtSql.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300032 INFO: Loading module hook 'hook-PyQt6.QtSvg.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300138 INFO: Loading module hook 'hook-PyQt6.QtSvgWidgets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300254 INFO: Loading module hook 'hook-PyQt6.QtTest.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300359 INFO: Loading module hook 'hook-PyQt6.QtTextToSpeech.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300499 INFO: Loading module hook 'hook-PyQt6.QtWebChannel.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300607 INFO: Loading module hook 'hook-PyQt6.QtWebEngineCore.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300821 INFO: Loading module hook 'hook-PyQt6.QtWebEngineQuick.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+300939 INFO: Loading module hook 'hook-PyQt6.QtWebEngineWidgets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+301051 INFO: Loading module hook 'hook-PyQt6.QtWebSockets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+301188 INFO: Loading module hook 'hook-PyQt6.QtWidgets.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+301342 INFO: Loading module hook 'hook-PyQt6.QtXml.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+301491 INFO: Loading module hook 'hook-scipy.special._ellip_harm_2.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+301492 INFO: Loading module hook 'hook-scipy.special._ufuncs.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+301493 INFO: Loading module hook 'hook-scipy.stats._stats.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+302254 INFO: Loading module hook 'hook-setuptools._distutils.command.check.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+302453 INFO: Loading module hook 'hook-sqlalchemy.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+302963 WARNING: Hidden import "pysqlite2" not found!
+302964 WARNING: Hidden import "MySQLdb" not found!
+302965 WARNING: Hidden import "psycopg2" not found!
+304097 INFO: Loading module hook 'hook-_tkinter.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+304097 INFO: checking Tree
+304098 INFO: Building Tree because Tree-00.toc is non existent
+304098 INFO: Building Tree Tree-00.toc
+304151 INFO: checking Tree
+304151 INFO: Building Tree because Tree-01.toc is non existent
+304151 INFO: Building Tree Tree-01.toc
+304157 INFO: checking Tree
+304157 INFO: Building Tree because Tree-02.toc is non existent
+304157 INFO: Building Tree Tree-02.toc
+304161 INFO: Loading module hook 'hook-lxml.objectify.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+304161 INFO: Loading module hook 'hook-tzdata.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+305529 INFO: Performing binary vs. data reclassification (7423 entries)
+307499 INFO: Looking for ctypes DLLs
+307791 WARNING: Ignoring /usr/lib64/libgomp.so.1 imported from C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\torch\_inductor\codecache.py - only basenames are supported with ctypes imports!
+308413 INFO: Analyzing run-time hooks ...
+308495 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_nltk.py'
+308500 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_win32comgenpy.py'
+308504 INFO: Processing pre-find module path hook _pyi_rth_utils from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\pre_find_module_path\\hook-_pyi_rth_utils.py'.
+308508 INFO: Loading module hook 'hook-_pyi_rth_utils.py' from 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks'...
+308537 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_pywintypes.py'
+308539 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_pythoncom.py'
+308540 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py'
+308543 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py'
+308545 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py'
+308550 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgres.py'
+308556 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py'
+308560 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_mplconfig.py'
+308562 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py'
+308564 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_cryptography_openssl.py'
+308566 INFO: Including run-time hook 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pyqt6.py'
+309061 INFO: Looking for dynamic libraries
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\building\build_main.py:194: UserWarning: The numpy.array_api submodule is still experimental. See NEP 47.
+  __import__(package)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\pydantic\experimental\__init__.py:7: PydanticExperimentalWarning: This module is experimental, its contents are subject to change and deprecation.
+  warnings.warn(
+W0121 14:09:06.825000 64424 torch\distributed\elastic\multiprocessing\redirects.py:29] NOTE: Redirects are currently not supported in Windows or MacOs.
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\building\build_main.py:194: DeprecationWarning: `torch.distributed._sharding_spec` will be deprecated, use `torch.distributed._shard.sharding_spec` instead
+  __import__(package)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\building\build_main.py:194: DeprecationWarning: `torch.distributed._sharded_tensor` will be deprecated, use `torch.distributed._shard.sharded_tensor` instead
+  __import__(package)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\building\build_main.py:194: DeprecationWarning: `torch.distributed._shard.checkpoint` will be deprecated, use `torch.distributed.checkpoint` instead
+  __import__(package)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\building\build_main.py:194: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+  __import__(package)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\pkg_resources\__init__.py:2832: DeprecationWarning: Deprecated call to `pkg_resources.declare_namespace('google')`.
+Implementing implicit namespace packages (as specified in PEP 420) is preferred to `pkg_resources.declare_namespace`. See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-namespace-packages
+  declare_namespace(pkg)
+C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\pkg_resources\__init__.py:2832: DeprecationWarning: Deprecated call to `pkg_resources.declare_namespace('google.cloud')`.
+Implementing implicit namespace packages (as specified in PEP 420) is preferred to `pkg_resources.declare_namespace`. See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-namespace-packages
+  declare_namespace(pkg)
+329603 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\numpy.libs', 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\scipy.libs', 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\pandas.libs', 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\pyarrow.libs', 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\torch\\lib', 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin', 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\shapely.libs']
+329603 INFO: Extra DLL search directories (PATH): ['C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin']
+347692 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-string-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6Bluetooth.dll'.
+347692 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6Bluetooth.dll'.
+347692 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-string-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6WebEngineCore.dll'.
+347693 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6WebEngineCore.dll'.
+347693 WARNING: Library not found: could not resolve 'api-ms-win-power-base-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6WebEngineCore.dll'.
+347693 WARNING: Library not found: could not resolve 'api-ms-win-shcore-scaling-l1-1-1.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6WebEngineCore.dll'.
+347694 WARNING: Library not found: could not resolve 'api-ms-win-core-realtime-l1-1-1.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6WebEngineCore.dll'.
+347694 WARNING: Library not found: could not resolve 'Qt6WebChannelQuick.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\bin\\Qt6WebEngineQuick.dll'.
+347694 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\geometryloaders\\defaultgeometryloader.dll'.
+347695 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\geometryloaders\\defaultgeometryloader.dll'.
+347695 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\geometryloaders\\gltfgeometryloader.dll'.
+347695 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\geometryloaders\\gltfgeometryloader.dll'.
+347695 WARNING: Library not found: could not resolve 'api-ms-win-core-heap-l2-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\multimedia\\ffmpegmediaplugin.dll'.
+347696 WARNING: Library not found: could not resolve 'api-ms-win-core-libraryloader-l1-2-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\multimedia\\ffmpegmediaplugin.dll'.
+347696 WARNING: Library not found: could not resolve 'api-ms-win-core-com-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\multimedia\\ffmpegmediaplugin.dll'.
+347696 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-string-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\platforms\\qwindows.dll'.
+347697 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\platforms\\qwindows.dll'.
+347697 WARNING: Library not found: could not resolve 'api-ms-win-shcore-scaling-l1-1-1.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\platforms\\qwindows.dll'.
+347697 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-string-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\position\\qtposition_winrt.dll'.
+347698 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\position\\qtposition_winrt.dll'.
+347698 WARNING: Library not found: could not resolve 'Qt6QmlCompiler.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\qmllint\\quicklintplugin.dll'.
+347699 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\renderers\\openglrenderer.dll'.
+347699 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\renderers\\openglrenderer.dll'.
+347700 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\renderers\\rhirenderer.dll'.
+347700 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\renderers\\rhirenderer.dll'.
+347700 WARNING: Library not found: could not resolve 'Qt63DAnimation.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\assimpsceneimport.dll'.
+347701 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\assimpsceneimport.dll'.
+347701 WARNING: Library not found: could not resolve 'Qt63DExtras.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\assimpsceneimport.dll'.
+347702 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\assimpsceneimport.dll'.
+347702 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\gltfsceneexport.dll'.
+347702 WARNING: Library not found: could not resolve 'Qt63DExtras.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\gltfsceneexport.dll'.
+347703 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\gltfsceneexport.dll'.
+347703 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\gltfsceneimport.dll'.
+347703 WARNING: Library not found: could not resolve 'Qt63DExtras.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\gltfsceneimport.dll'.
+347703 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sceneparsers\\gltfsceneimport.dll'.
+347704 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-string-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sensors\\qtsensors_winrt.dll'.
+347704 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sensors\\qtsensors_winrt.dll'.
+347704 WARNING: Library not found: could not resolve 'LIBPQ.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\sqldrivers\\qsqlpsql.dll'.
+347705 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-string-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\texttospeech\\qtexttospeech_winrt.dll'.
+347705 WARNING: Library not found: could not resolve 'api-ms-win-core-winrt-l1-1-0.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\texttospeech\\qtexttospeech_winrt.dll'.
+347705 WARNING: Library not found: could not resolve 'Qt6WebView.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\webview\\qtwebview_webengine.dll'.
+347705 WARNING: Library not found: could not resolve 'Qt6WebViewQuick.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\plugins\\webview\\qtwebview_webengine.dll'.
+347706 WARNING: Library not found: could not resolve 'Qt6QmlXmlListModel.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQml\\XmlListModel\\qmlxmllistmodelplugin.dll'.
+347706 WARNING: Library not found: could not resolve 'Qt6Quick3DHelpersImpl.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick3D\\Helpers\\impl\\qtquick3dhelpersimplplugin.dll'.
+347706 WARNING: Library not found: could not resolve 'Qt6Quick3DParticleEffects.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick3D\\ParticleEffects\\qtquick3dparticleeffectsplugin.dll'.
+347707 WARNING: Library not found: could not resolve 'Qt6Quick3DPhysicsHelpers.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick3D\\Physics\\Helpers\\qtquick3dphysicshelpersplugin.dll'.
+347707 WARNING: Library not found: could not resolve 'Qt6Quick3DPhysics.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick3D\\Physics\\qquick3dphysicsplugin.dll'.
+347707 WARNING: Library not found: could not resolve 'Qt6QuickEffects.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Effects\\effectsplugin.dll'.
+347707 WARNING: Library not found: could not resolve 'Qt6QmlLocalStorage.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\LocalStorage\\qmllocalstorageplugin.dll'.
+347708 WARNING: Library not found: could not resolve 'Qt63DQuickScene2D.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene2D\\qtquickscene2dplugin.dll'.
+347708 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene2D\\qtquickscene2dplugin.dll'.
+347708 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene2D\\qtquickscene2dplugin.dll'.
+347709 WARNING: Library not found: could not resolve 'Qt63DAnimation.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+347709 WARNING: Library not found: could not resolve 'Qt63DRender.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+347709 WARNING: Library not found: could not resolve 'Qt63DLogic.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+347709 WARNING: Library not found: could not resolve 'Qt63DInput.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+347710 WARNING: Library not found: could not resolve 'Qt63DCore.dll', dependency of 'C:\\Users\\Coemi\\AppData\\Roaming\\Python\\Python312\\site-packages\\PyQt6\\Qt6\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+347710 WARNING: Library not found: could not resolve 'api-ms-win-core-path-l1-1-0.dll', dependency of 'C:\\Program Files\\Python312\\python312.dll'.
+348349 INFO: Warnings written to C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\SyncroJob\warn-SyncroJob.txt
+349775 INFO: Graph cross-reference written to C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\SyncroJob\xref-SyncroJob.html
+350674 INFO: checking PYZ
+350674 INFO: Building PYZ because PYZ-00.toc is non existent
+350674 INFO: Building PYZ (ZlibArchive) C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\SyncroJob\PYZ-00.pyz
+371191 INFO: Building PYZ (ZlibArchive) C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\SyncroJob\PYZ-00.pyz completed successfully.
+371512 INFO: checking PKG
+371512 INFO: Building PKG because PKG-00.toc is non existent
+371512 INFO: Building PKG (CArchive) SyncroJob.pkg
+371598 INFO: Building PKG (CArchive) SyncroJob.pkg completed successfully.
+371600 INFO: Bootloader C:\Users\Coemi\AppData\Roaming\Python\Python312\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+371600 INFO: checking EXE
+371600 INFO: Building EXE because EXE-00.toc is non existent
+371600 INFO: Building EXE from EXE-00.toc
+371600 INFO: Copying bootloader EXE to C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\build\SyncroJob\SyncroJob.exe
+371608 INFO: Copying icon to EXE
+371614 INFO: Copying 0 resources to EXE
+371614 INFO: Embedding manifest in EXE
+371621 INFO: Appending PKG archive to EXE
+371686 INFO: Fixing EXE headers
+372517 INFO: Building EXE from EXE-00.toc completed successfully.
+372748 INFO: checking COLLECT
+372749 INFO: Building COLLECT because COLLECT-00.toc is non existent
+372749 INFO: Removing dir C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\dist\SyncroJob
+379858 INFO: Building COLLECT COLLECT-00.toc
+417087 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+[BUILD] PyInstaller completed successfully.
+[BUILD] Creating version.json...
+[BUILD] version.json created: v1.5.0
+[BUILD] Skipping Netlify deployment (--no-deploy)
+============================================================
+  BUILD COMPLETED!
+============================================================

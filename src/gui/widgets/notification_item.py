@@ -67,7 +67,6 @@ class NotificationItem(QFrame):
 
         layout = QVBoxLayout(self)
 
-        # Header: Icon + Title + Timestamp + Close
         header_layout = QHBoxLayout()
 
         # Icon

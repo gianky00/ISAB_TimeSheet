@@ -146,7 +146,6 @@ class HelpPanel(QWidget):
         self.index_list.currentRowChanged.connect(self._on_index_changed)
         sidebar_layout.addWidget(self.index_list, 1)  # Force stretch to 1
 
-        # sidebar_layout.addStretch() # Removed to allow list expansion
 
         # Browser Documentazione
         self.browser = QTextBrowser()

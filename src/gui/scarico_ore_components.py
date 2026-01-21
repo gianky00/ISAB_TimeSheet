@@ -1009,7 +1009,6 @@ class DateFilterPopupWidget(QWidget):
                     all_checked = False
                 stack.extend([item.child(i) for i in range(item.rowCount())])
             else:
-                # Leaf (Day)
                 if item.checkState() == Qt.CheckState.Checked:
                     val = item.data(Qt.ItemDataRole.UserRole)
                     selected.append(val)

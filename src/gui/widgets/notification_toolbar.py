@@ -101,7 +101,6 @@ class FilterChip(QPushButton):
             """
             )
         else:
-            # Inactive: outlined
             self.setStyleSheet(
                 """
                 QPushButton {

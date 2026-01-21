@@ -91,7 +91,6 @@ class SettingsPanel(QWidget):
         config_layout = QVBoxLayout(config_tab)
         config_layout.setContentsMargins(0, 10, 0, 0)  # Top Spacing
 
-        # Toolbox (Accordion)
         self.toolbox = QToolBox()
         self.toolbox.setStyleSheet(
             """
@@ -2113,7 +2112,7 @@ class SettingsPanel(QWidget):
             self._save_settings()
             return True
         elif reply == QMessageBox.StandardButton.Discard:
-            self._load_settings()
+            self.load_settings()
             return True
 
         return False

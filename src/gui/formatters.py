@@ -86,9 +86,7 @@ class FastTableModel(QAbstractTableModel):
         super().__init__()
         self._data = data or []
         self._headers = headers or []
-        # Mapping: {col_index: formatter_function}
         self._formatters = {}
-        # Mapping: {col_index: Qt.AlignmentFlag}
         self._alignments = {}
 
     def set_column_formatter(self, col_idx, formatter_func):

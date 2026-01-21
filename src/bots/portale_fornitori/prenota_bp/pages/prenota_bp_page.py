@@ -247,7 +247,6 @@ class PrenotaBPPage:
                 # Cerca l'icona di spunta verde nella riga corrente
                 # Il locator è relativo (.//...)
                 row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
-                # self.log(f"  Riga {i+1}: Disponibile ✓") # Verbose
             except Exception:
                 self.log(f"  Riga {i + 1}: NON Disponibile ✗")
                 all_ok = False

@@ -15,7 +15,25 @@ class ResourceManager:
 
     # Root del progetto (gestisce sia sorgenti che eseguibili congelati)
     if getattr(sys, "frozen", False):
-        PROJECT_ROOT = Path(os.path.dirname(sys.executable))
+        # PyInstaller crea sys._MEIPASS (directory temporanea/interna)
+        # In onefile: _MEIPASS è la root temporanea.
+        # In onedir (PyInstaller 6+): contenuti in _internal accanto all'exe.
+
+        exe_dir = Path(os.path.dirname(sys.executable))
+        base_dir = Path(getattr(sys, "_MEIPASS", exe_dir))
+
+        # 1. Check in _MEIPASS (onefile or explicitly set)
+        if (base_dir / "assets").exists():
+            PROJECT_ROOT = base_dir
+        # 2. Check in _internal (onedir default for PyInstaller > 6)
+        elif (exe_dir / "_internal" / "assets").exists():
+            PROJECT_ROOT = exe_dir / "_internal"
+        # 3. Check directly next to exe (legacy onedir or manual copy)
+        elif (exe_dir / "assets").exists():
+            PROJECT_ROOT = exe_dir
+        else:
+            # Fallback safe
+            PROJECT_ROOT = base_dir
     else:
         PROJECT_ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
 
@@ -32,6 +50,10 @@ class ResourceManager:
     @classmethod
     def get_icon(cls, name: str) -> str:
         """Restituisce il path assoluto di un'icona."""
+        # Se il nome è già un path relativo completo (es. assets/icons/home.svg), estrai solo il nome
+        if "assets/icons/" in name:
+            name = name.split("/")[-1]
+
         if not name.endswith((".svg", ".png", ".ico")):
             name += ".svg"
         path = cls.ICONS_DIR / name

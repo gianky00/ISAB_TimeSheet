@@ -829,7 +829,6 @@ class DipendentiPanel(QWidget):
         try:
             days = int(value)
             # Determina il colore basato sui giorni rimanenti
-            # days = 30 - giorni_trascorsi
             # Se giorni_trascorsi <= 20 -> days >= 10 (VERDE)
             # Se 21 <= giorni_trascorsi <= 30 -> 0 <= days < 10 (ARANCIO)
             # Se giorni_trascorsi > 30 -> days < 0 (ROSSO)
@@ -949,7 +948,6 @@ class DipendentiPanel(QWidget):
                 elif self.current_filter == "expired" and diff_days <= 30:
                     continue
 
-            # inattivazione(new), id(0), cognome(1), nome(2), badge(4), assunzione(5)
             master_rows.append([inactivation_val, r[0], r[1], r[2], r[4], r[5]])
             filtered_full_rows.append(r)
 

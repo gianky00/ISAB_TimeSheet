@@ -382,7 +382,6 @@ class AutopilotWidget(QWidget):
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         # Rimuovi tooltip per evitare sfondo nero
-        # self.config_btn.setToolTip("Configura pianificazioni automatiche")
         self.config_btn.setStyleSheet(
             """
             QPushButton {

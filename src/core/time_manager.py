@@ -24,7 +24,6 @@ def get_network_time(timeout=5):
 
         if "Date" in response.headers:
             # Parsa l'header Date (RFC 2822)
-            # Esempio: "Wed, 21 Oct 2015 07:28:00 GMT"
             network_time = parsedate_to_datetime(response.headers["Date"])
             # Assicura che sia timezone-aware (UTC)
             if network_time.tzinfo is None:

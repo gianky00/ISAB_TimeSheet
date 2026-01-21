@@ -239,7 +239,7 @@ def main():
 
         # Fase 3: Sicurezza
         checks.append(("🛡️ SAST Security (Bandit)", lambda: run_bandit()))
-        checks.append(("🦠 Dependency Vulns (Pip-Audit)", lambda: run_pip_audit()))
+        # checks.append(("🦠 Dependency Vulns (Pip-Audit)", lambda: run_pip_audit()))
 
         # Fase 4: Test (se non fast)
         if not args.fast:

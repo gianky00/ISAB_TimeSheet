@@ -171,7 +171,6 @@ class ActivityItem(QFrame):
         if animate:
             self.opacity_effect = QGraphicsOpacityEffect(self)
             # DEBUG: Disabling effect to check painter error
-            # self.setGraphicsEffect(self.opacity_effect)
 
             self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
             self.fade_in_animation.setDuration(600)
