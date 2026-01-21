@@ -35,16 +35,19 @@ echo [ TOOLS ]
 echo 14. INSPECTOR     (Universal Inspector)
 echo 15. SECRETS       (Secrets Manager)
 echo 16. PROFILING     (Scalene Performance)
+echo 17. DB MAINTAIN   (SQLite Vacuum & Check)
+echo 18. RAW METRICS   (Radon CC & MI)
+echo 19. CLEAN CODE    (Eradicate - Remove commented code)
 echo.
 echo [ SYSTEM ]
-echo 17. RUN APP       (Dev Mode - Icecream enabled)
-echo 18. CLEAN         (Pulizia cache)
+echo 20. RUN APP       (Dev Mode - Icecream enabled)
+echo 21. CLEAN         (Pulizia cache)
 echo.
 echo [q] ESCI
 echo.
 echo ============================================================
 
-set /p choice="Scegli (1-18): "
+set /p choice="Scegli (1-21): "
 
 set VENV_PYTHON=.venv\Scripts\python.exe
 set VENV_BIN=.venv\Scripts
@@ -159,11 +162,36 @@ if "%choice%"=="16" (
 )
 
 if "%choice%"=="17" (
-    !VENV_PYTHON! main.py
+    !VENV_PYTHON! admin/db_maintenance.py
+    pause
     goto menu
 )
 
 if "%choice%"=="18" (
+    echo [EXEC] Radon - Maintainability Index...
+    !VENV_BIN!\radon mi src -s
+    echo.
+    echo [EXEC] Radon - Cyclomatic Complexity (Risk only)...
+    !VENV_BIN!\radon cc src -a -nc --min B
+    pause
+    goto menu
+)
+
+if "%choice%"=="19" (
+    echo [EXEC] Eradicate - Removing commented out code...
+    !VENV_BIN!\pip install eradicate >nul
+    !VENV_BIN!\eradicate -r -i src
+    echo [INFO] Clean complete. Check git diff.
+    pause
+    goto menu
+)
+
+if "%choice%"=="20" (
+    !VENV_PYTHON! main.py
+    goto menu
+)
+
+if "%choice%"=="21" (
     !VENV_PYTHON! admin/clean_venv.py
     pause
     goto menu
