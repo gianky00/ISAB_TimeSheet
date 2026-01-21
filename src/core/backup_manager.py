@@ -53,7 +53,7 @@ class BackupManager:
         """Rileva percorso OneDrive."""
         user_home = Path.home()
         onedrive_env = os.environ.get("OneDrive")
-        if onedrive_env and os.path.isdir(onedrive_env):
+        if onedrive_env and Path(onedrive_env).is_dir():
             return Path(onedrive_env)
         if (user_home / "OneDrive").is_dir():
             return user_home / "OneDrive"
@@ -62,8 +62,8 @@ class BackupManager:
     @staticmethod
     def _detect_gdrive() -> Optional[Path]:
         """Rileva percorso Google Drive."""
-        for drive in ["G:/Il mio Drive", "G:/My Drive", "G:/"]:
-            if os.path.exists(drive):
+        for drive in ("G:/Il mio Drive", "G:/My Drive", "G:/"):
+            if Path(drive).exists():
                 return Path(drive)
         user_home = Path.home()
         if (user_home / "Google Drive").is_dir():
@@ -74,11 +74,11 @@ class BackupManager:
     def _detect_dropbox() -> Optional[Path]:
         """Rileva percorso Dropbox."""
         user_home = Path.home()
-        for db_path in [
+        for db_path in (
             user_home / "Dropbox",
             user_home / "Dropbox (Personal)",
             user_home / "Dropbox (Business)",
-        ]:
+        ):
             if db_path.is_dir():
                 return db_path
         return None

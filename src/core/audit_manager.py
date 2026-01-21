@@ -179,13 +179,11 @@ class AuditManager:
 
             for col_name, col_def in new_columns.items():
                 if col_name not in existing_cols:
-                    try:
+                    with suppress(sqlite3.OperationalError):
                         print(f"[AUDIT] Migrazione: Aggiunta colonna {col_name}...")
                         conn.execute(
                             f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}"
                         )
-                    except sqlite3.OperationalError as e:
-                        print(f"[AUDIT] Errore migrazione {col_name}: {e}")
 
             # Indici
             conn.execute(
@@ -195,16 +193,14 @@ class AuditManager:
 
     def _get_current_user(self) -> str:
         """Recupera l'utente corrente."""
-        for env_var in ["USERNAME", "USER"]:
+        for env_var in ("USERNAME", "USER"):
             user = os.environ.get(env_var)
             if user and user.lower() != "none":
                 return user
-        try:
+        with suppress(Exception):
             import getpass
 
             return getpass.getuser()
-        except Exception:
-            pass
         return "unknown"
 
     def _calculate_hash(self, data_str: str, prev_hash: str) -> str:

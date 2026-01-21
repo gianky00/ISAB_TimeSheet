@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import time
+from pathlib import Path
 
 import fitz  # type: ignore
 import win32con
@@ -58,12 +59,12 @@ def print_pdf(file_path, printer_name):
     Questo impedisce fisicamente alla stampante di fare fronte-retro tra le pagine,
     poiché le considera documenti distinti.
     """
-    if not os.path.exists(file_path):
+    if not Path(file_path).exists():
         return False
 
     try:
         current_default = win32print.GetDefaultPrinter()
-        target_printer = printer_name if printer_name else current_default
+        target_printer = printer_name or current_default
 
         logger.info(f"Avvio stampa 'Split Jobs' di {file_path} su {target_printer}")
 

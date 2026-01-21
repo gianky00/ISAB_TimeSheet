@@ -14,11 +14,9 @@ def format_date_it(value):
         if isinstance(value, str):
             # Tenta vari formati comuni
             for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d"):
-                try:
+                with suppress(ValueError):
                     dt = datetime.strptime(value.split(" ")[0], fmt)
                     return dt.strftime("%d/%m/%Y")
-                except ValueError:
-                    continue
             return value  # Fallback se non è una data riconosciuta
         elif isinstance(value, (datetime, float, int)):
             # Se è già datetime o timestamp (non supportato qui ma per sicurezza)
@@ -169,7 +167,7 @@ class FastTableModel(QAbstractTableModel):
                         return (0, 0)
 
                     # Tentativo Numero
-                    try:
+                    with suppress(ValueError):
                         clean_val = val_str.replace("€", "").replace("$", "").strip()
                         if "," in clean_val and "." in clean_val:
                             if clean_val.find(".") < clean_val.find(","):
@@ -179,8 +177,6 @@ class FastTableModel(QAbstractTableModel):
                         elif "," in clean_val:
                             clean_val = clean_val.replace(",", ".")
                         return (1, float(clean_val))
-                    except ValueError:
-                        pass
 
                     # Tentativo Data -> Timestamp (così confrontiamo come numeri)
                     date_formats = (

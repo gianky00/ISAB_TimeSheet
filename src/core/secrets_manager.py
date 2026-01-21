@@ -6,6 +6,7 @@ Utilizza variabili d'ambiente con fallback su file protetti.
 import base64
 import os
 import sys
+from contextlib import suppress
 from pathlib import Path
 
 import keyring  # Per integrazione con credential manager OS
@@ -44,28 +45,22 @@ class SecretsManager:
     def _get_key_from_env(cls) -> bytes | None:
         env_key = os.environ.get("SYNCROJOB_LICENSE_KEY")
         if env_key:
-            try:
+            with suppress(Exception):
                 return base64.urlsafe_b64decode(env_key)
-            except Exception:
-                pass
         return None
 
     @classmethod
     def _get_key_from_env_file(cls) -> bytes | None:
-        try:
+        with suppress(Exception):
             env_file = cls._get_env_file_path()
             if env_file.exists():
-                with open(env_file, "r", encoding="utf-8") as f:
+                with env_file.open("r", encoding="utf-8") as f:
                     for line in f:
                         if line.startswith("SYNCROJOB_LICENSE_KEY="):
                             key_str = line.split("=", 1)[1].strip()
                             key_str = key_str.strip('"').strip("'")
-                            try:
+                            with suppress(Exception):
                                 return base64.urlsafe_b64decode(key_str)
-                            except Exception:
-                                pass
-        except Exception:
-            pass
         return None
 
     @staticmethod
@@ -76,12 +71,10 @@ class SecretsManager:
 
     @classmethod
     def _get_key_from_keyring(cls) -> bytes | None:
-        try:
+        with suppress(Exception):
             stored = keyring.get_password(cls.APP_NAME, "license_key")
             if stored:
                 return base64.urlsafe_b64decode(stored)
-        except Exception:
-            pass
         return None
 
     @classmethod
@@ -107,37 +100,31 @@ class SecretsManager:
     @classmethod
     def is_available(cls) -> bool:
         """Verifica se il servizio di keyring è disponibile."""
-        try:
+        with suppress(Exception):
             # Prova a recuperare una chiave dummy per vedere se il backend risponde
             # Non salviamo nulla per evitare sporcizia, solo get
             keyring.get_password("test_backend_availability", "test")
             return True
-        except Exception:
-            return False
+        return False
 
     @classmethod
     def store_credential(cls, service: str, username: str, password: str):
         """Salva credenziali nel keyring di sistema."""
-        try:
+        with suppress(Exception):
             keyring.set_password(f"{cls.APP_NAME}_{service}", username, password)
-        except Exception as e:
-            print(f"Warning: Could not store credential in keyring: {e}")
 
     @classmethod
     def get_credential(cls, service: str, username: str) -> str | None:
         """Recupera password dal keyring di sistema."""
-        try:
+        with suppress(Exception):
             return keyring.get_password(f"{cls.APP_NAME}_{service}", username)
-        except Exception:
-            return None
+        return None
 
     @classmethod
     def delete_credential(cls, service: str, username: str):
         """Elimina credenziali dal keyring."""
-        try:
+        with suppress(keyring.errors.PasswordDeleteError, Exception):
             keyring.delete_password(f"{cls.APP_NAME}_{service}", username)
-        except (keyring.errors.PasswordDeleteError, Exception):
-            pass
 
     @staticmethod
     def derive_key(password: str, salt: bytes) -> bytes:

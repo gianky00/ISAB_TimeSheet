@@ -13,13 +13,13 @@ class SensitiveDataFilter(logging.Filter):
     PATTERNS: list[tuple[Pattern, str]] = [
         # Password in vari formati
         (
-            re.compile(r'password["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.I),
+            re.compile(r'password["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.IGNORECASE),
             "password=***MASKED***",
         ),
         # Token/API keys
         (
             re.compile(
-                r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?', re.I
+                r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?', re.IGNORECASE
             ),
             r"\1=***MASKED***",
         ),

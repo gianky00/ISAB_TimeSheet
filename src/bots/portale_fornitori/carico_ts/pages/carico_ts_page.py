@@ -31,16 +31,12 @@ class CaricoTSPage:
 
     def _wait_overlay(self):
         """Attende la scomparsa delle maschere di caricamento del portale."""
-        try:
+        with suppress(Exception):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
             time.sleep(0.3)
-        except Exception:
-            # Overlay timeout is common if overlay didn't appear fast enough or stuck.
-            # We ignore it to proceed, but debug log could be useful.
-            pass
 
     def navigate(self) -> bool:
         """Naviga verso il menu Gestione Timesheet."""

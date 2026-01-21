@@ -175,7 +175,7 @@ class ExcelImporter:
                 # Recupera password da config, default "coemi"
                 pwd = config.get("excel_decryption_password", "coemi")
 
-                with open(file_path, "rb") as f:
+                with Path(file_path).open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
                     office_file.load_key(password=pwd)
                     temp_decrypted = io.BytesIO()
@@ -205,7 +205,7 @@ class ExcelImporter:
             year = int(match.group(1))
             return year if 2000 <= year <= 2100 else None
 
-        if sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
+        if sheet_name.lower() in ("dati", "preventivi", "riepilogo"):
             return datetime.now().year
         return None
 

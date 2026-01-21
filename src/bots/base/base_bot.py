@@ -406,7 +406,7 @@ class BaseBot(ABC):
 
     def _handle_session_popup(self):
         """Gestisce il popup di sessione multipla cliccando su 'SI'."""
-        try:
+        with suppress(Exception):
             if self.popup_wait:
                 btn = self.popup_wait.until(
                     EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES)
@@ -414,13 +414,11 @@ class BaseBot(ABC):
                 btn.click()
                 self.log("✅ Popup sessione gestito (SI).")
                 return True
-        except Exception:
-            pass
         return False
 
     def _handle_ok_popup(self):
         """Gestisce i popup generici di conferma (OK)."""
-        try:
+        with suppress(Exception):
             if self.popup_wait:
                 btn = self.popup_wait.until(
                     EC.element_to_be_clickable(CommonLocators.POPUP_OK)
@@ -428,8 +426,6 @@ class BaseBot(ABC):
                 btn.click()
                 self.log("✅ Popup OK gestito.")
                 return True
-        except Exception:
-            pass
         return False
 
     def _safe_login_with_retry(self, max_retries: int = 2) -> bool:

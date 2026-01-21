@@ -1,55 +1,37 @@
-"""
-Bot TS - Contabilita KPI Panel
-Pannello per l'analisi KPI della Contabilità Strumentale.
-"""
-
-# Rimosso matplotlib.use('Qt5Agg') per lasciare auto-detection o default
-# e usare il backend corretto per PyQt6
-import matplotlib.pyplot as plt
+from contextlib import suppress
 import numpy as np
 import pandas as pd
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+
 from PyQt6.QtCore import (
-    QAbstractAnimation,
-    QEasingCurve,
-    QParallelAnimationGroup,
-    QPropertyAnimation,
+    Qt, QTimer, QSize, QParallelAnimationGroup, QPropertyAnimation,
+    QEasingCurve, QAbstractAnimation
 )
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import (
+    QColor, QFont, QIcon, QPixmap, QPainter, QGraphicsOpacityEffect,
+    QGraphicsDropShadowEffect
+)
 from PyQt6.QtWidgets import (
-    QComboBox,
-    QFrame,
-    QGraphicsDropShadowEffect,
-    QGraphicsOpacityEffect,
-    QGridLayout,
-    QHBoxLayout,
-    QLabel,
-    QScrollArea,
-    QSizePolicy,
-    QVBoxLayout,
-    QWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea,
+    QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect
 )
 
-from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
-from src.gui.widgets import InfoLabel, KPIBigCard
+from src.core.constants import Icons
 from src.utils.helpers import get_asset_path, get_colored_icon
+from src.gui.widgets.info_widgets import KPIBigCard, InfoLabel
 
-# Costante per il costo orario aziendale standard
-HOURLY_COST_STD = 30.00
-
+HOURLY_COST_STD = 28.50
 
 class ContabilitaKPIPanel(QWidget):
-    """Pannello Dashboard KPI."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         # Imposta stile matplotlib moderno
-        try:
+        with suppress(Exception):
             plt.style.use("seaborn-v0_8-darkgrid")
-        except Exception:
-            pass
 
         self._setup_ui()
         self.refresh_years()

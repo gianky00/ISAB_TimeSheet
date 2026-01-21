@@ -6,6 +6,7 @@ Usa Argon2/Scrypt per key derivation.
 import base64
 import os
 import secrets
+from contextlib import suppress
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
@@ -36,10 +37,8 @@ class PasswordManager:
 
         # Imposta permessi restrittivi (solo owner)
         if os.name != "nt":  # Unix
-            try:
+            with suppress(Exception):
                 os.chmod(self._KEY_DIR, 0o700)
-            except Exception:
-                pass
 
         self._key = self._load_or_create_key()
         self._cipher = Fernet(self._key)
@@ -49,14 +48,11 @@ class PasswordManager:
         if self._KEY_FILE.exists():
             # Se esiste solo la chiave (legacy), usala
             # Se esiste anche il salt (v2), verifica se dobbiamo rigenerare o caricare
-            with open(self._KEY_FILE, "rb") as f:
-                key = f.read()
-                # Verifica validità chiave Fernet (32 url-safe base64-encoded bytes)
-                try:
-                    Fernet(key)
-                    return key
-                except Exception:
-                    pass  # Chiave invalida, rigenera
+            key = self._KEY_FILE.read_bytes()
+            # Verifica validità chiave Fernet (32 url-safe base64-encoded bytes)
+            with suppress(Exception):
+                Fernet(key)
+                return key
 
         # Genera nuovo salt e chiave
         salt = secrets.token_bytes(32)
@@ -74,18 +70,14 @@ class PasswordManager:
         key = base64.urlsafe_b64encode(kdf.derive(machine_id))
 
         # Salva
-        with open(self._SALT_FILE, "wb") as f:
-            f.write(salt)
-        with open(self._KEY_FILE, "wb") as f:
-            f.write(key)
+        self._SALT_FILE.write_bytes(salt)
+        self._KEY_FILE.write_bytes(key)
 
         # Permessi restrittivi
         if os.name != "nt":
-            try:
+            with suppress(Exception):
                 os.chmod(self._KEY_FILE, 0o600)
                 os.chmod(self._SALT_FILE, 0o600)
-            except Exception:
-                pass
 
         return key
 

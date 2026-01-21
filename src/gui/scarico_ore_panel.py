@@ -273,13 +273,11 @@ class ScaricoOrePanel(QWidget):
 
             for idx in indexes:
                 if idx.column() == target_col:
-                    try:
+                    with suppress(ValueError):
                         val_str = str(idx.data(Qt.ItemDataRole.DisplayRole))
                         if val_str:
                             val_str = val_str.replace(",", ".")
                             total_selected += float(val_str)
-                    except ValueError:
-                        pass
 
             formatted = self._format_number(total_selected)
             self.lbl_selection_total.setText(f"Totale selezionato: {formatted}")

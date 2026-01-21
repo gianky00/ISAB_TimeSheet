@@ -74,9 +74,9 @@ def _handle_mixed_separators(s: str) -> str:
     if last_comma > last_dot:
         # IT: Punti sono migliaia, virgola è decimale
         return s.replace(".", "").replace(",", ".")
-    else:
-        # US: Virgole sono migliaia, punto è decimale
-        return s.replace(",", "")
+
+    # US: Virgole sono migliaia, punto è decimale
+    return s.replace(",", "")
 
 
 def _handle_single_dot(s: str) -> str:

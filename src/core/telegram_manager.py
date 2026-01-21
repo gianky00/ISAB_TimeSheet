@@ -391,14 +391,12 @@ class TelegramService(QObject):
                 client = LyraClient(api_key=api_key)
                 if isinstance(data, str) and not is_audio:
                     res = client.ask(data)
-                    try:
+                    with suppress(Exception):
                         clean = res.replace("```json", "").replace("```", "").strip()
                         intent = json.loads(clean)
                         if "action" in intent:
                             self.intent_received.emit(str(chat_id), intent)
                             return
-                    except Exception:
-                        pass
                     self.send_message_sync(f"🤖 **Lyra**: {res}")
                 else:
                     prompt = (
@@ -409,12 +407,10 @@ class TelegramService(QObject):
                         'JSON: {"action": "...", "object": "...", "items": [...]}'
                     )
                     res = client.analyze_media(data, prompt, "audio/ogg")
-                    try:
+                    with suppress(Exception):
                         clean = res.replace("```json", "").replace("```", "").strip()
                         intent = json.loads(clean)
                         self.intent_received.emit(str(chat_id), intent)
-                    except Exception:
-                        self.send_message_sync(f"Comando non riconosciuto: {res}")
             except Exception as e:
                 self.send_message_sync(f"❌ Errore AI: {e}")
 

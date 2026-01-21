@@ -106,8 +106,8 @@ class SmartLogTranslator:
             if any(kw in lower_msg for kw in keywords):
                 return cat
             # Check case-sensitive icons for success/error
-            if cat in ["error", "success"] and any(
-                kw in message for kw in ["✗", "✓"] if kw in keywords
+            if cat in ("error", "success") and any(
+                kw in message for kw in ("✗", "✓") if kw in keywords
             ):
                 return cat
         return "info"

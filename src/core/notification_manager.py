@@ -37,16 +37,14 @@ class NotificationManager(QObject):
         """Carica le notifiche dal file JSON con migrazione automatica."""
         if not self.notifications_file.exists():
             return []
-        try:
-            with open(self.notifications_file, "r", encoding="utf-8") as f:
+        with suppress(Exception):
+            with self.notifications_file.open("r", encoding="utf-8") as f:
                 data = json.load(f)
                 # Applica migrazione per retrocompatibilità
                 data = [self._migrate_notification(n) for n in data]
                 # Ordina per timestamp (più recenti prima)
                 return sorted(data, key=lambda x: x.get("timestamp", ""), reverse=True)
-        except Exception as e:
-            print(f"Errore caricamento notifiche: {e}")
-            return []
+        return []
 
     def _migrate_notification(self, notif: dict) -> dict:
         """Migra notifica vecchia al nuovo schema con valori default."""

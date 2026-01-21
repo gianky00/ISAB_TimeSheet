@@ -1,6 +1,8 @@
 import os
 import time
 
+from pathlib import Path
+
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from src.core.contabilita_manager import ContabilitaManager
@@ -67,9 +69,9 @@ class ContabilitaWorker(QThread):
             self.file_path, self.giornaliere_path
         )
 
-        attivita = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
+        attivita = 1 if self.attivita_path and Path(self.attivita_path).exists() else 0
         certificati = (
-            1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
+            1 if self.certificati_path and Path(self.certificati_path).exists() else 0
         )
 
         total = sheets + files + attivita + certificati

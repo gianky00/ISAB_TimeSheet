@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import os
+import subprocess
 import threading
 from datetime import datetime
 from typing import Any
@@ -174,7 +175,7 @@ class TelegramUIBridge(QObject):
             handler(params)
 
     def _handle_run_pdl(self, params):
-        self.mw.navigate_to_panel("scarico_pdl")
+        self.mw.navigate_to_panel(self.mw.pdl_panel.bot_id)
         print_enabled = params.get("print", False)
         self.mw.pdl_panel.print_check.setChecked(print_enabled)
         self.mw.pdl_panel.merge_and_send_from_telegram = params.get(
@@ -285,8 +286,6 @@ class TelegramUIBridge(QObject):
 
     def _handle_restart_app(self):
         try:
-            import subprocess
-
             subprocess.Popen(["cmd.exe", "/c", "start", os.path.abspath("avvio.bat")])
             QApplication.quit()
         except Exception as e:
@@ -380,7 +379,7 @@ class TelegramUIBridge(QObject):
         )
         if valid_items:
             self.mw.pdl_panel.add_rows_simple([{"numero_pdl": v} for v in valid_items])
-            self.mw.navigate_to_panel("scarico_pdl")
+            self.mw.navigate_to_panel(self.mw.pdl_panel.bot_id)
         self._send_data_feedback(len(valid_items), duplicates, errors)
 
     def _process_oda_items(self, items):

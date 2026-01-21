@@ -64,20 +64,20 @@ def get_github_token():
     return "".join(chr(c) for c in chars)
 
 
-def get_license_dir():
+def get_license_dir() -> Path:
     """Restituisce il percorso della cartella Licenza (in AppData)."""
-    base_dir = config_manager.get_data_path()
-    return os.path.join(base_dir, "Licenza")
+    base_dir = Path(config_manager.get_data_path())
+    return base_dir / "Licenza"
 
 
-def _get_validity_token_path():
+def _get_validity_token_path() -> Path:
     """Restituisce il percorso del token di validità."""
-    return os.path.join(get_license_dir(), "validity.token")
+    return get_license_dir() / "validity.token"
 
 
-def _get_emergency_grace_token_path():
+def _get_emergency_grace_token_path() -> Path:
     """Restituisce il percorso del token di grazia di emergenza (3 giorni)."""
-    return os.path.join(get_license_dir(), "emergency_grace.token")
+    return get_license_dir() / "emergency_grace.token"
 
 
 def update_grace_timestamp():
@@ -89,14 +89,13 @@ def update_grace_timestamp():
         cipher = Fernet(GRACE_PERIOD_KEY)
         encrypted_time = cipher.encrypt(current_time.isoformat().encode("utf-8"))
 
-        os.makedirs(os.path.dirname(token_path), exist_ok=True)
+        token_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(token_path, "wb") as f:
-            f.write(encrypted_time)
+        token_path.write_bytes(encrypted_time)
 
         emergency_token = _get_emergency_grace_token_path()
-        if os.path.exists(emergency_token):
-            os.remove(emergency_token)
+        if emergency_token.exists():
+            emergency_token.unlink()
 
     except Exception as e:
         print(f"[AVVISO] Errore aggiornamento timestamp: {e}")
@@ -106,15 +105,14 @@ def check_grace_period():
     """Verifica se l'applicazione può funzionare offline."""
     token_path = _get_validity_token_path()
 
-    if not os.path.exists(token_path):
+    if not token_path.exists():
         raise Exception(
             "Nessuna validazione online precedente.\n"
             "Connessione internet richiesta per il primo avvio."
         )
 
     try:
-        with open(token_path, "rb") as f:
-            encrypted_data = f.read()
+        encrypted_data = token_path.read_bytes()
 
         cipher = Fernet(GRACE_PERIOD_KEY)
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
@@ -282,8 +280,7 @@ def _save_license_files(license_dir: str, files: Dict[str, bytes]) -> bool:
     """Salva i file scaricati su disco."""
     try:
         for name, content in files.items():
-            with open(os.path.join(license_dir, name), "wb") as f:
-                f.write(content)
+            (Path(license_dir) / name).write_bytes(content)
         print("[LICENZA] ✓ Aggiornamento completato")
         update_grace_timestamp()
         return True

@@ -71,7 +71,7 @@ class ContabilitaSearch:
                         {
                             "type": "ODA",
                             "codice_oda": row[0],
-                            "descrizione": row[1] if row[1] else "Nessuna descrizione",
+                            "descrizione": row[1] or "Nessuna descrizione",
                             "odc": row[2],
                         }
                     )

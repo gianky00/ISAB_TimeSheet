@@ -87,7 +87,7 @@ def _load_base_config() -> Dict[str, Any]:
         return config
 
     try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        with CONFIG_FILE.open("r", encoding="utf-8") as f:
             loaded_config = json.load(f)
         config.update(loaded_config)
     except (json.JSONDecodeError, IOError):
@@ -122,10 +122,8 @@ def _decrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
         # Priorità 2: Fallback criptato nel file
         pw_file = acc.get("password")
         if pw_file:
-            try:
+            with suppress(Exception):
                 acc["password"] = password_manager.decrypt(pw_file)
-            except Exception:
-                pass
 
 
 def _migrate_legacy_config(config: Dict[str, Any]) -> bool:

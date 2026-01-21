@@ -346,7 +346,7 @@ class ScaricaTSBot(BaseBot):
         """Attende la comparsa di un nuovo file .xlsx nella directory sorgente."""
         start_time = time.time()
         while time.time() - start_time < timeout:
-            try:
+            with suppress(Exception):
                 # Se c'è un download in corso, attendi
                 if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
                     time.sleep(0.5)
@@ -360,8 +360,6 @@ class ScaricaTSBot(BaseBot):
                 new_files = current_files - files_before
                 if new_files:
                     return max(list(new_files), key=lambda f: f.stat().st_mtime)
-            except Exception:
-                pass
             time.sleep(0.5)
         return None
 
