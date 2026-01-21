@@ -78,6 +78,5 @@ class ResourceManager:
             d.mkdir(parents=True, exist_ok=True)
 
 
-
 # Inizializzazione struttura all'import
 ResourceManager.ensure_structure()

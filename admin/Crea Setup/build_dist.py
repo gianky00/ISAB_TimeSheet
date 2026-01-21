@@ -68,7 +68,7 @@ def run_command(cmd, cwd=None, shell=False, check=True):
                 stderr=subprocess.STDOUT,
                 text=True,
                 encoding="utf-8",
-                errors="replace"
+                errors="replace",
             )
 
             for line in process.stdout:
@@ -114,6 +114,7 @@ def clean_build():
             except Exception as e:
                 log(f"  Error removing {folder}: {e}")
 
+
 def run_pyarmor():
     """Obfuscate scripts using PyArmor."""
     log("[BUILD] Running PyArmor obfuscation...")
@@ -137,6 +138,7 @@ def run_pyarmor():
     # Use shell=True specifically for Windows if pyarmor is a bat/cmd shim
     run_command(cmd, cwd=ROOT_DIR, shell=(os.name == "nt"))
     log("[BUILD] PyArmor obfuscation completed.")
+
 
 def run_pyinstaller(obfuscated=False):
     """Build executable with PyInstaller."""
@@ -194,10 +196,20 @@ def run_pyinstaller(obfuscated=False):
 
     # FIX: Filter out internal/redundant modules that cause "Hidden import not found" errors
     ignored_imports = [
-        "bot", "locators", "pages", "modern_button",
-        "timeline_widget", "toast", "status_card", "status_indicator",
-        "helpers", "info_widgets", "data_table", "excel_table",
-        "version", "constants"
+        "bot",
+        "locators",
+        "pages",
+        "modern_button",
+        "timeline_widget",
+        "toast",
+        "status_card",
+        "status_indicator",
+        "helpers",
+        "info_widgets",
+        "data_table",
+        "excel_table",
+        "version",
+        "constants",
     ]
     detected_imports = [imp for imp in detected_imports if imp not in ignored_imports]
 
@@ -206,30 +218,44 @@ def run_pyinstaller(obfuscated=False):
 
     # FIX: Exclude unnecessary Qt modules to reduce size and warnings
     qt_excludes = [
-        'PyQt6.QtBluetooth',
-        'PyQt6.QtNfc',
-        'PyQt6.Qt3DCore',
-        'PyQt6.Qt3DRender',
-        'PyQt6.Qt3DInput',
-        'PyQt6.Qt3DLogic',
-        'PyQt6.Qt3DExtras',
-        'PyQt6.QtSpatialAudio',
-        'PyQt6.QtSensors',
-        'PyQt6.QtQuick3D',
-        'PyQt6.QtMultimedia',
-        'PyQt6.QtQml',
-        'PyQt6.QtQuick'
+        "PyQt6.QtBluetooth",
+        "PyQt6.QtNfc",
+        "PyQt6.Qt3DCore",
+        "PyQt6.Qt3DRender",
+        "PyQt6.Qt3DInput",
+        "PyQt6.Qt3DLogic",
+        "PyQt6.Qt3DExtras",
+        "PyQt6.QtSpatialAudio",
+        "PyQt6.QtSensors",
+        "PyQt6.QtQuick3D",
+        "PyQt6.QtMultimedia",
+        "PyQt6.QtQml",
+        "PyQt6.QtQuick",
     ]
     for exc in qt_excludes:
         cmd.extend(["--exclude-module", exc])
 
     # Collect all submodules for complex packages
-    complex_packages = ["selenium", "webdriver_manager", "markdown", "matplotlib", "telegram", "pandera"]
+    complex_packages = [
+        "selenium",
+        "webdriver_manager",
+        "markdown",
+        "matplotlib",
+        "telegram",
+        "pandera",
+    ]
     for pkg in complex_packages:
         cmd.extend(["--collect-submodules", pkg])
 
     # Force collect all data for critical packages
-    force_collect = ["pandera", "telegram", "markdown", "matplotlib", "PyQt6", "cryptography"]
+    force_collect = [
+        "pandera",
+        "telegram",
+        "markdown",
+        "matplotlib",
+        "PyQt6",
+        "cryptography",
+    ]
     for pkg in force_collect:
         cmd.extend(["--collect-all", pkg])
 
@@ -239,6 +265,7 @@ def run_pyinstaller(obfuscated=False):
     # Run PyInstaller
     run_command(cmd, cwd=ROOT_DIR)
     log("[BUILD] PyInstaller completed successfully.")
+
 
 def run_inno_setup():
     """Build installer with Inno Setup."""
@@ -277,6 +304,7 @@ def run_inno_setup():
 
     log("[BUILD] Installer created successfully.")
     return True
+
 
 def create_version_json():
     """Create version.json for update checking."""
@@ -411,6 +439,7 @@ def create_version_json():
     log(f"[BUILD] version.json created: v{version}")
     return netlify_dir
 
+
 def deploy_netlify(netlify_dir):
     """Deploy to Netlify."""
     log("[BUILD] Deploying to Netlify...")
@@ -419,9 +448,7 @@ def deploy_netlify(netlify_dir):
     try:
         subprocess.run(["netlify", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        log(
-            "[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli"
-        )
+        log("[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli")
         return False
 
     # Deploy
@@ -439,6 +466,7 @@ def deploy_netlify(netlify_dir):
     log("[BUILD] Deployed to Netlify successfully.")
     return True
 
+
 def main():
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
     parser.add_argument(
@@ -454,7 +482,7 @@ def main():
     if os.path.exists(LOG_FILE):
         try:
             os.remove(LOG_FILE)
-        except:
+        except OSError:
             pass
 
     log("=" * 60)

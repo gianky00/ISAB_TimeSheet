@@ -867,7 +867,7 @@ class ExcelImporter:
         total_rows = ws.max_row
 
         # Pre-allocate list for optimal performance
-        rows_to_insert = []
+        rows_to_insert: List[Tuple] = []
         rows_to_insert_append = rows_to_insert.append  # Cache method lookup
 
         # Process all rows with minimal overhead

@@ -2113,7 +2113,7 @@ class SettingsPanel(QWidget):
             self._save_settings()
             return True
         elif reply == QMessageBox.StandardButton.Discard:
-            self._load_settings()
+            self.load_settings()
             return True
 
         return False

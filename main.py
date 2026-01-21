@@ -107,7 +107,9 @@ def main():
             QCoreApplication.addLibraryPath(plugin_path)
 
         # Fallback per icone se PROJECT_ROOT non è impostato correttamente in ResourceManager
-        os.environ["QT_SVG_ICON_DIR"] = os.path.join(exe_dir, "_internal", "assets", "icons")
+        os.environ["QT_SVG_ICON_DIR"] = os.path.join(
+            exe_dir, "_internal", "assets", "icons"
+        )
 
     from src.core.app_initializer import AppInitializer
     from src.gui.main_window import MainWindow

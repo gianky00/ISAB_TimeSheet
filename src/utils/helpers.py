@@ -23,7 +23,7 @@ def get_asset_path(relative_path: str) -> str:
         exe_dir = os.path.dirname(sys.executable)
         internal_path = os.path.join(exe_dir, "_internal")
 
-        if os.path.exists(os.path.join(internal_path, relative_path.split('/')[0])):
+        if os.path.exists(os.path.join(internal_path, relative_path.split("/")[0])):
             base_path = internal_path
         else:
             base_path = exe_dir

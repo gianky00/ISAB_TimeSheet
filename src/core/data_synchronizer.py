@@ -198,8 +198,10 @@ class DataSynchronizer:
 
             if rows_to_insert:
                 columns = ExcelImporter.SCARICO_ORE_COLS
+                # Fix B608: Validate column names
+                safe_columns = [cls._validate_identifier(c) for c in columns]
                 placeholders = ", ".join(["?"] * len(columns))
-                insert_query = f"INSERT INTO scarico_ore ({', '.join(columns)}) VALUES ({placeholders})"
+                insert_query = f"INSERT INTO scarico_ore ({', '.join(safe_columns)}) VALUES ({placeholders})"  # nosec B608
 
                 # Batch insert in larger chunks (10k rows) for better throughput
                 BATCH_SIZE = 10000
