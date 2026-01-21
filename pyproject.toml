@@ -35,6 +35,11 @@ pymupdf = "*"
 pywin32 = { version = "*", platform = "win32" }
 python-telegram-bot = "*"
 pandera = "^0.28.1"
+pydantic = "*"
+tenacity = "*"
+loguru = "*"
+faker = "*"
+email-validator = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.0.2"
