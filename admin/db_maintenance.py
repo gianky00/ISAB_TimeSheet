@@ -1,6 +1,6 @@
 """
 SyncroJob - Database Maintenance Tool
-Esegue operazioni di manutenzione ordinaria sul database SQLite:
+Esegue operazioni di manutenzione ordinaria su TUTTI i database dell'applicazione:
 1. Integrity Check
 2. Vacuum (Compattazione)
 3. Analyze (Ottimizzazione Query Planner)
@@ -9,24 +9,37 @@ Esegue operazioni di manutenzione ordinaria sul database SQLite:
 import sqlite3
 import sys
 from pathlib import Path
+from platformdirs import user_data_dir
 
-# Cerchiamo il DB nella posizione standard
-PROJECT_ROOT = Path(__file__).parent.parent
-DB_PATH = PROJECT_ROOT / "data" / "syncrojob.db"
+# Configurazione Percorsi
+APP_NAME = "SyncroJob"
+CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
+DATA_DIR = CONFIG_DIR / "data"
 
-def maintenance():
-    print(f"🔧 AVVIO MANUTENZIONE DATABASE: {DB_PATH}")
+# Lista dei database conosciuti
+DATABASES = [
+    "contabilita.db",
+    "timbrature_Isab.db",
+    "pdl.db",
+    "storico_oda.db",
+    "anagrafica_dipendenti.db",
+    "audit_log.db"
+]
+
+def maintain_db(db_name):
+    db_path = DATA_DIR / db_name
+    print(f"\n📦 ANALISI: {db_name}")
     
-    if not DB_PATH.exists():
-        print(f"❌ Errore: Database non trovato in {DB_PATH}")
+    if not db_path.exists():
+        print(f"   ⚠️  Saltato: File non trovato.")
         return
 
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
         # 1. Integrity Check
-        print("🔍 1. Esecuzione PRAGMA integrity_check...", end=" ")
+        print("   🔍 Checking Integrity...", end=" ")
         cursor.execute("PRAGMA integrity_check")
         result = cursor.fetchone()
         if result[0] == "ok":
@@ -37,25 +50,36 @@ def maintenance():
             return
 
         # 2. Vacuum
-        print("🧹 2. Esecuzione VACUUM (Compattazione)...", end=" ")
+        print("   🧹 Vacuuming...", end=" ")
         cursor.execute("VACUUM")
-        print("✅ Completato")
+        print("✅ Done")
 
         # 3. Analyze
-        print("📊 3. Esecuzione ANALYZE (Ottimizzazione indici)...", end=" ")
+        print("   📊 Analyzing...", end=" ")
         cursor.execute("ANALYZE")
-        print("✅ Completato")
+        print("✅ Done")
         
         # 4. Check Size
-        size_mb = DB_PATH.stat().st_size / (1024 * 1024)
-        print(f"📉 Dimensione attuale DB: {size_mb:.2f} MB")
+        size_mb = db_path.stat().st_size / (1024 * 1024)
+        print(f"   📉 Size: {size_mb:.2f} MB")
 
         conn.close()
-        print("\n✨ Manutenzione completata con successo.")
 
     except Exception as e:
-        print(f"\n❌ ERRORE CRITICO: {e}")
+        print(f"   ❌ ERRORE CRITICO: {e}")
+
+def main():
+    print(f"🔧 SYNCROJOB DB MAINTENANCE TOOL")
+    print(f"📂 Data Dir: {DATA_DIR}\n")
+    
+    if not DATA_DIR.exists():
+        print(f"❌ Errore: Directory dati non trovata.")
         sys.exit(1)
 
+    for db in DATABASES:
+        maintain_db(db)
+
+    print("\n✨ Manutenzione completata.")
+
 if __name__ == "__main__":
-    maintenance()
+    main()

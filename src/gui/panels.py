@@ -169,7 +169,6 @@ class BaseBotPanel(QWidget):
 
         # Status Card (Model only, not in layout)
         self.status_card = StatusCard("Stato Attività")
-        # self.main_layout.addWidget(self.status_card) # Removed from layout
 
         # Content area (da sovrascrivere nelle sottoclassi)
         self.content_widget = QWidget()
@@ -1202,8 +1201,6 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.dest_path_edit.setMinimumWidth(200)  # Ridotto per stare in riga
 
         # Dynamic Width logic simplified/removed as we are in HBox with stretch
-        # def update_width_pdl(): ...
-        # self.dest_path_edit.textChanged.connect(update_width_pdl)
 
         options_layout.addWidget(self.dest_path_edit)
 
@@ -2384,7 +2381,6 @@ class TimbratureDBPanel(QWidget):
             item_cognome.setFlags(item_cognome.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.settings_table.setItem(i, 1, item_cognome)
 
-            # Reparto (ComboBox)
             combo_rep = QComboBox()
             combo_rep.addItems([""] + self.reparti)
             combo_rep.setCurrentText(emp["reparto"])
@@ -2392,7 +2388,6 @@ class TimbratureDBPanel(QWidget):
                 "QComboBox { border: none; background: transparent; }"
             )
 
-            # Cantiere (ComboBox)
             combo_cant = QComboBox()
             combo_cant.addItems([""] + self.cantieri)
             combo_cant.setCurrentText(emp["cantiere"])

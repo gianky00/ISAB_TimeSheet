@@ -91,7 +91,6 @@ class SettingsPanel(QWidget):
         config_layout = QVBoxLayout(config_tab)
         config_layout.setContentsMargins(0, 10, 0, 0)  # Top Spacing
 
-        # Toolbox (Accordion)
         self.toolbox = QToolBox()
         self.toolbox.setStyleSheet(
             """

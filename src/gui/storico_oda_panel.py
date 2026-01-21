@@ -57,7 +57,6 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                 width_col2 = self.tree.columnWidth(2)
 
                 # Removed save/restore to fix "2 saved states" error
-                # painter.save()
                 try:
                     # Gestione Selezione (Background)
                     # Il background viene disegnato dalla view di solito, ma per sicurezza ridisegniamo
@@ -103,7 +102,6 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                 finally:
                     # Manually reset clipping
                     painter.setClipping(False)
-                    # painter.restore()
                 return
 
         super().paint(painter, option, index)
@@ -220,7 +218,6 @@ class StoricoOdaPanel(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         # Custom Delegate per visualizzazione estesa descrizione
-        # self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
         self.splitter.addWidget(self.tree)
 

@@ -202,7 +202,6 @@ class SidebarWidget(QFrame):
         self.btn_fornitori.clicked.connect(lambda: self._handle_automazione_click(0))
         self.group_automazioni.add_child(self.btn_fornitori)
 
-        # Figlio: SafeWork
         self.btn_safework = SidebarChildButton("SafeWork", get_asset_path(Icons.SHIELD))
         self.btn_safework.clicked.connect(lambda: self._handle_automazione_click(1))
         self.group_automazioni.add_child(self.btn_safework)
@@ -262,7 +261,6 @@ class SidebarWidget(QFrame):
         self.group_notifiche = SidebarGroup("Notifiche", get_asset_path(Icons.BELL))
         layout.addWidget(self.group_notifiche)
 
-        # Figlio: Audit
         self.btn_audit = SidebarChildButton("Audit", get_asset_path(Icons.SHIELD))
         self.btn_audit.clicked.connect(lambda: self._handle_notifications_click(1))
         self.group_notifiche.add_child(self.btn_audit)

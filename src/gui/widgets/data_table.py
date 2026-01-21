@@ -103,7 +103,6 @@ class DataTable(QWidget):
 
         layout.addLayout(toolbar)
 
-        # Table (ExcelTableWidget)
         self._table = ExcelTableWidget()
         self._table.setColumnCount(len(self._columns))
         self._table.setHorizontalHeaderLabels([c["name"] for c in self._columns])
@@ -123,7 +122,6 @@ class DataTable(QWidget):
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
         # Remove redundant _apply_table_style call or keep it empty for future needs
-        # self._apply_table_style()
         layout.addWidget(self._table)
 
     def _apply_table_style(self):

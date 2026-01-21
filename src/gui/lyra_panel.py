@@ -651,7 +651,6 @@ class LyraPanel(QWidget):
         self.worker.start()
 
         # NON rimuovere l'allegato automaticamente, permetti domande di follow-up
-        # self._remove_attachment()
 
     def _on_answer(self, text):
         """Callback eseguito quando l'IA restituisce la risposta."""
