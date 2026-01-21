@@ -9,7 +9,7 @@ from email.utils import parsedate_to_datetime
 import requests
 
 
-def get_network_time(timeout=5):
+def get_network_time(timeout=2):
     """
     Ottiene l'orario corrente da una fonte online affidabile (es. Google).
     Restituisce un oggetto datetime con timezone UTC.

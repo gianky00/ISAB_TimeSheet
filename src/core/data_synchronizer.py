@@ -183,16 +183,6 @@ class DataSynchronizer:
             cursor.execute("SELECT COUNT(*) FROM scarico_ore")
             old_count = cursor.fetchone()[0]
 
-            # ULTRA-AGGRESSIVE PERFORMANCE OPTIMIZATIONS for bulk insert
-            cursor.execute("PRAGMA synchronous = OFF")  # Fastest (unsafe on crash)
-            cursor.execute(
-                "PRAGMA journal_mode = MEMORY"
-            )  # Journal in RAM (faster than WAL)
-            cursor.execute("PRAGMA cache_size = -128000")  # 128MB cache (doubled)
-            cursor.execute("PRAGMA temp_store = MEMORY")  # In-memory temp tables
-            cursor.execute("PRAGMA locking_mode = EXCLUSIVE")  # Exclusive lock
-            cursor.execute("PRAGMA page_size = 4096")  # Optimal page size
-
             # Fast replace: DELETE ALL (no need for diff on large tables)
             cursor.execute("DELETE FROM scarico_ore")
 
@@ -216,11 +206,6 @@ class DataSynchronizer:
                 for i in range(0, len(all_data), BATCH_SIZE):
                     batch = all_data[i : i + BATCH_SIZE]
                     cursor.executemany(insert_query, batch)
-
-            # Restore safe settings
-            cursor.execute("PRAGMA synchronous = NORMAL")
-            cursor.execute("PRAGMA journal_mode = WAL")  # Back to WAL mode
-            cursor.execute("PRAGMA locking_mode = NORMAL")
 
             new_count = len(rows_to_insert)
             conn.commit()
