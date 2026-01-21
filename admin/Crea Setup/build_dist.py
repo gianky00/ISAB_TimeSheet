@@ -52,10 +52,10 @@ def run_command(cmd, cwd=None, shell=False, check=True):
     """Run command and log output."""
     if cwd is None:
         cwd = ROOT_DIR
-    
+
     cmd_str = " ".join(cmd) if isinstance(cmd, list) else cmd
     log(f"\n[EXEC] {cmd_str}")
-    
+
     try:
         # Open file in append mode to redirect stdout
         with open(LOG_FILE, "a", encoding="utf-8") as f:
@@ -70,14 +70,14 @@ def run_command(cmd, cwd=None, shell=False, check=True):
                 encoding="utf-8",
                 errors="replace"
             )
-            
+
             for line in process.stdout:
                 sys.stdout.write(line)
                 f.write(line)
                 f.flush()
-            
+
             return_code = process.wait()
-            
+
             if check and return_code != 0:
                 log(f"[ERROR] Command failed with return code {return_code}")
                 sys.exit(1)
@@ -178,24 +178,24 @@ def run_pyinstaller(obfuscated=False):
 
     # --- AUTOMATIC DEPENDENCY ANALYSIS ---
     log("[BUILD] Analyzing source code for dependencies...")
-    
-    # Capture analyzer output to log as well? 
+
+    # Capture analyzer output to log as well?
     # Since get_all_imports prints to stdout, we might want to capture it.
     # But for now let's just run it. The user will see output in console.
     # To properly log it we'd need to redirect stdout during this call.
     # We will trust the console output for this part or wrap it later if needed.
-    
+
     try:
         detected_imports = get_all_imports(MAIN_SCRIPT, os.path.join(ROOT_DIR, "src"))
         log(f"[BUILD] Detected {len(detected_imports)} hidden imports.")
     except Exception as e:
         log(f"[ERROR] Dependency analysis failed: {e}")
         detected_imports = []
-    
+
     # FIX: Filter out internal/redundant modules that cause "Hidden import not found" errors
     ignored_imports = [
-        "bot", "locators", "pages", "modern_button", 
-        "timeline_widget", "toast", "status_card", "status_indicator", 
+        "bot", "locators", "pages", "modern_button",
+        "timeline_widget", "toast", "status_card", "status_indicator",
         "helpers", "info_widgets", "data_table", "excel_table",
         "version", "constants"
     ]
@@ -227,7 +227,7 @@ def run_pyinstaller(obfuscated=False):
     complex_packages = ["selenium", "webdriver_manager", "markdown", "matplotlib", "telegram", "pandera"]
     for pkg in complex_packages:
         cmd.extend(["--collect-submodules", pkg])
-    
+
     # Force collect all data for critical packages
     force_collect = ["pandera", "telegram", "markdown", "matplotlib", "PyQt6", "cryptography"]
     for pkg in force_collect:
@@ -270,11 +270,11 @@ def run_inno_setup():
 
     # Run ISCC
     cmd = [iscc, f"/DMyAppVersion={version}", ISS_SCRIPT]
-    
-    # Inno Setup might not print much to stdout/stderr in a way that is useful to capture line-by-line 
+
+    # Inno Setup might not print much to stdout/stderr in a way that is useful to capture line-by-line
     # but we will try.
     run_command(cmd, cwd=SCRIPT_DIR)
-    
+
     log("[BUILD] Installer created successfully.")
     return True
 

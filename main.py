@@ -105,7 +105,7 @@ def main():
         plugin_path = os.path.join(exe_dir, "_internal", "PyQt6", "Qt6", "plugins")
         if os.path.exists(plugin_path):
             QCoreApplication.addLibraryPath(plugin_path)
-        
+
         # Fallback per icone se PROJECT_ROOT non è impostato correttamente in ResourceManager
         os.environ["QT_SVG_ICON_DIR"] = os.path.join(exe_dir, "_internal", "assets", "icons")
 

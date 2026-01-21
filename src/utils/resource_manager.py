@@ -18,10 +18,10 @@ class ResourceManager:
         # PyInstaller crea sys._MEIPASS (directory temporanea/interna)
         # In onefile: _MEIPASS è la root temporanea.
         # In onedir (PyInstaller 6+): contenuti in _internal accanto all'exe.
-        
+
         exe_dir = Path(os.path.dirname(sys.executable))
         base_dir = Path(getattr(sys, "_MEIPASS", exe_dir))
-        
+
         # 1. Check in _MEIPASS (onefile or explicitly set)
         if (base_dir / "assets").exists():
             PROJECT_ROOT = base_dir
@@ -53,7 +53,7 @@ class ResourceManager:
         # Se il nome è già un path relativo completo (es. assets/icons/home.svg), estrai solo il nome
         if "assets/icons/" in name:
             name = name.split("/")[-1]
-            
+
         if not name.endswith((".svg", ".png", ".ico")):
             name += ".svg"
         path = cls.ICONS_DIR / name

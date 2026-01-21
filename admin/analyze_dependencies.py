@@ -3,27 +3,26 @@ Dependency Analyzer for PyInstaller/PyArmor (NUCLEAR OPTION)
 Scansiona il progetto in modo aggressivo per trovare TUTTE le dipendenze possibili.
 """
 
-import sys
-import os
 import ast
-import pkgutil
-import importlib
+import os
+import sys
 from modulefinder import ModuleFinder
 
+
 def get_all_imports(script_path, src_path):
-    print(f"[ANALYZER] ☢️  Avvio Analisi Totale Dipendenze...")
+    print("[ANALYZER] ☢️  Avvio Analisi Totale Dipendenze...")
     print(f"[ANALYZER] Script: {script_path}")
     print(f"[ANALYZER] Src: {src_path}")
-    
+
     # 1. Analisi Statica (ModuleFinder)
     # Aggiungi src al path
     sys.path.insert(0, src_path)
-    
+
     finder = ModuleFinder(path=sys.path)
     finder.run_script(script_path)
-    
+
     found_modules = set()
-    
+
     # 2. Analisi AST (Abstract Syntax Tree) su tutto il progetto
     # Questo trova importazioni anche in file non direttamente toccati da main.py
     print("[ANALYZER] 🔍 Scansione AST ricorsiva su 'src'...")
@@ -47,14 +46,14 @@ def get_all_imports(script_path, src_path):
     # 3. Inclusione Forzata di Famiglie Critiche
     # Se troviamo un modulo base, forziamo l'inclusione di sotto-componenti critici
     # che spesso sfuggono all'analisi statica/dinamica.
-    
+
     critical_families = {
         "cryptography": [
-            "cryptography", 
+            "cryptography",
             "cryptography.fernet",
             "cryptography.hazmat",
             "cryptography.hazmat.backends",
-            "cryptography.hazmat.backends.openssl", 
+            "cryptography.hazmat.backends.openssl",
             "cryptography.hazmat.bindings",
             "cryptography.hazmat.primitives",
             "cryptography.hazmat.primitives.kdf",
@@ -80,7 +79,7 @@ def get_all_imports(script_path, src_path):
     }
 
     print("[ANALYZER] 🛡️  Applicazione regole famiglie critiche...")
-    
+
     # Merge dei risultati AST con quelli del ModuleFinder
     for name, mod in finder.modules.items():
         root = name.split(".")[0]
@@ -88,7 +87,7 @@ def get_all_imports(script_path, src_path):
              found_modules.add(root)
 
     final_imports = set()
-    
+
     # Espansione basata sulle famiglie
     for module in list(found_modules):
         if module in critical_families:
@@ -116,7 +115,7 @@ if __name__ == "__main__":
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     main_py = os.path.join(root, "main.py")
     src = os.path.join(root, "src")
-    
+
     imports = get_all_imports(main_py, src)
     print("\n[ANALYZER] LISTA FINALE Hidden Imports:")
     for i in imports:
