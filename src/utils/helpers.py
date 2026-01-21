@@ -19,8 +19,14 @@ def get_asset_path(relative_path: str) -> str:
     Funziona sia in sviluppo che nell'app installata.
     """
     if getattr(sys, "frozen", False):
-        # Percorso dell'eseguibile
-        base_path = os.path.dirname(sys.executable)
+        # PyInstaller 6+ mette tutto in _internal per la modalità onedir
+        exe_dir = os.path.dirname(sys.executable)
+        internal_path = os.path.join(exe_dir, "_internal")
+        
+        if os.path.exists(os.path.join(internal_path, relative_path.split('/')[0])):
+            base_path = internal_path
+        else:
+            base_path = exe_dir
     else:
         # Percorso del sorgente (src/utils/helpers.py -> src -> root)
         base_path = os.path.dirname(
