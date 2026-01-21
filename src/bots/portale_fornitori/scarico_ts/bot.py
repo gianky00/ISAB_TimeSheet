@@ -5,6 +5,7 @@ Basato sullo script standalone funzionante.
 """
 
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 

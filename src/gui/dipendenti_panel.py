@@ -5,6 +5,7 @@ Visualizzazione e gestione dell'anagrafica dipendenti.
 
 import csv
 import logging
+from contextlib import suppress
 from datetime import datetime
 
 from PyQt6.QtCore import (

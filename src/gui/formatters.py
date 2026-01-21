@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import datetime
 
 from PyQt6.QtCore import QAbstractTableModel, Qt

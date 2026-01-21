@@ -220,7 +220,7 @@ def sanitize_filename(filename: str) -> str:
         return "unnamed_file"
 
     # 1. Strip null bytes
-    filename = str(filename).replace("\0", "")
+    filename = filename.replace("\0", "")
 
     # 2. Replace forbidden characters with underscore
     # We use a whitelist approach for maximum security:

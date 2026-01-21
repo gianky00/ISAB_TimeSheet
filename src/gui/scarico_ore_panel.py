@@ -5,6 +5,7 @@ Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
 
 import time
+from contextlib import suppress
 from datetime import datetime
 
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal

@@ -4,6 +4,7 @@ Gestisce il salvataggio persistente delle statistiche di utilizzo.
 """
 
 import json
+from contextlib import suppress
 from datetime import datetime
 
 from src.core import config_manager

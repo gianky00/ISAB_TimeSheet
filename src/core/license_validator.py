@@ -13,6 +13,7 @@ import sys
 import uuid
 from datetime import date
 from enum import Enum
+from pathlib import Path
 from typing import Tuple
 
 from cryptography.fernet import Fernet

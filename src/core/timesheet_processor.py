@@ -4,6 +4,7 @@ Replica fedelmente la logica VBA "ProcessTimesheetFiles" per elaborazione, puliz
 """
 
 import time
+from contextlib import suppress
 from pathlib import Path
 
 import openpyxl

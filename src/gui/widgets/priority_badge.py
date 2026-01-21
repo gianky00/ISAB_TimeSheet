@@ -59,7 +59,7 @@ class PriorityBadge(QWidget):
         layout.addWidget(self.dot)
 
         # Label (only for high and medium)
-        if self.priority in ["high", "medium"]:
+        if self.priority in ("high", "medium"):
             label_text = "Alta" if self.priority == "high" else "Media"
             self.label = QLabel(label_text)
             self.label.setStyleSheet(

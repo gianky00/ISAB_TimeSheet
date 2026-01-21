@@ -3,6 +3,7 @@ Bot TS - Contabilita Manager
 Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
 """
 
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple

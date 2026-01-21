@@ -235,7 +235,7 @@ class HorizontalTimelineWidget(QScrollArea):
 
     def add_log(self, message: str):
         human, tech, cat = SmartLogTranslator.humanize(message)
-        if cat == self.last_category and cat in ["download", "search"]:
+        if cat == self.last_category and cat in ("download", "search"):
             self.consecutive_count += 1
             items = [
                 self.container.main_layout.itemAt(i).widget()
@@ -311,10 +311,10 @@ class MissionReportCard(QFrame):
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl)
         stats = QHBoxLayout()
-        for k, v in [
+        for k, v in (
             ("Tempo", duration_str),
             ("Esito", "Successo" if status else "Errore"),
-        ]:
+        ):
             cont = QWidget()
             vl = QVBoxLayout(cont)
             vl.addWidget(

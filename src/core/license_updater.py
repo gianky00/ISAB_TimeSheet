@@ -5,7 +5,8 @@ Gestisce l'aggiornamento e la validazione della licenza.
 
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
+from pathlib import Path
+from typing import Dict, Optional, Tuple, Union
 
 import requests
 from cryptography.fernet import Fernet
@@ -241,7 +242,7 @@ def run_update() -> bool:
     return success
 
 
-def _ensure_license_dir(path: str) -> bool:
+def _ensure_license_dir(path: Union[str, Path]) -> bool:
     """Assicura l'esistenza della cartella licenza."""
     if not os.path.exists(path):
         try:
@@ -276,7 +277,7 @@ def _download_license_files(base_url: str) -> Tuple[Dict[str, bytes], Optional[s
     return downloaded, None
 
 
-def _save_license_files(license_dir: str, files: Dict[str, bytes]) -> bool:
+def _save_license_files(license_dir: Union[str, Path], files: Dict[str, bytes]) -> bool:
     """Salva i file scaricati su disco."""
     try:
         for name, content in files.items():

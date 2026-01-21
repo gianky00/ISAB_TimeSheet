@@ -4,6 +4,7 @@ import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from typing import Any
 
 import telegram

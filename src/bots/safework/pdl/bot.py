@@ -1,7 +1,7 @@
-import glob
 import os
 import time
 import traceback
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -556,8 +556,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _safe_remove(self, path):
         """Rimuove un file ignorando errori se in uso."""
-        from pathlib import Path
         from contextlib import suppress
+        from pathlib import Path
+
         with suppress(Exception):
             p = Path(path)
             if p.exists():
@@ -566,6 +567,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _attendi_e_ritorna_nuovo_pdf(self, tempo_riferimento, timeout=60):
         from pathlib import Path
+
         scadenza = time.time() + timeout
         self.log(
             f"⏳ Polling cartella download (Ref Time: {int(tempo_riferimento)})..."

@@ -5,6 +5,7 @@ Gestisce le notifiche dell'applicazione.
 
 import json
 import uuid
+from contextlib import suppress
 from datetime import datetime
 from typing import Optional
 

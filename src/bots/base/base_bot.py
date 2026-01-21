@@ -5,6 +5,7 @@ Classe base astratta per tutti i bot di automazione con State Machine e Validazi
 
 import time
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 

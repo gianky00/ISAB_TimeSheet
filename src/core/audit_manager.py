@@ -10,6 +10,7 @@ import os
 import sqlite3
 import time
 import traceback
+from contextlib import suppress
 from datetime import datetime, timedelta
 from enum import Enum
 from types import TracebackType

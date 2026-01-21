@@ -1,32 +1,42 @@
 from contextlib import suppress
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-
+from matplotlib.figure import Figure
 from PyQt6.QtCore import (
-    Qt, QTimer, QSize, QParallelAnimationGroup, QPropertyAnimation,
-    QEasingCurve, QAbstractAnimation
+    QAbstractAnimation,
+    QEasingCurve,
+    QParallelAnimationGroup,
+    QPropertyAnimation,
 )
 from PyQt6.QtGui import (
-    QColor, QFont, QIcon, QPixmap, QPainter, QGraphicsOpacityEffect,
-    QGraphicsDropShadowEffect
+    QColor,
 )
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea,
-    QFrame, QGridLayout, QSizePolicy, QGraphicsDropShadowEffect
+    QComboBox,
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
 )
 
-from src.core.contabilita_manager import ContabilitaManager
 from src.core.constants import Icons
+from src.core.contabilita_manager import ContabilitaManager
+from src.gui.widgets.info_widgets import InfoLabel, KPIBigCard
 from src.utils.helpers import get_asset_path, get_colored_icon
-from src.gui.widgets.info_widgets import KPIBigCard, InfoLabel
 
 HOURLY_COST_STD = 28.50
 
-class ContabilitaKPIPanel(QWidget):
 
+class ContabilitaKPIPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         # Imposta stile matplotlib moderno

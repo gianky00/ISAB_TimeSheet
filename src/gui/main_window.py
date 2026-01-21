@@ -5,6 +5,7 @@ Implementa Lazy Loading dei pannelli per prestazioni ottimali.
 """
 
 import random  # NEW IMPORT
+from contextlib import suppress
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
