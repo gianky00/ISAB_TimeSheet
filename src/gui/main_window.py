@@ -636,36 +636,55 @@ class MainWindow(QMainWindow):
         QApplication.instance().installEventFilter(self)
 
     def _open_command_palette(self):
-        """Apre la Command Palette (Spotlight)."""
+        """Apre la Command Palette (Spotlight) con funzionalità avanzate."""
         from src.gui.dialogs.command_palette import CommandPaletteDialog
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
+        import os
+        import sys
         
-        # Generiamo la lista comandi dinamica
+        # Helper per riavvio
+        def restart_app():
+            QApplication.quit()
+            os.execl(sys.executable, sys.executable, *sys.argv)
+
+        # Helper per aprire cartelle
+        def open_folder(path):
+            if os.path.exists(path):
+                QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+            else:
+                ToastManager.instance().show(f"Cartella non trovata: {path}", "error")
+
         commands = [
-            # NAVIGAZIONE
-            {'label': 'Vai a Dashboard', 'desc': 'Panello principale KPI e stato', 
-             'action': lambda: self._navigate_to(PageIndex.DASHBOARD), 'icon': Icons.ACTIVITY},
-            {'label': 'Vai a Timbrature', 'desc': 'Gestione timbrature Portale Fornitori', 
-             'action': lambda: self._navigate_to(PageIndex.TIMBRATURE), 'icon': Icons.CLOCK},
-            {'label': 'Vai a Strumentale', 'desc': 'Contabilità, OdA e SAL', 
-             'action': lambda: self._navigate_to(PageIndex.STRUMENTALE), 'icon': Icons.FOLDER},
-             {'label': 'Vai a DataEase', 'desc': 'Sincronizzazione Ore', 
-             'action': lambda: self._navigate_to(PageIndex.DATAEASE), 'icon': Icons.DATABASE},
-             {'label': 'Vai a Dipendenti', 'desc': 'Anagrafica Personale', 
-             'action': lambda: self._navigate_to(PageIndex.DIPENDENTI), 'icon': Icons.USERS},
-             {'label': 'Vai a Storico OdA', 'desc': 'Database Storico Ordini', 
-             'action': lambda: self._navigate_to(PageIndex.STORICO_ODA), 'icon': Icons.ARCHIVE},
-             {'label': 'Vai a Impostazioni', 'desc': 'Configurazione Sistema', 
-             'action': lambda: self._navigate_to(PageIndex.SETTINGS), 'icon': Icons.SETTINGS_DARK},
-             
-             # AZIONI RAPIDE
-             {'label': 'Esegui Backup', 'desc': 'Crea backup immediato configurazione', 
-             'action': lambda: BackupManager.create_backup(), 'icon': Icons.SAVE},
-             {'label': 'Aggiorna Dati', 'desc': 'Ricarica pagina corrente (F5)', 
-             'action': self._handle_f5, 'icon': Icons.REFRESH},
-             
-             # SISTEMA
-             {'label': 'Esci', 'desc': 'Chiudi l\'applicazione', 
-             'action': self.close, 'icon': Icons.LOG_OUT},
+            # --- NAVIGAZIONE PRINCIPALE ---
+            {'label': 'Vai a Dashboard', 'desc': 'KPI, Stato Sistema, Licenza', 'action': lambda: self._navigate_to(PageIndex.DASHBOARD), 'icon': Icons.ACTIVITY, 'shortcut': 'Alt+1'},
+            {'label': 'Vai a Timbrature', 'desc': 'Gestione Presenze Portale Fornitori', 'action': lambda: self._navigate_to(PageIndex.TIMBRATURE), 'icon': Icons.CLOCK, 'shortcut': 'Alt+2'},
+            {'label': 'Vai a Strumentale', 'desc': 'Contabilità, OdA, SAL, Consuntivi', 'action': lambda: self._navigate_to(PageIndex.STRUMENTALE), 'icon': Icons.FOLDER, 'shortcut': 'Alt+3'},
+            {'label': 'Vai a DataEase', 'desc': 'Sincronizzazione Ore e Quadrature', 'action': lambda: self._navigate_to(PageIndex.DATAEASE), 'icon': Icons.DATABASE, 'shortcut': 'Alt+4'},
+            {'label': 'Vai ad Anagrafiche', 'desc': 'Gestione PdL e Cantieri', 'action': lambda: self._navigate_to(PageIndex.ANAGRAFICHE), 'icon': Icons.BUILDING},
+            {'label': 'Vai a Dipendenti', 'desc': 'Database Personale e Scadenze', 'action': lambda: self._navigate_to(PageIndex.DIPENDENTI), 'icon': Icons.USERS},
+            {'label': 'Vai a Storico OdA', 'desc': 'Archivio Ordini di Acquisto', 'action': lambda: self._navigate_to(PageIndex.STORICO_ODA), 'icon': Icons.ARCHIVE},
+            {'label': 'Vai a Automazioni', 'desc': 'Pianificazione Task e Bot', 'action': lambda: self._navigate_to(PageIndex.AUTOMAZIONI), 'icon': Icons.SMART_TOY},
+            {'label': 'Vai a Notifiche', 'desc': 'Centro Messaggi e Audit Log', 'action': lambda: self._navigate_to(PageIndex.NOTIFICATIONS), 'icon': Icons.BELL},
+            {'label': 'Vai a Impostazioni', 'desc': 'Configurazione Globale', 'action': lambda: self._navigate_to(PageIndex.SETTINGS), 'icon': Icons.SETTINGS_DARK},
+            {'label': 'Vai a Lyra AI', 'desc': 'Assistente Intelligente', 'action': lambda: self._navigate_to(PageIndex.LYRA), 'icon': Icons.SPARKLES},
+
+            # --- AZIONI RAPIDE ---
+            {'label': 'Esegui Backup Configurazione', 'desc': 'Salva snapshot impostazioni .json', 'action': lambda: BackupManager.create_backup(), 'icon': Icons.SAVE},
+            {'label': 'Aggiorna Dati Correnti', 'desc': 'Ricarica il pannello attivo (F5)', 'action': self._handle_f5, 'icon': Icons.REFRESH, 'shortcut': 'F5'},
+            {'label': 'Toggle Statistiche Footer', 'desc': 'Mostra/Nascondi info tecniche (Hacker Mode)', 'action': self._toggle_footer_stats, 'icon': Icons.TERMINAL},
+            {'label': 'Ricerca Universale', 'desc': 'Focus barra di ricerca', 'action': self._handle_ctrl_f, 'icon': Icons.SEARCH, 'shortcut': 'Ctrl+F'},
+            
+            # --- STRUMENTI DI SISTEMA ---
+            {'label': 'Apri Cartella Log', 'desc': 'Visualizza file di log su disco', 'action': lambda: open_folder(os.path.join(os.getcwd(), 'temp', 'logs')), 'icon': Icons.FILE_TEXT},
+            {'label': 'Riavvia Applicazione', 'desc': 'Riavvio forzato del processo', 'action': restart_app, 'icon': Icons.REFRESH},
+            
+            # --- AIUTO & SUPPORTO ---
+            {'label': 'Guida in Linea', 'desc': 'Apri documentazione utente', 'action': lambda: self._navigate_to(PageIndex.HELP), 'icon': Icons.HELP},
+            {'label': 'Segnala un Bug', 'desc': 'Apri issue tracker su GitHub', 'action': lambda: QDesktopServices.openUrl(QUrl("https://github.com/gianky00/ISAB_TimeSheet/issues")), 'icon': Icons.ALERT_TRIANGLE},
+            
+            # --- SESSIONE ---
+            {'label': 'Esci', 'desc': 'Chiudi SyncroJob', 'action': self.close, 'icon': Icons.LOG_OUT},
         ]
         
         dlg = CommandPaletteDialog(self, commands)
