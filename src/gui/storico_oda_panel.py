@@ -22,86 +22,68 @@ from PyQt6.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
+    QFileDialog,
+    QMessageBox,
 )
 
 from src.core.constants import Icons
 from src.core.database import db_manager
+from src.core.oda_manager import OdaManager
 from src.gui.formatters import format_currency_smart, format_date_it
+from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
 class ChildDescriptionDelegate(QStyledItemDelegate):
-    """Delegate per estendere il testo della descrizione (Col 1) sulla colonna successiva per i figli."""
+    """Delegate per gestire lo stile delle righe figlie."""
 
     def __init__(self, tree_view):
         super().__init__(tree_view)
         self.tree = tree_view
 
     def paint(self, painter, option, index):
-        # Verifica se siamo in una riga figlia
+        # Verifica se siamo in una riga figlia (ha un genitore valido)
         if index.parent().isValid():
             col = index.column()
-            # Gestione Colonna 1 (Descrizione) e Colonna 2 (Pos, che è vuota per i figli)
-            if col == 1 or col == 2:
-                # Recupera i dati dalla colonna 1 (dove c'è il testo)
-                # Se siamo alla col 2, dobbiamo prendere i dati dalla col 1 (sibling)
+            
+            # --- GESTIONE MERGE COL 0 e COL 1 (Testo Breve) ---
+            if col == 0 or col == 1:
+                # Disegna il testo SOLO quando siamo sulla Col 1 (disegnando verso sinistra)
+                # Questo evita che il background della Col 1 copra il testo se disegnato sulla Col 0
                 if col == 1:
-                    text = index.data()
-                else:
-                    # Col 2: Prendi testo dalla col 1
-                    sibling = index.sibling(index.row(), 1)
-                    text = sibling.data()
+                    # Recupera dati dalla Col 0 (dove sta il testo vero)
+                    sibling0 = index.sibling(index.row(), 0)
+                    text = sibling0.data()
+                    
+                    width_col0 = self.tree.columnWidth(0)
+                    width_col1 = self.tree.columnWidth(1)
 
-                # Calcola larghezze
-                width_col1 = self.tree.columnWidth(1)
-                width_col2 = self.tree.columnWidth(2)
+                    try:
+                        if option.state & QStyle.StateFlag.State_Selected:
+                            painter.setPen(option.palette.highlightedText().color())
+                        else:
+                            painter.setPen(Qt.GlobalColor.darkBlue)
 
-                # Removed save/restore to fix "2 saved states" error
-                try:
-                    # Gestione Selezione (Background)
-                    # Il background viene disegnato dalla view di solito, ma per sicurezza ridisegniamo
-                    # se vogliamo stile custom o se l'estensione crea artefatti.
-                    # Qui ci limitiamo a gestire il testo.
-
-                    if option.state & QStyle.StateFlag.State_Selected:
-                        painter.setPen(option.palette.highlightedText().color())
-                    else:
-                        painter.setPen(option.palette.text().color())
-
-                    # Calcolo Rettangolo di Disegno "Totale" (spanning col 1 + 2)
-                    # L'obiettivo è disegnare il testo in un rettangolo che copre entrambe le colonne,
-                    # ma traslato correttamente in base alla colonna corrente.
-
-                    if col == 1:
-                        # Siamo in Col 1: Rettangolo è (rect.x, rect.y, w1 + w2, h)
-                        draw_rect = option.rect.adjusted(0, 0, width_col2, 0)
-                    else:
-                        # Siamo in Col 2: Rettangolo deve "iniziare" dalla Col 1 visivamente
-                        # rect.x è l'inizio della Col 2.
-                        # Vogliamo disegnare allo stesso offset assoluto di Col 1.
-                        # draw_rect deve essere spostato a sinistra di width_col1 ed esteso a destra
-                        draw_rect = option.rect.adjusted(-width_col1, 0, 0, 0)
-                        # La larghezza del draw_rect diventa width_col2 + width_col1?
-                        # No, rect.adjusted modifica le coordinate.
-                        # option.rect (Col2) ha width = w2.
-                        # Adjusted(-w1, 0, 0, 0) -> x = x - w1, width = w2 + w1.
-                        # Questo è corretto. Il testo verrà disegnato a partire dall'inizio di Col 1.
-
-                    # Disegno
-                    # Impostiamo il clipping al rect della cella corrente per evitare sbavature su altre colonne
-                    # (anche se il drawText clippa, è meglio essere espliciti se usiamo rect più grandi)
-                    painter.setClipRect(option.rect)
-
-                    # Align Left per iniziare sempre da sinistra (inizio Col 1)
-                    painter.drawText(
-                        draw_rect,
-                        Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                        text,
-                    )
-
-                finally:
-                    # Manually reset clipping
-                    painter.setClipping(False)
+                        # Rettangolo Totale: Inizia a sinistra di Col 1 (inizio Col 0) ed estende per W0 + W1
+                        # Option.rect è il rect della Col 1.
+                        # Spostiamo a SX di width_col0. Larghezza = W1 + W0.
+                        draw_rect = option.rect.adjusted(-width_col0, 0, 0, 0)
+                        
+                        painter.setClipRect(draw_rect)
+                        
+                        padded_rect = draw_rect.adjusted(5, 0, 0, 0)
+                        
+                        painter.drawText(
+                            padded_rect,
+                            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                            text,
+                        )
+                    finally:
+                        painter.setClipping(False)
+                
+                # Se siamo sulla Col 0 o Col 1, non chiamiamo super().paint() per il contenuto standard
+                # ma lasciamo gestire il background alla view o lo ridisegniamo se necessario.
+                # Qui ritorniamo per evitare doppio disegno del testo.
                 return
 
         super().paint(painter, option, index)
@@ -190,6 +172,12 @@ class StoricoOdaPanel(QWidget):
         refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         refresh_btn.clicked.connect(self.refresh_data)
         filter_layout.addWidget(refresh_btn)
+
+        import_btn = QPushButton("Importa Excel")
+        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
+        import_btn.clicked.connect(self._on_import_clicked)
+        filter_layout.addWidget(import_btn)
+
         main_layout.addLayout(filter_layout)
 
         # 2. Contenitore Splitter (Tree | Dettaglio)
@@ -217,7 +205,8 @@ class StoricoOdaPanel(QWidget):
         header = self.tree.header()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
-        # Custom Delegate per visualizzazione estesa descrizione
+        # Custom Delegate Style
+        self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
         self.splitter.addWidget(self.tree)
 
@@ -384,9 +373,12 @@ class StoricoOdaPanel(QWidget):
             # Number of placeholders must match columns above (21)
             params.extend([p] * 21)
 
-        # Order by ODA, POS, NUM_RIGA so grouping is easy
+        # Order by ODA DESC, POS ASC, NUM_RIGA ASC
+        # Usiamo CAST per assicurarci l'ordinamento numerico corretto (10, 20, 100...)
         query += (
-            " ORDER BY oda DESC, pos_oda ASC, CAST(num_riga AS INTEGER) ASC LIMIT 3000"
+            " ORDER BY data_oda DESC, oda DESC, "
+            "CAST(pos_oda AS INTEGER) ASC, "
+            "CAST(num_riga AS INTEGER) ASC LIMIT 3000"
         )
         return query, params
 
@@ -430,42 +422,92 @@ class StoricoOdaPanel(QWidget):
             parent_item = groups[group_key]
 
             # Create Child Row (The detailed line)
-            # Child layout mapping to columns:
-            # Col 0 (Data) -> "Riga: {num_riga}"
-            # Col 1 (OdA) -> {Testo Breve} or {Descrizione}
-            # Col 2 (Pos) -> ""
-            # Col 3 (Valore) -> {Prezzo Lordo}
-            # Col 4 (Stato) -> {Quantita} {UOM}
+            # Alignment for children (NEW LAYOUT):
+            # Col 0 (Data OdA) + Col 1 (OdA) -> {Testo Breve} or {Descrizione} (Merged via Delegate)
+            # Col 2 (Pos)          -> {Unità di Mis} {Quantità}
+            # Col 3 (Valore Netto) -> {Quantità}
+            # Col 4 (Stato)        -> {Prezzo Lordo}
 
             num_riga = r[27]
-
-            # Robust Text Extraction
             raw_testo = str(r[31]).strip() if r[31] else ""
             raw_desc = str(r[6]).strip() if r[6] else ""
-
-            # Use Testo Breve if valid (not "nan", not empty), else Descrizione
-            if raw_testo and raw_testo.lower() != "nan":
-                desc = raw_testo
-            else:
-                desc = raw_desc
-
+            desc = raw_testo if raw_testo and raw_testo.lower() != "nan" else raw_desc
+            
             prezzo = r[30]
             qta = r[28]
             uom = r[29]
 
-            c_riga = QStandardItem(f"Riga: {num_riga}")
-            c_desc = QStandardItem(str(desc))
+            # Create Child Row (The detailed line)
+            # Alignment for children (UPDATED LAYOUT 2):
+            # Col 0 (Data OdA) + Col 1 (OdA) -> {Testo Breve} (Merged via Delegate on Col 1)
+            # Col 2 (Pos)          -> {Unità di Mis} {Quantità}
+            # Col 3 (Valore Netto) -> {Prezzo Lordo}
+            # Col 4 (Stato)        -> Empty
+
+            num_riga = r[27]
+            raw_testo = str(r[31]).strip() if r[31] else ""
+            raw_desc = str(r[6]).strip() if r[6] else ""
+            desc = raw_testo if raw_testo and raw_testo.lower() != "nan" else raw_desc
+            
+            prezzo = r[30]
+            qta = r[28]
+            uom = r[29]
+
+            # Col 0: Descrizione (Disegnata dal Delegate sulla Col 1)
+            c_desc_merged = QStandardItem(str(desc))
+            
+            # Col 1: Empty (Usata dal delegate per disegnare esteso)
             c_empty = QStandardItem("")
+            
+            # Col 2: UOM + Qta
+            c_uom_qta = QStandardItem(f"{uom} {qta}")
+            
+            # Col 3: Prezzo Lordo (Spostato qui)
             c_prezzo = QStandardItem(format_currency_smart(str(prezzo)))
-            c_qta = QStandardItem(f"{qta} {uom}" if qta else "")
+            
+            # Col 4: Empty (Svuotato)
+            c_stato_empty = QStandardItem("")
 
-            # Child Read-only
-            for it in [c_riga, c_desc, c_empty, c_prezzo, c_qta]:
+            # Child Read-only e Stile
+            for it in [c_desc_merged, c_empty, c_uom_qta, c_prezzo, c_stato_empty]:
                 it.setEditable(False)
-                # Visual distinction
-                it.setForeground(Qt.GlobalColor.darkGray)
+                it.setForeground(Qt.GlobalColor.darkBlue) 
+                it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            # La descrizione merged la lasciamo allineata a sinistra
+            c_desc_merged.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-            # Store data on child
-            c_riga.setData(r, Qt.ItemDataRole.UserRole)
+            # Store data on child (col 0)
+            c_desc_merged.setData(r, Qt.ItemDataRole.UserRole)
 
-            parent_item.appendRow([c_riga, c_desc, c_empty, c_prezzo, c_qta])
+            parent_item.appendRow([c_desc_merged, c_empty, c_uom_qta, c_prezzo, c_stato_empty])
+
+    def _on_import_clicked(self):
+        """Gestisce l'importazione manuale del file Excel Storico OdA."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona File Storico OdA",
+            "",
+            "Excel Files (*.xlsx *.xls);;All Files (*)",
+        )
+        if not file_path:
+            return
+
+        try:
+            # Mostriamo un feedback immediato
+            ToastManager.instance().show("Avvio importazione OdA...", "info")
+            
+            # Utilizziamo OdaManager che gestisce DB e Sincronizzazione
+            # Nota: OdaManager.import_oda_from_excel restituisce (bool, msg, added, removed)
+            success, message, added, _ = OdaManager.import_oda_from_excel(file_path)
+            
+            if success:
+                ToastManager.instance().show(
+                    f"Importazione completata: {added} righe aggiornate.", "success"
+                )
+                self.refresh_data()
+            else:
+                QMessageBox.warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}")

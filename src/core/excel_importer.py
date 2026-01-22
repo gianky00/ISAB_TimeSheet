@@ -1179,7 +1179,7 @@ class ExcelImporter:
             df = df.loc[:, ~df.columns.duplicated()]
 
             # 3. Normalizzazione e Pulizia
-            cls._normalize_storico_oda_df(df)
+            df = cls._normalize_storico_oda_df(df)
             cls._clean_storico_oda_data(df)
 
             # 4. Conversione in tuple
@@ -1201,35 +1201,32 @@ class ExcelImporter:
 
     @classmethod
     def _map_storico_oda_columns(cls, df: pd.DataFrame) -> dict:
-        """Mappa le colonne dell'Excel a quelle del DB."""
-        df.columns = [str(c).strip() for c in df.columns]
+        """Mappa le colonne dell'Excel a quelle del DB con precisione."""
+        cols_in_df = [str(c).strip() for c in df.columns]
+        df.columns = cols_in_df
+        
         rename_map = {}
+        # 1. First Pass: Exact Matches
         for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
-            for col in df.columns:
-                if excel_col == col:
-                    rename_map[col] = db_col
-                    break
-                # Fallback matching
-                if len(excel_col) >= 4 and col.startswith(excel_col[:4]):
-                    if excel_col.startswith("Unit") and col.startswith("Unit"):
+            if excel_col in cols_in_df:
+                rename_map[excel_col] = db_col
+        
+        # 2. Second Pass: Case-insensitive fallback (Strict name)
+        for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
+            if excel_col not in rename_map:
+                for col in cols_in_df:
+                    if col.lower() == excel_col.lower():
                         rename_map[col] = db_col
                         break
-                    if abs(len(col) - len(excel_col)) <= 2:
-                        rename_map[col] = db_col
-                        break
+        
         return rename_map
 
     @classmethod
-    def _normalize_storico_oda_df(cls, df: pd.DataFrame):
-        """Assicura che tutte le colonne richieste esistano e filtra solo quelle del DB."""
-        for db_col in cls.STORICO_ODA_COLS:
-            if db_col not in df.columns:
-                df[db_col] = ""
-
-        # Filtra solo le colonne del DB (in-place modification via drop)
-        cols_to_drop = [c for c in df.columns if c not in cls.STORICO_ODA_COLS]
-        if cols_to_drop:
-            df.drop(columns=cols_to_drop, inplace=True)
+    def _normalize_storico_oda_df(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Assicura l'ordine esatto delle colonne richiesto dal DB e dalla UI."""
+        # reindex garantisce che le colonne siano nell'ordine di STORICO_ODA_COLS
+        # e aggiunge quelle mancanti riempiendole con stringa vuota.
+        return df.reindex(columns=cls.STORICO_ODA_COLS).fillna("")
 
     @classmethod
     def _clean_storico_oda_data(cls, df: pd.DataFrame):
