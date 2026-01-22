@@ -261,7 +261,7 @@ class ScaricoOrePanel(QWidget):
         # Get selected visual rows
         selected_rows = selection.selectedRows()
         model = self.source_model
-        
+
         # Map Visual Row -> Real Row ID (index in _display_data)
         for idx in selected_rows:
             if idx.isValid():
@@ -281,7 +281,7 @@ class ScaricoOrePanel(QWidget):
         real_to_visual = {real_id: vis_row for vis_row, real_id in enumerate(model._visible_indices)}
 
         new_selection = self.table_view.selectionModel()
-        from PyQt6.QtCore import QItemSelection, QItemSelectionRange
+        from PyQt6.QtCore import QItemSelection
 
         selection_batch = QItemSelection()
         col_count = model.columnCount() - 1
@@ -293,7 +293,7 @@ class ScaricoOrePanel(QWidget):
                 top_left = model.index(vis_row, 0)
                 bottom_right = model.index(vis_row, col_count)
                 selection_batch.select(top_left, bottom_right)
-        
+
         if not selection_batch.isEmpty():
              new_selection.select(selection_batch, new_selection.SelectionFlag.ClearAndSelect | new_selection.SelectionFlag.Rows)
              # Update totals

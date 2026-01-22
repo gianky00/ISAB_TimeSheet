@@ -148,7 +148,7 @@ class CacheWorker(QThread):
 
             # 3. Styles
             style_cache.append(self._parse_row_style(row))
-            
+
             # 4. Sort Keys (Date)
             # row[0] comes from DB/Excel as YYYY-MM-DD string or similar sortable
             date_keys.append(str(row[0]) if row[0] else "")
@@ -489,7 +489,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.layoutAboutToBeChanged.emit()
 
         reverse = (order == Qt.SortOrder.DescendingOrder)
-        
+
         # Helper to get sort key safely
         def get_key(idx):
              try:

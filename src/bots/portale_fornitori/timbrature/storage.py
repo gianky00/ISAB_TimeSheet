@@ -227,44 +227,44 @@ class TimbratureStorage:
         nel formato DB (YYYY-MM-DD).
         """
         term = term.strip()
-        
+
         # Mapping preliminare separatori
         clean_term = term
         for sep in ["/", ".", " "]:
             clean_term = clean_term.replace(sep, "-")
-        
+
         if "-" in clean_term:
             try:
                 parts = clean_term.split("-")
-                
+
                 # Caso DD-MM (es. 05/12 -> cerca 12 Dicembre)
                 if len(parts) == 2:
                     d, m = parts
                     # Ignoriamo se contengono testo
                     if d.isdigit() and m.isdigit():
                         return f"-{m.zfill(2)}-{d.zfill(2)}"
-                
+
                 # Caso DD-MM-YYYY
                 if len(parts) == 3:
                     d, m, y = parts
-                    
+
                     # Se l'anno è incompleto (es. 202), non normalizzare ancora
                     # Ritorna il termine originale parziale per permettere like testuale se serve,
                     # ma probabilmente fallirà il match su YYYY-MM-DD.
                     # Ma meglio che fallire convertendo in "202-12-05".
                     if len(y) not in (2, 4):
                          return term
-                         
+
                     # Gestione anno 2 cifre
                     if len(y) == 2:
                         y = "20" + y
-                    
+
                     # Ricostruisci YYYY-MM-DD
                     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
-                    
+
             except Exception:
                 pass
-                
+
         return term
 
     def _enrich_and_filter_timb(

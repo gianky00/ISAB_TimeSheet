@@ -47,7 +47,7 @@ def check_expiring_isab_authorizations() -> List[Dict[str, Any]]:
                         break
                     except ValueError:
                         continue
-                
+
                 if not last_date:
                     continue
 
@@ -80,7 +80,7 @@ def check_expiring_isab_authorizations() -> List[Dict[str, Any]]:
                 if norm_cf in last_by_cf:
                     delta, f_date = last_by_cf[norm_cf]
                     match_found = True
-            
+
             # Tenta Match secondario: Nome/Cognome
             if not match_found:
                 norm_key = (normalize(cog), normalize(nom))
@@ -93,11 +93,11 @@ def check_expiring_isab_authorizations() -> List[Dict[str, Any]]:
             if match_found and delta is not None:
                 # Monitoraggio: 20-30 giorni (In Scadenza)
                 # > 30 giorni (Scaduti) - Nessun limite superiore
-                if delta >= 20: 
+                if delta >= 20:
                     stat = "IN SCADENZA"
                     if delta > 30:
                         stat = "SCADUTA"
-                    
+
                     # Evitiamo di segnalare operativi (<= 20)
                     if delta <= 20:
                          continue

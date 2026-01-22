@@ -448,7 +448,7 @@ class AuditManager:
             with sqlite3.connect(self.DB_PATH) as conn:
                 res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
                 deleted_count = res.rowcount
-            
+
             if deleted_count > 0:
                 self.log_action(
                     "Pulizia Log",

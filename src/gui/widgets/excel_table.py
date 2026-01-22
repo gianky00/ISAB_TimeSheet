@@ -490,7 +490,7 @@ class EditableDataTable(QWidget):
                             # Se il valore non c'è, lo aggiungiamo? No, per le combo fisse meglio di no
                             # Ma se è un valore ad-hoc?
                             # Nel dubbio, proviamo a selezionarlo se c'è, altrimenti lasciamo vuoto (idx 0)
-                            widget.setCurrentIndex(0) 
+                            widget.setCurrentIndex(0)
                 else:
                     item = self.table.item(row, col)
                     if item:

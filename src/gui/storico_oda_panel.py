@@ -9,11 +9,13 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QSplitter,
@@ -22,8 +24,6 @@ from PyQt6.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
-    QFileDialog,
-    QMessageBox,
 )
 
 from src.core.constants import Icons
@@ -45,7 +45,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         # Verifica se siamo in una riga figlia (ha un genitore valido)
         if index.parent().isValid():
             col = index.column()
-            
+
             # --- GESTIONE MERGE COL 0 e COL 1 (Testo Breve) ---
             if col == 0 or col == 1:
                 # Disegna il testo SOLO quando siamo sulla Col 1 (disegnando verso sinistra)
@@ -54,7 +54,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                     # Recupera dati dalla Col 0 (dove sta il testo vero)
                     sibling0 = index.sibling(index.row(), 0)
                     text = sibling0.data()
-                    
+
                     width_col0 = self.tree.columnWidth(0)
                     width_col1 = self.tree.columnWidth(1)
 
@@ -68,11 +68,11 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                         # Option.rect è il rect della Col 1.
                         # Spostiamo a SX di width_col0. Larghezza = W1 + W0.
                         draw_rect = option.rect.adjusted(-width_col0, 0, 0, 0)
-                        
+
                         painter.setClipRect(draw_rect)
-                        
+
                         padded_rect = draw_rect.adjusted(5, 0, 0, 0)
-                        
+
                         painter.drawText(
                             padded_rect,
                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
@@ -80,7 +80,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                         )
                     finally:
                         painter.setClipping(False)
-                
+
                 # Se siamo sulla Col 0 o Col 1, non chiamiamo super().paint() per il contenuto standard
                 # ma lasciamo gestire il background alla view o lo ridisegniamo se necessario.
                 # Qui ritorniamo per evitare doppio disegno del testo.
@@ -432,7 +432,7 @@ class StoricoOdaPanel(QWidget):
             raw_testo = str(r[31]).strip() if r[31] else ""
             raw_desc = str(r[6]).strip() if r[6] else ""
             desc = raw_testo if raw_testo and raw_testo.lower() != "nan" else raw_desc
-            
+
             prezzo = r[30]
             qta = r[28]
             uom = r[29]
@@ -448,32 +448,32 @@ class StoricoOdaPanel(QWidget):
             raw_testo = str(r[31]).strip() if r[31] else ""
             raw_desc = str(r[6]).strip() if r[6] else ""
             desc = raw_testo if raw_testo and raw_testo.lower() != "nan" else raw_desc
-            
+
             prezzo = r[30]
             qta = r[28]
             uom = r[29]
 
             # Col 0: Descrizione (Disegnata dal Delegate sulla Col 1)
             c_desc_merged = QStandardItem(str(desc))
-            
+
             # Col 1: Empty (Usata dal delegate per disegnare esteso)
             c_empty = QStandardItem("")
-            
+
             # Col 2: UOM + Qta
             c_uom_qta = QStandardItem(f"{uom} {qta}")
-            
+
             # Col 3: Prezzo Lordo (Spostato qui)
             c_prezzo = QStandardItem(format_currency_smart(str(prezzo)))
-            
+
             # Col 4: Empty (Svuotato)
             c_stato_empty = QStandardItem("")
 
             # Child Read-only e Stile
             for it in [c_desc_merged, c_empty, c_uom_qta, c_prezzo, c_stato_empty]:
                 it.setEditable(False)
-                it.setForeground(Qt.GlobalColor.darkBlue) 
+                it.setForeground(Qt.GlobalColor.darkBlue)
                 it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            
+
             # La descrizione merged la lasciamo allineata a sinistra
             c_desc_merged.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
@@ -496,11 +496,11 @@ class StoricoOdaPanel(QWidget):
         try:
             # Mostriamo un feedback immediato
             ToastManager.instance().show("Avvio importazione OdA...", "info")
-            
+
             # Utilizziamo OdaManager che gestisce DB e Sincronizzazione
             # Nota: OdaManager.import_oda_from_excel restituisce (bool, msg, added, removed)
             success, message, added, _ = OdaManager.import_oda_from_excel(file_path)
-            
+
             if success:
                 ToastManager.instance().show(
                     f"Importazione completata: {added} righe aggiornate.", "success"
@@ -508,6 +508,6 @@ class StoricoOdaPanel(QWidget):
                 self.refresh_data()
             else:
                 QMessageBox.warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
-                
+
         except Exception as e:
             QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}")

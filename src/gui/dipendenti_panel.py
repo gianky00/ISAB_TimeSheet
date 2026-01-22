@@ -150,14 +150,14 @@ class InteractiveStatusCard(QFrame):
         left_layout = QVBoxLayout()
         left_layout.setSpacing(0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         self.val_text = QLabel("0")
         self.val_text.setStyleSheet(
             f"font-size: 28px; font-weight: 900; color: {color};"
         )
         self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.val_text)
-        
+
         layout.addLayout(left_layout)
 
         # Separatore leggero
@@ -176,7 +176,7 @@ class InteractiveStatusCard(QFrame):
         lbl_title.setStyleSheet(
             "font-size: 11px; font-weight: 800; color: #555; letter-spacing: 0.5px;"
         )
-        
+
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet("font-size: 10px; color: #777; font-weight: 500;")
         lbl_desc.setWordWrap(True)
@@ -184,7 +184,7 @@ class InteractiveStatusCard(QFrame):
 
         right_layout.addWidget(lbl_title)
         right_layout.addWidget(lbl_desc)
-        
+
         layout.addLayout(right_layout)
 
     def enterEvent(self, event):
@@ -334,7 +334,7 @@ class DipendentiPanel(QWidget):
         total_width = sum(self.column_widths) + 20
         self.table.setFixedWidth(total_width)
         self.content_layout.addWidget(self.table)
-        
+
         # --- PANNELLO DESTRA (SCHEDA DIPENDENTE VERTICALE) ---
 
         right_container = QWidget()
@@ -685,7 +685,7 @@ class DipendentiPanel(QWidget):
 
             last_date_str = str(res[0][0])
             date_part = last_date_str.split(" ")[0]
-            
+
             last_date = None
             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                 try:
@@ -693,7 +693,7 @@ class DipendentiPanel(QWidget):
                     break
                 except ValueError:
                     continue
-            
+
             if not last_date:
                 return "Errore data", "-", "#6c757d"
 
@@ -781,7 +781,7 @@ class DipendentiPanel(QWidget):
         row_idx = indexes[0].row()
         # Recuperiamo la riga completa dal modello (contiene anche i campi extra oltre i 7 visibili)
         row_data = self.model._data[row_idx]
-        
+
         # Mappatura indici basata sulla struttura creata in _process_employee_rows:
         # 0:scad, 1:id_ris, 2:disp_cog, 3:nome, 4:cf, 5:badge, 6:assunz, 7:nascita, 8:created, 9:real_cog
         mapping = {
@@ -801,7 +801,7 @@ class DipendentiPanel(QWidget):
         for h in self.full_headers:
             idx = mapping.get(h)
             val = str(row_data[idx]) if idx is not None and row_data[idx] is not None else ""
-            
+
             if val.lower() in ["nan", "none"]:
                 val = ""
 
@@ -904,12 +904,12 @@ class DipendentiPanel(QWidget):
         # Mappe per l'ultimo accesso
         last_by_cf = {}
         last_by_name = {}
-        
+
         for cog, nom, cf, d_str in accessi:
             if d_str:
                 norm_key = (normalize(cog), normalize(nom))
                 norm_cf = cf.strip().upper() if cf and cf.strip() else None
-                
+
                 with suppress(Exception):
                     date_part = str(d_str).split(" ")[0]
                     d_dt = None
@@ -919,7 +919,7 @@ class DipendentiPanel(QWidget):
                             break
                         except ValueError:
                             continue
-                    
+
                     if d_dt:
                         diff = (today - d_dt).days
                         if norm_cf:
@@ -929,7 +929,7 @@ class DipendentiPanel(QWidget):
                             last_by_name[norm_key] = diff
 
         master_rows = []
-        
+
         # Counters
         count_ok = 0
         count_warning = 0
@@ -940,7 +940,7 @@ class DipendentiPanel(QWidget):
             cf_val = str(r[7]).strip().upper() if r[7] else ""
             cog_val = normalize(r[1])
             nom_val = normalize(r[2])
-            
+
             diff_days = None
             cf_warning = False
 
@@ -950,7 +950,7 @@ class DipendentiPanel(QWidget):
                 diff_days = last_by_name.get((cog_val, nom_val))
                 if diff_days is not None and not cf_val:
                     cf_warning = True
-            
+
             # --- Aggiorna Contatori (TOTALE) ---
             if diff_days is not None:
                 # <= 20: Operativi
@@ -993,7 +993,7 @@ class DipendentiPanel(QWidget):
                 r[6],             # 8 (created_at)
                 r[1]              # 9 (cognome pulito)
             ])
-            
+
         # Aggiorna UI Cards
         self.card_ok.setValue(count_ok)
         self.card_warning.setValue(count_warning)

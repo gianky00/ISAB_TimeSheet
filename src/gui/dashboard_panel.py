@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 from PyQt6.QtCore import (  # type: ignore
     Qt,

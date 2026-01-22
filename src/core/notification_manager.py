@@ -4,6 +4,7 @@ Gestisce le notifiche dell'applicazione.
 """
 
 import json
+import threading
 import uuid
 from contextlib import suppress
 from datetime import datetime
@@ -13,8 +14,6 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.core import config_manager
 
-
-import threading
 
 class NotificationManager(QObject):
     _instance = None
@@ -29,7 +28,7 @@ class NotificationManager(QObject):
     @classmethod
     def instance(cls):
         if cls._instance is None:
-            # Double-checked locking pattern is not strictly needed here given GIL and simple init, 
+            # Double-checked locking pattern is not strictly needed here given GIL and simple init,
             # but we use lock for instance safety if accessed concurrently during startup
             with cls._lock:
                 if cls._instance is None:
@@ -39,11 +38,11 @@ class NotificationManager(QObject):
     def __init__(self):
         super().__init__()
         self.notifications_file = config_manager.CONFIG_DIR / "notifications.json"
-        
+
         # Ensure we have a lock instance even if manually instantiated (though shouldn't be)
         if not hasattr(self, "_lock"):
             self._lock = threading.RLock()
-            
+
         self.notifications = self._load_notifications()
 
     def _load_notifications(self) -> list:
