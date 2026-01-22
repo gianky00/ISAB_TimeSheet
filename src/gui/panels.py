@@ -1910,6 +1910,15 @@ class PDLDBPanel(QWidget):
             # Ordinamento numerico speciale per N° PDL
             if col_name == "n_pdl":
                 order_clause = f" ORDER BY CAST(n_pdl AS INTEGER) {self.current_sort_order}, n_pdl {self.current_sort_order}"
+            
+            # Ordinamento per Data (DD/MM/YYYY HH:MM:SS -> YYYYMMDD...)
+            elif col_name == "data_creazione":
+                # substr(date, 7, 4) = YYYY
+                # substr(date, 4, 2) = MM
+                # substr(date, 1, 2) = DD
+                # substr(date, 11) = HH:MM:SS
+                order_clause = f" ORDER BY substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2) || substr(data_creazione, 11) {self.current_sort_order}"
+            
             else:
                 order_clause = f" ORDER BY {col_name} {self.current_sort_order}"
         else:
