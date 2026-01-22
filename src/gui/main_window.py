@@ -11,7 +11,7 @@ from enum import IntEnum
 from pathlib import Path
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTimer
-from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -30,6 +30,7 @@ from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.auth_monitor import check_expiring_isab_authorizations
 from src.core.backup_manager import BackupManager
+from src.core.constants import Icons
 from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
@@ -110,6 +111,7 @@ class MainWindow(QMainWindow):
 
         # --- UI SETUP ---
         self._setup_ui()
+        self.command_palette = None # Inizializzazione Lazy
         self._connect_signals()
         self._setup_shortcuts()
 
@@ -489,7 +491,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
 
         # Toggle Button per Footer Stats (sinistra)
-        from src.core.constants import Icons
         from src.utils.helpers import get_asset_path, get_colored_icon
 
         self.footer_toggle_btn = QPushButton()
@@ -626,6 +627,83 @@ class MainWindow(QMainWindow):
 
         self.shortcut_search = QShortcut(QKeySequence("Ctrl+F"), self)
         self.shortcut_search.activated.connect(self._handle_ctrl_f)
+
+        # Shortcut per Command Palette (Spotlight) - Metodo Diretto QShortcut
+        self.shortcut_palette = QShortcut(QKeySequence("Ctrl+K"), self)
+        self.shortcut_palette.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self.shortcut_palette.activated.connect(self._open_command_palette)
+        
+        # Global Event Filter (The "Nuclear Option" for shortcuts)
+        QApplication.instance().installEventFilter(self)
+
+    def _open_command_palette(self):
+        """Apre o chiude la Command Palette (Spotlight) con animazione e debouncing."""
+        # Debouncing: evita aperture/chiusure troppo rapide (intervallo 300ms)
+        now = datetime.now().timestamp() * 1000
+        if hasattr(self, "_last_palette_toggle") and (now - self._last_palette_toggle) < 300:
+            return
+        self._last_palette_toggle = now
+
+        from src.gui.dialogs.command_palette import CommandPaletteDialog
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
+        from src.core.config_manager import get_data_path
+        import os
+        import sys
+        
+        # 1. Inizializzazione Lazy (Singleton per finestra)
+        if self.command_palette is None:
+            # ... (codice precedente invariato)
+            # Generazione comandi
+            def restart_app():
+                QApplication.quit()
+                os.execl(sys.executable, sys.executable, *sys.argv)
+
+            def open_folder(path):
+                if os.path.exists(path):
+                    QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+                else:
+                    ToastManager.instance().show(f"Cartella non trovata: {path}", "error")
+
+            commands = [
+                # --- NAVIGAZIONE PRINCIPALE ---
+                {'label': 'Vai a Dashboard', 'desc': 'KPI, Stato Sistema, Licenza', 'action': lambda: self._navigate_to(PageIndex.DASHBOARD), 'icon': Icons.ACTIVITY, 'shortcut': 'Alt+1'},
+                {'label': 'Vai a Timbrature', 'desc': 'Gestione Presenze Portale Fornitori', 'action': lambda: self._navigate_to(PageIndex.TIMBRATURE), 'icon': Icons.CLOCK, 'shortcut': 'Alt+2'},
+                {'label': 'Vai a Strumentale', 'desc': 'Contabilità, OdA, SAL, Consuntivi', 'action': lambda: self._navigate_to(PageIndex.STRUMENTALE), 'icon': Icons.FOLDER, 'shortcut': 'Alt+3'},
+                {'label': 'Vai a DataEase', 'desc': 'Sincronizzazione Ore e Quadrature', 'action': lambda: self._navigate_to(PageIndex.DATAEASE), 'icon': Icons.DATABASE, 'shortcut': 'Alt+4'},
+                {'label': 'Vai ad Anagrafiche', 'desc': 'Gestione PdL e Cantieri', 'action': lambda: self._navigate_to(PageIndex.ANAGRAFICHE), 'icon': Icons.BUILDING},
+                {'label': 'Vai a Dipendenti', 'desc': 'Database Personale e Scadenze', 'action': lambda: self._navigate_to(PageIndex.DIPENDENTI), 'icon': Icons.USERS},
+                {'label': 'Vai a Storico OdA', 'desc': 'Archivio Ordini di Acquisto', 'action': lambda: self._navigate_to(PageIndex.STORICO_ODA), 'icon': Icons.ARCHIVE},
+                {'label': 'Vai a Automazioni', 'desc': 'Pianificazione Task e Bot', 'action': lambda: self._navigate_to(PageIndex.AUTOMAZIONI), 'icon': Icons.SMART_TOY},
+                {'label': 'Vai a Notifiche', 'desc': 'Centro Messaggi e Audit Log', 'action': lambda: self._navigate_to(PageIndex.NOTIFICATIONS), 'icon': Icons.BELL},
+                {'label': 'Vai a Impostazioni', 'desc': 'Configurazione Globale', 'action': lambda: self._navigate_to(PageIndex.SETTINGS), 'icon': Icons.SETTINGS_DARK},
+                {'label': 'Vai a Lyra AI', 'desc': 'Assistente Intelligente', 'action': lambda: self._navigate_to(PageIndex.LYRA), 'icon': Icons.SPARKLES},
+
+                # --- AZIONI RAPIDE ---
+                {'label': 'Esegui Backup Configurazione', 'desc': 'Salva snapshot impostazioni .json', 'action': lambda: BackupManager.create_backup(), 'icon': Icons.SAVE},
+                {'label': 'Aggiorna Dati Correnti', 'desc': 'Ricarica il pannello attivo (F5)', 'action': self._handle_f5, 'icon': Icons.REFRESH, 'shortcut': 'F5'},
+                {'label': 'Toggle Statistiche Footer', 'desc': 'Mostra/Nascondi info tecniche (Hacker Mode)', 'action': self._toggle_footer_stats, 'icon': Icons.TERMINAL},
+                {'label': 'Ricerca Universale', 'desc': 'Focus barra di ricerca', 'action': self._handle_ctrl_f, 'icon': Icons.SEARCH, 'shortcut': 'Ctrl+F'},
+                
+                # --- STRUMENTI DI SISTEMA ---
+                {'label': 'Apri Cartella Dati', 'desc': 'Esplora file di configurazione e database', 'action': lambda: open_folder(get_data_path()), 'icon': Icons.FOLDER_OPEN},
+                {'label': 'Riavvia Applicazione', 'desc': 'Riavvio forzato del processo', 'action': restart_app, 'icon': Icons.REFRESH},
+                
+                # --- AIUTO & SUPPORTO ---
+                {'label': 'Guida in Linea', 'desc': 'Apri documentazione utente', 'action': lambda: self._navigate_to(PageIndex.HELP), 'icon': Icons.HELP},
+                {'label': 'Segnala un Bug', 'desc': 'Apri issue tracker su GitHub', 'action': lambda: QDesktopServices.openUrl(QUrl("https://github.com/gianky00/ISAB_TimeSheet/issues")), 'icon': Icons.ALERT_TRIANGLE},
+                
+                # --- SESSIONE ---
+                {'label': 'Esci', 'desc': 'Chiudi SyncroJob', 'action': self._quit_application, 'icon': Icons.LOG_OUT},
+            ]
+            
+            self.command_palette = CommandPaletteDialog(self, commands)
+        
+        # 2. Toggle Logic
+        if self.command_palette.isVisible():
+            self.command_palette.hide_animated()
+        else:
+            self.command_palette.show_animated()
 
     def _handle_f5(self):
         """Gestisce F5 tramite dispatch map."""
@@ -899,6 +977,11 @@ class MainWindow(QMainWindow):
             # Stop timer per risparmiare risorse
             if self.boot_telemetry.timer.isActive():
                 self.boot_telemetry.timer.stop()
+
+    def _quit_application(self):
+        """Chiude l'applicazione completamente (no tray)."""
+        self._force_quit = True
+        self.close()
 
     def closeEvent(self, event):
         """

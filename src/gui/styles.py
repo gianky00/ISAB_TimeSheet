@@ -29,8 +29,8 @@ class ThemeManager:
 
     @property
     def palette(self) -> ColorPalette:
-        """Restituisce la palette del tema corrente."""
-        return DARK if self.current_theme == "dark" else LIGHT
+        """Restituisce la palette del tema corrente (FORZATA A LIGHT)."""
+        return LIGHT
 
     def apply_theme(self, app: QApplication, theme_name: str = "light"):
         """

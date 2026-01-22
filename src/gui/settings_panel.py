@@ -41,6 +41,8 @@ from src.core.secrets_manager import SecretsManager
 from src.gui.dialogs.account_dialog import AccountDialog
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.widgets.statistics_widget import StatisticsWidget
+# from src.gui.widgets.security_dashboard import SecurityDashboard (Removed)
+import src.core.constants as Constants
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.connection_worker import ConnectionTestWorker
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -90,6 +92,35 @@ class SettingsPanel(QWidget):
         config_tab = QWidget()
         config_layout = QVBoxLayout(config_tab)
         config_layout.setContentsMargins(0, 10, 0, 0)  # Top Spacing
+
+        # Search Bar
+        search_layout = QHBoxLayout()
+        search_icon = QLabel()
+        search_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SEARCH), "#6c757d").pixmap(20, 20)
+        )
+        search_layout.addWidget(search_icon)
+
+        self.settings_search = QLineEdit()
+        self.settings_search.setPlaceholderText("Cerca impostazione...")
+        self.settings_search.setStyleSheet(
+            """
+            QLineEdit {
+                border: 1px solid #ced4da;
+                border-radius: 15px;
+                padding: 8px 15px;
+                background-color: #f8f9fa;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border-color: #0d6efd;
+                background-color: white;
+            }
+            """
+        )
+        self.settings_search.textChanged.connect(self._filter_settings)
+        search_layout.addWidget(self.settings_search)
+        config_layout.addLayout(search_layout)
 
         self.toolbox = QToolBox()
         self.toolbox.setStyleSheet(
@@ -492,6 +523,9 @@ class SettingsPanel(QWidget):
         self.contabilita_path_edit.setReadOnly(True)
         self.contabilita_path_edit.setMinimumHeight(40)
         self._style_input(self.contabilita_path_edit)
+        self.contabilita_path_edit.textChanged.connect(
+            lambda: self._validate_path_input(self.contabilita_path_edit)
+        )
         contabilita_path_layout.addWidget(self.contabilita_path_edit)
 
         self.browse_contabilita_btn = QPushButton("Sfoglia")
@@ -529,6 +563,9 @@ class SettingsPanel(QWidget):
         self.giornaliere_path_edit.setReadOnly(True)
         self.giornaliere_path_edit.setMinimumHeight(40)
         self._style_input(self.giornaliere_path_edit)
+        self.giornaliere_path_edit.textChanged.connect(
+            lambda: self._validate_path_input(self.giornaliere_path_edit)
+        )
         giornaliere_path_layout.addWidget(self.giornaliere_path_edit)
 
         self.browse_giornaliere_btn = QPushButton("Sfoglia")
@@ -557,6 +594,9 @@ class SettingsPanel(QWidget):
         self.attivita_path_edit.setReadOnly(True)
         self.attivita_path_edit.setMinimumHeight(40)
         self._style_input(self.attivita_path_edit)
+        self.attivita_path_edit.textChanged.connect(
+            lambda: self._validate_path_input(self.attivita_path_edit)
+        )
         attivita_path_layout.addWidget(self.attivita_path_edit)
 
         self.browse_attivita_btn = QPushButton("Sfoglia")
@@ -585,6 +625,9 @@ class SettingsPanel(QWidget):
         self.certificati_path_edit.setReadOnly(True)
         self.certificati_path_edit.setMinimumHeight(40)
         self._style_input(self.certificati_path_edit)
+        self.certificati_path_edit.textChanged.connect(
+            lambda: self._validate_path_input(self.certificati_path_edit)
+        )
         certificati_path_layout.addWidget(self.certificati_path_edit)
 
         self.browse_certificati_btn = QPushButton("Sfoglia")
@@ -617,6 +660,9 @@ class SettingsPanel(QWidget):
         self.dataease_path_edit.setReadOnly(True)
         self.dataease_path_edit.setMinimumHeight(40)
         self._style_input(self.dataease_path_edit)
+        self.dataease_path_edit.textChanged.connect(
+            lambda: self._validate_path_input(self.dataease_path_edit)
+        )
         dataease_path_layout.addWidget(self.dataease_path_edit)
 
         self.browse_dataease_btn = QPushButton("Sfoglia")
@@ -687,6 +733,30 @@ class SettingsPanel(QWidget):
         self.save_btn.setIcon(get_colored_icon(get_asset_path(Icons.SAVE), "#000000"))
         self.save_btn.setVisible(False)  # Nascosto
         action_layout.addWidget(self.save_btn)
+
+        # --- Footer con Import/Export e Reset ---
+        footer_container = QWidget()
+        footer_layout = QHBoxLayout(footer_container)
+        footer_layout.setContentsMargins(0, 10, 0, 0)
+
+        # Export Button
+        export_btn = QPushButton("Esporta backup")
+        export_btn.setIcon(get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#000000"))
+        export_btn.setToolTip("Salva un backup completo delle impostazioni")
+        export_btn.clicked.connect(self._export_settings)
+        self._style_button(export_btn)
+        footer_layout.addWidget(export_btn)
+
+        # Import Button
+        import_btn = QPushButton("Importa backup")
+        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
+        import_btn.setToolTip("Ripristina le impostazioni da un backup")
+        import_btn.clicked.connect(self._import_settings)
+        self._style_button(import_btn)
+        footer_layout.addWidget(import_btn)
+
+        footer_layout.addStretch()
+        config_layout.addWidget(footer_container)
 
         config_layout.addWidget(self.action_container)
         self.action_container.setVisible(False)  # Nascondi l'intero container
@@ -2116,3 +2186,129 @@ class SettingsPanel(QWidget):
             return True
 
         return False
+
+    def _validate_path_input(self, widget: QLineEdit):
+        """
+        Valida visivamente il path inserito nel widget.
+        Verde se esiste, Rosso se non esiste (e non è vuoto).
+        """
+        path_str = widget.text().strip()
+        if not path_str:
+            # Reset stile se vuoto (o stile default)
+            self._style_input(widget)
+            return
+
+        path = Path(path_str)
+        is_valid = path.exists()
+
+        if is_valid:
+            # Stile Verde (Valid)
+            widget.setStyleSheet(
+                """
+                QLineEdit {
+                    border: 2px solid #28a745;
+                    border-radius: 5px;
+                    padding: 8px;
+                    background-color: #f8fff9;
+                    color: #155724;
+                }
+                """
+            )
+        else:
+            # Stile Rosso (Invalid)
+            widget.setStyleSheet(
+                """
+                QLineEdit {
+                    border: 2px solid #dc3545;
+                    border-radius: 5px;
+                    padding: 8px;
+                    background-color: #fff8f8;
+                    color: #721c24;
+                }
+                """
+            )
+
+    def _export_settings(self):
+        """Gestisce l'esportazione delle impostazioni."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Esporta Configurazione",
+            f"syncrojob_backup_{int(datetime.now().timestamp())}.json",
+            "JSON Files (*.json);;All Files (*)",
+        )
+
+        if not file_path:
+            return
+
+        success, msg = config_manager.export_configuration(file_path)
+        if success:
+            ToastManager.instance().show("Backup esportato con successo!", "success")
+        else:
+            QMessageBox.critical(self, "Errore Esportazione", msg)
+
+    def _import_settings(self):
+        """Gestisce l'importazione delle impostazioni."""
+        confirm = QMessageBox.question(
+            self,
+            "Conferma Importazione",
+            "L'importazione sovrascriverà le impostazioni attuali.\n"
+            "Verrà creato un backup automatico prima di procedere.\n\n"
+            "Vuoi continuare?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Seleziona File di Backup", "", "JSON Files (*.json);;All Files (*)"
+        )
+
+        if not file_path:
+            return
+
+        success, msg = config_manager.import_configuration(file_path)
+        if success:
+            QMessageBox.information(
+                self,
+                "Importazione Completata",
+                f"{msg}\n\nL'applicazione verrà ricaricata.",
+            )
+            # Ricarica le impostazioni nella GUI
+            self.load_settings()
+        else:
+            QMessageBox.critical(self, "Errore Importazione", msg)
+
+    def _filter_settings(self, text):
+        """Filtra i gruppi di impostazioni in base al testo di ricerca."""
+        search_text = text.lower().strip()
+
+        # Iteriamo su tutti i gruppi salvati
+        found_any = False
+
+        for group in self.groups:
+            if not search_text:
+                group.setVisible(True)
+                continue
+
+            # Cerca nel titolo del gruppo
+            match = search_text in group.title().lower()
+
+            # Cerca nei widget figli (Label, Checkbox, Button texts)
+            if not match:
+                for child in group.findChildren(QWidget):
+                    # Controlla vari tipi di widget che hanno testo
+                    child_text = ""
+                    if isinstance(child, (QLabel, QCheckBox, QPushButton)):
+                        child_text = child.text()
+                    elif isinstance(child, QLineEdit):
+                        child_text = child.placeholderText()
+
+                    if search_text in child_text.lower():
+                        match = True
+                        break
+
+            group.setVisible(match)
+            if match:
+                found_any = True

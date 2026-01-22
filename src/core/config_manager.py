@@ -8,6 +8,7 @@ import json
 import os
 import threading
 from contextlib import suppress
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -383,3 +384,85 @@ def get_download_path() -> str:
 def get_fornitori() -> list:
     """Restituisce la lista dei fornitori configurati."""
     return get_config_value("fornitori", [])
+
+
+def export_configuration(export_path: str) -> tuple[bool, str]:
+    """
+    Esporta la configurazione corrente in un file JSON.
+    Decripta le credenziali per l'export (Opzionale: aggiungere flag per escludere o criptare).
+    Per ora esportiamo le credenziali in chiaro nel backup (l'utente deve proteggere il file).
+    """
+    try:
+        config = load_config()
+        # Per l'export, vogliamo che le password siano incluse (se l'utente vuole ripristinare altrove)
+        # load_config le ha già decriptate in cache.
+
+        export_data = copy.deepcopy(config)
+
+        # Aggiungiamo metadati
+        export_data["_meta"] = {
+            "exported_at": str(datetime.now()),
+            "app_version": "1.0",  # TODO: Recuperare versione reale
+            "type": "syncrojob_config_backup",
+        }
+
+        with open(export_path, "w", encoding="utf-8") as f:
+            json.dump(export_data, f, indent=4, ensure_ascii=False)
+
+        return True, "Esportazione completata con successo."
+    except Exception as e:
+        return False, f"Errore durante l'esportazione: {str(e)}"
+
+
+def import_configuration(import_path: str) -> tuple[bool, str]:
+    """
+    Importa la configurazione da un file JSON, sovrascrivendo quella attuale.
+    Effettua un backup automatico della configurazione attuale prima di sovrascrivere.
+    """
+    try:
+        # 1. Validazione File
+        path = Path(import_path)
+        if not path.exists():
+            return False, "File di importazione non trovato."
+
+        with open(path, "r", encoding="utf-8") as f:
+            new_config = json.load(f)
+
+        # Validazione base: controlliamo se sembra una config valida
+        # Es. controlliamo chiavi critiche
+        critical_keys = ["accounts", "browser_timeout", "fornitori"]
+        if not any(k in new_config for k in critical_keys):
+            return (
+                False,
+                "Il file selezionato non sembra una configurazione valida di SyncroJob.",
+            )
+
+        # Rimuovi metadati se presenti
+        new_config.pop("_meta", None)
+
+        # 2. Backup Configurazione Corrente
+        backup_file = (
+            CONFIG_DIR
+            / f"config_backup_pre_import_{int(datetime.now().timestamp())}.json"
+        )
+
+        current_config = load_config()
+        with open(backup_file, "w", encoding="utf-8") as f:
+            json.dump(current_config, f, indent=2)
+
+        # 3. Sovrascrittura
+        # Uniamo i default con la nuova config per garantire che nuove chiavi aggiunte in versioni recenti non manchino
+        merged_config = copy.deepcopy(DEFAULT_CONFIG)
+        merged_config.update(new_config)
+
+        save_config(merged_config)
+
+        return (
+            True,
+            f"Configurazione importata con successo.\nBackup precedente salvato in: {backup_file.name}",
+        )
+
+    except json.JSONDecodeError:
+        return False, "Il file non è un JSON valido."
+    except Exception as e:
+        return False, f"Errore critico importazione: {str(e)}"
