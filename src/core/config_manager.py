@@ -371,6 +371,13 @@ def get_data_path() -> str:
     return str(data_dir)
 
 
+def get_logs_path() -> str:
+    """Restituisce il percorso per i file di log."""
+    logs_dir = CONFIG_DIR / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    return str(logs_dir)
+
+
 def get_download_path() -> str:
     """Restituisce il path di download configurato."""
     path = get_config_value("download_path", "")

@@ -11,7 +11,7 @@ from enum import IntEnum
 from pathlib import Path
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTimer
-from PyQt6.QtGui import QAction, QKeySequence, QShortcut
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
 
         # --- UI SETUP ---
         self._setup_ui()
-        self.command_palette = None # Inizializzazione Lazy
+        self.command_palette = None  # Inizializzazione Lazy
         self._connect_signals()
         self._setup_shortcuts()
 
@@ -632,77 +632,346 @@ class MainWindow(QMainWindow):
         self.shortcut_palette = QShortcut(QKeySequence("Ctrl+K"), self)
         self.shortcut_palette.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette.activated.connect(self._open_command_palette)
-        
+
         # Global Event Filter (The "Nuclear Option" for shortcuts)
         QApplication.instance().installEventFilter(self)
 
     def _open_command_palette(self):
         """Apre o chiude la Command Palette (Spotlight) con animazione e debouncing."""
-        # Debouncing: evita aperture/chiusure troppo rapide (intervallo 300ms)
+        # Debouncing
         now = datetime.now().timestamp() * 1000
-        if hasattr(self, "_last_palette_toggle") and (now - self._last_palette_toggle) < 300:
+        if (
+            hasattr(self, "_last_palette_toggle")
+            and (now - self._last_palette_toggle) < 300
+        ):
             return
         self._last_palette_toggle = now
 
-        from src.gui.dialogs.command_palette import CommandPaletteDialog
-        from PyQt6.QtGui import QDesktopServices
-        from PyQt6.QtCore import QUrl
-        from src.core.config_manager import get_data_path
         import os
         import sys
-        
+
+        from PyQt6.QtCore import QUrl
+        from PyQt6.QtGui import QDesktopServices
+
+        from src.core.config_manager import get_data_path, get_logs_path
+        from src.gui.controllers.command_registry import CommandNode
+        from src.gui.dialogs.command_palette import CommandPaletteDialog
+
         # 1. Inizializzazione Lazy (Singleton per finestra)
         if self.command_palette is None:
-            # ... (codice precedente invariato)
-            # Generazione comandi
-            def restart_app():
-                QApplication.quit()
-                os.execl(sys.executable, sys.executable, *sys.argv)
+            try:
+                # --- AZIONI ---
+                def restart_app():
+                    QApplication.quit()
+                    os.execl(sys.executable, sys.executable, *sys.argv)
 
-            def open_folder(path):
-                if os.path.exists(path):
-                    QDesktopServices.openUrl(QUrl.fromLocalFile(path))
-                else:
-                    ToastManager.instance().show(f"Cartella non trovata: {path}", "error")
+                def open_folder(path):
+                    if os.path.exists(path):
+                        QDesktopServices.openUrl(QUrl.fromLocalFile(path))
 
-            commands = [
-                # --- NAVIGAZIONE PRINCIPALE ---
-                {'label': 'Vai a Dashboard', 'desc': 'KPI, Stato Sistema, Licenza', 'action': lambda: self._navigate_to(PageIndex.DASHBOARD), 'icon': Icons.ACTIVITY, 'shortcut': 'Alt+1'},
-                {'label': 'Vai a Timbrature', 'desc': 'Gestione Presenze Portale Fornitori', 'action': lambda: self._navigate_to(PageIndex.TIMBRATURE), 'icon': Icons.CLOCK, 'shortcut': 'Alt+2'},
-                {'label': 'Vai a Strumentale', 'desc': 'Contabilità, OdA, SAL, Consuntivi', 'action': lambda: self._navigate_to(PageIndex.STRUMENTALE), 'icon': Icons.FOLDER, 'shortcut': 'Alt+3'},
-                {'label': 'Vai a DataEase', 'desc': 'Sincronizzazione Ore e Quadrature', 'action': lambda: self._navigate_to(PageIndex.DATAEASE), 'icon': Icons.DATABASE, 'shortcut': 'Alt+4'},
-                {'label': 'Vai ad Anagrafiche', 'desc': 'Gestione PdL e Cantieri', 'action': lambda: self._navigate_to(PageIndex.ANAGRAFICHE), 'icon': Icons.BUILDING},
-                {'label': 'Vai a Dipendenti', 'desc': 'Database Personale e Scadenze', 'action': lambda: self._navigate_to(PageIndex.DIPENDENTI), 'icon': Icons.USERS},
-                {'label': 'Vai a Storico OdA', 'desc': 'Archivio Ordini di Acquisto', 'action': lambda: self._navigate_to(PageIndex.STORICO_ODA), 'icon': Icons.ARCHIVE},
-                {'label': 'Vai a Automazioni', 'desc': 'Pianificazione Task e Bot', 'action': lambda: self._navigate_to(PageIndex.AUTOMAZIONI), 'icon': Icons.SMART_TOY},
-                {'label': 'Vai a Notifiche', 'desc': 'Centro Messaggi e Audit Log', 'action': lambda: self._navigate_to(PageIndex.NOTIFICATIONS), 'icon': Icons.BELL},
-                {'label': 'Vai a Impostazioni', 'desc': 'Configurazione Globale', 'action': lambda: self._navigate_to(PageIndex.SETTINGS), 'icon': Icons.SETTINGS_DARK},
-                {'label': 'Vai a Lyra AI', 'desc': 'Assistente Intelligente', 'action': lambda: self._navigate_to(PageIndex.LYRA), 'icon': Icons.SPARKLES},
+                # --- COSTRUZIONE MENU ---
+                # Import Icons here if not available globally in this scope or ensure constants is imported
+                from src.core.constants import Icons
 
-                # --- AZIONI RAPIDE ---
-                {'label': 'Esegui Backup Configurazione', 'desc': 'Salva snapshot impostazioni .json', 'action': lambda: BackupManager.create_backup(), 'icon': Icons.SAVE},
-                {'label': 'Aggiorna Dati Correnti', 'desc': 'Ricarica il pannello attivo (F5)', 'action': self._handle_f5, 'icon': Icons.REFRESH, 'shortcut': 'F5'},
-                {'label': 'Toggle Statistiche Footer', 'desc': 'Mostra/Nascondi info tecniche (Hacker Mode)', 'action': self._toggle_footer_stats, 'icon': Icons.TERMINAL},
-                {'label': 'Ricerca Universale', 'desc': 'Focus barra di ricerca', 'action': self._handle_ctrl_f, 'icon': Icons.SEARCH, 'shortcut': 'Ctrl+F'},
-                
-                # --- STRUMENTI DI SISTEMA ---
-                {'label': 'Apri Cartella Dati', 'desc': 'Esplora file di configurazione e database', 'action': lambda: open_folder(get_data_path()), 'icon': Icons.FOLDER_OPEN},
-                {'label': 'Riavvia Applicazione', 'desc': 'Riavvio forzato del processo', 'action': restart_app, 'icon': Icons.REFRESH},
-                
-                # --- AIUTO & SUPPORTO ---
-                {'label': 'Guida in Linea', 'desc': 'Apri documentazione utente', 'action': lambda: self._navigate_to(PageIndex.HELP), 'icon': Icons.HELP},
-                {'label': 'Segnala un Bug', 'desc': 'Apri issue tracker su GitHub', 'action': lambda: QDesktopServices.openUrl(QUrl("https://github.com/gianky00/ISAB_TimeSheet/issues")), 'icon': Icons.ALERT_TRIANGLE},
-                
-                # --- SESSIONE ---
-                {'label': 'Esci', 'desc': 'Chiudi SyncroJob', 'action': self._quit_application, 'icon': Icons.LOG_OUT},
-            ]
-            
-            self.command_palette = CommandPaletteDialog(self, commands)
-        
+                # 1. RUN (Execution Flow)
+                # 1. RUN (Execution Flow)
+                menu_run = CommandNode(
+                    "Run...",
+                    "Avvia bot e task automatici",
+                    Icons.PLAY,
+                    children=[
+                        CommandNode(
+                            "Scarica Timbrature",
+                            "Portale Fornitori: Scarico presenze",
+                            Icons.CLOCK,
+                            children=[
+                                CommandNode(
+                                    "Oggi",
+                                    "Scarica solo oggi",
+                                    Icons.CALENDAR,
+                                    action=lambda: self.status_bar.showMessage(
+                                        "Bot Started: Today..."
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Ieri",
+                                    "Scarica giornata di ieri",
+                                    Icons.CLOCK,
+                                    action=lambda: self.status_bar.showMessage(
+                                        "Bot Started: Yesterday..."
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Mese Corrente",
+                                    "Scarica tutto il mese",
+                                    Icons.CALENDAR,
+                                    action=lambda: self.status_bar.showMessage(
+                                        "Bot Started: Month..."
+                                    ),
+                                ),
+                            ],
+                        ),
+                        CommandNode(
+                            "Sincronizza DataEase",
+                            "Scarico ore e quadrature",
+                            Icons.DATABASE,
+                            action=lambda: self._navigate_to(PageIndex.DATAEASE),
+                        ),
+                        CommandNode(
+                            "Check Scadenze",
+                            "Verifica abilitazioni ISAB in scadenza",
+                            Icons.SHIELD,
+                            action=self._check_isab_authorizations,
+                        ),
+                        CommandNode(
+                            "Backup Now",
+                            "Esegui backup immediato configurazione",
+                            Icons.SAVE,
+                            action=BackupManager.create_backup,
+                        ),
+                    ],
+                )
+
+                # 2. GO (Navigation Flow)
+                menu_go = CommandNode(
+                    "Go to...",
+                    "Navigazione rapida pannelli",
+                    Icons.GLOBE,
+                    children=[
+                        CommandNode(
+                            "General",
+                            children=[
+                                CommandNode(
+                                    "Dashboard",
+                                    "KPI e Stato",
+                                    Icons.ACTIVITY,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.DASHBOARD
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Notifiche & Audit",
+                                    "Log sistema",
+                                    Icons.BELL,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.NOTIFICATIONS
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Assistente AI",
+                                    "Lyra",
+                                    Icons.SPARKLES,
+                                    action=lambda: self._navigate_to(PageIndex.LYRA),
+                                ),
+                            ],
+                        ),
+                        CommandNode(
+                            "Moduli",
+                            children=[
+                                CommandNode(
+                                    "Timbrature",
+                                    "Gestione Presenze",
+                                    Icons.CLOCK,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.TIMBRATURE
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Strumentale",
+                                    "Contabilità & OdA",
+                                    Icons.FOLDER,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.STRUMENTALE
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Dipendenti",
+                                    "Anagrafica Risorse",
+                                    Icons.USERS,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.DIPENDENTI
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Storico OdA",
+                                    "Database Ordini",
+                                    Icons.ARCHIVE,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.STORICO_ODA
+                                    ),
+                                ),
+                            ],
+                        ),
+                        CommandNode(
+                            "System",
+                            children=[
+                                CommandNode(
+                                    "Impostazioni",
+                                    "Configurazione",
+                                    Icons.SETTINGS_DARK,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.SETTINGS
+                                    ),
+                                ),
+                                CommandNode(
+                                    "Automazioni",
+                                    "Scheduler",
+                                    Icons.SMART_TOY,
+                                    action=lambda: self._navigate_to(
+                                        PageIndex.AUTOMAZIONI
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ],
+                )
+
+                # 3. SET (Settings & Utilities)
+                menu_set = CommandNode(
+                    "System...",
+                    "Strumenti tecnici e opzioni",
+                    Icons.TERMINAL,
+                    children=[
+                        CommandNode(
+                            "Cartelle",
+                            children=[
+                                CommandNode(
+                                    "Dati Applicazione",
+                                    "Apri cartella config e DB",
+                                    Icons.FOLDER_OPEN,
+                                    action=lambda: open_folder(get_data_path()),
+                                ),
+                                CommandNode(
+                                    "Log Files",
+                                    "Apri cartella log",
+                                    Icons.FILE_TEXT,
+                                    action=lambda: open_folder(get_logs_path()),
+                                ),
+                            ],
+                        ),
+                        CommandNode(
+                            "Manutenzione",
+                            children=[
+                                CommandNode(
+                                    "Riavvia Applicazione",
+                                    "Soft Reboot",
+                                    Icons.REFRESH,
+                                    action=restart_app,
+                                ),
+                                CommandNode(
+                                    "Toggle Stats (Hacker Mode)",
+                                    "Mostra telemetria footer",
+                                    Icons.TERMINAL,
+                                    action=self._toggle_footer_stats,
+                                    close_on_execute=False,
+                                ),
+                                CommandNode(
+                                    "Aggiorna Dati (F5)",
+                                    "Refresh view corrente",
+                                    Icons.REFRESH,
+                                    action=self._handle_f5,
+                                ),
+                            ],
+                        ),
+                    ],
+                )
+
+                menu_help = CommandNode(
+                    "Help...",
+                    "Supporto e Documentazione",
+                    Icons.HELP,
+                    children=[
+                        CommandNode(
+                            "Guida utente",
+                            "Manuale operativo",
+                            Icons.HELP,
+                            action=lambda: self._navigate_to(PageIndex.HELP),
+                        ),
+                        CommandNode(
+                            "Segnala Bug",
+                            "GitHub Issues",
+                            Icons.ALERT_TRIANGLE,
+                            action=lambda: QDesktopServices.openUrl(
+                                QUrl(
+                                    "https://github.com/gianky00/ISAB_TimeSheet/issues"
+                                )
+                            ),
+                        ),
+                    ],
+                )
+
+                # Root List: COMBINAZIONE DI CATEGORIE E COMANDI DIRETTI (Hybrid Mode)
+                root_nodes = [
+                    # --- 1. COMANDI DI FLUSSO (Menu) ---
+                    menu_run,  # "Run..."
+                    menu_go,  # "Go to..."
+                    menu_set,  # "System..."
+                    menu_help,  # "Help..."
+                    # --- 2. SHORTCUT DIRETTI (Top Level per velocità) ---
+                    # Navigazione Frequente
+                    CommandNode(
+                        "Vai a Timbrature",
+                        "Navigazione Rapida",
+                        Icons.CLOCK,
+                        shortcut="Alt+2",
+                        action=lambda: self._navigate_to(PageIndex.TIMBRATURE),
+                    ),
+                    CommandNode(
+                        "Vai a Strumentale",
+                        "Navigazione Rapida",
+                        Icons.FOLDER,
+                        shortcut="Alt+3",
+                        action=lambda: self._navigate_to(PageIndex.STRUMENTALE),
+                    ),
+                    CommandNode(
+                        "Vai a DataEase",
+                        "Navigazione Rapida",
+                        Icons.DATABASE,
+                        shortcut="Alt+4",
+                        action=lambda: self._navigate_to(PageIndex.DATAEASE),
+                    ),
+                    # Azioni Rapide
+                    CommandNode(
+                        "Aggiorna (F5)",
+                        "Ricarica pagina corrente",
+                        Icons.REFRESH,
+                        shortcut="F5",
+                        action=self._handle_f5,
+                    ),
+                    CommandNode(
+                        "Ricerca Universale",
+                        "Cerca ovunque",
+                        Icons.SEARCH,
+                        shortcut="Ctrl+F",
+                        action=self._handle_ctrl_f,
+                    ),
+                    CommandNode(
+                        "Backup Configurazione",
+                        "Crea snapshot immediato",
+                        Icons.SAVE,
+                        action=BackupManager.create_backup,
+                    ),
+                    CommandNode(
+                        "Esci",
+                        "Chiudi applicazione",
+                        Icons.LOG_OUT,
+                        action=self._quit_application,
+                    ),
+                ]
+
+                self.command_palette = CommandPaletteDialog(self, root_nodes)
+            except Exception as e:
+                import traceback
+
+                print(f"CRITICAL ERROR initializing Command Palette: {e}")
+                traceback.print_exc()
+                self.status_bar.showMessage(f"Error opening palette: {e}", 5000)
+                return
+
         # 2. Toggle Logic
-        if self.command_palette.isVisible():
+        if self.command_palette and self.command_palette.isVisible():
             self.command_palette.hide_animated()
-        else:
+        elif self.command_palette:
             self.command_palette.show_animated()
 
     def _handle_f5(self):
@@ -892,7 +1161,9 @@ class MainWindow(QMainWindow):
     def _handle_automation_tab_change(self, tab_index: int):
         """Gestisce il cambio tab interno per il pannello Automazioni."""
         # 1. Naviga al pannello Automazioni se non ci siamo già
-        self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI, sub_index=tab_index)
+        self.navigation_controller.navigate_to(
+            PageIndex.AUTOMAZIONI, sub_index=tab_index
+        )
 
         # 2. Imposta il tab corretto
         if hasattr(self, "automazioni_widget"):
@@ -901,7 +1172,9 @@ class MainWindow(QMainWindow):
     def _handle_notifications_tab_change(self, tab_index: int):
         """Gestisce il cambio tab interno per il pannello Notifiche."""
         # 1. Naviga al pannello Notifiche se non ci siamo già
-        self.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS, sub_index=tab_index)
+        self.navigation_controller.navigate_to(
+            PageIndex.NOTIFICATIONS, sub_index=tab_index
+        )
 
         # 2. Imposta il tab corretto (0: Notifiche, 1: Audit)
         if hasattr(self, "notifications_panel"):
