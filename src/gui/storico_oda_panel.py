@@ -9,11 +9,13 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QSplitter,
@@ -22,8 +24,6 @@ from PyQt6.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
-    QFileDialog,
-    QMessageBox,
 )
 
 from src.core.constants import Icons
@@ -45,7 +45,11 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         # Verifica se siamo in una riga figlia (ha un genitore valido)
         if index.parent().isValid():
             col = index.column()
-            
+
+            # --- GESTIONE MERGE RIMOSSA / DISABILITATA PER NUOVE COLONNE ---
+            # Con l'aggiunta di "CREATO DA" e "Descrizione" come colonne esplicite,
+            # non è più necessario il merge visuale tra Col 0 e Col 1.
+            # Lasciamo il comportamento standard.
             # --- GESTIONE MERGE COL 0 e COL 1 (Testo Breve) ---
             if col == 0 or col == 1:
                 # Disegna il testo SOLO quando siamo sulla Col 1 (disegnando verso sinistra)
@@ -54,7 +58,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                     # Recupera dati dalla Col 0 (dove sta il testo vero)
                     sibling0 = index.sibling(index.row(), 0)
                     text = sibling0.data()
-                    
+
                     width_col0 = self.tree.columnWidth(0)
                     width_col1 = self.tree.columnWidth(1)
 
@@ -68,11 +72,11 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                         # Option.rect è il rect della Col 1.
                         # Spostiamo a SX di width_col0. Larghezza = W1 + W0.
                         draw_rect = option.rect.adjusted(-width_col0, 0, 0, 0)
-                        
+
                         painter.setClipRect(draw_rect)
-                        
+
                         padded_rect = draw_rect.adjusted(5, 0, 0, 0)
-                        
+
                         painter.drawText(
                             padded_rect,
                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
@@ -80,7 +84,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                         )
                     finally:
                         painter.setClipping(False)
-                
+
                 # Se siamo sulla Col 0 o Col 1, non chiamiamo super().paint() per il contenuto standard
                 # ma lasciamo gestire il background alla view o lo ridisegniamo se necessario.
                 # Qui ritorniamo per evitare doppio disegno del testo.
@@ -97,6 +101,8 @@ class StoricoOdaPanel(QWidget):
         # Colonne della TreeView (Master)
         # Sequence: Data OdA, OdA, Pos, Valore Netto, Stato
         self.master_headers = [
+            "CREATO DA",  # Nome Destinatario
+            "Descrizione",  # Descrizione
             "Data OdA",
             "OdA",
             "Pos",
@@ -399,7 +405,16 @@ class StoricoOdaPanel(QWidget):
 
             # Create Parent Group if not exists
             if group_key not in groups:
-                # Parent columns: Data OdA, OdA, Pos, Valore Netto, Stato
+                # Parent columns: CREATO DA, Descrizione, Data OdA, OdA, Pos, Valore Netto, Stato
+
+                # Extract values for new columns
+                # nome_destinatario -> index 15
+                # descrizione -> index 6
+                val_creato_da = str(r[15]) if r[15] else ""
+                val_desc = str(r[6]).strip() if r[6] else ""
+
+                item_creato = QStandardItem(val_creato_da)
+                item_desc = QStandardItem(val_desc)
                 item_data = QStandardItem(format_date_it(str(r[1])))
                 item_oda = QStandardItem(str(oda))
                 item_pos = QStandardItem(str(pos))
@@ -407,80 +422,92 @@ class StoricoOdaPanel(QWidget):
                 item_stato = QStandardItem(str(r[4]))
 
                 # Parent items (initially not bold until expanded)
-                for it in [item_data, item_oda, item_pos, item_val, item_stato]:
+                # List order must match self.master_headers
+                parent_row_items = [
+                    item_creato,
+                    item_desc,
+                    item_data,
+                    item_oda,
+                    item_pos,
+                    item_val,
+                    item_stato,
+                ]
+
+                for it in parent_row_items:
                     it.setEditable(False)
 
                 # Store full data on the parent too (representative of the position)
-                # Store on first column (Data OdA)
-                item_data.setData(r, Qt.ItemDataRole.UserRole)
+                # Store on first column (CREATO DA)
+                item_creato.setData(r, Qt.ItemDataRole.UserRole)
 
-                self.model.appendRow(
-                    [item_data, item_oda, item_pos, item_val, item_stato]
-                )
-                groups[group_key] = item_data
+                self.model.appendRow(parent_row_items)
+                groups[
+                    group_key
+                ] = item_creato  # Keep reference to first item as parent
 
             parent_item = groups[group_key]
 
             # Create Child Row (The detailed line)
-            # Alignment for children (NEW LAYOUT):
-            # Col 0 (Data OdA) + Col 1 (OdA) -> {Testo Breve} or {Descrizione} (Merged via Delegate)
-            # Col 2 (Pos)          -> {Unità di Mis} {Quantità}
-            # Col 3 (Valore Netto) -> {Quantità}
-            # Col 4 (Stato)        -> {Prezzo Lordo}
+            # Alignment for children (UPDATED LAYOUT 3 with new columns):
+            # Col 0 (CREATO DA)    -> Empty
+            # Col 1 (Descrizione)  -> {Testo Breve/Desc Detailed}
+            # Col 2 (Data OdA)     -> Empty
+            # Col 3 (OdA)          -> Empty
+            # Col 4 (Pos)          -> {Unità di Mis} {Quantità}
+            # Col 5 (Valore Netto) -> {Prezzo Lordo}
+            # Col 6 (Stato)        -> Empty
 
-            num_riga = r[27]
             raw_testo = str(r[31]).strip() if r[31] else ""
             raw_desc = str(r[6]).strip() if r[6] else ""
             desc = raw_testo if raw_testo and raw_testo.lower() != "nan" else raw_desc
-            
+
             prezzo = r[30]
             qta = r[28]
             uom = r[29]
 
-            # Create Child Row (The detailed line)
-            # Alignment for children (UPDATED LAYOUT 2):
-            # Col 0 (Data OdA) + Col 1 (OdA) -> {Testo Breve} (Merged via Delegate on Col 1)
-            # Col 2 (Pos)          -> {Unità di Mis} {Quantità}
-            # Col 3 (Valore Netto) -> {Prezzo Lordo}
-            # Col 4 (Stato)        -> Empty
-
-            num_riga = r[27]
-            raw_testo = str(r[31]).strip() if r[31] else ""
-            raw_desc = str(r[6]).strip() if r[6] else ""
-            desc = raw_testo if raw_testo and raw_testo.lower() != "nan" else raw_desc
-            
-            prezzo = r[30]
-            qta = r[28]
-            uom = r[29]
-
-            # Col 0: Descrizione (Disegnata dal Delegate sulla Col 1)
+            # Col 0: Descrizione (Disegnata dal Delegate sulla Col 1 in merge con Col 0)
             c_desc_merged = QStandardItem(str(desc))
-            
+            c_desc_merged.setTextAlignment(
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
+
             # Col 1: Empty (Usata dal delegate per disegnare esteso)
-            c_empty = QStandardItem("")
-            
-            # Col 2: UOM + Qta
+            c_empty_1 = QStandardItem("")
+
+            # Col 2, 3: Empty
+            c_empty_2 = QStandardItem("")
+            c_empty_3 = QStandardItem("")
+
+            # Col 4: UOM + Qta
             c_uom_qta = QStandardItem(f"{uom} {qta}")
-            
-            # Col 3: Prezzo Lordo (Spostato qui)
+
+            # Col 5: Prezzo Lordo
             c_prezzo = QStandardItem(format_currency_smart(str(prezzo)))
-            
-            # Col 4: Empty (Svuotato)
+
+            # Col 6: Empty
             c_stato_empty = QStandardItem("")
 
+            child_row_items = [
+                c_desc_merged,
+                c_empty_1,
+                c_empty_2,
+                c_empty_3,
+                c_uom_qta,
+                c_prezzo,
+                c_stato_empty,
+            ]
+
             # Child Read-only e Stile
-            for it in [c_desc_merged, c_empty, c_uom_qta, c_prezzo, c_stato_empty]:
+            for it in child_row_items:
                 it.setEditable(False)
-                it.setForeground(Qt.GlobalColor.darkBlue) 
-                it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            
-            # La descrizione merged la lasciamo allineata a sinistra
-            c_desc_merged.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                it.setForeground(Qt.GlobalColor.darkBlue)
+                if it != c_desc_merged:
+                    it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
             # Store data on child (col 0)
             c_desc_merged.setData(r, Qt.ItemDataRole.UserRole)
 
-            parent_item.appendRow([c_desc_merged, c_empty, c_uom_qta, c_prezzo, c_stato_empty])
+            parent_item.appendRow(child_row_items)
 
     def _on_import_clicked(self):
         """Gestisce l'importazione manuale del file Excel Storico OdA."""
@@ -496,18 +523,22 @@ class StoricoOdaPanel(QWidget):
         try:
             # Mostriamo un feedback immediato
             ToastManager.instance().show("Avvio importazione OdA...", "info")
-            
+
             # Utilizziamo OdaManager che gestisce DB e Sincronizzazione
             # Nota: OdaManager.import_oda_from_excel restituisce (bool, msg, added, removed)
             success, message, added, _ = OdaManager.import_oda_from_excel(file_path)
-            
+
             if success:
                 ToastManager.instance().show(
                     f"Importazione completata: {added} righe aggiornate.", "success"
                 )
                 self.refresh_data()
             else:
-                QMessageBox.warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
-                
+                QMessageBox.warning(
+                    self, "Errore Importazione", f"Impossibile importare:\n{message}"
+                )
+
         except Exception as e:
-            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}")
+            QMessageBox.critical(
+                self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}"
+            )
