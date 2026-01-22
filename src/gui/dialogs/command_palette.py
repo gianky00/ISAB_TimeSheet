@@ -210,6 +210,12 @@ class CommandPaletteDialog(QDialog):
         self.anim.disconnect(self.anim.finished, self._finish_close) # Disconnetti per pulizia
         self.closed.emit()
 
+    def toggle_close_safe(self):
+        """Chiude in modo sicuro ignorando i ripetuti della tastiera."""
+        if self.is_closing:
+            return
+        self.hide_animated()
+
     def eventFilter(self, obj, event):
         if obj == self.search_bar and event.type() == event.Type.KeyPress:
             key = event.key()
@@ -230,8 +236,8 @@ class CommandPaletteDialog(QDialog):
                 self.hide_animated()
                 return True
             elif key == Qt.Key.Key_K and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-                # Toggle close se premuto di nuovo Ctrl+K
-                self.hide_animated()
+                if not event.isAutoRepeat():
+                    self.toggle_close_safe()
                 return True
                 
         return super().eventFilter(obj, event)

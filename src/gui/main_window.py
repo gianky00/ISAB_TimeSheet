@@ -637,7 +637,13 @@ class MainWindow(QMainWindow):
         QApplication.instance().installEventFilter(self)
 
     def _open_command_palette(self):
-        """Apre o chiude la Command Palette (Spotlight) con animazione."""
+        """Apre o chiude la Command Palette (Spotlight) con animazione e debouncing."""
+        # Debouncing: evita aperture/chiusure troppo rapide (intervallo 300ms)
+        now = datetime.now().timestamp() * 1000
+        if hasattr(self, "_last_palette_toggle") and (now - self._last_palette_toggle) < 300:
+            return
+        self._last_palette_toggle = now
+
         from src.gui.dialogs.command_palette import CommandPaletteDialog
         from PyQt6.QtGui import QDesktopServices
         from PyQt6.QtCore import QUrl
@@ -647,6 +653,7 @@ class MainWindow(QMainWindow):
         
         # 1. Inizializzazione Lazy (Singleton per finestra)
         if self.command_palette is None:
+            # ... (codice precedente invariato)
             # Generazione comandi
             def restart_app():
                 QApplication.quit()
