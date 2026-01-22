@@ -1,13 +1,27 @@
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QLineEdit, QListWidget, QListWidgetItem,
-    QLabel, QGraphicsDropShadowEffect, QWidget, QHBoxLayout, QFrame,
-    QApplication, QScrollBar
+from PyQt6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
+    QRect,
+    QSize,
+    Qt,
+    QTimer,
+    pyqtSignal,
 )
-from PyQt6.QtCore import Qt, QSize, QTimer, QPropertyAnimation, QRect, QEasingCurve, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QDesktopServices, QAction
-from src.core.constants import Icons
-from src.utils.helpers import get_colored_icon, get_asset_path
-from src.core.config_manager import get_data_path
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import (
+    QDialog,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
+from src.utils.helpers import get_asset_path, get_colored_icon
+
 
 class CommandPaletteDialog(QDialog):
     """
@@ -16,7 +30,7 @@ class CommandPaletteDialog(QDialog):
     - Animazione Slide Down/Up
     - Auto-close on FocusOut
     """
-    
+
     # Segnale emesso quando il dialogo è completamente chiuso (utile per cleanup se necessario)
     closed = pyqtSignal()
 
@@ -24,22 +38,24 @@ class CommandPaletteDialog(QDialog):
         super().__init__(parent)
         # Usa Frameless + StaysOnTop. Rimosso Tool/Popup per stabilità.
         # Rimosso auto-close su focus out per evitare chiusure indesiderate.
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        
+
         # Dimensioni target
         self.target_width = 700
         self.target_height = 500
         self.setFixedSize(self.target_width, self.target_height)
-        
+
         self.commands = commands or []
-        
+
         self._setup_ui()
         self._populate_list(self.commands)
-        
+
         # Animazione Proprietà
         self.anim = QPropertyAnimation(self, b"geometry")
-        self.anim.setDuration(250) # ms
+        self.anim.setDuration(250)  # ms
         self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         # Stato
@@ -48,19 +64,22 @@ class CommandPaletteDialog(QDialog):
     def _setup_ui(self):
         # Container Principale (Shadowed)
         self.container = QWidget(self)
-        self.container.setGeometry(10, 10, self.target_width - 20, self.target_height - 20)
-        
+        self.container.setGeometry(
+            10, 10, self.target_width - 20, self.target_height - 20
+        )
+
         # VSCode Style Colors
         bg_color = "#1e1e1e"  # Darker background
         input_bg = "#3c3c3c"
         text_color = "#cccccc"
-        sel_bg = "#04395e"    # Deep blue selection
+        sel_bg = "#04395e"  # Deep blue selection
         sel_text = "#ffffff"
         border_color = "#454545"
 
         # MAIN CONTAINER STYLE
         self.container.setObjectName("MainContainer")
-        self.container.setStyleSheet(f"""
+        self.container.setStyleSheet(
+            f"""
             QWidget#MainContainer {{
                 background-color: {bg_color};
                 border: 1px solid {border_color};
@@ -71,8 +90,9 @@ class CommandPaletteDialog(QDialog):
                 border: none;
                 background: transparent;
             }}
-        """)
-        
+        """
+        )
+
         # Shadow Effect
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(25)
@@ -87,19 +107,22 @@ class CommandPaletteDialog(QDialog):
 
         # --- Search Bar Area ---
         search_container = QWidget()
-        search_container.setStyleSheet(f"""
-            background-color: {input_bg}; 
-            border-top-left-radius: 6px; 
-            border-top-right-radius: 6px; 
+        search_container.setStyleSheet(
+            f"""
+            background-color: {input_bg};
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
             padding: 5px;
             border-bottom: 1px solid {border_color};
-        """)
+        """
+        )
         search_layout = QVBoxLayout(search_container)
         search_layout.setContentsMargins(8, 8, 8, 5)
-        
+
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("> Type a command...")
-        self.search_bar.setStyleSheet(f"""
+        self.search_bar.setStyleSheet(
+            f"""
             QLineEdit {{
                 background-color: #3c3c3c;
                 color: {text_color};
@@ -112,17 +135,19 @@ class CommandPaletteDialog(QDialog):
                 border: 1px solid #007fd4; /* VSCode focus blue */
                 background-color: #252526;
             }}
-        """)
+        """
+        )
         self.search_bar.textChanged.connect(self._filter_list)
         self.search_bar.installEventFilter(self)
-        
+
         search_layout.addWidget(self.search_bar)
         layout.addWidget(search_container)
 
         # --- List Widget ---
         self.list_widget = QListWidget()
         self.list_widget.setVerticalScrollMode(QListWidget.ScrollMode.ScrollPerPixel)
-        self.list_widget.setStyleSheet(f"""
+        self.list_widget.setStyleSheet(
+            f"""
             QListWidget {{
                 background-color: {bg_color};
                 border: none;
@@ -143,7 +168,7 @@ class CommandPaletteDialog(QDialog):
             QListWidget::item:hover {{
                 background-color: #2a2d2e;
             }}
-            
+
             /* Scrollbar Styling */
             QScrollBar:vertical {{
                 border: none;
@@ -163,7 +188,8 @@ class CommandPaletteDialog(QDialog):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
                 height: 0px;
             }}
-        """)
+        """
+        )
         self.list_widget.itemActivated.connect(self._execute_selected)
         self.list_widget.clicked.connect(self._execute_selected)
         layout.addWidget(self.list_widget)
@@ -173,16 +199,20 @@ class CommandPaletteDialog(QDialog):
         if not self.parent():
             return
 
+        # Debounce Protection: Ignora Ctrl+K per i primi 400ms
+        self._can_close_via_shortcut = False
+        QTimer.singleShot(400, lambda: setattr(self, "_can_close_via_shortcut", True))
+
         parent_geo = self.parent().geometry()
-        
+
         # Calcola posizione centrale orizzontale
         x = parent_geo.x() + (parent_geo.width() - self.width()) // 2
         # Start Y (sopra la finestra)
-        start_y = parent_geo.y() + 30 # Offset dal titolo
+        start_y = parent_geo.y() + 30  # Offset dal titolo
         # End Y (un po' più in basso)
-        
+
         # Imposta geometria iniziale
-        self.setGeometry(x, start_y, self.width(), 0) # Altezza 0 inizialmente
+        self.setGeometry(x, start_y, self.width(), 0)  # Altezza 0 inizialmente
         self.show()
         self.raise_()
         self.search_bar.setFocus()
@@ -194,12 +224,15 @@ class CommandPaletteDialog(QDialog):
 
     def hide_animated(self):
         """Nasconde il dialogo con animazione Slide Up."""
-        if self.is_closing: return
+        if self.is_closing:
+            return
         self.is_closing = True
-        
+
         current_geo = self.geometry()
         self.anim.setStartValue(current_geo)
-        self.anim.setEndValue(QRect(current_geo.x(), current_geo.y(), current_geo.width(), 0))
+        self.anim.setEndValue(
+            QRect(current_geo.x(), current_geo.y(), current_geo.width(), 0)
+        )
         self.anim.finished.connect(self._finish_close)
         self.anim.start()
 
@@ -207,7 +240,10 @@ class CommandPaletteDialog(QDialog):
         """Callback fine animazione chiusura."""
         self.hide()
         self.is_closing = False
-        self.anim.disconnect(self.anim.finished, self._finish_close) # Disconnetti per pulizia
+        try:
+            self.anim.finished.disconnect(self._finish_close)  # Disconnetti per pulizia
+        except TypeError:
+            pass  # Già disconnesso o non connesso
         self.closed.emit()
 
     def toggle_close_safe(self):
@@ -235,11 +271,17 @@ class CommandPaletteDialog(QDialog):
             elif key == Qt.Key.Key_Escape:
                 self.hide_animated()
                 return True
-            elif key == Qt.Key.Key_K and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-                if not event.isAutoRepeat():
+            elif (
+                key == Qt.Key.Key_K
+                and event.modifiers() == Qt.KeyboardModifier.ControlModifier
+            ):
+                # Usa debounce flag
+                if not event.isAutoRepeat() and getattr(
+                    self, "_can_close_via_shortcut", True
+                ):
                     self.toggle_close_safe()
                 return True
-                
+
         return super().eventFilter(obj, event)
 
     def _populate_list(self, items):
@@ -252,43 +294,47 @@ class CommandPaletteDialog(QDialog):
     def _add_item(self, cmd):
         # Widget contenitore per l'item
         item = QListWidgetItem(self.list_widget)
-        item.setSizeHint(QSize(0, 50)) 
-        
+        item.setSizeHint(QSize(0, 50))
+
         widget = QWidget()
-        widget.setStyleSheet("background: transparent; border: none;") 
+        widget.setStyleSheet("background: transparent; border: none;")
         h_layout = QHBoxLayout(widget)
         h_layout.setContentsMargins(10, 5, 10, 5)
         h_layout.setSpacing(15)
-        
+
         # Icon
         icon_lbl = QLabel()
         icon_lbl.setFixedSize(20, 20)
-        if cmd.get('icon'):
-            pm = get_colored_icon(get_asset_path(cmd['icon']), "#cccccc").pixmap(20, 20)
+        if cmd.get("icon"):
+            pm = get_colored_icon(get_asset_path(cmd["icon"]), "#cccccc").pixmap(20, 20)
             icon_lbl.setPixmap(pm)
         h_layout.addWidget(icon_lbl)
-        
+
         # Text Stack
         txt_layout = QVBoxLayout()
         txt_layout.setSpacing(2)
         txt_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-        
-        lbl_main = QLabel(cmd['label'])
-        lbl_main.setStyleSheet("font-size: 14px; font-weight: bold; color: #e1e1e1; border: none;")
+
+        lbl_main = QLabel(cmd["label"])
+        lbl_main.setStyleSheet(
+            "font-size: 14px; font-weight: bold; color: #e1e1e1; border: none;"
+        )
         txt_layout.addWidget(lbl_main)
-        
-        if cmd.get('desc'):
-            lbl_desc = QLabel(cmd['desc'])
+
+        if cmd.get("desc"):
+            lbl_desc = QLabel(cmd["desc"])
             lbl_desc.setStyleSheet("font-size: 12px; color: #858585; border: none;")
             txt_layout.addWidget(lbl_desc)
-            
+
         h_layout.addLayout(txt_layout)
         h_layout.addStretch()
-        
+
         # Shortcut Label
-        if cmd.get('shortcut'):
-            sc_lbl = QLabel(cmd['shortcut'])
-            sc_lbl.setStyleSheet("color: #858585; font-size: 12px; font-family: monospace; border: none;")
+        if cmd.get("shortcut"):
+            sc_lbl = QLabel(cmd["shortcut"])
+            sc_lbl.setStyleSheet(
+                "color: #858585; font-size: 12px; font-family: monospace; border: none;"
+            )
             h_layout.addWidget(sc_lbl)
 
         # Set widget
@@ -299,21 +345,26 @@ class CommandPaletteDialog(QDialog):
     def _filter_list(self, text):
         search = text.lower()
         self.list_widget.clear()
-        
-        filtered = [c for c in self.commands if search in c['label'].lower() or search in c.get('desc', '').lower()]
-        
+
+        filtered = [
+            c
+            for c in self.commands
+            if search in c["label"].lower() or search in c.get("desc", "").lower()
+        ]
+
         for cmd in filtered:
             self._add_item(cmd)
-            
+
         if self.list_widget.count() > 0:
             self.list_widget.setCurrentRow(0)
 
     def _execute_selected(self):
         item = self.list_widget.currentItem()
-        if not item: return
+        if not item:
+            return
         cmd = item.data(Qt.ItemDataRole.UserRole)
-        if cmd and cmd.get('action'):
+        if cmd and cmd.get("action"):
             # Chiudi PRIMA di eseguire (per UX pulita)
-            self.hide() 
+            self.hide()
             # Esegui dopo brevissimo delay per permettere chiusura
-            QTimer.singleShot(50, cmd['action'])
+            QTimer.singleShot(50, cmd["action"])
