@@ -2106,7 +2106,7 @@ class TimbratureBotPanel(BaseBotPanel):
 
 
 class TimbratureDBPanel(QWidget):
-    """Pannello per la visualizzazione del Database Timbrature Isab ottimizzato."""
+    """Pannello per la visualizzazione del Database Timbrature Isab con architettura Master-Detail."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -2118,19 +2118,41 @@ class TimbratureDBPanel(QWidget):
         self.reparti = self.lists.get("reparti", [])
         self.cantieri = self.lists.get("cantieri", [])
 
-        # Model initialization
-        self.headers = [
+        # Colonne della Tabella (Vista Master)
+        self.master_headers = [
+            "Data",
+            "Cognome",
+            "Nome",
+            "Ingresso",
+            "Uscita",
+            "Reparto",
+            "Cantiere"
+        ]
+
+        # Mapping completo per il Dettaglio (Tutte le 18 colonne rilevate)
+        self.full_headers = [
             "Data",
             "Ingresso",
             "Uscita",
             "Nome",
             "Cognome",
-            "Presenza TS",
-            "Sito",
+            "Codice Fiscale",
+            "ID Dipendente",
+            "Fornitore",
+            "Numero Badge",
             "Reparto",
             "Cantiere",
+            "Presenza TS",
+            "Sito",
+            "Codice RILPRES",
+            "Codice Qualifica",
+            "Specializzazione",
+            "Società Ospitante",
+            "Data Inserimento"
         ]
-        self.model = FastTableModel([], self.headers)
+
+        self.model = FastTableModel([], self.master_headers)
+        self._raw_full_data = [] # Buffer per i dati completi
 
         self._setup_ui()
         # Pre-caricamento immediato e profondo
@@ -2176,7 +2198,7 @@ class TimbratureDBPanel(QWidget):
         self.cantiere_filter.setMinimumWidth(130)
 
         # Import Button
-        import_btn = QPushButton("Importa")  # Simplified
+        import_btn = QPushButton("Importa")
         import_btn.setIcon(get_colored_icon(get_asset_path(Icons.PLUS), "#FFFFFF"))
         import_btn.setFixedSize(90, 32)
         import_btn.clicked.connect(self._import_excel_manually)
@@ -2188,7 +2210,7 @@ class TimbratureDBPanel(QWidget):
 
         self.tabs.setCornerWidget(self.toolbar_container, Qt.Corner.TopRightCorner)
 
-        # --- TAB 1: Database (Timbrature) ---
+        # --- TAB 1: Database (Master-Detail) ---
         self.tab_database = QWidget()
         self._setup_database_tab(self.tab_database)
         self.tabs.addTab(
@@ -2212,17 +2234,19 @@ class TimbratureDBPanel(QWidget):
         self.main_layout.addWidget(self.tabs)
 
     def _setup_database_tab(self, parent_widget):
+        from PyQt6.QtWidgets import QFormLayout, QScrollArea, QSplitter
         layout = QVBoxLayout(parent_widget)
-        # Search layout removed (moved to corner widget)
+        layout.setContentsMargins(0, 5, 0, 0)
 
-        # Table (Model/View per massima reattività)
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # --- TABELLA (MASTER) ---
         self.db_table = QTableView()
         self.db_table.setModel(self.model)
         self.db_table.verticalHeader().setVisible(False)
         self.db_table.setAlternatingRowColors(True)
-        self.db_table.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
+        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.db_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.db_table.setSortingEnabled(True)
 
@@ -2230,7 +2254,99 @@ class TimbratureDBPanel(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 
-        layout.addWidget(self.db_table)
+        self.db_table.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        self.splitter.addWidget(self.db_table)
+
+        # --- PANNELLO DETTAGLIO (DETAIL) ---
+        detail_container = QWidget()
+        detail_layout = QVBoxLayout(detail_container)
+        detail_layout.setContentsMargins(10, 0, 5, 0)
+
+        detail_title = QLabel("Dettaglio Timbratura")
+        detail_title.setStyleSheet(
+            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
+        )
+        detail_layout.addWidget(detail_title)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_content = QWidget()
+        self.form_layout = QFormLayout(scroll_content)
+        self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        self.form_layout.setSpacing(10)
+
+        self.detail_labels = {}
+        for h in self.full_headers:
+            val_label = QLabel("-")
+            val_label.setWordWrap(True)
+            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.detail_labels[h] = val_label
+            self.form_layout.addRow(f"<b>{h}:</b>", val_label)
+
+        scroll.setWidget(scroll_content)
+        detail_layout.addWidget(scroll)
+
+        self.splitter.addWidget(detail_container)
+        self.splitter.setStretchFactor(0, 3) # Ridotto stretch tabella
+        self.splitter.setStretchFactor(1, 2) # Aumentato stretch dettaglio per leggibilità
+
+        layout.addWidget(self.splitter)
+
+    def _on_selection_changed(self, selected, _deselected):
+        """Aggiorna il pannello dettaglio quando si seleziona una riga."""
+        indexes = self.db_table.selectionModel().selectedRows()
+        if not indexes:
+            return
+
+        row_idx = indexes[0].row()
+        if row_idx < len(self._raw_full_data):
+            data = self._raw_full_data[row_idx]
+            # Indices source:
+            # 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, 5:presenza_ts, 6:sito, 
+            # 7:cf, 8:id_dip, 9:fornitore, 10:cod_rilpres, 11:num_badge, 12:cod_qual, 
+            # 13:specializ, 14:soc_osp, 15:data_ins, 16:rep, 17:cant
+            
+            mapping = {
+                "Data": 0, "Ingresso": 1, "Uscita": 2, "Nome": 3, "Cognome": 4,
+                "Codice Fiscale": 7, "ID Dipendente": 8, "Fornitore": 9,
+                "Numero Badge": 11, "Reparto": 16, "Cantiere": 17,
+                "Presenza TS": 5, "Sito": 6, "Codice RILPRES": 10,
+                "Codice Qualifica": 12, "Specializzazione": 13,
+                "Società Ospitante": 14, "Data Inserimento": 15
+            }
+
+            for h in self.full_headers:
+                idx = mapping.get(h)
+                val = str(data[idx]) if idx is not None and data[idx] is not None else ""
+                
+                if val.lower() in ["nan", "none"]:
+                    val = ""
+                
+                # Formattazione speciale Data
+                if h == "Data" and val:
+                    try:
+                        date_part = val.split(" ")[0]
+                        dt = datetime.strptime(date_part, "%Y-%m-%d")
+                        val = dt.strftime("%d/%m/%Y")
+                    except:
+                        pass
+                
+                # Formattazione speciale Data Inserimento
+                if h == "Data Inserimento" and val:
+                    try:
+                        # Estraiamo solo la parte data se presente l'ora
+                        date_part = val.split(" ")[0]
+                        for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                            try:
+                                dt = datetime.strptime(date_part, fmt)
+                                val = dt.strftime("%d/%m/%Y")
+                                break
+                            except ValueError:
+                                continue
+                    except:
+                        pass
+                
+                self.detail_labels[h].setText(val)
 
     def refresh_data(self):
         """Carica i dati dal DB e aggiorna il modello virtuale."""
@@ -2238,29 +2354,43 @@ class TimbratureDBPanel(QWidget):
         reparto = self.reparto_filter.currentData()
         cantiere = self.cantiere_filter.currentData()
 
-        # Rimuoviamo il limite di 500 per il precaricamento totale
+        # Recuperiamo i dati completi
         rows = self.storage.get_timbrature_with_reparto(
             limit=2000,
             filter_text=text,
             filter_reparto=reparto,
             filter_cantiere=cantiere,
         )
+        self._raw_full_data = rows
 
-        # Formattazione dati in blocco
-        formatted_rows = []
+        # Formattazione per la vista Master
+        # Headers: Data, Cognome, Nome, Ingresso, Uscita, Reparto, Cantiere
+        # Source indices: 0, 4, 3, 1, 2, 16, 17
+        master_rows = []
         for row in rows:
-            f_row = list(row)
             try:
-                date_str = str(f_row[0])
-                if date_str:
-                    date_part = date_str.split(" ")[0] if " " in date_str else date_str
+                dt_str = str(row[0])
+                if dt_str:
+                    date_part = dt_str.split(" ")[0]
                     dt = datetime.strptime(date_part, "%Y-%m-%d")
-                    f_row[0] = dt.strftime("%d/%m/%Y")
-            except Exception:
-                pass
-            formatted_rows.append(f_row)
+                    tab_date = dt.strftime("%d/%m/%Y")
+                else:
+                    tab_date = ""
+            except:
+                tab_date = str(row[0])
 
-        self.model.update_data(formatted_rows)
+            m_row = [
+                tab_date,
+                row[4] or "",  # Cognome
+                row[3] or "",  # Nome
+                row[1] or "",  # Ingresso
+                row[2] or "",  # Uscita
+                row[16] or "", # Reparto
+                row[17] or ""  # Cantiere
+            ]
+            master_rows.append(m_row)
+
+        self.model.update_data(master_rows)
         # Ottimizza colonne dopo il caricamento
         QTimer.singleShot(0, lambda: self.db_table.resizeColumnsToContents())
 

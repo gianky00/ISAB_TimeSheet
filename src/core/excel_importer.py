@@ -12,9 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
-if TYPE_CHECKING:
-    import pandas as pd
-
+import pandas as pd
 from src.core.schemas import validate_contabilita, validate_giornaliere
 
 # Lazy import placeholder

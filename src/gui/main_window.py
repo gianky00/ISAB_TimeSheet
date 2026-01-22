@@ -373,12 +373,15 @@ class MainWindow(QMainWindow):
 
             scaduti = [d for d in expiring if d["stato"] == "SCADUTA"]
             in_scadenza = [d for d in expiring if d["stato"] == "IN SCADENZA"]
+            missing_cf = [d for d in expiring if d.get("cf_mancante")]
 
             msg = "<b>Monitoraggio Abilitazioni ISAB</b><br/>"
             if scaduti:
                 msg += f"🔴 {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
             if in_scadenza:
                 msg += f"🟠 {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
+            if missing_cf:
+                msg += f"⚠️ {len(missing_cf)} Alert con CF mancante in anagrafica<br/>"
 
             msg += (
                 "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
