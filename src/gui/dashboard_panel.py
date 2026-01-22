@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 from PyQt6.QtCore import (  # type: ignore
+    Qt,
     QTimer,
 )
 from PyQt6.QtGui import QColor
@@ -96,32 +97,10 @@ class DashboardPanel(QWidget):
             self.autopilot_widget.refresh_events()
 
     def _setup_ui(self):
-        # 1. Header Section (Greeting Only, Clean)
-        header_row = QHBoxLayout()
-
-        greeting_col = QVBoxLayout()
-        hour = datetime.now().hour
-        greeting = "Buongiorno" if 5 <= hour < 18 else "Buonasera"
-        title = QLabel(f"{greeting}! Dashboard Operativa")
-        title.setStyleSheet("font-size: 28px; font-weight: 800; color: #343a40;")
-
-        subtitle = QLabel("Feed Attività")
-        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d;")
-
-        greeting_col.addWidget(title)
-        greeting_col.addWidget(subtitle)
-        header_row.addLayout(greeting_col)
-        header_row.addStretch()
-
-        self.content_layout.addLayout(header_row)
-
-        # 2. Activity Feed (Horizontal, Compact)
-        self.activity_feed = ActivityFeed()
-        self.content_layout.addWidget(self.activity_feed)
-
-        # 3. Quick Actions Row + Autopilot (Side by Side)
+        # 1. Quick Actions Row + Autopilot (Top)
         actions_row = QHBoxLayout()
         actions_row.setSpacing(20)
+        actions_row.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Quick Actions (Left)
         self.quick_actions = QuickActions()
@@ -134,7 +113,16 @@ class DashboardPanel(QWidget):
 
         self.content_layout.addLayout(actions_row)
 
+        # Space to push the activity feed to the bottom
         self.content_layout.addStretch()
+
+        # 2. Activity Feed (Bottom)
+        subtitle = QLabel("Feed Attività")
+        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;")
+        self.content_layout.addWidget(subtitle)
+
+        self.activity_feed = ActivityFeed()
+        self.content_layout.addWidget(self.activity_feed)
 
         # Initial data load
         self.refresh_live_data()

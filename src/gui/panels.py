@@ -1650,17 +1650,18 @@ class PDLDBPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # Colonne della Tabella (Vista Master)
+        # Nuove Colonne della Tabella (Vista Master)
         self.master_headers = [
-            "N° PDL",
-            "Stato",
             "Data Creazione",
+            "Richiedente",
+            "N° PDL",
             "Area",
             "Unità",
+            "Stato",
             "Descrizione",
         ]
 
-        # Mapping completo per il Dettaglio (Tutte le 19 colonne + ID e Importazione)
+        # Mapping completo per il Dettaglio (Tutte le 21 colonne)
         self.full_headers = [
             "ID",
             "N° PDL",
@@ -1687,6 +1688,11 @@ class PDLDBPanel(QWidget):
 
         self.model = FastTableModel([], self.master_headers)
         self._raw_full_data = []  # Buffer per i dati completi
+        self._cache = {}  # Cache per le query
+
+        # Stato Ordinamento
+        self.current_sort_col = None
+        self.current_sort_order = "DESC"
 
         # Timer per ricerca ritardata (Debounce)
         self.search_timer = QTimer()
@@ -1695,6 +1701,7 @@ class PDLDBPanel(QWidget):
 
         self._setup_ui()
         QTimer.singleShot(50, self.refresh_data)
+        QTimer.singleShot(100, self._populate_groups)
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -1703,17 +1710,27 @@ class PDLDBPanel(QWidget):
 
         # 1. Filtri (Top)
         filter_layout = QHBoxLayout()
+        filter_layout.setSpacing(10)
+
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText(
-            "Cerca ovunque... (PDL, Ditta, Area, Descrizione...)"
-        )
-        self.search_input.textChanged.connect(lambda: self.search_timer.start(2000))
+        self.search_input.setPlaceholderText("Cerca ovunque...")
+        self.search_input.setMaximumWidth(250)  # Restringi barra ricerca
+        self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
+        filter_layout.addWidget(QLabel("Gruppo:"))
+        self.group_filter = QComboBox()
+        self.group_filter.addItem("Tutti")
+        self.group_filter.currentTextChanged.connect(self.refresh_data)
+        filter_layout.addWidget(self.group_filter)
+
+        filter_layout.addWidget(QLabel("Sito:"))
         self.site_filter = QComboBox()
         self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
         self.site_filter.currentTextChanged.connect(self.refresh_data)
         filter_layout.addWidget(self.site_filter)
+
+        filter_layout.addStretch()
 
         refresh_btn = QPushButton("Aggiorna")
         refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
@@ -1738,11 +1755,12 @@ class PDLDBPanel(QWidget):
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setItemDelegate(
-            PDLDelegate([2], self.table)
-        )  # Data Creazione è indice 2 in questa vista
+            PDLDelegate([0], self.table)
+        )  # Data Creazione è indice 0
 
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         header = self.table.horizontalHeader()
+        header.setSectionsClickable(True)
         header.sectionClicked.connect(self._on_header_clicked)
 
         self.splitter.addWidget(self.table)
@@ -1765,7 +1783,6 @@ class PDLDBPanel(QWidget):
         self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.form_layout.setSpacing(10)
 
-        # Placeholder se nulla è selezionato
         self.detail_labels = {}
         for h in self.full_headers:
             val_label = QLabel("-")
@@ -1780,10 +1797,25 @@ class PDLDBPanel(QWidget):
         detail_layout.addWidget(scroll)
 
         self.splitter.addWidget(detail_container)
-        self.splitter.setStretchFactor(0, 3)  # Tabella più larga
-        self.splitter.setStretchFactor(1, 1)  # Dettaglio più stretto
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
 
         main_layout.addWidget(self.splitter)
+
+    def _populate_groups(self):
+        """Popola la dropdown dei gruppi estraendoli dal database."""
+        try:
+            query = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
+            rows = db_manager.execute_query(db_manager.DB_PDL, query)
+            self.group_filter.blockSignals(True)
+            self.group_filter.clear()
+            self.group_filter.addItem("Tutti")
+            for r in rows:
+                if r[0]:
+                    self.group_filter.addItem(str(r[0]))
+            self.group_filter.blockSignals(False)
+        except Exception as e:
+            print(f"Errore popolamento gruppi: {e}")
 
     def _on_selection_changed(self, selected, _deselected):
         """Aggiorna il pannello dettaglio quando si seleziona una riga."""
@@ -1794,35 +1826,56 @@ class PDLDBPanel(QWidget):
         row_idx = indexes[0].row()
         if row_idx < len(self._raw_full_data):
             data = self._raw_full_data[row_idx]
-            # Mapping dati riga su labels dettaglio
             for i, h in enumerate(self.full_headers):
                 val = str(data[i])
-                if val.lower() == "nan":
+                if val.lower() == "nan" or val == "None":
                     val = ""
+                
+                # Formattazione "Importato il"
+                if h == "Importato il" and val:
+                    try:
+                        dt = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+                        val = dt.strftime("%d/%m/%Y %H:%M:%S")
+                    except:
+                        pass
+                
                 self.detail_labels[h].setText(val)
 
     def _on_header_clicked(self, logical_index):
+        """Gestisce il toggle dell'ordinamento."""
+        if self.current_sort_col == logical_index:
+            self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
+        else:
+            self.current_sort_col = logical_index
+            self.current_sort_order = "ASC"
+        
         self.refresh_data(sort_col=logical_index)
 
     def refresh_data(self, sort_col=None):
-        """Aggiorna i dati della tabella PDL."""
+        """Aggiorna i dati della tabella PDL con sistema di cache."""
         query, params = self._build_pdl_query(sort_col)
+        cache_key = f"{query}_{params}"
+        
+        if cache_key in self._cache:
+            full_rows = self._cache[cache_key]
+        else:
+            try:
+                full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+                self._cache[cache_key] = full_rows
+            except Exception as e:
+                print(f"Errore caricamento PDL: {e}")
+                return
 
-        try:
-            full_rows = db_manager.execute_query(
-                db_manager.DB_PDL, query, tuple(params)
-            )
-            self._raw_full_data = full_rows
-            master_rows = self._process_pdl_rows(full_rows)
-            self.model.update_data(master_rows)
-            self._update_pdl_ui(len(master_rows))
-        except Exception as e:
-            print(f"Errore caricamento PDL: {e}")
+        self._raw_full_data = full_rows
+        master_rows = self._process_pdl_rows(full_rows)
+        self.model.update_data(master_rows)
+        self._update_pdl_ui(len(master_rows))
 
     def _build_pdl_query(self, sort_col: Optional[int]) -> Tuple[str, List[Any]]:
         """Costruisce la query SQL per i PDL."""
         search_text = self.search_input.text().lower()
         site_filter = self.site_filter.currentText()
+        group_filter = self.group_filter.currentText()
 
         query = "SELECT id, n_pdl, data_creazione, area, unita, ditta, descrizione_lavoro, tipologia, stato, apparecchiatura, richiedente, data_richiesta, emittente, data_emissione, aprente, data_apertura, priorita, contratto, ordine, sito, importato_il FROM pdl WHERE 1=1"
         params = []
@@ -1830,37 +1883,51 @@ class PDLDBPanel(QWidget):
         if site_filter != "Tutti i siti":
             query += " AND sito = ?"
             params.append(site_filter)
+        
+        if group_filter != "Tutti":
+            query += " AND n_pdl LIKE ?"
+            params.append(f"%/{group_filter}")
 
         if search_text:
-            query += " AND (n_pdl LIKE ? OR area LIKE ? OR descrizione_lavoro LIKE ? OR ditta LIKE ? OR richiedente LIKE ?)"
+            query += " AND (n_pdl LIKE ? OR area LIKE ? OR descrizione_lavoro LIKE ? OR ditta LIKE ? OR richiedente LIKE ? OR emittente LIKE ?)"
             p = f"%{search_text}%"
-            params.extend([p, p, p, p, p])
+            params.extend([p, p, p, p, p, p])
 
         # Ordinamento
         order_map = {
-            0: "n_pdl",
-            1: "stato",
-            2: "data_creazione",
+            0: "data_creazione",
+            1: "richiedente",
+            2: "n_pdl",
             3: "area",
             4: "unita",
-            5: "descrizione_lavoro",
+            5: "stato",
+            6: "descrizione_lavoro",
         }
+        
+        order_clause = ""
         if sort_col is not None and sort_col in order_map:
-            query += f" ORDER BY {order_map[sort_col]} ASC"
+            col_name = order_map[sort_col]
+            # Ordinamento numerico speciale per N° PDL
+            if col_name == "n_pdl":
+                order_clause = f" ORDER BY CAST(n_pdl AS INTEGER) {self.current_sort_order}, n_pdl {self.current_sort_order}"
+            else:
+                order_clause = f" ORDER BY {col_name} {self.current_sort_order}"
         else:
-            query += " ORDER BY importato_il DESC"
+            order_clause = " ORDER BY importato_il DESC"
 
-        query += " LIMIT 1000"
+        query += order_clause
+        query += " LIMIT 2000"
         return query, params
 
     def _process_pdl_rows(self, full_rows: List[Tuple]) -> List[List[Any]]:
-        """Pulisce e formatta le righe per la visualizzazione."""
+        """Pulisce e formatta le righe per la visualizzazione Master."""
+        # Nuova mappatura Master: DATA CREAZIONE, RICHIEDENTE, N° PDL, AREA, UNITA, STATO, DESCRIZIONE
+        # Indici full: 2, 10, 1, 3, 4, 8, 6
         master_rows = []
         for r in full_rows:
-            # Indici: n_pdl(1), stato(8), data_creazione(2), area(3), unita(4), descrizione(6)
-            row = [r[1], r[8], r[2], r[3], r[4], r[6]]
+            row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
             master_rows.append(
-                [("" if str(val).lower() == "nan" else val) for val in row]
+                [("" if str(val).lower() in ["nan", "none"] else val) for val in row]
             )
         return master_rows
 
@@ -1871,14 +1938,15 @@ class PDLDBPanel(QWidget):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
         self.table.resizeColumnsToContents()
+        # Limita larghezza colonne tranne descrizione
         for i in range(len(self.master_headers)):
-            if i != 5 and header.sectionSize(i) > 180:
-                header.resizeSection(i, 180)
+            if i != 6 and header.sectionSize(i) > 200:
+                header.resizeSection(i, 200)
 
         QTimer.singleShot(
-            10, lambda: header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
+            10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
         )
-        if count < 200:
+        if count < 500:
             QTimer.singleShot(100, self.table.resizeRowsToContents)
 
 

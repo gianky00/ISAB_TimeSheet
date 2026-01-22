@@ -245,6 +245,7 @@ class QuickActions(QWidget):
         )
 
         layout.addWidget(self.chips_widget)
+        layout.addStretch()
 
         # Context Menu Policy
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)

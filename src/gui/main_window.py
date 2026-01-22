@@ -353,6 +353,10 @@ class MainWindow(QMainWindow):
 
         # Monitoraggio Abilitazioni ISAB (Proattivo)
         QTimer.singleShot(2000, self._check_isab_authorizations)
+        # Recurring check every 4 hours
+        self.auth_check_timer = QTimer(self)
+        self.auth_check_timer.timeout.connect(self._check_isab_authorizations)
+        self.auth_check_timer.start(4 * 3600 * 1000)
 
     def _check_isab_authorizations(self):
         """Verifica dipendenti con abilitazione ISAB in scadenza e mostra notifica."""
@@ -807,7 +811,7 @@ class MainWindow(QMainWindow):
     def _handle_automation_tab_change(self, tab_index: int):
         """Gestisce il cambio tab interno per il pannello Automazioni."""
         # 1. Naviga al pannello Automazioni se non ci siamo già
-        self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI)
+        self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI, sub_index=tab_index)
 
         # 2. Imposta il tab corretto
         if hasattr(self, "automazioni_widget"):
@@ -816,7 +820,7 @@ class MainWindow(QMainWindow):
     def _handle_notifications_tab_change(self, tab_index: int):
         """Gestisce il cambio tab interno per il pannello Notifiche."""
         # 1. Naviga al pannello Notifiche se non ci siamo già
-        self.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS)
+        self.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS, sub_index=tab_index)
 
         # 2. Imposta il tab corretto (0: Notifiche, 1: Audit)
         if hasattr(self, "notifications_panel"):
