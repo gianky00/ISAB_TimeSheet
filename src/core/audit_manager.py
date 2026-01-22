@@ -446,6 +446,15 @@ class AuditManager:
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
-                conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
-        except Exception:
-            pass
+                res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
+                deleted_count = res.rowcount
+            
+            if deleted_count > 0:
+                self.log_action(
+                    "Pulizia Log",
+                    category="Sistema",
+                    params={"deleted_rows": deleted_count, "cutoff_date": cutoff},
+                    severity="low"
+                )
+        except Exception as e:
+            logger.error(f"Retention Policy Error: {e}")

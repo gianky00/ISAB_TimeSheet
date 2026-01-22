@@ -138,3 +138,16 @@ IDX_CERTIFICATO  # unused variable
 IDX_EMISSIONE  # unused variable
 IDX_ID  # unused variable
 ToastOverlay  # unused class
+
+# Phase 1 Modernization Audit (2026-01-22)
+pulseScale  # unused variable (src/gui/widgets/priority_badge.py - Qt Property)
+StatCard  # unused class (src/gui/widgets/simple_chart.py)
+get_phase  # unused method (src/gui/widgets/footer_stats.py)
+log_boot_message  # unused method (src/gui/widgets/footer_stats.py)
+_copy_link  # unused method (src/gui/widgets/notification_card.py)
+set_expanded  # unused method (src/gui/widgets/notification_group_header.py)
+bulk_action_triggered  # unused variable (src/gui/widgets/notification_toolbar.py)
+get_current_filter  # unused method (src/gui/widgets/notification_toolbar.py)
+get_search_query  # unused method (src/gui/widgets/notification_toolbar.py)
+get_sort_key  # unused method (src/gui/widgets/notification_toolbar.py)
+category_color  # unused attribute (src/gui/widgets/timeline_widget.py)

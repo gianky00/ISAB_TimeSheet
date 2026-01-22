@@ -97,7 +97,7 @@ class TestAuditManager:
             "UPDATE",
             status=AuditManager.Status.SUCCESS,
             notify=True,
-            params={"nuova": "2.0"},
+            params={"error_details": "Versione aggiornata a 2.0"},
         )
 
         mock_instance.add_notification.assert_called_once()
@@ -123,4 +123,4 @@ class TestAuditManager:
         # Should only have the log about retention, OLD_ACTION should be gone
         actions = [log_entry["action"] for log_entry in logs]
         assert "OLD_ACTION" not in actions
-        assert "Sistema" in actions  # The retention log itself
+        assert "Pulizia Log" in actions  # The retention log itself

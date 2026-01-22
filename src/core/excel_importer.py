@@ -1066,7 +1066,7 @@ class ExcelImporter:
             return None
 
         # 4. Extract styles (Inline)
-        row_styles = {}
+        row_styles: Dict[str, Dict[str, str]] = {}
         for i, key in enumerate(col_keys):
             # Skip empty cells
             if vals[i] == "":
