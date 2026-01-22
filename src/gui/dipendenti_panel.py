@@ -115,7 +115,8 @@ class InteractiveStatusCard(QFrame):
         self.base_color = color
         self.filter_type = filter_type
         self.description = description
-        self.setFixedSize(180, 110)  # Dimensioni fisse - ridotto a 180px
+        # Nuovo Layout: Largo e Basso
+        self.setFixedSize(240, 75)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         # Tooltip informativo
@@ -124,10 +125,10 @@ class InteractiveStatusCard(QFrame):
 
         # Effetto Ombra
         self.shadow = QGraphicsDropShadowEffect(self)
-        self.shadow.setBlurRadius(15)
+        self.shadow.setBlurRadius(10)
         self.shadow.setXOffset(0)
-        self.shadow.setYOffset(4)
-        self.shadow.setColor(QColor(0, 0, 0, 40))
+        self.shadow.setYOffset(2)
+        self.shadow.setColor(QColor(0, 0, 0, 30))
         self.setGraphicsEffect(self.shadow)
 
         self.setStyleSheet(
@@ -135,63 +136,68 @@ class InteractiveStatusCard(QFrame):
             InteractiveStatusCard {{
                 background-color: white;
                 border: 2px solid {color};
-                border-radius: 12px;
+                border-radius: 8px;
             }}
-        """
+            """
         )
 
+        # Layout Orizzontale Compatto
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(15, 12, 15, 12)
-        layout.setSpacing(12)
+        layout.setContentsMargins(10, 5, 10, 5)
+        layout.setSpacing(10)
 
-        # Icona e Testo
-        info_layout = QVBoxLayout()
-        info_layout.setSpacing(4)
+        # Sinistra: Icona/Colore + Numero
+        left_layout = QVBoxLayout()
+        left_layout.setSpacing(0)
+        left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.val_text = QLabel("0")
+        self.val_text.setStyleSheet(
+            f"font-size: 28px; font-weight: 900; color: {color};"
+        )
+        self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        left_layout.addWidget(self.val_text)
+        
+        layout.addLayout(left_layout)
+
+        # Separatore leggero
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        line.setStyleSheet("background-color: #eee;")
+        layout.addWidget(line)
+
+        # Destra: Titolo + Descrizione
+        right_layout = QVBoxLayout()
+        right_layout.setSpacing(2)
+        right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
         lbl_title.setStyleSheet(
-            "font-size: 12px; font-weight: 800; color: #9e9e9e; letter-spacing: 1px;"
+            "font-size: 11px; font-weight: 800; color: #555; letter-spacing: 0.5px;"
         )
-
-        self.val_text = QLabel("0")
-        self.val_text.setStyleSheet(
-            f"font-size: 36px; font-weight: 900; color: {color};"
-        )
-
-        # Descrizione sotto il numero
+        
         lbl_desc = QLabel(description)
-        lbl_desc.setStyleSheet("font-size: 11px; color: #6c757d; font-weight: 600;")
+        lbl_desc.setStyleSheet("font-size: 10px; color: #777; font-weight: 500;")
         lbl_desc.setWordWrap(True)
+        lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        info_layout.addWidget(lbl_title)
-        info_layout.addWidget(self.val_text)
-        info_layout.addWidget(lbl_desc)
-
-        # Indicatore laterale colorato
-        self.accent = QFrame()
-        self.accent.setFixedWidth(5)
-        self.accent.setStyleSheet(f"background-color: {color}; border-radius: 2px;")
-
-        layout.addWidget(self.accent)
-        layout.addLayout(info_layout)
-        layout.addStretch()
+        right_layout.addWidget(lbl_title)
+        right_layout.addWidget(lbl_desc)
+        
+        layout.addLayout(right_layout)
 
     def enterEvent(self, event):
-        # Animazione ombra al passaggio del mouse - senza spostare la card
-        self.shadow.setBlurRadius(20)
-        self.shadow.setYOffset(6)
-        self.shadow.setColor(QColor(0, 0, 0, 60))
+        self.shadow.setBlurRadius(15)
+        self.shadow.setYOffset(4)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        # Ritorna all'ombra normale
-        self.shadow.setBlurRadius(15)
-        self.shadow.setYOffset(4)
-        self.shadow.setColor(QColor(0, 0, 0, 40))
+        self.shadow.setBlurRadius(10)
+        self.shadow.setYOffset(2)
         super().leaveEvent(event)
 
     def mousePressEvent(self, event):
-        """Gestisce il click sulla card."""
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
@@ -249,7 +255,7 @@ class DipendentiPanel(QWidget):
 
         # 1. Filtri e Azioni (Top)
         filter_layout = QHBoxLayout()
-        filter_layout.setSpacing(1)  # Spacing ridotto tra gli elementi
+        filter_layout.setSpacing(5)
 
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Cerca per nome, cognome, CF o badge...")
@@ -258,30 +264,52 @@ class DipendentiPanel(QWidget):
 
         refresh_btn = QPushButton("Aggiorna")
         refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.setIconSize(QSize(24, 24))  # Icona ingrandita
-        refresh_btn.setToolTip("Aggiorna l'elenco dei dipendenti dal database")
+        refresh_btn.setIconSize(QSize(24, 24))
         refresh_btn.clicked.connect(self.refresh_data)
         filter_layout.addWidget(refresh_btn)
 
         import_btn = QPushButton("Importa CSV")
         import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
-        import_btn.setIconSize(QSize(24, 24))  # Icona ingrandita
-        import_btn.setToolTip(
-            "Importa anagrafica dipendenti da file CSV (separatore: punto e virgola)"
-        )
+        import_btn.setIconSize(QSize(24, 24))
         import_btn.clicked.connect(self._on_import_clicked)
         filter_layout.addWidget(import_btn)
 
         main_layout.addLayout(filter_layout)
 
-        # 2. Area Contenuti (Tabella | Medio: Contatori | Destra: Scheda)
+        # 1.5 Cards Container (Between Search and Table)
+        self.cards_container = QWidget()
+        cards_layout = QHBoxLayout(self.cards_container)
+        cards_layout.setContentsMargins(5, 5, 5, 5)
+        cards_layout.setSpacing(15)
+        cards_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self.card_ok = InteractiveStatusCard(
+            "Operativi", "#198754", Icons.CHECK_CIRCLE, "Ultimo accesso <= 20gg", "ok"
+        )
+        self.card_warning = InteractiveStatusCard(
+            "In Scadenza", "#fd7e14", Icons.ALERT_TRIANGLE, "Accesso 21-30gg fa", "warning"
+        )
+        self.card_expired = InteractiveStatusCard(
+            "Scaduti", "#dc3545", Icons.X_CIRCLE, "Accesso > 30gg fa", "expired"
+        )
+
+        self.card_ok.clicked.connect(self._on_card_filter)
+        self.card_warning.clicked.connect(self._on_card_filter)
+        self.card_expired.clicked.connect(self._on_card_filter)
+
+        cards_layout.addWidget(self.card_ok)
+        cards_layout.addWidget(self.card_warning)
+        cards_layout.addWidget(self.card_expired)
+        cards_layout.addStretch() # Push cards to left
+
+        main_layout.addWidget(self.cards_container)
+
+        # 2. Area Contenuti (Tabella | Destra: Scheda)
         self.content_layout = QHBoxLayout()
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(
-            10
-        )  # Spacing ridotto per avvicinare card alla tabella
+        self.content_layout.setSpacing(10)
 
-        # --- TABELLA (A SINISTRA) - STATICA CON COLONNE FISSE ---
+        # --- TABELLA (A SINISTRA) ---
         self.table = QTableView()
         self.table.setModel(self.model)
         self.table.setAlternatingRowColors(True)
@@ -296,78 +324,19 @@ class DipendentiPanel(QWidget):
         header = self.table.horizontalHeader()
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
 
-        # Aggiungi delegate per colorare i pallini
         self.table.setItemDelegateForColumn(0, ColoredDotDelegate(self.table))
 
-        # Larghezze fisse per ogni colonna (in px) - calcolate sui dati reali
-        # Ordine: SCAD.ISAB | ID RISORSA | Cognome | Nome | CODICE FISCALE | ID BADGE | DATA ASSUNZIONE
         self.column_widths = [70, 90, 180, 140, 150, 90, 135]
-
-        # Imposta tutte le colonne come Fixed (non ridimensionabili)
         for col_idx in range(len(self.column_widths)):
             header.setSectionResizeMode(col_idx, QHeaderView.ResizeMode.Fixed)
             self.table.setColumnWidth(col_idx, self.column_widths[col_idx])
 
-        # Calcola larghezza totale tabella: somma colonne + scrollbar + bordi
-        total_width = sum(self.column_widths) + 20  # 20px per scrollbar e margini
+        total_width = sum(self.column_widths) + 20
         self.table.setFixedWidth(total_width)
-
         self.content_layout.addWidget(self.table)
-
-        # --- AREA MEDIA (CONTATORI ORIZZONTALI IN ALTO) - STATICA ---
-        self.middle_container = QWidget()
-        self.middle_container.setFixedWidth(
-            600
-        )  # Larghezza fissa con margine per bordi: 3 card × 180px + 2 spacing × 12px + margini
-        middle_layout = QVBoxLayout(self.middle_container)
-        middle_layout.setContentsMargins(
-            10, 20, 10, 0
-        )  # Margine superiore aumentato da 10 a 20
-        middle_layout.setSpacing(0)
-
-        # Container orizzontale per le card
-        self.summary_container = QWidget()
-        summary_h_layout = QHBoxLayout(self.summary_container)
-        summary_h_layout.setContentsMargins(0, 0, 0, 0)
-        summary_h_layout.setSpacing(12)  # Spacing ridotto tra le card
-
-        self.card_ok = InteractiveStatusCard(
-            "Operativi",
-            "#198754",
-            Icons.CHECK_CIRCLE,
-            "Ultimo accesso entro 20 giorni",
-            "ok",
-        )
-        self.card_warning = InteractiveStatusCard(
-            "In Scadenza",
-            "#fd7e14",
-            Icons.ALERT_TRIANGLE,
-            "Nessun accesso da 21-30 giorni",
-            "warning",
-        )
-        self.card_expired = InteractiveStatusCard(
-            "Scaduti",
-            "#dc3545",
-            Icons.X_CIRCLE,
-            "Oltre 30 giorni senza accesso",
-            "expired",
-        )
-
-        # Connetti i segnali delle card
-        self.card_ok.clicked.connect(self._on_card_filter)
-        self.card_warning.clicked.connect(self._on_card_filter)
-        self.card_expired.clicked.connect(self._on_card_filter)
-
-        summary_h_layout.addWidget(self.card_ok)
-        summary_h_layout.addWidget(self.card_warning)
-        summary_h_layout.addWidget(self.card_expired)
-
-        middle_layout.addWidget(self.summary_container)
-        middle_layout.addStretch(1)  # Spinge tutto verso l'alto
-
-        self.content_layout.addWidget(self.middle_container)
-
+        
         # --- PANNELLO DESTRA (SCHEDA DIPENDENTE VERTICALE) ---
+
         right_container = QWidget()
         right_container.setFixedWidth(360)
         right_container.setStyleSheet(
@@ -552,7 +521,9 @@ class DipendentiPanel(QWidget):
         scroll.setWidget(scroll_content)
         right_layout.addWidget(scroll)
 
+        # Add components to content layout
         self.content_layout.addWidget(right_container)
+        self.content_layout.addStretch() # Push Table and Scheda to the left
 
         main_layout.addLayout(self.content_layout)
 
@@ -877,8 +848,6 @@ class DipendentiPanel(QWidget):
         """Aggiorna i dati della tabella Dipendenti."""
         search_text = self.search_input.text().lower()
 
-        self._update_isab_counters()
-
         query = """
             SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale
             FROM dipendenti WHERE 1=1
@@ -910,34 +879,6 @@ class DipendentiPanel(QWidget):
 
         except Exception as e:
             logger.error(f"Errore caricamento dipendenti: {e}")
-
-    def _update_isab_counters(self):
-        """Aggiorna i contatori delle card ISAB."""
-        from src.core.auth_monitor import check_expiring_isab_authorizations
-
-        try:
-            expiring = check_expiring_isab_authorizations()
-            scaduti = len([d for d in expiring if d["stato"] == "SCADUTA"])
-            in_scadenza = len([d for d in expiring if d["stato"] == "IN SCADENZA"])
-
-            # Query per gli operativi (chi ha accesso <= 20gg)
-            # Normalizzazione anche qui per i contatori
-            query_ok = """
-                SELECT COUNT(*) FROM (
-                    SELECT MAX(data) as d 
-                    FROM timbrature 
-                    GROUP BY UPPER(REPLACE(REPLACE(TRIM(cognome), '  ', ' '), '  ', ' ')), 
-                             UPPER(REPLACE(REPLACE(TRIM(nome), '  ', ' '), '  ', ' '))
-                ) WHERE (julianday('now') - julianday(d)) <= 20
-            """
-            res_ok = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_ok)
-            operativi = res_ok[0][0] if res_ok else 0
-
-            self.card_ok.setValue(operativi)
-            self.card_warning.setValue(in_scadenza)
-            self.card_expired.setValue(scaduti)
-        except Exception as e:
-            logger.error(f"Errore aggiornamento contatori ISAB: {e}")
 
     def _normalize_name(self, text: str) -> str:
         """Rimuove spazi multipli interni e spazi esterni, tutto maiuscolo."""
@@ -988,6 +929,11 @@ class DipendentiPanel(QWidget):
                             last_by_name[norm_key] = diff
 
         master_rows = []
+        
+        # Counters
+        count_ok = 0
+        count_warning = 0
+        count_expired = 0
 
         for r in full_rows:
             # Source fields from DB (id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale)
@@ -1004,12 +950,25 @@ class DipendentiPanel(QWidget):
                 diff_days = last_by_name.get((cog_val, nom_val))
                 if diff_days is not None and not cf_val:
                     cf_warning = True
+            
+            # --- Aggiorna Contatori (TOTALE) ---
+            if diff_days is not None:
+                # <= 20: Operativi
+                # 21-30: In Scadenza
+                # > 30: Scaduti
+                if diff_days <= 20:
+                    count_ok += 1
+                elif diff_days <= 30:
+                    count_warning += 1
+                else:
+                    count_expired += 1
+            # -----------------------------------
 
             inactivation_val = None
             if diff_days is not None:
                 inactivation_val = 30 - diff_days
 
-            # Filtro
+            # Filtro Visualizzazione
             if self.current_filter:
                 if diff_days is None: continue
                 if self.current_filter == "ok" and diff_days > 20: continue
@@ -1034,6 +993,11 @@ class DipendentiPanel(QWidget):
                 r[6],             # 8 (created_at)
                 r[1]              # 9 (cognome pulito)
             ])
+            
+        # Aggiorna UI Cards
+        self.card_ok.setValue(count_ok)
+        self.card_warning.setValue(count_warning)
+        self.card_expired.setValue(count_expired)
 
         return master_rows
 

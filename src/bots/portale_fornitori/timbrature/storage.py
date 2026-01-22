@@ -222,14 +222,49 @@ class TimbratureStorage:
         return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
 
     def _normalize_search_date(self, term: str) -> str:
-        if "/" in term:
+        """
+        Tenta di convertire una data input (DD/MM/YYYY, DD-MM-YYYY, ecc)
+        nel formato DB (YYYY-MM-DD).
+        """
+        term = term.strip()
+        
+        # Mapping preliminare separatori
+        clean_term = term
+        for sep in ["/", ".", " "]:
+            clean_term = clean_term.replace(sep, "-")
+        
+        if "-" in clean_term:
             try:
-                parts = term.split("/")
+                parts = clean_term.split("-")
+                
+                # Caso DD-MM (es. 05/12 -> cerca 12 Dicembre)
+                if len(parts) == 2:
+                    d, m = parts
+                    # Ignoriamo se contengono testo
+                    if d.isdigit() and m.isdigit():
+                        return f"-{m.zfill(2)}-{d.zfill(2)}"
+                
+                # Caso DD-MM-YYYY
                 if len(parts) == 3:
                     d, m, y = parts
+                    
+                    # Se l'anno è incompleto (es. 202), non normalizzare ancora
+                    # Ritorna il termine originale parziale per permettere like testuale se serve,
+                    # ma probabilmente fallirà il match su YYYY-MM-DD.
+                    # Ma meglio che fallire convertendo in "202-12-05".
+                    if len(y) not in (2, 4):
+                         return term
+                         
+                    # Gestione anno 2 cifre
+                    if len(y) == 2:
+                        y = "20" + y
+                    
+                    # Ricostruisci YYYY-MM-DD
                     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+                    
             except Exception:
                 pass
+                
         return term
 
     def _enrich_and_filter_timb(
@@ -298,11 +333,15 @@ class TimbratureStorage:
             data_val = row.get("data")
             if pd.notna(data_val):
                 if isinstance(data_val, (pd.Timestamp, pd.DatetimeIndex)):
-                    row["data"] = data_val.strftime("%Y-%m-%d")
+                    # Explicitly strip time
+                    row["data"] = data_val.date().isoformat()
                 else:
                     try:
-                        row["data"] = pd.to_datetime(data_val).strftime("%Y-%m-%d")
+                         # Attempt to parse and standardise with Italian format preference
+                        dt = pd.to_datetime(data_val, dayfirst=True)
+                        row["data"] = dt.date().isoformat()
                     except Exception:
+                        # Fallback for tough strings
                         pass
 
             vals = row.fillna("").astype(str).to_dict()

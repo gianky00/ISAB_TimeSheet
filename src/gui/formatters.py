@@ -81,10 +81,12 @@ class FastTableModel(QAbstractTableModel):
     - Allineamento intelligente (Numeri a destra).
     """
 
-    def __init__(self, data=None, headers=None):
+    def __init__(self, data=None, headers=None, metadata=None):
         super().__init__()
         self._data = data or []
         self._headers = headers or []
+        # Support for parallel metadata list (e.g. valid DB IDs)
+        self._metadata = metadata or ([None] * len(self._data))
         self._formatters = {}
         self._alignments = {}
 
@@ -112,6 +114,13 @@ class FastTableModel(QAbstractTableModel):
             return None
 
         row, col = index.row(), index.column()
+
+        # UserRole returns the whole metadata object for the row
+        if role == Qt.ItemDataRole.UserRole:
+            if row < len(self._metadata):
+                return self._metadata[row]
+            return None
+
         raw_value = self._data[row][col]
 
         if role == Qt.ItemDataRole.DisplayRole:
@@ -138,9 +147,10 @@ class FastTableModel(QAbstractTableModel):
             return self._headers[section]
         return None
 
-    def update_data(self, new_data):
+    def update_data(self, new_data, new_metadata=None):
         self.beginResetModel()
         self._data = new_data
+        self._metadata = new_metadata or ([None] * len(new_data))
         self.endResetModel()
 
     def sort(self, column, order):
@@ -150,7 +160,9 @@ class FastTableModel(QAbstractTableModel):
             # Funzione chiave per gestire None e tipi misti ed evitare TypeError (int < str)
             # Restituisce una tupla (priorità, valore)
             # Priorità: 0 = None/Vuoto, 1 = Numeri/Date, 2 = Stringhe
-            def sort_key(row):
+            def sort_key(row_tuple):
+                # row_tuple is (data_row, metadata_row)
+                row = row_tuple[0]
                 val = row[column]
 
                 # 0. Gestione None
@@ -205,7 +217,20 @@ class FastTableModel(QAbstractTableModel):
                 return (2, str(val))
 
             reverse = order == Qt.SortOrder.DescendingOrder
-            self._data.sort(key=sort_key, reverse=reverse)
+            
+            # Combine data and metadata, sort, then split
+            combined = list(zip(self._data, self._metadata))
+            combined.sort(key=sort_key, reverse=reverse)
+            
+            # Unzip
+            if combined:
+                self._data, self._metadata = zip(*combined)
+                self._data = list(self._data)
+                self._metadata = list(self._metadata)
+            else:
+                self._data = []
+                self._metadata = []
+
         except Exception as e:
             print(f"Sort Error: {e}")
         finally:

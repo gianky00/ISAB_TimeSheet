@@ -91,15 +91,24 @@ def check_expiring_isab_authorizations() -> List[Dict[str, Any]]:
                         missing_cf_flag = True
 
             if match_found and delta is not None:
-                # Monitoraggio: 20-30 giorni (In Scadenza) o 31-45 giorni (Appena Scaduti)
-                if 20 <= delta <= 45:
+                # Monitoraggio: 20-30 giorni (In Scadenza)
+                # > 30 giorni (Scaduti) - Nessun limite superiore
+                if delta >= 20: 
+                    stat = "IN SCADENZA"
+                    if delta > 30:
+                        stat = "SCADUTA"
+                    
+                    # Evitiamo di segnalare operativi (<= 20)
+                    if delta <= 20:
+                         continue
+
                     results.append(
                         {
                             "cognome": cog.upper(),
                             "nome": nom.upper(),
                             "ultima_data": f_date,
                             "giorni_trascorsi": delta,
-                            "stato": "SCADUTA" if delta > 30 else "IN SCADENZA",
+                            "stato": stat,
                             "cf_mancante": missing_cf_flag
                         }
                     )

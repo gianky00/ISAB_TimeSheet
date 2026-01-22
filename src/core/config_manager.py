@@ -19,6 +19,7 @@ from src.core.secrets_manager import SecretsManager
 # STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob
 APP_NAME = "SyncroJob"
 
+# Use platformdirs to get standard Local AppData path
 CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 # Root del progetto (assumendo src/core/config_manager.py)

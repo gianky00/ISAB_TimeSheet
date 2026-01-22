@@ -1014,8 +1014,19 @@ class ExcelImporter:
 
         # ODC specific handling
         vals = []
-        # Data
-        vals.append(_fmt(c_data.value))
+        # Data - Strip time if present
+        v_data = c_data.value
+        s_data = ""
+        if v_data:
+            if hasattr(v_data, "strftime"):
+                s_data = v_data.strftime("%Y-%m-%d")
+            else:
+                # String cleanup: "2024-01-01 00:00:00" -> "2024-01-01"
+                s = str(v_data).strip()
+                if " " in s:
+                    s = s.split(" ")[0]
+                s_data = s
+        vals.append(s_data)
         # Pers1
         vals.append(_fmt(c_p1.value))
         # Pers2

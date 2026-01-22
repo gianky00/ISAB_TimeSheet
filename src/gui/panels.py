@@ -43,7 +43,7 @@ from src.core.constants import Icons
 from src.core.database import db_manager
 from src.core.stats_manager import StatsManager
 from src.gui.design.spacing import Spacing  # Added import
-from src.gui.formatters import FastTableModel  # Moved from bottom
+from src.gui.formatters import FastTableModel, format_date_it  # Moved from bottom
 
 # Import UI Components
 from src.gui.widgets import (
@@ -2152,6 +2152,9 @@ class TimbratureDBPanel(QWidget):
         ]
 
         self.model = FastTableModel([], self.master_headers)
+        # Configure Date Formatter for Col 0 (Data)
+        self.model.set_column_formatter(0, format_date_it)
+
         self._raw_full_data = [] # Buffer per i dati completi
 
         self._setup_ui()
@@ -2298,9 +2301,14 @@ class TimbratureDBPanel(QWidget):
         if not indexes:
             return
 
-        row_idx = indexes[0].row()
-        if row_idx < len(self._raw_full_data):
-            data = self._raw_full_data[row_idx]
+        # Use the UserRole to get the original row data/index intact after sorting
+        # The model returns the METADATA object for UserRole
+        row_data = indexes[0].data(Qt.ItemDataRole.UserRole)
+        
+        if row_data:
+            # We stored the FULL RAW ROW tuple as metadata
+            data = row_data
+            
             # Indices source:
             # 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, 5:presenza_ts, 6:sito, 
             # 7:cf, 8:id_dip, 9:fornitore, 10:cod_rilpres, 11:num_badge, 12:cod_qual, 
@@ -2368,19 +2376,12 @@ class TimbratureDBPanel(QWidget):
         # Source indices: 0, 4, 3, 1, 2, 16, 17
         master_rows = []
         for row in rows:
-            try:
-                dt_str = str(row[0])
-                if dt_str:
-                    date_part = dt_str.split(" ")[0]
-                    dt = datetime.strptime(date_part, "%Y-%m-%d")
-                    tab_date = dt.strftime("%d/%m/%Y")
-                else:
-                    tab_date = ""
-            except:
-                tab_date = str(row[0])
+            # Mantieni la data in formato ISO (YYYY-MM-DD) per l'ordinamento corretto
+            # La visualizzazione sarà gestita dal formatter (format_date_it)
+            iso_date = str(row[0]).split(" ")[0] if row[0] else ""
 
             m_row = [
-                tab_date,
+                iso_date,      # Raw ISO Date
                 row[4] or "",  # Cognome
                 row[3] or "",  # Nome
                 row[1] or "",  # Ingresso
@@ -2390,7 +2391,9 @@ class TimbratureDBPanel(QWidget):
             ]
             master_rows.append(m_row)
 
-        self.model.update_data(master_rows)
+        # Pass master_rows as Data, and raw 'rows' as Metadata (UserRole)
+        # This links the Visual Row to the Full Source Row securely
+        self.model.update_data(master_rows, new_metadata=rows)
         # Ottimizza colonne dopo il caricamento
         QTimer.singleShot(0, lambda: self.db_table.resizeColumnsToContents())
 
