@@ -3,6 +3,7 @@ Bot TS - Contabilita Manager
 Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
 """
 
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
@@ -88,7 +89,7 @@ class ContabilitaManager:
 
             # 1. Lookup Map Preparation
             lookup_map = {}
-            try:
+            with suppress(Exception):
                 with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
                     lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
                     cursor = conn.cursor()
@@ -96,8 +97,6 @@ class ContabilitaManager:
                     rows = cursor.fetchall()
                     # Creazione dizionario n_prev -> odc, ignorando duplicati (usa l'ultimo trovato)
                     lookup_map = {row[0]: row[1] for row in rows if row[0]}
-            except Exception:
-                pass
 
             # 2. Import Giornaliere data
             (
@@ -116,7 +115,7 @@ class ContabilitaManager:
                 cls.DB_PATH, all_new_rows, years_encountered
             )
 
-            if not years_encountered and len(all_new_rows) == 0:
+            if not years_encountered and not all_new_rows:
                 return (
                     True,
                     "Nessuna nuova giornaliera trovata (check anno >= "

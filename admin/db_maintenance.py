@@ -9,6 +9,7 @@ Esegue operazioni di manutenzione ordinaria su TUTTI i database dell'applicazion
 import sqlite3
 import sys
 from pathlib import Path
+
 from platformdirs import user_data_dir
 
 # Configurazione Percorsi
@@ -23,21 +24,22 @@ DATABASES = [
     "pdl.db",
     "storico_oda.db",
     "anagrafica_dipendenti.db",
-    "audit_log.db"
+    "audit_log.db",
 ]
+
 
 def maintain_db(db_name):
     db_path = DATA_DIR / db_name
     print(f"\n📦 ANALISI: {db_name}")
-    
+
     if not db_path.exists():
-        print(f"   ⚠️  Saltato: File non trovato.")
+        print("   ⚠️  Saltato: File non trovato.")
         return
 
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        
+
         # 1. Integrity Check
         print("   🔍 Checking Integrity...", end=" ")
         cursor.execute("PRAGMA integrity_check")
@@ -58,7 +60,7 @@ def maintain_db(db_name):
         print("   📊 Analyzing...", end=" ")
         cursor.execute("ANALYZE")
         print("✅ Done")
-        
+
         # 4. Check Size
         size_mb = db_path.stat().st_size / (1024 * 1024)
         print(f"   📉 Size: {size_mb:.2f} MB")
@@ -68,18 +70,20 @@ def maintain_db(db_name):
     except Exception as e:
         print(f"   ❌ ERRORE CRITICO: {e}")
 
+
 def main():
-    print(f"🔧 SYNCROJOB DB MAINTENANCE TOOL")
+    print("🔧 SYNCROJOB DB MAINTENANCE TOOL")
     print(f"📂 Data Dir: {DATA_DIR}\n")
-    
+
     if not DATA_DIR.exists():
-        print(f"❌ Errore: Directory dati non trovata.")
+        print("❌ Errore: Directory dati non trovata.")
         sys.exit(1)
 
     for db in DATABASES:
         maintain_db(db)
 
     print("\n✨ Manutenzione completata.")
+
 
 if __name__ == "__main__":
     main()

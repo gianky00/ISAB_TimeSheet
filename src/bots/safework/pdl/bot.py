@@ -1,7 +1,7 @@
-import glob
 import os
 import time
 import traceback
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -37,7 +37,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
     @property
     def name(self) -> str:
         """Restituisce il nome dell'istanza del bot."""
-        return "Scarico PDL"
+        return "scarico_pdl"
 
     @property
     def description(self) -> str:
@@ -64,7 +64,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Nome file in maiuscolo come richiesto dall'utente
             self.log_file = log_dir / "pdl_bot_debug.TXT"
             # PULIZIA LOG: Usa 'w' invece di 'a' per resettare il file ad ogni avvio
-            with open(self.log_file, "w", encoding="utf-8") as f:
+            with self.log_file.open("w", encoding="utf-8") as f:
                 f.write(
                     f"--- SESSIONE DEBUG PDL BOT (DETTAGLIO MASSIMO) --- \nAvvio: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
                     f"Config: User={username}, Headless={headless}, Timeout={timeout}\n"
@@ -81,26 +81,22 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         """Override log per salvare su file con massimo dettaglio."""
         super().log(message)
         if hasattr(self, "log_file") and self.log_file:
-            try:
+            with suppress(Exception):
                 timestamp = time.strftime("%H:%M:%S")
-                with open(self.log_file, "a", encoding="utf-8") as f:
+                with self.log_file.open("a", encoding="utf-8") as f:
                     f.write(f"[{timestamp}] {message}\n")
-            except Exception:
-                pass
 
     def log_error(self, context: str, exception: Exception):
         """Logga un errore dettagliato con stack trace."""
         err_msg = f"❌ ERRORE CRITICO in {context}: {str(exception)}"
         self.log(err_msg)
         if hasattr(self, "log_file") and self.log_file:
-            try:
-                with open(self.log_file, "a", encoding="utf-8") as f:
+            with suppress(Exception):
+                with self.log_file.open("a", encoding="utf-8") as f:
                     f.write(
                         f"--- DETTAGLIO ERRORE ---\nURL Corrente: {self.driver.current_url if self.driver else 'N/A'}\n"
                     )
                     f.write(f"STACK TRACE:\n{traceback.format_exc()}\n{'-' * 50}\n")
-            except Exception:
-                pass
 
     def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
         """Validazione specifica per SafeWork PDL."""
@@ -558,21 +554,35 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             time.sleep(0.5)
         return False
 
+    def _safe_remove(self, path):
+        """Rimuove un file ignorando errori se in uso."""
+        from contextlib import suppress
+        from pathlib import Path
+
+        with suppress(Exception):
+            p = Path(path)
+            if p.exists():
+                p.unlink()
+                self.log(f"🗑️ Rimosso file temporaneo: {p.name}")
+
     def _attendi_e_ritorna_nuovo_pdf(self, tempo_riferimento, timeout=60):
+        from pathlib import Path
+
         scadenza = time.time() + timeout
         self.log(
             f"⏳ Polling cartella download (Ref Time: {int(tempo_riferimento)})..."
         )
+        download_path = Path(self.download_path)
         while time.time() < scadenza:
-            files = glob.glob(os.path.join(self.download_path, "*.pdf"))
-            nuovi_files = [f for f in files if os.path.getmtime(f) > tempo_riferimento]
+            files = list(download_path.glob("*.pdf"))
+            nuovi_files = [f for f in files if f.stat().st_mtime > tempo_riferimento]
             if nuovi_files:
-                nuovi_files.sort(key=os.path.getmtime, reverse=True)
+                nuovi_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
                 ultimo_file = nuovi_files[0]
                 # Verifica che non ci siano download in corso (.crdownload)
-                if not glob.glob(os.path.join(self.download_path, "*.crdownload")):
-                    self.log(f"📄 Trovato nuovo file: {os.path.basename(ultimo_file)}")
-                    return ultimo_file
+                if not list(download_path.glob("*.crdownload")):
+                    self.log(f"📄 Trovato nuovo file: {ultimo_file.name}")
+                    return str(ultimo_file)
             time.sleep(1)
         self.log("❌ Nessun nuovo PDF trovato entro il timeout.")
         return None

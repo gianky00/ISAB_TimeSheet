@@ -19,9 +19,7 @@ class ConnectionTestWorker(QThread):
             elif self.test_type == "gemini":
                 self._test_gemini()
         except Exception as e:
-            self.result_ready.emit(
-                False, "Eccezione", f"Errore durante il test: {str(e)}"
-            )
+            self.result_ready.emit(False, "Eccezione", f"Errore durante il test: {e}")
 
     def _test_telegram(self):
         url = f"https://api.telegram.org/bot{self.token_or_key}/getMe"

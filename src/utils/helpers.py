@@ -8,6 +8,7 @@ import os
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 from PyQt6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
@@ -23,7 +24,7 @@ def get_asset_path(relative_path: str) -> str:
         exe_dir = os.path.dirname(sys.executable)
         internal_path = os.path.join(exe_dir, "_internal")
 
-        if os.path.exists(os.path.join(internal_path, relative_path.split("/")[0])):
+        if Path(os.path.join(internal_path, relative_path.split("/")[0])).exists():
             base_path = internal_path
         else:
             base_path = exe_dir
@@ -41,7 +42,7 @@ def get_app_icon_path() -> Optional[str]:
     """Restituisce il percorso dell'icona dell'applicazione."""
     icon_path = get_asset_path("assets/app.ico")
 
-    if os.path.exists(icon_path):
+    if Path(icon_path).exists():
         return icon_path
     return None
 
@@ -152,7 +153,7 @@ def open_folder(path: str) -> bool:
     """
     import subprocess
 
-    if not os.path.exists(path):
+    if not Path(path).exists():
         return False
 
     try:
@@ -198,7 +199,6 @@ def truncate_string(text: str, max_length: int = 50, suffix: str = "...") -> str
     if not text:
         return ""
 
-    text = str(text)
     if len(text) <= max_length:
         return text
 
@@ -220,7 +220,7 @@ def sanitize_filename(filename: str) -> str:
         return "unnamed_file"
 
     # 1. Strip null bytes
-    filename = str(filename).replace("\0", "")
+    filename = filename.replace("\0", "")
 
     # 2. Replace forbidden characters with underscore
     # We use a whitelist approach for maximum security:
@@ -231,11 +231,8 @@ def sanitize_filename(filename: str) -> str:
     # 3. Collapse multiple underscores
     safe_filename = re.sub(r"_+", "_", safe_filename)
 
-    # 4. Collapse multiple dots (prevent ".." traversal patterns)
-    safe_filename = re.sub(r"\.+", ".", safe_filename)
-
-    # 5. Trim spaces and dots from ends (Windows doesn't like them)
-    safe_filename = safe_filename.strip(" .")
+    # 4. Collapse multiple dots and trim (prevent ".." traversal patterns)
+    safe_filename = re.sub(r"\.+", ".", safe_filename).strip(" .")
 
     # 6. Ensure not empty after sanitization
     if not safe_filename:
@@ -249,7 +246,7 @@ def get_colored_icon(icon_path: str, color: str = "#000000") -> QIcon:
     Carica un'icona SVG e ne cambia il colore in modo sicuro.
     Usa QImage per evitare conflitti di pittura su QPixmap.
     """
-    if not os.path.exists(icon_path):
+    if not Path(icon_path).exists():
         return QIcon()
 
     # Tentativo caricamento diretto

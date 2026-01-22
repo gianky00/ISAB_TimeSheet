@@ -5,6 +5,7 @@ Implementa Lazy Loading dei pannelli per prestazioni ottimali.
 """
 
 import random  # NEW IMPORT
+from contextlib import suppress
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
@@ -345,12 +346,10 @@ class MainWindow(QMainWindow):
 
         # Connect Autopilot Real-time updates
         if hasattr(self, "timbrature_bot_panel"):
-            try:
+            with suppress(Exception):
                 self.timbrature_bot_panel.autopilot_changed.connect(
                     self._update_autopilot_status_ui
                 )
-            except Exception:
-                pass
 
         # Monitoraggio Abilitazioni ISAB (Proattivo)
         QTimer.singleShot(2000, self._check_isab_authorizations)
@@ -456,8 +455,7 @@ class MainWindow(QMainWindow):
         for qss in ["main_window.qss", "message_box.qss"]:
             path = Path(f"assets/styles/{qss}")
             if path.exists():
-                with open(path, "r", encoding="utf-8") as f:
-                    self.setStyleSheet(self.styleSheet() + f.read())
+                self.setStyleSheet(self.styleSheet() + path.read_text(encoding="utf-8"))
 
     def _setup_ui(self):
         """Configura l'interfaccia con Placeholders per Lazy Loading."""

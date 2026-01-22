@@ -1,7 +1,4 @@
-"""
-SyncroJob - Excel Importer
-Gestisce l'importazione di dati da vari formati Excel.
-"""
+from __future__ import annotations
 
 import io
 import json
@@ -13,11 +10,15 @@ import zipfile
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
-import pandas as pd
+if TYPE_CHECKING:
+    import pandas as pd
 
 from src.core.schemas import validate_contabilita, validate_giornaliere
+
+# Lazy import placeholder
+_pd = None
 
 # Tentativo di importare msoffcrypto
 try:
@@ -37,6 +38,14 @@ except ImportError:
 
 class ExcelImporter:
     """Gestore per l'importazione di dati da file Excel."""
+
+    @staticmethod
+    def _get_pd():
+        """Lazy load di pandas"""
+        global _pd
+        if _pd is None:
+            import pandas as _pd
+        return _pd
 
     # Mapping colonne Excel -> DB (Contabilità / Dati)
     COLUMNS_MAPPING = {
@@ -175,7 +184,7 @@ class ExcelImporter:
                 # Recupera password da config, default "coemi"
                 pwd = config.get("excel_decryption_password", "coemi")
 
-                with open(file_path, "rb") as f:
+                with Path(file_path).open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
                     office_file.load_key(password=pwd)
                     temp_decrypted = io.BytesIO()
@@ -189,13 +198,24 @@ class ExcelImporter:
 
     @classmethod
     def _get_excel_file(cls, file_obj) -> pd.ExcelFile:
-        """Tenta di aprire il file Excel con pandas o openpyxl."""
+        """Tenta di aprire il file Excel con motore ottimizzato (calamine > default > openpyxl)."""
+        pd = cls._get_pd()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+            # 1. Tentativo con Calamine (Rust-based, ultra veloce)
+            try:
+                return pd.ExcelFile(file_obj, engine="calamine")
+            except (ImportError, ValueError, Exception):
+                pass
+
+            # 2. Tentativo Standard (Pandas auto-detect)
             try:
                 return pd.ExcelFile(file_obj)
             except Exception:
-                return pd.ExcelFile(file_obj, engine="openpyxl")
+                pass
+
+            # 3. Fallback esplicito OpenPyXL
+            return pd.ExcelFile(file_obj, engine="openpyxl")
 
     @classmethod
     def _identify_sheet_year(cls, sheet_name: str) -> Optional[int]:
@@ -205,13 +225,14 @@ class ExcelImporter:
             year = int(match.group(1))
             return year if 2000 <= year <= 2100 else None
 
-        if sheet_name.lower() in ["dati", "preventivi", "riepilogo"]:
+        if sheet_name.lower() in ("dati", "preventivi", "riepilogo"):
             return datetime.now().year
         return None
 
     @classmethod
     def _find_header_row(cls, xls, sheet_name) -> int:
         """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
+        pd = cls._get_pd()
         preview_df = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
         key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
 
@@ -311,6 +332,61 @@ class ExcelImporter:
             return False, f"Errore critico importazione: {e}", [], []
 
     @classmethod
+    def scan_scarico_ore_rows(cls, file_path: str) -> int:
+        """
+        Stima rapida delle righe per Scarico Ore (DataEase) per calcolo ETA.
+        Supporta file criptati (password 'coemi').
+        """
+        path = Path(file_path)
+        if not path.exists():
+            return 0
+
+        def _scan_zip(zip_file_obj):
+            try:
+                cnt = 0
+                with zipfile.ZipFile(zip_file_obj, "r") as z:
+                    for name in z.namelist():
+                        if name.startswith("xl/worksheets/sheet"):
+                            with z.open(name) as f:
+                                # Buffer increased to 32KB for safety
+                                head = f.read(32768).decode("utf-8", errors="ignore")
+                                match = re.search(
+                                    r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head
+                                )
+                                if match:
+                                    r = int(match.group(1))
+                                    if r > cnt:
+                                        cnt = r
+                return cnt
+            except Exception:
+                return 0
+
+        # 1. Tentativo Diretto (File non criptato)
+        try:
+            res = _scan_zip(path)
+            if res > 0:
+                return res
+        except zipfile.BadZipFile:
+            pass
+        except Exception:
+            pass
+
+        # 3. Tentativo Decrittazione
+        if msoffcrypto:
+            try:
+                decrypted = io.BytesIO()
+                with open(path, "rb") as f:
+                    office_file = msoffcrypto.OfficeFile(f)
+                    office_file.load_key(password="coemi")
+                    office_file.decrypt(decrypted)
+                decrypted.seek(0)
+                return _scan_zip(decrypted)
+            except Exception:
+                return 0
+
+        return 0
+
+    @classmethod
     def _process_all_sheets(
         cls, xls, sheet_names: List[str], progress_callback: Optional[Callable]
     ) -> Tuple[List[Tuple], List[int]]:
@@ -338,8 +414,16 @@ class ExcelImporter:
     def _process_single_sheet(cls, xls, sheet_name: str, year: int) -> List[Tuple]:
         """Processa un singolo foglio del file Excel di contabilità."""
         try:
+            pd = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
-            df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
+            # Optimization: Limit parsing to first 52 columns (A:AZ) to avoid 'ghost columns' slowness
+            try:
+                df = pd.read_excel(
+                    xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ"
+                )
+            except Exception:
+                df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
+
             df.columns = [str(c).strip().upper() for c in df.columns]
 
             if not df.empty:
@@ -472,6 +556,7 @@ class ExcelImporter:
         """Legge il foglio RIASSUNTO gestendo i motori pandas."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+            pd = cls._get_pd()
             try:
                 return pd.read_excel(file_path, sheet_name="RIASSUNTO")
             except ValueError:
@@ -725,6 +810,7 @@ class ExcelImporter:
         """Tenta di leggere il foglio 'Riepilogo'."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+            pd = cls._get_pd()
             try:
                 return pd.read_excel(path, sheet_name="Riepilogo", header=2)
             except (ValueError, Exception):
@@ -833,11 +919,12 @@ class ExcelImporter:
         wb_file.seek(0)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
-            # Performance optimizations: keep_vba=False, keep_links=False
+            # Performance optimizations: read_only=True is CRITICAL for speed on 24MB files
+            # Note: Styles ARE available in read_only mode (verified by test).
             return openpyxl.load_workbook(
                 wb_file,
                 data_only=True,
-                read_only=False,
+                read_only=True,
                 keep_vba=False,
                 keep_links=False,
             )
@@ -893,120 +980,141 @@ class ExcelImporter:
         Processa una singola riga estraendo valori e stili.
         OTTIMIZZATO per minimizzare allocazioni e chiamate costose.
         """
-        # Fast empty check (check solo primi 8 valori critici)
-        first_8_cells = row[:8]
-        if all(
-            c.value is None or (isinstance(c.value, str) and not c.value.strip())
-            for c in first_8_cells
-        ):
+        # Indici colonne (fissi per scarico ore)
+        # 0: data, 1: pers1, 2: pers2, 3: odc, 4: pos,
+        # 5: dalle, 6: alle, 7: tot_ore, 8: desc, 9: finito, 10: comm
+
+        # 1. Fast empty check: se data, pers1, odc, e pos sono vuoti, skip
+        # Accesso diretto alle celle raw
+        (
+            c_data,
+            c_p1,
+            c_p2,
+            c_odc,
+            c_pos,
+            c_dalle,
+            c_alle,
+            c_tot,
+            c_desc,
+            c_fin,
+            c_comm,
+        ) = row[0:11]
+
+        v_odc = c_odc.value
+        v_pos = c_pos.value
+
+        # ODC e POS sono obbligatori
+        if v_odc is None and v_pos is None:
             return None
 
-        # Extract values (allocate dict once)
-        row_vals = {
-            key: cls._format_scarico_cell_value(key, row[i].value)
-            for i, key in enumerate(col_keys)
-        }
+        # 2. Extract values (Inline formatting)
+        def _fmt(val):
+            if val is None:
+                return ""
+            s = str(val).strip()
+            return s.replace("\n", " ") if s else ""
 
-        # Early validation before expensive style extraction
-        if not cls._is_scarico_row_valid(row_vals):
+        # ODC specific handling
+        vals = []
+        # Data
+        vals.append(_fmt(c_data.value))
+        # Pers1
+        vals.append(_fmt(c_p1.value))
+        # Pers2
+        vals.append(_fmt(c_p2.value))
+
+        # ODC (skip 0)
+        s_odc = _fmt(v_odc)
+        if s_odc == "0" or s_odc == "0.0":
+            s_odc = ""
+        vals.append(s_odc)
+
+        # POS (skip 0)
+        s_pos = _fmt(v_pos)
+        if s_pos == "0" or s_pos == "0.0":
+            s_pos = ""
+        vals.append(s_pos)
+
+        # Dalle
+        vals.append(_fmt(c_dalle.value))
+        # Alle
+        vals.append(_fmt(c_alle.value))
+
+        # Totale Ore
+        s_tot = _fmt(c_tot.value)
+        vals.append(s_tot)
+
+        # Desc
+        vals.append(_fmt(c_desc.value))
+        # Finito
+        vals.append(_fmt(c_fin.value))
+
+        # Commessa (skip 0)
+        v_comm = c_comm.value
+        s_comm = _fmt(v_comm)
+        if s_comm == "0" or s_comm == "0.0":
+            s_comm = ""
+        vals.append(s_comm)
+
+        # 3. Validation Logic (Inlined)
+        # Check: odc, pos, totale_ore must be present
+        if not s_odc or not s_pos or not s_tot:
             return None
 
-        # Extract styles only for valid rows (expensive operation)
+        # Check: at least one person
+        if not vals[1] and not vals[2]:  # pers1 and pers2
+            return None
+
+        # 4. Extract styles (Inline)
         row_styles = {}
         for i, key in enumerate(col_keys):
-            # Skip style extraction for empty cells (optimization)
-            if row_vals[key]:
-                style = cls._get_cell_style(row[i])
-                if style:
-                    row_styles[key] = style
+            # Skip empty cells
+            if vals[i] == "":
+                continue
 
-        # Build tuple directly (avoid dict lookups)
+            cell = row[i]
+            # Foreground
+            try:
+                font = cell.font
+                if font and font.color and font.color.type == "rgb":
+                    rgb = str(font.color.rgb)
+                    # OpenPyXL RGB is ARGB usually
+                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+                    if hex_code != "#000000":  # Skip default black (optimization)
+                        row_styles.setdefault(key, {})["fg"] = hex_code
+            except (AttributeError, TypeError):
+                pass
+
+            # Background
+            try:
+                fill = cell.fill
+                if fill and fill.patternType == "solid":
+                    start_color = fill.start_color
+                    if start_color and start_color.type == "rgb":
+                        rgb = str(start_color.rgb)
+                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+                        if (
+                            hex_code != "#000000" and hex_code != "#FFFFFF"
+                        ):  # Skip white/black bg
+                            row_styles.setdefault(key, {})["bg"] = hex_code
+            except (AttributeError, TypeError):
+                pass
+
+        # Return tuple
         return (
-            row_vals["data"],
-            row_vals["pers1"],
-            row_vals["pers2"],
-            row_vals["odc"],
-            row_vals["pos"],
-            row_vals["dalle"],
-            row_vals["alle"],
-            row_vals["totale_ore"],
-            row_vals["descrizione"],
-            row_vals["finito"],
-            row_vals["commessa"],
+            vals[0],  # data
+            vals[1],  # pers1
+            vals[2],  # pers2
+            vals[3],  # odc
+            vals[4],  # pos
+            vals[5],  # dalle
+            vals[6],  # alle
+            vals[7],  # totale_ore
+            vals[8],  # descrizione
+            vals[9],  # finito
+            vals[10],  # commessa
             json.dumps(row_styles) if row_styles else "",
         )
-
-    @staticmethod
-    def _format_scarico_cell_value(key: str, val: Any) -> str:
-        """Formatta il valore della cella in base al tipo di colonna."""
-        if key in ["odc", "pos"]:
-            if val == 0 or str(val).strip() in ["0", "0.0"]:
-                return ""
-        elif key == "commessa":
-            if val == 0:
-                return "0"
-
-        val_str = str(val).strip() if val is not None else ""
-        return val_str.replace("\n", " ")
-
-    @staticmethod
-    def _get_cell_style(cell: Any) -> Optional[Dict[str, str]]:
-        """
-        Estrae i colori (HEX) dalla cella.
-        OTTIMIZZATO per ridurre accessi alle proprietà lazy di OpenPyXL.
-        """
-        style = {}
-
-        # Fast path: check if cell has any styling at all
-        try:
-            # Foreground color (cache font reference)
-            font = cell.font
-            if font and font.color and font.color.type == "rgb":
-                rgb = str(font.color.rgb)
-                style["fg"] = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
-
-            # Background color (cache fill reference)
-            fill = cell.fill
-            if fill and fill.patternType == "solid":
-                start_color = fill.start_color
-                if start_color and start_color.type == "rgb":
-                    rgb = str(start_color.rgb)
-                    style["bg"] = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
-        except (AttributeError, TypeError):
-            # Ignore cells without proper style attributes
-            pass
-
-        return style if style else None
-
-    @classmethod
-    def _is_scarico_row_valid(cls, row_vals: Dict[str, str]) -> bool:
-        """Verifica se la riga ha i dati minimi necessari per l'importazione."""
-        # 1. Almeno uno tra i campi tecnici deve essere presente
-        check_all_empty = [
-            "pers1",
-            "pers2",
-            "odc",
-            "pos",
-            "dalle",
-            "alle",
-            "totale_ore",
-        ]
-        if all(row_vals.get(k, "") == "" for k in check_all_empty):
-            return False
-
-        # 2. Campi obbligatori core
-        if (
-            not row_vals.get("odc")
-            or not row_vals.get("pos")
-            or not row_vals.get("totale_ore")
-        ):
-            return False
-
-        # 3. Almeno un operatore
-        if not row_vals.get("pers1") and not row_vals.get("pers2"):
-            return False
-
-        return True
 
     @classmethod
     def import_certificati_campione(
@@ -1020,6 +1128,7 @@ class ExcelImporter:
             return False, f"File non trovato: {file_path}", []
 
         try:
+            pd = cls._get_pd()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 xls = pd.ExcelFile(path)
@@ -1163,6 +1272,8 @@ class ExcelImporter:
     @staticmethod
     def _clean_euro_num(x):
         """Helper for European numbers (1.234,56 -> 1234.56)."""
+        import pandas as pd
+
         if pd.isna(x) or str(x).strip() == "":
             return 0.0
         if isinstance(x, (int, float)):
@@ -1191,6 +1302,7 @@ class ExcelImporter:
         cls, path: Path, sheet_name: str
     ) -> Tuple[pd.DataFrame, int]:
         """Legge i dati individuando l'intestazione."""
+        pd = cls._get_pd()
         df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=20)
         header_idx = cls._detect_certificati_header(df_preview)
         df = pd.read_excel(path, sheet_name=sheet_name, header=header_idx)
@@ -1250,11 +1362,18 @@ class ExcelImporter:
 
     @classmethod
     def _build_certificati_rename_map(cls, columns: List[str]) -> Dict[str, str]:
-        """Crea la mappa di ridenominazione colonne."""
+        """Costruisce la mappa di rinomina colonne basata sul mapping definito."""
         rename_map = {}
-        for excel_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
-            if excel_col in columns:
-                rename_map[excel_col] = db_col
+        for col in columns:
+            col_clean = str(col).strip()
+            # Cerca match esatto o parziale nel mapping
+            for schema_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
+                if schema_col.lower() == col_clean.lower():
+                    rename_map[col] = db_col
+                    break
+                # Fallback: se la colonna contiene la stringa schema (es. "Data\nScadenza")
+                if schema_col in col_clean:
+                    rename_map[col] = db_col
         return rename_map
 
     @classmethod
@@ -1271,6 +1390,7 @@ class ExcelImporter:
     @classmethod
     def _apply_certificati_formatting(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Applica formattazione date e calcolo giorni scadenza."""
+        pd = cls._get_pd()
 
         def format_date_it(val):
             if pd.isna(val) or val == "":
@@ -1300,31 +1420,6 @@ class ExcelImporter:
         if "stato" in df.columns:
             df["stato"] = df["stato"].apply(format_stato)
         return df
-
-    @classmethod
-    def scan_scarico_ore_rows(cls, file_path: str) -> int:
-        """Stima rapida delle righe per Scarico Ore (DataEase) per calcolo ETA."""
-        path = Path(file_path)
-        if not path.exists():
-            return 0
-
-        try:
-            with zipfile.ZipFile(path, "r") as z:
-                max_rows = 0
-                for name in z.namelist():
-                    if name.startswith("xl/worksheets/sheet"):
-                        with z.open(name) as f:
-                            head = f.read(1024).decode("utf-8", errors="ignore")
-                            match = re.search(
-                                r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head
-                            )
-                            if match:
-                                r = int(match.group(1))
-                                if r > max_rows:
-                                    max_rows = r
-                return max_rows
-        except Exception:
-            return 0
 
     @classmethod
     def scan_workload(cls, file_path: str, giornaliere_path: str) -> Tuple[int, int]:

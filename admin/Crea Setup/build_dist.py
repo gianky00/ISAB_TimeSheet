@@ -13,7 +13,7 @@ import sys
 
 # Add admin folder to path to import analyzer
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analyze_dependencies import get_all_imports
+from analyze_dependencies import get_all_imports  # noqa: E402
 
 # Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -473,8 +473,12 @@ def main():
         "--no-deploy", action="store_true", help="Skip Netlify deployment"
     )
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
+    # PyArmor is now mandatory/standard. Added a skip flag only for debugging if absolutely needed,
+    # but the default flow involves obfuscation.
     parser.add_argument(
-        "--obfuscate", action="store_true", help="Obfuscate code with PyArmor"
+        "--debug-no-obfuscate",
+        action="store_true",
+        help="DEBUG ONLY: Skip PyArmor (Not for production)",
     )
     args = parser.parse_args()
 
@@ -492,12 +496,18 @@ def main():
     # Step 1: Clean
     clean_build()
 
-    # Step 2: Obfuscation (Optional)
-    if args.obfuscate:
+    # Step 2: Obfuscation (Standard/Mandatory)
+    is_obfuscated = True
+    if args.debug_no_obfuscate:
+        log(
+            "[WARNING] SKIPPING OBFUSCATION (Debug Mode). This build is NOT for distribution."
+        )
+        is_obfuscated = False
+    else:
         run_pyarmor()
 
     # Step 3: PyInstaller
-    run_pyinstaller(obfuscated=args.obfuscate)
+    run_pyinstaller(obfuscated=is_obfuscated)
 
     # Step 4: Inno Setup
     if not args.skip_installer:

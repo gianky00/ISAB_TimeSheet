@@ -4,6 +4,7 @@ Pannello per la visualizzazione delle notifiche e Audit Log Dashboard.
 """
 
 import json
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -73,11 +74,9 @@ class AuditDetailDialog(QDialog):
 
         # Header Info
         ts = data.get("timestamp", "-")
-        try:
+        with suppress(ValueError):
             dt = datetime.fromisoformat(ts)
             ts = dt.strftime("%d/%m/%Y %H:%M:%S")
-        except ValueError:
-            pass
 
         dur_ms = data.get("duration_ms", 0) or 0
         dur_str = f"{dur_ms}ms" if dur_ms < 1000 else f"{dur_ms / 1000:.2f}s"

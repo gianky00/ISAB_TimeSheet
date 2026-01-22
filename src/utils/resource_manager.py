@@ -74,7 +74,7 @@ class ResourceManager:
     @classmethod
     def ensure_structure(cls):
         """Assicura che tutte le cartelle necessarie esistano."""
-        for d in [cls.TEMP_DIR, cls.LOGS_DIR, cls.DATA_DIR]:
+        for d in (cls.TEMP_DIR, cls.LOGS_DIR, cls.DATA_DIR):
             d.mkdir(parents=True, exist_ok=True)
 
 

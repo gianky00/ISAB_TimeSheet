@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -30,7 +31,8 @@ class ContabilitaWorker(QThread):
         """Esegue il workflow di importazione completo in background."""
         try:
             ContabilitaManager.init_db()
-            total_ops = self._calculate_total_ops()
+            ops_info = self._calculate_total_ops()
+            total_ops = ops_info["total"]
             self.start_time = time.time()
 
             # Stato interno accumulato
@@ -40,7 +42,7 @@ class ContabilitaWorker(QThread):
                 "messages": [],
                 "success": False,
                 "total_ops": total_ops,
-                "initial_total_ops": total_ops,  # Salva stima iniziale
+                "estimates": ops_info,  # Salva stima iniziale e breakdown
             }
 
             # Esecuzione fasi
@@ -60,60 +62,97 @@ class ContabilitaWorker(QThread):
         except Exception as e:
             self.finished_signal.emit(False, f"Errore critico: {e}", 0, 0, 0.0)
 
-    def _calculate_total_ops(self) -> int:
-        """Calcola il numero totale di operazioni per la barra di progresso."""
+    def _calculate_total_ops(self) -> dict:
+        """Calcola il totale operazioni e ritorna il dettaglio per stime accurate."""
         self.progress_signal.emit("⏳ Analisi carico di lavoro...")
         sheets, files = ContabilitaManager.scan_workload(
             self.file_path, self.giornaliere_path
         )
 
-        attivita = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
+        attivita = 1 if self.attivita_path and Path(self.attivita_path).exists() else 0
         certificati = (
-            1 if self.certificati_path and os.path.exists(self.certificati_path) else 0
+            1 if self.certificati_path and Path(self.certificati_path).exists() else 0
         )
 
         total = sheets + files + attivita + certificati
-        return total if total > 0 else 1
+        if total == 0:
+            total = 1
 
-    def _emit_progress(self, processed, offset, state, phase_total=None):
+        return {
+            "total": total,
+            "est_sheets": sheets,
+            "est_files": files,
+            "est_attivita": attivita,
+            "est_certificati": certificati,
+        }
+
+    def _update_progress_dynamic(
+        self, current_in_phase, total_in_phase, state, phase_key
+    ):
         """
-        Calcola ed emette il progresso globale con ETA accurato.
+        Aggiorna il totale operazioni se il numero effettivo differisce dalla stima.
 
         Args:
-            processed: Operazioni processate nella fase corrente
-            offset: Offset globale (operazioni delle fasi precedenti)
-            state: Stato condiviso
-            phase_total: Totale operazioni previste per la fase corrente (usato per aggiornare stima)
+            current_in_phase: Numero elemento corrente (1-based)
+            total_in_phase: Totale elementi reali nella fase
+            state: Stato del worker
+            phase_key: Chiave della stima nel dizionario state (es. 'est_sheets')
         """
-        current = offset + processed
+        # Se è la prima volta che riceviamo il totale reale per questa fase
+        if not state.get(f"{phase_key}_adjusted", False):
+            est = state["estimates"].get(phase_key, 0)
+            diff = total_in_phase - est
 
-        # Aggiorna dinamicamente il totale se abbiamo info più accurate dalla fase
-        if phase_total and phase_total > 0:
-            # Stima migliorata: offset + totale_fase_corrente + stime_fasi_successive
-            estimated_remaining = max(
-                0, state.get("initial_total_ops", 10) - offset - phase_total
-            )
-            state["total_ops"] = offset + phase_total + estimated_remaining
+            if diff != 0:
+                state["total_ops"] += diff
+                # Aggiorna anche la stima per evitare ricalcoli
+                state["estimates"][phase_key] = total_in_phase
 
-        # Fallback: se current supera total_ops, aggiorna
-        if current > state["total_ops"]:
+            state[f"{phase_key}_adjusted"] = True
+
+        # Calcola offset basato sulle fasi precedenti
+        # Ordine: Contabilita -> Giornaliere -> Attivita -> Certificati
+        offset = 0
+        est = state["estimates"]
+
+        if phase_key == "est_files":  # Giornaliere
+            offset += est["est_sheets"]
+        elif phase_key == "est_attivita":
+            offset += est["est_sheets"] + est["est_files"]
+        elif phase_key == "est_certificati":
+            offset += est["est_sheets"] + est["est_files"] + est["est_attivita"]
+
+        current_global = offset + current_in_phase
+
+        # Emissione
+        self._emit_simple_progress(current_global, state)
+
+    def _emit_simple_progress(self, current, state):
+        """Emette il segnale di progresso calcolato."""
+        elapsed = time.time() - self.start_time
+        total = state["total_ops"]
+
+        # Clamp current to total (per evitare >100% temporaneo)
+        if current > total:
+            # Se siamo oltre, espandiamo il totale
+            total = current
             state["total_ops"] = current
 
-        elapsed = time.time() - self.start_time
-        if current > 0 and elapsed > 0:
-            rate = current / elapsed
-            remaining = max(0, state["total_ops"] - current)
-            eta = remaining / rate if rate > 0 else 0
-            m, s = divmod(int(eta), 60)
-            percent = min(
-                99,
-                int((current / state["total_ops"]) * 100)
-                if state["total_ops"] > 0
-                else 0,
-            )
-            self.progress_signal.emit(
-                f"⏳ Importazione: {percent}% completato ({current}/{state['total_ops']}) • ETA: {m}m {s}s"
-            )
+        if total > 0:
+            percent = int((current / total) * 100)
+            percent = min(99, percent)
+        else:
+            percent = 0
+
+        # Stima ETA
+        rate = current / elapsed if elapsed > 0 else 0
+        remaining_ops = total - current
+        eta_s = remaining_ops / rate if rate > 0 else 0
+        m, s = divmod(int(eta_s), 60)
+
+        self.progress_signal.emit(
+            f"⏳ Importazione: {percent}% completato ({current}/{total}) • ETA: {m}m {s}s"
+        )
 
     def _phase_import_contabilita(self, state):
         if not self.file_path or not os.path.exists(self.file_path):
@@ -122,7 +161,9 @@ class ContabilitaWorker(QThread):
 
         success, msg, added, removed = ContabilitaManager.import_data_from_excel(
             self.file_path,
-            progress_callback=lambda c, t: self._emit_progress(c, 0, state, t),
+            progress_callback=lambda c, t: self._update_progress_dynamic(
+                c, t, state, "est_sheets"
+            ),
         )
         self._update_state(
             state,
@@ -137,13 +178,12 @@ class ContabilitaWorker(QThread):
         if not self.giornaliere_path:
             return
 
-        # Offset: numero di fogli caricati nella prima fase
-        # Nota: per semplicità usiamo un offset approssimativo o passiamo il numero reale
-        sheets, _ = ContabilitaManager.scan_workload(self.file_path, "")
-
+        # Nota: Import giornaliere scansiona internamente i file, ma noi passiamo callback
         success, msg, added, removed = ContabilitaManager.import_giornaliere(
             self.giornaliere_path,
-            progress_callback=lambda c, t: self._emit_progress(c, sheets, state, t),
+            progress_callback=lambda c, t: self._update_progress_dynamic(
+                c, t, state, "est_files"
+            ),
         )
         self._update_state(
             state,
@@ -161,11 +201,9 @@ class ContabilitaWorker(QThread):
         success, msg, added, removed = ContabilitaManager.import_attivita_programmate(
             self.attivita_path
         )
-        # Offset manuale per l'attivita (fine delle giornaliere)
-        sheets, files = ContabilitaManager.scan_workload(
-            self.file_path, self.giornaliere_path
-        )
-        self._emit_progress(1, sheets + files, state)
+
+        # Aggiorna progresso (1 step)
+        self._update_progress_dynamic(1, 1, state, "est_attivita")
 
         self._update_state(
             state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}"
@@ -178,12 +216,9 @@ class ContabilitaWorker(QThread):
         success, msg, added, removed = ContabilitaManager.import_certificati_campione(
             self.certificati_path
         )
-        # Offset per certificati
-        sheets, files = ContabilitaManager.scan_workload(
-            self.file_path, self.giornaliere_path
-        )
-        att_task = 1 if self.attivita_path and os.path.exists(self.attivita_path) else 0
-        self._emit_progress(1, sheets + files + att_task, state)
+
+        # Aggiorna progresso (1 step)
+        self._update_progress_dynamic(1, 1, state, "est_certificati")
 
         self._update_state(
             state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}"

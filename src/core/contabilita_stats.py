@@ -3,6 +3,8 @@ SyncroJob - Contabilita Stats
 Gestisce il calcolo delle statistiche per i dati della Contabilità Strumentale.
 """
 
+import operator
+from contextlib import suppress
 from pathlib import Path
 from typing import Dict, List, TypedDict
 
@@ -41,7 +43,9 @@ class ContabilitaStats:
 
         # 1. Processo Tabella Dati (KPI OdA)
         commesse = cls._process_main_data(data, stats)
-        stats["top_commesse"] = sorted(commesse, key=lambda x: x[1], reverse=True)[:5]
+        stats["top_commesse"] = sorted(
+            commesse, key=operator.itemgetter(1), reverse=True
+        )[:5]
 
         # 2. Processo Giornaliere (KPI Diretti/Indiretti)
         cls._process_giornaliere_stats(giornaliere, stats)
@@ -56,7 +60,7 @@ class ContabilitaStats:
             return commesse
 
         for row in data:
-            try:
+            with suppress(Exception):
                 n_prev = str(row[2]).strip()
                 if not n_prev or "totale" in n_prev.lower():
                     continue
@@ -77,8 +81,6 @@ class ContabilitaStats:
                 if v_prev > 0:
                     attivita = str(row[4]).strip() or "N/D"
                     commesse.append((attivita, v_prev))
-            except Exception:
-                pass
         return commesse
 
     @classmethod
@@ -88,7 +90,7 @@ class ContabilitaStats:
             return
 
         for row in giornaliere:
-            try:
+            with suppress(Exception):
                 n_prev = str(row[4]).strip()
                 odc = str(row[5]).strip()
                 ore = parse_currency(row[9])
@@ -101,5 +103,3 @@ class ContabilitaStats:
                     stats["ore_dirette"] += ore
                 else:
                     stats["ore_indirette"] += ore
-            except Exception:
-                pass

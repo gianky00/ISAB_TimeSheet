@@ -1,10 +1,5 @@
-"""
-Bot TS - Contabilita KPI Panel
-Pannello per l'analisi KPI della Contabilità Strumentale.
-"""
+from contextlib import suppress
 
-# Rimosso matplotlib.use('Qt5Agg') per lasciare auto-detection o default
-# e usare il backend corretto per PyQt6
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -16,7 +11,9 @@ from PyQt6.QtCore import (
     QParallelAnimationGroup,
     QPropertyAnimation,
 )
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import (
+    QColor,
+)
 from PyQt6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -33,23 +30,18 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
-from src.gui.widgets import InfoLabel, KPIBigCard
+from src.gui.widgets.info_widgets import InfoLabel, KPIBigCard
 from src.utils.helpers import get_asset_path, get_colored_icon
 
-# Costante per il costo orario aziendale standard
-HOURLY_COST_STD = 30.00
+HOURLY_COST_STD = 28.50
 
 
 class ContabilitaKPIPanel(QWidget):
-    """Pannello Dashboard KPI."""
-
     def __init__(self, parent=None):
         super().__init__(parent)
         # Imposta stile matplotlib moderno
-        try:
+        with suppress(Exception):
             plt.style.use("seaborn-v0_8-darkgrid")
-        except Exception:
-            pass
 
         self._setup_ui()
         self.refresh_years()

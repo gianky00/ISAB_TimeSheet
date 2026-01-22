@@ -5,6 +5,7 @@ Visualizzazione e gestione dell'anagrafica dipendenti.
 
 import csv
 import logging
+from contextlib import suppress
 from datetime import datetime
 
 from PyQt6.QtCore import (
@@ -916,12 +917,10 @@ class DipendentiPanel(QWidget):
         today = datetime.now()
         for d_str, cog, nom in accessi:
             if d_str:
-                try:
+                with suppress(Exception):
                     d_dt = datetime.strptime(d_str, "%Y-%m-%d")
                     diff = (today - d_dt).days
                     last_access_map[(cog.upper().strip(), nom.upper().strip())] = diff
-                except Exception:
-                    pass
 
         master_rows = []
         filtered_full_rows = []

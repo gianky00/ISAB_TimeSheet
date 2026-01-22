@@ -4,6 +4,7 @@ Replica fedelmente la logica VBA "ProcessTimesheetFiles" per elaborazione, puliz
 """
 
 import time
+from contextlib import suppress
 from pathlib import Path
 
 import openpyxl
@@ -135,11 +136,9 @@ class TimesheetProcessor:
             if cell.value is not None:
                 s_val = str(cell.value).strip()
                 if s_val.replace(".", "", 1).isdigit():
-                    try:
+                    with suppress(Exception):
                         cell.value = int(float(s_val))
                         cell.number_format = "0"
-                    except Exception:
-                        pass
 
         # 3. Eliminazione Colonne (ordine inverso)
         cols = ["AC", "Z", "X", "L", "I", "H", "G", "F", "E", "D", "A"]
@@ -157,19 +156,15 @@ class TimesheetProcessor:
             max_len = 0
             col_letter = get_column_letter(col[0].column)
             for cell in col:
-                try:
+                with suppress(Exception):
                     val_len = len(str(cell.value))
                     if val_len > max_len:
                         max_len = val_len
-                except Exception:
-                    pass
             ws.column_dimensions[col_letter].width = (max_len + 2) * 1.2
 
     @staticmethod
     def _cleanup_source(src: Path, dest: Path):
         """Rimuove il file sorgente se diverso dalla destinazione."""
-        try:
+        with suppress(Exception):
             if src.resolve() != dest.resolve():
                 src.unlink()
-        except Exception:
-            pass

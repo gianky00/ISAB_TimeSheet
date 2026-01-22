@@ -13,6 +13,7 @@ import sys
 import uuid
 from datetime import date
 from enum import Enum
+from pathlib import Path
 from typing import Tuple
 
 from cryptography.fernet import Fernet
@@ -142,10 +143,10 @@ def _get_linux_hardware_id():
         pass
 
     # Fallback to machine-id
-    if os.path.exists("/etc/machine-id"):
+    machine_id = Path("/etc/machine-id")
+    if machine_id.exists():
         try:
-            with open("/etc/machine-id", "r") as f:
-                return f.read().strip()
+            return machine_id.read_text().strip()
         except Exception:
             pass
     return None
@@ -157,13 +158,13 @@ def _get_license_paths():
 
     # Use standard data path via config_manager.get_data_path()
     # This ensures alignment with where data (and license) are expected
-    base_data_dir = config_manager.get_data_path()
+    base_data_dir = Path(config_manager.get_data_path())
 
-    license_dir = os.path.join(base_data_dir, "Licenza")
+    license_dir = base_data_dir / "Licenza"
     return {
         "dir": license_dir,
-        "config": os.path.join(license_dir, "config.dat"),
-        "manifest": os.path.join(license_dir, "manifest.json"),
+        "config": license_dir / "config.dat",
+        "manifest": license_dir / "manifest.json",
     }
 
 
@@ -175,25 +176,25 @@ def _check_and_migrate_local_license(target_paths: dict):
     """
     # Determine app root
     if getattr(sys, "frozen", False):
-        app_dir = os.path.dirname(sys.executable)
+        app_dir = Path(os.path.dirname(sys.executable))
     else:
         # In dev mode, look in project root (2 levels up from src/core)
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        app_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
+        current_dir = Path(__file__).parent
+        app_dir = (current_dir / ".." / "..").resolve()
 
     # Potential locations in app dir: ./Licenza/ or ./
     potential_dirs = [
-        os.path.join(app_dir, "Licenza"),
+        app_dir / "Licenza",
         app_dir,
     ]
 
     for source_dir in potential_dirs:
-        config_src = os.path.join(source_dir, "config.dat")
-        manifest_src = os.path.join(source_dir, "manifest.json")
+        config_src = source_dir / "config.dat"
+        manifest_src = source_dir / "manifest.json"
 
-        if os.path.exists(config_src) and os.path.exists(manifest_src):
+        if config_src.exists() and manifest_src.exists():
             try:
-                os.makedirs(target_paths["dir"], exist_ok=True)
+                target_paths["dir"].mkdir(parents=True, exist_ok=True)
                 shutil.copy2(config_src, target_paths["config"])
                 shutil.copy2(manifest_src, target_paths["manifest"])
                 return True
@@ -213,15 +214,14 @@ def get_license_info():
     paths = _get_license_paths()
     config_path = paths["config"]
 
-    if not os.path.exists(config_path):
+    if not config_path.exists():
         _check_and_migrate_local_license(paths)
 
-    if not os.path.exists(config_path):
+    if not config_path.exists():
         return None
 
     try:
-        with open(config_path, "rb") as f:
-            encrypted_data = f.read()
+        encrypted_data = config_path.read_bytes()
 
         # Retrieve key securely
         key_raw = SecretsManager.get_license_key()
