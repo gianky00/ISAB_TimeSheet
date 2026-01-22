@@ -654,10 +654,19 @@ class DettagliOdAPanel(BaseBotPanel):
         table_toolbar.addWidget(self.clear_btn)
         params_layout.addLayout(table_toolbar)
 
+        # Carica lista contratti salvati
+        config = config_manager.load_config()
+        contracts = config.get("contracts", [])
+
         self.data_table = EditableDataTable(
             [
                 {"name": "Numero OdA", "type": "text"},
-                {"name": "Numero Contratto", "type": "combo", "options": []},
+                {
+                    "name": "Numero Contratto", 
+                    "type": "combo", 
+                    "options": contracts,
+                    "default": config.get("default_contract", "")
+                },
             ]
         )
         self.data_table.setMinimumHeight(250)
