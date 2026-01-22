@@ -458,3 +458,46 @@ class AuditManager:
                 )
         except Exception as e:
             logger.error(f"Retention Policy Error: {e}")
+
+    def get_stats_by_day(self, days=30) -> Dict[str, Dict[str, int]]:
+        """
+        Restituisce statistiche aggregate per giorno.
+        Return format: {'2023-10-01': {'success': 10, 'error': 2, 'warning': 1}, ...}
+        """
+        cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        stats = {}
+        
+        # Pre-fill dates
+        for i in range(days + 1):
+            d = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+            stats[d] = {"success": 0, "error": 0, "warning": 0}
+            
+        try:
+            with sqlite3.connect(self.DB_PATH) as conn:
+                # SQLite 'date' function extracts YYYY-MM-DD from ISO string
+                query = """
+                    SELECT date(timestamp), status, count(*) 
+                    FROM audit_logs 
+                    WHERE timestamp >= ? 
+                    GROUP BY date(timestamp), status
+                """
+                rows = conn.execute(query, (cutoff,)).fetchall()
+                
+                for r in rows:
+                    day = r[0]
+                    status = r[1]
+                    count = r[2]
+                    
+                    if day in stats:
+                        # Normalize status
+                        s_key = status.lower()
+                        if s_key not in stats[day]:
+                            stats[day][s_key] = 0
+                        stats[day][s_key] += count
+                        
+        except Exception as e:
+            logger.error(f"Stats Error: {e}")
+            
+        # Filter out empty future dates if any and sort
+        return dict(sorted(stats.items()))
+

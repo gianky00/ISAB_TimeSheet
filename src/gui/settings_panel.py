@@ -41,6 +41,8 @@ from src.core.secrets_manager import SecretsManager
 from src.gui.dialogs.account_dialog import AccountDialog
 from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.widgets.statistics_widget import StatisticsWidget
+# from src.gui.widgets.security_dashboard import SecurityDashboard (Removed)
+import src.core.constants as Constants
 from src.gui.widgets.toast import ToastManager
 from src.gui.workers.connection_worker import ConnectionTestWorker
 from src.utils.helpers import get_asset_path, get_colored_icon

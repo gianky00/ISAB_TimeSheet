@@ -108,6 +108,10 @@ class Icons:
     ALERT_CIRCLE = "assets/icons/alert-circle.svg"
     ALERT_TRIANGLE = "assets/icons/alert-triangle.svg"
     SMART_TOY = "assets/icons/sparkles.svg"  # Fallback/Alias for AI
+    TERMINAL = "assets/icons/terminal.svg"
+    MAGIC = "assets/icons/magic.svg"
+    ARCHIVE = "assets/icons/archive.svg"
+    LOG_OUT = "assets/icons/log-out.svg"
 
     # Certificates
     CERTIFICATE_ACTIVE = "assets/icons/certificate_active.svg"

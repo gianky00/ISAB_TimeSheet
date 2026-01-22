@@ -11,7 +11,7 @@ from enum import IntEnum
 from pathlib import Path
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTimer
-from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -30,6 +30,7 @@ from src.core import config_manager
 from src.core.audit_manager import AuditManager
 from src.core.auth_monitor import check_expiring_isab_authorizations
 from src.core.backup_manager import BackupManager
+from src.core.constants import Icons
 from src.core.license_validator import get_license_info
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
@@ -489,7 +490,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
 
         # Toggle Button per Footer Stats (sinistra)
-        from src.core.constants import Icons
         from src.utils.helpers import get_asset_path, get_colored_icon
 
         self.footer_toggle_btn = QPushButton()
@@ -626,6 +626,50 @@ class MainWindow(QMainWindow):
 
         self.shortcut_search = QShortcut(QKeySequence("Ctrl+F"), self)
         self.shortcut_search.activated.connect(self._handle_ctrl_f)
+
+        # Shortcut per Command Palette (Spotlight) - Metodo Diretto QShortcut
+        self.shortcut_palette = QShortcut(QKeySequence("Ctrl+K"), self)
+        self.shortcut_palette.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self.shortcut_palette.activated.connect(self._open_command_palette)
+        
+        # Global Event Filter (The "Nuclear Option" for shortcuts)
+        QApplication.instance().installEventFilter(self)
+
+    def _open_command_palette(self):
+        """Apre la Command Palette (Spotlight)."""
+        from src.gui.dialogs.command_palette import CommandPaletteDialog
+        
+        # Generiamo la lista comandi dinamica
+        commands = [
+            # NAVIGAZIONE
+            {'label': 'Vai a Dashboard', 'desc': 'Panello principale KPI e stato', 
+             'action': lambda: self._navigate_to(PageIndex.DASHBOARD), 'icon': Icons.ACTIVITY},
+            {'label': 'Vai a Timbrature', 'desc': 'Gestione timbrature Portale Fornitori', 
+             'action': lambda: self._navigate_to(PageIndex.TIMBRATURE), 'icon': Icons.CLOCK},
+            {'label': 'Vai a Strumentale', 'desc': 'Contabilità, OdA e SAL', 
+             'action': lambda: self._navigate_to(PageIndex.STRUMENTALE), 'icon': Icons.FOLDER},
+             {'label': 'Vai a DataEase', 'desc': 'Sincronizzazione Ore', 
+             'action': lambda: self._navigate_to(PageIndex.DATAEASE), 'icon': Icons.DATABASE},
+             {'label': 'Vai a Dipendenti', 'desc': 'Anagrafica Personale', 
+             'action': lambda: self._navigate_to(PageIndex.DIPENDENTI), 'icon': Icons.USERS},
+             {'label': 'Vai a Storico OdA', 'desc': 'Database Storico Ordini', 
+             'action': lambda: self._navigate_to(PageIndex.STORICO_ODA), 'icon': Icons.ARCHIVE},
+             {'label': 'Vai a Impostazioni', 'desc': 'Configurazione Sistema', 
+             'action': lambda: self._navigate_to(PageIndex.SETTINGS), 'icon': Icons.SETTINGS_DARK},
+             
+             # AZIONI RAPIDE
+             {'label': 'Esegui Backup', 'desc': 'Crea backup immediato configurazione', 
+             'action': lambda: BackupManager.create_backup(), 'icon': Icons.SAVE},
+             {'label': 'Aggiorna Dati', 'desc': 'Ricarica pagina corrente (F5)', 
+             'action': self._handle_f5, 'icon': Icons.REFRESH},
+             
+             # SISTEMA
+             {'label': 'Esci', 'desc': 'Chiudi l\'applicazione', 
+             'action': self.close, 'icon': Icons.LOG_OUT},
+        ]
+        
+        dlg = CommandPaletteDialog(self, commands)
+        dlg.exec()
 
     def _handle_f5(self):
         """Gestisce F5 tramite dispatch map."""
