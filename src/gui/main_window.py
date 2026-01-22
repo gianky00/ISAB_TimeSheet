@@ -688,7 +688,7 @@ class MainWindow(QMainWindow):
                 {'label': 'Segnala un Bug', 'desc': 'Apri issue tracker su GitHub', 'action': lambda: QDesktopServices.openUrl(QUrl("https://github.com/gianky00/ISAB_TimeSheet/issues")), 'icon': Icons.ALERT_TRIANGLE},
                 
                 # --- SESSIONE ---
-                {'label': 'Esci', 'desc': 'Chiudi SyncroJob', 'action': self.close, 'icon': Icons.LOG_OUT},
+                {'label': 'Esci', 'desc': 'Chiudi SyncroJob', 'action': self._quit_application, 'icon': Icons.LOG_OUT},
             ]
             
             self.command_palette = CommandPaletteDialog(self, commands)
@@ -971,6 +971,11 @@ class MainWindow(QMainWindow):
             # Stop timer per risparmiare risorse
             if self.boot_telemetry.timer.isActive():
                 self.boot_telemetry.timer.stop()
+
+    def _quit_application(self):
+        """Chiude l'applicazione completamente (no tray)."""
+        self._force_quit = True
+        self.close()
 
     def closeEvent(self, event):
         """
