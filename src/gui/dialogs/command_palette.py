@@ -22,8 +22,9 @@ class CommandPaletteDialog(QDialog):
 
     def __init__(self, parent=None, commands=None):
         super().__init__(parent)
-        # USARE Tool Invece di Popup per evitare chiusura automatica indesiderata su alcuni OS
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint)
+        # Usa Frameless + StaysOnTop. Rimosso Tool/Popup per stabilità.
+        # Rimosso auto-close su focus out per evitare chiusure indesiderate.
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
         # Dimensioni target
@@ -234,13 +235,6 @@ class CommandPaletteDialog(QDialog):
                 return True
                 
         return super().eventFilter(obj, event)
-
-    def changeEvent(self, event):
-        """Gestisce il cambio di attivazione della finestra per chiusura automatica."""
-        if event.type() == event.Type.ActivationChange:
-            if not self.isActiveWindow() and self.isVisible() and not self.is_closing:
-                self.hide_animated()
-        super().changeEvent(event)
 
     def _populate_list(self, items):
         self.list_widget.clear()

@@ -680,7 +680,6 @@ class MainWindow(QMainWindow):
                 
                 # --- STRUMENTI DI SISTEMA ---
                 {'label': 'Apri Cartella Dati', 'desc': 'Esplora file di configurazione e database', 'action': lambda: open_folder(get_data_path()), 'icon': Icons.FOLDER_OPEN},
-                {'label': 'Apri Cartella Log', 'desc': 'Visualizza file di log su disco', 'action': lambda: open_folder(os.path.join(os.getcwd(), 'temp', 'logs')), 'icon': Icons.FILE_TEXT},
                 {'label': 'Riavvia Applicazione', 'desc': 'Riavvio forzato del processo', 'action': restart_app, 'icon': Icons.REFRESH},
                 
                 # --- AIUTO & SUPPORTO ---
