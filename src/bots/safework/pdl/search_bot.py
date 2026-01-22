@@ -280,7 +280,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
             placeholders = ", ".join(["?"] * len(columns))
             col_names = ", ".join(columns)
-            query = f"INSERT INTO pdl ({col_names}) VALUES ({placeholders})"  # nosec B608
+            query = f"INSERT OR REPLACE INTO pdl ({col_names}) VALUES ({placeholders})"  # nosec B608
 
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)

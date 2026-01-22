@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtCore import QApplication, QIODevice  # Importato correttamente
+from PyQt6.QtCore import QIODevice
+from PyQt6.QtWidgets import QApplication
 
 from src.core.telegram_bridge import TelegramUIBridge
 
@@ -125,6 +126,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_main_window.scarico_panel = MagicMock()
         self.mock_main_window.show_toast = MagicMock()
         self.mock_main_window.navigate_to_panel = MagicMock()
+        
+        # Setup specific mock attribute
+        self.mock_main_window.pdl_panel.bot_id = "scarico_pdl"
 
         self.mock_main_window.pdl_panel.data_table.get_data.return_value = [
             {"numero_pdl": "PDL001"}
@@ -144,7 +148,7 @@ class TestTelegramUIBridge(unittest.TestCase):
         )
         self.mock_main_window.navigate_to_panel.assert_called_once_with(
             "scarico_pdl"
-        )  # Corrected expected value
+        )
         self.mock_telegram_service.send_message_sync.assert_called_with(
             "✅ Aggiunti/Impostati 1\nℹ️ 1 duplicati ignorati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
         )
@@ -183,7 +187,7 @@ class TestTelegramUIBridge(unittest.TestCase):
 
         self.mock_main_window.grab.assert_called_once()
         mock_buffer_instance.open.assert_called_once_with(
-            QIODevice.OpenModeFlag.WriteOnly
+            MockQIODevice.OpenModeFlag.WriteOnly
         )
         self.mock_main_window.grab.return_value.save.assert_called_once_with(
             mock_buffer_instance, "PNG"
@@ -255,16 +259,20 @@ class TestTelegramUIBridge(unittest.TestCase):
             "📝 **Dati Estratti**\n\nPhoto analysis response"
         )
 
-    @patch("subprocess.Popen")  # Patched subprocess directly
+    @patch("src.core.telegram_bridge.subprocess")
     @patch("src.core.telegram_bridge.os.path.abspath", return_value="avvio.bat")
     @patch("src.core.telegram_bridge.QApplication.quit")
-    def test_handle_restart_app(self, mock_quit, mock_abspath, mock_popen):
+    def test_handle_restart_app(self, mock_quit, mock_abspath, mock_subprocess):
+        # We patch src.core.telegram_bridge.subprocess because it's imported in the module
         self.bridge._handle_restart_app()
-        mock_popen.assert_called_once()
+        mock_subprocess.Popen.assert_called_once()
         mock_quit.assert_called_once()
 
-    @patch("PyQt6.QtCore.QDate")  # Correctly patching QDate
+    @patch("src.core.telegram_bridge.QDate")
     def test_handle_run_timbrature(self, MockQDate):
+        # Patching QDate in the bridge module because it's imported with 'from ... import QDate'
+        # Note: If this fails, it might be because QDate is not in the bridge namespace (e.g. if generic import)
+        # Check source: 'from PyQt6.QtCore import ..., QDate, ...' -> It IS in namespace.
         self.mock_main_window.navigate_to_panel = MagicMock()
         self.mock_main_window.timbrature_bot_panel = MagicMock()
         self.mock_main_window.timbrature_bot_panel.validate_ready.return_value = (

@@ -19,6 +19,7 @@ from src.core.secrets_manager import SecretsManager
 # STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob
 APP_NAME = "SyncroJob"
 
+# Use platformdirs to get standard Local AppData path
 CONFIG_DIR = Path(user_data_dir(APP_NAME, appauthor=False))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 # Root del progetto (assumendo src/core/config_manager.py)
@@ -82,17 +83,33 @@ def load_config() -> Dict[str, Any]:
 
 
 def _load_base_config() -> Dict[str, Any]:
-    """Carica il file JSON base o restituisce i default."""
+    """Carica il file JSON base o restituisce i default, con override da Env Vars."""
     config = copy.deepcopy(DEFAULT_CONFIG)
-    if not CONFIG_FILE.exists():
-        return config
+    if CONFIG_FILE.exists():
+        try:
+            with CONFIG_FILE.open("r", encoding="utf-8") as f:
+                loaded_config = json.load(f)
+            config.update(loaded_config)
+        except (json.JSONDecodeError, IOError):
+            pass
 
-    try:
-        with CONFIG_FILE.open("r", encoding="utf-8") as f:
-            loaded_config = json.load(f)
-        config.update(loaded_config)
-    except (json.JSONDecodeError, IOError):
-        pass
+    # 12-Factor App: Override with Environment Variables
+    # Format: SYNCROJOB_KEY (es. SYNCROJOB_BROWSER_HEADLESS=true)
+    prefix = "SYNCROJOB_"
+    for key, default_val in DEFAULT_CONFIG.items():
+        env_key = f"{prefix}{key.upper()}"
+        env_val = os.environ.get(env_key)
+
+        if env_val is not None:
+            # Type casting basic per bool/int
+            if isinstance(default_val, bool):
+                config[key] = env_val.lower() in ("true", "1", "yes")
+            elif isinstance(default_val, int):
+                with suppress(ValueError):
+                    config[key] = int(env_val)
+            else:
+                config[key] = env_val
+
     return config
 
 

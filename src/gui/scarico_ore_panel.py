@@ -242,6 +242,63 @@ class ScaricoOrePanel(QWidget):
             self._update_selection_totals
         )
 
+        # Enable Sorting
+        self.table_view.setSortingEnabled(True)
+
+        # Selection Preservation Hooks
+        self.source_model.layoutAboutToBeChanged.connect(self._preserve_selection)
+        self.source_model.layoutChanged.connect(self._restore_selection)
+
+        self._saved_selection_real_ids = set()
+
+    def _preserve_selection(self):
+        """Salva gli ID reali (indici sorgente) delle righe selezionate prima di un cambio layout (sort/filter)."""
+        self._saved_selection_real_ids.clear()
+        selection = self.table_view.selectionModel()
+        if not selection.hasSelection():
+            return
+
+        # Get selected visual rows
+        selected_rows = selection.selectedRows()
+        model = self.source_model
+        
+        # Map Visual Row -> Real Row ID (index in _display_data)
+        for idx in selected_rows:
+            if idx.isValid():
+                visual_row = idx.row()
+                if visual_row < len(model._visible_indices):
+                    real_id = model._visible_indices[visual_row]
+                    self._saved_selection_real_ids.add(real_id)
+
+    def _restore_selection(self):
+        """Ripristina la selezione basandosi sugli ID reali salvati."""
+        if not self._saved_selection_real_ids:
+            return
+
+        model = self.source_model
+        # Build map: Real ID -> New Visual Row
+        # Optimization: Only build for visible rows
+        real_to_visual = {real_id: vis_row for vis_row, real_id in enumerate(model._visible_indices)}
+
+        new_selection = self.table_view.selectionModel()
+        from PyQt6.QtCore import QItemSelection, QItemSelectionRange
+
+        selection_batch = QItemSelection()
+        col_count = model.columnCount() - 1
+
+        for real_id in self._saved_selection_real_ids:
+            if real_id in real_to_visual:
+                vis_row = real_to_visual[real_id]
+                # Select entire row
+                top_left = model.index(vis_row, 0)
+                bottom_right = model.index(vis_row, col_count)
+                selection_batch.select(top_left, bottom_right)
+        
+        if not selection_batch.isEmpty():
+             new_selection.select(selection_batch, new_selection.SelectionFlag.ClearAndSelect | new_selection.SelectionFlag.Rows)
+             # Update totals
+             self._update_selection_totals()
+
     def _format_number(self, value: float) -> str:
         """Formatta un numero: intero se non ha decimali, altrimenti 2 decimali."""
         if value % 1 == 0:
@@ -407,6 +464,7 @@ class ScaricoOrePanel(QWidget):
 
         self._set_ui_loading(False)
         self._resize_columns()
+        self.table_view.sortByColumn(0, Qt.SortOrder.DescendingOrder)
         self._update_totals()
 
     def _load_data(self):

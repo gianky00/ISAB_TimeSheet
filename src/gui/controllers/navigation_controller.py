@@ -218,9 +218,9 @@ class NavigationController(QObject):
             except Exception as e:
                 logger.error(f"Signal: PDL Search Connection Failed: {e}")
 
-    def navigate_to(self, index: int):
+    def navigate_to(self, index: int, sub_index: Optional[int] = None):
         """Navigazione con Lazy Loading."""
-        if index == self.mw._current_page_index:
+        if index == self.mw._current_page_index and sub_index is None:
             self.mw.sidebar.set_active_button(index)
             return
 
@@ -236,11 +236,11 @@ class NavigationController(QObject):
 
         self.mw._current_page_index = index
         self.mw.page_stack.setCurrentIndex(index)
-        self.mw.sidebar.set_active_button(index)
+        self.mw.sidebar.set_active_button(index, sub_index)
 
     def navigate_to_extended(self, tab_idx, query):
         """Naviga a un tab specifico di Contabilità."""
-        self.navigate_to(4)  # STRUMENTALE
+        self.navigate_to(4, sub_index=tab_idx)  # STRUMENTALE
         self.mw.contabilita_panel.main_tabs.setCurrentIndex(tab_idx)
         self.mw.contabilita_panel.set_search_query(query)
 
@@ -267,7 +267,7 @@ class NavigationController(QObject):
 
         if panel_key in bot_map:
             main_idx, sub_idx = bot_map[panel_key]
-            self.navigate_to(1)  # AUTOMAZIONI
+            self.navigate_to(1, sub_index=main_idx)  # AUTOMAZIONI
             if hasattr(self.mw, "automazioni_widget"):
                 self.mw.automazioni_widget.setCurrentIndex(main_idx)
                 if main_idx == 0 and hasattr(self.mw, "tab_fornitori"):

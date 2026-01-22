@@ -253,7 +253,6 @@ def run_pyinstaller(obfuscated=False):
         "telegram",
         "markdown",
         "matplotlib",
-        "PyQt6",
         "cryptography",
     ]
     for pkg in force_collect:

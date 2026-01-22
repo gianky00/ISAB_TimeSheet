@@ -24,9 +24,9 @@ class TestSafeWorkPdlBot(unittest.TestCase):
 
         # Mock the Bot class that SafeWorkPdlBot inherits from or uses
         self.mock_bot_instance = MagicMock()
-        self.mock_bot_instance.name = "Scarico PDL"  # Expected value
+        self.mock_bot_instance.name = "scarico_pdl"  # Correct internal ID
         self.mock_bot_instance.description = (
-            "Automatizza il caricamento massiva dei dati PDL."
+            "Scarica e stampa PDL da SafeWork"
         )
         self.mock_bot_instance.run_bot.return_value = None  # Mocking the run_bot method
 
@@ -43,13 +43,13 @@ class TestSafeWorkPdlBot(unittest.TestCase):
 
         # If the bot class requires specific arguments and we want to test its methods
         # For simplicity, we mock the bot instance directly and test its attributes/methods
+        # self.bot is the mock in this test setup
         self.bot = self.mock_bot_instance
 
     def test_name_and_description(self):
         """Test che nome e descrizione siano corretti."""
-        # Adjusted assertion to match the expected capitalized name
-        assert self.bot.name == "Scarico PDL"
-        assert "massiva" in self.bot.description.lower()
+        assert self.bot.name == "scarico_pdl"  # Matches implementation
+        assert "stampa" in self.bot.description.lower()
 
     # Add more tests for bot functionality as needed
     # Example: test_run_bot_success, test_run_bot_failure, etc.

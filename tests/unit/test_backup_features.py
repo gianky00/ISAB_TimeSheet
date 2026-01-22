@@ -34,14 +34,15 @@ class TestBackupFeatures:
 
         # Mock os.environ.get
         mocker.patch("os.environ.get", return_value="/cloud/onedrive")
-        # Mock os.path.isdir per dire che quel path ESISTE
+        
+        # Mock Path.is_dir per entrambe le chiamate (env var check e home check)
+        mocker.patch("pathlib.Path.is_dir", return_value=True)
+        # Mantieni anche os.path per sicurezza se misto
         mocker.patch("os.path.isdir", return_value=True)
-        # Importante: mockare anche os.path.exists se usato internamente o neighboring logic
-        mocker.patch("os.path.exists", return_value=True)
-
+        
         paths = BackupManager.detect_cloud_paths()
         assert "OneDrive" in paths
-        # Su Windows i percorsi potrebbero venire normalizzati, ma il contenuto deve corrispondere
+        # Su Windows i percorsi potrebbero venire normalizzati
         assert "/cloud/onedrive" in str(paths["OneDrive"]).replace("\\", "/")
 
     def test_create_backup_logic(self, mock_dirs, mocker):

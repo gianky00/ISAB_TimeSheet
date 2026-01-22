@@ -29,8 +29,8 @@ class CacheWorker(QThread):
     """
 
     finished = pyqtSignal(
-        object, object, object, object
-    )  # display_data, search_index, float_totals, style_cache
+        object, object, object, object, object
+    )  # display_data, search_index, float_totals, style_cache, date_keys
     progress = pyqtSignal(str)
 
     def __init__(self, cache_path, data_source=None):
@@ -43,13 +43,13 @@ class CacheWorker(QThread):
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
-            display_data, search_index, float_totals, style_cache = self._build_caches(
+            display_data, search_index, float_totals, style_cache, date_keys = self._build_caches(
                 self.data_source
             )
             # Save to disk
             self.progress.emit("Salvataggio cache...")
-            self._save_cache(display_data, search_index, float_totals, style_cache)
-            self.finished.emit(display_data, search_index, float_totals, style_cache)
+            self._save_cache(display_data, search_index, float_totals, style_cache, date_keys)
+            self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
         else:
             # Load from file
             if not self.cache_path.exists():
@@ -72,44 +72,31 @@ class CacheWorker(QThread):
                             float_totals,
                             style_cache,
                         ) = self._build_caches(raw_data)
+                    if len(loaded) == 5:
+                         # New format
+                         d, s, t, st, dk = loaded
+                         display_data, search_index, float_totals, style_cache, date_keys = d, s, t, st, dk
                     elif len(loaded) == 4:
                         # Version 2 format: raw_data, search, totals, style
-                        # Checking if we need to rebuild (if data is not pre-formatted strings)
-                        d, s, t, st = loaded
-                        if (
-                            d
-                            and len(d) > 0
-                            and (d[0][0] is None or not isinstance(d[0][0], str))
-                        ):
-                            # Likely raw data or None, rebuild
-                            (
-                                display_data,
-                                search_index,
-                                float_totals,
-                                style_cache,
-                            ) = self._build_caches(d)
-                        else:
-                            # Already formatted
-                            display_data, search_index, float_totals, style_cache = (
-                                d,
-                                s,
-                                t,
-                                st,
-                            )
+                        # Upgrade by rebuilding
+                         d, _, _, _ = loaded
+                         # Force rebuild
+                         display_data, search_index, float_totals, style_cache, date_keys = self._build_caches(d) if d and not isinstance(d[0][0], str) else (d, [], [], [], [])
                     else:
-                        display_data, search_index, float_totals, style_cache = (
+                        display_data, search_index, float_totals, style_cache, date_keys = (
                             [],
                             [],
                             [],
                             [],
+                            []
                         )
 
                 self.finished.emit(
-                    display_data, search_index, float_totals, style_cache
+                    display_data, search_index, float_totals, style_cache, date_keys
                 )
             except Exception as e:
                 print(f"Error loading cache: {e}")
-                self.finished.emit([], [], [], [])
+                self.finished.emit([], [], [], [], [])
 
     def _build_style_cache_only(self, data):
         """
@@ -144,9 +131,9 @@ class CacheWorker(QThread):
         Args:
             data: Dati grezzi da processare.
         Returns:
-            tuple: (display_data, search_index, float_totals, style_cache)
+            tuple: (display_data, search_index, float_totals, style_cache, date_keys)
         """
-        display_data, search_index, float_totals, style_cache = [], [], [], []
+        display_data, search_index, float_totals, style_cache, date_keys = [], [], [], [], []
 
         for row in data:
             # 1. Date & Display Strings
@@ -161,8 +148,12 @@ class CacheWorker(QThread):
 
             # 3. Styles
             style_cache.append(self._parse_row_style(row))
+            
+            # 4. Sort Keys (Date)
+            # row[0] comes from DB/Excel as YYYY-MM-DD string or similar sortable
+            date_keys.append(str(row[0]) if row[0] else "")
 
-        return display_data, search_index, float_totals, style_cache
+        return display_data, search_index, float_totals, style_cache, date_keys
 
     def _format_date_for_display(self, val) -> str:
         """
@@ -239,7 +230,7 @@ class CacheWorker(QThread):
         except Exception:
             return None
 
-    def _save_cache(self, data, search, totals, style_cache):
+    def _save_cache(self, data, search, totals, style_cache, date_keys):
         """
         Salva i dati processati nel file di cache su disco.
 
@@ -248,11 +239,12 @@ class CacheWorker(QThread):
             search: Indice ricerca.
             totals: Totali numerici.
             style_cache: Cache degli stili.
+            date_keys: Chiavi di ordinamento per date.
         """
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.cache_path, "wb") as f:
-                pickle.dump((data, search, totals, style_cache), f)
+                pickle.dump((data, search, totals, style_cache, date_keys), f)
         except Exception as e:
             print(f"Error saving cache: {e}")
 
@@ -286,6 +278,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         "search_index": [],  # List[str]
         "totals": [],  # List[float]
         "styles": [],  # List[dict]
+        "date_keys": [], # List[str]
         "loaded": False,
     }
 
@@ -305,6 +298,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._search_index = []
         self._float_totals = []
         self._styles_cache = []
+        self._date_keys = []
 
         # Filtering
         self._visible_indices = []  # Indices into _display_data
@@ -322,6 +316,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
             self._search_index = self._global_cache["search_index"]
             self._float_totals = self._global_cache["totals"]
             self._styles_cache = self._global_cache["styles"]
+            self._date_keys = self._global_cache["date_keys"]
             # Reset filter (show all)
             self._visible_indices = list(range(len(self._display_data)))
             self._filtered_count = len(self._visible_indices)
@@ -351,13 +346,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
 
-    def _on_worker_finished(self, display_data, search, totals, style_cache):
+    def _on_worker_finished(self, display_data, search, totals, style_cache, date_keys):
         """Callback eseguito al termine del caricamento asincrono."""
         self.beginResetModel()
         self._display_data = display_data
         self._search_index = search
         self._float_totals = totals
         self._styles_cache = style_cache
+        self._date_keys = date_keys
 
         # Reset filters
         self._visible_indices = list(range(len(display_data)))
@@ -370,6 +366,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._global_cache["search_index"] = search
         self._global_cache["totals"] = totals
         self._global_cache["styles"] = style_cache
+        self._global_cache["date_keys"] = date_keys
         self._global_cache["loaded"] = True
 
         self.is_loading = False
@@ -383,8 +380,8 @@ class ScaricoOreTableModel(QAbstractTableModel):
     def set_data(self, data):
         """Aggiornamento dati sincrono (principalmente per test)."""
         worker = CacheWorker(self.CACHE_PATH)
-        display_data, search, totals, style_cache = worker._build_caches(data)
-        self._on_worker_finished(display_data, search, totals, style_cache)
+        display_data, search, totals, style_cache, date_keys = worker._build_caches(data)
+        self._on_worker_finished(display_data, search, totals, style_cache, date_keys)
 
     def set_filter(self, text, col_filters=None):
         """Applica filtri (testo globale e colonne) e aggiorna _visible_indices."""
@@ -483,6 +480,33 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
         return None
+
+    def sort(self, column: int, order: Qt.SortOrder):
+        """
+        Ordina il modello in base alla colonna specificata.
+        Supporta ordinamento per Date (chiavi), Numeri (totals) e Stringhe.
+        """
+        self.layoutAboutToBeChanged.emit()
+
+        reverse = (order == Qt.SortOrder.DescendingOrder)
+        
+        # Helper to get sort key safely
+        def get_key(idx):
+             try:
+                 if column == 0: # DATA -> Use Date Keys
+                     return self._date_keys[idx]
+                 elif column == 7: # TOTALE ORE -> Use Floats
+                     return self._float_totals[idx]
+                 else: # String -> case insensitive
+                     val = self._display_data[idx][column]
+                     return val.lower() if val else ""
+             except IndexError:
+                 return ""
+
+        # Sort the visible indices
+        self._visible_indices.sort(key=get_key, reverse=reverse)
+
+        self.layoutChanged.emit()
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
         """Restituisce l'intestazione per la sezione e il ruolo richiesto."""

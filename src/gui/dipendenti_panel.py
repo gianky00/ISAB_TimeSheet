@@ -115,7 +115,8 @@ class InteractiveStatusCard(QFrame):
         self.base_color = color
         self.filter_type = filter_type
         self.description = description
-        self.setFixedSize(180, 110)  # Dimensioni fisse - ridotto a 180px
+        # Nuovo Layout: Largo e Basso
+        self.setFixedSize(240, 75)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         # Tooltip informativo
@@ -124,10 +125,10 @@ class InteractiveStatusCard(QFrame):
 
         # Effetto Ombra
         self.shadow = QGraphicsDropShadowEffect(self)
-        self.shadow.setBlurRadius(15)
+        self.shadow.setBlurRadius(10)
         self.shadow.setXOffset(0)
-        self.shadow.setYOffset(4)
-        self.shadow.setColor(QColor(0, 0, 0, 40))
+        self.shadow.setYOffset(2)
+        self.shadow.setColor(QColor(0, 0, 0, 30))
         self.setGraphicsEffect(self.shadow)
 
         self.setStyleSheet(
@@ -135,63 +136,68 @@ class InteractiveStatusCard(QFrame):
             InteractiveStatusCard {{
                 background-color: white;
                 border: 2px solid {color};
-                border-radius: 12px;
+                border-radius: 8px;
             }}
-        """
+            """
         )
 
+        # Layout Orizzontale Compatto
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(15, 12, 15, 12)
-        layout.setSpacing(12)
+        layout.setContentsMargins(10, 5, 10, 5)
+        layout.setSpacing(10)
 
-        # Icona e Testo
-        info_layout = QVBoxLayout()
-        info_layout.setSpacing(4)
+        # Sinistra: Icona/Colore + Numero
+        left_layout = QVBoxLayout()
+        left_layout.setSpacing(0)
+        left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.val_text = QLabel("0")
+        self.val_text.setStyleSheet(
+            f"font-size: 28px; font-weight: 900; color: {color};"
+        )
+        self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        left_layout.addWidget(self.val_text)
+        
+        layout.addLayout(left_layout)
+
+        # Separatore leggero
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.VLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        line.setStyleSheet("background-color: #eee;")
+        layout.addWidget(line)
+
+        # Destra: Titolo + Descrizione
+        right_layout = QVBoxLayout()
+        right_layout.setSpacing(2)
+        right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
         lbl_title.setStyleSheet(
-            "font-size: 12px; font-weight: 800; color: #9e9e9e; letter-spacing: 1px;"
+            "font-size: 11px; font-weight: 800; color: #555; letter-spacing: 0.5px;"
         )
-
-        self.val_text = QLabel("0")
-        self.val_text.setStyleSheet(
-            f"font-size: 36px; font-weight: 900; color: {color};"
-        )
-
-        # Descrizione sotto il numero
+        
         lbl_desc = QLabel(description)
-        lbl_desc.setStyleSheet("font-size: 11px; color: #6c757d; font-weight: 600;")
+        lbl_desc.setStyleSheet("font-size: 10px; color: #777; font-weight: 500;")
         lbl_desc.setWordWrap(True)
+        lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        info_layout.addWidget(lbl_title)
-        info_layout.addWidget(self.val_text)
-        info_layout.addWidget(lbl_desc)
-
-        # Indicatore laterale colorato
-        self.accent = QFrame()
-        self.accent.setFixedWidth(5)
-        self.accent.setStyleSheet(f"background-color: {color}; border-radius: 2px;")
-
-        layout.addWidget(self.accent)
-        layout.addLayout(info_layout)
-        layout.addStretch()
+        right_layout.addWidget(lbl_title)
+        right_layout.addWidget(lbl_desc)
+        
+        layout.addLayout(right_layout)
 
     def enterEvent(self, event):
-        # Animazione ombra al passaggio del mouse - senza spostare la card
-        self.shadow.setBlurRadius(20)
-        self.shadow.setYOffset(6)
-        self.shadow.setColor(QColor(0, 0, 0, 60))
+        self.shadow.setBlurRadius(15)
+        self.shadow.setYOffset(4)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        # Ritorna all'ombra normale
-        self.shadow.setBlurRadius(15)
-        self.shadow.setYOffset(4)
-        self.shadow.setColor(QColor(0, 0, 0, 40))
+        self.shadow.setBlurRadius(10)
+        self.shadow.setYOffset(2)
         super().leaveEvent(event)
 
     def mousePressEvent(self, event):
-        """Gestisce il click sulla card."""
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.filter_type)
         super().mousePressEvent(event)
@@ -211,6 +217,7 @@ class DipendentiPanel(QWidget):
             "ID\nRISORSA",
             "Cognome",
             "Nome",
+            "CODICE FISCALE",
             "ID\nBADGE",
             "DATA\nASSUNZIONE",
         ]
@@ -221,6 +228,7 @@ class DipendentiPanel(QWidget):
             "Cognome",
             "Nome",
             "Data Nascita",
+            "Codice Fiscale",
             "Badge",
             "Data Assunzione",
             "Importato il",
@@ -247,39 +255,61 @@ class DipendentiPanel(QWidget):
 
         # 1. Filtri e Azioni (Top)
         filter_layout = QHBoxLayout()
-        filter_layout.setSpacing(1)  # Spacing ridotto tra gli elementi
+        filter_layout.setSpacing(5)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca per nome, cognome o badge...")
+        self.search_input.setPlaceholderText("Cerca per nome, cognome, CF o badge...")
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
         refresh_btn = QPushButton("Aggiorna")
         refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.setIconSize(QSize(24, 24))  # Icona ingrandita
-        refresh_btn.setToolTip("Aggiorna l'elenco dei dipendenti dal database")
+        refresh_btn.setIconSize(QSize(24, 24))
         refresh_btn.clicked.connect(self.refresh_data)
         filter_layout.addWidget(refresh_btn)
 
         import_btn = QPushButton("Importa CSV")
         import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
-        import_btn.setIconSize(QSize(24, 24))  # Icona ingrandita
-        import_btn.setToolTip(
-            "Importa anagrafica dipendenti da file CSV (separatore: punto e virgola)"
-        )
+        import_btn.setIconSize(QSize(24, 24))
         import_btn.clicked.connect(self._on_import_clicked)
         filter_layout.addWidget(import_btn)
 
         main_layout.addLayout(filter_layout)
 
-        # 2. Area Contenuti (Tabella | Medio: Contatori | Destra: Scheda)
+        # 1.5 Cards Container (Between Search and Table)
+        self.cards_container = QWidget()
+        cards_layout = QHBoxLayout(self.cards_container)
+        cards_layout.setContentsMargins(5, 5, 5, 5)
+        cards_layout.setSpacing(15)
+        cards_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self.card_ok = InteractiveStatusCard(
+            "Operativi", "#198754", Icons.CHECK_CIRCLE, "Ultimo accesso <= 20gg", "ok"
+        )
+        self.card_warning = InteractiveStatusCard(
+            "In Scadenza", "#fd7e14", Icons.ALERT_TRIANGLE, "Accesso 21-30gg fa", "warning"
+        )
+        self.card_expired = InteractiveStatusCard(
+            "Scaduti", "#dc3545", Icons.X_CIRCLE, "Accesso > 30gg fa", "expired"
+        )
+
+        self.card_ok.clicked.connect(self._on_card_filter)
+        self.card_warning.clicked.connect(self._on_card_filter)
+        self.card_expired.clicked.connect(self._on_card_filter)
+
+        cards_layout.addWidget(self.card_ok)
+        cards_layout.addWidget(self.card_warning)
+        cards_layout.addWidget(self.card_expired)
+        cards_layout.addStretch() # Push cards to left
+
+        main_layout.addWidget(self.cards_container)
+
+        # 2. Area Contenuti (Tabella | Destra: Scheda)
         self.content_layout = QHBoxLayout()
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(
-            10
-        )  # Spacing ridotto per avvicinare card alla tabella
+        self.content_layout.setSpacing(10)
 
-        # --- TABELLA (A SINISTRA) - STATICA CON COLONNE FISSE ---
+        # --- TABELLA (A SINISTRA) ---
         self.table = QTableView()
         self.table.setModel(self.model)
         self.table.setAlternatingRowColors(True)
@@ -294,80 +324,19 @@ class DipendentiPanel(QWidget):
         header = self.table.horizontalHeader()
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
 
-        # Aggiungi delegate per colorare i pallini
         self.table.setItemDelegateForColumn(0, ColoredDotDelegate(self.table))
 
-        # Larghezze fisse per ogni colonna (in px) - calcolate sui dati reali
-        # Ordine: SCAD.ISAB | ID RISORSA | Cognome | Nome | ID BADGE | DATA ASSUNZIONE
-        # Cognomi più lunghi: "BELLUCCI PRESTIGIACOMO" (22 char)
-        # Nomi più lunghi: "MOHAMED NASER", "ADEL IBRAHIM" (12-13 char)
-        self.column_widths = [70, 90, 200, 160, 90, 135]  # Nome aumentato a 160px
-
-        # Imposta tutte le colonne come Fixed (non ridimensionabili)
+        self.column_widths = [70, 90, 180, 140, 150, 90, 135]
         for col_idx in range(len(self.column_widths)):
             header.setSectionResizeMode(col_idx, QHeaderView.ResizeMode.Fixed)
             self.table.setColumnWidth(col_idx, self.column_widths[col_idx])
 
-        # Calcola larghezza totale tabella: somma colonne + scrollbar + bordi
-        total_width = sum(self.column_widths) + 20  # 20px per scrollbar e margini
+        total_width = sum(self.column_widths) + 20
         self.table.setFixedWidth(total_width)
-
         self.content_layout.addWidget(self.table)
-
-        # --- AREA MEDIA (CONTATORI ORIZZONTALI IN ALTO) - STATICA ---
-        self.middle_container = QWidget()
-        self.middle_container.setFixedWidth(
-            600
-        )  # Larghezza fissa con margine per bordi: 3 card × 180px + 2 spacing × 12px + margini
-        middle_layout = QVBoxLayout(self.middle_container)
-        middle_layout.setContentsMargins(
-            10, 20, 10, 0
-        )  # Margine superiore aumentato da 10 a 20
-        middle_layout.setSpacing(0)
-
-        # Container orizzontale per le card
-        self.summary_container = QWidget()
-        summary_h_layout = QHBoxLayout(self.summary_container)
-        summary_h_layout.setContentsMargins(0, 0, 0, 0)
-        summary_h_layout.setSpacing(12)  # Spacing ridotto tra le card
-
-        self.card_ok = InteractiveStatusCard(
-            "Operativi",
-            "#198754",
-            Icons.CHECK_CIRCLE,
-            "Ultimo accesso entro 20 giorni",
-            "ok",
-        )
-        self.card_warning = InteractiveStatusCard(
-            "In Scadenza",
-            "#fd7e14",
-            Icons.ALERT_TRIANGLE,
-            "Nessun accesso da 21-30 giorni",
-            "warning",
-        )
-        self.card_expired = InteractiveStatusCard(
-            "Scaduti",
-            "#dc3545",
-            Icons.X_CIRCLE,
-            "Oltre 30 giorni senza accesso",
-            "expired",
-        )
-
-        # Connetti i segnali delle card
-        self.card_ok.clicked.connect(self._on_card_filter)
-        self.card_warning.clicked.connect(self._on_card_filter)
-        self.card_expired.clicked.connect(self._on_card_filter)
-
-        summary_h_layout.addWidget(self.card_ok)
-        summary_h_layout.addWidget(self.card_warning)
-        summary_h_layout.addWidget(self.card_expired)
-
-        middle_layout.addWidget(self.summary_container)
-        middle_layout.addStretch(1)  # Spinge tutto verso l'alto
-
-        self.content_layout.addWidget(self.middle_container)
-
+        
         # --- PANNELLO DESTRA (SCHEDA DIPENDENTE VERTICALE) ---
+
         right_container = QWidget()
         right_container.setFixedWidth(360)
         right_container.setStyleSheet(
@@ -471,6 +440,11 @@ class DipendentiPanel(QWidget):
         row2_layout.addWidget(nome_widget)
         personal_layout.addLayout(row2_layout)
 
+        # Riga 3: Codice Fiscale
+        cf_widget = self._create_field_row("Codice Fiscale")
+        self.detail_labels["Codice Fiscale"] = cf_widget
+        personal_layout.addWidget(cf_widget)
+
         scroll_layout.addWidget(personal_card)
 
         # Card Badge e Assunzione
@@ -547,7 +521,9 @@ class DipendentiPanel(QWidget):
         scroll.setWidget(scroll_content)
         right_layout.addWidget(scroll)
 
+        # Add components to content layout
         self.content_layout.addWidget(right_container)
+        self.content_layout.addStretch() # Push Table and Scheda to the left
 
         main_layout.addLayout(self.content_layout)
 
@@ -689,21 +665,38 @@ class DipendentiPanel(QWidget):
         Recupera l'ultimo accesso ISAB e calcola lo stato abilitazione.
         Ritorna: (data_formattata, giorni_trascorsi, colore_hex)
         """
+        # Normalizziamo input in modo aggressivo
+        norm_cognome = self._normalize_name(cognome)
+        norm_nome = self._normalize_name(nome)
+
+        # Usiamo una ricerca flessibile per gestire sdoppiamenti nel DB
         query = """
             SELECT data FROM timbrature
-            WHERE UPPER(cognome) = UPPER(?) AND UPPER(nome) = UPPER(?)
+            WHERE UPPER(REPLACE(REPLACE(TRIM(cognome), '  ', ' '), '  ', ' ')) = ? 
+              AND UPPER(REPLACE(REPLACE(TRIM(nome), '  ', ' '), '  ', ' ')) = ?
             ORDER BY data DESC LIMIT 1
         """
         try:
             res = db_manager.execute_query(
-                db_manager.DB_TIMBRATURE, query, (cognome, nome)
+                db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome)
             )
             if not res:
                 return "Mai effettuato", "-", "#6c757d"  # Grigio
 
-            last_date_str = res[0][0]
-            # Formato data in timbrature è solitamente 'YYYY-MM-DD'
-            last_date = datetime.strptime(last_date_str, "%Y-%m-%d")
+            last_date_str = str(res[0][0])
+            date_part = last_date_str.split(" ")[0]
+            
+            last_date = None
+            for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                try:
+                    last_date = datetime.strptime(date_part, fmt)
+                    break
+                except ValueError:
+                    continue
+            
+            if not last_date:
+                return "Errore data", "-", "#6c757d"
+
             today = datetime.now()
             delta = (today - last_date).days
 
@@ -780,47 +773,52 @@ class DipendentiPanel(QWidget):
         self.refresh_data()
 
     def _on_selection_changed(self, selected, _deselected):
-        """Aggiorna il pannello dettaglio quando si seleziona una riga."""
+        """Aggiorna il pannello dettaglio prendendo i dati direttamente dal modello (sincronizzato con sorting)."""
         indexes = self.table.selectionModel().selectedRows()
         if not indexes:
             return
 
         row_idx = indexes[0].row()
-        if row_idx < len(self._raw_full_data):
-            data = self._raw_full_data[row_idx]
-            cognome = ""
-            nome = ""
+        # Recuperiamo la riga completa dal modello (contiene anche i campi extra oltre i 7 visibili)
+        row_data = self.model._data[row_idx]
+        
+        # Mappatura indici basata sulla struttura creata in _process_employee_rows:
+        # 0:scad, 1:id_ris, 2:disp_cog, 3:nome, 4:cf, 5:badge, 6:assunz, 7:nascita, 8:created, 9:real_cog
+        mapping = {
+            "ID Risorsa": 1,
+            "Cognome": 9, # Usiamo il cognome reale senza icone
+            "Nome": 3,
+            "Data Nascita": 7,
+            "Codice Fiscale": 4,
+            "Badge": 5,
+            "Data Assunzione": 6,
+            "Importato il": 8
+        }
 
-            for i, h in enumerate(self.full_headers):
-                val = str(data[i]) if data[i] is not None else ""
-                if val.lower() == "nan":
-                    val = ""
+        cognome = str(row_data[9])
+        nome = str(row_data[3])
 
-                if h == "Cognome":
-                    cognome = val
-                if h == "Nome":
-                    nome = val
+        for h in self.full_headers:
+            idx = mapping.get(h)
+            val = str(row_data[idx]) if idx is not None and row_data[idx] is not None else ""
+            
+            if val.lower() in ["nan", "none"]:
+                val = ""
 
-                # Formattazione speciale per l'ultima colonna (Importato il)
-                if h == "Importato il":
-                    val = self._format_db_date(val)
+            # Formattazione speciale per l'ultima colonna (Importato il)
+            if h == "Importato il":
+                val = self._format_db_date(val)
 
-                # Aggiorna il valore nel container (usa value_label)
-                if h in self.detail_labels:
-                    self.detail_labels[h].value_label.setText(val)
+            # Aggiorna il valore nel container
+            if h in self.detail_labels:
+                self.detail_labels[h].value_label.setText(val)
 
-            # Recupero e visualizzazione Ultimo Accesso ISAB
-            if cognome and nome:
-                access_info, _, color = self._get_last_isab_access(cognome, nome)
-                self.last_access_label.setText(access_info)
-                self.last_access_label.setStyleSheet(
-                    f"color: {color}; font-weight: bold; font-size: 14px; padding: 5px 0;"
-                )
-            else:
-                self.last_access_label.setText("-")
-                self.last_access_label.setStyleSheet(
-                    "color: #6c757d; font-weight: bold; font-size: 13px; padding: 5px 0;"
-                )
+        # Recupero e visualizzazione Ultimo Accesso ISAB (usando la logica robusta di match)
+        access_info, _, color = self._get_last_isab_access(cognome, nome)
+        self.last_access_label.setText(access_info)
+        self.last_access_label.setStyleSheet(
+            f"color: {color}; font-weight: bold; font-size: 14px; padding: 5px 0;"
+        )
 
     def _inactivation_formatter(self, value):
         """Formatta la colonna SCAD. ISAB con pallino e numero."""
@@ -850,18 +848,16 @@ class DipendentiPanel(QWidget):
         """Aggiorna i dati della tabella Dipendenti."""
         search_text = self.search_input.text().lower()
 
-        self._update_isab_counters()
-
         query = """
-            SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at
+            SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale
             FROM dipendenti WHERE 1=1
         """
         params = []
 
         if search_text:
-            query += " AND (cognome LIKE ? OR nome LIKE ? OR badge LIKE ?)"
+            query += " AND (cognome LIKE ? OR nome LIKE ? OR badge LIKE ? OR codice_fiscale LIKE ?)"
             p = f"%{search_text}%"
-            params.extend([p, p, p])
+            params.extend([p, p, p, p])
 
         query += " ORDER BY cognome ASC, nome ASC"
 
@@ -875,10 +871,7 @@ class DipendentiPanel(QWidget):
                 db_manager.DB_DIPENDENTI, query, tuple(params)
             )
 
-            master_rows, filtered_full_rows = self._process_employee_rows(full_rows)
-
-            # Aggiorna il buffer dei dati completi con i dati filtrati
-            self._raw_full_data = filtered_full_rows
+            master_rows = self._process_employee_rows(full_rows)
 
             self.model.update_data(master_rows)
             self.model.set_column_formatter(0, self._inactivation_formatter)
@@ -887,70 +880,126 @@ class DipendentiPanel(QWidget):
         except Exception as e:
             logger.error(f"Errore caricamento dipendenti: {e}")
 
-    def _update_isab_counters(self):
-        """Aggiorna i contatori delle card ISAB."""
-        from src.core.auth_monitor import check_expiring_isab_authorizations
-
-        try:
-            expiring = check_expiring_isab_authorizations()
-            scaduti = len([d for d in expiring if d["stato"] == "SCADUTA"])
-            in_scadenza = len([d for d in expiring if d["stato"] == "IN SCADENZA"])
-
-            # Query per gli operativi (chi ha accesso <= 20gg)
-            query_ok = "SELECT COUNT(*) FROM (SELECT MAX(data) as d FROM timbrature GROUP BY cognome, nome) WHERE (julianday('now') - julianday(d)) <= 20"
-            res_ok = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_ok)
-            operativi = res_ok[0][0] if res_ok else 0
-
-            self.card_ok.setValue(operativi)
-            self.card_warning.setValue(in_scadenza)
-            self.card_expired.setValue(scaduti)
-        except Exception as e:
-            logger.error(f"Errore aggiornamento contatori ISAB: {e}")
+    def _normalize_name(self, text: str) -> str:
+        """Rimuove spazi multipli interni e spazi esterni, tutto maiuscolo."""
+        if not text:
+            return ""
+        # Rimuove spazi esterni e converte in maiuscolo
+        text = str(text).strip().upper()
+        # Rimpiazza spazi multipli interni con spazio singolo
+        import re
+        return re.sub(r'\s+', ' ', text)
 
     def _process_employee_rows(self, full_rows):
-        """Elabora le righe dipendenti calcolando scadenza e applicando filtri."""
-        # Dizionario per accesso rapido all'ultimo accesso
-        # Recuperiamo tutti gli ultimi accessi ISAB in una volta
-        query_timb = "SELECT MAX(data), cognome, nome FROM timbrature GROUP BY UPPER(cognome), UPPER(nome)"
-        last_access_map = {}
+        """Elabora le righe dipendenti calcolando scadenza e preparando i dati completi per il modello."""
+        # Recuperiamo tutte le timbrature per processarle con normalizzazione
+        query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
         today = datetime.now()
-        for d_str, cog, nom in accessi:
+
+        import re
+        def normalize(t):
+            return re.sub(r'\s+', ' ', str(t).strip().upper())
+
+        # Mappe per l'ultimo accesso
+        last_by_cf = {}
+        last_by_name = {}
+        
+        for cog, nom, cf, d_str in accessi:
             if d_str:
+                norm_key = (normalize(cog), normalize(nom))
+                norm_cf = cf.strip().upper() if cf and cf.strip() else None
+                
                 with suppress(Exception):
-                    d_dt = datetime.strptime(d_str, "%Y-%m-%d")
-                    diff = (today - d_dt).days
-                    last_access_map[(cog.upper().strip(), nom.upper().strip())] = diff
+                    date_part = str(d_str).split(" ")[0]
+                    d_dt = None
+                    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                        try:
+                            d_dt = datetime.strptime(date_part, fmt)
+                            break
+                        except ValueError:
+                            continue
+                    
+                    if d_dt:
+                        diff = (today - d_dt).days
+                        if norm_cf:
+                            if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
+                                last_by_cf[norm_cf] = diff
+                        if norm_key not in last_by_name or diff < last_by_name[norm_key]:
+                            last_by_name[norm_key] = diff
 
         master_rows = []
-        filtered_full_rows = []
+        
+        # Counters
+        count_ok = 0
+        count_warning = 0
+        count_expired = 0
 
         for r in full_rows:
-            cog_key = (str(r[1]).upper().strip(), str(r[2]).upper().strip())
-            diff_days = last_access_map.get(cog_key)
+            # Source fields from DB (id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale)
+            cf_val = str(r[7]).strip().upper() if r[7] else ""
+            cog_val = normalize(r[1])
+            nom_val = normalize(r[2])
+            
+            diff_days = None
+            cf_warning = False
+
+            if cf_val:
+                diff_days = last_by_cf.get(cf_val)
+            if diff_days is None:
+                diff_days = last_by_name.get((cog_val, nom_val))
+                if diff_days is not None and not cf_val:
+                    cf_warning = True
+            
+            # --- Aggiorna Contatori (TOTALE) ---
+            if diff_days is not None:
+                # <= 20: Operativi
+                # 21-30: In Scadenza
+                # > 30: Scaduti
+                if diff_days <= 20:
+                    count_ok += 1
+                elif diff_days <= 30:
+                    count_warning += 1
+                else:
+                    count_expired += 1
+            # -----------------------------------
 
             inactivation_val = None
             if diff_days is not None:
                 inactivation_val = 30 - diff_days
 
-            # Applica il filtro se attivo
+            # Filtro Visualizzazione
             if self.current_filter:
-                if diff_days is None:
-                    continue  # Salta chi non ha mai fatto accesso
+                if diff_days is None: continue
+                if self.current_filter == "ok" and diff_days > 20: continue
+                elif self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30): continue
+                elif self.current_filter == "expired" and diff_days <= 30: continue
 
-                if self.current_filter == "ok" and diff_days > 20:
-                    continue
-                elif self.current_filter == "warning" and (
-                    diff_days <= 20 or diff_days > 30
-                ):
-                    continue
-                elif self.current_filter == "expired" and diff_days <= 30:
-                    continue
+            display_cognome = r[1]
+            if cf_warning:
+                display_cognome = f"⚠️ {r[1]}"
 
-            master_rows.append([inactivation_val, r[0], r[1], r[2], r[4], r[5]])
-            filtered_full_rows.append(r)
+            # Costruiamo la riga "Mega" che contiene colonne visibili (0-6) e dati extra (7-9)
+            # 0:scad, 1:id_ris, 2:disp_cog, 3:nome, 4:cf, 5:badge, 6:assunz | 7:nascita, 8:created, 9:real_cog
+            master_rows.append([
+                inactivation_val, # 0
+                r[0],             # 1 (id_risorsa)
+                display_cognome,  # 2
+                r[2],             # 3 (nome)
+                r[7],             # 4 (codice_fiscale)
+                r[4],             # 5 (badge)
+                r[5],             # 6 (data_assunzione)
+                r[3],             # 7 (data_nascita)
+                r[6],             # 8 (created_at)
+                r[1]              # 9 (cognome pulito)
+            ])
+            
+        # Aggiorna UI Cards
+        self.card_ok.setValue(count_ok)
+        self.card_warning.setValue(count_warning)
+        self.card_expired.setValue(count_expired)
 
-        return master_rows, filtered_full_rows
+        return master_rows
 
     def _on_import_clicked(self):
         """Gestisce l'importazione del file CSV."""
@@ -971,8 +1020,8 @@ class DipendentiPanel(QWidget):
                 for row in reader:
                     query = """
                         INSERT OR REPLACE INTO dipendenti
-                        (id_risorsa, cognome, nome, data_nascita, badge, data_assunzione)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        (id_risorsa, cognome, nome, data_nascita, codice_fiscale, badge, data_assunzione)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
                     """
                     db_manager.execute_query(
                         db_manager.DB_DIPENDENTI,
@@ -982,6 +1031,7 @@ class DipendentiPanel(QWidget):
                             row.get("Cognome"),
                             row.get("Nome"),
                             row.get("Data_nascita"),
+                            row.get("Codice_fiscale", ""),
                             row.get("Badge"),
                             row.get("Data_assunzione"),
                         ),

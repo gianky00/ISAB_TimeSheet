@@ -12,9 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
-if TYPE_CHECKING:
-    import pandas as pd
-
+import pandas as pd
 from src.core.schemas import validate_contabilita, validate_giornaliere
 
 # Lazy import placeholder
@@ -1016,8 +1014,19 @@ class ExcelImporter:
 
         # ODC specific handling
         vals = []
-        # Data
-        vals.append(_fmt(c_data.value))
+        # Data - Strip time if present
+        v_data = c_data.value
+        s_data = ""
+        if v_data:
+            if hasattr(v_data, "strftime"):
+                s_data = v_data.strftime("%Y-%m-%d")
+            else:
+                # String cleanup: "2024-01-01 00:00:00" -> "2024-01-01"
+                s = str(v_data).strip()
+                if " " in s:
+                    s = s.split(" ")[0]
+                s_data = s
+        vals.append(s_data)
         # Pers1
         vals.append(_fmt(c_p1.value))
         # Pers2
@@ -1066,7 +1075,7 @@ class ExcelImporter:
             return None
 
         # 4. Extract styles (Inline)
-        row_styles = {}
+        row_styles: Dict[str, Dict[str, str]] = {}
         for i, key in enumerate(col_keys):
             # Skip empty cells
             if vals[i] == "":
@@ -1170,7 +1179,7 @@ class ExcelImporter:
             df = df.loc[:, ~df.columns.duplicated()]
 
             # 3. Normalizzazione e Pulizia
-            cls._normalize_storico_oda_df(df)
+            df = cls._normalize_storico_oda_df(df)
             cls._clean_storico_oda_data(df)
 
             # 4. Conversione in tuple
@@ -1192,35 +1201,32 @@ class ExcelImporter:
 
     @classmethod
     def _map_storico_oda_columns(cls, df: pd.DataFrame) -> dict:
-        """Mappa le colonne dell'Excel a quelle del DB."""
-        df.columns = [str(c).strip() for c in df.columns]
+        """Mappa le colonne dell'Excel a quelle del DB con precisione."""
+        cols_in_df = [str(c).strip() for c in df.columns]
+        df.columns = cols_in_df
+        
         rename_map = {}
+        # 1. First Pass: Exact Matches
         for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
-            for col in df.columns:
-                if excel_col == col:
-                    rename_map[col] = db_col
-                    break
-                # Fallback matching
-                if len(excel_col) >= 4 and col.startswith(excel_col[:4]):
-                    if excel_col.startswith("Unit") and col.startswith("Unit"):
+            if excel_col in cols_in_df:
+                rename_map[excel_col] = db_col
+        
+        # 2. Second Pass: Case-insensitive fallback (Strict name)
+        for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
+            if excel_col not in rename_map:
+                for col in cols_in_df:
+                    if col.lower() == excel_col.lower():
                         rename_map[col] = db_col
                         break
-                    if abs(len(col) - len(excel_col)) <= 2:
-                        rename_map[col] = db_col
-                        break
+        
         return rename_map
 
     @classmethod
-    def _normalize_storico_oda_df(cls, df: pd.DataFrame):
-        """Assicura che tutte le colonne richieste esistano e filtra solo quelle del DB."""
-        for db_col in cls.STORICO_ODA_COLS:
-            if db_col not in df.columns:
-                df[db_col] = ""
-
-        # Filtra solo le colonne del DB (in-place modification via drop)
-        cols_to_drop = [c for c in df.columns if c not in cls.STORICO_ODA_COLS]
-        if cols_to_drop:
-            df.drop(columns=cols_to_drop, inplace=True)
+    def _normalize_storico_oda_df(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """Assicura l'ordine esatto delle colonne richiesto dal DB e dalla UI."""
+        # reindex garantisce che le colonne siano nell'ordine di STORICO_ODA_COLS
+        # e aggiunge quelle mancanti riempiendole con stringa vuota.
+        return df.reindex(columns=cls.STORICO_ODA_COLS).fillna("")
 
     @classmethod
     def _clean_storico_oda_data(cls, df: pd.DataFrame):

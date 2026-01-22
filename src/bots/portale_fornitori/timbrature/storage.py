@@ -20,11 +20,20 @@ class TimbratureStorage:
     DB_PATH = CONFIG_DIR / "data" / "timbrature_Isab.db"
 
     COLUMNS_MAP = {
+        "Id Dipendente": "id_dipendente",
         "Data Timbratura": "data",
         "Ora Ingresso": "ingresso",
         "Ora Uscita": "uscita",
+        "Fornitore": "fornitore",
+        "Codice Fornitore RILPRES": "codice_rilpres",
+        "Numero Badge": "numero_badge",
         "Nome Risorsa": "nome",
         "Cognome Risorsa": "cognome",
+        "Codice Fiscale": "codice_fiscale",
+        "Codice Qualifica": "codice_qualifica",
+        "Specializzazione": "specializzazione",
+        "Società Ospitante": "societa_ospitante",
+        "Data Ins": "data_ins",
         "Presente Nei Timesheet": "presenza_ts",
         "Sito Timbratura": "sito_timbratura",
     }
@@ -34,18 +43,27 @@ class TimbratureStorage:
         self._ensure_db_exists()
 
     def _init_schema(self):
-        """Initializes the database schema for timbrature."""
+        """Initializes the database schema for timbrature with all real columns."""
         with db_manager.get_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS timbrature (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_dipendente TEXT,
                     data TEXT,
                     ingresso TEXT,
                     uscita TEXT,
+                    fornitore TEXT,
+                    codice_rilpres TEXT,
+                    numero_badge TEXT,
                     nome TEXT,
                     cognome TEXT,
+                    codice_fiscale TEXT,
+                    codice_qualifica TEXT,
+                    specializzazione TEXT,
+                    societa_ospitante TEXT,
+                    data_ins TEXT,
                     presenza_ts TEXT,
                     sito_timbratura TEXT,
                     UNIQUE(data, ingresso, uscita, nome, cognome)
@@ -57,6 +75,9 @@ class TimbratureStorage:
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)"
             )
             conn.commit()
 
@@ -80,17 +101,17 @@ class TimbratureStorage:
                 cursor = conn.cursor()
                 # Cerca dipendenti unici
                 sql = """
-                    SELECT DISTINCT nome, cognome
+                    SELECT DISTINCT nome, cognome, codice_fiscale
                     FROM timbrature
-                    WHERE lower(nome) LIKE ? OR lower(cognome) LIKE ?
+                    WHERE lower(nome) LIKE ? OR lower(cognome) LIKE ? OR lower(codice_fiscale) LIKE ?
                     LIMIT 20
                 """
                 like_query = f"%{query}%"
-                cursor.execute(sql, (like_query, like_query))
+                cursor.execute(sql, (like_query, like_query, like_query))
 
                 rows = cursor.fetchall()
                 for row in rows:
-                    results.append({"nome": row[0], "cognome": row[1]})
+                    results.append({"nome": row[0], "cognome": row[1], "codice_fiscale": row[2]})
         except Exception:
             pass
         return results
@@ -108,7 +129,7 @@ class TimbratureStorage:
 
             # Ottieni tutti i dipendenti unici dalle timbrature
             cursor.execute(
-                "SELECT DISTINCT nome, cognome FROM timbrature ORDER BY cognome, nome"
+                "SELECT DISTINCT nome, cognome, codice_fiscale FROM timbrature ORDER BY cognome, nome"
             )
             rows = cursor.fetchall()
 
@@ -116,6 +137,7 @@ class TimbratureStorage:
             for row in rows:
                 nome = row["nome"]
                 cognome = row["cognome"]
+                cf = row["codice_fiscale"]
                 key = f"{nome}|{cognome}"
 
                 emp_data = mappings.get(key, {"reparto": "", "cantiere": ""})
@@ -124,6 +146,7 @@ class TimbratureStorage:
                     {
                         "nome": nome,
                         "cognome": cognome,
+                        "codice_fiscale": cf or "",
                         "reparto": emp_data.get("reparto", ""),
                         "cantiere": emp_data.get("cantiere", ""),
                     }
@@ -174,7 +197,12 @@ class TimbratureStorage:
             )
 
     def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
-        query = "SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura FROM timbrature"
+        query = """
+            SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura, 
+                   codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge, 
+                   codice_qualifica, specializzazione, societa_ospitante, data_ins 
+            FROM timbrature
+        """
         params: list[str] = []
         if not filter_text:
             return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
@@ -185,23 +213,58 @@ class TimbratureStorage:
             search_term = self._normalize_search_date(term)
             term_conditions = [
                 f"{col} LIKE ?"
-                for col in ["data", "nome", "cognome", "sito_timbratura"]
+                for col in ["data", "nome", "cognome", "sito_timbratura", "codice_fiscale"]
             ]
-            params.extend([f"%{search_term}%"] * 4)
+            params.extend([f"%{search_term}%"] * 5)
             conditions.append(f"({' OR '.join(term_conditions)})")
 
         query += " WHERE " + " AND ".join(conditions)
         return query + f" ORDER BY id DESC LIMIT {limit * 2}", params
 
     def _normalize_search_date(self, term: str) -> str:
-        if "/" in term:
+        """
+        Tenta di convertire una data input (DD/MM/YYYY, DD-MM-YYYY, ecc)
+        nel formato DB (YYYY-MM-DD).
+        """
+        term = term.strip()
+        
+        # Mapping preliminare separatori
+        clean_term = term
+        for sep in ["/", ".", " "]:
+            clean_term = clean_term.replace(sep, "-")
+        
+        if "-" in clean_term:
             try:
-                parts = term.split("/")
+                parts = clean_term.split("-")
+                
+                # Caso DD-MM (es. 05/12 -> cerca 12 Dicembre)
+                if len(parts) == 2:
+                    d, m = parts
+                    # Ignoriamo se contengono testo
+                    if d.isdigit() and m.isdigit():
+                        return f"-{m.zfill(2)}-{d.zfill(2)}"
+                
+                # Caso DD-MM-YYYY
                 if len(parts) == 3:
                     d, m, y = parts
+                    
+                    # Se l'anno è incompleto (es. 202), non normalizzare ancora
+                    # Ritorna il termine originale parziale per permettere like testuale se serve,
+                    # ma probabilmente fallirà il match su YYYY-MM-DD.
+                    # Ma meglio che fallire convertendo in "202-12-05".
+                    if len(y) not in (2, 4):
+                         return term
+                         
+                    # Gestione anno 2 cifre
+                    if len(y) == 2:
+                        y = "20" + y
+                    
+                    # Ricostruisci YYYY-MM-DD
                     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+                    
             except Exception:
                 pass
+                
         return term
 
     def _enrich_and_filter_timb(
@@ -209,6 +272,7 @@ class TimbratureStorage:
     ) -> List[tuple]:
         final = []
         for r in rows:
+            # Indices: 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, ...
             nome, cognome = r[3], r[4]
             emp = mappings.get(f"{nome}|{cognome}", {"reparto": "", "cantiere": ""})
             rep, cant = emp.get("reparto", ""), emp.get("cantiere", "")
@@ -238,10 +302,17 @@ class TimbratureStorage:
             missing = [c for c in self.COLUMNS_MAP.keys() if c not in df.columns]
             if missing:
                 log(f"⚠️ Colonne mancanti: {missing}")
-                return False
+                # return False - Non bloccare se mancano CF o Ore Effettive (vecchi file)
 
-            df_filtered = df[list(self.COLUMNS_MAP.keys())].copy()
+            # Filtriamo solo le colonne presenti
+            cols_to_use = [c for c in self.COLUMNS_MAP.keys() if c in df.columns]
+            df_filtered = df[cols_to_use].copy()
             df_filtered.rename(columns=self.COLUMNS_MAP, inplace=True)
+
+            # Aggiungi colonne mancanti con valori vuoti
+            for db_col in self.COLUMNS_MAP.values():
+                if db_col not in df_filtered.columns:
+                    df_filtered[db_col] = ""
 
             stats = {"added": 0, "skipped": 0}
             with db_manager.get_connection(self.db_path) as conn:
@@ -262,18 +333,32 @@ class TimbratureStorage:
             data_val = row.get("data")
             if pd.notna(data_val):
                 if isinstance(data_val, (pd.Timestamp, pd.DatetimeIndex)):
-                    row["data"] = data_val.strftime("%Y-%m-%d")
+                    # Explicitly strip time
+                    row["data"] = data_val.date().isoformat()
                 else:
                     try:
-                        row["data"] = pd.to_datetime(data_val).strftime("%Y-%m-%d")
+                         # Attempt to parse and standardise with Italian format preference
+                        dt = pd.to_datetime(data_val, dayfirst=True)
+                        row["data"] = dt.date().isoformat()
                     except Exception:
+                        # Fallback for tough strings
                         pass
 
             vals = row.fillna("").astype(str).to_dict()
             cursor.execute(
                 """
-                INSERT INTO timbrature (data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura)
-                VALUES (:data, :ingresso, :uscita, :nome, :cognome, :presenza_ts, :sito_timbratura)
+                INSERT INTO timbrature (
+                    id_dipendente, data, ingresso, uscita, fornitore, 
+                    codice_rilpres, numero_badge, nome, cognome, codice_fiscale, 
+                    codice_qualifica, specializzazione, societa_ospitante, 
+                    data_ins, presenza_ts, sito_timbratura
+                )
+                VALUES (
+                    :id_dipendente, :data, :ingresso, :uscita, :fornitore, 
+                    :codice_rilpres, :numero_badge, :nome, :cognome, :codice_fiscale, 
+                    :codice_qualifica, :specializzazione, :societa_ospitante, 
+                    :data_ins, :presenza_ts, :sito_timbratura
+                )
             """,
                 vals,
             )

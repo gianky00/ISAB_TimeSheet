@@ -479,6 +479,103 @@ class DatabaseManager:
             "INSERT INTO contabilita_fts(rowid, n_prev, attivita, odc, annotazioni) SELECT id, n_prev, attivita, odc, annotazioni FROM contabilita"
         )
 
+    @staticmethod
+    def _mig_pdl_v2(conn: sqlite3.Connection):
+        """Aggiunge vincolo UNIQUE su n_pdl e pulisce duplicati (v2)"""
+        cursor = conn.cursor()
+        # 1. Rimuovi duplicati mantenendo il più recente (o ID più alto)
+        cursor.execute(
+            """
+            DELETE FROM pdl 
+            WHERE id NOT IN (
+                SELECT MAX(id) FROM pdl GROUP BY n_pdl
+            )
+        """
+        )
+        # 2. Per aggiungere un vincolo UNIQUE in SQLite su una tabella esistente,
+        # bisogna ricreare la tabella (non supportato direttamente da ALTER TABLE).
+        cursor.execute("CREATE TABLE pdl_new AS SELECT * FROM pdl WHERE 1=0")
+        # Modifica lo schema della nuova tabella (non semplicissimo con CREATE TABLE AS)
+        # Meglio ricreare esplicitamente
+        cursor.execute("DROP TABLE pdl_new")
+        cursor.execute(
+            """
+            CREATE TABLE pdl_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                n_pdl TEXT UNIQUE,
+                data_creazione TEXT,
+                area TEXT,
+                unita TEXT,
+                ditta TEXT,
+                descrizione_lavoro TEXT,
+                tipologia TEXT,
+                stato TEXT,
+                apparecchiatura TEXT,
+                richiedente TEXT,
+                data_richiesta TEXT,
+                emittente TEXT,
+                data_emissione TEXT,
+                aprente TEXT,
+                data_apertura TEXT,
+                priorita TEXT,
+                contratto TEXT,
+                ordine TEXT,
+                sito TEXT,
+                importato_il TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
+        )
+        cursor.execute("INSERT INTO pdl_new SELECT * FROM pdl")
+        cursor.execute("DROP TABLE pdl")
+        cursor.execute("ALTER TABLE pdl_new RENAME TO pdl")
+        
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_n_pdl ON pdl(n_pdl)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_sito ON pdl(sito)")
+
+    @staticmethod
+    def _mig_dipendenti_v2(conn: sqlite3.Connection):
+        """Aggiunge colonna codice_fiscale (v2)"""
+        cursor = conn.cursor()
+        cursor.execute("ALTER TABLE dipendenti ADD COLUMN codice_fiscale TEXT")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_cf ON dipendenti(codice_fiscale)")
+
+    @staticmethod
+    def _mig_timbrature_v3(conn: sqlite3.Connection):
+        """Aggiunge colonne codice_fiscale e ore_effettive (v3)"""
+        cursor = conn.cursor()
+        # Verifichiamo se le colonne esistono già per evitare errori
+        cursor.execute("PRAGMA table_info(timbrature)")
+        columns = [row[1] for row in cursor.fetchall()]
+        
+        if "codice_fiscale" not in columns:
+            cursor.execute("ALTER TABLE timbrature ADD COLUMN codice_fiscale TEXT")
+        if "ore_effettive" not in columns:
+            cursor.execute("ALTER TABLE timbrature ADD COLUMN ore_effettive TEXT")
+            
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)")
+
+    @staticmethod
+    def _mig_timbrature_v4(conn: sqlite3.Connection):
+        """Aggiunge tutte le colonne mancanti rilevate dal file Excel reale (v4)"""
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(timbrature)")
+        existing = [row[1] for row in cursor.fetchall()]
+        
+        new_cols = {
+            "id_dipendente": "TEXT",
+            "fornitore": "TEXT",
+            "codice_rilpres": "TEXT",
+            "numero_badge": "TEXT",
+            "codice_qualifica": "TEXT",
+            "specializzazione": "TEXT",
+            "societa_ospitante": "TEXT",
+            "data_ins": "TEXT"
+        }
+        
+        for col, col_type in new_cols.items():
+            if col not in existing:
+                cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")
+
     # Dizionari di Migrazione
     MIGRATIONS_CONTABILITA = {
         1: _mig_contabilita_v1,
@@ -486,13 +583,18 @@ class DatabaseManager:
         3: _mig_contabilita_v3,
     }
 
-    MIGRATIONS_TIMBRATURE = {1: _mig_timbrature_v1, 2: _mig_timbrature_v2}
+    MIGRATIONS_TIMBRATURE = {
+        1: _mig_timbrature_v1, 
+        2: _mig_timbrature_v2, 
+        3: _mig_timbrature_v3,
+        4: _mig_timbrature_v4
+    }
 
-    MIGRATIONS_PDL = {1: _mig_pdl_v1}
+    MIGRATIONS_PDL = {1: _mig_pdl_v1, 2: _mig_pdl_v2}
 
     MIGRATIONS_STORICO_ODA = {1: _mig_storico_oda_v1, 2: _mig_storico_oda_v2}
 
-    MIGRATIONS_DIPENDENTI = {1: _mig_dipendenti_v1}
+    MIGRATIONS_DIPENDENTI = {1: _mig_dipendenti_v1, 2: _mig_dipendenti_v2}
 
 
 db_manager = DatabaseManager()

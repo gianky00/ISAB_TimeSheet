@@ -14,8 +14,11 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from src.core import config_manager
 
 
+import threading
+
 class NotificationManager(QObject):
     _instance = None
+    _lock = threading.RLock()  # Thread-safety lock
 
     # Segnali
     notification_added = pyqtSignal(dict)
@@ -26,12 +29,21 @@ class NotificationManager(QObject):
     @classmethod
     def instance(cls):
         if cls._instance is None:
-            cls._instance = NotificationManager()
+            # Double-checked locking pattern is not strictly needed here given GIL and simple init, 
+            # but we use lock for instance safety if accessed concurrently during startup
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = NotificationManager()
         return cls._instance
 
     def __init__(self):
         super().__init__()
         self.notifications_file = config_manager.CONFIG_DIR / "notifications.json"
+        
+        # Ensure we have a lock instance even if manually instantiated (though shouldn't be)
+        if not hasattr(self, "_lock"):
+            self._lock = threading.RLock()
+            
         self.notifications = self._load_notifications()
 
     def _load_notifications(self) -> list:
@@ -109,10 +121,11 @@ class NotificationManager(QObject):
             "related_id": related_id,
         }
 
-        self.notifications.insert(0, notif)
-        self._save_notifications()
+        with self._lock:
+            self.notifications.insert(0, notif)
+            self._save_notifications()
 
-        # Emissione segnali
+        # Emissione segnali (fuori dal lock per evitare deadlock con Qt loop)
         self.notification_added.emit(notif)
         self.notifications_updated.emit()
         self.unread_count_changed.emit(self.get_unread_count())

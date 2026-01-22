@@ -1,3 +1,5 @@
+from typing import Optional
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
@@ -299,7 +301,7 @@ class SidebarWidget(QFrame):
             tab_index
         )  # Cambia tab interno (0: Notifiche, 1: Audit)
 
-    def set_active_button(self, index: int):
+    def set_active_button(self, index: int, sub_index: Optional[int] = None):
         """Aggiorna lo stato checked dei pulsanti."""
 
         # Mappa diretta per pulsanti semplici
@@ -315,27 +317,23 @@ class SidebarWidget(QFrame):
             btn.setChecked(idx == index)
 
         # Gestione Gruppo Database (Indici 3, 4, 5, 6, 11, 10)
-        # IMPORTANTE: ordine corrisponde all'ordine di aggiunta dei children_btns
-        # Timbrature(3), Strumentale(4), Dataease(5), PDL(6), Dipendenti(11), Storico OdA(10)
         db_indices = [3, 4, 5, 6, 11, 10]
         self.group_db.set_active_index(index, db_indices)
 
         # Gestione Gruppo Notifiche (Indice 9)
+        # Notifiche (9) ha Audit (sub 1)
         if index == 9:
-            self.group_notifiche.set_active_index(9, [999])  # Illumina header
             self.group_notifiche.header_btn.setChecked(True)
+            self.btn_audit.setChecked(sub_index == 1)
         else:
             self.group_notifiche.header_btn.setChecked(False)
             self.btn_audit.setChecked(False)
 
         # Gestione Gruppo Automazioni (Indice 1)
-        # Qui è più complesso perché dipende dal tab interno, non solo dalla pagina.
-        # Per ora illuminiamo l'header se siamo a pagina 1.
         if index == 1:
-            self.group_automazioni.set_active_index(
-                1, [999, 999]
-            )  # Hack: illumina header
             self.group_automazioni.header_btn.setChecked(True)
+            self.btn_fornitori.setChecked(sub_index == 0)
+            self.btn_safework.setChecked(sub_index == 1)
         else:
             self.group_automazioni.header_btn.setChecked(False)
             self.btn_fornitori.setChecked(False)

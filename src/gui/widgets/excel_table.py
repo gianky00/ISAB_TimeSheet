@@ -417,7 +417,7 @@ class EditableDataTable(QWidget):
                     }
                 """
                 )
-                options = column.get("options", [])
+                options = [""] + column.get("options", [])
                 combo.addItems(options)
                 default_val = column.get("default", "")
                 if default_val and default_val in options:
@@ -487,8 +487,10 @@ class EditableDataTable(QWidget):
                         if idx >= 0:
                             widget.setCurrentIndex(idx)
                         else:
-                            widget.addItem(str(value))
-                            widget.setCurrentText(str(value))
+                            # Se il valore non c'è, lo aggiungiamo? No, per le combo fisse meglio di no
+                            # Ma se è un valore ad-hoc?
+                            # Nel dubbio, proviamo a selezionarlo se c'è, altrimenti lasciamo vuoto (idx 0)
+                            widget.setCurrentIndex(0) 
                 else:
                     item = self.table.item(row, col)
                     if item:
@@ -518,7 +520,8 @@ class EditableDataTable(QWidget):
             if isinstance(widget, QComboBox):
                 current_text = widget.currentText()
                 widget.clear()
-                widget.addItems(new_options)
+                # Aggiungi sempre opzione vuota
+                widget.addItems([""] + new_options)
 
                 # Tenta di ripristinare il valore
                 if current_text in new_options:

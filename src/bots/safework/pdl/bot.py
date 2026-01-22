@@ -194,14 +194,13 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         return True
 
-    def _safe_remove(self, path):
+    def _safe_remove(self, path: str | Path):
         """Rimuove un file ignorando errori se in uso."""
-        try:
-            if os.path.exists(path):
-                os.remove(path)
-                self.log(f"🗑️ Rimosso file temporaneo: {os.path.basename(path)}")
-        except Exception as e:
-            self.log(f"⚠️ Impossibile rimuovere file temp (in uso?): {path} - {str(e)}")
+        with suppress(Exception):
+            p = Path(path)
+            if p.exists():
+                p.unlink()
+                self.log(f"🗑️ Rimosso file temporaneo: {p.name}")
 
     def run(self, data: List[Dict[str, Any]]) -> bool:
         """Esegue il ciclo principale di scarico PDL."""
@@ -554,16 +553,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             time.sleep(0.5)
         return False
 
-    def _safe_remove(self, path):
-        """Rimuove un file ignorando errori se in uso."""
-        from contextlib import suppress
-        from pathlib import Path
 
-        with suppress(Exception):
-            p = Path(path)
-            if p.exists():
-                p.unlink()
-                self.log(f"🗑️ Rimosso file temporaneo: {p.name}")
 
     def _attendi_e_ritorna_nuovo_pdf(self, tempo_riferimento, timeout=60):
         from pathlib import Path
