@@ -12,7 +12,7 @@
 #endif
 
 ; Paths (relative to this script location)
-#define SourcePath "..\..\dist\SyncroJob"
+#define SourcePath "dist\SyncroJob"
 #define OutputPath "Setup"
 #define AssetsPath "..\..\assets"
 
