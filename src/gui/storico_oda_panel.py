@@ -60,7 +60,6 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                     text = sibling0.data()
 
                     width_col0 = self.tree.columnWidth(0)
-                    width_col1 = self.tree.columnWidth(1)
 
                     try:
                         if option.state & QStyle.StateFlag.State_Selected:

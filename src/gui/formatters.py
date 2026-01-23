@@ -219,12 +219,12 @@ class FastTableModel(QAbstractTableModel):
             reverse = order == Qt.SortOrder.DescendingOrder
 
             # Combine data and metadata, sort, then split
-            combined = list(zip(self._data, self._metadata))
+            combined = list(zip(self._data, self._metadata, strict=False))
             combined.sort(key=sort_key, reverse=reverse)
 
             # Unzip
             if combined:
-                self._data, self._metadata = zip(*combined)
+                self._data, self._metadata = zip(*combined, strict=False)
                 self._data = list(self._data)
                 self._metadata = list(self._metadata)
             else:

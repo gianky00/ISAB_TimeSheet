@@ -73,8 +73,8 @@ def test_import_logic(temp_db, storage, tmp_path):
     # Check index 4 (nome)
     # The order by nome means Luigi comes before Mario?
     # Luigi L, Mario M. Yes.
-    assert rows[0][4] == "Luigi"  # nome
-    assert rows[1][4] == "Mario"  # nome
+    assert rows[0][8] == "Luigi"  # nome
+    assert rows[1][8] == "Mario"  # nome
 
     # 4. Test Duplicati: Importa lo stesso file
     storage.import_excel(str(excel_file))

@@ -486,7 +486,7 @@ class DatabaseManager:
         # 1. Rimuovi duplicati mantenendo il più recente (o ID più alto)
         cursor.execute(
             """
-            DELETE FROM pdl 
+            DELETE FROM pdl
             WHERE id NOT IN (
                 SELECT MAX(id) FROM pdl GROUP BY n_pdl
             )

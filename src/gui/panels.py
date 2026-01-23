@@ -1845,7 +1845,7 @@ class PDLDBPanel(QWidget):
                     try:
                         dt = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
                         val = dt.strftime("%d/%m/%Y %H:%M:%S")
-                    except:
+                    except Exception:
                         pass
 
                 self.detail_labels[h].setText(val)
@@ -2378,11 +2378,16 @@ class TimbratureDBPanel(QWidget):
                 # Formattazione speciale Data
                 if h == "Data" and val:
                     try:
-                        date_part = val.split(" ")[0]
-                        dt = datetime.strptime(date_part, "%Y-%m-%d")
+                        dt = datetime.strptime(val, "%Y-%m-%d")
                         val = dt.strftime("%d/%m/%Y")
-                    except:
+                    except Exception:
                         pass
+                        try:
+                            date_part = val.split(" ")[0]
+                            dt = datetime.strptime(date_part, "%Y-%m-%d")
+                            val = dt.strftime("%d/%m/%Y")
+                        except Exception:
+                            pass
 
                 # Formattazione speciale Data Inserimento
                 if h == "Data Inserimento" and val:

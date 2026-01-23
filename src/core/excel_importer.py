@@ -974,17 +974,8 @@ class ExcelImporter:
         return rows_to_insert
 
     @classmethod
-    def _process_scarico_ore_row(cls, row, col_keys) -> Optional[Tuple]:
-        """
-        Processa una singola riga estraendo valori e stili.
-        OTTIMIZZATO per minimizzare allocazioni e chiamate costose.
-        """
-        # Indici colonne (fissi per scarico ore)
-        # 0: data, 1: pers1, 2: pers2, 3: odc, 4: pos,
-        # 5: dalle, 6: alle, 7: tot_ore, 8: desc, 9: finito, 10: comm
-
-        # 1. Fast empty check: se data, pers1, odc, e pos sono vuoti, skip
-        # Accesso diretto alle celle raw
+    def _extract_row_values(cls, row) -> Optional[List[str]]:
+        """Estrae e formatta i valori grezzi delle celle."""
         (
             c_data,
             c_p1,
@@ -1006,32 +997,30 @@ class ExcelImporter:
         if v_odc is None and v_pos is None:
             return None
 
-        # 2. Extract values (Inline formatting)
+        # Inline formatter
         def _fmt(val):
             if val is None:
                 return ""
             s = str(val).strip()
             return s.replace("\n", " ") if s else ""
 
-        # ODC specific handling
         vals = []
-        # Data - Strip time if present
+        # Data
         v_data = c_data.value
         s_data = ""
         if v_data:
             if hasattr(v_data, "strftime"):
                 s_data = v_data.strftime("%Y-%m-%d")
             else:
-                # String cleanup: "2024-01-01 00:00:00" -> "2024-01-01"
                 s = str(v_data).strip()
                 if " " in s:
                     s = s.split(" ")[0]
                 s_data = s
         vals.append(s_data)
-        # Pers1
-        vals.append(_fmt(c_p1.value))
-        # Pers2
-        vals.append(_fmt(c_p2.value))
+
+        # Other fields
+        vals.append(_fmt(c_p1.value))  # Pers1
+        vals.append(_fmt(c_p2.value))  # Pers2
 
         # ODC (skip 0)
         s_odc = _fmt(v_odc)
@@ -1045,19 +1034,11 @@ class ExcelImporter:
             s_pos = ""
         vals.append(s_pos)
 
-        # Dalle
-        vals.append(_fmt(c_dalle.value))
-        # Alle
-        vals.append(_fmt(c_alle.value))
-
-        # Totale Ore
-        s_tot = _fmt(c_tot.value)
-        vals.append(s_tot)
-
-        # Desc
-        vals.append(_fmt(c_desc.value))
-        # Finito
-        vals.append(_fmt(c_fin.value))
+        vals.append(_fmt(c_dalle.value))  # Dalle
+        vals.append(_fmt(c_alle.value))  # Alle
+        vals.append(_fmt(c_tot.value))  # Totale
+        vals.append(_fmt(c_desc.value))  # Desc
+        vals.append(_fmt(c_fin.value))  # Finito
 
         # Commessa (skip 0)
         v_comm = c_comm.value
@@ -1066,16 +1047,30 @@ class ExcelImporter:
             s_comm = ""
         vals.append(s_comm)
 
-        # 3. Validation Logic (Inlined)
+        return vals
+
+    @classmethod
+    def _process_scarico_ore_row(cls, row, col_keys) -> Optional[Tuple]:
+        """
+        Processa una singola riga estraendo valori e stili.
+        OTTIMIZZATO per minimizzare allocazioni e chiamate costose.
+        """
+        # 1. Extraction & Formatting
+        vals = cls._extract_row_values(row)
+        if not vals:
+            return None
+
+        # 2. Validation
         # Check: odc, pos, totale_ore must be present
-        if not s_odc or not s_pos or not s_tot:
+        # Indices: 3:odc, 4:pos, 7:tot
+        if not vals[3] or not vals[4] or not vals[7]:
             return None
 
         # Check: at least one person
-        if not vals[1] and not vals[2]:  # pers1 and pers2
+        if not vals[1] and not vals[2]:
             return None
 
-        # 4. Extract styles (Inline)
+        # 3. Extract styles (Inline)
         row_styles: Dict[str, Dict[str, str]] = {}
         for i, key in enumerate(col_keys):
             # Skip empty cells

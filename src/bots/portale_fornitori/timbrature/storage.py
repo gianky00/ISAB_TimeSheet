@@ -200,9 +200,9 @@ class TimbratureStorage:
 
     def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
         query = """
-            SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura, 
-                   codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge, 
-                   codice_qualifica, specializzazione, societa_ospitante, data_ins 
+            SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura,
+                   codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge,
+                   codice_qualifica, specializzazione, societa_ospitante, data_ins
             FROM timbrature
         """
         params: list[str] = []
@@ -356,15 +356,15 @@ class TimbratureStorage:
             cursor.execute(
                 """
                 INSERT INTO timbrature (
-                    id_dipendente, data, ingresso, uscita, fornitore, 
-                    codice_rilpres, numero_badge, nome, cognome, codice_fiscale, 
-                    codice_qualifica, specializzazione, societa_ospitante, 
+                    id_dipendente, data, ingresso, uscita, fornitore,
+                    codice_rilpres, numero_badge, nome, cognome, codice_fiscale,
+                    codice_qualifica, specializzazione, societa_ospitante,
                     data_ins, presenza_ts, sito_timbratura
                 )
                 VALUES (
-                    :id_dipendente, :data, :ingresso, :uscita, :fornitore, 
-                    :codice_rilpres, :numero_badge, :nome, :cognome, :codice_fiscale, 
-                    :codice_qualifica, :specializzazione, :societa_ospitante, 
+                    :id_dipendente, :data, :ingresso, :uscita, :fornitore,
+                    :codice_rilpres, :numero_badge, :nome, :cognome, :codice_fiscale,
+                    :codice_qualifica, :specializzazione, :societa_ospitante,
                     :data_ins, :presenza_ts, :sito_timbratura
                 )
             """,

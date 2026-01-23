@@ -901,6 +901,60 @@ class DipendentiPanel(QWidget):
 
         return re.sub(r"\s+", " ", text)
 
+    def _build_timbrature_maps(self, accessi):
+        """Costruisce le mappe per lookup accessi (Xenon Refactor)."""
+        today = datetime.now()
+        last_by_cf = {}
+        last_by_name = {}
+
+        def normalize(t):
+            return re.sub(r"\s+", " ", str(t).strip().upper())
+
+        for cog, nom, cf, d_str in accessi:
+            if d_str:
+                norm_key = (normalize(cog), normalize(nom))
+                norm_cf = cf.strip().upper() if cf and cf.strip() else None
+
+                with suppress(Exception):
+                    date_part = str(d_str).split(" ")[0]
+                    d_dt = None
+                    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                        try:
+                            d_dt = datetime.strptime(date_part, fmt)
+                            break
+                        except ValueError:
+                            continue
+
+                    if d_dt:
+                        diff = (today - d_dt).days
+                        if norm_cf:
+                            if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
+                                last_by_cf[norm_cf] = diff
+                        if (
+                            norm_key not in last_by_name
+                            or diff < last_by_name[norm_key]
+                        ):
+                            last_by_name[norm_key] = diff
+        return last_by_cf, last_by_name, normalize
+
+    def _compute_employee_status(self, r, last_by_cf, last_by_name, normalize):
+        """Calcola lo stato di un singolo dipendente."""
+        cf_val = str(r[7]).strip().upper() if r[7] else ""
+        cog_val = normalize(r[1])
+        nom_val = normalize(r[2])
+
+        diff_days = None
+        cf_warning = False
+
+        if cf_val:
+            diff_days = last_by_cf.get(cf_val)
+        if diff_days is None:
+            diff_days = last_by_name.get((cog_val, nom_val))
+            if diff_days is not None and not cf_val:
+                cf_warning = True
+
+        return diff_days, cf_warning, cog_val, nom_val, cf_val
+
     def _process_employee_rows(self, full_rows):
         """Elabora le righe dipendenti calcolando scadenza e preparando i dati completi per il modello."""
         # Recuperiamo tutte le timbrature per processarle con normalizzazione
