@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtCore import QIODevice
 from PyQt6.QtWidgets import QApplication
 
 from src.core.telegram_bridge import TelegramUIBridge
@@ -126,7 +125,7 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_main_window.scarico_panel = MagicMock()
         self.mock_main_window.show_toast = MagicMock()
         self.mock_main_window.navigate_to_panel = MagicMock()
-        
+
         # Setup specific mock attribute
         self.mock_main_window.pdl_panel.bot_id = "scarico_pdl"
 
@@ -146,9 +145,7 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with(
             [{"numero_pdl": "PDL002"}]
         )
-        self.mock_main_window.navigate_to_panel.assert_called_once_with(
-            "scarico_pdl"
-        )
+        self.mock_main_window.navigate_to_panel.assert_called_once_with("scarico_pdl")
         self.mock_telegram_service.send_message_sync.assert_called_with(
             "✅ Aggiunti/Impostati 1\nℹ️ 1 duplicati ignorati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
         )

@@ -9,7 +9,7 @@ from pathlib import Path
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication
 
-from src.gui.design.colors import DARK, LIGHT, ColorPalette
+from src.gui.design.colors import LIGHT, ColorPalette
 from src.utils.helpers import get_asset_path
 
 logger = logging.getLogger(__name__)

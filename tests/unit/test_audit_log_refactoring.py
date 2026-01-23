@@ -35,6 +35,8 @@ def audit_widget(qtbot, mocker):
             "severity": "high",
         },
     ]
+    # Mock get_filtered_logs to return the list + count
+    m_instance.get_filtered_logs.return_value = (m_instance.get_logs.return_value, 2)
 
     widget = AuditLogWidget()
     qtbot.addWidget(widget)
@@ -44,17 +46,24 @@ def audit_widget(qtbot, mocker):
 def test_audit_refresh_population(audit_widget):
     """Test that logs are correctly populated in the table."""
     audit_widget.refresh()
-    assert audit_widget.table.rowCount() == 2
+    model = audit_widget.model
+    assert model.rowCount() == 2
 
-    # Check first row (success)
-    assert audit_widget.table.item(0, 2).text() == "LOGIN"
-    assert audit_widget.table.item(0, 5).text() == "SUCCESS"
+    # Check first row (Action is col 5)
+    idx_action = model.index(0, 5)
+    # Qt.ItemDataRole.DisplayRole is 0
+    assert model.data(idx_action, 0) == "LOGIN"
 
-    # Check second row (error colors)
-    error_item = audit_widget.table.item(1, 5)
-    assert error_item.text() == "ERROR"
-    # high severity/error status should have red-ish foreground
-    assert error_item.foreground().color().name().lower() in ["#dc3545", "#ff0000"]
+    # Check second row (Action is col 5)
+    idx_error = model.index(1, 5)
+    assert model.data(idx_error, 0) == "ERROR_OP"
+
+    # Verify background color for error row (BackgroundRole is 8)
+    idx_bg = model.index(1, 0)
+    bg_color = model.data(idx_bg, 8)
+    assert bg_color is not None
+    # Just check it returns a color, precise hex match might be fragile without QColor import
+    assert bg_color.name() == "#fff5f5"
 
 
 def test_integrity_display(audit_widget, mocker):
@@ -62,9 +71,10 @@ def test_integrity_display(audit_widget, mocker):
     # Test valid
     audit_widget.manager.verify_integrity.return_value = True
     audit_widget.refresh()
-    assert "✅" in audit_widget.integrity_lbl.text()
+    # UI separates icon and text now
+    assert "Integro" in audit_widget.integrity_lbl.text()
 
     # Test manipulated
     audit_widget.manager.verify_integrity.return_value = False
     audit_widget.refresh()
-    assert "⚠️" in audit_widget.integrity_lbl.text()
+    assert "Legacy/Manomesso" in audit_widget.integrity_lbl.text()

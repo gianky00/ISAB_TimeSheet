@@ -60,7 +60,6 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
                     text = sibling0.data()
 
                     width_col0 = self.tree.columnWidth(0)
-                    width_col1 = self.tree.columnWidth(1)
 
                     try:
                         if option.state & QStyle.StateFlag.State_Selected:
@@ -441,9 +440,9 @@ class StoricoOdaPanel(QWidget):
                 item_creato.setData(r, Qt.ItemDataRole.UserRole)
 
                 self.model.appendRow(parent_row_items)
-                groups[
-                    group_key
-                ] = item_creato  # Keep reference to first item as parent
+                groups[group_key] = (
+                    item_creato  # Keep reference to first item as parent
+                )
 
             parent_item = groups[group_key]
 

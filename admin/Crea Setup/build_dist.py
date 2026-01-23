@@ -18,8 +18,8 @@ from analyze_dependencies import get_all_imports  # noqa: E402
 # Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-DIST_DIR = os.path.join(ROOT_DIR, "dist")
-BUILD_DIR = os.path.join(ROOT_DIR, "build")
+DIST_DIR = os.path.join(SCRIPT_DIR, "dist")
+BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
 OBF_DIR = os.path.join(BUILD_DIR, "obf")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 SETUP_OUTPUT_DIR = os.path.join(SCRIPT_DIR, "Setup")
@@ -167,6 +167,10 @@ def run_pyinstaller(obfuscated=False):
         "--windowed",
         "--noconfirm",
         "--clean",
+        "--distpath",
+        DIST_DIR,
+        "--workpath",
+        BUILD_DIR,
         # Add data files
         "--add-data",
         f"{src_path};src",
@@ -213,8 +217,15 @@ def run_pyinstaller(obfuscated=False):
     ]
     detected_imports = [imp for imp in detected_imports if imp not in ignored_imports]
 
+    # Fix: Jarvis/Pkg_resources runtime error
+
     for imp in detected_imports:
         cmd.extend(["--hidden-import", imp])
+
+    # Explicitly add pywin32 modules which might be missed
+    pywin32_modules = ["win32con", "win32print", "win32ui"]
+    for mod in pywin32_modules:
+        cmd.extend(["--hidden-import", mod])
 
     # FIX: Exclude unnecessary Qt modules to reduce size and warnings
     qt_excludes = [
@@ -254,6 +265,10 @@ def run_pyinstaller(obfuscated=False):
         "markdown",
         "matplotlib",
         "cryptography",
+        "jaraco.text",
+        "keyring",
+        "pymupdf",
+        "fitz",
     ]
     for pkg in force_collect:
         cmd.extend(["--collect-all", pkg])

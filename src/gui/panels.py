@@ -662,10 +662,10 @@ class DettagliOdAPanel(BaseBotPanel):
             [
                 {"name": "Numero OdA", "type": "text"},
                 {
-                    "name": "Numero Contratto", 
-                    "type": "combo", 
+                    "name": "Numero Contratto",
+                    "type": "combo",
                     "options": contracts,
-                    "default": config.get("default_contract", "")
+                    "default": config.get("default_contract", ""),
                 },
             ]
         )
@@ -1839,37 +1839,41 @@ class PDLDBPanel(QWidget):
                 val = str(data[i])
                 if val.lower() == "nan" or val == "None":
                     val = ""
-                
+
                 # Formattazione "Importato il"
                 if h == "Importato il" and val:
                     try:
                         dt = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
                         val = dt.strftime("%d/%m/%Y %H:%M:%S")
-                    except:
+                    except Exception:
                         pass
-                
+
                 self.detail_labels[h].setText(val)
 
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""
         if self.current_sort_col == logical_index:
-            self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
+            self.current_sort_order = (
+                "DESC" if self.current_sort_order == "ASC" else "ASC"
+            )
         else:
             self.current_sort_col = logical_index
             self.current_sort_order = "ASC"
-        
+
         self.refresh_data(sort_col=logical_index)
 
     def refresh_data(self, sort_col=None):
         """Aggiorna i dati della tabella PDL con sistema di cache."""
         query, params = self._build_pdl_query(sort_col)
         cache_key = f"{query}_{params}"
-        
+
         if cache_key in self._cache:
             full_rows = self._cache[cache_key]
         else:
             try:
-                full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+                full_rows = db_manager.execute_query(
+                    db_manager.DB_PDL, query, tuple(params)
+                )
                 self._cache[cache_key] = full_rows
             except Exception as e:
                 print(f"Errore caricamento PDL: {e}")
@@ -1892,7 +1896,7 @@ class PDLDBPanel(QWidget):
         if site_filter != "Tutti i siti":
             query += " AND sito = ?"
             params.append(site_filter)
-        
+
         if group_filter != "Tutti":
             query += " AND n_pdl LIKE ?"
             params.append(f"%/{group_filter}")
@@ -1912,14 +1916,14 @@ class PDLDBPanel(QWidget):
             5: "stato",
             6: "descrizione_lavoro",
         }
-        
+
         order_clause = ""
         if sort_col is not None and sort_col in order_map:
             col_name = order_map[sort_col]
             # Ordinamento numerico speciale per N° PDL
             if col_name == "n_pdl":
                 order_clause = f" ORDER BY CAST(n_pdl AS INTEGER) {self.current_sort_order}, n_pdl {self.current_sort_order}"
-            
+
             # Ordinamento per Data (DD/MM/YYYY HH:MM:SS -> YYYYMMDD...)
             elif col_name == "data_creazione":
                 # substr(date, 7, 4) = YYYY
@@ -1927,7 +1931,7 @@ class PDLDBPanel(QWidget):
                 # substr(date, 1, 2) = DD
                 # substr(date, 11) = HH:MM:SS
                 order_clause = f" ORDER BY substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2) || substr(data_creazione, 11) {self.current_sort_order}"
-            
+
             else:
                 order_clause = f" ORDER BY {col_name} {self.current_sort_order}"
         else:
@@ -2144,7 +2148,7 @@ class TimbratureDBPanel(QWidget):
             "Ingresso",
             "Uscita",
             "Reparto",
-            "Cantiere"
+            "Cantiere",
         ]
 
         # Mapping completo per il Dettaglio (Tutte le 18 colonne rilevate)
@@ -2166,14 +2170,14 @@ class TimbratureDBPanel(QWidget):
             "Codice Qualifica",
             "Specializzazione",
             "Società Ospitante",
-            "Data Inserimento"
+            "Data Inserimento",
         ]
 
         self.model = FastTableModel([], self.master_headers)
         # Configure Date Formatter for Col 0 (Data)
         self.model.set_column_formatter(0, format_date_it)
 
-        self._raw_full_data = [] # Buffer per i dati completi
+        self._raw_full_data = []  # Buffer per i dati completi
 
         self._setup_ui()
         # Pre-caricamento immediato e profondo
@@ -2256,6 +2260,7 @@ class TimbratureDBPanel(QWidget):
 
     def _setup_database_tab(self, parent_widget):
         from PyQt6.QtWidgets import QFormLayout, QScrollArea, QSplitter
+
         layout = QVBoxLayout(parent_widget)
         layout.setContentsMargins(0, 5, 0, 0)
 
@@ -2266,7 +2271,9 @@ class TimbratureDBPanel(QWidget):
         self.db_table.setModel(self.model)
         self.db_table.verticalHeader().setVisible(False)
         self.db_table.setAlternatingRowColors(True)
-        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.db_table.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.db_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.db_table.setSortingEnabled(True)
@@ -2275,7 +2282,9 @@ class TimbratureDBPanel(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 
-        self.db_table.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        self.db_table.selectionModel().selectionChanged.connect(
+            self._on_selection_changed
+        )
         self.splitter.addWidget(self.db_table)
 
         # --- PANNELLO DETTAGLIO (DETAIL) ---
@@ -2300,7 +2309,9 @@ class TimbratureDBPanel(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            val_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -2308,8 +2319,10 @@ class TimbratureDBPanel(QWidget):
         detail_layout.addWidget(scroll)
 
         self.splitter.addWidget(detail_container)
-        self.splitter.setStretchFactor(0, 3) # Ridotto stretch tabella
-        self.splitter.setStretchFactor(1, 2) # Aumentato stretch dettaglio per leggibilità
+        self.splitter.setStretchFactor(0, 3)  # Ridotto stretch tabella
+        self.splitter.setStretchFactor(
+            1, 2
+        )  # Aumentato stretch dettaglio per leggibilità
 
         layout.addWidget(self.splitter)
 
@@ -2322,41 +2335,60 @@ class TimbratureDBPanel(QWidget):
         # Use the UserRole to get the original row data/index intact after sorting
         # The model returns the METADATA object for UserRole
         row_data = indexes[0].data(Qt.ItemDataRole.UserRole)
-        
+
         if row_data:
             # We stored the FULL RAW ROW tuple as metadata
             data = row_data
-            
+
             # Indices source:
-            # 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, 5:presenza_ts, 6:sito, 
-            # 7:cf, 8:id_dip, 9:fornitore, 10:cod_rilpres, 11:num_badge, 12:cod_qual, 
+            # 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, 5:presenza_ts, 6:sito,
+            # 7:cf, 8:id_dip, 9:fornitore, 10:cod_rilpres, 11:num_badge, 12:cod_qual,
             # 13:specializ, 14:soc_osp, 15:data_ins, 16:rep, 17:cant
-            
+
             mapping = {
-                "Data": 0, "Ingresso": 1, "Uscita": 2, "Nome": 3, "Cognome": 4,
-                "Codice Fiscale": 7, "ID Dipendente": 8, "Fornitore": 9,
-                "Numero Badge": 11, "Reparto": 16, "Cantiere": 17,
-                "Presenza TS": 5, "Sito": 6, "Codice RILPRES": 10,
-                "Codice Qualifica": 12, "Specializzazione": 13,
-                "Società Ospitante": 14, "Data Inserimento": 15
+                "Data": 0,
+                "Ingresso": 1,
+                "Uscita": 2,
+                "Nome": 3,
+                "Cognome": 4,
+                "Codice Fiscale": 7,
+                "ID Dipendente": 8,
+                "Fornitore": 9,
+                "Numero Badge": 11,
+                "Reparto": 16,
+                "Cantiere": 17,
+                "Presenza TS": 5,
+                "Sito": 6,
+                "Codice RILPRES": 10,
+                "Codice Qualifica": 12,
+                "Specializzazione": 13,
+                "Società Ospitante": 14,
+                "Data Inserimento": 15,
             }
 
             for h in self.full_headers:
                 idx = mapping.get(h)
-                val = str(data[idx]) if idx is not None and data[idx] is not None else ""
-                
+                val = (
+                    str(data[idx]) if idx is not None and data[idx] is not None else ""
+                )
+
                 if val.lower() in ["nan", "none"]:
                     val = ""
-                
+
                 # Formattazione speciale Data
                 if h == "Data" and val:
                     try:
-                        date_part = val.split(" ")[0]
-                        dt = datetime.strptime(date_part, "%Y-%m-%d")
+                        dt = datetime.strptime(val, "%Y-%m-%d")
                         val = dt.strftime("%d/%m/%Y")
-                    except:
+                    except Exception:
                         pass
-                
+                        try:
+                            date_part = val.split(" ")[0]
+                            dt = datetime.strptime(date_part, "%Y-%m-%d")
+                            val = dt.strftime("%d/%m/%Y")
+                        except Exception:
+                            pass
+
                 # Formattazione speciale Data Inserimento
                 if h == "Data Inserimento" and val:
                     try:
@@ -2371,7 +2403,7 @@ class TimbratureDBPanel(QWidget):
                                 continue
                     except:
                         pass
-                
+
                 self.detail_labels[h].setText(val)
 
     def refresh_data(self):
@@ -2399,13 +2431,13 @@ class TimbratureDBPanel(QWidget):
             iso_date = str(row[0]).split(" ")[0] if row[0] else ""
 
             m_row = [
-                iso_date,      # Raw ISO Date
+                iso_date,  # Raw ISO Date
                 row[4] or "",  # Cognome
                 row[3] or "",  # Nome
                 row[1] or "",  # Ingresso
                 row[2] or "",  # Uscita
-                row[16] or "", # Reparto
-                row[17] or ""  # Cantiere
+                row[16] or "",  # Reparto
+                row[17] or "",  # Cantiere
             ]
             master_rows.append(m_row)
 

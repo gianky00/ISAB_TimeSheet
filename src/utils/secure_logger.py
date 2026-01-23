@@ -19,7 +19,8 @@ class SensitiveDataFilter(logging.Filter):
         # Token/API keys
         (
             re.compile(
-                r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?', re.IGNORECASE
+                r'(token|api_key|apikey|secret)["\s:=]+["\']?[\w-]+["\']?',
+                re.IGNORECASE,
             ),
             r"\1=***MASKED***",
         ),

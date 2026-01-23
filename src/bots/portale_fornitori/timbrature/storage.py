@@ -111,7 +111,9 @@ class TimbratureStorage:
 
                 rows = cursor.fetchall()
                 for row in rows:
-                    results.append({"nome": row[0], "cognome": row[1], "codice_fiscale": row[2]})
+                    results.append(
+                        {"nome": row[0], "cognome": row[1], "codice_fiscale": row[2]}
+                    )
         except Exception:
             pass
         return results
@@ -198,9 +200,9 @@ class TimbratureStorage:
 
     def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
         query = """
-            SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura, 
-                   codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge, 
-                   codice_qualifica, specializzazione, societa_ospitante, data_ins 
+            SELECT data, ingresso, uscita, nome, cognome, presenza_ts, sito_timbratura,
+                   codice_fiscale, id_dipendente, fornitore, codice_rilpres, numero_badge,
+                   codice_qualifica, specializzazione, societa_ospitante, data_ins
             FROM timbrature
         """
         params: list[str] = []
@@ -213,7 +215,13 @@ class TimbratureStorage:
             search_term = self._normalize_search_date(term)
             term_conditions = [
                 f"{col} LIKE ?"
-                for col in ["data", "nome", "cognome", "sito_timbratura", "codice_fiscale"]
+                for col in [
+                    "data",
+                    "nome",
+                    "cognome",
+                    "sito_timbratura",
+                    "codice_fiscale",
+                ]
             ]
             params.extend([f"%{search_term}%"] * 5)
             conditions.append(f"({' OR '.join(term_conditions)})")
@@ -227,44 +235,44 @@ class TimbratureStorage:
         nel formato DB (YYYY-MM-DD).
         """
         term = term.strip()
-        
+
         # Mapping preliminare separatori
         clean_term = term
         for sep in ["/", ".", " "]:
             clean_term = clean_term.replace(sep, "-")
-        
+
         if "-" in clean_term:
             try:
                 parts = clean_term.split("-")
-                
+
                 # Caso DD-MM (es. 05/12 -> cerca 12 Dicembre)
                 if len(parts) == 2:
                     d, m = parts
                     # Ignoriamo se contengono testo
                     if d.isdigit() and m.isdigit():
                         return f"-{m.zfill(2)}-{d.zfill(2)}"
-                
+
                 # Caso DD-MM-YYYY
                 if len(parts) == 3:
                     d, m, y = parts
-                    
+
                     # Se l'anno è incompleto (es. 202), non normalizzare ancora
                     # Ritorna il termine originale parziale per permettere like testuale se serve,
                     # ma probabilmente fallirà il match su YYYY-MM-DD.
                     # Ma meglio che fallire convertendo in "202-12-05".
                     if len(y) not in (2, 4):
-                         return term
-                         
+                        return term
+
                     # Gestione anno 2 cifre
                     if len(y) == 2:
                         y = "20" + y
-                    
+
                     # Ricostruisci YYYY-MM-DD
                     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
-                    
+
             except Exception:
                 pass
-                
+
         return term
 
     def _enrich_and_filter_timb(
@@ -337,7 +345,7 @@ class TimbratureStorage:
                     row["data"] = data_val.date().isoformat()
                 else:
                     try:
-                         # Attempt to parse and standardise with Italian format preference
+                        # Attempt to parse and standardise with Italian format preference
                         dt = pd.to_datetime(data_val, dayfirst=True)
                         row["data"] = dt.date().isoformat()
                     except Exception:
@@ -348,15 +356,15 @@ class TimbratureStorage:
             cursor.execute(
                 """
                 INSERT INTO timbrature (
-                    id_dipendente, data, ingresso, uscita, fornitore, 
-                    codice_rilpres, numero_badge, nome, cognome, codice_fiscale, 
-                    codice_qualifica, specializzazione, societa_ospitante, 
+                    id_dipendente, data, ingresso, uscita, fornitore,
+                    codice_rilpres, numero_badge, nome, cognome, codice_fiscale,
+                    codice_qualifica, specializzazione, societa_ospitante,
                     data_ins, presenza_ts, sito_timbratura
                 )
                 VALUES (
-                    :id_dipendente, :data, :ingresso, :uscita, :fornitore, 
-                    :codice_rilpres, :numero_badge, :nome, :cognome, :codice_fiscale, 
-                    :codice_qualifica, :specializzazione, :societa_ospitante, 
+                    :id_dipendente, :data, :ingresso, :uscita, :fornitore,
+                    :codice_rilpres, :numero_badge, :nome, :cognome, :codice_fiscale,
+                    :codice_qualifica, :specializzazione, :societa_ospitante,
                     :data_ins, :presenza_ts, :sito_timbratura
                 )
             """,

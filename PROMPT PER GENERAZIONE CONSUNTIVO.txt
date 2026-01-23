@@ -1,0 +1,10 @@
+in TS prendere:
+colonna A: Numero OdA
+colonna B: Data Timesheet
+colonna J: Nome
+colonna K: Cognome
+colonna M: Qualifica Applicata
+colonna N: Ora Ingresso
+colonna O: Ora Uscita
+
+ortensia

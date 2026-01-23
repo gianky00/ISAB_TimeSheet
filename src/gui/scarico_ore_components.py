@@ -43,13 +43,17 @@ class CacheWorker(QThread):
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
-            display_data, search_index, float_totals, style_cache, date_keys = self._build_caches(
-                self.data_source
+            display_data, search_index, float_totals, style_cache, date_keys = (
+                self._build_caches(self.data_source)
             )
             # Save to disk
             self.progress.emit("Salvataggio cache...")
-            self._save_cache(display_data, search_index, float_totals, style_cache, date_keys)
-            self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
+            self._save_cache(
+                display_data, search_index, float_totals, style_cache, date_keys
+            )
+            self.finished.emit(
+                display_data, search_index, float_totals, style_cache, date_keys
+            )
         else:
             # Load from file
             if not self.cache_path.exists():
@@ -73,23 +77,39 @@ class CacheWorker(QThread):
                             style_cache,
                         ) = self._build_caches(raw_data)
                     if len(loaded) == 5:
-                         # New format
-                         d, s, t, st, dk = loaded
-                         display_data, search_index, float_totals, style_cache, date_keys = d, s, t, st, dk
+                        # New format
+                        d, s, t, st, dk = loaded
+                        (
+                            display_data,
+                            search_index,
+                            float_totals,
+                            style_cache,
+                            date_keys,
+                        ) = d, s, t, st, dk
                     elif len(loaded) == 4:
                         # Version 2 format: raw_data, search, totals, style
                         # Upgrade by rebuilding
-                         d, _, _, _ = loaded
-                         # Force rebuild
-                         display_data, search_index, float_totals, style_cache, date_keys = self._build_caches(d) if d and not isinstance(d[0][0], str) else (d, [], [], [], [])
-                    else:
-                        display_data, search_index, float_totals, style_cache, date_keys = (
-                            [],
-                            [],
-                            [],
-                            [],
-                            []
+                        d, _, _, _ = loaded
+                        # Force rebuild
+                        (
+                            display_data,
+                            search_index,
+                            float_totals,
+                            style_cache,
+                            date_keys,
+                        ) = (
+                            self._build_caches(d)
+                            if d and not isinstance(d[0][0], str)
+                            else (d, [], [], [], [])
                         )
+                    else:
+                        (
+                            display_data,
+                            search_index,
+                            float_totals,
+                            style_cache,
+                            date_keys,
+                        ) = ([], [], [], [], [])
 
                 self.finished.emit(
                     display_data, search_index, float_totals, style_cache, date_keys
@@ -133,7 +153,13 @@ class CacheWorker(QThread):
         Returns:
             tuple: (display_data, search_index, float_totals, style_cache, date_keys)
         """
-        display_data, search_index, float_totals, style_cache, date_keys = [], [], [], [], []
+        display_data, search_index, float_totals, style_cache, date_keys = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
 
         for row in data:
             # 1. Date & Display Strings
@@ -148,7 +174,7 @@ class CacheWorker(QThread):
 
             # 3. Styles
             style_cache.append(self._parse_row_style(row))
-            
+
             # 4. Sort Keys (Date)
             # row[0] comes from DB/Excel as YYYY-MM-DD string or similar sortable
             date_keys.append(str(row[0]) if row[0] else "")
@@ -278,7 +304,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         "search_index": [],  # List[str]
         "totals": [],  # List[float]
         "styles": [],  # List[dict]
-        "date_keys": [], # List[str]
+        "date_keys": [],  # List[str]
         "loaded": False,
     }
 
@@ -380,7 +406,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
     def set_data(self, data):
         """Aggiornamento dati sincrono (principalmente per test)."""
         worker = CacheWorker(self.CACHE_PATH)
-        display_data, search, totals, style_cache, date_keys = worker._build_caches(data)
+        display_data, search, totals, style_cache, date_keys = worker._build_caches(
+            data
+        )
         self._on_worker_finished(display_data, search, totals, style_cache, date_keys)
 
     def set_filter(self, text, col_filters=None):
@@ -481,27 +509,27 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
         return None
 
-    def sort(self, column: int, order: Qt.SortOrder):
+    def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
         """
         Ordina il modello in base alla colonna specificata.
         Supporta ordinamento per Date (chiavi), Numeri (totals) e Stringhe.
         """
         self.layoutAboutToBeChanged.emit()
 
-        reverse = (order == Qt.SortOrder.DescendingOrder)
-        
+        reverse = order == Qt.SortOrder.DescendingOrder
+
         # Helper to get sort key safely
         def get_key(idx):
-             try:
-                 if column == 0: # DATA -> Use Date Keys
-                     return self._date_keys[idx]
-                 elif column == 7: # TOTALE ORE -> Use Floats
-                     return self._float_totals[idx]
-                 else: # String -> case insensitive
-                     val = self._display_data[idx][column]
-                     return val.lower() if val else ""
-             except IndexError:
-                 return ""
+            try:
+                if column == 0:  # DATA -> Use Date Keys
+                    return self._date_keys[idx]
+                elif column == 7:  # TOTALE ORE -> Use Floats
+                    return self._float_totals[idx]
+                else:  # String -> case insensitive
+                    val = self._display_data[idx][column]
+                    return val.lower() if val else ""
+            except IndexError:
+                return ""
 
         # Sort the visible indices
         self._visible_indices.sort(key=get_key, reverse=reverse)

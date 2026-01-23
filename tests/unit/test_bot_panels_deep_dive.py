@@ -297,7 +297,27 @@ class TestTimbratureDBPanel:
     def test_refresh_data(self, qapp, qtbot, mock_gui_deps):
         with patch("src.gui.panels.TimbratureStorage") as mock_storage:
             mock_storage.return_value.get_timbrature_with_reparto.return_value = [
-                ("2024-01-01", "08:00", "17:00", "A", "B", "S", "I", "R", "C")
+                # 18 columns required (0-17)
+                (
+                    "2024-01-01",
+                    "08:00",
+                    "17:00",
+                    "A",
+                    "B",
+                    "S",
+                    "I",
+                    "R",
+                    "C",
+                    "F",
+                    "CR",
+                    "NB",
+                    "CQ",
+                    "SP",
+                    "SO",
+                    "DI",
+                    "Reparto",
+                    "Cantiere",
+                )
             ]
             panel = TimbratureDBPanel()
             qtbot.addWidget(panel)

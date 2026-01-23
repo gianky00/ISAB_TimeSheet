@@ -48,7 +48,7 @@ class CommandRegistry:
     """
 
     _instance = None
-    _root: CommandNode = None
+    _root: Optional["CommandNode"] = None
 
     @classmethod
     def instance(cls):
@@ -60,7 +60,8 @@ class CommandRegistry:
         self._root = CommandNode("ROOT", children=[])
 
     def register_root(self, node: CommandNode):
-        self._root.children.append(node)
+        if self._root:
+            self._root.children.append(node)
 
     def get_root_nodes(self) -> List[CommandNode]:
-        return self._root.children
+        return self._root.children if self._root else []

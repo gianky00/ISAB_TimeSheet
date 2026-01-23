@@ -150,14 +150,14 @@ class InteractiveStatusCard(QFrame):
         left_layout = QVBoxLayout()
         left_layout.setSpacing(0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         self.val_text = QLabel("0")
         self.val_text.setStyleSheet(
             f"font-size: 28px; font-weight: 900; color: {color};"
         )
         self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.val_text)
-        
+
         layout.addLayout(left_layout)
 
         # Separatore leggero
@@ -176,15 +176,17 @@ class InteractiveStatusCard(QFrame):
         lbl_title.setStyleSheet(
             "font-size: 11px; font-weight: 800; color: #555; letter-spacing: 0.5px;"
         )
-        
+
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet("font-size: 10px; color: #777; font-weight: 500;")
         lbl_desc.setWordWrap(True)
-        lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lbl_desc.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
         right_layout.addWidget(lbl_title)
         right_layout.addWidget(lbl_desc)
-        
+
         layout.addLayout(right_layout)
 
     def enterEvent(self, event):
@@ -287,7 +289,11 @@ class DipendentiPanel(QWidget):
             "Operativi", "#198754", Icons.CHECK_CIRCLE, "Ultimo accesso <= 20gg", "ok"
         )
         self.card_warning = InteractiveStatusCard(
-            "In Scadenza", "#fd7e14", Icons.ALERT_TRIANGLE, "Accesso 21-30gg fa", "warning"
+            "In Scadenza",
+            "#fd7e14",
+            Icons.ALERT_TRIANGLE,
+            "Accesso 21-30gg fa",
+            "warning",
         )
         self.card_expired = InteractiveStatusCard(
             "Scaduti", "#dc3545", Icons.X_CIRCLE, "Accesso > 30gg fa", "expired"
@@ -300,7 +306,7 @@ class DipendentiPanel(QWidget):
         cards_layout.addWidget(self.card_ok)
         cards_layout.addWidget(self.card_warning)
         cards_layout.addWidget(self.card_expired)
-        cards_layout.addStretch() # Push cards to left
+        cards_layout.addStretch()  # Push cards to left
 
         main_layout.addWidget(self.cards_container)
 
@@ -334,7 +340,7 @@ class DipendentiPanel(QWidget):
         total_width = sum(self.column_widths) + 20
         self.table.setFixedWidth(total_width)
         self.content_layout.addWidget(self.table)
-        
+
         # --- PANNELLO DESTRA (SCHEDA DIPENDENTE VERTICALE) ---
 
         right_container = QWidget()
@@ -523,7 +529,7 @@ class DipendentiPanel(QWidget):
 
         # Add components to content layout
         self.content_layout.addWidget(right_container)
-        self.content_layout.addStretch() # Push Table and Scheda to the left
+        self.content_layout.addStretch()  # Push Table and Scheda to the left
 
         main_layout.addLayout(self.content_layout)
 
@@ -685,7 +691,7 @@ class DipendentiPanel(QWidget):
 
             last_date_str = str(res[0][0])
             date_part = last_date_str.split(" ")[0]
-            
+
             last_date = None
             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                 try:
@@ -693,7 +699,7 @@ class DipendentiPanel(QWidget):
                     break
                 except ValueError:
                     continue
-            
+
             if not last_date:
                 return "Errore data", "-", "#6c757d"
 
@@ -781,18 +787,18 @@ class DipendentiPanel(QWidget):
         row_idx = indexes[0].row()
         # Recuperiamo la riga completa dal modello (contiene anche i campi extra oltre i 7 visibili)
         row_data = self.model._data[row_idx]
-        
+
         # Mappatura indici basata sulla struttura creata in _process_employee_rows:
         # 0:scad, 1:id_ris, 2:disp_cog, 3:nome, 4:cf, 5:badge, 6:assunz, 7:nascita, 8:created, 9:real_cog
         mapping = {
             "ID Risorsa": 1,
-            "Cognome": 9, # Usiamo il cognome reale senza icone
+            "Cognome": 9,  # Usiamo il cognome reale senza icone
             "Nome": 3,
             "Data Nascita": 7,
             "Codice Fiscale": 4,
             "Badge": 5,
             "Data Assunzione": 6,
-            "Importato il": 8
+            "Importato il": 8,
         }
 
         cognome = str(row_data[9])
@@ -800,8 +806,12 @@ class DipendentiPanel(QWidget):
 
         for h in self.full_headers:
             idx = mapping.get(h)
-            val = str(row_data[idx]) if idx is not None and row_data[idx] is not None else ""
-            
+            val = (
+                str(row_data[idx])
+                if idx is not None and row_data[idx] is not None
+                else ""
+            )
+
             if val.lower() in ["nan", "none"]:
                 val = ""
 
@@ -888,28 +898,23 @@ class DipendentiPanel(QWidget):
         text = str(text).strip().upper()
         # Rimpiazza spazi multipli interni con spazio singolo
         import re
-        return re.sub(r'\s+', ' ', text)
 
-    def _process_employee_rows(self, full_rows):
-        """Elabora le righe dipendenti calcolando scadenza e preparando i dati completi per il modello."""
-        # Recuperiamo tutte le timbrature per processarle con normalizzazione
-        query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
-        accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
+        return re.sub(r"\s+", " ", text)
+
+    def _build_timbrature_maps(self, accessi):
+        """Costruisce le mappe per lookup accessi (Xenon Refactor)."""
         today = datetime.now()
-
-        import re
-        def normalize(t):
-            return re.sub(r'\s+', ' ', str(t).strip().upper())
-
-        # Mappe per l'ultimo accesso
         last_by_cf = {}
         last_by_name = {}
-        
+
+        def normalize(t):
+            return re.sub(r"\s+", " ", str(t).strip().upper())
+
         for cog, nom, cf, d_str in accessi:
             if d_str:
                 norm_key = (normalize(cog), normalize(nom))
                 norm_cf = cf.strip().upper() if cf and cf.strip() else None
-                
+
                 with suppress(Exception):
                     date_part = str(d_str).split(" ")[0]
                     d_dt = None
@@ -919,81 +924,96 @@ class DipendentiPanel(QWidget):
                             break
                         except ValueError:
                             continue
-                    
+
                     if d_dt:
                         diff = (today - d_dt).days
                         if norm_cf:
                             if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
                                 last_by_cf[norm_cf] = diff
-                        if norm_key not in last_by_name or diff < last_by_name[norm_key]:
+                        if (
+                            norm_key not in last_by_name
+                            or diff < last_by_name[norm_key]
+                        ):
                             last_by_name[norm_key] = diff
+        return last_by_cf, last_by_name, normalize
+
+    def _compute_employee_status(self, r, last_by_cf, last_by_name, normalize):
+        """Calcola lo stato di un singolo dipendente."""
+        cf_val = str(r[7]).strip().upper() if r[7] else ""
+        cog_val = normalize(r[1])
+        nom_val = normalize(r[2])
+
+        diff_days = None
+        cf_warning = False
+
+        if cf_val:
+            diff_days = last_by_cf.get(cf_val)
+        if diff_days is None:
+            diff_days = last_by_name.get((cog_val, nom_val))
+            if diff_days is not None and not cf_val:
+                cf_warning = True
+
+        return diff_days, cf_warning, cog_val, nom_val, cf_val
+
+    def _process_employee_rows(self, full_rows):
+        """Elabora le righe dipendenti calcolando scadenza e preparando i dati completi per il modello."""
+        # Recuperiamo tutte le timbrature per processarle con normalizzazione
+        query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
+        accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
+        
+        # Reuse existing helper to build maps
+        last_by_cf, last_by_name, normalize = self._build_timbrature_maps(accessi)
 
         master_rows = []
-        
-        # Counters
         count_ok = 0
         count_warning = 0
         count_expired = 0
 
         for r in full_rows:
-            # Source fields from DB (id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale)
-            cf_val = str(r[7]).strip().upper() if r[7] else ""
-            cog_val = normalize(r[1])
-            nom_val = normalize(r[2])
-            
-            diff_days = None
-            cf_warning = False
+            # Calcola stato usando helper esistente
+            diff_days, cf_warning, cog_val, nom_val, cf_val = self._compute_employee_status(
+                r, last_by_cf, last_by_name, normalize
+            )
 
-            if cf_val:
-                diff_days = last_by_cf.get(cf_val)
-            if diff_days is None:
-                diff_days = last_by_name.get((cog_val, nom_val))
-                if diff_days is not None and not cf_val:
-                    cf_warning = True
-            
             # --- Aggiorna Contatori (TOTALE) ---
             if diff_days is not None:
-                # <= 20: Operativi
-                # 21-30: In Scadenza
-                # > 30: Scaduti
                 if diff_days <= 20:
                     count_ok += 1
                 elif diff_days <= 30:
                     count_warning += 1
                 else:
                     count_expired += 1
-            # -----------------------------------
-
-            inactivation_val = None
-            if diff_days is not None:
-                inactivation_val = 30 - diff_days
 
             # Filtro Visualizzazione
             if self.current_filter:
-                if diff_days is None: continue
-                if self.current_filter == "ok" and diff_days > 20: continue
-                elif self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30): continue
-                elif self.current_filter == "expired" and diff_days <= 30: continue
+                if diff_days is None:
+                    continue
+                if self.current_filter == "ok" and diff_days > 20:
+                    continue
+                elif self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30):
+                    continue
+                elif self.current_filter == "expired" and diff_days <= 30:
+                    continue
 
-            display_cognome = r[1]
-            if cf_warning:
-                display_cognome = f"⚠️ {r[1]}"
+            inactivation_val = 30 - diff_days if diff_days is not None else None
+            display_cognome = f"⚠️ {r[1]}" if cf_warning else r[1]
 
-            # Costruiamo la riga "Mega" che contiene colonne visibili (0-6) e dati extra (7-9)
-            # 0:scad, 1:id_ris, 2:disp_cog, 3:nome, 4:cf, 5:badge, 6:assunz | 7:nascita, 8:created, 9:real_cog
-            master_rows.append([
-                inactivation_val, # 0
-                r[0],             # 1 (id_risorsa)
-                display_cognome,  # 2
-                r[2],             # 3 (nome)
-                r[7],             # 4 (codice_fiscale)
-                r[4],             # 5 (badge)
-                r[5],             # 6 (data_assunzione)
-                r[3],             # 7 (data_nascita)
-                r[6],             # 8 (created_at)
-                r[1]              # 9 (cognome pulito)
-            ])
-            
+            # Costruiamo la riga
+            master_rows.append(
+                [
+                    inactivation_val,  # 0
+                    r[0],  # 1 (id_risorsa)
+                    display_cognome,  # 2
+                    r[2],  # 3 (nome)
+                    r[7],  # 4 (codice_fiscale)
+                    r[4],  # 5 (badge)
+                    r[5],  # 6 (data_assunzione)
+                    r[3],  # 7 (data_nascita)
+                    r[6],  # 8 (created_at)
+                    r[1],  # 9 (cognome pulito)
+                ]
+            )
+
         # Aggiorna UI Cards
         self.card_ok.setValue(count_ok)
         self.card_warning.setValue(count_warning)
