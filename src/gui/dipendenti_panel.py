@@ -5,6 +5,7 @@ Visualizzazione e gestione dell'anagrafica dipendenti.
 
 import csv
 import logging
+import re
 from contextlib import suppress
 from datetime import datetime
 
@@ -678,7 +679,7 @@ class DipendentiPanel(QWidget):
         # Usiamo una ricerca flessibile per gestire sdoppiamenti nel DB
         query = """
             SELECT data FROM timbrature
-            WHERE UPPER(REPLACE(REPLACE(TRIM(cognome), '  ', ' '), '  ', ' ')) = ? 
+            WHERE UPPER(REPLACE(REPLACE(TRIM(cognome), '  ', ' '), '  ', ' ')) = ?
               AND UPPER(REPLACE(REPLACE(TRIM(nome), '  ', ' '), '  ', ' ')) = ?
             ORDER BY data DESC LIMIT 1
         """
@@ -960,7 +961,7 @@ class DipendentiPanel(QWidget):
         # Recuperiamo tutte le timbrature per processarle con normalizzazione
         query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
-        
+
         # Reuse existing helper to build maps
         last_by_cf, last_by_name, normalize = self._build_timbrature_maps(accessi)
 
@@ -971,9 +972,13 @@ class DipendentiPanel(QWidget):
 
         for r in full_rows:
             # Calcola stato usando helper esistente
-            diff_days, cf_warning, cog_val, nom_val, cf_val = self._compute_employee_status(
-                r, last_by_cf, last_by_name, normalize
-            )
+            (
+                diff_days,
+                cf_warning,
+                cog_val,
+                nom_val,
+                cf_val,
+            ) = self._compute_employee_status(r, last_by_cf, last_by_name, normalize)
 
             # --- Aggiorna Contatori (TOTALE) ---
             if diff_days is not None:
@@ -990,7 +995,9 @@ class DipendentiPanel(QWidget):
                     continue
                 if self.current_filter == "ok" and diff_days > 20:
                     continue
-                elif self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30):
+                elif self.current_filter == "warning" and (
+                    diff_days <= 20 or diff_days > 30
+                ):
                     continue
                 elif self.current_filter == "expired" and diff_days <= 30:
                     continue

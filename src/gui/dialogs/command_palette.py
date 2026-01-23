@@ -53,6 +53,13 @@ class CommandPaletteDialog(QDialog):
         self.navigation_stack = []  # Stack di (Label, Nodes) per tornare indietro
         self.breadcrumb_path = []  # Lista stringhe breadcrumb
 
+        # Input Mode State
+        self._input_mode = False
+        self._input_prompts = []
+        self._input_callback = None
+        self._input_answers = []
+        self._input_index = 0
+
         self._setup_ui()
         self._populate_list(self.current_nodes)
 
@@ -69,74 +76,66 @@ class CommandPaletteDialog(QDialog):
             10, 10, self.target_width - 20, self.target_height - 20
         )
 
-        # Colors
-        bg_color = "#1e1e1e"
-        input_bg = "#3c3c3c"
-        text_color = "#cccccc"
-        border_color = "#454545"
+        # Colors - Modern Dark Theme
+        bg_color = "rgba(32, 33, 36, 0.98)"  # Deep unified background
+        text_color = "#e8eaed"
+        accent_color = "#8ab4f8"  # Google Blue-ish / VSCode Blue
 
         self.container.setObjectName("MainContainer")
         self.container.setStyleSheet(
             f"""
             QWidget#MainContainer {{
                 background-color: {bg_color};
-                border: 1px solid {border_color};
-                border-radius: 6px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
                 color: {text_color};
             }}
             QLabel {{ border: none; background: transparent; }}
         """
         )
 
-        # Shadow
+        # Shadow (Subtler, deeper)
         shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(25)
+        shadow.setBlurRadius(40)
         shadow.setXOffset(0)
-        shadow.setYOffset(10)
-        shadow.setColor(QColor(0, 0, 0, 150))
+        shadow.setYOffset(20)
+        shadow.setColor(QColor(0, 0, 0, 180))
         self.container.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(self.container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # --- Breadcrumb Area (NEW) ---
+        # --- Breadcrumb ---
         self.breadcrumb_lbl = QLabel(">")
         self.breadcrumb_lbl.setStyleSheet(
-            "color: #007fd4; font-weight: bold; padding: 5px 10px; font-family: 'Consolas', monospace;"
+            f"color: {accent_color}; font-weight: 600; padding: 12px 20px 4px 20px; font-size: 13px; font-family: 'Segoe UI', sans-serif;"
         )
         self.breadcrumb_lbl.setVisible(False)
         layout.addWidget(self.breadcrumb_lbl)
 
         # --- Search Bar Area ---
         search_container = QWidget()
-        search_container.setStyleSheet(
-            f"""
-            background-color: {input_bg};
-            border-top-left-radius: 6px; # Se Breadcrumb visibile, questo cambia
-            border-top-right-radius: 6px;
-            padding: 5px;
-            border-bottom: 1px solid {border_color};
-        """
-        )
+        search_container.setStyleSheet("background: transparent; border: none;")
         search_layout = QVBoxLayout(search_container)
-        search_layout.setContentsMargins(8, 0, 8, 5)
+        search_layout.setContentsMargins(15, 15, 15, 15)
 
         self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("> Type to search...")
+        self.search_bar.setPlaceholderText("Type a command...")
         self.search_bar.setStyleSheet(
             f"""
             QLineEdit {{
-                background-color: #3c3c3c;
+                background-color: transparent;
                 color: {text_color};
-                border: 1px solid transparent;
+                border: none;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.1);
                 font-family: 'Segoe UI', sans-serif;
-                font-size: 14px;
-                padding: 4px;
+                font-size: 20px;
+                padding: 8px 4px;
+                selection-background-color: {accent_color};
             }}
             QLineEdit:focus {{
-                border: 1px solid #007fd4;
-                background-color: #252526;
+                border-bottom: 2px solid {accent_color};
             }}
         """
         )
@@ -233,13 +232,25 @@ class CommandPaletteDialog(QDialog):
         self.is_closing = False
         try:
             self.anim.finished.disconnect(self._finish_close)
-        except:
+        except Exception:
             pass
         self.closed.emit()
 
     def eventFilter(self, obj, event):
         if obj == self.search_bar and event.type() == event.Type.KeyPress:
             key = event.key()
+
+            # --- INPUT MODE HANDLING ---
+            if self._input_mode:
+                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+                    self._submit_input_step()
+                    return True
+                elif key == Qt.Key.Key_Escape:
+                    self._cancel_input_mode()
+                    return True
+                return False  # Let normal typing happen
+            # ---------------------------
+
             if key == Qt.Key.Key_Down:
                 idx = self.list_widget.currentRow()
                 if idx < self.list_widget.count() - 1:
@@ -274,6 +285,57 @@ class CommandPaletteDialog(QDialog):
                 return True
 
         return super().eventFilter(obj, event)
+
+    def _start_input_mode(self, node: CommandNode):
+        """Avvia la modalità input per il nodo selezionato."""
+        self._input_mode = True
+        self._input_prompts = node.input_prompts
+        self._input_callback = node.on_input_complete
+        self._input_answers = []
+        self._input_index = 0
+
+        self.list_widget.setVisible(False)
+        self.breadcrumb_lbl.setVisible(True)
+        self.breadcrumb_lbl.setText(f"> {node.label}")  # Show Context
+        self._show_next_prompt()
+
+    def _show_next_prompt(self):
+        if self._input_index < len(self._input_prompts):
+            prompt = self._input_prompts[self._input_index]
+            self.search_bar.setText("")
+            self.search_bar.setPlaceholderText(
+                f"{prompt} (Invio per confermare, Esc per annullare)"
+            )
+            self.search_bar.setFocus()
+        else:
+            # Finished
+            self._finish_input_mode()
+
+    def _submit_input_step(self):
+        val = self.search_bar.text().strip()
+        if not val:
+            return  # Block empty? Or allow empty? Let's block empty for now.
+
+        self._input_answers.append(val)
+        self._input_index += 1
+        self._show_next_prompt()
+
+    def _finish_input_mode(self):
+        if self._input_callback:
+            try:
+                self._input_callback(self._input_answers)
+            except Exception as e:
+                print(f"Error in input callback: {e}")
+
+        self.hide_animated()
+
+    def _cancel_input_mode(self):
+        """Esce dalla modalità input e torna alla lista."""
+        self._input_mode = False
+        self.list_widget.setVisible(True)
+        self.search_bar.setText("")
+        self._update_breadcrumb_ui()
+        self.search_bar.setFocus()
 
     def _navigate_down(self, node: CommandNode):
         """Entra in un sottomenu."""
@@ -311,13 +373,13 @@ class CommandPaletteDialog(QDialog):
     def _update_breadcrumb_ui(self):
         if not self.breadcrumb_path:
             self.breadcrumb_lbl.setVisible(False)
-            self.search_bar.setPlaceholderText("> Type to search...")
+            self.search_bar.setPlaceholderText("> Cerca...")
         else:
             self.breadcrumb_lbl.setVisible(True)
             path_str = " > ".join(self.breadcrumb_path)
             self.breadcrumb_lbl.setText(f"> {path_str}")
             self.search_bar.setPlaceholderText(
-                f"Search inside {self.breadcrumb_path[-1]}..."
+                f"Cerca dentro {self.breadcrumb_path[-1]}..."
             )
 
     def _populate_list(self, nodes: list[CommandNode]):
@@ -375,24 +437,74 @@ class CommandPaletteDialog(QDialog):
         self.list_widget.setItemWidget(item, widget)
 
     def _filter_list(self, text):
-        search = text.lower()
-        self.list_widget.clear()
-        # Filtra solo i nodi correnti
-        filtered = [
-            n
-            for n in self.current_nodes
-            if search in n.label.lower() or search in n.description.lower()
-        ]
-        for n in filtered:
-            self._add_item(n)
-        if self.list_widget.count() > 0:
-            self.list_widget.setCurrentRow(0)
+        try:
+            if self._input_mode:
+                return
+
+            search = text.lower().strip()
+            print(f"DEBUG PALETTE: Searching for '{search}'...")
+
+            self.list_widget.clear()
+
+            # Se vuoto, mostra la vista corrente (navigazione gerarchica)
+            if not search:
+                # Restore UI state
+                self._update_breadcrumb_ui()
+                self._populate_list(self.current_nodes)
+                return
+
+            # Hide breadcrumb in flat search mode
+            self.breadcrumb_lbl.setVisible(False)
+
+            # Se c'è testo, cerca ricorsivamente in TUTTO l'albero (vista piatta)
+            results = []
+            self._collect_all_nodes(self.root_nodes, search, results)
+            print(f"DEBUG PALETTE: Found {len(results)} matches for '{search}'")
+
+            for n in results:
+                self._add_item(n)
+
+            if self.list_widget.count() > 0:
+                self.list_widget.setCurrentRow(0)
+            else:
+                # Optional: Show "No results" item?
+                pass
+        except Exception as e:
+            print(f"ERROR in _filter_list: {e}")
+            import traceback
+
+            traceback.print_exc()
+
+    def _collect_all_nodes(self, nodes, search, results):
+        """Raccoglie ricorsivamente tutti i nodi che matchano la ricerca."""
+        for node in nodes:
+            # Check match su label o description
+            match = (search in node.label.lower()) or (
+                node.description and search in node.description.lower()
+            )
+
+            # Se è una foglia (azione) ed è un match, aggiungi
+            # Se è un menu (folder), aggiungi SOLO se matcha il nome del menu
+            # Ma vogliamo cercare anche DENTRO i menu
+
+            if match:
+                results.append(node)
+
+            # Ricorsione sui figli (se ci sono)
+            children = node.get_children()
+            if children:
+                self._collect_all_nodes(children, search, results)
 
     def _execute_selected(self):
         item = self.list_widget.currentItem()
         if not item:
             return
         node: CommandNode = item.data(Qt.ItemDataRole.UserRole)
+
+        # Check Input Mode
+        if node.input_prompts:
+            self._start_input_mode(node)
+            return
 
         if node.is_leaf:
             # Esegui Azione

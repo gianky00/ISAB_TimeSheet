@@ -268,12 +268,13 @@ class NavigationController(QObject):
         if panel_key in bot_map:
             main_idx, sub_idx = bot_map[panel_key]
             self.navigate_to(1, sub_index=main_idx)  # AUTOMAZIONI
-            if hasattr(self.mw, "automazioni_widget"):
-                self.mw.automazioni_widget.setCurrentIndex(main_idx)
-                if main_idx == 0 and hasattr(self.mw, "tab_fornitori"):
-                    self.mw.tab_fornitori.setCurrentIndex(sub_idx)
-                elif main_idx == 1 and hasattr(self.mw, "tab_safework"):
-                    self.mw.tab_safework.setCurrentIndex(sub_idx)
+
+            # Recupera il widget automazioni (ora dovrebbe essere inizializzato)
+            auto_widget = getattr(self.mw, "automazioni_widget", None)
+
+            if auto_widget:
+                # Usa il metodo dedicato che include logging e refresh
+                auto_widget.set_active_tab(main_idx, sub_idx)
             return
 
         db_map = {

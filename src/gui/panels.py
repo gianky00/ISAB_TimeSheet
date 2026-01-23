@@ -251,6 +251,15 @@ class BaseBotPanel(QWidget):
         """
         return True, ""
 
+    def run_externally(self, params: Dict[str, Any] = None):
+        """
+        Avvia il bot programmaticamente con parametri opzionali che sovrascrivono quelli UI.
+
+        Args:
+            params: Dizionario di parametri da sovrascrivere (es. {'data_da': '01.01.2025'}).
+        """
+        self._on_start(params_override=params)
+
     def add_rows_simple(self, new_rows: list):
         """Aggiunge righe alla tabella dati esistente (se presente)."""
         if hasattr(self, "data_table"):
@@ -273,7 +282,7 @@ class BaseBotPanel(QWidget):
             return len(self.data_table.get_data())
         return 0
 
-    def _on_start(self):
+    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
         """Gestisce l'avvio del bot. Da implementare nelle sottoclassi."""
         self.start_time = datetime.now()
         self.log_widget.timeline.set_mood("running")
@@ -559,16 +568,38 @@ class ScaricaTSPanel(BaseBotPanel):
             return False, "Nessun dato OdA inserito in tabella."
         return True, ""
 
-    def _on_start(self):
+    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
         """Avvia il bot."""
-        super()._on_start()
+        # Chiamiamo super senza argomenti (il BaseBotPanel._on_start che abbiamo appena modificato
+        # si aspetta params_override ma qui non serve passarglielo, serve solo per il log/stato).
+        super()._on_start(params_override)
 
         username, password = self.get_credentials()
         data = self.data_table.get_data()
         fornitore = self.params_widget.get_fornitore()
+
+        # Default behavior: get dates from UI
         data_da, _ = self.params_widget.get_dates()
 
-        self._save_data()
+        # Handle Overrides
+        if params_override:
+            if "data_da" in params_override:
+                data_da = params_override["data_da"]
+                self.log_widget.append(f"ℹ️ Override Data Inizio: {data_da}")
+
+            # Single Shot Execution Override
+            if "single_item" in params_override:
+                item = params_override[
+                    "single_item"
+                ]  # Expect dict like {"Numero OdA": "...", ...}
+                if item:
+                    data = [item]
+                    self.log_widget.append(
+                        f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}"
+                    )
+
+        if not params_override:
+            self._save_data()
 
         bot = self.get_bot_instance()
 
@@ -734,8 +765,8 @@ class DettagliOdAPanel(BaseBotPanel):
 
         return True, ""
 
-    def _on_start(self):
-        super()._on_start()
+    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+        super()._on_start(params_override)
 
         username, password = self.get_credentials()
         fornitore = self.params_widget.get_fornitore()
@@ -745,6 +776,23 @@ class DettagliOdAPanel(BaseBotPanel):
         )
 
         rows = self.data_table.get_data()
+
+        # Override logic
+        if params_override:
+            if "data_da" in params_override:
+                data_da = params_override["data_da"]
+            if "data_a" in params_override:
+                data_a = params_override["data_a"]
+
+            # Single Shot
+            if "single_item" in params_override:
+                item = params_override["single_item"]
+                if item:
+                    rows = [item]
+                    self.log_widget.append(
+                        f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}"
+                    )
+
         self.log_widget.append(f"[DEBUG] Rows retrieved: {len(rows)}")
 
         if not all([username, password, fornitore]):
@@ -754,7 +802,8 @@ class DettagliOdAPanel(BaseBotPanel):
             self.stop_btn.setEnabled(False)
             return
 
-        self._save_data()
+        if not params_override:
+            self._save_data()
 
         from src.bots import create_bot
 
@@ -900,12 +949,17 @@ class PrenotaBPPanel(BaseBotPanel):
             self.data_table.set_data([])
             self._save_data()
 
-    def _on_start(self):
+    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
         """Override: Prepara e avvia il worker specifico."""
+        super()._on_start(params_override)  # Call base to handle logs/status logic
+
         # Validazione form
         ready, msg = self.validate_ready()
         if not ready:
             QMessageBox.warning(self, "Attenzione", msg)
+            self._update_status("#C62828", "Validazione fallita")
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
             return
 
         # Recupera dati e configura bot
@@ -916,6 +970,25 @@ class PrenotaBPPanel(BaseBotPanel):
 
         fornitore = self.params_widget.get_fornitore()
         date_da, date_a = self.params_widget.get_dates()
+
+        # Handle Overrides
+        rows = self.data_table.get_data()
+        if params_override:
+            if "fornitore" in params_override:
+                fornitore = params_override["fornitore"]
+            if "data_da" in params_override:
+                date_da = params_override["data_da"]
+            if "data_a" in params_override:
+                date_a = params_override["data_a"]
+
+            # Single Shot
+            if "single_item" in params_override:
+                item = params_override["single_item"]
+                if item:
+                    rows = [item]
+                    self.log_widget.append(
+                        f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}"
+                    )
 
         bot = PrenotaBPBot(
             username=username,
@@ -928,7 +1001,7 @@ class PrenotaBPPanel(BaseBotPanel):
         )
 
         bot_data = {
-            "rows": self.data_table.get_data(),
+            "rows": rows,
             "fornitore": fornitore,
             "data_da": date_da,
             "data_a": date_a,
@@ -1064,9 +1137,9 @@ class CaricoTSPanel(BaseBotPanel):
         data = self.data_table.get_data()
         config_manager.set_config_value("last_carico_ts_data", data)
 
-    def _on_start(self):
+    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
         """Avvia il bot Carico TS."""
-        super()._on_start()
+        super()._on_start(params_override)
         username, password = self.get_credentials()
 
         if not username or not password:
@@ -1342,14 +1415,26 @@ class ScaricoPDLPanel(BaseBotPanel):
         default_acc = next((a for a in accounts if a.get("default")), accounts[0])
         return default_acc.get("username", ""), default_acc.get("password", "")
 
-    def _on_start(self):
-        super()._on_start()
+    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+        super()._on_start(params_override)
         username, password = self.get_credentials()
 
-        if not self._validate_pdl_start(username, password):
-            return
+        # Handle overrides for validation skipping if needed, or just row processing
+        rows = self.data_table.get_data()
 
-        bot_data = self._prepare_bot_data()
+        if params_override and "single_item" in params_override:
+            # Bypass table validation if single item provided
+            item = params_override["single_item"]
+            if item:
+                rows = [item]
+                self.log_widget.append(
+                    f"ℹ️ Esecuzione singola per PDL: {item.get('numero_pdl', 'N/D')}"
+                )
+        else:
+            if not self._validate_pdl_start(username, password):
+                return
+
+        bot_data = self._prepare_bot_data(rows)
         bot = self._create_pdl_bot(username, password)
         if not bot:
             return
@@ -1384,7 +1469,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             return False
         return True
 
-    def _prepare_bot_data(self) -> List[dict]:
+    def _prepare_bot_data(self, rows: list) -> List[dict]:
         """Prepara il payload per il bot."""
         print_enabled = self.print_check.isChecked()
         printer_name = self.printer_combo.currentText()
@@ -1394,7 +1479,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         )
 
         bot_data = []
-        for row in self.data_table.get_data():
+        for row in rows:
             pdl_val = row.get("numero_pdl", "")
             if pdl_val:
                 bot_data.append(
@@ -2067,26 +2152,64 @@ class TimbratureBotPanel(BaseBotPanel):
             return False, "Nessun fornitore selezionato."
         return True, ""
 
-    def _on_start(self):
+    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
         """Avvia il bot Timbrature."""
-        super()._on_start()
+        # print(f"[DEBUG] TimbratureBotPanel._on_start called. params_override={params_override}")
+        self.log_widget.append(f"DEBUG: Start requested. Override={params_override}")
+        super()._on_start(params_override)
+
+        # FIX RACE CONDITION: Se i dati non sono ancora caricati (es. avvio immediato da Palette), caricali ora.
+        if hasattr(self, "params_widget") and not self.params_widget.get_fornitore():
+            self.log_widget.append("DEBUG: Forcing data load (Race Condition Fix)")
+            self._load_saved_data()
+
         username, password = self.get_credentials()
+        # print(f"[DEBUG] Credentials: user={username}, pwd={'*' if password else 'None'}")
+
         fornitore = self.params_widget.get_fornitore()
+        # print(f"[DEBUG] Fornitore from widget: {fornitore}")
+        data_da, data_a = self.params_widget.get_dates()
+
+        # OVERRIDES
+        if params_override:
+            # print("[DEBUG] Applying overrides...")
+            if "fornitore" in params_override:
+                fornitore = params_override["fornitore"]
+            if "data_da" in params_override:
+                data_da = params_override["data_da"]
+            if "data_a" in params_override:
+                data_a = params_override["data_a"]
+            if "data_range" in params_override:  # Supporto per singolo campo range
+                # Se necessario gestire logica qui
+                pass
+
+        self.log_widget.append(
+            f"DEBUG: Params -> Fornitore: {fornitore}, Utente: {username}"
+        )
 
         if not all([username, password, fornitore]):
-            ToastManager.instance().show("Verifica i parametri.", "warning")
+            self.log_widget.append(
+                f"DEBUG: Missing Params! User: {bool(username)}, Pwd: {bool(password)}, Forn: {bool(fornitore)}"
+            )
+
+            # If running externally, maybe we can fallback to default config if UI is empty?
+            # But normally params_override or UI should provide it.
+            ToastManager.instance().show(
+                "Verifica i parametri (Fornitore mancante).", "warning"
+            )
             self._update_status("#C62828", "Parametri incompleti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             return
 
-        self._save_data()
-
-        data_da, data_a = self.params_widget.get_dates()
+        # Only save checks if NOT running external override to avoid overwriting user prefs with temp runs
+        if not params_override:
+            self._save_data()
 
         from src.bots import create_bot
 
         config = config_manager.load_config()
+        self.log_widget.append("DEBUG: Creating bot...")
         bot = create_bot(
             "timbrature",
             username=username,
@@ -2100,8 +2223,11 @@ class TimbratureBotPanel(BaseBotPanel):
         )
 
         if not bot:
+            self.log_widget.append("DEBUG: Bot creation failed!")
             ToastManager.instance().show("Errore creazione bot.", "error")
             return
+
+        # print("[DEBUG] Bot created successfully. Starting worker...")
 
         bot_data = {"fornitore": fornitore, "data_da": data_da, "data_a": data_a}
 
@@ -2119,6 +2245,7 @@ class TimbratureBotPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append(f"Avvio bot Timbrature ({fornitore})")
         self.worker.start()
+        # print("[DEBUG] Worker started.")
         self.bot_started.emit()
 
     def _on_worker_finished_custom(self, success: bool):
@@ -2401,7 +2528,7 @@ class TimbratureDBPanel(QWidget):
                                 break
                             except ValueError:
                                 continue
-                    except:
+                    except Exception:
                         pass
 
                 self.detail_labels[h].setText(val)

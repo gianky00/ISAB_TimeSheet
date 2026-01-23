@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QTimer
+from PyQt6.QtCore import QDate, QEasingCurve, QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
@@ -349,8 +349,13 @@ class MainWindow(QMainWindow):
         # Connect Autopilot Real-time updates
         if hasattr(self, "timbrature_bot_panel"):
             with suppress(Exception):
+                # Autopilot signal
                 self.timbrature_bot_panel.autopilot_changed.connect(
                     self._update_autopilot_status_ui
+                )
+                # Status signal (Feedback in Footer)
+                self.timbrature_bot_panel.status_changed.connect(
+                    lambda color, msg: self.footer_right.set_status(msg, color)
                 )
 
         # Monitoraggio Abilitazioni ISAB (Proattivo)
@@ -673,162 +678,180 @@ class MainWindow(QMainWindow):
                 # Import Icons here if not available globally in this scope or ensure constants is imported
                 from src.core.constants import Icons
 
-                # 1. RUN (Execution Flow)
-                # 1. RUN (Execution Flow)
+                # 1. ESEGUI (Execution Flow)
                 menu_run = CommandNode(
-                    "Run...",
+                    "Esegui...",
                     "Avvia bot e task automatici",
                     Icons.PLAY,
                     children=[
+                        # --- Timbrature (Attendance) ---
                         CommandNode(
                             "Scarica Timbrature",
-                            "Portale Fornitori: Scarico presenze",
+                            "Portale Fornitori: Presenze",
                             Icons.CLOCK,
                             children=[
                                 CommandNode(
                                     "Oggi",
                                     "Scarica solo oggi",
                                     Icons.CALENDAR,
-                                    action=lambda: self.status_bar.showMessage(
-                                        "Bot Started: Today..."
-                                    ),
+                                    action=lambda: self._run_timbrature_bot("oggi")
+                                    if hasattr(self, "_run_timbrature_bot")
+                                    else None,
                                 ),
                                 CommandNode(
                                     "Ieri",
                                     "Scarica giornata di ieri",
                                     Icons.CLOCK,
-                                    action=lambda: self.status_bar.showMessage(
-                                        "Bot Started: Yesterday..."
-                                    ),
+                                    action=lambda: self._run_timbrature_bot("ieri")
+                                    if hasattr(self, "_run_timbrature_bot")
+                                    else None,
                                 ),
                                 CommandNode(
                                     "Mese Corrente",
-                                    "Scarica tutto il mese",
+                                    "Dal 1° del mese ad oggi",
                                     Icons.CALENDAR,
-                                    action=lambda: self.status_bar.showMessage(
-                                        "Bot Started: Month..."
-                                    ),
+                                    action=lambda: self._run_timbrature_bot("mese")
+                                    if hasattr(self, "_run_timbrature_bot")
+                                    else None,
                                 ),
                             ],
                         ),
+                        # --- Scarico TS (Timesheets) ---
+                        CommandNode(
+                            "Scarico TS",
+                            "Portale Fornitori: Download Timesheets",
+                            Icons.DOWNLOAD,
+                            children=[
+                                CommandNode(
+                                    "Scarica singola OdA",
+                                    "Inserisci numero OdA manualmente",
+                                    Icons.EDIT,
+                                    input_prompts=["Inserisci Numero OdA"],
+                                    on_input_complete=self._on_scarico_ts_input,
+                                ),
+                                CommandNode(
+                                    "Esegui lista pannello",
+                                    "Processa le righe salvate nel pannello",
+                                    Icons.PLAY,
+                                    action=lambda: self.scarico_panel.run_externally({})
+                                    if hasattr(self, "scarico_panel")
+                                    else None,
+                                ),
+                            ],
+                        ),
+                        # --- Dettagli OdA ---
+                        CommandNode(
+                            "Dettagli OdA",
+                            "Portale Fornitori: Dettagli Ordini",
+                            Icons.LIST,
+                            input_prompts=["Inserisci Numero OdA"],
+                            on_input_complete=self._on_dettagli_oda_input,
+                        ),
+                        # --- Prenota BP (Badges) ---
+                        CommandNode(
+                            "Prenota BP",
+                            "Portale Fornitori: Prenotazione Badge",
+                            Icons.TICKET,
+                            input_prompts=["Inserisci Numero BP"],
+                            on_input_complete=self._on_prenota_bp_input,
+                        ),
+                        # --- Carico TS ---
+                        CommandNode(
+                            "Carico TS",
+                            "Portale Fornitori: Upload Timesheets",
+                            Icons.UPLOAD,
+                            action=self._run_carico_ts,
+                        ),
+                        # --- SafeWork PDL ---
+                        CommandNode(
+                            "Scarico PDL",
+                            "SafeWork: Download Permessi",
+                            Icons.SHIELD,
+                            input_prompts=["Inserisci Numero PDL"],
+                            on_input_complete=self._on_pdl_input,
+                        ),
+                        # --- Utility ---
                         CommandNode(
                             "Sincronizza DataEase",
                             "Scarico ore e quadrature",
                             Icons.DATABASE,
-                            action=lambda: self._navigate_to(PageIndex.DATAEASE),
+                            action=self._run_sync_dataease,
                         ),
                         CommandNode(
-                            "Check Scadenze",
-                            "Verifica abilitazioni ISAB in scadenza",
-                            Icons.SHIELD,
-                            action=self._check_isab_authorizations,
-                        ),
-                        CommandNode(
-                            "Backup Now",
-                            "Esegui backup immediato configurazione",
-                            Icons.SAVE,
-                            action=BackupManager.create_backup,
+                            "Sincronizza Strumentale",
+                            "Aggiorna Contabilità e OdA",
+                            Icons.FOLDER,
+                            action=self._run_sync_strumentale,
                         ),
                     ],
                 )
 
                 # 2. GO (Navigation Flow)
                 menu_go = CommandNode(
-                    "Go to...",
+                    "Vai a...",
                     "Navigazione rapida pannelli",
                     Icons.GLOBE,
                     children=[
                         CommandNode(
-                            "General",
-                            children=[
-                                CommandNode(
-                                    "Dashboard",
-                                    "KPI e Stato",
-                                    Icons.ACTIVITY,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.DASHBOARD
-                                    ),
-                                ),
-                                CommandNode(
-                                    "Notifiche & Audit",
-                                    "Log sistema",
-                                    Icons.BELL,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.NOTIFICATIONS
-                                    ),
-                                ),
-                                CommandNode(
-                                    "Assistente AI",
-                                    "Lyra",
-                                    Icons.SPARKLES,
-                                    action=lambda: self._navigate_to(PageIndex.LYRA),
-                                ),
-                            ],
+                            "Dashboard",
+                            "KPI e Stato",
+                            Icons.ACTIVITY,
+                            action=lambda: self._navigate_to(PageIndex.DASHBOARD),
                         ),
                         CommandNode(
-                            "Moduli",
-                            children=[
-                                CommandNode(
-                                    "Timbrature",
-                                    "Gestione Presenze",
-                                    Icons.CLOCK,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.TIMBRATURE
-                                    ),
-                                ),
-                                CommandNode(
-                                    "Strumentale",
-                                    "Contabilità & OdA",
-                                    Icons.FOLDER,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.STRUMENTALE
-                                    ),
-                                ),
-                                CommandNode(
-                                    "Dipendenti",
-                                    "Anagrafica Risorse",
-                                    Icons.USERS,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.DIPENDENTI
-                                    ),
-                                ),
-                                CommandNode(
-                                    "Storico OdA",
-                                    "Database Ordini",
-                                    Icons.ARCHIVE,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.STORICO_ODA
-                                    ),
-                                ),
-                            ],
+                            "Notifiche & Audit",
+                            "Log sistema",
+                            Icons.BELL,
+                            action=lambda: self._navigate_to(PageIndex.NOTIFICATIONS),
                         ),
                         CommandNode(
-                            "System",
-                            children=[
-                                CommandNode(
-                                    "Impostazioni",
-                                    "Configurazione",
-                                    Icons.SETTINGS_DARK,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.SETTINGS
-                                    ),
-                                ),
-                                CommandNode(
-                                    "Automazioni",
-                                    "Scheduler",
-                                    Icons.SMART_TOY,
-                                    action=lambda: self._navigate_to(
-                                        PageIndex.AUTOMAZIONI
-                                    ),
-                                ),
-                            ],
+                            "Assistente AI",
+                            "Lyra",
+                            Icons.SPARKLES,
+                            action=lambda: self._navigate_to(PageIndex.LYRA),
+                        ),
+                        CommandNode(
+                            "Timbrature",
+                            "Gestione Presenze",
+                            Icons.CLOCK,
+                            action=lambda: self._navigate_to(PageIndex.TIMBRATURE),
+                        ),
+                        CommandNode(
+                            "Strumentale",
+                            "Contabilità & OdA",
+                            Icons.FOLDER,
+                            action=lambda: self._navigate_to(PageIndex.STRUMENTALE),
+                        ),
+                        CommandNode(
+                            "Dipendenti",
+                            "Anagrafica Risorse",
+                            Icons.USERS,
+                            action=lambda: self._navigate_to(PageIndex.DIPENDENTI),
+                        ),
+                        CommandNode(
+                            "Storico OdA",
+                            "Database Ordini",
+                            Icons.ARCHIVE,
+                            action=lambda: self._navigate_to(PageIndex.STORICO_ODA),
+                        ),
+                        CommandNode(
+                            "Impostazioni",
+                            "Configurazione",
+                            Icons.SETTINGS_DARK,
+                            action=lambda: self._navigate_to(PageIndex.SETTINGS),
+                        ),
+                        CommandNode(
+                            "Automazioni",
+                            "Scheduler",
+                            Icons.SMART_TOY,
+                            action=lambda: self._navigate_to(PageIndex.AUTOMAZIONI),
                         ),
                     ],
                 )
 
                 # 3. SET (Settings & Utilities)
                 menu_set = CommandNode(
-                    "System...",
+                    "Sistema...",
                     "Strumenti tecnici e opzioni",
                     Icons.TERMINAL,
                     children=[
@@ -905,7 +928,6 @@ class MainWindow(QMainWindow):
                     # --- 1. COMANDI DI FLUSSO (Menu) ---
                     menu_run,  # "Run..."
                     menu_go,  # "Go to..."
-                    menu_set,  # "System..."
                     menu_help,  # "Help..."
                     # --- 2. SHORTCUT DIRETTI (Top Level per velocità) ---
                     # Navigazione Frequente
@@ -931,26 +953,7 @@ class MainWindow(QMainWindow):
                         action=lambda: self._navigate_to(PageIndex.DATAEASE),
                     ),
                     # Azioni Rapide
-                    CommandNode(
-                        "Aggiorna (F5)",
-                        "Ricarica pagina corrente",
-                        Icons.REFRESH,
-                        shortcut="F5",
-                        action=self._handle_f5,
-                    ),
-                    CommandNode(
-                        "Ricerca Universale",
-                        "Cerca ovunque",
-                        Icons.SEARCH,
-                        shortcut="Ctrl+F",
-                        action=self._handle_ctrl_f,
-                    ),
-                    CommandNode(
-                        "Backup Configurazione",
-                        "Crea snapshot immediato",
-                        Icons.SAVE,
-                        action=BackupManager.create_backup,
-                    ),
+                    menu_set,  # "System..." (Spostato qui)
                     CommandNode(
                         "Esci",
                         "Chiudi applicazione",
@@ -1272,3 +1275,126 @@ class MainWindow(QMainWindow):
         if self.isVisible():
             self.hide()
             event.ignore()
+
+    # --- Quick Action Helpers (Callbacks) ---
+    # --- Quick Action Helpers (Callbacks) ---
+    def _on_scarico_ts_input(self, args: list):
+        if not args or not args[0]:
+            return
+        # Assicura navigazione al tab corretto
+        self.navigation_controller.navigate_to_panel("scarico_ts")
+        # Esegue azione
+        if hasattr(self, "scarico_panel"):
+            QTimer.singleShot(
+                200,
+                lambda: self.scarico_panel.run_externally(
+                    {"single_item": {"numero_oda": args[0], "posizione_oda": ""}}
+                ),
+            )
+
+    def _on_dettagli_oda_input(self, args: list):
+        if not args or not args[0]:
+            return
+        self.navigation_controller.navigate_to_panel("dettagli_oda")
+        if hasattr(self, "dettagli_panel"):
+            QTimer.singleShot(
+                200,
+                lambda: self.dettagli_panel.run_externally(
+                    {"single_item": {"Numero OdA": args[0], "numero_oda": args[0]}}
+                ),
+            )
+
+    def _on_pdl_input(self, args: list):
+        if not args or not args[0]:
+            return
+        self.navigation_controller.navigate_to_panel("scarico_pdl")
+        if hasattr(self, "pdl_panel"):
+            QTimer.singleShot(
+                200,
+                lambda: self.pdl_panel.run_externally(
+                    {"single_item": {"numero_pdl": args[0]}}
+                ),
+            )
+
+    def _on_prenota_bp_input(self, args: list):
+        if not args or not args[0]:
+            return
+        self.navigation_controller.navigate_to_panel("prenota_bp")
+        if hasattr(self, "prenota_panel"):
+            QTimer.singleShot(
+                200,
+                lambda: self.prenota_panel.run_externally(
+                    {"single_item": {"numero_bp": args[0]}}
+                ),
+            )
+
+    def _run_carico_ts(self):
+        """Passa al tab Carico TS ed esegue."""
+        self.navigation_controller.navigate_to_panel("carico_ts")
+        if hasattr(self, "carico_panel"):
+            # Piccola delay per assicurare il render del tab
+            QTimer.singleShot(200, lambda: self.carico_panel.run_externally({}))
+
+    def _run_timbrature_bot(self, mode: str):
+        """Esegue il bot timbrature con feedback visivo immediato."""
+        # print(f"[DEBUG] _run_timbrature_bot CALLED with mode={mode}")
+        # 1. LAZY LOADING FORCE: Assicura che il pannello Automazioni sia caricato
+        if not hasattr(self, "timbrature_bot_panel"):
+            # print("[DEBUG] forcing lazy load of panel 1")
+            # PageIndex.AUTOMAZIONI = 1 (vedi NavigationController)
+            self.navigation_controller.get_panel(1)
+
+        # 2. Verifica esistenza (dovrebbe esserci ora)
+        if not hasattr(self, "timbrature_bot_panel"):
+            print("ERRORE: Impossibile caricare TimbratureBotPanel")
+            ToastManager.instance().show("DEBUG: Timbrature Panel NOT FOUND!", "error")
+            return
+        else:
+            # print(f"[DEBUG] Panel found: {self.timbrature_bot_panel}")
+            pass
+
+        # 3. LAZY SIGNAL CONNECTION: Connette i segnali se non è già stato fatto
+        if not getattr(self.timbrature_bot_panel, "_mw_signals_connected", False):
+            try:
+                # print("[DEBUG] Connecting signals...")
+                self.timbrature_bot_panel.status_changed.connect(
+                    lambda color, msg: self.footer_right.set_status(msg, color)
+                )
+                self.timbrature_bot_panel._mw_signals_connected = True
+            except Exception as e:
+                print(f"Errore connessione segnali Timbrature: {e}")
+                ToastManager.instance().show(f"DEBUG: Signal Error: {e}", "error")
+
+        data_da = QDate.currentDate().toString("dd.MM.yyyy")
+        data_a = QDate.currentDate().toString("dd.MM.yyyy")
+        label = "Oggi"
+
+        if mode == "ieri":
+            data_da = QDate.currentDate().addDays(-1).toString("dd.MM.yyyy")
+            data_a = QDate.currentDate().addDays(-1).toString("dd.MM.yyyy")
+            label = "Ieri"
+        elif mode == "mese":
+            data_da = QDate.currentDate().toString("01.MM.yyyy")
+            label = "Mese Corrente"
+
+        # Feedback Immediato
+        ToastManager.instance().show(
+            f"🚀 Avvio Timbrature ({label})...", "info", 2000, position="bottom_right"
+        )
+
+        # print(f"[DEBUG] Calling run_externally with dates: {data_da} - {data_a}")
+        self.timbrature_bot_panel.run_externally({"data_da": data_da, "data_a": data_a})
+
+    def _run_sync_dataease(self):
+        """Passa al pannello DataEase e avvia la sincronizzazione."""
+        self._navigate_to(PageIndex.DATAEASE)
+        # Il pannello è stato creato da navigate_to
+        if hasattr(self, "scarico_ore_panel"):
+            # Usa QTimer per dare tempo alla UI di aggiornarsi
+            QTimer.singleShot(500, self.scarico_ore_panel._start_update)
+
+    def _run_sync_strumentale(self):
+        """Passa al pannello Strumentale e avvia l'importazione."""
+        self._navigate_to(PageIndex.STRUMENTALE)
+        if hasattr(self, "contabilita_panel"):
+            QTimer.singleShot(500, self.contabilita_panel.start_import_process)
