@@ -145,9 +145,7 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with(
             [{"numero_pdl": "PDL002"}]
         )
-        self.mock_main_window.navigate_to_panel.assert_called_once_with(
-            "scarico_pdl"
-        )
+        self.mock_main_window.navigate_to_panel.assert_called_once_with("scarico_pdl")
         self.mock_telegram_service.send_message_sync.assert_called_with(
             "✅ Aggiunti/Impostati 1\nℹ️ 1 duplicati ignorati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
         )

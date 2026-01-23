@@ -299,8 +299,24 @@ class TestTimbratureDBPanel:
             mock_storage.return_value.get_timbrature_with_reparto.return_value = [
                 # 18 columns required (0-17)
                 (
-                    "2024-01-01", "08:00", "17:00", "A", "B", "S", "I", "R", "C",
-                    "F", "CR", "NB", "CQ", "SP", "SO", "DI", "Reparto", "Cantiere"
+                    "2024-01-01",
+                    "08:00",
+                    "17:00",
+                    "A",
+                    "B",
+                    "S",
+                    "I",
+                    "R",
+                    "C",
+                    "F",
+                    "CR",
+                    "NB",
+                    "CQ",
+                    "SP",
+                    "SO",
+                    "DI",
+                    "Reparto",
+                    "Cantiere",
                 )
             ]
             panel = TimbratureDBPanel()

@@ -478,7 +478,7 @@ class AuditManager:
             with sqlite3.connect(self.DB_PATH) as conn:
                 # SQLite 'date' function extracts YYYY-MM-DD from ISO string
                 query = """
-                    SELECT date(timestamp), status, count(*) 
+                    SELECT date(timestamp), status, count(*)
                     FROM audit_logs 
                     WHERE timestamp >= ? 
                     GROUP BY date(timestamp), status

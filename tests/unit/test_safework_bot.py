@@ -25,9 +25,7 @@ class TestSafeWorkPdlBot(unittest.TestCase):
         # Mock the Bot class that SafeWorkPdlBot inherits from or uses
         self.mock_bot_instance = MagicMock()
         self.mock_bot_instance.name = "scarico_pdl"  # Correct internal ID
-        self.mock_bot_instance.description = (
-            "Scarica e stampa PDL da SafeWork"
-        )
+        self.mock_bot_instance.description = "Scarica e stampa PDL da SafeWork"
         self.mock_bot_instance.run_bot.return_value = None  # Mocking the run_bot method
 
         # Create an instance of the bot, passing the mocked main window

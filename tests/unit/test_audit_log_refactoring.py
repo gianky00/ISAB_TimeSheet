@@ -57,7 +57,7 @@ def test_audit_refresh_population(audit_widget):
     # Check second row (Action is col 5)
     idx_error = model.index(1, 5)
     assert model.data(idx_error, 0) == "ERROR_OP"
-    
+
     # Verify background color for error row (BackgroundRole is 8)
     idx_bg = model.index(1, 0)
     bg_color = model.data(idx_bg, 8)

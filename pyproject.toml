@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "syncrojob"
-version = "1.5.0"
+version = "1.6.0"
 description = "ISAB TimeSheet application"
 authors = ["Giancarlo Allegretti"]
 packages = [
@@ -105,7 +105,7 @@ known_first_party = ["src"]
 
 [tool.codespell]
 skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*"
-ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato"
+ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo"
 check-filenames = true
 
 [tool.interrogate]
@@ -128,7 +128,7 @@ exclude = ["src/bots/safework/pdl/search_bot.py"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.5.0"
+version = "1.6.0"
 tag_format = "v$version"
 version_files = [
     "src/core/version.py:__version__",

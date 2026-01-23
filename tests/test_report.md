@@ -4,15 +4,18 @@
 **Duration:** 8546.45s
 
 ## Summary
-| Metric | Count |
-|---|---|
-| 🧪 Total | 1031 |
-| ✅ Passed | 942 |
-| ❌ Failed | 89 |
-| ⏩ Skipped | 0 |
+
+| Metric     | Count |
+| ---------- | ----- |
+| 🧪 Total   | 1031  |
+| ✅ Passed  | 942   |
+| ❌ Failed  | 89    |
+| ⏩ Skipped | 0     |
 
 ## ❌ Failures Details
+
 ### `tests/unit/test_audit_log_refactoring.py::test_audit_refresh_population`
+
 **Error:** `Unknown Error`
 
 <details><summary>Full Output</summary>
@@ -177,10 +180,13 @@ ERROR tests/unit/test_audit_log_refactoring.py::test_audit_refresh_population
 1 error in 6.11s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_audit_log_refactoring.py::test_integrity_display`
+
 **Error:** `Unknown Error`
 
 <details><summary>Full Output</summary>
@@ -341,14 +347,17 @@ src\utils\validators.py                                                 73     5
 TOTAL                                                                19063  15282    20%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-ERROR tests/unit/test_audit_log_refactoring.py::test_integrity_display - Valu...
+ERROR tests/unit/test_audit_log_refactoring.py::test_integrity_display - Value...
 1 error in 6.38s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_audit_manager_coverage_hardened.py::TestAuditManager::test_retention_policy`
+
 **Error:** `FAILED tests/unit/test_audit_manager_coverage_hardened.py::TestAuditManager::test_retention_policy`
 
 <details><summary>Full Output</summary>
@@ -358,9 +367,9 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ___________________ TestAuditManager.test_retention_policy ____________________
 tests\unit\test_audit_manager_coverage_hardened.py:69: in test_retention_policy
-    assert logs[0]["action"] == "Sistema"
-E   AssertionError: assert 'Pulizia Log' == 'Sistema'
-E     
+    assertt logs[0]["action"] == "Sistema"
+E   AsserttionError: assertt 'Pulizia Log' == 'Sistema'
+E
 E     - Sistema
 E     + Pulizia Log
 =============================== tests coverage ================================
@@ -510,10 +519,13 @@ FAILED tests/unit/test_audit_manager_coverage_hardened.py::TestAuditManager::tes
 1 failed in 5.82s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_backup_resilience.py::TestBackupResilience::test_detect_cloud_paths_onedrive`
+
 **Error:** `FAILED tests/unit/test_backup_resilience.py::TestBackupResilience::test_detect_cloud_paths_onedrive`
 
 <details><summary>Full Output</summary>
@@ -523,8 +535,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ____________ TestBackupResilience.test_detect_cloud_paths_onedrive ____________
 tests\unit\test_backup_resilience.py:99: in test_detect_cloud_paths_onedrive
-    assert paths["OneDrive"] == Path("C:\\Users\\Test\\OneDrive")
-E   AssertionError: assert WindowsPath('C:/Users/Coemi/OneDrive') == WindowsPath('C:/Users/Test/OneDrive')
+    assertt paths["OneDrive"] == Path("C:\\Users\\Test\\OneDrive")
+E   AsserttionError: assertt WindowsPath('C:/Users/Coemi/OneDrive') == WindowsPath('C:/Users/Test/OneDrive')
 E    +  where WindowsPath('C:/Users/Test/OneDrive') = Path('C:\\Users\\Test\\OneDrive')
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -673,10 +685,13 @@ FAILED tests/unit/test_backup_resilience.py::TestBackupResilience::test_detect_c
 1 failed in 8.61s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_bot_panels_deep_dive.py::TestTimbratureDBPanel::test_refresh_data`
+
 **Error:** `FAILED tests/unit/test_bot_panels_deep_dive.py::TestTimbratureDBPanel::test_refresh_data`
 
 <details><summary>Full Output</summary>
@@ -723,7 +738,7 @@ tests/unit/test_bot_panels_deep_dive.py::TestTimbratureDBPanel::test_refresh_dat
       ~~~^^^^
   IndexError: tuple index out of range
   ________________________________________________________________________________
-  
+
   For more information see https://pluggy.readthedocs.io/en/stable/api_reference.html#pluggy.PluggyTeardownRaisedWarning
     lambda: runtest_hook(item=item, **kwds),
 
@@ -876,10 +891,13 @@ ERROR tests/unit/test_bot_panels_deep_dive.py::TestTimbratureDBPanel::test_refre
 1 failed, 1 warning, 1 error in 10.00s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_bot_panels_final.py::TestBotPanelsFinal::test_timbrature_db_panel_refresh`
+
 **Error:** `FAILED tests/unit/test_bot_panels_final.py::TestBotPanelsFinal::test_timbrature_db_panel_refresh`
 
 <details><summary>Full Output</summary>
@@ -926,7 +944,7 @@ tests/unit/test_bot_panels_final.py::TestBotPanelsFinal::test_timbrature_db_pane
       ~~~^^^^
   IndexError: tuple index out of range
   ________________________________________________________________________________
-  
+
   For more information see https://pluggy.readthedocs.io/en/stable/api_reference.html#pluggy.PluggyTeardownRaisedWarning
     lambda: runtest_hook(item=item, **kwds),
 
@@ -1079,10 +1097,13 @@ ERROR tests/unit/test_bot_panels_final.py::TestBotPanelsFinal::test_timbrature_d
 1 failed, 1 warning, 1 error in 9.87s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_contabilita_queries_coverage.py::TestContabilitaQueriesCoverage::test_get_data_by_year_columns_alignment`
+
 **Error:** `Unknown Error`
 
 <details><summary>Full Output</summary>
@@ -1250,10 +1271,13 @@ ERROR tests/unit/test_contabilita_queries_coverage.py::TestContabilitaQueriesCov
 1 error in 8.15s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_contabilita_queries_coverage.py::TestContabilitaQueriesCoverage::test_get_scarico_ore_data_sorting`
+
 **Error:** `Unknown Error`
 
 <details><summary>Full Output</summary>
@@ -1421,10 +1445,13 @@ ERROR tests/unit/test_contabilita_queries_coverage.py::TestContabilitaQueriesCov
 1 error in 8.26s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_contabilita_worker_coverage.py::TestContabilitaWorker::test_progress_calculation`
+
 **Error:** `FAILED tests/unit/test_contabilita_worker_coverage.py::TestContabilitaWorker::test_progress_calculation`
 
 <details><summary>Full Output</summary>
@@ -1434,8 +1461,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______________ TestContabilitaWorker.test_progress_calculation _______________
 tests\unit\test_contabilita_worker_coverage.py:99: in test_progress_calculation
-    assert total == 11
-E   AssertionError: assert {'est_attivita': 0, 'est_certificati': 0, 'est_files': 5, 'est_sheets': 5, ...} == 11
+    assertt total == 11
+E   AsserttionError: assertt {'est_attivita': 0, 'est_certificati': 0, 'est_files': 5, 'est_sheets': 5, ...} == 11
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -1583,10 +1610,13 @@ FAILED tests/unit/test_contabilita_worker_coverage.py::TestContabilitaWorker::te
 1 failed in 8.07s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_controllers_coverage.py::TestControllersCoverage::test_navigation_controller_simple_logic`
+
 **Error:** `FAILED tests/unit/test_controllers_coverage.py::TestControllersCoverage::test_navigation_controller_simple_logic`
 
 <details><summary>Full Output</summary>
@@ -1595,24 +1625,24 @@ FAILED tests/unit/test_contabilita_worker_coverage.py::TestContabilitaWorker::te
 F                                                                        [100%]
 ================================== FAILURES ===================================
 _______ TestControllersCoverage.test_navigation_controller_simple_logic _______
-C:\Program Files\Python312\Lib\unittest\mock.py:949: in assert_called_with
-    raise AssertionError(_error_message()) from cause
-E   AssertionError: expected call not found.
+C:\Program Files\Python312\Lib\unittest\mock.py:949: in assertt_called_with
+    raise AsserttionError(_error_message()) from cause
+E   AsserttionError: expected call not found.
 E   Expected: set_active_button(1)
 E     Actual: set_active_button(1, None)
 
 During handling of the above exception, another exception occurred:
 tests\unit\test_controllers_coverage.py:59: in test_navigation_controller_simple_logic
-    mw.sidebar.set_active_button.assert_called_with(1)
-E   AssertionError: expected call not found.
+    mw.sidebar.set_active_button.assertt_called_with(1)
+E   AsserttionError: expected call not found.
 E   Expected: set_active_button(1)
 E     Actual: set_active_button(1, None)
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
-E   assert (1, None) == (1,)
-E     
+E   assertt (1, None) == (1,)
+E
 E     Left contains one more item: None
 E     Use -v to get more diff
 =============================== tests coverage ================================
@@ -1762,10 +1792,13 @@ FAILED tests/unit/test_controllers_coverage.py::TestControllersCoverage::test_na
 1 failed in 9.91s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_controllers_coverage.py::TestControllersCoverage::test_bot_controller_panel_status_sync`
+
 **Error:** `FAILED tests/unit/test_controllers_coverage.py::TestControllersCoverage::test_bot_controller_panel_status_sync`
 
 <details><summary>Full Output</summary>
@@ -1774,24 +1807,24 @@ FAILED tests/unit/test_controllers_coverage.py::TestControllersCoverage::test_na
 F                                                                        [100%]
 ================================== FAILURES ===================================
 ________ TestControllersCoverage.test_bot_controller_panel_status_sync ________
-C:\Program Files\Python312\Lib\unittest\mock.py:949: in assert_called_with
-    raise AssertionError(_error_message()) from cause
-E   AssertionError: expected call not found.
+C:\Program Files\Python312\Lib\unittest\mock.py:949: in assertt_called_with
+    raise AsserttionError(_error_message()) from cause
+E   AsserttionError: expected call not found.
 E   Expected: setStatus('RUNNING', 'Test SW')
 E     Actual: setStatus('Test SW', 'RUNNING')
 
 During handling of the above exception, another exception occurred:
 tests\unit\test_controllers_coverage.py:87: in test_bot_controller_panel_status_sync
-    mw.status_safework.setStatus.assert_called_with("RUNNING", "Test SW")
-E   AssertionError: expected call not found.
+    mw.status_safework.setStatus.assertt_called_with("RUNNING", "Test SW")
+E   AsserttionError: expected call not found.
 E   Expected: setStatus('RUNNING', 'Test SW')
 E     Actual: setStatus('Test SW', 'RUNNING')
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
-E   assert ('Test SW', 'RUNNING') == ('RUNNING', 'Test SW')
-E     
+E   assertt ('Test SW', 'RUNNING') == ('RUNNING', 'Test SW')
+E
 E     At index 0 diff: 'Test SW' != 'RUNNING'
 E     Use -v to get more diff
 =============================== tests coverage ================================
@@ -1941,10 +1974,13 @@ FAILED tests/unit/test_controllers_coverage.py::TestControllersCoverage::test_bo
 1 failed in 9.71s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_dashboard_full.py::TestDashboardPanelFull::test_dashboard_initialization`
+
 **Error:** `FAILED tests/unit/test_dashboard_full.py::TestDashboardPanelFull::test_dashboard_initialization`
 
 <details><summary>Full Output</summary>
@@ -1954,8 +1990,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ____________ TestDashboardPanelFull.test_dashboard_initialization _____________
 tests\unit\test_dashboard_full.py:99: in test_dashboard_initialization
-    assert found_greeting
-E   assert False
+    assertt found_greeting
+E   assertt False
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -2104,10 +2140,13 @@ FAILED tests/unit/test_dashboard_full.py::TestDashboardPanelFull::test_dashboard
 1 failed in 6.66s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_data_synchronizer_deep.py::TestDataSynchronizerDeep::test_sync_generic_scarico_ore`
+
 **Error:** `FAILED tests/unit/test_data_synchronizer_deep.py::TestDataSynchronizerDeep::test_sync_generic_scarico_ore`
 
 <details><summary>Full Output</summary>
@@ -2117,8 +2156,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ___________ TestDataSynchronizerDeep.test_sync_generic_scarico_ore ____________
 tests\unit\test_data_synchronizer_deep.py:220: in test_sync_generic_scarico_ore
-    assert added == 2
-E   assert 1 == 2
+    assertt added == 2
+E   assertt 1 == 2
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -2267,10 +2306,13 @@ FAILED tests/unit/test_data_synchronizer_deep.py::TestDataSynchronizerDeep::test
 1 failed in 8.18s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_data_synchronizer_extended.py::TestDataSynchronizerDetailed::test_sync_scarico_ore`
+
 **Error:** `FAILED tests/unit/test_data_synchronizer_extended.py::TestDataSynchronizerDetailed::test_sync_scarico_ore`
 
 <details><summary>Full Output</summary>
@@ -2280,8 +2322,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _____________ TestDataSynchronizerDetailed.test_sync_scarico_ore ______________
 tests\unit\test_data_synchronizer_extended.py:76: in test_sync_scarico_ore
-    assert added == 50
-E   assert 0 == 50
+    assertt added == 50
+E   assertt 0 == 50
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -2430,10 +2472,13 @@ FAILED tests/unit/test_data_synchronizer_extended.py::TestDataSynchronizerDetail
 1 failed in 8.12s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_excel_table_coverage.py::TestExcelTableCoverage::test_editable_data_table_row_management`
+
 **Error:** `FAILED tests/unit/test_excel_table_coverage.py::TestExcelTableCoverage::test_editable_data_table_row_management`
 
 <details><summary>Full Output</summary>
@@ -2443,9 +2488,9 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______ TestExcelTableCoverage.test_editable_data_table_row_management ________
 tests\unit\test_excel_table_coverage.py:48: in test_editable_data_table_row_management
-    assert combo.itemText(0) == "C"
-E   AssertionError: assert '' == 'C'
-E     
+    assertt combo.itemText(0) == "C"
+E   AsserttionError: assertt '' == 'C'
+E
 E     - C
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -2595,10 +2640,13 @@ FAILED tests/unit/test_excel_table_coverage.py::TestExcelTableCoverage::test_edi
 1 failed in 5.95s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_gui_headless_hardened.py::TestGUIHeadlessHardened::test_dashboard_greeting_logic`
+
 **Error:** `FAILED tests/unit/test_gui_headless_hardened.py::TestGUIHeadlessHardened::test_dashboard_greeting_logic`
 
 <details><summary>Full Output</summary>
@@ -2772,10 +2820,13 @@ FAILED tests/unit/test_gui_headless_hardened.py::TestGUIHeadlessHardened::test_d
 1 failed in 6.35s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater.py::test_get_license_dir`
+
 **Error:** `FAILED tests/unit/test_license_updater.py::test_get_license_dir - TypeError: ...`
 
 <details><summary>Full Output</summary>
@@ -2785,7 +2836,7 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ____________________________ test_get_license_dir _____________________________
 tests\unit\test_license_updater.py:36: in test_get_license_dir
-    assert "/fake/path" in path
+    assertt "/fake/path" in path
            ^^^^^^^^^^^^^^^^^^^^
 E   TypeError: argument of type 'WindowsPath' is not iterable
 =============================== tests coverage ================================
@@ -2936,10 +2987,13 @@ FAILED tests/unit/test_license_updater.py::test_get_license_dir - TypeError: ...
 1 failed in 5.82s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater.py::test_update_grace_timestamp`
+
 **Error:** `FAILED tests/unit/test_license_updater.py::test_update_grace_timestamp - Asse...`
 
 <details><summary>Full Output</summary>
@@ -2949,8 +3003,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _________________________ test_update_grace_timestamp _________________________
 tests\unit\test_license_updater.py:52: in test_update_grace_timestamp
-    assert os.path.exists(token_path)
-E   AssertionError: assert False
+    assertt os.path.exists(token_path)
+E   AsserttionError: assertt False
 E    +  where False = <built-in function _path_exists>('C:\\Users\\Coemi\\AppData\\Local\\Temp\\pytest-of-Allegretti\\pytest-5406\\test_update_grace_timestamp0\\Licenza\\validity.token')
 E    +    where <built-in function _path_exists> = <module 'ntpath' (frozen)>.exists
 E    +      where <module 'ntpath' (frozen)> = os.path
@@ -3104,10 +3158,13 @@ FAILED tests/unit/test_license_updater.py::test_update_grace_timestamp - Asse...
 1 failed in 5.84s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater.py::test_check_grace_period_valid`
+
 **Error:** `FAILED tests/unit/test_license_updater.py::test_check_grace_period_valid - Ty...`
 
 <details><summary>Full Output</summary>
@@ -3117,7 +3174,7 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ________________________ test_check_grace_period_valid ________________________
 tests\unit\test_license_updater.py:81: in test_check_grace_period_valid
-    assert check_grace_period() is True
+    assertt check_grace_period() is True
            ^^^^^^^^^^^^^^^^^^^^
 src\core\license_updater.py:107: in check_grace_period
     token_path = _get_validity_token_path()
@@ -3274,10 +3331,13 @@ FAILED tests/unit/test_license_updater.py::test_check_grace_period_valid - Ty...
 1 failed in 5.95s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater.py::test_check_grace_period_expired`
+
 **Error:** `FAILED tests/unit/test_license_updater.py::test_check_grace_period_expired - ...`
 
 <details><summary>Full Output</summary>
@@ -3300,7 +3360,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater.py:103: in test_check_grace_period_expired
     with pytest.raises(Exception, match="SCADUTO"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AssertionError: Regex pattern did not match.
+E   AsserttionError: Regex pattern did not match.
 E     Expected regex: 'SCADUTO'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 =============================== tests coverage ================================
@@ -3451,10 +3511,13 @@ FAILED tests/unit/test_license_updater.py::test_check_grace_period_expired - ...
 1 failed in 5.90s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater.py::test_check_emergency_grace_period_new`
+
 **Error:** `FAILED tests/unit/test_license_updater.py::test_check_emergency_grace_period_new`
 
 <details><summary>Full Output</summary>
@@ -3621,10 +3684,13 @@ FAILED tests/unit/test_license_updater.py::test_check_emergency_grace_period_new
 1 failed in 5.95s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_check_grace_period_success`
+
 **Error:** `FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_check_grace_period_success`
 
 <details><summary>Full Output</summary>
@@ -3634,7 +3700,7 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _________ TestLicenseUpdaterAdvanced.test_check_grace_period_success __________
 tests\unit\test_license_updater_advanced.py:49: in test_check_grace_period_success
-    assert check_grace_period() is True
+    assertt check_grace_period() is True
            ^^^^^^^^^^^^^^^^^^^^
 src\core\license_updater.py:107: in check_grace_period
     token_path = _get_validity_token_path()
@@ -3793,10 +3859,13 @@ FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::
 1 failed in 5.87s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_check_grace_period_expired`
+
 **Error:** `FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_check_grace_period_expired`
 
 <details><summary>Full Output</summary>
@@ -3819,7 +3888,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_advanced.py:65: in test_check_grace_period_expired
     with pytest.raises(Exception, match="SCADUTO"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AssertionError: Regex pattern did not match.
+E   AsserttionError: Regex pattern did not match.
 E     Expected regex: 'SCADUTO'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 ---------------------------- Captured stdout call -----------------------------
@@ -3972,10 +4041,13 @@ FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::
 1 failed in 5.84s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_check_grace_period_clock_rollback`
+
 **Error:** `FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_check_grace_period_clock_rollback`
 
 <details><summary>Full Output</summary>
@@ -3998,7 +4070,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_advanced.py:81: in test_check_grace_period_clock_rollback
     with pytest.raises(Exception, match="incoerenza orologio"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AssertionError: Regex pattern did not match.
+E   AsserttionError: Regex pattern did not match.
 E     Expected regex: 'incoerenza orologio'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 ---------------------------- Captured stdout call -----------------------------
@@ -4151,10 +4223,13 @@ FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::
 1 failed in 5.91s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_emergency_grace_period_flow`
+
 **Error:** `FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::test_emergency_grace_period_flow`
 
 <details><summary>Full Output</summary>
@@ -4321,10 +4396,13 @@ FAILED tests/unit/test_license_updater_advanced.py::TestLicenseUpdaterAdvanced::
 1 failed in 5.83s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_get_license_dir`
+
 **Error:** `FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_get_license_dir`
 
 <details><summary>Full Output</summary>
@@ -4334,7 +4412,7 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ___________________ TestLicenseUpdater.test_get_license_dir ___________________
 tests\unit\test_license_updater_coverage.py:35: in test_get_license_dir
-    assert str(tmp_path) in d
+    assertt str(tmp_path) in d
            ^^^^^^^^^^^^^^^^^^
 E   TypeError: argument of type 'WindowsPath' is not iterable
 =============================== tests coverage ================================
@@ -4485,10 +4563,13 @@ FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_get
 1 failed in 6.03s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_grace_timestamp_lifecycle`
+
 **Error:** `FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_grace_timestamp_lifecycle`
 
 <details><summary>Full Output</summary>
@@ -4498,8 +4579,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ______________ TestLicenseUpdater.test_grace_timestamp_lifecycle ______________
 tests\unit\test_license_updater_coverage.py:42: in test_grace_timestamp_lifecycle
-    assert token_path.exists()
-E   AssertionError: assert False
+    assertt token_path.exists()
+E   AsserttionError: assertt False
 E    +  where False = exists()
 E    +    where exists = WindowsPath('C:/Users/Coemi/AppData/Local/Temp/pytest-of-Allegretti/pytest-5425/test_grace_timestamp_lifecycle0/Licenza/validity.token').exists
 ---------------------------- Captured stdout call -----------------------------
@@ -4652,10 +4733,13 @@ FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_gra
 1 failed in 5.89s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_check_grace_period_missing_token`
+
 **Error:** `FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_check_grace_period_missing_token`
 
 <details><summary>Full Output</summary>
@@ -4678,7 +4762,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_coverage.py:56: in test_check_grace_period_missing_token
     with pytest.raises(Exception, match="Nessuna validazione"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AssertionError: Regex pattern did not match.
+E   AsserttionError: Regex pattern did not match.
 E     Expected regex: 'Nessuna validazione'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 =============================== tests coverage ================================
@@ -4829,10 +4913,13 @@ FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_che
 1 failed in 5.88s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_check_grace_period_tampered_clock`
+
 **Error:** `FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_check_grace_period_tampered_clock`
 
 <details><summary>Full Output</summary>
@@ -4855,7 +4942,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_coverage.py:65: in test_check_grace_period_tampered_clock
     with pytest.raises(Exception, match="incoerenza"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AssertionError: Regex pattern did not match.
+E   AsserttionError: Regex pattern did not match.
 E     Expected regex: 'incoerenza'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 ---------------------------- Captured stdout call -----------------------------
@@ -5008,10 +5095,13 @@ FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_che
 1 failed in 5.88s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_emergency_grace_lifecycle`
+
 **Error:** `FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_emergency_grace_lifecycle`
 
 <details><summary>Full Output</summary>
@@ -5178,10 +5268,13 @@ FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_eme
 1 failed in 6.02s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_emergency_grace_tampered`
+
 **Error:** `FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_emergency_grace_tampered`
 
 <details><summary>Full Output</summary>
@@ -5347,11 +5440,14 @@ FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_eme
 1 failed in 5.81s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator.py::test_valid_license`
-**Error:** `FAILED tests/unit/test_license_validator.py::test_valid_license - AssertionEr...`
+
+**Error:** `FAILED tests/unit/test_license_validator.py::test_valid_license - AsserttionEr...`
 
 <details><summary>Full Output</summary>
 
@@ -5360,8 +5456,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _____________________________ test_valid_license ______________________________
 tests\unit\test_license_validator.py:83: in test_valid_license
-    assert status == license_validator.LicenseStatus.VALID
-E   AssertionError: assert <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
+    assertt status == license_validator.LicenseStatus.VALID
+E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
 E    +  where <LicenseStatus.VALID: 'Valid'> = <enum 'LicenseStatus'>.VALID
 E    +    where <enum 'LicenseStatus'> = license_validator.LicenseStatus
 =============================== tests coverage ================================
@@ -5508,15 +5604,18 @@ src\utils\validators.py                                                 73     5
 TOTAL                                                                19144   8892    54%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_license_validator.py::test_valid_license - AssertionEr...
+FAILED tests/unit/test_license_validator.py::test_valid_license - AsserttionEr...
 1 failed in 5.96s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator.py::test_invalid_hardware_id`
-**Error:** `FAILED tests/unit/test_license_validator.py::test_invalid_hardware_id - Asser...`
+
+**Error:** `FAILED tests/unit/test_license_validator.py::test_invalid_hardware_id - Assert...`
 
 <details><summary>Full Output</summary>
 
@@ -5525,8 +5624,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 __________________________ test_invalid_hardware_id ___________________________
 tests\unit\test_license_validator.py:98: in test_invalid_hardware_id
-    assert status == license_validator.LicenseStatus.INVALID
-E   AssertionError: assert <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
+    assertt status == license_validator.LicenseStatus.INVALID
+E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
 E    +  where <LicenseStatus.INVALID: 'Invalid'> = <enum 'LicenseStatus'>.INVALID
 E    +    where <enum 'LicenseStatus'> = license_validator.LicenseStatus
 =============================== tests coverage ================================
@@ -5673,15 +5772,18 @@ src\utils\validators.py                                                 73     5
 TOTAL                                                                19144   8892    54%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_license_validator.py::test_invalid_hardware_id - Asser...
+FAILED tests/unit/test_license_validator.py::test_invalid_hardware_id - Assert...
 1 failed in 5.86s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator.py::test_expired_license`
-**Error:** `FAILED tests/unit/test_license_validator.py::test_expired_license - Assertion...`
+
+**Error:** `FAILED tests/unit/test_license_validator.py::test_expired_license - Asserttion...`
 
 <details><summary>Full Output</summary>
 
@@ -5690,8 +5792,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ____________________________ test_expired_license _____________________________
 tests\unit\test_license_validator.py:117: in test_expired_license
-    assert status == license_validator.LicenseStatus.EXPIRED
-E   AssertionError: assert <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
+    assertt status == license_validator.LicenseStatus.EXPIRED
+E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
 E    +  where <LicenseStatus.EXPIRED: 'Expired'> = <enum 'LicenseStatus'>.EXPIRED
 E    +    where <enum 'LicenseStatus'> = license_validator.LicenseStatus
 =============================== tests coverage ================================
@@ -5838,14 +5940,17 @@ src\utils\validators.py                                                 73     5
 TOTAL                                                                19144   8892    54%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_license_validator.py::test_expired_license - Assertion...
+FAILED tests/unit/test_license_validator.py::test_expired_license - Asserttion...
 1 failed in 5.86s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_advanced.py::TestLicenseValidatorAdvanced::test_license_data_validation_flow`
+
 **Error:** `FAILED tests/unit/test_license_validator_advanced.py::TestLicenseValidatorAdvanced::test_license_data_validation_flow`
 
 <details><summary>Full Output</summary>
@@ -5855,8 +5960,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______ TestLicenseValidatorAdvanced.test_license_data_validation_flow ________
 tests\unit\test_license_validator_advanced.py:112: in test_license_data_validation_flow
-    assert status == LicenseStatus.VALID
-E   AssertionError: assert <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
+    assertt status == LicenseStatus.VALID
+E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
 E    +  where <LicenseStatus.VALID: 'Valid'> = LicenseStatus.VALID
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -6006,10 +6111,13 @@ FAILED tests/unit/test_license_validator_advanced.py::TestLicenseValidatorAdvanc
 1 failed in 5.86s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_deep.py::TestLicenseValidatorDeep::test_get_license_info_decryption`
+
 **Error:** `FAILED tests/unit/test_license_validator_deep.py::TestLicenseValidatorDeep::test_get_license_info_decryption`
 
 <details><summary>Full Output</summary>
@@ -6173,10 +6281,13 @@ FAILED tests/unit/test_license_validator_deep.py::TestLicenseValidatorDeep::test
 1 failed in 5.91s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_deep.py::TestLicenseValidatorDeep::test_get_hardware_id_linux_machine_id`
+
 **Error:** `FAILED tests/unit/test_license_validator_deep.py::TestLicenseValidatorDeep::test_get_hardware_id_linux_machine_id`
 
 <details><summary>Full Output</summary>
@@ -6186,8 +6297,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______ TestLicenseValidatorDeep.test_get_hardware_id_linux_machine_id ________
 tests\unit\test_license_validator_deep.py:124: in test_get_hardware_id_linux_machine_id
-    assert hwid == "MACHINE-ID-123"
-E   AssertionError: assert None == 'MACHINE-ID-123'
+    assertt hwid == "MACHINE-ID-123"
+E   AsserttionError: assertt None == 'MACHINE-ID-123'
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -6336,10 +6447,13 @@ FAILED tests/unit/test_license_validator_deep.py::TestLicenseValidatorDeep::test
 1 failed in 5.87s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_hardware_id_linux_machine_id`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_hardware_id_linux_machine_id`
 
 <details><summary>Full Output</summary>
@@ -6349,8 +6463,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ____________________ test_get_hardware_id_linux_machine_id ____________________
 tests\unit\test_license_validator_extended.py:136: in test_get_hardware_id_linux_machine_id
-    assert get_hardware_id() == "FAKE_MACHINE_ID"
-E   AssertionError: assert None == 'FAKE_MACHINE_ID'
+    assertt get_hardware_id() == "FAKE_MACHINE_ID"
+E   AsserttionError: assertt None == 'FAKE_MACHINE_ID'
 E    +  where None = get_hardware_id()
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -6500,10 +6614,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_hardware_id_linux
 1 failed in 5.93s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_license_paths`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_license_paths`
 
 <details><summary>Full Output</summary>
@@ -6513,8 +6630,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ___________________________ test_get_license_paths ____________________________
 tests\unit\test_license_validator_extended.py:151: in test_get_license_paths
-    assert paths["dir"] == os.path.join("/fake/appdata", "Licenza")
-E   AssertionError: assert WindowsPath('/fake/appdata/Licenza') == '/fake/appdata\\Licenza'
+    assertt paths["dir"] == os.path.join("/fake/appdata", "Licenza")
+E   AsserttionError: assertt WindowsPath('/fake/appdata/Licenza') == '/fake/appdata\\Licenza'
 E    +  where '/fake/appdata\\Licenza' = <function join at 0x00000216A17A5120>('/fake/appdata', 'Licenza')
 E    +    where <function join at 0x00000216A17A5120> = <module 'ntpath' (frozen)>.join
 E    +      where <module 'ntpath' (frozen)> = os.path
@@ -6666,10 +6783,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_license_paths
 1 failed in 5.86s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_license_info_success`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_success`
 
 <details><summary>Full Output</summary>
@@ -6833,10 +6953,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_succ
 1 failed in 5.93s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_license_info_missing_file`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_missing_file`
 
 <details><summary>Full Output</summary>
@@ -6846,7 +6969,7 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _____________________ test_get_license_info_missing_file ______________________
 tests\unit\test_license_validator_extended.py:187: in test_get_license_info_missing_file
-    assert get_license_info() is None
+    assertt get_license_info() is None
            ^^^^^^^^^^^^^^^^^^
 src\core\license_validator.py:217: in get_license_info
     if not config_path.exists():
@@ -7000,10 +7123,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_miss
 1 failed in 5.92s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_detailed_license_status_hw_id_mismatch`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_detailed_license_status_hw_id_mismatch`
 
 <details><summary>Full Output</summary>
@@ -7013,8 +7139,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______________ test_get_detailed_license_status_hw_id_mismatch _______________
 tests\unit\test_license_validator_extended.py:278: in test_get_detailed_license_status_hw_id_mismatch
-    assert status == LicenseStatus.INVALID
-E   AssertionError: assert <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
+    assertt status == LicenseStatus.INVALID
+E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
 E    +  where <LicenseStatus.INVALID: 'Invalid'> = LicenseStatus.INVALID
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -7164,10 +7290,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_detailed_license_
 1 failed in 5.95s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_detailed_license_status_expired`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_detailed_license_status_expired`
 
 <details><summary>Full Output</summary>
@@ -7177,8 +7306,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 __________________ test_get_detailed_license_status_expired ___________________
 tests\unit\test_license_validator_extended.py:318: in test_get_detailed_license_status_expired
-    assert status == LicenseStatus.EXPIRED
-E   AssertionError: assert <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
+    assertt status == LicenseStatus.EXPIRED
+E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
 E    +  where <LicenseStatus.EXPIRED: 'Expired'> = LicenseStatus.EXPIRED
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -7328,10 +7457,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_detailed_license_
 1 failed in 5.86s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_detailed_license_status_valid`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_detailed_license_status_valid`
 
 <details><summary>Full Output</summary>
@@ -7341,8 +7473,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ___________________ test_get_detailed_license_status_valid ____________________
 tests\unit\test_license_validator_extended.py:342: in test_get_detailed_license_status_valid
-    assert status == LicenseStatus.VALID
-E   AssertionError: assert <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
+    assertt status == LicenseStatus.VALID
+E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
 E    +  where <LicenseStatus.VALID: 'Valid'> = LicenseStatus.VALID
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -7492,10 +7624,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_detailed_license_
 1 failed in 5.90s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_license_info_no_key`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_no_key`
 
 <details><summary>Full Output</summary>
@@ -7505,7 +7640,7 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ________________________ test_get_license_info_no_key _________________________
 tests\unit\test_license_validator_extended.py:414: in test_get_license_info_no_key
-    assert get_license_info() is None
+    assertt get_license_info() is None
            ^^^^^^^^^^^^^^^^^^
 src\core\license_validator.py:217: in get_license_info
     if not config_path.exists():
@@ -7659,10 +7794,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_no_k
 1 failed in 5.94s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_license_info_exception`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_exception`
 
 <details><summary>Full Output</summary>
@@ -7672,7 +7810,7 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______________________ test_get_license_info_exception _______________________
 tests\unit\test_license_validator_extended.py:424: in test_get_license_info_exception
-    assert get_license_info() is None
+    assertt get_license_info() is None
            ^^^^^^^^^^^^^^^^^^
 src\core\license_validator.py:217: in get_license_info
     if not config_path.exists():
@@ -7826,10 +7964,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_license_info_exce
 1 failed in 6.00s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_license_expiry`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_license_expiry`
 
 <details><summary>Full Output</summary>
@@ -7996,10 +8137,13 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_license_expiry
 1 failed in 5.94s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_license_validator_extended.py::test_get_license_client`
+
 **Error:** `FAILED tests/unit/test_license_validator_extended.py::test_get_license_client`
 
 <details><summary>Full Output</summary>
@@ -8166,11 +8310,14 @@ FAILED tests/unit/test_license_validator_extended.py::test_get_license_client
 1 failed in 5.88s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_lyra_client.py::test_system_context_generation`
-**Error:** `FAILED tests/unit/test_lyra_client.py::test_system_context_generation - asser...`
+
+**Error:** `FAILED tests/unit/test_lyra_client.py::test_system_context_generation - assert...`
 
 <details><summary>Full Output</summary>
 
@@ -8179,8 +8326,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______________________ test_system_context_generation ________________________
 tests\unit\test_lyra_client.py:65: in test_system_context_generation
-    assert "REPORT TIMBRATURE" in context
-E   assert 'REPORT TIMBRATURE' in "=== REPORT CONTABILITÀ (2025) ===\n- Valore Totale Preventivato: € 100,000.00\n- Ore Spese Totali: 1,000.0 h\n- Margi...re):\n  • Project A: € 50,000\nErrore lettura Timbrature: '>' not supported between instances of 'MagicMock' and 'int'"
+    assertt "REPORT TIMBRATURE" in context
+E   assertt 'REPORT TIMBRATURE' in "=== REPORT CONTABILITÀ (2025) ===\n- Valore Totale Preventivato: € 100,000.00\n- Ore Spese Totali: 1,000.0 h\n- Margi...re):\n  • Project A: € 50,000\nErrore lettura Timbrature: '>' not supported between instances of 'MagicMock' and 'int'"
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -8325,14 +8472,17 @@ src\utils\validators.py                                                 73     5
 TOTAL                                                                19144   8694    55%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_lyra_client.py::test_system_context_generation - asser...
+FAILED tests/unit/test_lyra_client.py::test_system_context_generation - assert...
 1 failed in 8.14s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_lyra_client_advanced.py::TestLyraClientAdvanced::test_get_system_context_aggregation`
+
 **Error:** `FAILED tests/unit/test_lyra_client_advanced.py::TestLyraClientAdvanced::test_get_system_context_aggregation`
 
 <details><summary>Full Output</summary>
@@ -8342,8 +8492,8 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _________ TestLyraClientAdvanced.test_get_system_context_aggregation __________
 tests\unit\test_lyra_client_advanced.py:51: in test_get_system_context_aggregation
-    assert "Mario Rossi" in context
-E   AssertionError: assert 'Mario Rossi' in '=== REPORT CONTABILITÀ (2026) ===\n- Valore Totale Preventivato: € 1,000.00\n- Ore Spese Totali: 10.0 h\n- Margine Op... Nessuna anomalia (uscite mancanti) rilevata.\n- Ultime 5 Attività Registrate:\n  • 2026-01-01: M. R. (08:00 -> 17:00)'
+    assertt "Mario Rossi" in context
+E   AsserttionError: assertt 'Mario Rossi' in '=== REPORT CONTABILITÀ (2026) ===\n- Valore Totale Preventivato: € 1,000.00\n- Ore Spese Totali: 10.0 h\n- Margine Op... Nessuna anomalia (uscite mancanti) rilevata.\n- Ultime 5 Attività Registrate:\n  • 2026-01-01: M. R. (08:00 -> 17:00)'
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -8492,10 +8642,13 @@ FAILED tests/unit/test_lyra_client_advanced.py::TestLyraClientAdvanced::test_get
 1 failed in 8.13s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_lyra_client_advanced.py::TestLyraClientAdvanced::test_ask_payload_and_response_parsing`
+
 **Error:** `FAILED tests/unit/test_lyra_client_advanced.py::TestLyraClientAdvanced::test_ask_payload_and_response_parsing`
 
 <details><summary>Full Output</summary>
@@ -8660,10 +8813,13 @@ FAILED tests/unit/test_lyra_client_advanced.py::TestLyraClientAdvanced::test_ask
 1 failed in 8.25s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_lyra_client_coverage.py::TestLyraClientCoverage::test_get_system_context_assembly`
+
 **Error:** `FAILED tests/unit/test_lyra_client_coverage.py::TestLyraClientCoverage::test_get_system_context_assembly`
 
 <details><summary>Full Output</summary>
@@ -8823,10 +8979,13 @@ FAILED tests/unit/test_lyra_client_coverage.py::TestLyraClientCoverage::test_get
 1 failed in 8.09s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_main_window.py::TestMainWindow::test_init`
+
 **Error:** `FAILED tests/unit/test_main_window.py::TestMainWindow::test_init - AssertionE...`
 
 <details><summary>Full Output</summary>
@@ -8838,7 +8997,7 @@ __________________________ TestMainWindow.test_init ___________________________
 tests\unit\test_main_window.py:23: in test_init
     assert window.windowTitle() == "SyncroJob"
 E   AssertionError: assert 'SyncroJob v1.5.0' == 'SyncroJob'
-E     
+E
 E     - SyncroJob
 E     + SyncroJob v1.5.0
 =============================== tests coverage ================================
@@ -8989,10 +9148,13 @@ FAILED tests/unit/test_main_window.py::TestMainWindow::test_init - AssertionE...
 1 failed in 13.37s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_main_window.py::TestMainWindow::test_navigation`
+
 **Error:** `FAILED tests/unit/test_main_window.py::TestMainWindow::test_navigation - Attr...`
 
 <details><summary>Full Output</summary>
@@ -9153,10 +9315,13 @@ FAILED tests/unit/test_main_window.py::TestMainWindow::test_navigation - Attr...
 1 failed in 14.35s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_different_page`
+
 **Error:** `FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_different_page`
 
 <details><summary>Full Output</summary>
@@ -9177,12 +9342,12 @@ tests\unit\test_navigation_controller_coverage.py:69: in test_navigate_to_differ
 E   AssertionError: expected call not found.
 E   Expected: set_active_button(1)
 E     Actual: set_active_button(1, None)
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
 E   assert (1, None) == (1,)
-E     
+E
 E     Left contains one more item: None
 E     Use -v to get more diff
 =============================== tests coverage ================================
@@ -9333,10 +9498,13 @@ FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControll
 1 failed in 5.95s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_extended`
+
 **Error:** `FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_extended`
 
 <details><summary>Full Output</summary>
@@ -9357,17 +9525,17 @@ tests\unit\test_navigation_controller_coverage.py:90: in test_navigate_to_extend
 E   AssertionError: expected call not found.
 E   Expected: navigate_to(3)
 E     Actual: navigate_to(4, sub_index=2)
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
 E   assert (4,) == (3,)
-E     
+E
 E     At index 0 diff: 4 != 3
 E     Use -v to get more diff
 E   Kwargs:
 E   assert {'sub_index': 2} == {}
-E     
+E
 E     Left contains 1 more item:
 E     {'sub_index': 2}
 E     Use -v to get more diff
@@ -9519,10 +9687,13 @@ FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControll
 1 failed in 5.92s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_panel_nested_bot`
+
 **Error:** `FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_panel_nested_bot`
 
 <details><summary>Full Output</summary>
@@ -9543,12 +9714,12 @@ tests\unit\test_navigation_controller_coverage.py:104: in test_navigate_to_panel
 E   AssertionError: expected call not found.
 E   Expected: navigate_to(1)
 E     Actual: navigate_to(1, sub_index=0)
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Kwargs:
 E   assert {'sub_index': 0} == {}
-E     
+E
 E     Left contains 1 more item:
 E     {'sub_index': 0}
 E     Use -v to get more diff
@@ -9700,10 +9871,13 @@ FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControll
 1 failed in 5.94s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_settings_unsaved_prompt`
+
 **Error:** `FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControllerCoverage::test_navigate_to_settings_unsaved_prompt`
 
 <details><summary>Full Output</summary>
@@ -9725,12 +9899,12 @@ tests\unit\test_navigation_controller_coverage.py:80: in test_navigate_to_settin
 E   AssertionError: expected call not found.
 E   Expected: set_active_button(4)
 E     Actual: set_active_button(1, None)
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
 E   assert (1, None) == (4,)
-E     
+E
 E     At index 0 diff: 1 != 4
 E     Left contains one more item: None
 E     Use -v to get more diff
@@ -9882,10 +10056,13 @@ FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControll
 1 failed in 6.13s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_navigation_controller_refactoring.py::test_get_panel_lazy_load_settings`
+
 **Error:** `Unknown Error`
 
 <details><summary>Full Output</summary>
@@ -9893,10 +10070,13 @@ FAILED tests/unit/test_navigation_controller_coverage.py::TestNavigationControll
 ```text
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_set_filter`
+
 **Error:** `FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_set_filter`
 
 <details><summary>Full Output</summary>
@@ -10057,10 +10237,13 @@ FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::
 1 failed in 6.71s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_filter_errors_logic`
+
 **Error:** `FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_filter_errors_logic`
 
 <details><summary>Full Output</summary>
@@ -10221,10 +10404,13 @@ FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::
 1 failed in 6.71s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_clear_notifications_confirm`
+
 **Error:** `Timeout`
 
 <details><summary>Full Output</summary>
@@ -10232,10 +10418,13 @@ FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::
 ```text
 Execution Timed Out
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_audit_log_widget_refresh`
+
 **Error:** `FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::test_audit_log_widget_refresh`
 
 <details><summary>Full Output</summary>
@@ -10401,10 +10590,13 @@ FAILED tests/unit/test_notifications_panel_deep.py::TestNotificationsPanelDeep::
 1 failed in 6.12s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_pandera_validation.py::test_validate_real_anagrafica`
+
 **Error:** `FAILED tests/unit/test_pandera_validation.py::test_validate_real_anagrafica`
 
 <details><summary>Full Output</summary>
@@ -10605,10 +10797,13 @@ FAILED tests/unit/test_pandera_validation.py::test_validate_real_anagrafica
 1 failed in 9.09s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_printing.py::TestPrinting::test_print_pdf_split_jobs`
+
 **Error:** `FAILED tests/unit/test_printing.py::TestPrinting::test_print_pdf_split_jobs`
 
 <details><summary>Full Output</summary>
@@ -10768,10 +10963,13 @@ FAILED tests/unit/test_printing.py::TestPrinting::test_print_pdf_split_jobs
 1 failed in 7.18s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_printing.py::TestPrinting::test_print_pdf_fallback`
+
 **Error:** `FAILED tests/unit/test_printing.py::TestPrinting::test_print_pdf_fallback - a...`
 
 <details><summary>Full Output</summary>
@@ -10931,10 +11129,13 @@ FAILED tests/unit/test_printing.py::TestPrinting::test_print_pdf_fallback - a...
 1 failed in 7.27s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_safework_bot_deep.py::TestSafeWorkPDLBotDeep::test_polling_logic_simulated`
+
 **Error:** `FAILED tests/unit/test_safework_bot_deep.py::TestSafeWorkPDLBotDeep::test_polling_logic_simulated`
 
 <details><summary>Full Output</summary>
@@ -11109,10 +11310,13 @@ FAILED tests/unit/test_safework_bot_deep.py::TestSafeWorkPDLBotDeep::test_pollin
 1 failed in 9.60s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_scarico_ore_components_extended.py::TestScaricoOreComponentsExtended::test_cache_worker_build`
+
 **Error:** `FAILED tests/unit/test_scarico_ore_components_extended.py::TestScaricoOreComponentsExtended::test_cache_worker_build`
 
 <details><summary>Full Output</summary>
@@ -11273,10 +11477,13 @@ FAILED tests/unit/test_scarico_ore_components_extended.py::TestScaricoOreCompone
 1 failed in 6.00s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_scarico_ore_components_refactoring.py::test_cache_worker_build_caches_logic`
+
 **Error:** `FAILED tests/unit/test_scarico_ore_components_refactoring.py::test_cache_worker_build_caches_logic`
 
 <details><summary>Full Output</summary>
@@ -11437,10 +11644,13 @@ FAILED tests/unit/test_scarico_ore_components_refactoring.py::test_cache_worker_
 1 failed in 6.00s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_scarico_ore_panel_deep.py::TestScaricoOrePanelDeep::test_update_finished_ui_restore`
+
 **Error:** `FAILED tests/unit/test_scarico_ore_panel_deep.py::TestScaricoOrePanelDeep::test_update_finished_ui_restore`
 
 <details><summary>Full Output</summary>
@@ -11603,10 +11813,13 @@ FAILED tests/unit/test_scarico_ore_panel_deep.py::TestScaricoOrePanelDeep::test_
 1 failed in 8.62s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_perform_search_no_results`
+
 **Error:** `FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_perform_search_no_results`
 
 <details><summary>Full Output</summary>
@@ -11627,12 +11840,12 @@ tests\unit\test_search_controller_coverage.py:38: in test_perform_search_no_resu
 E   AssertionError: expected call not found.
 E   Expected: addAction('\u274c Nessun risultato trovato')
 E     Actual: addAction('Nessun risultato trovato')
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
 E   assert ('Nessun risultato trovato',) == ('\u274c Nessun ri...ato trovato',)
-E     
+E
 E     At index 0 diff: 'Nessun risultato trovato' != '\u274c Nessun risultato trovato'
 E     Use -v to get more diff
 =============================== tests coverage ================================
@@ -11783,10 +11996,13 @@ FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCovera
 1 failed in 9.83s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_audit_found`
+
 **Error:** `FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_audit_found`
 
 <details><summary>Full Output</summary>
@@ -11947,10 +12163,13 @@ FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCovera
 1 failed in 9.60s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_employees_found`
+
 **Error:** `FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_employees_found`
 
 <details><summary>Full Output</summary>
@@ -12110,10 +12329,13 @@ FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCovera
 1 failed in 9.72s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_extended_found`
+
 **Error:** `FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_extended_found`
 
 <details><summary>Full Output</summary>
@@ -12130,12 +12352,12 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_search_controller_coverage.py:74: in test_search_extended_found
     menu.addAction.assert_any_call("\U0001f4c2 GIORNALIERE:")
 E   AssertionError: addAction('\U0001f4c2 GIORNALIERE:') call not found
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
 E   assert ('M1 - Mod1 (Cost1)',) == ('\U0001f4c2 GIORNALIERE:',)
-E     
+E
 E     At index 0 diff: 'M1 - Mod1 (Cost1)' != '\U0001f4c2 GIORNALIERE:'
 E     Use -v to get more diff
 =============================== tests coverage ================================
@@ -12286,10 +12508,13 @@ FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCovera
 1 failed in 9.58s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_oda_found`
+
 **Error:** `FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCoverage::test_search_oda_found`
 
 <details><summary>Full Output</summary>
@@ -12306,12 +12531,12 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_search_controller_coverage.py:51: in test_search_oda_found
     menu.addAction.assert_any_call("\U0001f4ca CONTABILIT\xc0 STRUMENTALE (OdA):")
 E   AssertionError: addAction('\U0001f4ca CONTABILIT\xc0 STRUMENTALE (OdA):') call not found
-E   
+E
 E   pytest introspection follows:
-E   
+E
 E   Args:
 E   assert ('OdA 123 - Test OdA...',) == ('\U0001f4ca CONTABILI...TALE (OdA):',)
-E     
+E
 E     At index 0 diff: 'OdA 123 - Test OdA...' != '\U0001f4ca CONTABILIT\xc0 STRUMENTALE (OdA):'
 E     Use -v to get more diff
 =============================== tests coverage ================================
@@ -12462,10 +12687,13 @@ FAILED tests/unit/test_search_controller_coverage.py::TestSearchControllerCovera
 1 failed in 9.64s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_search_features.py::test_search_employees`
+
 **Error:** `FAILED tests/unit/test_search_features.py::test_search_employees - sqlite3.Op...`
 
 <details><summary>Full Output</summary>
@@ -12634,10 +12862,13 @@ FAILED tests/unit/test_search_features.py::test_search_employees - sqlite3.Op...
 1 failed in 9.74s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_secrets_manager_coverage.py::TestSecretsManager::test_get_license_key_fallback`
+
 **Error:** `FAILED tests/unit/test_secrets_manager_coverage.py::TestSecretsManager::test_get_license_key_fallback`
 
 <details><summary>Full Output</summary>
@@ -12799,10 +13030,13 @@ FAILED tests/unit/test_secrets_manager_coverage.py::TestSecretsManager::test_get
 1 failed in 5.81s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_secrets_manager_coverage.py::TestSecretsManager::test_store_credential_error`
+
 **Error:** `FAILED tests/unit/test_secrets_manager_coverage.py::TestSecretsManager::test_store_credential_error`
 
 <details><summary>Full Output</summary>
@@ -12963,10 +13197,13 @@ FAILED tests/unit/test_secrets_manager_coverage.py::TestSecretsManager::test_sto
 1 failed in 5.88s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_secrets_manager_refactoring.py::test_get_fallback_key`
+
 **Error:** `FAILED tests/unit/test_secrets_manager_refactoring.py::test_get_fallback_key`
 
 <details><summary>Full Output</summary>
@@ -13127,10 +13364,13 @@ FAILED tests/unit/test_secrets_manager_refactoring.py::test_get_fallback_key
 1 failed in 5.87s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_secrets_manager_refactoring.py::test_get_license_key_priority`
+
 **Error:** `FAILED tests/unit/test_secrets_manager_refactoring.py::test_get_license_key_priority`
 
 <details><summary>Full Output</summary>
@@ -13291,10 +13531,13 @@ FAILED tests/unit/test_secrets_manager_refactoring.py::test_get_license_key_prio
 1 failed in 5.85s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_settings_panel_coverage.py::TestSettingsPanelCoverage::test_reset_config`
+
 **Error:** `FAILED tests/unit/test_settings_panel_coverage.py::TestSettingsPanelCoverage::test_reset_config`
 
 <details><summary>Full Output</summary>
@@ -13457,10 +13700,13 @@ FAILED tests/unit/test_settings_panel_coverage.py::TestSettingsPanelCoverage::te
 1 failed in 6.28s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_settings_panel_deep.py::TestSettingsPanelComplete::test_settings_navigation`
+
 **Error:** `FAILED tests/unit/test_settings_panel_deep.py::TestSettingsPanelComplete::test_settings_navigation`
 
 <details><summary>Full Output</summary>
@@ -13472,7 +13718,7 @@ _____________ TestSettingsPanelComplete.test_settings_navigation ______________
 tests\unit\test_settings_panel_deep.py:27: in test_settings_navigation
     assert panel.tabs.tabText(3) == "\u2708\ufe0f Telegram"
 E   AssertionError: assert 'Telegram' == '\u2708\ufe0f Telegram'
-E     
+E
 E     - \u2708\ufe0f Telegram
 E     ? ---
 E     + Telegram
@@ -13624,10 +13870,13 @@ FAILED tests/unit/test_settings_panel_deep.py::TestSettingsPanelComplete::test_s
 1 failed in 6.23s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_sprint_c_gui_deep.py::TestSprintCGUIDeep::test_search_filtering_proxy`
+
 **Error:** `FAILED tests/unit/test_sprint_c_gui_deep.py::TestSprintCGUIDeep::test_search_filtering_proxy`
 
 <details><summary>Full Output</summary>
@@ -13788,10 +14037,13 @@ FAILED tests/unit/test_sprint_c_gui_deep.py::TestSprintCGUIDeep::test_search_fil
 1 failed in 14.58s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_telegram_coverage.py::TestTelegramCoverage::test_async_loop_lifecycle`
+
 **Error:** `FAILED tests/unit/test_telegram_coverage.py::TestTelegramCoverage::test_async_loop_lifecycle`
 
 <details><summary>Full Output</summary>
@@ -13964,10 +14216,13 @@ FAILED tests/unit/test_telegram_coverage.py::TestTelegramCoverage::test_async_lo
 1 failed, 1 warning in 12.28s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_cmd_start`
+
 **Error:** `FAILED tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage::test_cmd_start`
 
 <details><summary>Full Output</summary>
@@ -14136,10 +14391,13 @@ FAILED tests/unit/test_telegram_manager_coverage.py::TestTelegramManagerCoverage
 1 failed in 12.05s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_button_dispatcher`
+
 **Error:** `FAILED tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test_handle_button_dispatcher`
 
 <details><summary>Full Output</summary>
@@ -14305,10 +14563,13 @@ FAILED tests/unit/test_telegram_manager_logic.py::TestTelegramManagerLogic::test
 1 failed in 12.02s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_telegram_service.py::test_cmd_start`
+
 **Error:** `FAILED tests/unit/test_telegram_service.py::test_cmd_start - AssertionError: ...`
 
 <details><summary>Full Output</summary>
@@ -14468,10 +14729,13 @@ FAILED tests/unit/test_telegram_service.py::test_cmd_start - AssertionError: ...
 1 failed in 11.78s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_cmd_start_association`
+
 **Error:** `FAILED tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced::test_cmd_start_association`
 
 <details><summary>Full Output</summary>
@@ -14632,10 +14896,13 @@ FAILED tests/unit/test_telegram_service_advanced.py::TestTelegramServiceAdvanced
 1 failed in 11.83s
 
 ```
+
 </details>
 
 ---
+
 ### `tests/unit/test_utils_suite.py::TestUtilsHelpers::test_get_app_icon_path`
+
 **Error:** `FAILED tests/unit/test_utils_suite.py::TestUtilsHelpers::test_get_app_icon_path`
 
 <details><summary>Full Output</summary>
@@ -14796,6 +15063,7 @@ FAILED tests/unit/test_utils_suite.py::TestUtilsHelpers::test_get_app_icon_path
 1 failed in 7.70s
 
 ```
+
 </details>
 
 ---

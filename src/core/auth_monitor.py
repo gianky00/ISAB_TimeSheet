@@ -18,7 +18,7 @@ def _normalize(t: Any) -> str:
 
 
 def _build_access_maps(
-    accessi_raw: List[Tuple[Any, ...]]
+    accessi_raw: List[Tuple[Any, ...]],
 ) -> Tuple[Dict[str, Tuple[int, str]], Dict[Tuple[str, str], Tuple[int, str]]]:
     """Costruisce le mappe di ultimo accesso: per CF e per (Cognome, Nome)."""
     last_by_cf: Dict[str, Tuple[int, str]] = {}
