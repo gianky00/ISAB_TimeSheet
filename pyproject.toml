@@ -40,6 +40,7 @@ tenacity = "*"
 loguru = "*"
 faker = "*"
 email-validator = "*"
+jaraco-text = "^4.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.0.2"

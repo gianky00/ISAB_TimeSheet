@@ -39,6 +39,14 @@ class SecretsManager:
         if key:
             return key
 
+        # 4. Fallback Hardcoded (Embedded for Distribution)
+        try:
+            return base64.urlsafe_b64decode(
+                "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
+            )
+        except Exception:
+            pass
+
         return None
 
     @classmethod
