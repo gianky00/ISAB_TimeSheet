@@ -1063,49 +1063,11 @@ class ExcelImporter:
             return None
 
         # 2. Validation
-        # Check: odc, pos, totale_ore must be present
-        # Indices: 3:odc, 4:pos, 7:tot
-        if not vals[3] or not vals[4] or not vals[7]:
+        if not cls._validate_scarico_row(vals):
             return None
 
-        # Check: at least one person
-        if not vals[1] and not vals[2]:
-            return None
-
-        # 3. Extract styles (Inline)
-        row_styles: Dict[str, Dict[str, str]] = {}
-        for i, key in enumerate(col_keys):
-            # Skip empty cells
-            if vals[i] == "":
-                continue
-
-            cell = row[i]
-            # Foreground
-            try:
-                font = cell.font
-                if font and font.color and font.color.type == "rgb":
-                    rgb = str(font.color.rgb)
-                    # OpenPyXL RGB is ARGB usually
-                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
-                    if hex_code != "#000000":  # Skip default black (optimization)
-                        row_styles.setdefault(key, {})["fg"] = hex_code
-            except (AttributeError, TypeError):
-                pass
-
-            # Background
-            try:
-                fill = cell.fill
-                if fill and fill.patternType == "solid":
-                    start_color = fill.start_color
-                    if start_color and start_color.type == "rgb":
-                        rgb = str(start_color.rgb)
-                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
-                        if (
-                            hex_code != "#000000" and hex_code != "#FFFFFF"
-                        ):  # Skip white/black bg
-                            row_styles.setdefault(key, {})["bg"] = hex_code
-            except (AttributeError, TypeError):
-                pass
+        # 3. Extract styles
+        styles_json = cls._extract_row_styles(row, col_keys, vals)
 
         # Return tuple
         return (
@@ -1120,8 +1082,55 @@ class ExcelImporter:
             vals[8],  # descrizione
             vals[9],  # finito
             vals[10],  # commessa
-            json.dumps(row_styles) if row_styles else "",
+            styles_json,
         )
+
+    @staticmethod
+    def _validate_scarico_row(vals) -> bool:
+        """Valida una riga di scarico ore."""
+        # Check: odc, pos, totale_ore must be present (Indices: 3, 4, 7)
+        if not vals[3] or not vals[4] or not vals[7]:
+            return False
+        # Check: at least one person
+        if not vals[1] and not vals[2]:
+            return False
+        return True
+
+    @staticmethod
+    def _extract_row_styles(row, col_keys, vals) -> str:
+        """Estrae gli stili delle celle (fg/bg) ottimizzato."""
+        row_styles: Dict[str, Dict[str, str]] = {}
+        for i, key in enumerate(col_keys):
+            # Skip empty cells
+            if vals[i] == "":
+                continue
+
+            cell = row[i]
+            # Foreground
+            try:
+                font = cell.font
+                if font and font.color and font.color.type == "rgb":
+                    rgb = str(font.color.rgb)
+                    hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+                    if hex_code != "#000000":  # Skip default black
+                        row_styles.setdefault(key, {})["fg"] = hex_code
+            except (AttributeError, TypeError):
+                pass
+
+            # Background
+            try:
+                fill = cell.fill
+                if fill and fill.patternType == "solid":
+                    start_color = fill.start_color
+                    if start_color and start_color.type == "rgb":
+                        rgb = str(start_color.rgb)
+                        hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
+                        if hex_code != "#000000" and hex_code != "#FFFFFF":
+                            row_styles.setdefault(key, {})["bg"] = hex_code
+            except (AttributeError, TypeError):
+                pass
+        
+        return json.dumps(row_styles) if row_styles else ""
 
     @classmethod
     def import_certificati_campione(

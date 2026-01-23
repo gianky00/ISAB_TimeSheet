@@ -960,82 +960,29 @@ class DipendentiPanel(QWidget):
         # Recuperiamo tutte le timbrature per processarle con normalizzazione
         query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
         accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
-        today = datetime.now()
-
-        import re
-
-        def normalize(t):
-            return re.sub(r"\s+", " ", str(t).strip().upper())
-
-        # Mappe per l'ultimo accesso
-        last_by_cf = {}
-        last_by_name = {}
-
-        for cog, nom, cf, d_str in accessi:
-            if d_str:
-                norm_key = (normalize(cog), normalize(nom))
-                norm_cf = cf.strip().upper() if cf and cf.strip() else None
-
-                with suppress(Exception):
-                    date_part = str(d_str).split(" ")[0]
-                    d_dt = None
-                    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-                        try:
-                            d_dt = datetime.strptime(date_part, fmt)
-                            break
-                        except ValueError:
-                            continue
-
-                    if d_dt:
-                        diff = (today - d_dt).days
-                        if norm_cf:
-                            if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
-                                last_by_cf[norm_cf] = diff
-                        if (
-                            norm_key not in last_by_name
-                            or diff < last_by_name[norm_key]
-                        ):
-                            last_by_name[norm_key] = diff
+        
+        # Reuse existing helper to build maps
+        last_by_cf, last_by_name, normalize = self._build_timbrature_maps(accessi)
 
         master_rows = []
-
-        # Counters
         count_ok = 0
         count_warning = 0
         count_expired = 0
 
         for r in full_rows:
-            # Source fields from DB (id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale)
-            cf_val = str(r[7]).strip().upper() if r[7] else ""
-            cog_val = normalize(r[1])
-            nom_val = normalize(r[2])
-
-            diff_days = None
-            cf_warning = False
-
-            if cf_val:
-                diff_days = last_by_cf.get(cf_val)
-            if diff_days is None:
-                diff_days = last_by_name.get((cog_val, nom_val))
-                if diff_days is not None and not cf_val:
-                    cf_warning = True
+            # Calcola stato usando helper esistente
+            diff_days, cf_warning, cog_val, nom_val, cf_val = self._compute_employee_status(
+                r, last_by_cf, last_by_name, normalize
+            )
 
             # --- Aggiorna Contatori (TOTALE) ---
             if diff_days is not None:
-                # <= 20: Operativi
-                # 21-30: In Scadenza
-                # > 30: Scaduti
                 if diff_days <= 20:
                     count_ok += 1
                 elif diff_days <= 30:
                     count_warning += 1
                 else:
                     count_expired += 1
-            # -----------------------------------
-
-            inactivation_val = None
-            if diff_days is not None:
-                inactivation_val = 30 - diff_days
 
             # Filtro Visualizzazione
             if self.current_filter:
@@ -1043,19 +990,15 @@ class DipendentiPanel(QWidget):
                     continue
                 if self.current_filter == "ok" and diff_days > 20:
                     continue
-                elif self.current_filter == "warning" and (
-                    diff_days <= 20 or diff_days > 30
-                ):
+                elif self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30):
                     continue
                 elif self.current_filter == "expired" and diff_days <= 30:
                     continue
 
-            display_cognome = r[1]
-            if cf_warning:
-                display_cognome = f"⚠️ {r[1]}"
+            inactivation_val = 30 - diff_days if diff_days is not None else None
+            display_cognome = f"⚠️ {r[1]}" if cf_warning else r[1]
 
-            # Costruiamo la riga "Mega" che contiene colonne visibili (0-6) e dati extra (7-9)
-            # 0:scad, 1:id_ris, 2:disp_cog, 3:nome, 4:cf, 5:badge, 6:assunz | 7:nascita, 8:created, 9:real_cog
+            # Costruiamo la riga
             master_rows.append(
                 [
                     inactivation_val,  # 0
