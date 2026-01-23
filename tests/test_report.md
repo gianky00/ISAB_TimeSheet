@@ -368,7 +368,7 @@ F                                                                        [100%]
 ___________________ TestAuditManager.test_retention_policy ____________________
 tests\unit\test_audit_manager_coverage_hardened.py:69: in test_retention_policy
     assertt logs[0]["action"] == "Sistema"
-E   AsserttionError: assertt 'Pulizia Log' == 'Sistema'
+E   AssertionError: assertt 'Pulizia Log' == 'Sistema'
 E
 E     - Sistema
 E     + Pulizia Log
@@ -536,7 +536,7 @@ F                                                                        [100%]
 ____________ TestBackupResilience.test_detect_cloud_paths_onedrive ____________
 tests\unit\test_backup_resilience.py:99: in test_detect_cloud_paths_onedrive
     assertt paths["OneDrive"] == Path("C:\\Users\\Test\\OneDrive")
-E   AsserttionError: assertt WindowsPath('C:/Users/Coemi/OneDrive') == WindowsPath('C:/Users/Test/OneDrive')
+E   AssertionError: assertt WindowsPath('C:/Users/Coemi/OneDrive') == WindowsPath('C:/Users/Test/OneDrive')
 E    +  where WindowsPath('C:/Users/Test/OneDrive') = Path('C:\\Users\\Test\\OneDrive')
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -1462,7 +1462,7 @@ F                                                                        [100%]
 _______________ TestContabilitaWorker.test_progress_calculation _______________
 tests\unit\test_contabilita_worker_coverage.py:99: in test_progress_calculation
     assertt total == 11
-E   AsserttionError: assertt {'est_attivita': 0, 'est_certificati': 0, 'est_files': 5, 'est_sheets': 5, ...} == 11
+E   AssertionError: assertt {'est_attivita': 0, 'est_certificati': 0, 'est_files': 5, 'est_sheets': 5, ...} == 11
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -1626,15 +1626,15 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 _______ TestControllersCoverage.test_navigation_controller_simple_logic _______
 C:\Program Files\Python312\Lib\unittest\mock.py:949: in assertt_called_with
-    raise AsserttionError(_error_message()) from cause
-E   AsserttionError: expected call not found.
+    raise AssertionError(_error_message()) from cause
+E   AssertionError: expected call not found.
 E   Expected: set_active_button(1)
 E     Actual: set_active_button(1, None)
 
 During handling of the above exception, another exception occurred:
 tests\unit\test_controllers_coverage.py:59: in test_navigation_controller_simple_logic
     mw.sidebar.set_active_button.assertt_called_with(1)
-E   AsserttionError: expected call not found.
+E   AssertionError: expected call not found.
 E   Expected: set_active_button(1)
 E     Actual: set_active_button(1, None)
 E
@@ -1808,15 +1808,15 @@ F                                                                        [100%]
 ================================== FAILURES ===================================
 ________ TestControllersCoverage.test_bot_controller_panel_status_sync ________
 C:\Program Files\Python312\Lib\unittest\mock.py:949: in assertt_called_with
-    raise AsserttionError(_error_message()) from cause
-E   AsserttionError: expected call not found.
+    raise AssertionError(_error_message()) from cause
+E   AssertionError: expected call not found.
 E   Expected: setStatus('RUNNING', 'Test SW')
 E     Actual: setStatus('Test SW', 'RUNNING')
 
 During handling of the above exception, another exception occurred:
 tests\unit\test_controllers_coverage.py:87: in test_bot_controller_panel_status_sync
     mw.status_safework.setStatus.assertt_called_with("RUNNING", "Test SW")
-E   AsserttionError: expected call not found.
+E   AssertionError: expected call not found.
 E   Expected: setStatus('RUNNING', 'Test SW')
 E     Actual: setStatus('Test SW', 'RUNNING')
 E
@@ -2489,7 +2489,7 @@ F                                                                        [100%]
 _______ TestExcelTableCoverage.test_editable_data_table_row_management ________
 tests\unit\test_excel_table_coverage.py:48: in test_editable_data_table_row_management
     assertt combo.itemText(0) == "C"
-E   AsserttionError: assertt '' == 'C'
+E   AssertionError: assertt '' == 'C'
 E
 E     - C
 =============================== tests coverage ================================
@@ -3004,7 +3004,7 @@ F                                                                        [100%]
 _________________________ test_update_grace_timestamp _________________________
 tests\unit\test_license_updater.py:52: in test_update_grace_timestamp
     assertt os.path.exists(token_path)
-E   AsserttionError: assertt False
+E   AssertionError: assertt False
 E    +  where False = <built-in function _path_exists>('C:\\Users\\Coemi\\AppData\\Local\\Temp\\pytest-of-Allegretti\\pytest-5406\\test_update_grace_timestamp0\\Licenza\\validity.token')
 E    +    where <built-in function _path_exists> = <module 'ntpath' (frozen)>.exists
 E    +      where <module 'ntpath' (frozen)> = os.path
@@ -3360,7 +3360,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater.py:103: in test_check_grace_period_expired
     with pytest.raises(Exception, match="SCADUTO"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AsserttionError: Regex pattern did not match.
+E   AssertionError: Regex pattern did not match.
 E     Expected regex: 'SCADUTO'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 =============================== tests coverage ================================
@@ -3888,7 +3888,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_advanced.py:65: in test_check_grace_period_expired
     with pytest.raises(Exception, match="SCADUTO"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AsserttionError: Regex pattern did not match.
+E   AssertionError: Regex pattern did not match.
 E     Expected regex: 'SCADUTO'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 ---------------------------- Captured stdout call -----------------------------
@@ -4070,7 +4070,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_advanced.py:81: in test_check_grace_period_clock_rollback
     with pytest.raises(Exception, match="incoerenza orologio"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AsserttionError: Regex pattern did not match.
+E   AssertionError: Regex pattern did not match.
 E     Expected regex: 'incoerenza orologio'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 ---------------------------- Captured stdout call -----------------------------
@@ -4580,7 +4580,7 @@ F                                                                        [100%]
 ______________ TestLicenseUpdater.test_grace_timestamp_lifecycle ______________
 tests\unit\test_license_updater_coverage.py:42: in test_grace_timestamp_lifecycle
     assertt token_path.exists()
-E   AsserttionError: assertt False
+E   AssertionError: assertt False
 E    +  where False = exists()
 E    +    where exists = WindowsPath('C:/Users/Coemi/AppData/Local/Temp/pytest-of-Allegretti/pytest-5425/test_grace_timestamp_lifecycle0/Licenza/validity.token').exists
 ---------------------------- Captured stdout call -----------------------------
@@ -4762,7 +4762,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_coverage.py:56: in test_check_grace_period_missing_token
     with pytest.raises(Exception, match="Nessuna validazione"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AsserttionError: Regex pattern did not match.
+E   AssertionError: Regex pattern did not match.
 E     Expected regex: 'Nessuna validazione'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 =============================== tests coverage ================================
@@ -4942,7 +4942,7 @@ During handling of the above exception, another exception occurred:
 tests\unit\test_license_updater_coverage.py:65: in test_check_grace_period_tampered_clock
     with pytest.raises(Exception, match="incoerenza"):
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AsserttionError: Regex pattern did not match.
+E   AssertionError: Regex pattern did not match.
 E     Expected regex: 'incoerenza'
 E     Actual message: "unsupported operand type(s) for /: 'str' and 'str'"
 ---------------------------- Captured stdout call -----------------------------
@@ -5447,7 +5447,7 @@ FAILED tests/unit/test_license_updater_coverage.py::TestLicenseUpdater::test_eme
 
 ### `tests/unit/test_license_validator.py::test_valid_license`
 
-**Error:** `FAILED tests/unit/test_license_validator.py::test_valid_license - AsserttionEr...`
+**Error:** `FAILED tests/unit/test_license_validator.py::test_valid_license - AssertionEr...`
 
 <details><summary>Full Output</summary>
 
@@ -5457,7 +5457,7 @@ F                                                                        [100%]
 _____________________________ test_valid_license ______________________________
 tests\unit\test_license_validator.py:83: in test_valid_license
     assertt status == license_validator.LicenseStatus.VALID
-E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
+E   AssertionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
 E    +  where <LicenseStatus.VALID: 'Valid'> = <enum 'LicenseStatus'>.VALID
 E    +    where <enum 'LicenseStatus'> = license_validator.LicenseStatus
 =============================== tests coverage ================================
@@ -5604,7 +5604,7 @@ src\utils\validators.py                                                 73     5
 TOTAL                                                                19144   8892    54%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_license_validator.py::test_valid_license - AsserttionEr...
+FAILED tests/unit/test_license_validator.py::test_valid_license - AssertionEr...
 1 failed in 5.96s
 
 ```
@@ -5625,7 +5625,7 @@ F                                                                        [100%]
 __________________________ test_invalid_hardware_id ___________________________
 tests\unit\test_license_validator.py:98: in test_invalid_hardware_id
     assertt status == license_validator.LicenseStatus.INVALID
-E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
+E   AssertionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
 E    +  where <LicenseStatus.INVALID: 'Invalid'> = <enum 'LicenseStatus'>.INVALID
 E    +    where <enum 'LicenseStatus'> = license_validator.LicenseStatus
 =============================== tests coverage ================================
@@ -5783,7 +5783,7 @@ FAILED tests/unit/test_license_validator.py::test_invalid_hardware_id - Assert..
 
 ### `tests/unit/test_license_validator.py::test_expired_license`
 
-**Error:** `FAILED tests/unit/test_license_validator.py::test_expired_license - Asserttion...`
+**Error:** `FAILED tests/unit/test_license_validator.py::test_expired_license - Assertion...`
 
 <details><summary>Full Output</summary>
 
@@ -5793,7 +5793,7 @@ F                                                                        [100%]
 ____________________________ test_expired_license _____________________________
 tests\unit\test_license_validator.py:117: in test_expired_license
     assertt status == license_validator.LicenseStatus.EXPIRED
-E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
+E   AssertionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
 E    +  where <LicenseStatus.EXPIRED: 'Expired'> = <enum 'LicenseStatus'>.EXPIRED
 E    +    where <enum 'LicenseStatus'> = license_validator.LicenseStatus
 =============================== tests coverage ================================
@@ -5940,7 +5940,7 @@ src\utils\validators.py                                                 73     5
 TOTAL                                                                19144   8892    54%
 Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/unit/test_license_validator.py::test_expired_license - Asserttion...
+FAILED tests/unit/test_license_validator.py::test_expired_license - Assertion...
 1 failed in 5.86s
 
 ```
@@ -5961,7 +5961,7 @@ F                                                                        [100%]
 _______ TestLicenseValidatorAdvanced.test_license_data_validation_flow ________
 tests\unit\test_license_validator_advanced.py:112: in test_license_data_validation_flow
     assertt status == LicenseStatus.VALID
-E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
+E   AssertionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
 E    +  where <LicenseStatus.VALID: 'Valid'> = LicenseStatus.VALID
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -6298,7 +6298,7 @@ F                                                                        [100%]
 _______ TestLicenseValidatorDeep.test_get_hardware_id_linux_machine_id ________
 tests\unit\test_license_validator_deep.py:124: in test_get_hardware_id_linux_machine_id
     assertt hwid == "MACHINE-ID-123"
-E   AsserttionError: assertt None == 'MACHINE-ID-123'
+E   AssertionError: assertt None == 'MACHINE-ID-123'
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
@@ -6464,7 +6464,7 @@ F                                                                        [100%]
 ____________________ test_get_hardware_id_linux_machine_id ____________________
 tests\unit\test_license_validator_extended.py:136: in test_get_hardware_id_linux_machine_id
     assertt get_hardware_id() == "FAKE_MACHINE_ID"
-E   AsserttionError: assertt None == 'FAKE_MACHINE_ID'
+E   AssertionError: assertt None == 'FAKE_MACHINE_ID'
 E    +  where None = get_hardware_id()
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -6631,7 +6631,7 @@ F                                                                        [100%]
 ___________________________ test_get_license_paths ____________________________
 tests\unit\test_license_validator_extended.py:151: in test_get_license_paths
     assertt paths["dir"] == os.path.join("/fake/appdata", "Licenza")
-E   AsserttionError: assertt WindowsPath('/fake/appdata/Licenza') == '/fake/appdata\\Licenza'
+E   AssertionError: assertt WindowsPath('/fake/appdata/Licenza') == '/fake/appdata\\Licenza'
 E    +  where '/fake/appdata\\Licenza' = <function join at 0x00000216A17A5120>('/fake/appdata', 'Licenza')
 E    +    where <function join at 0x00000216A17A5120> = <module 'ntpath' (frozen)>.join
 E    +      where <module 'ntpath' (frozen)> = os.path
@@ -7140,7 +7140,7 @@ F                                                                        [100%]
 _______________ test_get_detailed_license_status_hw_id_mismatch _______________
 tests\unit\test_license_validator_extended.py:278: in test_get_detailed_license_status_hw_id_mismatch
     assertt status == LicenseStatus.INVALID
-E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
+E   AssertionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.INVALID: 'Invalid'>
 E    +  where <LicenseStatus.INVALID: 'Invalid'> = LicenseStatus.INVALID
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -7307,7 +7307,7 @@ F                                                                        [100%]
 __________________ test_get_detailed_license_status_expired ___________________
 tests\unit\test_license_validator_extended.py:318: in test_get_detailed_license_status_expired
     assertt status == LicenseStatus.EXPIRED
-E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
+E   AssertionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.EXPIRED: 'Expired'>
 E    +  where <LicenseStatus.EXPIRED: 'Expired'> = LicenseStatus.EXPIRED
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -7474,7 +7474,7 @@ F                                                                        [100%]
 ___________________ test_get_detailed_license_status_valid ____________________
 tests\unit\test_license_validator_extended.py:342: in test_get_detailed_license_status_valid
     assertt status == LicenseStatus.VALID
-E   AsserttionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
+E   AssertionError: assertt <LicenseStatus.ERROR: 'Error'> == <LicenseStatus.VALID: 'Valid'>
 E    +  where <LicenseStatus.VALID: 'Valid'> = LicenseStatus.VALID
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
@@ -8493,7 +8493,7 @@ F                                                                        [100%]
 _________ TestLyraClientAdvanced.test_get_system_context_aggregation __________
 tests\unit\test_lyra_client_advanced.py:51: in test_get_system_context_aggregation
     assertt "Mario Rossi" in context
-E   AsserttionError: assertt 'Mario Rossi' in '=== REPORT CONTABILITÀ (2026) ===\n- Valore Totale Preventivato: € 1,000.00\n- Ore Spese Totali: 10.0 h\n- Margine Op... Nessuna anomalia (uscite mancanti) rilevata.\n- Ultime 5 Attività Registrate:\n  • 2026-01-01: M. R. (08:00 -> 17:00)'
+E   AssertionError: assertt 'Mario Rossi' in '=== REPORT CONTABILITÀ (2026) ===\n- Valore Totale Preventivato: € 1,000.00\n- Ore Spese Totali: 10.0 h\n- Margine Op... Nessuna anomalia (uscite mancanti) rilevata.\n- Ultime 5 Attività Registrate:\n  • 2026-01-01: M. R. (08:00 -> 17:00)'
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.10-final-0 _______________
 
