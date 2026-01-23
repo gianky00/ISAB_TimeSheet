@@ -10,9 +10,10 @@ import zipfile
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
+
 from src.core.schemas import validate_contabilita, validate_giornaliere
 
 # Lazy import placeholder
@@ -1204,13 +1205,13 @@ class ExcelImporter:
         """Mappa le colonne dell'Excel a quelle del DB con precisione."""
         cols_in_df = [str(c).strip() for c in df.columns]
         df.columns = cols_in_df
-        
+
         rename_map = {}
         # 1. First Pass: Exact Matches
         for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
             if excel_col in cols_in_df:
                 rename_map[excel_col] = db_col
-        
+
         # 2. Second Pass: Case-insensitive fallback (Strict name)
         for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
             if excel_col not in rename_map:
@@ -1218,7 +1219,7 @@ class ExcelImporter:
                     if col.lower() == excel_col.lower():
                         rename_map[col] = db_col
                         break
-        
+
         return rename_map
 
     @classmethod

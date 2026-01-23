@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 from PyQt6.QtCore import (  # type: ignore
     Qt,
@@ -118,7 +117,9 @@ class DashboardPanel(QWidget):
 
         # 2. Activity Feed (Bottom)
         subtitle = QLabel("Feed Attività")
-        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;")
+        subtitle.setStyleSheet(
+            "font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;"
+        )
         self.content_layout.addWidget(subtitle)
 
         self.activity_feed = ActivityFeed()

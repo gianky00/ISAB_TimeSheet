@@ -446,15 +446,17 @@ class AuditManager:
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
-                res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
+                res = conn.execute(
+                    "DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,)
+                )
                 deleted_count = res.rowcount
-            
+
             if deleted_count > 0:
                 self.log_action(
                     "Pulizia Log",
                     category="Sistema",
                     params={"deleted_rows": deleted_count, "cutoff_date": cutoff},
-                    severity="low"
+                    severity="low",
                 )
         except Exception as e:
             logger.error(f"Retention Policy Error: {e}")
@@ -466,12 +468,12 @@ class AuditManager:
         """
         cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
         stats = {}
-        
+
         # Pre-fill dates
         for i in range(days + 1):
             d = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
             stats[d] = {"success": 0, "error": 0, "warning": 0}
-            
+
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 # SQLite 'date' function extracts YYYY-MM-DD from ISO string
@@ -482,22 +484,21 @@ class AuditManager:
                     GROUP BY date(timestamp), status
                 """
                 rows = conn.execute(query, (cutoff,)).fetchall()
-                
+
                 for r in rows:
                     day = r[0]
                     status = r[1]
                     count = r[2]
-                    
+
                     if day in stats:
                         # Normalize status
                         s_key = status.lower()
                         if s_key not in stats[day]:
                             stats[day][s_key] = 0
                         stats[day][s_key] += count
-                        
+
         except Exception as e:
             logger.error(f"Stats Error: {e}")
-            
+
         # Filter out empty future dates if any and sort
         return dict(sorted(stats.items()))
-

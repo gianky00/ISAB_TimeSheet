@@ -553,8 +553,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             time.sleep(0.5)
         return False
 
-
-
     def _attendi_e_ritorna_nuovo_pdf(self, tempo_riferimento, timeout=60):
         from pathlib import Path
 

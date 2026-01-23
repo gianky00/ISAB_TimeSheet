@@ -528,7 +528,7 @@ class DatabaseManager:
         cursor.execute("INSERT INTO pdl_new SELECT * FROM pdl")
         cursor.execute("DROP TABLE pdl")
         cursor.execute("ALTER TABLE pdl_new RENAME TO pdl")
-        
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_n_pdl ON pdl(n_pdl)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pdl_sito ON pdl(sito)")
 
@@ -537,7 +537,9 @@ class DatabaseManager:
         """Aggiunge colonna codice_fiscale (v2)"""
         cursor = conn.cursor()
         cursor.execute("ALTER TABLE dipendenti ADD COLUMN codice_fiscale TEXT")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_dip_cf ON dipendenti(codice_fiscale)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_dip_cf ON dipendenti(codice_fiscale)"
+        )
 
     @staticmethod
     def _mig_timbrature_v3(conn: sqlite3.Connection):
@@ -546,13 +548,15 @@ class DatabaseManager:
         # Verifichiamo se le colonne esistono già per evitare errori
         cursor.execute("PRAGMA table_info(timbrature)")
         columns = [row[1] for row in cursor.fetchall()]
-        
+
         if "codice_fiscale" not in columns:
             cursor.execute("ALTER TABLE timbrature ADD COLUMN codice_fiscale TEXT")
         if "ore_effettive" not in columns:
             cursor.execute("ALTER TABLE timbrature ADD COLUMN ore_effettive TEXT")
-            
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)")
+
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)"
+        )
 
     @staticmethod
     def _mig_timbrature_v4(conn: sqlite3.Connection):
@@ -560,7 +564,7 @@ class DatabaseManager:
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(timbrature)")
         existing = [row[1] for row in cursor.fetchall()]
-        
+
         new_cols = {
             "id_dipendente": "TEXT",
             "fornitore": "TEXT",
@@ -569,9 +573,9 @@ class DatabaseManager:
             "codice_qualifica": "TEXT",
             "specializzazione": "TEXT",
             "societa_ospitante": "TEXT",
-            "data_ins": "TEXT"
+            "data_ins": "TEXT",
         }
-        
+
         for col, col_type in new_cols.items():
             if col not in existing:
                 cursor.execute(f"ALTER TABLE timbrature ADD COLUMN {col} {col_type}")
@@ -584,10 +588,10 @@ class DatabaseManager:
     }
 
     MIGRATIONS_TIMBRATURE = {
-        1: _mig_timbrature_v1, 
-        2: _mig_timbrature_v2, 
+        1: _mig_timbrature_v1,
+        2: _mig_timbrature_v2,
         3: _mig_timbrature_v3,
-        4: _mig_timbrature_v4
+        4: _mig_timbrature_v4,
     }
 
     MIGRATIONS_PDL = {1: _mig_pdl_v1, 2: _mig_pdl_v2}
