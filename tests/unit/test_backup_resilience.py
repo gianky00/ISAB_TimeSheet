@@ -92,7 +92,7 @@ class TestBackupResilience:
     def test_detect_cloud_paths_onedrive(self, mocker):
         """Test: Rilevamento OneDrive tramite env var."""
         mocker.patch.dict(os.environ, {"OneDrive": "C:\\Users\\Test\\OneDrive"})
-        mocker.patch("os.path.isdir", return_value=True)
+        mocker.patch("pathlib.Path.is_dir", return_value=True)
 
         paths = BackupManager.detect_cloud_paths()
         assert "OneDrive" in paths

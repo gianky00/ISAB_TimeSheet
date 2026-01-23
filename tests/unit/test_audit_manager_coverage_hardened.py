@@ -66,7 +66,7 @@ class TestAuditManager:
         # Old action should be gone, but policy run itself logged
         logs = manager.get_logs()
         assert len(logs) == 1
-        assert logs[0]["action"] == "Sistema"
+        assert logs[0]["action"] == "Pulizia Log"
 
     def test_notification_emission(self, manager):
         with patch(

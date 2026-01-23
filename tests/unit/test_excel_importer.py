@@ -185,8 +185,9 @@ class TestExcelImporter:
         assert len(rows) == 1
 
     @patch("src.core.excel_importer.zipfile.ZipFile")
+    @patch("src.core.excel_importer.zipfile.is_zipfile", return_value=True)
     @patch("src.core.excel_importer.Path.exists", return_value=True)
-    def test_scan_workload(self, mock_exists, mock_zip):
+    def test_scan_workload(self, mock_exists, mock_is_zip, mock_zip):
         mock_zip_instance = mock_zip.return_value.__enter__.return_value
         mock_zip_instance.namelist.return_value = ["xl/workbook.xml"]
         mock_zip_instance.read.return_value = b'name="2024" name="2025"'

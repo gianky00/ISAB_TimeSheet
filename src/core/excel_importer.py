@@ -267,6 +267,8 @@ class ExcelImporter:
                 # Euristiche extra
                 if "PREV" in norm_col and "DATA" in norm_col:
                     rename_map[col] = "data_prev"
+                elif "PREV" in norm_col and ("NUM" in norm_col or "N." in norm_col):
+                    rename_map[col] = "n_prev"
         df.rename(columns=rename_map, inplace=True)
 
         # Validazione Pandera (Contabilità)
