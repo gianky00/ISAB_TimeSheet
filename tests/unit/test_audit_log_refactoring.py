@@ -2,7 +2,7 @@
 Baseline tests for AuditLogWidget refresh logic.
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from PyQt6.QtGui import QIcon, QPixmap
@@ -41,10 +41,8 @@ def audit_widget(qtbot, mocker):
     m_instance.get_filtered_logs.return_value = (m_instance.get_logs.return_value, 2)
 
     # CRITICAL: Mock icons and assets to prevent crashes in headless environment
-    # Use real QIcon/QPixmap objects (even if empty) instead of MagicMock
-    # because QTableView needs valid paintable objects.
     dummy_pixmap = QPixmap(10, 10)
-    dummy_pixmap.fill(0)  # Fill with transparent color (or black)
+    dummy_pixmap.fill(0)
     dummy_icon = QIcon(dummy_pixmap)
 
     mocker.patch(
@@ -53,14 +51,17 @@ def audit_widget(qtbot, mocker):
     mocker.patch(
         "src.gui.panels.notifications_panel.get_colored_icon", return_value=dummy_icon
     )
-
-    # Also patch them in the model module where AuditTableModel is defined
     mocker.patch("src.gui.models.audit_model.get_asset_path", return_value="dummy.svg")
     mocker.patch("src.gui.models.audit_model.get_colored_icon", return_value=dummy_icon)
 
-    # CRITICAL: Mock QTimer to prevent background live refresh during tests
+    # CRITICAL: Mock QTimer to prevent background live refresh
     with patch("PyQt6.QtCore.QTimer"):
         widget = AuditLogWidget()
+        # MOCK UI Heavy operations that cause crashes in CI
+        widget.table_view.resizeColumnsToContents = MagicMock()
+        widget.table_view.setColumnWidth = MagicMock()
+        widget.table_view.columnWidth = MagicMock(return_value=100)
+
         qtbot.addWidget(widget)
         return widget
 
@@ -83,7 +84,6 @@ def test_audit_refresh_population(audit_widget):
     idx_bg = model.index(1, 0)
     bg_color = model.data(idx_bg, 8)
     assert bg_color is not None
-    # We check the name of the color returned by the model
     assert bg_color.name() == "#fff5f5"
 
 
