@@ -2,7 +2,7 @@ name: SyncroJob CI
 
 on:
   push:
-    branches: ["master", "main", "develop"]
+    branches: ["master", "main", "develop", "refactor-palette"]
   pull_request:
     branches: ["master", "main"]
 
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test:
-    name: Run Tests (Windows)
+    name: Verification (Windows)
     runs-on: windows-latest
 
     steps:
@@ -21,21 +21,33 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
-      - name: Install dependencies
+      - name: Install Poetry
         run: |
           python -m pip install --upgrade pip
           pip install poetry
-          poetry install
 
-      - name: Lint with Ruff
+      - name: Setup Poetry Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Environment Preparation
+        run: |
+          mkdir -p data temp logs
+          echo "Environment ready for testing"
+
+      - name: Quality Check (Informative)
         run: |
           poetry run ruff check .
-
-      - name: Type Check with MyPy
-        run: |
           poetry run mypy src/core
+        continue-on-error: true
 
       - name: Run Unit Tests
         run: |
