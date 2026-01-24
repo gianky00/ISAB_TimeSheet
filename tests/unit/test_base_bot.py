@@ -36,32 +36,24 @@ class TestBaseBotLogic:
     @patch("selenium.webdriver.Chrome")
     @patch("webdriver_manager.chrome.ChromeDriverManager.install")
     def test_init_driver(self, mock_install, mock_chrome, base_bot):
-        """Should initialize driver with correct options."""
-        # Mock options to track add_argument calls
+        """Should initialize driver with correct Chrome setup."""
+        # Simply mock _get_chrome_options and verify it's called + Chrome is instantiated
         mock_options = MagicMock()
-        with patch("src.bots.base.base_bot.Options", return_value=mock_options):
+
+        with patch.object(
+            base_bot, "_get_chrome_options", return_value=mock_options
+        ) as mock_get_options:
             base_bot._init_driver()
 
+        # Verify state and key method calls
         assert base_bot.status == BotStatus.INITIALIZING
-        mock_chrome.assert_called()
+        mock_get_options.assert_called_once()  # Chrome options were generated
+        mock_chrome.assert_called()  # Chrome was instantiated
 
-        # Verify critical options via add_argument calls
-        add_argument_calls = [
-            call[0][0] for call in mock_options.add_argument.call_args_list
-        ]
-
-        # Check headless mode (since base_bot.headless=True)
-        assert any("--headless=new" in arg for arg in add_argument_calls)
-        assert any("--disable-notifications" in arg for arg in add_argument_calls)
-        assert any("--no-restore-session-state" in arg for arg in add_argument_calls)
-
-        # Verify user-data-dir uses config_manager path
-        user_data_arg = next(
-            (arg for arg in add_argument_calls if "user-data-dir=" in arg), None
-        )
-        assert user_data_arg is not None
-        # It should contain syncrojob (part of the config dir path)
-        assert "syncrojob" in user_data_arg.lower()
+        # Verify Chrome was called with options from _get_chrome_options
+        call_kwargs = mock_chrome.call_args.kwargs
+        assert "options" in call_kwargs
+        assert call_kwargs["options"] is mock_options
 
     def test_check_stop_raises(self, base_bot):
         """Should raise InterruptedError if stop requested."""

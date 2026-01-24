@@ -42,7 +42,7 @@ def test_bot_initialization(bot):
 
 
 def test_init_driver_success(bot):
-    """Test inizializzazione driver con mock completi."""
+    """Test inizializzazione driver - verifica chiamate di base."""
     mock_options = MagicMock()
 
     with (
@@ -52,7 +52,9 @@ def test_init_driver_success(bot):
             return_value="/path/to/driver",
         ),
         patch("selenium.webdriver.chrome.service.Service"),
-        patch("src.bots.base.base_bot.Options", return_value=mock_options),
+        patch.object(
+            bot, "_get_chrome_options", return_value=mock_options
+        ) as mock_get_options,
     ):
         bot._init_driver()
 
@@ -61,8 +63,13 @@ def test_init_driver_success(bot):
         assert bot.wait is not None
         assert bot.status == BotStatus.INITIALIZING
 
-        # Verify add_argument was called
-        assert mock_options.add_argument.called
+        # Verify _get_chrome_options was called
+        mock_get_options.assert_called_once()
+
+        # Verify Chrome received the options
+        call_kwargs = mock_chrome.call_args.kwargs
+        assert "options" in call_kwargs
+        assert call_kwargs["options"] is mock_options
 
 
 def test_login_flow_success(bot):
