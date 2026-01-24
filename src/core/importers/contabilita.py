@@ -1,5 +1,7 @@
 import logging
 import pandas as pd
+import zipfile
+import re
 from typing import Callable, List, Optional, Tuple
 from pathlib import Path
 
@@ -27,6 +29,28 @@ class ContabilitaImporter(BaseImporter):
         "INDIRIZZO CONSUNTIVO": "indirizzo_consuntivo",
         "NOME FILE": "nome_file",
     }
+
+    @classmethod
+    def scan_sheets(cls, file_path: str) -> int:
+        """Conta i fogli validi nell'Excel principale (metodo veloce)."""
+        p_file = Path(file_path)
+        if not file_path or not p_file.exists():
+            return 0
+        try:
+            # Check if valid zip before opening
+            if not zipfile.is_zipfile(p_file):
+                # Maybe old xls format (OLE) -> fallback 1 sheet
+                return 1
+
+            with zipfile.ZipFile(p_file, "r") as z:
+                if "xl/workbook.xml" not in z.namelist():
+                    return 1
+                wb_xml = z.read("xl/workbook.xml").decode("utf-8")
+                sheet_names = re.findall(r'name="([^"]+)"', wb_xml)
+                return len([s for s in sheet_names if re.search(r"(\d{4})", s)])
+        except Exception as e:
+            logging.debug(f"Scan excel sheets error: {e}")
+            return 1
 
     @classmethod
     def import_contabilita_dati(

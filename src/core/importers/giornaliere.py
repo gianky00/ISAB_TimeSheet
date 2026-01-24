@@ -31,6 +31,31 @@ class GiornaliereImporter(BaseImporter):
     }
 
     @classmethod
+    def scan_files(cls, giornaliere_path: str) -> int:
+        """Conta i file validi nelle cartelle giornaliere."""
+        p_giorn = Path(giornaliere_path)
+        if not giornaliere_path or not p_giorn.exists():
+            return 0
+
+        count = 0
+        current_year = datetime.now().year
+        for folder in p_giorn.iterdir():
+            if not folder.is_dir():
+                continue
+            match = re.match(r"Giornaliere\s+(\d{4})", folder.name, re.IGNORECASE)
+            if not match:
+                continue
+
+            year = int(match.group(1))
+            if year > current_year:
+                continue
+
+            for file_path in folder.glob("*.xls*"):
+                if not file_path.name.startswith("~$"):
+                    count += 1
+        return count
+
+    @classmethod
     def import_giornaliere(
         cls,
         root_path: str,

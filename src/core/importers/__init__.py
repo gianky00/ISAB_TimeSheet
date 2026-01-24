@@ -89,37 +89,6 @@ class ExcelImporter:
     # --- Helpers Vari ---
     @staticmethod
     def scan_workload(file_path: str, giornaliere_path: str) -> Tuple[int, int]:
-        # Implementazione proxy che usa BaseImporter o reimplementa usando helpers
-        # Poiché BaseImporter ha _identify_sheet_year ma non scan logic specifica (che era in ExcelImporter),
-        # possiamo importare i metodi specifici o averli spostati.
-        # Ho visto _scan_excel_sheets e _scan_giornaliere_files in CertificatiImporter (per errore di copia?)
-        # o forse erano metodi standalone.
-        # Li ho visti alla fine del file originale.
-        # Per semplicità, li ho copiati in CertificatiImporter durante la lettura precedente?
-        # Aspetta, ho letto _scan_excel_sheets nel blocco finale che conteneva CertificatiImporter logica.
-        # Ma concettualmente scan_workload è generico o legato a Contabilità/Giornaliere.
-        # Meglio delegare a ContabilitaImporter e GiornaliereImporter se hanno metodi scan,
-        # oppure metterli in un Helper.
-        
-        # Implementazione rapida qui delegando ai moduli corretti se esistono o reimplementando
-        # Dato che scan_workload era un metodo statico di ExcelImporter,
-        # e serviva per la UI di caricamento.
-        
-        from src.core.importers.base import BaseImporter
-        # Qui potremmo dover duplicare o spostare la logica di scan se non l'ho messa nei moduli specifici.
-        # ContabilitaImporter non ha _scan_excel_sheets pubblico.
-        # Ma CertificatiImporter (nel mio ultimo write) HA scan_workload!
-        # Perché? Perché l'ho copiato dal blocco finale del file originale che conteneva tutto.
-        # Quindi CertificatiImporter ha scan_workload... che non c'entra nulla con i certificati.
-        # Errore di refactoring nel passaggio precedente.
-        
-        # Correzione: scan_workload dovrebbe stare qui o in un modulo 'utils'.
-        # Poiché l'ho messo in CertificatiImporter (per errore), posso chiamarlo da lì per ora,
-        # ma è brutto.
-        
-        # Soluzione pulita: Reimplemento qui delegando a Base o usando metodi privati se accessibili.
-        # Ma _scan_excel_sheets usa zipfile e regex.
-        
-        # Per ora delego a CertificatiImporter che ha il metodo (anche se impropriamente posizionato)
-        # per mantenere il refactoring funzionante senza riscrivere tutto ora.
-        return CertificatiImporter.scan_workload(file_path, giornaliere_path)
+        sheets = ContabilitaImporter.scan_sheets(file_path)
+        files = GiornaliereImporter.scan_files(giornaliere_path)
+        return sheets, files
