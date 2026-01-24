@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
-from src.gui.scarico_ore_components import FilterHeaderView, ScaricoOreTableModel
+from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableModel
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
