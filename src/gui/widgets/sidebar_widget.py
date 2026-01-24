@@ -142,12 +142,12 @@ class SidebarWidget(QFrame):
         self.separator.setVisible(not self._is_collapsed)
 
         # Aggiorna pulsanti
-        for btn in [
+        for btn in (
             self.btn_home,
             self.btn_lyra,
             self.btn_help,
             self.btn_settings,
-        ]:
+        ):
             btn.set_collapsed(self._is_collapsed)
 
         # Aggiorna Gruppi

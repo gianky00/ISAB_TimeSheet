@@ -1,7 +1,6 @@
 from typing import Callable, Dict, List, Optional, Tuple
 
 from src.core.importers.attivita import AttivitaImporter
-from src.core.importers.base import BaseImporter
 from src.core.importers.certificati import CertificatiImporter
 from src.core.importers.contabilita import ContabilitaImporter
 from src.core.importers.giornaliere import GiornaliereImporter
@@ -48,7 +47,9 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, List[Tuple]]:
-        return AttivitaImporter.import_attivita_programmate(file_path, progress_callback)
+        return AttivitaImporter.import_attivita_programmate(
+            file_path, progress_callback
+        )
 
     # --- Scarico Ore ---
     SCARICO_ORE_COLS = ScaricoOreImporter.SCARICO_ORE_COLS
@@ -73,7 +74,9 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, List[Tuple]]:
-        return CertificatiImporter.import_certificati_campione(file_path, progress_callback)
+        return CertificatiImporter.import_certificati_campione(
+            file_path, progress_callback
+        )
 
     # --- Storico OdA ---
     STORICO_ODA_MAPPING = StoricoOdaImporter.STORICO_ODA_MAPPING

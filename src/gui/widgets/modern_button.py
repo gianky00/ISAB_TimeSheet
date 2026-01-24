@@ -90,14 +90,13 @@ class ModernButton(QPushButton):
     def _get_colors(self):
         """Restituisce la coppia di colori (sfondo, testo) in base alla variante."""
         p = self._palette
-        colors = {
+        return {
             self.Variant.PRIMARY: (p.primary, p.on_primary),
             self.Variant.SECONDARY: (p.secondary, p.on_secondary),
             self.Variant.SUCCESS: (p.success, "#FFFFFF"),
             self.Variant.DANGER: (p.error, "#FFFFFF"),
             self.Variant.GHOST: ("transparent", p.primary),
-        }
-        return colors.get(self._variant, (p.primary, p.on_primary))
+        }.get(self._variant, (p.primary, p.on_primary))
 
     def _get_size_styles(self):
         """Restituisce il padding e la dimensione del font in base alla taglia."""
