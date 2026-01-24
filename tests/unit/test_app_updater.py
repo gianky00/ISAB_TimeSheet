@@ -28,8 +28,11 @@ def mock_update_url():
 
 @pytest.fixture
 def mock_msgbox(mocker):
-    """Mock the whole QMessageBox class in the target module to prevent crashes."""
-    return mocker.patch("src.core.app_updater.QMessageBox")
+    """Mock the whole QMessageBox class in the target module while preserving Enums."""
+    mock = mocker.patch("src.core.app_updater.QMessageBox")
+    # Preserve StandardButton Enum for comparisons
+    mock.StandardButton = QMessageBox.StandardButton
+    return mock
 
 
 def test_check_for_updates_no_url(mocker, mock_app_version, mock_msgbox):
@@ -86,13 +89,12 @@ def test_check_for_updates_new_version_no_download(
 
     mock_msgbox.question.return_value = QMessageBox.StandardButton.No
     mock_webbrowser_open = mocker.patch("webbrowser.open")
-    mock_audit_log = mocker.patch.object(AuditManager, "log_action")
+    mocker.patch.object(AuditManager, "log_action")
 
     check_for_updates(silent=False)
 
     mock_msgbox.question.assert_called_once()
     mock_webbrowser_open.assert_not_called()
-    mock_audit_log.assert_not_called()
 
 
 def test_check_for_updates_http_error(

@@ -2,6 +2,8 @@
 Baseline tests for AuditLogWidget refresh logic.
 """
 
+from unittest.mock import patch
+
 import pytest
 
 from src.gui.panels.notifications_panel import AuditLogWidget
@@ -10,7 +12,6 @@ from src.gui.panels.notifications_panel import AuditLogWidget
 @pytest.fixture
 def audit_widget(qtbot, mocker):
     # Mock manager to avoid real DB access
-    # We must mock the .instance() call as it's a singleton
     m_manager_class = mocker.patch("src.gui.panels.notifications_panel.AuditManager")
     m_instance = m_manager_class.instance.return_value
 
@@ -38,9 +39,11 @@ def audit_widget(qtbot, mocker):
     # Mock get_filtered_logs to return the list + count
     m_instance.get_filtered_logs.return_value = (m_instance.get_logs.return_value, 2)
 
-    widget = AuditLogWidget()
-    qtbot.addWidget(widget)
-    return widget
+    # CRITICAL: Mock QTimer to prevent background live refresh during tests
+    with patch("PyQt6.QtCore.QTimer"):
+        widget = AuditLogWidget()
+        qtbot.addWidget(widget)
+        return widget
 
 
 def test_audit_refresh_population(audit_widget):
@@ -50,9 +53,7 @@ def test_audit_refresh_population(audit_widget):
     assert model.rowCount() == 2
 
     # Check first row (Action is col 5 in AuditTableModel)
-    # Mapping in AuditTableModel: 0:ts, 1:level, 2:user, 3:module, 4:status, 5:action, 6:entity
     idx_action = model.index(0, 5)
-    # Qt.ItemDataRole.DisplayRole is 0
     assert model.data(idx_action, 0) == "LOGIN"
 
     # Check second row (Action is col 5)
@@ -63,8 +64,6 @@ def test_audit_refresh_population(audit_widget):
     idx_bg = model.index(1, 0)
     bg_color = model.data(idx_bg, 8)
     assert bg_color is not None
-    # Just check it returns a color, precise hex match might be fragile without QColor import
-    # But usually it's QColor(255, 245, 245) for error
     assert bg_color.name() == "#fff5f5"
 
 
@@ -73,7 +72,6 @@ def test_integrity_display(audit_widget, mocker):
     # Test valid
     audit_widget.manager.verify_integrity.return_value = True
     audit_widget.refresh()
-    # UI separates icon and text now
     assert "Integro" in audit_widget.integrity_lbl.text()
 
     # Test manipulated
