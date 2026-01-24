@@ -69,6 +69,7 @@ class PathsPage(QWidget):
         edit.setPlaceholderText("Seleziona cartella..." if folder else "Seleziona file...")
         style_input(edit)
         edit.textChanged.connect(self.settings_changed.emit)
+        edit.textChanged.connect(lambda: self._validate_path(edit))
         row.addWidget(edit)
 
         btn = QPushButton("Sfoglia")
@@ -81,6 +82,39 @@ class PathsPage(QWidget):
 
         parent_layout.addLayout(row)
         return edit
+
+    def _validate_path(self, widget: QLineEdit):
+        """Valida visivamente il percorso inserito."""
+        path = widget.text().strip()
+        if not path:
+            style_input(widget)
+            return
+
+        p = Path(path)
+        if p.exists():
+            widget.setStyleSheet("""
+                QLineEdit {
+                    border: 2px solid #28a745;
+                    border-radius: 4px;
+                    padding: 10px;
+                    font-size: 15px;
+                    background-color: #e8f5e9;
+                    color: #155724;
+                }
+                QLineEdit:focus { border-color: #28a745; }
+            """)
+        else:
+            widget.setStyleSheet("""
+                QLineEdit {
+                    border: 2px solid #dc3545;
+                    border-radius: 4px;
+                    padding: 10px;
+                    font-size: 15px;
+                    background-color: #f8d7da;
+                    color: #721c24;
+                }
+                QLineEdit:focus { border-color: #dc3545; }
+            """)
 
     # --- BROWSE HANDLERS ---
 
@@ -119,12 +153,24 @@ class PathsPage(QWidget):
 
     def load_from_config(self, config: dict):
         self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
+        self._validate_path(self.contabilita_path_edit)
+        
         self.auto_update_check.setChecked(config.get("enable_auto_update_contabilita", False))
+        
         self.giornaliere_path_edit.setText(config.get("giornaliere_path", ""))
+        self._validate_path(self.giornaliere_path_edit)
+        
         self.attivita_path_edit.setText(config.get("attivita_programmate_path", ""))
+        self._validate_path(self.attivita_path_edit)
+        
         self.certificati_path_edit.setText(config.get("certificati_campione_path", ""))
+        self._validate_path(self.certificati_path_edit)
+        
         self.dataease_path_edit.setText(config.get("dataease_db_path", ""))
+        self._validate_path(self.dataease_path_edit)
+        
         self.consuntivi_path_edit.setText(config.get("consuntivi_export_path", ""))
+        self._validate_path(self.consuntivi_path_edit)
 
     def save_to_config(self, config_manager):
         config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
