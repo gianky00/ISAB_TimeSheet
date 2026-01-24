@@ -133,7 +133,13 @@ def run_ruff(fix=False):
 
 
 def run_mypy():
-    cmd = [get_bin("mypy"), "src", "--ignore-missing-imports", "--no-error-summary"]
+    cmd = [
+        get_bin("mypy"),
+        "src",
+        "--ignore-missing-imports",
+        "--no-error-summary",
+        "--no-incremental",
+    ]
     return run_tool("mypy", cmd, "Mypy Types")
 
 

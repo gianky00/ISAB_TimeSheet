@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.gui.settings_panel import SettingsPanel
+from src.gui.panels.settings.main_panel import SettingsPanel
 
 
 class TestSettingsGUI:
@@ -10,7 +10,7 @@ class TestSettingsGUI:
     def app(self, qapp):
         return qapp
 
-    @patch("src.gui.settings_panel.config_manager.load_config")
+    @patch("src.gui.panels.settings.main_panel.config_manager.load_config")
     def test_settings_panel_init(self, mock_load, app, qtbot):
         mock_load.return_value = {
             "browser_headless": True,
@@ -21,20 +21,23 @@ class TestSettingsGUI:
         panel = SettingsPanel()
         qtbot.addWidget(panel)
 
-        assert panel.headless_check.isChecked() is True
-        assert panel.timeout_spin.value() == 45
+        # Accessing nested widgets in modular structure
+        general_page = panel.config_tab.general_page
+        assert general_page.headless_check.isChecked() is True
+        assert general_page.timeout_spin.value() == 45
 
-    @patch("src.gui.settings_panel.config_manager.set_config_value")
-    @patch("src.gui.settings_panel.config_manager.load_config")
+    @patch("src.gui.panels.settings.main_panel.config_manager.set_config_value")
+    @patch("src.gui.panels.settings.main_panel.config_manager.load_config")
     def test_settings_save(self, mock_load, mock_set, app, qtbot):
         mock_load.return_value = {}
         panel = SettingsPanel()
         qtbot.addWidget(panel)
 
-        panel.timeout_spin.setValue(99)
+        general_page = panel.config_tab.general_page
+        general_page.timeout_spin.setValue(99)
 
         # Suppress message box
-        with patch("src.gui.settings_panel.QMessageBox.information"):
+        with patch("src.gui.panels.settings.main_panel.QMessageBox.information"):
             panel._save_settings()
 
         # Verify call to config_manager

@@ -2,8 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
-from src.gui.panels import CaricoTSPanel, ScaricaTSPanel
-from src.gui.settings_panel import SettingsPanel
+from src.gui.panels.carico_ts import CaricoTSPanel
+from src.gui.panels.scarico_ts import ScaricaTSPanel
+from src.gui.panels.settings.main_panel import SettingsPanel
 
 
 class TestGUIPanels:
@@ -33,8 +34,8 @@ class TestGUIPanels:
         panel.data_table.set_data([{"numero_oda": "123"}])
         assert panel.data_table.table.rowCount() >= 1
 
-    @patch("src.core.config_manager.set_config_value")
-    @patch("src.core.config_manager.load_config")
+    @patch("src.gui.panels.scarico_ts.config_manager.set_config_value")
+    @patch("src.gui.panels.scarico_ts.config_manager.load_config")
     def test_scarica_ts_panel_save(self, mock_load, mock_save, app, qtbot):
         mock_load.return_value = {}
         panel = ScaricaTSPanel()
@@ -46,13 +47,13 @@ class TestGUIPanels:
         panel.params_widget.fornitore_combo.setCurrentText("NewF")
         panel.elabora_ts_check.setChecked(True)
 
-        # Trigger save (usually manual or signal based)
+        # Trigger save
         panel._save_data()
 
-        # Verify save called (actual checks of args would be more complex)
+        # Verify save called
         assert mock_save.called
 
-    @patch("src.gui.settings_panel.config_manager.load_config")
+    @patch("src.gui.panels.settings.main_panel.config_manager.load_config")
     def test_settings_panel_init(self, mock_load, app, qtbot):
         mock_load.return_value = {
             "browser_headless": True,
@@ -63,23 +64,25 @@ class TestGUIPanels:
         panel = SettingsPanel()
         qtbot.addWidget(panel)
 
-        assert panel.headless_check.isChecked() is True
-        assert panel.timeout_spin.value() == 60
-        assert panel.account_list.count() == 1
+        gen_page = panel.config_tab.general_page
+        lists_page = panel.config_tab.lists_page
 
-    @patch("src.gui.settings_panel.config_manager.set_config_value")
-    @patch("src.gui.settings_panel.config_manager.load_config")
+        assert gen_page.headless_check.isChecked() is True
+        assert gen_page.timeout_spin.value() == 60
+        assert lists_page.account_list.count() == 1
+
+    @patch("src.gui.panels.settings.main_panel.config_manager.set_config_value")
+    @patch("src.gui.panels.settings.main_panel.config_manager.load_config")
     def test_settings_panel_save(self, mock_load, mock_save, app, qtbot):
         mock_load.return_value = {}
         panel = SettingsPanel()
         qtbot.addWidget(panel)
 
         # Change something
-        panel.timeout_spin.setValue(99)
+        panel.config_tab.general_page.timeout_spin.setValue(99)
 
-        # Click save
-        with patch("src.gui.settings_panel.QMessageBox.information"):  # Suppress popup
-            panel.save_btn.click()
+        # Trigger save
+        panel._save_settings()
 
         # Verify save called
         assert mock_save.called

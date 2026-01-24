@@ -11,12 +11,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.gui.contabilita_panel import ContabilitaPanel
+from src.gui.panels.contabilita_panel import ContabilitaPanel
 
 
 @pytest.fixture
 def panel(qtbot, mock_ui_dependencies, mocker):
-    mocker.patch("src.gui.contabilita_panel.ContabilitaPanel.refresh_tabs")
+    mocker.patch("src.gui.panels.contabilita_panel.ContabilitaPanel.refresh_tabs")
     mocker.patch(
         "src.gui.widgets.contabilita.attivita_tab.AttivitaProgrammateTab",
         return_value=QWidget(),
@@ -26,7 +26,8 @@ def panel(qtbot, mock_ui_dependencies, mocker):
         return_value=QWidget(),
     )
     mocker.patch(
-        "src.gui.contabilita_kpi_panel.ContabilitaKPIPanel", return_value=QWidget()
+        "src.gui.panels.contabilita_kpi_panel.ContabilitaKPIPanel",
+        return_value=QWidget(),
     )
     mocker.patch("PyQt6.QtCore.QTimer.singleShot")
     p = ContabilitaPanel()

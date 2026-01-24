@@ -3,7 +3,8 @@ Baseline tests for Scarico Ore Components.
 Ensures data processing and tree building logic remains consistent during refactoring.
 """
 
-from src.gui.scarico_ore_components import CacheWorker, DateFilterPopupWidget
+from src.gui.components.scarico_ore.cache import CacheWorker
+from src.gui.components.scarico_ore.filters.popup_date import DateFilterPopupWidget
 
 
 def test_cache_worker_build_caches_logic():

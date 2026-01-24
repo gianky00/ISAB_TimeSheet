@@ -1,6 +1,6 @@
 import pytest
 
-from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
+from src.gui.panels.contabilita_kpi_panel import ContabilitaKPIPanel
 
 
 class TestGUIAdvanced:
@@ -13,7 +13,7 @@ class TestGUIAdvanced:
     @pytest.fixture
     def mock_manager(self, mocker):
         """Mock per ContabilitaManager."""
-        return mocker.patch("src.gui.contabilita_kpi_panel.ContabilitaManager")
+        return mocker.patch("src.gui.panels.contabilita_kpi_panel.ContabilitaManager")
 
     def test_kpi_panel_initialization(self, qtbot, mock_manager):
         """Test: Inizializzazione del pannello e caricamento anni."""

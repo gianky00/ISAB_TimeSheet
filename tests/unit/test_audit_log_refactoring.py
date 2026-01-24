@@ -4,14 +4,14 @@ Baseline tests for AuditLogWidget refresh logic.
 
 import pytest
 
-from src.gui.notifications_panel import AuditLogWidget
+from src.gui.panels.notifications_panel import AuditLogWidget
 
 
 @pytest.fixture
 def audit_widget(qtbot, mocker):
     # Mock manager to avoid real DB access
     # We must mock the .instance() call as it's a singleton
-    m_manager_class = mocker.patch("src.gui.notifications_panel.AuditManager")
+    m_manager_class = mocker.patch("src.gui.panels.notifications_panel.AuditManager")
     m_instance = m_manager_class.instance.return_value
 
     m_instance.verify_integrity.return_value = True
@@ -49,7 +49,8 @@ def test_audit_refresh_population(audit_widget):
     model = audit_widget.model
     assert model.rowCount() == 2
 
-    # Check first row (Action is col 5)
+    # Check first row (Action is col 5 in AuditTableModel)
+    # Mapping in AuditTableModel: 0:ts, 1:level, 2:user, 3:module, 4:status, 5:action, 6:entity
     idx_action = model.index(0, 5)
     # Qt.ItemDataRole.DisplayRole is 0
     assert model.data(idx_action, 0) == "LOGIN"
@@ -63,6 +64,7 @@ def test_audit_refresh_population(audit_widget):
     bg_color = model.data(idx_bg, 8)
     assert bg_color is not None
     # Just check it returns a color, precise hex match might be fragile without QColor import
+    # But usually it's QColor(255, 245, 245) for error
     assert bg_color.name() == "#fff5f5"
 
 

@@ -1,4 +1,4 @@
-from src.gui.widgets.timeline_widget import HorizontalTimelineWidget, LogWidget
+from src.gui.widgets.timeline_widget import HorizontalTimelineWidget, TimelineWidget
 
 # The 'qapp' fixture is automatically provided by pytest-qt and ensures a
 # QApplication instance exists before any tests that use GUI components are run.
@@ -6,15 +6,15 @@ from src.gui.widgets.timeline_widget import HorizontalTimelineWidget, LogWidget
 
 def test_horizontal_timeline_functionality(qtbot):
     """
-    Tests the basic functionality of the LogWidget and its HorizontalTimelineWidget.
+    Tests the basic functionality of the TimelineWidget and its HorizontalTimelineWidget.
     """
-    widget = LogWidget()
+    widget = TimelineWidget()
     qtbot.addWidget(widget)
 
-    # Verify that the LogWidget correctly contains a HorizontalTimelineWidget
+    # Verify that the TimelineWidget correctly contains a HorizontalTimelineWidget
     assert isinstance(
         widget.timeline, HorizontalTimelineWidget
-    ), "LogWidget should be using HorizontalTimelineWidget"
+    ), "TimelineWidget should be using HorizontalTimelineWidget"
 
     # Add a series of logs to the widget
     logs_to_add = [

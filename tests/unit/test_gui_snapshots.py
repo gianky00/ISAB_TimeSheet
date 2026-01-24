@@ -2,9 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
-# Import panels (these imports assume the file structure is correct)
-from src.gui.contabilita_panel import ContabilitaPanel
-from src.gui.scarico_ore_panel import ScaricoOrePanel
+# Import panels from new modular locations
+from src.gui.panels.contabilita_panel import ContabilitaPanel
+from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
 
 class TestGuiSnapshots:
@@ -17,14 +17,12 @@ class TestGuiSnapshots:
         Snapshot-like test: verify ContabilitaPanel has the expected structure
         (TabWidget, Buttons) without actually running data logic.
         """
-        # We need to mock get_config_value or similar if the panel uses it in init
         with patch("src.core.config_manager.get_config_value", return_value=[]):
             panel = ContabilitaPanel()
             qtbot.addWidget(panel)
 
             # Check Tabs
-            # ContabilitaPanel uses a QTabWidget named 'main_tabs'
-            assert panel.main_tabs.count() >= 3  # Dati, Preventivi, Riepilogo, etc.
+            assert panel.main_tabs.count() >= 3
 
     def test_scarico_ore_panel_instantiation(self, qtbot, mock_deps):
         """Verify ScaricoOrePanel can be instantiated."""
@@ -33,7 +31,5 @@ class TestGuiSnapshots:
             qtbot.addWidget(panel)
 
             # Check title or label existence
-            # ScaricoOrePanel has a table_view
             assert panel.table_view is not None
-            # And a search input
             assert panel.search_input is not None
