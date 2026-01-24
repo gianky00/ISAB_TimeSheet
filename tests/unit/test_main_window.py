@@ -11,11 +11,14 @@ class TestMainWindow:
     def app(self, qapp):
         return qapp
 
+    @patch("src.gui.main_window.main.QTimer.singleShot")
     @patch("src.gui.main_window.main.ServiceController")
     @patch("src.gui.main_window.main.LyraSentinel")
     @patch("src.gui.main_window.main.config_manager.load_config")
     @patch("src.gui.main_window.main.apply_theme")
-    def test_init(self, mock_theme, mock_conf, mock_sentinel, mock_service, app, qtbot):
+    def test_init(
+        self, mock_theme, mock_conf, mock_sentinel, mock_service, mock_timer, app, qtbot
+    ):
         mock_conf.return_value = {}
 
         window = MainWindow()
@@ -28,6 +31,7 @@ class TestMainWindow:
     def test_navigation(self, app, qtbot):
         # Mock internal components to avoid side effects
         with (
+            patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
             patch("src.gui.main_window.main.LyraSentinel"),
             patch(
@@ -63,6 +67,7 @@ class TestMainWindow:
 
     def test_navigate_to_panel(self, app, qtbot):
         with (
+            patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
             patch("src.gui.main_window.main.LyraSentinel"),
             patch(
@@ -86,6 +91,7 @@ class TestMainWindow:
             window = MainWindow()
             qtbot.addWidget(window)
 
+            # Manually ensure panels are loaded for the test
             window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
 
             # Test deep link navigation
