@@ -1,5 +1,6 @@
 import logging
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QTabWidget
+
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage
 
@@ -27,7 +28,7 @@ class DipendentiPanel(QWidget):
         # self.tabs.addTab(AnagraficaPage(), "Anagrafica")
         # self.tabs.addTab(CertificatiPage(), "Certificati")
         # main_layout.addWidget(self.tabs)
-        
+
         self.anagrafica_page = AnagraficaPage()
         main_layout.addWidget(self.anagrafica_page)
 

@@ -1,12 +1,13 @@
 import logging
-import pandas as pd
-import zipfile
 import re
-from typing import Callable, List, Optional, Tuple
+import zipfile
 from pathlib import Path
+from typing import Callable, List, Optional, Tuple
 
-from src.core.schemas import validate_contabilita
+import pandas as pd
+
 from src.core.importers.base import BaseImporter
+from src.core.schemas import validate_contabilita
 
 
 class ContabilitaImporter(BaseImporter):
@@ -244,7 +245,9 @@ class ContabilitaImporter(BaseImporter):
         try:
             df = validate_contabilita(df)
         except Exception as e:
-            logging.warning(f"Validazione Pandera Contabilità fallita (uso fallback): {e})")
+            logging.warning(
+                f"Validazione Pandera Contabilità fallita (uso fallback): {e})"
+            )
 
         return df
 

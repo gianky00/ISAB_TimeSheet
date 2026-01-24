@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import QGroupBox, QLineEdit, QListWidget, QPushButton, QSpinBox
+from PyQt6.QtWidgets import QGroupBox, QPushButton
 
 
 def create_group_box(title: str) -> QGroupBox:
@@ -86,7 +86,9 @@ def style_button(button: QPushButton) -> None:
     )
 
 
-def style_mini_button(button: QPushButton, color: str, text_color: str = "black") -> None:
+def style_mini_button(
+    button: QPushButton, color: str, text_color: str = "black"
+) -> None:
     """Applica stile per pulsanti piccoli (es. add/remove in liste)."""
     button.setFixedSize(32, 32)
     button.setIconSize(QSize(18, 18))

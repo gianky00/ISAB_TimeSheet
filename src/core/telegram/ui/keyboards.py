@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+
 class TelegramUI:
     @staticmethod
     def get_main_keyboard():
@@ -26,11 +27,7 @@ class TelegramUI:
     @staticmethod
     def get_bots_menu():
         keyboard = [
-            [
-                InlineKeyboardButton(
-                    "🏭 Portale Fornitori", callback_data="nav_portale"
-                )
-            ],
+            [InlineKeyboardButton("🏭 Portale Fornitori", callback_data="nav_portale")],
             [InlineKeyboardButton("🛡️ SafeWork", callback_data="nav_safework")],
             [TelegramUI.get_back_button("menu_main")],
         ]
@@ -62,9 +59,7 @@ class TelegramUI:
                 InlineKeyboardButton("📸 Screenshot", callback_data="screenshot"),
             ],
             [
-                InlineKeyboardButton(
-                    "⚙️ Impostazioni", callback_data="menu_settings"
-                ),
+                InlineKeyboardButton("⚙️ Impostazioni", callback_data="menu_settings"),
                 InlineKeyboardButton("🛑 Stop Globale", callback_data="stop_all"),
             ],
             [InlineKeyboardButton("⚡ Manutenzione", callback_data="menu_power")],
@@ -77,17 +72,9 @@ class TelegramUI:
         keyboard = [
             [InlineKeyboardButton("📥 Scarico TS", callback_data="menu_ts")],
             [InlineKeyboardButton("📤 Carico TS", callback_data="menu_carico")],
-            [
-                InlineKeyboardButton(
-                    "📋 Dettagli OdA", callback_data="menu_oda_details"
-                )
-            ],
+            [InlineKeyboardButton("📋 Dettagli OdA", callback_data="menu_oda_details")],
             [InlineKeyboardButton("⏱️ Timbrature", callback_data="menu_timbrature")],
-            [
-                InlineKeyboardButton(
-                    "📦 Prenota BP", callback_data="menu_prenota_bp"
-                )
-            ],
+            [InlineKeyboardButton("📦 Prenota BP", callback_data="menu_prenota_bp")],
             [TelegramUI.get_back_button("nav_bots")],
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -102,9 +89,7 @@ class TelegramUI:
 
     @staticmethod
     def get_lyra_menu():
-        return InlineKeyboardMarkup(
-            [[TelegramUI.get_back_button("menu_main")]]
-        )
+        return InlineKeyboardMarkup([[TelegramUI.get_back_button("menu_main")]])
 
     @staticmethod
     def get_db_year_selection(years):
@@ -112,9 +97,7 @@ class TelegramUI:
         row = []
         for y in sorted(years, reverse=True):
             row.append(
-                InlineKeyboardButton(
-                    str(y), callback_data=f"db_year_strumentale_{y}"
-                )
+                InlineKeyboardButton(str(y), callback_data=f"db_year_strumentale_{y}")
             )
             if len(row) == 3:
                 keyboard.append(row)
@@ -175,11 +158,7 @@ class TelegramUI:
     def get_carico_menu():
         return InlineKeyboardMarkup(
             [
-                [
-                    InlineKeyboardButton(
-                        "▶ Avvia Carico", callback_data="run_carico"
-                    )
-                ],
+                [InlineKeyboardButton("▶ Avvia Carico", callback_data="run_carico")],
                 [TelegramUI.get_back_button("nav_portale")],
             ]
         )
@@ -193,11 +172,7 @@ class TelegramUI:
                         "🕒 Ieri", callback_data="run_timbrature_yesterday"
                     )
                 ],
-                [
-                    InlineKeyboardButton(
-                        "📅 Oggi", callback_data="run_timbrature_today"
-                    )
-                ],
+                [InlineKeyboardButton("📅 Oggi", callback_data="run_timbrature_today")],
                 [TelegramUI.get_back_button("nav_portale")],
             ]
         )

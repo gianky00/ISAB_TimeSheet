@@ -1,7 +1,10 @@
 import json
 import pickle
+
 from PyQt6.QtCore import QThread, pyqtSignal
+
 from src.utils.parsing import parse_currency
+
 
 class CacheWorker(QThread):
     """

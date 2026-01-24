@@ -1,5 +1,12 @@
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QSpinBox, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QHBoxLayout,
+    QLabel,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
 
 from src.gui.panels.settings.shared import create_group_box, style_input
 
@@ -48,7 +55,7 @@ class GeneralPage(QWidget):
         self.timeout_spin.setMinimumWidth(100)
         style_input(self.timeout_spin)
         self.timeout_spin.valueChanged.connect(self.settings_changed.emit)
-        
+
         timeout_layout.addWidget(self.timeout_spin)
         timeout_layout.addStretch()
         browser_layout.addLayout(timeout_layout)
@@ -63,5 +70,7 @@ class GeneralPage(QWidget):
 
     def save_to_config(self, config_manager):
         """Salva i valori nella configurazione."""
-        config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
+        config_manager.set_config_value(
+            "browser_headless", self.headless_check.isChecked()
+        )
         config_manager.set_config_value("browser_timeout", self.timeout_spin.value())

@@ -1,10 +1,13 @@
 from typing import Any
+
 from telegram import Update, constants
 from telegram.ext import ContextTypes
+
 from src.core import config_manager
 from src.core.contabilita_manager import ContabilitaManager
-from src.utils.printing import get_installed_printers
 from src.core.telegram.ui.keyboards import TelegramUI
+from src.utils.printing import get_installed_printers
+
 
 async def handle_button(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gestisce tutti i callback dei bottoni inline."""
@@ -27,6 +30,7 @@ async def handle_button(service, update: Update, context: ContextTypes.DEFAULT_T
     elif _is_utility_data(data):
         await _handle_utility_actions(service, data, query, chat_id)
 
+
 async def _validate_button_query(service, update: Update, query: Any) -> bool:
     if not query or not query.message:
         return False
@@ -38,14 +42,17 @@ async def _validate_button_query(service, update: Update, query: Any) -> bool:
     await query.answer()
     return bool(query.data)
 
+
 def _is_bot_data(data: str) -> bool:
     prefixes = ["menu_", "run_", "input_", "clear_", "list_", "confirm_"]
     return any(data.startswith(p) for p in prefixes) or data == "toggle_merge_all_pdl"
+
 
 def _is_utility_data(data: str) -> bool:
     items = ["status", "screenshot", "snap_app", "snap_pc", "stop_all"]
     prefixes = ["app_", "set_", "toggle_"]
     return data in items or any(data.startswith(p) for p in prefixes)
+
 
 async def _handle_nav_actions(service, data, query):
     if data == "menu_main":
@@ -91,6 +98,7 @@ async def _handle_nav_actions(service, data, query):
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
+
 async def _handle_db_actions(service, data, query, chat_id):
     if data == "db_select_year_strumentale":
         years = ContabilitaManager.get_available_years()
@@ -124,8 +132,11 @@ async def _handle_db_actions(service, data, query, chat_id):
             parse_mode=constants.ParseMode.MARKDOWN,
         )
 
+
 async def _handle_bot_actions(service, data, query, chat_id, update, context):
-    if await _handle_menu_and_input_dispatch(service, data, query, chat_id, update, context):
+    if await _handle_menu_and_input_dispatch(
+        service, data, query, chat_id, update, context
+    ):
         return
 
     if data.startswith("sel_print_run_"):
@@ -135,7 +146,10 @@ async def _handle_bot_actions(service, data, query, chat_id, update, context):
     else:
         _handle_direct_bot_commands(service, data, chat_id)
 
-async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update, context):
+
+async def _handle_menu_and_input_dispatch(
+    service, data, query, chat_id, update, context
+):
     async def handle_menu_pdl():
         merge_all = service.pdl_settings.get(chat_id, {}).get("merge_all", False)
         await query.edit_message_text(
@@ -205,13 +219,13 @@ async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update,
         printers = get_installed_printers()
         await query.edit_message_text(
             "Seleziona la stampante:",
-            reply_markup=TelegramUI.get_printer_selection_menu(printers, "menu_pdl")
+            reply_markup=TelegramUI.get_printer_selection_menu(printers, "menu_pdl"),
         )
 
     async def handle_run_pdl_off():
         await query.edit_message_text(
             "Vuoi ricevere il PDF unito in chat?",
-            reply_markup=TelegramUI.get_confirm_merge_menu(noprint=True)
+            reply_markup=TelegramUI.get_confirm_merge_menu(noprint=True),
         )
 
     map_handlers = {
@@ -234,6 +248,7 @@ async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update,
         return True
     return False
 
+
 async def _handle_printer_selection(service, data, query, chat_id):
     sn = data.replace("sel_print_run_", "")
     fpn = _get_full_printer_name(sn)
@@ -243,6 +258,7 @@ async def _handle_printer_selection(service, data, query, chat_id):
         reply_markup=TelegramUI.get_confirm_merge_menu(noprint=False),
         parse_mode=constants.ParseMode.MARKDOWN,
     )
+
 
 async def _handle_run_pdl_confirm(service, data, query, chat_id):
     p = service.user_states.pop(chat_id, {}).get("printer", "")
@@ -265,11 +281,13 @@ async def _handle_run_pdl_confirm(service, data, query, chat_id):
         f"{msg}, invio PDF={params['merge_and_send']}, merge finale={merge_all}."
     )
 
+
 def _get_full_printer_name(short_name: str) -> str:
     for p in get_installed_printers():
         if p.startswith(short_name):
             return p
     return short_name
+
 
 def _handle_direct_bot_commands(service, data, chat_id):
     direct_map = {
@@ -286,6 +304,7 @@ def _handle_direct_bot_commands(service, data, chat_id):
     }
     if cmd := direct_map.get(data):
         service.command_received.emit(cmd[0], cmd[1])
+
 
 async def _handle_utility_actions(service, data, query, chat_id):
     if data == "status":
@@ -312,6 +331,7 @@ async def _handle_utility_actions(service, data, query, chat_id):
     elif data.startswith("set_") or data.startswith("toggle_"):
         await _handle_setting_changes(service, data, query, chat_id)
 
+
 async def _handle_utility_menus(service, data, query):
     if data == "menu_settings":
         config = config_manager.load_config()
@@ -328,6 +348,7 @@ async def _handle_utility_menus(service, data, query):
         await query.edit_message_text(
             "🖨️ Stampanti:", reply_markup=TelegramUI.get_printers_menu(printers)
         )
+
 
 async def _handle_setting_changes(service, data, query, chat_id):
     if data.startswith("set_forn_"):

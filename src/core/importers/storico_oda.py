@@ -1,7 +1,8 @@
-import pandas as pd
 import warnings
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
+
+import pandas as pd
 
 from src.core.importers.base import BaseImporter
 
@@ -124,7 +125,7 @@ class StoricoOdaImporter(BaseImporter):
     def _clean_storico_oda_data(cls, df: pd.DataFrame):
         """Pulisce date, numeri e ID."""
         pd = cls._get_pd()
-        
+
         # Date
         for date_col in ["data_oda", "data_consegna"]:
             df[date_col] = (

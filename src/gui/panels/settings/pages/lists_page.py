@@ -1,5 +1,4 @@
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
-from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -35,18 +34,18 @@ class ListsPage(QWidget):
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
-        
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        
+
         content = QWidget()
         self.layout = QVBoxLayout(content)
         self.layout.setSpacing(20)
 
         # 1. ACCOUNT ISAB
         self._setup_account_section()
-        
+
         # 2. ACCOUNT SAFEWORK
         self._setup_sw_account_section()
 
@@ -95,15 +94,21 @@ class ListsPage(QWidget):
         self.sw_account_list = QListWidget()
         self.sw_account_list.setMaximumHeight(100)
         self.sw_account_list.setStyleSheet(list_style())
-        self.sw_account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.sw_account_list.customContextMenuRequested.connect(self._show_sw_account_menu)
+        self.sw_account_list.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
+        self.sw_account_list.customContextMenuRequested.connect(
+            self._show_sw_account_menu
+        )
         layout.addWidget(self.sw_account_list)
 
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_sw_account, "Aggiungi")
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_sw_account, "Modifica")
         self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_sw_account, "Rimuovi")
-        self._add_btn(btns, Icons.STAR, "#ffc107", self._set_default_sw_account, "Default")
+        self._add_btn(
+            btns, Icons.STAR, "#ffc107", self._set_default_sw_account, "Default"
+        )
         btns.addStretch()
         layout.addLayout(btns)
         self.layout.addWidget(group)
@@ -114,9 +119,14 @@ class ListsPage(QWidget):
         self.contract_list = QListWidget()
         self.contract_list.setMaximumHeight(130)
         self.contract_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.contract_list, self._add_contract, self._edit_contract, self._remove_contract)
+        self._setup_generic_list(
+            self.contract_list,
+            self._add_contract,
+            self._edit_contract,
+            self._remove_contract,
+        )
         layout.addWidget(self.contract_list)
-        
+
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_contract)
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_contract)
@@ -131,7 +141,12 @@ class ListsPage(QWidget):
         self.fornitori_list = QListWidget()
         self.fornitori_list.setMaximumHeight(130)
         self.fornitori_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.fornitori_list, self._add_fornitore, self._edit_fornitore, self._remove_fornitore)
+        self._setup_generic_list(
+            self.fornitori_list,
+            self._add_fornitore,
+            self._edit_fornitore,
+            self._remove_fornitore,
+        )
         layout.addWidget(self.fornitori_list)
 
         btns = QHBoxLayout()
@@ -148,7 +163,12 @@ class ListsPage(QWidget):
         self.reparti_list = QListWidget()
         self.reparti_list.setMaximumHeight(100)
         self.reparti_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.reparti_list, self._add_reparto, self._edit_reparto, self._remove_reparto)
+        self._setup_generic_list(
+            self.reparti_list,
+            self._add_reparto,
+            self._edit_reparto,
+            self._remove_reparto,
+        )
         layout.addWidget(self.reparti_list)
 
         btns = QHBoxLayout()
@@ -165,7 +185,12 @@ class ListsPage(QWidget):
         self.cantieri_list = QListWidget()
         self.cantieri_list.setMaximumHeight(100)
         self.cantieri_list.setStyleSheet(list_style())
-        self._setup_generic_list(self.cantieri_list, self._add_cantiere, self._edit_cantiere, self._remove_cantiere)
+        self._setup_generic_list(
+            self.cantieri_list,
+            self._add_cantiere,
+            self._edit_cantiere,
+            self._remove_cantiere,
+        )
         layout.addWidget(self.cantieri_list)
 
         btns = QHBoxLayout()
@@ -181,7 +206,8 @@ class ListsPage(QWidget):
     def _add_btn(self, layout, icon, color, callback, tooltip=""):
         btn = QPushButton()
         btn.setIcon(get_colored_icon(get_asset_path(icon), "#000000"))
-        if tooltip: btn.setToolTip(tooltip)
+        if tooltip:
+            btn.setToolTip(tooltip)
         btn.clicked.connect(callback)
         style_mini_button(btn, color)
         layout.addWidget(btn)
@@ -189,18 +215,36 @@ class ListsPage(QWidget):
     def _setup_generic_list(self, list_widget, add_cb, edit_cb, remove_cb):
         list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         list_widget.customContextMenuRequested.connect(
-            lambda pos: self._show_generic_menu(pos, list_widget, add_cb, edit_cb, remove_cb)
+            lambda pos: self._show_generic_menu(
+                pos, list_widget, add_cb, edit_cb, remove_cb
+            )
         )
 
     # --- MENU CONTESTUALI ---
 
     def _show_account_menu(self, position):
-        self._show_acc_menu_impl(position, self.account_list, self._add_account, self._edit_account, self._remove_account, self._set_default_account)
+        self._show_acc_menu_impl(
+            position,
+            self.account_list,
+            self._add_account,
+            self._edit_account,
+            self._remove_account,
+            self._set_default_account,
+        )
 
     def _show_sw_account_menu(self, position):
-        self._show_acc_menu_impl(position, self.sw_account_list, self._add_sw_account, self._edit_sw_account, self._remove_sw_account, self._set_default_sw_account)
+        self._show_acc_menu_impl(
+            position,
+            self.sw_account_list,
+            self._add_sw_account,
+            self._edit_sw_account,
+            self._remove_sw_account,
+            self._set_default_sw_account,
+        )
 
-    def _show_acc_menu_impl(self, position, list_widget, add_cb, edit_cb, remove_cb, def_cb):
+    def _show_acc_menu_impl(
+        self, position, list_widget, add_cb, edit_cb, remove_cb, def_cb
+    ):
         menu = QMenu()
         item = list_widget.itemAt(position)
         menu.addAction("Aggiungi", add_cb)
@@ -254,7 +298,8 @@ class ListsPage(QWidget):
 
     def _edit_account(self):
         item = self.account_list.currentItem()
-        if not item: return
+        if not item:
+            return
         data = item.data(Qt.ItemDataRole.UserRole)
         dlg = AccountDialog(self, data["username"], data["password"])
         if dlg.exec():
@@ -262,12 +307,18 @@ class ListsPage(QWidget):
             if u:
                 data["username"] = u
                 data["password"] = p
-                self._render_accounts(self.account_list, self._get_accounts(self.account_list))
+                self._render_accounts(
+                    self.account_list, self._get_accounts(self.account_list)
+                )
                 self.settings_changed.emit()
 
     def _remove_account(self):
         row = self.account_list.currentRow()
-        if row >= 0 and QMessageBox.question(self, "Conferma", "Rimuovere account?") == QMessageBox.StandardButton.Yes:
+        if (
+            row >= 0
+            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
+            == QMessageBox.StandardButton.Yes
+        ):
             self.account_list.takeItem(row)
             accs = self._get_accounts(self.account_list)
             if accs and not any(a["default"] for a in accs):
@@ -279,7 +330,8 @@ class ListsPage(QWidget):
         row = self.account_list.currentRow()
         if row >= 0:
             accs = self._get_accounts(self.account_list)
-            for i, a in enumerate(accs): a["default"] = (i == row)
+            for i, a in enumerate(accs):
+                a["default"] = i == row
             self._render_accounts(self.account_list, accs)
             self.settings_changed.emit()
 
@@ -299,7 +351,8 @@ class ListsPage(QWidget):
 
     def _edit_sw_account(self):
         item = self.sw_account_list.currentItem()
-        if not item: return
+        if not item:
+            return
         data = item.data(Qt.ItemDataRole.UserRole)
         dlg = AccountDialog(self, data["username"], data["password"])
         if dlg.exec():
@@ -307,12 +360,18 @@ class ListsPage(QWidget):
             if u:
                 data["username"] = u
                 data["password"] = p
-                self._render_accounts(self.sw_account_list, self._get_accounts(self.sw_account_list))
+                self._render_accounts(
+                    self.sw_account_list, self._get_accounts(self.sw_account_list)
+                )
                 self.settings_changed.emit()
 
     def _remove_sw_account(self):
         row = self.sw_account_list.currentRow()
-        if row >= 0 and QMessageBox.question(self, "Conferma", "Rimuovere account?") == QMessageBox.StandardButton.Yes:
+        if (
+            row >= 0
+            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
+            == QMessageBox.StandardButton.Yes
+        ):
             self.sw_account_list.takeItem(row)
             accs = self._get_accounts(self.sw_account_list)
             if accs and not any(a["default"] for a in accs):
@@ -324,7 +383,8 @@ class ListsPage(QWidget):
         row = self.sw_account_list.currentRow()
         if row >= 0:
             accs = self._get_accounts(self.sw_account_list)
-            for i, a in enumerate(accs): a["default"] = (i == row)
+            for i, a in enumerate(accs):
+                a["default"] = i == row
             self._render_accounts(self.sw_account_list, accs)
             self.settings_changed.emit()
 
@@ -353,26 +413,50 @@ class ListsPage(QWidget):
 
     def _remove_simple(self, list_widget):
         row = list_widget.currentRow()
-        if row >= 0 and QMessageBox.question(self, "Conferma", "Rimuovere elemento?") == QMessageBox.StandardButton.Yes:
+        if (
+            row >= 0
+            and QMessageBox.question(self, "Conferma", "Rimuovere elemento?")
+            == QMessageBox.StandardButton.Yes
+        ):
             list_widget.takeItem(row)
             self.settings_changed.emit()
 
     # Wrapper specifici
-    def _add_contract(self): self._add_simple(self.contract_list, "Contratto:")
-    def _edit_contract(self): self._edit_simple(self.contract_list, "Contratto:")
-    def _remove_contract(self): self._remove_simple(self.contract_list)
+    def _add_contract(self):
+        self._add_simple(self.contract_list, "Contratto:")
 
-    def _add_fornitore(self): self._add_simple(self.fornitori_list, "Fornitore:")
-    def _edit_fornitore(self): self._edit_simple(self.fornitori_list, "Fornitore:")
-    def _remove_fornitore(self): self._remove_simple(self.fornitori_list)
+    def _edit_contract(self):
+        self._edit_simple(self.contract_list, "Contratto:")
 
-    def _add_reparto(self): self._add_simple(self.reparti_list, "Reparto:")
-    def _edit_reparto(self): self._edit_simple(self.reparti_list, "Reparto:")
-    def _remove_reparto(self): self._remove_simple(self.reparti_list)
+    def _remove_contract(self):
+        self._remove_simple(self.contract_list)
 
-    def _add_cantiere(self): self._add_simple(self.cantieri_list, "Cantiere:")
-    def _edit_cantiere(self): self._edit_simple(self.cantieri_list, "Cantiere:")
-    def _remove_cantiere(self): self._remove_simple(self.cantieri_list)
+    def _add_fornitore(self):
+        self._add_simple(self.fornitori_list, "Fornitore:")
+
+    def _edit_fornitore(self):
+        self._edit_simple(self.fornitori_list, "Fornitore:")
+
+    def _remove_fornitore(self):
+        self._remove_simple(self.fornitori_list)
+
+    def _add_reparto(self):
+        self._add_simple(self.reparti_list, "Reparto:")
+
+    def _edit_reparto(self):
+        self._edit_simple(self.reparti_list, "Reparto:")
+
+    def _remove_reparto(self):
+        self._remove_simple(self.reparti_list)
+
+    def _add_cantiere(self):
+        self._add_simple(self.cantieri_list, "Cantiere:")
+
+    def _edit_cantiere(self):
+        self._edit_simple(self.cantieri_list, "Cantiere:")
+
+    def _remove_cantiere(self):
+        self._remove_simple(self.cantieri_list)
 
     # --- LOAD & SAVE ---
 
@@ -381,13 +465,29 @@ class ListsPage(QWidget):
         self._render_accounts(self.sw_account_list, config.get("safework_accounts", []))
         self._update_simple_list(self.contract_list, config.get("contracts", []))
         self._update_simple_list(self.fornitori_list, config.get("fornitori", []))
-        self._update_simple_list(self.reparti_list, config.get("reparti_timbrature", []))
-        self._update_simple_list(self.cantieri_list, config.get("cantieri_timbrature", []))
+        self._update_simple_list(
+            self.reparti_list, config.get("reparti_timbrature", [])
+        )
+        self._update_simple_list(
+            self.cantieri_list, config.get("cantieri_timbrature", [])
+        )
 
     def save_to_config(self, config_manager):
-        config_manager.set_config_value("accounts", self._get_accounts(self.account_list))
-        config_manager.set_config_value("safework_accounts", self._get_accounts(self.sw_account_list))
-        config_manager.set_config_value("contracts", self._get_simple_items(self.contract_list))
-        config_manager.set_config_value("fornitori", self._get_simple_items(self.fornitori_list))
-        config_manager.set_config_value("reparti_timbrature", self._get_simple_items(self.reparti_list))
-        config_manager.set_config_value("cantieri_timbrature", self._get_simple_items(self.cantieri_list))
+        config_manager.set_config_value(
+            "accounts", self._get_accounts(self.account_list)
+        )
+        config_manager.set_config_value(
+            "safework_accounts", self._get_accounts(self.sw_account_list)
+        )
+        config_manager.set_config_value(
+            "contracts", self._get_simple_items(self.contract_list)
+        )
+        config_manager.set_config_value(
+            "fornitori", self._get_simple_items(self.fornitori_list)
+        )
+        config_manager.set_config_value(
+            "reparti_timbrature", self._get_simple_items(self.reparti_list)
+        )
+        config_manager.set_config_value(
+            "cantieri_timbrature", self._get_simple_items(self.cantieri_list)
+        )

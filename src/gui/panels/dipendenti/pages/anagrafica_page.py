@@ -200,9 +200,13 @@ class AnagraficaPage(QWidget):
         header_layout.setContentsMargins(20, 15, 20, 15)
 
         title_label = QLabel("📋 SCHEDA DIPENDENTE")
-        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: white; letter-spacing: 1px;")
+        title_label.setStyleSheet(
+            "font-size: 20px; font-weight: bold; color: white; letter-spacing: 1px;"
+        )
         subtitle_label = QLabel("Dettagli anagrafica e accessi")
-        subtitle_label.setStyleSheet("font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;")
+        subtitle_label.setStyleSheet(
+            "font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;"
+        )
         header_layout.addWidget(title_label)
         header_layout.addWidget(subtitle_label)
         right_layout.addWidget(header_card)
@@ -210,7 +214,9 @@ class AnagraficaPage(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
+        scroll.setStyleSheet(
+            "QScrollArea { background-color: transparent; border: none; }"
+        )
 
         scroll_content = QWidget()
         scroll_content.setStyleSheet("background-color: transparent;")
@@ -265,11 +271,17 @@ class AnagraficaPage(QWidget):
         access_layout.setSpacing(10)
 
         access_title = QLabel("🏭 ULTIMO ACCESSO ISAB")
-        access_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #2196F3; letter-spacing: 0.5px;")
+        access_title.setStyleSheet(
+            "font-size: 13px; font-weight: bold; color: #2196F3; letter-spacing: 0.5px;"
+        )
         self.last_access_label = QLabel("-")
         self.last_access_label.setWordWrap(True)
-        self.last_access_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.last_access_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50; padding: 5px 0;")
+        self.last_access_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self.last_access_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #2c3e50; padding: 5px 0;"
+        )
         access_layout.addWidget(access_title)
         access_layout.addWidget(self.last_access_label)
         scroll_layout.addWidget(access_card)
@@ -302,10 +314,14 @@ class AnagraficaPage(QWidget):
             params.extend([p, p, p, p])
         query += " ORDER BY cognome ASC, nome ASC"
 
-        self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
+        self.table.horizontalHeader().setDefaultAlignment(
+            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
+        )
 
         try:
-            full_rows = db_manager.execute_query(db_manager.DB_DIPENDENTI, query, tuple(params))
+            full_rows = db_manager.execute_query(
+                db_manager.DB_DIPENDENTI, query, tuple(params)
+            )
             master_rows = self._process_employee_rows(full_rows)
             self.model.update_data(master_rows)
             self.model.set_column_formatter(0, self._inactivation_formatter)
@@ -324,9 +340,13 @@ class AnagraficaPage(QWidget):
         count_expired = 0
 
         for r in full_rows:
-            diff_days, cf_warning, cog_val, nom_val, cf_val = self._compute_employee_status(
-                r, last_by_cf, last_by_name, normalize
-            )
+            (
+                diff_days,
+                cf_warning,
+                cog_val,
+                nom_val,
+                cf_val,
+            ) = self._compute_employee_status(r, last_by_cf, last_by_name, normalize)
 
             if diff_days is not None:
                 if diff_days <= 20:
@@ -337,17 +357,34 @@ class AnagraficaPage(QWidget):
                     count_expired += 1
 
             if self.current_filter:
-                if diff_days is None: continue
-                if self.current_filter == "ok" and diff_days > 20: continue
-                elif self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30): continue
-                elif self.current_filter == "expired" and diff_days <= 30: continue
+                if diff_days is None:
+                    continue
+                if self.current_filter == "ok" and diff_days > 20:
+                    continue
+                elif self.current_filter == "warning" and (
+                    diff_days <= 20 or diff_days > 30
+                ):
+                    continue
+                elif self.current_filter == "expired" and diff_days <= 30:
+                    continue
 
             inactivation_val = 30 - diff_days if diff_days is not None else None
             display_cognome = f"⚠️ {r[1]}" if cf_warning else r[1]
 
-            master_rows.append([
-                inactivation_val, r[0], display_cognome, r[2], r[7], r[4], r[5], r[3], r[6], r[1]
-            ])
+            master_rows.append(
+                [
+                    inactivation_val,
+                    r[0],
+                    display_cognome,
+                    r[2],
+                    r[7],
+                    r[4],
+                    r[5],
+                    r[3],
+                    r[6],
+                    r[1],
+                ]
+            )
 
         self.card_ok.setValue(count_ok)
         self.card_warning.setValue(count_warning)
@@ -373,13 +410,17 @@ class AnagraficaPage(QWidget):
                         try:
                             d_dt = datetime.strptime(date_part, fmt)
                             break
-                        except ValueError: continue
+                        except ValueError:
+                            continue
                     if d_dt:
                         diff = (today - d_dt).days
                         if norm_cf:
                             if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
                                 last_by_cf[norm_cf] = diff
-                        if norm_key not in last_by_name or diff < last_by_name[norm_key]:
+                        if (
+                            norm_key not in last_by_name
+                            or diff < last_by_name[norm_key]
+                        ):
                             last_by_name[norm_key] = diff
         return last_by_cf, last_by_name, normalize
 
@@ -399,13 +440,16 @@ class AnagraficaPage(QWidget):
         return diff_days, cf_warning, cog_val, nom_val, cf_val
 
     def _inactivation_formatter(self, value):
-        if value is None or value == "": return ""
+        if value is None or value == "":
+            return ""
         try:
             days = int(value)
             dot = "●"
-            if days < 0: days = 0
+            if days < 0:
+                days = 0
             return f"{dot} {days}"
-        except Exception: return str(value)
+        except Exception:
+            return str(value)
 
     def _on_card_filter(self, filter_type):
         if self.current_filter == filter_type:
@@ -413,7 +457,9 @@ class AnagraficaPage(QWidget):
             ToastManager.instance().show("Filtro rimosso", "info", duration=2000)
         else:
             self.current_filter = filter_type
-            ToastManager.instance().show(f"Filtro attivo: {filter_type}", "info", duration=2000)
+            ToastManager.instance().show(
+                f"Filtro attivo: {filter_type}", "info", duration=2000
+            )
 
         for card in [self.card_ok, self.card_warning, self.card_expired]:
             style = f"background-color: {'#f0f0f0' if card.filter_type == self.current_filter else 'white'}; border: {'3px' if card.filter_type == self.current_filter else '2px'} solid {card.base_color}; border-radius: 12px;"
@@ -422,36 +468,55 @@ class AnagraficaPage(QWidget):
 
     def _on_selection_changed(self, selected, _deselected):
         indexes = self.table.selectionModel().selectedRows()
-        if not indexes: return
+        if not indexes:
+            return
         row_idx = indexes[0].row()
         row_data = self.model._data[row_idx]
-        
+
         mapping = {
-            "ID Risorsa": 1, "Cognome": 9, "Nome": 3, "Data Nascita": 7,
-            "Codice Fiscale": 4, "Badge": 5, "Data Assunzione": 6, "Importato il": 8,
+            "ID Risorsa": 1,
+            "Cognome": 9,
+            "Nome": 3,
+            "Data Nascita": 7,
+            "Codice Fiscale": 4,
+            "Badge": 5,
+            "Data Assunzione": 6,
+            "Importato il": 8,
         }
-        
+
         cognome = str(row_data[9])
         nome = str(row_data[3])
 
         for h in self.full_headers:
             idx = mapping.get(h)
-            val = str(row_data[idx]) if idx is not None and row_data[idx] is not None else ""
-            if val.lower() in ["nan", "none"]: val = ""
-            if h == "Importato il": val = self._format_db_date(val)
-            
+            val = (
+                str(row_data[idx])
+                if idx is not None and row_data[idx] is not None
+                else ""
+            )
+            if val.lower() in ["nan", "none"]:
+                val = ""
+            if h == "Importato il":
+                val = self._format_db_date(val)
+
             if h in self.detail_labels and self.detail_labels[h]:
                 self.detail_labels[h].setText(val)
 
         access_info, _, color = self._get_last_isab_access(cognome, nome)
         self.last_access_label.setText(access_info)
-        self.last_access_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 14px; padding: 5px 0;")
+        self.last_access_label.setStyleSheet(
+            f"color: {color}; font-weight: bold; font-size: 14px; padding: 5px 0;"
+        )
 
     def _format_db_date(self, date_str):
-        if not date_str or date_str == "None": return "-"
+        if not date_str or date_str == "None":
+            return "-"
         try:
-            return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %H:%M:%S")
-        except Exception: return date_str
+            return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime(
+                "%d/%m/%Y %H:%M:%S"
+            )
+        except Exception:
+            return date_str
 
     def _get_last_isab_access(self, cognome, nome):
         norm_cognome = self._normalize_name(cognome)
@@ -463,9 +528,12 @@ class AnagraficaPage(QWidget):
             ORDER BY data DESC LIMIT 1
         """
         try:
-            res = db_manager.execute_query(db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome))
-            if not res: return "Mai effettuato", "-", "#6c757d"
-            
+            res = db_manager.execute_query(
+                db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome)
+            )
+            if not res:
+                return "Mai effettuato", "-", "#6c757d"
+
             last_date_str = str(res[0][0])
             date_part = last_date_str.split(" ")[0]
             last_date = None
@@ -473,27 +541,43 @@ class AnagraficaPage(QWidget):
                 try:
                     last_date = datetime.strptime(date_part, fmt)
                     break
-                except ValueError: continue
-            
-            if not last_date: return "Errore data", "-", "#6c757d"
-            
+                except ValueError:
+                    continue
+
+            if not last_date:
+                return "Errore data", "-", "#6c757d"
+
             delta = (datetime.now() - last_date).days
             formatted_date = last_date.strftime("%d/%m/%Y")
-            
-            if delta <= 20: return f"{formatted_date} ({delta} gg fa)", str(delta), "#198754"
-            elif delta <= 30: return f"{formatted_date} ({delta} gg fa)", str(delta), "#fd7e14"
-            else: return f"{formatted_date} (SCADUTA - {delta} gg fa)", str(delta), "#dc3545"
+
+            if delta <= 20:
+                return f"{formatted_date} ({delta} gg fa)", str(delta), "#198754"
+            elif delta <= 30:
+                return f"{formatted_date} ({delta} gg fa)", str(delta), "#fd7e14"
+            else:
+                return (
+                    f"{formatted_date} (SCADUTA - {delta} gg fa)",
+                    str(delta),
+                    "#dc3545",
+                )
         except Exception as e:
             logger.error(f"Errore recupero ultimo accesso ISAB: {e}")
             return "Errore", "-", "#6c757d"
 
     def _normalize_name(self, text):
-        if not text: return ""
+        if not text:
+            return ""
         return re.sub(r"\s+", " ", str(text).strip().upper())
 
     def _on_import_clicked(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Seleziona Anagrafica Dipendenti", "", "CSV Files (*.csv);;All Files (*)")
-        if not file_path: return
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona Anagrafica Dipendenti",
+            "",
+            "CSV Files (*.csv);;All Files (*)",
+        )
+        if not file_path:
+            return
         try:
             with open(file_path, mode="r", encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f, delimiter=";")
@@ -504,13 +588,23 @@ class AnagraficaPage(QWidget):
                         (id_risorsa, cognome, nome, data_nascita, codice_fiscale, badge, data_assunzione)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                     """
-                    db_manager.execute_query(db_manager.DB_DIPENDENTI, query, (
-                        row.get("id_risorsa"), row.get("Cognome"), row.get("Nome"),
-                        row.get("Data_nascita"), row.get("Codice_fiscale", ""),
-                        row.get("Badge"), row.get("Data_assunzione"),
-                    ))
+                    db_manager.execute_query(
+                        db_manager.DB_DIPENDENTI,
+                        query,
+                        (
+                            row.get("id_risorsa"),
+                            row.get("Cognome"),
+                            row.get("Nome"),
+                            row.get("Data_nascita"),
+                            row.get("Codice_fiscale", ""),
+                            row.get("Badge"),
+                            row.get("Data_assunzione"),
+                        ),
+                    )
                     count += 1
-            ToastManager.instance().show(f"Importazione completata: {count} dipendenti.", "success")
+            ToastManager.instance().show(
+                f"Importazione completata: {count} dipendenti.", "success"
+            )
             self.refresh_data()
         except Exception as e:
             logger.error(f"Errore import CSV: {e}")

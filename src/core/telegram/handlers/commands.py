@@ -1,7 +1,9 @@
 from telegram import Update, constants
 from telegram.ext import ContextTypes
+
 from src.core import config_manager
 from src.core.telegram.ui.keyboards import TelegramUI
+
 
 async def cmd_start(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.effective_chat:
@@ -31,6 +33,7 @@ async def cmd_start(service, update: Update, context: ContextTypes.DEFAULT_TYPE)
             reply_markup=TelegramUI.get_main_keyboard(),
             parse_mode=constants.ParseMode.MARKDOWN,
         )
+
 
 async def _handle_initial_pairing(
     service,
@@ -67,11 +70,13 @@ async def _handle_initial_pairing(
         )
     return False
 
+
 async def cmd_status(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await service._check_auth(update):
         return
     if update.effective_chat:
         service.status_requested.emit(str(update.effective_chat.id))
+
 
 async def cmd_stop(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await service._check_auth(update):

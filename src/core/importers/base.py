@@ -1,10 +1,9 @@
 import io
 import re
 import warnings
-import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Tuple, Optional
+from typing import Any, Optional, Tuple
 
 # Lazy import placeholder
 _pd = None
@@ -18,6 +17,7 @@ except ImportError:
 # Tentativo di importare openpyxl
 try:
     import openpyxl  # type: ignore
+
     HAS_OPENPYXL = True
 except ImportError:
     openpyxl = None  # type: ignore

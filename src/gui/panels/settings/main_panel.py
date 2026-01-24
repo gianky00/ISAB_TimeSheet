@@ -43,21 +43,37 @@ class SettingsPanel(QWidget):
         # 1. Configurazione
         self.config_tab = ConfigTab()
         self.config_tab.settings_changed.connect(self._on_settings_changed)
-        self.tabs.addTab(self.config_tab, get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#546E7A"), "Configurazione")
+        self.tabs.addTab(
+            self.config_tab,
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#546E7A"),
+            "Configurazione",
+        )
 
         # 2. Backup
         self.backup_tab = BackupTab()
-        self.tabs.addTab(self.backup_tab, get_colored_icon(get_asset_path(Icons.CLOUD), "#546E7A"), "Backup Cloud")
+        self.tabs.addTab(
+            self.backup_tab,
+            get_colored_icon(get_asset_path(Icons.CLOUD), "#546E7A"),
+            "Backup Cloud",
+        )
 
         # 3. Statistiche
         self.stats_widget = StatisticsWidget()
-        self.tabs.addTab(self.stats_widget, get_colored_icon(get_asset_path(Icons.ROCKET), "#546E7A"), "Statistiche")
+        self.tabs.addTab(
+            self.stats_widget,
+            get_colored_icon(get_asset_path(Icons.ROCKET), "#546E7A"),
+            "Statistiche",
+        )
 
         # 4. Telegram
         self.telegram_tab = TelegramTab()
         self.telegram_tab.settings_changed.connect(self._on_settings_changed)
         self.telegram_tab.request_help.connect(self.request_help_section.emit)
-        self.tabs.addTab(self.telegram_tab, get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"), "Telegram")
+        self.tabs.addTab(
+            self.telegram_tab,
+            get_colored_icon(get_asset_path(Icons.SEND), "#546E7A"),
+            "Telegram",
+        )
 
         self.tabs.currentChanged.connect(self._on_tab_changed)
         main_layout.addWidget(self.tabs)
@@ -89,27 +105,27 @@ class SettingsPanel(QWidget):
         """Chiamato quando una qualsiasi impostazione cambia."""
         self._has_unsaved_changes = True
         self.unsaved_changes.emit(True)
-        self.save_timer.start() # Reset timer debounce
+        self.save_timer.start()  # Reset timer debounce
 
     def _save_settings(self):
         """Salva le impostazioni su disco."""
         try:
             self.config_tab.save_to_config(config_manager)
             self.telegram_tab.save_to_config(config_manager)
-            self.backup_tab._save_auto_backup() # Backup tab manages its own logic mostly, but check consistency
-            
+            self.backup_tab._save_auto_backup()  # Backup tab manages its own logic mostly, but check consistency
+
             # Persist changes
             # config_manager handles persistence internally usually via set_config_value calls immediately?
-            # Or does it need a save() call? 
+            # Or does it need a save() call?
             # In the original code, set_config_value writes to file. So we are good.
-            
+
             self._has_unsaved_changes = False
             self.unsaved_changes.emit(False)
             self.settings_saved.emit()
-            
+
             # Optional: Show unobtrusive toast?
             # ToastManager.instance().show("Salvataggio automatico...", "info", 1000)
-            
+
         except Exception as e:
             print(f"Errore salvataggio impostazioni: {e}")
 
@@ -131,7 +147,13 @@ class SettingsPanel(QWidget):
 
     def _export_settings(self):
         from PyQt6.QtWidgets import QFileDialog
-        path, _ = QFileDialog.getSaveFileName(self, "Esporta Configurazione", "SyncroJob_Config.json", "JSON Files (*.json)")
+
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Esporta Configurazione",
+            "SyncroJob_Config.json",
+            "JSON Files (*.json)",
+        )
         if path:
             success, msg = config_manager.export_configuration(path)
             if success:
@@ -141,10 +163,17 @@ class SettingsPanel(QWidget):
 
     def _import_settings(self):
         from PyQt6.QtWidgets import QFileDialog, QMessageBox
-        path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
+
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Importa Configurazione", "", "JSON Files (*.json)"
+        )
         if path:
-            res = QMessageBox.warning(self, "Conferma", "L'importazione sovrascriverà le impostazioni attuali.\nContinuare?", 
-                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            res = QMessageBox.warning(
+                self,
+                "Conferma",
+                "L'importazione sovrascriverà le impostazioni attuali.\nContinuare?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
             if res == QMessageBox.StandardButton.Yes:
                 success, msg = config_manager.import_configuration(path)
                 if success:

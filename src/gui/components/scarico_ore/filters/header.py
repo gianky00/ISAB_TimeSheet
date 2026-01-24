@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QHeaderView, QMenu, QWidgetAction
 
 from src.gui.components.scarico_ore.filters.popup_date import DateFilterPopupWidget

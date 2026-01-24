@@ -1,5 +1,12 @@
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QToolBox, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QToolBox,
+    QVBoxLayout,
+    QWidget,
+)
 
 from src.core.constants import Icons
 from src.gui.panels.settings.pages.diag_page import DiagPage
@@ -26,7 +33,9 @@ class ConfigTab(QWidget):
         # Search Bar
         search_layout = QHBoxLayout()
         search_icon = QLabel()
-        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#6c757d").pixmap(20, 20))
+        search_icon.setPixmap(
+            get_colored_icon(get_asset_path(Icons.SEARCH), "#6c757d").pixmap(20, 20)
+        )
         search_layout.addWidget(search_icon)
 
         self.search_bar = QLineEdit()

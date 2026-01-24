@@ -1,4 +1,5 @@
 from typing import Dict, List
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
@@ -152,9 +153,18 @@ class DateFilterPopupWidget(QWidget):
 
     def _get_month_name(self, m_str):
         names = {
-            "01": "Gennaio", "02": "Febbraio", "03": "Marzo", "04": "Aprile",
-            "05": "Maggio", "06": "Giugno", "07": "Luglio", "08": "Agosto",
-            "09": "Settembre", "10": "Ottobre", "11": "Novembre", "12": "Dicembre",
+            "01": "Gennaio",
+            "02": "Febbraio",
+            "03": "Marzo",
+            "04": "Aprile",
+            "05": "Maggio",
+            "06": "Giugno",
+            "07": "Luglio",
+            "08": "Agosto",
+            "09": "Settembre",
+            "10": "Ottobre",
+            "11": "Novembre",
+            "12": "Dicembre",
         }
         return names.get(m_str, m_str)
 

@@ -1,8 +1,8 @@
-import pandas as pd
 import warnings
-import re
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
+
+import pandas as pd
 
 from src.core.importers.base import BaseImporter
 
@@ -64,9 +64,7 @@ class CertificatiImporter(BaseImporter):
 
     @classmethod
     def _read_certificati_data(
-        cls,
-        path: Path,
-        sheet_name: str
+        cls, path: Path, sheet_name: str
     ) -> Tuple[pd.DataFrame, int]:
         """Legge i dati individuando l'intestazione."""
         pd = cls._get_pd()
@@ -98,10 +96,7 @@ class CertificatiImporter(BaseImporter):
 
     @classmethod
     def _process_certificati_df(
-        cls,
-        df: pd.DataFrame,
-        sheet_name: str,
-        header_row_idx: int
+        cls, df: pd.DataFrame, sheet_name: str, header_row_idx: int
     ) -> Tuple[bool, str, List[Tuple]]:
         """Processes the Certificati DataFrame and returns formatted rows."""
         df.columns = [str(c).strip() for c in df.columns]

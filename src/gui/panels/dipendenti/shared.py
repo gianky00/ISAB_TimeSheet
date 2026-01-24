@@ -1,4 +1,5 @@
 import logging
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter
 from PyQt6.QtWidgets import (
@@ -11,8 +12,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from src.core.constants import Icons
 
 logger = logging.getLogger(__name__)
 
@@ -247,7 +246,7 @@ def create_field_row(label_text):
 
     layout.addWidget(label)
     layout.addWidget(value_label)
-    
+
     # Restituisce il container (widget da aggiungere al layout) e la label del valore (da aggiornare)
     # Monkey-patching per compatibilità con il codice esistente che si aspetta 'value_label' come attributo?
     # No, nel codice originale:
@@ -256,12 +255,12 @@ def create_field_row(label_text):
     # E poi in _update_detail:
     # widget = self.detail_labels[...]
     # value_lbl = widget.findChild(QLabel, "") ... no, come recuperava il valore?
-    
+
     # Devo controllare come _update_detail usa questi widget.
-    # Nel codice originale non ho letto _update_detail. 
+    # Nel codice originale non ho letto _update_detail.
     # Leggo un attimo per essere sicuro.
-    
+
     # Assegno un objectName alla value_label per ritrovarla
     value_label.setObjectName("value_label")
-    
+
     return container

@@ -15,7 +15,7 @@ from telegram.ext import (
 )
 
 from src.core import config_manager
-from src.core.telegram.handlers import commands, messages, callbacks
+from src.core.telegram.handlers import callbacks, commands, messages
 
 
 class TelegramService(QObject):
@@ -118,19 +118,38 @@ class TelegramService(QObject):
             return lambda u, c: handler(self, u, c)
 
         # Commands
-        self.app.add_handler(CommandHandler("start", lambda u, c: commands.cmd_start(self, u, c)))
-        self.app.add_handler(CommandHandler("status", lambda u, c: commands.cmd_status(self, u, c)))
-        self.app.add_handler(CommandHandler("stop", lambda u, c: commands.cmd_stop(self, u, c)))
+        self.app.add_handler(
+            CommandHandler("start", lambda u, c: commands.cmd_start(self, u, c))
+        )
+        self.app.add_handler(
+            CommandHandler("status", lambda u, c: commands.cmd_status(self, u, c))
+        )
+        self.app.add_handler(
+            CommandHandler("stop", lambda u, c: commands.cmd_stop(self, u, c))
+        )
 
         # Messages
         self.app.add_handler(
-            MessageHandler(filters.TEXT & ~filters.COMMAND, lambda u, c: messages.handle_text_input(self, u, c))
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND,
+                lambda u, c: messages.handle_text_input(self, u, c),
+            )
         )
-        self.app.add_handler(MessageHandler(filters.PHOTO, lambda u, c: messages.handle_photo(self, u, c)))
-        self.app.add_handler(MessageHandler(filters.VOICE, lambda u, c: messages.handle_voice(self, u, c)))
+        self.app.add_handler(
+            MessageHandler(
+                filters.PHOTO, lambda u, c: messages.handle_photo(self, u, c)
+            )
+        )
+        self.app.add_handler(
+            MessageHandler(
+                filters.VOICE, lambda u, c: messages.handle_voice(self, u, c)
+            )
+        )
 
         # Callbacks
-        self.app.add_handler(CallbackQueryHandler(lambda u, c: callbacks.handle_button(self, u, c)))
+        self.app.add_handler(
+            CallbackQueryHandler(lambda u, c: callbacks.handle_button(self, u, c))
+        )
 
         # Error
         self.app.add_error_handler(self._handle_error)
@@ -138,6 +157,7 @@ class TelegramService(QObject):
     async def _shutdown_application(self):
         self.log_signal.emit("Spegnimento del bot Telegram...")
         try:
+
             async def sequence():
                 if self.app.updater and self.app.updater.is_running:
                     await self.app.updater.stop()
@@ -253,7 +273,9 @@ class TelegramService(QObject):
                 await self.app.bot.send_message(
                     chat_id=chat_id,
                     text=text,
-                    parse_mode=telegram.constants.ParseMode.MARKDOWN if "*" in text else None,
+                    parse_mode=telegram.constants.ParseMode.MARKDOWN
+                    if "*" in text
+                    else None,
                 )
             except Exception as e:
                 self.log_signal.emit(f"❌ Fallito invio messaggio a Telegram: {e}")
@@ -267,7 +289,9 @@ class TelegramService(QObject):
                     chat_id=chat_id,
                     photo=photo_bytes,
                     caption=caption,
-                    parse_mode=telegram.constants.ParseMode.MARKDOWN if caption else None,
+                    parse_mode=telegram.constants.ParseMode.MARKDOWN
+                    if caption
+                    else None,
                 )
             except Exception as e:
                 self.log_signal.emit(f"❌ Fallito invio foto a Telegram: {e}")
@@ -282,7 +306,9 @@ class TelegramService(QObject):
                         chat_id=chat_id,
                         document=f,
                         caption=caption,
-                        parse_mode=telegram.constants.ParseMode.MARKDOWN if caption else None,
+                        parse_mode=telegram.constants.ParseMode.MARKDOWN
+                        if caption
+                        else None,
                     )
             except Exception as e:
                 self.log_signal.emit(f"❌ Fallito invio documento a Telegram: {e}")

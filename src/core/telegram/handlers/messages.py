@@ -1,12 +1,17 @@
 import json
 import re
 from contextlib import suppress
+
 from telegram import Update
 from telegram.ext import ContextTypes
+
 from src.core.secrets_manager import SecretsManager
 from src.core.telegram.ui.keyboards import TelegramUI
 
-async def handle_text_input(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+async def handle_text_input(
+    service, update: Update, context: ContextTypes.DEFAULT_TYPE
+):
     if (
         not await service._check_auth(update)
         or not update.effective_chat
@@ -32,6 +37,7 @@ async def handle_text_input(service, update: Update, context: ContextTypes.DEFAU
     # 3. Gestione Input Sequenziali (OdA, PDL, Time)
     await _handle_sequential_input(service, chat_id, state, text, update)
 
+
 async def _handle_db_query_input(service, chat_id, state, text, update):
     parts = state.replace("WAITING_DB_QUERY_", "").split("_")
     params = {"db": parts[0].lower(), "query": text, "chat_id": str(chat_id)}
@@ -42,12 +48,14 @@ async def _handle_db_query_input(service, chat_id, state, text, update):
     service.command_received.emit("search_db_pdf", params)
     service.user_states[chat_id] = None
 
+
 async def _handle_nlu_or_query(service, chat_id, text):
     keywords = ["scarica", "stampa", "avvia", "pdl", "oda", "stato", "riavvia"]
     if any(k in text.lower() for k in keywords):
         await process_with_ai(service, chat_id, text)
     else:
         service.query_received.emit(str(chat_id), text)
+
 
 async def _handle_sequential_input(service, chat_id, state, text, update):
     items = [
@@ -76,6 +84,7 @@ async def _handle_sequential_input(service, chat_id, state, text, update):
         "✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard()
     )
 
+
 async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await service._check_auth(update):
         return
@@ -87,6 +96,7 @@ async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TY
     audio_bytes = await file.download_as_bytearray()
     await update.message.reply_chat_action("typing")
     await process_with_ai(service, chat_id, bytes(audio_bytes), is_audio=True)
+
 
 async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await service._check_auth(update):
@@ -100,6 +110,7 @@ async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TY
     file = await context.bot.get_file(photo.file_id)
     photo_bytes = await file.download_as_bytearray()
     service.photo_received.emit(chat_id, bytes(photo_bytes), caption)
+
 
 async def process_with_ai(service, chat_id, data, is_audio=False):
     api_key = SecretsManager.get_gemini_api_key()

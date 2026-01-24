@@ -15,7 +15,7 @@ class DiagPage(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        
+
         diag_group = create_group_box("Diagnostica & Licenza")
         diag_layout = QHBoxLayout(diag_group)
         diag_layout.setSpacing(15)
@@ -27,7 +27,9 @@ class DiagPage(QWidget):
         diag_layout.addStretch()
 
         open_folder_btn = QPushButton("  Apri Cartella Dati")
-        open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
+        open_folder_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
+        )
         open_folder_btn.clicked.connect(self._open_data_folder)
         style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)
@@ -41,7 +43,7 @@ class DiagPage(QWidget):
         open_folder(str(path))
 
     def load_from_config(self, config: dict):
-        pass # Nulla da caricare per ora
+        pass  # Nulla da caricare per ora
 
     def save_to_config(self, config_manager):
-        pass # Nulla da salvare
+        pass  # Nulla da salvare

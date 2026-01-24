@@ -10,8 +10,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from src.core.schemas import validate_giornaliere
 from src.core.importers.base import BaseImporter
+from src.core.schemas import validate_giornaliere
 
 
 class GiornaliereImporter(BaseImporter):
@@ -279,7 +279,7 @@ class GiornaliereImporter(BaseImporter):
         ]
         # Check existence before accessing
         cols_to_clean = [c for c in cols_to_clean if c in df.columns]
-        
+
         df[cols_to_clean] = df[cols_to_clean].astype(str).apply(lambda x: x.str.strip())
         df[cols_to_clean] = df[cols_to_clean].replace(r"(?i)^nan$", "", regex=True)
         return df

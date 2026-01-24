@@ -1,6 +1,5 @@
 import io
 import json
-import logging
 import re
 import warnings
 import zipfile
@@ -14,6 +13,7 @@ except ImportError:
 
 try:
     import openpyxl  # type: ignore
+
     HAS_OPENPYXL = True
 except ImportError:
     openpyxl = None  # type: ignore
