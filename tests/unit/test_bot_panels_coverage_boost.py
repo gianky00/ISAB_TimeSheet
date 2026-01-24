@@ -9,9 +9,16 @@ from src.gui.panels import TimbratureDBPanel
 @pytest.fixture
 def timbrature_db_panel(qtbot, mocker):
     # Mock dependencies BEFORE creating the panel
-    mocker.patch("src.gui.panels.TimbratureStorage")
-    mocker.patch("src.gui.panels.config_manager.load_config", return_value={})
-    mocker.patch("src.gui.panels.get_asset_path", return_value="")
+    mock_storage_class = mocker.patch(
+        "src.gui.panels.timbrature.panel.TimbratureStorage"
+    )
+    mock_storage_instance = mock_storage_class.return_value
+    mock_storage_instance.get_lists.return_value = {"reparti": [], "cantieri": []}
+
+    mocker.patch(
+        "src.gui.panels.timbrature.panel.config_manager.load_config", return_value={}
+    )
+    mocker.patch("src.gui.panels.timbrature.panel.get_asset_path", return_value="")
 
     panel = TimbratureDBPanel()
     qtbot.addWidget(panel)

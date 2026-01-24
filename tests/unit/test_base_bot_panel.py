@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, PropertyMock, patch
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
-    QGroupBox,
     QHBoxLayout,
     QPushButton,
     QVBoxLayout,
@@ -43,20 +42,20 @@ class TestBaseBotPanel(unittest.TestCase):
         mock_audit_class.return_value = self.mock_audit_manager_instance
 
         self.patcher_panels_audit_manager = patch(
-            "src.gui.panels.AuditManager",
+            "src.gui.panels.base.AuditManager",
             new=mock_audit_class,
         )
         self.patcher_panels_audit_manager.start()
 
         self.mock_stats_manager_instance = MagicMock()
         self.patcher_panels_stats_manager = patch(
-            "src.gui.panels.StatsManager",
+            "src.gui.panels.base.StatsManager",
             new=MagicMock(return_value=self.mock_stats_manager_instance),
         )
         self.patcher_panels_stats_manager.start()
 
-        # Patch StatusCard in src.gui.panels
-        self.patcher_status_card = patch("src.gui.panels.StatusCard")
+        # Patch StatusCard in src.gui.panels.base
+        self.patcher_status_card = patch("src.gui.panels.base.StatusCard")
         self.mock_status_card_class = self.patcher_status_card.start()
 
         self.mock_status_card_instance = MagicMock()
@@ -71,7 +70,7 @@ class TestBaseBotPanel(unittest.TestCase):
         # Patch LogWidget/TimelineWidget in src.gui.panels
         # During refactoring, LogWidget might have been renamed or moved.
         # BaseBotPanel uses src.gui.widgets.timeline_widget.TimelineWidget usually.
-        self.patcher_log_widget = patch("src.gui.panels.TimelineWidget")
+        self.patcher_log_widget = patch("src.gui.panels.base.TimelineWidget")
         self.mock_log_widget_class = self.patcher_log_widget.start()
         self.mock_log_widget_instance = MagicMock()
         self.mock_log_widget_instance.append = MagicMock()
@@ -79,8 +78,8 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_log_widget_instance.timeline.set_mood = MagicMock()
         self.mock_log_widget_class.return_value = self.mock_log_widget_instance
 
-        # Patch ModernButton in src.gui.panels
-        self.patcher_modern_button = patch("src.gui.panels.ModernButton")
+        # Patch ModernButton in src.gui.panels.base
+        self.patcher_modern_button = patch("src.gui.panels.base.ModernButton")
         self.mock_modern_button_class = self.patcher_modern_button.start()
         # Bind real Enums
         self.mock_modern_button_class.Variant = ModernButton.Variant
@@ -97,13 +96,13 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_start_btn_instance.setEnabled = MagicMock()  # Mock setEnabled
         self.mock_stop_btn_instance.setEnabled = MagicMock()  # Mock setEnabled
 
-        # Patch get_asset_path in src.gui.panels because it is imported directly
-        self.patcher_get_asset_path = patch("src.gui.panels.get_asset_path")
+        # Patch get_asset_path in src.gui.panels.base because it is imported directly
+        self.patcher_get_asset_path = patch("src.gui.panels.base.get_asset_path")
         self.mock_get_asset_path = self.patcher_get_asset_path.start()
         self.mock_get_asset_path.return_value = "mock/path/to/asset.svg"
 
-        # Patch config_manager in src.gui.panels directly to ensure it catches usage
-        self.patcher_config_manager = patch("src.gui.panels.config_manager")
+        # Patch config_manager in src.gui.panels.base directly to ensure it catches usage
+        self.patcher_config_manager = patch("src.gui.panels.base.config_manager")
         self.mock_config_manager = self.patcher_config_manager.start()
         self.mock_config_manager.load_config.return_value = {
             "browser_headless": False,
@@ -126,7 +125,7 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_bot_instance = MagicMock()
         self.mock_create_bot.return_value = self.mock_bot_instance
 
-        self.patcher_bot_worker = patch("src.gui.panels.BotWorker")
+        self.patcher_bot_worker = patch("src.gui.panels.base.BotWorker")
         self.mock_bot_worker_class = self.patcher_bot_worker.start()
         self.mock_worker_bot_instance = MagicMock()
         self.mock_worker_bot_instance.downloaded_files = []
@@ -135,23 +134,18 @@ class TestBaseBotPanel(unittest.TestCase):
         self.mock_bot_worker_instance.bot = self.mock_worker_bot_instance
         self.mock_bot_worker_class.return_value = self.mock_bot_worker_instance
 
-        # Patch PyQt6.QtWidgets Layouts and Widgets in src.gui.panels
-        self.patcher_qvboxlayout = patch("src.gui.panels.QVBoxLayout")
+        # Patch PyQt6.QtWidgets Layouts and Widgets in src.gui.panels.base
+        self.patcher_qvboxlayout = patch("src.gui.panels.base.QVBoxLayout")
         self.mock_qvboxlayout_class = self.patcher_qvboxlayout.start()
         self.mock_qvboxlayout_instance = MagicMock(spec=QVBoxLayout)
         self.mock_qvboxlayout_class.return_value = self.mock_qvboxlayout_instance
 
-        self.patcher_qhboxlayout = patch("src.gui.panels.QHBoxLayout")
+        self.patcher_qhboxlayout = patch("src.gui.panels.base.QHBoxLayout")
         self.mock_qhboxlayout_class = self.patcher_qhboxlayout.start()
         self.mock_qhboxlayout_instance = MagicMock(spec=QHBoxLayout)
         self.mock_qhboxlayout_class.return_value = self.mock_qhboxlayout_instance
 
-        self.patcher_qgroupbox = patch("src.gui.panels.QGroupBox")
-        self.mock_qgroupbox_class = self.patcher_qgroupbox.start()
-        self.mock_qgroupbox_instance = MagicMock(spec=QGroupBox)
-        self.mock_qgroupbox_class.return_value = self.mock_qgroupbox_instance
-
-        self.patcher_qwidget_for_content = patch("src.gui.panels.QWidget")
+        self.patcher_qwidget_for_content = patch("src.gui.panels.base.QWidget")
         self.mock_qwidget_for_content_class = self.patcher_qwidget_for_content.start()
         self.mock_content_widget_instance = (
             self.mock_qwidget_for_content_class.return_value
@@ -170,7 +164,9 @@ class TestBaseBotPanel(unittest.TestCase):
         )
 
         # Patch MissionReportCard class
-        self.patcher_mission_report_card = patch("src.gui.panels.MissionReportCard")
+        self.patcher_mission_report_card = patch(
+            "src.gui.panels.base.MissionReportCard"
+        )
         self.mock_mission_report_card_class = self.patcher_mission_report_card.start()
         self.mock_mission_report_card_instance = MagicMock(spec=QWidget)
         self.mock_mission_report_card_class.return_value = (
@@ -194,11 +190,6 @@ class TestBaseBotPanel(unittest.TestCase):
 
         self.panel.window = MagicMock(return_value=self.mock_parent)
 
-        self.mock_re_module = MagicMock()
-        self.patcher_re_module = patch.dict("sys.modules", {"re": self.mock_re_module})
-        self.patcher_re_module.start()
-        self.mock_re_module.sub.return_value = "Cleaned message"
-
     def tearDown(self):
         self.patcher_panels_audit_manager.stop()
         self.patcher_panels_stats_manager.stop()
@@ -213,11 +204,10 @@ class TestBaseBotPanel(unittest.TestCase):
         self.patcher_bot_worker.stop()
         self.patcher_qvboxlayout.stop()
         self.patcher_qhboxlayout.stop()
-        self.patcher_qgroupbox.stop()
+
         self.patcher_qwidget_for_content.stop()
         self.patcher_qgraphic_opacity_effect.stop()
         self.patcher_mission_report_card.stop()
-        self.patcher_re_module.stop()
 
     def test_base_panel_init(self):
         self.assertEqual(self.panel.bot_id, "bot_id")
@@ -399,15 +389,17 @@ class TestBaseBotPanel(unittest.TestCase):
         )
 
     def test_on_log(self):
-        self.mock_re_module.sub.return_value = "Cleaned message"
+        # We can't easily patch local import 're' without side effects.
+        # So we just test that append call happens, assuming real re works.
+        # Real re.sub shouldn't crash on standard string.
         self.panel._on_log("[12:34:56] Test message")
 
         self.mock_log_widget_instance.append.assert_called_once_with(
             "[12:34:56] Test message"
         )
-        self.mock_re_module.sub.assert_called_once()
+        # We check that telegram message was sent with cleaned string (real re removes timestamp)
         self.mock_parent.telegram.send_message_sync.assert_called_once_with(
-            "🔹 *Bot Name*\nCleaned message"
+            "🔹 *Bot Name*\nTest message"
         )
 
     def test_on_status(self):
