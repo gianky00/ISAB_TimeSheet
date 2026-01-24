@@ -72,9 +72,7 @@ class TestGUIHeadlessHardened:
             if "Buongiorno" in label.text():
                 found_morning = True
                 break
-        assert found_morning, (
-            f"Label Buongiorno non trovata alle 08:00. Testo trovato: {[label.text() for label in dash.findChildren(QLabel)]}"
-        )
+        assert found_morning, f"Label Buongiorno non trovata alle 08:00. Testo trovato: {[label.text() for label in dash.findChildren(QLabel)]}"
 
         # Scenario Sera (20:00)
         mock_now.hour = 20

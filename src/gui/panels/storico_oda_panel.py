@@ -440,9 +440,9 @@ class StoricoOdaPanel(QWidget):
                 item_creato.setData(r, Qt.ItemDataRole.UserRole)
 
                 self.model.appendRow(parent_row_items)
-                groups[group_key] = (
-                    item_creato  # Keep reference to first item as parent
-                )
+                groups[
+                    group_key
+                ] = item_creato  # Keep reference to first item as parent
 
             parent_item = groups[group_key]
 

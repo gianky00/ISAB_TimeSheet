@@ -99,15 +99,15 @@ var
   MsgResult: Integer;
 begin
   // Chiedi all'utente se vuole pulire TUTTO (Config, Database, Licenza)
-  MsgResult := MsgBox('Vuoi eliminare anche tutte le impostazioni, i database e la licenza?' + #13#10 + 
-                      'ATTENZIONE: Questa operazione è irreversibile.', 
+  MsgResult := MsgBox('Vuoi eliminare anche tutte le impostazioni, i database e la licenza?' + #13#10 +
+                      'ATTENZIONE: Questa operazione è irreversibile.',
                       mbConfirmation, MB_YESNO);
-  
+
   if MsgResult = IDYES then
   begin
     // Elimina la cartella in Local (SyncroJob) per coerenza con il codice Python
     DelTree(ExpandConstant('{localappdata}\SyncroJob'), True, True, True);
   end;
-  
+
   Result := True;
 end;

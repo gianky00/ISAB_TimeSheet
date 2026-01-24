@@ -3,7 +3,6 @@ SyncroJob - Prenota BP Panel
 Pannello per il bot Prenota BP.
 """
 
-import traceback
 from typing import Any, Dict, Optional
 
 from PyQt6.QtCore import QTimer

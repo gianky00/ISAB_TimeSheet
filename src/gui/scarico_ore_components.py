@@ -43,9 +43,13 @@ class CacheWorker(QThread):
         if self.data_source:
             # Build cache from raw data (e.g. from DB)
             self.progress.emit("Elaborazione dati...")
-            display_data, search_index, float_totals, style_cache, date_keys = (
-                self._build_caches(self.data_source)
-            )
+            (
+                display_data,
+                search_index,
+                float_totals,
+                style_cache,
+                date_keys,
+            ) = self._build_caches(self.data_source)
             # Save to disk
             self.progress.emit("Salvataggio cache...")
             self._save_cache(

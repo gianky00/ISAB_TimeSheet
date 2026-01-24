@@ -6,7 +6,7 @@ Classi base e worker per i pannelli dei bot.
 import threading
 import traceback
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (

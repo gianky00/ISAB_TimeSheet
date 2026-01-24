@@ -48,13 +48,15 @@ class SecurityDashboard(QWidget):
 
         integrity_btn = QPushButton("Verifica Integrità")
         integrity_btn.setIcon(get_colored_icon(get_asset_path(Icons.SHIELD), "white"))
-        integrity_btn.setStyleSheet("""
+        integrity_btn.setStyleSheet(
+            """
             QPushButton {
                 background-color: #198754; color: white; border: none;
                 padding: 8px 15px; border-radius: 5px; font-weight: bold;
             }
             QPushButton:hover { background-color: #157347; }
-        """)
+        """
+        )
         integrity_btn.clicked.connect(self._run_integrity_check)
         header_layout.addWidget(integrity_btn)
 
@@ -93,10 +95,12 @@ class SecurityDashboard(QWidget):
         self.log_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.log_area.setWidget(self.log_content)
 
-        self.log_area.setStyleSheet("""
+        self.log_area.setStyleSheet(
+            """
             QScrollArea { border: 1px solid #dee2e6; border-radius: 8px; background: white; }
             QWidget { background: white; }
-        """)
+        """
+        )
         layout.addWidget(self.log_area)
 
     def refresh(self):
@@ -132,10 +136,12 @@ class SecurityDashboard(QWidget):
 
     def _create_kpi_card(self, title, value, color):
         card = QFrame()
-        card.setStyleSheet(f"""
+        card.setStyleSheet(
+            f"""
             background: white; border-radius: 8px;
             border: 1px solid #dee2e6; border-left: 5px solid {color};
-        """)
+        """
+        )
         layout = QVBoxLayout(card)
         t = QLabel(title)
         t.setStyleSheet("color: #6c757d; font-size: 12px;")

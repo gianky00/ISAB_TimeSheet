@@ -12,9 +12,9 @@ def test_horizontal_timeline_functionality(qtbot):
     qtbot.addWidget(widget)
 
     # Verify that the LogWidget correctly contains a HorizontalTimelineWidget
-    assert isinstance(widget.timeline, HorizontalTimelineWidget), (
-        "LogWidget should be using HorizontalTimelineWidget"
-    )
+    assert isinstance(
+        widget.timeline, HorizontalTimelineWidget
+    ), "LogWidget should be using HorizontalTimelineWidget"
 
     # Add a series of logs to the widget
     logs_to_add = [
@@ -33,6 +33,6 @@ def test_horizontal_timeline_functionality(qtbot):
     layout = widget.timeline.container.main_layout
     item_count = sum(1 for i in range(layout.count()) if layout.itemAt(i).widget())
 
-    assert item_count == len(logs_to_add), (
-        f"Expected {len(logs_to_add)} items in timeline, but found {item_count}"
-    )
+    assert item_count == len(
+        logs_to_add
+    ), f"Expected {len(logs_to_add)} items in timeline, but found {item_count}"

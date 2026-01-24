@@ -3,11 +3,16 @@ SyncroJob - Ricerca PDL Panel
 Pannello per il bot Ricerca PDL (SafeWork).
 """
 
-import traceback
-from typing import Any, Dict, Optional
 
 from PyQt6.QtCore import QTimer, pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QGroupBox, QHBoxLayout, QLabel, QVBoxLayout
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+)
 
 from src.core import config_manager
 from src.gui.panels.base import BaseBotPanel, BotWorker

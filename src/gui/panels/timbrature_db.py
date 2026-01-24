@@ -5,7 +5,6 @@ Pannello per la visualizzazione del Database Timbrature Isab con architettura Ma
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -15,7 +14,6 @@ from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFileDialog,
-    QFormLayout,
     QHBoxLayout,
     QHeaderView,
     QInputDialog,
@@ -23,12 +21,10 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QPushButton,
-    QScrollArea,
-    QSplitter,
+    QTableView,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
-    QTableView,
     QVBoxLayout,
     QWidget,
 )
