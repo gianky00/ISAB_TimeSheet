@@ -1,10 +1,9 @@
-import os
 import threading
 import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, PropertyMock, patch
 
-import pytest
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -21,9 +20,6 @@ from src.gui.widgets import (
 )
 
 
-@pytest.mark.skipif(
-    os.environ.get("CI") == "true", reason="Skipping heavy UI tests in CI"
-)
 class TestBaseBotPanel(unittest.TestCase):
     def setUp(self):
         # Ensure QApplication exists (provided by pytest-qt in full suite)

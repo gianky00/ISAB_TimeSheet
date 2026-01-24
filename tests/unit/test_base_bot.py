@@ -37,23 +37,27 @@ class TestBaseBotLogic:
     @patch("webdriver_manager.chrome.ChromeDriverManager.install")
     def test_init_driver(self, mock_install, mock_chrome, base_bot):
         """Should initialize driver with correct options."""
-        base_bot._init_driver()
+        # Mock options to track add_argument calls
+        mock_options = MagicMock()
+        with patch("src.bots.base.base_bot.Options", return_value=mock_options):
+            base_bot._init_driver()
 
         assert base_bot.status == BotStatus.INITIALIZING
         mock_chrome.assert_called()
 
-        # Verify options
-        call_args = mock_chrome.call_args
-        options = call_args.kwargs["options"]
-        args = list(options.arguments)
+        # Verify critical options via add_argument calls
+        add_argument_calls = [
+            call[0][0] for call in mock_options.add_argument.call_args_list
+        ]
 
-        assert "--headless=new" in args
-        assert "--disable-notifications" in args
-        assert "--no-restore-session-state" in args
+        # Check headless mode (since base_bot.headless=True)
+        assert any("--headless=new" in arg for arg in add_argument_calls)
+        assert any("--disable-notifications" in arg for arg in add_argument_calls)
+        assert any("--no-restore-session-state" in arg for arg in add_argument_calls)
 
-        # Verify user-data-dir uses config_manager path (not CWD)
+        # Verify user-data-dir uses config_manager path
         user_data_arg = next(
-            (arg for arg in args if arg.startswith("user-data-dir=")), None
+            (arg for arg in add_argument_calls if "user-data-dir=" in arg), None
         )
         assert user_data_arg is not None
         # It should contain syncrojob (part of the config dir path)

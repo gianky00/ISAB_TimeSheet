@@ -13,10 +13,15 @@ def mock_ui_deps(mocker):
     mocker.patch("src.core.audit_manager.AuditManager")
     mocker.patch("src.core.stats_manager.StatsManager")
     mocker.patch("src.utils.helpers.get_asset_path", return_value="")
+
+    # **CRITICAL**: Mock TimelineWidget to prevent QTimer crashes in CI
+    mocker.patch("src.gui.widgets.timeline_widget.TimelineWidget")
+
     return mocker
 
 
 def test_base_bot_panel_logic(qtbot, mock_ui_deps):
+    """Test BaseBotPanel logic without actually creating complex widgets."""
     panel = BaseBotPanel("test_bot", "Test Bot", "Description")
     qtbot.addWidget(panel)
 
