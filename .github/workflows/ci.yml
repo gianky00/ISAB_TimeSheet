@@ -40,7 +40,7 @@ jobs:
 
       - name: Environment Preparation
         run: |
-          mkdir -p data temp logs
+          New-Item -ItemType Directory -Force -Path data, temp, logs
           echo "Environment ready for testing"
 
       - name: Quality Check (Informative)
