@@ -1,18 +1,9 @@
-import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QLabel
+from PyQt6.QtWidgets import QLabel
 
 from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.quick_actions import QuickActions
-
-
-@pytest.fixture(scope="session")
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
 
 
 class TestDashboardComponents:

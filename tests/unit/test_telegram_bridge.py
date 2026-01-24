@@ -6,19 +6,10 @@ from PyQt6.QtWidgets import QApplication
 from src.core.telegram_bridge import TelegramUIBridge
 
 
-# Mock QApplication for tests
-class MockQApplication(QApplication):
-    def __init__(self, *args, **kwargs):
-        pass
-
-
 class TestTelegramUIBridge(unittest.TestCase):
     def setUp(self):
-        # Ensure a QApplication instance exists for PyQt signals
-        if QApplication.instance() is None:
-            self.app = MockQApplication([])
-        else:
-            self.app = QApplication.instance()
+        # Ensure a QApplication instance exists (provided by pytest-qt in full suite)
+        self.app = QApplication.instance()
 
         self.mock_main_window = MagicMock()
 
@@ -53,12 +44,8 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge = TelegramUIBridge(self.mock_main_window)
 
     def tearDown(self):
-        if (
-            hasattr(self, "app")
-            and self.app is not None
-            and not isinstance(self.app, MockQApplication)
-        ):
-            self.app.quit()
+        # Cleanup mocked app if needed
+        pass
 
     def test_init(self):
         self.assertEqual(self.bridge.mw, self.mock_main_window)
@@ -253,23 +240,19 @@ class TestTelegramUIBridge(unittest.TestCase):
             images=["base64_photo_string"],
         )
         self.mock_telegram_service.send_message_sync.assert_any_call(
-            "📝 **Dati Estratti**\n\nPhoto analysis response"
+            "📋 **Dati Estratti**\n\nPhoto analysis response"
         )
 
     @patch("src.core.telegram_bridge.subprocess")
     @patch("src.core.telegram_bridge.os.path.abspath", return_value="avvio.bat")
     @patch("src.core.telegram_bridge.QApplication.quit")
     def test_handle_restart_app(self, mock_quit, mock_abspath, mock_subprocess):
-        # We patch src.core.telegram_bridge.subprocess because it's imported in the module
         self.bridge._handle_restart_app()
         mock_subprocess.Popen.assert_called_once()
         mock_quit.assert_called_once()
 
     @patch("src.core.telegram_bridge.QDate")
     def test_handle_run_timbrature(self, MockQDate):
-        # Patching QDate in the bridge module because it's imported with 'from ... import QDate'
-        # Note: If this fails, it might be because QDate is not in the bridge namespace (e.g. if generic import)
-        # Check source: 'from PyQt6.QtCore import ..., QDate, ...' -> It IS in namespace.
         self.mock_main_window.navigate_to_panel = MagicMock()
         self.mock_main_window.timbrature_bot_panel = MagicMock()
         self.mock_main_window.timbrature_bot_panel.validate_ready.return_value = (

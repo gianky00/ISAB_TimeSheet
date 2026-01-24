@@ -1,20 +1,11 @@
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget
+from PyQt6.QtWidgets import QLabel, QWidget
 
 from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.panels.settings.main_panel import SettingsPanel
 from src.gui.widgets.toast import Toast
-
-
-# Fixture per garantire l'esistenza di una QApplication (necessaria per QWidget)
-@pytest.fixture(scope="session")
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
 
 
 class TestGUIHeadlessHardened:
@@ -64,7 +55,6 @@ class TestGUIHeadlessHardened:
         # Scenario Mattina (8:00)
         mock_now.hour = 8
         dash = DashboardPanel()
-        QApplication.processEvents()
 
         found_morning = False
         for label in dash.findChildren(QLabel):
@@ -76,7 +66,6 @@ class TestGUIHeadlessHardened:
         # Scenario Sera (20:00)
         mock_now.hour = 20
         dash_evening = DashboardPanel()
-        QApplication.processEvents()
 
         found_evening = False
         for label in dash_evening.findChildren(QLabel):
@@ -109,12 +98,17 @@ class TestGUIHeadlessHardened:
             return_value=mock_dlg,
         )
 
-        lists_page = settings_panel.config_tab.lists_page
-        initial_count = lists_page.account_list.count()
-        lists_page._add_account()
+        initial_count = settings_panel.config_tab.lists_page.account_list.count()
+        settings_panel.config_tab.lists_page._add_account()
 
-        assert lists_page.account_list.count() == initial_count + 1
-        assert "new_user" in lists_page.account_list.item(0).text()
+        assert (
+            settings_panel.config_tab.lists_page.account_list.count()
+            == initial_count + 1
+        )
+        assert (
+            "new_user"
+            in settings_panel.config_tab.lists_page.account_list.item(0).text()
+        )
 
     def test_settings_tab_change_refresh(self, settings_panel, mocker):
         """Verifica che il cambio tab aggiorni le statistiche."""
