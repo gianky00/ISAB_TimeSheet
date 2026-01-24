@@ -9,7 +9,7 @@ from src.gui.panels.contabilita_kpi_panel import ContabilitaKPIPanel
 from src.gui.panels.contabilita_panel import ContabilitaPanel
 from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.panels.dettagli_oda import DettagliOdAPanel
-from src.gui.panels.dipendenti_panel import DipendentiPanel
+from src.gui.panels.dipendenti import DipendentiPanel
 from src.gui.panels.help_panel import HelpPanel
 from src.gui.panels.lyra_panel import LyraPanel
 from src.gui.panels.notifications_panel import NotificationsPanel
