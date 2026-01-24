@@ -7,12 +7,17 @@ from src.core.database import DatabaseManager
 class TestContabilitaQueriesCoverage:
     @pytest.fixture
     def db_path(self, tmp_path, mocker):
-        p = tmp_path / "queries.db"
+        p_cont = tmp_path / "queries_cont.db"
+        p_timb = tmp_path / "queries_timb.db"
         # Patch dei path globali prima di init_db
-        mocker.patch.object(DatabaseManager, "DB_CONTABILITA", p)
-        mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", p)
+        mocker.patch.object(DatabaseManager, "DB_CONTABILITA", p_cont)
+        mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", p_timb)
+        mocker.patch.object(DatabaseManager, "DB_PDL", tmp_path / "queries_pdl.db")
+        mocker.patch.object(DatabaseManager, "DB_STORICO_ODA", tmp_path / "queries_oda.db")
+        mocker.patch.object(DatabaseManager, "DB_DIPENDENTI", tmp_path / "queries_dip.db")
+        
         DatabaseManager().init_db()
-        return p
+        return p_cont
 
     def test_get_data_by_year_columns_alignment(self, db_path):
         """Verifica che la query per anno restituisca tutte le colonne mappate."""

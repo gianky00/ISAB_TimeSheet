@@ -95,5 +95,5 @@ class TestContabilitaWorker:
         with patch("os.path.exists", return_value=True):
             mock_manager.scan_workload.return_value = (5, 5)
             # 5 sheets + 5 files + 1 attivita + 0 certificati = 11
-            total = worker._calculate_total_ops()
-            assert total == 11
+            res = worker._calculate_total_ops()
+            assert res["total"] == 11

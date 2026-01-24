@@ -66,10 +66,17 @@ def test_init_driver_success(bot):
         # Verify _get_chrome_options was called
         mock_get_options.assert_called_once()
 
-        # Verify Chrome received the options
-        call_kwargs = mock_chrome.call_args.kwargs
-        assert "options" in call_kwargs
-        assert call_kwargs["options"] is mock_options
+        # Verify Chrome received the options - handle both old and new API
+        if hasattr(mock_chrome.call_args, "kwargs"):
+            # New API (Python 3.8+)
+            call_kwargs = mock_chrome.call_args.kwargs
+            assert "options" in call_kwargs
+            assert call_kwargs["options"] is mock_options
+        else:
+            # Old API - call_args is (args, kwargs) tuple
+            args, kwargs = mock_chrome.call_args
+            assert "options" in kwargs
+            assert kwargs["options"] is mock_options
 
 
 def test_login_flow_success(bot):

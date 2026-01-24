@@ -37,7 +37,7 @@ class TestBaseBotLogic:
     @patch("webdriver_manager.chrome.ChromeDriverManager.install")
     def test_init_driver(self, mock_install, mock_chrome, base_bot):
         """Should initialize driver with correct Chrome setup."""
-        # Simply mock _get_chrome_options and verify it's called + Chrome is instantiated
+        # Mock _get_chrome_options and verify it's called + Chrome is instantiated
         mock_options = MagicMock()
 
         with patch.object(
@@ -51,9 +51,17 @@ class TestBaseBotLogic:
         mock_chrome.assert_called()  # Chrome was instantiated
 
         # Verify Chrome was called with options from _get_chrome_options
-        call_kwargs = mock_chrome.call_args.kwargs
-        assert "options" in call_kwargs
-        assert call_kwargs["options"] is mock_options
+        # Handle both old (args, kwargs tuple) and new (.args, .kwargs) API
+        if hasattr(mock_chrome.call_args, "kwargs"):
+            # New API (Python 3.8+)
+            call_kwargs = mock_chrome.call_args.kwargs
+            assert "options" in call_kwargs
+            assert call_kwargs["options"] is mock_options
+        else:
+            # Old API - call_args is (args, kwargs) tuple
+            args, kwargs = mock_chrome.call_args
+            assert "options" in kwargs
+            assert kwargs["options"] is mock_options
 
     def test_check_stop_raises(self, base_bot):
         """Should raise InterruptedError if stop requested."""
