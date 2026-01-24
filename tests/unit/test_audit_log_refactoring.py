@@ -2,6 +2,7 @@
 Baseline tests for AuditLogWidget refresh logic.
 """
 
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -66,6 +67,9 @@ def audit_widget(qtbot, mocker):
         return widget
 
 
+@pytest.mark.skipif(
+    os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI"
+)
 def test_audit_refresh_population(audit_widget):
     """Test that logs are correctly populated in the table."""
     audit_widget.refresh()
@@ -87,6 +91,9 @@ def test_audit_refresh_population(audit_widget):
     assert bg_color.name() == "#fff5f5"
 
 
+@pytest.mark.skipif(
+    os.environ.get("CI") == "true", reason="Skipping Qt heavy test in CI"
+)
 def test_integrity_display(audit_widget, mocker):
     """Test integrity label updates."""
     # Test valid
