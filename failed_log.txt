@@ -1,0 +1,64 @@
+Verification (Windows)	Run Unit Tests	﻿2026-01-24T20:53:14.9633434Z ##[group]Run poetry run pytest tests/unit -v
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9633856Z [36;1mpoetry run pytest tests/unit -v[0m
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9702533Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9702856Z env:
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9703107Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9703546Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9703985Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9704371Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9704751Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:14.9705046Z ##[endgroup]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8821714Z ============================= test session starts =============================
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8823202Z platform win32 -- Python 3.12.10, pytest-8.0.2, pluggy-1.6.0 -- C:\Users\runneradmin\AppData\Local\pypoetry\Cache\virtualenvs\syncrojob-foANo-9x-py3.12\Scripts\python.exe
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8824802Z cachedir: .pytest_cache
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8826094Z hypothesis profile 'ci' -> database=None, deadline=None, print_blob=True, derandomize=True, suppress_health_check=(HealthCheck.too_slow,)
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8827135Z PyQt6 6.5.2 -- Qt runtime 6.5.2 -- Qt compiled 6.5.2
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8827636Z rootdir: D:\a\ISAB_TimeSheet\ISAB_TimeSheet
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8828056Z configfile: pytest.ini
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8828802Z plugins: anyio-4.12.1, Faker-40.1.2, hypothesis-6.150.2, asyncio-0.23.8, cov-7.0.0, mock-3.12.0, qt-4.3.1, typeguard-4.4.4
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:23.8830027Z asyncio: mode=Mode.STRICT
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:52.7399966Z collecting ... collected 1002 items
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:52.7400411Z
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:53.1477754Z tests/unit/test_accessibility_simple.py::TestAccessibilitySimple::test_make_accessible PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:53.3370349Z tests/unit/test_accessibility_simple.py::TestAccessibilitySimple::test_setup_tab_order PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:53.5252316Z tests/unit/test_accessibility_simple.py::TestAccessibilitySimple::test_keyboard_shortcuts_def PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:53.8279543Z tests/unit/test_ai_sentinel_hardened.py::TestAISentinelHardened::test_sentinel_anomaly_detection_sqlite PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:54.0207854Z tests/unit/test_ai_sentinel_hardened.py::TestAISentinelHardened::test_document_processor_image_conversion PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:54.2020455Z tests/unit/test_ai_sentinel_hardened.py::TestAISentinelHardened::test_document_processor_searchable_check PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:54.3947098Z tests/unit/test_ai_sentinel_hardened.py::TestAISentinelHardened::test_document_processor_merge_logic PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:54.5897141Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_check_license_valid_immediate PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:54.7781019Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_check_license_recovery_via_update PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:54.9685925Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_check_license_grace_period_allowed PASSED [  0%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:55.1595799Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_check_license_fatal_failure PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:55.3514112Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_initialize_full_success PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:55.7529377Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_initialize_fail_license_exits PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:55.9369778Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_init_db_success PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:56.1214155Z tests/unit/test_app_initializer_coverage.py::TestAppInitializerCoverage::test_setup_app_style PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:56.3301509Z tests/unit/test_app_initializer_coverage_hardened.py::TestAppInitializer::test_initialize_success PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:57.2058819Z tests/unit/test_app_initializer_coverage_hardened.py::TestAppInitializer::test_initialize_license_fail_grace_fail PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:58.0529769Z tests/unit/test_app_initializer_coverage_hardened.py::TestAppInitializer::test_initialize_license_fail_grace_allowed PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:58.2527735Z tests/unit/test_app_initializer_coverage_hardened.py::TestAppInitializer::test_db_init_fail PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:58.4475078Z tests/unit/test_app_initializer_coverage_hardened.py::TestAppInitializer::test_setup_app_style PASSED [  1%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:58.6533495Z tests/unit/test_app_initializer_deep.py::TestAppInitializerDeep::test_initialize_full_success PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:58.8527508Z tests/unit/test_app_initializer_deep.py::TestAppInitializerDeep::test_initialize_update_trigger PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:59.0649456Z tests/unit/test_app_initializer_deep.py::TestAppInitializerDeep::test_initialize_emergency_grace_success PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:59.2745584Z tests/unit/test_app_initializer_deep.py::TestAppInitializerDeep::test_initialize_failed_license_exit PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:59.4767859Z tests/unit/test_app_initializer_deep.py::TestAppInitializerDeep::test_initialize_db_error_exit PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:59.6687804Z tests/unit/test_app_updater.py::test_check_for_updates_no_url PASSED     [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:53:59.8569291Z tests/unit/test_app_updater.py::test_check_for_updates_no_new_version PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:00.0666328Z tests/unit/test_app_updater.py::test_check_for_updates_new_version_download PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:00.2659286Z tests/unit/test_app_updater.py::test_check_for_updates_new_version_no_download PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:00.4681998Z tests/unit/test_app_updater.py::test_check_for_updates_http_error PASSED [  2%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:00.6626963Z tests/unit/test_app_updater.py::test_check_for_updates_timeout PASSED    [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:00.8503193Z tests/unit/test_app_updater.py::test_check_for_updates_request_exception PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:01.0356108Z tests/unit/test_app_updater.py::test_check_for_updates_silent_mode PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:01.2279476Z tests/unit/test_app_updater.py::test_check_for_updates_no_download_url_provided PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:01.4114627Z tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_no_url PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:01.5945051Z tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_request_fail PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:01.7864261Z tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_newer_found PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:01.9680465Z tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_for_updates_not_newer PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:02.1492806Z tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_is_newer_version PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:02.3408925Z tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_handle_update_found_callback PASSED [  3%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:02.5257902Z tests/unit/test_app_updater_coverage.py::TestAppUpdater::test_check_updates_silent_exception PASSED [  4%]
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:02.9229534Z tests/unit/test_audit_log_refactoring.py::test_audit_refresh_population
+Verification (Windows)	Run Unit Tests	2026-01-24T20:54:02.9360981Z ##[error]Process completed with exit code 1.

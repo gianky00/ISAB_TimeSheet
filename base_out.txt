@@ -1,0 +1,10 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-8.0.2, pluggy-1.6.0
+PyQt6 6.5.2 -- Qt runtime 6.5.2 -- Qt compiled 6.5.2
+rootdir: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet
+configfile: pytest.ini
+plugins: anyio-4.12.1, Faker-40.1.2, hypothesis-6.150.2, asyncio-0.23.8, cov-7.0.0, mock-3.12.0, qt-4.3.1, xdist-3.8.0, typeguard-4.4.4
+asyncio: mode=Mode.STRICT
+collected 14 items
+
+tests\unit\test_base_bot_panel.py

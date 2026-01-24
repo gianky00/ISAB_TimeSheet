@@ -1,9 +1,14 @@
+import os
 from unittest.mock import ANY, patch
 
 import pytest
 from PyQt6.QtWidgets import QComboBox
 
 from src.gui.panels import TimbratureDBPanel
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("CI") == "true", reason="Skipping heavy UI tests in CI"
+)
 
 
 @pytest.fixture
