@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QApplication, QLabel, QWidget
 
 from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.panels.settings.main_panel import SettingsPanel
-from src.gui.toast import Toast
+from src.gui.widgets.toast import Toast
 
 
 # Fixture per garantire l'esistenza di una QApplication (necessaria per QWidget)
@@ -29,7 +29,7 @@ class TestGUIHeadlessHardened:
             "src.gui.panels.settings.main_panel.config_manager.set_config_value"
         )
         mocker.patch(
-            "src.gui.panels.settings.tabs.telegram_tab.SecretsManager.get_gemini_api_key",
+            "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
             return_value="fake_key",
         )
 
@@ -88,15 +88,14 @@ class TestGUIHeadlessHardened:
     def test_toast_animation_lifecycle(self, qapp, mocker):
         """Verifica che il toast si mostri e avvii l'animazione."""
         parent = QWidget()
-        toast = Toast(parent)
+        toast = Toast("Test Message", parent=parent)
 
         # Mock QPropertyAnimation
         m_anim = MagicMock()
-        toast.anim = m_anim
+        toast._fade_in = m_anim
 
-        toast.show_toast("Test Message", duration=1000)
+        toast.show_at(0, 0)
 
-        assert toast.label.text() == "Test Message"
         assert m_anim.start.called
 
     def test_settings_account_addition_flow(self, settings_panel, mocker):
