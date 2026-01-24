@@ -19,7 +19,7 @@ from src.gui.panels.ricerca_pdl import RicercaPDLPanel
 from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 from src.gui.panels.scarico_pdl import ScaricoPDLPanel
 from src.gui.panels.scarico_ts import ScaricaTSPanel
-from src.gui.panels.settings_panel import SettingsPanel
+from src.gui.panels.settings.main_panel import SettingsPanel
 from src.gui.panels.storico_oda_panel import StoricoOdaPanel
 from src.gui.panels.timbrature_bot import TimbratureBotPanel
 from src.gui.panels.timbrature_db import TimbratureDBPanel
