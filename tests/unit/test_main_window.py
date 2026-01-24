@@ -52,14 +52,14 @@ class TestMainWindow:
             qtbot.addWidget(window)
 
             # Click Automazioni
-            window.sidebar.btn_automazioni.click()
+            window.sidebar.btn_fornitori.click()
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
-            assert window.sidebar.btn_automazioni.isChecked()
+            assert window.sidebar.group_automazioni.header_btn.isChecked()
 
-            # Click Database (Dipendenti in refactored version)
-            window.sidebar.btn_database.click()
-            assert window.page_stack.currentIndex() == PageIndex.TIMBRATURE
-            assert window.sidebar.btn_database.isChecked()
+            # Click Home
+            window.sidebar.btn_home.click()
+            assert window.page_stack.currentIndex() == PageIndex.DASHBOARD
+            assert window.sidebar.btn_home.isChecked()
 
     def test_navigate_to_panel(self, app, qtbot):
         with (
