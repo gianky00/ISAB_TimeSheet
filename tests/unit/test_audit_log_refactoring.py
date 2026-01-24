@@ -2,9 +2,10 @@
 Baseline tests for AuditLogWidget refresh logic.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+from PyQt6.QtGui import QIcon, QPixmap
 
 from src.gui.panels.notifications_panel import AuditLogWidget
 
@@ -40,18 +41,22 @@ def audit_widget(qtbot, mocker):
     m_instance.get_filtered_logs.return_value = (m_instance.get_logs.return_value, 2)
 
     # CRITICAL: Mock icons and assets to prevent crashes in headless environment
+    # Use real QIcon/QPixmap objects (even if empty) instead of MagicMock
+    # because QTableView needs valid paintable objects.
+    dummy_pixmap = QPixmap(10, 10)
+    dummy_pixmap.fill(0)  # Fill with transparent color (or black)
+    dummy_icon = QIcon(dummy_pixmap)
+
     mocker.patch(
         "src.gui.panels.notifications_panel.get_asset_path", return_value="dummy.svg"
     )
     mocker.patch(
-        "src.gui.panels.notifications_panel.get_colored_icon", return_value=MagicMock()
+        "src.gui.panels.notifications_panel.get_colored_icon", return_value=dummy_icon
     )
 
     # Also patch them in the model module where AuditTableModel is defined
     mocker.patch("src.gui.models.audit_model.get_asset_path", return_value="dummy.svg")
-    mocker.patch(
-        "src.gui.models.audit_model.get_colored_icon", return_value=MagicMock()
-    )
+    mocker.patch("src.gui.models.audit_model.get_colored_icon", return_value=dummy_icon)
 
     # CRITICAL: Mock QTimer to prevent background live refresh during tests
     with patch("PyQt6.QtCore.QTimer"):
