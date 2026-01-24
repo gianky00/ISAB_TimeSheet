@@ -154,8 +154,8 @@ class BaseBotPanel(QWidget):
         self.bot_name = bot_name
         self.bot_description = bot_description
 
-        self.worker = None
-        self.start_time = None
+        self.worker: Optional[BotWorker] = None
+        self.start_time: Optional[datetime] = None
         self._setup_ui()
         self._connect_signals()
 
@@ -251,7 +251,7 @@ class BaseBotPanel(QWidget):
         """
         return True, ""
 
-    def run_externally(self, params: Dict[str, Any] = None):
+    def run_externally(self, params: Optional[Dict[str, Any]] = None):
         """
         Avvia il bot programmaticamente con parametri opzionali che sovrascrivono quelli UI.
 

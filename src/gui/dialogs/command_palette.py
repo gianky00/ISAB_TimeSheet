@@ -238,53 +238,64 @@ class CommandPaletteDialog(QDialog):
 
     def eventFilter(self, obj, event):
         if obj == self.search_bar and event.type() == event.Type.KeyPress:
-            key = event.key()
-
-            # --- INPUT MODE HANDLING ---
             if self._input_mode:
-                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
-                    self._submit_input_step()
-                    return True
-                elif key == Qt.Key.Key_Escape:
-                    self._cancel_input_mode()
-                    return True
-                return False  # Let normal typing happen
-            # ---------------------------
-
-            if key == Qt.Key.Key_Down:
-                idx = self.list_widget.currentRow()
-                if idx < self.list_widget.count() - 1:
-                    self.list_widget.setCurrentRow(idx + 1)
-                return True
-            elif key == Qt.Key.Key_Up:
-                idx = self.list_widget.currentRow()
-                if idx > 0:
-                    self.list_widget.setCurrentRow(idx - 1)
-                return True
-            elif key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
-                self._execute_selected()
-                return True
-            elif key == Qt.Key.Key_Backspace:
-                if not self.search_bar.text():  # Se input vuoto, torna indietro
-                    self._navigate_up()
-                    return True
-            elif key == Qt.Key.Key_Escape:
-                if self.navigation_stack and not self.search_bar.text():
-                    self._navigate_up()  # Esc torna su di un livello
-                else:
-                    self.hide_animated()  # O chiude se siamo alla root
-                return True
-            elif (
-                key == Qt.Key.Key_K
-                and event.modifiers() == Qt.KeyboardModifier.ControlModifier
-            ):
-                if not event.isAutoRepeat() and getattr(
-                    self, "_can_close_via_shortcut", True
-                ):
-                    self.hide_animated()
-                return True
+                return self._handle_input_mode_key(event)
+            return self._handle_standard_key(event)
 
         return super().eventFilter(obj, event)
+
+    def _handle_input_mode_key(self, event):
+        key = event.key()
+        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+            self._submit_input_step()
+            return True
+        elif key == Qt.Key.Key_Escape:
+            self._cancel_input_mode()
+            return True
+        return False
+
+    def _handle_standard_key(self, event):
+        key = event.key()
+
+        if key == Qt.Key.Key_Down:
+            idx = self.list_widget.currentRow()
+            if idx < self.list_widget.count() - 1:
+                self.list_widget.setCurrentRow(idx + 1)
+            return True
+
+        elif key == Qt.Key.Key_Up:
+            idx = self.list_widget.currentRow()
+            if idx > 0:
+                self.list_widget.setCurrentRow(idx - 1)
+            return True
+
+        elif key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+            self._execute_selected()
+            return True
+
+        elif key == Qt.Key.Key_Backspace:
+            if not self.search_bar.text():
+                self._navigate_up()
+                return True
+
+        elif key == Qt.Key.Key_Escape:
+            if self.navigation_stack and not self.search_bar.text():
+                self._navigate_up()
+            else:
+                self.hide_animated()
+            return True
+
+        elif (
+            key == Qt.Key.Key_K
+            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
+        ):
+            if not event.isAutoRepeat() and getattr(
+                self, "_can_close_via_shortcut", True
+            ):
+                self.hide_animated()
+            return True
+
+        return False
 
     def _start_input_mode(self, node: CommandNode):
         """Avvia la modalità input per il nodo selezionato."""

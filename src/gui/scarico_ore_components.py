@@ -509,7 +509,9 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
         return None
 
-    def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
+    def sort(
+        self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
+    ) -> None:
         """
         Ordina il modello in base alla colonna specificata.
         Supporta ordinamento per Date (chiavi), Numeri (totals) e Stringhe.

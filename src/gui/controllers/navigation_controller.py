@@ -77,7 +77,7 @@ class NavigationController(QObject):
         return creator() if creator else None
 
     def _create_dashboard(self):
-        from src.gui.dashboard_panel import DashboardPanel
+        from src.gui.panels import DashboardPanel
 
         self.mw.dashboard_panel = DashboardPanel()
 
@@ -98,7 +98,7 @@ class NavigationController(QObject):
         return self.mw.automazioni_widget
 
     def _create_lyra(self):
-        from src.gui.lyra_panel import LyraPanel
+        from src.gui.panels import LyraPanel
 
         self.mw.lyra_panel = LyraPanel()
         return self.mw.lyra_panel
@@ -110,13 +110,13 @@ class NavigationController(QObject):
         return self.mw.timbrature_db_panel
 
     def _create_strumentale(self):
-        from src.gui.contabilita_panel import ContabilitaPanel
+        from src.gui.panels import ContabilitaPanel
 
         self.mw.contabilita_panel = ContabilitaPanel()
         return self.mw.contabilita_panel
 
     def _create_dataease(self):
-        from src.gui.scarico_ore_panel import ScaricoOrePanel
+        from src.gui.panels import ScaricoOrePanel
 
         self.mw.scarico_ore_panel = ScaricoOrePanel()
         return self.mw.scarico_ore_panel
@@ -128,32 +128,32 @@ class NavigationController(QObject):
         return self.mw.pdl_db_panel
 
     def _create_storico_oda(self):
-        from src.gui.storico_oda_panel import StoricoOdaPanel
+        from src.gui.panels import StoricoOdaPanel
 
         self.mw.storico_oda_panel = StoricoOdaPanel()
         return self.mw.storico_oda_panel
 
     def _create_dipendenti(self):
-        from src.gui.dipendenti_panel import DipendentiPanel
+        from src.gui.panels import DipendentiPanel
 
         self.mw.dipendenti_panel = DipendentiPanel()
         return self.mw.dipendenti_panel
 
     def _create_help(self):
-        from src.gui.help_panel import HelpPanel
+        from src.gui.panels import HelpPanel
 
         self.mw.help_panel = HelpPanel()
         return self.mw.help_panel
 
     def _create_notifications(self):
-        from src.gui.notifications_panel import NotificationsPanel
+        from src.gui.panels import NotificationsPanel
 
         self.mw.notifications_panel = NotificationsPanel()
         return self.mw.notifications_panel
 
     def _create_settings_panel(self) -> QObject:
         """Crea e configura il pannello impostazioni."""
-        from src.gui.settings_panel import SettingsPanel
+        from src.gui.panels import SettingsPanel
 
         panel = SettingsPanel()
         self.mw.settings_panel = panel

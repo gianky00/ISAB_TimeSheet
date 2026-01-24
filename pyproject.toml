@@ -41,6 +41,7 @@ loguru = "*"
 faker = "*"
 email-validator = "*"
 jaraco-text = "^4.0.0"
+jaraco-context = "^6.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.0.2"
@@ -73,6 +74,7 @@ commitizen = "^4.12.0"
 icecream = "^2.1.9"
 diagrams = "^0.25.1"
 pyarmor = "^9.2.3"
+refurb = "^2.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

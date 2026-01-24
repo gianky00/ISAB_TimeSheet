@@ -1129,7 +1129,7 @@ class ExcelImporter:
                             row_styles.setdefault(key, {})["bg"] = hex_code
             except (AttributeError, TypeError):
                 pass
-        
+
         return json.dumps(row_styles) if row_styles else ""
 
     @classmethod

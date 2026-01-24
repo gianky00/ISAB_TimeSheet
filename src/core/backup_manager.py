@@ -6,6 +6,7 @@ Gestisce il backup e ripristino dei dati critici su cloud locale (OneDrive/Drive
 import logging
 import os
 import zipfile
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -112,7 +113,7 @@ class BackupManager:
 
         # 2. Check manual path override
         configured_path = config.get("backup_path")
-        if configured_path and os.path.exists(configured_path):
+        if configured_path and Path(configured_path).exists():
             return Path(configured_path)
 
         # 3. Auto-detect fallback (Priority: OneDrive -> Google -> Dropbox)
@@ -196,19 +197,15 @@ class BackupManager:
             target_dir: Cartella dove risiedono i backup.
             keep: Numero di backup da conservare (default 5).
         """
-        try:
+        with suppress(Exception):
             backups = sorted(
                 target_dir.glob("SyncroJob_Backup_*.zip"),
                 key=os.path.getmtime,
                 reverse=True,
             )
             for old_backup in backups[keep:]:
-                try:
+                with suppress(Exception):
                     old_backup.unlink()
-                except Exception:
-                    pass
-        except Exception:
-            pass
 
     @staticmethod
     def list_backups() -> List[Path]:
@@ -230,7 +227,7 @@ class BackupManager:
     def restore_backup(zip_path: str) -> Tuple[bool, str]:
         """Ripristina un backup sovrascrivendo i dati attuali."""
         try:
-            if not os.path.exists(zip_path):
+            if not Path(zip_path).exists():
                 return False, "File di backup non trovato."
 
             # Verifica validità zip

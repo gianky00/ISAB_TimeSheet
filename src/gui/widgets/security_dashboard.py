@@ -133,16 +133,16 @@ class SecurityDashboard(QWidget):
     def _create_kpi_card(self, title, value, color):
         card = QFrame()
         card.setStyleSheet(f"""
-            background: white; border-radius: 8px; 
+            background: white; border-radius: 8px;
             border: 1px solid #dee2e6; border-left: 5px solid {color};
         """)
-        l = QVBoxLayout(card)
+        layout = QVBoxLayout(card)
         t = QLabel(title)
         t.setStyleSheet("color: #6c757d; font-size: 12px;")
         v = QLabel(value)
         v.setStyleSheet(f"color: {color}; font-size: 24px; font-weight: bold;")
-        l.addWidget(t)
-        l.addWidget(v)
+        layout.addWidget(t)
+        layout.addWidget(v)
         return card
 
     def _update_chart(self, stats):
@@ -216,15 +216,14 @@ class SecurityDashboard(QWidget):
         for log in logs:
             row = QFrame()
             row.setStyleSheet("background: #fff0f0; border-radius: 5px; padding: 5px;")
-            l = QHBoxLayout(row)
+            layout = QHBoxLayout(row)
 
             ts = log["timestamp"][11:19]
             act = log["action"]
-            msg = log.get("params", "")
 
             txt = QLabel(f"<b>{ts}</b> - {act}")
-            l.addWidget(txt)
-            l.addStretch()
+            layout.addWidget(txt)
+            layout.addStretch()
 
             self.log_layout.addWidget(row)
 

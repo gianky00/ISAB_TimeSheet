@@ -1390,14 +1390,14 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-ena
 
 [[package]]
 name = "jaraco-context"
-version = "6.0.2"
+version = "6.1.0"
 description = "Useful decorators and context managers"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "jaraco_context-6.0.2-py3-none-any.whl", hash = "sha256:55fc21af4b4f9ca94aa643b6ee7fe13b1e4c01abf3aeb98ca4ad9c80b741c786"},
-    {file = "jaraco_context-6.0.2.tar.gz", hash = "sha256:953ae8dddb57b1d791bf72ea1009b32088840a7dd19b9ba16443f62be919ee57"},
+    {file = "jaraco_context-6.1.0-py3-none-any.whl", hash = "sha256:a43b5ed85815223d0d3cfdb6d7ca0d2bc8946f28f30b6f3216bda070f68badda"},
+    {file = "jaraco_context-6.1.0.tar.gz", hash = "sha256:129a341b0a85a7db7879e22acd66902fda67882db771754574338898b2d5d86f"},
 ]
 
 [package.extras]
@@ -3994,6 +3994,21 @@ mando = ">=0.6,<0.8"
 toml = ["tomli (>=2.0.1)"]
 
 [[package]]
+name = "refurb"
+version = "2.2.0"
+description = "A tool for refurbishing and modernizing Python codebases"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "refurb-2.2.0-py3-none-any.whl", hash = "sha256:2d41f728f166b3315fb9e4618881589385666bcdf1f6d9f879981d6d86091b34"},
+    {file = "refurb-2.2.0.tar.gz", hash = "sha256:645472793b3af40cca121e37df45dd9b20b525c4df99429d9fd9f6b5c238b9ea"},
+]
+
+[package.dependencies]
+mypy = ">=1.10.0,<1.11.0 || >1.11.0"
+
+[[package]]
 name = "requests"
 version = "2.32.4"
 description = "Python HTTP for Humans."
@@ -4963,4 +4978,4 @@ requests = ">=2.0,<3.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "927fe204dc5925e4dcbcf967866c8af37d2b80dfec5209992720e06e8e5761b7"
+content-hash = "3296720697cfa500e1235c489408903fbf9ddfc80591ce812adcd24c4a1a7f51"

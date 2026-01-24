@@ -218,14 +218,12 @@ def _encrypt_account_list(accounts: List[Dict[str, Any]], service_name: str):
         if not username or not password:
             continue
 
-        try:
+        with suppress(Exception):
             if SecretsManager.is_available():
                 SecretsManager.store_credential(service_name, username, password)
                 # Rimuovi la password in chiaro dal dizionario che verrà salvato
                 acc.pop("password", None)
                 continue
-        except Exception:
-            pass
 
         # Fallback: Cripta nel file
         acc["password"] = password_manager.encrypt(password)
@@ -235,17 +233,15 @@ def _atomic_write_json(data: Dict[str, Any], target_path: Path):
     """Scrittura atomica del file JSON."""
     temp_file = target_path.with_suffix(".tmp")
     try:
-        with open(temp_file, "w", encoding="utf-8") as f:
+        with temp_file.open("w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
             f.flush()
             os.fsync(f.fileno())
         os.replace(temp_file, target_path)
     finally:
         if temp_file.exists():
-            try:
-                os.remove(temp_file)
-            except Exception:
-                pass
+            with suppress(Exception):
+                temp_file.unlink()
 
 
 def get_config_value(key: str, default: Any = None) -> Any:
@@ -432,7 +428,7 @@ def import_configuration(import_path: str) -> tuple[bool, str]:
         if not path.exists():
             return False, "File di importazione non trovato."
 
-        with open(path, "r", encoding="utf-8") as f:
+        with path.open("r", encoding="utf-8") as f:
             new_config = json.load(f)
 
         # Validazione base: controlliamo se sembra una config valida
@@ -454,7 +450,7 @@ def import_configuration(import_path: str) -> tuple[bool, str]:
         )
 
         current_config = load_config()
-        with open(backup_file, "w", encoding="utf-8") as f:
+        with backup_file.open("w", encoding="utf-8") as f:
             json.dump(current_config, f, indent=2)
 
         # 3. Sovrascrittura

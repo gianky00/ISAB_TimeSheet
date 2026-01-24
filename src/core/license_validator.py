@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import uuid
+from contextlib import suppress
 from datetime import date
 from enum import Enum
 from pathlib import Path
@@ -63,7 +64,7 @@ def _get_windows_hardware_id():
     CREATE_NO_WINDOW = 0x08000000
 
     # 1. Try WMIC (Legacy)
-    try:
+    with suppress(Exception):
         cmd = ["wmic", "diskdrive", "get", "serialnumber"]
         output = subprocess.check_output(
             cmd, shell=False, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
@@ -73,11 +74,9 @@ def _get_windows_hardware_id():
             serial = parts[1].strip()
             if serial:
                 return serial
-    except Exception:
-        pass
 
     # 2. Try PowerShell (Disk Serial)
-    try:
+    with suppress(Exception):
         cmd = [
             "powershell",
             "-NoProfile",
@@ -95,11 +94,9 @@ def _get_windows_hardware_id():
 
         if output:
             return output.splitlines()[0].strip()
-    except Exception:
-        pass
 
     # 3. Try PowerShell (System UUID)
-    try:
+    with suppress(Exception):
         cmd = [
             "powershell",
             "-NoProfile",
@@ -117,15 +114,13 @@ def _get_windows_hardware_id():
 
         if output:
             return output
-    except Exception:
-        pass
     return None
 
 
 def _get_linux_hardware_id():
     """Helper to get hardware ID on Linux."""
     # Try lsblk
-    try:
+    with suppress(Exception):
         # Avoid complex pipes with shell=True, execute basic lsblk and parse in python
         cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
         output = (
@@ -139,16 +134,12 @@ def _get_linux_hardware_id():
 
         if first_line:
             return first_line
-    except Exception:
-        pass
 
     # Fallback to machine-id
     machine_id = Path("/etc/machine-id")
     if machine_id.exists():
-        try:
+        with suppress(Exception):
             return machine_id.read_text().strip()
-        except Exception:
-            pass
     return None
 
 
@@ -193,13 +184,11 @@ def _check_and_migrate_local_license(target_paths: dict):
         manifest_src = source_dir / "manifest.json"
 
         if config_src.exists() and manifest_src.exists():
-            try:
+            with suppress(Exception):
                 target_paths["dir"].mkdir(parents=True, exist_ok=True)
                 shutil.copy2(config_src, target_paths["config"])
                 shutil.copy2(manifest_src, target_paths["manifest"])
                 return True
-            except Exception:
-                pass  # Fail silently, we'll return Missing anyway
 
     return False
 
@@ -261,18 +250,18 @@ def get_detailed_license_status():
     paths = _get_license_paths()
 
     # Controllo cartella
-    if not os.path.exists(paths["dir"]):
+    if not paths["dir"].exists():
         try:
-            os.makedirs(paths["dir"])
+            paths["dir"].mkdir(parents=True)
         except OSError:
             return LicenseStatus.ERROR, "Impossibile creare cartella 'Licenza'"
 
     # 0. Check Migration (Fix for manual installation)
-    if not (os.path.exists(paths["config"]) and os.path.exists(paths["manifest"])):
+    if not (paths["config"].exists() and paths["manifest"].exists()):
         _check_and_migrate_local_license(paths)
 
     # Controllo file
-    if not os.path.exists(paths["config"]) or not os.path.exists(paths["manifest"]):
+    if not paths["config"].exists() or not paths["manifest"].exists():
         return LicenseStatus.MISSING, "File di licenza mancanti"
 
     # 1. Verifica integrità tramite manifest

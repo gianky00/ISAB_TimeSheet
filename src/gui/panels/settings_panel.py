@@ -2284,7 +2284,6 @@ class SettingsPanel(QWidget):
         search_text = text.lower().strip()
 
         # Iteriamo su tutti i gruppi salvati
-        found_any = False
 
         for group in self.groups:
             if not search_text:
@@ -2309,5 +2308,3 @@ class SettingsPanel(QWidget):
                         break
 
             group.setVisible(match)
-            if match:
-                found_any = True
