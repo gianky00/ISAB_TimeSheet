@@ -10,15 +10,17 @@ from src.utils.document_processor import DocumentProcessor
 
 class TestAISentinelHardened:
     @pytest.fixture
-    def sentinel(self, mocker):
-        # Mocking Qt components to avoid event loop issues
-        mocker.patch("PyQt6.QtCore.QThread.__init__", return_value=None)
+    def sentinel(self, qapp, mocker):
+        """Fixture for LyraSentinel with mocked signals."""
+        # We don't mock __init__ anymore to avoid breaking internal Qt state
         s = LyraSentinel()
-        s.anomalies_found = MagicMock()
+        # Mock the signal emission
+        mocker.patch.object(s, "anomalies_found")
         return s
 
     def test_sentinel_anomaly_detection_sqlite(self, sentinel, mocker, tmp_path):
         """Verifica il rilevamento anomalie timbrature tramite query SQL."""
+        # Point CONFIG_DIR to our tmp path
         mocker.patch("src.core.lyra_sentinel.CONFIG_DIR", tmp_path)
         (tmp_path / "data").mkdir()
         db_path = tmp_path / "data" / "timbrature_Isab.db"
@@ -41,6 +43,7 @@ class TestAISentinelHardened:
             return_value=[],
         )
 
+        # Run logic synchronously for testing
         sentinel.run()
 
         # Deve aver trovato 1 anomalia (quella di ieri)
