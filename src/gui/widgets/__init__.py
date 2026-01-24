@@ -16,8 +16,8 @@ from .timeline_widget import (
     HorizontalLogItem,
     HorizontalTimelineContainer,
     HorizontalTimelineWidget,
-    LogWidget,
     MissionReportCard,
+    TimelineWidget,
 )
 from .toast import Toast, ToastManager
 
@@ -32,7 +32,7 @@ __all__ = [
     "HorizontalTimelineWidget",
     "InfoLabel",
     "KPIBigCard",
-    "LogWidget",
+    "TimelineWidget",
     "MissionReportCard",
     "StatusIndicator",
     "DataTable",

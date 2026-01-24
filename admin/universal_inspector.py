@@ -32,6 +32,11 @@ URL_MAP = {
 
 
 class BotArchitect:
+    """
+    Automated inspector tool for capturing web application states and DOM structures.
+    Used for creating datasets for AI training or debugging Selenium workflows.
+    """
+
     def __init__(self):
         self.driver = None
         self.config = config_manager.load_config()
@@ -51,10 +56,13 @@ class BotArchitect:
         )
 
     def log_to_console(self, text):
+        """Logs message to console with timestamp."""
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {text}")
 
     def get_user_choice(self):
+        """Launches a Tkinter GUI to select the target portal and configuration."""
         root = tk.Tk()
+        # ... (tkinter code unchanged)
         root.title("Universal Inspector - Setup")
         root.geometry("600x500")
         root.attributes("-topmost", True)
@@ -134,12 +142,14 @@ class BotArchitect:
         return selected_url.get(), URL_MAP.get(selected_url.get())
 
     def init_driver(self):
+        """Initializes the Chrome WebDriver with anti-detection options."""
         chrome_options = Options()
         chrome_options.add_argument("--start-maximized")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         self.driver = webdriver.Chrome(options=chrome_options)
 
     def auto_login(self, portal_name, url):
+        """Performs automatic login to the selected portal using credentials from config."""
         self.driver.get(url)
         accounts = (
             self.config.get("accounts", [])
@@ -185,6 +195,10 @@ class BotArchitect:
             pass
 
     def capture_state(self, state_name):
+        """
+        Captures the current browser state (Screenshot, DOM, JSON mapping).
+        Creates a new directory in log_inspector for the snapshot.
+        """
         self.state_counter += 1
         folder_name = f"debug_{self.state_counter}_{state_name.replace(' ', '_')}"
         state_path = os.path.join(INSPECTOR_DIR, folder_name)
@@ -213,11 +227,13 @@ class BotArchitect:
         self._record_entry("STATE_CHANGE", state_name, folder_name)
 
     def record_action(self, action_desc):
+        """Records a user action (text description) into the workflow manifest."""
         self.action_counter += 1
         self.log_to_console(f"📝 AZIONE {self.action_counter}: {action_desc}")
         self._record_entry("ACTION", action_desc, self.last_state_folder)
 
     def _record_entry(self, entry_type, description, ref_state):
+        """Helper to append an entry to the workflow JSON list."""
         self.workflow.append(
             {
                 "order": len(self.workflow) + 1,
@@ -232,6 +248,7 @@ class BotArchitect:
             json.dump(self.workflow, f, indent=4)
 
     def _get_ultimate_scanner_js(self):
+        """Returns the JS code for deep DOM scanning and element extraction."""
         return r"""
             function scan(root = document, framePath = "root") {
                 let results = [];
@@ -267,6 +284,10 @@ class BotArchitect:
         """
 
     def run(self):
+        """
+        Main execution loop.
+        Initializes driver, performs login, and enters interactive command loop.
+        """
         name, url = self.get_user_choice()
         self.init_driver()
         self.auto_login(name, url)

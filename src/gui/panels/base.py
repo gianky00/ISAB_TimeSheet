@@ -22,7 +22,7 @@ from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.core.stats_manager import StatsManager
 from src.gui.design.spacing import Spacing
-from src.gui.widgets import LogWidget, MissionReportCard
+from src.gui.widgets import MissionReportCard, TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.status_card import StatusCard
 from src.utils.helpers import get_asset_path
@@ -147,7 +147,7 @@ class BaseBotPanel(QWidget):
         self.main_layout.addWidget(self.content_widget)
 
         # Log
-        self.log_widget = LogWidget()
+        self.log_widget = TimelineWidget()
         self.main_layout.addWidget(self.log_widget)
 
         # Buttons

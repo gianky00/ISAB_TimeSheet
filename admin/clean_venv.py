@@ -9,6 +9,7 @@ import sys
 
 
 def get_site_packages():
+    """Retrieves the site-packages directory path from sys.path."""
     # Attempt to find site-packages directory
     for path in sys.path:
         if "site-packages" in path and os.path.isdir(path):
@@ -17,6 +18,7 @@ def get_site_packages():
 
 
 def clean_invalid_dists():
+    """Scans and removes invalid distributions (starting with ~) from site-packages."""
     site_pkg = get_site_packages()
     if not site_pkg:
         print("Could not find site-packages directory.")

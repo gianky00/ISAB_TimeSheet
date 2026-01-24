@@ -119,6 +119,47 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
+class StatsCard(QFrame):
+    """
+    Card widget displaying a single statistical metric (icon, label, value).
+    Used in the footer to show real-time application stats.
+    """
+
+    def __init__(self, title, value, icon, parent=None):
+        """
+        Initialize the StatsCard.
+
+        Args:
+            title (str): The label associated with the stat.
+            value (str): The value to display.
+            icon (str): Path to the icon asset.
+            parent (QWidget): Parent widget.
+        """
+        super().__init__(parent)
+        self._base_style = ""
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def setBaseStyle(self, style: str):
+        self._base_style = style
+        self.setStyleSheet(style)
+
+    def enterEvent(self, event):
+        # Hover: sfondo leggero (solid per evitare problemi di rendering)
+        self.setStyleSheet(
+            self._base_style
+            + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
+        )
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setStyleSheet(self._base_style)
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        # Nota: ClickableLabel non ha signal - solo visual feedback
+        super().mousePressEvent(event)
+
+
 class FooterLeftWidget(QWidget):
     """
     Parte sinistra del footer: Business Info con layout verticale ottimizzato.

@@ -12,6 +12,10 @@ from src.core.telegram.ui.keyboards import TelegramUI
 async def handle_text_input(
     service, update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
+    """
+    Main router for incoming text messages.
+    Routes based on current user state (DB query, wizard) or passes to NLU.
+    """
     if (
         not await service._check_auth(update)
         or not update.effective_chat
@@ -39,6 +43,7 @@ async def handle_text_input(
 
 
 async def _handle_db_query_input(service, chat_id, state, text, update):
+    """Processes search queries for the database browser."""
     parts = state.replace("WAITING_DB_QUERY_", "").split("_")
     params = {"db": parts[0].lower(), "query": text, "chat_id": str(chat_id)}
     if len(parts) > 1:
@@ -50,6 +55,7 @@ async def _handle_db_query_input(service, chat_id, state, text, update):
 
 
 async def _handle_nlu_or_query(service, chat_id, text):
+    """Decides whether to process text as an NLU intent or a simple query."""
     keywords = ["scarica", "stampa", "avvia", "pdl", "oda", "stato", "riavvia"]
     if any(k in text.lower() for k in keywords):
         await process_with_ai(service, chat_id, text)
@@ -58,6 +64,7 @@ async def _handle_nlu_or_query(service, chat_id, text):
 
 
 async def _handle_sequential_input(service, chat_id, state, text, update):
+    """Handles multi-line or list inputs for specific wizards (PDL, OdA, Time)."""
     items = [
         i.strip()
         for i in text.replace(",", "\n").replace(";", "\n").split("\n")
@@ -86,6 +93,10 @@ async def _handle_sequential_input(service, chat_id, state, text, update):
 
 
 async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles voice messages.
+    Downloads audio and sends it to the AI processor for transcription/analysis.
+    """
     if not await service._check_auth(update):
         return
     if not update.effective_chat or not update.message or not update.message.voice:
@@ -99,6 +110,10 @@ async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles photo messages.
+    Downloads the high-res photo and emits a 'photo_received' signal.
+    """
     if not await service._check_auth(update):
         return
     if not update.effective_chat or not update.message or not update.message.photo:
@@ -113,6 +128,10 @@ async def handle_photo(service, update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def process_with_ai(service, chat_id, data, is_audio=False):
+    """
+    Submits text or audio data to the Gemini/Lyra AI engine.
+    Parses the JSON response to trigger application actions or replies.
+    """
     api_key = SecretsManager.get_gemini_api_key()
     if not api_key:
         service.send_message_sync("⚠️ API Key mancante per intelligenza bot.")

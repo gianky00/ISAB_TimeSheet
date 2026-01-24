@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
@@ -5,6 +6,16 @@ from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 
 from src.gui.components.scarico_ore.cache import CacheWorker
+
+
+@dataclass
+class ScaricoOreRow:
+    """
+    Data model representing a single row in the 'Scarico Ore' table.
+    Contains employee info, hours worked, and job order details.
+    """
+
+    id: str
 
 
 class ScaricoOreTableModel(QAbstractTableModel):

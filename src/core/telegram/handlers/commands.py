@@ -6,6 +6,10 @@ from src.core.telegram.ui.keyboards import TelegramUI
 
 
 async def cmd_start(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the /start command.
+    Checks authentication status and displays the main menu or pairing prompt.
+    """
     if not update.effective_chat:
         return
 
@@ -42,7 +46,10 @@ async def _handle_initial_pairing(
     config: dict,
     chat_id: str,
 ) -> bool:
-    """Gestisce il primo accoppiamento tramite OTP."""
+    """
+    Manages the initial device pairing process using an OTP code.
+    Returns True if pairing is successful, False otherwise.
+    """
     args = context.args
     pairing_code = config.get("telegram_pairing_code", "")
 
@@ -72,6 +79,10 @@ async def _handle_initial_pairing(
 
 
 async def cmd_status(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the /status command.
+    Triggers a status report request to the desktop application to be sent back via callback.
+    """
     if not await service._check_auth(update):
         return
     if update.effective_chat:
@@ -79,8 +90,12 @@ async def cmd_status(service, update: Update, context: ContextTypes.DEFAULT_TYPE
 
 
 async def cmd_stop(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the /stop command.
+    Sends a 'stop_all' signal to the desktop application to halt all running operations.
+    """
     if not await service._check_auth(update):
         return
-    service.command_received.emit("stop_all", {{}})
+    service.command_received.emit("stop_all", {})
     if update.message:
         await update.message.reply_text("🛑 *Richiesta Stop Inviata*")

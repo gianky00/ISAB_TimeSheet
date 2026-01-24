@@ -269,8 +269,14 @@ class HorizontalTimelineWidget(QScrollArea):
         self.container.main_layout.addStretch()
 
 
-class LogWidget(QWidget):
+class TimelineWidget(QWidget):
+    """
+    Widget visualizing a vertical timeline of events.
+    Each event supports title, description, timestamp, and metadata.
+    """
+
     def __init__(self, parent=None):
+        """Initialize the timeline widget."""
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
