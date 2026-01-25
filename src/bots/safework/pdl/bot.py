@@ -72,7 +72,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     f"{'-' * 50}\n"
                 )
         except Exception as e:
-            print(f"Errore setup log file: {e}")
+            super().log(f"⚠️ Errore setup log file PDL: {e}")
             self.log_file = None
         self.downloaded_files: List[str] = []
         self.missing_pdls: List[str] = []

@@ -5,8 +5,11 @@ Classe base astratta per tutti i bot di automazione con State Machine e Validazi
 
 from abc import ABC, abstractmethod
 from contextlib import suppress
+import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -111,9 +114,13 @@ class BaseBot(ABC):
         Args:
             message: Testo del messaggio da loggare.
         """
-        print(f"[{self.name}] {message}")
+        """
+        # print(f"[{self.name}] {message}")
         if self._log_callback:
             self._log_callback(message)
+        
+        # Log to file via logging framework
+        logger.info(f"[{self.name}] {message}")
         if self._telegram_service:
             try:
                 import re

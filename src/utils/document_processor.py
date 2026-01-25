@@ -4,8 +4,11 @@ Gestisce l'estrazione di testo e immagini da file PDF per l'analisi AI.
 """
 
 import base64
+import logging
 from pathlib import Path
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 try:
     import fitz  # type: ignore
@@ -26,8 +29,8 @@ class DocumentProcessor:
                 full_text += page.get_text()
             doc.close()
             return full_text.strip()
-        except Exception as e:
-            print(f"Errore estrazione testo PDF: {e}")
+        except Exception:
+            logger.error(f"Errore estrazione testo PDF: {file_path}", exc_info=True)
             return ""
 
     @staticmethod
@@ -45,8 +48,10 @@ class DocumentProcessor:
                 b64_str = base64.b64encode(img_data).decode("utf-8")
                 images_base64.append(b64_str)
             doc.close()
-        except Exception as e:
-            print(f"Errore conversione PDF in immagini: {e}")
+        except Exception:
+            logger.error(
+                f"Errore conversione PDF in immagini: {file_path}", exc_info=True
+            )
 
         return images_base64
 
@@ -63,6 +68,7 @@ class DocumentProcessor:
             doc.close()
             return has_text
         except Exception:
+            # logger.warning(f"Errore controllo searchable per {file_path}", exc_info=True)
             return False
 
     @staticmethod
@@ -70,7 +76,7 @@ class DocumentProcessor:
         """Unisce più file PDF in uno solo usando PyMuPDF (fitz)."""
         try:
             if not fitz:
-                print("Errore: PyMuPDF (fitz) non è installato.")
+                logger.error("Errore: PyMuPDF (fitz) non è installato.")
                 return False
 
             result = fitz.open()
@@ -81,6 +87,6 @@ class DocumentProcessor:
             result.save(output_path)
             result.close()
             return True
-        except Exception as e:
-            print(f"Errore durante l'unione dei PDF con fitz: {e}")
+        except Exception:
+            logger.error("Errore durante l'unione dei PDF con fitz", exc_info=True)
             return False
