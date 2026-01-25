@@ -3,9 +3,9 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from contextlib import suppress
-import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -114,11 +114,10 @@ class BaseBot(ABC):
         Args:
             message: Testo del messaggio da loggare.
         """
-        """
         # print(f"[{self.name}] {message}")
         if self._log_callback:
             self._log_callback(message)
-        
+
         # Log to file via logging framework
         logger.info(f"[{self.name}] {message}")
         if self._telegram_service:
@@ -169,6 +168,12 @@ class BaseBot(ABC):
             self._configure_waits_and_pages()
         except Exception as e:
             self._handle_driver_error(e)
+
+    def _handle_driver_error(self, e: Exception):
+        """Gestisce e logga errori critici del driver."""
+        self.log(f"❌ Errore driver: {e}")
+        # Rilancia per permettere al meccanismo di retry di funzionare
+        raise e
 
     def _get_chrome_options(self) -> Options:
         """Configura e restituisce le opzioni di Chrome per massimizzare stabilità e performance."""

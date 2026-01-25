@@ -1,9 +1,11 @@
+import logging
 import os
 import time
-import traceback
 from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 import fitz  # type: ignore # PyMuPDF
 from selenium.webdriver.common.by import By
@@ -12,7 +14,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.base import SafeworkBaseBot
-from src.core import config_manager
 from src.utils.printing import print_pdf
 
 
@@ -52,51 +53,15 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         timeout: int = 30,
         download_path: str = "",
     ):
-        """Inizializza il bot PDL con logging esteso."""
+        """Inizializza il bot PDL."""
         super().__init__(username, password, headless, timeout, download_path)
-        self.log_file: Optional[Path] = None
         self.merged_pdf_path: Optional[Path] = None
-
-        # Setup File Logging
-        try:
-            log_dir = config_manager.CONFIG_DIR / "logs"
-            log_dir.mkdir(parents=True, exist_ok=True)
-            # Nome file in maiuscolo come richiesto dall'utente
-            self.log_file = log_dir / "pdl_bot_debug.TXT"
-            # PULIZIA LOG: Usa 'w' invece di 'a' per resettare il file ad ogni avvio
-            with self.log_file.open("w", encoding="utf-8") as f:
-                f.write(
-                    f"--- SESSIONE DEBUG PDL BOT (DETTAGLIO MASSIMO) --- \nAvvio: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-                    f"Config: User={username}, Headless={headless}, Timeout={timeout}\n"
-                    f"Download Path: {self.download_path}\n"
-                    f"{'-' * 50}\n"
-                )
-        except Exception as e:
-            super().log(f"⚠️ Errore setup log file PDL: {e}")
-            self.log_file = None
         self.downloaded_files: List[str] = []
         self.missing_pdls: List[str] = []
 
-    def log(self, message: str):
-        """Override log per salvare su file con massimo dettaglio."""
-        super().log(message)
-        if hasattr(self, "log_file") and self.log_file:
-            with suppress(Exception):
-                timestamp = time.strftime("%H:%M:%S")
-                with self.log_file.open("a", encoding="utf-8") as f:
-                    f.write(f"[{timestamp}] {message}\n")
-
     def log_error(self, context: str, exception: Exception):
         """Logga un errore dettagliato con stack trace."""
-        err_msg = f"❌ ERRORE CRITICO in {context}: {str(exception)}"
-        self.log(err_msg)
-        if hasattr(self, "log_file") and self.log_file:
-            with suppress(Exception):
-                with self.log_file.open("a", encoding="utf-8") as f:
-                    f.write(
-                        f"--- DETTAGLIO ERRORE ---\nURL Corrente: {self.driver.current_url if self.driver else 'N/A'}\n"
-                    )
-                    f.write(f"STACK TRACE:\n{traceback.format_exc()}\n{'-' * 50}\n")
+        logger.error(f"❌ ERRORE CRITICO in {context}: {exception}", exc_info=True)
 
     def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
         """Validazione specifica per SafeWork PDL."""
