@@ -49,7 +49,7 @@ def wait_for_overlay_to_disappear(
     """
     try:
         WebDriverWait(driver, timeout).until(
-            EC.invisibility_of_element_located(locator)
+            EC.invisibility_of_element_located(locator)  # type: ignore[arg-type]
         )
         return True
     except TimeoutException:
@@ -100,7 +100,7 @@ def wait_for_element_clickable(
         WebElement se trovato e cliccabile, None se timeout.
     """
     try:
-        return WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
+        return WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))  # type: ignore[arg-type]
     except TimeoutException:
         logger.warning(f"Element not clickable within timeout: {locator}")
         return None
@@ -145,23 +145,22 @@ def poll_for_file(
     while time.time() - start_time < timeout:
         # Check se ci sono download in corso (crdownload, tmp, part)
         in_progress = any(
-            directory.glob(f"*{ext}")
-            for ext in [".crdownload", ".tmp", ".part"]
+            directory.glob(f"*{ext}") for ext in [".crdownload", ".tmp", ".part"]
         )
-        
+
         if in_progress:
             time.sleep(poll_interval)
             continue
-        
+
         # Trova tutti i file matching
         files = list(directory.glob(pattern))
 
         # Filtra per esclusioni
         files = [
-            f for f in files
-            if f.is_file() and not any(
-                f.suffix == ext or ext in f.name for ext in exclude_patterns
-            )
+            f
+            for f in files
+            if f.is_file()
+            and not any(f.suffix == ext or ext in f.name for ext in exclude_patterns)
         ]
 
         # Filtra per età minima se specificata
