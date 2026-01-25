@@ -127,10 +127,6 @@ class BaseBot(ABC):
             except Exception:
                 pass
 
-    def set_telegram_service(self, service: Any):
-        """Associa un servizio Telegram per l'invio delle notifiche push."""
-        self._telegram_service = service
-
     def set_log_callback(self, callback: Callable[[str], None]):
         """Imposta la callback per inoltrare i log all'interfaccia utente."""
         self._log_callback = callback
@@ -374,35 +370,6 @@ class BaseBot(ABC):
         """Alias per _verify_login compatibile con i test legacy."""
         return self._verify_login()
 
-    def _logout(self) -> bool:
-        """Esegue il logout formale dal portale ISAB."""
-        try:
-            if not self.wait:
-                return False
-            self.log("🚪 Eseguo il logout...")
-            # 1. Clicca su impostazioni (ingranaggio)
-            self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
-            ).click()
-            # 2. Clicca su Esci (wait esplicito garantisce dropdown visibile)
-            self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
-            ).click()
-            self.log("✅ Logout effettuato.")
-            return True
-        except Exception as e:
-            self.log(f"⚠️ Logout fallito: {e}")
-            return False
-
-    def navigate_to_menu(self, _menu_path: List[str]) -> bool:
-        """Naviga verso un menu specifico del portale (Placeholder)."""
-        # Placeholder - implement if needed or used
-        return True
-
-    def _handle_unsaved_changes_popup(self):
-        """Gestisce eventuali popup di avviso per modifiche non salvate."""
-        return
-
     def _handle_session_popup(self):
         """Gestisce il popup di sessione multipla cliccando su 'SI'."""
         with suppress(Exception):
@@ -412,18 +379,6 @@ class BaseBot(ABC):
                 )
                 btn.click()
                 self.log("✅ Popup sessione gestito (SI).")
-                return True
-        return False
-
-    def _handle_ok_popup(self):
-        """Gestisce i popup generici di conferma (OK)."""
-        with suppress(Exception):
-            if self.popup_wait:
-                btn = self.popup_wait.until(
-                    EC.element_to_be_clickable(CommonLocators.POPUP_OK)
-                )
-                btn.click()
-                self.log("✅ Popup OK gestito.")
                 return True
         return False
 

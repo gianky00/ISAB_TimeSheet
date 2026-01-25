@@ -384,11 +384,6 @@ def get_download_path() -> str:
     return str(default_download) if default_download.exists() else str(Path.home())
 
 
-def get_fornitori() -> list:
-    """Restituisce la lista dei fornitori configurati."""
-    return get_config_value("fornitori", [])
-
-
 def export_configuration(export_path: str) -> tuple[bool, str]:
     """
     Esporta la configurazione corrente in un file JSON.

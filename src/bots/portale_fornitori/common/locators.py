@@ -36,15 +36,6 @@ class CommonLocators:
         By.XPATH,
         "//span[normalize-space(text())='Si' and contains(@class, 'x-btn-inner')]",
     )
-    POPUP_OK = (By.XPATH, "//span[text()='OK' and contains(@class, 'x-btn-inner')]")
-    POPUP_ATTENTION_HEADER = (
-        By.XPATH,
-        "//span[contains(@class, 'x-window-header-text') and contains(text(), 'Attenzione')]",
-    )
-    POPUP_YES_BUTTON = (
-        By.XPATH,
-        "//div[contains(@class, 'x-window')]//span[normalize-space(text())='Si' and contains(@class, 'x-btn-inner')]",
-    )
 
     # Logout
     SETTINGS_BUTTON = (

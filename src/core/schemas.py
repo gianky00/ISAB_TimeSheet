@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import List
 
 import pandas as pd
 import pandera.pandas as pa
@@ -86,45 +86,6 @@ def _group_ranges(numbers: List[int]) -> str:
             if i < len(numbers):
                 start = numbers[i]
     return ", ".join(ranges)
-
-
-def format_schema_errors(
-    e: pa.errors.SchemaErrors,
-    filename: str = "",
-    sheet: str = "",
-    header_offset: int = 0,
-    column_map: Optional[Dict[str, int]] = None,
-) -> str:
-    """Traduce gli errori in un formato compatto elencando tutte le celle in gioco."""
-    lines = []
-    if filename:
-        lines.append(
-            f"<b>📂 File:</b> {filename}" + (f" | 📄 Foglio: {sheet}" if sheet else "")
-        )
-
-    failure_cases = e.failure_cases
-    if failure_cases is not None and not failure_cases.empty:
-        for col, group in failure_cases.groupby("column"):
-            col_letter = "?"
-            if column_map and col in column_map:
-                col_letter = get_excel_column_letter(column_map[col])
-
-            # Calcola tutte le righe Excel coinvolte
-            # Excel Row = Index in DF + Header Row Offset + 2
-            excel_rows = [idx + header_offset + 2 for idx in group.index]
-
-            # Raggruppa per range per non creare stringhe infinite
-            row_ranges = _group_ranges(excel_rows)
-            # Crea coordinate complete (es. K3-K7, K10)
-            cell_coords = ", ".join(
-                [f"{col_letter}{r}" for r in row_ranges.split(", ")]
-            )
-
-            lines.append(
-                f"• <b>{col}</b>: {len(group)} err. nelle celle: <b>{cell_coords}</b>"
-            )
-
-    return "\n".join(lines) if lines else str(e)
 
 
 def validate_dipendenti(df: pd.DataFrame, headers_only: bool = False) -> pd.DataFrame:
