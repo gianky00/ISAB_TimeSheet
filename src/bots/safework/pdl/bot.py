@@ -303,11 +303,21 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         if self._gestisci_alert_ricerca():
             self.log(f"⚠️ Rilevato alert per {pdl_num}. Attesa resiliente...")
-            # No sleep needed: _attendi_scomparsa_overlay() handles wait
             try:
                 self._attendi_scomparsa_overlay(timeout_secondi=5)
             except Exception:
                 pass
+            # Verifica che il PDL sia stato caricato controllando presenza pulsante stampa
+            try:
+                WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located(
+                        (By.ID, "topIcon-acticonAnteprimaStampaMenu")
+                    )
+                )
+            except Exception:
+                self.log(f"❌ PDL {pdl_num} non caricato dopo alert. Salto.")
+                self.missing_pdls.append(pdl_num)
+                return False
         else:
             self._attendi_scomparsa_overlay()
 
@@ -426,7 +436,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             )
             btn_tutte.click()
             self.log("✓ Selezionato radio button 'Tutte'")
-            
+
             # Attende che il pulsante "Anteprima" sia cliccabile
             btn_anteprima = self.wait.until(
                 EC.element_to_be_clickable((By.ID, "btnAnteprima"))
@@ -574,7 +584,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         download_path = Path(self.download_path)
         while time.time() < scadenza:
             files = list(download_path.glob("*.pdf"))
-            nuovi_files = [f for f in files if f.stat().st_mtime > tempo_riferimento_adjusted]
+            # Escludi file temporanei (temp_p1_*, temp_p2_*) per evitare conflitti
+            files = [f for f in files if not f.name.startswith("temp_p")]
+            nuovi_files = [
+                f for f in files if f.stat().st_mtime > tempo_riferimento_adjusted
+            ]
             if nuovi_files:
                 nuovi_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
                 ultimo_file = nuovi_files[0]

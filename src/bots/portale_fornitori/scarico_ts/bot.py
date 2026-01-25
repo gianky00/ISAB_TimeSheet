@@ -282,7 +282,6 @@ class ScaricaTSBot(BaseBot):
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'nearest'});", fornitore_option
             )
-            time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", fornitore_option)
 
             self._attendi_scomparsa_overlay()
@@ -350,7 +349,6 @@ class ScaricaTSBot(BaseBot):
             with suppress(Exception):
                 # Se c'è un download in corso, attendi
                 if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
-                    time.sleep(0.5)
                     continue
 
                 current_files = {
@@ -361,7 +359,6 @@ class ScaricaTSBot(BaseBot):
                 new_files = current_files - files_before
                 if new_files:
                     return max(list(new_files), key=lambda f: f.stat().st_mtime)
-            time.sleep(0.5)
         return None
 
     def _get_final_download_path(
@@ -406,7 +403,5 @@ class ScaricaTSBot(BaseBot):
                 return dest
             except Exception as e:
                 self.log(f"⚠️ Tentativo spostamento {attempt + 1}/3 fallito: {e}")
-                time.sleep(2)
-
         self.log(f"❌ Impossibile spostare il file in: {dest}")
         return None

@@ -13,9 +13,13 @@ class TestContabilitaQueriesCoverage:
         mocker.patch.object(DatabaseManager, "DB_CONTABILITA", p_cont)
         mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", p_timb)
         mocker.patch.object(DatabaseManager, "DB_PDL", tmp_path / "queries_pdl.db")
-        mocker.patch.object(DatabaseManager, "DB_STORICO_ODA", tmp_path / "queries_oda.db")
-        mocker.patch.object(DatabaseManager, "DB_DIPENDENTI", tmp_path / "queries_dip.db")
-        
+        mocker.patch.object(
+            DatabaseManager, "DB_STORICO_ODA", tmp_path / "queries_oda.db"
+        )
+        mocker.patch.object(
+            DatabaseManager, "DB_DIPENDENTI", tmp_path / "queries_dip.db"
+        )
+
         DatabaseManager().init_db()
         return p_cont
 

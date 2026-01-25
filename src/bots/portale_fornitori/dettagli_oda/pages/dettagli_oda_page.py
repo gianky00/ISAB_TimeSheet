@@ -53,7 +53,6 @@ class DettagliOdAPage:
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
-            time.sleep(0.3)
         except TimeoutException:
             pass
 
@@ -69,7 +68,6 @@ class DettagliOdAPage:
         try:
             self.expand_sidebar_if_collapsed()
             self.log("Navigazione menu Report -> Oda...")
-            time.sleep(1)  # Ensure UI is idle
 
             # Click Report (using JS to avoid interception/crash)
             # Dalla seconda riga in poi, a volte è necessario cliccare due volte
@@ -80,7 +78,6 @@ class DettagliOdAPage:
 
             if not is_first_row:
                 # Strategia robustezza: piccolo sleep e secondo click se necessario
-                time.sleep(0.5)
                 self.driver.execute_script("arguments[0].click();", report_btn)
 
             self._wait_for_overlay()
@@ -124,7 +121,6 @@ class DettagliOdAPage:
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'nearest'});", option
             )
-            time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
             return True
@@ -141,9 +137,6 @@ class DettagliOdAPage:
                 EC.element_to_be_clickable(DettagliOdALocators.LOGOUT_SETTINGS_BUTTON)
             )
             self.driver.execute_script("arguments[0].click();", settings_btn)
-            time.sleep(0.5)
-
-            # 2. Click Logout
             try:
                 logout_btn = self.wait.until(
                     EC.visibility_of_element_located(CommonLocators.LOGOUT_OPTION)
@@ -171,8 +164,6 @@ class DettagliOdAPage:
 
             except TimeoutException:
                 self.log("⚠️ Popup conferma non apparso o timeout.")
-
-            time.sleep(1)
         except Exception as e:
             self.log(f"⚠️ Errore durante logout: {e}")
 
@@ -187,7 +178,6 @@ class DettagliOdAPage:
                 self.log("  Menu laterale collassato, espansione in corso...")
                 # Usa JS click per robustezza
                 self.driver.execute_script("arguments[0].click();", expand_btn)
-                time.sleep(0.5)
                 self.log("  Menu espanso.")
         except Exception:
             # Se l'elemento non c'è o non è visibile, assumiamo sia già espanso
@@ -256,10 +246,6 @@ class DettagliOdAPage:
             )
             if not checkbox.is_selected():
                 self.driver.execute_script("arguments[0].click();", checkbox)
-
-            time.sleep(0.5)
-
-            # Click Search
             self.wait.until(
                 EC.element_to_be_clickable(DettagliOdALocators.SEARCH_BUTTON)
             ).click()
@@ -346,7 +332,6 @@ class DettagliOdAPage:
                     )
                     if close_btn.is_displayed():
                         self.driver.execute_script("arguments[0].click();", close_btn)
-                        time.sleep(0.5)
                     else:
                         break
                 except Exception:
@@ -390,7 +375,6 @@ class DettagliOdAPage:
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'center'});", btn
             )
-            time.sleep(0.5)
             try:
                 btn.click()
             except Exception:
@@ -404,7 +388,6 @@ class DettagliOdAPage:
         start = time.time()
         while time.time() - start < Timeouts.DOWNLOAD:
             if any(f.suffix == ".crdownload" for f in source_dir.iterdir()):
-                time.sleep(0.5)
                 continue
 
             current = {
@@ -415,7 +398,6 @@ class DettagliOdAPage:
             new_files = current - files_before
             if new_files:
                 return max(list(new_files), key=lambda f: f.stat().st_mtime)
-            time.sleep(0.5)
         return None
 
     def _finalize_download(

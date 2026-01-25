@@ -42,7 +42,6 @@ class ScaricoTSPage:
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
-            time.sleep(0.3)
         except TimeoutException:
             self.log("⚠️ Timeout attesa overlay.")
 
@@ -93,7 +92,6 @@ class ScaricoTSPage:
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'nearest'});", option
             )
-            time.sleep(0.5)
             self.driver.execute_script("arguments[0].click();", option)
             self._wait_for_overlay()
 
@@ -199,7 +197,6 @@ class ScaricoTSPage:
             }
             if new_files := current_files - files_before:
                 return max(list(new_files), key=lambda f: f.stat().st_mtime)
-            time.sleep(0.5)
         return None
 
     def _resolve_unique_path(

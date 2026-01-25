@@ -1,5 +1,3 @@
-import time
-
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -46,7 +44,7 @@ class SafeworkBaseBot(BaseBot):
         except Exception:
             pass
 
-        time.sleep(0.5)
+        # No sleep needed: invisibility check is sufficient
         return True
 
     def _attendi_caricamento_sistema(self):
