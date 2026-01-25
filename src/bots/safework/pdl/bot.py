@@ -290,7 +290,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             )
             campo.clear()
             campo.send_keys(pdl_num)
-            time.sleep(0.5)
+            # No sleep needed: send_keys is synchronous
             campo.send_keys(Keys.ENTER)
         except Exception as e:
             self.log_error(f"Interazione campo ricerca PDL {pdl_num}", e)
@@ -303,7 +303,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         if self._gestisci_alert_ricerca():
             self.log(f"⚠️ Rilevato alert per {pdl_num}. Attesa resiliente...")
-            time.sleep(2)
+            # No sleep needed: _attendi_scomparsa_overlay() handles wait
             try:
                 self._attendi_scomparsa_overlay(timeout_secondi=5)
             except Exception:
@@ -320,7 +320,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         assert self.driver and self.wait
         self.log(f"⬇️ Avvio scarico Parte Prima per PdL {pdl_num}...")
         self.driver.execute_script("window.scrollTo(0, 0);")
-        time.sleep(1)
+        # No sleep needed: scroll is synchronous
         ts = time.time()
 
         try:
@@ -329,7 +329,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     (By.ID, "topIcon-acticonAnteprimaStampaMenu")
                 )
             ).click()
-            time.sleep(0.5)
+            # No sleep needed: wait esplicito su appItaliano
             self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
         except Exception as e:
             self.log_error(f"Click stampa Parte 1 PDL {pdl_num}", e)
@@ -376,7 +376,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         try:
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
-            time.sleep(1)
+            # No sleep needed: _gestisci_dialogo_stampa_tutte() checks visibility
             # Gestione eventuale dialogo "Stampa Tutte"
             self._gestisci_dialogo_stampa_tutte()
         except Exception as e:
@@ -407,7 +407,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                     self.driver.find_element(
                         By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
                     ).click()
-                time.sleep(1)
+                # No sleep needed: next wait guarantees visibility
             self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
             return True
         except Exception as e:
@@ -416,16 +416,26 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
     def _gestisci_dialogo_stampa_tutte(self):
         """Seleziona 'Stampa Tutte' nel popup se appare."""
-        if not self.driver:
+        if not self.driver or not self.wait:
             return
-        assert self.driver
+        assert self.driver and self.wait
         try:
-            btn_tutte = self.driver.find_element(By.ID, "rbStampaTutte")
-            if btn_tutte.is_displayed():
-                btn_tutte.click()
-                time.sleep(0.5)
-                self.driver.find_element(By.ID, "btnAnteprima").click()
-        except Exception:
+            # Attende che il radio button "Tutte" sia cliccabile
+            btn_tutte = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "rbStampaTutte"))
+            )
+            btn_tutte.click()
+            self.log("✓ Selezionato radio button 'Tutte'")
+            
+            # Attende che il pulsante "Anteprima" sia cliccabile
+            btn_anteprima = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "btnAnteprima"))
+            )
+            btn_anteprima.click()
+            self.log("✓ Cliccato su 'Anteprima'")
+        except Exception as e:
+            # Il dialogo potrebbe non apparire sempre, quindi non logghiamo errore
+            self.log(f"ℹ️ Dialogo 'Stampa Tutte' non presente o già gestito: {e}")
             pass
 
     def _unisci_e_stampa_pdl(self, pdl_num, p1, p2, item, all_paths) -> bool:
@@ -546,24 +556,25 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 if btn_ok.is_displayed():
                     self.log("🖱️ Clic su OK per chiudere alert.")
                     btn_ok.click()
-                    time.sleep(1)
+                    # No sleep needed: return immediately after click
                     return True
             except Exception:
                 pass
-            time.sleep(0.5)
+            # Polling interval handled by while loop condition
         return False
 
     def _attendi_e_ritorna_nuovo_pdf(self, tempo_riferimento, timeout=60):
-        from pathlib import Path
-
+        """Attende e restituisce il nuovo PDF scaricato con polling inline (da main)."""
         scadenza = time.time() + timeout
+        # Margine di 2 secondi per arrotondamenti filesystem
+        tempo_riferimento_adjusted = tempo_riferimento - 2
         self.log(
             f"⏳ Polling cartella download (Ref Time: {int(tempo_riferimento)})..."
         )
         download_path = Path(self.download_path)
         while time.time() < scadenza:
             files = list(download_path.glob("*.pdf"))
-            nuovi_files = [f for f in files if f.stat().st_mtime > tempo_riferimento]
+            nuovi_files = [f for f in files if f.stat().st_mtime > tempo_riferimento_adjusted]
             if nuovi_files:
                 nuovi_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
                 ultimo_file = nuovi_files[0]
