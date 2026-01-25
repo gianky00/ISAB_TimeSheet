@@ -302,11 +302,9 @@ class MenuBarComponent(QObject):
                 ),
                 CommandNode(
                     "Segnala Bug",
-                    "GitHub Issues",
+                    "Invia report e log",
                     Icons.ALERT_TRIANGLE,
-                    action=lambda: QDesktopServices.openUrl(
-                        QUrl("https://github.com/gianky00/ISAB_TimeSheet/issues")
-                    ),
+                    action=mw.open_bug_report_dialog,
                 ),
             ],
         )

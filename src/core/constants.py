@@ -79,7 +79,7 @@ class Icons:
     ALERT = "assets/icons/alert-triangle.svg"
     LOCK = "assets/icons/lock.svg"
     EYE = "assets/icons/eye.svg"
-    EYE_OFF = "assets/icons/eye-off.svg"
+
     BELL = "assets/icons/bell.svg"
     STAR = "assets/icons/star.svg"
     KEY = "assets/icons/key.svg"
@@ -109,7 +109,7 @@ class Icons:
     ALERT_TRIANGLE = "assets/icons/alert-triangle.svg"
     SMART_TOY = "assets/icons/sparkles.svg"  # Fallback/Alias for AI
     TERMINAL = "assets/icons/terminal.svg"
-    MAGIC = "assets/icons/magic.svg"
+
     ARCHIVE = "assets/icons/archive.svg"
     LOG_OUT = "assets/icons/log-out.svg"
 
@@ -127,4 +127,3 @@ class Icons:
     STATUS_DOT_GRAY = "assets/icons/status_dot_gray.svg"
 
     # UI Elements
-    SEPARATOR_DOT = "assets/icons/separator_dot.svg"

@@ -3,10 +3,13 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -111,9 +114,12 @@ class BaseBot(ABC):
         Args:
             message: Testo del messaggio da loggare.
         """
-        print(f"[{self.name}] {message}")
+        # print(f"[{self.name}] {message}")
         if self._log_callback:
             self._log_callback(message)
+
+        # Log to file via logging framework
+        logger.info(f"[{self.name}] {message}")
         if self._telegram_service:
             try:
                 import re
@@ -126,10 +132,6 @@ class BaseBot(ABC):
                 )
             except Exception:
                 pass
-
-    def set_telegram_service(self, service: Any):
-        """Associa un servizio Telegram per l'invio delle notifiche push."""
-        self._telegram_service = service
 
     def set_log_callback(self, callback: Callable[[str], None]):
         """Imposta la callback per inoltrare i log all'interfaccia utente."""
@@ -166,6 +168,12 @@ class BaseBot(ABC):
             self._configure_waits_and_pages()
         except Exception as e:
             self._handle_driver_error(e)
+
+    def _handle_driver_error(self, e: Exception):
+        """Gestisce e logga errori critici del driver."""
+        self.log(f"❌ Errore driver: {e}")
+        # Rilancia per permettere al meccanismo di retry di funzionare
+        raise e
 
     def _get_chrome_options(self) -> Options:
         """Configura e restituisce le opzioni di Chrome per massimizzare stabilità e performance."""
@@ -374,35 +382,6 @@ class BaseBot(ABC):
         """Alias per _verify_login compatibile con i test legacy."""
         return self._verify_login()
 
-    def _logout(self) -> bool:
-        """Esegue il logout formale dal portale ISAB."""
-        try:
-            if not self.wait:
-                return False
-            self.log("🚪 Eseguo il logout...")
-            # 1. Clicca su impostazioni (ingranaggio)
-            self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
-            ).click()
-            # 2. Clicca su Esci (wait esplicito garantisce dropdown visibile)
-            self.wait.until(
-                EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
-            ).click()
-            self.log("✅ Logout effettuato.")
-            return True
-        except Exception as e:
-            self.log(f"⚠️ Logout fallito: {e}")
-            return False
-
-    def navigate_to_menu(self, _menu_path: List[str]) -> bool:
-        """Naviga verso un menu specifico del portale (Placeholder)."""
-        # Placeholder - implement if needed or used
-        return True
-
-    def _handle_unsaved_changes_popup(self):
-        """Gestisce eventuali popup di avviso per modifiche non salvate."""
-        return
-
     def _handle_session_popup(self):
         """Gestisce il popup di sessione multipla cliccando su 'SI'."""
         with suppress(Exception):
@@ -412,18 +391,6 @@ class BaseBot(ABC):
                 )
                 btn.click()
                 self.log("✅ Popup sessione gestito (SI).")
-                return True
-        return False
-
-    def _handle_ok_popup(self):
-        """Gestisce i popup generici di conferma (OK)."""
-        with suppress(Exception):
-            if self.popup_wait:
-                btn = self.popup_wait.until(
-                    EC.element_to_be_clickable(CommonLocators.POPUP_OK)
-                )
-                btn.click()
-                self.log("✅ Popup OK gestito.")
                 return True
         return False
 

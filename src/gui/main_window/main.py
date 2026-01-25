@@ -624,6 +624,13 @@ class MainWindow(QMainWindow):
         if hasattr(self, "help_panel"):
             self.help_panel.open_section(section_title)
 
+    def open_bug_report_dialog(self):
+        """Apre il dialog per la segnalazione di bug."""
+        from src.gui.dialogs.bug_report_dialog import BugReportDialog
+
+        dlg = BugReportDialog(self)
+        dlg.exec()
+
     def analyze_with_lyra(self, context_text: str):
         """Passa al contesto Lyra."""
         # TODO: Implement if needed, was empty in source

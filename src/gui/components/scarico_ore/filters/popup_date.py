@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any, Dict, List, Optional, Set
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
@@ -15,10 +15,13 @@ from PyQt6.QtWidgets import (
 class DateFilterPopupWidget(QWidget):
     """Widget filtro gerarchico per date (Anno -> Mese -> Giorno)."""
 
-    def __init__(self, values, selected_values=None):
+    def __init__(
+        self, values: List[str], selected_values: Optional[List[str]] = None
+    ) -> None:
         super().__init__()
         self.values = values
         self.applied = False
+        self.raw_dates: Set[str] = set()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -51,7 +54,9 @@ class DateFilterPopupWidget(QWidget):
         layout.addWidget(self.tree)
         self._build_tree(values, selected_values)
 
-    def _build_tree(self, values, selected_values):
+    def _build_tree(
+        self, values: List[str], selected_values: Optional[List[str]]
+    ) -> None:
         self.raw_dates = set(values)
         structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(
             values
@@ -67,7 +72,7 @@ class DateFilterPopupWidget(QWidget):
             self.model.appendRow(y_item)
 
     def _group_dates_by_hierarchy(
-        self, values: list
+        self, values: List[str]
     ) -> Dict[str, Dict[str, List[str]]]:
         structure: Dict[str, Dict[str, List[str]]] = {}
         for v in values:
@@ -88,7 +93,11 @@ class DateFilterPopupWidget(QWidget):
         return structure
 
     def _create_year_item(
-        self, year, months_map, selected_set, is_all
+        self,
+        year: str,
+        months_map: Dict[str, List[str]],
+        selected_set: Set[str],
+        is_all: bool,
     ) -> QStandardItem:
         y_item = QStandardItem(year)
         y_item.setCheckable(True)
@@ -111,7 +120,11 @@ class DateFilterPopupWidget(QWidget):
         return y_item
 
     def _create_month_item(
-        self, month_code, days, selected_set, is_all
+        self,
+        month_code: str,
+        days: List[str],
+        selected_set: Set[str],
+        is_all: bool,
     ) -> QStandardItem:
         m_name = self._get_month_name(month_code)
         m_item = QStandardItem(f"{m_name} ({month_code})")
@@ -151,7 +164,7 @@ class DateFilterPopupWidget(QWidget):
                 return True
         return False
 
-    def _get_month_name(self, m_str):
+    def _get_month_name(self, m_str: str) -> str:
         names = {
             "01": "Gennaio",
             "02": "Febbraio",
@@ -168,7 +181,7 @@ class DateFilterPopupWidget(QWidget):
         }
         return names.get(m_str, m_str)
 
-    def _on_item_changed(self, item):
+    def _on_item_changed(self, item: QStandardItem) -> None:
         self.model.blockSignals(True)
         state = item.checkState()
         if state != Qt.CheckState.PartiallyChecked:
@@ -176,13 +189,14 @@ class DateFilterPopupWidget(QWidget):
         self._update_parent_state(item)
         self.model.blockSignals(False)
 
-    def _set_children_state(self, item, state):
+    def _set_children_state(self, item: QStandardItem, state: Qt.CheckState) -> None:
         for i in range(item.rowCount()):
             child = item.child(i)
-            child.setCheckState(state)
-            self._set_children_state(child, state)
+            if child:
+                child.setCheckState(state)
+                self._set_children_state(child, state)
 
-    def _update_parent_state(self, item):
+    def _update_parent_state(self, item: QStandardItem) -> None:
         parent = item.parent()
         if not parent:
             return
@@ -192,7 +206,10 @@ class DateFilterPopupWidget(QWidget):
         count = parent.rowCount()
 
         for i in range(count):
-            s = parent.child(i).checkState()
+            child = parent.child(i)
+            if not child:
+                continue
+            s = child.checkState()
             if s == Qt.CheckState.Checked:
                 checked += 1
             elif s == Qt.CheckState.PartiallyChecked:
@@ -207,40 +224,44 @@ class DateFilterPopupWidget(QWidget):
 
         self._update_parent_state(parent)
 
-    def select_all(self):
+    def select_all(self) -> None:
         self.model.blockSignals(True)
         root = self.model.invisibleRootItem()
-        self._set_children_state(root, Qt.CheckState.Checked)
+        if root:
+            self._set_children_state(root, Qt.CheckState.Checked)
         self.model.blockSignals(False)
         self.model.layoutChanged.emit()
 
-    def select_none(self):
+    def select_none(self) -> None:
         self.model.blockSignals(True)
         root = self.model.invisibleRootItem()
-        self._set_children_state(root, Qt.CheckState.Unchecked)
+        if root:
+            self._set_children_state(root, Qt.CheckState.Unchecked)
         self.model.blockSignals(False)
         self.model.layoutChanged.emit()
 
-    def apply_filter(self):
+    def apply_filter(self) -> None:
         self.applied = True
         self._close_menu()
 
-    def get_selected_values(self):
-        selected = []
+    def get_selected_values(self) -> Optional[List[str]]:
+        selected: List[str] = []
         root = self.model.invisibleRootItem()
         all_checked = True
 
         stack = [root.child(i) for i in range(root.rowCount())]
         while stack:
-            item = stack.pop()
+            # Type assertion per mypy
+            item: QStandardItem = stack.pop()  # type: ignore[assignment]
             if item.rowCount() > 0:
                 if item.checkState() != Qt.CheckState.Checked:
                     all_checked = False
                 stack.extend([item.child(i) for i in range(item.rowCount())])
             else:
                 if item.checkState() == Qt.CheckState.Checked:
+                    # Rimuoviamo il cast Any se data ritorna Any correttamente
                     val = item.data(Qt.ItemDataRole.UserRole)
-                    selected.append(val)
+                    selected.append(str(val))
                 else:
                     all_checked = False
 
@@ -248,8 +269,8 @@ class DateFilterPopupWidget(QWidget):
             return None
         return selected
 
-    def _close_menu(self):
-        parent = self.parent()
+    def _close_menu(self) -> None:
+        parent: Any = self.parent()
         while parent:
             if isinstance(parent, QMenu):
                 parent.close()

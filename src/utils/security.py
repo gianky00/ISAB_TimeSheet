@@ -4,6 +4,7 @@ Usa Argon2/Scrypt per key derivation.
 """
 
 import base64
+import logging
 import os
 import secrets
 from contextlib import suppress
@@ -12,6 +13,8 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 from src.core.config_manager import CONFIG_DIR
+
+logger = logging.getLogger(__name__)
 
 
 class PasswordManager:
@@ -104,8 +107,8 @@ class PasswordManager:
         try:
             encrypted = self._cipher.encrypt(plaintext.encode())
             return f"ENC:v2:{encrypted.decode()}"
-        except Exception as e:
-            print(f"Encryption error: {e}")
+        except Exception:
+            logger.error("Encryption error", exc_info=True)
             return ""
 
     def decrypt(self, ciphertext: str) -> str:
@@ -117,8 +120,8 @@ class PasswordManager:
             try:
                 encrypted_data = ciphertext[7:].encode()
                 return self._cipher.decrypt(encrypted_data).decode()
-            except Exception as e:
-                print(f"Decryption error (v2): {e}")
+            except Exception:
+                logger.error("Decryption error (v2)", exc_info=True)
                 return ""
 
         # Legacy format (ENC:) - migra a v2
@@ -127,8 +130,8 @@ class PasswordManager:
                 encrypted_data = ciphertext[4:].encode()
                 decrypted = self._cipher.decrypt(encrypted_data).decode()
                 return decrypted
-            except Exception as e:
-                print(f"Decryption error (legacy): {e}")
+            except Exception:
+                logger.error("Decryption error (legacy)", exc_info=True)
                 return ""
 
         # Plaintext legacy (potrebbe essere una vecchia config non criptata)

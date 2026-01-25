@@ -60,6 +60,16 @@ def ensure_config_dir():
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def get_version() -> str:
+    """Restituisce la versione corrente dell'applicazione."""
+    try:
+        from src.core.version import __version__
+
+        return __version__
+    except ImportError:
+        return "1.7.2"  # Fallback manuale se l'import fallisce
+
+
 def load_config() -> Dict[str, Any]:
     """
     Carica la configurazione dal file, la decripta e la mette in cache.
@@ -382,11 +392,6 @@ def get_download_path() -> str:
 
     default_download = Path.home() / "Downloads"
     return str(default_download) if default_download.exists() else str(Path.home())
-
-
-def get_fornitori() -> list:
-    """Restituisce la lista dei fornitori configurati."""
-    return get_config_value("fornitori", [])
 
 
 def export_configuration(export_path: str) -> tuple[bool, str]:

@@ -51,26 +51,51 @@ def handle_thread_exception(args):
         handler.flush()
 
 
-def setup_crash_logging():
+def setup_logging():
     if not CONFIG_DIR.exists():
         CONFIG_DIR.mkdir(parents=True)
     log_dir = CONFIG_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
 
-    # Setup Logger con Flush immediato
-    handler = logging.FileHandler(log_dir / "crash.log", mode="w", encoding="utf-8")
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    # 1. Main App Logger (syncrojob.log)
+    # Usa RotatingFileHandler per evitare file enormi (max 5MB, 3 backup)
+    from logging.handlers import RotatingFileHandler
+
+    app_log_file = log_dir / "syncrojob.log"
+    app_handler = RotatingFileHandler(
+        app_log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+    )
+    app_handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
+
+    # Configura il root logger (cattura tutto dai moduli src.*)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    if not root_logger.handlers:
+        root_logger.addHandler(app_handler)
+
+    # 2. Crash Logger (crash.log) - Separato per errori fatali
+    crash_handler = logging.FileHandler(
+        log_dir / "crash.log", mode="w", encoding="utf-8"
+    )
+    crash_handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    )
+
     clogger = logging.getLogger("crash_logger")
+    # Evita duplicazione se già configurato (es. reload)
     if not clogger.handlers:
-        clogger.addHandler(handler)
+        clogger.addHandler(crash_handler)
     clogger.setLevel(logging.INFO)
+    clogger.propagate = False  # Non mandare i crash al root logger (opzionale)
 
     # Installazione Hooks
     sys.excepthook = handle_exception
-    threading.excepthook = handle_thread_exception  # Richiede Python 3.8+
+    threading.excepthook = handle_thread_exception
 
 
-setup_crash_logging()
+setup_logging()
 
 # Ensure src is in path
 src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")

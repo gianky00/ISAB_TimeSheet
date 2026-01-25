@@ -91,16 +91,6 @@ class SecretsManager:
         return cls.get_credential("api", "exa_api_key") or ""
 
     @classmethod
-    def get_github_token(cls) -> str:
-        """Recupera GitHub Token dal Keyring."""
-        return cls.get_credential("api", "github_api_key") or ""
-
-    @classmethod
-    def get_openai_key(cls) -> str:
-        """Recupera OpenAI Key dal Keyring."""
-        return cls.get_credential("api", "openai_api_key") or ""
-
-    @classmethod
     def get_gemini_api_key(cls) -> str:
         """Recupera Gemini API Key dal Keyring."""
         return cls.get_credential("api", "GEMINI_API_KEY") or ""

@@ -8,13 +8,11 @@ import json
 import logging
 import os
 import sqlite3
-import time
 import traceback
 from contextlib import suppress
 from datetime import datetime, timedelta
 from enum import Enum
-from types import TracebackType
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -37,67 +35,6 @@ class AuditSignals:
 
             cls._instance = _Signals()
         return cls._instance
-
-
-class AuditTimer:
-    """
-    Context Manager per misurare la durata delle operazioni e
-    catturare automaticamente eccezioni per l'audit log.
-    """
-
-    def __init__(
-        self,
-        action: str,
-        category: str = "general",
-        entity: str = "",
-        module: str = "",
-        notify: bool = False,
-    ):
-        self.action = action
-        self.category = category
-        self.entity = entity
-        self.module = module
-        self.notify = notify
-        self.start_time = 0.0
-        self.audit_manager = AuditManager.instance()
-
-    def __enter__(self):
-        self.start_time = time.time()
-        return self
-
-    def __exit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ):
-        duration_ms = int((time.time() - self.start_time) * 1000)
-        status = AuditManager.Status.SUCCESS
-        severity = AuditManager.Severity.LOW
-        error_code = None
-        params = {"duration_str": f"{duration_ms}ms"}
-
-        if exc_type:
-            status = AuditManager.Status.ERROR
-            severity = AuditManager.Severity.HIGH
-            error_code = exc_type.__name__
-            params["error_details"] = str(exc_val)
-            params["traceback"] = "".join(traceback.format_tb(exc_tb))
-
-        self.audit_manager.log_action(
-            action=self.action,
-            category=self.category,
-            entity=self.entity,
-            params=params,
-            status=status,
-            severity=severity,
-            duration_ms=duration_ms,
-            module=self.module,
-            error_code=error_code,
-            notify=self.notify,
-        )
-        # Non sopprimiamo l'eccezione, la lasciamo propagare
-        return False
 
 
 class AuditManager:
@@ -311,7 +248,10 @@ class AuditManager:
             logger.error(f"Audit Log Error: {e}")
             traceback.print_exc()
 
-    def _generate_notification(self, action, entity, status_val, severity_val, params):
+    def _generate_notification(
+        self, action: str, entity: str, status_val: str, severity_val: str, params: Any
+    ):
+        """Genera una notifica utente basata sull'esito dell'azione auditata."""
         from src.core.notification_manager import NotificationManager
 
         level = "info"
@@ -376,14 +316,29 @@ class AuditManager:
 
     def get_filtered_logs(
         self,
-        start_date=None,
-        end_date=None,
-        levels=None,
-        category=None,
-        search_text=None,
-        limit=50,
-        offset=0,
-    ):
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        levels: Optional[List[str]] = None,
+        category: Optional[str] = None,
+        search_text: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """
+        Recupera i log filtrati dal database con paginazione.
+
+        Args:
+            start_date: Data inizio filtro.
+            end_date: Data fine filtro.
+            levels: Lista di livelli di severità da includere.
+            category: Categoria specifica.
+            search_text: Testo libero per ricerca.
+            limit: Numero massimo di risultati.
+            offset: Offset per paginazione.
+
+        Returns:
+            Tuple[List, int]: Lista dei log e conteggio totale record.
+        """
         logs = []
         total = 0
         try:
@@ -432,7 +387,8 @@ class AuditManager:
 
         return logs, total
 
-    def get_categories(self):
+    def get_categories(self) -> List[str]:
+        """Recupera la lista unica delle categorie di log presenti nel DB."""
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 res = conn.execute(
@@ -442,7 +398,8 @@ class AuditManager:
         except Exception:
             return []
 
-    def run_retention_policy(self, days=90):
+    def run_retention_policy(self, days: int = 90):
+        """Esegue la pulizia dei log più vecchi di 'days' giorni."""
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         try:
             with sqlite3.connect(self.DB_PATH) as conn:

@@ -23,6 +23,12 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, list, list]:
+        """
+        Importa i dati di contabilità dal file specificato.
+
+        Returns:
+            Tuple: (success, message, data_rows, years_found)
+        """
         return ContabilitaImporter.import_contabilita_dati(file_path, progress_callback)
 
     # --- Giornaliere ---
@@ -34,6 +40,12 @@ class ExcelImporter:
         lookup_map: Dict,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, List[Tuple], List[int]]:
+        """
+        Importa le giornaliere ricorsivamente dalla root path.
+
+        Returns:
+            Tuple: (success, message, rows, years_cleared)
+        """
         return GiornaliereImporter.import_giornaliere(
             root_path, lookup_map, progress_callback
         )
@@ -47,6 +59,7 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, List[Tuple]]:
+        """Importa la programmazione attività."""
         return AttivitaImporter.import_attivita_programmate(
             file_path, progress_callback
         )
@@ -59,6 +72,7 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, List[Tuple]]:
+        """Importa il file di scarico ore massivo."""
         return ScaricoOreImporter.import_scarico_ore(file_path, progress_callback)
 
     @staticmethod
