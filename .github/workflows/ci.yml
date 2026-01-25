@@ -2,7 +2,7 @@ name: SyncroJob CI
 
 on:
   push:
-    branches: ["master", "main", "develop", "refactor-palette"]
+    branches: ["master", "main", "develop", "refactor-palette", "Refactor-CI-git"]
   pull_request:
     branches: ["master", "main"]
 
