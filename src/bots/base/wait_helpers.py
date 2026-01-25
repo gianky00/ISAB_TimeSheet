@@ -145,23 +145,22 @@ def poll_for_file(
     while time.time() - start_time < timeout:
         # Check se ci sono download in corso (crdownload, tmp, part)
         in_progress = any(
-            directory.glob(f"*{ext}")
-            for ext in [".crdownload", ".tmp", ".part"]
+            directory.glob(f"*{ext}") for ext in [".crdownload", ".tmp", ".part"]
         )
-        
+
         if in_progress:
             time.sleep(poll_interval)
             continue
-        
+
         # Trova tutti i file matching
         files = list(directory.glob(pattern))
 
         # Filtra per esclusioni
         files = [
-            f for f in files
-            if f.is_file() and not any(
-                f.suffix == ext or ext in f.name for ext in exclude_patterns
-            )
+            f
+            for f in files
+            if f.is_file()
+            and not any(f.suffix == ext or ext in f.name for ext in exclude_patterns)
         ]
 
         # Filtra per età minima se specificata
