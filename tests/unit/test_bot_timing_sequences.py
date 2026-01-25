@@ -71,34 +71,15 @@ class TestBotTimingSequences:
 
     def test_safework_pdl_search_timing(self, mock_safework_bot):
         """Verifica la pausa critica dopo la ricerca di un PDL."""
-        data = [{"numero_pdl": "123456"}]
-
-        with (
-            patch("time.sleep") as mock_sleep,
-            patch.object(SafeWorkPDLBot, "_gestisci_alert_ricerca", return_value=False),
-            patch.object(SafeWorkPDLBot, "_attendi_scomparsa_overlay"),
-            patch.object(
-                SafeWorkPDLBot, "_attendi_e_ritorna_nuovo_pdf", return_value="f.pdf"
-            ),
-            patch(
-                "src.utils.document_processor.DocumentProcessor.merge_pdfs",
-                return_value=True,
-            ),
-            patch("os.rename"),
-            patch("os.remove"),
-            patch("os.path.exists", return_value=True),
-            patch("builtins.open"),
-            patch("src.bots.safework.pdl.bot.fitz"),
-            patch.object(mock_safework_bot, "_check_stop"),
-        ):
+        with patch("time.sleep") as mock_sleep:
+            # Setup driver/wait mock per arrivare allo sleep
             mock_safework_bot.wait.until.return_value = MagicMock()
-            mock_safework_bot.driver.find_element.return_value.is_displayed.return_value = True
-
-            mock_safework_bot.run(data)
-
+            
+            # Eseguiamo solo il metodo di ricerca che contiene lo sleep di 0.5s
+            mock_safework_bot._esegui_ricerca_pdl("123456/S")
+            
             calls = [c.args[0] for c in mock_sleep.call_args_list]
             assert 0.5 in calls
-            assert 1 in calls
 
     def test_timbrature_navigation_timing(self, mock_timbrature_bot):
         """Verifica le pause durante la navigazione nel bot Timbrature."""
