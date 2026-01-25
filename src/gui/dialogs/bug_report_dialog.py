@@ -318,7 +318,7 @@ class BugReportDialog(QDialog):
 
                 <!-- TECH INFO FOOTER -->
                 <div style="margin-top: 40px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
-                    <strong>Contenuto Allegato Tecnico:</strong> Log applicativi, Stacktrace errori critici, Configurazione ambiente, Screenshot (se disponibili).<br>
+                    <strong>Contenuto Allegato Tecnico:</strong> Log applicativi, Stacktrace errori critici, Configurazione ambiente, Screenshots.<br>
                     File: <code>{os.path.basename(final_zip_path)}</code>
                 </div>
             </div>
