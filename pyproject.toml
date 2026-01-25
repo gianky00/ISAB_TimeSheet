@@ -41,6 +41,7 @@ loguru = "*"
 faker = "*"
 email-validator = "*"
 jaraco-text = "^4.0.0"
+jaraco-context = "^6.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.0.2"
@@ -73,6 +74,7 @@ commitizen = "^4.12.0"
 icecream = "^2.1.9"
 diagrams = "^0.25.1"
 pyarmor = "^9.2.3"
+refurb = "^2.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -105,8 +107,8 @@ ignore = ["DEP001", "DEP002", "DEP003", "DEP004"]
 known_first_party = ["src"]
 
 [tool.codespell]
-skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*"
-ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo"
+skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,*.js,*.html,*.css,*.map,*.pem,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*,./admin/Crea Setup/*,./admin/Crea Licenze/*"
+ignore-words-list = "nome,ore,impossibile,stati,reparti,cantieri,fornitori,contratti,registrate,invalide,cliente,fase,accumulato,termine,momento,visuale,allo,rende,alle,classe,normale,visibile,ignora,configurate,comando,categorie,valide,celle,limite,installate,macchine,possibile,foto,tre,datas,distribuite,compatibile,accessibile,separato,cant,te,vai,variante,accumulare,generare,processore,somme,validata,probabile,quantit,mis,invisibile,applicato,appropriato,incluse,aggressivo,forse"
 check-filenames = true
 
 [tool.interrogate]
@@ -118,7 +120,7 @@ ignore-private = true
 ignore-property-decorators = true
 ignore-module = true
 fail-under = 80
-exclude = ["tests", "docs", "build", "dist", "admin"]
+exclude = ["tests", "docs", "build", "dist", "temp", "graveyard", "site", "admin", "scripts"]
 verbose = 1
 quiet = false
 color = true

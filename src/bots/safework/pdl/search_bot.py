@@ -1,4 +1,3 @@
-import glob
 import os
 import time
 from typing import Any, Dict, List, Optional
@@ -126,7 +125,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 EC.element_to_be_clickable((By.ID, "topIcon-actHomePage"))
             )
             btn_home.click()
-            time.sleep(3)
+            # No sleep needed: _attendi_scomparsa_overlay() has internal wait
             self._attendi_scomparsa_overlay()
 
             self.log("🔍 Clic su Ricerca PdL (sideBar)...")
@@ -134,7 +133,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL"))
             )
             btn_ricerca.click()
-            time.sleep(3)
+            # No sleep needed: _attendi_scomparsa_overlay() has internal wait
             self._attendi_scomparsa_overlay()
             return True
         except Exception as e:
@@ -152,7 +151,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"🖱️ Impostazione checkbox 'Escludi chiusi' a {exclude_closed}")
                 self.driver.execute_script("arguments[0].click();", checkbox)
-                time.sleep(1)
+                # No sleep needed: checkbox state change is immediate
         except Exception as e:
             self.log(f"⚠️ Errore gestione checkbox: {e}")
 
@@ -192,16 +191,14 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
                 )
             )
             site_dropdown.click()
-            time.sleep(1)
-
+            # Wait for dropdown options to appear
             option = self.wait.until(
                 EC.element_to_be_clickable(
                     (By.XPATH, f"//li//span[text()='{site_name}']")
                 )
             )
             option.click()
-            time.sleep(1)
-
+            # No sleep needed: next wait guarantees button availability
             self.log("🖱️ Clic su Cerca...")
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnCerca"))).click()
             self._attendi_scomparsa_overlay(timeout_secondi=300)
@@ -219,20 +216,18 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             ts_start = time.time()
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnEsporta"))).click()
 
-            timeout = 600
-            end_time = time.time() + timeout
-            while time.time() < end_time:
-                files = glob.glob(os.path.join(self.download_path, "Ricerca*.xlsx"))
-                new_files = [f for f in files if os.path.getmtime(f) > ts_start]
-                if new_files:
-                    if not any(
-                        f.endswith(".crdownload")
-                        for f in glob.glob(os.path.join(self.download_path, "*"))
-                    ):
-                        latest_file = max(new_files, key=os.path.getmtime)
-                        return latest_file
-                time.sleep(2)
-            return None
+            # Use helper for efficient polling
+            from src.bots.base.wait_helpers import poll_for_file
+
+            latest_file = poll_for_file(
+                directory=self.download_path,
+                pattern="Ricerca*.xlsx",
+                timeout=600,
+                poll_interval=1.0,
+                min_age=ts_start,
+                exclude_patterns=[".crdownload"],
+            )
+            return latest_file
         except Exception as e:
             self.log(f"❌ Errore esportazione: {e}")
             return None

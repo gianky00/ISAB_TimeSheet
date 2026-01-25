@@ -2,7 +2,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.gui.main_window import MainWindow, PageIndex
+from src.gui.main_window.main import MainWindow
+from src.gui.main_window.page_index import PageIndex
 
 
 class TestMainWindow:
@@ -10,27 +11,35 @@ class TestMainWindow:
     def app(self, qapp):
         return qapp
 
-    @patch("src.gui.main_window.ServiceController")
-    @patch("src.gui.main_window.LyraSentinel")
-    @patch("src.gui.main_window.config_manager.load_config")
-    @patch("src.gui.main_window.apply_theme")
-    def test_init(self, mock_theme, mock_conf, mock_sentinel, mock_service, app, qtbot):
+    @patch("src.gui.main_window.main.QTimer.singleShot")
+    @patch("src.gui.main_window.main.ServiceController")
+    @patch("src.gui.main_window.main.LyraSentinel")
+    @patch("src.gui.main_window.main.config_manager.load_config")
+    @patch("src.gui.main_window.main.apply_theme")
+    def test_init(
+        self, mock_theme, mock_conf, mock_sentinel, mock_service, mock_timer, app, qtbot
+    ):
         mock_conf.return_value = {}
 
         window = MainWindow()
         qtbot.addWidget(window)
 
-        assert window.windowTitle() == "SyncroJob"
+        assert "SyncroJob" in window.windowTitle()
         assert window.page_stack.count() >= 6
         assert window.sidebar.btn_home.isChecked()
 
     def test_navigation(self, app, qtbot):
         # Mock internal components to avoid side effects
         with (
-            patch("src.gui.main_window.ServiceController"),
-            patch("src.gui.main_window.LyraSentinel"),
-            patch("src.gui.contabilita_panel.ContabilitaManager") as mock_manager,
-            patch("src.gui.main_window.config_manager.load_config", return_value={}),
+            patch("src.gui.main_window.main.QTimer.singleShot"),
+            patch("src.gui.main_window.main.ServiceController"),
+            patch("src.gui.main_window.main.LyraSentinel"),
+            patch(
+                "src.gui.panels.contabilita_panel.ContabilitaManager"
+            ) as mock_manager,
+            patch(
+                "src.gui.main_window.main.config_manager.load_config", return_value={}
+            ),
         ):
             mock_manager.get_available_years.return_value = []
             mock_manager.get_year_stats.return_value = {
@@ -47,21 +56,26 @@ class TestMainWindow:
             qtbot.addWidget(window)
 
             # Click Automazioni
-            window.sidebar.btn_automazioni.click()
+            window.sidebar.btn_fornitori.click()
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
-            assert window.sidebar.btn_automazioni.isChecked()
+            assert window.sidebar.group_automazioni.header_btn.isChecked()
 
-            # Click Database
-            window.sidebar.btn_database.click()
-            assert window.page_stack.currentIndex() == PageIndex.DATABASE
-            assert window.sidebar.btn_database.isChecked()
+            # Click Home
+            window.sidebar.btn_home.click()
+            assert window.page_stack.currentIndex() == PageIndex.DASHBOARD
+            assert window.sidebar.btn_home.isChecked()
 
     def test_navigate_to_panel(self, app, qtbot):
         with (
-            patch("src.gui.main_window.ServiceController"),
-            patch("src.gui.main_window.LyraSentinel"),
-            patch("src.gui.contabilita_panel.ContabilitaManager") as mock_manager,
-            patch("src.gui.main_window.config_manager.load_config", return_value={}),
+            patch("src.gui.main_window.main.QTimer.singleShot"),
+            patch("src.gui.main_window.main.ServiceController"),
+            patch("src.gui.main_window.main.LyraSentinel"),
+            patch(
+                "src.gui.panels.contabilita_panel.ContabilitaManager"
+            ) as mock_manager,
+            patch(
+                "src.gui.main_window.main.config_manager.load_config", return_value={}
+            ),
         ):
             mock_manager.get_available_years.return_value = []
             mock_manager.get_year_stats.return_value = {
@@ -77,16 +91,11 @@ class TestMainWindow:
             window = MainWindow()
             qtbot.addWidget(window)
 
-            # In the new implementation, we use _preload_background
-            # For the test, we can trigger it or just ensure panels are loaded
-            window._preload_background()
-
-            # Since _preload_background uses QTimer, we might need to wait or
-            # manually initialize what we need for the deep link test
+            # Manually ensure panels are loaded for the test
             window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
 
             # Test deep link navigation
-            window.navigate_to_panel(
+            window.navigation_controller.navigate_to_panel(
                 "timbrature"
             )  # Should go to Automazioni -> Timbrature (Tab 2)
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI

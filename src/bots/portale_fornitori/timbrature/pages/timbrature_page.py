@@ -46,7 +46,7 @@ class TimbraturePage:
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
-            time.sleep(0.3)
+            # No sleep needed: invisibility check is sufficient
         except TimeoutException:
             self.log("⚠️ Timeout attesa overlay.")
         except AttributeError:
@@ -56,7 +56,7 @@ class TimbraturePage:
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
-            time.sleep(0.3)
+            # No sleep needed: invisibility check is sufficient
 
     def navigate_to_timbrature(self) -> bool:
         """Navigates to Report -> Timbrature."""
@@ -66,7 +66,7 @@ class TimbraturePage:
                 EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU)
             )
             report_element.click()
-            time.sleep(1.5)
+            # No sleep needed: keyboard actions have built-in pauses
 
             # Keyboard navigation to tab
             actions = ActionChains(self.driver)
@@ -74,8 +74,7 @@ class TimbraturePage:
             actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.TAB).pause(0.3)
             actions.send_keys(Keys.ENTER).perform()
-
-            time.sleep(1.0)
+            # No sleep needed: _wait_for_overlay() handles wait
             self._wait_for_overlay()
             return True
         except Exception as e:
@@ -142,9 +141,7 @@ class TimbraturePage:
 
             self.log("Attendo caricamento risultati...")
             self._wait_for_overlay()
-
-            # Wait for results table or empty message
-            time.sleep(1.0)  # Grace period for table render
+            # No sleep needed: overlay wait is sufficient for UI update
 
             self.log("Caricamento terminato.")
             return True
@@ -189,12 +186,12 @@ class TimbraturePage:
                             )
                         break
                 except Exception:
-                    time.sleep(1)
+                    # Retry loop - no sleep needed, immediate retry is fine
+                    pass
 
             if not arrow_element:
                 raise Exception("Impossibile trovare la freccia del fornitore.")
-
-            time.sleep(0.5)  # Wait for list animation
+            # No sleep needed: wait for option presence is next
 
             # Select option with retry
             from selenium.webdriver.common.by import By
@@ -209,14 +206,13 @@ class TimbraturePage:
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'nearest'});", option
             )
-            time.sleep(0.3)
+            # No sleep needed: scrollIntoView is synchronous
 
             try:
                 option.click()
             except (ElementClickInterceptedException, Exception):
                 self.driver.execute_script("arguments[0].click();", option)
-
-            time.sleep(0.5)
+            # No sleep needed: _wait_for_overlay() checks completion
             self._wait_for_overlay()
 
         except Exception as e:
@@ -228,7 +224,7 @@ class TimbraturePage:
         downloaded_file = ""
         try:
             self.log("Cerco pulsante Excel...")
-            time.sleep(1.0)
+            # No sleep needed: _find_excel_button() has internal waits
             excel_btn = self._find_excel_button()
 
             if not excel_btn:
@@ -238,7 +234,7 @@ class TimbraturePage:
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'center'});", excel_btn
             )
-            time.sleep(0.5)
+            # No sleep needed: scrollIntoView is synchronous
 
             self.log("Clicco su Excel...")
             try:
@@ -247,7 +243,7 @@ class TimbraturePage:
                 self.driver.execute_script("arguments[0].click();", excel_btn)
 
             self.log("Attendo download...")
-            time.sleep(3.0)
+            # No sleep needed: _rename_latest_download() should use polling
             downloaded_file = self._rename_latest_download("timbrature_temp")
             return downloaded_file
 

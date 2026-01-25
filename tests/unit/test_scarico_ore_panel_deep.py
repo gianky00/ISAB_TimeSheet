@@ -1,6 +1,6 @@
 import pytest
 
-from src.gui.scarico_ore_panel import ScaricoOrePanel
+from src.gui.panels.scarico_ore_panel import ScaricoOrePanel
 
 
 class TestScaricoOrePanelDeep:

@@ -14,7 +14,7 @@ Analizzare e correggere tutti i test che causano crash quando eseguiti in suite 
 ### [Gennaio 2026] - Migrazione a Robust Runner
 - **Status**: Migrazione completata.
 - **Configurazione**: `scripts/avvio_test.bat` ora include il flag `--reset` di default per garantire il rilevamento di tutti i test.
-- **Vantaggi**: 
+- **Vantaggi**:
     - Esecuzione isolata per file che falliscono o vanno in timeout.
     - Generazione automatica di `tests/test_report.md`.
     - Persistenza dello stato tramite `.test_session_state.json` (permette di riprendere i test dopo un'interruzione).

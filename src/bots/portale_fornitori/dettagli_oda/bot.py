@@ -2,7 +2,6 @@
 SyncroJob - Dettagli OdA Bot
 """
 
-import time
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -134,7 +133,6 @@ class DettagliOdABot(BaseBot):
             # Se è un ODA Generico (senza numero OdA), importiamo nel DB
             if not oda:
                 self._import_oda_to_db(downloaded_path)
-            time.sleep(1)
             return True
         return False
 

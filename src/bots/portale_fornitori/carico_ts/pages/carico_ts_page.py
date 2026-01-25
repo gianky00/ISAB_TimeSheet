@@ -3,7 +3,6 @@ SyncroJob - Carico TS Page
 Page Object Model for Carico TS.
 """
 
-import time
 from contextlib import suppress
 
 from selenium.webdriver.common.action_chains import ActionChains
@@ -37,7 +36,6 @@ class CaricoTSPage:
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
-            time.sleep(0.3)
 
     def navigate(self) -> bool:
         """Naviga verso il menu Gestione Timesheet."""
@@ -75,7 +73,6 @@ class CaricoTSPage:
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block:'nearest'});", opt
             )
-            time.sleep(0.3)
             self.driver.execute_script("arguments[0].click();", opt)
             self._wait_overlay()
             return True
@@ -100,9 +97,6 @@ class CaricoTSPage:
 
             # JS Click to focus/activate
             self.driver.execute_script("arguments[0].click();", inp)
-            time.sleep(0.2)
-
-            # Use JS to set value + dispatch events
             js = """
             var el = arguments[0];
             el.value = arguments[1];
@@ -120,7 +114,6 @@ class CaricoTSPage:
             self.log("Estrai OdA cliccato.")
 
             # Just stopping here as per original logic (it stops after extract)
-            time.sleep(2)
             return True
         except Exception as e:
             self.log(f"Errore processo OdA: {e}")

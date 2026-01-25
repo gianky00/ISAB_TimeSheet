@@ -7,13 +7,10 @@ from src.core.license_validator import LicenseStatus
 class TestAppInitializerDeep:
     @pytest.fixture
     def mock_msgbox(self, mocker):
-        return mocker.patch("PyQt6.QtWidgets.QMessageBox.critical")
+        """Mock the whole QMessageBox class in the target module to prevent crashes."""
+        return mocker.patch("src.core.app_initializer.QMessageBox")
 
-    @pytest.fixture
-    def mock_msgbox_warn(self, mocker):
-        return mocker.patch("PyQt6.QtWidgets.QMessageBox.warning")
-
-    def test_initialize_full_success(self, mocker):
+    def test_initialize_full_success(self, mocker, mock_msgbox):
         """Verifica avvio con successo (Licenza valida + DB OK)."""
         m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
         m_status.return_value = (LicenseStatus.VALID, "OK")
@@ -21,7 +18,7 @@ class TestAppInitializerDeep:
 
         assert AppInitializer.initialize() is True
 
-    def test_initialize_update_trigger(self, mocker):
+    def test_initialize_update_trigger(self, mocker, mock_msgbox):
         """Verifica che se la licenza manca, venga tentato l'aggiornamento."""
         m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
         m_status.side_effect = [
@@ -37,7 +34,7 @@ class TestAppInitializerDeep:
         assert res is True
         assert mock_update.call_count == 1
 
-    def test_initialize_emergency_grace_success(self, mocker, mock_msgbox_warn):
+    def test_initialize_emergency_grace_success(self, mocker, mock_msgbox):
         """Verifica avvio in modalità provvisoria tramite periodo di grazia."""
         m_status = mocker.patch("src.core.app_initializer.get_detailed_license_status")
         m_status.return_value = (LicenseStatus.INVALID, "Expired")
@@ -51,7 +48,8 @@ class TestAppInitializerDeep:
         mocker.patch("src.core.app_initializer.db_manager.init_db")
 
         assert AppInitializer.initialize() is True
-        mock_msgbox_warn.assert_called_once()
+        # Verify that warning was called on the mocked class
+        mock_msgbox.warning.assert_called_once()
 
     def test_initialize_failed_license_exit(self, mocker, mock_msgbox):
         """Verifica che l'app esca se licenza e grazia falliscono."""
@@ -69,7 +67,7 @@ class TestAppInitializerDeep:
         AppInitializer.initialize()
 
         mock_exit.assert_called_once_with(1)
-        mock_msgbox.assert_called_once()
+        mock_msgbox.critical.assert_called_once()
 
     def test_initialize_db_error_exit(self, mocker, mock_msgbox):
         """Verifica che l'app esca se il database non si inizializza."""
@@ -84,4 +82,4 @@ class TestAppInitializerDeep:
         AppInitializer.initialize()
 
         mock_exit.assert_called_once_with(1)
-        mock_msgbox.assert_called_once()
+        mock_msgbox.critical.assert_called_once()

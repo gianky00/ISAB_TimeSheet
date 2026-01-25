@@ -109,3 +109,25 @@ class AutomazioniWidget(QTabWidget):
                     self.panel_pdl_search,
                 ]
             )
+
+    def set_active_tab(self, main_idx: int, sub_idx: int):
+        """Imposta programmaticamente il tab attivo con debug."""
+        print(f"DEBUG: AutomazioniWidget.set_active_tab({main_idx}, {sub_idx})")
+
+        # 1. Tab Principale
+        self.setCurrentIndex(main_idx)
+
+        # 2. Sotto-Tab (con delay per sicurezza UI)
+        target_widget = None
+        if main_idx == 0:
+            target_widget = self.tab_fornitori
+        elif main_idx == 1:
+            target_widget = self.tab_safework
+
+        if target_widget:
+            print(
+                f"DEBUG: Switching inner tab {main_idx} to {sub_idx} (Current: {target_widget.currentIndex()})"
+            )
+            target_widget.setCurrentIndex(sub_idx)
+            # Force update
+            target_widget.repaint()

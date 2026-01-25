@@ -21,6 +21,7 @@ VENV_PYTHON = (
 
 
 def run_command(cmd, description, exit_on_fail=True, capture=False):
+    """Executes a subprocess command with error handling and optional output capture."""
     print(f"\n[STEP] {description}...")
     try:
         if capture:
@@ -39,6 +40,7 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):
 
 
 def get_current_version():
+    """Extracts the current version string from src/core/version.py."""
     version_file = ROOT_DIR / "src" / "core" / "version.py"
     content = version_file.read_text()
     import re
@@ -129,6 +131,7 @@ def detect_bump_type():
 
 
 def main():
+    """Entry point for the release process, handling arguments and workflow execution."""
     # Fix encoding for Windows console to support emoji
     if sys.platform == "win32":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")

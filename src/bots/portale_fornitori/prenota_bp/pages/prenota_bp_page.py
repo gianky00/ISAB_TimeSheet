@@ -2,7 +2,6 @@
 Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 """
 
-import time
 from datetime import datetime, timedelta
 from typing import Callable, List, Optional, Tuple
 
@@ -41,7 +40,6 @@ class PrenotaBPPage:
         try:
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask') or contains(@class, 'full-loader')][not(contains(@style,'display: none'))]"
             self.short_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
-            time.sleep(0.5)
         except TimeoutException:
             pass
 
@@ -70,9 +68,6 @@ class PrenotaBPPage:
                 self.driver.execute_script(
                     "arguments[0].scrollIntoView({block: 'center'});", el
                 )
-                time.sleep(0.3)
-
-                # Prova il click standard
                 try:
                     el.click()
                 except Exception:
@@ -85,7 +80,6 @@ class PrenotaBPPage:
                     self.log(f"⚠ Errore definitivo click su {locator}: {str(e)}")
                     raise e
                 self.log(f"  (Riprovo click su {locator}...)")
-                time.sleep(1)
                 self._wait_for_overlay()
 
     def wait_and_fill(self, locator, text, timeout=None):
@@ -101,7 +95,6 @@ class PrenotaBPPage:
         wait = WebDriverWait(self.driver, timeout) if timeout else self.wait
         el = wait.until(EC.visibility_of_element_located(locator))
         el.clear()
-        time.sleep(0.1)
         el.send_keys(text)
         return el
 
@@ -141,7 +134,6 @@ class PrenotaBPPage:
             # Espansione menu principale
             self.log("Espansione menu 'Buono di Prelievo'...")
             self.wait_and_click(PrenotaBPLocators.MENU_BUONO_PRELIEVO)
-            time.sleep(1.5)  # Attesa animazione ExtJS
             submenu = self.wait.until(
                 EC.element_to_be_clickable(PrenotaBPLocators.SUBMENU_GESTIONE_BP)
             )
@@ -172,9 +164,6 @@ class PrenotaBPPage:
                     EC.element_to_be_clickable(PrenotaBPLocators.FILTER_FORNITORE_ARROW)
                 )
                 ActionChains(self.driver).move_to_element(arrow).click().perform()
-                time.sleep(0.8)
-
-                # 2. Click sull'opzione nella lista
                 option_xpath = f"//li[normalize-space(text())='{fornitore}']"
                 option = WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, option_xpath))
@@ -183,7 +172,6 @@ class PrenotaBPPage:
                 self.driver.execute_script(
                     "arguments[0].scrollIntoView({block: 'nearest'});", option
                 )
-                time.sleep(0.3)
                 self.driver.execute_script("arguments[0].click();", option)
                 self._wait_for_overlay()
             except Exception as e:
@@ -294,7 +282,6 @@ class PrenotaBPPage:
             raise e
 
         self._wait_for_overlay()
-        time.sleep(1)
 
     def gestisci_creazione_richiesta(self, note: str):
         """Gestisce la selezione dei materiali, la creazione della richiesta e la compilazione del form."""
@@ -354,8 +341,6 @@ class PrenotaBPPage:
             if idx < len(checkers):
                 self._click_safe(checkers[idx])
                 count_selected += 1
-                time.sleep(0.05)
-
         return count_selected > 0
 
     def _compila_form_richiesta(self, note: str):
@@ -396,7 +381,6 @@ class PrenotaBPPage:
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'center'});", element
             )
-            time.sleep(0.1)
             element.click()
         except Exception:
             self.driver.execute_script("arguments[0].click();", element)

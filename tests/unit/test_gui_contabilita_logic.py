@@ -2,7 +2,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.gui.contabilita_panel import ContabilitaYearTab, GiornaliereYearTab
+from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
+from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
 
 
 class TestContabilitaTableLogic:
@@ -42,8 +43,6 @@ class TestContabilitaTableLogic:
 
         try:
             # Verify data row added
-            # Actually, current _load_data in year_tab.py DOES NOT add a totals row yet.
-            # It just converts db rows to display rows.
             model = tab.table.model()
             assert (
                 model.rowCount() == 1

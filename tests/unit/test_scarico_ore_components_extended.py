@@ -1,6 +1,7 @@
 import pytest
 
-from src.gui.scarico_ore_components import CacheWorker, ScaricoOreTableModel
+from src.gui.components.scarico_ore.cache import CacheWorker
+from src.gui.components.scarico_ore.model import ScaricoOreTableModel
 
 
 class TestScaricoOreComponentsExtended:
@@ -35,9 +36,6 @@ class TestScaricoOreComponentsExtended:
             worker.start()
 
         # Verify that display cache was built
-        # finished signal: display_data, search_index, float_totals, style_cache
-        # We can't easily check args of signal from worker.start() without more setup,
-        # but we can test the internal _build_caches
         display, search, totals, styles = worker._build_caches(data)
         assert len(display) == 1
         assert display[0][0] == "01/01/2024"  # Date formatted

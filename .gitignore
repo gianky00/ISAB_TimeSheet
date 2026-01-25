@@ -38,3 +38,6 @@ node_modules/
 reports/
 build_log.txt
 Autorizzati ISAB.xlsx
+/src/core/importers/__pycache__
+/src/core/importers/__pycache__
+/src/core/importers/__pycache__

@@ -3,7 +3,6 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
-import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from pathlib import Path
@@ -385,8 +384,7 @@ class BaseBot(ABC):
             self.wait.until(
                 EC.element_to_be_clickable(CommonLocators.SETTINGS_BUTTON)
             ).click()
-            time.sleep(0.5)
-            # 2. Clicca su Esci
+            # 2. Clicca su Esci (wait esplicito garantisce dropdown visibile)
             self.wait.until(
                 EC.element_to_be_clickable(CommonLocators.LOGOUT_OPTION)
             ).click()
@@ -445,11 +443,11 @@ class BaseBot(ABC):
                 if self._login():
                     return True
                 self.cleanup()
-                time.sleep(3)
+                # No sleep needed: _init_driver() has internal waits
             except Exception as e:
                 self.log(f"⚠️ Errore tentativo {_attempt}: {e}")
                 self.cleanup()
-                time.sleep(3)
+                # No sleep needed: cleanup() is synchronous
         return False
 
     def cleanup(self):

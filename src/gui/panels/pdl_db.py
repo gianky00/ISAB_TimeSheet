@@ -1,0 +1,367 @@
+"""
+SyncroJob - PDL Database Panel
+Pannello per la visualizzazione del Database PDL SafeWork.
+"""
+
+from datetime import datetime
+from typing import Any, List, Optional, Tuple
+
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QComboBox,
+    QFormLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QScrollArea,
+    QSplitter,
+    QStyledItemDelegate,
+    QTableView,
+    QVBoxLayout,
+    QWidget,
+)
+
+from src.core.constants import Icons
+from src.core.database import db_manager
+from src.gui.formatters import FastTableModel
+from src.utils.helpers import get_asset_path, get_colored_icon
+
+
+class PDLDelegate(QStyledItemDelegate):
+    """Delegate per gestire il wrap selettivo e l'allineamento nelle celle PDL."""
+
+    def __init__(self, date_columns, parent=None):
+        super().__init__(parent)
+        self.date_columns = date_columns
+
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        # Abilita il wrap per tutte le colonne tranne quelle date
+        if index.column() not in self.date_columns:
+            option.features |= option.ViewItemFeature.HasDisplay
+            option.displayAlignment = (
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
+            option.textElideMode = Qt.TextElideMode.ElideNone
+        else:
+            # Date: riga singola
+            option.textElideMode = Qt.TextElideMode.ElideRight
+
+
+class PDLDBPanel(QWidget):
+    """Pannello per la visualizzazione del Database PDL SafeWork con architettura Master-Detail."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # Nuove Colonne della Tabella (Vista Master)
+        self.master_headers = [
+            "Data Creazione",
+            "Richiedente",
+            "N° PDL",
+            "Area",
+            "Unità",
+            "Stato",
+            "Descrizione",
+        ]
+
+        # Mapping completo per il Dettaglio (Tutte le 21 colonne)
+        self.full_headers = [
+            "ID",
+            "N° PDL",
+            "Data Creazione",
+            "Area",
+            "Unità",
+            "Ditta",
+            "Descrizione",
+            "Tipologia",
+            "Stato",
+            "Apparecchiatura",
+            "Richiedente",
+            "Data Richiesta",
+            "Emittente",
+            "Data Emissione",
+            "Aprente",
+            "Data Apertura",
+            "Priorità",
+            "Contratto",
+            "Ordine",
+            "Sito",
+            "Importato il",
+        ]
+
+        self.model = FastTableModel([], self.master_headers)
+        self._raw_full_data = []  # Buffer per i dati completi
+        self._cache = {}  # Cache per le query
+
+        # Stato Ordinamento
+        self.current_sort_col = None
+        self.current_sort_order = "DESC"
+
+        # Timer per ricerca ritardata (Debounce)
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.refresh_data)
+
+        self._setup_ui()
+        QTimer.singleShot(50, self.refresh_data)
+        QTimer.singleShot(100, self._populate_groups)
+
+    def _setup_ui(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
+
+        # 1. Filtri (Top)
+        filter_layout = QHBoxLayout()
+        filter_layout.setSpacing(10)
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Cerca ovunque...")
+        self.search_input.setMaximumWidth(250)  # Restringi barra ricerca
+        self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
+        filter_layout.addWidget(self.search_input)
+
+        filter_layout.addWidget(QLabel("Gruppo:"))
+        self.group_filter = QComboBox()
+        self.group_filter.addItem("Tutti")
+        self.group_filter.currentTextChanged.connect(self.refresh_data)
+        filter_layout.addWidget(self.group_filter)
+
+        filter_layout.addWidget(QLabel("Sito:"))
+        self.site_filter = QComboBox()
+        self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
+        self.site_filter.currentTextChanged.connect(self.refresh_data)
+        filter_layout.addWidget(self.site_filter)
+
+        filter_layout.addStretch()
+
+        refresh_btn = QPushButton("Aggiorna")
+        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
+        refresh_btn.clicked.connect(self.refresh_data)
+        filter_layout.addWidget(refresh_btn)
+        main_layout.addLayout(filter_layout)
+
+        # 2. Contenitore Splitter (Tabella | Dettaglio)
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # --- TABELLA (MASTER) ---
+        self.table = QTableView()
+        self.table.setModel(self.model)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)
+        self.table.setWordWrap(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setItemDelegate(
+            PDLDelegate([0], self.table)
+        )  # Data Creazione è indice 0
+
+        self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        header = self.table.horizontalHeader()
+        header.setSectionsClickable(True)
+        header.sectionClicked.connect(self._on_header_clicked)
+
+        self.splitter.addWidget(self.table)
+
+        # --- PANNELLO DETTAGLIO (DETAIL) ---
+        detail_container = QWidget()
+        detail_layout = QVBoxLayout(detail_container)
+        detail_layout.setContentsMargins(5, 0, 5, 0)
+
+        detail_title = QLabel("Dettaglio Completo PDL")
+        detail_title.setStyleSheet(
+            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
+        )
+        detail_layout.addWidget(detail_title)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_content = QWidget()
+        self.form_layout = QFormLayout(scroll_content)
+        self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        self.form_layout.setSpacing(10)
+
+        self.detail_labels = {}
+        for h in self.full_headers:
+            val_label = QLabel("-")
+            val_label.setWordWrap(True)
+            val_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
+            self.detail_labels[h] = val_label
+            self.form_layout.addRow(f"<b>{h}:</b>", val_label)
+
+        scroll.setWidget(scroll_content)
+        detail_layout.addWidget(scroll)
+
+        self.splitter.addWidget(detail_container)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
+
+        main_layout.addWidget(self.splitter)
+
+    def _populate_groups(self):
+        """Popola la dropdown dei gruppi estraendoli dal database."""
+        try:
+            query = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
+            rows = db_manager.execute_query(db_manager.DB_PDL, query)
+            self.group_filter.blockSignals(True)
+            self.group_filter.clear()
+            self.group_filter.addItem("Tutti")
+            for r in rows:
+                if r[0]:
+                    self.group_filter.addItem(str(r[0]))
+            self.group_filter.blockSignals(False)
+        except Exception as e:
+            print(f"Errore popolamento gruppi: {e}")
+
+    def _on_selection_changed(self, selected, _deselected):
+        """Aggiorna il pannello dettaglio quando si seleziona una riga."""
+        indexes = self.table.selectionModel().selectedRows()
+        if not indexes:
+            return
+
+        row_idx = indexes[0].row()
+        if row_idx < len(self._raw_full_data):
+            data = self._raw_full_data[row_idx]
+            for i, h in enumerate(self.full_headers):
+                val = str(data[i])
+                if val.lower() == "nan" or val == "None":
+                    val = ""
+
+                # Formattazione "Importato il"
+                if h == "Importato il" and val:
+                    try:
+                        dt = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+                        val = dt.strftime("%d/%m/%Y %H:%M:%S")
+                    except Exception:
+                        pass
+
+                self.detail_labels[h].setText(val)
+
+    def _on_header_clicked(self, logical_index):
+        """Gestisce il toggle dell'ordinamento."""
+        if self.current_sort_col == logical_index:
+            self.current_sort_order = (
+                "DESC" if self.current_sort_order == "ASC" else "ASC"
+            )
+        else:
+            self.current_sort_col = logical_index
+            self.current_sort_order = "ASC"
+
+        self.refresh_data(sort_col=logical_index)
+
+    def refresh_data(self, sort_col=None):
+        """Aggiorna i dati della tabella PDL con sistema di cache."""
+        query, params = self._build_pdl_query(sort_col)
+        cache_key = f"{query}_{params}"
+
+        if cache_key in self._cache:
+            full_rows = self._cache[cache_key]
+        else:
+            try:
+                full_rows = db_manager.execute_query(
+                    db_manager.DB_PDL, query, tuple(params)
+                )
+                self._cache[cache_key] = full_rows
+            except Exception as e:
+                print(f"Errore caricamento PDL: {e}")
+                return
+
+        self._raw_full_data = full_rows
+        master_rows = self._process_pdl_rows(full_rows)
+        self.model.update_data(master_rows)
+        self._update_pdl_ui(len(master_rows))
+
+    def _build_pdl_query(self, sort_col: Optional[int]) -> Tuple[str, List[Any]]:
+        """Costruisce la query SQL per i PDL."""
+        search_text = self.search_input.text().lower()
+        site_filter = self.site_filter.currentText()
+        group_filter = self.group_filter.currentText()
+
+        query = "SELECT id, n_pdl, data_creazione, area, unita, ditta, descrizione_lavoro, tipologia, stato, apparecchiatura, richiedente, data_richiesta, emittente, data_emissione, aprente, data_apertura, priorita, contratto, ordine, sito, importato_il FROM pdl WHERE 1=1"
+        params = []
+
+        if site_filter != "Tutti i siti":
+            query += " AND sito = ?"
+            params.append(site_filter)
+
+        if group_filter != "Tutti":
+            query += " AND n_pdl LIKE ?"
+            params.append(f"%/{group_filter}")
+
+        if search_text:
+            query += " AND (n_pdl LIKE ? OR area LIKE ? OR descrizione_lavoro LIKE ? OR ditta LIKE ? OR richiedente LIKE ? OR emittente LIKE ?)"
+            p = f"%{search_text}%"
+            params.extend([p, p, p, p, p, p])
+
+        # Ordinamento
+        order_map = {
+            0: "data_creazione",
+            1: "richiedente",
+            2: "n_pdl",
+            3: "area",
+            4: "unita",
+            5: "stato",
+            6: "descrizione_lavoro",
+        }
+
+        order_clause = ""
+        if sort_col is not None and sort_col in order_map:
+            col_name = order_map[sort_col]
+            # Ordinamento numerico speciale per N° PDL
+            if col_name == "n_pdl":
+                order_clause = f" ORDER BY CAST(n_pdl AS INTEGER) {self.current_sort_order}, n_pdl {self.current_sort_order}"
+
+            # Ordinamento per Data (DD/MM/YYYY HH:MM:SS -> YYYYMMDD...)
+            elif col_name == "data_creazione":
+                # substr(date, 7, 4) = YYYY
+                # substr(date, 4, 2) = MM
+                # substr(date, 1, 2) = DD
+                # substr(date, 11) = HH:MM:SS
+                order_clause = f" ORDER BY substr(data_creazione, 7, 4) || substr(data_creazione, 4, 2) || substr(data_creazione, 1, 2) || substr(data_creazione, 11) {self.current_sort_order}"
+
+            else:
+                order_clause = f" ORDER BY {col_name} {self.current_sort_order}"
+        else:
+            order_clause = " ORDER BY importato_il DESC"
+
+        query += order_clause
+        query += " LIMIT 2000"
+        return query, params
+
+    def _process_pdl_rows(self, full_rows: List[Tuple]) -> List[List[Any]]:
+        """Pulisce e formatta le righe per la visualizzazione Master."""
+        # Nuova mappatura Master: DATA CREAZIONE, RICHIEDENTE, N° PDL, AREA, UNITA, STATO, DESCRIZIONE
+        # Indici full: 2, 10, 1, 3, 4, 8, 6
+        master_rows = []
+        for r in full_rows:
+            row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
+            master_rows.append(
+                [("" if str(val).lower() in ["nan", "none"] else val) for val in row]
+            )
+        return master_rows
+
+    def _update_pdl_ui(self, count: int):
+        """Ottimizza il layout della tabella."""
+        header = self.table.horizontalHeader()
+        for i in range(len(self.master_headers)):
+            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
+
+        self.table.resizeColumnsToContents()
+        # Limita larghezza colonne tranne descrizione
+        for i in range(len(self.master_headers)):
+            if i != 6 and header.sectionSize(i) > 200:
+                header.resizeSection(i, 200)
+
+        QTimer.singleShot(
+            10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+        )
+        if count < 500:
+            QTimer.singleShot(100, self.table.resizeRowsToContents)

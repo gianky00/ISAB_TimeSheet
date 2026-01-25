@@ -30,10 +30,17 @@ class CommandNode:
     # Se False, rimane aperta (utile per toggle rapidi).
     close_on_execute: bool = True
 
+    # --- INPUT MODE EXTENSION ---
+    # Lista di prompt per richiedere input sequenziali (es. ["Inserisci OdA", "Inserisci Pos"])
+    input_prompts: List[str] = field(default_factory=list)
+
+    # Callback eseguita al termine degli input. Riceve una lista di valori str.
+    on_input_complete: Optional[Callable[[List[str]], None]] = None
+
     @property
     def is_leaf(self) -> bool:
-        """Ritorna True se è un nodo finale eseguibile."""
-        return self.action is not None
+        """Ritorna True se è un nodo finale eseguibile (azione o input)."""
+        return self.action is not None or bool(self.input_prompts)
 
     def get_children(self) -> List["CommandNode"]:
         """Recupera i figli, gestendo anche i provider dinamici."""

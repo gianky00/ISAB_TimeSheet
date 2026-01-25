@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.gui.help_panel import HelpPanel
-from src.gui.lyra_panel import LyraPanel
-from src.gui.notifications_panel import NotificationsPanel
+from src.gui.panels.help_panel import HelpPanel
+from src.gui.panels.lyra_panel import LyraPanel
+from src.gui.panels.notifications_panel import NotificationsPanel
 
 
 class TestGUIPanelsExtended:
@@ -14,7 +14,7 @@ class TestGUIPanelsExtended:
 
     def test_lyra_panel_init(self, qtbot):
         with patch(
-            "src.gui.lyra_panel.SecretsManager.get_gemini_api_key",
+            "src.gui.panels.lyra_panel.SecretsManager.get_gemini_api_key",
             return_value="fake_key",
         ):
             panel = LyraPanel()
@@ -72,11 +72,6 @@ class TestGUIPanelsExtended:
             qtbot.addWidget(panel)
 
             # Mock the message box to avoid blocking
-            with patch("PyQt6.QtWidgets.QMessageBox.exec", return_value=None):
-                # Simulate "Sì" click
-                # Finding the "Sì" button is hard without real exec,
-                # so we just mock the manager call directly or the button logic
+            with patch("PyQt6.QtWidgets.QMessageBox.question", return_value=None):
                 panel.manager.clear_all = MagicMock()
-                # Instead of clicking (which opens dialog), we test the internal logic if possible
-                # or just ensure the button is connected.
                 assert panel.manager is not None

@@ -1,18 +1,9 @@
-import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QLabel
+from PyQt6.QtWidgets import QLabel
 
-from src.gui.dashboard_panel import DashboardPanel
+from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.widgets.activity_feed import ActivityFeed
 from src.gui.widgets.quick_actions import QuickActions
-
-
-@pytest.fixture(scope="session")
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
 
 
 class TestDashboardComponents:
@@ -62,12 +53,7 @@ class TestDashboardComponents:
         feed = ActivityFeed()
         feed.refresh_feed()
 
-        # Check presence of text
-        # Logic: "Test Action - Test Entity" or just "Test Action" if entity missing
-        # We expect "Test Action - Test Entity"
-
         all_labels_text = [lbl.text() for lbl in feed.findChildren(QLabel)]
-        # Filter for our action
         matching = [t for t in all_labels_text if "Test Action" in t]
         assert len(matching) > 0
         assert any("Test Entity" in t for t in matching)
@@ -109,7 +95,6 @@ class TestDashboardPanelFull:
         panel = DashboardPanel()
 
         # We simulate a "nav_page_2" (Lyra) click
-        # Need to ensure main window mock has _navigate_to
         mw_mock = mocker.Mock()
         mocker.patch.object(panel, "window", return_value=mw_mock)
 
@@ -129,7 +114,6 @@ class TestQuickActionsConfig:
 
         from src.gui.dialogs.quick_actions_config import QuickActionsConfigDialog
 
-        # Mock get_config_value with real keys from AVAILABLE_ACTIONS
         mocker.patch(
             "src.gui.dialogs.quick_actions_config.get_config_value",
             return_value=["nav_dettagli_oda"],
@@ -139,7 +123,6 @@ class TestQuickActionsConfig:
         dlg = QuickActionsConfigDialog()
         qtbot.addWidget(dlg)
 
-        # Helper to find item by key
         def find_item(key_to_find):
             iterator = QTreeWidgetItemIterator(dlg.tree)
             while iterator.value():
@@ -149,12 +132,12 @@ class TestQuickActionsConfig:
                 iterator += 1
             return None
 
-        # Check initial state (nav_dettagli_oda checked)
+        # Check initial state
         sync_item = find_item("nav_dettagli_oda")
         assert sync_item is not None
         assert sync_item.checkState(0) == Qt.CheckState.Checked
 
-        # Simulate user changing selection: Add nav_page_2 (Lyra)
+        # Simulate user selection
         lyra_item = find_item("nav_page_2")
         assert lyra_item is not None
         lyra_item.setCheckState(0, Qt.CheckState.Checked)
@@ -162,7 +145,7 @@ class TestQuickActionsConfig:
         # Accept dialog
         dlg.accept()
 
-        # Verify save called
+        # Verify save
         call_args = mock_set.call_args
         assert call_args[0][0] == "quick_actions"
         saved_list = call_args[0][1]

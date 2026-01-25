@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
-from src.gui.scarico_ore_components import DateFilterPopupWidget, ListFilterPopupWidget
+from src.gui.components.scarico_ore.filters.popup_date import DateFilterPopupWidget
+from src.gui.components.scarico_ore.filters.popup_list import ListFilterPopupWidget
 
 
 class TestMasterCoverage:

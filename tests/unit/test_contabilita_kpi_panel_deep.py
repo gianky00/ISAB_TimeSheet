@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
+from src.gui.panels.contabilita_kpi_panel import ContabilitaKPIPanel
 
 
 class TestContabilitaKPIPanelDeep:

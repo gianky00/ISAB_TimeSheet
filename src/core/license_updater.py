@@ -3,7 +3,6 @@ SyncroJob - LicenseUpdater
 Gestisce l'aggiornamento e la validazione della licenza.
 """
 
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
@@ -155,20 +154,18 @@ def check_emergency_grace_period():
     token_path = _get_emergency_grace_token_path()
     current_time, is_trusted = time_manager.get_trusted_time()
 
-    if not os.path.exists(token_path):
+    if not token_path.exists():
         try:
             cipher = Fernet(GRACE_PERIOD_KEY)
             encrypted_start = cipher.encrypt(current_time.isoformat().encode("utf-8"))
-            os.makedirs(os.path.dirname(token_path), exist_ok=True)
-            with open(token_path, "wb") as f:
-                f.write(encrypted_start)
+            token_path.parent.mkdir(parents=True, exist_ok=True)
+            token_path.write_bytes(encrypted_start)
             return True, "Periodo di grazia attivato (3 giorni)", 3
         except Exception as e:
             return False, f"Errore attivazione periodo di grazia: {e}", 0
 
     try:
-        with open(token_path, "rb") as f:
-            encrypted_data = f.read()
+        encrypted_data = token_path.read_bytes()
 
         cipher = Fernet(GRACE_PERIOD_KEY)
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
@@ -209,12 +206,12 @@ def is_running_from_source() -> bool:
 def is_license_folder_empty() -> bool:
     """Verifica se la cartella licenza è vuota o non esiste."""
     license_dir = get_license_dir()
-    if not os.path.exists(license_dir):
+    if not license_dir.exists():
         return True
 
-    config_dat = os.path.join(license_dir, "config.dat")
-    manifest_json = os.path.join(license_dir, "manifest.json")
-    return not (os.path.exists(config_dat) and os.path.exists(manifest_json))
+    config_dat = license_dir / "config.dat"
+    manifest_json = license_dir / "manifest.json"
+    return not (config_dat.exists() and manifest_json.exists())
 
 
 def run_update() -> bool:
@@ -244,9 +241,10 @@ def run_update() -> bool:
 
 def _ensure_license_dir(path: Union[str, Path]) -> bool:
     """Assicura l'esistenza della cartella licenza."""
-    if not os.path.exists(path):
+    path = Path(path)
+    if not path.exists():
         try:
-            os.makedirs(path)
+            path.mkdir(parents=True)
             print("[LICENZA] Cartella licenza creata")
         except OSError as e:
             print(f"[ERRORE] Creazione cartella licenza: {e}")

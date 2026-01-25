@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
 )
 
-from src.gui.contabilita_kpi_panel import ContabilitaKPIPanel
-from src.gui.contabilita_panel import ContabilitaPanel
+from src.gui.panels.contabilita_kpi_panel import ContabilitaKPIPanel
+from src.gui.panels.contabilita_panel import ContabilitaPanel
 
 
 class TestSprintCGUIDeep:

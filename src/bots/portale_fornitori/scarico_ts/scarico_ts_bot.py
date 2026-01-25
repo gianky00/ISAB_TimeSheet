@@ -3,7 +3,6 @@ SyncroJob - Scarico TS Bot
 Bot for downloading timesheets using Page Object Model.
 """
 
-import time
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -104,9 +103,6 @@ class ScaricaTSBot(BaseBot):
 
             if page.search_and_download(numero_oda, posizione_oda, download_dir):
                 success_count += 1
-
-            time.sleep(1)
-
         self.log("-" * 40)
         self.log(f"Completato: {success_count}/{len(rows)} download riusciti")
 
