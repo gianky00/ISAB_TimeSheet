@@ -34,15 +34,15 @@ def test_load_settings_data_filter(timbrature_db_panel, qtbot):
     ]
 
     # Filter OFF
-    panel.filter_empty_cb.setChecked(False)
-    panel._load_settings_data()
-    assert panel.settings_table.rowCount() == 2
+    panel.settings_tab.filter_empty_cb.setChecked(False)
+    panel.settings_tab.load_data()
+    assert panel.settings_tab.settings_table.rowCount() == 2
 
     # Filter ON
-    panel.filter_empty_cb.setChecked(True)
-    panel._load_settings_data()
-    assert panel.settings_table.rowCount() == 1  # Luca Bianchi (empty)
-    assert panel.settings_table.item(0, 0).text() == "Luca"
+    panel.settings_tab.filter_empty_cb.setChecked(True)
+    panel.settings_tab.load_data()
+    assert panel.settings_tab.settings_table.rowCount() == 1  # Luca Bianchi (empty)
+    assert panel.settings_tab.settings_table.item(0, 0).text() == "Luca"
 
 
 def test_employee_detail_update(timbrature_db_panel, qtbot):
@@ -50,18 +50,21 @@ def test_employee_detail_update(timbrature_db_panel, qtbot):
     panel.storage.get_employees.return_value = [
         {"nome": "Mario", "cognome": "Rossi", "reparto": "", "cantiere": ""}
     ]
+    # Mock lists in storage so load_data finds them
+    panel.storage.get_lists.return_value = {
+        "reparti": ["NUOVO_REPARTO"],
+        "cantieri": [],
+    }
 
-    # IMPORTANT: Pre-populate lists so setCurrentText works (Combo is not editable)
-    panel.reparti = ["NUOVO_REPARTO"]
-
-    panel._load_settings_data()
+    panel.settings_tab.load_data()
 
     # Get combo from table (Cell 0, 2 is Reparto)
-    combo_rep = panel.settings_table.cellWidget(0, 2)
+    combo_rep = panel.settings_tab.settings_table.cellWidget(0, 2)
     assert isinstance(combo_rep, QComboBox)
 
     # Trigger change
-    combo_rep.setCurrentText("NUOVO_REPARTO")
+    with qtbot.waitSignal(combo_rep.currentTextChanged, timeout=1000):
+        combo_rep.setCurrentText("NUOVO_REPARTO")
 
     # Verify call
     panel.storage.update_employee_details.assert_called_with(
@@ -78,8 +81,8 @@ def test_import_excel_manually_success(timbrature_db_panel, qtbot, mocker):
     panel.storage.import_excel.return_value = True
 
     with (
-        patch("src.gui.panels.AuditManager"),
-        patch("src.gui.panels.ToastManager.instance") as mock_toast,
+        patch("src.core.audit_manager.AuditManager"),
+        patch("src.gui.widgets.toast.ToastManager.instance") as mock_toast,
     ):
         panel._import_excel_manually()
         assert panel.storage.import_excel.called
@@ -94,24 +97,23 @@ def test_import_excel_manually_fail(timbrature_db_panel, qtbot, mocker):
     )
     panel.storage.import_excel.return_value = False
 
-    with patch("src.gui.panels.ToastManager.instance") as mock_toast:
+    with patch("src.gui.widgets.toast.ToastManager.instance") as mock_toast:
         panel._import_excel_manually()
         mock_toast.return_value.show.assert_called_with(ANY, "error")
 
 
 def test_update_combo_boxes(timbrature_db_panel, qtbot):
     panel = timbrature_db_panel
-    panel.lists = {"reparti": ["R1"], "cantieri": ["C1"]}
-    panel._update_combo_boxes()
+    panel.storage.get_lists.return_value = {"reparti": ["R1"], "cantieri": ["C1"]}
+    panel._update_filter_combos()
 
     assert panel.reparto_filter.count() == 2  # Tutti + R1
     assert panel.cantiere_filter.count() == 2  # Tutti + C1
 
 
-@patch("src.gui.panels.QDialog.exec")
-@patch("src.gui.panels.QInputDialog.getText")
+@patch("PyQt6.QtWidgets.QDialog.exec")
+@patch("PyQt6.QtWidgets.QInputDialog.getText")
 def test_manage_list_add_item(mock_get_text, mock_exec, timbrature_db_panel, qtbot):
-    panel = timbrature_db_panel
-    panel.lists = {"reparti": []}
-    mock_get_text.return_value = ("NEW_ITEM", True)
-    panel._manage_list("reparti", "Titolo")
+    # Nota: _manage_list è stato rimosso in favore delle impostazioni generali.
+    # Questo test è obsoleto per TimbratureDBPanel ma lo manteniamo come stub se necessario.
+    pass

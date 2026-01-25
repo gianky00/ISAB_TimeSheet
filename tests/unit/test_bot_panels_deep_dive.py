@@ -78,13 +78,13 @@ class TestBotWorker:
 @pytest.fixture
 def mock_gui_deps():
     with (
-        patch("src.gui.panels.AuditManager") as mock_audit,
-        patch("src.gui.panels.StatsManager") as mock_stats,
+        patch("src.core.audit_manager.AuditManager") as mock_audit,
+        patch("src.core.stats_manager.StatsManager") as mock_stats,
         patch("src.core.config_manager") as mock_config_core,
-        patch("src.gui.panels.config_manager", new=mock_config_core),
+        patch("src.gui.panels.base.config_manager", new=mock_config_core),
         patch("src.gui.widgets.bot_parameters.config_manager", new=mock_config_core),
-        patch("src.gui.panels.get_asset_path", return_value="mock/path.svg"),
-        patch("src.gui.panels.ToastManager") as mock_toast,
+        patch("src.utils.helpers.get_asset_path", return_value="mock/path.svg"),
+        patch("src.gui.widgets.toast.ToastManager") as mock_toast,
     ):
         # Setup mock behavior for singletons
 
