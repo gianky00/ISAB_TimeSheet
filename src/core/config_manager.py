@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 from platformdirs import user_data_dir
 
 from src.core.secrets_manager import SecretsManager
+from src.core.version import __version__
 
 # Path del file di configurazione
 # STANDARD DEFINITIVO: %LOCALAPPDATA%\SyncroJob
@@ -27,6 +28,10 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 _config_cache: Optional[Dict[str, Any]] = None
 _config_lock = threading.RLock()  # Lock per accesso thread-safe
+
+def get_version() -> str:
+    """Restituisce la versione corrente dell'applicazione."""
+    return __version__
 
 # Configurazione di default
 DEFAULT_CONFIG: Dict[str, Any] = {

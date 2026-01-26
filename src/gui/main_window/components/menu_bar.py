@@ -8,15 +8,8 @@ from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from src.core.config_manager import get_data_path, get_logs_path
 from src.core.constants import Icons
 from src.gui.controllers.command_registry import CommandNode
+from src.gui.dialogs.bug_report_dialog import BugReportDialog
 from src.gui.dialogs.command_palette import CommandPaletteDialog
-
-# Assuming PageIndex is needed, we should probably import it or use ints if we want to decouple
-# But PageIndex is defined in main_window_monolith.py. We should probably move PageIndex to a shared constants file or keep it in the new main.py and import it.
-# To avoid circular imports, let's assume PageIndex is passed or available via main_window (bad practice) or we define it in a new util file.
-# For now, I will NOT import PageIndex but use it dynamically or simpler: define it here if needed or import from a new place.
-# Actually PageIndex is an IntEnum. I should probably move it to `src/gui/constants.py` or similar.
-# For this refactor, I'll extract PageIndex to `src/gui/main_window/page_index.py` (new file) to be safe.
-
 
 class MenuBarComponent(QObject):
     def __init__(self, main_window):
@@ -24,13 +17,36 @@ class MenuBarComponent(QObject):
         self.main_window = main_window
         self.command_palette = None
         self._last_palette_toggle = 0
+        self._bug_dialog = None
         self._setup_shortcuts()
+
+    def open_bug_report_dialog(self):
+        """Apre il dialogo per la segnalazione di bug."""
+        try:
+            self._bug_dialog = BugReportDialog(self.main_window)
+            self._bug_dialog.show()
+        except Exception as e:
+            print(f"Error opening bug report dialog: {e}")
+            if hasattr(self.main_window, "show_toast"):
+                self.main_window.show_toast(f"Errore apertura segnalazione: {e}", "error")
 
     def _setup_shortcuts(self):
         # Shortcut per Command Palette (Spotlight)
         self.shortcut_palette = QShortcut(QKeySequence("Ctrl+K"), self.main_window)
         self.shortcut_palette.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette.activated.connect(self.open_command_palette)
+
+        # Fallback Shortcut (Ctrl+Shift+P) per conflitti
+        self.shortcut_palette_sec = QShortcut(
+            QKeySequence("Ctrl+Shift+P"), self.main_window
+        )
+        self.shortcut_palette_sec.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self.shortcut_palette_sec.activated.connect(self.open_command_palette)
+
+        # Fallback Shortcut (F1)
+        self.shortcut_palette_f1 = QShortcut(QKeySequence("F1"), self.main_window)
+        self.shortcut_palette_f1.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self.shortcut_palette_f1.activated.connect(self.open_command_palette)
 
     def open_command_palette(self):
         """Apre o chiude la Command Palette (Spotlight) con animazione e debouncing."""
@@ -46,6 +62,8 @@ class MenuBarComponent(QObject):
             self.command_palette.hide_animated()
         elif self.command_palette:
             self.command_palette.show_animated()
+            # Optional: Toast per confermare l'apertura se in debug mode, ma meglio evitare spam
+            # self.main_window.show_toast("Palette Aperta", "info", 1000)
 
     def _init_palette(self):
         try:
@@ -302,11 +320,9 @@ class MenuBarComponent(QObject):
                 ),
                 CommandNode(
                     "Segnala Bug",
-                    "GitHub Issues",
+                    "Invia Report con Outlook",
                     Icons.ALERT_TRIANGLE,
-                    action=lambda: QDesktopServices.openUrl(
-                        QUrl("https://github.com/gianky00/ISAB_TimeSheet/issues")
-                    ),
+                    action=self.open_bug_report_dialog,
                 ),
             ],
         )
