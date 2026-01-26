@@ -61,8 +61,10 @@ class TestBotTimingSequences:
         mock_scarico_bot.long_wait.until.return_value = mock_el
 
         with (
-            patch("time.sleep") as mock_sleep,
-            patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay") as mock_wait_overlay,
+            patch("time.sleep"),
+            patch.object(
+                ScaricaTSBot, "_attendi_scomparsa_overlay"
+            ) as mock_wait_overlay,
         ):
             with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains"):
                 mock_scarico_bot._setup_filters()
@@ -76,10 +78,10 @@ class TestBotTimingSequences:
         with patch("time.sleep") as mock_sleep:
             # Setup driver/wait mock per arrivare allo sleep
             mock_safework_bot.wait.until.return_value = MagicMock()
-            
+
             # Eseguiamo solo il metodo di ricerca che contiene lo sleep di 0.5s
             mock_safework_bot._esegui_ricerca_pdl("123456/S")
-            
+
             calls = [c.args[0] for c in mock_sleep.call_args_list]
             assert 0.5 in calls
 
@@ -90,7 +92,7 @@ class TestBotTimingSequences:
         )
 
         with (
-            patch("time.sleep") as mock_sleep,
+            patch("time.sleep"),
             patch.object(TimbraturePage, "_wait_for_overlay") as mock_wait_overlay,
         ):
             page = TimbraturePage(mock_timbrature_bot.driver)
@@ -114,7 +116,7 @@ class TestBotTimingSequences:
         )
 
         with (
-            patch("time.sleep") as mock_sleep,
+            patch("time.sleep"),
             patch.object(TimbraturePage, "_wait_for_overlay") as mock_wait_overlay,
         ):
             page = TimbraturePage(mock_timbrature_bot.driver)

@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -33,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 def wait_for_overlay_to_disappear(
     driver: WebDriver,
-    locator: Tuple[By, str],
+    locator: Tuple[str, str],
     timeout: int = 30,
 ) -> bool:
     """
@@ -85,7 +84,7 @@ def wait_for_element_staleness(
 
 def wait_for_element_clickable(
     driver: WebDriver,
-    locator: Tuple[By, str],
+    locator: Tuple[str, str],
     timeout: int = 10,
 ) -> Optional[WebElement]:
     """
@@ -224,7 +223,7 @@ class element_text_changes:
         >>> wait.until(element_text_changes((By.ID, "counter"), "0"))
     """
 
-    def __init__(self, locator: Tuple[By, str], initial_text: str):
+    def __init__(self, locator: Tuple[str, str], initial_text: str):
         self.locator = locator
         self.initial_text = initial_text
 
@@ -270,7 +269,7 @@ class element_count_is:
 
     def __init__(
         self,
-        locator: Tuple[By, str],
+        locator: Tuple[str, str],
         exact_count: Optional[int] = None,
         min_count: Optional[int] = None,
         max_count: Optional[int] = None,
@@ -303,7 +302,7 @@ class element_count_is:
 
 def safe_click_with_retry(
     driver: WebDriver,
-    locator: Tuple[By, str],
+    locator: Tuple[str, str],
     timeout: int = 10,
     retries: int = 3,
     retry_delay: float = 0.5,
@@ -345,7 +344,7 @@ def safe_click_with_retry(
 def execute_with_wait(
     action: Callable[[], None],
     driver: WebDriver,
-    wait_locator: Optional[Tuple[By, str]] = None,
+    wait_locator: Optional[Tuple[str, str]] = None,
     wait_timeout: int = 10,
 ) -> bool:
     """
