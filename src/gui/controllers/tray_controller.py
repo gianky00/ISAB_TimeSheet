@@ -2,7 +2,7 @@
 Controller per la gestione della System Tray Icon.
 """
 
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from src.core.constants import Icons
@@ -21,7 +21,7 @@ class TrayController:
         """Configura l'icona nella system tray."""
         icon_path = get_app_icon_path()
         if icon_path:
-            self.tray_icon.setIcon(get_colored_icon(icon_path, "#000000"))
+            self.tray_icon.setIcon(QIcon(icon_path))
 
         # Tray Menu
         tray_menu = QMenu()
