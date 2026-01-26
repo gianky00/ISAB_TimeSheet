@@ -1,4 +1,0 @@
-# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\core\license_validator.py
-# hypothesis_version: 6.150.2
-
-[4096, '--nodeps', '-Command', '-NoProfile', '-n', '-o', '.', '..', '/', '/etc/machine-id', 'Cliente', 'ERROR_GETTING_ID', 'Error', 'Expired', 'File Config', 'Grace', 'Hardware ID', 'Invalid', 'Licenza', 'Linux', 'Mismatch Hardware', 'Missing', 'N/D', 'Scadenza Licenza', 'UNKNOWN', 'Utente', 'Valid', 'Violazione Licenza', 'Windows', 'atteso', 'config', 'config.dat', 'dir', 'diskdrive', 'error', 'frozen', 'get', 'high', 'lsblk', 'manifest', 'manifest.json', 'powershell', 'r', 'rb', 'rilevato', 'serial', 'serialnumber', 'sicurezza', 'utf-8', 'wmic']

@@ -1,4 +1,0 @@
-# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\bots\portale_fornitori\timbrature\storage.py
-# hypothesis_version: 6.150.2
-
-[500, ' AND ', ' WHERE ', '%Y-%m-%d', '/', 'ANALISI', 'CANTIERE', 'Cognome Risorsa', 'Data Timbratura', 'ELETTRICO', 'Nome Risorsa', 'Ora Ingresso', 'Ora Uscita', 'STRUMENTALE', 'Sito Timbratura', 'Tutti', 'added', 'cantiere', 'cantieri', 'cognome', 'data', 'employee_mappings', 'ingresso', 'nome', 'openpyxl', 'presenza_ts', 'r', 'reparti', 'reparto', 'sito_timbratura', 'skipped', 'timbrature_Isab.db', 'uscita', 'utf-8']

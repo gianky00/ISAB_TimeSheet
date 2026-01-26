@@ -1,43 +1,78 @@
+# Python internals
 __pycache__/
 *.pyc
-data/
-config.json
-database.db
-*.spec
-dist/
-build/
-.venv/
+*.pyo
+*.pyd
+.python-version
+
+# Virtual Environments
 venv/
-/admin/Crea Setup/Setup
+.venv/
+env/
+
+# Environment Variables
 .env
+.env.*
 
-# Coverage reports
+# Distribution / Packaging
+build/
+dist/
+*.spec
+*.egg-info/
+.eggs/
+*.manifest
+
+# Testing & Coverage
 .coverage
+.coverage.*
 htmlcov/
-
-# Log files
-*.log
-.aider*
-/.mypy_cache
-/.ruff_cache
-/.pytest_cache
+.pytest_cache/
 .hypothesis/
+.mypy_cache/
+.ruff_cache/
+# reports/ # User seems to keep reports, uncomment if you want to ignore them
 
-# Temp/Dev files
-temp/
+# Logs and debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+build_log.txt
+profiling_report.html
+
+# Database & Config
+data/
+database.db
 test.db
+config.json
+secrets.json
+
+# IDE / Editors
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific / Temp
+temp/
+tmp/
+*.pkl
 test_cache.pkl
 .test_session_state.json
-*.pkl
-claude/risolvere footer.json
-site/
-profiling_report.html
 architecture.png
+/admin/Crea Setup/Setup
 /file excel
 node_modules/
-reports/
-build_log.txt
 Autorizzati ISAB.xlsx
-/src/core/importers/__pycache__
-/src/core/importers/__pycache__
-/src/core/importers/__pycache__
+claude/
+.aider*
+site/
