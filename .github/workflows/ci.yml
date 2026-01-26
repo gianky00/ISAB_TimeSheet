@@ -1,54 +1,71 @@
-name: SyncroJob CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: ["master", "main", "develop", "refactor-palette"]
+    branches: [ master, main, Refactor-CI-git ]
   pull_request:
-    branches: ["master", "main"]
-
-permissions:
-  contents: read
+    branches: [ master, main, Refactor-CI-git ]
 
 jobs:
   test:
-    name: Verification (Windows)
+    name: Test & Quality Check
     runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
 
-      - name: Setup Poetry Cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-      - name: Install dependencies
-        run: poetry install
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
 
-      - name: Environment Preparation
-        run: |
-          New-Item -ItemType Directory -Force -Path data, temp, logs
-          echo "Environment ready for testing"
+    - name: Install project
+      run: poetry install --no-interaction
 
-      - name: Quality Check (Informative)
-        run: |
-          poetry run ruff check .
-          poetry run mypy src/core
-        continue-on-error: true
+    # Linting & Static Analysis (Must Pass)
+    - name: Run Ruff (Linting)
+      run: poetry run ruff check .
 
-      - name: Run Unit Tests
-        run: |
-          poetry run pytest tests/unit -v
+    - name: Run Mypy (Type Checking)
+      run: poetry run mypy .
+
+    # Testing Strategy:
+    # 1. We skip 'gui' and 'integration' markers on CI if they are unstable without a display.
+    #    However, since we are on 'windows-latest', basic GUI tests *might* work if they don't require
+    #    interaction.
+    # 2. We explicitly use 'headless' mode for any Selenium logic.
+    # 3. We use pytest-qt's off-screen rendering capabilities where possible.
+
+    - name: Run Tests (Unit)
+      env:
+        CI: "true"
+        QT_QPA_PLATFORM: "offscreen" # Crucial for Qt on CI/Headless
+      run: |
+        poetry run pytest -m "not slow and not integration" --cov=src --cov-report=xml
+
+    # Optional: Upload coverage
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false

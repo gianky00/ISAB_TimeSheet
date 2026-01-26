@@ -44,7 +44,7 @@ def test_scarica_ts_panel_deep(qtbot, mock_ui_deps):
 
     # Test validation
     # Case 1: Empty OdA
-    with patch("src.gui.panels.QMessageBox.warning"):
+    with patch("PyQt6.QtWidgets.QMessageBox.warning"):
         ready, msg = panel.validate_ready()
         assert ready is False
         assert "OdA" in msg
@@ -81,7 +81,7 @@ def test_dettagli_oda_panel_deep(qtbot, mock_ui_deps):
     assert panel.data_table.get_data()[0]["numero_oda"] == "999"
 
 
-@patch("src.gui.panels.BotWorker")
+@patch("src.gui.panels.scarico_ts.BotWorker")
 def test_bot_worker_integration(mock_worker_cls, qtbot, mock_ui_deps):
     panel = ScaricaTSPanel()
     qtbot.addWidget(panel)

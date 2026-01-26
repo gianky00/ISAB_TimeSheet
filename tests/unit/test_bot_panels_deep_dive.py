@@ -78,13 +78,15 @@ class TestBotWorker:
 @pytest.fixture
 def mock_gui_deps():
     with (
-        patch("src.gui.panels.AuditManager") as mock_audit,
-        patch("src.gui.panels.StatsManager") as mock_stats,
+        patch("src.gui.panels.base.AuditManager") as mock_audit,
+        patch("src.gui.panels.base.StatsManager") as mock_stats,
         patch("src.core.config_manager") as mock_config_core,
-        patch("src.gui.panels.config_manager", new=mock_config_core),
+        patch("src.gui.panels.base.config_manager", new=mock_config_core),
+        patch("src.gui.panels.scarico_ts.config_manager", new=mock_config_core),
+        patch("src.gui.panels.timbrature_bot.config_manager", new=mock_config_core),
         patch("src.gui.widgets.bot_parameters.config_manager", new=mock_config_core),
-        patch("src.gui.panels.get_asset_path", return_value="mock/path.svg"),
-        patch("src.gui.panels.ToastManager") as mock_toast,
+        patch("src.utils.helpers.get_asset_path", return_value="mock/path.svg"),
+        patch("src.gui.widgets.toast.ToastManager") as mock_toast,
     ):
         # Setup mock behavior for singletons
 
@@ -295,7 +297,7 @@ class TestScaricoPDLPanel:
 
 class TestTimbratureDBPanel:
     def test_refresh_data(self, qapp, qtbot, mock_gui_deps):
-        with patch("src.gui.panels.TimbratureStorage") as mock_storage:
+        with patch("src.gui.panels.timbrature.panel.TimbratureStorage") as mock_storage:
             mock_storage.return_value.get_timbrature_with_reparto.return_value = [
                 # 18 columns required (0-17)
                 (

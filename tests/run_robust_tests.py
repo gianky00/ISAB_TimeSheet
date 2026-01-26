@@ -203,13 +203,19 @@ class TestRunner:
             if self.failed_tests:
                 f.write("## ❌ Failures Details\n")
                 for item in self.failed_tests:
-                    f.write(f"### `{item['id']}`\n")
-                    f.write(f"**Error:** `{item.get('error', 'Unknown')}`\n\n")
-                    f.write("<details><summary>Full Output</summary>\n\n")
-                    f.write("```text\n")
-                    f.write(item.get("full_output", "No output captured"))
-                    f.write("\n```\n")
-                    f.write("</details>\n\n")
+                    if isinstance(item, dict):
+                        f.write(f"### `{item.get('id', 'Unknown')}`\n")
+                        f.write(f"**Error:** `{item.get('error', 'Unknown')}`\n\n")
+                        f.write("<details><summary>Full Output</summary>\n\n")
+                        f.write("```text\n")
+                        f.write(item.get("full_output", "No output captured"))
+                        f.write("\n```\n")
+                        f.write("</details>\n\n")
+                    else:
+                        f.write(f"### `{item}`\n")
+                        f.write(
+                            "**Error:** `Dettagli non disponibili (ripreso da stato precedente)`\n\n"
+                        )
                     f.write("---\n")
             else:
                 f.write("## ✅ All Tests Passed!\n")
@@ -432,11 +438,16 @@ class TestRunner:
             {"id": nid, "error": error_msg, "log": full_log, "full_output": full_log}
         )
 
-        if getattr(self, "exitfirst", False):
-            Console.error("\n⛔ EXITFIRST: Test fallito. Interruzione immediata.")
-            self.save_state()
-            self.generate_report()
-            sys.exit(1)
+        # Salvataggio immediato e generazione report ad ogni fail
+        self.save_state()
+        self.generate_report()
+
+        # Interruzione immediata ad ogni fallimento come richiesto
+        Console.error(f"\n🛑 Test Fallito: {nid}")
+        Console.error(
+            "Interruzione automatica per permettere la correzione. Il prossimo avvio riprenderà da questo file."
+        )
+        sys.exit(1)
 
     def _extract_error_message(self, lines):
         """Estrae un messaggio di errore significativo dalle ultime righe del log."""

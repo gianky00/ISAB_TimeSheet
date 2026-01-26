@@ -1,4 +1,0 @@
-# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\core\audit_manager.py
-# hypothesis_version: 6.150.2
-
-[200, 256, '-', '0', 'Audit Database', 'Sistema', 'TEXT', "TEXT DEFAULT 'low'", 'USER', 'USERNAME', 'audit_log.db', 'clean_days', 'data', 'entity', 'error', 'general', 'high', 'info', 'low', 'mantenimento', 'medium', 'none', 'nt', 'nuova', 'params', 'righe', 'row_hash', 'severity', 'success', 'unknown', 'user_id', 'warning', '{}']

@@ -22,6 +22,9 @@ class AppInitializer:
     @staticmethod
     def initialize():
         """Esegue tutti i controlli necessari prima di mostrare la GUI."""
+        # 0. Setup Logging (CRITICAL: Prima di tutto il resto)
+        AppInitializer._setup_logging()
+
         # 1. Licenza
         if not AppInitializer._check_license():
             sys.exit(1)
@@ -34,6 +37,43 @@ class AppInitializer:
         AppInitializer._init_telegram_security()
 
         return True
+
+    @staticmethod
+    def _setup_logging():
+        """Configura il logging su file rotativo."""
+        from logging.handlers import RotatingFileHandler
+        from pathlib import Path
+        from src.core import config_manager
+
+        log_dir = Path(config_manager.get_logs_path())
+        log_file = log_dir / "application.log"
+
+        # Formatter
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+
+        # Handler Rotativo (5MB x 3 backup)
+        handler = RotatingFileHandler(
+            log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+        )
+        handler.setFormatter(formatter)
+
+        # Root Logger config
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.INFO)
+        
+        # Evita duplicati se reload
+        if not any(isinstance(h, RotatingFileHandler) for h in root_logger.handlers):
+            root_logger.addHandler(handler)
+            logger.info(f"Logging inizializzato su: {log_file}")
+        
+        # Console Handler (opzionale, se non c'è già)
+        if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+            console = logging.StreamHandler()
+            console.setFormatter(formatter)
+            root_logger.addHandler(console)
+
 
     @staticmethod
     def _init_telegram_security():

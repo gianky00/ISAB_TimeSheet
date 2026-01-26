@@ -1,4 +1,0 @@
-# file: C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\src\bots\safework\pdl\bot.py
-# hypothesis_version: 6.150.2
-
-[0.5, 400000, '%H:%M:%S', '%d-%m-%Y_%H-%M', '*.crdownload', '*.pdf', '/C', '/S', '0', 'Apertura URL', 'Attesa post-login', '_clean.pdf', 'a', 'appItaliano', 'btnAnteprima', 'btnLogin', 'btnPrintPS', 'fldRicercaPdLVeloce', 'inpPassword', 'inpUtente', 'lblPAFoglio', 'log_file', 'logs', 'merge_all_session', 'numPermessiTrovati', 'numero_pdl', "p[idtxt='1C51D77B']", 'pdl_bot_debug.TXT', 'pdl_number', 'print_enabled', 'printer_name', 'rbStampaTutte', 'scarico_pdl', 'utf-8', 'w', '❌ Lista dati vuota.']

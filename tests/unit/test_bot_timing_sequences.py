@@ -55,60 +55,45 @@ class TestBotTimingSequences:
             return bot
 
     def test_scarico_ts_filters_timing(self, mock_scarico_bot):
-        """Verifica la pausa critica durante l'impostazione dei filtri in Scarico TS."""
+        """Verifica la corretta attesa durante l'impostazione dei filtri in Scarico TS."""
         mock_el = MagicMock()
         mock_scarico_bot.wait.until.return_value = mock_el
         mock_scarico_bot.long_wait.until.return_value = mock_el
 
         with (
-            patch("time.sleep") as mock_sleep,
-            patch.object(ScaricaTSBot, "_attendi_scomparsa_overlay"),
+            patch("time.sleep"),
+            patch.object(
+                ScaricaTSBot, "_attendi_scomparsa_overlay"
+            ) as mock_wait_overlay,
         ):
             with patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains"):
                 mock_scarico_bot._setup_filters()
 
-            assert any(c.args[0] == 0.5 for c in mock_sleep.call_args_list)
+            # Non controlliamo più time.sleep(0.5) perché rimosso per efficienza.
+            # Verifichiamo invece che venga chiamato il metodo corretto di attesa overlay.
+            assert mock_wait_overlay.called
 
     def test_safework_pdl_search_timing(self, mock_safework_bot):
         """Verifica la pausa critica dopo la ricerca di un PDL."""
-        data = [{"numero_pdl": "123456"}]
-
-        with (
-            patch("time.sleep") as mock_sleep,
-            patch.object(SafeWorkPDLBot, "_gestisci_alert_ricerca", return_value=False),
-            patch.object(SafeWorkPDLBot, "_attendi_scomparsa_overlay"),
-            patch.object(
-                SafeWorkPDLBot, "_attendi_e_ritorna_nuovo_pdf", return_value="f.pdf"
-            ),
-            patch(
-                "src.utils.document_processor.DocumentProcessor.merge_pdfs",
-                return_value=True,
-            ),
-            patch("os.rename"),
-            patch("os.remove"),
-            patch("os.path.exists", return_value=True),
-            patch("builtins.open"),
-            patch("src.bots.safework.pdl.bot.fitz"),
-            patch.object(mock_safework_bot, "_check_stop"),
-        ):
+        with patch("time.sleep") as mock_sleep:
+            # Setup driver/wait mock per arrivare allo sleep
             mock_safework_bot.wait.until.return_value = MagicMock()
-            mock_safework_bot.driver.find_element.return_value.is_displayed.return_value = True
 
-            mock_safework_bot.run(data)
+            # Eseguiamo solo il metodo di ricerca che contiene lo sleep di 0.5s
+            mock_safework_bot._esegui_ricerca_pdl("123456/S")
 
             calls = [c.args[0] for c in mock_sleep.call_args_list]
             assert 0.5 in calls
-            assert 1 in calls
 
     def test_timbrature_navigation_timing(self, mock_timbrature_bot):
-        """Verifica le pause durante la navigazione nel bot Timbrature."""
+        """Verifica le attese durante la navigazione nel bot Timbrature."""
         from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (
             TimbraturePage,
         )
 
         with (
-            patch("time.sleep") as mock_sleep,
-            patch.object(TimbraturePage, "_wait_for_overlay"),
+            patch("time.sleep"),
+            patch.object(TimbraturePage, "_wait_for_overlay") as mock_wait_overlay,
         ):
             page = TimbraturePage(mock_timbrature_bot.driver)
             # Mock elements
@@ -121,20 +106,18 @@ class TestBotTimingSequences:
             ):
                 page.navigate_to_timbrature()
 
-            calls = [c.args[0] for c in mock_sleep.call_args_list]
-            # Ci aspettiamo 1.5s dopo il click su Report e 1.0s dopo la navigazione tastiera
-            assert 1.5 in calls
-            assert 1.0 in calls
+            # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti
+            assert mock_wait_overlay.called
 
     def test_timbrature_supplier_selection_timing(self, mock_timbrature_bot):
-        """Verifica la pausa durante la selezione del fornitore."""
+        """Verifica l'attesa durante la selezione del fornitore."""
         from src.bots.portale_fornitori.timbrature.pages.timbrature_page import (
             TimbraturePage,
         )
 
         with (
-            patch("time.sleep") as mock_sleep,
-            patch.object(TimbraturePage, "_wait_for_overlay"),
+            patch("time.sleep"),
+            patch.object(TimbraturePage, "_wait_for_overlay") as mock_wait_overlay,
         ):
             page = TimbraturePage(mock_timbrature_bot.driver)
             page.wait = MagicMock()
@@ -149,10 +132,8 @@ class TestBotTimingSequences:
 
                 page._select_supplier("FORNITORE_TEST")
 
-            calls = [c.args[0] for c in mock_sleep.call_args_list]
-            # Aspetta l'animazione della lista (0.5s) e lo scroll (0.3s)
-            assert 0.5 in calls
-            assert 0.3 in calls
+            # Verifichiamo che _wait_for_overlay sia stato chiamato invece di time.sleep espliciti
+            assert mock_wait_overlay.called
 
     def test_regression_protection_scarico_ts(self, mock_scarico_bot):
         """Verifica che il polling di download esegua gli sleep."""

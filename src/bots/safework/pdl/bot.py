@@ -349,6 +349,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.driver.execute_script("window.scrollTo(0, 0);")
         ts = time.time()
 
+        # Assicura che la "Parte Seconda" sia espansa/visibile
+        self._espandi_parte_seconda()
+
         try:
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnPrintPS"))).click()
             # No sleep needed: _gestisci_dialogo_stampa_tutte() checks visibility
@@ -375,14 +378,42 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             return False
         assert self.driver and self.wait
         try:
+            # Se la sezione non è visibile, prova ad aprirla
             if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
+                self.log("📂 Tentativo espansione accordion 'Parte Seconda'...")
+                clicked = False
+                
+                # Strategia 1: ID Label
                 try:
                     self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
+                    clicked = True
                 except Exception:
-                    self.driver.find_element(
-                        By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
-                    ).click()
+                    pass
+
+                # Strategia 2: Testo XPATH
+                if not clicked:
+                    try:
+                        self.driver.find_element(
+                            By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
+                        ).click()
+                        clicked = True
+                    except Exception:
+                        pass
+                
+                # Strategia 3: User Specific IDTXT (2E20B56F)
+                if not clicked:
+                    try:
+                        self.driver.find_element(
+                            By.CSS_SELECTOR, "span[idtxt='2E20B56F']"
+                        ).click()
+                        self.log("✓ Aperto tramite idtxt='2E20B56F'")
+                        clicked = True
+                    except Exception:
+                        pass
+
                 # No sleep needed: next wait guarantees visibility
+            
+            # Attesa conferma visibilità
             self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
             return True
         except Exception as e:
@@ -408,9 +439,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             )
             btn_anteprima.click()
             self.log("✓ Cliccato su 'Anteprima'")
-        except Exception as e:
-            # Il dialogo potrebbe non apparire sempre, quindi non logghiamo errore
-            self.log(f"ℹ️ Dialogo 'Stampa Tutte' non presente o già gestito: {e}")
+        except Exception:
+            # Il dialogo non appare quando c'è solo 1 rinnovo
+            self.log("ℹ️ PDL con 1 rinnovo, dialogo non necessario")
             pass
 
     def _unisci_e_stampa_pdl(self, pdl_num, p1, p2, item, all_paths) -> bool:
@@ -531,7 +562,20 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 if btn_ok.is_displayed():
                     self.log("🖱️ Clic su OK per chiudere alert.")
                     btn_ok.click()
-                    # No sleep needed: return immediately after click
+                    
+                    # CRITICAL FIX: Attendi che il modal scompaia completamente
+                    # per evitare ElementClickInterceptedException
+                    try:
+                        WebDriverWait(self.driver, 5).until(
+                            EC.invisibility_of_element_located(
+                                (By.XPATH, "//div[contains(@class, 'modal') and contains(@class, 'in')]")
+                            )
+                        )
+                        self.log("✓ Modal dialog chiuso completamente")
+                    except Exception:
+                        # Fallback: sleep breve se wait fallisce
+                        time.sleep(0.5)
+                    
                     return True
             except Exception:
                 pass
