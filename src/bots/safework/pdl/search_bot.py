@@ -213,19 +213,25 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return None
         try:
             self.log(f"📥 Esportazione Excel per {site_name}...")
-            ts_start = time.time()
+            self.log(f"🔎 DEBUG: Attendo file in: '{self.download_path}'")
+            # Use helper for efficient polling
+            from pathlib import Path
+            from src.bots.base.wait_helpers import poll_for_new_file
+
+            # 1. Snapshot dei file PRE-CLICK (per rilevare il delta)
+            # Questo approccio è immune a problemi di timestamp del server
+            download_dir = Path(self.download_path)
+            files_before = {str(f.resolve()) for f in download_dir.glob("*") if f.is_file()}
+
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnEsporta"))).click()
 
-            # Use helper for efficient polling
-            from src.bots.base.wait_helpers import poll_for_file
-
-            latest_file = poll_for_file(
+            # 2. Attesa NUOVO file (Delta)
+            latest_file = poll_for_new_file(
                 directory=self.download_path,
+                files_before=files_before,
                 pattern="Ricerca*.xlsx",
                 timeout=600,
                 poll_interval=1.0,
-                min_age=ts_start,
-                exclude_patterns=[".crdownload"],
             )
             return latest_file
         except Exception as e:
