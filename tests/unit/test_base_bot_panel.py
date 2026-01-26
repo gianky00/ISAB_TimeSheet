@@ -21,16 +21,17 @@ class TestBaseBotPanel:
 
         # Patch core managers and UI components globally for this test class
         # CRITICAL: We patch layout methods to allow MagicMocks without TypeError
-        with patch("src.gui.panels.base.AuditManager"), patch(
-            "src.gui.panels.base.StatsManager"
-        ), patch("src.gui.panels.base.StatusCard"), patch(
-            "src.gui.panels.base.TimelineWidget"
-        ), patch("src.gui.panels.base.ModernButton") as mock_btn_class, patch(
-            "src.gui.panels.base.get_asset_path", return_value="mock.svg"
-        ), patch("src.gui.panels.base.config_manager"), patch.object(
-            QVBoxLayout, "addWidget"
-        ), patch.object(QHBoxLayout, "addWidget"), patch.object(
-            QVBoxLayout, "addLayout"
+        with (
+            patch("src.gui.panels.base.AuditManager"),
+            patch("src.gui.panels.base.StatsManager"),
+            patch("src.gui.panels.base.StatusCard"),
+            patch("src.gui.panels.base.TimelineWidget"),
+            patch("src.gui.panels.base.ModernButton") as mock_btn_class,
+            patch("src.gui.panels.base.get_asset_path", return_value="mock.svg"),
+            patch("src.gui.panels.base.config_manager"),
+            patch.object(QVBoxLayout, "addWidget"),
+            patch.object(QHBoxLayout, "addWidget"),
+            patch.object(QVBoxLayout, "addLayout"),
         ):
             # Setup ModernButton mock
             self.mock_start_btn = MagicMock(spec=QPushButton)

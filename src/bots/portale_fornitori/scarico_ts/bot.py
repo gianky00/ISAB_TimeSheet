@@ -359,7 +359,7 @@ class ScaricaTSBot(BaseBot):
                 new_files = current_files - files_before
                 if new_files:
                     return max(list(new_files), key=lambda f: f.stat().st_mtime)
-            
+
             time.sleep(0.5)
         return None
 

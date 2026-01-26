@@ -56,9 +56,12 @@ def audit_widget(qtbot, mocker):
     mocker.patch("src.gui.models.audit_model.get_colored_icon", return_value=dummy_icon)
 
     # CRITICAL: Patch layouts to avoid MagicMock type errors in Qt methods
-    with patch("PyQt6.QtWidgets.QVBoxLayout.addWidget"), patch(
-        "PyQt6.QtWidgets.QHBoxLayout.addWidget"
-    ), patch("PyQt6.QtWidgets.QGridLayout.addWidget"), patch("PyQt6.QtCore.QTimer"):
+    with (
+        patch("PyQt6.QtWidgets.QVBoxLayout.addWidget"),
+        patch("PyQt6.QtWidgets.QHBoxLayout.addWidget"),
+        patch("PyQt6.QtWidgets.QGridLayout.addWidget"),
+        patch("PyQt6.QtCore.QTimer"),
+    ):
         widget = AuditLogWidget()
         # MOCK UI Heavy operations that cause crashes in CI
         widget.table_view.resizeColumnsToContents = MagicMock()
