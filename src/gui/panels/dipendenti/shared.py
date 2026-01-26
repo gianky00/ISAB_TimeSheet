@@ -81,40 +81,54 @@ class InteractiveStatusCard(QFrame):
         self.base_color = color
         self.filter_type = filter_type
         self.description = description
-        self.setFixedSize(240, 75)
+        self.setFixedHeight(85)  # Appiattita: ridotta da 110 a 85
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        tooltip = f"<b>{label}</b><br/>{description} nello stabilimento ISAB<br/><i>Clicca per filtrare</i>"
+        # Testo tooltip più professionale
+        tooltip_map = {
+            "ok": "Dipendenti con ultimo accesso entro 20 giorni<br/><i>Clicca per visualizzare</i>",
+            "warning": "Dipendenti con ultimo accesso tra 21 e 30 giorni<br/><i>Clicca per visualizzare</i>",
+            "expired": "Dipendenti con ultimo accesso oltre 30 giorni<br/><i>Clicca per visualizzare</i>",
+        }
+        tooltip = f"<b>{label}</b><br/>{tooltip_map.get(filter_type, description)}"
         self.setToolTip(tooltip)
 
         self.shadow = QGraphicsDropShadowEffect(self)
-        self.shadow.setBlurRadius(10)
+        self.shadow.setBlurRadius(12)
         self.shadow.setXOffset(0)
         self.shadow.setYOffset(2)
-        self.shadow.setColor(QColor(0, 0, 0, 30))
+        self.shadow.setColor(QColor(0, 0, 0, 35))
         self.setGraphicsEffect(self.shadow)
 
         self.setStyleSheet(
             f"""
             InteractiveStatusCard {{
-                background-color: white;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 white, stop:1 #fafbfc);
                 border: 2px solid {color};
-                border-radius: 8px;
+                border-radius: 10px;
             }}
             """
         )
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 5, 10, 5)
-        layout.setSpacing(10)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(12)
 
         left_layout = QVBoxLayout()
         left_layout.setSpacing(0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        # Emoji per contesto visivo
+        emoji_map = {"ok": "✅", "warning": "⚠️", "expired": "🚫"}
+        emoji_label = QLabel(emoji_map.get(filter_type, "📊"))
+        emoji_label.setStyleSheet("font-size: 24px; border: none;")
+        emoji_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        left_layout.addWidget(emoji_label)
+
         self.val_text = QLabel("0")
         self.val_text.setStyleSheet(
-            f"font-size: 28px; font-weight: 900; color: {color};"
+            f"font-size: 30px; font-weight: 900; color: {color};"
         )
         self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.val_text)
@@ -124,21 +138,23 @@ class InteractiveStatusCard(QFrame):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
-        line.setStyleSheet("background-color: #eee;")
+        line.setStyleSheet("background-color: #dee2e6; min-width: 2px;")
         layout.addWidget(line)
 
         right_layout = QVBoxLayout()
-        right_layout.setSpacing(2)
+        right_layout.setSpacing(3)
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
         lbl_title.setStyleSheet(
-            "font-size: 11px; font-weight: 800; color: #555; letter-spacing: 0.5px;"
+            "font-size: 14px; font-weight: 800; color: #495057; letter-spacing: 0.8px;"
         )
 
         lbl_desc = QLabel(description)
-        lbl_desc.setStyleSheet("font-size: 10px; color: #777; font-weight: 500;")
-        lbl_desc.setWordWrap(True)
+        lbl_desc.setStyleSheet(
+            "font-size: 13px; color: #6c757d; font-weight: 600;"  # Aumentato a 13px e font-weight 600
+        )
+        lbl_desc.setWordWrap(False)  # Disabilita word wrap per evitare a capo
         lbl_desc.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
@@ -192,11 +208,11 @@ def create_info_card(title):
     header = QLabel(title)
     header.setStyleSheet(
         """
-        font-size: 15px;
+        font-size: 14px;
         font-weight: bold;
         color: #5a5a5a;
         background-color: transparent;
-        padding: 12px 15px 8px 15px;
+        padding: 10px 12px 6px 12px;
         letter-spacing: 0.5px;
     """
     )
@@ -205,8 +221,8 @@ def create_info_card(title):
     content_widget = QWidget()
     content_widget.setStyleSheet("background-color: transparent;")
     content_layout = QVBoxLayout(content_widget)
-    content_layout.setContentsMargins(15, 12, 15, 12)
-    content_layout.setSpacing(10)
+    content_layout.setContentsMargins(12, 8, 12, 10)  # Ridotto per compattezza
+    content_layout.setSpacing(8)  # Ridotto da 10 a 8
 
     main_layout.addWidget(content_widget)
 
@@ -218,8 +234,8 @@ def create_field_row(label_text):
     container = QWidget()
     container.setStyleSheet("background-color: transparent;")
     layout = QVBoxLayout(container)
-    layout.setContentsMargins(0, 0, 0, 8)
-    layout.setSpacing(4)
+    layout.setContentsMargins(0, 0, 0, 6)  # Ridotto da 8 a 6
+    layout.setSpacing(3)  # Ridotto da 4 a 3
 
     label = QLabel(label_text.upper())
     label.setStyleSheet(

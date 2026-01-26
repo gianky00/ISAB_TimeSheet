@@ -2,7 +2,7 @@ import csv
 import logging
 import re
 from contextlib import suppress
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from PyQt6.QtCore import (
     QSize,
@@ -21,7 +21,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QScrollArea,
     QSizePolicy,
     QTableView,
     QVBoxLayout,
@@ -105,17 +104,43 @@ class AnagraficaPage(QWidget):
         import_btn.clicked.connect(self._on_import_clicked)
         filter_layout.addWidget(import_btn)
 
+        email_report_btn = QPushButton("Genera Report via Email")
+        email_report_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.SEND), "#ffffff")
+        )
+        email_report_btn.setIconSize(QSize(24, 24))
+        email_report_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 15px;
+                font-weight: 600;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+            QPushButton:pressed {
+                background-color: #0a58ca;
+            }
+        """
+        )
+        email_report_btn.clicked.connect(self._generate_email_report)
+        filter_layout.addWidget(email_report_btn)
+
         main_layout.addLayout(filter_layout)
 
         # Cards Container
         self.cards_container = QWidget()
         cards_layout = QHBoxLayout(self.cards_container)
-        cards_layout.setContentsMargins(5, 5, 5, 5)
+        cards_layout.setContentsMargins(0, 5, 0, 5)
         cards_layout.setSpacing(15)
-        cards_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.card_ok = InteractiveStatusCard(
-            "Operativi", "#198754", Icons.CHECK_CIRCLE, "Ultimo accesso <= 20gg", "ok"
+            "Operativi", "#198754", Icons.CHECK_CIRCLE, "Ultimo accesso ≤20gg", "ok"
         )
         self.card_warning = InteractiveStatusCard(
             "In Scadenza",
@@ -125,17 +150,16 @@ class AnagraficaPage(QWidget):
             "warning",
         )
         self.card_expired = InteractiveStatusCard(
-            "Scaduti", "#dc3545", Icons.X_CIRCLE, "Accesso > 30gg fa", "expired"
+            "Scaduti", "#dc3545", Icons.X_CIRCLE, "Accesso >30gg fa", "expired"
         )
 
         self.card_ok.clicked.connect(self._on_card_filter)
         self.card_warning.clicked.connect(self._on_card_filter)
         self.card_expired.clicked.connect(self._on_card_filter)
 
-        cards_layout.addWidget(self.card_ok)
-        cards_layout.addWidget(self.card_warning)
-        cards_layout.addWidget(self.card_expired)
-        cards_layout.addStretch()
+        cards_layout.addWidget(self.card_ok, stretch=1)
+        cards_layout.addWidget(self.card_warning, stretch=1)
+        cards_layout.addWidget(self.card_expired, stretch=1)
 
         main_layout.addWidget(self.cards_container)
 
@@ -156,17 +180,26 @@ class AnagraficaPage(QWidget):
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
 
+        # Menu contestuale per bypass monitoraggio
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+
         header = self.table.horizontalHeader()
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         self.table.setItemDelegateForColumn(0, ColoredDotDelegate(self.table))
 
-        self.column_widths = [70, 90, 180, 140, 150, 90, 135]
+        # Larghezze colonne aumentate per evitare troncamenti
+        self.column_widths = [80, 100, 200, 150, 180, 100, 145]
         for col_idx in range(len(self.column_widths)):
             header.setSectionResizeMode(col_idx, QHeaderView.ResizeMode.Fixed)
             self.table.setColumnWidth(col_idx, self.column_widths[col_idx])
 
         total_width = sum(self.column_widths) + 20
         self.table.setFixedWidth(total_width)
+
+        # Imposta la larghezza delle card uguale a quella della tabella
+        self.cards_container.setFixedWidth(total_width)
+
         self.content_layout.addWidget(self.table)
 
         # Pannello Destra (Scheda)
@@ -179,10 +212,10 @@ class AnagraficaPage(QWidget):
         right_container.setStyleSheet("QWidget { background-color: #f8f9fa; }")
         right_layout = QVBoxLayout(right_container)
         right_layout.setContentsMargins(10, 10, 10, 10)
-        right_layout.setSpacing(12)
+        right_layout.setSpacing(8)  # Ridotto da 12 a 8
 
         header_card = QFrame()
-        header_card.setFixedHeight(80)
+        header_card.setFixedHeight(70)  # Ridotto da 80 a 70
         header_shadow = QGraphicsDropShadowEffect()
         header_shadow.setBlurRadius(20)
         header_shadow.setYOffset(3)
@@ -197,7 +230,7 @@ class AnagraficaPage(QWidget):
         """
         )
         header_layout = QVBoxLayout(header_card)
-        header_layout.setContentsMargins(20, 15, 20, 15)
+        header_layout.setContentsMargins(18, 12, 18, 12)  # Ridotto per compattezza
 
         title_label = QLabel("📋 SCHEDA DIPENDENTE")
         title_label.setStyleSheet(
@@ -211,18 +244,12 @@ class AnagraficaPage(QWidget):
         header_layout.addWidget(subtitle_label)
         right_layout.addWidget(header_card)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet(
-            "QScrollArea { background-color: transparent; border: none; }"
-        )
-
-        scroll_content = QWidget()
-        scroll_content.setStyleSheet("background-color: transparent;")
-        scroll_layout = QVBoxLayout(scroll_content)
-        scroll_layout.setContentsMargins(0, 0, 0, 0)
-        scroll_layout.setSpacing(10)
+        # Content diretto senza scroll
+        detail_content = QWidget()
+        detail_content.setStyleSheet("background-color: transparent;")
+        detail_layout = QVBoxLayout(detail_content)
+        detail_layout.setContentsMargins(0, 0, 0, 0)
+        detail_layout.setSpacing(8)  # Ridotto da 10 a 8 per compattezza
 
         personal_card, personal_layout = create_info_card("👤 Dati Personali")
         self.detail_labels = {}
@@ -240,7 +267,7 @@ class AnagraficaPage(QWidget):
         personal_layout.addLayout(row2)
 
         personal_layout.addWidget(self._add_detail_field("Codice Fiscale"))
-        scroll_layout.addWidget(personal_card)
+        detail_layout.addWidget(personal_card)
 
         work_card, work_layout = create_info_card("💼 Informazioni Lavorative")
         row3 = QHBoxLayout()
@@ -249,7 +276,7 @@ class AnagraficaPage(QWidget):
         row3.addWidget(self._add_detail_field("Data Assunzione"))
         work_layout.addLayout(row3)
         work_layout.addWidget(self._add_detail_field("Importato il"))
-        scroll_layout.addWidget(work_card)
+        detail_layout.addWidget(work_card)
 
         access_card = QFrame()
         access_shadow = QGraphicsDropShadowEffect()
@@ -267,8 +294,8 @@ class AnagraficaPage(QWidget):
         """
         )
         access_layout = QVBoxLayout(access_card)
-        access_layout.setContentsMargins(18, 15, 18, 15)
-        access_layout.setSpacing(10)
+        access_layout.setContentsMargins(15, 12, 15, 12)  # Ridotto per compattezza
+        access_layout.setSpacing(6)  # Ridotto da 10 a 6
 
         access_title = QLabel("🏭 ULTIMO ACCESSO ISAB")
         access_title.setStyleSheet(
@@ -284,11 +311,10 @@ class AnagraficaPage(QWidget):
         )
         access_layout.addWidget(access_title)
         access_layout.addWidget(self.last_access_label)
-        scroll_layout.addWidget(access_card)
+        detail_layout.addWidget(access_card)
 
-        scroll_layout.addStretch()
-        scroll.setWidget(scroll_content)
-        right_layout.addWidget(scroll)
+        detail_layout.addStretch()
+        right_layout.addWidget(detail_content)
 
         self.content_layout.addWidget(right_container)
         self.content_layout.addStretch()
@@ -301,10 +327,71 @@ class AnagraficaPage(QWidget):
         self.detail_labels[label] = value_lbl
         return container
 
+    def _show_context_menu(self, position):
+        """Mostra menu contestuale per gestione monitoraggio dipendente."""
+        indexes = self.table.selectionModel().selectedRows()
+        if not indexes:
+            return
+
+        row_idx = indexes[0].row()
+        row_data = self.model._data[row_idx]
+        id_risorsa = row_data[1]  # ID Risorsa
+
+        # Verifica stato monitoraggio corrente
+        query = "SELECT monitoraggio_attivo FROM dipendenti WHERE id_risorsa = ?"
+        result = db_manager.execute_query(
+            db_manager.DB_DIPENDENTI, query, (id_risorsa,)
+        )
+        is_monitored = result[0][0] if result and result[0][0] is not None else 1
+
+        from PyQt6.QtGui import QAction
+        from PyQt6.QtWidgets import QMenu
+
+        menu = QMenu(self)
+
+        if is_monitored:
+            action = QAction(
+                get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#dc3545"),
+                "🚫 Escludi da monitoraggio",
+                self,
+            )
+            action.triggered.connect(lambda: self._toggle_monitoring(id_risorsa, False))
+        else:
+            action = QAction(
+                get_colored_icon(get_asset_path(Icons.CHECK_CIRCLE), "#198754"),
+                "✅ Riattiva monitoraggio",
+                self,
+            )
+            action.triggered.connect(lambda: self._toggle_monitoring(id_risorsa, True))
+
+        menu.addAction(action)
+        menu.exec(self.table.viewport().mapToGlobal(position))
+
+    def _toggle_monitoring(self, id_risorsa, enable):
+        """Attiva o disattiva il monitoraggio per un dipendente."""
+        try:
+            query = "UPDATE dipendenti SET monitoraggio_attivo = ? WHERE id_risorsa = ?"
+            db_manager.execute_query(
+                db_manager.DB_DIPENDENTI, query, (1 if enable else 0, id_risorsa)
+            )
+
+            status_text = "riattivato" if enable else "escluso"
+            ToastManager.instance().show(
+                f"Monitoraggio {status_text} per il dipendente",
+                "success",
+                duration=2500,
+            )
+            self.refresh_data()
+        except Exception as e:
+            logger.error(f"Errore toggle monitoraggio: {e}")
+            QMessageBox.critical(
+                self, "Errore", f"Impossibile modificare il monitoraggio:\n{e}"
+            )
+
     def refresh_data(self):
         search_text = self.search_input.text().lower()
         query = """
-            SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale
+            SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
             FROM dipendenti WHERE 1=1
         """
         params = []
@@ -340,6 +427,9 @@ class AnagraficaPage(QWidget):
         count_expired = 0
 
         for r in full_rows:
+            # r contiene ora anche monitoraggio_attivo come ultimo elemento
+            is_monitored = r[8] if len(r) > 8 and r[8] is not None else 1
+
             (
                 diff_days,
                 cf_warning,
@@ -348,7 +438,8 @@ class AnagraficaPage(QWidget):
                 cf_val,
             ) = self._compute_employee_status(r, last_by_cf, last_by_name, normalize)
 
-            if diff_days is not None:
+            # Conta solo i dipendenti monitorati
+            if diff_days is not None and is_monitored:
                 if diff_days <= 20:
                     count_ok += 1
                 elif diff_days <= 30:
@@ -452,17 +543,31 @@ class AnagraficaPage(QWidget):
             return str(value)
 
     def _on_card_filter(self, filter_type):
+        # Mappa dei testi professionali per i filtri
+        filter_messages = {
+            "ok": "Visualizzazione dipendenti operativi (accesso ≤ 20 giorni)",
+            "warning": "Visualizzazione dipendenti in scadenza (accesso 21-30 giorni)",
+            "expired": "Visualizzazione dipendenti non operativi (accesso > 30 giorni)",
+        }
+
         if self.current_filter == filter_type:
             self.current_filter = None
-            ToastManager.instance().show("Filtro rimosso", "info", duration=2000)
+            ToastManager.instance().show(
+                "Filtro disattivato - Visualizzazione completa", "info", duration=2500
+            )
         else:
             self.current_filter = filter_type
-            ToastManager.instance().show(
-                f"Filtro attivo: {filter_type}", "info", duration=2000
-            )
+            message = filter_messages.get(filter_type, f"Filtro: {filter_type}")
+            ToastManager.instance().show(message, "info", duration=3000)
 
         for card in [self.card_ok, self.card_warning, self.card_expired]:
-            style = f"background-color: {'#f0f0f0' if card.filter_type == self.current_filter else 'white'}; border: {'3px' if card.filter_type == self.current_filter else '2px'} solid {card.base_color}; border-radius: 12px;"
+            is_active = card.filter_type == self.current_filter
+            gradient = (
+                "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #e8f5e9, stop:1 #f8f9fa)"
+                if is_active
+                else "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 white, stop:1 #fafbfc)"
+            )
+            style = f"background: {gradient}; border: {'3px' if is_active else '2px'} solid {card.base_color}; border-radius: 12px;"
             card.setStyleSheet(f"InteractiveStatusCard {{ {style} }}")
         self.refresh_data()
 
@@ -609,3 +714,159 @@ class AnagraficaPage(QWidget):
         except Exception as e:
             logger.error(f"Errore import CSV: {e}")
             QMessageBox.critical(self, "Errore", f"Impossibile importare:\n{e}")
+
+    def _generate_email_report(self):
+        """Genera email report professionale in Outlook con dipendenti in scadenza e scaduti."""
+        try:
+            import urllib.parse
+
+            # Query per dipendenti warning e expired (solo monitorati)
+            query = """
+                SELECT id_risorsa, cognome, nome, codice_fiscale, badge, data_assunzione
+                FROM dipendenti
+                WHERE monitoraggio_attivo = 1 OR monitoraggio_attivo IS NULL
+                ORDER BY cognome ASC, nome ASC
+            """
+            dipendenti = db_manager.execute_query(db_manager.DB_DIPENDENTI, query)
+
+            # Recupera accessi per calcolare stato
+            query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
+            accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
+            last_by_cf, last_by_name, normalize = self._build_timbrature_maps(accessi)
+
+            warning_list = []
+            expired_list = []
+
+            for dip in dipendenti:
+                id_ris, cog, nom, cf, badge, data_ass = dip
+                cf_norm = normalize(cf or "")
+                name_key = (normalize(cog or ""), normalize(nom or ""))
+
+                # last_by_cf e last_by_name contengono giorni (int), non datetime
+                diff_days = last_by_cf.get(cf_norm) or last_by_name.get(name_key)
+                if diff_days is None:
+                    continue
+
+                # Calcola la data effettiva dell'ultimo accesso
+                last_access_date = datetime.now() - timedelta(days=diff_days)
+                formatted_date = last_access_date.strftime("%d/%m/%Y")
+
+                if 21 <= diff_days <= 30:
+                    warning_list.append(
+                        {
+                            "id": id_ris,
+                            "cognome": cog,
+                            "nome": nom,
+                            "badge": badge,
+                            "giorni": diff_days,
+                            "data": formatted_date,
+                        }
+                    )
+                elif diff_days > 30:
+                    expired_list.append(
+                        {
+                            "id": id_ris,
+                            "cognome": cog,
+                            "nome": nom,
+                            "badge": badge,
+                            "giorni": diff_days,
+                            "data": formatted_date,
+                        }
+                    )
+
+            if not warning_list and not expired_list:
+                QMessageBox.information(
+                    self,
+                    "Nessun dipendente",
+                    "Non ci sono dipendenti in scadenza o scaduti da segnalare.",
+                )
+                return
+
+            # Costruisci corpo email HTML
+            current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+            body_html = f"""<html><body style='font-family: Arial, sans-serif;'>
+<h2 style='color: #0d6efd;'>Report Monitoraggio Dipendenti ISAB</h2>
+<p><strong>Data generazione:</strong> {current_date}</p>
+<p><strong>Generato da:</strong> SyncroJob Enterprise</p>
+<hr style='border: 1px solid #dee2e6;'>
+"""
+
+            if warning_list:
+                body_html += f"""
+<h3 style='color: #fd7e14;'>⚠️ Dipendenti in Scadenza ({len(warning_list)})</h3>
+<p style='font-size: 13px; color: #6c757d;'>Ultimo accesso tra 21 e 30 giorni fa</p>
+<table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; width: 100%; font-size: 13px;'>
+<thead style='background-color: #fff3cd;'>
+<tr>
+<th>ID</th><th>Cognome</th><th>Nome</th><th>Badge</th><th>Ultimo Accesso</th><th>Giorni Trascorsi</th>
+</tr>
+</thead>
+<tbody>
+"""
+                for dip in warning_list:
+                    body_html += f"""<tr>
+<td>{dip['id']}</td>
+<td>{dip['cognome']}</td>
+<td>{dip['nome']}</td>
+<td>{dip['badge']}</td>
+<td>{dip['data']}</td>
+<td style='font-weight: bold; color: #fd7e14;'>{dip['giorni']} giorni</td>
+</tr>
+"""
+                body_html += "</tbody></table><br/>"
+
+            if expired_list:
+                body_html += f"""
+<h3 style='color: #dc3545;'>🚫 Dipendenti Non Operativi ({len(expired_list)})</h3>
+<p style='font-size: 13px; color: #6c757d;'>Ultimo accesso oltre 30 giorni fa</p>
+<table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; width: 100%; font-size: 13px;'>
+<thead style='background-color: #f8d7da;'>
+<tr>
+<th>ID</th><th>Cognome</th><th>Nome</th><th>Badge</th><th>Ultimo Accesso</th><th>Giorni Trascorsi</th>
+</tr>
+</thead>
+<tbody>
+"""
+                for dip in expired_list:
+                    body_html += f"""<tr>
+<td>{dip['id']}</td>
+<td>{dip['cognome']}</td>
+<td>{dip['nome']}</td>
+<td>{dip['badge']}</td>
+<td>{dip['data']}</td>
+<td style='font-weight: bold; color: #dc3545;'>{dip['giorni']} giorni</td>
+</tr>
+"""
+                body_html += "</tbody></table><br/>"
+
+            body_html += """
+<hr style='border: 1px solid #dee2e6;'>
+<p style='font-size: 12px; color: #6c757d;'>
+<em>Report generato automaticamente da SyncroJob Enterprise.<br/>
+Per maggiori informazioni, consultare il sistema di gestione dipendenti.</em>
+</p>
+</body></html>"""
+
+            # Costruisci mailto URL
+            subject = f"Report Monitoraggio Dipendenti ISAB - {current_date}"
+            mailto_url = f"mailto:?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(body_html)}"
+
+            # Apri Outlook (su Windows)
+            import os
+            import subprocess
+
+            if os.name == "nt":
+                subprocess.run(["start", "outlook", mailto_url], shell=True)
+            else:
+                # Fallback per altri OS
+                subprocess.run(["xdg-open", mailto_url])
+
+            ToastManager.instance().show(
+                "Email report generata - Outlook aperto", "success", duration=3000
+            )
+
+        except Exception as e:
+            logger.error(f"Errore generazione email report: {e}")
+            QMessageBox.critical(
+                self, "Errore", f"Impossibile generare il report email:\n{e}"
+            )

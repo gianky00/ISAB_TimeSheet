@@ -542,6 +542,21 @@ class DatabaseManager:
         )
 
     @staticmethod
+    def _mig_dipendenti_v3(conn: sqlite3.Connection):
+        """Aggiunge colonna monitoraggio_attivo per bypass manuale (v3)"""
+        cursor = conn.cursor()
+        # Verifica se la colonna esiste già per evitare errori
+        cursor.execute("PRAGMA table_info(dipendenti)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if "monitoraggio_attivo" not in columns:
+            cursor.execute(
+                "ALTER TABLE dipendenti ADD COLUMN monitoraggio_attivo INTEGER DEFAULT 1"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_dip_monitoraggio ON dipendenti(monitoraggio_attivo)"
+            )
+
+    @staticmethod
     def _mig_timbrature_v3(conn: sqlite3.Connection):
         """Aggiunge colonne codice_fiscale e ore_effettive (v3)"""
         cursor = conn.cursor()
@@ -598,7 +613,11 @@ class DatabaseManager:
 
     MIGRATIONS_STORICO_ODA = {1: _mig_storico_oda_v1, 2: _mig_storico_oda_v2}
 
-    MIGRATIONS_DIPENDENTI = {1: _mig_dipendenti_v1, 2: _mig_dipendenti_v2}
+    MIGRATIONS_DIPENDENTI = {
+        1: _mig_dipendenti_v1,
+        2: _mig_dipendenti_v2,
+        3: _mig_dipendenti_v3,
+    }
 
 
 db_manager = DatabaseManager()

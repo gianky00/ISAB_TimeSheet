@@ -476,29 +476,56 @@ class EditableDataTable(QWidget):
         for row_data in data:
             row = self.table.rowCount()
             self.table.insertRow(row)
-            self._populate_row(row)
-            for col, column in enumerate(self.columns):
-                key = column["name"].lower().replace(" ", "_")
-                value = row_data.get(key, "")
-                widget = self.table.cellWidget(row, col)
-                if isinstance(widget, QComboBox):
-                    if value:
-                        idx = widget.findText(str(value))
-                        if idx >= 0:
-                            widget.setCurrentIndex(idx)
-                        else:
-                            # Se il valore non c'è, lo aggiungiamo? No, per le combo fisse meglio di no
-                            # Ma se è un valore ad-hoc?
-                            # Nel dubbio, proviamo a selezionarlo se c'è, altrimenti lasciamo vuoto (idx 0)
-                            widget.setCurrentIndex(0)
-                else:
-                    item = self.table.item(row, col)
-                    if item:
-                        item.setText(str(value))
+            # Popola la riga SENZA applicare i valori di default (load_mode=True)
+            self._populate_row_from_data(row, row_data)
         if self.table.rowCount() == 0:
             while self.table.rowCount() < 5:
                 self._add_row()
         self.table.blockSignals(False)
+
+    def _populate_row_from_data(self, row: int, row_data: dict):
+        """Popola una riga con dati specifici, senza applicare valori di default."""
+        for col, column in enumerate(self.columns):
+            col_type = column.get("type", "text")
+            key = column["name"].lower().replace(" ", "_")
+            value = row_data.get(key, "")
+
+            if col_type == "combo":
+                combo = QComboBox()
+                combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+                combo.setStyleSheet(
+                    """
+                    QComboBox {
+                        border: none;
+                        background: transparent;
+                        color: black;
+                        padding-left: 5px;
+                    }
+                    QComboBox QAbstractItemView {
+                        background-color: white;
+                        color: black;
+                        selection-background-color: #e7f1ff;
+                        selection-color: #0d6efd;
+                    }
+                """
+                )
+                options = [""] + column.get("options", [])
+                combo.addItems(options)
+                # Imposta il valore salvato, NON il default
+                if value:
+                    idx = combo.findText(str(value))
+                    if idx >= 0:
+                        combo.setCurrentIndex(idx)
+                    else:
+                        combo.setCurrentIndex(0)  # Vuoto
+                else:
+                    combo.setCurrentIndex(0)  # Vuoto
+                combo.currentTextChanged.connect(lambda text: self.data_changed.emit())
+                self.table.setCellWidget(row, col, combo)
+            else:
+                # Per text field, usa il valore salvato, NON il default
+                item = SortableTableWidgetItem(str(value))
+                self.table.setItem(row, col, item)
 
     def update_column_options(self, column_name: str, new_options: list):
         """Aggiorna le opzioni per una colonna di tipo combo."""

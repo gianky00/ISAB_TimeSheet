@@ -120,8 +120,24 @@ def main():
     # Suppress openpyxl "Unknown extension" warning
     warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
-    from PyQt6.QtCore import QCoreApplication
+    from PyQt6.QtCore import QCoreApplication, QSharedMemory
     from PyQt6.QtWidgets import QApplication, QMessageBox
+
+    # === SINGLE INSTANCE CHECK ===
+    # Crea una shared memory con un nome univoco per l'applicazione
+    shared_memory = QSharedMemory("SyncroJob_SingleInstance_Key")
+
+    # Tenta di creare la memoria condivisa
+    if not shared_memory.create(1):
+        # Se la creazione fallisce, significa che un'altra istanza è già in esecuzione
+        QMessageBox.warning(
+            None,
+            "SyncroJob già in esecuzione",
+            "Un'istanza di SyncroJob è già in esecuzione.\n\n"
+            "Per evitare conflitti e problemi di concorrenza, "
+            "è possibile avere una sola istanza attiva alla volta.",
+        )
+        sys.exit(0)
 
     if getattr(sys, "frozen", False):
         # Fix for Qt plugins path when frozen with PyInstaller 6+ and PyArmor

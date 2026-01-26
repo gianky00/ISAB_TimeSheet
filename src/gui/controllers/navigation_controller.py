@@ -257,12 +257,15 @@ class NavigationController(QObject):
     def navigate_to_panel(self, panel_key: str):
         """Navigazione verso pannelli annidati."""
         bot_map = {
+            # Portale Fornitori (main_idx=0)
             "dettagli_oda": (0, 0),
             "scarico_ts": (0, 1),
             "timbrature": (0, 2),
             "prenota_bp": (0, 3),
             "carico_ts": (0, 4),
+            # SafeWork (main_idx=1)
             "scarico_pdl": (1, 0),
+            "ricerca_pdl": (1, 1),
         }
 
         if panel_key in bot_map:

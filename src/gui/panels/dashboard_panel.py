@@ -168,17 +168,22 @@ class DashboardPanel(QWidget):
         return False
 
     def _handle_automation_commands(self, key, main_window) -> bool:
-        """Gestisce navigazione verso automazioni."""
-        automation_keys = [
-            "nav_dettagli_oda",
-            "nav_scarico_ts",
-            "nav_carico_ts",
-            "pf_timbrature",
-            "pf_prenota_bp",
-        ]
-        if key in automation_keys:
-            if hasattr(main_window, "_handle_automation_tab_change"):
-                main_window._handle_automation_tab_change(0)
+        """Gestisce navigazione verso automazioni specifiche."""
+        # Mappa chiavi quick actions -> panel keys per navigation_controller
+        automation_map = {
+            "nav_dettagli_oda": "dettagli_oda",
+            "nav_scarico_ts": "scarico_ts",
+            "nav_carico_ts": "carico_ts",
+            "pf_timbrature": "timbrature",
+            "pf_prenota_bp": "prenota_bp",
+            "nav_scarico_pdl": "scarico_pdl",
+            "nav_ricerca_pdl": "ricerca_pdl",
+        }
+
+        if key in automation_map:
+            panel_key = automation_map[key]
+            if hasattr(main_window, "navigation_controller"):
+                main_window.navigation_controller.navigate_to_panel(panel_key)
             return True
         return False
 
