@@ -310,7 +310,7 @@ class BugReportDialog(QDialog):
                                 Descrizione Problema
                             </h3>
                             <div style="font-size: 14px; line-height: 1.6; color: #222; min-height: 150px;">
-                                {description.replace(chr(10), '<br>')}
+                                {description.replace(chr(10), "<br>")}
                             </div>
                         </td>
                     </tr>

@@ -805,12 +805,12 @@ class AnagraficaPage(QWidget):
 """
                 for dip in warning_list:
                     body_html += f"""<tr>
-<td>{dip['id']}</td>
-<td>{dip['cognome']}</td>
-<td>{dip['nome']}</td>
-<td>{dip['badge']}</td>
-<td>{dip['data']}</td>
-<td style='font-weight: bold; color: #fd7e14;'>{dip['giorni']} giorni</td>
+<td>{dip["id"]}</td>
+<td>{dip["cognome"]}</td>
+<td>{dip["nome"]}</td>
+<td>{dip["badge"]}</td>
+<td>{dip["data"]}</td>
+<td style='font-weight: bold; color: #fd7e14;'>{dip["giorni"]} giorni</td>
 </tr>
 """
                 body_html += "</tbody></table><br/>"
@@ -829,12 +829,12 @@ class AnagraficaPage(QWidget):
 """
                 for dip in expired_list:
                     body_html += f"""<tr>
-<td>{dip['id']}</td>
-<td>{dip['cognome']}</td>
-<td>{dip['nome']}</td>
-<td>{dip['badge']}</td>
-<td>{dip['data']}</td>
-<td style='font-weight: bold; color: #dc3545;'>{dip['giorni']} giorni</td>
+<td>{dip["id"]}</td>
+<td>{dip["cognome"]}</td>
+<td>{dip["nome"]}</td>
+<td>{dip["badge"]}</td>
+<td>{dip["data"]}</td>
+<td style='font-weight: bold; color: #dc3545;'>{dip["giorni"]} giorni</td>
 </tr>
 """
                 body_html += "</tbody></table><br/>"

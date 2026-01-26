@@ -247,6 +247,9 @@ class DateFilterPopupWidget(QWidget):
     def get_selected_values(self) -> Optional[List[str]]:
         selected: List[str] = []
         root = self.model.invisibleRootItem()
+        if not root:
+            return None
+
         all_checked = True
 
         stack = [root.child(i) for i in range(root.rowCount())]

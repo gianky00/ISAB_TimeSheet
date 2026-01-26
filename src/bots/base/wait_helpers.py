@@ -153,13 +153,19 @@ def poll_for_file(
 
         # Trova tutti i file matching
         files = list(directory.glob(pattern))
-        
+
         # DEBUG AGGRESSIVO (Richiesto da User per Troubleshooting)
-        if time.time() - start_time < 5:  # Logga solo nei primi 5 secondi per non spammare
+        if (
+            time.time() - start_time < 5
+        ):  # Logga solo nei primi 5 secondi per non spammare
             all_files_in_dir = list(directory.glob("*"))
-            logger.debug(f"[DEBUG-POLL] Scanning '{directory}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}")
+            logger.debug(
+                f"[DEBUG-POLL] Scanning '{directory}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}"
+            )
             if len(all_files_in_dir) < 20:
-                 logger.debug(f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}")
+                logger.debug(
+                    f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}"
+                )
 
         # Filtra per esclusioni
         files = [
@@ -176,10 +182,10 @@ def poll_for_file(
             valid_files = []
             for f in files:
                 stat = f.stat()
-                # Usa il massimo tra mtime e ctime per gestire casi dove il browser 
+                # Usa il massimo tra mtime e ctime per gestire casi dove il browser
                 # preserva il Last-Modified del server (mtime vecchio) ma il file è appena creato (ctime nuovo)
                 effective_time = max(stat.st_mtime, stat.st_ctime)
-                
+
                 if effective_time >= cutoff:
                     valid_files.append(f)
                 else:
@@ -262,9 +268,11 @@ def poll_for_new_file(
                 snapshot_map[p] = p.stat().st_mtime
         except Exception:
             pass
-    
+
     start_time = time.time()
-    logger.info(f"Monitoraggio files in {directory} (Snapshot: {len(snapshot_map)} files)...")
+    logger.info(
+        f"Monitoraggio files in {directory} (Snapshot: {len(snapshot_map)} files)..."
+    )
 
     while time.time() - start_time < timeout:
         # 1. Check download in corso
@@ -274,10 +282,10 @@ def poll_for_new_file(
 
         # 2. Get current files matching pattern
         current_files = list(directory.glob(pattern))
-        
+
         # 3. Check for New or Modified files
         detected_file = None
-        
+
         for f in current_files:
             try:
                 f_res = f.resolve()
@@ -289,7 +297,7 @@ def poll_for_new_file(
                     detected_file = f_res
                     logger.info(f"✅ FILE NUOVO RILEVATO: {f_res.name}")
                     break
-                
+
                 # Caso 2: File Aggiornato (era nello snapshot ma mtime è cambiato)
                 # Tolleranza 1 secondo
                 if f_res.stat().st_mtime > snapshot_map[f_res] + 1.0:
@@ -301,10 +309,10 @@ def poll_for_new_file(
 
         if detected_file:
             return str(detected_file)
-            
+
         # Log di debug periodico (ogni 5 secondi)
         if int(time.time() - start_time) % 5 == 0:
-             logger.debug(f"[POLL] Scanning... Found {len(current_files)} matches.")
+            logger.debug(f"[POLL] Scanning... Found {len(current_files)} matches.")
 
         time.sleep(poll_interval)
 

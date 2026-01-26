@@ -344,7 +344,7 @@ class AuditManager:
         try:
             query = "SELECT * FROM audit_logs WHERE 1=1"
             c_query = "SELECT COUNT(*) FROM audit_logs WHERE 1=1"
-            params = []
+            params: List[Any] = []
 
             if start_date:
                 query += " AND timestamp >= ?"
