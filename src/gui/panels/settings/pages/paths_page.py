@@ -76,11 +76,6 @@ class PathsPage(QWidget):
             de_layout, self._browse_dataease
         )
 
-        de_layout.addWidget(QLabel("Cartella Export Consuntivi:"))
-        self.consuntivi_path_edit = self._create_path_row(
-            de_layout, self._browse_consuntivi, folder=True
-        )
-
         layout.addWidget(dataease_group)
         layout.addStretch()
 
@@ -183,11 +178,6 @@ class PathsPage(QWidget):
         if p:
             self.dataease_path_edit.setText(p)
 
-    def _browse_consuntivi(self):
-        p = self._browse_folder("Seleziona Cartella Consuntivi")
-        if p:
-            self.consuntivi_path_edit.setText(p)
-
     # --- LOAD & SAVE ---
 
     def load_from_config(self, config: dict):
@@ -210,9 +200,6 @@ class PathsPage(QWidget):
         self.dataease_path_edit.setText(config.get("dataease_db_path", ""))
         self._validate_path(self.dataease_path_edit)
 
-        self.consuntivi_path_edit.setText(config.get("consuntivi_export_path", ""))
-        self._validate_path(self.consuntivi_path_edit)
-
     def save_to_config(self, config_manager):
         config_manager.set_config_value(
             "contabilita_file_path", self.contabilita_path_edit.text()
@@ -231,7 +218,4 @@ class PathsPage(QWidget):
         )
         config_manager.set_config_value(
             "dataease_db_path", self.dataease_path_edit.text()
-        )
-        config_manager.set_config_value(
-            "consuntivi_export_path", self.consuntivi_path_edit.text()
         )
