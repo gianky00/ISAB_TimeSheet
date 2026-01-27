@@ -81,7 +81,7 @@ class TimbratureBot(BaseBot):
             return False
         assert self.driver
 
-        page = TimbraturePage(self.driver, self.log)
+        page = TimbraturePage(self.driver, self.log, self.download_path)
 
         # 1. Navigation
         if not page.navigate_to_timbrature():

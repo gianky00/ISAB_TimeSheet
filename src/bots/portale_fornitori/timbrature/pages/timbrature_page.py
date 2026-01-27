@@ -26,12 +26,16 @@ class TimbraturePage:
     """Encapsulates interactions with the Timbrature page."""
 
     def __init__(
-        self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None
+        self,
+        driver: WebDriver,
+        log_callback: Optional[Callable[[str], None]] = None,
+        download_path: str = "",
     ):
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
         self.long_wait = WebDriverWait(driver, Timeouts.PAGE_LOAD)
         self._log = log_callback or print
+        self.download_path = download_path
 
     def log(self, msg: str):
         self._log(msg)
@@ -269,8 +273,15 @@ class TimbraturePage:
         return None
 
     def _rename_latest_download(self, new_name_base: str) -> str:
-        """Finds latest download in system Downloads and moves it to temp folder."""
-        source_dir = Path.home() / "Downloads"
+        """Finds latest download in configured download folder and moves it to temp folder."""
+        # Chrome downloads directly to download_path (if configured)
+        source_dir = (
+            Path(self.download_path).resolve()
+            if self.download_path
+            else Path.home() / "Downloads"
+        )
+        self._log(f"[DEBUG] Cerco file in: {source_dir}")
+
         from src.core.config_manager import CONFIG_DIR
 
         dest_dir = CONFIG_DIR / "temp"
@@ -295,6 +306,9 @@ class TimbraturePage:
             time.sleep(1)
 
         if not latest_file:
+            # Debug: lista file attuali
+            current_files = list(source_dir.glob("*")) if source_dir.exists() else []
+            self._log(f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
             return ""
 
         try:

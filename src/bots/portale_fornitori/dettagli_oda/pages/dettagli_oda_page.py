@@ -349,17 +349,29 @@ class DettagliOdAPage:
     ) -> Optional[Path]:
         """Esegue il download, attende il file e lo sposta nella cartella finale."""
         try:
+            # Normalize path to handle forward/backward slashes
+            source_dir = Path(source_dir).resolve()
+            self.log(f"  [DEBUG] Cerco file in: {source_dir}")
+
+            if not source_dir.exists():
+                self.log(f"  ✗ Cartella non esiste: {source_dir}")
+                return None
+
             files_before = {
                 f
                 for f in source_dir.iterdir()
                 if f.is_file() and f.suffix.lower() == ".xlsx"
             }
+            self.log(f"  [DEBUG] File .xlsx prima del download: {len(files_before)}")
 
             if not self._click_export_button(button_locator):
                 return None
 
             downloaded_file = self._wait_for_download(source_dir, files_before)
             if not downloaded_file:
+                # Debug: lista file attuali
+                current_files = list(source_dir.iterdir()) if source_dir.exists() else []
+                self.log(f"  [DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
                 self.log("  ✗ File non trovato nella cartella Download.")
                 return None
 
