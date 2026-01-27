@@ -79,6 +79,7 @@ class Icons:
     ALERT = "assets/icons/alert-triangle.svg"
     LOCK = "assets/icons/lock.svg"
     EYE = "assets/icons/eye.svg"
+    EYE_OFF = "assets/icons/eye-off.svg"
 
     BELL = "assets/icons/bell.svg"
     STAR = "assets/icons/star.svg"

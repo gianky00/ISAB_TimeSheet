@@ -188,11 +188,6 @@ def main():
     )
     new_version = get_current_version()
 
-    # 4. Generate Icons (Ensures visual assets are up to date)
-    run_command(
-        [str(VENV_PYTHON), "admin/Crea Setup/generate_icons.py"], "Updating Icons"
-    )
-
     # 5. Git Operations
     if not args.no_git:
         run_command(["git", "add", "."], "Staging changes")
