@@ -1,9 +1,9 @@
 import pytest
-from unittest.mock import MagicMock, patch
 from PyQt6.QtCore import Qt
 
-from src.gui.panels.settings.main_panel import SettingsPanel
 from src.gui.dialogs.account_dialog import AccountDialog
+from src.gui.panels.settings.main_panel import SettingsPanel
+
 
 class TestSettingsPanelCoverage:
     @pytest.fixture
@@ -28,18 +28,15 @@ class TestSettingsPanelCoverage:
             "accounts": [],
             "safework_accounts": [],
         }
-        
+
         # Patch the base core module
         cm = mocker.patch("src.core.config_manager")
         cm.load_config.return_value = config_data
-        
+
         # ALSO patch specifically in the module that actually imports it
         mocker.patch("src.gui.panels.settings.main_panel.config_manager", cm)
-        
+
         return cm
-
-
-
 
     @pytest.fixture
     def mock_secrets(self, mocker):
@@ -63,7 +60,10 @@ class TestSettingsPanelCoverage:
     def test_load_config_to_ui(self, panel):
         """Test that configuration is correctly loaded into UI widgets."""
         assert panel.config_tab.general_page.headless_check.isChecked() is False
-        assert panel.config_tab.paths_page.contabilita_path_edit.text() == "/path/to/contabilita"
+        assert (
+            panel.config_tab.paths_page.contabilita_path_edit.text()
+            == "/path/to/contabilita"
+        )
 
     def test_autosave_behavior(self, panel, mock_config):
         """Test that changing widgets triggers auto-save."""
@@ -89,9 +89,13 @@ class TestSettingsPanelCoverage:
 
     def test_add_fornitore(self, panel, mocker):
         """Test adding a supplier."""
-        mocker.patch("PyQt6.QtWidgets.QInputDialog.getText", return_value=("New Supplier", True))
+        mocker.patch(
+            "PyQt6.QtWidgets.QInputDialog.getText", return_value=("New Supplier", True)
+        )
         lists_page = panel.config_tab.lists_page
         lists_page._add_fornitore()
-        items = [lists_page.fornitori_list.item(i).text() for i in range(lists_page.fornitori_list.count())]
+        items = [
+            lists_page.fornitori_list.item(i).text()
+            for i in range(lists_page.fornitori_list.count())
+        ]
         assert "New Supplier" in items
-

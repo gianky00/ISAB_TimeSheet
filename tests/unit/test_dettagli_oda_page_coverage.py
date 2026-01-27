@@ -39,7 +39,7 @@ class TestDettagliOdaPageCoverage:
         mocker.patch("pathlib.Path.exists", return_value=True)
         mocker.patch("pathlib.Path.mkdir")
         mocker.patch("pathlib.Path.resolve", return_value=source_dir)
-        
+
         mock_iter = mocker.patch("pathlib.Path.iterdir")
         mocker.patch("time.time", side_effect=range(100, 200))
         mocker.patch("time.sleep")
@@ -65,15 +65,15 @@ class TestDettagliOdaPageCoverage:
             [mocker.MagicMock(suffix=".crdownload")],  # Loop 1: ancora in download
             [mock_file],  # Loop 2: any() -> no crdownload
             [mock_file],  # Loop 2: current -> trovato!
-            [], # eventuale iterdir extra
+            [],  # eventuale iterdir extra
         ]
 
         # Mock del driver e degli elementi UI
         page.wait = MagicMock()
         mock_btn = MagicMock()
         page.wait.until.return_value = mock_btn
-        mock_btn.text = "Trovati : 1" # Per il conteggio risultati
-        
+        mock_btn.text = "Trovati : 1"  # Per il conteggio risultati
+
         page._wait_for_overlay = MagicMock()
 
         # Evita loop in _close_all_tabs
@@ -86,7 +86,6 @@ class TestDettagliOdaPageCoverage:
 
         assert res is not None
         assert res.name == "dettaglio_oda_123.xlsx"
-
 
     def test_navigate_to_dettagli_second_row_retry(self, page):
         """Verifica la strategia di robustezza per righe successive alla prima."""

@@ -1,7 +1,6 @@
 import pytest
 from PyQt6.QtWidgets import (
     QApplication,
-    QLineEdit,
     QTableWidget,
     QTableWidgetItem,
 )
@@ -132,4 +131,3 @@ class TestSprintCGUIDeep:
         panel.search_input.setText("SearchQuery")
 
         mock_filter.assert_called_with("SearchQuery")
-

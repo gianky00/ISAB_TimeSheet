@@ -4,7 +4,6 @@ Classe base astratta per tutti i bot di automazione con State Machine e Validazi
 """
 
 import logging
-import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from pathlib import Path

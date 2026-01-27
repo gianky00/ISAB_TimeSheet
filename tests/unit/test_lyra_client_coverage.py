@@ -60,7 +60,6 @@ class TestLyraClientCoverage:
         # Il nuovo formato usa le iniziali con i punti (es. G. A.)
         assert "G. A. (08:00 -> 17:00)" in context
 
-
     def test_ask_with_image_payload(self, client, mocker):
         """Verifica la costruzione del payload multi-modale (testo + immagine)."""
         mock_resp = MagicMock()

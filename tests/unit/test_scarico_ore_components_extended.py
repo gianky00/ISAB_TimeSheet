@@ -41,7 +41,6 @@ class TestScaricoOreComponentsExtended:
         assert display[0][0] == "01/01/2024"  # Date formatted
         assert totals[0] == 8.0
 
-
     def test_model_filtering(self, qapp):
         model = ScaricoOreTableModel()
         # Manually inject data to test filter logic without async

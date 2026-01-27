@@ -1,9 +1,8 @@
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 
-from src.core.excel_importer import ExcelImporter
 from src.core.importers.giornaliere import GiornaliereImporter
 
 
@@ -65,4 +64,3 @@ class TestExcelImporterComprehensive:
             assert len(rows) == 2
             assert rows[0][2] == "Mario Rossi"
             assert rows[1][2] == "Luigi Verdi"
-

@@ -38,7 +38,6 @@ def test_get_license_dir(mocker):
     assert "Licenza" in str(path)
 
 
-
 def test_update_grace_timestamp(mocker, mock_license_dir):
     mocker.patch(
         "src.core.license_updater.get_license_dir", return_value=mock_license_dir

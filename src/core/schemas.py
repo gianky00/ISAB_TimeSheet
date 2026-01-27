@@ -20,7 +20,6 @@ class DipendenteSchema(pa.DataFrameModel):
         coerce = True
 
 
-
 class GiornaliereSchema(pa.DataFrameModel):
     """Schema di validazione per i file Giornaliera."""
 

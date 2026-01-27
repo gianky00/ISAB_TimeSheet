@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.core.telegram_manager import TelegramService
 from src.core.telegram.handlers import callbacks
+from src.core.telegram_manager import TelegramService
 
 
 class TestTelegramDeepDive:
@@ -69,12 +69,15 @@ class TestTelegramDeepDive:
         mock_query.edit_message_text = AsyncMock()
 
         # Test settings and power menus
-        await callbacks._handle_utility_actions(service, "menu_power", mock_query, "123")
+        await callbacks._handle_utility_actions(
+            service, "menu_power", mock_query, "123"
+        )
         assert "Manutenzione" in mock_query.edit_message_text.call_args[0][0]
 
         with patch(
             "src.core.config_manager.load_config", return_value={"fornitori": ["F1"]}
         ):
-            await callbacks._handle_utility_actions(service, "menu_settings", mock_query, "123")
+            await callbacks._handle_utility_actions(
+                service, "menu_settings", mock_query, "123"
+            )
             assert "Impostazioni" in mock_query.edit_message_text.call_args[0][0]
-

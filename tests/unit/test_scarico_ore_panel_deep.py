@@ -114,6 +114,7 @@ class TestScaricoOrePanelDeep:
     def test_update_finished_ui_restore(self, panel, mocker):
         """Verifica il ripristino della UI dopo l'aggiornamento."""
         from pathlib import Path
+
         mocker.patch.object(Path, "exists", return_value=True)
         mocker.patch.object(Path, "unlink")
 
@@ -126,4 +127,3 @@ class TestScaricoOrePanelDeep:
         assert "+10" in status_text
         assert "-2" in status_text
         assert "15.5s" in status_text
-

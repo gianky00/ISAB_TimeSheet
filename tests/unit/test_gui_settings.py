@@ -41,4 +41,3 @@ class TestSettingsGUI:
 
         # Verify call to config_manager
         mock_set.assert_any_call("browser_timeout", 99)
-

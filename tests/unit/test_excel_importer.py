@@ -198,4 +198,3 @@ class TestExcelImporter:
         # files calls GiornaliereImporter.scan_files
         assert sheets == 2
         assert files == 0
-

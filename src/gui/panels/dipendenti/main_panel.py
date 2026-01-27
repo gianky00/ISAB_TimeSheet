@@ -1,12 +1,11 @@
 import logging
 
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QTabWidget
-from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
+from src.core.constants import Icons
 from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage
 from src.gui.panels.dipendenti_manager_panel import DipendentiManagerPanel
 from src.utils.helpers import get_asset_path, get_colored_icon
-from src.core.constants import Icons
 
 logger = logging.getLogger(__name__)
 
@@ -27,22 +26,22 @@ class DipendentiPanel(QWidget):
         main_layout.setSpacing(0)
 
         self.tabs = QTabWidget()
-        self.tabs.setProperty("class", "Level2Tabs") # Stile Tab secondari
+        self.tabs.setProperty("class", "Level2Tabs")  # Stile Tab secondari
 
         # Tab 1: Monitoraggio (Vecchia interfaccia)
         self.anagrafica_page = AnagraficaPage()
         self.tabs.addTab(
             self.anagrafica_page,
-            get_colored_icon(get_asset_path(Icons.ACTIVITY), "#0d6efd"), 
-            "Monitoraggio"
+            get_colored_icon(get_asset_path(Icons.ACTIVITY), "#0d6efd"),
+            "Monitoraggio",
         )
 
         # Tab 2: Configurazione (Nuova interfaccia CRUD)
         self.manager_page = DipendentiManagerPanel()
         self.tabs.addTab(
             self.manager_page,
-            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#6c757d"), 
-            "Configurazione"
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#6c757d"),
+            "Configurazione",
         )
 
         # AGGIORNAMENTO AUTOMATICO TRA TAB
@@ -56,8 +55,10 @@ class DipendentiPanel(QWidget):
         current = self.tabs.currentWidget()
         if hasattr(current, "refresh_data"):
             current.refresh_data()
-        
+
         # Opzionale: aggiorna anche l'altro in background se necessario
-        if current == self.anagrafica_page and hasattr(self.manager_page, "refresh_data"):
-             # Non forziamo il refresh grafico se non visibile, ma magari ricarica dati
-             pass
+        if current == self.anagrafica_page and hasattr(
+            self.manager_page, "refresh_data"
+        ):
+            # Non forziamo il refresh grafico se non visibile, ma magari ricarica dati
+            pass

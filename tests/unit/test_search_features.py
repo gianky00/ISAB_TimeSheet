@@ -84,7 +84,6 @@ def mock_timbrature_db(tmp_path):
             "INSERT INTO timbrature VALUES ('2025-01-01', '08:00', '17:00', 'Giuseppe', 'Bianchi', 'BNCGSP...', 'OK', 'Sito B')"
         )
 
-
     return db_path
 
 

@@ -28,7 +28,6 @@ def mock_paths(tmp_path):
         yield config_path, manifest_path
 
 
-
 @pytest.fixture
 def mock_secrets():
     """Mocks SecretsManager to return a fixed key."""

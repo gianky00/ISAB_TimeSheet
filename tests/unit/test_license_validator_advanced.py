@@ -35,7 +35,6 @@ class TestLicenseValidatorAdvanced:
 
         return lic_dir, config_file, manifest_file
 
-
     def test_get_hardware_id_windows_wmic(self, mocker):
         """Test: Recupero HWID su Windows tramite WMIC mockato."""
         mocker.patch("platform.system", return_value="Windows")
@@ -107,11 +106,13 @@ class TestLicenseValidatorAdvanced:
     def test_license_hardware_mismatch(self, license_env, mocker):
         """Test: Fallimento se HWID nella licenza è diverso da quello attuale."""
         lic_dir, config_file, manifest_file = license_env
-        
+
         # Assicura che i file esistano fisicamente per evitare LicenseStatus.MISSING
         config_file.write_text("dummy")
-        manifest_file.write_text(json.dumps({"config.dat": hashlib.sha256(b"dummy").hexdigest()}))
-        
+        manifest_file.write_text(
+            json.dumps({"config.dat": hashlib.sha256(b"dummy").hexdigest()})
+        )
+
         payload = {"Hardware ID": "WRONG-ID", "Scadenza Licenza": "31/12/2099"}
         mocker.patch(
             "src.core.license_validator.get_license_info", return_value=payload
@@ -128,4 +129,3 @@ class TestLicenseValidatorAdvanced:
         status, msg = get_detailed_license_status()
         assert status == LicenseStatus.INVALID
         assert "Hardware ID non valido" in msg
-

@@ -41,8 +41,6 @@ class TestTelegramCoverage:
         mock_app.initialize.assert_awaited()
         mock_app.shutdown.assert_awaited()
 
-
-
     def test_send_message_sync(self, service, mocker):
         service.loop = MagicMock()
         service.loop.is_running.return_value = True

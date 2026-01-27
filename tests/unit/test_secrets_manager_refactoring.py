@@ -113,7 +113,6 @@ def test_derive_key():
     assert len(key) > 0
 
 
-
 def test_store_delete_credential():
     with (
         patch("keyring.set_password") as m_set,

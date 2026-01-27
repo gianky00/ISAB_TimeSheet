@@ -90,7 +90,6 @@ class TestSearchControllerCoverage(unittest.TestCase):
         self.assertEqual(count, 1)
         menu.addAction.assert_any_call("DIPENDENTI:")
 
-
     @patch("src.core.audit_manager.AuditManager")
     def test_search_audit_found(self, MockAudit):
         MockAudit.instance().get_logs.return_value = [
@@ -103,7 +102,6 @@ class TestSearchControllerCoverage(unittest.TestCase):
 
         self.assertEqual(count, 1)  # Only 1 matches "Login"
         menu.addAction.assert_any_call("AUDIT LOG:")
-
 
     @patch("src.gui.controllers.search_controller.QMenu")
     def test_perform_search_integration(self, MockMenu):

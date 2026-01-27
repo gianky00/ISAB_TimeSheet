@@ -48,7 +48,6 @@ class TestSettingsPanelComplete:
                 panel._save_settings()
                 mock_save.assert_called()
 
-
     def test_telegram_settings_change(self, panel, qtbot):
         qtbot.addWidget(panel)
         panel.tabs.setCurrentIndex(3)  # Telegram

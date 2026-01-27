@@ -23,9 +23,9 @@ sys.modules["win32print"] = MagicMock()
 sys.modules["win32ui"] = MagicMock()
 sys.modules["win32con"] = MagicMock()
 
-import pytest
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
+import pytest  # noqa: E402
 
+from src.bots.safework.pdl.bot import SafeWorkPDLBot  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -57,7 +57,6 @@ def mock_settings(tmp_path):
     """Isola i log e i download."""
     with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
         yield
-
 
 
 @pytest.fixture

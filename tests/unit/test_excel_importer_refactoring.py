@@ -4,8 +4,8 @@ Ensures 100% coverage and parity before refactoring.
 """
 
 import json
-from unittest.mock import MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -14,8 +14,6 @@ from src.core.excel_importer import ExcelImporter
 from src.core.importers.contabilita import ContabilitaImporter
 from src.core.importers.giornaliere import GiornaliereImporter
 from src.core.importers.scarico_ore import ScaricoOreImporter
-from src.core.importers.attivita import AttivitaImporter
-from src.core.importers.certificati import CertificatiImporter
 
 
 @pytest.fixture
@@ -107,7 +105,10 @@ def test_import_contabilita_dati_critical_error():
 
 def test_find_header_row_coverage(mock_xls_file):
     xls = pd.ExcelFile(mock_xls_file)
-    with patch("src.core.importers.contabilita.pd.read_excel", return_value=pd.DataFrame({"A": [1]})):
+    with patch(
+        "src.core.importers.contabilita.pd.read_excel",
+        return_value=pd.DataFrame({"A": [1]}),
+    ):
         idx = ContabilitaImporter._find_header_row(xls, "2025")
         assert idx == 0
 
@@ -476,4 +477,3 @@ def test_scan_workload_coverage(tmp_path):
 
     rows = ExcelImporter.scan_scarico_ore_rows(str(path))
     assert rows >= 0
-

@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt6.QtCore import QObject
 
 from src.bots.base.base_bot import BaseBot
 from src.core.constants import BotStatus

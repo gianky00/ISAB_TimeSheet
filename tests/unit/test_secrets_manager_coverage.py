@@ -73,7 +73,6 @@ class TestSecretsManager:
         assert SecretsManager.get_gemini_api_key() == "secret_value"
         keyring.get_password.assert_called_with("SyncroJob_api", "GEMINI_API_KEY")
 
-
     def test_store_credential(self, mock_keyring):
         SecretsManager.store_credential("api", "user", "pass")
         keyring.set_password.assert_called_with("SyncroJob_api", "user", "pass")

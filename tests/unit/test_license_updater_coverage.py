@@ -35,7 +35,6 @@ class TestLicenseUpdater:
             assert str(tmp_path) in str(d)
             assert "Licenza" in str(d)
 
-
     def test_grace_timestamp_lifecycle(self, mock_paths):
         # 1. Update timestamp
         update_grace_timestamp()

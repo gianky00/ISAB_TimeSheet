@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock, patch
-from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -49,9 +48,15 @@ def test_import_contabilita_valid_data(importer):
             return_value=mock_xls,
         ),
         patch("src.core.importers.contabilita.pd.read_excel", return_value=df_actual),
-        patch("src.core.importers.contabilita.ContabilitaImporter._find_header_row", return_value=0),
+        patch(
+            "src.core.importers.contabilita.ContabilitaImporter._find_header_row",
+            return_value=0,
+        ),
         patch("src.core.importers.contabilita.Path.exists", return_value=True),
-        patch("src.core.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted", return_value=("fake", False)),
+        patch(
+            "src.core.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted",
+            return_value=("fake", False),
+        ),
     ):
         success, msg, rows, years = importer.import_contabilita_dati("fake.xlsx")
 
@@ -114,4 +119,3 @@ def test_import_giornaliere_collection(importer, tmp_path):
     found_files = [str(t[1].name) for t in tasks]
     assert "valid.xls" in found_files
     assert "~$lock.xls" not in found_files
-

@@ -1,9 +1,7 @@
 from datetime import datetime
 from unittest.mock import patch
 
-import pytest
 from PyQt6.QtWidgets import QMessageBox
-
 
 from src.gui.panels.notifications_panel import AuditLogWidget, NotificationsPanel
 
@@ -83,29 +81,28 @@ class TestNotificationsPanelDeep:
 
             # Switch to 'error' filter
             panel.toolbar._on_filter_clicked("error")
-            
+
             # La logica del pannello usa un timer per il refresh
             # Attendiamo che venga renderizzato il gruppo corretto
             def check_found():
                 # Deve esserci almeno un gruppo
                 if not panel._group_widgets:
                     return False
-                
+
                 for group_data in panel._group_widgets.values():
                     container = group_data["container"]
                     layout = container.layout()
                     for i in range(layout.count()):
                         w = layout.itemAt(i).widget()
                         # NotificationCard usa 'notification'
-                        if hasattr(w, "notification") and w.notification.get("level") == "error":
+                        if (
+                            hasattr(w, "notification")
+                            and w.notification.get("level") == "error"
+                        ):
                             return True
                 return False
 
             qtbot.waitUntil(check_found, timeout=3000)
-
-
-
-
 
     def test_clear_notifications_confirm(self, qapp, qtbot):
         with patch(

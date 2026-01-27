@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from src.core.telegram.handlers import callbacks, messages
 from src.core.telegram_manager import TelegramService
-from src.core.telegram.handlers import messages, callbacks
 
 
 class TestTelegramCoreDeep:
@@ -17,7 +17,9 @@ class TestTelegramCoreDeep:
         mock_context = MagicMock()
 
         # Mock auth
-        with patch.object(service, "_check_auth", new_callable=AsyncMock, return_value=True):
+        with patch.object(
+            service, "_check_auth", new_callable=AsyncMock, return_value=True
+        ):
             mock_file = AsyncMock()
             mock_file.download_as_bytearray = AsyncMock(
                 return_value=bytearray(b"fake_audio")
@@ -27,7 +29,10 @@ class TestTelegramCoreDeep:
             mock_update.message.voice.file_id = "voice123"
             mock_update.message.reply_chat_action = AsyncMock()
 
-            with patch("src.core.telegram.handlers.messages.process_with_ai", new_callable=AsyncMock) as mock_ai:
+            with patch(
+                "src.core.telegram.handlers.messages.process_with_ai",
+                new_callable=AsyncMock,
+            ) as mock_ai:
                 await messages.handle_voice(service, mock_update, mock_context)
                 mock_ai.assert_called_once()
 
@@ -37,7 +42,9 @@ class TestTelegramCoreDeep:
         mock_context = MagicMock()
 
         # Mock auth
-        with patch.object(service, "_check_auth", new_callable=AsyncMock, return_value=True):
+        with patch.object(
+            service, "_check_auth", new_callable=AsyncMock, return_value=True
+        ):
             mock_photo = MagicMock()
             mock_photo.file_id = "photo123"
             mock_update.message.photo = [mock_photo]
@@ -67,9 +74,10 @@ class TestTelegramCoreDeep:
         mock_update.callback_query = mock_query
         mock_query.edit_message_text = AsyncMock()
 
-
         # Mock auth
-        with patch.object(service, "_check_auth", new_callable=AsyncMock, return_value=True):
+        with patch.object(
+            service, "_check_auth", new_callable=AsyncMock, return_value=True
+        ):
             # Nav to Utility
             mock_query.data = "nav_utility"
             await callbacks.handle_button(service, mock_update, mock_context)
@@ -79,7 +87,8 @@ class TestTelegramCoreDeep:
             mock_query.data = "nav_bots"
             await callbacks.handle_button(service, mock_update, mock_context)
             assert (
-                "🤖 *Seleziona Piattaforma*" in mock_query.edit_message_text.call_args[0][0]
+                "🤖 *Seleziona Piattaforma*"
+                in mock_query.edit_message_text.call_args[0][0]
             )
 
     def test_sync_send_methods(self, service):
@@ -95,4 +104,3 @@ class TestTelegramCoreDeep:
 
             service.send_photo_sync(b"data", "caption")
             assert mock_run.call_count == 2
-

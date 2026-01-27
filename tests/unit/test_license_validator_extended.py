@@ -1,10 +1,9 @@
-from pathlib import Path
 import base64
 import hashlib
 import json
-import os
 from datetime import date, datetime, timedelta, timezone
-from unittest.mock import mock_open, patch
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from cryptography.fernet import Fernet
@@ -119,7 +118,10 @@ def test_get_hardware_id_linux_lsblk(mocker):
 
 def test_get_hardware_id_linux_machine_id(mocker):
     mocker.patch("platform.system", return_value="Linux")
-    mocker.patch("src.core.license_validator.subprocess.check_output", side_effect=Exception("lsblk failed"))
+    mocker.patch(
+        "src.core.license_validator.subprocess.check_output",
+        side_effect=Exception("lsblk failed"),
+    )
 
     # Mock Path directly in the module to avoid platform issues
     mock_path_inst = mocker.MagicMock()
@@ -129,11 +131,6 @@ def test_get_hardware_id_linux_machine_id(mocker):
 
     mocker.patch("src.core.license_validator.uuid.getnode", return_value=12345)
     assert get_hardware_id() == "FAKE_MACHINE_ID"
-
-
-
-
-
 
 
 def test_get_hardware_id_fallback_uuid(mocker):
@@ -150,7 +147,10 @@ def test_get_license_paths(mocker):
     paths = _get_license_paths()
     assert str(paths["dir"]).replace("\\", "/") == "/fake/appdata/Licenza"
     assert str(paths["config"]).replace("\\", "/") == "/fake/appdata/Licenza/config.dat"
-    assert str(paths["manifest"]).replace("\\", "/") == "/fake/appdata/Licenza/manifest.json"
+    assert (
+        str(paths["manifest"]).replace("\\", "/")
+        == "/fake/appdata/Licenza/manifest.json"
+    )
 
 
 def test_get_license_info_success(mocker, mock_license_dir, mock_secrets_manager):
@@ -225,10 +225,12 @@ def test_get_detailed_license_status_invalid_sha(
         "manifest": mock_license_dir / "manifest.json",
     }
     mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
-    
+
     # Assicura che i file esistano
     (mock_license_dir / "config.dat").write_text("fake_encrypted_config")
-    (mock_license_dir / "manifest.json").write_text(json.dumps({"config.dat": "invalid_sha"}))
+    (mock_license_dir / "manifest.json").write_text(
+        json.dumps({"config.dat": "invalid_sha"})
+    )
 
     mocker.patch(
         "src.core.license_validator._calculate_sha256", return_value="different_sha"
@@ -468,4 +470,3 @@ def test_get_license_client(
     )
     client = get_license_client()
     assert client == "Test Cliente"
-

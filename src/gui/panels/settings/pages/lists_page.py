@@ -68,7 +68,7 @@ class ListsPage(QWidget):
         layout = QVBoxLayout(group)
 
         self.account_list = QListWidget()
-        self.account_list.setMaximumHeight(150) # Aumentato leggermente
+        self.account_list.setMaximumHeight(150)  # Aumentato leggermente
         self.account_list.setStyleSheet(list_style())
         self.account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.account_list.customContextMenuRequested.connect(self._show_account_menu)
@@ -88,7 +88,7 @@ class ListsPage(QWidget):
         layout = QVBoxLayout(group)
 
         self.sw_account_list = QListWidget()
-        self.sw_account_list.setMaximumHeight(150) # Aumentato leggermente
+        self.sw_account_list.setMaximumHeight(150)  # Aumentato leggermente
         self.sw_account_list.setStyleSheet(list_style())
         self.sw_account_list.setContextMenuPolicy(
             Qt.ContextMenuPolicy.CustomContextMenu
@@ -296,12 +296,12 @@ class ListsPage(QWidget):
         row = self.account_list.currentRow()
         if row < 0:
             return
-            
+
         # Ottieni tutti gli account
         accs = self._get_accounts(self.account_list)
         # Ottieni quello da modificare
         target_acc = accs[row]
-        
+
         dlg = AccountDialog(self, target_acc["username"], target_acc["password"])
         if dlg.exec():
             u, p = dlg.get_data()
@@ -352,10 +352,10 @@ class ListsPage(QWidget):
         row = self.sw_account_list.currentRow()
         if row < 0:
             return
-            
+
         accs = self._get_accounts(self.sw_account_list)
         target_acc = accs[row]
-        
+
         dlg = AccountDialog(self, target_acc["username"], target_acc["password"])
         if dlg.exec():
             u, p = dlg.get_data()

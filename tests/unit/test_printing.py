@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import MagicMock
+
 from src.utils.printing import get_installed_printers, print_pdf
+
 
 class TestPrinting:
     def test_get_installed_printers(self, mocker):
@@ -13,7 +14,7 @@ class TestPrinting:
         mocker.patch("src.utils.printing.Path.exists", return_value=True)
         mock_win32print = mocker.patch("src.utils.printing.win32print")
         mock_win32print.GetDefaultPrinter.return_value = "DefaultPrinter"
-        
+
         mock_win32ui = mocker.patch("src.utils.printing.win32ui")
         mock_dc = MagicMock()
         mock_win32ui.CreateDC.return_value = mock_dc
@@ -23,7 +24,7 @@ class TestPrinting:
         mock_doc = MagicMock()
         mock_fitz.open.return_value = mock_doc
         mock_doc.__len__.return_value = 2
-        
+
         mock_page = MagicMock()
         mock_pix = MagicMock()
         mock_pix.alpha = False
@@ -44,10 +45,12 @@ class TestPrinting:
 
     def test_print_pdf_fallback(self, mocker):
         mocker.patch("src.utils.printing.Path.exists", return_value=True)
-        mocker.patch("src.utils.printing.win32print.GetDefaultPrinter", side_effect=Exception("Fail"))
+        mocker.patch(
+            "src.utils.printing.win32print.GetDefaultPrinter",
+            side_effect=Exception("Fail"),
+        )
         mock_startfile = mocker.patch("src.utils.printing.os.startfile", create=True)
 
         result = print_pdf("C:/test.pdf", "Printer")
         assert result is True
         assert mock_startfile.called
-

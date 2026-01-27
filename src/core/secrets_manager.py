@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 class SecretsManager:
-
     """Gestisce i segreti in modo sicuro."""
 
     APP_NAME = "SyncroJob"
@@ -135,7 +134,6 @@ class SecretsManager:
             keyring.delete_password(f"{cls.APP_NAME}_{service}", username)
         except (keyring.errors.PasswordDeleteError, Exception) as e:
             logger.warning(f"Could not delete credential for {service}: {e}")
-
 
     @staticmethod
     def derive_key(password: str, salt: bytes) -> bytes:

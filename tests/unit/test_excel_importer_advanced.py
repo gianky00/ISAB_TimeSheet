@@ -36,7 +36,9 @@ class TestExcelImporterAdvanced:
             }
         )
 
-        mocker.patch("src.core.importers.contabilita.pd.ExcelFile", return_value=mock_xls)
+        mocker.patch(
+            "src.core.importers.contabilita.pd.ExcelFile", return_value=mock_xls
+        )
         mocker.patch(
             "src.core.importers.contabilita.ContabilitaImporter._get_excel_file",
             return_value=mock_xls,
@@ -101,7 +103,9 @@ class TestExcelImporterAdvanced:
             }
         )
 
-        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df_giorn):
+        with patch(
+            "src.core.importers.giornaliere.pd.read_excel", return_value=df_giorn
+        ):
             year, rows, err = GiornaliereImporter._process_single_giornaliera(
                 (2026, Path("test.xlsx"), {})
             )
@@ -199,5 +203,3 @@ class TestExcelImporterAdvanced:
         assert ContabilitaImporter._identify_sheet_year("2024_Riepilogo") == 2024
         assert ContabilitaImporter._identify_sheet_year("Dati") == datetime.now().year
         assert ContabilitaImporter._identify_sheet_year("Foglio1") is None
-
-

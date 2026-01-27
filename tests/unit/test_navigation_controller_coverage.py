@@ -103,7 +103,6 @@ class TestNavigationControllerCoverage(unittest.TestCase):
         mock_nav.assert_called_with(1, sub_index=0)
         self.mock_mw.automazioni_widget.set_active_tab.assert_called_with(0, 1)
 
-
     @patch("src.gui.controllers.navigation_controller.NavigationController.navigate_to")
     def test_analyze_with_lyra(self, mock_nav):
         self.mock_mw.lyra_panel = MagicMock()

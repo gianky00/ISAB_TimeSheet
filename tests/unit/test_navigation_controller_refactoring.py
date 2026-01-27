@@ -3,7 +3,6 @@ Tests for NavigationController.get_panel refactoring.
 Ensures functional parity before refactoring.
 """
 
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -89,9 +88,7 @@ def test_get_panel_exception_handling(controller, mock_mw):
     index = 0
     setattr(mock_mw, f"_panel_initialized_{index}", False)
 
-    with patch(
-        "src.gui.panels.DashboardPanel", side_effect=Exception("Load Fail")
-    ):
+    with patch("src.gui.panels.DashboardPanel", side_effect=Exception("Load Fail")):
         # Mock QMessageBox.critical
         with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_msg:
             placeholder = MagicMock()
@@ -101,4 +98,3 @@ def test_get_panel_exception_handling(controller, mock_mw):
 
             assert panel == placeholder
             mock_msg.assert_called_once()
-

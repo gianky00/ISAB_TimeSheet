@@ -80,7 +80,7 @@ class TestDataSynchronizerDetailed:
         # 15 new - 10 old = 5 added, 0 removed
         assert added == 5
         assert removed == 0
-        
+
         # Verify optimized sync calls
         # Should call SELECT COUNT
         cursor.execute.assert_any_call("SELECT COUNT(*) FROM scarico_ore")
@@ -88,4 +88,3 @@ class TestDataSynchronizerDetailed:
         cursor.execute.assert_any_call("DELETE FROM scarico_ore")
         # Should insert new rows
         assert cursor.executemany.called
-

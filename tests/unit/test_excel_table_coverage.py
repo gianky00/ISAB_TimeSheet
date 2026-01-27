@@ -52,7 +52,6 @@ class TestExcelTableCoverage:
         assert combo.itemText(0) == ""
         assert combo.itemText(1) == "C"
 
-
     def test_copy_paste_cycle(self, app):
         """Simula il ciclo di copia e incolla tramite appunti."""
         table = ExcelTableWidget()
