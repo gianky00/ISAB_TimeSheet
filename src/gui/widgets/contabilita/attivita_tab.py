@@ -103,29 +103,23 @@ class AttivitaProgrammateTab(QWidget):
 
         self.table.auto_copy_headers = True
         header = self.table.horizontalHeader()
+        # Inizialmente usa Interactive per permettere ridimensionamento automatico
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setColumnHidden(0, True)
         self.table.setColumnHidden(14, True)
-        self.table.setColumnWidth(1, 80)
-        self.table.setColumnWidth(2, 80)
-        self.table.setColumnWidth(3, 60)
-        self.table.setColumnWidth(4, 350)
-        for i in range(5, 10):
-            self.table.setColumnWidth(i, 50)
-        self.table.setColumnWidth(10, 120)
-        self.table.setColumnWidth(11, 120)
-        self.table.setColumnWidth(12, 100)
-        self.table.setColumnWidth(13, 150)
-        self.table.setColumnWidth(15, 250)
 
-        # Estendi colonne con testo lungo per riempire spazio orizzontale
-        header.setSectionResizeMode(
-            4, QHeaderView.ResizeMode.Stretch
-        )  # DESCRIZIONE ATTIVITA'
-        header.setSectionResizeMode(
-            11, QHeaderView.ResizeMode.Stretch
-        )  # STATO ATTIVITA'
-        header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)  # AVVISO
+        # Imposta larghezze minime ragionevoli
+        self.table.setColumnWidth(1, 80)  # AREA
+        self.table.setColumnWidth(2, 80)  # PdL
+        self.table.setColumnWidth(3, 60)  # IMP.
+        self.table.setColumnWidth(4, 350)  # DESCRIZIONE ATTIVITA'
+        for i in range(5, 10):
+            self.table.setColumnWidth(i, 50)  # Giorni settimana
+        self.table.setColumnWidth(10, 120)  # STATO PdL
+        self.table.setColumnWidth(11, 120)  # STATO ATTIVITA'
+        self.table.setColumnWidth(12, 100)  # DATA CONTROLLO
+        self.table.setColumnWidth(13, 150)  # PERSONALE IMPIEGATO
+        self.table.setColumnWidth(15, 250)  # AVVISO
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -148,9 +142,33 @@ class AttivitaProgrammateTab(QWidget):
                 self._populate_table_row(row_idx, row_data, db_keys)
             self.table.resizeRowsToContents()
             self._populate_filters()
+            # Adatta le colonne al contenuto
+            self._adjust_column_widths()
         finally:
             self.table.blockSignals(False)
             self.table.setSortingEnabled(True)
+
+    def _adjust_column_widths(self):
+        """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
+        header = self.table.horizontalHeader()
+
+        # Ridimensiona colonne specifiche al contenuto
+        columns_to_resize = [1, 2, 3, 10, 11, 12, 13]  # Escludi quelle con stretch
+        for col in columns_to_resize:
+            if not self.table.isColumnHidden(col):
+                self.table.resizeColumnToContents(col)
+                # Aggiungi buffer per leggibilità (10% + 15px)
+                current_width = self.table.columnWidth(col)
+                self.table.setColumnWidth(col, int(current_width * 1.1) + 15)
+
+        # Imposta Stretch per colonne con testo lungo (dopo aver ridimensionato le altre)
+        header.setSectionResizeMode(
+            4, QHeaderView.ResizeMode.Stretch
+        )  # DESCRIZIONE ATTIVITA'
+        header.setSectionResizeMode(
+            11, QHeaderView.ResizeMode.Stretch
+        )  # STATO ATTIVITA'
+        header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)  # AVVISO
 
     def _populate_table_row(self, row_idx: int, row_data: tuple, db_keys: list):
         styles_idx = len(self.COLUMNS)
@@ -218,56 +236,43 @@ class AttivitaProgrammateTab(QWidget):
                 r, self._should_hide_row(r, f_ps, f_po, f_area, f_stato)
             )
 
-            def _should_hide_row(
-                self, row: int, f_ps: bool, f_po: bool, f_area: str, f_stato: str
-            ) -> bool:
-                """Determina se una riga deve essere nascosta in base ai filtri attivi."""
+    def _should_hide_row(
+        self, row: int, f_ps: bool, f_po: bool, f_area: str, f_stato: str
+    ) -> bool:
+        """Determina se una riga deve essere nascosta in base ai filtri attivi."""
+        if self._is_ps_missing(row, f_ps):
+            return True
+        if self._is_po_missing(row, f_po):
+            return True
+        if self._is_area_mismatch(row, f_area):
+            return True
+        if self._is_stato_mismatch(row, f_stato):
+            return True
+        return False
 
-                if self._is_ps_missing(row, f_ps):
-                    return True
+    def _is_ps_missing(self, row: int, active: bool) -> bool:
+        if not active:
+            return False
+        it = self.table.item(row, 0)
+        return not it or not it.text().strip()
 
-                if self._is_po_missing(row, f_po):
-                    return True
+    def _is_po_missing(self, row: int, active: bool) -> bool:
+        if not active:
+            return False
+        it = self.table.item(row, 14)
+        return not it or not it.text().strip()
 
-                if self._is_area_mismatch(row, f_area):
-                    return True
+    def _is_area_mismatch(self, row: int, area: str) -> bool:
+        if area == "Tutte":
+            return False
+        it = self.table.item(row, 1)
+        return not it or it.text() != area
 
-                if self._is_stato_mismatch(row, f_stato):
-                    return True
-
-                return False
-
-            def _is_ps_missing(self, row: int, active: bool) -> bool:
-                if not active:
-                    return False
-
-                it = self.table.item(row, 0)
-
-                return not it or not it.text().strip()
-
-            def _is_po_missing(self, row: int, active: bool) -> bool:
-                if not active:
-                    return False
-
-                it = self.table.item(row, 14)
-
-                return not it or not it.text().strip()
-
-            def _is_area_mismatch(self, row: int, area: str) -> bool:
-                if area == "Tutte":
-                    return False
-
-                it = self.table.item(row, 1)
-
-                return not it or it.text() != area
-
-            def _is_stato_mismatch(self, row: int, stato: str) -> bool:
-                if stato == "Tutti":
-                    return False
-
-                it = self.table.item(row, 10)
-
-                return not it or it.text() != stato
+    def _is_stato_mismatch(self, row: int, stato: str) -> bool:
+        if stato == "Tutti":
+            return False
+        it = self.table.item(row, 10)
+        return not it or it.text() != stato
 
     def _reset_filters(self):
         self.chk_ps.setChecked(False)

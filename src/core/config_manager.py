@@ -29,9 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 _config_cache: Optional[Dict[str, Any]] = None
 _config_lock = threading.RLock()  # Lock per accesso thread-safe
 
+
 def get_version() -> str:
     """Restituisce la versione corrente dell'applicazione."""
     return __version__
+
 
 # Configurazione di default
 DEFAULT_CONFIG: Dict[str, Any] = {
@@ -63,16 +65,6 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 def ensure_config_dir():
     """Assicura che la directory di configurazione esista."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def get_version() -> str:
-    """Restituisce la versione corrente dell'applicazione."""
-    try:
-        from src.core.version import __version__
-
-        return __version__
-    except ImportError:
-        return "1.7.2"  # Fallback manuale se l'import fallisce
 
 
 def load_config() -> Dict[str, Any]:

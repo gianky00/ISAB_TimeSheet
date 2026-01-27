@@ -9,8 +9,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-logger = logging.getLogger(__name__)
-
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -22,6 +20,8 @@ from src.bots.base.login_page import LoginPage
 from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
+
+logger = logging.getLogger(__name__)
 
 
 class BaseBot(ABC):
@@ -168,12 +168,6 @@ class BaseBot(ABC):
             self._configure_waits_and_pages()
         except Exception as e:
             self._handle_driver_error(e)
-
-    def _handle_driver_error(self, e: Exception):
-        """Gestisce e logga errori critici del driver."""
-        self.log(f"❌ Errore driver: {e}")
-        # Rilancia per permettere al meccanismo di retry di funzionare
-        raise e
 
     def _get_chrome_options(self) -> Options:
         """Configura e restituisce le opzioni di Chrome per massimizzare stabilità e performance."""

@@ -43,6 +43,7 @@ class AppInitializer:
         """Configura il logging su file rotativo."""
         from logging.handlers import RotatingFileHandler
         from pathlib import Path
+
         from src.core import config_manager
 
         log_dir = Path(config_manager.get_logs_path())
@@ -62,18 +63,17 @@ class AppInitializer:
         # Root Logger config
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
-        
+
         # Evita duplicati se reload
         if not any(isinstance(h, RotatingFileHandler) for h in root_logger.handlers):
             root_logger.addHandler(handler)
             logger.info(f"Logging inizializzato su: {log_file}")
-        
+
         # Console Handler (opzionale, se non c'è già)
         if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
             console = logging.StreamHandler()
             console.setFormatter(formatter)
             root_logger.addHandler(console)
-
 
     @staticmethod
     def _init_telegram_security():

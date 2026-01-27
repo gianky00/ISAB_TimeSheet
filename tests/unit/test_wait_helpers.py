@@ -4,8 +4,8 @@ Unit Tests for Selenium Wait Helpers
 Test suite per wait_helpers.py usando mock WebDriver e Temporary Directory.
 """
 
-import time
 import threading
+import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -14,9 +14,6 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
 from src.bots.base.wait_helpers import (
-    alert_appears_with_text,
-    element_count_is,
-    element_text_changes,
     execute_with_wait,
     poll_for_download_complete,
     poll_for_file,
@@ -72,7 +69,9 @@ class TestWaitForOverlay:
         mock_wait_class.return_value = mock_wait
         mock_wait.until.return_value = True
 
-        result = wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"), timeout=10)
+        result = wait_for_overlay_to_disappear(
+            mock_driver, (By.ID, "overlay"), timeout=10
+        )
         assert result is True
 
     @patch("src.bots.base.wait_helpers.WebDriverWait")
@@ -81,7 +80,9 @@ class TestWaitForOverlay:
         mock_wait_class.return_value = mock_wait
         mock_wait.until.side_effect = TimeoutException()
 
-        result = wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"), timeout=1)
+        result = wait_for_overlay_to_disappear(
+            mock_driver, (By.ID, "overlay"), timeout=1
+        )
         assert result is False
 
 
@@ -141,7 +142,9 @@ class TestPollForDownloadComplete:
 
     def test_download_complete(self, temp_download_dir):
         (temp_download_dir / "report.xlsx").write_text("data")
-        result = poll_for_download_complete(temp_download_dir, pattern="report.xlsx", timeout=2, poll_interval=0.1)
+        result = poll_for_download_complete(
+            temp_download_dir, pattern="report.xlsx", timeout=2, poll_interval=0.1
+        )
         assert result is not None
         assert result.endswith("report.xlsx")
 
@@ -157,6 +160,7 @@ class TestPollForDownloadComplete:
 # TEST NEW FILE POLLING (SNAPSHOT BASED)
 # ============================================================================
 
+
 class TestPollForNewFile:
     """Test poll_for_new_file()."""
 
@@ -165,7 +169,7 @@ class TestPollForNewFile:
         # 1. Snapshot iniziale
         (temp_download_dir / "existing.txt").write_text("old")
         files_before = {str(f.resolve()) for f in temp_download_dir.glob("*")}
-        
+
         # 2. Crea file nuovo in thread
         def create_new():
             time.sleep(0.3)
@@ -175,9 +179,13 @@ class TestPollForNewFile:
 
         # 3. Poll
         result = poll_for_new_file(
-            temp_download_dir, files_before, pattern="*.txt", timeout=3, poll_interval=0.1
+            temp_download_dir,
+            files_before,
+            pattern="*.txt",
+            timeout=3,
+            poll_interval=0.1,
         )
-        
+
         assert result is not None
         assert Path(result).name == "new.txt"
 
@@ -185,19 +193,25 @@ class TestPollForNewFile:
         """Rileva file esistente ma aggiornato (overwrite)."""
         target_file = temp_download_dir / "updated.txt"
         target_file.write_text("version1")
-        
+
         # Snapshot include file originale
         files_before = {str(f.resolve()) for f in temp_download_dir.glob("*")}
-        
+
         # Modifica file in thread (simulate overwrite)
         def overwrite_file():
-            time.sleep(1.2) # Sleep > 1s per garantire cambio mtime rilevabile (tolleranza è 1.0s)
+            time.sleep(
+                1.2
+            )  # Sleep > 1s per garantire cambio mtime rilevabile (tolleranza è 1.0s)
             target_file.write_text("version2")
-            
+
         threading.Thread(target=overwrite_file).start()
 
         result = poll_for_new_file(
-            temp_download_dir, files_before, pattern="*.txt", timeout=4, poll_interval=0.1
+            temp_download_dir,
+            files_before,
+            pattern="*.txt",
+            timeout=4,
+            poll_interval=0.1,
         )
 
         assert result is not None
@@ -207,7 +221,7 @@ class TestPollForNewFile:
     def test_timeout_no_change(self, temp_download_dir):
         """Nessun cambiamento -> timeout."""
         files_before = {str(f.resolve()) for f in temp_download_dir.glob("*")}
-        
+
         result = poll_for_new_file(
             temp_download_dir, files_before, timeout=0.5, poll_interval=0.1
         )
@@ -233,15 +247,23 @@ class TestSafeClickWithRetry:
 
     @patch("src.bots.base.wait_helpers.wait_for_element_clickable")
     @patch("src.bots.base.wait_helpers.time.sleep")
-    def test_click_retry_on_intercept(self, mock_sleep, mock_wait_clickable, mock_driver):
+    def test_click_retry_on_intercept(
+        self, mock_sleep, mock_wait_clickable, mock_driver
+    ):
         from selenium.common.exceptions import ElementClickInterceptedException
+
         mock_element = MagicMock()
         mock_wait_clickable.return_value = mock_element
 
         # First call raises, second succeeds
-        mock_element.click.side_effect = [ElementClickInterceptedException("Overlay"), None]
+        mock_element.click.side_effect = [
+            ElementClickInterceptedException("Overlay"),
+            None,
+        ]
 
-        result = safe_click_with_retry(mock_driver, (By.ID, "button"), retries=3, retry_delay=0.1)
+        result = safe_click_with_retry(
+            mock_driver, (By.ID, "button"), retries=3, retry_delay=0.1
+        )
         assert result is True
         assert mock_element.click.call_count == 2
 
@@ -259,8 +281,9 @@ class TestExecuteWithWait:
             action_called = True
 
         result = execute_with_wait(
-            action=test_action, driver=mock_driver, wait_locator=(By.CLASS_NAME, "overlay")
+            action=test_action,
+            driver=mock_driver,
+            wait_locator=(By.CLASS_NAME, "overlay"),
         )
         assert result is True
         assert action_called is True
-

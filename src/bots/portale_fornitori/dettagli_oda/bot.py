@@ -78,9 +78,10 @@ class DettagliOdABot(BaseBot):
         page = DettagliOdAPage(self.driver, self.log)
         OdaManager.init_db()
 
-        # Define source (System Downloads) and destination (Configured Path)
-        source_dir = Path.home() / "Downloads"
-        dest_dir = Path(self.download_path) if self.download_path else source_dir
+        # Chrome downloads directly to download_path (if configured)
+        # Source and dest are the same folder - we just rename the downloaded file
+        source_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
+        dest_dir = source_dir
 
         success = 0
         for i, row in enumerate(rows, 1):

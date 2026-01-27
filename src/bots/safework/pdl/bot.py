@@ -5,8 +5,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-logger = logging.getLogger(__name__)
-
 import fitz  # type: ignore # PyMuPDF
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -15,6 +13,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.base import SafeworkBaseBot
 from src.utils.printing import print_pdf
+
+logger = logging.getLogger(__name__)
 
 
 class SafeWorkPDLBot(SafeworkBaseBot):
@@ -382,7 +382,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             if not self.driver.find_element(By.ID, "lblPAFoglio").is_displayed():
                 self.log("📂 Tentativo espansione accordion 'Parte Seconda'...")
                 clicked = False
-                
+
                 # Strategia 1: ID Label
                 try:
                     self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
@@ -399,7 +399,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                         clicked = True
                     except Exception:
                         pass
-                
+
                 # Strategia 3: User Specific IDTXT (2E20B56F)
                 if not clicked:
                     try:
@@ -412,7 +412,7 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                         pass
 
                 # No sleep needed: next wait guarantees visibility
-            
+
             # Attesa conferma visibilità
             self.wait.until(EC.visibility_of_element_located((By.ID, "lblPAFoglio")))
             return True
@@ -562,20 +562,23 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 if btn_ok.is_displayed():
                     self.log("🖱️ Clic su OK per chiudere alert.")
                     btn_ok.click()
-                    
+
                     # CRITICAL FIX: Attendi che il modal scompaia completamente
                     # per evitare ElementClickInterceptedException
                     try:
                         WebDriverWait(self.driver, 5).until(
                             EC.invisibility_of_element_located(
-                                (By.XPATH, "//div[contains(@class, 'modal') and contains(@class, 'in')]")
+                                (
+                                    By.XPATH,
+                                    "//div[contains(@class, 'modal') and contains(@class, 'in')]",
+                                )
                             )
                         )
                         self.log("✓ Modal dialog chiuso completamente")
                     except Exception:
                         # Fallback: sleep breve se wait fallisce
                         time.sleep(0.5)
-                    
+
                     return True
             except Exception:
                 pass

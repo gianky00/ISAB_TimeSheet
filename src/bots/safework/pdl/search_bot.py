@@ -1,5 +1,4 @@
 import os
-import time
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -216,12 +215,15 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.log(f"🔎 DEBUG: Attendo file in: '{self.download_path}'")
             # Use helper for efficient polling
             from pathlib import Path
+
             from src.bots.base.wait_helpers import poll_for_new_file
 
             # 1. Snapshot dei file PRE-CLICK (per rilevare il delta)
             # Questo approccio è immune a problemi di timestamp del server
             download_dir = Path(self.download_path)
-            files_before = {str(f.resolve()) for f in download_dir.glob("*") if f.is_file()}
+            files_before = {
+                str(f.resolve()) for f in download_dir.glob("*") if f.is_file()
+            }
 
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnEsporta"))).click()
 

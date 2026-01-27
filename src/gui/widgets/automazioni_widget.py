@@ -41,27 +41,27 @@ class AutomazioniWidget(QTabWidget):
         self.tab_fornitori.addTab(
             self.panel_dettagli,
             get_colored_icon(get_asset_path(Icons.LIST), "#546E7A"),
-            "Dettagli OdA",
+            "Dettagli OdA (bot)",
         )
         self.tab_fornitori.addTab(
             self.panel_scarico,
             get_colored_icon(get_asset_path(Icons.DOWNLOAD), "#546E7A"),
-            "Scarico TS",
+            "Scarico TS (bot)",
         )
         self.tab_fornitori.addTab(
             self.panel_timbrature,
             get_colored_icon(get_asset_path(Icons.CLOCK), "#546E7A"),
-            "Timbrature",
+            "Timbrature (bot)",
         )
         self.tab_fornitori.addTab(
             self.panel_prenota,
             get_colored_icon(get_asset_path(Icons.TICKET), "#546E7A"),
-            "Prenota BP",
+            "Prenota BP (bot)",
         )
         self.tab_fornitori.addTab(
             self.panel_carico,
             get_colored_icon(get_asset_path(Icons.UPLOAD), "#546E7A"),
-            "Carico TS",
+            "Carico TS (bot)",
         )
 
         # --- TAB 2: SafeWork ---
@@ -73,12 +73,12 @@ class AutomazioniWidget(QTabWidget):
         self.tab_safework.addTab(
             self.panel_pdl,
             get_colored_icon(get_asset_path(Icons.SHIELD), "#546E7A"),
-            "Scarico PDL",
+            "Scarico PDL (bot)",
         )
         self.tab_safework.addTab(
             self.panel_pdl_search,
             get_colored_icon(get_asset_path(Icons.SEARCH), "#546E7A"),
-            "Ricerca PDL",
+            "Ricerca PDL (bot)",
         )
 
         # Aggiunta tab principali

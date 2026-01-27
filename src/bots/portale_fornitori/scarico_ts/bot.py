@@ -136,8 +136,9 @@ class ScaricaTSBot(BaseBot):
             f"🚀 Inizio scarico TS per {len(rows)} OdA (Fornitore: {self.fornitore})..."
         )
 
-        source_dir = Path.home() / "Downloads"
-        dest_dir = Path(self.download_path) if self.download_path else source_dir
+        # Chrome downloads directly to download_path (if configured)
+        source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        dest_dir = source_dir
         return rows, dest_dir
 
     def _process_oda_rows(
@@ -146,7 +147,8 @@ class ScaricaTSBot(BaseBot):
         """Cicla sugli OdA ed esegue la ricerca e il download."""
         success_count = 0
         downloaded_files = []
-        source_dir = Path.home() / "Downloads"
+        # Chrome downloads directly to download_path (if configured)
+        source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
 
         for row in rows:
             self._check_stop()
@@ -306,18 +308,31 @@ class ScaricaTSBot(BaseBot):
         if not self.wait or not self.driver:
             return None
 
+        # Normalize path
+        source_dir = Path(source_dir).resolve()
+        self.log(f"[DEBUG] Cerco file in: {source_dir}")
+
+        if not source_dir.exists():
+            self.log(f"✗ Cartella non esiste: {source_dir}")
+            return None
+
         # 1. Clicca tasto Excel
         files_before = {
             f
             for f in source_dir.iterdir()
             if f.is_file() and f.suffix.lower() == ".xlsx"
         }
+        self.log(f"[DEBUG] File .xlsx prima del download: {len(files_before)}")
+
         if not self._click_excel_export_button():
             return None
 
         # 2. Attendi download
         downloaded_file = self._wait_for_new_file(source_dir, files_before)
         if not downloaded_file:
+            # Debug: lista file attuali
+            current_files = list(source_dir.iterdir()) if source_dir.exists() else []
+            self.log(f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
             self.log("⚠️ File non scaricato nel tempo stabilito.")
             return None
 

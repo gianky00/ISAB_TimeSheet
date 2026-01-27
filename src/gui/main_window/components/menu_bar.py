@@ -11,6 +11,7 @@ from src.gui.controllers.command_registry import CommandNode
 from src.gui.dialogs.bug_report_dialog import BugReportDialog
 from src.gui.dialogs.command_palette import CommandPaletteDialog
 
+
 class MenuBarComponent(QObject):
     def __init__(self, main_window):
         super().__init__(main_window)
@@ -28,7 +29,9 @@ class MenuBarComponent(QObject):
         except Exception as e:
             print(f"Error opening bug report dialog: {e}")
             if hasattr(self.main_window, "show_toast"):
-                self.main_window.show_toast(f"Errore apertura segnalazione: {e}", "error")
+                self.main_window.show_toast(
+                    f"Errore apertura segnalazione: {e}", "error"
+                )
 
     def _setup_shortcuts(self):
         # Shortcut per Command Palette (Spotlight)

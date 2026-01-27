@@ -59,34 +59,49 @@ AVAILABLE_ACTIONS = {
     # PRIMO LIVELLO: Automazioni > SECONDO LIVELLO: Portale Fornitori
     # ============================================================
     "nav_dettagli_oda": {
-        "text": "Dettagli OdA",
+        "text": "Dettagli OdA (bot)",
         "icon": Icons.LIST,
         "color": "#6610f2",
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "nav_scarico_ts": {
-        "text": "Scarico TS",
+        "text": "Scarico TS (bot)",
         "icon": Icons.DOWNLOAD,
         "color": "#0d6efd",
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "nav_carico_ts": {
-        "text": "Carico TS",
+        "text": "Carico TS (bot)",
         "icon": Icons.UPLOAD,
         "color": "#20c997",
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "pf_timbrature": {
-        "text": "Timbrature",
+        "text": "Timbrature (bot)",
         "icon": Icons.CLOCK,
         "color": "#fd7e14",
         "path": ["Automazioni", "Portale Fornitori"],
     },
     "pf_prenota_bp": {
-        "text": "Prenota BP",
+        "text": "Prenota BP (bot)",
         "icon": Icons.CALENDAR,
         "color": "#198754",
         "path": ["Automazioni", "Portale Fornitori"],
+    },
+    # ============================================================
+    # PRIMO LIVELLO: Automazioni > SECONDO LIVELLO: SafeWork
+    # ============================================================
+    "nav_scarico_pdl": {
+        "text": "Scarico PDL (bot)",
+        "icon": Icons.SHIELD,
+        "color": "#198754",
+        "path": ["Automazioni", "SafeWork"],
+    },
+    "nav_ricerca_pdl": {
+        "text": "Ricerca PDL (bot)",
+        "icon": Icons.SEARCH,
+        "color": "#198754",
+        "path": ["Automazioni", "SafeWork"],
     },
     # ============================================================
     # PRIMO LIVELLO: DataBase > SECONDO LIVELLO: Strumentale

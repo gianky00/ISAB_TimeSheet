@@ -226,14 +226,14 @@ class AuditLogWidget(QWidget):
         self.date_from = CalendarDateEdit()
         self.date_from.setDate(QDate.currentDate().addDays(-7))
         self.date_from.setDisplayFormat("dd/MM/yyyy")
-        self.date_from.setMinimumWidth(160)
-        self.date_from.setMaximumWidth(200)
+        self.date_from.setMinimumWidth(180)  # Aumentato da 160 a 180
+        self.date_from.setMaximumWidth(220)  # Aumentato da 200 a 220
 
         self.date_to = CalendarDateEdit()
         self.date_to.setDate(QDate.currentDate())
         self.date_to.setDisplayFormat("dd/MM/yyyy")
-        self.date_to.setMinimumWidth(160)
-        self.date_to.setMaximumWidth(200)
+        self.date_to.setMinimumWidth(180)  # Aumentato da 160 a 180
+        self.date_to.setMaximumWidth(220)  # Aumentato da 200 a 220
 
         filter_layout.addWidget(QLabel("Dal:"))
         filter_layout.addWidget(self.date_from)

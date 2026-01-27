@@ -500,7 +500,7 @@ class ScaricoOrePanel(QWidget):
         for i in range(11):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
-        self.table_view.setColumnWidth(0, 100)  # Data
+        self.table_view.setColumnWidth(0, 120)  # Data (aumentato da 100 a 120)
         self.table_view.setColumnWidth(1, 150)  # Pers1
         self.table_view.setColumnWidth(2, 150)  # Pers2
         self.table_view.setColumnWidth(3, 100)  # ODC
@@ -512,7 +512,7 @@ class ScaricoOrePanel(QWidget):
         header.setSectionResizeMode(8, QHeaderView.ResizeMode.Stretch)  # Descrizione
 
         self.table_view.setColumnWidth(9, 80)  # Finito
-        self.table_view.setColumnWidth(10, 100)  # Commessa
+        self.table_view.setColumnWidth(10, 130)  # Commessa (aumentato da 100 a 130)
 
     def keyPressEvent(self, event):
         """Gestisce gli eventi da tastiera, incluso Ctrl+C per la copia dei dati."""

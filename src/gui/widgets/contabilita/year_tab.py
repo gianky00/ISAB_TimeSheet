@@ -73,15 +73,24 @@ class ContabilitaYearTab(QWidget):
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
-        # Imposta larghezze iniziali ragionevoli
-        self.table.setColumnWidth(0, 90)
-        self.table.setColumnWidth(2, 80)
-        self.table.setColumnWidth(4, 300)
-        self.table.setColumnWidth(11, 250)
+        # Inizialmente usa Interactive per tutte le colonne
+        # per permettere il ridimensionamento automatico basato sul contenuto
+        for i in range(len(self.COLUMNS)):
+            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
 
-        # Estendi colonne con testo lungo per riempire spazio orizzontale
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # ATTIVITA'
-        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # ANNOTAZIONI
+        # Imposta larghezze minime ragionevoli
+        self.table.setColumnWidth(0, 90)  # DATA PREV.
+        self.table.setColumnWidth(1, 70)  # MESE
+        self.table.setColumnWidth(2, 80)  # N° PREV.
+        self.table.setColumnWidth(3, 100)  # TOTALE PREV.
+        self.table.setColumnWidth(4, 300)  # ATTIVITA'
+        self.table.setColumnWidth(5, 80)  # TCL
+        self.table.setColumnWidth(6, 80)  # ODC
+        self.table.setColumnWidth(7, 100)  # STATO ATTIVITA'
+        self.table.setColumnWidth(8, 100)  # TIPOLOGIA
+        self.table.setColumnWidth(9, 80)  # ORE SP
+        self.table.setColumnWidth(10, 80)  # RESA
+        self.table.setColumnWidth(11, 250)  # ANNOTAZIONI
 
         layout.addWidget(self.table)
 
@@ -108,8 +117,44 @@ class ContabilitaYearTab(QWidget):
 
             self.model.update_data(display_rows)
 
+            # Ridimensiona le colonne al contenuto dopo il caricamento
+            QTimer.singleShot(100, self._adjust_column_widths)
+
         except Exception as e:
             print(f"Error loading data for year {self.year}: {e}")
+
+    def _adjust_column_widths(self):
+        """Adatta le larghezze delle colonne al contenuto, mantenendo un minimo leggibile."""
+        header = self.table.horizontalHeader()
+
+        # Ridimensiona tutte le colonne al contenuto
+        self.table.resizeColumnsToContents()
+
+        # Aggiungi un buffer per leggibilità e assicura larghezze minime
+        column_min_widths = {
+            0: 90,  # DATA PREV.
+            1: 70,  # MESE
+            2: 80,  # N° PREV.
+            3: 100,  # TOTALE PREV.
+            4: 200,  # ATTIVITA' (minimo più largo)
+            5: 80,  # TCL
+            6: 80,  # ODC
+            7: 100,  # STATO ATTIVITA'
+            8: 100,  # TIPOLOGIA
+            9: 80,  # ORE SP
+            10: 80,  # RESA
+            11: 150,  # ANNOTAZIONI (minimo più largo)
+        }
+
+        for col, min_width in column_min_widths.items():
+            current_width = self.table.columnWidth(col)
+            # Usa il massimo tra contenuto + buffer e il minimo definito
+            new_width = max(int(current_width * 1.1) + 10, min_width)
+            self.table.setColumnWidth(col, new_width)
+
+        # Imposta Stretch per le colonne con testo lungo (dopo aver impostato le altre)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # ATTIVITA'
+        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # ANNOTAZIONI
 
     def set_search_query(self, query):
         """Placeholder per la ricerca (da implementare nel modello se necessario)."""
