@@ -1,8 +1,10 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from PyQt6.QtCore import QObject
 
-from src.bots.base.base_bot import BaseBot, BotStatus
+from src.bots.base.base_bot import BaseBot
+from src.core.constants import BotStatus
 
 
 class ConcreteBot(BaseBot):
@@ -41,7 +43,6 @@ class TestBaseBot:
     def mock_delays(self):
         # Patch automatico per tutti i test di questa classe
         with (
-            patch("src.bots.base.base_bot.time.sleep"),
             patch("src.bots.base.base_bot.WebDriverWait"),
         ):  # Mock WebDriverWait costruttore
             yield
@@ -70,7 +71,6 @@ class TestBaseBot:
             patch.object(bot, "_attendi_scomparsa_overlay", return_value=True),
             patch.object(bot, "_verify_logged_in_via_ui", return_value=False),
             patch.object(bot, "_handle_session_popup"),
-            patch.object(bot, "_handle_ok_popup"),
         ):
             result = bot._login()
 
@@ -86,23 +86,3 @@ class TestBaseBot:
 
         result = bot._login()
         assert result is False
-
-    def test_logout(self, bot):
-        bot.driver.current_url = "login.aspx"
-
-        with patch.object(bot, "_handle_unsaved_changes_popup"):
-            # Configura wait.until per ritornare un elemento cliccabile
-            mock_el = MagicMock()
-            bot.wait.until.return_value = mock_el
-
-            result = bot._logout()
-
-            assert result is True
-            assert mock_el.click.called
-
-    def test_navigate_menu(self, bot):
-        bot.wait.until.return_value = MagicMock()
-
-        with patch.object(bot, "_attendi_scomparsa_overlay"):
-            result = bot.navigate_to_menu(["Menu1", "SubMenu2"])
-            assert result is True

@@ -92,7 +92,8 @@ class TestContabilitaWorker:
     def test_progress_calculation(self, worker, mock_manager):
         """Test internal total ops calculation."""
         worker.attivita_path = "exists"
-        with patch("os.path.exists", return_value=True):
+        with patch("os.path.exists", return_value=True), \
+             patch("pathlib.Path.exists", return_value=True):
             mock_manager.scan_workload.return_value = (5, 5)
             # 5 sheets + 5 files + 1 attivita + 0 certificati = 11
             res = worker._calculate_total_ops()

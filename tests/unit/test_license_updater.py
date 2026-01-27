@@ -21,7 +21,7 @@ from src.core.license_updater import (
 def mock_license_dir(tmp_path):
     license_dir = tmp_path / "Licenza"
     license_dir.mkdir()
-    return str(license_dir)
+    return license_dir
 
 
 def test_get_github_token():
@@ -33,8 +33,10 @@ def test_get_github_token():
 def test_get_license_dir(mocker):
     mocker.patch("src.core.config_manager.get_data_path", return_value="/fake/path")
     path = get_license_dir()
-    assert "/fake/path" in path
-    assert "Licenza" in path
+    # Convert to str for substring assertion
+    assert "/fake/path" in str(path).replace("\\", "/")
+    assert "Licenza" in str(path)
+
 
 
 def test_update_grace_timestamp(mocker, mock_license_dir):

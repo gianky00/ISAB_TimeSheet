@@ -37,6 +37,9 @@ class TestExcelTableCoverage:
         ]
         data_table = EditableDataTable(cols)
 
+        # Inizialmente 5 righe (come da _setup_ui)
+        assert data_table.table.rowCount() == 5
+
         # Aggiungi riga sopra (alla prima riga)
         data_table.table.setCurrentCell(0, 0)
         data_table._add_row_above()
@@ -45,7 +48,10 @@ class TestExcelTableCoverage:
         # Aggiorna opzioni combo
         data_table.update_column_options("Col2", ["C", "D"])
         combo = data_table.table.cellWidget(0, 1)
-        assert combo.itemText(0) == "C"
+        # L'indice 0 è sempre la stringa vuota ""
+        assert combo.itemText(0) == ""
+        assert combo.itemText(1) == "C"
+
 
     def test_copy_paste_cycle(self, app):
         """Simula il ciclo di copia e incolla tramite appunti."""

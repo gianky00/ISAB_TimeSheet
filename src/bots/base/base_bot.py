@@ -4,6 +4,7 @@ Classe base astratta per tutti i bot di automazione con State Machine e Validazi
 """
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from pathlib import Path
@@ -136,6 +137,10 @@ class BaseBot(ABC):
     def set_log_callback(self, callback: Callable[[str], None]):
         """Imposta la callback per inoltrare i log all'interfaccia utente."""
         self._log_callback = callback
+
+    def set_telegram_service(self, service: Any):
+        """Imposta il servizio Telegram per l'invio di notifiche."""
+        self._telegram_service = service
 
     def set_input_callback(self, callback: Callable[[str], str]):
         """Imposta la callback per richiedere input interattivo all'utente."""

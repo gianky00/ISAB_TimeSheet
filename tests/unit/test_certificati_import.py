@@ -7,10 +7,10 @@ from src.core.contabilita_manager import ContabilitaManager
 
 
 class TestCertificatiImport(unittest.TestCase):
-    @patch("src.core.excel_importer.pd.read_sql")
-    @patch("src.core.excel_importer.pd.ExcelFile")
-    @patch("src.core.excel_importer.pd.read_excel")
-    @patch("src.core.excel_importer.Path.exists")
+    @patch("pandas.read_sql")
+    @patch("pandas.ExcelFile")
+    @patch("pandas.read_excel")
+    @patch("pathlib.Path.exists")
     def test_import_certificati_dynamic_header(
         self, mock_exists, mock_read_excel, mock_excel_file, mock_read_sql
     ):

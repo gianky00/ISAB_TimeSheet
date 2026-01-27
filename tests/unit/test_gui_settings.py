@@ -36,9 +36,9 @@ class TestSettingsGUI:
         general_page = panel.config_tab.general_page
         general_page.timeout_spin.setValue(99)
 
-        # Suppress message box
-        with patch("src.gui.panels.settings.main_panel.QMessageBox.information"):
-            panel._save_settings()
+        # Trigger save
+        panel._save_settings()
 
         # Verify call to config_manager
         mock_set.assert_any_call("browser_timeout", 99)
+

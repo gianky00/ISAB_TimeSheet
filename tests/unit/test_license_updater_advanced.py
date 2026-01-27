@@ -20,9 +20,10 @@ class TestLicenseUpdaterAdvanced:
     def mock_license_dir(self, tmp_path):
         """Mock della directory licenza usando un path temporaneo."""
         with patch(
-            "src.core.license_updater.get_license_dir", return_value=str(tmp_path)
+            "src.core.license_updater.get_license_dir", return_value=tmp_path
         ):
             yield tmp_path
+
 
     def test_github_token_reconstruction(self):
         """Verifica che il token venga ricostruito correttamente dai codici ASCII."""

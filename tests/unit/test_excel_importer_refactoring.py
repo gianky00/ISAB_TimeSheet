@@ -5,11 +5,17 @@ Ensures 100% coverage and parity before refactoring.
 
 import json
 from unittest.mock import MagicMock, patch
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
 from src.core.excel_importer import ExcelImporter
+from src.core.importers.contabilita import ContabilitaImporter
+from src.core.importers.giornaliere import GiornaliereImporter
+from src.core.importers.scarico_ore import ScaricoOreImporter
+from src.core.importers.attivita import AttivitaImporter
+from src.core.importers.certificati import CertificatiImporter
 
 
 @pytest.fixture
@@ -89,9 +95,9 @@ def test_import_contabilita_dati_empty_sheet(tmp_path):
 
 def test_import_contabilita_dati_critical_error():
     with patch(
-        "src.core.excel_importer.pd.ExcelFile", side_effect=Exception("Critical")
+        "src.core.importers.contabilita.pd.ExcelFile", side_effect=Exception("Critical")
     ):
-        with patch("src.core.excel_importer.Path.exists", return_value=True):
+        with patch("src.core.importers.contabilita.Path.exists", return_value=True):
             success, msg, rows, years = ExcelImporter.import_contabilita_dati(
                 "dummy.xlsx"
             )
@@ -101,14 +107,14 @@ def test_import_contabilita_dati_critical_error():
 
 def test_find_header_row_coverage(mock_xls_file):
     xls = pd.ExcelFile(mock_xls_file)
-    with patch("pandas.read_excel", return_value=pd.DataFrame({"A": [1]})):
-        idx = ExcelImporter._find_header_row(xls, "2025")
+    with patch("src.core.importers.contabilita.pd.read_excel", return_value=pd.DataFrame({"A": [1]})):
+        idx = ContabilitaImporter._find_header_row(xls, "2025")
         assert idx == 0
 
 
 def test_normalize_columns_extra_heuristics():
     df = pd.DataFrame(columns=["PREVENTIVO DATA", "NUMERO PREV"])
-    df = ExcelImporter._normalize_columns(df)
+    df = ContabilitaImporter._normalize_columns(df)
     assert "data_prev" in df.columns
     assert "n_prev" in df.columns
 
@@ -145,11 +151,11 @@ def test_import_giornaliere_success(tmp_path):
     lookup_map = {"P123": "5400999"}
     mock_cb = MagicMock()
 
-    with patch("src.core.excel_importer.ProcessPoolExecutor") as mock_pool:
+    with patch("src.core.importers.giornaliere.ProcessPoolExecutor") as mock_pool:
         mock_executor = MagicMock()
         mock_pool.return_value.__enter__.return_value = mock_executor
-        args = (2025, file_path, lookup_map)
-        res = ExcelImporter._process_single_giornaliera(args)
+        args = (2025, Path(file_path), lookup_map)
+        res = GiornaliereImporter._process_single_giornaliera(args)
         mock_executor.map.return_value = [res]
 
         success, msg, rows, years = ExcelImporter.import_giornaliere(
@@ -189,8 +195,8 @@ def test_process_single_giornaliera_extraction_logic(tmp_path):
             writer, sheet_name="RIASSUNTO", startrow=4, index=False, header=False
         )
 
-    args = (2025, file_path, {})
-    _, rows, _ = ExcelImporter._process_single_giornaliera(args)
+    args = (2025, Path(file_path), {})
+    _, rows, _ = GiornaliereImporter._process_single_giornaliera(args)
     assert rows[0][5] == "22/123"
     assert rows[1][5] == "540012345"
     assert "CANONE" in rows[2][5].upper()
@@ -199,8 +205,8 @@ def test_process_single_giornaliera_extraction_logic(tmp_path):
 def test_process_single_giornaliera_invalid_sheet(tmp_path):
     file_path = tmp_path / "no_riassunto.xlsx"
     pd.DataFrame({"A": [1]}).to_excel(file_path, sheet_name="Sheet1")
-    args = (2025, file_path, {})
-    year, rows, err = ExcelImporter._process_single_giornaliera(args)
+    args = (2025, Path(file_path), {})
+    year, rows, err = GiornaliereImporter._process_single_giornaliera(args)
     assert rows == []
     assert err is None
 
@@ -320,7 +326,7 @@ def test_process_scarico_ore_row_validation():
         MockCell(""),
         MockCell(""),
     ]
-    res = ExcelImporter._process_scarico_ore_row(row_0_odc, col_keys)
+    res = ScaricoOreImporter._process_scarico_ore_row(row_0_odc, col_keys)
     assert res is None  # ODC is empty string now
 
     # 2. Row with no personnel
@@ -337,7 +343,7 @@ def test_process_scarico_ore_row_validation():
         MockCell(""),
         MockCell(""),
     ]
-    res = ExcelImporter._process_scarico_ore_row(row_no_pers, col_keys)
+    res = ScaricoOreImporter._process_scarico_ore_row(row_no_pers, col_keys)
     assert res is None
 
     # 3. Row with only partial required (missing pos)
@@ -354,7 +360,7 @@ def test_process_scarico_ore_row_validation():
         MockCell(""),
         MockCell(""),
     ]
-    res = ExcelImporter._process_scarico_ore_row(row_no_pos, col_keys)
+    res = ScaricoOreImporter._process_scarico_ore_row(row_no_pos, col_keys)
     assert res is None
 
 
@@ -470,3 +476,4 @@ def test_scan_workload_coverage(tmp_path):
 
     rows = ExcelImporter.scan_scarico_ore_rows(str(path))
     assert rows >= 0
+

@@ -1,6 +1,9 @@
+from datetime import datetime
 from unittest.mock import patch
 
+import pytest
 from PyQt6.QtWidgets import QMessageBox
+
 
 from src.gui.panels.notifications_panel import AuditLogWidget, NotificationsPanel
 
@@ -53,15 +56,15 @@ class TestNotificationsPanelDeep:
             "src.core.notification_manager.NotificationManager.instance"
         ) as mock_manager:
             mock_inst = mock_manager.return_value
-            # Mock get_notifications to return a mix of info and error
-            # Note: The panel calls get_notifications(filter_unread=False) by default
-            mock_inst.get_notifications.return_value = [
+            now_iso = datetime.now().isoformat()
+            data = [
                 {
                     "id": 1,
                     "title": "InfoMsg",
                     "message": "M1",
                     "level": "info",
                     "read": False,
+                    "timestamp": now_iso,
                 },
                 {
                     "id": 2,
@@ -69,31 +72,40 @@ class TestNotificationsPanelDeep:
                     "message": "E1",
                     "level": "error",
                     "read": False,
+                    "timestamp": now_iso,
                 },
             ]
+            mock_inst.get_notifications.return_value = data
+            mock_inst.notifications = data
 
             panel = NotificationsPanel()
             qtbot.addWidget(panel)
 
             # Switch to 'error' filter
             panel.toolbar._on_filter_clicked("error")
+            
+            # La logica del pannello usa un timer per il refresh
+            # Attendiamo che venga renderizzato il gruppo corretto
+            def check_found():
+                # Deve esserci almeno un gruppo
+                if not panel._group_widgets:
+                    return False
+                
+                for group_data in panel._group_widgets.values():
+                    container = group_data["container"]
+                    layout = container.layout()
+                    for i in range(layout.count()):
+                        w = layout.itemAt(i).widget()
+                        # NotificationCard usa 'notification'
+                        if hasattr(w, "notification") and w.notification.get("level") == "error":
+                            return True
+                return False
 
-            # Check widgets in scroll layout
-            # The refactored panel uses grouping. We look into the container of the group.
-            # But refresh_notifications is async/debounced via timer in real app.
-            # Here we might need to force refresh or wait.
-            panel.refresh_notifications()
+            qtbot.waitUntil(check_found, timeout=3000)
 
-            found_error = False
-            for group_key in panel._group_widgets:
-                container = panel._group_widgets[group_key]["container"]
-                layout = container.layout()
-                for i in range(layout.count()):
-                    w = layout.itemAt(i).widget()
-                    if w and hasattr(w, "data") and w.data.get("level") == "error":
-                        found_error = True
 
-            assert found_error is True
+
+
 
     def test_clear_notifications_confirm(self, qapp, qtbot):
         with patch(

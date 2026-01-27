@@ -63,7 +63,9 @@ class TestBaseBot:
 
         bot.log("Hello Telegram")
         tg_mock.send_message_sync.assert_called()
-        assert "Hello Telegram" in tg_mock.send_message_sync.call_args[0][0]
+        # Verify cleaning logic (re.sub)
+        args, _ = tg_mock.send_message_sync.call_args
+        assert "Hello Telegram" in args[0]
 
     def test_request_stop(self):
         bot = ConcreteBot("u", "p")

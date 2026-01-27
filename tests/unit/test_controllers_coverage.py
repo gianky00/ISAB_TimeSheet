@@ -56,7 +56,7 @@ class TestControllersCoverage:
 
         assert mw._current_page_index == 1
         mw.page_stack.setCurrentIndex.assert_called_with(1)
-        mw.sidebar.set_active_button.assert_called_with(1)
+        mw.sidebar.set_active_button.assert_called_with(1, None)
 
     def test_navigation_controller_settings_dirty_check(self, mw, mocker):
         """Verifica blocco navigazione se impostazioni non salvate."""
@@ -84,7 +84,8 @@ class TestControllersCoverage:
 
         mw.status_safework = MagicMock()
         ctrl._on_panel_status_changed("RUNNING", "Test SW")
-        mw.status_safework.setStatus.assert_called_with("RUNNING", "Test SW")
+        # Note: status_changed(status, message) calls setStatus(message, status)
+        mw.status_safework.setStatus.assert_called_with("Test SW", "RUNNING")
 
         # 2. Test Portale (Default)
         mock_panel_portale = MagicMock()
@@ -93,7 +94,7 @@ class TestControllersCoverage:
 
         mw.status_portale = MagicMock()
         ctrl._on_panel_status_changed("IDLE", "Test Portale")
-        mw.status_portale.setStatus.assert_called_with("IDLE", "Test Portale")
+        mw.status_portale.setStatus.assert_called_with("Test Portale", "IDLE")
 
     def test_search_controller_routing(self, mw, mocker):
         """Verifica che la ricerca OdA inoltri i risultati correttamente."""

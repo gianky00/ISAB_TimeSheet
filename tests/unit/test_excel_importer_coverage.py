@@ -1,9 +1,12 @@
 from unittest.mock import MagicMock, patch
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
 from src.core.excel_importer import ExcelImporter
+from src.core.importers.contabilita import ContabilitaImporter
+from src.core.importers.giornaliere import GiornaliereImporter
 
 
 @pytest.fixture
@@ -13,7 +16,7 @@ def importer():
 
 def test_import_contabilita_file_not_found(importer):
     """Test gestione file inesistente."""
-    with patch("pathlib.Path.exists", return_value=False):
+    with patch("src.core.importers.contabilita.Path.exists", return_value=False):
         success, msg, rows, years = importer.import_contabilita_dati(
             "non_existent.xlsx"
         )
@@ -42,13 +45,13 @@ def test_import_contabilita_valid_data(importer):
 
     with (
         patch(
-            "src.core.excel_importer.ExcelImporter._get_excel_file",
+            "src.core.importers.contabilita.ContabilitaImporter._get_excel_file",
             return_value=mock_xls,
         ),
-        patch("src.core.excel_importer.pd.read_excel", return_value=df_actual),
-        patch("src.core.excel_importer.ExcelImporter._find_header_row", return_value=0),
-        patch("pathlib.Path.exists", return_value=True),
-        patch("src.core.excel_importer.msoffcrypto", None),
+        patch("src.core.importers.contabilita.pd.read_excel", return_value=df_actual),
+        patch("src.core.importers.contabilita.ContabilitaImporter._find_header_row", return_value=0),
+        patch("src.core.importers.contabilita.Path.exists", return_value=True),
+        patch("src.core.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted", return_value=("fake", False)),
     ):
         success, msg, rows, years = importer.import_contabilita_dati("fake.xlsx")
 
@@ -73,10 +76,10 @@ def test_import_contabilita_no_valid_sheets(importer):
 
     with (
         patch(
-            "src.core.excel_importer.ExcelImporter._get_excel_file",
+            "src.core.importers.contabilita.ContabilitaImporter._get_excel_file",
             return_value=mock_xls,
         ),
-        patch("pathlib.Path.exists", return_value=True),
+        patch("src.core.importers.contabilita.Path.exists", return_value=True),
     ):
         success, msg, _, _ = importer.import_contabilita_dati("fake.xlsx")
         assert success is False
@@ -86,7 +89,8 @@ def test_import_contabilita_no_valid_sheets(importer):
 def test_normalize_columns_logic(importer):
     """Test robustezza normalizzazione colonne."""
     df = pd.DataFrame(columns=[" DATA  PREV. ", "  MESE", "N°PREV"])
-    norm_df = importer._normalize_columns(df)
+    # Call directly on implementation
+    norm_df = ContabilitaImporter._normalize_columns(df)
     cols = norm_df.columns.tolist()
     assert "data_prev" in cols
     assert "mese" in cols
@@ -102,11 +106,12 @@ def test_import_giornaliere_collection(importer, tmp_path):
     (past_year / "valid.xls").touch()
     (past_year / "~$lock.xls").touch()
 
-    # Passiamo un dizionario vuoto come lookup_map
-    tasks = importer._collect_giornaliere_tasks(root, {})
+    # Call directly on implementation
+    tasks = GiornaliereImporter._collect_giornaliere_tasks(root, {})
 
     assert len(tasks) >= 1
     # Verifica il primo elemento della tupla (year, path, dict)
     found_files = [str(t[1].name) for t in tasks]
     assert "valid.xls" in found_files
     assert "~$lock.xls" not in found_files
+

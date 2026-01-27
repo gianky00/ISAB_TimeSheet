@@ -138,15 +138,15 @@ class TestBotTimingSequences:
     def test_regression_protection_scarico_ts(self, mock_scarico_bot):
         """Verifica che il polling di download esegua gli sleep."""
         source_dir = Path("source")
-        dest_dir = Path("dest")
-        mock_scarico_bot.wait.until.return_value = MagicMock()
+        files_before = set()
 
         with (
             patch("time.sleep") as mock_sleep,
             patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 40]),
             patch("pathlib.Path.iterdir") as mock_iter,
         ):
-            mock_iter.side_effect = [[Path("f.crdownload")], [Path("f.crdownload")], []]
+            # Simula: prima iterazione vede .crdownload, seconda iterazione vede solo file_before, terza timeout o successo
+            mock_iter.side_effect = [[Path("f.crdownload")], [], []]
 
-            mock_scarico_bot._download_excel(source_dir, dest_dir, "ODA", "10")
+            mock_scarico_bot._wait_for_new_file(source_dir, files_before, timeout=10)
             assert any(c.args[0] == 0.5 for c in mock_sleep.call_args_list)

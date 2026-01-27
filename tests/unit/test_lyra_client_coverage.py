@@ -57,7 +57,9 @@ class TestLyraClientCoverage:
         assert "REPORT CONTABILITÀ (2024)" in context
         assert "€ 10,000.00" in context
         assert "REPORT TIMBRATURE" in context
-        assert "G A (08:00 -> 17:00)" in context
+        # Il nuovo formato usa le iniziali con i punti (es. G. A.)
+        assert "G. A. (08:00 -> 17:00)" in context
+
 
     def test_ask_with_image_payload(self, client, mocker):
         """Verifica la costruzione del payload multi-modale (testo + immagine)."""

@@ -20,7 +20,7 @@ class TestLicenseUpdater:
     def mock_paths(self, tmp_path, mocker):
         license_dir = tmp_path / "Licenza"
         mocker.patch(
-            "src.core.license_updater.get_license_dir", return_value=str(license_dir)
+            "src.core.license_updater.get_license_dir", return_value=license_dir
         )
         return license_dir
 
@@ -32,8 +32,9 @@ class TestLicenseUpdater:
     def test_get_license_dir(self, tmp_path):
         with patch("src.core.config_manager.get_data_path", return_value=str(tmp_path)):
             d = get_license_dir()
-            assert str(tmp_path) in d
-            assert "Licenza" in d
+            assert str(tmp_path) in str(d)
+            assert "Licenza" in str(d)
+
 
     def test_grace_timestamp_lifecycle(self, mock_paths):
         # 1. Update timestamp

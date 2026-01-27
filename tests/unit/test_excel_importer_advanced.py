@@ -7,6 +7,9 @@ import pandas as pd
 import pytest
 
 from src.core.excel_importer import ExcelImporter
+from src.core.importers.contabilita import ContabilitaImporter
+from src.core.importers.giornaliere import GiornaliereImporter
+from src.core.importers.scarico_ore import ScaricoOreImporter
 
 
 class TestExcelImporterAdvanced:
@@ -33,12 +36,12 @@ class TestExcelImporterAdvanced:
             }
         )
 
-        mocker.patch("src.core.excel_importer.pd.ExcelFile", return_value=mock_xls)
+        mocker.patch("src.core.importers.contabilita.pd.ExcelFile", return_value=mock_xls)
         mocker.patch(
-            "src.core.excel_importer.ExcelImporter._get_excel_file",
+            "src.core.importers.contabilita.ContabilitaImporter._get_excel_file",
             return_value=mock_xls,
         )
-        mocker.patch("src.core.excel_importer.Path.exists", return_value=True)
+        mocker.patch("src.core.importers.contabilita.Path.exists", return_value=True)
 
         # side_effect:
         # 1. Preview for 'Dati 2026' (needs at least 2 key cols matching)
@@ -46,7 +49,7 @@ class TestExcelImporterAdvanced:
         # 3. Preview for '2025'
         # 4. Actual data for '2025'
         mocker.patch(
-            "src.core.excel_importer.pd.read_excel",
+            "src.core.importers.contabilita.pd.read_excel",
             side_effect=[
                 pd.DataFrame(
                     [["DATAPREV", "MESE", "NPREV", "TOTALE PREV", "ATTIVITA", "ODC"]]
@@ -68,13 +71,15 @@ class TestExcelImporterAdvanced:
             ],
         )
         mocker.patch(
-            "src.core.excel_importer.ExcelImporter._decrypt_if_encrypted",
+            "src.core.importers.contabilita.ContabilitaImporter._decrypt_if_encrypted",
             return_value=("fake_path", False),
         )
 
         success, msg, rows, years = ExcelImporter.import_contabilita_dati("fake.xlsx")
         assert success is True
         assert 2026 in years
+        # rows format: (year, data_prev, mese, n_prev, ...)
+        # n_prev is index 3
         assert rows[0][3] == "P123"
 
     # --- GIORNALIERE TESTS ---
@@ -96,8 +101,8 @@ class TestExcelImporterAdvanced:
             }
         )
 
-        with patch("src.core.excel_importer.pd.read_excel", return_value=df_giorn):
-            year, rows, err = ExcelImporter._process_single_giornaliera(
+        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df_giorn):
+            year, rows, err = GiornaliereImporter._process_single_giornaliera(
                 (2026, Path("test.xlsx"), {})
             )
             assert err is None
@@ -123,8 +128,8 @@ class TestExcelImporterAdvanced:
         # L'ODC deve iniziare con 5400 per passare il filtro mask_standard nel sorgente
         lookup = {"P999": "54001234"}
 
-        with patch("src.core.excel_importer.pd.read_excel", return_value=df):
-            year, rows, err = ExcelImporter._process_single_giornaliera(
+        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df):
+            year, rows, err = GiornaliereImporter._process_single_giornaliera(
                 (2026, Path("f.xlsx"), lookup)
             )
             assert len(rows) > 0
@@ -166,7 +171,7 @@ class TestExcelImporterAdvanced:
             "commessa",
         ]
 
-        res = ExcelImporter._process_scarico_ore_row(mock_row, col_keys)
+        res = ScaricoOreImporter._process_scarico_ore_row(mock_row, col_keys)
 
         assert res is not None
         styles_json = res[-1]
@@ -190,7 +195,9 @@ class TestExcelImporterAdvanced:
 
     def test_identify_sheet_year(self):
         """Test: Estrazione anno da nomi fogli."""
-        assert ExcelImporter._identify_sheet_year("Dati 2026") == 2026
-        assert ExcelImporter._identify_sheet_year("2024_Riepilogo") == 2024
-        assert ExcelImporter._identify_sheet_year("Dati") == datetime.now().year
-        assert ExcelImporter._identify_sheet_year("Foglio1") is None
+        assert ContabilitaImporter._identify_sheet_year("Dati 2026") == 2026
+        assert ContabilitaImporter._identify_sheet_year("2024_Riepilogo") == 2024
+        assert ContabilitaImporter._identify_sheet_year("Dati") == datetime.now().year
+        assert ContabilitaImporter._identify_sheet_year("Foglio1") is None
+
+

@@ -94,9 +94,9 @@ class TestConfigManager:
 
         target = tmp_path / "fail.json"
 
-        # Mock open to fail
-        with patch("builtins.open", side_effect=IOError("Disk full")):
-            with pytest.raises(IOError):
+        # Mock Path.open to fail (since we use temp_file.open)
+        with patch("pathlib.Path.open", side_effect=OSError("Disk full")):
+            with pytest.raises(OSError):
                 _atomic_write_json({"data": 1}, target)
 
         assert not target.exists()

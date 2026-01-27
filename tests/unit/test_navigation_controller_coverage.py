@@ -66,10 +66,11 @@ class TestNavigationControllerCoverage(unittest.TestCase):
         mock_get.assert_called_with(1)
         self.assertEqual(self.mock_mw._current_page_index, 1)
         self.mock_mw.page_stack.setCurrentIndex.assert_called_with(1)
-        self.mock_mw.sidebar.set_active_button.assert_called_with(1)
+        self.mock_mw.sidebar.set_active_button.assert_called_with(1, None)
 
     def test_navigate_to_settings_unsaved_prompt(self):
-        self.mock_mw._current_page_index = 4
+        # SETTINGS è indice 7
+        self.mock_mw._current_page_index = 7
         mock_settings = MagicMock()
         mock_settings.has_unsaved_changes.return_value = True
         mock_settings.prompt_save_if_needed.return_value = False  # User cancelled
@@ -77,33 +78,31 @@ class TestNavigationControllerCoverage(unittest.TestCase):
 
         self.controller.navigate_to(1)
 
-        self.mock_mw.sidebar.set_active_button.assert_called_with(4)  # Reverted
+        self.mock_mw.sidebar.set_active_button.assert_called_with(7)  # Reverted
         self.mock_mw.page_stack.setCurrentIndex.assert_not_called()
 
     @patch("src.gui.controllers.navigation_controller.NavigationController.navigate_to")
     def test_navigate_to_extended(self, mock_nav):
-        self.mock_mw.database_widget = MagicMock()
         self.mock_mw.contabilita_panel = MagicMock()
 
         self.controller.navigate_to_extended(2, "query")
 
-        mock_nav.assert_called_with(3)
-        self.mock_mw.database_widget.setCurrentIndex.assert_called_with(1)
+        # STRUMENTALE è indice 4
+        mock_nav.assert_called_with(4, sub_index=2)
         self.mock_mw.contabilita_panel.main_tabs.setCurrentIndex.assert_called_with(2)
         self.mock_mw.contabilita_panel.set_search_query.assert_called_with("query")
 
     @patch("src.gui.controllers.navigation_controller.NavigationController.navigate_to")
     def test_navigate_to_panel_nested_bot(self, mock_nav):
-        self.mock_mw.automations_widget = MagicMock()  # typo in code but let's check
-        # src/gui/controllers/navigation_controller.py:168 uses self.mw.automazioni_widget
         self.mock_mw.automazioni_widget = MagicMock()
         self.mock_mw.tab_fornitori = MagicMock()
 
         self.controller.navigate_to_panel("scarico_ts")
 
-        mock_nav.assert_called_with(1)
-        self.mock_mw.automazioni_widget.setCurrentIndex.assert_called_with(0)
-        self.mock_mw.tab_fornitori.setCurrentIndex.assert_called_with(1)
+        # AUTOMAZIONI è indice 1
+        mock_nav.assert_called_with(1, sub_index=0)
+        self.mock_mw.automazioni_widget.set_active_tab.assert_called_with(0, 1)
+
 
     @patch("src.gui.controllers.navigation_controller.NavigationController.navigate_to")
     def test_analyze_with_lyra(self, mock_nav):

@@ -25,6 +25,7 @@ def timbrature_bot(mock_driver):
         bot = TimbratureBot(username="test", password="pwd")
         bot.driver = mock_driver
         bot.log = MagicMock()
+        bot.download_path = "mock/download/path"
         return bot
 
 
