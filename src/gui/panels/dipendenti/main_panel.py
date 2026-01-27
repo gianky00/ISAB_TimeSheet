@@ -1,8 +1,12 @@
 import logging
 
-from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QTabWidget
+from PyQt6.QtGui import QIcon
 
 from src.gui.panels.dipendenti.pages.anagrafica_page import AnagraficaPage
+from src.gui.panels.dipendenti_manager_panel import DipendentiManagerPanel
+from src.utils.helpers import get_asset_path, get_colored_icon
+from src.core.constants import Icons
 
 logger = logging.getLogger(__name__)
 
@@ -22,17 +26,38 @@ class DipendentiPanel(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # Per ora usiamo direttamente la pagina Anagrafica
-        # In futuro, qui metteremo un QTabWidget:
-        # self.tabs = QTabWidget()
-        # self.tabs.addTab(AnagraficaPage(), "Anagrafica")
-        # self.tabs.addTab(CertificatiPage(), "Certificati")
-        # main_layout.addWidget(self.tabs)
+        self.tabs = QTabWidget()
+        self.tabs.setProperty("class", "Level2Tabs") # Stile Tab secondari
 
+        # Tab 1: Monitoraggio (Vecchia interfaccia)
         self.anagrafica_page = AnagraficaPage()
-        main_layout.addWidget(self.anagrafica_page)
+        self.tabs.addTab(
+            self.anagrafica_page,
+            get_colored_icon(get_asset_path(Icons.ACTIVITY), "#0d6efd"), 
+            "Monitoraggio"
+        )
+
+        # Tab 2: Configurazione (Nuova interfaccia CRUD)
+        self.manager_page = DipendentiManagerPanel()
+        self.tabs.addTab(
+            self.manager_page,
+            get_colored_icon(get_asset_path(Icons.SETTINGS_DARK), "#6c757d"), 
+            "Configurazione"
+        )
+
+        # AGGIORNAMENTO AUTOMATICO TRA TAB
+        self.manager_page.data_changed.connect(self.anagrafica_page.refresh_data)
+
+        main_layout.addWidget(self.tabs)
 
     def refresh_data(self):
         """Metodo pubblico chiamato dal controller per aggiornare i dati."""
-        if hasattr(self.anagrafica_page, "refresh_data"):
-            self.anagrafica_page.refresh_data()
+        # Aggiorna il tab attivo
+        current = self.tabs.currentWidget()
+        if hasattr(current, "refresh_data"):
+            current.refresh_data()
+        
+        # Opzionale: aggiorna anche l'altro in background se necessario
+        if current == self.anagrafica_page and hasattr(self.manager_page, "refresh_data"):
+             # Non forziamo il refresh grafico se non visibile, ma magari ricarica dati
+             pass

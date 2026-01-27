@@ -96,18 +96,6 @@ class AnagraficaPage(QWidget):
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
-        refresh_btn = QPushButton("Aggiorna")
-        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.setIconSize(QSize(24, 24))
-        refresh_btn.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(refresh_btn)
-
-        import_btn = QPushButton("Importa CSV")
-        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
-        import_btn.setIconSize(QSize(24, 24))
-        import_btn.clicked.connect(self._on_import_clicked)
-        filter_layout.addWidget(import_btn)
-
         email_report_btn = QPushButton("Genera Report via Email")
         email_report_btn.setIcon(
             get_colored_icon(get_asset_path(Icons.SEND), "#ffffff")
@@ -306,9 +294,15 @@ class AnagraficaPage(QWidget):
             }
         """
         )
-        access_layout = QVBoxLayout(access_card)
-        access_layout.setContentsMargins(15, 12, 15, 12)  # Ridotto per compattezza
-        access_layout.setSpacing(6)  # Ridotto da 10 a 6
+        access_layout = QHBoxLayout(access_card) # Layout Orizzontale
+        access_layout.setContentsMargins(15, 12, 15, 12)
+        access_layout.setSpacing(15)
+
+        # Colonna Sinistra: Ultimo Accesso
+        left_col = QWidget()
+        left_layout = QVBoxLayout(left_col)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(6)
 
         access_title = QLabel("🏭 ULTIMO ACCESSO ISAB")
         access_title.setStyleSheet(
@@ -322,8 +316,32 @@ class AnagraficaPage(QWidget):
         self.last_access_label.setStyleSheet(
             "font-size: 16px; font-weight: bold; color: #2c3e50; padding: 5px 0;"
         )
-        access_layout.addWidget(access_title)
-        access_layout.addWidget(self.last_access_label)
+        left_layout.addWidget(access_title)
+        left_layout.addWidget(self.last_access_label)
+        
+        access_layout.addWidget(left_col)
+
+        # Colonna Destra: Streak (Nascosta di default)
+        self.streak_container = QWidget()
+        self.streak_container.setVisible(False) # Nascosto se non rilevante
+        right_layout = QVBoxLayout(self.streak_container)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(6)
+
+        streak_title = QLabel("🔥 FREQUENZA")
+        streak_title.setStyleSheet(
+            "font-size: 13px; font-weight: bold; color: #FF9800; letter-spacing: 0.5px;"
+        )
+        self.streak_label = QLabel("-")
+        self.streak_label.setWordWrap(True)
+        self.streak_label.setStyleSheet(
+            "font-size: 15px; font-weight: bold; color: #2c3e50; padding: 5px 0;"
+        )
+        right_layout.addWidget(streak_title)
+        right_layout.addWidget(self.streak_label)
+        
+        access_layout.addWidget(self.streak_container)
+
         detail_layout.addWidget(access_card)
 
         detail_layout.addStretch()
@@ -402,16 +420,21 @@ class AnagraficaPage(QWidget):
             )
 
     def refresh_data(self):
-        search_text = self.search_input.text().lower()
+        search_text = self.search_input.text().lower().strip()
         query = """
             SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
             FROM dipendenti WHERE 1=1
         """
         params = []
+        
         if search_text:
-            query += " AND (cognome LIKE ? OR nome LIKE ? OR badge LIKE ? OR codice_fiscale LIKE ?)"
-            p = f"%{search_text}%"
-            params.extend([p, p, p, p])
+            # Multi-term search: Every term must match at least one field
+            terms = search_text.split()
+            for term in terms:
+                p = f"%{term}%"
+                query += " AND (cognome LIKE ? OR nome LIKE ? OR badge LIKE ? OR codice_fiscale LIKE ?)"
+                params.extend([p, p, p, p])
+                
         query += " ORDER BY cognome ASC, nome ASC"
 
         self.table.horizontalHeader().setDefaultAlignment(
@@ -646,6 +669,15 @@ class AnagraficaPage(QWidget):
             f"color: {color}; font-weight: bold; font-size: 14px; padding: 5px 0;"
         )
 
+        # Calcolo Streak
+        is_visible, streak_msg, streak_color = self._get_consecutive_access_days(cognome, nome)
+        self.streak_container.setVisible(is_visible)
+        if is_visible:
+            self.streak_label.setText(streak_msg)
+            self.streak_label.setStyleSheet(
+                f"color: {streak_color}; font-weight: bold; font-size: 15px; padding: 5px 0;"
+            )
+
     def _format_db_date(self, date_str):
         if not date_str or date_str == "None":
             return "-"
@@ -655,6 +687,77 @@ class AnagraficaPage(QWidget):
             )
         except Exception:
             return date_str
+
+    def _get_consecutive_access_days(self, cognome, nome):
+        """
+        Calcola i giorni consecutivi di accesso.
+        Ritorna: (is_visible, messaggio, colore)
+        """
+        norm_cognome = self._normalize_name(cognome)
+        norm_nome = self._normalize_name(nome)
+        
+        query = """
+            SELECT DISTINCT substr(data, 1, 10) as day 
+            FROM timbrature
+            WHERE UPPER(REPLACE(REPLACE(TRIM(cognome), '  ', ' '), '  ', ' ')) = ?
+              AND UPPER(REPLACE(REPLACE(TRIM(nome), '  ', ' '), '  ', ' ')) = ?
+            ORDER BY day DESC
+        """
+        try:
+            rows = db_manager.execute_query(
+                db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome)
+            )
+            if not rows:
+                return False, "", ""
+
+            dates = []
+            for r in rows:
+                d_str = str(r[0])
+                d_obj = None
+                for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                    try:
+                        d_obj = datetime.strptime(d_str, fmt).date()
+                        break
+                    except ValueError:
+                        continue
+                if d_obj:
+                    dates.append(d_obj)
+
+            if not dates:
+                return False, "", ""
+
+            # Controllo recenza (se l'ultimo accesso è > 2 giorni fa, nascondiamo)
+            current_date = dates[0]
+            days_since_last = (datetime.now().date() - current_date).days
+            
+            if days_since_last > 2:
+                return False, "", "" # Storico, non mostrare nulla
+
+            # Calcolo consecutività
+            streak = 1
+            for i in range(1, len(dates)):
+                prev_date = dates[i]
+                if (current_date - prev_date).days == 1:
+                    streak += 1
+                    current_date = prev_date
+                else:
+                    break
+            
+            if streak > 10:
+                msg = f"⚠️ {streak} GIORNI DI FILA\nRIPOSO NECESSARIO"
+                color = "#dc3545" # Rosso Alert
+            elif streak > 6:
+                msg = f"{streak} Giorni consecutivi"
+                color = "#fd7e14" # Arancione
+            else:
+                msg = f"{streak} Giorni consecutivi"
+                color = "#198754" # Verde
+
+            return True, msg, color
+
+        except Exception as e:
+            logger.error(f"Errore calcolo streak: {e}")
+            return False, "", ""
 
     def _get_last_isab_access(self, cognome, nome):
         norm_cognome = self._normalize_name(cognome)

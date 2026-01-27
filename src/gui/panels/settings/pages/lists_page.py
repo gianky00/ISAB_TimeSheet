@@ -43,23 +43,19 @@ class ListsPage(QWidget):
         self.layout = QVBoxLayout(content)
         self.layout.setSpacing(20)
 
-        # 1. ACCOUNT ISAB
-        self._setup_account_section()
+        # RIGA 1: Accounts, Fornitori, Contratti (Tutto orizzontale)
+        row1 = QHBoxLayout()
+        self._setup_account_section(row1)
+        self._setup_sw_account_section(row1)
+        self._setup_fornitori_section(row1)
+        self._setup_contract_section(row1)
+        self.layout.addLayout(row1)
 
-        # 2. ACCOUNT SAFEWORK
-        self._setup_sw_account_section()
-
-        # 3. CONTRATTI E FORNITORI (Affiancati)
+        # RIGA 2: REPARTI E CANTIERI (Affiancati)
         row2 = QHBoxLayout()
-        self._setup_contract_section(row2)
-        self._setup_fornitori_section(row2)
+        self._setup_reparti_section(row2)
+        self._setup_cantieri_section(row2)
         self.layout.addLayout(row2)
-
-        # 4. REPARTI E CANTIERI (Affiancati)
-        row3 = QHBoxLayout()
-        self._setup_reparti_section(row3)
-        self._setup_cantieri_section(row3)
-        self.layout.addLayout(row3)
 
         self.layout.addStretch()
         scroll.setWidget(content)
@@ -67,12 +63,12 @@ class ListsPage(QWidget):
 
     # --- SEZIONI UI ---
 
-    def _setup_account_section(self):
+    def _setup_account_section(self, parent_layout):
         group = create_group_box("Account ISAB")
         layout = QVBoxLayout(group)
 
         self.account_list = QListWidget()
-        self.account_list.setMaximumHeight(100)
+        self.account_list.setMaximumHeight(150) # Aumentato leggermente
         self.account_list.setStyleSheet(list_style())
         self.account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.account_list.customContextMenuRequested.connect(self._show_account_menu)
@@ -85,14 +81,14 @@ class ListsPage(QWidget):
         self._add_btn(btns, Icons.STAR, "#ffc107", self._set_default_account, "Default")
         btns.addStretch()
         layout.addLayout(btns)
-        self.layout.addWidget(group)
+        parent_layout.addWidget(group)
 
-    def _setup_sw_account_section(self):
+    def _setup_sw_account_section(self, parent_layout):
         group = create_group_box("Account SafeWork")
         layout = QVBoxLayout(group)
 
         self.sw_account_list = QListWidget()
-        self.sw_account_list.setMaximumHeight(100)
+        self.sw_account_list.setMaximumHeight(150) # Aumentato leggermente
         self.sw_account_list.setStyleSheet(list_style())
         self.sw_account_list.setContextMenuPolicy(
             Qt.ContextMenuPolicy.CustomContextMenu
@@ -111,7 +107,7 @@ class ListsPage(QWidget):
         )
         btns.addStretch()
         layout.addLayout(btns)
-        self.layout.addWidget(group)
+        parent_layout.addWidget(group)
 
     def _setup_contract_section(self, parent_layout):
         group = create_group_box("Contratti")
@@ -297,19 +293,22 @@ class ListsPage(QWidget):
                 self.settings_changed.emit()
 
     def _edit_account(self):
-        item = self.account_list.currentItem()
-        if not item:
+        row = self.account_list.currentRow()
+        if row < 0:
             return
-        data = item.data(Qt.ItemDataRole.UserRole)
-        dlg = AccountDialog(self, data["username"], data["password"])
+            
+        # Ottieni tutti gli account
+        accs = self._get_accounts(self.account_list)
+        # Ottieni quello da modificare
+        target_acc = accs[row]
+        
+        dlg = AccountDialog(self, target_acc["username"], target_acc["password"])
         if dlg.exec():
             u, p = dlg.get_data()
             if u:
-                data["username"] = u
-                data["password"] = p
-                self._render_accounts(
-                    self.account_list, self._get_accounts(self.account_list)
-                )
+                target_acc["username"] = u
+                target_acc["password"] = p
+                self._render_accounts(self.account_list, accs)
                 self.settings_changed.emit()
 
     def _remove_account(self):
@@ -350,19 +349,20 @@ class ListsPage(QWidget):
                 self.settings_changed.emit()
 
     def _edit_sw_account(self):
-        item = self.sw_account_list.currentItem()
-        if not item:
+        row = self.sw_account_list.currentRow()
+        if row < 0:
             return
-        data = item.data(Qt.ItemDataRole.UserRole)
-        dlg = AccountDialog(self, data["username"], data["password"])
+            
+        accs = self._get_accounts(self.sw_account_list)
+        target_acc = accs[row]
+        
+        dlg = AccountDialog(self, target_acc["username"], target_acc["password"])
         if dlg.exec():
             u, p = dlg.get_data()
             if u:
-                data["username"] = u
-                data["password"] = p
-                self._render_accounts(
-                    self.sw_account_list, self._get_accounts(self.sw_account_list)
-                )
+                target_acc["username"] = u
+                target_acc["password"] = p
+                self._render_accounts(self.sw_account_list, accs)
                 self.settings_changed.emit()
 
     def _remove_sw_account(self):

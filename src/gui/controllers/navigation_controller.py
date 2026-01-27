@@ -134,7 +134,7 @@ class NavigationController(QObject):
         return self.mw.storico_oda_panel
 
     def _create_dipendenti(self):
-        from src.gui.panels import DipendentiPanel
+        from src.gui.panels.dipendenti.main_panel import DipendentiPanel
 
         self.mw.dipendenti_panel = DipendentiPanel()
         return self.mw.dipendenti_panel
