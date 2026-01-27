@@ -52,9 +52,7 @@ class ReportHistory:
             logger.error(f"Errore salvataggio storico report: {e}")
 
     @classmethod
-    def save_report(
-        cls, warning_list: List[Dict], expired_list: List[Dict]
-    ) -> None:
+    def save_report(cls, warning_list: List[Dict], expired_list: List[Dict]) -> None:
         """
         Salva snapshot del report corrente.
 

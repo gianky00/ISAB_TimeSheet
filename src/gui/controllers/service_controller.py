@@ -149,6 +149,7 @@ class ServiceController(QObject):
         else:
             try:
                 from datetime import datetime
+
                 last_dt = datetime.fromisoformat(last_sent_str)
                 days_passed = (datetime.now() - last_dt).days
                 if days_passed >= interval_days:
@@ -172,14 +173,14 @@ class ServiceController(QObject):
 
         try:
             # Importa le dipendenze necessarie
-            from src.core.database import db_manager
-            from src.core.report_history import ReportHistory
-
             # Importa funzione helper per costruire le mappe timbrature
             # (la logica è duplicata per evitare dipendenze circolari)
             import re
             from contextlib import suppress
             from datetime import timedelta
+
+            from src.core.database import db_manager
+            from src.core.report_history import ReportHistory
 
             def normalize(t):
                 return re.sub(r"\s+", " ", str(t).strip().upper())
@@ -205,9 +206,15 @@ class ServiceController(QObject):
                             if d_dt:
                                 diff = (today - d_dt).days
                                 if norm_cf:
-                                    if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
+                                    if (
+                                        norm_cf not in last_by_cf
+                                        or diff < last_by_cf[norm_cf]
+                                    ):
                                         last_by_cf[norm_cf] = diff
-                                if norm_key not in last_by_name or diff < last_by_name[norm_key]:
+                                if (
+                                    norm_key not in last_by_name
+                                    or diff < last_by_name[norm_key]
+                                ):
                                     last_by_name[norm_key] = diff
                 return last_by_cf, last_by_name
 
@@ -265,11 +272,13 @@ class ServiceController(QObject):
 
             # Invia report via Outlook
             import os
+
             if os.name != "nt":
                 logger.warning("Report email schedulato disponibile solo su Windows")
                 return
 
             import win32com.client
+
             from src.core.version import __version__
 
             # Costruisci HTML semplificato per invio automatico
@@ -322,25 +331,26 @@ class ServiceController(QObject):
 
             # Aggiorna timestamp ultimo invio
             config_manager.set_config_value(
-                "report_email_autopilot_last_sent",
-                datetime.now().isoformat()
+                "report_email_autopilot_last_sent", datetime.now().isoformat()
             )
 
             # Notifica
             NotificationManager.instance().add_notification(
                 title="Report Email Inviato",
                 message=f"Report automatico inviato: {len(warning_list)} in scadenza, {len(expired_list)} scaduti",
-                level="success"
+                level="success",
             )
 
-            logger.info(f"Report email schedulato inviato: {len(warning_list)} warning, {len(expired_list)} expired")
+            logger.info(
+                f"Report email schedulato inviato: {len(warning_list)} warning, {len(expired_list)} expired"
+            )
 
         except Exception as e:
             logger.error(f"Errore invio report email schedulato: {e}")
             NotificationManager.instance().add_notification(
                 title="Errore Report Email",
                 message=f"Impossibile inviare report automatico: {e}",
-                level="error"
+                level="error",
             )
 
     def _prepare_scarico_oda_generale(self, panel):

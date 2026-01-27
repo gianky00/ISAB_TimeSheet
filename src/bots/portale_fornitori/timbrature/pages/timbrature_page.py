@@ -308,7 +308,9 @@ class TimbraturePage:
         if not latest_file:
             # Debug: lista file attuali
             current_files = list(source_dir.glob("*")) if source_dir.exists() else []
-            self._log(f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
+            self._log(
+                f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}"
+            )
             return ""
 
         try:

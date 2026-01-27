@@ -370,8 +370,12 @@ class DettagliOdAPage:
             downloaded_file = self._wait_for_download(source_dir, files_before)
             if not downloaded_file:
                 # Debug: lista file attuali
-                current_files = list(source_dir.iterdir()) if source_dir.exists() else []
-                self.log(f"  [DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
+                current_files = (
+                    list(source_dir.iterdir()) if source_dir.exists() else []
+                )
+                self.log(
+                    f"  [DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}"
+                )
                 self.log("  ✗ File non trovato nella cartella Download.")
                 return None
 
