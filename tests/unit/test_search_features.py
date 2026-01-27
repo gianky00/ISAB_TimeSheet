@@ -71,17 +71,19 @@ def mock_timbrature_db(tmp_path):
                 uscita TEXT,
                 nome TEXT,
                 cognome TEXT,
+                codice_fiscale TEXT,
                 presenza_ts TEXT,
                 sito_timbratura TEXT
             )
         """
         )
         conn.execute(
-            "INSERT INTO timbrature VALUES ('2025-01-01', '08:00', '17:00', 'Mario', 'Rossi', 'OK', 'Sito A')"
+            "INSERT INTO timbrature VALUES ('2025-01-01', '08:00', '17:00', 'Mario', 'Rossi', 'RSSMRA...', 'OK', 'Sito A')"
         )
         conn.execute(
-            "INSERT INTO timbrature VALUES ('2025-01-01', '08:00', '17:00', 'Giuseppe', 'Bianchi', 'OK', 'Sito B')"
+            "INSERT INTO timbrature VALUES ('2025-01-01', '08:00', '17:00', 'Giuseppe', 'Bianchi', 'BNCGSP...', 'OK', 'Sito B')"
         )
+
 
     return db_path
 

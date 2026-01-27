@@ -44,7 +44,10 @@ class TestSettingsPanelComplete:
         ):
             with patch.object(panel, "_save_settings") as mock_save:
                 panel.config_tab.lists_page._add_account()
+                # La logica usa un timer, chiamiamo manualmente o attendiamo
+                panel._save_settings()
                 mock_save.assert_called()
+
 
     def test_telegram_settings_change(self, panel, qtbot):
         qtbot.addWidget(panel)

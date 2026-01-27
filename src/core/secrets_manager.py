@@ -4,6 +4,7 @@ Utilizza variabili d'ambiente con fallback su file protetti.
 """
 
 import base64
+import logging
 import os
 import sys
 from contextlib import suppress
@@ -13,8 +14,11 @@ import keyring  # Per integrazione con credential manager OS
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+logger = logging.getLogger(__name__)
+
 
 class SecretsManager:
+
     """Gestisce i segreti in modo sicuro."""
 
     APP_NAME = "SyncroJob"
@@ -108,21 +112,30 @@ class SecretsManager:
     @classmethod
     def store_credential(cls, service: str, username: str, password: str):
         """Salva credenziali nel keyring di sistema."""
-        with suppress(Exception):
+        try:
             keyring.set_password(f"{cls.APP_NAME}_{service}", username, password)
+        except Exception as e:
+            # Print for tests (capsys) and log for production
+            print(f"Warning: Could not store credential for {service}: {e}")
+            logger.warning(f"Could not store credential for {service}: {e}")
 
     @classmethod
     def get_credential(cls, service: str, username: str) -> str | None:
         """Recupera password dal keyring di sistema."""
-        with suppress(Exception):
+        try:
             return keyring.get_password(f"{cls.APP_NAME}_{service}", username)
-        return None
+        except Exception as e:
+            logger.warning(f"Could not retrieve credential for {service}: {e}")
+            return None
 
     @classmethod
     def delete_credential(cls, service: str, username: str):
         """Elimina credenziali dal keyring."""
-        with suppress(keyring.errors.PasswordDeleteError, Exception):
+        try:
             keyring.delete_password(f"{cls.APP_NAME}_{service}", username)
+        except (keyring.errors.PasswordDeleteError, Exception) as e:
+            logger.warning(f"Could not delete credential for {service}: {e}")
+
 
     @staticmethod
     def derive_key(password: str, salt: bytes) -> bytes:

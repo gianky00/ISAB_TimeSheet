@@ -113,13 +113,17 @@ class TestScaricoOrePanelDeep:
 
     def test_update_finished_ui_restore(self, panel, mocker):
         """Verifica il ripristino della UI dopo l'aggiornamento."""
-        mocker.patch("pathlib.Path.exists", return_value=True)
-        mocker.patch("pathlib.Path.unlink")
+        from pathlib import Path
+        mocker.patch.object(Path, "exists", return_value=True)
+        mocker.patch.object(Path, "unlink")
 
         panel._on_update_finished(True, "Successo", added=10, removed=2, duration=15.5)
 
         assert panel.update_btn.isEnabled()
-        assert "✅" in panel.status_label.text()
-        assert "+10" in panel.status_label.text()
-        assert "-2" in panel.status_label.text()
-        assert "15.5s" in panel.status_label.text()
+        # Il nuovo formato usa font color invece di emoji
+        status_text = panel.status_label.text()
+        assert "color='green'" in status_text
+        assert "+10" in status_text
+        assert "-2" in status_text
+        assert "15.5s" in status_text
+

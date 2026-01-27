@@ -124,10 +124,12 @@ class TestSprintCGUIDeep:
 
     def test_search_filtering_proxy(self, panel, qapp, mocker):
         """Verifica che la ricerca superiore deleghi al tab corrente."""
-        panel.main_tabs.setCurrentWidget(panel.tab_attivita)
+        # Seleziona il tab Attività Programmate
+        panel.main_tabs.setCurrentWidget(panel.attivita_widget)
         mock_filter = mocker.patch.object(panel.attivita_widget, "filter_data")
 
-        search_input = panel.tab_attivita.findChild(QLineEdit)
-        search_input.setText("SearchQuery")
+        # La ricerca è globale nel pannello (search_input)
+        panel.search_input.setText("SearchQuery")
 
         mock_filter.assert_called_with("SearchQuery")
+

@@ -3,6 +3,7 @@ Tests for NavigationController.get_panel refactoring.
 Ensures functional parity before refactoring.
 """
 
+
 from unittest.mock import MagicMock, patch
 
 import pytest

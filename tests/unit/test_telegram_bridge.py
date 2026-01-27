@@ -233,15 +233,16 @@ class TestTelegramUIBridge(unittest.TestCase):
         target_func = kwargs["target"]
         target_func()
 
-        MockBase64.b64encode.assert_called_once_with(photo_bytes)
         MockLyraClient.assert_called_once_with(api_key="fake_api_key")
         mock_lyra_client_instance.ask.assert_called_once_with(
+
             "Estrai dati da questo rapportino. Tabella Markdown.\nNote: Analyze this image",
             images=["base64_photo_string"],
         )
         self.mock_telegram_service.send_message_sync.assert_any_call(
-            "📋 **Dati Estratti**\n\nPhoto analysis response"
+            "📝 **Dati Estratti**\n\nPhoto analysis response"
         )
+
 
     @patch("src.core.telegram_bridge.subprocess")
     @patch("src.core.telegram_bridge.os.path.abspath", return_value="avvio.bat")

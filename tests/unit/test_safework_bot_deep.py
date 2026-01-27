@@ -29,27 +29,39 @@ class TestSafeWorkPDLBotDeep:
 
     def test_polling_logic_simulated(self, mocker):
         """Verifica l'algoritmo di polling dei file PDF."""
+        from pathlib import Path
         bot = MagicMock(spec=SafeWorkPDLBot)
         bot.download_path = "/tmp"
+        bot.log = MagicMock()
+        
+        # Bind real method
         bot._attendi_e_ritorna_nuovo_pdf = (
             SafeWorkPDLBot._attendi_e_ritorna_nuovo_pdf.__get__(bot, SafeWorkPDLBot)
         )
 
-        m_glob = mocker.patch("src.bots.safework.pdl.bot.glob.glob")
-        m_glob.side_effect = [
-            ["/tmp/file.crdownload"],
-            ["/tmp/file.crdownload"],
-            ["/tmp/file.pdf"],
-            [],
+        # Mock Path.glob and Path.stat
+        mock_path_glob = mocker.patch("src.bots.safework.pdl.bot.Path.glob")
+        
+        f_pdf = MagicMock(spec=Path)
+        f_pdf.name = "file.pdf"
+        f_pdf.__str__.return_value = "/tmp/file.pdf"
+        f_pdf.stat.return_value.st_mtime = 200
+
+        # Iterazione 1: *.pdf ritorna [] -> non chiama *.crdownload
+        # Iterazione 2: *.pdf ritorna [f_pdf] -> chiama *.crdownload -> ritorna []
+        mock_path_glob.side_effect = [
+            [],      # Iter 1: *.pdf
+            [f_pdf], # Iter 2: *.pdf
+            []       # Iter 2: *.crdownload
         ]
-        mocker.patch("src.bots.safework.pdl.bot.os.path.getmtime", return_value=200)
-        mocker.patch(
-            "src.bots.safework.pdl.bot.time.time", side_effect=[100, 101, 102, 300]
-        )
+        
+        mocker.patch("src.bots.safework.pdl.bot.time.time", side_effect=[100, 101, 102, 103, 104])
         mocker.patch("src.bots.safework.pdl.bot.time.sleep")
 
         res = bot._attendi_e_ritorna_nuovo_pdf(150)
         assert res == "/tmp/file.pdf"
+
+
 
     def test_alert_handling_logic(self, mocker):
         """Verifica la logica di chiusura alert."""

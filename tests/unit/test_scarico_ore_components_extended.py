@@ -35,11 +35,12 @@ class TestScaricoOreComponentsExtended:
         with qtbot.wait_signal(worker.finished, timeout=2000):
             worker.start()
 
-        # Verify that display cache was built
-        display, search, totals, styles = worker._build_caches(data)
+        # Verify that display cache was built (now returns 5 values)
+        display, search, totals, styles, dkeys = worker._build_caches(data)
         assert len(display) == 1
         assert display[0][0] == "01/01/2024"  # Date formatted
         assert totals[0] == 8.0
+
 
     def test_model_filtering(self, qapp):
         model = ScaricoOreTableModel()

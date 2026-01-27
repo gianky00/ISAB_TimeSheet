@@ -26,16 +26,19 @@ class TestSearchControllerCoverage(unittest.TestCase):
     def test_perform_search_no_results(self, MockMenu):
         mock_menu_instance = MockMenu.return_value
 
-        # Mock sub-searches to return 0
+        # Mock all sub-searches to return 0
         self.controller._search_oda = MagicMock(return_value=0)
+        self.controller._search_storico_oda = MagicMock(return_value=0)
         self.controller._search_extended = MagicMock(return_value=0)
         self.controller._search_employees = MagicMock(return_value=0)
+        self.controller._search_attivita_programmate = MagicMock(return_value=0)
+        self.controller._search_pdl = MagicMock(return_value=0)
         self.controller._search_audit = MagicMock(return_value=0)
 
         self.controller.perform_search("nothing")
 
         # Check "No results" action added
-        mock_menu_instance.addAction.assert_called_with("❌ Nessun risultato trovato")
+        mock_menu_instance.addAction.assert_called_with("Nessun risultato trovato")
         mock_menu_instance.exec.assert_called()
 
     @patch("src.core.contabilita_manager.ContabilitaManager")
@@ -48,7 +51,7 @@ class TestSearchControllerCoverage(unittest.TestCase):
         count = self.controller._search_oda("123", menu)
 
         self.assertEqual(count, 1)
-        menu.addAction.assert_any_call("📊 CONTABILITÀ STRUMENTALE (OdA):")
+        menu.addAction.assert_any_call("CONTABILITÀ STRUMENTALE (OdA):")
 
     @patch("src.core.contabilita_manager.ContabilitaManager")
     def test_search_oda_exception(self, MockCM):
@@ -71,11 +74,11 @@ class TestSearchControllerCoverage(unittest.TestCase):
         count = self.controller._search_extended("query", menu)
 
         self.assertEqual(count, 3)
-        menu.addAction.assert_any_call("📂 GIORNALIERE:")
-        menu.addAction.assert_any_call("🏗️ CANTIERE (Scarico Ore):")
-        menu.addAction.assert_any_call("📜 CERTIFICATI:")
+        menu.addAction.assert_any_call("GIORNALIERE:")
+        menu.addAction.assert_any_call("CANTIERE (Scarico Ore):")
+        menu.addAction.assert_any_call("CERTIFICATI:")
 
-    @patch("src.bots.portale_fornitori.timbrature.storage.TimbratureStorage")
+    @patch("src.gui.controllers.search_controller.TimbratureStorage")
     def test_search_employees_found(self, MockStorage):
         MockStorage.return_value.search_employees.return_value = [
             {"cognome": "Rossi", "nome": "Mario"}
@@ -85,11 +88,12 @@ class TestSearchControllerCoverage(unittest.TestCase):
         count = self.controller._search_employees("Rossi", menu)
 
         self.assertEqual(count, 1)
-        menu.addAction.assert_any_call("👥 DIPENDENTI:")
+        menu.addAction.assert_any_call("DIPENDENTI:")
+
 
     @patch("src.core.audit_manager.AuditManager")
     def test_search_audit_found(self, MockAudit):
-        MockAudit.return_value.get_logs.return_value = [
+        MockAudit.instance().get_logs.return_value = [
             {"action": "Login", "entity": "User"},
             {"action": "Logout", "entity": "User"},
         ]
@@ -98,7 +102,8 @@ class TestSearchControllerCoverage(unittest.TestCase):
         count = self.controller._search_audit("Login", menu)
 
         self.assertEqual(count, 1)  # Only 1 matches "Login"
-        menu.addAction.assert_any_call("🛡️ AUDIT LOG:")
+        menu.addAction.assert_any_call("AUDIT LOG:")
+
 
     @patch("src.gui.controllers.search_controller.QMenu")
     def test_perform_search_integration(self, MockMenu):
