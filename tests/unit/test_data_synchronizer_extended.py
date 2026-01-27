@@ -69,10 +69,22 @@ class TestDataSynchronizerDetailed:
 
     def test_sync_scarico_ore(self, mock_db):
         conn, cursor = mock_db
-        cursor.fetchone.side_effect = [(50,), (10,)]
+        # New logic: gets old_count (10), then calculates diff vs new_count (15)
+        cursor.fetchone.return_value = (10,)
 
-        added, removed = DataSynchronizer.sync_scarico_ore(Path("fake.db"), [("data",)])
+        # Create 15 dummy rows
+        new_rows = [("data",)] * 15
 
-        assert added == 50
-        assert removed == 10
-        assert "scarico_ore" in cursor.execute.call_args_list[1][0][0]
+        added, removed = DataSynchronizer.sync_scarico_ore(Path("fake.db"), new_rows)
+
+        # 15 new - 10 old = 5 added, 0 removed
+        assert added == 5
+        assert removed == 0
+
+        # Verify optimized sync calls
+        # Should call SELECT COUNT
+        cursor.execute.assert_any_call("SELECT COUNT(*) FROM scarico_ore")
+        # Should call DELETE ALL
+        cursor.execute.assert_any_call("DELETE FROM scarico_ore")
+        # Should insert new rows
+        assert cursor.executemany.called

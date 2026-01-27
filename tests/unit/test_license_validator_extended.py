@@ -1,9 +1,9 @@
 import base64
 import hashlib
 import json
-import os
 from datetime import date, datetime, timedelta, timezone
-from unittest.mock import mock_open
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from cryptography.fernet import Fernet
@@ -29,7 +29,7 @@ from src.core.secrets_manager import SecretsManager
 def mock_license_dir(tmp_path):
     license_dir = tmp_path / "Licenza"
     license_dir.mkdir()
-    return str(license_dir)
+    return license_dir
 
 
 @pytest.fixture
@@ -65,10 +65,8 @@ def setup_valid_license_files(mock_license_dir, mocker):
     manifest_data = {"config.dat": config_hash}
 
     # Scrivi i file
-    with open(os.path.join(mock_license_dir, "config.dat"), "wb") as f:
-        f.write(encrypted_config)
-    with open(os.path.join(mock_license_dir, "manifest.json"), "w") as f:
-        json.dump(manifest_data, f)
+    (mock_license_dir / "config.dat").write_bytes(encrypted_config)
+    (mock_license_dir / "manifest.json").write_text(json.dumps(manifest_data))
 
     return license_data
 
@@ -118,21 +116,20 @@ def test_get_hardware_id_linux_lsblk(mocker):
     assert get_hardware_id() == "FAKE_LSBLK_SERIAL"
 
 
-def test_get_hardware_id_linux_machine_id(mocker, tmp_path):
+def test_get_hardware_id_linux_machine_id(mocker):
     mocker.patch("platform.system", return_value="Linux")
-    mocker.patch("subprocess.check_output", side_effect=Exception("lsblk failed"))
-
-    # Simula il file /etc/machine-id
-    machine_id_path = tmp_path / "etc" / "machine-id"
-    machine_id_path.parent.mkdir()
-    machine_id_path.write_text("FAKE_MACHINE_ID")
     mocker.patch(
-        "os.path.exists",
-        side_effect=lambda p: p == str(machine_id_path) or p == "/etc/machine-id",
+        "src.core.license_validator.subprocess.check_output",
+        side_effect=Exception("lsblk failed"),
     )
-    mocker.patch("builtins.open", mock_open(read_data="FAKE_MACHINE_ID"))
-    mocker.patch("src.core.license_validator.uuid.getnode", return_value=12345)
 
+    # Mock Path directly in the module to avoid platform issues
+    mock_path_inst = mocker.MagicMock()
+    mock_path_inst.exists.return_value = True
+    mock_path_inst.read_text.return_value = "FAKE_MACHINE_ID"
+    mocker.patch("src.core.license_validator.Path", return_value=mock_path_inst)
+
+    mocker.patch("src.core.license_validator.uuid.getnode", return_value=12345)
     assert get_hardware_id() == "FAKE_MACHINE_ID"
 
 
@@ -148,9 +145,12 @@ def test_get_hardware_id_fallback_uuid(mocker):
 def test_get_license_paths(mocker):
     mocker.patch("src.core.config_manager.get_data_path", return_value="/fake/appdata")
     paths = _get_license_paths()
-    assert paths["dir"] == os.path.join("/fake/appdata", "Licenza")
-    assert paths["config"] == os.path.join(paths["dir"], "config.dat")
-    assert paths["manifest"] == os.path.join(paths["dir"], "manifest.json")
+    assert str(paths["dir"]).replace("\\", "/") == "/fake/appdata/Licenza"
+    assert str(paths["config"]).replace("\\", "/") == "/fake/appdata/Licenza/config.dat"
+    assert (
+        str(paths["manifest"]).replace("\\", "/")
+        == "/fake/appdata/Licenza/manifest.json"
+    )
 
 
 def test_get_license_info_success(mocker, mock_license_dir, mock_secrets_manager):
@@ -158,8 +158,8 @@ def test_get_license_info_success(mocker, mock_license_dir, mock_secrets_manager
         "src.core.license_validator._get_license_paths",
         return_value={
             "dir": mock_license_dir,
-            "config": os.path.join(mock_license_dir, "config.dat"),
-            "manifest": os.path.join(mock_license_dir, "manifest.json"),
+            "config": mock_license_dir / "config.dat",
+            "manifest": mock_license_dir / "manifest.json",
         },
     )
 
@@ -168,8 +168,7 @@ def test_get_license_info_success(mocker, mock_license_dir, mock_secrets_manager
     test_payload = {"Cliente": "Test", "Scadenza Licenza": "01/01/2027"}
     encrypted_data = cipher.encrypt(json.dumps(test_payload).encode("utf-8"))
 
-    with open(os.path.join(mock_license_dir, "config.dat"), "wb") as f:
-        f.write(encrypted_data)
+    (mock_license_dir / "config.dat").write_bytes(encrypted_data)
 
     info = get_license_info()
     assert info == test_payload
@@ -180,8 +179,8 @@ def test_get_license_info_missing_file(mocker, mock_license_dir):
         "src.core.license_validator._get_license_paths",
         return_value={
             "dir": mock_license_dir,
-            "config": os.path.join(mock_license_dir, "non_existent.dat"),
-            "manifest": os.path.join(mock_license_dir, "manifest.json"),
+            "config": mock_license_dir / "non_existent.dat",
+            "manifest": mock_license_dir / "manifest.json",
         },
     )
     assert get_license_info() is None
@@ -189,20 +188,14 @@ def test_get_license_info_missing_file(mocker, mock_license_dir):
 
 def test_get_detailed_license_status_missing_dir(mocker, tmp_path):
     mock_paths = {
-        "dir": os.path.join(str(tmp_path), "NonEsistente"),
-        "config": os.path.join(str(tmp_path), "NonEsistente", "config.dat"),
-        "manifest": os.path.join(str(tmp_path), "NonEsistente", "manifest.json"),
+        "dir": tmp_path / "NonEsistente",
+        "config": tmp_path / "NonEsistente" / "config.dat",
+        "manifest": tmp_path / "NonEsistente" / "manifest.json",
     }
     mocker.patch(
         "src.core.license_validator._get_license_paths", return_value=mock_paths
     )
-    mocker.patch(
-        "os.path.exists",
-        side_effect=lambda p: p != mock_paths["dir"]
-        and p != mock_paths["config"]
-        and p != mock_paths["manifest"],
-    )
-    mocker.patch("os.makedirs")
+    mocker.patch.object(Path, "mkdir")
 
     status, msg = get_detailed_license_status()
     assert status == LicenseStatus.MISSING
@@ -214,14 +207,9 @@ def test_get_detailed_license_status_missing_files(mocker, mock_license_dir):
         "src.core.license_validator._get_license_paths",
         return_value={
             "dir": mock_license_dir,
-            "config": os.path.join(mock_license_dir, "non_existent.dat"),
-            "manifest": os.path.join(mock_license_dir, "non_existent.json"),
+            "config": mock_license_dir / "non_existent.dat",
+            "manifest": mock_license_dir / "non_existent.json",
         },
-    )
-    mocker.patch(
-        "os.path.exists",
-        side_effect=lambda p: p != os.path.join(mock_license_dir, "non_existent.dat")
-        and p != os.path.join(mock_license_dir, "non_existent.json"),
     )
     status, msg = get_detailed_license_status()
     assert status == LicenseStatus.MISSING
@@ -233,17 +221,17 @@ def test_get_detailed_license_status_invalid_sha(
 ):
     paths = {
         "dir": mock_license_dir,
-        "config": os.path.join(mock_license_dir, "config.dat"),
-        "manifest": os.path.join(mock_license_dir, "manifest.json"),
+        "config": mock_license_dir / "config.dat",
+        "manifest": mock_license_dir / "manifest.json",
     }
     mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
-    mocker.patch("os.path.exists", return_value=True)
 
-    m4 = mock_open(read_data=b"fake_encrypted_config")
-    mocker.patch("builtins.open", m4)
+    # Assicura che i file esistano
+    (mock_license_dir / "config.dat").write_text("fake_encrypted_config")
+    (mock_license_dir / "manifest.json").write_text(
+        json.dumps({"config.dat": "invalid_sha"})
+    )
 
-    manifest_data = {"config.dat": "invalid_sha"}
-    mocker.patch("json.load", return_value=manifest_data)
     mocker.patch(
         "src.core.license_validator._calculate_sha256", return_value="different_sha"
     )
@@ -261,8 +249,8 @@ def test_get_detailed_license_status_hw_id_mismatch(
         "src.core.license_validator._get_license_paths",
         return_value={
             "dir": mock_license_dir,
-            "config": os.path.join(mock_license_dir, "config.dat"),
-            "manifest": os.path.join(mock_license_dir, "manifest.json"),
+            "config": mock_license_dir / "config.dat",
+            "manifest": mock_license_dir / "manifest.json",
         },
     )
     mocker.patch(
@@ -285,8 +273,8 @@ def test_get_detailed_license_status_expired(
 ):
     paths = {
         "dir": mock_license_dir,
-        "config": os.path.join(mock_license_dir, "config.dat"),
-        "manifest": os.path.join(mock_license_dir, "manifest.json"),
+        "config": mock_license_dir / "config.dat",
+        "manifest": mock_license_dir / "manifest.json",
     }
     mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
 
@@ -301,10 +289,8 @@ def test_get_detailed_license_status_expired(
     config_hash = hashlib.sha256(encrypted_config).hexdigest()
     manifest_data = {"config.dat": config_hash}
 
-    with open(os.path.join(mock_license_dir, "config.dat"), "wb") as f:
-        f.write(encrypted_config)
-    with open(os.path.join(mock_license_dir, "manifest.json"), "w") as f:
-        json.dump(manifest_data, f)
+    (mock_license_dir / "config.dat").write_bytes(encrypted_config)
+    (mock_license_dir / "manifest.json").write_text(json.dumps(manifest_data))
 
     mocker.patch(
         "src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID"
@@ -326,8 +312,8 @@ def test_get_detailed_license_status_valid(
         "src.core.license_validator._get_license_paths",
         return_value={
             "dir": mock_license_dir,
-            "config": os.path.join(mock_license_dir, "config.dat"),
-            "manifest": os.path.join(mock_license_dir, "manifest.json"),
+            "config": mock_license_dir / "config.dat",
+            "manifest": mock_license_dir / "manifest.json",
         },
     )
     mocker.patch(
@@ -344,20 +330,21 @@ def test_get_detailed_license_status_valid(
 
 
 def test_get_detailed_license_status_mkdir_fail(mocker):
-    mocker.patch("os.path.exists", side_effect=[False, False])  # Dir doesn't exist
-    mocker.patch("os.makedirs", side_effect=OSError("Permesso negato"))
-    mocker.patch(
-        "src.core.license_validator._get_license_paths",
-        return_value={"dir": "/root/lic"},
-    )
+    # Mock Path.exists to return False for dir creation test
+    with patch.object(Path, "exists", return_value=False):
+        with patch.object(Path, "mkdir", side_effect=OSError("Permesso negato")):
+            mocker.patch(
+                "src.core.license_validator._get_license_paths",
+                return_value={"dir": Path("/root/lic")},
+            )
 
-    status, msg = get_detailed_license_status()
-    assert status == LicenseStatus.ERROR
-    assert "Impossibile creare cartella" in msg
+            status, msg = get_detailed_license_status()
+            assert status == LicenseStatus.ERROR
+            assert "Impossibile creare cartella" in msg
 
 
 def test_check_integrity_exception(mocker):
-    paths = {"manifest": "any.json", "config": "any.dat"}
+    paths = {"manifest": Path("any.json"), "config": Path("any.dat")}
     mocker.patch("builtins.open", side_effect=Exception("Read error"))
     status, msg = _check_integrity_with_manifest(paths)
     assert status == LicenseStatus.ERROR
@@ -384,7 +371,7 @@ def test_validate_license_data_expired_untrusted(mocker):
     payload = {"Hardware ID": "SAME", "Scadenza Licenza": "01/01/2020"}
     mocker.patch("src.core.license_validator.get_license_info", return_value=payload)
     mocker.patch("src.core.license_validator.get_hardware_id", return_value="SAME")
-    # Scaduta e orario NON fidato - patchiamo dove viene IMPORTATA
+    # Scaduta e orario NON fidato
     mocker.patch(
         "src.core.license_validator.get_trusted_time",
         return_value=(datetime(2021, 1, 1, tzinfo=timezone.utc), False),
@@ -407,9 +394,10 @@ def test_validate_license_data_exception(mocker):
 def test_get_license_info_no_key(mocker, mock_license_dir):
     mocker.patch(
         "src.core.license_validator._get_license_paths",
-        return_value={"config": os.path.join(mock_license_dir, "config.dat")},
+        return_value={"config": mock_license_dir / "config.dat"},
     )
-    mocker.patch("os.path.exists", return_value=True)
+    # Ensure file exists
+    (mock_license_dir / "config.dat").write_text("data")
     mocker.patch.object(SecretsManager, "get_license_key", return_value=None)
     assert get_license_info() is None
 
@@ -417,9 +405,10 @@ def test_get_license_info_no_key(mocker, mock_license_dir):
 def test_get_license_info_exception(mocker, mock_license_dir):
     mocker.patch(
         "src.core.license_validator._get_license_paths",
-        return_value={"config": os.path.join(mock_license_dir, "config.dat")},
+        return_value={"config": mock_license_dir / "config.dat"},
     )
-    mocker.patch("os.path.exists", return_value=True)
+    # Ensure file exists
+    (mock_license_dir / "config.dat").write_text("data")
     mocker.patch("builtins.open", side_effect=Exception("Read fail"))
     assert get_license_info() is None
 
@@ -459,8 +448,8 @@ def test_get_license_expiry(
         "src.core.license_validator._get_license_paths",
         return_value={
             "dir": mock_license_dir,
-            "config": os.path.join(mock_license_dir, "config.dat"),
-            "manifest": os.path.join(mock_license_dir, "manifest.json"),
+            "config": mock_license_dir / "config.dat",
+            "manifest": mock_license_dir / "manifest.json",
         },
     )
     expiry = get_license_expiry()
@@ -475,8 +464,8 @@ def test_get_license_client(
         "src.core.license_validator._get_license_paths",
         return_value={
             "dir": mock_license_dir,
-            "config": os.path.join(mock_license_dir, "config.dat"),
-            "manifest": os.path.join(mock_license_dir, "manifest.json"),
+            "config": mock_license_dir / "config.dat",
+            "manifest": mock_license_dir / "manifest.json",
         },
     )
     client = get_license_client()

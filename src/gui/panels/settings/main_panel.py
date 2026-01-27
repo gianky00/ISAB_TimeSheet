@@ -31,6 +31,7 @@ class SettingsPanel(QWidget):
 
         self._setup_ui()
         self.load_settings()
+        self._has_unsaved_changes = False
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)

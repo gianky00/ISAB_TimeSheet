@@ -137,6 +137,10 @@ class BaseBot(ABC):
         """Imposta la callback per inoltrare i log all'interfaccia utente."""
         self._log_callback = callback
 
+    def set_telegram_service(self, service: Any):
+        """Imposta il servizio Telegram per l'invio di notifiche."""
+        self._telegram_service = service
+
     def set_input_callback(self, callback: Callable[[str], str]):
         """Imposta la callback per richiedere input interattivo all'utente."""
         self._input_callback = callback

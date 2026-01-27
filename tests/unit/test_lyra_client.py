@@ -37,12 +37,18 @@ def mock_timbrature_db(tmp_path):
         mock_cursor = MagicMock()
         mock_sqlite.connect.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
+        mock_conn.__enter__.return_value = mock_conn
 
-        # Setup cursor responses
-        mock_cursor.fetchone.side_effect = [
-            (100,),  # Total
-            (5,),  # Anomalies (missing out)
-        ]
+        # Use a list and pop to ensure we don't run out of values
+        # or return a default (0,) to avoid MagicMock issues
+        fetchone_responses = [(100,), (5,), (0,), (0,)]
+
+        def safe_fetchone(*args, **kwargs):
+            if fetchone_responses:
+                return fetchone_responses.pop(0)
+            return (0,)
+
+        mock_cursor.fetchone.side_effect = safe_fetchone
 
         mock_cursor.fetchall.return_value = [
             ("2025-01-01", "Mario", "Rossi", "08:00", "17:00")
@@ -63,7 +69,7 @@ def test_system_context_generation(mock_contabilita_manager, mock_timbrature_db)
     assert "REPORT CONTABILITÀ (2025)" in context
     assert "Valore Totale Preventivato: € 100,000.00" in context
     assert "REPORT TIMBRATURE" in context
-    assert "Rilevate 5 timbrature con uscita mancante" in context
+    assert "ATTENZIONE: Rilevate 5 timbrature con uscita mancante" in context
 
 
 @patch("src.core.lyra_client.requests.post")

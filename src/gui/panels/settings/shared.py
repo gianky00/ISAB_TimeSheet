@@ -33,14 +33,21 @@ def list_style() -> str:
             border-radius: 4px;
             padding: 5px;
             font-size: 14px;
+            background-color: white;
+            color: black;
         }
         QListWidget::item {
-            padding: 5px;
+            padding: 8px;
             border-bottom: 1px solid #f0f0f0;
+            color: black;
         }
         QListWidget::item:selected {
-            background-color: #e7f1ff;
-            color: #0d6efd;
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+        }
+        QListWidget::item:hover:!selected {
+            background-color: #f8f9fa;
         }
     """
 

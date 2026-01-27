@@ -23,23 +23,15 @@ class TestLicenseValidatorAdvanced:
         config_file = lic_dir / "config.dat"
         manifest_file = lic_dir / "manifest.json"
 
+        # DEVE restituire oggetti Path, non stringhe
         paths = {
-            "dir": str(lic_dir),
-            "config": str(config_file),
-            "manifest": str(manifest_file),
+            "dir": lic_dir,
+            "config": config_file,
+            "manifest": manifest_file,
         }
         mocker.patch(
             "src.core.license_validator._get_license_paths", return_value=paths
         )
-
-        # Patch os.path.exists per far credere che i file esistano sempre in questo test
-        mock_exists = mocker.patch("src.core.license_validator.os.path.exists")
-        mock_exists.side_effect = lambda p: str(p) in [
-            str(lic_dir),
-            str(config_file),
-            str(manifest_file),
-        ]
-        mocker.patch("src.core.license_validator.os.makedirs")
 
         return lic_dir, config_file, manifest_file
 
@@ -114,6 +106,13 @@ class TestLicenseValidatorAdvanced:
     def test_license_hardware_mismatch(self, license_env, mocker):
         """Test: Fallimento se HWID nella licenza è diverso da quello attuale."""
         lic_dir, config_file, manifest_file = license_env
+
+        # Assicura che i file esistano fisicamente per evitare LicenseStatus.MISSING
+        config_file.write_text("dummy")
+        manifest_file.write_text(
+            json.dumps({"config.dat": hashlib.sha256(b"dummy").hexdigest()})
+        )
+
         payload = {"Hardware ID": "WRONG-ID", "Scadenza Licenza": "31/12/2099"}
         mocker.patch(
             "src.core.license_validator.get_license_info", return_value=payload

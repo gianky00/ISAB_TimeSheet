@@ -1,10 +1,12 @@
-import base64
 import csv
 import logging
+import os
 import re
 from contextlib import suppress
 from datetime import datetime, timedelta
+from pathlib import Path
 
+import pandas as pd
 from PyQt6.QtCore import (
     QSize,
     Qt,
@@ -30,6 +32,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.database import db_manager
+from src.core.report_history import ReportHistory
 from src.gui.formatters import FastTableModel
 from src.gui.panels.dipendenti.shared import (
     ColoredDotDelegate,
@@ -93,18 +96,6 @@ class AnagraficaPage(QWidget):
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
-        refresh_btn = QPushButton("Aggiorna")
-        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.setIconSize(QSize(24, 24))
-        refresh_btn.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(refresh_btn)
-
-        import_btn = QPushButton("Importa CSV")
-        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
-        import_btn.setIconSize(QSize(24, 24))
-        import_btn.clicked.connect(self._on_import_clicked)
-        filter_layout.addWidget(import_btn)
-
         email_report_btn = QPushButton("Genera Report via Email")
         email_report_btn.setIcon(
             get_colored_icon(get_asset_path(Icons.SEND), "#ffffff")
@@ -153,14 +144,23 @@ class AnagraficaPage(QWidget):
         self.card_expired = InteractiveStatusCard(
             "Scaduti", "#dc3545", Icons.X_CIRCLE, "Accesso >30gg fa", "expired"
         )
+        self.card_excluded = InteractiveStatusCard(
+            "Esclusi",
+            "#6c757d",
+            Icons.EYE_OFF,
+            "Non monitorati",
+            "excluded",
+        )
 
         self.card_ok.clicked.connect(self._on_card_filter)
         self.card_warning.clicked.connect(self._on_card_filter)
         self.card_expired.clicked.connect(self._on_card_filter)
+        self.card_excluded.clicked.connect(self._on_card_filter)
 
         cards_layout.addWidget(self.card_ok, stretch=1)
         cards_layout.addWidget(self.card_warning, stretch=1)
         cards_layout.addWidget(self.card_expired, stretch=1)
+        cards_layout.addWidget(self.card_excluded, stretch=1)
 
         main_layout.addWidget(self.cards_container)
 
@@ -295,8 +295,8 @@ class AnagraficaPage(QWidget):
         """
         )
         access_layout = QVBoxLayout(access_card)
-        access_layout.setContentsMargins(15, 12, 15, 12)  # Ridotto per compattezza
-        access_layout.setSpacing(6)  # Ridotto da 10 a 6
+        access_layout.setContentsMargins(15, 12, 15, 12)
+        access_layout.setSpacing(6)
 
         access_title = QLabel("🏭 ULTIMO ACCESSO ISAB")
         access_title.setStyleSheet(
@@ -312,6 +312,7 @@ class AnagraficaPage(QWidget):
         )
         access_layout.addWidget(access_title)
         access_layout.addWidget(self.last_access_label)
+
         detail_layout.addWidget(access_card)
 
         detail_layout.addStretch()
@@ -390,16 +391,21 @@ class AnagraficaPage(QWidget):
             )
 
     def refresh_data(self):
-        search_text = self.search_input.text().lower()
+        search_text = self.search_input.text().lower().strip()
         query = """
             SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
             FROM dipendenti WHERE 1=1
         """
         params = []
+
         if search_text:
-            query += " AND (cognome LIKE ? OR nome LIKE ? OR badge LIKE ? OR codice_fiscale LIKE ?)"
-            p = f"%{search_text}%"
-            params.extend([p, p, p, p])
+            # Multi-term search: Every term must match at least one field
+            terms = search_text.split()
+            for term in terms:
+                p = f"%{term}%"
+                query += " AND (cognome LIKE ? OR nome LIKE ? OR badge LIKE ? OR codice_fiscale LIKE ?)"
+                params.extend([p, p, p, p])
+
         query += " ORDER BY cognome ASC, nome ASC"
 
         self.table.horizontalHeader().setDefaultAlignment(
@@ -423,43 +429,22 @@ class AnagraficaPage(QWidget):
         last_by_cf, last_by_name, normalize = self._build_timbrature_maps(accessi)
 
         master_rows = []
-        count_ok = 0
-        count_warning = 0
-        count_expired = 0
+        counts = {"ok": 0, "warning": 0, "expired": 0, "excluded": 0}
 
         for r in full_rows:
-            # r contiene ora anche monitoraggio_attivo come ultimo elemento
             is_monitored = r[8] if len(r) > 8 and r[8] is not None else 1
+            diff_days, cf_warning, _, _, _ = self._compute_employee_status(
+                r, last_by_cf, last_by_name, normalize
+            )
 
-            (
-                diff_days,
-                cf_warning,
-                cog_val,
-                nom_val,
-                cf_val,
-            ) = self._compute_employee_status(r, last_by_cf, last_by_name, normalize)
+            # 1. Aggiornamento Conteggi
+            self._update_status_counts(counts, is_monitored, diff_days)
 
-            # Conta solo i dipendenti monitorati
-            if diff_days is not None and is_monitored:
-                if diff_days <= 20:
-                    count_ok += 1
-                elif diff_days <= 30:
-                    count_warning += 1
-                else:
-                    count_expired += 1
+            # 2. Applicazione Filtri UI
+            if self._should_skip_by_filter(is_monitored, diff_days):
+                continue
 
-            if self.current_filter:
-                if diff_days is None:
-                    continue
-                if self.current_filter == "ok" and diff_days > 20:
-                    continue
-                elif self.current_filter == "warning" and (
-                    diff_days <= 20 or diff_days > 30
-                ):
-                    continue
-                elif self.current_filter == "expired" and diff_days <= 30:
-                    continue
-
+            # 3. Formattazione riga
             inactivation_val = 30 - diff_days if diff_days is not None else None
             display_cognome = f"⚠️ {r[1]}" if cf_warning else r[1]
 
@@ -478,10 +463,45 @@ class AnagraficaPage(QWidget):
                 ]
             )
 
-        self.card_ok.setValue(count_ok)
-        self.card_warning.setValue(count_warning)
-        self.card_expired.setValue(count_expired)
+        # Aggiorna le card UI
+        self.card_ok.setValue(counts["ok"])
+        self.card_warning.setValue(counts["warning"])
+        self.card_expired.setValue(counts["expired"])
+        self.card_excluded.setValue(counts["excluded"])
         return master_rows
+
+    def _update_status_counts(self, counts, is_monitored, diff_days):
+        """Aggiorna i contatori degli stati per le card UI."""
+        if not is_monitored:
+            counts["excluded"] += 1
+        elif diff_days is not None:
+            if diff_days <= 20:
+                counts["ok"] += 1
+            elif diff_days <= 30:
+                counts["warning"] += 1
+            else:
+                counts["expired"] += 1
+
+    def _should_skip_by_filter(self, is_monitored, diff_days):
+        """Determina se un dipendente deve essere escluso dalla vista in base al filtro attivo."""
+        if not self.current_filter:
+            return False
+
+        if self.current_filter == "excluded":
+            return bool(is_monitored)
+
+        # Per gli altri filtri (ok, warning, expired), mostriamo solo i monitorati con dati validi
+        if not is_monitored or diff_days is None:
+            return True
+
+        if self.current_filter == "ok" and diff_days > 20:
+            return True
+        if self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30):
+            return True
+        if self.current_filter == "expired" and diff_days <= 30:
+            return True
+
+        return False
 
     def _build_timbrature_maps(self, accessi):
         today = datetime.now()
@@ -549,6 +569,7 @@ class AnagraficaPage(QWidget):
             "ok": "Visualizzazione dipendenti operativi (accesso ≤ 20 giorni)",
             "warning": "Visualizzazione dipendenti in scadenza (accesso 21-30 giorni)",
             "expired": "Visualizzazione dipendenti non operativi (accesso > 30 giorni)",
+            "excluded": "Visualizzazione dipendenti esclusi dal monitoraggio",
         }
 
         if self.current_filter == filter_type:
@@ -561,7 +582,12 @@ class AnagraficaPage(QWidget):
             message = filter_messages.get(filter_type, f"Filtro: {filter_type}")
             ToastManager.instance().show(message, "info", duration=3000)
 
-        for card in [self.card_ok, self.card_warning, self.card_expired]:
+        for card in [
+            self.card_ok,
+            self.card_warning,
+            self.card_expired,
+            self.card_excluded,
+        ]:
             is_active = card.filter_type == self.current_filter
             gradient = (
                 "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #e8f5e9, stop:1 #f8f9fa)"
@@ -717,196 +743,259 @@ class AnagraficaPage(QWidget):
             QMessageBox.critical(self, "Errore", f"Impossibile importare:\n{e}")
 
     def _generate_email_report(self):
-        """Genera email report professionale in Outlook con dipendenti in scadenza e scaduti."""
+        """Genera email report professionale coordinando raccolta dati, generazione HTML/Excel e invio."""
         try:
-            import urllib.parse
-
-            # Query per dipendenti warning e expired (solo monitorati)
-            query = """
-                SELECT id_risorsa, cognome, nome, codice_fiscale, badge, data_assunzione
-                FROM dipendenti
-                WHERE monitoraggio_attivo = 1 OR monitoraggio_attivo IS NULL
-                ORDER BY cognome ASC, nome ASC
-            """
-            dipendenti = db_manager.execute_query(db_manager.DB_DIPENDENTI, query)
-
-            # Recupera accessi per calcolare stato
-            query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
-            accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
-            last_by_cf, last_by_name, normalize = self._build_timbrature_maps(accessi)
-
-            warning_list = []
-            expired_list = []
-
-            for dip in dipendenti:
-                id_ris, cog, nom, cf, badge, data_ass = dip
-                cf_norm = normalize(cf or "")
-                name_key = (normalize(cog or ""), normalize(nom or ""))
-
-                # last_by_cf e last_by_name contengono giorni (int), non datetime
-                diff_days = last_by_cf.get(cf_norm) or last_by_name.get(name_key)
-                if diff_days is None:
-                    continue
-
-                # Calcola la data effettiva dell'ultimo accesso
-                last_access_date = datetime.now() - timedelta(days=diff_days)
-                formatted_date = last_access_date.strftime("%d/%m/%Y")
-
-                if 21 <= diff_days <= 30:
-                    warning_list.append(
-                        {
-                            "id": id_ris,
-                            "cognome": cog,
-                            "nome": nom,
-                            "badge": badge,
-                            "giorni": diff_days,
-                            "data": formatted_date,
-                        }
-                    )
-                elif diff_days > 30:
-                    expired_list.append(
-                        {
-                            "id": id_ris,
-                            "cognome": cog,
-                            "nome": nom,
-                            "badge": badge,
-                            "giorni": diff_days,
-                            "data": formatted_date,
-                        }
-                    )
-
-            if not warning_list and not expired_list:
+            # 1. Raccolta e classificazione dati
+            report_data = self._gather_report_data()
+            if not report_data["warning_list"] and not report_data["expired_list"]:
                 QMessageBox.information(
                     self,
                     "Nessun dipendente",
-                    "Non ci sono dipendenti in scadenza o scaduti da segnalare.",
+                    "Ottimo! Non ci sono dipendenti in scadenza o scaduti.",
                 )
                 return
 
-            # Costruisci corpo email HTML
-            current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+            # 2. Generazione HTML
+            body_html = self._build_report_html(report_data)
 
-            # Carica icona come base64 per email
-            from pathlib import Path
-
-            from src.core.version import __version__
-
-            icon_b64 = ""
-            icon_path = Path(get_asset_path("app.ico"))
-            if icon_path.exists():
-                with open(icon_path, "rb") as f:
-                    icon_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-            icon_html = (
-                f'<img src="data:image/x-icon;base64,{icon_b64}" width="20" height="20" style="vertical-align: middle; margin-right: 5px;">'
-                if icon_b64
-                else ""
+            # 3. Generazione Excel
+            excel_path = self._create_report_excel(
+                report_data["warning_list"], report_data["expired_list"]
             )
 
-            body_html = f"""<html><body style='font-family: Arial, sans-serif;'>
-<h2 style='color: #0d6efd;'>Report Monitoraggio Dipendenti in ISAB</h2>
-<p><strong>Data generazione:</strong> {current_date}</p>
-<p><strong>Generato da:</strong> {icon_html}SyncroJob ({__version__})</p>
-<hr style='border: 1px solid #dee2e6;'>
-"""
-
-            # Stile tabella dinamico
-            table_style = "border-collapse: collapse; font-size: 13px; white-space: nowrap;"
-            th_style = "padding: 8px 12px; text-align: left;"
-            td_style = "padding: 8px 12px;"
-
-            if warning_list:
-                body_html += f"""
-<h3 style='color: #fd7e14;'>⚠️ Dipendenti in Scadenza ({len(warning_list)})</h3>
-<p style='font-size: 13px; color: #6c757d;'>Ultimo accesso tra 21 e 30 giorni fa</p>
-<table border='1' cellspacing='0' style='{table_style}'>
-<thead style='background-color: #fff3cd;'>
-<tr>
-<th style='{th_style}'>ID</th><th style='{th_style}'>Cognome</th><th style='{th_style}'>Nome</th><th style='{th_style}'>Badge</th><th style='{th_style}'>Ultimo Accesso</th><th style='{th_style}'>Giorni Trascorsi</th>
-</tr>
-</thead>
-<tbody>
-"""
-                for dip in warning_list:
-                    body_html += f"""<tr>
-<td style='{td_style}'>{dip["id"]}</td>
-<td style='{td_style}'>{dip["cognome"]}</td>
-<td style='{td_style}'>{dip["nome"]}</td>
-<td style='{td_style}'>{dip["badge"]}</td>
-<td style='{td_style}'>{dip["data"]}</td>
-<td style='{td_style} font-weight: bold; color: #fd7e14;'>{dip["giorni"]} giorni</td>
-</tr>
-"""
-                body_html += "</tbody></table><br/>"
-
-            if expired_list:
-                body_html += f"""
-<h3 style='color: #dc3545;'>🚫 Dipendenti Non Operativi ({len(expired_list)})</h3>
-<p style='font-size: 13px; color: #6c757d;'>Ultimo accesso oltre 30 giorni fa</p>
-<table border='1' cellspacing='0' style='{table_style}'>
-<thead style='background-color: #f8d7da;'>
-<tr>
-<th style='{th_style}'>ID</th><th style='{th_style}'>Cognome</th><th style='{th_style}'>Nome</th><th style='{th_style}'>Badge</th><th style='{th_style}'>Ultimo Accesso</th><th style='{th_style}'>Giorni Trascorsi</th>
-</tr>
-</thead>
-<tbody>
-"""
-                for dip in expired_list:
-                    body_html += f"""<tr>
-<td style='{td_style}'>{dip["id"]}</td>
-<td style='{td_style}'>{dip["cognome"]}</td>
-<td style='{td_style}'>{dip["nome"]}</td>
-<td style='{td_style}'>{dip["badge"]}</td>
-<td style='{td_style}'>{dip["data"]}</td>
-<td style='{td_style} font-weight: bold; color: #dc3545;'>{dip["giorni"]} giorni</td>
-</tr>
-"""
-                body_html += "</tbody></table><br/>"
-
-            body_html += "</body></html>"
-
-            subject = f"Report Monitoraggio Dipendenti in ISAB - {current_date}"
-
-            # Usa COM API per Outlook (no limiti di lunghezza)
-            import os
-
-            if os.name == "nt":
-                try:
-                    import win32com.client
-
-                    outlook = win32com.client.Dispatch("Outlook.Application")
-                    mail = outlook.CreateItem(0)  # 0 = olMailItem
-                    mail.Subject = subject
-                    mail.HTMLBody = body_html
-                    mail.Display()  # Mostra email per modifica prima dell'invio
-
-                    ToastManager.instance().show(
-                        "Email report generata - Outlook aperto", "success", duration=3000
-                    )
-                except ImportError:
-                    # Fallback se pywin32 non installato
-                    QMessageBox.warning(
-                        self,
-                        "Modulo mancante",
-                        "Il modulo 'pywin32' non è installato.\n"
-                        "Installa con: pip install pywin32",
-                    )
-                except Exception as e:
-                    raise Exception(f"Errore apertura Outlook: {e}")
-            else:
-                # Fallback per altri OS (versione semplificata)
-                import subprocess
-                import webbrowser
-
-                # Su Linux/Mac usa mailto semplice (solo subject, no body lungo)
-                mailto_url = f"mailto:?subject={urllib.parse.quote(subject)}"
-                webbrowser.open(mailto_url)
-                ToastManager.instance().show(
-                    "Email aperta (body non supportato su questo OS)", "warning", duration=3000
-                )
+            # 4. Invio Email
+            self._send_report_email(body_html, excel_path, report_data)
 
         except Exception as e:
             logger.error(f"Errore generazione email report: {e}")
             QMessageBox.critical(
-                self, "Errore", f"Impossibile generare il report email:\n{e}"
+                self, "Errore", f"Impossibile generare il report:\n{e}"
             )
+
+    def _gather_report_data(self):
+        """Raccoglie i dati dei dipendenti e li divide in warning ed expired."""
+        query = """
+            SELECT id_risorsa, cognome, nome, codice_fiscale, badge, data_assunzione
+            FROM dipendenti
+            WHERE monitoraggio_attivo = 1 OR monitoraggio_attivo IS NULL
+            ORDER BY cognome ASC, nome ASC
+        """
+        dipendenti = db_manager.execute_query(db_manager.DB_DIPENDENTI, query)
+
+        query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
+        accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
+        last_by_cf, last_by_name, normalize = self._build_timbrature_maps(accessi)
+
+        warning_list = []
+        expired_list = []
+
+        for dip in dipendenti:
+            id_ris, cog, nom, cf, badge, _ = dip
+            cf_norm = normalize(cf or "")
+            name_key = (normalize(cog or ""), normalize(nom or ""))
+
+            diff_days = last_by_cf.get(cf_norm) or last_by_name.get(name_key)
+            if diff_days is None:
+                continue
+
+            last_access_date = datetime.now() - timedelta(days=diff_days)
+            item = {
+                "id": id_ris,
+                "cognome": cog,
+                "nome": nom,
+                "badge": badge if badge else "-",
+                "giorni": diff_days,
+                "data": last_access_date.strftime("%d/%m/%Y"),
+            }
+
+            if 21 <= diff_days <= 30:
+                warning_list.append(item)
+            elif diff_days > 30:
+                expired_list.append(item)
+
+        # Ordinamento per urgenza
+        warning_list.sort(key=lambda x: x["giorni"], reverse=True)
+        expired_list.sort(key=lambda x: x["giorni"], reverse=True)
+
+        return {
+            "warning_list": warning_list,
+            "expired_list": expired_list,
+            "total_monitored": len(dipendenti),
+        }
+
+    def _build_report_html(self, data):
+        """Costruisce il template HTML per l'email."""
+        from src.core.version import __version__
+
+        current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+        font_family = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif"
+        header_color = "#0d6efd"
+        border_color = "#e5e7eb"
+
+        # Executive Summary Logic
+        urgenti = len([d for d in data["expired_list"] if d["giorni"] > 60])
+        tot_attenzione = len(data["warning_list"]) + len(data["expired_list"])
+
+        if urgenti > 0:
+            sum_text = f"<strong>ATTENZIONE:</strong> {urgenti} dipendenti richiedono azione <strong>IMMEDIATA</strong> (oltre 60 giorni). Totale da gestire: {tot_attenzione}."
+            sum_color, sum_icon = "#dc3545", "⚠️"
+        elif len(data["expired_list"]) > 0:
+            sum_text = f"<strong>{len(data['expired_list'])}</strong> dipendenti scaduti e <strong>{len(data['warning_list'])}</strong> in scadenza richiedono attenzione."
+            sum_color, sum_icon = "#fd7e14", "🚨"
+        else:
+            sum_text = f"<strong>{len(data['warning_list'])}</strong> dipendenti in scadenza da monitorare nei prossimi giorni."
+            sum_color, sum_icon = "#0d6efd", "ℹ️"
+
+        # Trend calculation
+        trend_html = ""
+        trend = ReportHistory.calculate_trend(
+            len(data["warning_list"]), len(data["expired_list"])
+        )
+        if trend:
+            parts = []
+            for k, label in [
+                ("warning_diff", "in scadenza"),
+                ("expired_diff", "scaduti"),
+            ]:
+                diff = trend[k]
+                if diff > 0:
+                    parts.append(
+                        f'<span style="color: #dc3545;">+{diff} {label}</span>'
+                    )
+                elif diff < 0:
+                    parts.append(f'<span style="color: #198754;">{diff} {label}</span>')
+            if parts:
+                trend_html = f'<p style="margin: 8px 0 0 0; padding: 10px 12px; background-color: #f8f9fa; border-radius: 4px; font-size: 12px; color: #6b7280;">📊 <strong>Trend:</strong> {" | ".join(parts)} rispetto al {trend["last_date"]}</p>'
+
+        # Main Template
+        html = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: {font_family}; margin: 0; padding: 0; color: #1f2937; background-color: #f9fafb; }}
+                .container {{ width: auto; max-width: 1500px; margin: 0 auto; background-color: #ffffff; }}
+                .summary-table {{ width: auto; min-width: 480px; border-collapse: separate; border-spacing: 8px; margin: 16px auto; }}
+                .card {{ background-color: #ffffff; padding: 14px 20px; border: 1px solid {border_color}; border-radius: 6px; text-align: center; width: 160px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }}
+                .card-number {{ font-size: 24px; font-weight: 700; display: block; margin-bottom: 4px; letter-spacing: -0.5px; }}
+                .card-label {{ font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; font-weight: 600; }}
+                .data-table {{ width: auto; border-collapse: collapse; margin: 0 0 20px 0; background-color: white; border: 1px solid {border_color}; }}
+                .data-table th {{ background-color: #e7f1ff; text-align: left; padding: 5px 10px; border: 1px solid #cce0ff; font-size: 12px; color: #1a56db; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }}
+                .data-table td {{ padding: 5px 12px; border: 1px solid {border_color}; font-size: 13px; vertical-align: middle; color: #374151; }}
+            </style>
+        </head>
+        <body style="background-color: #f9fafb; margin: 0; padding: 20px 0;">
+            <div class="container" style="border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0d6efd;">
+                    <tr><td style="padding: 20px 24px; text-align: center;">
+                        <h2 style="margin: 0; font-weight: 700; font-size: 20px; color: #ffffff;">Report Monitoraggio Accessi in ISAB</h2>
+                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #cfe2ff;">Generato il {current_date} da SyncroJob v{__version__}</p>
+                    </td></tr>
+                </table>
+                <div style="padding: 16px 20px; background-color: #ffffff;">
+                    <table class="summary-table" style="margin: 0 auto;">
+                        <tr>
+                            <td><div class="card" style="border-left: 3px solid {header_color}; text-align: left;"><span class="card-number">{data["total_monitored"]}</span><span class="card-label">Monitorati</span></div></td>
+                            <td><div class="card" style="border-left: 3px solid #f59e0b; text-align: left;"><span class="card-number">{len(data["warning_list"])}</span><span class="card-label">In Scadenza</span></div></td>
+                            <td><div class="card" style="border-left: 3px solid #ef4444; text-align: left;"><span class="card-number">{len(data["expired_list"])}</span><span class="card-label">Scaduti</span></div></td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="padding: 0 20px 20px 20px; background-color: #ffffff;">
+                    <p style="margin: 0 0 8px 0; padding: 12px; background-color: #fff8f0; border-radius: 6px; color: {sum_color}; font-size: 13px; border-left: 3px solid {sum_color}; font-weight: 500;">
+                        {sum_icon} {sum_text}</p>
+                    {trend_html}
+        """
+
+        if data["warning_list"]:
+            html += '<h3 style="color: #fd7e14; margin: 16px 0 12px 0; padding-left: 12px; border-left: 4px solid #fd7e14; font-size: 15px;">⚠️ In Scadenza (21-30 gg)</h3>'
+            html += self._build_html_table(data["warning_list"], "#fd7e14")
+
+        if data["expired_list"]:
+            html += '<h3 style="color: #dc3545; margin: 16px 0 12px 0; padding-left: 12px; border-left: 4px solid #dc3545; font-size: 15px;">🚫 Scaduti (&gt; 30 gg)</h3>'
+            html += self._build_html_table(data["expired_list"], "#dc3545")
+
+        html += "</div></div></body></html>"
+        return html
+
+    def _build_html_table(self, items, color, rows_per_col=10):
+        """Crea tabelle HTML multi-colonna."""
+        chunks = [
+            items[i : i + rows_per_col] for i in range(0, len(items), rows_per_col)
+        ]
+        html = '<table cellpadding="0" cellspacing="0" border="0"><tr>'
+        for col_idx, chunk in enumerate(chunks[:4]):
+            if col_idx > 0:
+                html += '<td style="width: 15px;"></td>'
+            html += '<td style="vertical-align: top;"><table class="data-table"><thead><tr><th>Dipendente</th><th>Badge</th><th>Ultimo Accesso</th><th style="text-align: center;">Gg</th></tr></thead><tbody>'
+            for idx, dip in enumerate(chunk):
+                row_bg = "#ffffff" if idx % 2 == 0 else "#f8f9fa"
+                html += f'<tr style="background-color: {row_bg};"><td>{dip["cognome"]} {dip["nome"]}</td><td>{dip["badge"]}</td><td>{dip["data"]}</td><td style="text-align: center; color: {color}; font-weight: 600;">{dip["giorni"]}</td></tr>'
+            html += "</tbody></table></td>"
+        html += "</tr></table>"
+        return html
+
+    def _create_report_excel(self, warning_list, expired_list):
+        """Crea il file Excel temporaneo con i dati del report."""
+        excel_data = []
+        for items, label in [(warning_list, "In Scadenza"), (expired_list, "Scaduto")]:
+            for dip in items:
+                excel_data.append(
+                    {
+                        "Cognome": dip["cognome"],
+                        "Nome": dip["nome"],
+                        "Badge": dip["badge"],
+                        "Ultimo Accesso": dip["data"],
+                        "Giorni": dip["giorni"],
+                        "Stato": label,
+                    }
+                )
+
+        if not excel_data:
+            return None
+
+        df_report = pd.DataFrame(excel_data)
+        path = (
+            Path(os.environ["TEMP"])
+            / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+        )
+        df_report.to_excel(path, index=False, sheet_name="Dipendenti")
+        return path
+
+    def _send_report_email(self, body_html, excel_path, data):
+        """Gestisce l'invio fisico dell'email tramite Outlook o Browser."""
+        subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now().strftime('%d/%m/%Y')}"
+
+        if os.name == "nt":
+            try:
+                import win32com.client
+
+                outlook = win32com.client.Dispatch("Outlook.Application")
+                mail = outlook.CreateItem(0)
+                mail.To = "luca.riccio@coemi.it"
+                mail.CC = "isabsud@coemi.it"
+                mail.Subject = subject
+                mail.HTMLBody = body_html
+                if excel_path and excel_path.exists():
+                    mail.Attachments.Add(str(excel_path))
+                mail.Display()
+
+                ReportHistory.save_report(data["warning_list"], data["expired_list"])
+                ToastManager.instance().show(
+                    "Report generato in Outlook con allegato Excel",
+                    "success",
+                    duration=3000,
+                )
+                return
+            except Exception as e:
+                logger.warning(f"Outlook failed: {e}")
+
+        # Fallback Browser
+        import webbrowser
+
+        tmp_path = Path(os.environ["TEMP"]) / "report_isab.html"
+        tmp_path.write_text(body_html, encoding="utf-8")
+        webbrowser.open(f"file:///{tmp_path.as_posix()}")
+        ReportHistory.save_report(data["warning_list"], data["expired_list"])
+        ToastManager.instance().show(
+            "Outlook non trovato: aperto report nel browser", "warning", duration=4000
+        )

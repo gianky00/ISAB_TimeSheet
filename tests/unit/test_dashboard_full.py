@@ -76,13 +76,13 @@ class TestDashboardPanelFull:
         assert panel.activity_feed is not None
         assert panel.quick_actions is not None
 
-        # Verify Greeting Exists
-        found_greeting = False
+        # Verify Subtitle Exists
+        found_subtitle = False
         for lbl in panel.findChildren(QLabel):
-            if "Dashboard Operativa" in lbl.text():
-                found_greeting = True
+            if "Feed Attività" in lbl.text():
+                found_subtitle = True
                 break
-        assert found_greeting
+        assert found_subtitle
 
     def test_dashboard_quick_action_integration(self, qapp, mocker, qtbot):
         """Verify Quick Action click triggers navigation on MainWindow."""

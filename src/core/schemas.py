@@ -16,7 +16,7 @@ class DipendenteSchema(pa.DataFrameModel):
     Data_assunzione: Series[pd.Timestamp] = pa.Field(coerce=True)
 
     class Config:
-        strict = True
+        strict = False
         coerce = True
 
 

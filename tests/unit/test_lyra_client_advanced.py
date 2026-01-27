@@ -48,7 +48,8 @@ class TestLyraClientAdvanced:
         assert "REPORT CONTABILITÀ (2026)" in context
         assert "€ 1,000.00" in context
         assert "REPORT TIMBRATURE" in context
-        assert "Mario Rossi" in context
+        # Il nuovo formato usa le iniziali (es. M. R.) invece del nome completo
+        assert "M. R." in context
 
     def test_ask_payload_and_response_parsing(self, client, mocker):
         """Test: Verifica costruzione payload e parsing risposta Gemini."""
@@ -79,8 +80,8 @@ class TestLyraClientAdvanced:
         assert "System Context" in prompt
         assert "Contesto Utente" in prompt
         assert "Ciao Lyra" in prompt
-        # Verifica audit log
-        mock_audit().log_action.assert_called()
+        # Verifica audit log tramite l'istanza singleton
+        mock_audit.instance().log_action.assert_called()
 
     def test_ask_api_error_handling(self, client, mocker):
         """Test: Gestione errori HTTP dall'API Gemini."""

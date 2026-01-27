@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSpinBox,
     QTimeEdit,
     QVBoxLayout,
     QWidget,
@@ -329,6 +330,199 @@ class AutopilotConfigCard(QFrame):
             QTimer.singleShot(
                 100, self.parent_widget.footer_left_widget.refresh_accounts
             )
+
+
+class AutopilotConfigCardWithInterval(QFrame):
+    """
+    Card per configurare un task programmato con intervallo in giorni.
+    Usato per report email e altri task non giornalieri.
+    """
+
+    def __init__(self, bot_id, bot_name, icon_path, color, parent=None):
+        super().__init__(parent)
+        self.bot_id = bot_id
+        self.bot_name = bot_name
+        self.icon_path = icon_path
+        self.color = color
+        self.parent_widget = parent
+
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setStyleSheet(
+            f"""
+            AutopilotConfigCardWithInterval {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f8f9fa, stop:1 #ffffff);
+                border-radius: 12px;
+                border-left: 4px solid {color};
+                border-top: 1px solid #e9ecef;
+                border-right: 1px solid #e9ecef;
+                border-bottom: 1px solid #e9ecef;
+            }}
+        """
+        )
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+
+        # Header con icona e nome
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(10)
+
+        icon_label = QLabel()
+        icon_label.setFixedSize(28, 28)
+        icon_label.setPixmap(
+            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18)
+        )
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_label.setStyleSheet(
+            f"""
+            QLabel {{
+                background-color: {color};
+                border-radius: 14px;
+                border: none;
+                padding: 5px;
+            }}
+        """
+        )
+        header_layout.addWidget(icon_label)
+
+        name_lbl = QLabel(bot_name)
+        name_lbl.setStyleSheet(
+            """
+            QLabel {
+                font-weight: 600;
+                font-size: 14px;
+                color: #212529;
+                border: none;
+                background: transparent;
+            }
+        """
+        )
+        header_layout.addWidget(name_lbl)
+        header_layout.addStretch()
+
+        layout.addLayout(header_layout)
+
+        # Checkbox abilitazione
+        self.enable_check = QCheckBox("Abilita invio automatico")
+        self.enable_check.setStyleSheet(
+            """
+            QCheckBox {
+                font-size: 13px;
+                color: #495057;
+                spacing: 8px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                border: 2px solid #ced4da;
+                background: #ffffff;
+            }
+            QCheckBox::indicator:checked {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #0d6efd, stop:1 #0a58ca);
+                border-color: #0d6efd;
+                image: url(assets/icons/check.svg);
+            }
+        """
+        )
+        self.enable_check.stateChanged.connect(self._on_config_changed)
+        layout.addWidget(self.enable_check)
+
+        # Riga: Orario + Intervallo giorni
+        settings_layout = QHBoxLayout()
+        settings_layout.setSpacing(15)
+
+        # Time picker
+        time_label = QLabel("Ore:")
+        time_label.setStyleSheet("font-size: 12px; color: #495057;")
+        settings_layout.addWidget(time_label)
+
+        self.time_edit = QTimeEdit()
+        self.time_edit.setTime(QTime(8, 0))
+        self.time_edit.setDisplayFormat("HH:mm")
+        self.time_edit.setFixedWidth(70)
+        self.time_edit.setStyleSheet(
+            """
+            QTimeEdit {
+                padding: 4px 8px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                background: #ffffff;
+                font-size: 12px;
+                color: #212529;
+            }
+            QTimeEdit:focus {
+                border-color: #0d6efd;
+            }
+        """
+        )
+        self.time_edit.timeChanged.connect(self._on_config_changed)
+        settings_layout.addWidget(self.time_edit)
+
+        # Intervallo giorni
+        interval_label = QLabel("Ogni:")
+        interval_label.setStyleSheet("font-size: 12px; color: #495057;")
+        settings_layout.addWidget(interval_label)
+
+        self.interval_spin = QSpinBox()
+        self.interval_spin.setRange(1, 30)
+        self.interval_spin.setValue(7)
+        self.interval_spin.setSuffix(" gg")
+        self.interval_spin.setFixedWidth(70)
+        self.interval_spin.setStyleSheet(
+            """
+            QSpinBox {
+                padding: 4px 8px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                background: #ffffff;
+                font-size: 12px;
+                color: #212529;
+            }
+            QSpinBox:focus {
+                border-color: #0d6efd;
+            }
+        """
+        )
+        self.interval_spin.valueChanged.connect(self._on_config_changed)
+        settings_layout.addWidget(self.interval_spin)
+        settings_layout.addStretch()
+
+        layout.addLayout(settings_layout)
+
+        # Carica configurazione salvata
+        self._load_config()
+
+    def _load_config(self):
+        """Carica la configurazione salvata per questo task."""
+        config = config_manager.load_config()
+
+        is_enabled = config.get(f"{self.bot_id}_autopilot_enabled", False)
+        self.enable_check.setChecked(is_enabled)
+
+        saved_time = config.get(f"{self.bot_id}_autopilot_time", "08:00")
+        self.time_edit.setTime(QTime.fromString(saved_time, "HH:mm"))
+
+        interval_days = config.get(f"{self.bot_id}_autopilot_interval_days", 7)
+        self.interval_spin.setValue(interval_days)
+
+    def _on_config_changed(self):
+        """Salva la configurazione quando viene modificata."""
+        config_manager.set_config_value(
+            f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked()
+        )
+        config_manager.set_config_value(
+            f"{self.bot_id}_autopilot_time", self.time_edit.time().toString("HH:mm")
+        )
+        config_manager.set_config_value(
+            f"{self.bot_id}_autopilot_interval_days", self.interval_spin.value()
+        )
+
+        # Notifica il parent widget per refresh
+        if self.parent_widget and hasattr(self.parent_widget, "refresh_events"):
+            QTimer.singleShot(100, self.parent_widget.refresh_events)
 
 
 class AutopilotWidget(QWidget):
@@ -685,6 +879,20 @@ class AutopilotWidget(QWidget):
                 }
             )
 
+        # Report Email ISAB (con intervallo giorni)
+        if config.get("report_email_autopilot_enabled", False):
+            target_time = config.get("report_email_autopilot_time", "08:00")
+            interval_days = config.get("report_email_autopilot_interval_days", 7)
+            events.append(
+                {
+                    "name": f"Report Email (ogni {interval_days}gg)",
+                    "time": target_time,
+                    "icon": Icons.SEND,
+                    "color": "#6f42c1",
+                    "site": "internal",
+                }
+            )
+
         # Se non ci sono eventi, mostra messaggio
         if not events:
             empty_lbl = QLabel("⏸️ Nessun bot programmato")
@@ -724,7 +932,7 @@ class AutopilotWidget(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        # Lista dei bot configurabili
+        # Lista dei bot configurabili (giornalieri)
         bots = [
             {
                 "id": "timbrature",
@@ -749,11 +957,33 @@ class AutopilotWidget(QWidget):
             },
         ]
 
-        # Aggiungi config cards in griglia 2 colonne
-        for idx, bot in enumerate(bots):
+        # Task con intervallo giorni configurabile
+        interval_tasks = [
+            {
+                "id": "report_email",
+                "name": "Report Email ISAB",
+                "icon": Icons.SEND,
+                "color": "#6f42c1",
+            },
+        ]
+
+        # Aggiungi config cards per bot giornalieri
+        idx = 0
+        for bot in bots:
             card = AutopilotConfigCard(
                 bot["id"], bot["name"], bot["icon"], bot["color"], self
             )
             row = idx // 2  # Riga
             col = idx % 2  # Colonna (0 o 1)
             self.config_layout.addWidget(card, row, col)
+            idx += 1
+
+        # Aggiungi config cards per task con intervallo
+        for task in interval_tasks:
+            card = AutopilotConfigCardWithInterval(
+                task["id"], task["name"], task["icon"], task["color"], self
+            )
+            row = idx // 2
+            col = idx % 2
+            self.config_layout.addWidget(card, row, col)
+            idx += 1

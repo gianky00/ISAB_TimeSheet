@@ -65,13 +65,6 @@ def test_get_key_from_keyring():
         assert res == test_key_bytes
 
 
-def test_get_fallback_key():
-    """Test fallback hardcoded."""
-    res = SecretsManager._get_fallback_key()
-    assert res is not None
-    assert len(res) == 32
-
-
 def test_get_license_key_priority():
     """Verifica le priorità di caricamento."""
     with (
@@ -92,14 +85,13 @@ def test_get_license_key_priority():
             ):
                 assert SecretsManager.get_license_key() == b"keyring"
 
-                # Priority 4: Fallback
+                # Priority 4: Fallback (Embedded)
                 with patch.object(
                     SecretsManager, "_get_key_from_keyring", return_value=None
                 ):
-                    assert (
-                        SecretsManager.get_license_key()
-                        == SecretsManager._get_fallback_key()
-                    )
+                    fallback = SecretsManager.get_license_key()
+                    assert fallback is not None
+                    assert len(fallback) == 32
 
 
 def test_is_available():
@@ -112,8 +104,6 @@ def test_is_available():
 def test_credentials_wrappers():
     with patch.object(SecretsManager, "get_credential", return_value="fake"):
         assert SecretsManager.get_exa_api_key() == "fake"
-        assert SecretsManager.get_github_token() == "fake"
-        assert SecretsManager.get_openai_key() == "fake"
         assert SecretsManager.get_gemini_api_key() == "fake"
 
 

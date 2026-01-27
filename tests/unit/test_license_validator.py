@@ -21,9 +21,9 @@ def mock_paths(tmp_path):
 
     with patch("src.core.license_validator._get_license_paths") as mock_get:
         mock_get.return_value = {
-            "dir": str(license_dir),
-            "config": str(config_path),
-            "manifest": str(manifest_path),
+            "dir": license_dir,
+            "config": config_path,
+            "manifest": manifest_path,
         }
         yield config_path, manifest_path
 

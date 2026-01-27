@@ -4,12 +4,13 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from src.core.excel_importer import ExcelImporter
+from src.core.importers.giornaliere import GiornaliereImporter
 
 
 class TestExcelImporter:
-    @patch("src.core.excel_importer.pd.ExcelFile")
-    @patch("src.core.excel_importer.pd.read_excel")
-    @patch("src.core.excel_importer.Path.exists", return_value=True)
+    @patch("src.core.importers.contabilita.pd.ExcelFile")
+    @patch("src.core.importers.contabilita.pd.read_excel")
+    @patch("src.core.importers.contabilita.Path.exists", return_value=True)
     def test_import_contabilita_dati_success(
         self, mock_exists, mock_read_excel, mock_excel_file
     ):
@@ -59,8 +60,8 @@ class TestExcelImporter:
             }
         )
 
-        with patch("src.core.excel_importer.pd.read_excel", return_value=df):
-            year, rows, err = ExcelImporter._process_single_giornaliera(
+        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df):
+            year, rows, err = GiornaliereImporter._process_single_giornaliera(
                 (2024, Path("file.xlsx"), {})
             )
 
@@ -68,8 +69,8 @@ class TestExcelImporter:
             assert len(rows) == 1
             assert rows[0][5] == "5400123"
 
-    @patch("src.core.excel_importer.ProcessPoolExecutor")
-    @patch("src.core.excel_importer.Path")
+    @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
+    @patch("src.core.importers.giornaliere.Path")
     def test_import_giornaliere_parallel_mock(self, mock_path, mock_executor):
         # Mock directory structure
         mock_root = MagicMock()
@@ -96,9 +97,9 @@ class TestExcelImporter:
         assert 2024 in years
         assert len(rows) == 1
 
-    @patch("src.core.excel_importer.pd.read_excel")
-    @patch("src.core.excel_importer.pd.ExcelFile")
-    @patch("src.core.excel_importer.Path.exists", return_value=True)
+    @patch("src.core.importers.certificati.pd.read_excel")
+    @patch("src.core.importers.certificati.pd.ExcelFile")
+    @patch("src.core.importers.certificati.Path.exists", return_value=True)
     def test_import_certificati_campione(
         self, mock_exists, mock_excel_file, mock_read_excel
     ):
@@ -127,9 +128,9 @@ class TestExcelImporter:
         assert success is True
         assert len(rows) == 1
 
-    @patch("src.core.excel_importer.msoffcrypto", None)
-    @patch("src.core.excel_importer.openpyxl.load_workbook")
-    @patch("src.core.excel_importer.Path.exists", return_value=True)
+    @patch("src.core.importers.scarico_ore.msoffcrypto", None)
+    @patch("src.core.importers.scarico_ore.openpyxl.load_workbook")
+    @patch("src.core.importers.scarico_ore.Path.exists", return_value=True)
     def test_import_scarico_ore_mock(self, mock_exists, mock_load_wb):
         mock_file_handle = MagicMock()
         mock_file_handle.__enter__.return_value = mock_file_handle
@@ -172,8 +173,8 @@ class TestExcelImporter:
             assert success is True, f"Failed: {msg}"
             assert len(rows) == 1
 
-    @patch("src.core.excel_importer.pd.read_excel")
-    @patch("src.core.excel_importer.Path.exists", return_value=True)
+    @patch("src.core.importers.attivita.pd.read_excel")
+    @patch("src.core.importers.attivita.Path.exists", return_value=True)
     def test_import_attivita_programmate(self, mock_exists, mock_read_excel):
         df = pd.DataFrame(
             {"PS": ["P1"], "AREA": ["A1"], "DESCRIZIONE\nATTIVITA'": ["D1"]}
@@ -184,14 +185,16 @@ class TestExcelImporter:
         assert success is True
         assert len(rows) == 1
 
-    @patch("src.core.excel_importer.zipfile.ZipFile")
-    @patch("src.core.excel_importer.zipfile.is_zipfile", return_value=True)
-    @patch("src.core.excel_importer.Path.exists", return_value=True)
+    @patch("src.core.importers.contabilita.zipfile.ZipFile")
+    @patch("src.core.importers.contabilita.zipfile.is_zipfile", return_value=True)
+    @patch("src.core.importers.contabilita.Path.exists", return_value=True)
     def test_scan_workload(self, mock_exists, mock_is_zip, mock_zip):
         mock_zip_instance = mock_zip.return_value.__enter__.return_value
         mock_zip_instance.namelist.return_value = ["xl/workbook.xml"]
         mock_zip_instance.read.return_value = b'name="2024" name="2025"'
 
         sheets, files = ExcelImporter.scan_workload("dummy.xlsx", "")
+        # sheets calls ContabilitaImporter.scan_sheets
+        # files calls GiornaliereImporter.scan_files
         assert sheets == 2
         assert files == 0

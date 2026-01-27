@@ -137,7 +137,11 @@ class ScaricaTSBot(BaseBot):
         )
 
         # Chrome downloads directly to download_path (if configured)
-        source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        source_dir = (
+            Path(self.download_path).resolve()
+            if self.download_path
+            else Path.home() / "Downloads"
+        )
         dest_dir = source_dir
         return rows, dest_dir
 
@@ -148,7 +152,11 @@ class ScaricaTSBot(BaseBot):
         success_count = 0
         downloaded_files = []
         # Chrome downloads directly to download_path (if configured)
-        source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        source_dir = (
+            Path(self.download_path).resolve()
+            if self.download_path
+            else Path.home() / "Downloads"
+        )
 
         for row in rows:
             self._check_stop()
@@ -332,7 +340,9 @@ class ScaricaTSBot(BaseBot):
         if not downloaded_file:
             # Debug: lista file attuali
             current_files = list(source_dir.iterdir()) if source_dir.exists() else []
-            self.log(f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
+            self.log(
+                f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}"
+            )
             self.log("⚠️ File non scaricato nel tempo stabilito.")
             return None
 

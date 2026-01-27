@@ -80,7 +80,11 @@ class DettagliOdABot(BaseBot):
 
         # Chrome downloads directly to download_path (if configured)
         # Source and dest are the same folder - we just rename the downloaded file
-        source_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
+        source_dir = (
+            Path(self.download_path)
+            if self.download_path
+            else Path.home() / "Downloads"
+        )
         dest_dir = source_dir
 
         success = 0

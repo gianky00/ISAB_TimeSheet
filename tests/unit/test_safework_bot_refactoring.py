@@ -4,11 +4,28 @@ Aims for high coverage and regression testing without infinite loops.
 """
 
 import os
+import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
+# Mock preventivo TOTALE prima di importare il bot
+sys.modules["PyQt6"] = MagicMock()
+sys.modules["PyQt6.QtCore"] = MagicMock()
+sys.modules["PyQt6.QtWidgets"] = MagicMock()
+sys.modules["PyQt6.QtGui"] = MagicMock()
+sys.modules["selenium"] = MagicMock()
+sys.modules["selenium.webdriver"] = MagicMock()
+sys.modules["selenium.webdriver.common.by"] = MagicMock()
+sys.modules["selenium.webdriver.common.keys"] = MagicMock()
+sys.modules["selenium.webdriver.support"] = MagicMock()
+sys.modules["selenium.webdriver.support.ui"] = MagicMock()
+sys.modules["selenium.webdriver.support.expected_conditions"] = MagicMock()
+sys.modules["win32print"] = MagicMock()
+sys.modules["win32ui"] = MagicMock()
+sys.modules["win32con"] = MagicMock()
 
-from src.bots.safework.pdl.bot import SafeWorkPDLBot
+import pytest  # noqa: E402
+
+from src.bots.safework.pdl.bot import SafeWorkPDLBot  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -38,7 +55,7 @@ def mock_time_and_sleep():
 @pytest.fixture(autouse=True)
 def mock_settings(tmp_path):
     """Isola i log e i download."""
-    with patch("src.bots.safework.pdl.bot.config_manager.CONFIG_DIR", tmp_path):
+    with patch("src.core.config_manager.CONFIG_DIR", tmp_path):
         yield
 
 

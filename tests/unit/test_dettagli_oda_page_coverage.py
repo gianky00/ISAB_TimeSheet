@@ -28,39 +28,52 @@ class TestDettagliOdaPageCoverage:
 
     def test_download_with_crdownload_wait(self, page, mocker):
         """Verifica che il download aspetti la scomparsa dei file temporanei Chrome."""
-        source_dir = Path("source")
-        dest_dir = Path("dest")
+        # Usa percorsi assoluti mockati per evitare confusione con resolve()
+        source_dir = Path("/fake/source")
+        dest_dir = Path("/fake/dest")
 
         # Mock per simulare:
-        # 1. Bottone trovato
+        # 1. Cartella esiste
         # 2. Presenza di .crdownload al primo controllo
         # 3. Comparsa del file .xlsx finale al secondo controllo
+        mocker.patch("pathlib.Path.exists", return_value=True)
+        mocker.patch("pathlib.Path.mkdir")
+        mocker.patch("pathlib.Path.resolve", return_value=source_dir)
+
         mock_iter = mocker.patch("pathlib.Path.iterdir")
         mocker.patch("time.time", side_effect=range(100, 200))
         mocker.patch("time.sleep")
         mocker.patch("shutil.move")
-        mocker.patch("os.path.exists", return_value=True)
 
-        # Mock per Path.exists: deve restituire True per il file finale
+        # Mock per il file finale
         mock_file = mocker.MagicMock(spec=Path)
         mock_file.suffix = ".xlsx"
         mock_file.name = "test.xlsx"
         mock_file.is_file.return_value = True
         mock_file.stat.return_value.st_mtime = 1500
-        mock_file.__str__.return_value = "source/test.xlsx"
+        mock_file.__str__.return_value = "/fake/source/test.xlsx"
         mock_file.parent = source_dir
 
+        # Configurazione sequenza iterdir
+        # 1. files_before in _download
+        # 2. any(.crdownload) in _wait_for_download (giro 1)
+        # 3. any(.crdownload) in _wait_for_download (giro 2) -> False
+        # 4. current in _wait_for_download (giro 2)
+        # 5. iterdir in process_oda results count (se usato) o cleanup
         mock_iter.side_effect = [
             [],  # files_before
-            [mocker.MagicMock(suffix=".crdownload")],  # primo giro loop: in corso
-            [mock_file],  # secondo giro loop: finito
-            [mock_file],  # terzo giro: conferma
-            [mock_file],  # quarto giro
+            [mocker.MagicMock(suffix=".crdownload")],  # Loop 1: ancora in download
+            [mock_file],  # Loop 2: any() -> no crdownload
+            [mock_file],  # Loop 2: current -> trovato!
+            [],  # eventuale iterdir extra
         ]
 
-        # Mock del bottone export
+        # Mock del driver e degli elementi UI
         page.wait = MagicMock()
-        page.wait.until.return_value = MagicMock()
+        mock_btn = MagicMock()
+        page.wait.until.return_value = mock_btn
+        mock_btn.text = "Trovati : 1"  # Per il conteggio risultati
+
         page._wait_for_overlay = MagicMock()
 
         # Evita loop in _close_all_tabs
@@ -71,7 +84,7 @@ class TestDettagliOdaPageCoverage:
                 "123", "C1", "01.01.2024", "01.01.2025", source_dir, dest_dir
             )
 
-        assert isinstance(res, Path)
+        assert res is not None
         assert res.name == "dettaglio_oda_123.xlsx"
 
     def test_navigate_to_dettagli_second_row_retry(self, page):

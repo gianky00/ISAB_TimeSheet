@@ -1,8 +1,9 @@
+from pathlib import Path
 from unittest.mock import patch
 
 import pandas as pd
 
-from src.core.excel_importer import ExcelImporter
+from src.core.importers.giornaliere import GiornaliereImporter
 
 
 class TestExcelImporterComprehensive:
@@ -52,10 +53,10 @@ class TestExcelImporterComprehensive:
         ]
         df = pd.DataFrame(data, columns=cols)
 
-        with patch("src.core.excel_importer.pd.read_excel", return_value=df):
+        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df):
             # Using dict() to avoid tool interpolation issues with {}
-            year, rows, err = ExcelImporter._process_single_giornaliera(
-                (2024, file1, {})
+            year, rows, err = GiornaliereImporter._process_single_giornaliera(
+                (2024, Path(file1), {})
             )
 
             assert err is None

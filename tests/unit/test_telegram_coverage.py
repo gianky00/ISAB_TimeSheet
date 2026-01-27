@@ -24,28 +24,18 @@ class TestTelegramCoverage:
         mock_app.start = AsyncMock()
         mock_app.stop = AsyncMock()
         mock_app.shutdown = AsyncMock()
+        mock_app.updater = MagicMock()
         mock_app.updater.start_polling = AsyncMock()
         mock_app.updater.stop = AsyncMock()
         mock_app.running = True
 
         mocker.patch.object(service, "_build_application", return_value=mock_app)
 
-        # We need to run _run_async_loop but stop it quickly
-        service.stop_event.set()  # Set immediately to exit loop
+        # Ensure the loop exits immediately
+        service.stop_event.set()
 
-        # Since _run_async_loop creates a new event loop and runs a coroutine,
-        # we can't easily mock threading.Thread to run it synchronously without complexity.
-        # Instead, we'll test the inner logic: main() coroutine.
-
-        # Let's extract the main logic from _run_async_loop by mocking _execute_loop
-        # to run the main() coroutine directly in this test.
-
-        async def mock_execute(coro):
-            await coro()
-
-        with patch.object(service, "_execute_loop", side_effect=mock_execute):
-            # Trigger logic (without threading)
-            service._run_async_loop("TOKEN")
+        # Test the core async logic directly
+        await service._main_loop_logic("TOKEN")
 
         # Verification
         mock_app.initialize.assert_awaited()

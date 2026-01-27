@@ -46,11 +46,12 @@ def test_get_panel_already_initialized(controller, mock_mw):
     mock_mw.page_stack.insertWidget.assert_not_called()
 
 
-@patch("src.gui.dashboard_panel.DashboardPanel")
+@patch("src.gui.panels.DashboardPanel")
 def test_get_panel_lazy_load_dashboard(mock_dashboard, controller, mock_mw):
     """Test lazy loading of DashboardPanel (index 0)."""
     index = 0
     setattr(mock_mw, f"_panel_initialized_{index}", False)
+    mock_mw.footer_left = MagicMock()
 
     new_widget = MagicMock()
     mock_dashboard.return_value = new_widget
@@ -62,10 +63,11 @@ def test_get_panel_lazy_load_dashboard(mock_dashboard, controller, mock_mw):
     mock_mw.page_stack.insertWidget.assert_called_with(index, new_widget)
 
 
-@patch("src.gui.settings_panel.SettingsPanel")
+@patch("src.gui.panels.SettingsPanel")
 def test_get_panel_lazy_load_settings(mock_settings, controller, mock_mw):
-    """Test lazy loading of SettingsPanel (index 4) with signal connection."""
-    index = 4
+    """Test lazy loading of SettingsPanel (index 7) with signal connection."""
+    # SETTINGS è ora indice 7
+    index = 7
     setattr(mock_mw, f"_panel_initialized_{index}", False)
 
     new_widget = MagicMock()
@@ -86,9 +88,7 @@ def test_get_panel_exception_handling(controller, mock_mw):
     index = 0
     setattr(mock_mw, f"_panel_initialized_{index}", False)
 
-    with patch(
-        "src.gui.dashboard_panel.DashboardPanel", side_effect=Exception("Load Fail")
-    ):
+    with patch("src.gui.panels.DashboardPanel", side_effect=Exception("Load Fail")):
         # Mock QMessageBox.critical
         with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_msg:
             placeholder = MagicMock()
