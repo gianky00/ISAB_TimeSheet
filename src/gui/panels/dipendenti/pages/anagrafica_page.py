@@ -1,3 +1,4 @@
+import base64
 import csv
 import logging
 import re
@@ -784,33 +785,56 @@ class AnagraficaPage(QWidget):
 
             # Costruisci corpo email HTML
             current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+            # Carica icona come base64 per email
+            from pathlib import Path
+
+            from src.core.version import __version__
+
+            icon_b64 = ""
+            icon_path = Path(get_asset_path("app.ico"))
+            if icon_path.exists():
+                with open(icon_path, "rb") as f:
+                    icon_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+            icon_html = (
+                f'<img src="data:image/x-icon;base64,{icon_b64}" width="20" height="20" style="vertical-align: middle; margin-right: 5px;">'
+                if icon_b64
+                else ""
+            )
+
             body_html = f"""<html><body style='font-family: Arial, sans-serif;'>
-<h2 style='color: #0d6efd;'>Report Monitoraggio Dipendenti ISAB</h2>
+<h2 style='color: #0d6efd;'>Report Monitoraggio Dipendenti in ISAB</h2>
 <p><strong>Data generazione:</strong> {current_date}</p>
-<p><strong>Generato da:</strong> SyncroJob Enterprise</p>
+<p><strong>Generato da:</strong> {icon_html}SyncroJob ({__version__})</p>
 <hr style='border: 1px solid #dee2e6;'>
 """
+
+            # Stile tabella dinamico
+            table_style = "border-collapse: collapse; font-size: 13px; white-space: nowrap;"
+            th_style = "padding: 8px 12px; text-align: left;"
+            td_style = "padding: 8px 12px;"
 
             if warning_list:
                 body_html += f"""
 <h3 style='color: #fd7e14;'>⚠️ Dipendenti in Scadenza ({len(warning_list)})</h3>
 <p style='font-size: 13px; color: #6c757d;'>Ultimo accesso tra 21 e 30 giorni fa</p>
-<table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; width: 100%; font-size: 13px;'>
+<table border='1' cellspacing='0' style='{table_style}'>
 <thead style='background-color: #fff3cd;'>
 <tr>
-<th>ID</th><th>Cognome</th><th>Nome</th><th>Badge</th><th>Ultimo Accesso</th><th>Giorni Trascorsi</th>
+<th style='{th_style}'>ID</th><th style='{th_style}'>Cognome</th><th style='{th_style}'>Nome</th><th style='{th_style}'>Badge</th><th style='{th_style}'>Ultimo Accesso</th><th style='{th_style}'>Giorni Trascorsi</th>
 </tr>
 </thead>
 <tbody>
 """
                 for dip in warning_list:
                     body_html += f"""<tr>
-<td>{dip["id"]}</td>
-<td>{dip["cognome"]}</td>
-<td>{dip["nome"]}</td>
-<td>{dip["badge"]}</td>
-<td>{dip["data"]}</td>
-<td style='font-weight: bold; color: #fd7e14;'>{dip["giorni"]} giorni</td>
+<td style='{td_style}'>{dip["id"]}</td>
+<td style='{td_style}'>{dip["cognome"]}</td>
+<td style='{td_style}'>{dip["nome"]}</td>
+<td style='{td_style}'>{dip["badge"]}</td>
+<td style='{td_style}'>{dip["data"]}</td>
+<td style='{td_style} font-weight: bold; color: #fd7e14;'>{dip["giorni"]} giorni</td>
 </tr>
 """
                 body_html += "</tbody></table><br/>"
@@ -819,51 +843,67 @@ class AnagraficaPage(QWidget):
                 body_html += f"""
 <h3 style='color: #dc3545;'>🚫 Dipendenti Non Operativi ({len(expired_list)})</h3>
 <p style='font-size: 13px; color: #6c757d;'>Ultimo accesso oltre 30 giorni fa</p>
-<table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; width: 100%; font-size: 13px;'>
+<table border='1' cellspacing='0' style='{table_style}'>
 <thead style='background-color: #f8d7da;'>
 <tr>
-<th>ID</th><th>Cognome</th><th>Nome</th><th>Badge</th><th>Ultimo Accesso</th><th>Giorni Trascorsi</th>
+<th style='{th_style}'>ID</th><th style='{th_style}'>Cognome</th><th style='{th_style}'>Nome</th><th style='{th_style}'>Badge</th><th style='{th_style}'>Ultimo Accesso</th><th style='{th_style}'>Giorni Trascorsi</th>
 </tr>
 </thead>
 <tbody>
 """
                 for dip in expired_list:
                     body_html += f"""<tr>
-<td>{dip["id"]}</td>
-<td>{dip["cognome"]}</td>
-<td>{dip["nome"]}</td>
-<td>{dip["badge"]}</td>
-<td>{dip["data"]}</td>
-<td style='font-weight: bold; color: #dc3545;'>{dip["giorni"]} giorni</td>
+<td style='{td_style}'>{dip["id"]}</td>
+<td style='{td_style}'>{dip["cognome"]}</td>
+<td style='{td_style}'>{dip["nome"]}</td>
+<td style='{td_style}'>{dip["badge"]}</td>
+<td style='{td_style}'>{dip["data"]}</td>
+<td style='{td_style} font-weight: bold; color: #dc3545;'>{dip["giorni"]} giorni</td>
 </tr>
 """
                 body_html += "</tbody></table><br/>"
 
-            body_html += """
-<hr style='border: 1px solid #dee2e6;'>
-<p style='font-size: 12px; color: #6c757d;'>
-<em>Report generato automaticamente da SyncroJob Enterprise.<br/>
-Per maggiori informazioni, consultare il sistema di gestione dipendenti.</em>
-</p>
-</body></html>"""
+            body_html += "</body></html>"
 
-            # Costruisci mailto URL
-            subject = f"Report Monitoraggio Dipendenti ISAB - {current_date}"
-            mailto_url = f"mailto:?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(body_html)}"
+            subject = f"Report Monitoraggio Dipendenti in ISAB - {current_date}"
 
-            # Apri Outlook (su Windows)
+            # Usa COM API per Outlook (no limiti di lunghezza)
             import os
-            import subprocess
 
             if os.name == "nt":
-                subprocess.run(["start", "outlook", mailto_url], shell=True)
-            else:
-                # Fallback per altri OS
-                subprocess.run(["xdg-open", mailto_url])
+                try:
+                    import win32com.client
 
-            ToastManager.instance().show(
-                "Email report generata - Outlook aperto", "success", duration=3000
-            )
+                    outlook = win32com.client.Dispatch("Outlook.Application")
+                    mail = outlook.CreateItem(0)  # 0 = olMailItem
+                    mail.Subject = subject
+                    mail.HTMLBody = body_html
+                    mail.Display()  # Mostra email per modifica prima dell'invio
+
+                    ToastManager.instance().show(
+                        "Email report generata - Outlook aperto", "success", duration=3000
+                    )
+                except ImportError:
+                    # Fallback se pywin32 non installato
+                    QMessageBox.warning(
+                        self,
+                        "Modulo mancante",
+                        "Il modulo 'pywin32' non è installato.\n"
+                        "Installa con: pip install pywin32",
+                    )
+                except Exception as e:
+                    raise Exception(f"Errore apertura Outlook: {e}")
+            else:
+                # Fallback per altri OS (versione semplificata)
+                import subprocess
+                import webbrowser
+
+                # Su Linux/Mac usa mailto semplice (solo subject, no body lungo)
+                mailto_url = f"mailto:?subject={urllib.parse.quote(subject)}"
+                webbrowser.open(mailto_url)
+                ToastManager.instance().show(
+                    "Email aperta (body non supportato su questo OS)", "warning", duration=3000
+                )
 
         except Exception as e:
             logger.error(f"Errore generazione email report: {e}")
