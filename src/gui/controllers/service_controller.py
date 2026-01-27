@@ -121,6 +121,228 @@ class ServiceController(QObject):
                         bot_id, panel, site, f"Avvio pianificato automatico ({now})..."
                     )
 
+        # === REPORT EMAIL SCHEDULATO (con intervallo giorni) ===
+        self._check_report_email_schedule(config, now)
+
+    def _check_report_email_schedule(self, config, now_time):
+        """
+        Controlla e gestisce l'invio schedulato del report email.
+        Questo task usa un intervallo in giorni invece di essere giornaliero.
+        """
+        if not config.get("report_email_autopilot_enabled", False):
+            return
+
+        target_time = config.get("report_email_autopilot_time", "08:00")
+
+        # Verifica prima l'orario
+        if now_time != target_time:
+            return
+
+        # Verifica intervallo giorni
+        interval_days = config.get("report_email_autopilot_interval_days", 7)
+        last_sent_str = config.get("report_email_autopilot_last_sent")
+
+        should_send = False
+        if last_sent_str is None:
+            # Mai inviato prima, invia ora
+            should_send = True
+        else:
+            try:
+                from datetime import datetime
+                last_dt = datetime.fromisoformat(last_sent_str)
+                days_passed = (datetime.now() - last_dt).days
+                if days_passed >= interval_days:
+                    should_send = True
+            except (ValueError, TypeError):
+                # Data invalida, invia comunque
+                should_send = True
+
+        if should_send:
+            self._send_scheduled_report_email()
+
+    def _send_scheduled_report_email(self):
+        """Genera e invia il report email automaticamente (senza UI)."""
+        import logging
+        from datetime import datetime
+
+        from src.core import config_manager
+        from src.core.notification_manager import NotificationManager
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            # Importa le dipendenze necessarie
+            from src.core.database import db_manager
+            from src.core.report_history import ReportHistory
+
+            # Importa funzione helper per costruire le mappe timbrature
+            # (la logica è duplicata per evitare dipendenze circolari)
+            import re
+            from contextlib import suppress
+            from datetime import timedelta
+
+            def normalize(t):
+                return re.sub(r"\s+", " ", str(t).strip().upper())
+
+            def build_timbrature_maps(accessi):
+                today = datetime.now()
+                last_by_cf = {}
+                last_by_name = {}
+
+                for cog, nom, cf, d_str in accessi:
+                    if d_str:
+                        norm_key = (normalize(cog), normalize(nom))
+                        norm_cf = cf.strip().upper() if cf and cf.strip() else None
+                        with suppress(Exception):
+                            date_part = str(d_str).split(" ")[0]
+                            d_dt = None
+                            for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                                try:
+                                    d_dt = datetime.strptime(date_part, fmt)
+                                    break
+                                except ValueError:
+                                    continue
+                            if d_dt:
+                                diff = (today - d_dt).days
+                                if norm_cf:
+                                    if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
+                                        last_by_cf[norm_cf] = diff
+                                if norm_key not in last_by_name or diff < last_by_name[norm_key]:
+                                    last_by_name[norm_key] = diff
+                return last_by_cf, last_by_name
+
+            # Query dipendenti monitorati
+            query = """
+                SELECT id_risorsa, cognome, nome, codice_fiscale, badge, data_assunzione
+                FROM dipendenti
+                WHERE monitoraggio_attivo = 1 OR monitoraggio_attivo IS NULL
+                ORDER BY cognome ASC, nome ASC
+            """
+            dipendenti = db_manager.execute_query(db_manager.DB_DIPENDENTI, query)
+
+            # Recupera accessi
+            query_timb = "SELECT cognome, nome, codice_fiscale, data FROM timbrature"
+            accessi = db_manager.execute_query(db_manager.DB_TIMBRATURE, query_timb)
+            last_by_cf, last_by_name = build_timbrature_maps(accessi)
+
+            warning_list = []
+            expired_list = []
+
+            for dip in dipendenti:
+                id_ris, cog, nom, cf, badge, data_ass = dip
+                cf_norm = normalize(cf or "")
+                name_key = (normalize(cog or ""), normalize(nom or ""))
+
+                diff_days = last_by_cf.get(cf_norm) or last_by_name.get(name_key)
+                if diff_days is None:
+                    continue
+
+                last_access_date = datetime.now() - timedelta(days=diff_days)
+                formatted_date = last_access_date.strftime("%d/%m/%Y")
+
+                item = {
+                    "id": id_ris,
+                    "cognome": cog,
+                    "nome": nom,
+                    "badge": badge if badge else "-",
+                    "giorni": diff_days,
+                    "data": formatted_date,
+                }
+
+                if 21 <= diff_days <= 30:
+                    warning_list.append(item)
+                elif diff_days > 30:
+                    expired_list.append(item)
+
+            # Se non ci sono dipendenti da segnalare, non inviare
+            if not warning_list and not expired_list:
+                logger.info("Report email schedulato: nessun dipendente da segnalare")
+                return
+
+            # Ordina per urgenza
+            warning_list.sort(key=lambda x: x["giorni"], reverse=True)
+            expired_list.sort(key=lambda x: x["giorni"], reverse=True)
+
+            # Invia report via Outlook
+            import os
+            if os.name != "nt":
+                logger.warning("Report email schedulato disponibile solo su Windows")
+                return
+
+            import win32com.client
+            from src.core.version import __version__
+
+            # Costruisci HTML semplificato per invio automatico
+            current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+            body_html = f"""
+            <html>
+            <body style="font-family: 'Segoe UI', Arial, sans-serif; color: #1f2937;">
+                <h2 style="color: #0d6efd;">Report Automatico Monitoraggio Accessi ISAB</h2>
+                <p style="color: #6b7280;">Generato automaticamente il {current_date} da SyncroJob v{__version__}</p>
+
+                <p><strong>Riepilogo:</strong> {len(warning_list)} in scadenza, {len(expired_list)} scaduti</p>
+
+                <h3 style="color: #fd7e14;">In Scadenza (21-30 gg)</h3>
+                <ul>
+            """
+            for dip in warning_list[:20]:  # Limita a 20 per email automatica
+                body_html += f"<li>{dip['cognome']} {dip['nome']} - {dip['giorni']}gg ({dip['data']})</li>"
+            if len(warning_list) > 20:
+                body_html += f"<li><em>... e altri {len(warning_list) - 20}</em></li>"
+            body_html += "</ul>"
+
+            body_html += "<h3 style='color: #dc3545;'>Scaduti (&gt; 30 gg)</h3><ul>"
+            for dip in expired_list[:20]:
+                body_html += f"<li>{dip['cognome']} {dip['nome']} - {dip['giorni']}gg ({dip['data']})</li>"
+            if len(expired_list) > 20:
+                body_html += f"<li><em>... e altri {len(expired_list) - 20}</em></li>"
+            body_html += "</ul>"
+
+            body_html += """
+                <p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
+                    Questo report è stato inviato automaticamente dal sistema Autopilot di SyncroJob.
+                </p>
+            </body>
+            </html>
+            """
+
+            subject = f"[AUTO] Report Monitoraggio ISAB - {datetime.now().strftime('%d/%m/%Y')}"
+
+            outlook = win32com.client.Dispatch("Outlook.Application")
+            mail = outlook.CreateItem(0)
+            mail.To = "luca.riccio@coemi.it"
+            mail.CC = "isabsud@coemi.it"
+            mail.Subject = subject
+            mail.HTMLBody = body_html
+            mail.Send()  # Invio automatico (non Display)
+
+            # Salva snapshot per trend
+            ReportHistory.save_report(warning_list, expired_list)
+
+            # Aggiorna timestamp ultimo invio
+            config_manager.set_config_value(
+                "report_email_autopilot_last_sent",
+                datetime.now().isoformat()
+            )
+
+            # Notifica
+            NotificationManager.instance().add_notification(
+                title="Report Email Inviato",
+                message=f"Report automatico inviato: {len(warning_list)} in scadenza, {len(expired_list)} scaduti",
+                level="success"
+            )
+
+            logger.info(f"Report email schedulato inviato: {len(warning_list)} warning, {len(expired_list)} expired")
+
+        except Exception as e:
+            logger.error(f"Errore invio report email schedulato: {e}")
+            NotificationManager.instance().add_notification(
+                title="Errore Report Email",
+                message=f"Impossibile inviare report automatico: {e}",
+                level="error"
+            )
+
     def _prepare_scarico_oda_generale(self, panel):
         """
         Prepara il pannello Scarico OdA Generale:

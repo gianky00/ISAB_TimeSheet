@@ -203,6 +203,21 @@ class NavigationController(QObject):
             except Exception as e:
                 logger.error(f"Signal Connection Failed: {e}")
 
+        # Timbrature Bot -> Dipendenti (Anagrafica)
+        if (
+            hasattr(self.mw, "timbrature_bot_panel")
+            and hasattr(self.mw, "dipendenti_panel")
+            and not getattr(self.mw, "_timbrature_dipendenti_signals_connected", False)
+        ):
+            try:
+                self.mw.timbrature_bot_panel.data_updated.connect(
+                    self.mw.dipendenti_panel.refresh_data
+                )
+                self.mw._timbrature_dipendenti_signals_connected = True
+                logger.info("Signal: Timbrature Bot -> Dipendenti connected.")
+            except Exception as e:
+                logger.error(f"Signal Timbrature -> Dipendenti Connection Failed: {e}")
+
         # PDL Search -> PDL DB
         if (
             hasattr(self.mw, "pdl_search_panel")

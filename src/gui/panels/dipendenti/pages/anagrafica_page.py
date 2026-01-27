@@ -1,9 +1,13 @@
 import base64
 import csv
 import logging
+import os
 import re
 from contextlib import suppress
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import pandas as pd
 
 from PyQt6.QtCore import (
     QSize,
@@ -30,6 +34,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.database import db_manager
+from src.core.report_history import ReportHistory
 from src.gui.formatters import FastTableModel
 from src.gui.panels.dipendenti.shared import (
     ColoredDotDelegate,
@@ -748,9 +753,6 @@ class AnagraficaPage(QWidget):
     def _generate_email_report(self):
         """Genera email report professionale in Outlook con Dashboard e Tabelle."""
         try:
-            import urllib.parse
-            import os
-            from pathlib import Path
             from src.core.version import __version__
 
             # 1. Recupero Dati
@@ -885,12 +887,51 @@ class AnagraficaPage(QWidget):
                             </tr>
                         </table>
                     </div>
-
-                    <div style="padding: 0 20px 20px 20px; background-color: #ffffff;">
-                        <p style="margin: 0 0 16px 0; padding: 12px; background-color: #f9fafb; border-radius: 6px; color: #6b7280; font-size: 12px; border-left: 3px solid #d1d5db;">
-                            Di seguito il dettaglio dei dipendenti che richiedono attenzione.
-                        </p>
             """
+
+            # Calcolare frase riassuntiva dinamica con urgenza
+            urgenti = len([d for d in expired_list if d["giorni"] > 60])
+            totale_attenzione = len(warning_list) + len(expired_list)
+
+            if urgenti > 0:
+                summary_text = f"<strong>ATTENZIONE:</strong> {urgenti} dipendenti richiedono azione <strong>IMMEDIATA</strong> (oltre 60 giorni). Totale da gestire: {totale_attenzione}."
+                summary_color = "#dc3545"
+                summary_icon = "⚠️"
+            elif len(expired_list) > 0:
+                summary_text = f"<strong>{len(expired_list)}</strong> dipendenti scaduti e <strong>{len(warning_list)}</strong> in scadenza richiedono attenzione."
+                summary_color = "#fd7e14"
+                summary_icon = "🚨"
+            else:
+                summary_text = f"<strong>{len(warning_list)}</strong> dipendenti in scadenza da monitorare nei prossimi giorni."
+                summary_color = "#0d6efd"
+                summary_icon = "ℹ️"
+
+            # Calcolo trend rispetto al report precedente
+            trend_html = ""
+            trend = ReportHistory.calculate_trend(len(warning_list), len(expired_list))
+            if trend:
+                trend_parts = []
+                warning_diff = trend["warning_diff"]
+                expired_diff = trend["expired_diff"]
+
+                if warning_diff > 0:
+                    trend_parts.append(f'<span style="color: #dc3545;">+{warning_diff} in scadenza</span>')
+                elif warning_diff < 0:
+                    trend_parts.append(f'<span style="color: #198754;">{warning_diff} in scadenza</span>')
+
+                if expired_diff > 0:
+                    trend_parts.append(f'<span style="color: #dc3545;">+{expired_diff} scaduti</span>')
+                elif expired_diff < 0:
+                    trend_parts.append(f'<span style="color: #198754;">{expired_diff} scaduti</span>')
+
+                if trend_parts:
+                    trend_text = " | ".join(trend_parts)
+                    trend_html = f'<p style="margin: 8px 0 0 0; padding: 10px 12px; background-color: #f8f9fa; border-radius: 4px; font-size: 12px; color: #6b7280;">📊 <strong>Trend:</strong> {trend_text} rispetto al {trend["last_date"]}</p>'
+
+            body_html += '<div style="padding: 0 20px 20px 20px; background-color: #ffffff;">'
+            body_html += f'<p style="margin: 0 0 8px 0; padding: 12px; background-color: #fff8f0; border-radius: 6px; color: {summary_color}; font-size: 13px; border-left: 3px solid {summary_color}; font-weight: 500;">'
+            body_html += f'{summary_icon} {summary_text}</p>'
+            body_html += trend_html
 
             def build_multi_column_table(data_list, color, rows_per_col=10):
                 """Genera tabelle affiancate con max righe per colonna."""
@@ -961,16 +1002,54 @@ class AnagraficaPage(QWidget):
 
             subject = f"Report Monitoraggio Accessi in ISAB - {datetime.now().strftime('%d/%m/%Y')}"
 
-            # 3. Invio (Outlook / Fallback)
+            # 3. Creazione allegato Excel con tutti i dati
+            excel_path = None
+            if warning_list or expired_list:
+                excel_data = []
+                for dip in warning_list:
+                    excel_data.append({
+                        "Cognome": dip["cognome"],
+                        "Nome": dip["nome"],
+                        "Badge": dip["badge"],
+                        "Ultimo Accesso": dip["data"],
+                        "Giorni": dip["giorni"],
+                        "Stato": "In Scadenza"
+                    })
+                for dip in expired_list:
+                    excel_data.append({
+                        "Cognome": dip["cognome"],
+                        "Nome": dip["nome"],
+                        "Badge": dip["badge"],
+                        "Ultimo Accesso": dip["data"],
+                        "Giorni": dip["giorni"],
+                        "Stato": "Scaduto"
+                    })
+
+                df_report = pd.DataFrame(excel_data)
+                excel_path = Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+                df_report.to_excel(excel_path, index=False, sheet_name="Dipendenti")
+
+            # 4. Invio (Outlook / Fallback)
             if os.name == "nt":
                 try:
                     import win32com.client
                     outlook = win32com.client.Dispatch("Outlook.Application")
                     mail = outlook.CreateItem(0)
+                    mail.To = "luca.riccio@coemi.it"
+                    mail.CC = "isabsud@coemi.it"
                     mail.Subject = subject
                     mail.HTMLBody = body_html
+
+                    # Aggiungi allegato Excel se presente
+                    if excel_path and excel_path.exists():
+                        mail.Attachments.Add(str(excel_path))
+
                     mail.Display()
-                    ToastManager.instance().show("Report generato in Outlook", "success", duration=3000)
+
+                    # Salva snapshot del report per il calcolo del trend futuro
+                    ReportHistory.save_report(warning_list, expired_list)
+
+                    ToastManager.instance().show("Report generato in Outlook con allegato Excel", "success", duration=3000)
                 except Exception as e:
                     # Fallback per problemi COM o Outlook non configurato
                     logger.warning(f"Fallback Outlook failed: {e}")
@@ -981,6 +1060,10 @@ class AnagraficaPage(QWidget):
                     with open(tmp_path, "w", encoding="utf-8") as f:
                         f.write(body_html)
                     webbrowser.open(f"file:///{tmp_path.as_posix()}")
+
+                    # Salva snapshot anche in fallback
+                    ReportHistory.save_report(warning_list, expired_list)
+
                     ToastManager.instance().show("Outlook non trovato: aperto report nel browser", "warning", duration=4000)
 
             else:
