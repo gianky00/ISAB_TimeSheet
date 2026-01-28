@@ -48,15 +48,15 @@ class PROCESS_MEMORY_COUNTERS_EX(Structure):
     _fields_ = [
         ("cb", wintypes.DWORD),
         ("PageFaultCount", wintypes.DWORD),
-        ("PeakWorkingSetSize", wintypes.BASE_TSD_SIZE_T),
-        ("WorkingSetSize", wintypes.BASE_TSD_SIZE_T),
-        ("QuotaPeakPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
-        ("QuotaPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
-        ("QuotaPeakNonPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
-        ("QuotaNonPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
-        ("PagefileUsage", wintypes.BASE_TSD_SIZE_T),
-        ("PeakPagefileUsage", wintypes.BASE_TSD_SIZE_T),
-        ("PrivateUsage", wintypes.BASE_TSD_SIZE_T),
+        ("PeakWorkingSetSize", ctypes.c_size_t),
+        ("WorkingSetSize", ctypes.c_size_t),
+        ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+        ("PagefileUsage", ctypes.c_size_t),
+        ("PeakPagefileUsage", ctypes.c_size_t),
+        ("PrivateUsage", ctypes.c_size_t),
     ]
 
 
