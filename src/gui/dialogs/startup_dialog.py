@@ -3,9 +3,11 @@ Splash Screen con animazioni fluide a 60fps.
 Il caricamento avviene in un thread separato per non bloccare MAI le animazioni.
 """
 
+import ctypes
 import math
 import os
 import random
+from ctypes import Structure, byref, sizeof, wintypes
 
 from PyQt6.QtCore import (
     QEasingCurve,
@@ -40,6 +42,40 @@ from PyQt6.QtWidgets import (
 
 
 # =============================================================================
+# WINDOWS MEMORY API WRAPPER (No dependencies)
+# =============================================================================
+class PROCESS_MEMORY_COUNTERS_EX(Structure):
+    _fields_ = [
+        ("cb", wintypes.DWORD),
+        ("PageFaultCount", wintypes.DWORD),
+        ("PeakWorkingSetSize", wintypes.BASE_TSD_SIZE_T),
+        ("WorkingSetSize", wintypes.BASE_TSD_SIZE_T),
+        ("QuotaPeakPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
+        ("QuotaPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
+        ("QuotaPeakNonPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
+        ("QuotaNonPagedPoolUsage", wintypes.BASE_TSD_SIZE_T),
+        ("PagefileUsage", wintypes.BASE_TSD_SIZE_T),
+        ("PeakPagefileUsage", wintypes.BASE_TSD_SIZE_T),
+        ("PrivateUsage", wintypes.BASE_TSD_SIZE_T),
+    ]
+
+
+def get_current_process_ram_mb():
+    """Restituisce l'uso RAM del processo corrente in MB su Windows."""
+    try:
+        process = ctypes.windll.kernel32.GetCurrentProcess()
+        counters = PROCESS_MEMORY_COUNTERS_EX()
+        counters.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX)
+        if ctypes.windll.psapi.GetProcessMemoryInfo(
+            process, byref(counters), sizeof(counters)
+        ):
+            return counters.WorkingSetSize / 1024 / 1024
+    except Exception:
+        pass
+    return 0.0
+
+
+# =============================================================================
 # WORKER THREAD - Caricamento in background
 # =============================================================================
 class InitWorker(QObject):
@@ -70,7 +106,7 @@ class InitWorker(QObject):
 
 
 # =============================================================================
-# PARTICLE SYSTEM
+# PARTICLE SYSTEM (Parallax Enhanced)
 # =============================================================================
 class Particle:
     """Singola particella animata."""
@@ -96,6 +132,17 @@ class Particle:
         self.phase += 0.02
         if self.y < -10:
             self.reset(self.w, self.h)
+        # Wrap orizzontale
+        if self.x > self.w + 10:
+            self.x = -10
+        if self.x < -10:
+            self.x = self.w + 10
+
+    def apply_force(self, dx, dy):
+        """Applica parallasse: le particelle più grandi (vicine) si muovono di più."""
+        factor = self.size * 0.4  # Fattore di profondità
+        self.x -= dx * factor
+        self.y -= dy * factor
 
     def get_opacity(self):
         """Calculate current opacity with pulsing effect."""
@@ -121,6 +168,12 @@ class ParticleBackground(QWidget):
     def init_particles(self, count=60):
         """Initialize particle array with specified count."""
         self.particles = [Particle(self.width(), self.height()) for _ in range(count)]
+
+    def apply_parallax(self, dx, dy):
+        """Applica forza di parallasse a tutte le particelle."""
+        for p in self.particles:
+            p.apply_force(dx, dy)
+        self.update()
 
     def _tick(self):
         self.phase += 0.015
@@ -204,6 +257,79 @@ class ParticleBackground(QWidget):
 
         # Reset clipping
         painter.setClipping(False)
+
+
+# =============================================================================
+# RESOURCE MONITOR HUD
+# =============================================================================
+class ResourceMonitor(QWidget):
+    """HUD Monitor per Risorse (RAM/CPU Activity)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(140, 30)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+
+        # RAM Indicator
+        self.ram_lbl = QLabel("RAM: 0MB")
+        self.ram_lbl.setStyleSheet(
+            "color: rgba(52, 152, 219, 0.8); font-size: 10px; font-weight: 600; font-family: 'Consolas';"
+        )
+
+        # Activity Indicator (Fake CPU/Disk IO visualization)
+        self.activity_bar = QFrame()
+        self.activity_bar.setFixedSize(40, 4)
+        self.activity_bar.setStyleSheet(
+            "background: rgba(255,255,255,0.1); border-radius: 2px;"
+        )
+
+        layout.addStretch()
+        layout.addWidget(self.ram_lbl)
+        layout.addWidget(self.activity_bar)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._update_stats)
+        self.timer.start(500)  # 2Hz refresh
+
+        self._activity_level = 0
+
+    def _update_stats(self):
+        # Update RAM (Real)
+        mb = get_current_process_ram_mb()
+        self.ram_lbl.setText(f"RAM: {int(mb)}MB")
+
+        # Decay activity
+        self._activity_level = max(0, self._activity_level - 10)
+        self._draw_activity()
+
+    def trigger_activity(self):
+        """Chiamato quando c'è un log event per simulare carico CPU/IO."""
+        self._activity_level = min(100, self._activity_level + 30)
+        self._draw_activity()
+
+    def _draw_activity(self):
+        # Color gradient based on activity
+        if self._activity_level > 80:
+            col = "#e74c3c"  # Red
+        elif self._activity_level > 40:
+            col = "#f1c40f"  # Yellow
+        else:
+            col = "#2ecc71"  # Green
+
+        w = int((self._activity_level / 100) * 40)
+        # Semplice visualizzazione tramite style sheet dinamico sul widget interno non è performante
+        # Qui usiamo un semplice gradiente via stylesheet sul frame stesso o un child
+        # Per semplicità, usiamo un trick: un child frame
+        if not hasattr(self, "_bar_fill"):
+            self._bar_fill = QLabel(self.activity_bar)
+            self._bar_fill.setFixedHeight(4)
+            self._bar_fill.move(0, 0)
+
+        self._bar_fill.setFixedSize(max(0, w), 4)
+        self._bar_fill.setStyleSheet(f"background: {col}; border-radius: 2px;")
 
 
 # =============================================================================
@@ -722,7 +848,12 @@ class StartupDialog(QDialog):
             "font-size:11px; color:rgba(52,152,219,0.8); font-weight:600;"
         )
         footer.addWidget(self.dots)
+
         footer.addStretch()
+
+        # Resource Monitor (Bottom Right)
+        self.resource_mon = ResourceMonitor()
+        footer.addWidget(self.resource_mon)
 
         content_layout.addLayout(footer)
         layout.addWidget(self.container)
@@ -738,6 +869,9 @@ class StartupDialog(QDialog):
         self._pulse_timer.timeout.connect(self._pulse_indicator)
         self._pulse_timer.start(800)
 
+        # Drag Logic
+        self._drag_pos = None
+
         # Fade in
         self.setWindowOpacity(0.0)
         self._fade = QPropertyAnimation(self, b"windowOpacity")
@@ -746,6 +880,33 @@ class StartupDialog(QDialog):
         self._fade.setEndValue(1.0)
         self._fade.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._fade.start()
+
+    def mousePressEvent(self, event):
+        """Start dragging."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = (
+                event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            )
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        """Handle dragging with parallax effect."""
+        if event.buttons() & Qt.MouseButton.LeftButton and self._drag_pos:
+            new_pos = event.globalPosition().toPoint() - self._drag_pos
+            # Calcola delta per parallasse
+            current_pos = self.pos()
+            dx = new_pos.x() - current_pos.x()
+            dy = new_pos.y() - current_pos.y()
+
+            self.move(new_pos)
+
+            # Applica parallasse (direzione opposta al movimento)
+            self.particles.apply_parallax(dx, dy)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        """Stop dragging."""
+        self._drag_pos = None
 
     def _animate_dots(self):
         self._dot_count = (self._dot_count + 1) % 4
@@ -771,6 +932,9 @@ class StartupDialog(QDialog):
     def _on_progress(self, message: str, prog: int):
         """Aggiorna UI - chiamato dal thread principale via signal."""
         self.status.setText(message.upper())
+
+        # Trigger CPU activity simulation on log event
+        self.resource_mon.trigger_activity()
 
         # Colore indicatore
         if prog >= 90:
@@ -827,6 +991,7 @@ class StartupDialog(QDialog):
         self.logo.timer.stop()
         self._dot_timer.stop()
         self._pulse_timer.stop()
+        self.resource_mon.timer.stop()
         for lbl in self.log_labels:
             lbl._timer.stop()
         if self._thread and self._thread.isRunning():
