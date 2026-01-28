@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 import sys
 
 from PyQt6.QtGui import QFont
@@ -41,7 +42,6 @@ class AppInitializer:
     @staticmethod
     def _setup_logging():
         """Configura il logging su file rotativo."""
-        from logging.handlers import RotatingFileHandler
         from pathlib import Path
 
         from src.core import config_manager
@@ -55,7 +55,7 @@ class AppInitializer:
         )
 
         # Handler Rotativo (5MB x 3 backup)
-        handler = RotatingFileHandler(
+        handler = logging.handlers.RotatingFileHandler(
             log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
         )
         handler.setFormatter(formatter)
@@ -65,7 +65,10 @@ class AppInitializer:
         root_logger.setLevel(logging.INFO)
 
         # Evita duplicati se reload
-        if not any(isinstance(h, RotatingFileHandler) for h in root_logger.handlers):
+        if not any(
+            isinstance(h, logging.handlers.RotatingFileHandler)
+            for h in root_logger.handlers
+        ):
             root_logger.addHandler(handler)
             logger.info(f"Logging inizializzato su: {log_file}")
 

@@ -5,6 +5,7 @@ Entry point principale dell'applicazione.
 """
 
 import logging
+import logging.handlers
 import os
 import shutil
 import sys
@@ -59,10 +60,8 @@ def setup_logging():
 
     # 1. Main App Logger (syncrojob.log)
     # Usa RotatingFileHandler per evitare file enormi (max 5MB, 3 backup)
-    from logging.handlers import RotatingFileHandler
-
     app_log_file = log_dir / "syncrojob.log"
-    app_handler = RotatingFileHandler(
+    app_handler = logging.handlers.RotatingFileHandler(
         app_log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
     )
     app_handler.setFormatter(
