@@ -2,6 +2,7 @@
 """
 # SyncroJob - Zero-Lag Startup Architecture
 Tutto il caricamento (anche quello della GUI) avviene nello Splash Screen.
+Le animazioni rimangono fluide grazie al refresh timer.
 """
 
 import logging
@@ -34,7 +35,7 @@ def main():
 
     warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
     app = QApplication(sys.argv)
-    
+
     # === SINGLE INSTANCE ===
     server_name = "SyncroJob_Instance_Connector"
     socket = QLocalSocket()
@@ -44,7 +45,7 @@ def main():
         socket.waitForBytesWritten(500)
         socket.disconnectFromServer()
         sys.exit(0)
-    
+
     server = QLocalServer()
     server.listen(server_name)
     main_window_instance = None
@@ -70,15 +71,24 @@ def main():
     # 1. MOSTRA SPLASH SCREEN IMMEDIATAMENTE
     startup_dialog = StartupDialog()
     startup_dialog.show()
-    
+
+    # === ANIMATION REFRESH TIMER ===
+    # Forza il refresh delle animazioni ogni 16ms (~60fps) anche durante il caricamento
+    animation_timer = QTimer()
+    animation_timer.setInterval(16)
+    animation_timer.timeout.connect(lambda: app.processEvents())
+    animation_timer.start()
+
     def update_startup_ui(msg, prog):
         startup_dialog.update_status(msg, prog)
+        # processEvents viene già chiamato dal timer, ma lo chiamiamo anche qui per sicurezza
         app.processEvents()
 
     # 2. CARICA I MODULI CORE
     # (Inizializzazione database, licenza, import pandas/selenium)
     # Nota: NON passiamo ancora la mw_instance qui perché dobbiamo ancora importare MainWindow
     if not AppInitializer.initialize(status_callback=update_startup_ui):
+        animation_timer.stop()
         startup_dialog.close()
         sys.exit(1)
 
@@ -94,7 +104,10 @@ def main():
     # 5. FINALIZZAZIONE
     update_startup_ui("Configurazione finale in corso...", 100)
     main_window_instance.finalize_init()
-    
+
+    # Ferma il timer delle animazioni forzate
+    animation_timer.stop()
+
     # Piccola pausa per mostrare il 100%
     QTimer.singleShot(500, lambda: startup_dialog.close())
     QTimer.singleShot(600, lambda: main_window_instance.showMaximized())

@@ -7,9 +7,17 @@ from typing import Callable, Optional
 
 # Import leggeri
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QApplication
 
 logger = logging.getLogger("AppInitializer")
+
+
+def _yield_to_gui():
+    """Cede il controllo alla GUI per mantenere le animazioni fluide."""
+    app = QApplication.instance()
+    if app:
+        app.processEvents()
+
 
 class AppInitializer:
     """Gestisce la sequenza di avvio con log puliti e sintetici."""
@@ -20,46 +28,63 @@ class AppInitializer:
     def initialize(status_callback: Optional[Callable[[str, int], None]] = None, mw_instance=None):
         """
         Esegue l'inizializzazione con log diretti.
+        Cede frequentemente il controllo alla GUI per animazioni fluide.
         """
-        
+
         def step(msg, prog):
             if status_callback:
                 status_callback(msg, prog)
             logger.info(f"[INIT] {msg} ({prog}%)")
+            _yield_to_gui()
 
         try:
             if not mw_instance and not AppInitializer._core_initialized:
                 # --- FASE 1: CORE ---
                 step("Kernel System", 5)
                 AppInitializer._setup_logging()
-                
+                _yield_to_gui()
+
                 step("Data Analysis Engines", 10)
+                _yield_to_gui()
                 import pandas
+                _yield_to_gui()
                 import numpy
-                
+                _yield_to_gui()
+
                 step("Automation Drivers", 15)
+                _yield_to_gui()
                 import selenium
-                
+                _yield_to_gui()
+
                 # --- FASE 2: SICUREZZA ---
                 step("Hardware Identity (HWID)", 20)
+                _yield_to_gui()
                 from src.core.license_validator import get_detailed_license_status, LicenseStatus
+                _yield_to_gui()
                 from src.core.license_updater import run_update
-                
+                _yield_to_gui()
+
                 status, msg = get_detailed_license_status()
+                _yield_to_gui()
                 if status != LicenseStatus.VALID:
                     step("Cloud License Recovery", 25)
                     run_update()
+                    _yield_to_gui()
 
                 step("System Database", 30)
+                _yield_to_gui()
                 from src.core.database import db_manager
+                _yield_to_gui()
                 db_manager.init_db()
-                
+                _yield_to_gui()
+
                 AppInitializer._core_initialized = True
                 return True
 
             elif mw_instance:
                 from src.gui.main_window.page_index import PageIndex
-                
+                _yield_to_gui()
+
                 tasks = [
                     (PageIndex.DASHBOARD, "Dashboard & Analytics"),
                     (PageIndex.TIMBRATURE, "Timesheet Repository"),
@@ -71,26 +96,33 @@ class AppInitializer:
                     (PageIndex.LYRA, "Lyra Analysis Engine"),
                     (PageIndex.SETTINGS, "User Configuration")
                 ]
-                
+
                 base_prog = 45
                 for i, (idx, name) in enumerate(tasks):
                     prog = base_prog + int((i / len(tasks)) * 45)
                     step(name, prog)
+                    _yield_to_gui()
                     mw_instance.navigation_controller.get_panel(idx)
-                    time.sleep(0.02)
+                    _yield_to_gui()
+                    # Micro-pausa per permettere alle animazioni di aggiornarsi
+                    time.sleep(0.01)
+                    _yield_to_gui()
 
                 # --- FASE 5: SERVIZI ---
                 step("Telegram Security Monitor", 92)
+                _yield_to_gui()
                 from src.core import config_manager
                 config = config_manager.load_config()
+                _yield_to_gui()
                 if not config.get("telegram_chat_id") and not config.get("telegram_pairing_code"):
                     import random
                     code = str(random.randint(100000, 999999))
                     config_manager.set_config_value("telegram_pairing_code", code)
-                
+                _yield_to_gui()
+
                 step("System Ready", 100)
                 return True
-            
+
             return True
 
         except Exception as e:
