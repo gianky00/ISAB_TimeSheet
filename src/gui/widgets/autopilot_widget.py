@@ -354,15 +354,23 @@ class AutopilotConfigCard(QFrame):
             # Usa un timer per evitare loop di refresh durante il cambio
             QTimer.singleShot(100, self.parent_widget.refresh_events)
 
-        # Aggiorna anche il footer
-        if (
-            self.parent_widget
-            and hasattr(self.parent_widget, "footer_left_widget")
-            and self.parent_widget.footer_left_widget
-        ):
-            QTimer.singleShot(
-                100, self.parent_widget.footer_left_widget.refresh_accounts
-            )
+        # Aggiorna anche il footer (Account & Status Cards)
+        if self.parent_widget:
+            if (
+                hasattr(self.parent_widget, "footer_left_widget")
+                and self.parent_widget.footer_left_widget
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.footer_left_widget.refresh_accounts
+                )
+
+            if (
+                hasattr(self.parent_widget, "status_bar")
+                and self.parent_widget.status_bar
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.status_bar.update_autopilot_ui
+                )
 
 
 class AutopilotConfigCardWithInterval(QFrame):
@@ -557,6 +565,24 @@ class AutopilotConfigCardWithInterval(QFrame):
         if self.parent_widget and hasattr(self.parent_widget, "refresh_events"):
             QTimer.singleShot(100, self.parent_widget.refresh_events)
 
+        # Aggiorna anche il footer (Account & Status Cards)
+        if self.parent_widget:
+            if (
+                hasattr(self.parent_widget, "footer_left_widget")
+                and self.parent_widget.footer_left_widget
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.footer_left_widget.refresh_accounts
+                )
+
+            if (
+                hasattr(self.parent_widget, "status_bar")
+                and self.parent_widget.status_bar
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.status_bar.update_autopilot_ui
+                )
+
 
 class AutopilotWidget(QWidget):
     """
@@ -567,6 +593,7 @@ class AutopilotWidget(QWidget):
         super().__init__(parent)
         self._config_mode = False  # False = visualizzazione, True = configurazione
         self.footer_left_widget = None  # Riferimento al footer per aggiornamenti
+        self.status_bar = None  # Riferimento alla StatusBarComponent
         self._setup_ui()
 
         # Timer per aggiornare i bot programmati ogni minuto
@@ -577,6 +604,10 @@ class AutopilotWidget(QWidget):
     def set_footer_widget(self, footer_left_widget):
         """Imposta il riferimento al footer widget per gli aggiornamenti."""
         self.footer_left_widget = footer_left_widget
+
+    def set_status_bar(self, status_bar):
+        """Imposta il riferimento alla barra di stato per aggiornamenti Autopilot."""
+        self.status_bar = status_bar
 
     def _setup_ui(self):
         # Imposta size policy per non influenzare altri widget nella stessa riga

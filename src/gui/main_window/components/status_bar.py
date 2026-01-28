@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt
+from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QPushButton, QStatusBar
 
 from src.core import config_manager
@@ -104,7 +104,13 @@ class StatusBarComponent(QObject):
         self.status_bar.addPermanentWidget(self.footer_right)
 
     def _init_timers(self):
-        pass
+        # Timer per aggiornamento automatico dello stato Autopilot (ogni 10 secondi)
+        self.autopilot_timer = QTimer(self)
+        self.autopilot_timer.timeout.connect(self.update_autopilot_ui)
+        self.autopilot_timer.start(10000)
+
+        # Primo aggiornamento immediato
+        QTimer.singleShot(500, self.update_autopilot_ui)
 
     def _toggle_footer_stats(self):
         """Toggle tra System Metrics (boot_telemetry) e License Info (footer_left)."""
