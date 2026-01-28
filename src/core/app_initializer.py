@@ -1,154 +1,127 @@
 import logging
 import logging.handlers
 import sys
+import time
 import traceback
 from typing import Callable, Optional
 
+# Import leggeri
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QMessageBox
 
-from src.core.database import db_manager
-from src.core.license_updater import check_emergency_grace_period, run_update
-from src.core.license_validator import (
-    LicenseStatus,
-    get_detailed_license_status,
-    get_hardware_id,
-)
-from src.gui.styles import apply_theme
-
 logger = logging.getLogger("AppInitializer")
 
-
 class AppInitializer:
-    """Gestisce la sequenza di avvio dell'applicazione."""
+    """Gestisce la sequenza di avvio UNIFICATA (Core + GUI Preload)."""
+
+    _core_initialized = False
 
     @staticmethod
-    def initialize(status_callback: Optional[Callable[[str, int], None]] = None):
+    def initialize(status_callback: Optional[Callable[[str, int], None]] = None, mw_instance=None):
         """
-        Esegue tutti i controlli necessari prima di mostrare la GUI.
+        Esegue l'inizializzazione completa o il pre-caricamento della GUI.
+        """
         
-        Args:
-            status_callback: Funzione(messaggio, progresso) per aggiornare la UI di caricamento.
-        """
-        def update(msg, prog):
+        def step(msg, prog):
             if status_callback:
                 status_callback(msg, prog)
             logger.info(f"[INIT] {msg} ({prog}%)")
 
         try:
-            # 0. Setup Logging
-            update("Configurazione sistema di logging...", 20)
-            AppInitializer._setup_logging()
+            # SE mw_instance non è fornito, facciamo il CORE INIT
+            if not mw_instance and not AppInitializer._core_initialized:
+                # --- FASE 1: CORE SYSTEM ---
+                step("Inizializzazione Kernel SyncroJob...", 5)
+                AppInitializer._setup_logging()
+                
+                step("Caricamento motori di analisi dati...", 10)
+                import pandas
+                import numpy
+                
+                step("Configurazione motori di automazione...", 15)
+                import selenium
+                
+                # --- FASE 2: SICUREZZA & LICENZA ---
+                step("Verifica identità hardware (HWID)...", 20)
+                from src.core.license_validator import get_detailed_license_status, LicenseStatus
+                from src.core.license_updater import run_update
+                
+                status, msg = get_detailed_license_status()
+                if status != LicenseStatus.VALID:
+                    step("Ripristino licenza tramite cloud...", 25)
+                    run_update()
 
-            # 1. Licenza
-            update("Verifica licenza in corso...", 40)
-            if not AppInitializer._check_license(status_callback):
-                return False
+                step("Connessione al database di sistema...", 30)
+                from src.core.database import db_manager
+                db_manager.init_db()
+                
+                AppInitializer._core_initialized = True
+                return True
 
-            # 2. Database
-            update("Inizializzazione database locale...", 70)
-            if not AppInitializer._init_db():
-                return False
+            # SE mw_instance è fornito, facciamo il GUI PRELOAD
+            elif mw_instance:
+                from src.gui.main_window.page_index import PageIndex
+                
+                tasks = [
+                    (PageIndex.DASHBOARD, "Dashboard & Analytics"),
+                    (PageIndex.TIMBRATURE, "Timesheet Repository"),
+                    (PageIndex.STRUMENTALE, "Asset Registry Module"),
+                    (PageIndex.DATAEASE, "DataEase Sync Bridge"),
+                    (PageIndex.ANAGRAFICHE, "HR Directory Service"),
+                    (PageIndex.DIPENDENTI, "Employee Records"),
+                    (PageIndex.AUTOMAZIONI, "Task Scheduler Engine"),
+                    (PageIndex.LYRA, "Lyra Analysis Engine"),
+                    (PageIndex.SETTINGS, "User Configuration")
+                ]
+                
+                base_prog = 45
+                for i, (idx, name) in enumerate(tasks):
+                    prog = base_prog + int((i / len(tasks)) * 45)
+                    step(f"Caricamento modulo: {name}...", prog)
+                    mw_instance.navigation_controller.get_panel(idx)
+                    # Piccola pausa per fluidità visiva
+                    time.sleep(0.02)
 
-            # 3. Sicurezza Telegram
-            update("Sincronizzazione sicurezza Telegram...", 90)
-            AppInitializer._init_telegram_security()
-
-            update("Avvio applicazione...", 100)
+                # --- FASE 5: SERVIZI ACCESSORI ---
+                step("Avvio monitoraggio sicurezza Telegram...", 92)
+                from src.core import config_manager
+                config = config_manager.load_config()
+                if not config.get("telegram_chat_id") and not config.get("telegram_pairing_code"):
+                    import random
+                    code = str(random.randint(100000, 999999))
+                    config_manager.set_config_value("telegram_pairing_code", code)
+                
+                step("Sistema pronto. Accesso in corso...", 100)
+                return True
+            
             return True
 
         except Exception as e:
-            logger.critical(f"Errore fatale inizializzazione: {e}")
+            logger.critical(f"Errore fatale startup: {e}")
             logger.error(traceback.format_exc())
-            QMessageBox.critical(None, "Errore Inizializzazione", 
-                                f"Si è verificato un errore durante l'avvio:\n{e}")
             return False
 
     @staticmethod
     def _setup_logging():
-        """Configura il logging su file rotativo."""
         from pathlib import Path
         from src.core import config_manager
-
         log_dir = Path(config_manager.get_logs_path())
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / "application.log"
-
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-
-        handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=3, encoding="utf-8")
         handler.setFormatter(formatter)
-
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
-
-        if not any(
-            isinstance(h, logging.handlers.RotatingFileHandler)
-            for h in root_logger.handlers
-        ):
+        if not any(isinstance(h, logging.handlers.RotatingFileHandler) for h in root_logger.handlers):
             root_logger.addHandler(handler)
 
     @staticmethod
-    def _init_telegram_security():
-        """Genera un codice di accoppiamento se Telegram non è configurato."""
-        import random
-        from src.core import config_manager
-
-        config = config_manager.load_config()
-        if not config.get("telegram_chat_id"):
-            if not config.get("telegram_pairing_code"):
-                code = str(random.randint(100000, 999999))
-                config_manager.set_config_value("telegram_pairing_code", code)
-
-    @staticmethod
-    def _check_license(status_callback=None):
-        try:
-            status, msg = get_detailed_license_status()
-
-            if status != LicenseStatus.VALID:
-                if status_callback:
-                    status_callback("Tentativo ripristino licenza online...", 50)
-                run_update()
-                status, msg = get_detailed_license_status()
-
-            if status != LicenseStatus.VALID:
-                grace_allowed, grace_msg, remaining = check_emergency_grace_period()
-                hw_id = get_hardware_id()
-
-                if grace_allowed:
-                    return True
-                else:
-                    QMessageBox.critical(
-                        None,
-                        "Errore Licenza",
-                        f"Licenza non valida.\n\n{msg}\n\nID Hardware: {hw_id}",
-                    )
-                    return False
-
-            return True
-        except Exception as e:
-            logger.error(f"Errore licenza: {e}")
-            return False
-
-    @staticmethod
-    def _init_db():
-        try:
-            db_manager.init_db()
-            return True
-        except Exception as e:
-            return False
-
-    @staticmethod
     def setup_app_style(app):
-        """Configura font e tema."""
         from src.core.version import __version__
         app.setStyle("Fusion")
+        from src.gui.styles import apply_theme
         apply_theme(app, "light")
         app.setFont(QFont("Segoe UI", 10))
         app.setApplicationName("SyncroJob")
-        app.setOrganizationName("Giancarlo Allegretti")
         app.setApplicationVersion(__version__)
