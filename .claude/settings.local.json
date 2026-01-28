@@ -18,7 +18,12 @@
       "Bash(find:*)",
       "Bash(ruff check:*)",
       "Bash(grep:*)",
-      "Bash(cmd /c \"dir /b C:\\\\Users\\\\Coemi\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\\\\assets\\\\*.ico 2>nul || echo No .ico files found\")"
+      "Bash(cmd /c \"dir /b C:\\\\Users\\\\Coemi\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\\\\assets\\\\*.ico 2>nul || echo No .ico files found\")",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(.venv/Scripts/ruff.exe check:*)",
+      "Bash(.venv/Scripts/ruff.exe format:*)",
+      "Bash(.venvScriptsinterrogate.exe -vv srcguidialogsstartup_dialog.py srccoreapp_initializer.py main.py)",
+      "Bash(.venv/Scripts/interrogate.exe:*)"
     ]
   }
 }

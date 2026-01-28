@@ -2,21 +2,41 @@
 Splash Screen con animazioni fluide a 60fps.
 Il caricamento avviene in un thread separato per non bloccare MAI le animazioni.
 """
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QApplication, QFrame, QGraphicsDropShadowEffect, QWidget
-)
-from PyQt6.QtCore import (
-    Qt, QPropertyAnimation, QEasingCurve, QTimer, QRect,
-    QPoint, pyqtProperty, QVariantAnimation, QThread, pyqtSignal, QObject
-)
-from PyQt6.QtGui import (
-    QIcon, QColor, QPainter, QPainterPath, QLinearGradient,
-    QRadialGradient, QConicalGradient, QPen, QBrush, QFont
-)
+
+import math
 import os
 import random
-import math
+
+from PyQt6.QtCore import (
+    QEasingCurve,
+    QObject,
+    QPoint,
+    QPropertyAnimation,
+    Qt,
+    QThread,
+    QTimer,
+    pyqtSignal,
+)
+from PyQt6.QtGui import (
+    QBrush,
+    QColor,
+    QConicalGradient,
+    QIcon,
+    QLinearGradient,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QRadialGradient,
+)
+from PyQt6.QtWidgets import (
+    QDialog,
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 # =============================================================================
@@ -24,6 +44,7 @@ import math
 # =============================================================================
 class InitWorker(QObject):
     """Esegue il caricamento in un thread separato."""
+
     progress = pyqtSignal(str, int)
     finished = pyqtSignal(bool)
 
@@ -32,15 +53,18 @@ class InitWorker(QObject):
         self.mw_instance = mw_instance
 
     def run(self):
+        """Execute initialization in background thread."""
         try:
             from src.core.app_initializer import AppInitializer
+
             success = AppInitializer.initialize(
                 status_callback=lambda msg, prog: self.progress.emit(msg, prog),
-                mw_instance=self.mw_instance
+                mw_instance=self.mw_instance,
             )
             self.finished.emit(success)
         except Exception as e:
             import logging
+
             logging.getLogger("InitWorker").error(f"Error: {e}")
             self.finished.emit(False)
 
@@ -50,11 +74,13 @@ class InitWorker(QObject):
 # =============================================================================
 class Particle:
     """Singola particella animata."""
+
     def __init__(self, w, h):
         self.reset(w, h)
         self.y = random.uniform(0, h)  # Posizione iniziale casuale
 
     def reset(self, w, h):
+        """Reset particle to bottom with random properties."""
         self.x = random.uniform(0, w)
         self.y = h + 10
         self.size = random.uniform(1.5, 3.5)
@@ -64,6 +90,7 @@ class Particle:
         self.w, self.h = w, h
 
     def update(self):
+        """Update particle position with upward drift and horizontal oscillation."""
         self.y -= self.speed
         self.x += math.sin(self.phase) * 0.3
         self.phase += 0.02
@@ -71,11 +98,13 @@ class Particle:
             self.reset(self.w, self.h)
 
     def get_opacity(self):
+        """Calculate current opacity with pulsing effect."""
         return self.opacity * (0.6 + 0.4 * math.sin(self.phase * 2))
 
 
 class ParticleBackground(QWidget):
     """Background con particelle, connessioni e glow orbs."""
+
     BORDER_RADIUS = 28  # Angoli molto smussati
 
     def __init__(self, parent=None):
@@ -88,6 +117,7 @@ class ParticleBackground(QWidget):
         self.timer.start(16)  # 60fps
 
     def init_particles(self, count=60):
+        """Initialize particle array with specified count."""
         self.particles = [Particle(self.width(), self.height()) for _ in range(count)]
 
     def _tick(self):
@@ -97,6 +127,7 @@ class ParticleBackground(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        """Render particles, connections, and glow orbs with rounded clip."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
@@ -129,7 +160,9 @@ class ParticleBackground(QWidget):
             glow.setColorAt(1, QColor(52, 152, 219, 0))
             painter.setBrush(QBrush(glow))
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(QPoint(int(p.x), int(p.y)), int(p.size * 4), int(p.size * 4))
+            painter.drawEllipse(
+                QPoint(int(p.x), int(p.y)), int(p.size * 4), int(p.size * 4)
+            )
             # Core
             painter.setBrush(QColor(52, 152, 219, int(op * 255)))
             painter.drawEllipse(QPoint(int(p.x), int(p.y)), int(p.size), int(p.size))
@@ -158,9 +191,9 @@ class ParticleBackground(QWidget):
         """Linee tra particelle vicine."""
         max_dist = 80
         for i, p1 in enumerate(self.particles):
-            for p2 in self.particles[i+1:]:
+            for p2 in self.particles[i + 1 :]:
                 dx, dy = p1.x - p2.x, p1.y - p2.y
-                dist = math.sqrt(dx*dx + dy*dy)
+                dist = math.sqrt(dx * dx + dy * dy)
                 if dist < max_dist:
                     opacity = (1 - dist / max_dist) * 0.12
                     pen = QPen(QColor(52, 152, 219, int(opacity * 255)), 0.5)
@@ -176,6 +209,7 @@ class ParticleBackground(QWidget):
 # =============================================================================
 class AnimatedBorder(QWidget):
     """Bordo con luce che scorre e ombre illuminate."""
+
     BORDER_RADIUS = 28  # Angoli molto smussati
 
     def __init__(self, parent=None):
@@ -194,6 +228,7 @@ class AnimatedBorder(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        """Render animated border with glow shadows and traveling light points."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
@@ -201,12 +236,12 @@ class AnimatedBorder(QWidget):
 
         intensity = 0.6 + 0.4 * math.sin(self.phase * 2)
 
-        # === OMBRE LUMINOSE ESTERNE (multiple layers) ===
+        # === OUTER GLOW SHADOWS (multiple layers) ===
         # Layer 1 - Ombra esterna diffusa grande
         outer_glow1 = QPainterPath()
         outer_glow1.addRoundedRect(-8, -8, w + 16, h + 16, r + 8, r + 8)
         painter.setPen(Qt.PenStyle.NoPen)
-        outer_gradient1 = QRadialGradient(w/2, h/2, max(w, h) * 0.7)
+        outer_gradient1 = QRadialGradient(w / 2, h / 2, max(w, h) * 0.7)
         outer_gradient1.setColorAt(0.5, QColor(52, 152, 219, int(20 * intensity)))
         outer_gradient1.setColorAt(0.7, QColor(52, 152, 219, int(10 * intensity)))
         outer_gradient1.setColorAt(1.0, QColor(52, 152, 219, 0))
@@ -216,8 +251,7 @@ class AnimatedBorder(QWidget):
         for offset in [6, 4, 2]:
             glow_path = QPainterPath()
             glow_path.addRoundedRect(
-                -offset, -offset, w + offset*2, h + offset*2,
-                r + offset, r + offset
+                -offset, -offset, w + offset * 2, h + offset * 2, r + offset, r + offset
             )
             alpha = int((25 - offset * 3) * intensity)
             glow_color = QColor(52, 152, 219, alpha)
@@ -293,7 +327,9 @@ class AnimatedBorder(QWidget):
                 # Scia
                 trail_size = 20 - i * 3
                 trail_glow = QRadialGradient(px, py, trail_size)
-                trail_glow.setColorAt(0, QColor(52, 152, 219, int(80 * trail_intensity)))
+                trail_glow.setColorAt(
+                    0, QColor(52, 152, 219, int(80 * trail_intensity))
+                )
                 trail_glow.setColorAt(1, QColor(52, 152, 219, 0))
                 painter.setBrush(QBrush(trail_glow))
                 painter.drawEllipse(QPoint(int(px), int(py)), trail_size, trail_size)
@@ -319,6 +355,7 @@ class AnimatedBorder(QWidget):
 # =============================================================================
 class GlowingProgressBar(QWidget):
     """Progress bar con glow e shimmer."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._value = 0
@@ -342,9 +379,11 @@ class GlowingProgressBar(QWidget):
         self.update()
 
     def setValue(self, val):
+        """Set target progress value (0-100) with smooth interpolation."""
         self._value = max(0, min(100, val))
 
     def paintEvent(self, event):
+        """Render progress bar with gradient, shimmer, and glow effects."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
@@ -361,7 +400,14 @@ class GlowingProgressBar(QWidget):
             # Gradient progress
             grad = QLinearGradient(0, 0, pw, 0)
             grad.setColorAt(0, QColor(52, 152, 219))
-            grad.setColorAt(0.5, QColor(int(80 * intensity + 50), int(160 * intensity + 40), int(220 * intensity)))
+            grad.setColorAt(
+                0.5,
+                QColor(
+                    int(80 * intensity + 50),
+                    int(160 * intensity + 40),
+                    int(220 * intensity),
+                ),
+            )
             grad.setColorAt(1, QColor(155, 89, 182))
 
             progress = QPainterPath()
@@ -390,6 +436,7 @@ class GlowingProgressBar(QWidget):
 # =============================================================================
 class PulsingLogo(QWidget):
     """Logo con effetto pulsante e glow."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.pixmap = None
@@ -399,6 +446,7 @@ class PulsingLogo(QWidget):
         self.timer.start(16)
 
     def set_pixmap(self, pm):
+        """Set the logo pixmap to display."""
         self.pixmap = pm
         self.update()
 
@@ -407,6 +455,7 @@ class PulsingLogo(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        """Render logo with pulsing scale and glow effect."""
         if not self.pixmap:
             return
         painter = QPainter(self)
@@ -428,8 +477,12 @@ class PulsingLogo(QWidget):
 
         # Logo scalato
         size = int(64 * scale)
-        scaled = self.pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio,
-                                     Qt.TransformationMode.SmoothTransformation)
+        scaled = self.pixmap.scaled(
+            size,
+            size,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
         x = int(cx - scaled.width() / 2)
         y = int(cy - scaled.height() / 2)
         painter.drawPixmap(x, y, scaled)
@@ -440,6 +493,7 @@ class PulsingLogo(QWidget):
 # =============================================================================
 class TypewriterLabel(QLabel):
     """Label con effetto typewriter fluido."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._target = ""
@@ -449,12 +503,14 @@ class TypewriterLabel(QLabel):
         self._timer.timeout.connect(self._type)
 
     def set_text_animated(self, text, speed=20):
+        """Start typewriter animation with specified speed in ms per character."""
         self._target = text
         self._current = ""
         self._index = 0
         self._timer.start(speed)
 
     def set_text_instant(self, text):
+        """Set text immediately without animation."""
         self._timer.stop()
         self._target = text
         self._current = text
@@ -464,7 +520,7 @@ class TypewriterLabel(QLabel):
     def _type(self):
         if self._index < len(self._target):
             self._index += 1
-            self._current = self._target[:self._index]
+            self._current = self._target[: self._index]
             self.setText(self._current)
         else:
             self._timer.stop()
@@ -481,7 +537,9 @@ class StartupDialog(QDialog):
 
     def __init__(self):
         super().__init__()
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedSize(self.WIDTH, self.HEIGHT)
 
@@ -545,6 +603,7 @@ class StartupDialog(QDialog):
         title_box.addWidget(self.title)
 
         from src.core.version import __version__
+
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
             "font-size:13px; color:rgba(52,152,219,0.9); font-weight:600; letter-spacing:3px;"
@@ -608,7 +667,9 @@ class StartupDialog(QDialog):
         footer.addWidget(self.status)
 
         self.dots = QLabel("")
-        self.dots.setStyleSheet("font-size:11px; color:rgba(52,152,219,0.8); font-weight:600;")
+        self.dots.setStyleSheet(
+            "font-size:11px; color:rgba(52,152,219,0.8); font-weight:600;"
+        )
         footer.addWidget(self.dots)
         footer.addStretch()
 
@@ -676,7 +737,7 @@ class StartupDialog(QDialog):
 
         for i in range(5):
             if i < len(self.current_logs):
-                is_last = (i == len(self.current_logs) - 1)
+                is_last = i == len(self.current_logs) - 1
                 opacity = 1.0 if is_last else 0.25 + i * 0.12
                 self.log_labels[i].setStyleSheet(
                     f"font-size:12px; color:rgba(255,255,255,{opacity}); "
@@ -700,6 +761,7 @@ class StartupDialog(QDialog):
         QTimer.singleShot(400, self.accept)
 
     def get_result(self) -> bool:
+        """Return initialization result status."""
         return self._init_result
 
     def update_status(self, message: str, progress: int):

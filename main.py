@@ -8,12 +8,12 @@ import logging
 import logging.handlers
 import os
 import sys
-from pathlib import Path
 
 from src.core.config_manager import CONFIG_DIR
 
 
 def setup_early_logging():
+    """Initialize early file logging before the application starts."""
     if not CONFIG_DIR.exists():
         CONFIG_DIR.mkdir(parents=True)
     log_dir = CONFIG_DIR / "logs"
@@ -30,8 +30,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src
 
 
 def main():
+    """Application entry point with three-phase startup architecture."""
     import warnings
-    from PyQt6.QtCore import QTimer, QThread, pyqtSignal, QObject
+
+    from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
     from PyQt6.QtNetwork import QLocalServer, QLocalSocket
     from PyQt6.QtWidgets import QApplication, QMessageBox
 
@@ -53,6 +55,7 @@ def main():
     main_window_instance = None
 
     def handle_new_connection():
+        """Handle incoming connection from another instance to activate window."""
         client_socket = server.nextPendingConnection()
         if client_socket.waitForReadyRead(500):
             msg = client_socket.readAll().data().decode()
@@ -66,25 +69,31 @@ def main():
 
     # === SETUP STYLE ===
     from src.core.app_initializer import AppInitializer
+
     AppInitializer.setup_app_style(app)
 
     # === SPLASH SCREEN ===
     from src.gui.dialogs.startup_dialog import StartupDialog
+
     splash = StartupDialog()
     splash.show()
     app.processEvents()
 
     # === WORKER PER FASE 1 (Import pesanti) - Thread separato ===
     class Phase1Worker(QObject):
+        """Worker thread for Phase 1 initialization (heavy imports)."""
+
         progress = pyqtSignal(str, int)
         finished = pyqtSignal(bool)
 
         def run(self):
+            """Execute Phase 1 initialization in background thread."""
             try:
                 from src.core.app_initializer import AppInitializer
+
                 success = AppInitializer.initialize(
                     status_callback=lambda msg, prog: self.progress.emit(msg, prog),
-                    mw_instance=None  # Solo imports, no GUI
+                    mw_instance=None,  # Solo imports, no GUI
                 )
                 self.finished.emit(success)
             except Exception as e:
@@ -96,9 +105,11 @@ def main():
     phase1_success = [False]
 
     def on_phase1_progress(msg, prog):
+        """Update splash screen with Phase 1 progress."""
         splash.update_status(msg, prog)
 
     def on_phase1_finished(success):
+        """Handle Phase 1 completion and store result."""
         phase1_done[0] = True
         phase1_success[0] = success
 
@@ -129,6 +140,7 @@ def main():
     app.processEvents()
 
     from src.gui.main_window.main import MainWindow
+
     main_window_instance = MainWindow()
     app.processEvents()
 
@@ -140,13 +152,13 @@ def main():
     refresh_timer.start()
 
     def gui_callback(msg, prog):
+        """Update splash screen and process GUI events during Phase 3."""
         splash.update_status(msg, prog)
         app.processEvents()
 
     # Esegui preload pannelli
     AppInitializer.initialize(
-        status_callback=gui_callback,
-        mw_instance=main_window_instance
+        status_callback=gui_callback, mw_instance=main_window_instance
     )
 
     # Ferma timer refresh
