@@ -96,7 +96,18 @@ class MainWindow(QMainWindow):
 
     def finalize_init(self):
         """Metodo chiamato dopo che lo splash screen ha finito il caricamento."""
-        self.status_bar_component.show_operational_state()
+        import logging
+
+        logger = logging.getLogger("MainWindow")
+
+        try:
+            logger.info("Starting finalize_init...")
+            logger.info("Calling show_operational_state...")
+            self.status_bar_component.show_operational_state()
+            logger.info("finalize_init completed successfully")
+        except Exception as e:
+            logger.critical(f"Error in finalize_init: {e}", exc_info=True)
+            raise
 
         # Proactive Checks
         QTimer.singleShot(2000, self._check_isab_authorizations)
@@ -144,9 +155,10 @@ class MainWindow(QMainWindow):
         content_layout = QVBoxLayout(content_area)
         content_layout.setContentsMargins(20, 20, 20, 20)
 
-        self.update_banner, self.global_search = (
-            self.tool_bar_component.setup_content_toolbar(content_layout)
-        )
+        (
+            self.update_banner,
+            self.global_search,
+        ) = self.tool_bar_component.setup_content_toolbar(content_layout)
 
         self.page_stack = QStackedWidget()
         for i in range(12):

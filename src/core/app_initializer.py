@@ -4,8 +4,6 @@ App Initializer con yield frequenti per animazioni fluide.
 
 import logging
 import logging.handlers
-import time
-from typing import Callable, Optional
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
@@ -26,105 +24,110 @@ class AppInitializer:
     _core_initialized = False
 
     @staticmethod
-    def initialize(
-        status_callback: Optional[Callable[[str, int], None]] = None, mw_instance=None
-    ):
-        """Esegue l'inizializzazione."""
+    def initialize_core():
+        """Esegue l'inizializzazione del nucleo (Fase 1)."""
 
-        def step(msg, prog):
-            """Report initialization progress step."""
-            if status_callback:
-                status_callback(msg, prog)
-            logger.info(f"[INIT] {msg} ({prog}%)")
+        def step(msg):
+            logger.info(f"[INIT CORE] {msg}")
 
         try:
-            if not mw_instance and not AppInitializer._core_initialized:
-                # === FASE 1: MODULI CORE (può girare in thread) ===
-
-                step("Inizializzazione Nucleo Sistema", 5)
-                AppInitializer._setup_logging()
-
-                step("Caricamento Motori Analisi Dati", 10)
-                import pandas  # noqa
-                import numpy  # noqa
-
-                step("Configurazione Driver Automazione", 18)
-                import selenium  # noqa
-
-                step("Verifica Integrità Hardware", 22)
-                from src.core.license_updater import run_update
-                from src.core.license_validator import (
-                    LicenseStatus,
-                    get_detailed_license_status,
-                )
-
-                status, msg = get_detailed_license_status()
-                if status != LicenseStatus.VALID:
-                    step("Sincronizzazione Licenza Cloud", 26)
-                    run_update()
-
-                step("Connessione Database Sistema", 32)
-                from src.core.database import db_manager
-
-                db_manager.init_db()
-
-                AppInitializer._core_initialized = True
+            if AppInitializer._core_initialized:
                 return True
 
-            elif mw_instance:
-                # === FASE 2: PRELOAD GUI (deve restare nel thread principale) ===
-                from src.gui.main_window.page_index import PageIndex
+            step("Inizializzazione Nucleo Sistema")
+            AppInitializer._setup_logging()
 
-                _yield()
+            step("Caricamento Motori Analisi Dati")
+            import pandas  # noqa
+            import numpy  # noqa
 
-                tasks = [
-                    (PageIndex.DASHBOARD, "Preparazione Dashboard"),
-                    (PageIndex.TIMBRATURE, "Caricamento Repository Ore"),
-                    (PageIndex.STRUMENTALE, "Registro Asset Aziendali"),
-                    (PageIndex.DATAEASE, "DataEase Sync Bridge"),
-                    (PageIndex.ANAGRAFICHE, "Directory Personale"),
-                    (PageIndex.DIPENDENTI, "Gestione Schede Dipendenti"),
-                    (PageIndex.AUTOMAZIONI, "Scheduler Attività"),
-                    (PageIndex.LYRA, "Motore Analisi Lyra"),
-                    (PageIndex.SETTINGS, "Configurazione Utente"),
-                ]
+            step("Configurazione Driver Automazione")
+            import selenium  # noqa
 
-                base_prog = 45
-                for i, (idx, name) in enumerate(tasks):
-                    prog = base_prog + int((i / len(tasks)) * 45)
-                    step(name, prog)
-                    _yield()
+            step("Verifica Integrità Hardware")
+            from src.core.license_updater import run_update
+            from src.core.license_validator import (
+                LicenseStatus,
+                get_detailed_license_status,
+            )
 
-                    # Carica il pannello
-                    mw_instance.navigation_controller.get_panel(idx)
-                    _yield()
+            status, msg = get_detailed_license_status()
+            if status != LicenseStatus.VALID:
+                step("Sincronizzazione Licenza Cloud")
+                run_update()
 
-                    # Micro-pausa per permettere refresh animazioni
-                    time.sleep(0.008)
-                    _yield()
+            step("Connessione Database Sistema")
+            from src.core.database import db_manager
 
-                step("Monitoraggio Sicurezza Telegram", 94)
-                _yield()
-                from src.core import config_manager
+            db_manager.init_db()
 
-                config = config_manager.load_config()
-                if not config.get("telegram_chat_id") and not config.get(
-                    "telegram_pairing_code"
-                ):
-                    import random
-
-                    code = str(random.randint(100000, 999999))
-                    config_manager.set_config_value("telegram_pairing_code", code)
-                _yield()
-
-                step("Sistema Pronto", 100)
-                return True
-
+            AppInitializer._core_initialized = True
             return True
 
         except Exception as e:
             logger.critical(f"Startup error: {e}")
             return False
+
+    @staticmethod
+    def init_generator(mw_instance):
+        """Generatore per l'inizializzazione GUI a step (Fase 2)."""
+
+        from src.core import config_manager
+        from src.gui.main_window.page_index import PageIndex
+
+        # IMPORTANT: PageIndex enum values (corrected to match current definition)
+        # DASHBOARD=0, AUTOMAZIONI=1, LYRA=2, TIMBRATURE=3, STRUMENTALE=4,
+        # DATAEASE=5, ANAGRAFICHE=6, SETTINGS=7, HELP=8, NOTIFICATIONS=9,
+        # STORICO_ODA=10, DIPENDENTI=11
+
+        tasks = [
+            (PageIndex.DASHBOARD, "Preparazione Dashboard"),
+            (PageIndex.AUTOMAZIONI, "Scheduler Attività"),
+            (PageIndex.LYRA, "Motore Analisi Lyra"),
+            (PageIndex.TIMBRATURE, "Caricamento Repository Ore"),
+            (PageIndex.STRUMENTALE, "Registro Asset Aziendali"),
+            (PageIndex.DATAEASE, "DataEase Sync Bridge"),
+            (PageIndex.ANAGRAFICHE, "Directory Personale"),
+            (PageIndex.SETTINGS, "Configurazione Utente"),
+            (PageIndex.DIPENDENTI, "Gestione Schede Dipendenti"),
+        ]
+
+        base_prog = 45
+        total = len(tasks)
+
+        for i, (idx, name) in enumerate(tasks):
+            prog = base_prog + int((i / total) * 45)
+            # Yield control to main loop
+            yield name, prog
+
+            # Heavy task - load panel with error handling
+            try:
+                import logging
+
+                logger = logging.getLogger("AppInitializer")
+                logger.info(f"Loading panel {name} (index {idx})...")
+                mw_instance.navigation_controller.get_panel(idx)
+                logger.info(f"Panel {name} loaded successfully")
+            except Exception as e:
+                import logging
+
+                logger = logging.getLogger("AppInitializer")
+                logger.error(
+                    f"Error loading panel {name} (index {idx}): {e}", exc_info=True
+                )
+                # Continue anyway - app should still work without this panel
+
+        yield "Monitoraggio Sicurezza Telegram", 94
+        config = config_manager.load_config()
+        if not config.get("telegram_chat_id") and not config.get(
+            "telegram_pairing_code"
+        ):
+            import random
+
+            code = str(random.randint(100000, 999999))
+            config_manager.set_config_value("telegram_pairing_code", code)
+
+        yield "Sistema Pronto", 100
 
     @staticmethod
     def _setup_logging():

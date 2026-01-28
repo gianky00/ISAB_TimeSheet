@@ -7,17 +7,15 @@ import ctypes
 import math
 import os
 import random
+from contextlib import suppress
 from ctypes import Structure, byref, sizeof, wintypes
 
 from PyQt6.QtCore import (
     QEasingCurve,
-    QObject,
     QPoint,
     QPropertyAnimation,
     Qt,
-    QThread,
     QTimer,
-    pyqtSignal,
 )
 from PyQt6.QtGui import (
     QBrush,
@@ -28,6 +26,7 @@ from PyQt6.QtGui import (
     QPainter,
     QPainterPath,
     QPen,
+    QPixmap,
     QRadialGradient,
 )
 from PyQt6.QtWidgets import (
@@ -97,36 +96,6 @@ def get_current_process_ram_mb():
 
 
 # =============================================================================
-# WORKER THREAD - Caricamento in background
-# =============================================================================
-class InitWorker(QObject):
-    """Esegue il caricamento in un thread separato."""
-
-    progress = pyqtSignal(str, int)
-    finished = pyqtSignal(bool)
-
-    def __init__(self, mw_instance=None):
-        super().__init__()
-        self.mw_instance = mw_instance
-
-    def run(self):
-        """Execute initialization in background thread."""
-        try:
-            from src.core.app_initializer import AppInitializer
-
-            success = AppInitializer.initialize(
-                status_callback=lambda msg, prog: self.progress.emit(msg, prog),
-                mw_instance=self.mw_instance,
-            )
-            self.finished.emit(success)
-        except Exception as e:
-            import logging
-
-            logging.getLogger("InitWorker").error(f"Error: {e}")
-            self.finished.emit(False)
-
-
-# =============================================================================
 # PARTICLE SYSTEM (Parallax Enhanced)
 # =============================================================================
 class Particle:
@@ -185,6 +154,7 @@ class ParticleBackground(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tick)
         self.timer.start(16)  # 60fps
+        self._bg_cache = None
 
     def init_particles(self, count=60):
         """Initialize particle array with specified count."""
@@ -194,7 +164,12 @@ class ParticleBackground(QWidget):
         """Applica forza di parallasse a tutte le particelle."""
         for p in self.particles:
             p.apply_force(dx, dy)
-        self.update()
+        # Non chiamiamo update() qui per non saturare l'event loop durante il drag
+
+    def resizeEvent(self, event):
+        """Invalidate cache on resize."""
+        self._bg_cache = None
+        super().resizeEvent(event)
 
     def _tick(self):
         self.phase += 0.015
@@ -202,12 +177,18 @@ class ParticleBackground(QWidget):
             p.update()
         self.update()
 
-    def paintEvent(self, event):
-        """Render particles, connections, and glow orbs with rounded clip."""
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    def _render_background_to_cache(self):
+        """Render static background elements to pixmap."""
         w, h = self.width(), self.height()
         r = self.BORDER_RADIUS
+
+        from PyQt6.QtGui import QPixmap
+
+        self._bg_cache = QPixmap(w, h)
+        self._bg_cache.fill(Qt.GlobalColor.transparent)
+
+        painter = QPainter(self._bg_cache)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # Clip agli angoli arrotondati
         clip_path = QPainterPath()
@@ -219,29 +200,79 @@ class ParticleBackground(QWidget):
         bg.setColorAt(0, QColor(6, 6, 12))
         bg.setColorAt(0.5, QColor(10, 10, 18))
         bg.setColorAt(1, QColor(6, 6, 12))
-        painter.fillRect(self.rect(), bg)
+        painter.fillRect(0, 0, w, h, bg)
 
-        # Glow orbs pulsanti
-        self._draw_glow_orbs(painter, w, h)
+        painter.end()
 
-        # Connessioni tra particelle vicine
+    def _render_sprite_to_cache(self):
+        """Pre-render a single particle sprite (glowing dot)."""
+        size = 64  # Max size
+        self._sprite_cache = QPixmap(size, size)
+        self._sprite_cache.fill(Qt.GlobalColor.transparent)
+
+        pt = QPainter(self._sprite_cache)
+        pt.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Glow
+        glow = QRadialGradient(size / 2, size / 2, size / 2)
+        glow.setColorAt(0, QColor(52, 152, 219, 200))
+        glow.setColorAt(1, QColor(52, 152, 219, 0))
+        pt.setBrush(QBrush(glow))
+        pt.setPen(Qt.PenStyle.NoPen)
+        pt.drawEllipse(0, 0, size, size)
+
+        # Core
+        pt.setBrush(QColor(255, 255, 255, 220))
+        pt.drawEllipse(QPoint(int(size / 2), int(size / 2)), 4, 4)
+        pt.end()
+
+    def paintEvent(self, event):
+        """Render cached background and sprite-based particles."""
+        painter = QPainter(self)
+
+        # 1. Background (Cached)
+        if not self._bg_cache:
+            self._render_background_to_cache()
+        painter.drawPixmap(0, 0, self._bg_cache)
+
+        # 2. Particles (Sprite Batching)
+        if not hasattr(self, "_sprite_cache") or not self._sprite_cache:
+            self._render_sprite_to_cache()
+
+        w, h = self.width(), self.height()
+        r = self.BORDER_RADIUS
+
+        # Clip for particles
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, w, h, r, r)
+        painter.setClipPath(path)
+
+        # Draw sprites
+        for p in self.particles:
+            # Calculate opacity/scale
+            op = 0.6 + 0.4 * math.sin(self.phase * 2 + p.phase)  # Opacity variation
+
+            painter.setOpacity(op * p.opacity)
+
+            # Scale sprite? No, just draw it (scaling is slow).
+            # Or use drawPixmap with target rect for hardware scaling.
+            target_size = p.size * 8  # Virtual size
+
+            # Position centered
+            x = int(p.x - target_size / 2)
+            y = int(p.y - target_size / 2)
+
+            painter.drawPixmap(
+                x, y, int(target_size), int(target_size), self._sprite_cache
+            )
+
+        # Draw Connections (Lines are cheap)
+        painter.setOpacity(1.0)
         self._draw_connections(painter)
 
-        # Particelle
-        for p in self.particles:
-            op = p.get_opacity()
-            # Glow
-            glow = QRadialGradient(p.x, p.y, p.size * 4)
-            glow.setColorAt(0, QColor(52, 152, 219, int(op * 80)))
-            glow.setColorAt(1, QColor(52, 152, 219, 0))
-            painter.setBrush(QBrush(glow))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(
-                QPoint(int(p.x), int(p.y)), int(p.size * 4), int(p.size * 4)
-            )
-            # Core
-            painter.setBrush(QColor(52, 152, 219, int(op * 255)))
-            painter.drawEllipse(QPoint(int(p.x), int(p.y)), int(p.size), int(p.size))
+        # Draw Orbs (Cached or simple?)
+        # Orbs are large, let's keep them dynamic but optimize
+        self._draw_glow_orbs(painter, w, h)
 
     def _draw_glow_orbs(self, painter, w, h):
         """Orbs luminosi che pulsano."""
@@ -266,14 +297,18 @@ class ParticleBackground(QWidget):
     def _draw_connections(self, painter):
         """Linee tra particelle vicine."""
         max_dist = 80
+        pen = QPen(QColor(52, 152, 219, 40), 1)  # Constant pen
+        painter.setPen(pen)
+
         for i, p1 in enumerate(self.particles):
-            for p2 in self.particles[i + 1 :]:
+            # Optimize nested loop: check only next 5 particles (spatial locality approximation)
+            for p2 in self.particles[i + 1 : min(i + 6, len(self.particles))]:
                 dx, dy = p1.x - p2.x, p1.y - p2.y
-                dist = math.sqrt(dx * dx + dy * dy)
-                if dist < max_dist:
-                    opacity = (1 - dist / max_dist) * 0.12
-                    pen = QPen(QColor(52, 152, 219, int(opacity * 255)), 0.5)
-                    painter.setPen(pen)
+                if abs(dx) > max_dist or abs(dy) > max_dist:
+                    continue  # Fast reject
+
+                dist_sq = dx * dx + dy * dy
+                if dist_sq < max_dist * max_dist:
                     painter.drawLine(int(p1.x), int(p1.y), int(p2.x), int(p2.y))
 
         # Reset clipping
@@ -363,9 +398,16 @@ class ResourceMonitor(QWidget):
     def _update_stats(self):
         import time
 
+        # Safety check: Don't update if widget is being destroyed
+        if not self.isVisible():
+            return
+
         # Update RAM (Real)
-        mb = get_current_process_ram_mb()
-        self.ram_lbl.setText(f"RAM: {int(mb)}MB")
+        try:
+            mb = get_current_process_ram_mb()
+            self.ram_lbl.setText(f"RAM: {int(mb)}MB")
+        except Exception:
+            pass
 
         # Update CPU (Real)
         try:
@@ -390,8 +432,11 @@ class ResourceMonitor(QWidget):
             self.cpu_lbl.setText("CPU: N/A")
 
         # Decay activity (Log based)
-        self._activity_level = max(0, self._activity_level - 10)
-        self._draw_activity()
+        try:
+            self._activity_level = max(0, self._activity_level - 10)
+            self._draw_activity()
+        except Exception:
+            pass
 
     def trigger_activity(self):
         """Chiamato quando c'è un log event per simulare carico CPU/IO."""
@@ -1005,17 +1050,9 @@ class StartupDialog(QDialog):
         color = "#3498db" if self._pulse_state else "rgba(52,152,219,0.4)"
         self.indicator.setStyleSheet(f"background:{color}; border-radius:4px;")
 
-    def start_initialization(self, mw_instance=None):
-        """Avvia il caricamento in un thread separato - animazioni MAI bloccate."""
-        self._thread = QThread()
-        self._worker = InitWorker(mw_instance)
-        self._worker.moveToThread(self._thread)
-
-        self._thread.started.connect(self._worker.run)
-        self._worker.progress.connect(self._on_progress)
-        self._worker.finished.connect(self._on_finished)
-
-        self._thread.start()
+    # DEPRECATED: This method is no longer used. Initialization now happens
+    # via the generator pattern in main.py for better control flow.
+    # Keeping for backward compatibility but will be removed in future versions.
 
     def _on_progress(self, message: str, prog: int):
         """Aggiorna UI - chiamato dal thread principale via signal."""
@@ -1072,17 +1109,42 @@ class StartupDialog(QDialog):
         self._on_progress(message, progress)
 
     def closeEvent(self, event):
-        """Cleanup."""
-        self.particles.timer.stop()
-        self.border.timer.stop()
-        self.progress.timer.stop()
-        self.logo.timer.stop()
-        self._dot_timer.stop()
-        self._pulse_timer.stop()
-        self.resource_mon.timer.stop()
-        for lbl in self.log_labels:
-            lbl._timer.stop()
-        if self._thread and self._thread.isRunning():
-            self._thread.quit()
-            self._thread.wait(500)
+        """Cleanup - Stop all timers and threads safely."""
+        import logging
+
+        logger = logging.getLogger("StartupDialog")
+
+        try:
+            logger.info("Closing splash screen - stopping timers...")
+
+            # Stop all timers with safety checks
+            with suppress(Exception):
+                self.particles.timer.stop()
+            with suppress(Exception):
+                self.border.timer.stop()
+            with suppress(Exception):
+                self.progress.timer.stop()
+            with suppress(Exception):
+                self.logo.timer.stop()
+            with suppress(Exception):
+                self._dot_timer.stop()
+            with suppress(Exception):
+                self._pulse_timer.stop()
+            with suppress(Exception):
+                self.resource_mon.timer.stop()
+
+            for lbl in self.log_labels:
+                with suppress(Exception):
+                    lbl._timer.stop()
+
+            # Clean up thread
+            if self._thread and self._thread.isRunning():
+                logger.info("Waiting for worker thread to finish...")
+                self._thread.quit()
+                self._thread.wait(500)
+
+            logger.info("Splash screen closed successfully")
+        except Exception as e:
+            logger.error(f"Error during splash cleanup: {e}", exc_info=True)
+
         super().closeEvent(event)

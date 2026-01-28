@@ -91,10 +91,8 @@ def main():
             try:
                 from src.core.app_initializer import AppInitializer
 
-                success = AppInitializer.initialize(
-                    status_callback=lambda msg, prog: self.progress.emit(msg, prog),
-                    mw_instance=None,  # Solo imports, no GUI
-                )
+                # FASE 1 ora usa initialize_core (ritorna bool)
+                success = AppInitializer.initialize_core()
                 self.finished.emit(success)
             except Exception as e:
                 logging.getLogger("Phase1").error(f"Error: {e}")
@@ -144,35 +142,64 @@ def main():
     main_window_instance = MainWindow()
     app.processEvents()
 
-    # === FASE 3: Preload pannelli con timer forzato ===
-    # Timer che forza refresh GUI ogni 8ms per animazioni fluide
-    refresh_timer = QTimer()
-    refresh_timer.setInterval(8)
-    refresh_timer.timeout.connect(lambda: app.processEvents())
-    refresh_timer.start()
+    # === FASE 3: Preload GUI con Generatore Non-Bloccante ===
 
-    def gui_callback(msg, prog):
-        """Update splash screen and process GUI events during Phase 3."""
-        splash.update_status(msg, prog)
-        app.processEvents()
+    # Inizializza generatore
+    gui_init_gen = AppInitializer.init_generator(main_window_instance)
 
-    # Esegui preload pannelli
-    AppInitializer.initialize(
-        status_callback=gui_callback, mw_instance=main_window_instance
-    )
+    def finalize_startup():
+        """Called when initialization is complete."""
+        try:
+            logging.getLogger("Startup").info("Finalizing startup sequence...")
+            splash.update_status("Avvio completato", 100)
 
-    # Ferma timer refresh
-    refresh_timer.stop()
+            logging.getLogger("Startup").info("Calling finalize_init...")
+            main_window_instance.finalize_init()
 
-    # === FINALIZZAZIONE ===
-    splash.update_status("Avvio completato", 100)
-    app.processEvents()
+            logging.getLogger("Startup").info("Showing main window...")
+            # Show main window FIRST (hidden behind splash)
+            main_window_instance.show()
+            main_window_instance.showMaximized()
+            main_window_instance.raise_()
+            main_window_instance.activateWindow()
 
-    main_window_instance.finalize_init()
+            logging.getLogger("Startup").info("Main window shown, closing splash...")
+            # Process events to ensure window is rendered
+            app.processEvents()
 
-    # Chiudi splash e mostra finestra principale
-    QTimer.singleShot(400, splash.close)
-    QTimer.singleShot(500, main_window_instance.showMaximized)
+            # Close splash - main window will automatically come to front
+            splash.close()
+
+            logging.getLogger("Startup").info("Startup finalized successfully")
+        except Exception as e:
+            logging.getLogger("Startup").critical(
+                f"Error in finalize_startup: {e}", exc_info=True
+            )
+
+    def process_next_step():
+        """Execute one initialization step and yield to event loop."""
+        try:
+            # Esegue UN solo step e ritorna subito
+            msg, prog = next(gui_init_gen)
+            logging.getLogger("Startup").info(f"Init step: {msg} ({prog}%)")
+            splash.update_status(msg, prog)
+
+            # Pianifica il prossimo step al prossimo ciclo di eventi libero (0ms)
+            # Questo permette alla GUI di aggiornarsi e alle animazioni di avanzare
+            QTimer.singleShot(0, process_next_step)
+
+        except StopIteration:
+            # Generatore esaurito = Init completata
+            logging.getLogger("Startup").info("Initialization generator completed")
+            finalize_startup()
+        except Exception as e:
+            logging.getLogger("Startup").error(
+                f"Error in init loop: {e}", exc_info=True
+            )
+            finalize_startup()  # Try to proceed anyway
+
+    # Avvia la catena di inizializzazione
+    QTimer.singleShot(10, process_next_step)
 
     try:
         exit_code = app.exec()
