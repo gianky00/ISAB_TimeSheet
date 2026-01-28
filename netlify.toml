@@ -1,5 +1,5 @@
 [build]
-  command = "pip install poetry && poetry config virtualenvs.create false && poetry install --with dev --no-interaction && mkdocs build"
+  command = "python -m pip install poetry && python -m poetry install --with dev --no-interaction && python -m mkdocs build"
   publish = "site"
 
 [build.environment]
