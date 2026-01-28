@@ -12,14 +12,14 @@ from PyQt6.QtWidgets import QMessageBox
 logger = logging.getLogger("AppInitializer")
 
 class AppInitializer:
-    """Gestisce la sequenza di avvio UNIFICATA (Core + GUI Preload)."""
+    """Gestisce la sequenza di avvio con log puliti e sintetici."""
 
     _core_initialized = False
 
     @staticmethod
     def initialize(status_callback: Optional[Callable[[str, int], None]] = None, mw_instance=None):
         """
-        Esegue l'inizializzazione completa o il pre-caricamento della GUI.
+        Esegue l'inizializzazione con log diretti.
         """
         
         def step(msg, prog):
@@ -28,48 +28,46 @@ class AppInitializer:
             logger.info(f"[INIT] {msg} ({prog}%)")
 
         try:
-            # SE mw_instance non è fornito, facciamo il CORE INIT
             if not mw_instance and not AppInitializer._core_initialized:
-                # --- FASE 1: CORE SYSTEM ---
-                step("Inizializzazione Kernel SyncroJob...", 5)
+                # --- FASE 1: CORE ---
+                step("Kernel System", 5)
                 AppInitializer._setup_logging()
                 
-                step("Caricamento motori di analisi dati...", 10)
+                step("Data Analysis Engines", 10)
                 import pandas
                 import numpy
                 
-                step("Configurazione motori di automazione...", 15)
+                step("Automation Drivers", 15)
                 import selenium
                 
-                # --- FASE 2: SICUREZZA & LICENZA ---
-                step("Verifica identità hardware (HWID)...", 20)
+                # --- FASE 2: SICUREZZA ---
+                step("Hardware Identity (HWID)", 20)
                 from src.core.license_validator import get_detailed_license_status, LicenseStatus
                 from src.core.license_updater import run_update
                 
                 status, msg = get_detailed_license_status()
                 if status != LicenseStatus.VALID:
-                    step("Ripristino licenza tramite cloud...", 25)
+                    step("Cloud License Recovery", 25)
                     run_update()
 
-                step("Connessione al database di sistema...", 30)
+                step("System Database", 30)
                 from src.core.database import db_manager
                 db_manager.init_db()
                 
                 AppInitializer._core_initialized = True
                 return True
 
-            # SE mw_instance è fornito, facciamo il GUI PRELOAD
             elif mw_instance:
                 from src.gui.main_window.page_index import PageIndex
                 
                 tasks = [
                     (PageIndex.DASHBOARD, "Dashboard & Analytics"),
                     (PageIndex.TIMBRATURE, "Timesheet Repository"),
-                    (PageIndex.STRUMENTALE, "Asset Registry Module"),
+                    (PageIndex.STRUMENTALE, "Asset Registry"),
                     (PageIndex.DATAEASE, "DataEase Sync Bridge"),
-                    (PageIndex.ANAGRAFICHE, "HR Directory Service"),
+                    (PageIndex.ANAGRAFICHE, "HR Directory"),
                     (PageIndex.DIPENDENTI, "Employee Records"),
-                    (PageIndex.AUTOMAZIONI, "Task Scheduler Engine"),
+                    (PageIndex.AUTOMAZIONI, "Task Scheduler"),
                     (PageIndex.LYRA, "Lyra Analysis Engine"),
                     (PageIndex.SETTINGS, "User Configuration")
                 ]
@@ -77,13 +75,12 @@ class AppInitializer:
                 base_prog = 45
                 for i, (idx, name) in enumerate(tasks):
                     prog = base_prog + int((i / len(tasks)) * 45)
-                    step(f"Caricamento modulo: {name}...", prog)
+                    step(name, prog)
                     mw_instance.navigation_controller.get_panel(idx)
-                    # Piccola pausa per fluidità visiva
                     time.sleep(0.02)
 
-                # --- FASE 5: SERVIZI ACCESSORI ---
-                step("Avvio monitoraggio sicurezza Telegram...", 92)
+                # --- FASE 5: SERVIZI ---
+                step("Telegram Security Monitor", 92)
                 from src.core import config_manager
                 config = config_manager.load_config()
                 if not config.get("telegram_chat_id") and not config.get("telegram_pairing_code"):
@@ -91,14 +88,13 @@ class AppInitializer:
                     code = str(random.randint(100000, 999999))
                     config_manager.set_config_value("telegram_pairing_code", code)
                 
-                step("Sistema pronto. Accesso in corso...", 100)
+                step("System Ready", 100)
                 return True
             
             return True
 
         except Exception as e:
-            logger.critical(f"Errore fatale startup: {e}")
-            logger.error(traceback.format_exc())
+            logger.critical(f"Startup error: {e}")
             return False
 
     @staticmethod
