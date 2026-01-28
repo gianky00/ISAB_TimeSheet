@@ -53,6 +53,10 @@ def run_command(cmd, cwd=None, shell=False, check=True):
     if cwd is None:
         cwd = ROOT_DIR
 
+    # On Windows, always use shell=True for commands that might be scripts (like netlify, pyarmor)
+    if os.name == "nt":
+        shell = True
+
     cmd_str = " ".join(cmd) if isinstance(cmd, list) else cmd
     log(f"\n[EXEC] {cmd_str}")
 
@@ -135,8 +139,8 @@ def run_pyarmor():
         MAIN_SCRIPT,
     ]
 
-    # Use shell=True specifically for Windows if pyarmor is a bat/cmd shim
-    run_command(cmd, cwd=ROOT_DIR, shell=(os.name == "nt"))
+    # run_command now handles shell=True for NT automatically
+    run_command(cmd, cwd=ROOT_DIR)
     log("[BUILD] PyArmor obfuscation completed.")
 
 
@@ -185,12 +189,6 @@ def run_pyinstaller(obfuscated=False):
     # --- AUTOMATIC DEPENDENCY ANALYSIS ---
     log("[BUILD] Analyzing source code for dependencies...")
 
-    # Capture analyzer output to log as well?
-    # Since get_all_imports prints to stdout, we might want to capture it.
-    # But for now let's just run it. The user will see output in console.
-    # To properly log it we'd need to redirect stdout during this call.
-    # We will trust the console output for this part or wrap it later if needed.
-
     try:
         detected_imports = get_all_imports(MAIN_SCRIPT, os.path.join(ROOT_DIR, "src"))
         log(f"[BUILD] Detected {len(detected_imports)} hidden imports.")
@@ -216,8 +214,6 @@ def run_pyinstaller(obfuscated=False):
         "constants",
     ]
     detected_imports = [imp for imp in detected_imports if imp not in ignored_imports]
-
-    # Fix: Jarvis/Pkg_resources runtime error
 
     for imp in detected_imports:
         cmd.extend(["--hidden-import", imp])
@@ -312,8 +308,6 @@ def run_inno_setup():
     # Run ISCC
     cmd = [iscc, f"/DMyAppVersion={version}", ISS_SCRIPT]
 
-    # Inno Setup might not print much to stdout/stderr in a way that is useful to capture line-by-line
-    # but we will try.
     run_command(cmd, cwd=SCRIPT_DIR)
 
     log("[BUILD] Installer created successfully.")
@@ -333,7 +327,7 @@ def create_version_json():
 
     version_json = {
         "version": version,
-        "url": f"https://syncrojob.netlify.app/SyncroJob_Setup_{version}.exe",
+        "url": f"https://projectjob-bot.netlify.app/SyncroJob_Setup_{version}.exe",
     }
 
     # Write version.json
@@ -342,7 +336,6 @@ def create_version_json():
         json.dump(version_json, f, indent=2)
 
     # Copy installer to netlify folder
-    version = get_version()
     installer_name = f"SyncroJob_Setup_{version}.exe"
     src_installer = os.path.join(SETUP_OUTPUT_DIR, installer_name)
 
@@ -458,9 +451,14 @@ def deploy_netlify(netlify_dir):
     """Deploy to Netlify."""
     log("[BUILD] Deploying to Netlify...")
 
+    # Use shell=True on Windows to find npm-installed scripts (netlify.cmd/ps1)
+    use_shell = os.name == "nt"
+
     # Check if netlify CLI is available
     try:
-        subprocess.run(["netlify", "--version"], capture_output=True, check=True)
+        subprocess.run(
+            ["netlify", "--version"], shell=use_shell, capture_output=True, check=True
+        )
     except (subprocess.CalledProcessError, FileNotFoundError):
         log("[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli")
         return False
@@ -476,7 +474,7 @@ def deploy_netlify(netlify_dir):
         NETLIFY_SITE_ID,
     ]
 
-    run_command(cmd)
+    run_command(cmd, shell=use_shell)
     log("[BUILD] Deployed to Netlify successfully.")
     return True
 
@@ -487,8 +485,6 @@ def main():
         "--no-deploy", action="store_true", help="Skip Netlify deployment"
     )
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
-    # PyArmor is now mandatory/standard. Added a skip flag only for debugging if absolutely needed,
-    # but the default flow involves obfuscation.
     parser.add_argument(
         "--debug-no-obfuscate",
         action="store_true",
@@ -510,15 +506,12 @@ def main():
     # Step 1: Clean
     clean_build()
 
-    # Step 2: Obfuscation (Standard/Mandatory)
-    is_obfuscated = True
-    if args.debug_no_obfuscate:
-        log(
-            "[WARNING] SKIPPING OBFUSCATION (Debug Mode). This build is NOT for distribution."
-        )
-        is_obfuscated = False
-    else:
+    # Step 2: Obfuscation
+    is_obfuscated = not args.debug_no_obfuscate
+    if is_obfuscated:
         run_pyarmor()
+    else:
+        log("[WARNING] SKIPPING OBFUSCATION (Debug Mode).")
 
     # Step 3: PyInstaller
     run_pyinstaller(obfuscated=is_obfuscated)
@@ -527,10 +520,10 @@ def main():
     if not args.skip_installer:
         run_inno_setup()
 
-    # Step 4: Create version.json
+    # Step 5: Create version.json
     netlify_dir = create_version_json()
 
-    # Step 5: Deploy (optional)
+    # Step 6: Deploy
     if not args.no_deploy:
         deploy_netlify(netlify_dir)
     else:
