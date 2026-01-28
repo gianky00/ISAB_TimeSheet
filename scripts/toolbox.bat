@@ -28,19 +28,20 @@ echo.
 echo [ VERSIONING ^& DEPLOY ]
 echo 10. COMMIT WIZARD (Commitizen - Guida al commit standard)
 echo 11. BUMP VERSION  (Commitizen - Auto-incremento versione)
-echo 12. RELEASE       (Legacy Release script)
-echo 13. DEPLOY        (Release ^& Deploy to Netlify)
+echo 12. RELEASE       (Release Automatica - Full)
+echo 13. DEPLOY        (Release ^& Deploy - Full)
+echo 25. FAST DEPLOY   (Release ^& Deploy - Senza Test)
 echo.
 echo [ TOOLS ]
 echo 14. INSPECTOR     (Universal Inspector)
 echo 15. SECRETS       (Secrets Manager)
 echo 16. PROFILING     (Scalene Performance)
-echo 17. DB MAINTAIN   (SQLite Vacuum & Check)
-echo 18. RAW METRICS   (Radon CC & MI)
+echo 17. DB MAINTAIN   (SQLite Vacuum ^& Check)
+echo 18. RAW METRICS   (Radon CC ^& MI)
 echo 19. CLEAN CODE    (Eradicate - Remove commented code)
 echo 20. SECURITY AUDIT(Pip-audit - Vulnerability scan)
 echo 21. MODERNIZE CODE(Refurb - Modern Python suggestions)
-echo 22. PROJECT STATS (Pygount - Lines of code & stats)
+echo 22. PROJECT STATS (Pygount - Lines of code ^& stats)
 echo.
 echo [ SYSTEM ]
 echo 23. RUN APP       (Dev Mode - Icecream enabled)
@@ -50,7 +51,7 @@ echo [q] ESCI
 echo.
 echo ============================================================
 
-set /p choice="Scegli (1-24): "
+set /p choice="Scegli (1-25): "
 
 set VENV_PYTHON=.venv\Scripts\python.exe
 set VENV_BIN=.venv\Scripts
@@ -144,6 +145,12 @@ if "%choice%"=="12" (
 
 if "%choice%"=="13" (
     !VENV_PYTHON! admin/release.py auto --deploy
+    pause
+    goto menu
+)
+
+if "%choice%"=="25" (
+    !VENV_PYTHON! admin/release.py auto --deploy --skip-tests
     pause
     goto menu
 )
