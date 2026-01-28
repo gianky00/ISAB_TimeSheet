@@ -59,7 +59,6 @@ def setup_logging():
     log_dir.mkdir(exist_ok=True)
 
     # 1. Main App Logger (syncrojob.log)
-    # Usa RotatingFileHandler per evitare file enormi (max 5MB, 3 backup)
     app_log_file = log_dir / "syncrojob.log"
     app_handler = logging.handlers.RotatingFileHandler(
         app_log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
@@ -68,13 +67,12 @@ def setup_logging():
         logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     )
 
-    # Configura il root logger (cattura tutto dai moduli src.*)
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     if not root_logger.handlers:
         root_logger.addHandler(app_handler)
 
-    # 2. Crash Logger (crash.log) - Separato per errori fatali
+    # 2. Crash Logger (crash.log)
     crash_handler = logging.FileHandler(
         log_dir / "crash.log", mode="w", encoding="utf-8"
     )
@@ -83,13 +81,11 @@ def setup_logging():
     )
 
     clogger = logging.getLogger("crash_logger")
-    # Evita duplicazione se già configurato (es. reload)
     if not clogger.handlers:
         clogger.addHandler(crash_handler)
     clogger.setLevel(logging.INFO)
-    clogger.propagate = False  # Non mandare i crash al root logger (opzionale)
+    clogger.propagate = False
 
-    # Installazione Hooks
     sys.excepthook = handle_exception
     threading.excepthook = handle_thread_exception
 
@@ -104,69 +100,85 @@ if src_path not in sys.path:
 
 def main():
     import warnings
+    from PyQt6.QtCore import QCoreApplication
+    from PyQt6.QtNetwork import QLocalServer, QLocalSocket
+    from PyQt6.QtWidgets import QApplication, QMessageBox
 
-    # Setup Icecream for debugging (DX)
+    # Setup Icecream
     try:
         from icecream import ic
-
         ic.configureOutput(prefix="DEBUG| ", includeContext=True)
         import builtins
-
         builtins.ic = ic  # type: ignore
     except ImportError:
         pass
 
-    # Suppress openpyxl "Unknown extension" warning
     warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
-    from PyQt6.QtCore import QCoreApplication, QSharedMemory
-    from PyQt6.QtWidgets import QApplication, QMessageBox
-
-    # === SINGLE INSTANCE CHECK ===
-    # Crea una shared memory con un nome univoco per l'applicazione
-    shared_memory = QSharedMemory("SyncroJob_SingleInstance_Key")
-
-    # Tenta di creare la memoria condivisa
-    if not shared_memory.create(1):
-        # Se la creazione fallisce, significa che un'altra istanza è già in esecuzione
-        QMessageBox.warning(
-            None,
-            "SyncroJob già in esecuzione",
-            "Un'istanza di SyncroJob è già in esecuzione.\n\n"
-            "Per evitare conflitti e problemi di concorrenza, "
-            "è possibile avere una sola istanza attiva alla volta.",
-        )
+    app = QApplication(sys.argv)
+    
+    # === SINGLE INSTANCE & ACTIVATION LOGIC ===
+    server_name = "SyncroJob_Instance_Connector"
+    
+    # Prova a connetterti a un'istanza esistente
+    socket = QLocalSocket()
+    socket.connectToServer(server_name)
+    
+    if socket.waitForConnected(500):
+        # Esiste già un'istanza! Invia comando di attivazione e chiudi.
+        socket.write(b"ACTIVATE")
+        socket.waitForBytesWritten(500)
+        socket.disconnectFromServer()
         sys.exit(0)
+    
+    # Se la connessione fallisce, questa è la prima istanza. Avvia il server.
+    server = QLocalServer()
+    server.listen(server_name)
+    
+    # Variabile per contenere la finestra principale (necessaria per la closure)
+    main_window_instance = None
 
+    def handle_new_connection():
+        client_socket = server.nextPendingConnection()
+        if client_socket.waitForReadyRead(500):
+            msg = client_socket.readAll().data().decode()
+            if msg == "ACTIVATE" and main_window_instance:
+                # Riporta la finestra in primo piano
+                main_window_instance.show()
+                main_window_instance.raise_()
+                main_window_instance.activateWindow()
+        client_socket.disconnectFromServer()
+
+    server.newConnection.connect(handle_new_connection)
+
+    # Configurazione path e ambiente per eseguibile
     if getattr(sys, "frozen", False):
-        # Fix for Qt plugins path when frozen with PyInstaller 6+ and PyArmor
         exe_dir = os.path.dirname(sys.executable)
-        # Struttura standard PyInstaller 6+: _internal/PyQt6/Qt6/plugins
         plugin_path = os.path.join(exe_dir, "_internal", "PyQt6", "Qt6", "plugins")
         if os.path.exists(plugin_path):
             QCoreApplication.addLibraryPath(plugin_path)
-
-        # Fallback per icone se PROJECT_ROOT non è impostato correttamente in ResourceManager
-        os.environ["QT_SVG_ICON_DIR"] = os.path.join(
-            exe_dir, "_internal", "assets", "icons"
-        )
+        os.environ["QT_SVG_ICON_DIR"] = os.path.join(exe_dir, "_internal", "assets", "icons")
 
     from src.core.app_initializer import AppInitializer
     from src.gui.main_window import MainWindow
 
-    app = QApplication(sys.argv)
     AppInitializer.setup_app_style(app)
 
     if not AppInitializer.initialize():
         sys.exit(1)
 
     try:
-        window = MainWindow()
-        window.showMaximized()
-        sys.exit(app.exec())
+        main_window_instance = MainWindow()
+        main_window_instance.showMaximized()
+        
+        # Esegue il loop e assicura la chiusura del server alla fine
+        exit_code = app.exec()
+        server.close()
+        sys.exit(exit_code)
     except Exception as e:
         logger.critical("Errore fatale GUI", exc_info=True)
         QMessageBox.critical(None, "Errore GUI", f"Errore fatale durante l'avvio:\n{e}")
+        server.close()
         sys.exit(1)
 
 
