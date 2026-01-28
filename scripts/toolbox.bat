@@ -31,6 +31,7 @@ echo 11. BUMP VERSION  (Commitizen - Auto-incremento versione)
 echo 12. RELEASE       (Release Automatica - Full)
 echo 13. DEPLOY        (Release ^& Deploy - Full)
 echo 25. FAST DEPLOY   (Release ^& Deploy - Senza Test)
+echo 26. FAST RELEASE  (Build EXE - Senza Test)
 echo.
 echo [ TOOLS ]
 echo 14. INSPECTOR     (Universal Inspector)
@@ -51,7 +52,7 @@ echo [q] ESCI
 echo.
 echo ============================================================
 
-set /p choice="Scegli (1-25): "
+set /p choice="Scegli (1-26): "
 
 set VENV_PYTHON=.venv\Scripts\python.exe
 set VENV_BIN=.venv\Scripts
@@ -151,6 +152,12 @@ if "%choice%"=="13" (
 
 if "%choice%"=="25" (
     !VENV_PYTHON! admin/release.py auto --deploy --skip-tests
+    pause
+    goto menu
+)
+
+if "%choice%"=="26" (
+    !VENV_PYTHON! admin/release.py auto --skip-tests
     pause
     goto menu
 )
