@@ -207,8 +207,9 @@ def run_pyinstaller(obfuscated=False):
     for imp in detected_imports:
         cmd.extend(["--hidden-import", imp])
 
-    pywin32_modules = ["win32con", "win32print", "win32ui"]
-    for mod in pywin32_modules:
+    # CRITICAL: Force include standard library handlers often missed in frozen environments
+    force_hidden_imports = ["win32con", "win32print", "win32ui", "logging.handlers"]
+    for mod in force_hidden_imports:
         cmd.extend(["--hidden-import", mod])
 
     qt_excludes = [
