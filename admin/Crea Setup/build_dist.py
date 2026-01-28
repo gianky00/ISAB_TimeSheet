@@ -1,4 +1,4 @@
-﻿"""
+"""
 Bot TS - Build & Distribution Script
 Compila l'applicazione con PyInstaller, crea l'installer con Inno Setup,
 e opzionalmente deploya su Netlify.
@@ -466,7 +466,9 @@ def deploy_netlify(netlify_dir):
     # Deploy
     cmd = [
         "netlify",
-        "deploy", "--message", "Manual Installer Deploy",
+        "deploy",
+        "--message",
+        "Manual Installer Deploy",
         "--prod",
         "--dir",
         netlify_dir,
@@ -536,4 +538,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
