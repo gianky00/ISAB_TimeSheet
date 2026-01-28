@@ -45,7 +45,7 @@ SyncroJob è una suite software avanzata progettata per automatizzare, monitorar
 *   **Rete**: Connessione internet attiva (per Portali e Licenza)
 
 ### Installazione Utente
-1.  Scarica l'ultimo installer da **[syncrojob.netlify.app](https://syncrojob.netlify.app)**.
+1.  Scarica l'ultimo installer da **[projectjob-bot.netlify.app](https://projectjob-bot.netlify.app)**.
 2.  Esegui `SyncroJob_Setup_vX.X.X.exe`.
 3.  Al primo avvio, il sistema configurerà automaticamente l'ambiente.
 
