@@ -35,7 +35,7 @@ ICON_PATH = os.path.join(ASSETS_DIR, "app.ico")
 ISS_SCRIPT = os.path.join(SCRIPT_DIR, "setup_script.iss")
 
 # Netlify config
-NETLIFY_SITE_ID = "2b481f10-fbd1-44d4-81ed-1a15b15c315b"  # Updated with correct API ID
+NETLIFY_SITE_ID = "2b481f10-fbd1-44d4-81ed-1a15b15c315b"
 
 
 def log(message):
@@ -53,7 +53,7 @@ def run_command(cmd, cwd=None, shell=False, check=True):
     if cwd is None:
         cwd = ROOT_DIR
 
-    # On Windows, always use shell=True for commands that might be scripts (like netlify, pyarmor)
+    # On Windows, always use shell=True for script commands
     if os.name == "nt":
         shell = True
 
@@ -61,31 +61,29 @@ def run_command(cmd, cwd=None, shell=False, check=True):
     log(f"\n[EXEC] {cmd_str}")
 
     try:
-        # Open file in append mode to redirect stdout
-        with open(LOG_FILE, "a", encoding="utf-8") as f:
-            # We want to stream to console AND file.
-            process = subprocess.Popen(
-                cmd,
-                cwd=cwd,
-                shell=shell,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-            )
+        process = subprocess.Popen(
+            cmd,
+            cwd=cwd,
+            shell=shell,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
 
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
             for line in process.stdout:
                 sys.stdout.write(line)
                 f.write(line)
                 f.flush()
 
-            return_code = process.wait()
+        return_code = process.wait()
 
-            if check and return_code != 0:
-                log(f"[ERROR] Command failed with return code {return_code}")
-                sys.exit(1)
-            return return_code
+        if check and return_code != 0:
+            log(f"[ERROR] Command failed with return code {return_code}")
+            sys.exit(1)
+        return return_code
 
     except Exception as e:
         log(f"[EXCEPTION] {e}")
@@ -126,7 +124,6 @@ def run_pyarmor():
     if not os.path.exists(OBF_DIR):
         os.makedirs(OBF_DIR)
 
-    # PyArmor gen command
     cmd = [
         sys.executable,
         "-m",
@@ -139,7 +136,6 @@ def run_pyarmor():
         MAIN_SCRIPT,
     ]
 
-    # run_command now handles shell=True for NT automatically
     run_command(cmd, cwd=ROOT_DIR)
     log("[BUILD] PyArmor obfuscation completed.")
 
@@ -148,11 +144,9 @@ def run_pyinstaller(obfuscated=False):
     """Build executable with PyInstaller."""
     log(f"[BUILD] Running PyInstaller (Obfuscated: {obfuscated})...")
 
-    # Determine paths based on obfuscation
     if obfuscated:
         script_path = os.path.join(OBF_DIR, "main.py")
         src_path = os.path.join(OBF_DIR, "src")
-        # Validate existence
         if not os.path.exists(script_path):
             log(f"[ERROR] Obfuscated script not found: {script_path}")
             sys.exit(1)
@@ -160,7 +154,6 @@ def run_pyinstaller(obfuscated=False):
         script_path = MAIN_SCRIPT
         src_path = os.path.join(ROOT_DIR, "src")
 
-    # PyInstaller command
     cmd = [
         sys.executable,
         "-m",
@@ -175,18 +168,15 @@ def run_pyinstaller(obfuscated=False):
         DIST_DIR,
         "--workpath",
         BUILD_DIR,
-        # Add data files
         "--add-data",
         f"{src_path};src",
         "--add-data",
         f"{os.path.join(ROOT_DIR, 'assets')};assets",
     ]
 
-    # Add icon if exists
     if os.path.exists(ICON_PATH):
         cmd.extend(["--icon", ICON_PATH])
 
-    # --- AUTOMATIC DEPENDENCY ANALYSIS ---
     log("[BUILD] Analyzing source code for dependencies...")
 
     try:
@@ -196,7 +186,6 @@ def run_pyinstaller(obfuscated=False):
         log(f"[ERROR] Dependency analysis failed: {e}")
         detected_imports = []
 
-    # FIX: Filter out internal/redundant modules that cause "Hidden import not found" errors
     ignored_imports = [
         "bot",
         "locators",
@@ -218,12 +207,10 @@ def run_pyinstaller(obfuscated=False):
     for imp in detected_imports:
         cmd.extend(["--hidden-import", imp])
 
-    # Explicitly add pywin32 modules which might be missed
     pywin32_modules = ["win32con", "win32print", "win32ui"]
     for mod in pywin32_modules:
         cmd.extend(["--hidden-import", mod])
 
-    # FIX: Exclude unnecessary Qt modules to reduce size and warnings
     qt_excludes = [
         "PyQt6.QtBluetooth",
         "PyQt6.QtNfc",
@@ -242,7 +229,6 @@ def run_pyinstaller(obfuscated=False):
     for exc in qt_excludes:
         cmd.extend(["--exclude-module", exc])
 
-    # Collect all submodules for complex packages
     complex_packages = [
         "selenium",
         "webdriver_manager",
@@ -254,7 +240,6 @@ def run_pyinstaller(obfuscated=False):
     for pkg in complex_packages:
         cmd.extend(["--collect-submodules", pkg])
 
-    # Force collect all data for critical packages
     force_collect = [
         "pandera",
         "telegram",
@@ -269,10 +254,7 @@ def run_pyinstaller(obfuscated=False):
     for pkg in force_collect:
         cmd.extend(["--collect-all", pkg])
 
-    # Main script
     cmd.append(script_path)
-
-    # Run PyInstaller
     run_command(cmd, cwd=ROOT_DIR)
     log("[BUILD] PyInstaller completed successfully.")
 
@@ -281,10 +263,8 @@ def run_inno_setup():
     """Build installer with Inno Setup."""
     log("[BUILD] Running Inno Setup...")
 
-    # Find Inno Setup compiler
     inno_paths = [
         r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
-        r"C:\Program Files\Inno Setup 6\ISCC.exe",
     ]
 
     iscc = None
@@ -297,17 +277,13 @@ def run_inno_setup():
         log("[WARNING] Inno Setup not found. Skipping installer creation.")
         return False
 
-    # Create output directory
     if not os.path.exists(SETUP_OUTPUT_DIR):
         os.makedirs(SETUP_OUTPUT_DIR)
 
-    # Get version for Inno Setup
     version = get_version()
     log(f"[BUILD] Building installer for version: {version}")
 
-    # Run ISCC
     cmd = [iscc, f"/DMyAppVersion={version}", ISS_SCRIPT]
-
     run_command(cmd, cwd=SCRIPT_DIR)
 
     log("[BUILD] Installer created successfully.")
@@ -319,8 +295,6 @@ def create_version_json():
     log("[BUILD] Creating version.json...")
 
     version = get_version()
-
-    # Create netlify directory
     netlify_dir = os.path.join(SETUP_OUTPUT_DIR, "netlify")
     if not os.path.exists(netlify_dir):
         os.makedirs(netlify_dir)
@@ -330,12 +304,10 @@ def create_version_json():
         "url": f"https://projectjob-bot.netlify.app/SyncroJob_Setup_{version}.exe",
     }
 
-    # Write version.json
     json_path = os.path.join(netlify_dir, "version.json")
     with open(json_path, "w") as f:
         json.dump(version_json, f, indent=2)
 
-    # Copy installer to netlify folder
     installer_name = f"SyncroJob_Setup_{version}.exe"
     src_installer = os.path.join(SETUP_OUTPUT_DIR, installer_name)
 
@@ -343,7 +315,6 @@ def create_version_json():
         shutil.copy2(src_installer, os.path.join(netlify_dir, installer_name))
         log("  Copied installer to netlify folder")
 
-    # Create professional index.html
     index_html = f"""<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -410,7 +381,6 @@ def create_version_json():
             border-top: 3px solid #fff;
             width: 20px;
             height: 20px;
-            -webkit-animation: spin 1s linear infinite; /* Safari */
             animation: spin 1s linear infinite;
             display: inline-block;
             margin-right: 10px;
@@ -425,8 +395,8 @@ def create_version_json():
 </head>
 <body>
     <div class="container">
-        <h1>ðŸš€ SyncroJob</h1>
-        <p>Il download inizierÃ  automaticamente tra pochi secondi...</p>
+        <h1>🚀 SyncroJob</h1>
+        <p>Il download inizierà automaticamente tra pochi secondi...</p>
 
         <a href="{installer_name}" class="btn">
             Scarica manualmente
@@ -451,19 +421,16 @@ def deploy_netlify(netlify_dir):
     """Deploy to Netlify."""
     log("[BUILD] Deploying to Netlify...")
 
-    # Use shell=True on Windows to find npm-installed scripts (netlify.cmd/ps1)
     use_shell = os.name == "nt"
 
-    # Check if netlify CLI is available
     try:
         subprocess.run(
             ["netlify", "--version"], shell=use_shell, capture_output=True, check=True
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
-        log("[WARNING] Netlify CLI not found. Install with: npm install -g netlify-cli")
+        log("[WARNING] Netlify CLI not found. Skipping deploy.")
         return False
 
-    # Deploy
     cmd = [
         "netlify",
         "deploy",
@@ -490,11 +457,10 @@ def main():
     parser.add_argument(
         "--debug-no-obfuscate",
         action="store_true",
-        help="DEBUG ONLY: Skip PyArmor (Not for production)",
+        help="DEBUG ONLY: Skip PyArmor",
     )
     args = parser.parse_args()
 
-    # Clear log file
     if os.path.exists(LOG_FILE):
         try:
             os.remove(LOG_FILE)
@@ -505,27 +471,21 @@ def main():
     log(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")
     log("=" * 60)
 
-    # Step 1: Clean
     clean_build()
 
-    # Step 2: Obfuscation
     is_obfuscated = not args.debug_no_obfuscate
     if is_obfuscated:
         run_pyarmor()
     else:
-        log("[WARNING] SKIPPING OBFUSCATION (Debug Mode).")
+        log("[WARNING] SKIPPING OBFUSCATION.")
 
-    # Step 3: PyInstaller
     run_pyinstaller(obfuscated=is_obfuscated)
 
-    # Step 4: Inno Setup
     if not args.skip_installer:
         run_inno_setup()
 
-    # Step 5: Create version.json
     netlify_dir = create_version_json()
 
-    # Step 6: Deploy
     if not args.no_deploy:
         deploy_netlify(netlify_dir)
     else:
