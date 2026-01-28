@@ -104,6 +104,15 @@ class MainWindow(QMainWindow):
             logger.info("Starting finalize_init...")
             logger.info("Calling show_operational_state...")
             self.status_bar_component.show_operational_state()
+
+            # Connect Footer Signals for Account Switching
+            self.status_bar_component.footer_left.portale_clicked.connect(
+                lambda: self._switch_account("isab")
+            )
+            self.status_bar_component.footer_left.safework_clicked.connect(
+                lambda: self._switch_account("safework")
+            )
+
             logger.info("finalize_init completed successfully")
         except Exception as e:
             logger.critical(f"Error in finalize_init: {e}", exc_info=True)
@@ -244,7 +253,7 @@ class MainWindow(QMainWindow):
                 with suppress(Exception):
                     self.timbrature_bot_panel.status_changed.connect(
                         lambda color,
-                        msg: self.status_bar_component.footer_right.set_status(
+                        msg: self.status_bar_component.status_portale.setStatus(
                             msg, color
                         )
                     )
