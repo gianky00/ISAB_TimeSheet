@@ -1,4 +1,4 @@
-"""
+﻿"""
 Bot TS - Build & Distribution Script
 Compila l'applicazione con PyInstaller, crea l'installer con Inno Setup,
 e opzionalmente deploya su Netlify.
@@ -425,8 +425,8 @@ def create_version_json():
 </head>
 <body>
     <div class="container">
-        <h1>🚀 SyncroJob</h1>
-        <p>Il download inizierà automaticamente tra pochi secondi...</p>
+        <h1>ðŸš€ SyncroJob</h1>
+        <p>Il download inizierÃ  automaticamente tra pochi secondi...</p>
 
         <a href="{installer_name}" class="btn">
             Scarica manualmente
@@ -466,7 +466,7 @@ def deploy_netlify(netlify_dir):
     # Deploy
     cmd = [
         "netlify",
-        "deploy",
+        "deploy", "--message", "Manual Installer Deploy",
         "--prod",
         "--dir",
         netlify_dir,
@@ -536,3 +536,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
