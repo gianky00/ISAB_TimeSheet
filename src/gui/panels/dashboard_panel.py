@@ -4,10 +4,8 @@ from PyQt6.QtCore import (  # type: ignore
     Qt,
     QTimer,
 )
-from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QScrollArea,
@@ -42,12 +40,13 @@ class DashboardPanel(QWidget):
         """
         )
 
-        container_shadow = QGraphicsDropShadowEffect()
-        container_shadow.setBlurRadius(30)
-        container_shadow.setXOffset(0)
-        container_shadow.setYOffset(10)
-        container_shadow.setColor(QColor(0, 0, 0, 20))
-        self.main_container.setGraphicsEffect(container_shadow)
+        # REMOVED: QGraphicsDropShadowEffect causes QPainter warnings
+        # container_shadow = QGraphicsDropShadowEffect()
+        # container_shadow.setBlurRadius(30)
+        # container_shadow.setXOffset(0)
+        # container_shadow.setYOffset(10)
+        # container_shadow.setColor(QColor(0, 0, 0, 20))
+        # self.main_container.setGraphicsEffect(container_shadow)
 
         self.container_layout = QVBoxLayout(self.main_container)
         self.container_layout.setContentsMargins(25, 25, 25, 25)

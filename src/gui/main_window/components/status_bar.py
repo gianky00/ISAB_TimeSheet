@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt
+from PyQt6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QSize, Qt, QTimer
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QPushButton, QStatusBar
 
 from src.core import config_manager
@@ -104,7 +104,13 @@ class StatusBarComponent(QObject):
         self.status_bar.addPermanentWidget(self.footer_right)
 
     def _init_timers(self):
-        pass
+        # Timer per aggiornamento automatico dello stato Autopilot (ogni 10 secondi)
+        self.autopilot_timer = QTimer(self)
+        self.autopilot_timer.timeout.connect(self.update_autopilot_ui)
+        self.autopilot_timer.start(10000)
+
+        # Primo aggiornamento immediato
+        QTimer.singleShot(500, self.update_autopilot_ui)
 
     def _toggle_footer_stats(self):
         """Toggle tra System Metrics (boot_telemetry) e License Info (footer_left)."""
@@ -141,45 +147,68 @@ class StatusBarComponent(QObject):
 
     def show_operational_state(self):
         """Rimuove console e progress bar, mostra i widget operativi."""
-        # Animazione fade-out per startup_console
-        console_effect = QGraphicsOpacityEffect(self.startup_console)
-        self.startup_console.setGraphicsEffect(console_effect)
-        console_anim = QPropertyAnimation(console_effect, b"opacity")
-        console_anim.setDuration(600)
-        console_anim.setStartValue(1.0)
-        console_anim.setEndValue(0.0)
-        console_anim.setEasingCurve(QEasingCurve.Type.InCubic)
-        console_anim.finished.connect(lambda: self.startup_console.setVisible(False))
-        console_anim.start()
+        import logging
 
-        # Animazione fade-out per boot_telemetry
-        telemetry_effect = QGraphicsOpacityEffect(self.boot_telemetry)
-        self.boot_telemetry.setGraphicsEffect(telemetry_effect)
-        telemetry_anim = QPropertyAnimation(telemetry_effect, b"opacity")
-        telemetry_anim.setDuration(600)
-        telemetry_anim.setStartValue(1.0)
-        telemetry_anim.setEndValue(0.0)
-        telemetry_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+        logger = logging.getLogger("StatusBar")
 
-        def hide_and_reset_telemetry():
-            self.boot_telemetry.setVisible(False)
-            self.boot_telemetry.setGraphicsEffect(None)
-            if self.boot_telemetry.timer.isActive():
-                self.boot_telemetry.timer.stop()
+        try:
+            logger.info("Starting show_operational_state...")
 
-        telemetry_anim.finished.connect(hide_and_reset_telemetry)
-        telemetry_anim.start()
+            # Animazione fade-out per startup_console
+            logger.info("Setting up console animation...")
+            console_effect = QGraphicsOpacityEffect(self.startup_console)
+            self.startup_console.setGraphicsEffect(console_effect)
+            console_anim = QPropertyAnimation(console_effect, b"opacity")
+            console_anim.setDuration(600)
+            console_anim.setStartValue(1.0)
+            console_anim.setEndValue(0.0)
+            console_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+            console_anim.finished.connect(
+                lambda: self.startup_console.setVisible(False)
+            )
+            console_anim.start()
 
-        # Keep refs
-        self._console_anim = console_anim
-        self._telemetry_anim = telemetry_anim
+            # Animazione fade-out per boot_telemetry
+            logger.info("Setting up telemetry animation...")
+            telemetry_effect = QGraphicsOpacityEffect(self.boot_telemetry)
+            self.boot_telemetry.setGraphicsEffect(telemetry_effect)
+            telemetry_anim = QPropertyAnimation(telemetry_effect, b"opacity")
+            telemetry_anim.setDuration(600)
+            telemetry_anim.setStartValue(1.0)
+            telemetry_anim.setEndValue(0.0)
+            telemetry_anim.setEasingCurve(QEasingCurve.Type.InCubic)
 
-        self.status_bar.clearMessage()
-        self.footer_right.show_operational()
+            def hide_and_reset_telemetry():
+                try:
+                    self.boot_telemetry.setVisible(False)
+                    self.boot_telemetry.setGraphicsEffect(None)
+                    if self.boot_telemetry.timer.isActive():
+                        self.boot_telemetry.timer.stop()
+                except Exception as e:
+                    logger.error(f"Error in hide_and_reset_telemetry: {e}")
 
-        self.update_license_info()
-        self.footer_left.fade_in(400)
-        self._footer_stats_mode = False
+            telemetry_anim.finished.connect(hide_and_reset_telemetry)
+            telemetry_anim.start()
+
+            # Keep refs
+            self._console_anim = console_anim
+            self._telemetry_anim = telemetry_anim
+
+            logger.info("Updating status bar...")
+            self.status_bar.clearMessage()
+            self.footer_right.show_operational()
+
+            logger.info("Updating license info...")
+            self.update_license_info()
+
+            logger.info("Fading in footer...")
+            self.footer_left.fade_in(400)
+            self._footer_stats_mode = False
+
+            logger.info("show_operational_state completed successfully")
+        except Exception as e:
+            logger.critical(f"Error in show_operational_state: {e}", exc_info=True)
+            raise
 
     def update_autopilot_ui(self):
         """Aggiorna le card di stato con il countdown del task più imminente."""

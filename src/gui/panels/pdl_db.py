@@ -127,14 +127,16 @@ class PDLDBPanel(QWidget):
         filter_layout.addWidget(QLabel("Gruppo:"))
         self.group_filter = QComboBox()
         self.group_filter.addItem("Tutti")
-        self.group_filter.currentTextChanged.connect(self.refresh_data)
         filter_layout.addWidget(self.group_filter)
 
         filter_layout.addWidget(QLabel("Sito:"))
         self.site_filter = QComboBox()
         self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
-        self.site_filter.currentTextChanged.connect(self.refresh_data)
         filter_layout.addWidget(self.site_filter)
+
+        # Connessioni segnali (DOPO inizializzazione widget per evitare crash)
+        self.group_filter.currentTextChanged.connect(self.refresh_data)
+        self.site_filter.currentTextChanged.connect(self.refresh_data)
 
         filter_layout.addStretch()
 
