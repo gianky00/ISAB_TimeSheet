@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
-# SyncroJob - Zero-Lag Startup Architecture
-Tutto il caricamento (anche quello della GUI) avviene nello Splash Screen.
-Le animazioni rimangono fluide grazie al refresh timer.
+SyncroJob - Zero-Lag Startup Architecture
+Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
 """
 
 import logging
 import logging.handlers
 import os
 import sys
-import threading
 from pathlib import Path
 
 from src.core.config_manager import CONFIG_DIR
 
+
 def setup_early_logging():
-    if not CONFIG_DIR.exists(): CONFIG_DIR.mkdir(parents=True)
+    if not CONFIG_DIR.exists():
+        CONFIG_DIR.mkdir(parents=True)
     log_dir = CONFIG_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
     root_logger = logging.getLogger()
@@ -24,12 +24,14 @@ def setup_early_logging():
     handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     root_logger.addHandler(handler)
 
+
 setup_early_logging()
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
+
 def main():
     import warnings
-    from PyQt6.QtCore import QCoreApplication, QTimer
+    from PyQt6.QtCore import QTimer, QThread, pyqtSignal, QObject
     from PyQt6.QtNetwork import QLocalServer, QLocalSocket
     from PyQt6.QtWidgets import QApplication, QMessageBox
 
@@ -62,65 +64,114 @@ def main():
 
     server.newConnection.connect(handle_new_connection)
 
-    # Import veloci per lo splash
-    from src.gui.dialogs.startup_dialog import StartupDialog
+    # === SETUP STYLE ===
     from src.core.app_initializer import AppInitializer
-
     AppInitializer.setup_app_style(app)
 
-    # 1. MOSTRA SPLASH SCREEN IMMEDIATAMENTE
-    startup_dialog = StartupDialog()
-    startup_dialog.show()
+    # === SPLASH SCREEN ===
+    from src.gui.dialogs.startup_dialog import StartupDialog
+    splash = StartupDialog()
+    splash.show()
+    app.processEvents()
 
-    # === ANIMATION REFRESH TIMER ===
-    # Forza il refresh delle animazioni ogni 16ms (~60fps) anche durante il caricamento
-    animation_timer = QTimer()
-    animation_timer.setInterval(16)
-    animation_timer.timeout.connect(lambda: app.processEvents())
-    animation_timer.start()
+    # === WORKER PER FASE 1 (Import pesanti) - Thread separato ===
+    class Phase1Worker(QObject):
+        progress = pyqtSignal(str, int)
+        finished = pyqtSignal(bool)
 
-    def update_startup_ui(msg, prog):
-        startup_dialog.update_status(msg, prog)
-        # processEvents viene già chiamato dal timer, ma lo chiamiamo anche qui per sicurezza
+        def run(self):
+            try:
+                from src.core.app_initializer import AppInitializer
+                success = AppInitializer.initialize(
+                    status_callback=lambda msg, prog: self.progress.emit(msg, prog),
+                    mw_instance=None  # Solo imports, no GUI
+                )
+                self.finished.emit(success)
+            except Exception as e:
+                logging.getLogger("Phase1").error(f"Error: {e}")
+                self.finished.emit(False)
+
+    # Variabili di stato
+    phase1_done = [False]
+    phase1_success = [False]
+
+    def on_phase1_progress(msg, prog):
+        splash.update_status(msg, prog)
+
+    def on_phase1_finished(success):
+        phase1_done[0] = True
+        phase1_success[0] = success
+
+    # Avvia thread per fase 1
+    thread1 = QThread()
+    worker1 = Phase1Worker()
+    worker1.moveToThread(thread1)
+    thread1.started.connect(worker1.run)
+    worker1.progress.connect(on_phase1_progress)
+    worker1.finished.connect(on_phase1_finished)
+    thread1.start()
+
+    # Attendi completamento fase 1 mantenendo GUI fluida
+    while not phase1_done[0]:
         app.processEvents()
 
-    # 2. CARICA I MODULI CORE
-    # (Inizializzazione database, licenza, import pandas/selenium)
-    # Nota: NON passiamo ancora la mw_instance qui perché dobbiamo ancora importare MainWindow
-    if not AppInitializer.initialize(status_callback=update_startup_ui):
-        animation_timer.stop()
-        startup_dialog.close()
+    # Cleanup thread 1
+    thread1.quit()
+    thread1.wait(1000)
+
+    if not phase1_success[0]:
+        splash.close()
+        QMessageBox.critical(None, "Errore", "Inizializzazione fallita")
         sys.exit(1)
 
-    # 3. IMPORTA E CREA MAINWINDOW (SILENZIOSAMENTE)
-    update_startup_ui("Preparazione interfaccia grafica...", 85)
+    # === FASE 2: Creazione MainWindow (Thread principale richiesto da Qt) ===
+    splash.update_status("Costruzione interfaccia...", 40)
+    app.processEvents()
+
     from src.gui.main_window.main import MainWindow
     main_window_instance = MainWindow()
+    app.processEvents()
 
-    # 4. ESEGUI DEEP PRELOAD (Caricamento pannelli GUI)
-    # Ora passiamo l'istanza appena creata per caricare i moduli interni
-    AppInitializer.initialize(status_callback=update_startup_ui, mw_instance=main_window_instance)
+    # === FASE 3: Preload pannelli con timer forzato ===
+    # Timer che forza refresh GUI ogni 8ms per animazioni fluide
+    refresh_timer = QTimer()
+    refresh_timer.setInterval(8)
+    refresh_timer.timeout.connect(lambda: app.processEvents())
+    refresh_timer.start()
 
-    # 5. FINALIZZAZIONE
-    update_startup_ui("Configurazione finale in corso...", 100)
+    def gui_callback(msg, prog):
+        splash.update_status(msg, prog)
+        app.processEvents()
+
+    # Esegui preload pannelli
+    AppInitializer.initialize(
+        status_callback=gui_callback,
+        mw_instance=main_window_instance
+    )
+
+    # Ferma timer refresh
+    refresh_timer.stop()
+
+    # === FINALIZZAZIONE ===
+    splash.update_status("Avvio completato", 100)
+    app.processEvents()
+
     main_window_instance.finalize_init()
 
-    # Ferma il timer delle animazioni forzate
-    animation_timer.stop()
-
-    # Piccola pausa per mostrare il 100%
-    QTimer.singleShot(500, lambda: startup_dialog.close())
-    QTimer.singleShot(600, lambda: main_window_instance.showMaximized())
+    # Chiudi splash e mostra finestra principale
+    QTimer.singleShot(400, splash.close)
+    QTimer.singleShot(500, main_window_instance.showMaximized)
 
     try:
         exit_code = app.exec()
         server.close()
         sys.exit(exit_code)
     except Exception as e:
-        logging.getLogger("crash_logger").critical("Errore fatale GUI", exc_info=True)
-        QMessageBox.critical(None, "Errore GUI", f"Errore fatale durante l'avvio:\n{e}")
+        logging.getLogger("crash").critical("Fatal error", exc_info=True)
+        QMessageBox.critical(None, "Errore", f"Errore fatale:\n{e}")
         server.close()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
