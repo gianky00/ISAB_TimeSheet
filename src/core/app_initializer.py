@@ -41,17 +41,17 @@ class AppInitializer:
             if not mw_instance and not AppInitializer._core_initialized:
                 # === FASE 1: MODULI CORE (può girare in thread) ===
 
-                step("Kernel System", 5)
+                step("Inizializzazione Nucleo Sistema", 5)
                 AppInitializer._setup_logging()
 
-                step("Data Analysis Engines", 10)
+                step("Caricamento Motori Analisi Dati", 10)
                 import pandas  # noqa
                 import numpy  # noqa
 
-                step("Automation Drivers", 18)
+                step("Configurazione Driver Automazione", 18)
                 import selenium  # noqa
 
-                step("Hardware Identity (HWID)", 22)
+                step("Verifica Integrità Hardware", 22)
                 from src.core.license_updater import run_update
                 from src.core.license_validator import (
                     LicenseStatus,
@@ -60,10 +60,10 @@ class AppInitializer:
 
                 status, msg = get_detailed_license_status()
                 if status != LicenseStatus.VALID:
-                    step("Cloud License Recovery", 26)
+                    step("Sincronizzazione Licenza Cloud", 26)
                     run_update()
 
-                step("System Database", 32)
+                step("Connessione Database Sistema", 32)
                 from src.core.database import db_manager
 
                 db_manager.init_db()
@@ -78,15 +78,15 @@ class AppInitializer:
                 _yield()
 
                 tasks = [
-                    (PageIndex.DASHBOARD, "Dashboard & Analytics"),
-                    (PageIndex.TIMBRATURE, "Timesheet Repository"),
-                    (PageIndex.STRUMENTALE, "Asset Registry"),
+                    (PageIndex.DASHBOARD, "Preparazione Dashboard"),
+                    (PageIndex.TIMBRATURE, "Caricamento Repository Ore"),
+                    (PageIndex.STRUMENTALE, "Registro Asset Aziendali"),
                     (PageIndex.DATAEASE, "DataEase Sync Bridge"),
-                    (PageIndex.ANAGRAFICHE, "HR Directory"),
-                    (PageIndex.DIPENDENTI, "Employee Records"),
-                    (PageIndex.AUTOMAZIONI, "Task Scheduler"),
-                    (PageIndex.LYRA, "Lyra Analysis Engine"),
-                    (PageIndex.SETTINGS, "User Configuration"),
+                    (PageIndex.ANAGRAFICHE, "Directory Personale"),
+                    (PageIndex.DIPENDENTI, "Gestione Schede Dipendenti"),
+                    (PageIndex.AUTOMAZIONI, "Scheduler Attività"),
+                    (PageIndex.LYRA, "Motore Analisi Lyra"),
+                    (PageIndex.SETTINGS, "Configurazione Utente"),
                 ]
 
                 base_prog = 45
@@ -103,7 +103,7 @@ class AppInitializer:
                     time.sleep(0.008)
                     _yield()
 
-                step("Telegram Security Monitor", 94)
+                step("Monitoraggio Sicurezza Telegram", 94)
                 _yield()
                 from src.core import config_manager
 
@@ -117,7 +117,7 @@ class AppInitializer:
                     config_manager.set_config_value("telegram_pairing_code", code)
                 _yield()
 
-                step("System Ready", 100)
+                step("Sistema Pronto", 100)
                 return True
 
             return True

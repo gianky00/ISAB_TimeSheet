@@ -126,6 +126,18 @@ class AutopilotEventCard(QFrame):
         layout.addLayout(text_layout)
         layout.addStretch()
 
+        # --- ANIMAZIONE "VIVO" (Pulse Effect sull'icona) ---
+        self.icon_opacity = QGraphicsOpacityEffect(icon_label)
+        icon_label.setGraphicsEffect(self.icon_opacity)
+
+        self.pulse_anim = QPropertyAnimation(self.icon_opacity, b"opacity")
+        self.pulse_anim.setDuration(2000)
+        self.pulse_anim.setStartValue(0.6)
+        self.pulse_anim.setEndValue(1.0)
+        self.pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+        self.pulse_anim.setLoopCount(-1)  # Infinito
+        self.pulse_anim.start()
+
         # Timer per aggiornare il countdown ogni minuto
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_countdown)
@@ -566,6 +578,39 @@ class AutopilotWidget(QWidget):
             "font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;"
         )
         header_layout.addWidget(title)
+
+        # --- LIVE INDICATOR (Neon Dot) ---
+        self.live_container = QWidget()
+        live_layout = QHBoxLayout(self.live_container)
+        live_layout.setContentsMargins(5, 0, 5, 0)
+        live_layout.setSpacing(5)
+
+        self.live_dot = QLabel()
+        self.live_dot.setFixedSize(8, 8)
+        self.live_dot.setStyleSheet(
+            "background-color: #22c55e; border-radius: 4px; border: 1px solid #16a34a;"
+        )
+
+        self.live_text = QLabel("LIVE")
+        self.live_text.setStyleSheet(
+            "color: #22c55e; font-size: 10px; font-weight: 800; letter-spacing: 1px;"
+        )
+
+        live_layout.addWidget(self.live_dot)
+        live_layout.addWidget(self.live_text)
+        header_layout.addWidget(self.live_container)
+
+        # Animazione Pulsante per il pallino LIVE
+        self.dot_opacity = QGraphicsOpacityEffect(self.live_container)
+        self.live_container.setGraphicsEffect(self.dot_opacity)
+
+        self.dot_anim = QPropertyAnimation(self.dot_opacity, b"opacity")
+        self.dot_anim.setDuration(1000)
+        self.dot_anim.setStartValue(0.3)
+        self.dot_anim.setEndValue(1.0)
+        self.dot_anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self.dot_anim.setLoopCount(-1)
+        self.dot_anim.start()
 
         # Pulsante configurazione con icona settings
         self.config_btn = QPushButton()

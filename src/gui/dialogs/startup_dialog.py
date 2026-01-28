@@ -110,6 +110,8 @@ class ParticleBackground(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.particles = []
         self.phase = 0
         self.timer = QTimer(self)
@@ -537,11 +539,14 @@ class StartupDialog(QDialog):
 
     def __init__(self):
         super().__init__()
+        self.setObjectName("StartupDialog")
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setFixedSize(self.WIDTH, self.HEIGHT)
+        self.setStyleSheet("#StartupDialog { background: transparent; border: none; }")
 
         self._worker = None
         self._thread = None
@@ -554,6 +559,10 @@ class StartupDialog(QDialog):
 
         self.container = QFrame()
         self.container.setObjectName("Container")
+        self.container.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.container.setStyleSheet(
+            "#Container { background: transparent; border: none; }"
+        )
 
         # Particle background
         self.particles = ParticleBackground(self.container)
@@ -567,7 +576,8 @@ class StartupDialog(QDialog):
         # Content overlay
         self.content = QFrame(self.container)
         self.content.setGeometry(0, 0, self.WIDTH, self.HEIGHT)
-        self.content.setStyleSheet("background: transparent;")
+        self.content.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.content.setStyleSheet("background: transparent; border: none;")
 
         # Shadow luminosa esterna
         shadow = QGraphicsDropShadowEffect()
@@ -602,7 +612,15 @@ class StartupDialog(QDialog):
         )
         title_box.addWidget(self.title)
 
+        from src.core.license_validator import get_hardware_id, get_license_info
         from src.core.version import __version__
+
+        # License Info Data
+        lic_info = get_license_info() or {}
+        client_name = lic_info.get("Cliente", "N/D").upper()
+        expiry_date = lic_info.get("Scadenza Licenza", "N/D")
+        # HWID from payload if available (for consistency), else calculated
+        hw_id = lic_info.get("Hardware ID", get_hardware_id() or "UNKNOWN")
 
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
@@ -612,6 +630,39 @@ class StartupDialog(QDialog):
 
         header.addLayout(title_box)
         header.addStretch()
+
+        # === LICENSE INFO BOX (Right Side) ===
+        license_box = QVBoxLayout()
+        license_box.setSpacing(2)
+        license_box.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
+        )
+
+        def create_info_row(label_text, value_text):
+            row = QHBoxLayout()
+            row.setSpacing(5)
+            row.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet(
+                "color: rgba(255, 255, 255, 0.5); font-size: 10px; font-weight: 600;"
+            )
+
+            val = QLabel(value_text)
+            val.setStyleSheet(
+                "color: rgba(255, 255, 255, 0.9); font-size: 10px; font-weight: bold; font-family: 'Consolas', monospace;"
+            )
+
+            row.addWidget(lbl)
+            row.addWidget(val)
+            return row
+
+        license_box.addLayout(create_info_row("CLIENTE:", client_name))
+        license_box.addLayout(create_info_row("HW-ID:", hw_id))
+        license_box.addLayout(create_info_row("SCADENZA:", expiry_date))
+
+        header.addLayout(license_box)
+
         content_layout.addLayout(header)
 
         # === LOG CONSOLE ===
@@ -623,7 +674,7 @@ class StartupDialog(QDialog):
         log_layout.setContentsMargins(20, 15, 20, 15)
         log_layout.setSpacing(5)
 
-        log_header = QLabel("SYSTEM INITIALIZATION")
+        log_header = QLabel("INIZIALIZZAZIONE SISTEMA")
         log_header.setStyleSheet(
             "font-size:9px; color:rgba(52,152,219,0.6); letter-spacing:2px; font-weight:600;"
         )
@@ -660,7 +711,7 @@ class StartupDialog(QDialog):
         footer.addWidget(self.indicator)
         footer.addSpacing(8)
 
-        self.status = QLabel("INITIALIZING")
+        self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
             "font-size:11px; color:rgba(255,255,255,0.5); font-weight:600; letter-spacing:2px;"
         )
