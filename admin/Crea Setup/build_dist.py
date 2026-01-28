@@ -5,12 +5,12 @@ e opzionalmente deploya su Netlify.
 """
 
 import argparse
+import glob
 import json
 import os
 import shutil
 import subprocess
 import sys
-import glob
 
 # Add admin folder to path to import analyzer
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
