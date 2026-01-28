@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import sys
+import glob
 
 # Add admin folder to path to import analyzer
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -292,13 +293,23 @@ def run_inno_setup():
 
 
 def create_version_json():
-    """Create version.json for update checking."""
-    log("[BUILD] Creating version.json...")
+    """Create version.json for update checking and prepare netlify folder."""
+    log("[BUILD] Preparing Netlify distribution folder...")
 
     version = get_version()
     netlify_dir = os.path.join(SETUP_OUTPUT_DIR, "netlify")
     if not os.path.exists(netlify_dir):
         os.makedirs(netlify_dir)
+
+    # CLEANUP: Remove old .exe files to ensure only the latest is deployed
+    log("  Cleaning old installers from Netlify folder...")
+    old_exes = glob.glob(os.path.join(netlify_dir, "*.exe"))
+    for old_exe in old_exes:
+        try:
+            os.remove(old_exe)
+            log(f"    Deleted old installer: {os.path.basename(old_exe)}")
+        except Exception as e:
+            log(f"    Warning: Could not delete {old_exe}: {e}")
 
     version_json = {
         "version": version,
@@ -314,7 +325,7 @@ def create_version_json():
 
     if os.path.exists(src_installer):
         shutil.copy2(src_installer, os.path.join(netlify_dir, installer_name))
-        log("  Copied installer to netlify folder")
+        log(f"  Copied new installer: {installer_name}")
 
     index_html = f"""<!DOCTYPE html>
 <html lang="it">
@@ -414,7 +425,7 @@ def create_version_json():
     with open(os.path.join(netlify_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(index_html)
 
-    log(f"[BUILD] version.json created: v{version}")
+    log(f"[BUILD] Netlify folder prepared for v{version}")
     return netlify_dir
 
 
