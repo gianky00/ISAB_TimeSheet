@@ -1,6 +1,8 @@
 import logging
 import logging.handlers
 import sys
+import traceback
+from typing import Callable, Optional
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QMessageBox
@@ -21,127 +23,115 @@ class AppInitializer:
     """Gestisce la sequenza di avvio dell'applicazione."""
 
     @staticmethod
-    def initialize():
-        """Esegue tutti i controlli necessari prima di mostrare la GUI."""
-        # 0. Setup Logging (CRITICAL: Prima di tutto il resto)
-        AppInitializer._setup_logging()
+    def initialize(status_callback: Optional[Callable[[str, int], None]] = None):
+        """
+        Esegue tutti i controlli necessari prima di mostrare la GUI.
+        
+        Args:
+            status_callback: Funzione(messaggio, progresso) per aggiornare la UI di caricamento.
+        """
+        def update(msg, prog):
+            if status_callback:
+                status_callback(msg, prog)
+            logger.info(f"[INIT] {msg} ({prog}%)")
 
-        # 1. Licenza
-        if not AppInitializer._check_license():
-            sys.exit(1)
+        try:
+            # 0. Setup Logging
+            update("Configurazione sistema di logging...", 20)
+            AppInitializer._setup_logging()
 
-        # 2. Database
-        if not AppInitializer._init_db():
-            sys.exit(1)
+            # 1. Licenza
+            update("Verifica licenza in corso...", 40)
+            if not AppInitializer._check_license(status_callback):
+                return False
 
-        # 3. Sicurezza Telegram
-        AppInitializer._init_telegram_security()
+            # 2. Database
+            update("Inizializzazione database locale...", 70)
+            if not AppInitializer._init_db():
+                return False
 
-        return True
+            # 3. Sicurezza Telegram
+            update("Sincronizzazione sicurezza Telegram...", 90)
+            AppInitializer._init_telegram_security()
+
+            update("Avvio applicazione...", 100)
+            return True
+
+        except Exception as e:
+            logger.critical(f"Errore fatale inizializzazione: {e}")
+            logger.error(traceback.format_exc())
+            QMessageBox.critical(None, "Errore Inizializzazione", 
+                                f"Si è verificato un errore durante l'avvio:\n{e}")
+            return False
 
     @staticmethod
     def _setup_logging():
         """Configura il logging su file rotativo."""
         from pathlib import Path
-
         from src.core import config_manager
 
         log_dir = Path(config_manager.get_logs_path())
+        log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / "application.log"
 
-        # Formatter
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
-        # Handler Rotativo (5MB x 3 backup)
         handler = logging.handlers.RotatingFileHandler(
             log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
         )
         handler.setFormatter(formatter)
 
-        # Root Logger config
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
 
-        # Evita duplicati se reload
         if not any(
             isinstance(h, logging.handlers.RotatingFileHandler)
             for h in root_logger.handlers
         ):
             root_logger.addHandler(handler)
-            logger.info(f"Logging inizializzato su: {log_file}")
-
-        # Console Handler (opzionale, se non c'è già)
-        if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
-            console = logging.StreamHandler()
-            console.setFormatter(formatter)
-            root_logger.addHandler(console)
 
     @staticmethod
     def _init_telegram_security():
         """Genera un codice di accoppiamento se Telegram non è configurato."""
         import random
-
         from src.core import config_manager
 
         config = config_manager.load_config()
         if not config.get("telegram_chat_id"):
-            # Genera un codice a 6 cifre se non esiste già un pairing pendente
             if not config.get("telegram_pairing_code"):
                 code = str(random.randint(100000, 999999))
                 config_manager.set_config_value("telegram_pairing_code", code)
-                logger.info(f"Generato nuovo pairing code Telegram: {code}")
-            else:
-                logger.info(
-                    f"Pairing code Telegram esistente: {config.get('telegram_pairing_code')}"
-                )
 
     @staticmethod
-    def _check_license():
+    def _check_license(status_callback=None):
         try:
             status, msg = get_detailed_license_status()
 
-            # Se la licenza non è valida o manca, tenta l'aggiornamento online
             if status != LicenseStatus.VALID:
-                logger.info(
-                    "Licenza non valida o mancante. Tentativo di aggiornamento online..."
-                )
+                if status_callback:
+                    status_callback("Tentativo ripristino licenza online...", 50)
                 run_update()
                 status, msg = get_detailed_license_status()
 
-            # Se ancora non è valida, prova ad attivare/verificare il periodo di grazia
             if status != LicenseStatus.VALID:
-                logger.warning(f"Validazione licenza fallita ({status.value}): {msg}")
                 grace_allowed, grace_msg, remaining = check_emergency_grace_period()
                 hw_id = get_hardware_id()
 
                 if grace_allowed:
-                    logger.info(
-                        f"Accesso consentito tramite periodo di grazia: {grace_msg}"
-                    )
-                    QMessageBox.warning(
-                        None,
-                        "Licenza - Modalità Provvisoria",
-                        f"⚠️ {grace_msg}\n\nL'applicazione funzionerà in modalità limitata per {remaining} giorni.\nContatta l'assistenza fornendo il seguente ID:\n\nID Hardware: {hw_id}",
-                    )
                     return True
                 else:
-                    logger.critical(f"Accesso negato: {grace_msg}")
                     QMessageBox.critical(
                         None,
                         "Errore Licenza",
-                        f"Impossibile trovare una licenza valida e il periodo di grazia è scaduto.\n\n{msg}\n\nID Hardware: {hw_id}",
+                        f"Licenza non valida.\n\n{msg}\n\nID Hardware: {hw_id}",
                     )
                     return False
 
-            logger.info("Licenza verificata con successo.")
             return True
         except Exception as e:
-            logger.error(f"Errore critico durante il controllo licenza: {e}")
-            import traceback
-
-            logger.error(traceback.format_exc())
+            logger.error(f"Errore licenza: {e}")
             return False
 
     @staticmethod
@@ -150,18 +140,15 @@ class AppInitializer:
             db_manager.init_db()
             return True
         except Exception as e:
-            logger.critical(f"Errore DB: {e}")
-            QMessageBox.critical(
-                None, "Errore Database", f"Impossibile inizializzare il DB:\n{e}"
-            )
             return False
 
     @staticmethod
     def setup_app_style(app):
         """Configura font e tema."""
+        from src.core.version import __version__
         app.setStyle("Fusion")
         apply_theme(app, "light")
         app.setFont(QFont("Segoe UI", 10))
         app.setApplicationName("SyncroJob")
         app.setOrganizationName("Giancarlo Allegretti")
-        app.setApplicationVersion("1.0.0")
+        app.setApplicationVersion(__version__)

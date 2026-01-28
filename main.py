@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 # SyncroJob - Sistema di Automazione Portale ISAB
-Entry point principale dell'applicazione.
+Entry point principale dell'applicazione con Smart Startup.
 """
 
 import logging
@@ -28,7 +28,6 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     logger.critical(f"UNHANDLED EXCEPTION (MainThread):\n{error_msg}")
 
-    # Forza il flush immediato
     for handler in logger.handlers:
         handler.flush()
 
@@ -47,7 +46,6 @@ def handle_thread_exception(args):
     )
     logger.critical(f"UNHANDLED EXCEPTION (Thread: {args.thread.name}):\n{error_msg}")
 
-    # Forza il flush
     for handler in logger.handlers:
         handler.flush()
 
@@ -58,7 +56,6 @@ def setup_logging():
     log_dir = CONFIG_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
 
-    # 1. Main App Logger (syncrojob.log)
     app_log_file = log_dir / "syncrojob.log"
     app_handler = logging.handlers.RotatingFileHandler(
         app_log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
@@ -72,7 +69,6 @@ def setup_logging():
     if not root_logger.handlers:
         root_logger.addHandler(app_handler)
 
-    # 2. Crash Logger (crash.log)
     crash_handler = logging.FileHandler(
         log_dir / "crash.log", mode="w", encoding="utf-8"
     )
@@ -104,7 +100,6 @@ def main():
     from PyQt6.QtNetwork import QLocalServer, QLocalSocket
     from PyQt6.QtWidgets import QApplication, QMessageBox
 
-    # Setup Icecream
     try:
         from icecream import ic
         ic.configureOutput(prefix="DEBUG| ", includeContext=True)
@@ -119,23 +114,17 @@ def main():
     
     # === SINGLE INSTANCE & ACTIVATION LOGIC ===
     server_name = "SyncroJob_Instance_Connector"
-    
-    # Prova a connetterti a un'istanza esistente
     socket = QLocalSocket()
     socket.connectToServer(server_name)
     
     if socket.waitForConnected(500):
-        # Esiste già un'istanza! Invia comando di attivazione e chiudi.
         socket.write(b"ACTIVATE")
         socket.waitForBytesWritten(500)
         socket.disconnectFromServer()
         sys.exit(0)
     
-    # Se la connessione fallisce, questa è la prima istanza. Avvia il server.
     server = QLocalServer()
     server.listen(server_name)
-    
-    # Variabile per contenere la finestra principale (necessaria per la closure)
     main_window_instance = None
 
     def handle_new_connection():
@@ -143,7 +132,6 @@ def main():
         if client_socket.waitForReadyRead(500):
             msg = client_socket.readAll().data().decode()
             if msg == "ACTIVATE" and main_window_instance:
-                # Riporta la finestra in primo piano
                 main_window_instance.show()
                 main_window_instance.raise_()
                 main_window_instance.activateWindow()
@@ -151,7 +139,7 @@ def main():
 
     server.newConnection.connect(handle_new_connection)
 
-    # Configurazione path e ambiente per eseguibile
+    # Configurazione path e ambiente
     if getattr(sys, "frozen", False):
         exe_dir = os.path.dirname(sys.executable)
         plugin_path = os.path.join(exe_dir, "_internal", "PyQt6", "Qt6", "plugins")
@@ -161,17 +149,29 @@ def main():
 
     from src.core.app_initializer import AppInitializer
     from src.gui.main_window import MainWindow
+    from src.gui.dialogs.startup_dialog import StartupDialog
 
     AppInitializer.setup_app_style(app)
 
-    if not AppInitializer.initialize():
+    # === STARTUP LOADING WINDOW ===
+    startup_dialog = StartupDialog()
+    startup_dialog.show()
+    
+    # Funzione per aggiornare la UI durante l'inizializzazione
+    def update_startup_ui(msg, prog):
+        startup_dialog.update_status(msg, prog)
+
+    # Esegui inizializzazione con feedback visivo
+    if not AppInitializer.initialize(status_callback=update_startup_ui):
+        startup_dialog.close()
         sys.exit(1)
+
+    # Chiudi finestra di caricamento e apri la principale
+    startup_dialog.close()
 
     try:
         main_window_instance = MainWindow()
         main_window_instance.showMaximized()
-        
-        # Esegue il loop e assicura la chiusura del server alla fine
         exit_code = app.exec()
         server.close()
         sys.exit(exit_code)
