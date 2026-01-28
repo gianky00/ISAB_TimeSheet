@@ -4,12 +4,11 @@ Dialoghi e card informative.
 """
 
 from PyQt6.QtCore import QPoint, QRect, QSize, Qt
-from PyQt6.QtGui import QColor, QCursor
+from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -130,12 +129,14 @@ class KPIBigCard(QFrame):
         self.setMinimumWidth(200)
         self.setMinimumHeight(120)
 
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setXOffset(0)
-        shadow.setYOffset(5)
-        shadow.setColor(QColor(0, 0, 0, 20))
-        self.setGraphicsEffect(shadow)
+        # REMOVED: QGraphicsDropShadowEffect causes QPainter warnings
+        # Use CSS box-shadow instead (not fully supported but better than warnings)
+        # shadow = QGraphicsDropShadowEffect(self)
+        # shadow.setBlurRadius(20)
+        # shadow.setXOffset(0)
+        # shadow.setYOffset(5)
+        # shadow.setColor(QColor(0, 0, 0, 20))
+        # self.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)

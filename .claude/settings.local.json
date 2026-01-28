@@ -23,7 +23,12 @@
       "Bash(.venv/Scripts/ruff.exe check:*)",
       "Bash(.venv/Scripts/ruff.exe format:*)",
       "Bash(.venvScriptsinterrogate.exe -vv srcguidialogsstartup_dialog.py srccoreapp_initializer.py main.py)",
-      "Bash(.venv/Scripts/interrogate.exe:*)"
+      "Bash(.venv/Scripts/interrogate.exe:*)",
+      "Bash(timeout:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }

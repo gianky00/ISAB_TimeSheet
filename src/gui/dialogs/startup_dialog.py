@@ -229,6 +229,7 @@ class ParticleBackground(QWidget):
     def paintEvent(self, event):
         """Render cached background and sprite-based particles."""
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # 1. Background (Cached)
         if not self._bg_cache:
@@ -241,6 +242,9 @@ class ParticleBackground(QWidget):
 
         w, h = self.width(), self.height()
         r = self.BORDER_RADIUS
+
+        # === Save painter state before clipping ===
+        painter.save()
 
         # Clip for particles
         path = QPainterPath()
@@ -266,12 +270,16 @@ class ParticleBackground(QWidget):
                 x, y, int(target_size), int(target_size), self._sprite_cache
             )
 
-        # Draw Connections (Lines are cheap)
+        # Reset opacity for connections
         painter.setOpacity(1.0)
+
+        # Draw Connections (Lines are cheap)
         self._draw_connections(painter)
 
-        # Draw Orbs (Cached or simple?)
-        # Orbs are large, let's keep them dynamic but optimize
+        # Restore painter state (removes clipping)
+        painter.restore()
+
+        # Draw Orbs (Cached or simple?) - outside clipping
         self._draw_glow_orbs(painter, w, h)
 
     def _draw_glow_orbs(self, painter, w, h):
@@ -310,9 +318,6 @@ class ParticleBackground(QWidget):
                 dist_sq = dx * dx + dy * dy
                 if dist_sq < max_dist * max_dist:
                     painter.drawLine(int(p1.x), int(p1.y), int(p2.x), int(p2.y))
-
-        # Reset clipping
-        painter.setClipping(False)
 
 
 # =============================================================================
@@ -677,13 +682,18 @@ class GlowingProgressBar(QWidget):
 
             # Shimmer effect
             if 0 < self._shimmer < pw:
+                # Save state before clipping
+                painter.save()
+
                 shimmer = QLinearGradient(self._shimmer - 40, 0, self._shimmer + 40, 0)
                 shimmer.setColorAt(0, QColor(255, 255, 255, 0))
                 shimmer.setColorAt(0.5, QColor(255, 255, 255, 100))
                 shimmer.setColorAt(1, QColor(255, 255, 255, 0))
                 painter.setClipPath(progress)
                 painter.fillRect(self._shimmer - 40, 0, 80, h, shimmer)
-                painter.setClipping(False)
+
+                # Restore state (removes clipping)
+                painter.restore()
 
             # Glow sotto la barra
             glow = QLinearGradient(0, h, 0, h + 8)

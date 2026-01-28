@@ -71,13 +71,13 @@ class AutopilotEventCard(QFrame):
         layout.setSpacing(12)
 
         # Icon
-        icon_label = QLabel()
-        icon_label.setFixedSize(32, 32)
-        icon_label.setPixmap(
+        self.icon_label = QLabel()
+        self.icon_label.setFixedSize(32, 32)
+        self.icon_label.setPixmap(
             get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(20, 20)
         )
-        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_label.setStyleSheet(
+        self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.icon_label.setStyleSheet(
             f"""
             QLabel {{
                 background-color: {color};
@@ -87,7 +87,7 @@ class AutopilotEventCard(QFrame):
             }}
         """
         )
-        layout.addWidget(icon_label)
+        layout.addWidget(self.icon_label)
 
         # Text content
         text_layout = QVBoxLayout()
@@ -127,8 +127,8 @@ class AutopilotEventCard(QFrame):
         layout.addStretch()
 
         # --- ANIMAZIONE "VIVO" (Pulse Effect sull'icona) ---
-        self.icon_opacity = QGraphicsOpacityEffect(icon_label)
-        icon_label.setGraphicsEffect(self.icon_opacity)
+        self.icon_opacity = QGraphicsOpacityEffect(self.icon_label)
+        self.icon_label.setGraphicsEffect(self.icon_opacity)
 
         self.pulse_anim = QPropertyAnimation(self.icon_opacity, b"opacity")
         self.pulse_anim.setDuration(2000)
@@ -145,6 +145,27 @@ class AutopilotEventCard(QFrame):
 
         # Aggiorna countdown iniziale
         self._update_countdown()
+
+    def cleanup(self):
+        """Clean up animations and effects before deletion."""
+        try:
+            # Stop animations
+            if hasattr(self, "pulse_anim") and self.pulse_anim is not None:
+                self.pulse_anim.stop()
+                self.pulse_anim.deleteLater()
+
+            if hasattr(self, "timer") and self.timer is not None:
+                self.timer.stop()
+
+            # Remove graphics effect
+            if hasattr(self, "icon_label") and self.icon_label:
+                self.icon_label.setGraphicsEffect(None)
+
+            # Delete effect (may not exist if animation was disabled)
+            if hasattr(self, "icon_opacity") and self.icon_opacity:
+                self.icon_opacity.deleteLater()
+        except (RuntimeError, AttributeError):
+            pass  # Widget already deleted or attribute missing
 
     def _update_countdown(self):
         """Aggiorna il countdown per il prossimo evento."""
@@ -677,7 +698,51 @@ class AutopilotWidget(QWidget):
 
     def _toggle_mode(self):
         """Toggle tra modalità visualizzazione e configurazione con animazione spettacolare."""
+        # Prevent multiple animations at once
+        if hasattr(self, "_animating") and self._animating:
+            return
+
+        self._animating = True
         self._config_mode = not self._config_mode
+
+        # === CRITICAL: Stop ALL animations BEFORE transition to prevent QPainter warnings ===
+
+        # 1. Stop LIVE dot animation
+        if hasattr(self, "dot_anim") and self.dot_anim:
+            try:
+                self.dot_anim.stop()
+            except RuntimeError:
+                pass
+
+        # 2. Stop ALL card animations (DON'T remove effects yet, do it in cleanup)
+        for i in range(self.view_layout.count()):
+            item = self.view_layout.itemAt(i)
+            if item and item.widget():
+                widget = item.widget()
+                if hasattr(widget, "pulse_anim") and widget.pulse_anim is not None:
+                    try:
+                        widget.pulse_anim.stop()
+                    except RuntimeError:
+                        pass
+                if hasattr(widget, "timer") and widget.timer is not None:
+                    try:
+                        widget.timer.stop()
+                    except RuntimeError:
+                        pass
+                # DON'T remove effects here - causes QPainter warnings
+                # Will be removed in cleanup() before deletion
+
+        # 3. Stop ALL card animations in config_widget
+        for i in range(self.config_layout.count()):
+            item = self.config_layout.itemAt(i)
+            if item and item.widget():
+                widget = item.widget()
+                if hasattr(widget, "pulse_anim") and widget.pulse_anim is not None:
+                    try:
+                        widget.pulse_anim.stop()
+                    except RuntimeError:
+                        pass
+                # DON'T remove effects here
 
         # Animazione spettacolare del pulsante ingranaggio
         self._animate_gear_button()
@@ -691,11 +756,54 @@ class AutopilotWidget(QWidget):
             # Refresh events dopo aver configurato
             QTimer.singleShot(600, self.refresh_events)
 
+        # Restart LIVE animation after transition
+        def restart_live_animation():
+            try:
+                if hasattr(self, "dot_anim") and self.dot_anim:
+                    self.dot_anim.start()
+            except RuntimeError:
+                pass
+
+        QTimer.singleShot(800, restart_live_animation)
+
+        # Re-enable after animation completes
+        QTimer.singleShot(800, lambda: setattr(self, "_animating", False))
+
     def _animate_gear_button(self):
         """
         Crea un'animazione SPETTACOLARE per il pulsante ingranaggio.
         # Combina: Scale bounce drammatico, Shake orizzontale, Pulsazione colore multi-fase.
         """
+        # Cleanup previous animations if still running
+        if hasattr(self, "_gear_animation") and self._gear_animation:
+            try:
+                if (
+                    self._gear_animation.state()
+                    == QParallelAnimationGroup.State.Running
+                ):
+                    self._gear_animation.stop()
+                self._gear_animation.deleteLater()
+            except RuntimeError:
+                pass
+
+        # Also clean up child animations
+        if hasattr(self, "_gear_shake_anim") and self._gear_shake_anim:
+            try:
+                if self._gear_shake_anim.state() == QPropertyAnimation.State.Running:
+                    self._gear_shake_anim.stop()
+            except RuntimeError:
+                pass
+
+        if hasattr(self, "_gear_scale_sequence") and self._gear_scale_sequence:
+            try:
+                if (
+                    self._gear_scale_sequence.state()
+                    == QSequentialAnimationGroup.State.Running
+                ):
+                    self._gear_scale_sequence.stop()
+            except RuntimeError:
+                pass
+
         # Salva posizione originale
         original_pos = self.config_btn.pos()
         original_style = self.config_btn.styleSheet()
@@ -761,43 +869,55 @@ class AutopilotWidget(QWidget):
         # 3. CAMBIO COLORE MULTI-FASE (effetto arcobaleno)
         # Sequenza: grigio -> blu -> viola -> verde -> grigio
         def set_blue():
-            self.config_btn.setStyleSheet(
+            try:
+                self.config_btn.setStyleSheet(
+                    """
+                    QPushButton {
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                            stop:0 #0d6efd, stop:1 #0a58ca);
+                        border: 3px solid #0d6efd;
+                        border-radius: 16px;
+                    }
                 """
-                QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #0d6efd, stop:1 #0a58ca);
-                    border: 3px solid #0d6efd;
-                    border-radius: 16px;
-                }
-            """
-            )
+                )
+            except RuntimeError:
+                pass
 
         def set_purple():
-            self.config_btn.setStyleSheet(
+            try:
+                self.config_btn.setStyleSheet(
+                    """
+                    QPushButton {
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                            stop:0 #8b5cf6, stop:1 #7c3aed);
+                        border: 3px solid #8b5cf6;
+                        border-radius: 16px;
+                    }
                 """
-                QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #8b5cf6, stop:1 #7c3aed);
-                    border: 3px solid #8b5cf6;
-                    border-radius: 16px;
-                }
-            """
-            )
+                )
+            except RuntimeError:
+                pass
 
         def set_green():
-            self.config_btn.setStyleSheet(
+            try:
+                self.config_btn.setStyleSheet(
+                    """
+                    QPushButton {
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                            stop:0 #10b981, stop:1 #059669);
+                        border: 3px solid #10b981;
+                        border-radius: 16px;
+                    }
                 """
-                QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #10b981, stop:1 #059669);
-                    border: 3px solid #10b981;
-                    border-radius: 16px;
-                }
-            """
-            )
+                )
+            except RuntimeError:
+                pass
 
         def restore_color():
-            self.config_btn.setStyleSheet(original_style)
+            try:
+                self.config_btn.setStyleSheet(original_style)
+            except RuntimeError:
+                pass
 
         # Timer per cambio colore rapido (caleidoscopio)
         QTimer.singleShot(0, set_blue)  # Blu immediato
@@ -805,80 +925,77 @@ class AutopilotWidget(QWidget):
         QTimer.singleShot(400, set_green)  # Verde a 400ms
         QTimer.singleShot(750, restore_color)  # Ritorno normale a 750ms
 
+        # Cleanup animation when finished
+        def cleanup_gear_animation():
+            try:
+                parallel_group.deleteLater()
+            except RuntimeError:
+                pass
+
+        parallel_group.finished.connect(cleanup_gear_animation)
+
         # === AVVIA ANIMAZIONE ===
         parallel_group.start()
 
         # Mantieni riferimenti per evitare garbage collection
         self._gear_animation = parallel_group
         self._gear_shake_anim = shake_anim
+        self._gear_scale_sequence = scale_sequence
 
     def _animate_transition(self, from_widget, to_widget):
         """
         Crea un'animazione spettacolare di transizione tra due widget.
-        Effetto: fade out → fade in
+        Effetto: fade out → fade in - SIMPLIFIED VERSION without QGraphicsOpacityEffect
         """
-        # Crea nuovi effetti per questa animazione
-        from_effect = QGraphicsOpacityEffect(from_widget)
-        from_widget.setGraphicsEffect(from_effect)
-        from_effect.setOpacity(1.0)
+        # Stop any previous animation
+        if hasattr(self, "_current_animation") and self._current_animation:
+            try:
+                if (
+                    self._current_animation.state()
+                    == QSequentialAnimationGroup.State.Running
+                ):
+                    self._current_animation.stop()
+                self._current_animation.deleteLater()
+            except RuntimeError:
+                pass
 
-        to_effect = QGraphicsOpacityEffect(to_widget)
-        to_widget.setGraphicsEffect(to_effect)
-        to_effect.setOpacity(0.0)
+        # Clean up any previous effects
+        from_widget.setGraphicsEffect(None)
+        to_widget.setGraphicsEffect(None)
 
-        # Mostra il widget di destinazione (ma invisibile)
+        # Simple cross-fade without opacity effects
+        # Just hide/show with a timer delay
         to_widget.setVisible(True)
+        to_widget.hide()
 
-        # Animazione gruppo sequenziale
-        sequence = QSequentialAnimationGroup(self)
+        def do_transition():
+            from_widget.hide()
+            to_widget.show()
 
-        # FASE 1: Fade out del widget corrente
-        fade_out = QPropertyAnimation(from_effect, b"opacity", self)
-        fade_out.setDuration(300)
-        fade_out.setStartValue(1.0)
-        fade_out.setEndValue(0.0)
-        fade_out.setEasingCurve(QEasingCurve.Type.InCubic)
-
-        sequence.addAnimation(fade_out)
-
-        # Nascondi il widget di partenza al termine del fade out
-        def hide_from():
-            from_widget.setVisible(False)
-            # Rimuovi l'effetto per liberare risorse
-            from_widget.setGraphicsEffect(None)
-
-        fade_out.finished.connect(hide_from)
-
-        # FASE 2: Fade in del nuovo widget
-        fade_in = QPropertyAnimation(to_effect, b"opacity", self)
-        fade_in.setDuration(400)
-        fade_in.setStartValue(0.0)
-        fade_in.setEndValue(1.0)
-        fade_in.setEasingCurve(QEasingCurve.Type.OutCubic)
-
-        # Rimuovi l'effetto al termine per liberare risorse
-        def cleanup_to():
-            to_widget.setGraphicsEffect(None)
-
-        fade_in.finished.connect(cleanup_to)
-
-        sequence.addAnimation(fade_in)
-
-        # Avvia l'animazione
-        sequence.start()
-
-        # Mantieni i riferimenti per evitare garbage collection
-        self._current_animation = sequence
-        self._from_effect = from_effect
-        self._to_effect = to_effect
+        # Delay transition slightly for smoother visual effect
+        QTimer.singleShot(150, do_transition)
 
     def refresh_events(self):
         """Ricarica gli eventi programmati dai bot (modalità visualizzazione) con layout a 2 colonne."""
+        from PyQt6.QtWidgets import QApplication
+
         # Pulisci eventi esistenti
+        widgets_to_delete = []
         while self.view_layout.count() > 0:
             item = self.view_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget()
+            if widget:
+                # Clean up animations before deleting
+                if hasattr(widget, "cleanup"):
+                    widget.cleanup()
+                widgets_to_delete.append(widget)
+
+        # Delete all widgets
+        for widget in widgets_to_delete:
+            widget.deleteLater()
+
+        # CRITICAL: Force immediate processing of delete events
+        QApplication.processEvents()
 
         config = config_manager.load_config()
 
@@ -971,11 +1088,25 @@ class AutopilotWidget(QWidget):
 
     def _refresh_config(self):
         """Ricarica le configurazioni dei bot (modalità configurazione) con layout a 2 colonne."""
+        from PyQt6.QtWidgets import QApplication
+
         # Pulisci config esistenti
+        widgets_to_delete = []
         while self.config_layout.count() > 0:
             item = self.config_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget()
+            if widget:
+                # Clean up any animations before deleting
+                if hasattr(widget, "cleanup"):
+                    widget.cleanup()
+                widgets_to_delete.append(widget)
+
+        # Delete all widgets
+        for widget in widgets_to_delete:
+            widget.deleteLater()
+
+        # CRITICAL: Force immediate processing of delete events
+        QApplication.processEvents()
 
         # Lista dei bot configurabili (giornalieri)
         bots = [
