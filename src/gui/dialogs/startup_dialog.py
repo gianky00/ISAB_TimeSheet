@@ -63,14 +63,31 @@ class PROCESS_MEMORY_COUNTERS_EX(Structure):
 def get_current_process_ram_mb():
     """Restituisce l'uso RAM del processo corrente in MB su Windows."""
     try:
-        process = ctypes.windll.kernel32.GetCurrentProcess()
+        # 1. Check if we are on Windows and have access to windll
+        if not hasattr(ctypes, "windll") or not hasattr(ctypes.windll, "psapi"):
+            return 0.0
+
+        psapi = ctypes.windll.psapi
+        kernel32 = ctypes.windll.kernel32
+
+        # 2. Configure function signatures to prevent SegFaults on 64-bit Python
+        if not getattr(psapi.GetProcessMemoryInfo, "argtypes", None):
+            psapi.GetProcessMemoryInfo.argtypes = (
+                wintypes.HANDLE,
+                ctypes.POINTER(PROCESS_MEMORY_COUNTERS_EX),
+                wintypes.DWORD,
+            )
+            psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+
+        # 3. Call API
+        process = kernel32.GetCurrentProcess()
         counters = PROCESS_MEMORY_COUNTERS_EX()
         counters.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX)
-        if ctypes.windll.psapi.GetProcessMemoryInfo(
-            process, byref(counters), sizeof(counters)
-        ):
+
+        if psapi.GetProcessMemoryInfo(process, byref(counters), sizeof(counters)):
             return counters.WorkingSetSize / 1024 / 1024
     except Exception:
+        # Fail silently to avoid crashing the splash screen
         pass
     return 0.0
 
