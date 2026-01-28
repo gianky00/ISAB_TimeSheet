@@ -60,6 +60,10 @@ class PROCESS_MEMORY_COUNTERS_EX(Structure):
     ]
 
 
+class FILETIME(Structure):
+    _fields_ = [("dwLowDateTime", wintypes.DWORD), ("dwHighDateTime", wintypes.DWORD)]
+
+
 def get_current_process_ram_mb():
     """Restituisce l'uso RAM del processo corrente in MB su Windows."""
     try:
@@ -284,28 +288,46 @@ class ResourceMonitor(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(140, 30)
+        self.setFixedSize(140, 38)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
+
+        # Stats Layout (Vertical)
+        stats_layout = QVBoxLayout()
+        stats_layout.setSpacing(0)
+        stats_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         # RAM Indicator
         self.ram_lbl = QLabel("RAM: 0MB")
         self.ram_lbl.setStyleSheet(
-            "color: rgba(52, 152, 219, 0.8); font-size: 10px; font-weight: 600; font-family: 'Consolas';"
+            "color: rgba(52, 152, 219, 0.9); font-size: 10px; font-weight: 700; font-family: 'Consolas';"
         )
 
-        # Activity Indicator (Fake CPU/Disk IO visualization)
+        # CPU Indicator
+        self.cpu_lbl = QLabel("CPU: 0%")
+        self.cpu_lbl.setStyleSheet(
+            "color: rgba(46, 204, 113, 0.9); font-size: 10px; font-weight: 700; font-family: 'Consolas';"
+        )
+
+        stats_layout.addWidget(self.ram_lbl)
+        stats_layout.addWidget(self.cpu_lbl)
+
+        # Activity Indicator (Fake IO visualization)
         self.activity_bar = QFrame()
-        self.activity_bar.setFixedSize(40, 4)
+        self.activity_bar.setFixedSize(6, 28)
         self.activity_bar.setStyleSheet(
-            "background: rgba(255,255,255,0.1); border-radius: 2px;"
+            "background: rgba(255,255,255,0.1); border-radius: 3px;"
         )
 
         layout.addStretch()
-        layout.addWidget(self.ram_lbl)
+        layout.addLayout(stats_layout)
         layout.addWidget(self.activity_bar)
+
+        # CPU tracking state
+        self.last_proc_time = 0
+        self.last_time = 0
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_stats)
@@ -313,12 +335,61 @@ class ResourceMonitor(QWidget):
 
         self._activity_level = 0
 
+    def _get_cpu_time(self):
+        """Get total kernel + user time for this process in 100ns units."""
+        try:
+            creation, exit, kernel, user = (
+                FILETIME(),
+                FILETIME(),
+                FILETIME(),
+                FILETIME(),
+            )
+            if ctypes.windll.kernel32.GetProcessTimes(
+                ctypes.windll.kernel32.GetCurrentProcess(),
+                byref(creation),
+                byref(exit),
+                byref(kernel),
+                byref(user),
+            ):
+                # Helper to convert FILETIME to int
+                def ft_to_int(ft):
+                    return (ft.dwHighDateTime << 32) + ft.dwLowDateTime
+
+                return ft_to_int(kernel) + ft_to_int(user)
+        except Exception:
+            pass
+        return 0
+
     def _update_stats(self):
+        import time
+
         # Update RAM (Real)
         mb = get_current_process_ram_mb()
         self.ram_lbl.setText(f"RAM: {int(mb)}MB")
 
-        # Decay activity
+        # Update CPU (Real)
+        try:
+            current_proc = self._get_cpu_time()
+            current_time = time.time()
+
+            if self.last_time > 0:
+                delta_proc = current_proc - self.last_proc_time  # 100ns units
+                delta_time = current_time - self.last_time  # seconds
+
+                if delta_time > 0:
+                    cpu_count = os.cpu_count() or 1
+                    # 1 sec = 10,000,000 units of 100ns
+                    cpu_percent = (
+                        delta_proc / (delta_time * 10_000_000 * cpu_count)
+                    ) * 100
+                    self.cpu_lbl.setText(f"CPU: {cpu_percent:.1f}%")
+
+            self.last_proc_time = current_proc
+            self.last_time = current_time
+        except Exception:
+            self.cpu_lbl.setText("CPU: N/A")
+
+        # Decay activity (Log based)
         self._activity_level = max(0, self._activity_level - 10)
         self._draw_activity()
 
@@ -328,25 +399,25 @@ class ResourceMonitor(QWidget):
         self._draw_activity()
 
     def _draw_activity(self):
-        # Color gradient based on activity
-        if self._activity_level > 80:
-            col = "#e74c3c"  # Red
-        elif self._activity_level > 40:
-            col = "#f1c40f"  # Yellow
-        else:
-            col = "#2ecc71"  # Green
+        # Activity Bar is vertical now
+        h = int((self._activity_level / 100) * 28)
 
-        w = int((self._activity_level / 100) * 40)
-        # Semplice visualizzazione tramite style sheet dinamico sul widget interno non è performante
-        # Qui usiamo un semplice gradiente via stylesheet sul frame stesso o un child
-        # Per semplicità, usiamo un trick: un child frame
         if not hasattr(self, "_bar_fill"):
             self._bar_fill = QLabel(self.activity_bar)
-            self._bar_fill.setFixedHeight(4)
-            self._bar_fill.move(0, 0)
+            self._bar_fill.setFixedWidth(6)
+            self._bar_fill.move(0, 28)  # Start from bottom
 
-        self._bar_fill.setFixedSize(max(0, w), 4)
-        self._bar_fill.setStyleSheet(f"background: {col}; border-radius: 2px;")
+        # Color gradient
+        if self._activity_level > 80:
+            col = "#e74c3c"
+        elif self._activity_level > 40:
+            col = "#f1c40f"
+        else:
+            col = "#2ecc71"
+
+        self._bar_fill.setFixedHeight(max(0, h))
+        self._bar_fill.move(0, 28 - h)  # Grow upwards
+        self._bar_fill.setStyleSheet(f"background: {col}; border-radius: 3px;")
 
 
 # =============================================================================
