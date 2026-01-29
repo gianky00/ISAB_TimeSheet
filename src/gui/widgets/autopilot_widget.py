@@ -2,6 +2,8 @@
 Widget Autopilot per visualizzare e configurare eventi programmati dei bot.
 """
 
+from contextlib import suppress
+
 from PyQt6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
@@ -727,77 +729,59 @@ class AutopilotWidget(QWidget):
         self.refresh_events()
         self._refresh_config()
 
+    def _stop_all_card_animations(self, layout):
+        """Ferma ricorsivamente tutte le animazioni delle card in un layout."""
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if not item or not item.widget():
+                continue
+
+            widget = item.widget()
+            # Stop pulse animation
+            if hasattr(widget, "pulse_anim") and widget.pulse_anim:
+                with suppress(RuntimeError):
+                    widget.pulse_anim.stop()
+
+            # Stop timers
+            if hasattr(widget, "timer") and widget.timer:
+                with suppress(RuntimeError):
+                    widget.timer.stop()
+
     def _toggle_mode(self):
         """Toggle tra modalità visualizzazione e configurazione con animazione spettacolare."""
-        # Prevent multiple animations at once
-        if hasattr(self, "_animating") and self._animating:
+        if getattr(self, "_animating", False):
             return
 
         self._animating = True
         self._config_mode = not self._config_mode
 
-        # === CRITICAL: Stop ALL animations BEFORE transition to prevent QPainter warnings ===
-
         # 1. Stop LIVE dot animation
         if hasattr(self, "dot_anim") and self.dot_anim:
-            try:
+            with suppress(RuntimeError):
                 self.dot_anim.stop()
-            except RuntimeError:
-                pass
 
-        # 2. Stop ALL card animations (DON'T remove effects yet, do it in cleanup)
-        for i in range(self.view_layout.count()):
-            item = self.view_layout.itemAt(i)
-            if item and item.widget():
-                widget = item.widget()
-                if hasattr(widget, "pulse_anim") and widget.pulse_anim is not None:
-                    try:
-                        widget.pulse_anim.stop()
-                    except RuntimeError:
-                        pass
-                if hasattr(widget, "timer") and widget.timer is not None:
-                    try:
-                        widget.timer.stop()
-                    except RuntimeError:
-                        pass
-                # DON'T remove effects here - causes QPainter warnings
-                # Will be removed in cleanup() before deletion
+        # 2. Stop card animations in both layouts
+        self._stop_all_card_animations(self.view_layout)
+        self._stop_all_card_animations(self.config_layout)
 
-        # 3. Stop ALL card animations in config_widget
-        for i in range(self.config_layout.count()):
-            item = self.config_layout.itemAt(i)
-            if item and item.widget():
-                widget = item.widget()
-                if hasattr(widget, "pulse_anim") and widget.pulse_anim is not None:
-                    try:
-                        widget.pulse_anim.stop()
-                    except RuntimeError:
-                        pass
-                # DON'T remove effects here
-
-        # Animazione spettacolare del pulsante ingranaggio
+        # 3. Effettua la transizione
         self._animate_gear_button()
 
         if self._config_mode:
-            # Passaggio a config mode
             self._animate_transition(self.view_widget, self.config_widget)
         else:
-            # Passaggio a view mode
             self._animate_transition(self.config_widget, self.view_widget)
-            # Refresh events dopo aver configurato
             QTimer.singleShot(600, self.refresh_events)
 
-        # Restart LIVE animation after transition
-        def restart_live_animation():
-            try:
-                if hasattr(self, "dot_anim") and self.dot_anim:
-                    self.dot_anim.start()
-            except RuntimeError:
-                pass
+        # 4. Restart animazioni dopo la transizione
+        QTimer.singleShot(800, self._restart_live_animations)
 
-        QTimer.singleShot(800, restart_live_animation)
-
-        # Re-enable after animation completes
+    def _restart_live_animations(self):
+        """Ripristina le animazioni globali dopo la transizione."""
+        if hasattr(self, "dot_anim") and self.dot_anim:
+            with suppress(RuntimeError):
+                self.dot_anim.start()
+        self._animating = False
         QTimer.singleShot(800, lambda: setattr(self, "_animating", False))
 
     def _animate_gear_button(self):
