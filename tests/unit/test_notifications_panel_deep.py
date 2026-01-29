@@ -3,7 +3,8 @@ from unittest.mock import patch
 
 from PyQt6.QtWidgets import QMessageBox
 
-from src.gui.panels.notifications_panel import AuditLogWidget, NotificationsPanel
+from src.gui.panels.notifications_panel import NotificationsPanel
+from src.gui.widgets.audit_log_widget import AuditLogWidget
 
 
 class TestNotificationsPanelDeep:
@@ -111,9 +112,11 @@ class TestNotificationsPanelDeep:
                 assert mock_inst.clear_all.called
 
     def test_audit_log_widget_refresh(self, qapp, qtbot):
-        with patch("src.gui.panels.notifications_panel.AuditManager.instance") as mock_audit:
+        # Patch AuditManager in the correct module where AuditLogWidget is defined
+        with patch("src.gui.widgets.audit_log_widget.AuditManager.instance") as mock_audit:
             mock_inst = mock_audit.return_value
             mock_inst.verify_integrity.return_value = True
+            mock_inst.get_categories.return_value = ["C1"]
             # Mock get_filtered_logs used by widget
             mock_inst.get_filtered_logs.return_value = (
                 [

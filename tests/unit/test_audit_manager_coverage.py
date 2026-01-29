@@ -8,30 +8,21 @@ from src.core.audit_manager import AuditManager
 
 
 class TestAuditManager:
-    """Test coverage for src/core/audit_manager.py"""
+    """Test coverage for src/core/audit modular V2."""
 
     @pytest.fixture
-    def mock_db(self):
-        # Use in-memory DB for tests
-        with patch.object(AuditManager, "DB_PATH", ":memory:"):
-            # Force singleton reset
-            AuditManager._instance = None
-            manager = AuditManager()
-            # Ensure table exists (AuditManager.__new__ calls _init_db, but with :memory: path handling might vary)
-            # In our code _init_db uses self.DB_PATH.parent.mkdir which fails for :memory:.
-            # So we need to mock _init_db or handle the path.
-            # Better approach: Mock DB_PATH to a temporary file.
-            yield manager
-            AuditManager._instance = None
-
-    @pytest.fixture
-    def temp_db_manager(self, tmp_path):
+    def temp_db_manager(self, tmp_path, mocker):
         db_file = tmp_path / "audit_test.db"
-        with patch.object(AuditManager, "DB_PATH", db_file):
-            AuditManager._instance = None
-            manager = AuditManager()
-            yield manager
-            AuditManager._instance = None
+        # Patch the actual location in AuditDatabase
+        mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
+        # Patch AuditSignals to avoid PyQt6 issues in headless
+        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        
+        # Reset singleton
+        AuditManager._instance = None
+        manager = AuditManager()
+        yield manager
+        AuditManager._instance = None
 
     def test_singleton(self, temp_db_manager):
         m1 = AuditManager()
@@ -79,10 +70,11 @@ class TestAuditManager:
 
         assert manager.verify_integrity() is False
 
-    @patch("src.core.audit_manager.os.environ.get")
-    def test_get_current_user_env(self, mock_env, temp_db_manager):
-        mock_env.return_value = "TEST_USER"
-        assert temp_db_manager._get_current_user() == "TEST_USER"
+    def test_get_current_user_env(self, temp_db_manager):
+        # Patch os in manager.py
+        with patch("src.core.audit.manager.os.environ.get") as mock_env:
+            mock_env.return_value = "TEST_USER"
+            assert temp_db_manager._get_current_user() == "TEST_USER"
 
     @patch("src.core.notification_manager.NotificationManager.instance")
     def test_notification_trigger(self, mock_notify, temp_db_manager):
@@ -92,6 +84,7 @@ class TestAuditManager:
         temp_db_manager.log_action(
             "UPDATE",
             status=AuditManager.Status.SUCCESS,
+            severity=AuditManager.Severity.LOW,
             notify=True,
             params={"error_details": "Versione aggiornata a 2.0"},
         )

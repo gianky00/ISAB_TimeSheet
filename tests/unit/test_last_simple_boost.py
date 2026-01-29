@@ -17,17 +17,16 @@ class TestLastSimpleBoost:
             assert "P1" in printers
 
     def test_apply_theme_logic(self, qapp):
-        # Mock Path.exists and open to return a custom stylesheet
+        # Mock Path.exists and open in theme_manager where they are used
         with (
-            patch("src.gui.styles.get_asset_path", return_value="fake.qss"),
-            patch("src.gui.styles.Path.exists", return_value=True),
-            patch("builtins.open", MagicMock()),
+            patch("src.gui.styles.theme_manager.get_asset_path", return_value="fake.qss"),
+            patch("src.gui.styles.theme_manager.Path.exists", return_value=True),
+            patch("src.gui.styles.theme_manager.open", create=True) as mock_open,
         ):
             # Setup open mock to return specific content
-            with patch("src.gui.styles.open", create=True) as mock_open:
-                mock_open.return_value.__enter__.return_value.read.return_value = "QWidget { color: red; }"
-                apply_theme(qapp, "light")
-                assert "color: red" in qapp.styleSheet()
+            mock_open.return_value.__enter__.return_value.read.return_value = "QWidget { color: red; }"
+            apply_theme(qapp, "light")
+            assert "color: red" in qapp.styleSheet()
 
     def test_stats_manager_increment(self, tmp_path):
         with patch("src.core.config_manager.CONFIG_DIR", tmp_path):

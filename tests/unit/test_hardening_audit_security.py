@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from src.core.audit_manager import AuditManager
+from src.core.audit.integrity import AuditIntegrity
 from src.core.database import DatabaseManager, db_manager
 from src.utils.security import PasswordManager
 
@@ -13,10 +14,14 @@ from src.utils.security import PasswordManager
 class TestHardeningAuditSecurity:
     @pytest.fixture
     def audit_env(self, tmp_path, mocker):
-        """Setup isolato per AuditManager."""
+        """Setup isolato per AuditManager modular V2."""
         db_path = tmp_path / "audit_hardening.db"
-        mocker.patch.object(AuditManager, "DB_PATH", db_path)
-        with patch("src.core.audit_manager.AuditManager._instance", None):
+        # Patch the real location in AuditDatabase
+        mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
+        # Patch signals
+        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        
+        with patch("src.core.audit.manager.AuditManager._instance", None):
             manager = AuditManager()
             yield manager, db_path
 
@@ -68,27 +73,25 @@ class TestHardeningAuditSecurity:
         manager.log_action("First")
         manager.log_action("Third")  # Questa sarà ID 2
 
-        # Ora inseriamo manualmente una riga con ID forzato o semplicemente "in mezzo"
-        # (SQLite AUTOINCREMENT non permette facilmente ID intermedi, ma simuliamo un attacco
-        # dove l'attaccante inserisce una riga e ricalcola il suo hash ma non quelli successivi)
-
         with sqlite3.connect(db_path) as conn:
             # Recuperiamo l'ultimo hash per iniettare una riga "valida" a metà
             cursor = conn.cursor()
             cursor.execute("SELECT row_hash FROM audit_logs WHERE id = 1")
             h1 = cursor.fetchone()[0]
 
-            # Calcoliamo un hash "valido" per una riga fake
-            fake_data = f"{datetime.now().isoformat()}|attacker|Exploit|general|-|{{}}|success|high"
-            fake_hash = manager._calculate_hash(fake_data, h1)
+            # Calcoliamo un hash "valido" (V2) per una riga fake
+            ts = datetime.now().isoformat()
+            fake_data = f"{ts}|attacker|Exploit|general|-|{{}}|success|high|0||"
+            fake_hash = AuditIntegrity.calculate_hash(fake_data, h1)
 
             conn.execute(
                 """
-INSERT INTO audit_logs
-                (timestamp, user_id, action, category, entity, params, status, severity, row_hash)
-                VALUES (?, 'attacker', 'Exploit', 'general', '-', '{}', 'success', 'high', ?)
-""",
-                (datetime.now().isoformat(), fake_hash),
+                INSERT INTO audit_logs
+                (timestamp, user_id, action, category, entity, params, status, severity, 
+                 duration_ms, module, error_code, row_hash)
+                VALUES (?, 'attacker', 'Exploit', 'general', '-', '{}', 'success', 'high', 0, '', '', ?)
+                """,
+                (ts, fake_hash),
             )
             conn.commit()
 
@@ -105,7 +108,7 @@ INSERT INTO audit_logs
             manager.log_action(f"Performance Test {i}", category="stress")
         duration = time.time() - start_time
 
-        # Media di 50ms per log (SQLITE su disco) è accettabile
+        # Media accettabile per test
         assert duration < 25.0
         assert manager.verify_integrity() is True
 

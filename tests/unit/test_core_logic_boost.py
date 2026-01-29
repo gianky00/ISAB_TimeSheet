@@ -11,7 +11,8 @@ class TestCoreLogicRefined:
         db_path = tmp_path / "audit.db"
         # Reset singleton
         AuditManager._instance = None
-        with patch.object(AuditManager, "DB_PATH", db_path):
+        # Patch the real DB_PATH in AuditDatabase
+        with patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path):
             am = AuditManager()
             # Verify DB was initialized
             with sqlite3.connect(db_path) as conn:
