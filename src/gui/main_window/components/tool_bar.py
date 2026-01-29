@@ -24,21 +24,15 @@ class ToolBarComponent(QObject):
         """Creates the top toolbar in the content area (vertical layout)."""
         self.update_banner = UpdateBanner()
         # Connect internally if possible, or expose signal
-        self.update_banner.download_requested.connect(
-            self.main_window._on_download_update_clicked
-        )
+        self.update_banner.download_requested.connect(self.main_window._on_download_update_clicked)
         layout.addWidget(self.update_banner)
 
         self.global_search = QLineEdit()
-        self.global_search.setPlaceholderText(
-            "Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F"
-        )
+        self.global_search.setPlaceholderText("Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F")
         self.global_search.setMinimumHeight(40)
         # Assuming search_controller is available on main_window
         self.global_search.returnPressed.connect(
-            lambda: self.main_window.search_controller.perform_search(
-                self.global_search.text()
-            )
+            lambda: self.main_window.search_controller.perform_search(self.global_search.text())
         )
         layout.addWidget(self.global_search)
 

@@ -19,9 +19,7 @@ class StatusCard(QFrame):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
-        self.setCursor(
-            Qt.CursorShape.PointingHandCursor
-        )  # Cursore pointer per indicare cliccabilità
+        self.setCursor(Qt.CursorShape.PointingHandCursor)  # Cursore pointer per indicare cliccabilità
         self.setStyleSheet(
             """
             StatusCard {
@@ -44,18 +42,14 @@ class StatusCard(QFrame):
         # 1. Icona colorata (Barra verticale decorativa)
         self._icon_bar = QFrame()
         self._icon_bar.setFixedWidth(4)
-        self._icon_bar.setStyleSheet(
-            f"background-color: {self._palette.primary}; border-radius: 2px;"
-        )
+        self._icon_bar.setStyleSheet(f"background-color: {self._palette.primary}; border-radius: 2px;")
         layout.addWidget(self._icon_bar)
 
         icon_lbl = QLabel()
         icon_lbl.setFixedSize(20, 20)
         icon_lbl.setScaledContents(True)
         icon_lbl.setPixmap(
-            get_colored_icon(
-                get_asset_path(Icons.CLOCK), self._palette.on_surface
-            ).pixmap(20, 20)
+            get_colored_icon(get_asset_path(Icons.CLOCK), self._palette.on_surface).pixmap(20, 20)
         )
         layout.addWidget(icon_lbl)
 

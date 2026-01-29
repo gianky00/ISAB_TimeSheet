@@ -45,9 +45,7 @@ class ReportHistory:
         """Salva i dati nello storico."""
         cls._ensure_file()
         try:
-            cls.HISTORY_FILE.write_text(
-                json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
-            )
+            cls.HISTORY_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         except Exception as e:
             logger.error(f"Errore salvataggio storico report: {e}")
 
@@ -84,9 +82,7 @@ class ReportHistory:
         data["last_report"] = new_report
 
         cls._save_data(data)
-        logger.info(
-            f"Report salvato: {len(warning_list)} warning, {len(expired_list)} expired"
-        )
+        logger.info(f"Report salvato: {len(warning_list)} warning, {len(expired_list)} expired")
 
     @classmethod
     def get_last_report(cls) -> Optional[Dict]:
@@ -100,9 +96,7 @@ class ReportHistory:
         return data.get("last_report")
 
     @classmethod
-    def calculate_trend(
-        cls, current_warning: int, current_expired: int
-    ) -> Optional[Dict]:
+    def calculate_trend(cls, current_warning: int, current_expired: int) -> Optional[Dict]:
         """
         Calcola la differenza con il report precedente.
 

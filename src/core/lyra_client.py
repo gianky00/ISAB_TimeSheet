@@ -85,9 +85,7 @@ class LyraClient:
             latest_year = max(years)
             stats = ContabilitaManager.get_year_stats(latest_year)
             margine = stats["total_prev"] - (stats["total_ore"] * 30.0)
-            marginalita = (
-                (margine / stats["total_prev"] * 100) if stats["total_prev"] > 0 else 0
-            )
+            marginalita = (margine / stats["total_prev"] * 100) if stats["total_prev"] > 0 else 0
 
             lines = [
                 f"=== REPORT CONTABILITÀ ({latest_year}) ===",
@@ -131,9 +129,7 @@ class LyraClient:
 
             lines = ["\n=== REPORT TIMBRATURE ===", f"- Record Totali: {total_count}"]
             if missing_out > 0:
-                lines.append(
-                    f"- ⚠️ ATTENZIONE: Rilevate {missing_out} timbrature con uscita mancante."
-                )
+                lines.append(f"- ⚠️ ATTENZIONE: Rilevate {missing_out} timbrature con uscita mancante.")
             else:
                 lines.append("- Nessuna anomalia (uscite mancanti) rilevata.")
 
@@ -167,9 +163,7 @@ class LyraClient:
 
             if images:
                 for img_b64 in images:
-                    parts.append(
-                        {"inline_data": {"mime_type": "image/png", "data": img_b64}}
-                    )
+                    parts.append({"inline_data": {"mime_type": "image/png", "data": img_b64}})
 
             payload = {"contents": [{"parts": parts}]}
 

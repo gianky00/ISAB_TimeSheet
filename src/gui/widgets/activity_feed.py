@@ -96,9 +96,7 @@ class ActivityItem(QFrame):
         # Badge container
         badge = QLabel()
         badge.setFixedSize(32, 32)
-        badge.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 20)
-        )
+        badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 20))
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setStyleSheet(
             f"""
@@ -248,12 +246,8 @@ class ActivityFeed(QWidget):
             }
         """
         )
-        self.scroll_area.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
-        self.scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         self.feed_widget = QWidget()
         self.feed_layout = QHBoxLayout(self.feed_widget)  # Horizontal!
@@ -285,10 +279,7 @@ class ActivityFeed(QWidget):
                 if item.widget():
                     widget = item.widget()
                     # Ferma animazioni e rimuovi effetti prima di eliminare
-                    if (
-                        hasattr(widget, "fade_in_animation")
-                        and widget.fade_in_animation is not None
-                    ):
+                    if hasattr(widget, "fade_in_animation") and widget.fade_in_animation is not None:
                         widget.fade_in_animation.stop()
                     if widget.graphicsEffect():
                         widget.setGraphicsEffect(None)

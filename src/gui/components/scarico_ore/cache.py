@@ -35,12 +35,8 @@ class CacheWorker(QThread):
                 date_keys,
             ) = self._build_caches(self.data_source)
             self.progress.emit("Salvataggio cache...")
-            self._save_cache(
-                display_data, search_index, float_totals, style_cache, date_keys
-            )
-            self.finished.emit(
-                display_data, search_index, float_totals, style_cache, date_keys
-            )
+            self._save_cache(display_data, search_index, float_totals, style_cache, date_keys)
+            self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
         else:
             if not self.cache_path.exists():
                 self.finished.emit([], [], [], [], [])
@@ -71,7 +67,13 @@ class CacheWorker(QThread):
                             float_totals,
                             style_cache,
                             date_keys,
-                        ) = d, s, t, st, dk
+                        ) = (
+                            d,
+                            s,
+                            t,
+                            st,
+                            dk,
+                        )
                     elif len(loaded) == 4:
                         d, _, _, _ = loaded
                         (
@@ -94,9 +96,7 @@ class CacheWorker(QThread):
                             date_keys,
                         ) = ([], [], [], [], [])
 
-                self.finished.emit(
-                    display_data, search_index, float_totals, style_cache, date_keys
-                )
+                self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
             except Exception as e:
                 print(f"Error loading cache: {e}")
                 self.finished.emit([], [], [], [], [])

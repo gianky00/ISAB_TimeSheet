@@ -34,9 +34,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class ScaricoOreWorker(QThread):
     """Worker per l'importazione in background dei dati di Scarico Ore Cantiere."""
 
-    finished_signal = pyqtSignal(
-        bool, str, int, int, float
-    )  # Successo, Messaggio, Aggiunti, Rimossi, Durata
+    finished_signal = pyqtSignal(bool, str, int, int, float)  # Successo, Messaggio, Aggiunti, Rimossi, Durata
     progress_signal = pyqtSignal(str)
 
     def __init__(self, file_path: str):
@@ -95,9 +93,7 @@ class ScaricoOrePanel(QWidget):
         """Inizializza l'interfaccia e avvia il caricamento asincrono della cache."""
         super().__init__(parent)
         self.worker = None
-        self._last_update_status = (
-            None  # Store the status string to persist after reload
-        )
+        self._last_update_status = None  # Store the status string to persist after reload
         self._setup_ui()
         # Delay load to allow UI to show up first (optimization)
         self.search_input.setPlaceholderText("Inizializzazione dati... attendere")
@@ -121,19 +117,13 @@ class ScaricoOrePanel(QWidget):
 
         # Totals Labels
         self.lbl_count = QLabel("Righe: 0")
-        self.lbl_count.setStyleSheet(
-            "color: #607D8B; font-weight: 600; font-size: 12px;"
-        )
+        self.lbl_count.setStyleSheet("color: #607D8B; font-weight: 600; font-size: 12px;")
 
         self.lbl_selection_total = QLabel("Selezionato: 0")
-        self.lbl_selection_total.setStyleSheet(
-            "color: #009688; font-weight: 600; font-size: 12px;"
-        )
+        self.lbl_selection_total.setStyleSheet("color: #009688; font-weight: 600; font-size: 12px;")
 
         self.lbl_total_hours = QLabel("Totale Ore: 0")
-        self.lbl_total_hours.setStyleSheet(
-            "color: #455A64; font-weight: 700; font-size: 12px;"
-        )
+        self.lbl_total_hours.setStyleSheet("color: #455A64; font-weight: 700; font-size: 12px;")
 
         # Search Bar
         self.search_input = QLineEdit()
@@ -152,9 +142,7 @@ class ScaricoOrePanel(QWidget):
 
         # Update Button
         self.update_btn = QPushButton("Aggiorna")
-        self.update_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
-        )
+        self.update_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF"))
         self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_btn.setFixedSize(110, 34)
         self.update_btn.setStyleSheet(
@@ -196,9 +184,7 @@ class ScaricoOrePanel(QWidget):
         # 2. "Scarico Ore" Tab Content (Only Table)
         self.scarico_tab = QWidget()
         scarico_layout = QVBoxLayout(self.scarico_tab)
-        scarico_layout.setContentsMargins(
-            0, 10, 0, 0
-        )  # Top margin for spacing from tabs
+        scarico_layout.setContentsMargins(0, 10, 0, 0)  # Top margin for spacing from tabs
 
         # --- Virtual Table View ---
         self.table_view = QTableView()
@@ -221,9 +207,7 @@ class ScaricoOrePanel(QWidget):
         header = FilterHeaderView(Qt.Orientation.Horizontal, self.table_view)
         self.table_view.setHorizontalHeader(header)
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        header.setDefaultAlignment(
-            Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap
-        )
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
 
         # Connect Header Filters
         header.filterChanged.connect(self._on_header_filter_changed)
@@ -238,9 +222,7 @@ class ScaricoOrePanel(QWidget):
         )
 
         # Connect selection changes
-        self.table_view.selectionModel().selectionChanged.connect(
-            self._update_selection_totals
-        )
+        self.table_view.selectionModel().selectionChanged.connect(self._update_selection_totals)
 
         # Enable Sorting
         self.table_view.setSortingEnabled(True)
@@ -278,9 +260,7 @@ class ScaricoOrePanel(QWidget):
         model = self.source_model
         # Build map: Real ID -> New Visual Row
         # Optimization: Only build for visible rows
-        real_to_visual = {
-            real_id: vis_row for vis_row, real_id in enumerate(model._visible_indices)
-        }
+        real_to_visual = {real_id: vis_row for vis_row, real_id in enumerate(model._visible_indices)}
 
         new_selection = self.table_view.selectionModel()
         from PyQt6.QtCore import QItemSelection
@@ -299,8 +279,7 @@ class ScaricoOrePanel(QWidget):
         if not selection_batch.isEmpty():
             new_selection.select(
                 selection_batch,
-                new_selection.SelectionFlag.ClearAndSelect
-                | new_selection.SelectionFlag.Rows,
+                new_selection.SelectionFlag.ClearAndSelect | new_selection.SelectionFlag.Rows,
             )
             # Update totals
             self._update_selection_totals()
@@ -451,9 +430,7 @@ class ScaricoOrePanel(QWidget):
             self.table_view.setDisabled(True)
             QApplication.processEvents()
         else:
-            self.search_input.setPlaceholderText(
-                "Filtra dati (es. scavullo 4041)... (Premi Invio)"
-            )
+            self.search_input.setPlaceholderText("Filtra dati (es. scavullo 4041)... (Premi Invio)")
             self.table_view.setDisabled(False)
 
     def _on_loading_progress(self, msg):

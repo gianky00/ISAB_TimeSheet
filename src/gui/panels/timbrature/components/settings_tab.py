@@ -51,9 +51,7 @@ class TimbratureSettingsTab(QWidget):
         header_layout.addWidget(open_settings_btn)
         layout.addLayout(header_layout)
 
-        sub = QLabel(
-            "Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente."
-        )
+        sub = QLabel("Assegna Reparto e Cantiere ai dipendenti. Modifiche salvate automaticamente.")
         sub.setStyleSheet("color: #6c757d; margin-bottom: 5px;")
         layout.addWidget(sub)
 
@@ -61,9 +59,7 @@ class TimbratureSettingsTab(QWidget):
         filter_layout = QHBoxLayout()
         self.filter_empty_cb = QCheckBox("Mostra solo dati mancanti (Vuoti)")
         config = config_manager.load_config()
-        self.filter_empty_cb.setChecked(
-            config.get("timbrature_filter_empty_only", False)
-        )
+        self.filter_empty_cb.setChecked(config.get("timbrature_filter_empty_only", False))
         self.filter_empty_cb.stateChanged.connect(self._on_filter_empty_changed)
         filter_layout.addWidget(self.filter_empty_cb)
         filter_layout.addStretch()
@@ -73,12 +69,8 @@ class TimbratureSettingsTab(QWidget):
         self.settings_table = QTableWidget()
         self.settings_table.verticalHeader().setVisible(False)
         self.settings_table.setColumnCount(4)
-        self.settings_table.setHorizontalHeaderLabels(
-            ["Nome", "Cognome", "Reparto", "Cantiere"]
-        )
-        self.settings_table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
+        self.settings_table.setHorizontalHeaderLabels(["Nome", "Cognome", "Reparto", "Cantiere"])
+        self.settings_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.settings_table)
 
     def load_data(self):
@@ -150,9 +142,7 @@ class TimbratureSettingsTab(QWidget):
         self.settings_changed.emit()
 
     def _on_filter_empty_changed(self):
-        config_manager.set_config_value(
-            "timbrature_filter_empty_only", self.filter_empty_cb.isChecked()
-        )
+        config_manager.set_config_value("timbrature_filter_empty_only", self.filter_empty_cb.isChecked())
         self.load_data()
 
     def _open_settings_request(self):

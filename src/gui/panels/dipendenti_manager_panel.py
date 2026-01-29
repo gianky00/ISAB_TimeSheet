@@ -146,15 +146,11 @@ class DipendentiManagerPanel(QWidget):
         self.btn_refresh.clicked.connect(self.refresh_data)
         toolbar.addWidget(self.btn_refresh)
 
-        self.btn_sync = ModernButton(
-            "Sync da CSV", variant=ModernButton.Variant.SECONDARY
-        )
+        self.btn_sync = ModernButton("Sync da CSV", variant=ModernButton.Variant.SECONDARY)
         self.btn_sync.clicked.connect(self._sync_from_csv)
         toolbar.addWidget(self.btn_sync)
 
-        self.btn_add = ModernButton(
-            "Nuovo Dipendente", variant=ModernButton.Variant.PRIMARY
-        )
+        self.btn_add = ModernButton("Nuovo Dipendente", variant=ModernButton.Variant.PRIMARY)
         self.btn_add.clicked.connect(self._add_employee)
         toolbar.addWidget(self.btn_add)
 
@@ -172,9 +168,7 @@ class DipendentiManagerPanel(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(
             0, QHeaderView.ResizeMode.ResizeToContents
         )  # ID stretto
@@ -262,18 +256,14 @@ class DipendentiManagerPanel(QWidget):
 
         try:
             count = employee_manager.import_from_csv(file_path)
-            QMessageBox.information(
-                self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti."
-            )
+            QMessageBox.information(self, "Sync Completato", f"Importati/Aggiornati {count} dipendenti.")
             self.refresh_data()
             self.data_changed.emit()
             AuditManager.instance().log_action(
                 "Sync CSV", "dipendenti", "Manuale", {"file": file_path, "count": count}
             )
         except Exception as e:
-            QMessageBox.warning(
-                self, "Errore Sync", f"Errore durante l'importazione:\n{e}"
-            )
+            QMessageBox.warning(self, "Errore Sync", f"Errore durante l'importazione:\n{e}")
 
     def _add_employee(self):
         dlg = EmployeeEditorDialog(self)
@@ -320,8 +310,6 @@ class DipendentiManagerPanel(QWidget):
             if employee_manager.update_employee(id_risorsa, new_data):
                 self.refresh_data()
                 self.data_changed.emit()
-                AuditManager.instance().log_action(
-                    "Modifica Dipendente", "dipendenti", id_risorsa
-                )
+                AuditManager.instance().log_action("Modifica Dipendente", "dipendenti", id_risorsa)
             else:
                 QMessageBox.warning(self, "Errore", "Impossibile aggiornare i dati.")

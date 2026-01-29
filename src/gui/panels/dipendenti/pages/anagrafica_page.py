@@ -97,9 +97,7 @@ class AnagraficaPage(QWidget):
         filter_layout.addWidget(self.search_input)
 
         email_report_btn = QPushButton("Genera Report via Email")
-        email_report_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.SEND), "#ffffff")
-        )
+        email_report_btn.setIcon(get_colored_icon(get_asset_path(Icons.SEND), "#ffffff"))
         email_report_btn.setIconSize(QSize(24, 24))
         email_report_btn.setStyleSheet(
             """
@@ -234,13 +232,9 @@ class AnagraficaPage(QWidget):
         header_layout.setContentsMargins(18, 12, 18, 12)  # Ridotto per compattezza
 
         title_label = QLabel("📋 SCHEDA DIPENDENTE")
-        title_label.setStyleSheet(
-            "font-size: 20px; font-weight: bold; color: white; letter-spacing: 1px;"
-        )
+        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: white; letter-spacing: 1px;")
         subtitle_label = QLabel("Dettagli anagrafica e accessi")
-        subtitle_label.setStyleSheet(
-            "font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;"
-        )
+        subtitle_label.setStyleSheet("font-size: 14px; color: rgba(255, 255, 255, 0.90); margin-top: 2px;")
         header_layout.addWidget(title_label)
         header_layout.addWidget(subtitle_label)
         right_layout.addWidget(header_card)
@@ -304,9 +298,7 @@ class AnagraficaPage(QWidget):
         )
         self.last_access_label = QLabel("-")
         self.last_access_label.setWordWrap(True)
-        self.last_access_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
+        self.last_access_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.last_access_label.setStyleSheet(
             "font-size: 16px; font-weight: bold; color: #2c3e50; padding: 5px 0;"
         )
@@ -341,9 +333,7 @@ class AnagraficaPage(QWidget):
 
         # Verifica stato monitoraggio corrente
         query = "SELECT monitoraggio_attivo FROM dipendenti WHERE id_risorsa = ?"
-        result = db_manager.execute_query(
-            db_manager.DB_DIPENDENTI, query, (id_risorsa,)
-        )
+        result = db_manager.execute_query(db_manager.DB_DIPENDENTI, query, (id_risorsa,))
         is_monitored = result[0][0] if result and result[0][0] is not None else 1
 
         from PyQt6.QtGui import QAction
@@ -373,9 +363,7 @@ class AnagraficaPage(QWidget):
         """Attiva o disattiva il monitoraggio per un dipendente."""
         try:
             query = "UPDATE dipendenti SET monitoraggio_attivo = ? WHERE id_risorsa = ?"
-            db_manager.execute_query(
-                db_manager.DB_DIPENDENTI, query, (1 if enable else 0, id_risorsa)
-            )
+            db_manager.execute_query(db_manager.DB_DIPENDENTI, query, (1 if enable else 0, id_risorsa))
 
             status_text = "riattivato" if enable else "escluso"
             ToastManager.instance().show(
@@ -386,9 +374,7 @@ class AnagraficaPage(QWidget):
             self.refresh_data()
         except Exception as e:
             logger.error(f"Errore toggle monitoraggio: {e}")
-            QMessageBox.critical(
-                self, "Errore", f"Impossibile modificare il monitoraggio:\n{e}"
-            )
+            QMessageBox.critical(self, "Errore", f"Impossibile modificare il monitoraggio:\n{e}")
 
     def refresh_data(self):
         search_text = self.search_input.text().lower().strip()
@@ -413,9 +399,7 @@ class AnagraficaPage(QWidget):
         )
 
         try:
-            full_rows = db_manager.execute_query(
-                db_manager.DB_DIPENDENTI, query, tuple(params)
-            )
+            full_rows = db_manager.execute_query(db_manager.DB_DIPENDENTI, query, tuple(params))
             master_rows = self._process_employee_rows(full_rows)
             self.model.update_data(master_rows)
             self.model.set_column_formatter(0, self._inactivation_formatter)
@@ -529,10 +513,7 @@ class AnagraficaPage(QWidget):
                         if norm_cf:
                             if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
                                 last_by_cf[norm_cf] = diff
-                        if (
-                            norm_key not in last_by_name
-                            or diff < last_by_name[norm_key]
-                        ):
+                        if norm_key not in last_by_name or diff < last_by_name[norm_key]:
                             last_by_name[norm_key] = diff
         return last_by_cf, last_by_name, normalize
 
@@ -621,11 +602,7 @@ class AnagraficaPage(QWidget):
 
         for h in self.full_headers:
             idx = mapping.get(h)
-            val = (
-                str(row_data[idx])
-                if idx is not None and row_data[idx] is not None
-                else ""
-            )
+            val = str(row_data[idx]) if idx is not None and row_data[idx] is not None else ""
             if val.lower() in ["nan", "none"]:
                 val = ""
             if h == "Importato il":
@@ -644,9 +621,7 @@ class AnagraficaPage(QWidget):
         if not date_str or date_str == "None":
             return "-"
         try:
-            return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime(
-                "%d/%m/%Y %H:%M:%S"
-            )
+            return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %H:%M:%S")
         except Exception:
             return date_str
 
@@ -660,9 +635,7 @@ class AnagraficaPage(QWidget):
             ORDER BY data DESC LIMIT 1
         """
         try:
-            res = db_manager.execute_query(
-                db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome)
-            )
+            res = db_manager.execute_query(db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome))
             if not res:
                 return "Mai effettuato", "-", "#6c757d"
 
@@ -734,9 +707,7 @@ class AnagraficaPage(QWidget):
                         ),
                     )
                     count += 1
-            ToastManager.instance().show(
-                f"Importazione completata: {count} dipendenti.", "success"
-            )
+            ToastManager.instance().show(f"Importazione completata: {count} dipendenti.", "success")
             self.refresh_data()
         except Exception as e:
             logger.error(f"Errore import CSV: {e}")
@@ -759,18 +730,14 @@ class AnagraficaPage(QWidget):
             body_html = self._build_report_html(report_data)
 
             # 3. Generazione Excel
-            excel_path = self._create_report_excel(
-                report_data["warning_list"], report_data["expired_list"]
-            )
+            excel_path = self._create_report_excel(report_data["warning_list"], report_data["expired_list"])
 
             # 4. Invio Email
             self._send_report_email(body_html, excel_path, report_data)
 
         except Exception as e:
             logger.error(f"Errore generazione email report: {e}")
-            QMessageBox.critical(
-                self, "Errore", f"Impossibile generare il report:\n{e}"
-            )
+            QMessageBox.critical(self, "Errore", f"Impossibile generare il report:\n{e}")
 
     def _gather_report_data(self):
         """Raccoglie i dati dei dipendenti e li divide in warning ed expired."""
@@ -848,9 +815,7 @@ class AnagraficaPage(QWidget):
 
         # Trend calculation
         trend_html = ""
-        trend = ReportHistory.calculate_trend(
-            len(data["warning_list"]), len(data["expired_list"])
-        )
+        trend = ReportHistory.calculate_trend(len(data["warning_list"]), len(data["expired_list"]))
         if trend:
             parts = []
             for k, label in [
@@ -859,9 +824,7 @@ class AnagraficaPage(QWidget):
             ]:
                 diff = trend[k]
                 if diff > 0:
-                    parts.append(
-                        f'<span style="color: #dc3545;">+{diff} {label}</span>'
-                    )
+                    parts.append(f'<span style="color: #dc3545;">+{diff} {label}</span>')
                 elif diff < 0:
                     parts.append(f'<span style="color: #198754;">{diff} {label}</span>')
             if parts:
@@ -919,9 +882,7 @@ class AnagraficaPage(QWidget):
 
     def _build_html_table(self, items, color, rows_per_col=10):
         """Crea tabelle HTML multi-colonna."""
-        chunks = [
-            items[i : i + rows_per_col] for i in range(0, len(items), rows_per_col)
-        ]
+        chunks = [items[i : i + rows_per_col] for i in range(0, len(items), rows_per_col)]
         html = '<table cellpadding="0" cellspacing="0" border="0"><tr>'
         for col_idx, chunk in enumerate(chunks[:4]):
             if col_idx > 0:
@@ -955,8 +916,7 @@ class AnagraficaPage(QWidget):
 
         df_report = pd.DataFrame(excel_data)
         path = (
-            Path(os.environ["TEMP"])
-            / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+            Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
         )
         df_report.to_excel(path, index=False, sheet_name="Dipendenti")
         return path

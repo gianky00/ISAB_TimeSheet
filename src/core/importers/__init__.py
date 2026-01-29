@@ -46,9 +46,7 @@ class ExcelImporter:
         Returns:
             Tuple: (success, message, rows, years_cleared)
         """
-        return GiornaliereImporter.import_giornaliere(
-            root_path, lookup_map, progress_callback
-        )
+        return GiornaliereImporter.import_giornaliere(root_path, lookup_map, progress_callback)
 
     # --- Attività Programmate ---
     ATTIVITA_PROGRAMMATE_MAPPING = AttivitaImporter.ATTIVITA_PROGRAMMATE_MAPPING
@@ -60,9 +58,7 @@ class ExcelImporter:
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, List[Tuple]]:
         """Importa la programmazione attività."""
-        return AttivitaImporter.import_attivita_programmate(
-            file_path, progress_callback
-        )
+        return AttivitaImporter.import_attivita_programmate(file_path, progress_callback)
 
     # --- Scarico Ore ---
     SCARICO_ORE_COLS = ScaricoOreImporter.SCARICO_ORE_COLS
@@ -88,9 +84,7 @@ class ExcelImporter:
         file_path: str,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, List[Tuple]]:
-        return CertificatiImporter.import_certificati_campione(
-            file_path, progress_callback
-        )
+        return CertificatiImporter.import_certificati_campione(file_path, progress_callback)
 
     # --- Storico OdA ---
     STORICO_ODA_MAPPING = StoricoOdaImporter.STORICO_ODA_MAPPING

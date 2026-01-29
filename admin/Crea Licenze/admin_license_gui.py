@@ -69,9 +69,7 @@ class LicenseAdminApp:
         # Header
         header_frame = ttk.Frame(root)
         header_frame.pack(fill="x", pady=15)
-        ttk.Label(
-            header_frame, text="🔑 Generatore Licenza SyncroJob", style="Header.TLabel"
-        ).pack()
+        ttk.Label(header_frame, text="🔑 Generatore Licenza SyncroJob", style="Header.TLabel").pack()
 
         # Main container
         frm = ttk.LabelFrame(root, text="Dati Cliente", padding=20)
@@ -91,9 +89,7 @@ class LicenseAdminApp:
         )
 
         # Nome Cliente
-        ttk.Label(frm, text="Nome Cliente (riferimento):").pack(
-            anchor="w", pady=(15, 0)
-        )
+        ttk.Label(frm, text="Nome Cliente (riferimento):").pack(anchor="w", pady=(15, 0))
         self.ent_name = ttk.Entry(frm, width=60)
         self.ent_name.pack(fill="x", pady=5)
 
@@ -121,13 +117,13 @@ class LicenseAdminApp:
             command=lambda: self.set_expiry_days(180),
         ).pack(side="left", padx=2)
 
-        ttk.Button(
-            date_frame, text="3 Mesi", width=8, command=lambda: self.set_expiry_days(90)
-        ).pack(side="left", padx=2)
+        ttk.Button(date_frame, text="3 Mesi", width=8, command=lambda: self.set_expiry_days(90)).pack(
+            side="left", padx=2
+        )
 
-        ttk.Button(
-            date_frame, text="1 Mese", width=8, command=lambda: self.set_expiry_days(30)
-        ).pack(side="left", padx=2)
+        ttk.Button(date_frame, text="1 Mese", width=8, command=lambda: self.set_expiry_days(30)).pack(
+            side="left", padx=2
+        )
 
         # Default: 1 anno
         self.set_expiry_days(365)
@@ -191,9 +187,7 @@ class LicenseAdminApp:
 
         # Pulisci nome per cartella
         folder_name = (
-            "".join(c for c in client_name if c.isalnum() or c in (" ", "_", "-"))
-            .strip()
-            .replace(" ", "_")
+            "".join(c for c in client_name if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
         )
 
         # Paths

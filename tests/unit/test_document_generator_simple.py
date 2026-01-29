@@ -14,6 +14,4 @@ class TestDocumentGeneratorSimple:
                 # Check if print was called
                 assert mock_print_method.called
                 # Check if printer was configured
-                mock_printer.return_value.setOutputFileName.assert_called_with(
-                    "test.pdf"
-                )
+                mock_printer.return_value.setOutputFileName.assert_called_with("test.pdf")

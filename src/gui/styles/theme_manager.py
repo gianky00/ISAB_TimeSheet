@@ -69,9 +69,7 @@ class ThemeManager:
             # Backgrounds
             palette.setColor(group, QPalette.ColorRole.Window, q(p.background))
             palette.setColor(group, QPalette.ColorRole.Base, q(p.surface))
-            palette.setColor(
-                group, QPalette.ColorRole.AlternateBase, q(p.surface_variant)
-            )
+            palette.setColor(group, QPalette.ColorRole.AlternateBase, q(p.surface_variant))
             palette.setColor(group, QPalette.ColorRole.ToolTipBase, q(p.surface))
             palette.setColor(group, QPalette.ColorRole.Button, q(p.surface))
 

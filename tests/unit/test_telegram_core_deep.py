@@ -17,13 +17,9 @@ class TestTelegramCoreDeep:
         mock_context = MagicMock()
 
         # Mock auth
-        with patch.object(
-            service, "_check_auth", new_callable=AsyncMock, return_value=True
-        ):
+        with patch.object(service, "_check_auth", new_callable=AsyncMock, return_value=True):
             mock_file = AsyncMock()
-            mock_file.download_as_bytearray = AsyncMock(
-                return_value=bytearray(b"fake_audio")
-            )
+            mock_file.download_as_bytearray = AsyncMock(return_value=bytearray(b"fake_audio"))
             mock_context.bot.get_file = AsyncMock(return_value=mock_file)
 
             mock_update.message.voice.file_id = "voice123"
@@ -42,18 +38,14 @@ class TestTelegramCoreDeep:
         mock_context = MagicMock()
 
         # Mock auth
-        with patch.object(
-            service, "_check_auth", new_callable=AsyncMock, return_value=True
-        ):
+        with patch.object(service, "_check_auth", new_callable=AsyncMock, return_value=True):
             mock_photo = MagicMock()
             mock_photo.file_id = "photo123"
             mock_update.message.photo = [mock_photo]
             mock_update.message.caption = "test caption"
 
             mock_file = AsyncMock()
-            mock_file.download_as_bytearray = AsyncMock(
-                return_value=bytearray(b"fake_photo")
-            )
+            mock_file.download_as_bytearray = AsyncMock(return_value=bytearray(b"fake_photo"))
             mock_context.bot.get_file = AsyncMock(return_value=mock_file)
 
             mock_signal = MagicMock()
@@ -75,9 +67,7 @@ class TestTelegramCoreDeep:
         mock_query.edit_message_text = AsyncMock()
 
         # Mock auth
-        with patch.object(
-            service, "_check_auth", new_callable=AsyncMock, return_value=True
-        ):
+        with patch.object(service, "_check_auth", new_callable=AsyncMock, return_value=True):
             # Nav to Utility
             mock_query.data = "nav_utility"
             await callbacks.handle_button(service, mock_update, mock_context)
@@ -86,10 +76,7 @@ class TestTelegramCoreDeep:
             # Nav to Bots
             mock_query.data = "nav_bots"
             await callbacks.handle_button(service, mock_update, mock_context)
-            assert (
-                "🤖 *Seleziona Piattaforma*"
-                in mock_query.edit_message_text.call_args[0][0]
-            )
+            assert "🤖 *Seleziona Piattaforma*" in mock_query.edit_message_text.call_args[0][0]
 
     def test_sync_send_methods(self, service):
         # Mock loop and app

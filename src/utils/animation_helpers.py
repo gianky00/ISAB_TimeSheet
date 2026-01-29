@@ -141,10 +141,7 @@ def cleanup_animation_safely(anim: Optional[QAbstractAnimation]) -> None:
         anim.deleteLater()
 
 
-def cleanup_effect_safely(
-    widget: Optional[QWidget],
-    effect: Optional[QGraphicsOpacityEffect]
-) -> None:
+def cleanup_effect_safely(widget: Optional[QWidget], effect: Optional[QGraphicsOpacityEffect]) -> None:
     """
     Rimuove e pulisce un effetto grafico in modo sicuro.
 
@@ -159,10 +156,7 @@ def cleanup_effect_safely(
             effect.deleteLater()
 
 
-def clear_layout_safely(
-    layout: QLayout,
-    process_events: bool = True
-) -> None:
+def clear_layout_safely(layout: QLayout, process_events: bool = True) -> None:
     """
     Pulisce un layout rimuovendo tutti i widget in modo sicuro.
 
@@ -258,11 +252,7 @@ def create_animation_timer(
     return timer
 
 
-def delayed_call(
-    callback: Callable,
-    delay: int = 100,
-    parent: Optional[QWidget] = None
-) -> None:
+def delayed_call(callback: Callable, delay: int = 100, parent: Optional[QWidget] = None) -> None:
     """
     Esegue una funzione dopo un ritardo.
 

@@ -112,16 +112,12 @@ class AppInitializer:
                 import logging
 
                 logger = logging.getLogger("AppInitializer")
-                logger.error(
-                    f"Error loading panel {name} (index {idx}): {e}", exc_info=True
-                )
+                logger.error(f"Error loading panel {name} (index {idx}): {e}", exc_info=True)
                 # Continue anyway - app should still work without this panel
 
         yield "Monitoraggio Sicurezza Telegram", 94
         config = config_manager.load_config()
-        if not config.get("telegram_chat_id") and not config.get(
-            "telegram_pairing_code"
-        ):
+        if not config.get("telegram_chat_id") and not config.get("telegram_pairing_code"):
             import random
 
             code = str(random.randint(100000, 999999))
@@ -138,19 +134,14 @@ class AppInitializer:
         log_dir = Path(config_manager.get_logs_path())
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / "application.log"
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler = logging.handlers.RotatingFileHandler(
             log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
         )
         handler.setFormatter(formatter)
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
-        if not any(
-            isinstance(h, logging.handlers.RotatingFileHandler)
-            for h in root_logger.handlers
-        ):
+        if not any(isinstance(h, logging.handlers.RotatingFileHandler) for h in root_logger.handlers):
             root_logger.addHandler(handler)
 
     @staticmethod

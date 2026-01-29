@@ -13,8 +13,10 @@ logger = logging.getLogger(__name__)
 # WINDOWS API WRAPPER
 # =============================================================================
 
+
 class PROCESS_MEMORY_COUNTERS_EX(Structure):
     """Struttura Windows per i contatori di memoria del processo."""
+
     _fields_ = [
         ("cb", wintypes.DWORD),
         ("PageFaultCount", wintypes.DWORD),
@@ -29,9 +31,12 @@ class PROCESS_MEMORY_COUNTERS_EX(Structure):
         ("PrivateUsage", ctypes.c_size_t),
     ]
 
+
 class FILETIME(Structure):
     """Struttura Windows per timestamp di sistema."""
+
     _fields_ = [("dwLowDateTime", wintypes.DWORD), ("dwHighDateTime", wintypes.DWORD)]
+
 
 def get_current_process_ram_mb() -> float:
     """

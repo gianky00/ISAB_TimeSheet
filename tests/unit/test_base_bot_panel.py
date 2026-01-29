@@ -114,9 +114,7 @@ class TestBaseBotPanel:
     def test_ask_user_input(self):
         result = {}
         event = threading.Event()
-        with patch(
-            "src.gui.panels.base.QInputDialog.getText", return_value=("input", True)
-        ):
+        with patch("src.gui.panels.base.QInputDialog.getText", return_value=("input", True)):
             self.panel._ask_user_input("Prompt", result, event)
             assert result["value"] == "input"
             assert event.is_set()

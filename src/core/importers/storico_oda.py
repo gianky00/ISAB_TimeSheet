@@ -128,11 +128,7 @@ class StoricoOdaImporter(BaseImporter):
 
         # Date
         for date_col in ["data_oda", "data_consegna"]:
-            df[date_col] = (
-                pd.to_datetime(df[date_col], errors="coerce")
-                .dt.strftime("%Y-%m-%d")
-                .fillna("")
-            )
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce").dt.strftime("%Y-%m-%d").fillna("")
 
         # Numeri
         num_cols = [
@@ -157,13 +153,7 @@ class StoricoOdaImporter(BaseImporter):
             "posizione_contratto",
         ]
         for str_col in id_cols:
-            df[str_col] = (
-                df[str_col]
-                .fillna(0)
-                .astype(str)
-                .str.replace(r"\\.0$", "", regex=True)
-                .str.strip()
-            )
+            df[str_col] = df[str_col].fillna(0).astype(str).str.replace(r"\\.0$", "", regex=True).str.strip()
 
         # Altre stringhe
         for col in df.columns:

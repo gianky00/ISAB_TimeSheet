@@ -180,9 +180,7 @@ class NotificationCard(QFrame):
         icon_path = style["icon"]
         icon_color = style["icon_color"]
         badge_bg = style["badge_bg"]
-        badge.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(18, 18)
-        )
+        badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(18, 18))
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setStyleSheet(
             f"""
@@ -378,10 +376,7 @@ class NotificationCard(QFrame):
         - Newlines → <br>
         """
         # Fast path: if no markdown syntax, return as-is with just <br> for newlines
-        if (
-            not any(char in text for char in ["*", "`", "[", "]", "(", ")"])
-            and "\n" not in text
-        ):
+        if not any(char in text for char in ["*", "`", "[", "]", "(", ")"]) and "\n" not in text:
             return text
 
         import re
@@ -478,14 +473,10 @@ class NotificationCard(QFrame):
         mark_action = QAction(mark_text, self)
         if is_read:
             mark_action.triggered.connect(
-                lambda: self.manager.update_notification(
-                    self.notification["id"], {"read": False}
-                )
+                lambda: self.manager.update_notification(self.notification["id"], {"read": False})
             )
         else:
-            mark_action.triggered.connect(
-                lambda: self.manager.mark_as_read(self.notification["id"])
-            )
+            mark_action.triggered.connect(lambda: self.manager.mark_as_read(self.notification["id"]))
         menu.addAction(mark_action)
 
         # Pin/Unpin
@@ -493,9 +484,7 @@ class NotificationCard(QFrame):
         pin_text = "Rimuovi pin" if is_pinned else "Fissa"
         pin_action = QAction(pin_text, self)
         pin_action.triggered.connect(
-            lambda: self.manager.pin_notification(
-                self.notification["id"], not is_pinned
-            )
+            lambda: self.manager.pin_notification(self.notification["id"], not is_pinned)
         )
         menu.addAction(pin_action)
 

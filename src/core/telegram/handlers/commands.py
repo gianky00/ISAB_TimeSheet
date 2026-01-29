@@ -21,9 +21,7 @@ async def cmd_start(service, update: Update, context: ContextTypes.DEFAULT_TYPE)
     if saved_chat_id:
         if chat_id != saved_chat_id:
             if update.message:
-                await update.message.reply_text(
-                    "⛔ Questo bot è già associato a un altro dispositivo."
-                )
+                await update.message.reply_text("⛔ Questo bot è già associato a un altro dispositivo.")
             return
     else:
         # 2. Gestione nuovo accoppiamento
@@ -55,9 +53,7 @@ async def _handle_initial_pairing(
 
     if not pairing_code:
         if update.message:
-            await update.message.reply_text(
-                "⚠️ Errore: Codice non trovato nell'app desktop."
-            )
+            await update.message.reply_text("⚠️ Errore: Codice non trovato nell'app desktop.")
         return False
 
     if args and args[0] == pairing_code:
@@ -65,9 +61,7 @@ async def _handle_initial_pairing(
         config_manager.set_config_value("telegram_chat_id", chat_id)
         config_manager.set_config_value("telegram_pairing_code", "")
         if update.message:
-            await update.message.reply_text(
-                f"✅ Dispositivo associato!\nChat ID: {chat_id}"
-            )
+            await update.message.reply_text(f"✅ Dispositivo associato!\nChat ID: {chat_id}")
         return True
 
     if update.message:

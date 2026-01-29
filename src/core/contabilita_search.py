@@ -138,8 +138,7 @@ class ContabilitaSearch:
         params.append(limit)
         cursor.execute(sql, params)
         return [
-            {"data": cls._fmt_date(r[0]), "personale": r[1], "descrizione": r[2]}
-            for r in cursor.fetchall()
+            {"data": cls._fmt_date(r[0]), "personale": r[1], "descrizione": r[2]} for r in cursor.fetchall()
         ]
 
     @classmethod
@@ -175,7 +174,4 @@ class ContabilitaSearch:
         sql = """SELECT modello, costruttore, matricola FROM certificati_campione
                  WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
         cursor.execute(sql, [like, like, like, limit])
-        return [
-            {"modello": r[0], "costruttore": r[1], "matricola": r[2]}
-            for r in cursor.fetchall()
-        ]
+        return [{"modello": r[0], "costruttore": r[1], "matricola": r[2]} for r in cursor.fetchall()]

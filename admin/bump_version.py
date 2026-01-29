@@ -55,9 +55,7 @@ def bump_version(part="patch"):
     new_version = f"{major}.{minor}.{patch}"
 
     # Sostituisci nel contenuto di version.py
-    new_content = re.sub(
-        r'__version__\s*=\s*".*"', f'__version__ = "{new_version}"', content
-    )
+    new_content = re.sub(r'__version__\s*=\s*".*"', f'__version__ = "{new_version}"', content)
 
     with open(version_file, "w", encoding="utf-8") as f:
         f.write(new_content)
@@ -87,9 +85,7 @@ def bump_version(part="patch"):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Incrementa la versione dell'applicazione"
-    )
+    parser = argparse.ArgumentParser(description="Incrementa la versione dell'applicazione")
     parser.add_argument(
         "part",
         choices=["major", "minor", "patch"],

@@ -80,9 +80,7 @@ class EmployeeManager:
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         params = (
-            employee_data.get(
-                "id_risorsa"
-            ),  # Può essere None (autoincrement) o specifico
+            employee_data.get("id_risorsa"),  # Può essere None (autoincrement) o specifico
             employee_data["cognome"].upper(),
             employee_data["nome"].upper(),
             employee_data.get("data_nascita"),
@@ -143,9 +141,7 @@ class EmployeeManager:
                 for row in reader:
                     # Mappatura CSV -> DB
                     id_val = row.get("id_risorsa") or row.get("ID")
-                    id_risorsa = (
-                        int(id_val) if id_val and str(id_val).isdigit() else None
-                    )
+                    id_risorsa = int(id_val) if id_val and str(id_val).isdigit() else None
 
                     data = {
                         "id_risorsa": id_risorsa,

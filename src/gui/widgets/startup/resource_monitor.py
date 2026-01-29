@@ -7,10 +7,12 @@ import ctypes
 import os
 import time
 from ctypes import byref
+
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFrame
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from src.utils.system_telemetry import FILETIME, get_current_process_ram_mb
+
 
 class ResourceMonitor(QWidget):
     """HUD Monitor per Risorse (RAM/CPU Activity)."""
@@ -46,9 +48,7 @@ class ResourceMonitor(QWidget):
         # Activity Indicator (Fake IO visualization)
         self.activity_bar = QFrame()
         self.activity_bar.setFixedSize(6, 28)
-        self.activity_bar.setStyleSheet(
-            "background: rgba(255,255,255,0.1); border-radius: 3px;"
-        )
+        self.activity_bar.setStyleSheet("background: rgba(255,255,255,0.1); border-radius: 3px;")
 
         layout.addStretch()
         layout.addLayout(stats_layout)
@@ -80,8 +80,10 @@ class ResourceMonitor(QWidget):
                 byref(kernel),
                 byref(user),
             ):
+
                 def ft_to_int(ft):
                     return (ft.dwHighDateTime << 32) + ft.dwLowDateTime
+
                 return ft_to_int(kernel) + ft_to_int(user)
         except Exception:
             pass
@@ -109,9 +111,7 @@ class ResourceMonitor(QWidget):
 
                 if delta_time > 0:
                     cpu_count = os.cpu_count() or 1
-                    cpu_percent = (
-                        delta_proc / (delta_time * 10_000_000 * cpu_count)
-                    ) * 100
+                    cpu_percent = (delta_proc / (delta_time * 10_000_000 * cpu_count)) * 100
                     self.cpu_lbl.setText(f"CPU: {cpu_percent:.1f}%")
 
             self.last_proc_time = current_proc

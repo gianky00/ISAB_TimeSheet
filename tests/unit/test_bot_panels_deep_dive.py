@@ -126,9 +126,7 @@ class TestBaseBotPanel:
         panel._on_start()
 
         mock_gui_deps["audit"].return_value.log_action.assert_called()
-        mock_gui_deps["stats"].return_value.increment_usage.assert_called_with(
-            "test_bot"
-        )
+        mock_gui_deps["stats"].return_value.increment_usage.assert_called_with("test_bot")
 
     def test_on_log_forward_to_telegram(self, qapp, qtbot, mock_gui_deps):
         panel = BaseBotPanel("bot", "Bot", "Desc")
@@ -148,9 +146,7 @@ class TestBaseBotPanel:
         container = {}
         event = MagicMock()
 
-        with patch(
-            "PyQt6.QtWidgets.QInputDialog.getText", return_value=("secret", True)
-        ):
+        with patch("PyQt6.QtWidgets.QInputDialog.getText", return_value=("secret", True)):
             panel._ask_user_input("Prompt", container, event)
             assert container["value"] == "secret"
             event.set.assert_called_once()
@@ -193,9 +189,7 @@ class TestScaricaTSPanel:
 
         panel.data_table.set_data([{"numero_oda": "123"}])
         panel.params_widget.get_fornitore = MagicMock(return_value="F")
-        panel.params_widget.get_dates = MagicMock(
-            return_value=("01.01.2025", "01.01.2025")
-        )
+        panel.params_widget.get_dates = MagicMock(return_value=("01.01.2025", "01.01.2025"))
         panel.params_widget.get_dest_path = MagicMock(return_value="/tmp")
 
         with patch.object(panel, "get_credentials", return_value=("user", "pass")):
@@ -246,9 +240,7 @@ class TestTimbratureBotPanel:
         panel.params_widget.set_fornitore("F1")
         panel._save_data()
 
-        mock_gui_deps["config"].set_config_value.assert_any_call(
-            "last_timbrature_fornitore", "F1"
-        )
+        mock_gui_deps["config"].set_config_value.assert_any_call("last_timbrature_fornitore", "F1")
 
     @patch("src.bots.create_bot")
     def test_on_start(self, mock_create_bot, qapp, qtbot, mock_gui_deps):
@@ -269,9 +261,7 @@ class TestTimbratureBotPanel:
 
 class TestScaricoPDLPanel:
     @patch("src.bots.create_bot")
-    def test_telegram_send_after_finish(
-        self, mock_create_bot, qapp, qtbot, mock_gui_deps
-    ):
+    def test_telegram_send_after_finish(self, mock_create_bot, qapp, qtbot, mock_gui_deps):
         mock_bot = MagicMock()
         mock_bot.downloaded_files = ["/tmp/test.pdf"]
         mock_create_bot.return_value = mock_bot

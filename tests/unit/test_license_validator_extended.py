@@ -52,9 +52,7 @@ def setup_valid_license_files(mock_license_dir, mocker):
     # Dati di licenza validi
     license_data = {
         "Hardware ID": "FAKE_HW_ID",
-        "Scadenza Licenza": (date.today() + timedelta(days=365)).strftime(
-            "%d/%m/%Y"
-        ),  # Valida per 1 anno
+        "Scadenza Licenza": (date.today() + timedelta(days=365)).strftime("%d/%m/%Y"),  # Valida per 1 anno
         "Cliente": "Test Cliente",
     }
     encrypted_config = cipher.encrypt(json.dumps(license_data).encode("utf-8"))
@@ -135,9 +133,7 @@ def test_get_hardware_id_linux_machine_id(mocker):
 
 def test_get_hardware_id_fallback_uuid(mocker):
     mocker.patch("platform.system", return_value="Unknown")
-    mocker.patch(
-        "subprocess.check_output", side_effect=Exception("All subprocess calls failed")
-    )
+    mocker.patch("subprocess.check_output", side_effect=Exception("All subprocess calls failed"))
     mocker.patch("src.core.license_validator.uuid.getnode", return_value=12345)
     assert get_hardware_id() == "12345"
 
@@ -147,10 +143,7 @@ def test_get_license_paths(mocker):
     paths = _get_license_paths()
     assert str(paths["dir"]).replace("\\", "/") == "/fake/appdata/Licenza"
     assert str(paths["config"]).replace("\\", "/") == "/fake/appdata/Licenza/config.dat"
-    assert (
-        str(paths["manifest"]).replace("\\", "/")
-        == "/fake/appdata/Licenza/manifest.json"
-    )
+    assert str(paths["manifest"]).replace("\\", "/") == "/fake/appdata/Licenza/manifest.json"
 
 
 def test_get_license_info_success(mocker, mock_license_dir, mock_secrets_manager):
@@ -192,9 +185,7 @@ def test_get_detailed_license_status_missing_dir(mocker, tmp_path):
         "config": tmp_path / "NonEsistente" / "config.dat",
         "manifest": tmp_path / "NonEsistente" / "manifest.json",
     }
-    mocker.patch(
-        "src.core.license_validator._get_license_paths", return_value=mock_paths
-    )
+    mocker.patch("src.core.license_validator._get_license_paths", return_value=mock_paths)
     mocker.patch.object(Path, "mkdir")
 
     status, msg = get_detailed_license_status()
@@ -216,9 +207,7 @@ def test_get_detailed_license_status_missing_files(mocker, mock_license_dir):
     assert "File di licenza mancanti" in msg
 
 
-def test_get_detailed_license_status_invalid_sha(
-    mocker, mock_license_dir, mock_secrets_manager
-):
+def test_get_detailed_license_status_invalid_sha(mocker, mock_license_dir, mock_secrets_manager):
     paths = {
         "dir": mock_license_dir,
         "config": mock_license_dir / "config.dat",
@@ -228,13 +217,9 @@ def test_get_detailed_license_status_invalid_sha(
 
     # Assicura che i file esistano
     (mock_license_dir / "config.dat").write_text("fake_encrypted_config")
-    (mock_license_dir / "manifest.json").write_text(
-        json.dumps({"config.dat": "invalid_sha"})
-    )
+    (mock_license_dir / "manifest.json").write_text(json.dumps({"config.dat": "invalid_sha"}))
 
-    mocker.patch(
-        "src.core.license_validator._calculate_sha256", return_value="different_sha"
-    )
+    mocker.patch("src.core.license_validator._calculate_sha256", return_value="different_sha")
     mocker.patch.object(AuditManager, "log_action")
 
     status, msg = get_detailed_license_status()
@@ -253,9 +238,7 @@ def test_get_detailed_license_status_hw_id_mismatch(
             "manifest": mock_license_dir / "manifest.json",
         },
     )
-    mocker.patch(
-        "src.core.license_validator.get_hardware_id", return_value="ANOTHER_HW_ID"
-    )
+    mocker.patch("src.core.license_validator.get_hardware_id", return_value="ANOTHER_HW_ID")
     mocker.patch(
         "src.core.time_manager.get_trusted_time",
         return_value=(datetime.now(timezone.utc), True),
@@ -268,9 +251,7 @@ def test_get_detailed_license_status_hw_id_mismatch(
     mock_audit_log.assert_called_once()
 
 
-def test_get_detailed_license_status_expired(
-    mocker, mock_license_dir, mock_secrets_manager
-):
+def test_get_detailed_license_status_expired(mocker, mock_license_dir, mock_secrets_manager):
     paths = {
         "dir": mock_license_dir,
         "config": mock_license_dir / "config.dat",
@@ -292,9 +273,7 @@ def test_get_detailed_license_status_expired(
     (mock_license_dir / "config.dat").write_bytes(encrypted_config)
     (mock_license_dir / "manifest.json").write_text(json.dumps(manifest_data))
 
-    mocker.patch(
-        "src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID"
-    )
+    mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
     mocker.patch(
         "src.core.time_manager.get_trusted_time",
         return_value=(datetime.now(timezone.utc), True),
@@ -316,9 +295,7 @@ def test_get_detailed_license_status_valid(
             "manifest": mock_license_dir / "manifest.json",
         },
     )
-    mocker.patch(
-        "src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID"
-    )
+    mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
     mocker.patch(
         "src.core.time_manager.get_trusted_time",
         return_value=(datetime.now(timezone.utc) - timedelta(days=1), True),
@@ -383,9 +360,7 @@ def test_validate_license_data_expired_untrusted(mocker):
 
 
 def test_validate_license_data_exception(mocker):
-    mocker.patch(
-        "src.core.license_validator.get_license_info", side_effect=Exception("Boom")
-    )
+    mocker.patch("src.core.license_validator.get_license_info", side_effect=Exception("Boom"))
     status, msg = _validate_license_data({})
     assert status == LicenseStatus.ERROR
     assert "Errore validazione" in msg
@@ -425,9 +400,7 @@ def test_get_license_client_none(mocker):
 
 def test_get_hardware_id_exception(mocker):
     mocker.patch("platform.system", return_value="Unknown")
-    mocker.patch(
-        "src.core.license_validator.uuid.getnode", side_effect=Exception("UUID fail")
-    )
+    mocker.patch("src.core.license_validator.uuid.getnode", side_effect=Exception("UUID fail"))
     assert get_hardware_id() == "ERROR_GETTING_ID"
 
 
@@ -441,9 +414,7 @@ def test_verify_license(mocker):
     assert msg == "OK"
 
 
-def test_get_license_expiry(
-    mocker, mock_license_dir, mock_secrets_manager, setup_valid_license_files
-):
+def test_get_license_expiry(mocker, mock_license_dir, mock_secrets_manager, setup_valid_license_files):
     mocker.patch(
         "src.core.license_validator._get_license_paths",
         return_value={
@@ -457,9 +428,7 @@ def test_get_license_expiry(
     assert str(expected_year) in expiry
 
 
-def test_get_license_client(
-    mocker, mock_license_dir, mock_secrets_manager, setup_valid_license_files
-):
+def test_get_license_client(mocker, mock_license_dir, mock_secrets_manager, setup_valid_license_files):
     mocker.patch(
         "src.core.license_validator._get_license_paths",
         return_value={

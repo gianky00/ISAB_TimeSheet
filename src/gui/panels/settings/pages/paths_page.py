@@ -36,34 +36,24 @@ class PathsPage(QWidget):
 
         # Bilancio
         cont_layout.addWidget(QLabel("File bilancio strumentale:"))
-        self.contabilita_path_edit = self._create_path_row(
-            cont_layout, self._browse_contabilita
-        )
+        self.contabilita_path_edit = self._create_path_row(cont_layout, self._browse_contabilita)
 
-        self.auto_update_check = QCheckBox(
-            "Attiva aggiornamento automatico all'avvio (background)"
-        )
+        self.auto_update_check = QCheckBox("Attiva aggiornamento automatico all'avvio (background)")
         self.auto_update_check.setStyleSheet("padding: 5px; font-size: 15px;")
         self.auto_update_check.stateChanged.connect(self.settings_changed.emit)
         cont_layout.addWidget(self.auto_update_check)
 
         # Giornaliere
         cont_layout.addWidget(QLabel("Cartella Giornaliere (Root):"))
-        self.giornaliere_path_edit = self._create_path_row(
-            cont_layout, self._browse_giornaliere, folder=True
-        )
+        self.giornaliere_path_edit = self._create_path_row(cont_layout, self._browse_giornaliere, folder=True)
 
         # Attività
         cont_layout.addWidget(QLabel("File Attività Programmate (Riepilogo):"))
-        self.attivita_path_edit = self._create_path_row(
-            cont_layout, self._browse_attivita
-        )
+        self.attivita_path_edit = self._create_path_row(cont_layout, self._browse_attivita)
 
         # Certificati
         cont_layout.addWidget(QLabel("File Certificati Campione:"))
-        self.certificati_path_edit = self._create_path_row(
-            cont_layout, self._browse_certificati
-        )
+        self.certificati_path_edit = self._create_path_row(cont_layout, self._browse_certificati)
 
         layout.addWidget(contabilita_group)
 
@@ -72,9 +62,7 @@ class PathsPage(QWidget):
         de_layout = QVBoxLayout(dataease_group)
 
         de_layout.addWidget(QLabel("Database DataEase (Access/MDB):"))
-        self.dataease_path_edit = self._create_path_row(
-            de_layout, self._browse_dataease
-        )
+        self.dataease_path_edit = self._create_path_row(de_layout, self._browse_dataease)
 
         layout.addWidget(dataease_group)
         layout.addStretch()
@@ -84,9 +72,7 @@ class PathsPage(QWidget):
         edit = QLineEdit()
         edit.setReadOnly(True)
         edit.setMinimumHeight(40)
-        edit.setPlaceholderText(
-            "Seleziona cartella..." if folder else "Seleziona file..."
-        )
+        edit.setPlaceholderText("Seleziona cartella..." if folder else "Seleziona file...")
         style_input(edit)
         edit.textChanged.connect(self.settings_changed.emit)
         edit.textChanged.connect(lambda: self._validate_path(edit))
@@ -150,9 +136,7 @@ class PathsPage(QWidget):
         return QFileDialog.getExistingDirectory(self, title, str(Path.home()))
 
     def _browse_contabilita(self):
-        p = self._browse_file(
-            "Seleziona File Contabilità", "Excel Files (*.xlsx *.xlsm)"
-        )
+        p = self._browse_file("Seleziona File Contabilità", "Excel Files (*.xlsx *.xlsm)")
         if p:
             self.contabilita_path_edit.setText(p)
 
@@ -167,9 +151,7 @@ class PathsPage(QWidget):
             self.attivita_path_edit.setText(p)
 
     def _browse_certificati(self):
-        p = self._browse_file(
-            "Seleziona File Certificati", "Excel Files (*.xlsx *.xlsm)"
-        )
+        p = self._browse_file("Seleziona File Certificati", "Excel Files (*.xlsx *.xlsm)")
         if p:
             self.certificati_path_edit.setText(p)
 
@@ -184,9 +166,7 @@ class PathsPage(QWidget):
         self.contabilita_path_edit.setText(config.get("contabilita_file_path", ""))
         self._validate_path(self.contabilita_path_edit)
 
-        self.auto_update_check.setChecked(
-            config.get("enable_auto_update_contabilita", False)
-        )
+        self.auto_update_check.setChecked(config.get("enable_auto_update_contabilita", False))
 
         self.giornaliere_path_edit.setText(config.get("giornaliere_path", ""))
         self._validate_path(self.giornaliere_path_edit)
@@ -201,21 +181,9 @@ class PathsPage(QWidget):
         self._validate_path(self.dataease_path_edit)
 
     def save_to_config(self, config_manager):
-        config_manager.set_config_value(
-            "contabilita_file_path", self.contabilita_path_edit.text()
-        )
-        config_manager.set_config_value(
-            "enable_auto_update_contabilita", self.auto_update_check.isChecked()
-        )
-        config_manager.set_config_value(
-            "giornaliere_path", self.giornaliere_path_edit.text()
-        )
-        config_manager.set_config_value(
-            "attivita_programmate_path", self.attivita_path_edit.text()
-        )
-        config_manager.set_config_value(
-            "certificati_campione_path", self.certificati_path_edit.text()
-        )
-        config_manager.set_config_value(
-            "dataease_db_path", self.dataease_path_edit.text()
-        )
+        config_manager.set_config_value("contabilita_file_path", self.contabilita_path_edit.text())
+        config_manager.set_config_value("enable_auto_update_contabilita", self.auto_update_check.isChecked())
+        config_manager.set_config_value("giornaliere_path", self.giornaliere_path_edit.text())
+        config_manager.set_config_value("attivita_programmate_path", self.attivita_path_edit.text())
+        config_manager.set_config_value("certificati_campione_path", self.certificati_path_edit.text())
+        config_manager.set_config_value("dataease_db_path", self.dataease_path_edit.text())

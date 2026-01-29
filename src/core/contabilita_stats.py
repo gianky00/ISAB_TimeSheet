@@ -43,9 +43,7 @@ class ContabilitaStats:
 
         # 1. Processo Tabella Dati (KPI OdA)
         commesse = cls._process_main_data(data, stats)
-        stats["top_commesse"] = sorted(
-            commesse, key=operator.itemgetter(1), reverse=True
-        )[:5]
+        stats["top_commesse"] = sorted(commesse, key=operator.itemgetter(1), reverse=True)[:5]
 
         # 2. Processo Giornaliere (KPI Diretti/Indiretti)
         cls._process_giornaliere_stats(giornaliere, stats)
@@ -74,9 +72,7 @@ class ContabilitaStats:
 
                 status = str(row[7]).strip().upper()
                 if status:
-                    stats["status_counts"][status] = (
-                        stats["status_counts"].get(status, 0) + 1
-                    )
+                    stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
 
                 if v_prev > 0:
                     attivita = str(row[4]).strip() or "N/D"
@@ -95,9 +91,7 @@ class ContabilitaStats:
                 odc = str(row[5]).strip()
                 ore = parse_currency(row[9])
 
-                is_direct = (n_prev and n_prev.lower() != "nan") or (
-                    odc and odc.lower() != "nan"
-                )
+                is_direct = (n_prev and n_prev.lower() != "nan") or (odc and odc.lower() != "nan")
 
                 if is_direct:
                     stats["ore_dirette"] += ore

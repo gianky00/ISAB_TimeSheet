@@ -132,9 +132,7 @@ class TimbratureDBPanel(QWidget):
         self.db_table.setModel(self.model)
         self.db_table.verticalHeader().setVisible(False)
         self.db_table.setAlternatingRowColors(True)
-        self.db_table.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
+        self.db_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.db_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.db_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.db_table.setSortingEnabled(True)
@@ -143,9 +141,7 @@ class TimbratureDBPanel(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 
-        self.db_table.selectionModel().selectionChanged.connect(
-            self._on_selection_changed
-        )
+        self.db_table.selectionModel().selectionChanged.connect(self._on_selection_changed)
 
         splitter.addWidget(self.db_table)
 

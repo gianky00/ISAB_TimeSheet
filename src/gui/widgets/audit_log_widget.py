@@ -177,9 +177,7 @@ class AuditLogWidget(QWidget):
         top_bar.addWidget(self.integrity_icon)
 
         self.integrity_lbl = QLabel("Verifica...")
-        self.integrity_lbl.setStyleSheet(
-            "color: #6c757d; font-size: 13px; font-weight: 600;"
-        )
+        self.integrity_lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: 600;")
         top_bar.addWidget(self.integrity_lbl)
 
         top_bar.addStretch()
@@ -225,18 +223,14 @@ class AuditLogWidget(QWidget):
 
         # Livello
         self.level_combo = QComboBox()
-        self.level_combo.addItems(
-            ["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"]
-        )
+        self.level_combo.addItems(["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"])
         self.level_combo.setFixedWidth(130)
         filter_layout.addWidget(self.level_combo)
 
         # Search
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Cerca nei log...")
-        self.search_edit.setStyleSheet(
-            "border: 1px solid #ced4da; border-radius: 4px; padding: 4px;"
-        )
+        self.search_edit.setStyleSheet("border: 1px solid #ced4da; border-radius: 4px; padding: 4px;")
         filter_layout.addWidget(self.search_edit)
 
         # Btn Applica
@@ -259,14 +253,10 @@ class AuditLogWidget(QWidget):
         # --- DATA GRID ---
         self.table_view = QTableView()
         self.table_view.setAlternatingRowColors(True)
-        self.table_view.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
+        self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_view.verticalHeader().setVisible(False)
-        self.table_view.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Interactive
-        )
+        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.table_view.setStyleSheet(
             """
@@ -385,9 +375,7 @@ class AuditLogWidget(QWidget):
         if total_pages < 1:
             total_pages = 1
         disp = self.current_page + 1
-        self.page_lbl.setText(
-            f"Pagina {disp} di {total_pages} (Tot: {self.total_logs})"
-        )
+        self.page_lbl.setText(f"Pagina {disp} di {total_pages} (Tot: {self.total_logs})")
         self.prev_btn.setEnabled(self.current_page > 0)
         self.next_btn.setEnabled(disp < total_pages)
 
@@ -410,9 +398,7 @@ class AuditLogWidget(QWidget):
             self.integrity_lbl.setStyleSheet("color: #198754; font-weight: bold;")
         else:
             self.integrity_icon.setPixmap(
-                get_colored_icon(
-                    get_asset_path(Icons.ALERT_TRIANGLE), "#dc3545"
-                ).pixmap(18, 18)
+                get_colored_icon(get_asset_path(Icons.ALERT_TRIANGLE), "#dc3545").pixmap(18, 18)
             )
             self.integrity_lbl.setText("Legacy/Manomesso")
             self.integrity_lbl.setStyleSheet("color: #dc3545; font-weight: bold;")

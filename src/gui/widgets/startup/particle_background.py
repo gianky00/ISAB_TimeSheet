@@ -5,12 +5,20 @@ Sfondo animato con particelle e parallasse per la Splash Screen.
 
 import math
 import random
-from PyQt6.QtCore import Qt, QTimer, QPoint
+
+from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtGui import (
-    QBrush, QColor, QLinearGradient, QPainter, 
-    QPainterPath, QPen, QPixmap, QRadialGradient
+    QBrush,
+    QColor,
+    QLinearGradient,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QRadialGradient,
 )
 from PyQt6.QtWidgets import QWidget
+
 
 class Particle:
     """Singola particella animata."""

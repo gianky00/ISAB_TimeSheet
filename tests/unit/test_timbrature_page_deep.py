@@ -53,9 +53,7 @@ def test_set_filters(mock_driver):
     with (
         patch("time.sleep"),
         patch.object(page, "_select_supplier") as mock_sel,
-        patch(
-            "src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains"
-        ) as mock_actions,
+        patch("src.bots.portale_fornitori.timbrature.pages.timbrature_page.ActionChains") as mock_actions,
         patch("selenium.webdriver.support.ui.WebDriverWait.until"),
     ):  # Mock wait too
         mock_actions_instance = mock_actions.return_value

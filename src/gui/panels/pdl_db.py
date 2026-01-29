@@ -42,9 +42,7 @@ class PDLDelegate(QStyledItemDelegate):
         # Abilita il wrap per tutte le colonne tranne quelle date
         if index.column() not in self.date_columns:
             option.features |= option.ViewItemFeature.HasDisplay
-            option.displayAlignment = (
-                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-            )
+            option.displayAlignment = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             option.textElideMode = Qt.TextElideMode.ElideNone
         else:
             # Date: riga singola
@@ -160,9 +158,7 @@ class PDLDBPanel(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setItemDelegate(
-            PDLDelegate([0], self.table)
-        )  # Data Creazione è indice 0
+        self.table.setItemDelegate(PDLDelegate([0], self.table))  # Data Creazione è indice 0
 
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         header = self.table.horizontalHeader()
@@ -177,9 +173,7 @@ class PDLDBPanel(QWidget):
         detail_layout.setContentsMargins(5, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Completo PDL")
-        detail_title.setStyleSheet(
-            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
-        )
+        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -193,9 +187,7 @@ class PDLDBPanel(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
+            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -250,9 +242,7 @@ class PDLDBPanel(QWidget):
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""
         if self.current_sort_col == logical_index:
-            self.current_sort_order = (
-                "DESC" if self.current_sort_order == "ASC" else "ASC"
-            )
+            self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
         else:
             self.current_sort_col = logical_index
             self.current_sort_order = "ASC"
@@ -268,9 +258,7 @@ class PDLDBPanel(QWidget):
             full_rows = self._cache[cache_key]
         else:
             try:
-                full_rows = db_manager.execute_query(
-                    db_manager.DB_PDL, query, tuple(params)
-                )
+                full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
                 self._cache[cache_key] = full_rows
             except Exception as e:
                 print(f"Errore caricamento PDL: {e}")
@@ -345,9 +333,7 @@ class PDLDBPanel(QWidget):
         master_rows = []
         for r in full_rows:
             row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
-            master_rows.append(
-                [("" if str(val).lower() in ["nan", "none"] else val) for val in row]
-            )
+            master_rows.append([("" if str(val).lower() in ["nan", "none"] else val) for val in row])
         return master_rows
 
     def _update_pdl_ui(self, count: int):
@@ -362,8 +348,6 @@ class PDLDBPanel(QWidget):
             if i != 6 and header.sectionSize(i) > 200:
                 header.resizeSection(i, 200)
 
-        QTimer.singleShot(
-            10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
-        )
+        QTimer.singleShot(10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch))
         if count < 500:
             QTimer.singleShot(100, self.table.resizeRowsToContents)

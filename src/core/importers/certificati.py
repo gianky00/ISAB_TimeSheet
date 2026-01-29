@@ -63,9 +63,7 @@ class CertificatiImporter(BaseImporter):
         return str(xls.sheet_names[0]) if xls.sheet_names else None
 
     @classmethod
-    def _read_certificati_data(
-        cls, path: Path, sheet_name: str
-    ) -> Tuple[pd.DataFrame, int]:
+    def _read_certificati_data(cls, path: Path, sheet_name: str) -> Tuple[pd.DataFrame, int]:
         """Legge i dati individuando l'intestazione."""
         pd = cls._get_pd()
         df_preview = pd.read_excel(path, sheet_name=sheet_name, header=None, nrows=20)

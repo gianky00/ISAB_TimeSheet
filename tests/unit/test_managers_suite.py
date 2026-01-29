@@ -30,9 +30,7 @@ def mock_config_stats():
 class TestAuditManager:
     def test_log_action(self, temp_audit_db):
         manager = temp_audit_db
-        manager.log_action(
-            "Test Action", category="test", entity="user", params={"p": 1}
-        )
+        manager.log_action("Test Action", category="test", entity="user", params={"p": 1})
 
         # Verify data
         logs = manager.get_logs(limit=1)

@@ -8,18 +8,15 @@ from typing import Optional, Tuple
 
 # Formati di data comunemente usati nell'applicazione
 DATE_FORMATS = [
-    "%Y-%m-%d",      # ISO format (2024-01-15)
-    "%d/%m/%Y",      # Italian format (15/01/2024)
-    "%d\\%m\\%Y",    # Escaped backslash format
+    "%Y-%m-%d",  # ISO format (2024-01-15)
+    "%d/%m/%Y",  # Italian format (15/01/2024)
+    "%d\\%m\\%Y",  # Escaped backslash format
     "%Y-%m-%d %H:%M:%S",  # ISO with time
     "%d/%m/%Y %H:%M:%S",  # Italian with time
 ]
 
 
-def parse_date_flexible(
-    date_str: Optional[str],
-    formats: Optional[list[str]] = None
-) -> Optional[date]:
+def parse_date_flexible(date_str: Optional[str], formats: Optional[list[str]] = None) -> Optional[date]:
     """
     Tenta di parsare una stringa data usando più formati.
 
@@ -45,8 +42,7 @@ def parse_date_flexible(
 
 
 def parse_datetime_flexible(
-    date_str: Optional[str],
-    formats: Optional[list[str]] = None
+    date_str: Optional[str], formats: Optional[list[str]] = None
 ) -> Optional[datetime]:
     """
     Tenta di parsare una stringa datetime usando più formati.
@@ -72,10 +68,7 @@ def parse_datetime_flexible(
     return None
 
 
-def format_date_it(
-    date_obj: Optional[date],
-    include_time: bool = False
-) -> str:
+def format_date_it(date_obj: Optional[date], include_time: bool = False) -> str:
     """
     Formatta una data nel formato italiano.
 
@@ -111,10 +104,7 @@ def format_date_iso(date_obj: Optional[date]) -> str:
     return date_obj.strftime("%Y-%m-%d")
 
 
-def calculate_days_diff(
-    date_obj: Optional[date],
-    from_date: Optional[date] = None
-) -> Optional[int]:
+def calculate_days_diff(date_obj: Optional[date], from_date: Optional[date] = None) -> Optional[int]:
     """
     Calcola la differenza in giorni tra due date.
 
@@ -132,10 +122,7 @@ def calculate_days_diff(
     return (from_date - date_obj).days
 
 
-def get_status_by_days(
-    days: Optional[int],
-    thresholds: Tuple[int, int] = (20, 30)
-) -> Tuple[str, str]:
+def get_status_by_days(days: Optional[int], thresholds: Tuple[int, int] = (20, 30)) -> Tuple[str, str]:
     """
     Determina lo status e il colore in base ai giorni trascorsi.
 
@@ -180,10 +167,7 @@ def format_days_ago(days: Optional[int]) -> str:
         return f"{days} giorni fa"
 
 
-def get_date_range(
-    days_back: int,
-    from_date: Optional[date] = None
-) -> Tuple[date, date]:
+def get_date_range(days_back: int, from_date: Optional[date] = None) -> Tuple[date, date]:
     """
     Calcola un range di date.
 

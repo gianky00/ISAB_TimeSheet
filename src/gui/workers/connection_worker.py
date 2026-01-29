@@ -30,17 +30,11 @@ class ConnectionTestWorker(QThread):
             if data.get("ok"):
                 bot_name = data["result"]["first_name"]
                 username = data["result"]["username"]
-                self.result_ready.emit(
-                    True, "Successo", f"Connesso a: {bot_name} (@{username})"
-                )
+                self.result_ready.emit(True, "Successo", f"Connesso a: {bot_name} (@{username})")
             else:
-                self.result_ready.emit(
-                    False, "Errore API", f"Risposta negativa: {data}"
-                )
+                self.result_ready.emit(False, "Errore API", f"Risposta negativa: {data}")
         else:
-            self.result_ready.emit(
-                False, "Errore HTTP", f"Status Code: {resp.status_code}"
-            )
+            self.result_ready.emit(False, "Errore HTTP", f"Status Code: {resp.status_code}")
 
     def _test_gemini(self):
         # Simple list models check
@@ -48,9 +42,7 @@ class ConnectionTestWorker(QThread):
         resp = requests.get(url, timeout=10)
 
         if resp.status_code == 200:
-            self.result_ready.emit(
-                True, "Successo", "API Key valida! Connessione stabilita."
-            )
+            self.result_ready.emit(True, "Successo", "API Key valida! Connessione stabilita.")
         else:
             self.result_ready.emit(
                 False,

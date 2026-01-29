@@ -72,9 +72,7 @@ class MessageBubble(QFrame):
             text_color = "#ffffff"
             sender_color = "#e9ecef"
             bubble.setStyleSheet(
-                f"background-color: {bg_color}; "
-                f"border-radius: 15px; "
-                f"border-bottom-right-radius: 2px;"
+                f"background-color: {bg_color}; " f"border-radius: 15px; " f"border-bottom-right-radius: 2px;"
             )
             container_layout.addStretch()
             container_layout.addWidget(bubble)
@@ -117,9 +115,7 @@ class MessageBubble(QFrame):
             html_text = html_text.replace("<table>", f"<table {style_table}>")
 
         lbl_msg.setText(
-            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>"
-            f"{html_text}"
-            f"</div>"
+            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>" f"{html_text}" f"</div>"
         )
         lbl_msg.setStyleSheet("background: transparent; border: none;")
         bubble_layout.addWidget(lbl_msg)

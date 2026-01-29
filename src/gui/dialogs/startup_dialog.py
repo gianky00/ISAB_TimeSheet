@@ -38,6 +38,7 @@ from src.gui.widgets.startup.startup_widgets import (
 
 logger = logging.getLogger(__name__)
 
+
 class StartupDialog(QDialog):
     """Splash screen con animazioni fluide a 60fps."""
 
@@ -55,9 +56,7 @@ class StartupDialog(QDialog):
     def _init_window(self):
         """Configura le proprietà base della finestra."""
         self.setObjectName("StartupDialog")
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
-        )
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setFixedSize(self.WIDTH, self.HEIGHT)
@@ -79,9 +78,7 @@ class StartupDialog(QDialog):
         self.container = QFrame()
         self.container.setObjectName("Container")
         self.container.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.container.setStyleSheet(
-            "#Container { background: transparent; border: none; }"
-        )
+        self.container.setStyleSheet("#Container { background: transparent; border: none; }")
 
         # Particle background (Estratto)
         self.particles = ParticleBackground(self.container)
@@ -143,6 +140,7 @@ class StartupDialog(QDialog):
         title_box.addWidget(self.title)
 
         from src.core.version import __version__
+
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
             "font-size:13px; color:rgba(52,152,219,0.9); font-weight:600; letter-spacing:3px;"
@@ -216,7 +214,7 @@ class StartupDialog(QDialog):
 
         self.log_labels = []
         for i in range(5):
-            lbl = TypewriterLabel() # Estratto
+            lbl = TypewriterLabel()  # Estratto
             lbl.setStyleSheet(
                 f"font-size:12px; color:rgba(255,255,255,{0.2 + i * 0.15}); "
                 f"font-family:'Consolas','Fira Code',monospace; padding:2px 0;"
@@ -228,7 +226,7 @@ class StartupDialog(QDialog):
 
     def _setup_progress(self, parent_layout: QVBoxLayout):
         """Configura la barra di progresso."""
-        self.progress = GlowingProgressBar() # Estratto
+        self.progress = GlowingProgressBar()  # Estratto
         parent_layout.addWidget(self.progress)
 
     def _setup_footer(self, parent_layout: QVBoxLayout):
@@ -359,15 +357,23 @@ class StartupDialog(QDialog):
     def closeEvent(self, event):
         """Cleanup - Stop all timers and threads safely."""
         try:
-            with suppress(Exception): self.particles.timer.stop()
-            with suppress(Exception): self.border.timer.stop()
-            with suppress(Exception): self.progress.timer.stop()
-            with suppress(Exception): self.logo.timer.stop()
-            with suppress(Exception): self._dot_timer.stop()
-            with suppress(Exception): self._pulse_timer.stop()
-            with suppress(Exception): self.resource_mon.timer.stop()
+            with suppress(Exception):
+                self.particles.timer.stop()
+            with suppress(Exception):
+                self.border.timer.stop()
+            with suppress(Exception):
+                self.progress.timer.stop()
+            with suppress(Exception):
+                self.logo.timer.stop()
+            with suppress(Exception):
+                self._dot_timer.stop()
+            with suppress(Exception):
+                self._pulse_timer.stop()
+            with suppress(Exception):
+                self.resource_mon.timer.stop()
             for lbl in self.log_labels:
-                with suppress(Exception): lbl._timer.stop()
+                with suppress(Exception):
+                    lbl._timer.stop()
             if self._thread and self._thread.isRunning():
                 self._thread.quit()
                 self._thread.wait(500)

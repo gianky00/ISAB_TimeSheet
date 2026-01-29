@@ -119,14 +119,10 @@ class AuditManager:
                 if col_name not in existing_cols:
                     with suppress(sqlite3.OperationalError):
                         print(f"[AUDIT] Migrazione: Aggiunta colonna {col_name}...")
-                        conn.execute(
-                            f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}"
-                        )
+                        conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}")
 
             # Indici
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)"
-            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
             conn.commit()
 
     def _get_current_user(self) -> str:
@@ -150,9 +146,7 @@ class AuditManager:
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1"
-                )
+                cursor.execute("SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1")
                 row = cursor.fetchone()
                 return row[0] if row and row[0] else "0" * 64
         except Exception:
@@ -178,12 +172,8 @@ class AuditManager:
             user_id = self._get_current_user()
 
             # Normalizzazione
-            status_val = (
-                status.value if isinstance(status, self.Status) else str(status)
-            )
-            severity_val = (
-                severity.value if isinstance(severity, self.Severity) else str(severity)
-            )
+            status_val = status.value if isinstance(status, self.Status) else str(status)
+            severity_val = severity.value if isinstance(severity, self.Severity) else str(severity)
 
             # Defaults
             entity = entity or "-"
@@ -240,9 +230,7 @@ class AuditManager:
             self.signals.logs_updated.emit()
 
             if notify:
-                self._generate_notification(
-                    action, entity, status_val, severity_val, params
-                )
+                self._generate_notification(action, entity, status_val, severity_val, params)
 
         except Exception as e:
             logger.error(f"Audit Log Error: {e}")
@@ -266,18 +254,14 @@ class AuditManager:
         if params and isinstance(params, dict) and "error_details" in params:
             msg = params["error_details"]
 
-        NotificationManager.instance().add_notification(
-            f"{action}: {entity}", msg, level=level
-        )
+        NotificationManager.instance().add_notification(f"{action}: {entity}", msg, level=level)
 
     def verify_integrity(self) -> bool:
         """Verifica la catena di hash."""
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row
-                rows = conn.execute(
-                    "SELECT * FROM audit_logs ORDER BY id ASC"
-                ).fetchall()
+                rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
 
                 prev_hash = "0" * 64
                 for row in rows:
@@ -391,9 +375,7 @@ class AuditManager:
         """Recupera la lista unica delle categorie di log presenti nel DB."""
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
-                res = conn.execute(
-                    "SELECT DISTINCT category FROM audit_logs ORDER BY category"
-                )
+                res = conn.execute("SELECT DISTINCT category FROM audit_logs ORDER BY category")
                 return [r[0] for r in res if r[0]]
         except Exception:
             return []
@@ -403,9 +385,7 @@ class AuditManager:
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
-                res = conn.execute(
-                    "DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,)
-                )
+                res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff,))
                 deleted_count = res.rowcount
 
             if deleted_count > 0:

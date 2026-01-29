@@ -44,9 +44,7 @@ class RicercaPDLPanel(BaseBotPanel):
         top_row = QHBoxLayout()
 
         # 1. Flag Escludi Chiusi
-        self.exclude_closed_check = QCheckBox(
-            "Escludi permessi chiusi, scaduti o eliminati"
-        )
+        self.exclude_closed_check = QCheckBox("Escludi permessi chiusi, scaduti o eliminati")
         self.exclude_closed_check.setChecked(True)
         self.exclude_closed_check.stateChanged.connect(self._save_data)
         top_row.addWidget(self.exclude_closed_check)
@@ -69,19 +67,13 @@ class RicercaPDLPanel(BaseBotPanel):
 
     def _load_saved_data(self):
         config = config_manager.load_config()
-        self.exclude_closed_check.setChecked(
-            config.get("pdl_search_exclude_closed", True)
-        )
+        self.exclude_closed_check.setChecked(config.get("pdl_search_exclude_closed", True))
         saved_site = config.get("pdl_search_site", "Seleziona tutto")
         self.site_combo.setCurrentText(saved_site)
 
     def _save_data(self):
-        config_manager.set_config_value(
-            "pdl_search_exclude_closed", self.exclude_closed_check.isChecked()
-        )
-        config_manager.set_config_value(
-            "pdl_search_site", self.site_combo.currentText()
-        )
+        config_manager.set_config_value("pdl_search_exclude_closed", self.exclude_closed_check.isChecked())
+        config_manager.set_config_value("pdl_search_site", self.site_combo.currentText())
 
     def get_bot_instance(self):
         from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
@@ -103,9 +95,7 @@ class RicercaPDLPanel(BaseBotPanel):
         username, password = self.get_credentials()
 
         if not username or not password:
-            ToastManager.instance().show(
-                "Configura le credenziali SafeWork nelle Impostazioni.", "warning"
-            )
+            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
             self._update_status("#C62828", "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)

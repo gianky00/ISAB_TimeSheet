@@ -4,12 +4,20 @@ Collezione di widget animati utilizzati nella Splash Screen.
 """
 
 import math
-from PyQt6.QtCore import Qt, QTimer, QPoint, QRect
+
+from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtGui import (
-    QBrush, QColor, QConicalGradient, QLinearGradient, QPainter, 
-    QPainterPath, QPen, QRadialGradient
+    QBrush,
+    QColor,
+    QConicalGradient,
+    QLinearGradient,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QRadialGradient,
 )
-from PyQt6.QtWidgets import QWidget, QLabel
+from PyQt6.QtWidgets import QLabel, QWidget
+
 
 class AnimatedBorder(QWidget):
     """Bordo con luce che scorre e ombre illuminate."""
@@ -100,6 +108,7 @@ class AnimatedBorder(QWidget):
                 painter.setBrush(QColor(52, 152, 219, int(80 * trail_intensity)))
                 painter.drawEllipse(QPoint(int(px), int(py)), trail_size, trail_size)
 
+
 class GlowingProgressBar(QWidget):
     """Progress bar con glow e shimmer."""
 
@@ -137,7 +146,6 @@ class GlowingProgressBar(QWidget):
 
         if self._display_value > 0:
             pw = int((self._display_value / 100) * w)
-            intensity = 0.8 + 0.2 * math.sin(self._phase)
             grad = QLinearGradient(0, 0, pw, 0)
             grad.setColorAt(0, QColor(52, 152, 219))
             grad.setColorAt(1, QColor(155, 89, 182))
@@ -155,6 +163,7 @@ class GlowingProgressBar(QWidget):
                 painter.setClipPath(progress)
                 painter.fillRect(self._shimmer - 40, 0, 80, h, shimmer)
                 painter.restore()
+
 
 class PulsingLogo(QWidget):
     """Logo con effetto pulsante e glow."""
@@ -176,7 +185,8 @@ class PulsingLogo(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        if not self.pixmap: return
+        if not self.pixmap:
+            return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
@@ -193,8 +203,11 @@ class PulsingLogo(QWidget):
         painter.drawEllipse(QPoint(int(cx), int(cy)), 60, 60)
 
         size = int(64 * scale)
-        scaled = self.pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        scaled = self.pixmap.scaled(
+            size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+        )
         painter.drawPixmap(int(cx - scaled.width() / 2), int(cy - scaled.height() / 2), scaled)
+
 
 class TypewriterLabel(QLabel):
     """Label con effetto typewriter fluido."""
@@ -218,7 +231,7 @@ class TypewriterLabel(QLabel):
     def _type(self):
         if self._index < len(self._target):
             self._index += 1
-            self._current = self._target[:self._index]
+            self._current = self._target[: self._index]
             self.setText(self._current)
         else:
             self._timer.stop()
