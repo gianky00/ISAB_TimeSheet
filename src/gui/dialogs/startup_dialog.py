@@ -808,6 +808,14 @@ class StartupDialog(QDialog):
 
     def __init__(self):
         super().__init__()
+        self._init_window()
+        self._init_state()
+        self._setup_container()
+        self._setup_content()
+        self._setup_animations()
+
+    def _init_window(self):
+        """Configura le proprietà base della finestra."""
         self.setObjectName("StartupDialog")
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
@@ -817,12 +825,16 @@ class StartupDialog(QDialog):
         self.setFixedSize(self.WIDTH, self.HEIGHT)
         self.setStyleSheet("#StartupDialog { background: transparent; border: none; }")
 
+    def _init_state(self):
+        """Inizializza lo stato interno del dialog."""
         self._worker = None
         self._thread = None
         self._init_result = False
         self.current_logs = []
+        self._drag_pos = None
 
-        # Layout
+    def _setup_container(self):
+        """Configura il container principale con particelle, bordo e shadow."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -855,21 +867,32 @@ class StartupDialog(QDialog):
         shadow.setOffset(0, 0)
         self.container.setGraphicsEffect(shadow)
 
-        # Content layout
+        layout.addWidget(self.container)
+
+    def _setup_content(self):
+        """Configura il contenuto principale (header, console, progress, footer)."""
         content_layout = QVBoxLayout(self.content)
         content_layout.setContentsMargins(55, 45, 55, 45)
         content_layout.setSpacing(20)
 
-        # === HEADER ===
+        self._setup_header(content_layout)
+        self._setup_console(content_layout)
+        self._setup_progress(content_layout)
+        self._setup_footer(content_layout)
+
+    def _setup_header(self, parent_layout: QVBoxLayout):
+        """Configura l'header con logo, titolo e info licenza."""
         header = QHBoxLayout()
         header.setSpacing(20)
 
+        # Logo pulsante
         self.logo = PulsingLogo()
         self.logo.setFixedSize(85, 85)
         if os.path.exists("assets/app.ico"):
             self.logo.set_pixmap(QIcon("assets/app.ico").pixmap(64, 64))
         header.addWidget(self.logo)
 
+        # Titolo e versione
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
 
@@ -881,15 +904,7 @@ class StartupDialog(QDialog):
         )
         title_box.addWidget(self.title)
 
-        from src.core.license_validator import get_hardware_id, get_license_info
         from src.core.version import __version__
-
-        # License Info Data
-        lic_info = get_license_info() or {}
-        client_name = lic_info.get("Cliente", "N/D").upper()
-        expiry_date = lic_info.get("Scadenza Licenza", "N/D")
-        # HWID from payload if available (for consistency), else calculated
-        hw_id = lic_info.get("Hardware ID", get_hardware_id() or "UNKNOWN")
 
         self.version = QLabel(f"v{__version__}")
         self.version.setStyleSheet(
@@ -900,41 +915,54 @@ class StartupDialog(QDialog):
         header.addLayout(title_box)
         header.addStretch()
 
-        # === LICENSE INFO BOX (Right Side) ===
+        # License info box
+        self._setup_license_info(header)
+
+        parent_layout.addLayout(header)
+
+    def _setup_license_info(self, parent_layout: QHBoxLayout):
+        """Configura il box con le informazioni della licenza."""
+        from src.core.license_validator import get_hardware_id, get_license_info
+
+        lic_info = get_license_info() or {}
+        client_name = lic_info.get("Cliente", "N/D").upper()
+        expiry_date = lic_info.get("Scadenza Licenza", "N/D")
+        hw_id = lic_info.get("Hardware ID", get_hardware_id() or "UNKNOWN")
+
         license_box = QVBoxLayout()
         license_box.setSpacing(2)
         license_box.setAlignment(
             Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
         )
 
-        def create_info_row(label_text, value_text):
-            row = QHBoxLayout()
-            row.setSpacing(5)
-            row.setAlignment(Qt.AlignmentFlag.AlignRight)
+        license_box.addLayout(self._create_info_row("CLIENTE:", client_name))
+        license_box.addLayout(self._create_info_row("HW-ID:", hw_id))
+        license_box.addLayout(self._create_info_row("SCADENZA:", expiry_date))
 
-            lbl = QLabel(label_text)
-            lbl.setStyleSheet(
-                "color: rgba(255, 255, 255, 0.5); font-size: 10px; font-weight: 600;"
-            )
+        parent_layout.addLayout(license_box)
 
-            val = QLabel(value_text)
-            val.setStyleSheet(
-                "color: rgba(255, 255, 255, 0.9); font-size: 10px; font-weight: bold; font-family: 'Consolas', monospace;"
-            )
+    def _create_info_row(self, label_text: str, value_text: str) -> QHBoxLayout:
+        """Crea una riga di informazione label: valore."""
+        row = QHBoxLayout()
+        row.setSpacing(5)
+        row.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-            row.addWidget(lbl)
-            row.addWidget(val)
-            return row
+        lbl = QLabel(label_text)
+        lbl.setStyleSheet(
+            "color: rgba(255, 255, 255, 0.5); font-size: 10px; font-weight: 600;"
+        )
 
-        license_box.addLayout(create_info_row("CLIENTE:", client_name))
-        license_box.addLayout(create_info_row("HW-ID:", hw_id))
-        license_box.addLayout(create_info_row("SCADENZA:", expiry_date))
+        val = QLabel(value_text)
+        val.setStyleSheet(
+            "color: rgba(255, 255, 255, 0.9); font-size: 10px; font-weight: bold; font-family: 'Consolas', monospace;"
+        )
 
-        header.addLayout(license_box)
+        row.addWidget(lbl)
+        row.addWidget(val)
+        return row
 
-        content_layout.addLayout(header)
-
-        # === LOG CONSOLE ===
+    def _setup_console(self, parent_layout: QVBoxLayout):
+        """Configura la console di log con TypewriterLabels."""
         self.log_frame = QFrame()
         self.log_frame.setStyleSheet(
             "background:rgba(0,0,0,0.35); border-radius:16px; border:1px solid rgba(52,152,219,0.2);"
@@ -964,28 +992,33 @@ class StartupDialog(QDialog):
             log_layout.addWidget(lbl)
             self.log_labels.append(lbl)
 
-        content_layout.addWidget(self.log_frame)
+        parent_layout.addWidget(self.log_frame)
 
-        # === PROGRESS BAR ===
+    def _setup_progress(self, parent_layout: QVBoxLayout):
+        """Configura la barra di progresso."""
         self.progress = GlowingProgressBar()
-        content_layout.addWidget(self.progress)
+        parent_layout.addWidget(self.progress)
 
-        # === FOOTER ===
+    def _setup_footer(self, parent_layout: QVBoxLayout):
+        """Configura il footer con indicatore, status e resource monitor."""
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 5, 0, 0)
 
+        # Indicatore di stato
         self.indicator = QLabel()
         self.indicator.setFixedSize(8, 8)
         self.indicator.setStyleSheet("background:#3498db; border-radius:4px;")
         footer.addWidget(self.indicator)
         footer.addSpacing(8)
 
+        # Label status
         self.status = QLabel("AVVIO IN CORSO...")
         self.status.setStyleSheet(
             "font-size:11px; color:rgba(255,255,255,0.5); font-weight:600; letter-spacing:2px;"
         )
         footer.addWidget(self.status)
 
+        # Dots animati
         self.dots = QLabel("")
         self.dots.setStyleSheet(
             "font-size:11px; color:rgba(52,152,219,0.8); font-weight:600;"
@@ -994,26 +1027,25 @@ class StartupDialog(QDialog):
 
         footer.addStretch()
 
-        # Resource Monitor (Bottom Right)
+        # Resource Monitor
         self.resource_mon = ResourceMonitor()
         footer.addWidget(self.resource_mon)
 
-        content_layout.addLayout(footer)
-        layout.addWidget(self.container)
+        parent_layout.addLayout(footer)
 
-        # Animazioni ausiliarie
+    def _setup_animations(self):
+        """Configura i timer per le animazioni (dots, pulse, fade-in)."""
+        # Dots animation
         self._dot_count = 0
         self._dot_timer = QTimer(self)
         self._dot_timer.timeout.connect(self._animate_dots)
         self._dot_timer.start(350)
 
+        # Pulse indicator
         self._pulse_state = True
         self._pulse_timer = QTimer(self)
         self._pulse_timer.timeout.connect(self._pulse_indicator)
         self._pulse_timer.start(800)
-
-        # Drag Logic
-        self._drag_pos = None
 
         # Fade in
         self.setWindowOpacity(0.0)

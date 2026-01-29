@@ -27,88 +27,12 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.lyra_client import LyraClient
 from src.core.secrets_manager import SecretsManager
+from src.gui.widgets.message_bubble import MessageBubble
 from src.utils.document_processor import DocumentProcessor
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
-class MessageBubble(QFrame):
-    """Widget per una singola bolla di messaggio nella chat."""
-
-    def __init__(self, sender, text, is_lyra=True, parent=None):
-        super().__init__(parent)
-        self.is_lyra = is_lyra
-        self._setup_ui(sender, text)
-
-    def _setup_ui(self, sender, text):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Container per l'allineamento
-        container = QWidget()
-        container_layout = QHBoxLayout(container)
-        container_layout.setContentsMargins(10, 5, 10, 5)
-
-        # La bolla effettiva
-        bubble = QFrame()
-        bubble_layout = QVBoxLayout(bubble)
-        bubble_layout.setContentsMargins(15, 10, 15, 10)
-        bubble_layout.setSpacing(5)
-
-        # Colori e stili basati sul mittente
-        if self.is_lyra:
-            bg_color = "#f1f3f9"
-            text_color = "#212529"
-            sender_color = "#6f42c1"
-            bubble.setStyleSheet(
-                f"background-color: {bg_color}; border-radius: 15px; border-bottom-left-radius: 2px; border: 1px solid #dee2e6;"
-            )
-            container_layout.addWidget(bubble)
-            container_layout.addStretch()
-        else:
-            bg_color = "#6f42c1"
-            text_color = "#ffffff"
-            sender_color = "#e9ecef"
-            bubble.setStyleSheet(
-                f"background-color: {bg_color}; border-radius: 15px; border-bottom-right-radius: 2px;"
-            )
-            container_layout.addStretch()
-            container_layout.addWidget(bubble)
-
-        # Shadow
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(10)
-        shadow.setXOffset(0)
-        shadow.setYOffset(2)
-        shadow.setColor(QColor(0, 0, 0, 30))
-        bubble.setGraphicsEffect(shadow)
-
-        # Sender Label
-        lbl_sender = QLabel(sender)
-        lbl_sender.setStyleSheet(
-            f"font-weight: bold; font-size: 11px; color: {sender_color}; background: transparent; border: none;"
-        )
-        bubble_layout.addWidget(lbl_sender)
-
-        # Message Label (Markdown Support via RichText)
-        lbl_msg = QLabel()
-        lbl_msg.setWordWrap(True)
-        lbl_msg.setTextFormat(Qt.TextFormat.RichText)
-        lbl_msg.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-
-        # Formattazione Markdown per HTML
-        html_text = markdown.markdown(text, extensions=["tables", "fenced_code"])
-        # Custom styles for table inside bubble
-        if self.is_lyra:
-            style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 5px; border-color: #dee2e6;"'
-            html_text = html_text.replace("<table>", f"<table {style_table}>")
-
-        lbl_msg.setText(
-            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>{html_text}</div>"
-        )
-        lbl_msg.setStyleSheet("background: transparent; border: none;")
-        bubble_layout.addWidget(lbl_msg)
-
-        layout.addWidget(container)
+# MessageBubble è stata estratta in src/gui/widgets/message_bubble.py
 
 
 class LyraWorker(QThread):

@@ -784,24 +784,16 @@ class AutopilotWidget(QWidget):
         self._animating = False
         QTimer.singleShot(800, lambda: setattr(self, "_animating", False))
 
-    def _animate_gear_button(self):
-        """
-        Crea un'animazione SPETTACOLARE per il pulsante ingranaggio.
-        # Combina: Scale bounce drammatico, Shake orizzontale, Pulsazione colore multi-fase.
-        """
-        # Cleanup previous animations if still running
+    def _cleanup_gear_animations(self):
+        """Ferma e pulisce le animazioni del gear button se in esecuzione."""
         if hasattr(self, "_gear_animation") and self._gear_animation:
             try:
-                if (
-                    self._gear_animation.state()
-                    == QParallelAnimationGroup.State.Running
-                ):
+                if self._gear_animation.state() == QParallelAnimationGroup.State.Running:
                     self._gear_animation.stop()
                 self._gear_animation.deleteLater()
             except RuntimeError:
                 pass
 
-        # Also clean up child animations
         if hasattr(self, "_gear_shake_anim") and self._gear_shake_anim:
             try:
                 if self._gear_shake_anim.state() == QPropertyAnimation.State.Running:
@@ -811,120 +803,67 @@ class AutopilotWidget(QWidget):
 
         if hasattr(self, "_gear_scale_sequence") and self._gear_scale_sequence:
             try:
-                if (
-                    self._gear_scale_sequence.state()
-                    == QSequentialAnimationGroup.State.Running
-                ):
+                if self._gear_scale_sequence.state() == QSequentialAnimationGroup.State.Running:
                     self._gear_scale_sequence.stop()
             except RuntimeError:
                 pass
 
-        # Salva posizione originale
-        original_pos = self.config_btn.pos()
-        original_style = self.config_btn.styleSheet()
-
-        # === ANIMAZIONE PARALLELA (tutto insieme) ===
-        parallel_group = QParallelAnimationGroup(self)
-
-        # 1. SHAKE EFFECT (movimento orizzontale rapido)
+    def _create_shake_animation(self, original_pos):
+        """Crea l'animazione di shake orizzontale per il gear button."""
         shake_anim = QPropertyAnimation(self.config_btn, b"pos", self)
         shake_anim.setDuration(500)
         shake_anim.setKeyValueAt(0.0, original_pos)
-        shake_anim.setKeyValueAt(
-            0.1, QPoint(original_pos.x() + 3, original_pos.y())
-        )  # Destra
-        shake_anim.setKeyValueAt(
-            0.2, QPoint(original_pos.x() - 3, original_pos.y())
-        )  # Sinistra
-        shake_anim.setKeyValueAt(
-            0.3, QPoint(original_pos.x() + 2, original_pos.y())
-        )  # Destra
-        shake_anim.setKeyValueAt(
-            0.4, QPoint(original_pos.x() - 2, original_pos.y())
-        )  # Sinistra
-        shake_anim.setKeyValueAt(
-            0.5, QPoint(original_pos.x() + 1, original_pos.y())
-        )  # Destra
-        shake_anim.setKeyValueAt(1.0, original_pos)  # Torna normale
+        shake_anim.setKeyValueAt(0.1, QPoint(original_pos.x() + 3, original_pos.y()))
+        shake_anim.setKeyValueAt(0.2, QPoint(original_pos.x() - 3, original_pos.y()))
+        shake_anim.setKeyValueAt(0.3, QPoint(original_pos.x() + 2, original_pos.y()))
+        shake_anim.setKeyValueAt(0.4, QPoint(original_pos.x() - 2, original_pos.y()))
+        shake_anim.setKeyValueAt(0.5, QPoint(original_pos.x() + 1, original_pos.y()))
+        shake_anim.setKeyValueAt(1.0, original_pos)
         shake_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        parallel_group.addAnimation(shake_anim)
+        return shake_anim
 
-        # 2. PULSAZIONE DRAMMATICA con scala (zoom in/out/bounce)
-        # Sequenza: 1.0 -> 1.5 (GRANDE) -> 0.8 -> 1.0 (bounce)
+    def _create_scale_animation(self):
+        """Crea l'animazione di scale bounce per il gear button."""
         scale_sequence = QSequentialAnimationGroup(self)
 
-        # Scale UP DRAMMATICO (zoom in molto grande)
+        # Scale UP (zoom in)
         scale_up = QPropertyAnimation(self.config_btn, b"iconSize", self)
         scale_up.setDuration(200)
         scale_up.setStartValue(QSize(20, 20))
-        scale_up.setEndValue(QSize(30, 30))  # +50% size!
+        scale_up.setEndValue(QSize(30, 30))
         scale_up.setEasingCurve(QEasingCurve.Type.OutCubic)
         scale_sequence.addAnimation(scale_up)
 
-        # Scale DOWN (zoom out piccolo)
+        # Scale DOWN (zoom out)
         scale_down = QPropertyAnimation(self.config_btn, b"iconSize", self)
         scale_down.setDuration(150)
         scale_down.setStartValue(QSize(30, 30))
-        scale_down.setEndValue(QSize(16, 16))  # -20% size
+        scale_down.setEndValue(QSize(16, 16))
         scale_down.setEasingCurve(QEasingCurve.Type.InCubic)
         scale_sequence.addAnimation(scale_down)
 
-        # Scale NORMALIZE con BOUNCE ELASTICO (ritorno drammatico)
+        # Scale NORMALIZE con bounce elastico
         scale_normal = QPropertyAnimation(self.config_btn, b"iconSize", self)
         scale_normal.setDuration(400)
         scale_normal.setStartValue(QSize(16, 16))
         scale_normal.setEndValue(QSize(20, 20))
-        scale_normal.setEasingCurve(
-            QEasingCurve.Type.OutElastic
-        )  # ELASTIC = Super bounce!
+        scale_normal.setEasingCurve(QEasingCurve.Type.OutElastic)
         scale_sequence.addAnimation(scale_normal)
 
-        parallel_group.addAnimation(scale_sequence)
+        return scale_sequence
 
-        # 3. CAMBIO COLORE MULTI-FASE (effetto arcobaleno)
-        # Sequenza: grigio -> blu -> viola -> verde -> grigio
-        def set_blue():
+    def _setup_color_transitions(self, original_style):
+        """Configura le transizioni di colore a caleidoscopio per il gear button."""
+        def set_color(gradient_start, gradient_end, border_color):
             try:
-                self.config_btn.setStyleSheet(
-                    """
-                    QPushButton {
+                self.config_btn.setStyleSheet(f"""
+                    QPushButton {{
                         background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #0d6efd, stop:1 #0a58ca);
-                        border: 3px solid #0d6efd;
+                            stop:0 {gradient_start}, stop:1 {gradient_end});
+                        border: 3px solid {border_color};
                         border-radius: 16px;
-                    }
-                """
-                )
-            except RuntimeError:
-                pass
-
-        def set_purple():
-            try:
-                self.config_btn.setStyleSheet(
-                    """
-                    QPushButton {
-                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #8b5cf6, stop:1 #7c3aed);
-                        border: 3px solid #8b5cf6;
-                        border-radius: 16px;
-                    }
-                """
-                )
-            except RuntimeError:
-                pass
-
-        def set_green():
-            try:
-                self.config_btn.setStyleSheet(
-                    """
-                    QPushButton {
-                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #10b981, stop:1 #059669);
-                        border: 3px solid #10b981;
-                        border-radius: 16px;
-                    }
-                """
-                )
+                    }}
+                """)
             except RuntimeError:
                 pass
 
@@ -935,24 +874,44 @@ class AutopilotWidget(QWidget):
                 pass
 
         # Timer per cambio colore rapido (caleidoscopio)
-        QTimer.singleShot(0, set_blue)  # Blu immediato
-        QTimer.singleShot(200, set_purple)  # Viola a 200ms
-        QTimer.singleShot(400, set_green)  # Verde a 400ms
-        QTimer.singleShot(750, restore_color)  # Ritorno normale a 750ms
+        QTimer.singleShot(0, lambda: set_color("#0d6efd", "#0a58ca", "#0d6efd"))      # Blu
+        QTimer.singleShot(200, lambda: set_color("#8b5cf6", "#7c3aed", "#8b5cf6"))    # Viola
+        QTimer.singleShot(400, lambda: set_color("#10b981", "#059669", "#10b981"))    # Verde
+        QTimer.singleShot(750, restore_color)
 
-        # Cleanup animation when finished
-        def cleanup_gear_animation():
-            try:
-                parallel_group.deleteLater()
-            except RuntimeError:
-                pass
+    def _animate_gear_button(self):
+        """
+        Crea un'animazione spettacolare per il pulsante ingranaggio.
+        Combina: Scale bounce, Shake orizzontale, Pulsazione colore multi-fase.
+        """
+        # Cleanup animazioni precedenti
+        self._cleanup_gear_animations()
 
-        parallel_group.finished.connect(cleanup_gear_animation)
+        # Salva stato originale
+        original_pos = self.config_btn.pos()
+        original_style = self.config_btn.styleSheet()
 
-        # === AVVIA ANIMAZIONE ===
+        # Crea gruppo animazione parallela
+        parallel_group = QParallelAnimationGroup(self)
+
+        # 1. Shake effect
+        shake_anim = self._create_shake_animation(original_pos)
+        parallel_group.addAnimation(shake_anim)
+
+        # 2. Scale bounce effect
+        scale_sequence = self._create_scale_animation()
+        parallel_group.addAnimation(scale_sequence)
+
+        # 3. Color transitions
+        self._setup_color_transitions(original_style)
+
+        # Cleanup quando finisce
+        parallel_group.finished.connect(
+            lambda: parallel_group.deleteLater() if parallel_group else None
+        )
+
+        # Avvia e mantieni riferimenti
         parallel_group.start()
-
-        # Mantieni riferimenti per evitare garbage collection
         self._gear_animation = parallel_group
         self._gear_shake_anim = shake_anim
         self._gear_scale_sequence = scale_sequence

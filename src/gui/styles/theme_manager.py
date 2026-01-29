@@ -115,10 +115,6 @@ class ThemeManager:
             )
 
         # Global Light Theme Enforcement for Popups & Windows
-        # Forces white background on all "popup" like widgets that might inherit OS Dark Mode
-        # Global Light Theme Enforcement for Popups & Windows
-        # Forces white background on all "popup" like widgets that might inherit OS Dark Mode
-        # NUCLEAR OPTION: Specificity is key.
         global_overrides = """
             /* FORCE LIGHT THEME ON ALL DIALOGS AND MENUS */
             QDialog, QMainWindow {
@@ -228,6 +224,6 @@ class ThemeManager:
         app.setStyleSheet(qss_content + global_overrides)
 
 
-# Wrapper per compatibilità con il codice esistente
 def apply_theme(app: QApplication, theme_name: str = "light"):
+    """Wrapper per compatibilità con il codice esistente."""
     ThemeManager().apply_theme(app, theme_name)
