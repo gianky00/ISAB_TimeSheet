@@ -139,9 +139,7 @@ def get_all_imports(script_path, src_path):
             continue  # Skip internal modules usually
         cleaned_imports.add(imp)
 
-    print(
-        f"[ANALYZER] ✅ Identificati {len(cleaned_imports)} moduli univoci da includere."
-    )
+    print(f"[ANALYZER] ✅ Identificati {len(cleaned_imports)} moduli univoci da includere.")
     return sorted(cleaned_imports)
 
 

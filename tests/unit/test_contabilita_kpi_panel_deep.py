@@ -10,9 +10,7 @@ class TestContabilitaKPIPanelDeep:
     )
     @patch("src.core.contabilita_manager.ContabilitaManager.get_year_stats")
     @patch("src.core.contabilita_manager.ContabilitaManager.get_data_by_year")
-    def test_load_kpi_data_and_plotting(
-        self, mock_get_data, mock_get_stats, mock_years, qapp, qtbot
-    ):
+    def test_load_kpi_data_and_plotting(self, mock_get_data, mock_get_stats, mock_years, qapp, qtbot):
         # Mock stats
         mock_get_stats.return_value = {
             "total_prev": 10000.0,

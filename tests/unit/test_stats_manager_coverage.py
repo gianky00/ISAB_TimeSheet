@@ -10,9 +10,7 @@ class TestStatsManager:
     def manager(self, tmp_path, mocker):
         # Mock config_manager to avoid real disk I/O
         self.mock_config = {"statistics": {}}
-        mocker.patch(
-            "src.core.config_manager.load_config", return_value=self.mock_config
-        )
+        mocker.patch("src.core.config_manager.load_config", return_value=self.mock_config)
         mocker.patch(
             "src.core.config_manager.set_config_value",
             side_effect=lambda k, v: self.mock_config.update({k: v}),

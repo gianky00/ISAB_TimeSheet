@@ -51,10 +51,7 @@ class ModernButton(QPushButton):
         if icon:
             self.setIcon(get_colored_icon(icon, "#000000"))
             # Increase padding for icon
-            self.setStyleSheet(
-                self.styleSheet()
-                + "QPushButton { padding-left: 32px; text-align: left; }"
-            )
+            self.setStyleSheet(self.styleSheet() + "QPushButton { padding-left: 32px; text-align: left; }")
 
     def _setup_animation(self):
         """Inizializza l'animazione di opacità per l'effetto hover."""

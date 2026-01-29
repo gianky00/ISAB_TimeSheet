@@ -14,10 +14,11 @@ class TestAuditManager:
         db_dir.mkdir()
         db_path = db_dir / "audit_log.db"
 
-        # Patch the class-level attribute before instantiation
-        mocker.patch("src.core.audit_manager.AuditManager.DB_PATH", db_path)
-        # Patch CONFIG_DIR just in case
-        mocker.patch("src.core.audit_manager.CONFIG_DIR", tmp_path)
+        # Patch the class-level attribute in AuditDatabase where it's actually used
+        mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
+        # Patch CONFIG_DIR in the new modules
+        mocker.patch("src.core.audit.database.CONFIG_DIR", tmp_path)
+        mocker.patch("src.core.audit.manager.AuditSignals.instance")
 
         # Reset singleton
         AuditManager._instance = None
@@ -25,9 +26,7 @@ class TestAuditManager:
 
     def test_log_action_and_integrity(self, manager):
         """Test logging an action and verifying chain integrity."""
-        manager.log_action(
-            "Test Action", "unit-test", entity="App", status=AuditManager.Status.SUCCESS
-        )
+        manager.log_action("Test Action", "unit-test", entity="App", status=AuditManager.Status.SUCCESS)
         manager.log_action(
             "Test Action 2",
             "unit-test",
@@ -69,9 +68,7 @@ class TestAuditManager:
         assert logs[0]["action"] == "Pulizia Log"
 
     def test_notification_emission(self, manager):
-        with patch(
-            "src.core.notification_manager.NotificationManager.instance"
-        ) as mock_notif:
+        with patch("src.core.notification_manager.NotificationManager.instance") as mock_notif:
             manager.log_action("Action", notify=True)
             mock_notif.return_value.add_notification.assert_called_once()
 

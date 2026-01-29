@@ -47,9 +47,7 @@ def wait_for_overlay_to_disappear(
         True se l'overlay è scomparso, False se timeout.
     """
     try:
-        WebDriverWait(driver, timeout).until(
-            EC.invisibility_of_element_located(locator)
-        )
+        WebDriverWait(driver, timeout).until(EC.invisibility_of_element_located(locator))
         return True
     except TimeoutException:
         logger.warning(f"Timeout waiting for overlay: {locator}")
@@ -143,9 +141,7 @@ def poll_for_file(
 
     while time.time() - start_time < timeout:
         # Check se ci sono download in corso (crdownload, tmp, part)
-        in_progress = any(
-            directory.glob(f"*{ext}") for ext in [".crdownload", ".tmp", ".part"]
-        )
+        in_progress = any(directory.glob(f"*{ext}") for ext in [".crdownload", ".tmp", ".part"])
 
         if in_progress:
             time.sleep(poll_interval)
@@ -155,24 +151,19 @@ def poll_for_file(
         files = list(directory.glob(pattern))
 
         # DEBUG AGGRESSIVO (Richiesto da User per Troubleshooting)
-        if (
-            time.time() - start_time < 5
-        ):  # Logga solo nei primi 5 secondi per non spammare
+        if time.time() - start_time < 5:  # Logga solo nei primi 5 secondi per non spammare
             all_files_in_dir = list(directory.glob("*"))
             logger.debug(
                 f"[DEBUG-POLL] Scanning '{directory}'. Total files: {len(all_files_in_dir)}. Matching '{pattern}': {len(files)}"
             )
             if len(all_files_in_dir) < 20:
-                logger.debug(
-                    f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}"
-                )
+                logger.debug(f"[DEBUG-POLL] Files: {[f.name for f in all_files_in_dir]}")
 
         # Filtra per esclusioni
         files = [
             f
             for f in files
-            if f.is_file()
-            and not any(f.suffix == ext or ext in f.name for ext in exclude_patterns)
+            if f.is_file() and not any(f.suffix == ext or ext in f.name for ext in exclude_patterns)
         ]
 
         # Filtra per età minima se specificata (con tolleranza per clock skew)
@@ -202,9 +193,7 @@ def poll_for_file(
 
         time.sleep(poll_interval)
 
-    logger.warning(
-        f"Timeout polling for file in {directory} with pattern {pattern} (min_age={min_age})"
-    )
+    logger.warning(f"Timeout polling for file in {directory} with pattern {pattern} (min_age={min_age})")
     return None
 
 
@@ -270,9 +259,7 @@ def poll_for_new_file(
             pass
 
     start_time = time.time()
-    logger.info(
-        f"Monitoraggio files in {directory} (Snapshot: {len(snapshot_map)} files)..."
-    )
+    logger.info(f"Monitoraggio files in {directory} (Snapshot: {len(snapshot_map)} files)...")
 
     while time.time() - start_time < timeout:
         # 1. Check download in corso

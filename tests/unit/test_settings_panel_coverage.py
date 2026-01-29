@@ -60,10 +60,7 @@ class TestSettingsPanelCoverage:
     def test_load_config_to_ui(self, panel):
         """Test that configuration is correctly loaded into UI widgets."""
         assert panel.config_tab.general_page.headless_check.isChecked() is False
-        assert (
-            panel.config_tab.paths_page.contabilita_path_edit.text()
-            == "/path/to/contabilita"
-        )
+        assert panel.config_tab.paths_page.contabilita_path_edit.text() == "/path/to/contabilita"
 
     def test_autosave_behavior(self, panel, mock_config):
         """Test that changing widgets triggers auto-save."""
@@ -89,13 +86,8 @@ class TestSettingsPanelCoverage:
 
     def test_add_fornitore(self, panel, mocker):
         """Test adding a supplier."""
-        mocker.patch(
-            "PyQt6.QtWidgets.QInputDialog.getText", return_value=("New Supplier", True)
-        )
+        mocker.patch("PyQt6.QtWidgets.QInputDialog.getText", return_value=("New Supplier", True))
         lists_page = panel.config_tab.lists_page
         lists_page._add_fornitore()
-        items = [
-            lists_page.fornitori_list.item(i).text()
-            for i in range(lists_page.fornitori_list.count())
-        ]
+        items = [lists_page.fornitori_list.item(i).text() for i in range(lists_page.fornitori_list.count())]
         assert "New Supplier" in items

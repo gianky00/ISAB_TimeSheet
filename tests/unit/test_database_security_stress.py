@@ -30,9 +30,7 @@ class TestDatabaseSecurityStress:
         def writer_task():
             try:
                 for i in range(20):
-                    db_mgr.execute_query(
-                        db_path, "INSERT INTO test (val) VALUES (?)", (f"val_{i}",)
-                    )
+                    db_mgr.execute_query(db_path, "INSERT INTO test (val) VALUES (?)", (f"val_{i}",))
             except Exception as e:
                 errors.append(f"Writer error: {e}")
 
@@ -98,12 +96,8 @@ class TestDatabaseSecurityStress:
 
         # Patching paths in PasswordManager class
         mocker.patch("src.utils.security.PasswordManager._KEY_DIR", sec_dir)
-        mocker.patch(
-            "src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key"
-        )
-        mocker.patch(
-            "src.utils.security.PasswordManager._SALT_FILE", sec_dir / "encryption.salt"
-        )
+        mocker.patch("src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key")
+        mocker.patch("src.utils.security.PasswordManager._SALT_FILE", sec_dir / "encryption.salt")
 
         from src.utils.security import PasswordManager
 

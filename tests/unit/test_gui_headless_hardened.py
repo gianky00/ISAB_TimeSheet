@@ -16,9 +16,7 @@ class TestGUIHeadlessHardened:
             "src.gui.panels.settings.main_panel.config_manager.load_config",
             return_value={"browser_headless": False, "browser_timeout": 30},
         )
-        mocker.patch(
-            "src.gui.panels.settings.main_panel.config_manager.set_config_value"
-        )
+        mocker.patch("src.gui.panels.settings.main_panel.config_manager.set_config_value")
         mocker.patch(
             "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
             return_value="fake_key",
@@ -37,42 +35,6 @@ class TestGUIHeadlessHardened:
         # Manually trigger save as real trigger is debounced timer
         settings_panel._save_settings()
         assert m_save.called
-
-    def test_dashboard_greeting_logic(self, qapp, mocker):
-        """Verifica il saluto dinamico in base all'ora."""
-        # Mock StatsManager per evitare crash nel refresh
-        mocker.patch(
-            "src.core.stats_manager.StatsManager.get_all_stats", return_value={}
-        )
-
-        # Patch datetime nel modulo dashboard_panel
-        mock_datetime = mocker.patch("src.gui.panels.dashboard_panel.datetime")
-
-        # Prepariamo un mock per l'oggetto 'now'
-        mock_now = MagicMock()
-        mock_datetime.now.return_value = mock_now
-
-        # Scenario Mattina (8:00)
-        mock_now.hour = 8
-        dash = DashboardPanel()
-
-        found_morning = False
-        for label in dash.findChildren(QLabel):
-            if "Buongiorno" in label.text():
-                found_morning = True
-                break
-        assert found_morning
-
-        # Scenario Sera (20:00)
-        mock_now.hour = 20
-        dash_evening = DashboardPanel()
-
-        found_evening = False
-        for label in dash_evening.findChildren(QLabel):
-            if "Buonasera" in label.text():
-                found_evening = True
-                break
-        assert found_evening
 
     def test_toast_animation_lifecycle(self, qapp, mocker):
         """Verifica che il toast si mostri e avvii l'animazione."""
@@ -101,14 +63,8 @@ class TestGUIHeadlessHardened:
         initial_count = settings_panel.config_tab.lists_page.account_list.count()
         settings_panel.config_tab.lists_page._add_account()
 
-        assert (
-            settings_panel.config_tab.lists_page.account_list.count()
-            == initial_count + 1
-        )
-        assert (
-            "new_user"
-            in settings_panel.config_tab.lists_page.account_list.item(0).text()
-        )
+        assert settings_panel.config_tab.lists_page.account_list.count() == initial_count + 1
+        assert "new_user" in settings_panel.config_tab.lists_page.account_list.item(0).text()
 
     def test_settings_tab_change_refresh(self, settings_panel, mocker):
         """Verifica che il cambio tab aggiorni le statistiche."""

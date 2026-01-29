@@ -53,9 +53,7 @@ def mock_xls_file(tmp_path):
 
 
 def test_import_contabilita_dati_file_not_found():
-    success, msg, rows, years = ExcelImporter.import_contabilita_dati(
-        "non_existent.xlsx"
-    )
+    success, msg, rows, years = ExcelImporter.import_contabilita_dati("non_existent.xlsx")
     assert success is False
     assert "File non trovato" in msg
 
@@ -92,13 +90,9 @@ def test_import_contabilita_dati_empty_sheet(tmp_path):
 
 
 def test_import_contabilita_dati_critical_error():
-    with patch(
-        "src.core.importers.contabilita.pd.ExcelFile", side_effect=Exception("Critical")
-    ):
+    with patch("src.core.importers.contabilita.pd.ExcelFile", side_effect=Exception("Critical")):
         with patch("src.core.importers.contabilita.Path.exists", return_value=True):
-            success, msg, rows, years = ExcelImporter.import_contabilita_dati(
-                "dummy.xlsx"
-            )
+            success, msg, rows, years = ExcelImporter.import_contabilita_dati("dummy.xlsx")
             assert success is False
             assert "Errore critico" in msg
 
@@ -192,9 +186,7 @@ def test_process_single_giornaliera_extraction_logic(tmp_path):
     )
     with pd.ExcelWriter(file_path) as writer:
         df.to_excel(writer, sheet_name="RIASSUNTO", index=False)
-        pd.DataFrame([["X"]]).to_excel(
-            writer, sheet_name="RIASSUNTO", startrow=4, index=False, header=False
-        )
+        pd.DataFrame([["X"]]).to_excel(writer, sheet_name="RIASSUNTO", startrow=4, index=False, header=False)
 
     args = (2025, Path(file_path), {})
     _, rows, _ = GiornaliereImporter._process_single_giornaliera(args)
@@ -261,9 +253,7 @@ def test_import_scarico_ore_success(tmp_path):
         if i == 5:  # ODC: Blue foreground
             cell.font = Font(color="0000FF")
         if i == 10:  # Desc: Red background
-            cell.fill = PatternFill(
-                start_color="FF0000", end_color="FF0000", fill_type="solid"
-            )
+            cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
 
     wb.save(path)
 
@@ -420,9 +410,7 @@ def test_import_attivita_programmate_missing_sheet(tmp_path):
 
 def test_import_attivita_programmate_no_columns(tmp_path):
     path = tmp_path / "no_cols.xlsx"
-    pd.DataFrame({"Wrong": [1]}).to_excel(
-        path, sheet_name="Riepilogo", startrow=2, index=False
-    )
+    pd.DataFrame({"Wrong": [1]}).to_excel(path, sheet_name="Riepilogo", startrow=2, index=False)
     success, msg, rows = ExcelImporter.import_attivita_programmate(str(path))
     assert success is False
     assert "Colonne non trovate" in msg

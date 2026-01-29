@@ -45,9 +45,7 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Usiamo il widget atomico per i parametri comuni
-        self.params_widget = BotParametersWidget(
-            show_date_range=False, show_dest_path=True
-        )
+        self.params_widget = BotParametersWidget(show_date_range=False, show_dest_path=True)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -114,20 +112,13 @@ class ScaricaTSPanel(BaseBotPanel):
         date_da, _ = self.params_widget.get_dates()
         config_manager.set_config_value("last_ts_data", self.data_table.get_data())
         config_manager.set_config_value("last_ts_date", date_da)
-        config_manager.set_config_value(
-            "last_ts_fornitore", self.params_widget.get_fornitore()
-        )
-        config_manager.set_config_value(
-            "path_scarico_ts", self.params_widget.get_dest_path()
-        )
+        config_manager.set_config_value("last_ts_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
         config_manager.set_config_value("elabora_ts", self.elabora_ts_check.isChecked())
 
     def _clear_table(self):
         """Pulisce la tabella."""
-        if (
-            QMessageBox.question(self, "Conferma", "Svuotare la tabella?")
-            == QMessageBox.StandardButton.Yes
-        ):
+        if QMessageBox.question(self, "Conferma", "Svuotare la tabella?") == QMessageBox.StandardButton.Yes:
             self.data_table.set_data([])
             self._save_data()
 
@@ -177,14 +168,10 @@ class ScaricaTSPanel(BaseBotPanel):
 
             # Single Shot Execution Override
             if "single_item" in params_override:
-                item = params_override[
-                    "single_item"
-                ]  # Expect dict like {"Numero OdA": "...", ...}
+                item = params_override["single_item"]  # Expect dict like {"Numero OdA": "...", ...}
                 if item:
                     data = [item]
-                    self.log_widget.append(
-                        f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}"
-                    )
+                    self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 
         if not params_override:
             self._save_data()

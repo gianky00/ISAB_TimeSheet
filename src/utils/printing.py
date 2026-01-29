@@ -84,9 +84,7 @@ def print_pdf(file_path, printer_name):
                 hdc.CreatePrinterDC(target_printer)
 
                 # 2. Avvia un NUOVO documento (Job)
-                job_name = (
-                    f"{os.path.basename(file_path)} - Pag {page_num + 1}/{total_pages}"
-                )
+                job_name = f"{os.path.basename(file_path)} - Pag {page_num + 1}/{total_pages}"
                 hdc.StartDoc(job_name)
                 hdc.StartPage()
 
@@ -113,9 +111,7 @@ def print_pdf(file_path, printer_name):
                     dib.draw(hdc.GetHandleOutput(), (0, 0, horz_res, vert_res))
 
                 except Exception as render_err:
-                    logger.error(
-                        f"Errore rendering pagina {page_num + 1}: {render_err}"
-                    )
+                    logger.error(f"Errore rendering pagina {page_num + 1}: {render_err}")
                     hdc.AbortDoc()
                     raise render_err
 

@@ -11,7 +11,8 @@ class TestCoreLogicRefined:
         db_path = tmp_path / "audit.db"
         # Reset singleton
         AuditManager._instance = None
-        with patch.object(AuditManager, "DB_PATH", db_path):
+        # Patch the real DB_PATH in AuditDatabase
+        with patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path):
             am = AuditManager()
             # Verify DB was initialized
             with sqlite3.connect(db_path) as conn:
@@ -54,9 +55,7 @@ class TestCoreLogicRefined:
                 "INSERT INTO contabilita (year, n_prev, totale_prev, attivita, stato_attivita, ore_sp) VALUES (2024, 'PREV1', '1.000,00', 'Att1', 'COMPLETATO', '10,0')"
             )
             # index 4:n_prev (in giornaliere cols list), index 9:ore
-            conn.execute(
-                "INSERT INTO giornaliere (year, n_prev, odc, ore) VALUES (2024, 'PREV1', '', '5,0')"
-            )
+            conn.execute("INSERT INTO giornaliere (year, n_prev, odc, ore) VALUES (2024, 'PREV1', '', '5,0')")
 
         stats = ContabilitaStats.get_year_stats(db_path, 2024)
         assert stats["total_prev"] == 1000.0

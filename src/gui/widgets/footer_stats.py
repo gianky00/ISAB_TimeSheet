@@ -20,14 +20,13 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 
 
 class FooterItemWidget(QWidget):
     """Elemento informativo con tag e valore."""
 
-    def __init__(
-        self, label: str, value: str = "", color: str = "#607D8B", parent=None
-    ):
+    def __init__(self, label: str, value: str = "", color: str = "#607D8B", parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 0, 5, 0)
@@ -40,9 +39,7 @@ class FooterItemWidget(QWidget):
         layout.addWidget(self.lbl_tag)
 
         self.lbl_val = QLabel(value)
-        self.lbl_val.setStyleSheet(
-            "color: #212529; font-size: 11px; background: transparent;"
-        )
+        self.lbl_val.setStyleSheet("color: #212529; font-size: 11px; background: transparent;")
         layout.addWidget(self.lbl_val)
 
     def set_text(self, text: str):
@@ -105,8 +102,7 @@ class ClickableLabel(QLabel):
     def enterEvent(self, event):
         # Hover: sfondo leggero (solid per evitare problemi di rendering)
         self.setStyleSheet(
-            self._base_style
-            + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
+            self._base_style + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
         )
         super().enterEvent(event)
 
@@ -146,8 +142,7 @@ class StatsCard(QFrame):
     def enterEvent(self, event):
         # Hover: sfondo leggero (solid per evitare problemi di rendering)
         self.setStyleSheet(
-            self._base_style
-            + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
+            self._base_style + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
         )
         super().enterEvent(event)
 
@@ -193,15 +188,11 @@ class FooterLeftWidget(QWidget):
         col1_layout.setSpacing(2)
 
         self.client_item = QLabel()
-        self.client_item.setStyleSheet(
-            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
-        )
+        self.client_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
         col1_layout.addWidget(self.client_item)
 
         self.expiry_item = QLabel()
-        self.expiry_item.setStyleSheet(
-            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
-        )
+        self.expiry_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
         col1_layout.addWidget(self.expiry_item)
         layout.addWidget(col1)
 
@@ -214,9 +205,7 @@ class FooterLeftWidget(QWidget):
         col2_layout.setSpacing(2)
 
         self.hw_id_item = QLabel()
-        self.hw_id_item.setStyleSheet(
-            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
-        )
+        self.hw_id_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
         col2_layout.addWidget(self.hw_id_item)
 
         self.last_login_item = QLabel()
@@ -235,16 +224,12 @@ class FooterLeftWidget(QWidget):
         col3_layout.setSpacing(2)
 
         self.portale_item = ClickableLabel()
-        self.portale_item.setBaseStyle(
-            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
-        )
+        self.portale_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
         self.portale_item.mousePressEvent = lambda e: self.portale_clicked.emit()
         col3_layout.addWidget(self.portale_item)
 
         self.safe_item = ClickableLabel()
-        self.safe_item.setBaseStyle(
-            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
-        )
+        self.safe_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
         self.safe_item.mousePressEvent = lambda e: self.safework_clicked.emit()
         col3_layout.addWidget(self.safe_item)
         layout.addWidget(col3)
@@ -290,9 +275,7 @@ class FooterLeftWidget(QWidget):
         self._fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._fade_anim.start()
 
-    def update_info(
-        self, client: str, expiry: str, last_login: str = "", hw_id: str = ""
-    ):
+    def update_info(self, client: str, expiry: str, last_login: str = "", hw_id: str = ""):
         """Aggiorna le info di business (FASE 2)."""
         self.client_item.setText(f"<b>Cliente:</b> {client}")
         self.expiry_item.setText(f"<b>Scadenza:</b> {expiry}")
@@ -319,16 +302,12 @@ class FooterLeftWidget(QWidget):
 
         # Tooltips dinamici basati sul numero di account
         if len(accounts) > 1:
-            self.portale_item.setToolTip(
-                f"Clicca per switchare account (Trovati: {len(accounts)})"
-            )
+            self.portale_item.setToolTip(f"Clicca per switchare account (Trovati: {len(accounts)})")
         else:
             self.portale_item.setToolTip("Clicca per gestire gli account")
 
         if len(safework) > 1:
-            self.safe_item.setToolTip(
-                f"Clicca per switchare account (Trovati: {len(safework)})"
-            )
+            self.safe_item.setToolTip(f"Clicca per switchare account (Trovati: {len(safework)})")
         else:
             self.safe_item.setToolTip("Clicca per gestire gli account SafeWork")
 
@@ -589,9 +568,7 @@ class BootTelemetryWidget(QWidget):
             if net_connected:
                 self.lbl_net.setText("NET: <span style='color:#4CAF50'>●</span> Online")
             else:
-                self.lbl_net.setText(
-                    "NET: <span style='color:#F44336'>●</span> Offline"
-                )
+                self.lbl_net.setText("NET: <span style='color:#F44336'>●</span> Offline")
 
             # Col 6: THR / PID
             self.lbl_threads.setText(f"THR: {self.process.num_threads()}")
@@ -601,12 +578,7 @@ class BootTelemetryWidget(QWidget):
             self.lbl_session.setText(f"SID: {self.session_id}")
             net = psutil.net_io_counters()
             io_rate = (
-                (
-                    net.bytes_recv
-                    - self.last_net.bytes_recv
-                    + net.bytes_sent
-                    - self.last_net.bytes_sent
-                )
+                (net.bytes_recv - self.last_net.bytes_recv + net.bytes_sent - self.last_net.bytes_sent)
                 / dt
                 / 1024
             )
@@ -618,127 +590,7 @@ class BootTelemetryWidget(QWidget):
             pass
 
 
-class AnimatedProgressBar(QWidget):
-    """
-    Progress bar animata con striature, shimmer e bordo pulsante.
-    Effetto hacker-style professionale.
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setFixedSize(220, 18)
-
-        self._value = 0
-        self._stripe_offset = 0
-        self._shimmer_pos = -50
-        self._border_alpha = 255
-        self._border_direction = -5  # Direzione pulsazione
-
-        # Timer per animazioni (leggero, 30 FPS)
-        self._anim_timer = QTimer(self)
-        self._anim_timer.timeout.connect(self._animate)
-        self._anim_timer.setInterval(33)  # ~30 FPS
-
-    def setValue(self, value: int):
-        self._value = max(0, min(value, 100))
-        self.update()
-
-    def value(self) -> int:
-        return self._value
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        self._anim_timer.start()
-
-    def hideEvent(self, event):
-        super().hideEvent(event)
-        self._anim_timer.stop()
-
-    def _animate(self):
-        """Aggiorna le animazioni."""
-        # Striature che scorrono
-        self._stripe_offset = (self._stripe_offset + 2) % 20
-
-        # Shimmer che attraversa
-        self._shimmer_pos += 4
-        if self._shimmer_pos > self.width() + 50:
-            self._shimmer_pos = -50
-
-        # Bordo pulsante
-        self._border_alpha += self._border_direction
-        if self._border_alpha <= 100:
-            self._border_direction = 5
-        elif self._border_alpha >= 255:
-            self._border_direction = -5
-
-        self.update()
-
-    def paintEvent(self, event):
-        from PyQt6.QtCore import QRectF
-        from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QPen
-
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        w, h = self.width(), self.height()
-        radius = 4
-
-        # 1. Sfondo
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(224, 224, 224))  # #E0E0E0
-        painter.drawRoundedRect(QRectF(0, 0, w, h), radius, radius)
-
-        # 2. Chunk (parte riempita)
-        chunk_width = int((self._value / 100) * (w - 4))
-        if chunk_width > 0:
-            chunk_rect = QRectF(2, 2, chunk_width, h - 4)
-
-            # Gradiente base nero
-            painter.setBrush(QColor(0, 0, 0))
-            painter.drawRoundedRect(chunk_rect, radius - 1, radius - 1)
-
-            # 3. Striature diagonali animate
-            painter.setClipRect(chunk_rect)
-            stripe_color = QColor(60, 60, 60)  # Grigio scuro per contrasto
-            painter.setBrush(stripe_color)
-            painter.setPen(Qt.PenStyle.NoPen)
-
-            stripe_width = 10
-            for x in range(-20 + self._stripe_offset, int(chunk_width) + 20, 20):
-                points = [
-                    (x, h),
-                    (x + stripe_width, h),
-                    (x + stripe_width + 15, 0),
-                    (x + 15, 0),
-                ]
-                from PyQt6.QtCore import QPointF
-                from PyQt6.QtGui import QPolygonF
-
-                polygon = QPolygonF([QPointF(p[0] + 2, p[1]) for p in points])
-                painter.drawPolygon(polygon)
-
-            # 4. Shimmer (riflesso luminoso)
-            painter.setClipRect(chunk_rect)
-            shimmer_gradient = QLinearGradient(
-                self._shimmer_pos, 0, self._shimmer_pos + 50, 0
-            )
-            shimmer_gradient.setColorAt(0.0, QColor(255, 255, 255, 0))
-            shimmer_gradient.setColorAt(0.5, QColor(255, 255, 255, 80))
-            shimmer_gradient.setColorAt(1.0, QColor(255, 255, 255, 0))
-            painter.setBrush(shimmer_gradient)
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawRoundedRect(chunk_rect, radius - 1, radius - 1)
-
-            painter.setClipping(False)
-
-        # 5. Bordo pulsante
-        border_color = QColor(0, 0, 0, self._border_alpha)
-        pen = QPen(border_color, 2)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(QRectF(1, 1, w - 2, h - 2), radius, radius)
-
-        painter.end()
+# AnimatedProgressBar è stata estratta in src/gui/widgets/animated_progress_bar.py
 
 
 class FooterRightWidget(QWidget):
@@ -815,9 +667,7 @@ class FooterStatsManager(QWidget):
         self.right_widget = right_widget
         self.phase = "boot"  # 'boot' o 'operational'
 
-    def transition_to_operational(
-        self, client_name: str = "", expiry: str = "", last_login: str = ""
-    ):
+    def transition_to_operational(self, client_name: str = "", expiry: str = "", last_login: str = ""):
         """
         Transizione da FASE 1 (Boot) a FASE 2 (Operativo).
         Nasconde telemetria e progress, mostra business info e status cards.

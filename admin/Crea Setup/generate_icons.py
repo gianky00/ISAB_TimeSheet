@@ -103,9 +103,7 @@ def create_complex_app_icon(target_size):
     for i in range(25, 0, -1):
         r = sphere_radius * (1 + i * 0.05)
         alpha = int(200 / (i + 1))
-        draw.ellipse(
-            [center - r, center - r, center + r, center + r], fill=(*BRIGHT_CYAN, alpha)
-        )
+        draw.ellipse([center - r, center - r, center + r, center + r], fill=(*BRIGHT_CYAN, alpha))
 
     # Gradiente della sfera
     for i in range(20):
@@ -151,9 +149,7 @@ def create_complex_app_icon(target_size):
         for i in range(5):
             e_r = element_size * (1 - i * 0.15)
             brightness = 180 + i * 15
-            draw.ellipse(
-                [x - e_r, y - e_r, x + e_r, y + e_r], fill=(brightness, 245, 255, 255)
-            )
+            draw.ellipse([x - e_r, y - e_r, x + e_r, y + e_r], fill=(brightness, 245, 255, 255))
 
     # === LINEE DI CONNESSIONE tra elementi ===
     circuit_width = int(canvas * 0.008)
@@ -301,9 +297,7 @@ def create_complex_setup_icon(target_size):
     for i in range(8, 0, -1):
         r = node_r * (1 + i * 0.4)
         alpha = int(200 / (i + 1))
-        draw.ellipse(
-            [center - r, center - r, center + r, center + r], fill=(*BRIGHT_CYAN, alpha)
-        )
+        draw.ellipse([center - r, center - r, center + r, center + r], fill=(*BRIGHT_CYAN, alpha))
 
     # Gradiente del nodo
     for i in range(4):
@@ -387,9 +381,7 @@ def create_complex_setup_icon(target_size):
             pr = particle_r * (1.5 - trail * 0.3)
             alpha = int(220 / (trail + 1))
 
-            draw.ellipse(
-                [tx - pr, ty - pr, tx + pr, ty + pr], fill=(*ULTRA_BRIGHT, alpha)
-            )
+            draw.ellipse([tx - pr, ty - pr, tx + pr, ty + pr], fill=(*ULTRA_BRIGHT, alpha))
 
     # === MARCATORI ANGOLARI ===
     corner_size = canvas * 0.035

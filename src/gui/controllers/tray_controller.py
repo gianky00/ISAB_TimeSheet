@@ -54,8 +54,6 @@ class TrayController:
                 self.mw.showMaximized()
                 self.mw.activateWindow()
 
-    def show_message(
-        self, title, message, icon=QSystemTrayIcon.MessageIcon.Information, timeout=5000
-    ):
+    def show_message(self, title, message, icon=QSystemTrayIcon.MessageIcon.Information, timeout=5000):
         """Mostra una notifica tray."""
         self.tray_icon.showMessage(title, message, icon, timeout)

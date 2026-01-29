@@ -70,15 +70,9 @@ class TimbratureStorage:
                 )
             """
             )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_data ON timbrature(data)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_nome_cogn ON timbrature(nome, cognome)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_timb_cf ON timbrature(codice_fiscale)")
             conn.commit()
 
     def _ensure_db_exists(self):
@@ -111,9 +105,7 @@ class TimbratureStorage:
 
                 rows = cursor.fetchall()
                 for row in rows:
-                    results.append(
-                        {"nome": row[0], "cognome": row[1], "codice_fiscale": row[2]}
-                    )
+                    results.append({"nome": row[0], "cognome": row[1], "codice_fiscale": row[2]})
         except Exception:
             pass
         return results
@@ -194,9 +186,7 @@ class TimbratureStorage:
             cursor.execute(sql, params)
             raw_rows = cursor.fetchall()
 
-            return self._enrich_and_filter_timb(
-                raw_rows, mappings, filter_reparto, filter_cantiere, limit
-            )
+            return self._enrich_and_filter_timb(raw_rows, mappings, filter_reparto, filter_cantiere, limit)
 
     def _build_timb_query(self, filter_text, limit) -> Tuple[str, list]:
         query = """
@@ -275,9 +265,7 @@ class TimbratureStorage:
 
         return term
 
-    def _enrich_and_filter_timb(
-        self, rows, mappings, f_rep, f_cant, limit
-    ) -> List[tuple]:
+    def _enrich_and_filter_timb(self, rows, mappings, f_rep, f_cant, limit) -> List[tuple]:
         final = []
         for r in rows:
             # Indices: 0:data, 1:ingresso, 2:uscita, 3:nome, 4:cognome, ...
@@ -295,9 +283,7 @@ class TimbratureStorage:
                 break
         return final
 
-    def import_excel(
-        self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None
-    ) -> bool:
+    def import_excel(self, excel_path: str, log_callback: Optional[Callable[[str], None]] = None) -> bool:
         """Imports an Excel file into the database."""
 
         def log(m):
@@ -381,9 +367,7 @@ class TimbratureStorage:
         config = config_manager.load_config()
 
         # Logica di migrazione se mancano i dati nel config ma esiste il vecchio file
-        if "reparti" not in config or (
-            not config.get("reparti") and not config.get("cantieri")
-        ):
+        if "reparti" not in config or (not config.get("reparti") and not config.get("cantieri")):
             old_path = self.db_path.parent / "timbrature_lists.json"
             if old_path.exists():
                 try:
@@ -398,9 +382,7 @@ class TimbratureStorage:
                     pass
 
         return {
-            "reparti": config.get(
-                "reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]
-            ),
+            "reparti": config.get("reparti", ["STRUMENTALE", "ELETTRICO", "CANTIERE", "ANALISI"]),
             "cantieri": config.get("cantieri", []),
         }
 

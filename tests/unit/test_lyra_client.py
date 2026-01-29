@@ -50,9 +50,7 @@ def mock_timbrature_db(tmp_path):
 
         mock_cursor.fetchone.side_effect = safe_fetchone
 
-        mock_cursor.fetchall.return_value = [
-            ("2025-01-01", "Mario", "Rossi", "08:00", "17:00")
-        ]
+        mock_cursor.fetchall.return_value = [("2025-01-01", "Mario", "Rossi", "08:00", "17:00")]
 
         yield tmp_path
 
@@ -77,9 +75,7 @@ def test_ask_success(mock_post, mock_contabilita_manager):
     # Setup success response
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "candidates": [{"content": {"parts": [{"text": "Risposta AI"}]}}]
-    }
+    mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "Risposta AI"}]}}]}
     mock_post.return_value = mock_response
 
     client = LyraClient(api_key="dummy_key")

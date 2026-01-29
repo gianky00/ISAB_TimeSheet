@@ -53,9 +53,7 @@ class StatusBarComponent(QObject):
 
         # Toggle Button
         self.footer_toggle_btn = QPushButton()
-        self.footer_toggle_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.ACTIVITY), "#000000")
-        )
+        self.footer_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.ACTIVITY), "#000000"))
         self.footer_toggle_btn.setIconSize(QSize(20, 20))
         self.footer_toggle_btn.setFixedSize(40, 40)
         self.footer_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -163,9 +161,7 @@ class StatusBarComponent(QObject):
             console_anim.setStartValue(1.0)
             console_anim.setEndValue(0.0)
             console_anim.setEasingCurve(QEasingCurve.Type.InCubic)
-            console_anim.finished.connect(
-                lambda: self.startup_console.setVisible(False)
-            )
+            console_anim.finished.connect(lambda: self.startup_console.setVisible(False))
             console_anim.start()
 
             # Animazione fade-out per boot_telemetry

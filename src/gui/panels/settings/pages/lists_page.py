@@ -90,21 +90,15 @@ class ListsPage(QWidget):
         self.sw_account_list = QListWidget()
         self.sw_account_list.setMaximumHeight(150)  # Aumentato leggermente
         self.sw_account_list.setStyleSheet(list_style())
-        self.sw_account_list.setContextMenuPolicy(
-            Qt.ContextMenuPolicy.CustomContextMenu
-        )
-        self.sw_account_list.customContextMenuRequested.connect(
-            self._show_sw_account_menu
-        )
+        self.sw_account_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.sw_account_list.customContextMenuRequested.connect(self._show_sw_account_menu)
         layout.addWidget(self.sw_account_list)
 
         btns = QHBoxLayout()
         self._add_btn(btns, Icons.PLUS, "#28a745", self._add_sw_account, "Aggiungi")
         self._add_btn(btns, Icons.EDIT, "#0d6efd", self._edit_sw_account, "Modifica")
         self._add_btn(btns, Icons.TRASH, "#dc3545", self._remove_sw_account, "Rimuovi")
-        self._add_btn(
-            btns, Icons.STAR, "#ffc107", self._set_default_sw_account, "Default"
-        )
+        self._add_btn(btns, Icons.STAR, "#ffc107", self._set_default_sw_account, "Default")
         btns.addStretch()
         layout.addLayout(btns)
         parent_layout.addWidget(group)
@@ -211,9 +205,7 @@ class ListsPage(QWidget):
     def _setup_generic_list(self, list_widget, add_cb, edit_cb, remove_cb):
         list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         list_widget.customContextMenuRequested.connect(
-            lambda pos: self._show_generic_menu(
-                pos, list_widget, add_cb, edit_cb, remove_cb
-            )
+            lambda pos: self._show_generic_menu(pos, list_widget, add_cb, edit_cb, remove_cb)
         )
 
     # --- MENU CONTESTUALI ---
@@ -238,9 +230,7 @@ class ListsPage(QWidget):
             self._set_default_sw_account,
         )
 
-    def _show_acc_menu_impl(
-        self, position, list_widget, add_cb, edit_cb, remove_cb, def_cb
-    ):
+    def _show_acc_menu_impl(self, position, list_widget, add_cb, edit_cb, remove_cb, def_cb):
         menu = QMenu()
         item = list_widget.itemAt(position)
         menu.addAction("Aggiungi", add_cb)
@@ -315,8 +305,7 @@ class ListsPage(QWidget):
         row = self.account_list.currentRow()
         if (
             row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
-            == QMessageBox.StandardButton.Yes
+            and QMessageBox.question(self, "Conferma", "Rimuovere account?") == QMessageBox.StandardButton.Yes
         ):
             self.account_list.takeItem(row)
             accs = self._get_accounts(self.account_list)
@@ -369,8 +358,7 @@ class ListsPage(QWidget):
         row = self.sw_account_list.currentRow()
         if (
             row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
-            == QMessageBox.StandardButton.Yes
+            and QMessageBox.question(self, "Conferma", "Rimuovere account?") == QMessageBox.StandardButton.Yes
         ):
             self.sw_account_list.takeItem(row)
             accs = self._get_accounts(self.sw_account_list)
@@ -465,29 +453,13 @@ class ListsPage(QWidget):
         self._render_accounts(self.sw_account_list, config.get("safework_accounts", []))
         self._update_simple_list(self.contract_list, config.get("contracts", []))
         self._update_simple_list(self.fornitori_list, config.get("fornitori", []))
-        self._update_simple_list(
-            self.reparti_list, config.get("reparti_timbrature", [])
-        )
-        self._update_simple_list(
-            self.cantieri_list, config.get("cantieri_timbrature", [])
-        )
+        self._update_simple_list(self.reparti_list, config.get("reparti_timbrature", []))
+        self._update_simple_list(self.cantieri_list, config.get("cantieri_timbrature", []))
 
     def save_to_config(self, config_manager):
-        config_manager.set_config_value(
-            "accounts", self._get_accounts(self.account_list)
-        )
-        config_manager.set_config_value(
-            "safework_accounts", self._get_accounts(self.sw_account_list)
-        )
-        config_manager.set_config_value(
-            "contracts", self._get_simple_items(self.contract_list)
-        )
-        config_manager.set_config_value(
-            "fornitori", self._get_simple_items(self.fornitori_list)
-        )
-        config_manager.set_config_value(
-            "reparti_timbrature", self._get_simple_items(self.reparti_list)
-        )
-        config_manager.set_config_value(
-            "cantieri_timbrature", self._get_simple_items(self.cantieri_list)
-        )
+        config_manager.set_config_value("accounts", self._get_accounts(self.account_list))
+        config_manager.set_config_value("safework_accounts", self._get_accounts(self.sw_account_list))
+        config_manager.set_config_value("contracts", self._get_simple_items(self.contract_list))
+        config_manager.set_config_value("fornitori", self._get_simple_items(self.fornitori_list))
+        config_manager.set_config_value("reparti_timbrature", self._get_simple_items(self.reparti_list))
+        config_manager.set_config_value("cantieri_timbrature", self._get_simple_items(self.cantieri_list))

@@ -45,9 +45,7 @@ class TelegramService(QObject):
         self.pdl_settings = {}  # Settings specifici per PDL (es. merge_all)
         self.pending_data = {}
         self._start_lock = threading.Lock()
-        self.ai_executor = ThreadPoolExecutor(
-            max_workers=3, thread_name_prefix="Telegram_AI"
-        )
+        self.ai_executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="Telegram_AI")
 
     def start_service(self):
         """Avvia o riavvia il servizio in modo thread-safe."""
@@ -65,9 +63,7 @@ class TelegramService(QObject):
                 return
 
             self.stop_event.clear()
-            self.thread = threading.Thread(
-                target=self._run_async_loop, args=(token,), daemon=True
-            )
+            self.thread = threading.Thread(target=self._run_async_loop, args=(token,), daemon=True)
             self.thread.start()
 
     def stop_service(self):
@@ -77,9 +73,7 @@ class TelegramService(QObject):
             self.stop_event.set()
             self.thread.join(timeout=12)
             if self.thread.is_alive():
-                self.log_signal.emit(
-                    "⚠️ Timeout: il thread di Telegram non si è fermato correttamente."
-                )
+                self.log_signal.emit("⚠️ Timeout: il thread di Telegram non si è fermato correttamente.")
             else:
                 self.log_signal.emit("Servizio Telegram fermato.")
 
@@ -104,13 +98,7 @@ class TelegramService(QObject):
             await self._shutdown_application()
 
     def _build_application(self, token: str) -> Application:
-        return (
-            Application.builder()
-            .token(token)
-            .read_timeout(10)
-            .connect_timeout(10)
-            .build()
-        )
+        return Application.builder().token(token).read_timeout(10).connect_timeout(10).build()
 
     def _add_handlers(self):
         # Wrappers to pass 'self' (the service instance) to handlers
@@ -118,15 +106,9 @@ class TelegramService(QObject):
             return lambda u, c: handler(self, u, c)
 
         # Commands
-        self.app.add_handler(
-            CommandHandler("start", lambda u, c: commands.cmd_start(self, u, c))
-        )
-        self.app.add_handler(
-            CommandHandler("status", lambda u, c: commands.cmd_status(self, u, c))
-        )
-        self.app.add_handler(
-            CommandHandler("stop", lambda u, c: commands.cmd_stop(self, u, c))
-        )
+        self.app.add_handler(CommandHandler("start", lambda u, c: commands.cmd_start(self, u, c)))
+        self.app.add_handler(CommandHandler("status", lambda u, c: commands.cmd_status(self, u, c)))
+        self.app.add_handler(CommandHandler("stop", lambda u, c: commands.cmd_stop(self, u, c)))
 
         # Messages
         self.app.add_handler(
@@ -135,21 +117,11 @@ class TelegramService(QObject):
                 lambda u, c: messages.handle_text_input(self, u, c),
             )
         )
-        self.app.add_handler(
-            MessageHandler(
-                filters.PHOTO, lambda u, c: messages.handle_photo(self, u, c)
-            )
-        )
-        self.app.add_handler(
-            MessageHandler(
-                filters.VOICE, lambda u, c: messages.handle_voice(self, u, c)
-            )
-        )
+        self.app.add_handler(MessageHandler(filters.PHOTO, lambda u, c: messages.handle_photo(self, u, c)))
+        self.app.add_handler(MessageHandler(filters.VOICE, lambda u, c: messages.handle_voice(self, u, c)))
 
         # Callbacks
-        self.app.add_handler(
-            CallbackQueryHandler(lambda u, c: callbacks.handle_button(self, u, c))
-        )
+        self.app.add_handler(CallbackQueryHandler(lambda u, c: callbacks.handle_button(self, u, c)))
 
         # Error
         self.app.add_error_handler(self._handle_error)
@@ -191,9 +163,7 @@ class TelegramService(QObject):
     ) -> None:
         """Gestisce gli errori globali del bot."""
         if isinstance(context.error, telegram.error.Conflict):
-            self.log_signal.emit(
-                "🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio."
-            )
+            self.log_signal.emit("🔴 CONFLITTO TELEGRAM: Rilevata altra istanza attiva. Arresto servizio.")
             self.stop_event.set()
         elif isinstance(context.error, telegram.error.NetworkError):
             self.log_signal.emit(f"⚠️ Errore Rete Telegram: {context.error}")
@@ -241,9 +211,7 @@ class TelegramService(QObject):
         if self.loop and self.loop.is_running() and self.connected_chat_id:
             try:
                 asyncio.run_coroutine_threadsafe(
-                    self._send_photo_async(
-                        self.connected_chat_id, photo_bytes, caption
-                    ),
+                    self._send_photo_async(self.connected_chat_id, photo_bytes, caption),
                     self.loop,
                 )
             except Exception as e:
@@ -257,9 +225,7 @@ class TelegramService(QObject):
         if self.loop and self.loop.is_running() and self.connected_chat_id:
             try:
                 asyncio.run_coroutine_threadsafe(
-                    self._send_document_async(
-                        self.connected_chat_id, file_path, caption
-                    ),
+                    self._send_document_async(self.connected_chat_id, file_path, caption),
                     self.loop,
                 )
             except Exception as e:
@@ -273,9 +239,7 @@ class TelegramService(QObject):
                 await self.app.bot.send_message(
                     chat_id=chat_id,
                     text=text,
-                    parse_mode=telegram.constants.ParseMode.MARKDOWN
-                    if "*" in text
-                    else None,
+                    parse_mode=telegram.constants.ParseMode.MARKDOWN if "*" in text else None,
                 )
             except Exception as e:
                 self.log_signal.emit(f"❌ Fallito invio messaggio a Telegram: {e}")
@@ -289,9 +253,7 @@ class TelegramService(QObject):
                     chat_id=chat_id,
                     photo=photo_bytes,
                     caption=caption,
-                    parse_mode=telegram.constants.ParseMode.MARKDOWN
-                    if caption
-                    else None,
+                    parse_mode=telegram.constants.ParseMode.MARKDOWN if caption else None,
                 )
             except Exception as e:
                 self.log_signal.emit(f"❌ Fallito invio foto a Telegram: {e}")
@@ -306,9 +268,7 @@ class TelegramService(QObject):
                         chat_id=chat_id,
                         document=f,
                         caption=caption,
-                        parse_mode=telegram.constants.ParseMode.MARKDOWN
-                        if caption
-                        else None,
+                        parse_mode=telegram.constants.ParseMode.MARKDOWN if caption else None,
                     )
             except Exception as e:
                 self.log_signal.emit(f"❌ Fallito invio documento a Telegram: {e}")

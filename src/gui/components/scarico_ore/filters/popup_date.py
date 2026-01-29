@@ -15,9 +15,7 @@ from PyQt6.QtWidgets import (
 class DateFilterPopupWidget(QWidget):
     """Widget filtro gerarchico per date (Anno -> Mese -> Giorno)."""
 
-    def __init__(
-        self, values: List[str], selected_values: Optional[List[str]] = None
-    ) -> None:
+    def __init__(self, values: List[str], selected_values: Optional[List[str]] = None) -> None:
         super().__init__()
         self.values = values
         self.applied = False
@@ -54,26 +52,18 @@ class DateFilterPopupWidget(QWidget):
         layout.addWidget(self.tree)
         self._build_tree(values, selected_values)
 
-    def _build_tree(
-        self, values: List[str], selected_values: Optional[List[str]]
-    ) -> None:
+    def _build_tree(self, values: List[str], selected_values: Optional[List[str]]) -> None:
         self.raw_dates = set(values)
-        structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(
-            values
-        )
+        structure: Dict[str, Dict[str, List[str]]] = self._group_dates_by_hierarchy(values)
 
         is_all_selected = selected_values is None
         selected_set = set(selected_values) if selected_values else set()
 
         for y in sorted(structure.keys(), reverse=True):
-            y_item = self._create_year_item(
-                y, structure[y], selected_set, is_all_selected
-            )
+            y_item = self._create_year_item(y, structure[y], selected_set, is_all_selected)
             self.model.appendRow(y_item)
 
-    def _group_dates_by_hierarchy(
-        self, values: List[str]
-    ) -> Dict[str, Dict[str, List[str]]]:
+    def _group_dates_by_hierarchy(self, values: List[str]) -> Dict[str, Dict[str, List[str]]]:
         structure: Dict[str, Dict[str, List[str]]] = {}
         for v in values:
             if not v:
@@ -139,11 +129,7 @@ class DateFilterPopupWidget(QWidget):
             d_item.setEditable(False)
             d_item.setData(date_str, Qt.ItemDataRole.UserRole)
 
-            state = (
-                Qt.CheckState.Checked
-                if (is_all or date_str in selected_set)
-                else Qt.CheckState.Unchecked
-            )
+            state = Qt.CheckState.Checked if (is_all or date_str in selected_set) else Qt.CheckState.Unchecked
             d_item.setCheckState(state)
             if state == Qt.CheckState.Checked:
                 checked_days += 1

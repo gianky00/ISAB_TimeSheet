@@ -76,9 +76,7 @@ class GiornaliereImporter(BaseImporter):
                 [],
             )
 
-        all_rows, imported_years = cls._run_parallel_import(
-            tasks_args, progress_callback
-        )
+        all_rows, imported_years = cls._run_parallel_import(tasks_args, progress_callback)
 
         if not imported_years:
             return True, "Nessuna riga valida importata dai file trovati.", [], []
@@ -192,9 +190,7 @@ class GiornaliereImporter(BaseImporter):
                 return None
             except Exception:
                 try:
-                    return pd.read_excel(
-                        file_path, sheet_name="RIASSUNTO", engine="openpyxl"
-                    )
+                    return pd.read_excel(file_path, sheet_name="RIASSUNTO", engine="openpyxl")
                 except zipfile.BadZipFile:
                     return None
                 except Exception as e:
@@ -222,9 +218,7 @@ class GiornaliereImporter(BaseImporter):
         try:
             df = validate_giornaliere(df)
         except Exception as e:
-            logging.warning(
-                f"Validazione Pandera Giornaliere fallita (uso fallback): {e}"
-            )
+            logging.warning(f"Validazione Pandera Giornaliere fallita (uso fallback): {e}")
 
         return df
 
@@ -294,16 +288,12 @@ class GiornaliereImporter(BaseImporter):
         mask_empty = df["odc"] == ""
         if mask_empty.any():
             comm_pattern = r"\b(\d{2}/\d{3})\b"
-            extracted = df.loc[mask_empty, "descrizione"].str.extract(
-                comm_pattern, expand=False
-            )
+            extracted = df.loc[mask_empty, "descrizione"].str.extract(comm_pattern, expand=False)
             df.loc[mask_empty, "odc"] = extracted.fillna("")
 
-        mask_standard = ~df["odc"].str.contains("canone", case=False, na=False) & ~df[
-            "odc"
-        ].str.match(r"^\d{2}/\d{3}$", na=False)
+        mask_standard = ~df["odc"].str.contains("canone", case=False, na=False) & ~df["odc"].str.match(
+            r"^\d{2}/\d{3}$", na=False
+        )
         if mask_standard.any():
-            extracted = df.loc[mask_standard, "odc"].str.extract(
-                r"(5400\d+)", expand=False
-            )
+            extracted = df.loc[mask_standard, "odc"].str.extract(r"(5400\d+)", expand=False)
             df.loc[mask_standard, "odc"] = extracted.fillna("")

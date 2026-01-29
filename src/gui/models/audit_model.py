@@ -30,13 +30,9 @@ class AuditTableModel(QAbstractTableModel):
         # Pre-load icons
         self._icons = {
             "high": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), "#dc3545"),
-            "medium": get_colored_icon(
-                get_asset_path(Icons.STATUS_DOT_ORANGE), "#fd7e14"
-            ),
+            "medium": get_colored_icon(get_asset_path(Icons.STATUS_DOT_ORANGE), "#fd7e14"),
             "low": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"),
-            "success": get_colored_icon(
-                get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"
-            ),
+            "success": get_colored_icon(get_asset_path(Icons.STATUS_DOT_GREEN), "#198754"),
             "error": get_colored_icon(get_asset_path(Icons.STATUS_DOT_RED), "#dc3545"),
         }
 
@@ -152,10 +148,7 @@ class AuditTableModel(QAbstractTableModel):
         return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
     def headerData(self, section, orientation, role):
-        if (
-            role == Qt.ItemDataRole.DisplayRole
-            and orientation == Qt.Orientation.Horizontal
-        ):
+        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self.COLUMNS[section]
         return None
 

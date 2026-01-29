@@ -2,6 +2,8 @@
 Widget Autopilot per visualizzare e configurare eventi programmati dei bot.
 """
 
+from contextlib import suppress
+
 from PyQt6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
@@ -73,9 +75,7 @@ class AutopilotEventCard(QFrame):
         # Icon
         self.icon_label = QLabel()
         self.icon_label.setFixedSize(32, 32)
-        self.icon_label.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(20, 20)
-        )
+        self.icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(20, 20))
         self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.icon_label.setStyleSheet(
             f"""
@@ -226,9 +226,7 @@ class AutopilotConfigCard(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18)
-        )
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -342,9 +340,7 @@ class AutopilotConfigCard(QFrame):
 
     def _on_config_changed(self):
         """Salva la configurazione quando viene modificata."""
-        config_manager.set_config_value(
-            f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked()
-        )
+        config_manager.set_config_value(f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked())
         config_manager.set_config_value(
             f"{self.bot_id}_autopilot_time", self.time_edit.time().toString("HH:mm")
         )
@@ -356,21 +352,11 @@ class AutopilotConfigCard(QFrame):
 
         # Aggiorna anche il footer (Account & Status Cards)
         if self.parent_widget:
-            if (
-                hasattr(self.parent_widget, "footer_left_widget")
-                and self.parent_widget.footer_left_widget
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.footer_left_widget.refresh_accounts
-                )
+            if hasattr(self.parent_widget, "footer_left_widget") and self.parent_widget.footer_left_widget:
+                QTimer.singleShot(100, self.parent_widget.footer_left_widget.refresh_accounts)
 
-            if (
-                hasattr(self.parent_widget, "status_bar")
-                and self.parent_widget.status_bar
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.status_bar.update_autopilot_ui
-                )
+            if hasattr(self.parent_widget, "status_bar") and self.parent_widget.status_bar:
+                QTimer.singleShot(100, self.parent_widget.status_bar.update_autopilot_ui)
 
 
 class AutopilotConfigCardWithInterval(QFrame):
@@ -411,9 +397,7 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18)
-        )
+        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -551,15 +535,11 @@ class AutopilotConfigCardWithInterval(QFrame):
 
     def _on_config_changed(self):
         """Salva la configurazione quando viene modificata."""
-        config_manager.set_config_value(
-            f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked()
-        )
+        config_manager.set_config_value(f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked())
         config_manager.set_config_value(
             f"{self.bot_id}_autopilot_time", self.time_edit.time().toString("HH:mm")
         )
-        config_manager.set_config_value(
-            f"{self.bot_id}_autopilot_interval_days", self.interval_spin.value()
-        )
+        config_manager.set_config_value(f"{self.bot_id}_autopilot_interval_days", self.interval_spin.value())
 
         # Notifica il parent widget per refresh
         if self.parent_widget and hasattr(self.parent_widget, "refresh_events"):
@@ -567,21 +547,11 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         # Aggiorna anche il footer (Account & Status Cards)
         if self.parent_widget:
-            if (
-                hasattr(self.parent_widget, "footer_left_widget")
-                and self.parent_widget.footer_left_widget
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.footer_left_widget.refresh_accounts
-                )
+            if hasattr(self.parent_widget, "footer_left_widget") and self.parent_widget.footer_left_widget:
+                QTimer.singleShot(100, self.parent_widget.footer_left_widget.refresh_accounts)
 
-            if (
-                hasattr(self.parent_widget, "status_bar")
-                and self.parent_widget.status_bar
-            ):
-                QTimer.singleShot(
-                    100, self.parent_widget.status_bar.update_autopilot_ui
-                )
+            if hasattr(self.parent_widget, "status_bar") and self.parent_widget.status_bar:
+                QTimer.singleShot(100, self.parent_widget.status_bar.update_autopilot_ui)
 
 
 class AutopilotWidget(QWidget):
@@ -626,9 +596,7 @@ class AutopilotWidget(QWidget):
         header_layout.setSpacing(10)
 
         title = QLabel("Autopilot")
-        title.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;"
-        )
+        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;")
         header_layout.addWidget(title)
 
         # --- LIVE INDICATOR (Neon Dot) ---
@@ -666,9 +634,7 @@ class AutopilotWidget(QWidget):
 
         # Pulsante configurazione con icona settings
         self.config_btn = QPushButton()
-        self.config_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.SETTINGS), "#6c757d")
-        )
+        self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), "#6c757d"))
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -727,97 +693,71 @@ class AutopilotWidget(QWidget):
         self.refresh_events()
         self._refresh_config()
 
+    def _stop_all_card_animations(self, layout):
+        """Ferma ricorsivamente tutte le animazioni delle card in un layout."""
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if not item or not item.widget():
+                continue
+
+            widget = item.widget()
+            # Stop pulse animation
+            if hasattr(widget, "pulse_anim") and widget.pulse_anim:
+                with suppress(RuntimeError):
+                    widget.pulse_anim.stop()
+
+            # Stop timers
+            if hasattr(widget, "timer") and widget.timer:
+                with suppress(RuntimeError):
+                    widget.timer.stop()
+
     def _toggle_mode(self):
         """Toggle tra modalità visualizzazione e configurazione con animazione spettacolare."""
-        # Prevent multiple animations at once
-        if hasattr(self, "_animating") and self._animating:
+        if getattr(self, "_animating", False):
             return
 
         self._animating = True
         self._config_mode = not self._config_mode
 
-        # === CRITICAL: Stop ALL animations BEFORE transition to prevent QPainter warnings ===
-
         # 1. Stop LIVE dot animation
         if hasattr(self, "dot_anim") and self.dot_anim:
-            try:
+            with suppress(RuntimeError):
                 self.dot_anim.stop()
-            except RuntimeError:
-                pass
 
-        # 2. Stop ALL card animations (DON'T remove effects yet, do it in cleanup)
-        for i in range(self.view_layout.count()):
-            item = self.view_layout.itemAt(i)
-            if item and item.widget():
-                widget = item.widget()
-                if hasattr(widget, "pulse_anim") and widget.pulse_anim is not None:
-                    try:
-                        widget.pulse_anim.stop()
-                    except RuntimeError:
-                        pass
-                if hasattr(widget, "timer") and widget.timer is not None:
-                    try:
-                        widget.timer.stop()
-                    except RuntimeError:
-                        pass
-                # DON'T remove effects here - causes QPainter warnings
-                # Will be removed in cleanup() before deletion
+        # 2. Stop card animations in both layouts
+        self._stop_all_card_animations(self.view_layout)
+        self._stop_all_card_animations(self.config_layout)
 
-        # 3. Stop ALL card animations in config_widget
-        for i in range(self.config_layout.count()):
-            item = self.config_layout.itemAt(i)
-            if item and item.widget():
-                widget = item.widget()
-                if hasattr(widget, "pulse_anim") and widget.pulse_anim is not None:
-                    try:
-                        widget.pulse_anim.stop()
-                    except RuntimeError:
-                        pass
-                # DON'T remove effects here
-
-        # Animazione spettacolare del pulsante ingranaggio
+        # 3. Effettua la transizione
         self._animate_gear_button()
 
         if self._config_mode:
-            # Passaggio a config mode
             self._animate_transition(self.view_widget, self.config_widget)
         else:
-            # Passaggio a view mode
             self._animate_transition(self.config_widget, self.view_widget)
-            # Refresh events dopo aver configurato
             QTimer.singleShot(600, self.refresh_events)
 
-        # Restart LIVE animation after transition
-        def restart_live_animation():
-            try:
-                if hasattr(self, "dot_anim") and self.dot_anim:
-                    self.dot_anim.start()
-            except RuntimeError:
-                pass
+        # 4. Restart animazioni dopo la transizione
+        QTimer.singleShot(800, self._restart_live_animations)
 
-        QTimer.singleShot(800, restart_live_animation)
-
-        # Re-enable after animation completes
+    def _restart_live_animations(self):
+        """Ripristina le animazioni globali dopo la transizione."""
+        if hasattr(self, "dot_anim") and self.dot_anim:
+            with suppress(RuntimeError):
+                self.dot_anim.start()
+        self._animating = False
         QTimer.singleShot(800, lambda: setattr(self, "_animating", False))
 
-    def _animate_gear_button(self):
-        """
-        Crea un'animazione SPETTACOLARE per il pulsante ingranaggio.
-        # Combina: Scale bounce drammatico, Shake orizzontale, Pulsazione colore multi-fase.
-        """
-        # Cleanup previous animations if still running
+    def _cleanup_gear_animations(self):
+        """Ferma e pulisce le animazioni del gear button se in esecuzione."""
         if hasattr(self, "_gear_animation") and self._gear_animation:
             try:
-                if (
-                    self._gear_animation.state()
-                    == QParallelAnimationGroup.State.Running
-                ):
+                if self._gear_animation.state() == QParallelAnimationGroup.State.Running:
                     self._gear_animation.stop()
                 self._gear_animation.deleteLater()
             except RuntimeError:
                 pass
 
-        # Also clean up child animations
         if hasattr(self, "_gear_shake_anim") and self._gear_shake_anim:
             try:
                 if self._gear_shake_anim.state() == QPropertyAnimation.State.Running:
@@ -827,118 +767,68 @@ class AutopilotWidget(QWidget):
 
         if hasattr(self, "_gear_scale_sequence") and self._gear_scale_sequence:
             try:
-                if (
-                    self._gear_scale_sequence.state()
-                    == QSequentialAnimationGroup.State.Running
-                ):
+                if self._gear_scale_sequence.state() == QSequentialAnimationGroup.State.Running:
                     self._gear_scale_sequence.stop()
             except RuntimeError:
                 pass
 
-        # Salva posizione originale
-        original_pos = self.config_btn.pos()
-        original_style = self.config_btn.styleSheet()
-
-        # === ANIMAZIONE PARALLELA (tutto insieme) ===
-        parallel_group = QParallelAnimationGroup(self)
-
-        # 1. SHAKE EFFECT (movimento orizzontale rapido)
+    def _create_shake_animation(self, original_pos):
+        """Crea l'animazione di shake orizzontale per il gear button."""
         shake_anim = QPropertyAnimation(self.config_btn, b"pos", self)
         shake_anim.setDuration(500)
         shake_anim.setKeyValueAt(0.0, original_pos)
-        shake_anim.setKeyValueAt(
-            0.1, QPoint(original_pos.x() + 3, original_pos.y())
-        )  # Destra
-        shake_anim.setKeyValueAt(
-            0.2, QPoint(original_pos.x() - 3, original_pos.y())
-        )  # Sinistra
-        shake_anim.setKeyValueAt(
-            0.3, QPoint(original_pos.x() + 2, original_pos.y())
-        )  # Destra
-        shake_anim.setKeyValueAt(
-            0.4, QPoint(original_pos.x() - 2, original_pos.y())
-        )  # Sinistra
-        shake_anim.setKeyValueAt(
-            0.5, QPoint(original_pos.x() + 1, original_pos.y())
-        )  # Destra
-        shake_anim.setKeyValueAt(1.0, original_pos)  # Torna normale
+        shake_anim.setKeyValueAt(0.1, QPoint(original_pos.x() + 3, original_pos.y()))
+        shake_anim.setKeyValueAt(0.2, QPoint(original_pos.x() - 3, original_pos.y()))
+        shake_anim.setKeyValueAt(0.3, QPoint(original_pos.x() + 2, original_pos.y()))
+        shake_anim.setKeyValueAt(0.4, QPoint(original_pos.x() - 2, original_pos.y()))
+        shake_anim.setKeyValueAt(0.5, QPoint(original_pos.x() + 1, original_pos.y()))
+        shake_anim.setKeyValueAt(1.0, original_pos)
         shake_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        parallel_group.addAnimation(shake_anim)
+        return shake_anim
 
-        # 2. PULSAZIONE DRAMMATICA con scala (zoom in/out/bounce)
-        # Sequenza: 1.0 -> 1.5 (GRANDE) -> 0.8 -> 1.0 (bounce)
+    def _create_scale_animation(self):
+        """Crea l'animazione di scale bounce per il gear button."""
         scale_sequence = QSequentialAnimationGroup(self)
 
-        # Scale UP DRAMMATICO (zoom in molto grande)
+        # Scale UP (zoom in)
         scale_up = QPropertyAnimation(self.config_btn, b"iconSize", self)
         scale_up.setDuration(200)
         scale_up.setStartValue(QSize(20, 20))
-        scale_up.setEndValue(QSize(30, 30))  # +50% size!
+        scale_up.setEndValue(QSize(30, 30))
         scale_up.setEasingCurve(QEasingCurve.Type.OutCubic)
         scale_sequence.addAnimation(scale_up)
 
-        # Scale DOWN (zoom out piccolo)
+        # Scale DOWN (zoom out)
         scale_down = QPropertyAnimation(self.config_btn, b"iconSize", self)
         scale_down.setDuration(150)
         scale_down.setStartValue(QSize(30, 30))
-        scale_down.setEndValue(QSize(16, 16))  # -20% size
+        scale_down.setEndValue(QSize(16, 16))
         scale_down.setEasingCurve(QEasingCurve.Type.InCubic)
         scale_sequence.addAnimation(scale_down)
 
-        # Scale NORMALIZE con BOUNCE ELASTICO (ritorno drammatico)
+        # Scale NORMALIZE con bounce elastico
         scale_normal = QPropertyAnimation(self.config_btn, b"iconSize", self)
         scale_normal.setDuration(400)
         scale_normal.setStartValue(QSize(16, 16))
         scale_normal.setEndValue(QSize(20, 20))
-        scale_normal.setEasingCurve(
-            QEasingCurve.Type.OutElastic
-        )  # ELASTIC = Super bounce!
+        scale_normal.setEasingCurve(QEasingCurve.Type.OutElastic)
         scale_sequence.addAnimation(scale_normal)
 
-        parallel_group.addAnimation(scale_sequence)
+        return scale_sequence
 
-        # 3. CAMBIO COLORE MULTI-FASE (effetto arcobaleno)
-        # Sequenza: grigio -> blu -> viola -> verde -> grigio
-        def set_blue():
+    def _setup_color_transitions(self, original_style):
+        """Configura le transizioni di colore a caleidoscopio per il gear button."""
+
+        def set_color(gradient_start, gradient_end, border_color):
             try:
                 self.config_btn.setStyleSheet(
-                    """
-                    QPushButton {
+                    f"""
+                    QPushButton {{
                         background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #0d6efd, stop:1 #0a58ca);
-                        border: 3px solid #0d6efd;
+                            stop:0 {gradient_start}, stop:1 {gradient_end});
+                        border: 3px solid {border_color};
                         border-radius: 16px;
-                    }
-                """
-                )
-            except RuntimeError:
-                pass
-
-        def set_purple():
-            try:
-                self.config_btn.setStyleSheet(
-                    """
-                    QPushButton {
-                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #8b5cf6, stop:1 #7c3aed);
-                        border: 3px solid #8b5cf6;
-                        border-radius: 16px;
-                    }
-                """
-                )
-            except RuntimeError:
-                pass
-
-        def set_green():
-            try:
-                self.config_btn.setStyleSheet(
-                    """
-                    QPushButton {
-                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #10b981, stop:1 #059669);
-                        border: 3px solid #10b981;
-                        border-radius: 16px;
-                    }
+                    }}
                 """
                 )
             except RuntimeError:
@@ -951,24 +841,42 @@ class AutopilotWidget(QWidget):
                 pass
 
         # Timer per cambio colore rapido (caleidoscopio)
-        QTimer.singleShot(0, set_blue)  # Blu immediato
-        QTimer.singleShot(200, set_purple)  # Viola a 200ms
-        QTimer.singleShot(400, set_green)  # Verde a 400ms
-        QTimer.singleShot(750, restore_color)  # Ritorno normale a 750ms
+        QTimer.singleShot(0, lambda: set_color("#0d6efd", "#0a58ca", "#0d6efd"))  # Blu
+        QTimer.singleShot(200, lambda: set_color("#8b5cf6", "#7c3aed", "#8b5cf6"))  # Viola
+        QTimer.singleShot(400, lambda: set_color("#10b981", "#059669", "#10b981"))  # Verde
+        QTimer.singleShot(750, restore_color)
 
-        # Cleanup animation when finished
-        def cleanup_gear_animation():
-            try:
-                parallel_group.deleteLater()
-            except RuntimeError:
-                pass
+    def _animate_gear_button(self):
+        """
+        Crea un'animazione spettacolare per il pulsante ingranaggio.
+        Combina: Scale bounce, Shake orizzontale, Pulsazione colore multi-fase.
+        """
+        # Cleanup animazioni precedenti
+        self._cleanup_gear_animations()
 
-        parallel_group.finished.connect(cleanup_gear_animation)
+        # Salva stato originale
+        original_pos = self.config_btn.pos()
+        original_style = self.config_btn.styleSheet()
 
-        # === AVVIA ANIMAZIONE ===
+        # Crea gruppo animazione parallela
+        parallel_group = QParallelAnimationGroup(self)
+
+        # 1. Shake effect
+        shake_anim = self._create_shake_animation(original_pos)
+        parallel_group.addAnimation(shake_anim)
+
+        # 2. Scale bounce effect
+        scale_sequence = self._create_scale_animation()
+        parallel_group.addAnimation(scale_sequence)
+
+        # 3. Color transitions
+        self._setup_color_transitions(original_style)
+
+        # Cleanup quando finisce
+        parallel_group.finished.connect(lambda: parallel_group.deleteLater() if parallel_group else None)
+
+        # Avvia e mantieni riferimenti
         parallel_group.start()
-
-        # Mantieni riferimenti per evitare garbage collection
         self._gear_animation = parallel_group
         self._gear_shake_anim = shake_anim
         self._gear_scale_sequence = scale_sequence
@@ -981,10 +889,7 @@ class AutopilotWidget(QWidget):
         # Stop any previous animation
         if hasattr(self, "_current_animation") and self._current_animation:
             try:
-                if (
-                    self._current_animation.state()
-                    == QSequentialAnimationGroup.State.Running
-                ):
+                if self._current_animation.state() == QSequentialAnimationGroup.State.Running:
                     self._current_animation.stop()
                 self._current_animation.deleteLater()
             except RuntimeError:
@@ -1110,9 +1015,7 @@ class AutopilotWidget(QWidget):
 
         # Aggiungi event cards in griglia 2 colonne
         for idx, event in enumerate(events):
-            card = AutopilotEventCard(
-                event["name"], event["time"], event["icon"], event["color"], self
-            )
+            card = AutopilotEventCard(event["name"], event["time"], event["icon"], event["color"], self)
             row = idx // 2  # Riga
             col = idx % 2  # Colonna (0 o 1)
             self.view_layout.addWidget(card, row, col)
@@ -1177,9 +1080,7 @@ class AutopilotWidget(QWidget):
         # Aggiungi config cards per bot giornalieri
         idx = 0
         for bot in bots:
-            card = AutopilotConfigCard(
-                bot["id"], bot["name"], bot["icon"], bot["color"], self
-            )
+            card = AutopilotConfigCard(bot["id"], bot["name"], bot["icon"], bot["color"], self)
             row = idx // 2  # Riga
             col = idx % 2  # Colonna (0 o 1)
             self.config_layout.addWidget(card, row, col)

@@ -5,13 +5,12 @@ from typing import Any, List, Optional
 import markdown
 import pandas as pd
 from PyQt6.QtCore import QSize, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QAction, QColor
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
     QFileDialog,
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -27,88 +26,11 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.lyra_client import LyraClient
 from src.core.secrets_manager import SecretsManager
+from src.gui.widgets.message_bubble import MessageBubble
 from src.utils.document_processor import DocumentProcessor
 from src.utils.helpers import get_asset_path, get_colored_icon
 
-
-class MessageBubble(QFrame):
-    """Widget per una singola bolla di messaggio nella chat."""
-
-    def __init__(self, sender, text, is_lyra=True, parent=None):
-        super().__init__(parent)
-        self.is_lyra = is_lyra
-        self._setup_ui(sender, text)
-
-    def _setup_ui(self, sender, text):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Container per l'allineamento
-        container = QWidget()
-        container_layout = QHBoxLayout(container)
-        container_layout.setContentsMargins(10, 5, 10, 5)
-
-        # La bolla effettiva
-        bubble = QFrame()
-        bubble_layout = QVBoxLayout(bubble)
-        bubble_layout.setContentsMargins(15, 10, 15, 10)
-        bubble_layout.setSpacing(5)
-
-        # Colori e stili basati sul mittente
-        if self.is_lyra:
-            bg_color = "#f1f3f9"
-            text_color = "#212529"
-            sender_color = "#6f42c1"
-            bubble.setStyleSheet(
-                f"background-color: {bg_color}; border-radius: 15px; border-bottom-left-radius: 2px; border: 1px solid #dee2e6;"
-            )
-            container_layout.addWidget(bubble)
-            container_layout.addStretch()
-        else:
-            bg_color = "#6f42c1"
-            text_color = "#ffffff"
-            sender_color = "#e9ecef"
-            bubble.setStyleSheet(
-                f"background-color: {bg_color}; border-radius: 15px; border-bottom-right-radius: 2px;"
-            )
-            container_layout.addStretch()
-            container_layout.addWidget(bubble)
-
-        # Shadow
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(10)
-        shadow.setXOffset(0)
-        shadow.setYOffset(2)
-        shadow.setColor(QColor(0, 0, 0, 30))
-        bubble.setGraphicsEffect(shadow)
-
-        # Sender Label
-        lbl_sender = QLabel(sender)
-        lbl_sender.setStyleSheet(
-            f"font-weight: bold; font-size: 11px; color: {sender_color}; background: transparent; border: none;"
-        )
-        bubble_layout.addWidget(lbl_sender)
-
-        # Message Label (Markdown Support via RichText)
-        lbl_msg = QLabel()
-        lbl_msg.setWordWrap(True)
-        lbl_msg.setTextFormat(Qt.TextFormat.RichText)
-        lbl_msg.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-
-        # Formattazione Markdown per HTML
-        html_text = markdown.markdown(text, extensions=["tables", "fenced_code"])
-        # Custom styles for table inside bubble
-        if self.is_lyra:
-            style_table = 'border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; margin-top: 5px; border-color: #dee2e6;"'
-            html_text = html_text.replace("<table>", f"<table {style_table}>")
-
-        lbl_msg.setText(
-            f"<div style='color: {text_color}; font-size: 14px; line-height: 1.4;'>{html_text}</div>"
-        )
-        lbl_msg.setStyleSheet("background: transparent; border: none;")
-        bubble_layout.addWidget(lbl_msg)
-
-        layout.addWidget(container)
+# MessageBubble è stata estratta in src/gui/widgets/message_bubble.py
 
 
 class LyraWorker(QThread):
@@ -161,9 +83,7 @@ class LyraWorker(QThread):
             import traceback
 
             error_details = traceback.format_exc()
-            self.finished.emit(
-                f"Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}"
-            )
+            self.finished.emit(f"Errore critico nel Worker di Lyra:\n{str(e)}\n\n{error_details}")
 
 
 class ModelListWorker(QThread):
@@ -217,9 +137,7 @@ class LyraPanel(QWidget):
 
         # Header
         header = QFrame()
-        header.setStyleSheet(
-            "background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;"
-        )
+        header.setStyleSheet("background-color: #6f42c1; border-radius: 8px; padding: 10px 15px;")
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -246,22 +164,16 @@ class LyraPanel(QWidget):
         h_layout.addWidget(self.model_combo)
 
         refresh_models_btn = QPushButton()
-        refresh_models_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
-        )
+        refresh_models_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         refresh_models_btn.setFixedSize(32, 32)
         refresh_models_btn.setIconSize(QSize(18, 18))
         refresh_models_btn.setToolTip("Aggiorna lista modelli")
-        refresh_models_btn.setStyleSheet(
-            "QPushButton { background-color: transparent; border: none; }"
-        )
+        refresh_models_btn.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
         refresh_models_btn.clicked.connect(self._fetch_models)
         h_layout.addWidget(refresh_models_btn)
 
         sub = QLabel("Esperta Contabile")
-        sub.setStyleSheet(
-            "color: rgba(255,255,255,0.8); margin-left: 10px;"
-        )  # Added margin for spacing
+        sub.setStyleSheet("color: rgba(255,255,255,0.8); margin-left: 10px;")  # Added margin for spacing
         h_layout.addWidget(sub)
 
         h_layout.addStretch()
@@ -310,9 +222,7 @@ class LyraPanel(QWidget):
         self.table_actions_layout = QHBoxLayout()
         self.table_actions_layout.setContentsMargins(0, 5, 0, 5)
         self.btn_export_last_table = QPushButton("Esporta ultima tabella Excel")
-        self.btn_export_last_table.setIcon(
-            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000")
-        )
+        self.btn_export_last_table.setIcon(get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000"))
         self.btn_export_last_table.setVisible(False)
         self.btn_export_last_table.setStyleSheet(
             """
@@ -353,9 +263,7 @@ class LyraPanel(QWidget):
         att_layout.addStretch()
 
         self.btn_remove_att = QPushButton()
-        self.btn_remove_att.setIcon(
-            get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#000000")
-        )
+        self.btn_remove_att.setIcon(get_colored_icon(get_asset_path(Icons.X_CIRCLE), "#000000"))
         self.btn_remove_att.setFixedSize(24, 24)
         self.btn_remove_att.setStyleSheet(
             "background: transparent; color: #dc3545; font-weight: bold; border: none;"
@@ -513,11 +421,7 @@ class LyraPanel(QWidget):
 
     def _on_model_changed(self, model_name):
         """Salva il modello scelto nella configurazione globale."""
-        if (
-            model_name
-            and "Caricamento" not in model_name
-            and "mancante" not in model_name
-        ):
+        if model_name and "Caricamento" not in model_name and "mancante" not in model_name:
             config_manager.set_config_value("ai_model", model_name)
 
     def _populate_models_dropdown(self, models):
@@ -573,9 +477,7 @@ class LyraPanel(QWidget):
             self.attached_images = DocumentProcessor.get_pages_as_images(p)
 
             # Automatic prompt suggestion
-            self.input_field.setText(
-                "Analizza questo documento ed estrai i dati principali in una tabella."
-            )
+            self.input_field.setText("Analizza questo documento ed estrai i dati principali in una tabella.")
             self.input_field.setFocus()
         else:
             QMessageBox.warning(
@@ -631,9 +533,7 @@ class LyraPanel(QWidget):
         final_images = self.attached_images.copy()
 
         if self.attached_file:
-            self._append_message(
-                "Sistema", f"<i>[Documento allegato: {self.attached_file.name}]</i>"
-            )
+            self._append_message("Sistema", f"<i>[Documento allegato: {self.attached_file.name}]</i>")
             # If the PDF is text-searchable, we can also append the text to context
             if DocumentProcessor.is_pdf_searchable(self.attached_file):
                 pdf_text = DocumentProcessor.extract_text(self.attached_file)
@@ -687,9 +587,7 @@ class LyraPanel(QWidget):
         menu.addAction(pdf_action)
 
         excel_action = QAction("Esporta ultima tabella (Excel)", self)
-        excel_action.setIcon(
-            get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000")
-        )
+        excel_action.setIcon(get_colored_icon(get_asset_path(Icons.BAR_CHART), "#000000"))
         excel_action.triggered.connect(self._export_excel)
         menu.addAction(excel_action)
 
@@ -723,9 +621,7 @@ class LyraPanel(QWidget):
                         labels = widget.findChildren(QLabel)
                         if len(labels) >= 2:
                             msg_html = labels[1].text()
-                            html_content += (
-                                f"<p><b>{sender}</b>:< br>{msg_html}</p><hr>"
-                            )
+                            html_content += f"<p><b>{sender}</b>:< br>{msg_html}</p><hr>"
 
                 doc.setHtml(html_content)
 
@@ -734,9 +630,7 @@ class LyraPanel(QWidget):
                 printer.setOutputFileName(filename)
 
                 doc.print(printer)
-                QMessageBox.information(
-                    self, "Successo", "Chat esportata correttamente!"
-                )
+                QMessageBox.information(self, "Successo", "Chat esportata correttamente!")
             except Exception as e:
                 QMessageBox.warning(
                     self,
@@ -747,25 +641,19 @@ class LyraPanel(QWidget):
     def _export_excel(self):
         """Esporta l'ultima tabella trovata nella cronologia chat in Excel."""
         if not self.last_table_data:
-            QMessageBox.warning(
-                self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare."
-            )
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle recenti da esportare.")
             return
 
         table_lines = self._extract_table_lines(self.last_table_data)
         if not table_lines:
-            QMessageBox.warning(
-                self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio."
-            )
+            QMessageBox.warning(self, "Nessuna tabella", "Non ho trovato tabelle valide nel messaggio.")
             return
 
         try:
             df = self._parse_markdown_table(table_lines)
             self._save_df_to_excel(df)
         except Exception as e:
-            QMessageBox.critical(
-                self, "Errore", f"Impossibile esportare la tabella: {e}"
-            )
+            QMessageBox.critical(self, "Errore", f"Impossibile esportare la tabella: {e}")
 
     def _extract_table_lines(self, text: str) -> List[str]:
         """Estrae le linee che compongono una tabella Markdown."""
@@ -805,6 +693,4 @@ class LyraPanel(QWidget):
         )
         if filename:
             df.to_excel(filename, index=False)
-            QMessageBox.information(
-                self, "Successo", "Tabella esportata correttamente!"
-            )
+            QMessageBox.information(self, "Successo", "Tabella esportata correttamente!")

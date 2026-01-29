@@ -40,9 +40,7 @@ class TimbratureDetailView(QWidget):
         detail_layout.setContentsMargins(10, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Timbratura")
-        detail_title.setStyleSheet(
-            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
-        )
+        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -55,9 +53,7 @@ class TimbratureDetailView(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
+            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -98,11 +94,7 @@ class TimbratureDetailView(QWidget):
 
         for h in self.full_headers:
             idx = mapping.get(h)
-            val = (
-                str(data[idx])
-                if idx is not None and idx < len(data) and data[idx] is not None
-                else ""
-            )
+            val = str(data[idx]) if idx is not None and idx < len(data) and data[idx] is not None else ""
 
             if val.lower() in ["nan", "none"]:
                 val = ""

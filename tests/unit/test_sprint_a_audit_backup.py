@@ -15,7 +15,11 @@ class TestSprintAAuditBackup:
     @pytest.fixture
     def audit_mgr(self, tmp_path, mocker):
         db_path = tmp_path / "audit_test.db"
-        mocker.patch.object(AuditManager, "DB_PATH", db_path)
+        # Patch the real location in AuditDatabase
+        mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
+        # Patch signals
+        mocker.patch("src.core.audit.manager.AuditSignals.instance")
+        
         # Forza reset singleton reale
         AuditManager._instance = None
         mgr = AuditManager()

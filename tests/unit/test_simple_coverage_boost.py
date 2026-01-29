@@ -69,7 +69,4 @@ class TestFastTableModelExtended:
         assert model.data(model.index(0, 0), role=Qt.ItemDataRole.ToolTipRole) is None
 
         # Vertical header
-        assert (
-            model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole)
-            is None
-        )
+        assert model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole) is None

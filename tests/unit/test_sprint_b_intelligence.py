@@ -150,9 +150,7 @@ class TestSprintBIntelligence:
         """Verifica l'invio di dati multimediali."""
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "| SC | TS |"}]}}]
-        }
+        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "| SC | TS |"}]}}]}
 
         with patch("requests.post", return_value=mock_response):
             res = lyra.analyze_media(b"fake_image_bytes", prompt="Estrai tabella")

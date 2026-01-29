@@ -85,10 +85,7 @@ class AttivitaImporter(BaseImporter):
                 rename_map[excel_col] = db_col
             else:
                 for col in df.columns:
-                    if (
-                        excel_col.replace("\n", " ").strip()
-                        == col.replace("\n", " ").strip()
-                    ):
+                    if excel_col.replace("\n", " ").strip() == col.replace("\n", " ").strip():
                         rename_map[col] = db_col
                         break
 

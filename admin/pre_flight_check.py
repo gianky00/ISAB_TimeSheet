@@ -28,11 +28,7 @@ except ImportError:
 # Configurazione Base
 PROJECT_ROOT = Path(__file__).parent.parent
 LOG_DIR = PROJECT_ROOT / "temp" / "logs"
-VENV_BIN = (
-    PROJECT_ROOT / ".venv" / "Scripts"
-    if sys.platform == "win32"
-    else PROJECT_ROOT / ".venv" / "bin"
-)
+VENV_BIN = PROJECT_ROOT / ".venv" / "Scripts" if sys.platform == "win32" else PROJECT_ROOT / ".venv" / "bin"
 
 console = Console()
 
@@ -44,9 +40,7 @@ def get_bin(name):
     return str(venv_path) if venv_path.exists() else name
 
 
-def run_tool(
-    name: str, cmd: List[str], label: str, cwd=PROJECT_ROOT
-) -> Tuple[bool, str, float]:
+def run_tool(name: str, cmd: List[str], label: str, cwd=PROJECT_ROOT) -> Tuple[bool, str, float]:
     """Esegue un tool e restituisce (successo, output, durata)."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = LOG_DIR / f"{name}.log"
@@ -209,9 +203,7 @@ def main():
     parser.add_argument("--fix", action="store_true", help="Applica fix automatici")
     parser.add_argument("--fast", action="store_true", help="Salta i test lenti")
     parser.add_argument("--test-only", action="store_true", help="Solo test")
-    parser.add_argument(
-        "--super-audit", action="store_true", help="Audit completo + bump"
-    )
+    parser.add_argument("--super-audit", action="store_true", help="Audit completo + bump")
     parser.add_argument("--force", action="store_true", help="Ignora errori")
     args = parser.parse_args()
 
@@ -268,9 +260,7 @@ def main():
             status_icon = "✅" if success else "❌"
             status_style = "green" if success else "bold red"
 
-            results.append(
-                {"label": label, "success": success, "msg": msg, "duration": duration}
-            )
+            results.append({"label": label, "success": success, "msg": msg, "duration": duration})
 
             if not success:
                 overall_success = False

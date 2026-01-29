@@ -43,9 +43,7 @@ class TelegramTab(QWidget):
         help_btn = QPushButton("Guida alla configurazione")
         help_btn.setIcon(get_colored_icon(get_asset_path(Icons.HELP), "#000000"))
         help_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        help_btn.clicked.connect(
-            lambda: self.request_help.emit("Configurazione Telegram")
-        )
+        help_btn.clicked.connect(lambda: self.request_help.emit("Configurazione Telegram"))
         help_btn.setStyleSheet(
             "background-color: #e7f1ff; color: #0d6efd; border: 1px solid #0d6efd; border-radius: 6px; padding: 8px 15px; font-weight: bold;"
         )
@@ -66,9 +64,7 @@ class TelegramTab(QWidget):
 
         # Token
         self.tg_token_edit = QLineEdit()
-        self.tg_token_edit.setPlaceholderText(
-            "Inserisci il Token fornito da @BotFather"
-        )
+        self.tg_token_edit.setPlaceholderText("Inserisci il Token fornito da @BotFather")
         self.tg_token_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.tg_token_edit.setMinimumHeight(40)
         self.tg_token_edit.textChanged.connect(self.settings_changed.emit)
@@ -95,9 +91,7 @@ class TelegramTab(QWidget):
         tg_id_layout.addWidget(self.tg_chat_id_edit)
 
         self.tg_reset_btn = QPushButton(" Scollega Dispositivo")
-        self.tg_reset_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.TRASH), "#dc3545")
-        )
+        self.tg_reset_btn.setIcon(get_colored_icon(get_asset_path(Icons.TRASH), "#dc3545"))
         self.tg_reset_btn.setFixedWidth(180)
         self.tg_reset_btn.setMinimumHeight(40)
         self.tg_reset_btn.clicked.connect(self._reset_telegram_pairing)
@@ -109,9 +103,7 @@ class TelegramTab(QWidget):
 
         # Gemini API Key
         self.gemini_api_key_edit = QLineEdit()
-        self.gemini_api_key_edit.setPlaceholderText(
-            "Inserisci la Gemini API Key per l'AI Coach"
-        )
+        self.gemini_api_key_edit.setPlaceholderText("Inserisci la Gemini API Key per l'AI Coach")
         self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.gemini_api_key_edit.setMinimumHeight(40)
         self.gemini_api_key_edit.textChanged.connect(self.settings_changed.emit)
@@ -121,9 +113,7 @@ class TelegramTab(QWidget):
         gemini_layout.addWidget(self.gemini_api_key_edit)
 
         self.gemini_toggle_btn = QPushButton()
-        self.gemini_toggle_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.EYE), "#000000")
-        )
+        self.gemini_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#000000"))
         self.gemini_toggle_btn.setFixedSize(40, 40)
         self.gemini_toggle_btn.clicked.connect(self._toggle_gemini_visibility)
         gemini_layout.addWidget(self.gemini_toggle_btn)
@@ -141,14 +131,10 @@ class TelegramTab(QWidget):
     def _toggle_gemini_visibility(self):
         if self.gemini_api_key_edit.echoMode() == QLineEdit.EchoMode.Password:
             self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.gemini_toggle_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.LOCK), "#000000")
-            )
+            self.gemini_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.LOCK), "#000000"))
         else:
             self.gemini_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.gemini_toggle_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.EYE), "#000000")
-            )
+            self.gemini_toggle_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#000000"))
 
     def _reset_telegram_pairing(self):
         if not self.tg_chat_id_edit.text():
@@ -164,9 +150,7 @@ class TelegramTab(QWidget):
         ):
             self.tg_chat_id_edit.clear()
             self.settings_changed.emit()
-            ToastManager.instance().show(
-                "Dispositivo scollegato. Salva per applicare.", "warning"
-            )
+            ToastManager.instance().show("Dispositivo scollegato. Salva per applicare.", "warning")
 
     def _test_telegram_connection(self):
         token = self.tg_token_edit.text().strip()
@@ -178,9 +162,7 @@ class TelegramTab(QWidget):
         if service.test_connection():
             ToastManager.instance().show("Connessione Telegram OK!", "success")
         else:
-            QMessageBox.critical(
-                self, "Errore", "Token non valido o errore di connessione."
-            )
+            QMessageBox.critical(self, "Errore", "Token non valido o errore di connessione.")
 
     def _test_gemini_connection(self):
         # Placeholder logic
@@ -223,6 +205,4 @@ class TelegramTab(QWidget):
             config_manager_instance.set_config_value("telegram_token", tg_token)
             config_manager_instance.set_config_value("gemini_api_key", gemini_key)
 
-        config_manager_instance.set_config_value(
-            "telegram_chat_id", self.tg_chat_id_edit.text().strip()
-        )
+        config_manager_instance.set_config_value("telegram_chat_id", self.tg_chat_id_edit.text().strip())

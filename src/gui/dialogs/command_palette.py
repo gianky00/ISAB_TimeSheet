@@ -37,9 +37,7 @@ class CommandPaletteDialog(QDialog):
 
     def __init__(self, parent=None, root_nodes=None):
         super().__init__(parent)
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
-        )
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # Dimensioni target
@@ -72,9 +70,7 @@ class CommandPaletteDialog(QDialog):
     def _setup_ui(self):
         # Container Principale
         self.container = QWidget(self)
-        self.container.setGeometry(
-            10, 10, self.target_width - 20, self.target_height - 20
-        )
+        self.container.setGeometry(10, 10, self.target_width - 20, self.target_height - 20)
 
         # Colors - Modern Dark Theme
         bg_color = "rgba(32, 33, 36, 0.98)"  # Deep unified background
@@ -285,13 +281,8 @@ class CommandPaletteDialog(QDialog):
                 self.hide_animated()
             return True
 
-        elif (
-            key == Qt.Key.Key_K
-            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
-        ):
-            if not event.isAutoRepeat() and getattr(
-                self, "_can_close_via_shortcut", True
-            ):
+        elif key == Qt.Key.Key_K and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            if not event.isAutoRepeat() and getattr(self, "_can_close_via_shortcut", True):
                 self.hide_animated()
             return True
 
@@ -314,9 +305,7 @@ class CommandPaletteDialog(QDialog):
         if self._input_index < len(self._input_prompts):
             prompt = self._input_prompts[self._input_index]
             self.search_bar.setText("")
-            self.search_bar.setPlaceholderText(
-                f"{prompt} (Invio per confermare, Esc per annullare)"
-            )
+            self.search_bar.setPlaceholderText(f"{prompt} (Invio per confermare, Esc per annullare)")
             self.search_bar.setFocus()
         else:
             # Finished
@@ -355,9 +344,7 @@ class CommandPaletteDialog(QDialog):
             return
 
         # Push stato corrente nello stack
-        self.navigation_stack.append(
-            (self.current_nodes, self.list_widget.currentRow())
-        )
+        self.navigation_stack.append((self.current_nodes, self.list_widget.currentRow()))
         self.breadcrumb_path.append(node.label)
 
         # Aggiorna stato
@@ -389,9 +376,7 @@ class CommandPaletteDialog(QDialog):
             self.breadcrumb_lbl.setVisible(True)
             path_str = " > ".join(self.breadcrumb_path)
             self.breadcrumb_lbl.setText(f"> {path_str}")
-            self.search_bar.setPlaceholderText(
-                f"Cerca dentro {self.breadcrumb_path[-1]}..."
-            )
+            self.search_bar.setPlaceholderText(f"Cerca dentro {self.breadcrumb_path[-1]}...")
 
     def _populate_list(self, nodes: list[CommandNode]):
         self.list_widget.clear()

@@ -38,9 +38,7 @@ class AccountDialog(QDialog):
         pass_layout.addWidget(self.password_edit)
 
         self.toggle_pass_btn = QPushButton()
-        self.toggle_pass_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.EYE), "#000000")
-        )
+        self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#000000"))
         self.toggle_pass_btn.setIconSize(QSize(20, 20))
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
         self.toggle_pass_btn.setFixedSize(35, 35)
@@ -78,15 +76,11 @@ class AccountDialog(QDialog):
     def _toggle_password_visibility(self):
         if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.LOCK), "#000000")
-            )
+            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.LOCK), "#000000"))
             self.toggle_pass_btn.setToolTip("Nascondi password")
         else:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.EYE), "#000000")
-            )
+            self.toggle_pass_btn.setIcon(get_colored_icon(get_asset_path(Icons.EYE), "#000000"))
             self.toggle_pass_btn.setToolTip("Mostra password")
 
     def get_data(self):

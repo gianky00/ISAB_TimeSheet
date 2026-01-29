@@ -104,9 +104,7 @@ class ContabilitaManager:
                 message,
                 all_new_rows,
                 years_encountered,
-            ) = ExcelImporter.import_giornaliere(
-                root_path, lookup_map, progress_callback
-            )
+            ) = ExcelImporter.import_giornaliere(root_path, lookup_map, progress_callback)
             if not success:
                 return False, message, 0, 0
 
@@ -118,9 +116,7 @@ class ContabilitaManager:
             if not years_encountered and not all_new_rows:
                 return (
                     True,
-                    "Nessuna nuova giornaliera trovata (check anno >= "
-                    + str(current_year)
-                    + ").",
+                    "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ").",
                     0,
                     0,
                 )
@@ -147,9 +143,7 @@ class ContabilitaManager:
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_attivita_programmate(
-            cls.DB_PATH, imported_rows
-        )
+        total_added, total_removed = DataSynchronizer.sync_attivita_programmate(cls.DB_PATH, imported_rows)
         return True, message, total_added, total_removed
 
     @classmethod
@@ -159,15 +153,11 @@ class ContabilitaManager:
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, int, int]:
         """Importa il file Scarico Ore Cantiere (OpenPyXL per colori + Diff Logic)."""
-        success, message, imported_rows = ExcelImporter.import_scarico_ore(
-            file_path, progress_callback
-        )
+        success, message, imported_rows = ExcelImporter.import_scarico_ore(file_path, progress_callback)
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_scarico_ore(
-            cls.DB_PATH, imported_rows
-        )
+        total_added, total_removed = DataSynchronizer.sync_scarico_ore(cls.DB_PATH, imported_rows)
         return True, message, total_added, total_removed
 
     @classmethod
@@ -183,9 +173,7 @@ class ContabilitaManager:
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_certificati_campione(
-            cls.DB_PATH, imported_rows
-        )
+        total_added, total_removed = DataSynchronizer.sync_certificati_campione(cls.DB_PATH, imported_rows)
         return True, message, total_added, total_removed
 
     @classmethod
@@ -228,9 +216,7 @@ class ContabilitaManager:
         return ContabilitaSearch.search_oda(cls.DB_PATH, query)
 
     @classmethod
-    def search_extended(
-        cls, query: str, year: int | None = None, limit: int = 100
-    ) -> Dict[str, List[Dict]]:
+    def search_extended(cls, query: str, year: int | None = None, limit: int = 100) -> Dict[str, List[Dict]]:
         """
         Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
         Returns: Dict con liste di risultati per categoria.

@@ -172,9 +172,7 @@ def main():
 
             logging.getLogger("Startup").info("Startup finalized successfully")
         except Exception as e:
-            logging.getLogger("Startup").critical(
-                f"Error in finalize_startup: {e}", exc_info=True
-            )
+            logging.getLogger("Startup").critical(f"Error in finalize_startup: {e}", exc_info=True)
 
     def process_next_step():
         """Execute one initialization step and yield to event loop."""
@@ -193,9 +191,7 @@ def main():
             logging.getLogger("Startup").info("Initialization generator completed")
             finalize_startup()
         except Exception as e:
-            logging.getLogger("Startup").error(
-                f"Error in init loop: {e}", exc_info=True
-            )
+            logging.getLogger("Startup").error(f"Error in init loop: {e}", exc_info=True)
             finalize_startup()  # Try to proceed anyway
 
     # Avvia la catena di inizializzazione

@@ -46,9 +46,7 @@ class TestDatabaseManager:
             (2026, "Test"),
         )
 
-        res = manager.execute_query(
-            manager.DB_CONTABILITA, "SELECT attivita FROM contabilita"
-        )
+        res = manager.execute_query(manager.DB_CONTABILITA, "SELECT attivita FROM contabilita")
         assert len(res) == 1
         assert res[0][0] == "Test"
 
@@ -59,9 +57,7 @@ class TestDatabaseManager:
             "sqlite3.connect",
             side_effect=[
                 sqlite3.OperationalError("database is locked"),
-                sqlite3.connect(
-                    f"file:{manager.DB_CONTABILITA.absolute()}?mode=rw", uri=True
-                ),
+                sqlite3.connect(f"file:{manager.DB_CONTABILITA.absolute()}?mode=rw", uri=True),
             ],
         ):
             res = manager.execute_query(manager.DB_CONTABILITA, "SELECT 1")

@@ -81,13 +81,10 @@ def _get_windows_hardware_id():
             "powershell",
             "-NoProfile",
             "-Command",
-            "Get-CimInstance -Class Win32_DiskDrive | "
-            "Select-Object -ExpandProperty SerialNumber",
+            "Get-CimInstance -Class Win32_DiskDrive | " "Select-Object -ExpandProperty SerialNumber",
         ]
         output = (
-            subprocess.check_output(
-                cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
-            )
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
             .decode()
             .strip()
         )
@@ -101,13 +98,10 @@ def _get_windows_hardware_id():
             "powershell",
             "-NoProfile",
             "-Command",
-            "Get-CimInstance -Class Win32_ComputerSystemProduct | "
-            "Select-Object -ExpandProperty UUID",
+            "Get-CimInstance -Class Win32_ComputerSystemProduct | " "Select-Object -ExpandProperty UUID",
         ]
         output = (
-            subprocess.check_output(
-                cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW
-            )
+            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
             .decode()
             .strip()
         )
@@ -123,11 +117,7 @@ def _get_linux_hardware_id():
     with suppress(Exception):
         # Avoid complex pipes with shell=True, execute basic lsblk and parse in python
         cmd = ["lsblk", "--nodeps", "-o", "serial", "-n"]
-        output = (
-            subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL)
-            .decode()
-            .strip()
-        )
+        output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL).decode().strip()
 
         # Take the first line if multiple disks
         first_line = output.split("\n")[0].strip()

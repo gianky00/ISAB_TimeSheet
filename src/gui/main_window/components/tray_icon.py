@@ -20,23 +20,17 @@ class TrayIconComponent(QObject):
             f"È uscita la versione {new_version}. Clicca qui per scaricarla.",
         )
 
-    def show_background_notification(
-        self, title: str, message: str, is_error: bool = False
-    ):
+    def show_background_notification(self, title: str, message: str, is_error: bool = False):
         """
         Mostra una notifica di sistema (Toast) se l'applicazione non è attiva.
         """
         from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
-        is_active = (
-            self.main_window.isActiveWindow() and not self.main_window.isMinimized()
-        )
+        is_active = self.main_window.isActiveWindow() and not self.main_window.isMinimized()
 
         if not is_active:
             icon = (
-                QSystemTrayIcon.MessageIcon.Critical
-                if is_error
-                else QSystemTrayIcon.MessageIcon.Information
+                QSystemTrayIcon.MessageIcon.Critical if is_error else QSystemTrayIcon.MessageIcon.Information
             )
             self.controller.show_message(title, message, icon, 5000)
             QApplication.alert(self.main_window, 0)

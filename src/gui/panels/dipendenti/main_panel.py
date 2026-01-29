@@ -57,8 +57,6 @@ class DipendentiPanel(QWidget):
             current.refresh_data()
 
         # Opzionale: aggiorna anche l'altro in background se necessario
-        if current == self.anagrafica_page and hasattr(
-            self.manager_page, "refresh_data"
-        ):
+        if current == self.anagrafica_page and hasattr(self.manager_page, "refresh_data"):
             # Non forziamo il refresh grafico se non visibile, ma magari ricarica dati
             pass

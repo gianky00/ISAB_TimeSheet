@@ -45,9 +45,7 @@ class ServiceController(QObject):
         QTimer.singleShot(3000, self._check_updates)
 
         # Collegamento notifiche globali -> Telegram
-        NotificationManager.instance().notification_added.connect(
-            self._forward_notification_to_telegram
-        )
+        NotificationManager.instance().notification_added.connect(self._forward_notification_to_telegram)
 
         # Scheduler (ogni 60s) per task pianificati
         self.scheduler_timer = QTimer(self)
@@ -206,15 +204,9 @@ class ServiceController(QObject):
                             if d_dt:
                                 diff = (today - d_dt).days
                                 if norm_cf:
-                                    if (
-                                        norm_cf not in last_by_cf
-                                        or diff < last_by_cf[norm_cf]
-                                    ):
+                                    if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
                                         last_by_cf[norm_cf] = diff
-                                if (
-                                    norm_key not in last_by_name
-                                    or diff < last_by_name[norm_key]
-                                ):
+                                if norm_key not in last_by_name or diff < last_by_name[norm_key]:
                                     last_by_name[norm_key] = diff
                 return last_by_cf, last_by_name
 
@@ -330,9 +322,7 @@ class ServiceController(QObject):
             ReportHistory.save_report(warning_list, expired_list)
 
             # Aggiorna timestamp ultimo invio
-            config_manager.set_config_value(
-                "report_email_autopilot_last_sent", datetime.now().isoformat()
-            )
+            config_manager.set_config_value("report_email_autopilot_last_sent", datetime.now().isoformat())
 
             # Notifica
             NotificationManager.instance().add_notification(
@@ -362,9 +352,7 @@ class ServiceController(QObject):
         if hasattr(panel, "table"):
             # Pulisci la tabella completamente
             panel.table.setRowCount(0)
-            panel.log_widget.append(
-                "🧹 Tabella pulita per scarico generale (senza filtro OdA)"
-            )
+            panel.log_widget.append("🧹 Tabella pulita per scarico generale (senza filtro OdA)")
 
     def _schedule_bot_with_parallelism(self, bot_id, panel, site, log_message):
         """
@@ -470,19 +458,13 @@ class ServiceController(QObject):
         # Controlla se ci sono bot in coda per questo sito
         if self.pending_bots_by_site[site]:
             # Avvia il prossimo bot in coda
-            next_bot_id, next_panel, next_log_message = self.pending_bots_by_site[
-                site
-            ].pop(0)
-            next_panel.log_widget.append(
-                "▶️ Bot precedente completato. Avvio da coda..."
-            )
+            next_bot_id, next_panel, next_log_message = self.pending_bots_by_site[site].pop(0)
+            next_panel.log_widget.append("▶️ Bot precedente completato. Avvio da coda...")
             self._start_bot(next_bot_id, next_panel, site, next_log_message)
 
     def _check_updates(self):
         """Controlla gli aggiornamenti in background."""
-        check_for_updates(
-            parent=self.mw, silent=True, callback=self.mw._show_update_banner
-        )
+        check_for_updates(parent=self.mw, silent=True, callback=self.mw._show_update_banner)
 
     def _forward_notification_to_telegram(self, notification):
         """Inoltra notifiche importanti al bot Telegram."""
@@ -493,8 +475,6 @@ class ServiceController(QObject):
         if level in ["success", "error", "warning"]:
             title = notification.get("title", "Notifica")
             msg = notification.get("message", "")
-            icon = (
-                "[OK]" if level == "success" else "[ERR]" if level == "error" else "[!]"
-            )
+            icon = "[OK]" if level == "success" else "[ERR]" if level == "error" else "[!]"
             text = f"{icon} *{title}*\n{msg}"
             self.telegram.send_message_sync(text)

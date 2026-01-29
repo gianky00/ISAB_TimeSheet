@@ -39,9 +39,7 @@ class TestTelegramDeepDive:
             "src.core.contabilita_manager.ContabilitaManager.get_available_years",
             return_value=[2023, 2024],
         ):
-            await callbacks._handle_db_actions(
-                service, "db_select_year_strumentale", mock_query, "123"
-            )
+            await callbacks._handle_db_actions(service, "db_select_year_strumentale", mock_query, "123")
             assert "Seleziona Anno" in mock_query.edit_message_text.call_args[0][0]
 
     @pytest.mark.asyncio
@@ -58,9 +56,7 @@ class TestTelegramDeepDive:
             "menu_timbrature",
         ]
         for m in bot_menus:
-            await callbacks._handle_bot_actions(
-                service, m, mock_query, "123", MagicMock(), MagicMock()
-            )
+            await callbacks._handle_bot_actions(service, m, mock_query, "123", MagicMock(), MagicMock())
             assert mock_query.edit_message_text.called
 
     @pytest.mark.asyncio
@@ -69,15 +65,9 @@ class TestTelegramDeepDive:
         mock_query.edit_message_text = AsyncMock()
 
         # Test settings and power menus
-        await callbacks._handle_utility_actions(
-            service, "menu_power", mock_query, "123"
-        )
+        await callbacks._handle_utility_actions(service, "menu_power", mock_query, "123")
         assert "Manutenzione" in mock_query.edit_message_text.call_args[0][0]
 
-        with patch(
-            "src.core.config_manager.load_config", return_value={"fornitori": ["F1"]}
-        ):
-            await callbacks._handle_utility_actions(
-                service, "menu_settings", mock_query, "123"
-            )
+        with patch("src.core.config_manager.load_config", return_value={"fornitori": ["F1"]}):
+            await callbacks._handle_utility_actions(service, "menu_settings", mock_query, "123")
             assert "Impostazioni" in mock_query.edit_message_text.call_args[0][0]

@@ -128,9 +128,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     def set_data(self, data):
         worker = CacheWorker(self.CACHE_PATH)
-        display_data, search, totals, style_cache, date_keys = worker._build_caches(
-            data
-        )
+        display_data, search, totals, style_cache, date_keys = worker._build_caches(data)
         self._on_worker_finished(display_data, search, totals, style_cache, date_keys)
 
     def set_filter(self, text, col_filters=None):
@@ -156,9 +154,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         s_idx = self._search_index
         return [i for i in indices if all(t in s_idx[i] for t in terms)]
 
-    def _apply_column_filters(
-        self, indices: List[int], col_filters: Optional[dict]
-    ) -> List[int]:
+    def _apply_column_filters(self, indices: List[int], col_filters: Optional[dict]) -> List[int]:
         if not col_filters:
             return indices
 
@@ -213,9 +209,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
         return None
 
-    def sort(
-        self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
-    ) -> None:
+    def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
         self.layoutAboutToBeChanged.emit()
 
         reverse = order == Qt.SortOrder.DescendingOrder
@@ -236,10 +230,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if (
-            orientation == Qt.Orientation.Horizontal
-            and role == Qt.ItemDataRole.DisplayRole
-        ):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self.COLUMNS[section]
         return None
 

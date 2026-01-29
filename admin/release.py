@@ -25,9 +25,7 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):
     print(f"\n[STEP] {description}...")
     try:
         if capture:
-            result = subprocess.run(
-                cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True)
             return result.stdout.strip()
 
         result = subprocess.run(cmd, cwd=ROOT_DIR, check=exit_on_fail)
@@ -151,13 +149,9 @@ def main():
         action="store_true",
         help="Skip test execution during pre-flight",
     )
-    parser.add_argument(
-        "--force", action="store_true", help="Force release even if checks fail"
-    )
+    parser.add_argument("--force", action="store_true", help="Force release even if checks fail")
     parser.add_argument("--no-git", action="store_true", help="Skip Git operations")
-    parser.add_argument(
-        "--push", action="store_true", help="Push to remote after release"
-    )
+    parser.add_argument("--push", action="store_true", help="Push to remote after release")
     args = parser.parse_args()
 
     start_time = time.time()
@@ -172,9 +166,7 @@ def main():
     run_command(pre_flight_cmd, "Pre-Flight Safety Check")
 
     # 2. Sync Requirements
-    run_command(
-        [str(VENV_PYTHON), "admin/sync_requirements.py"], "Syncing Requirements"
-    )
+    run_command([str(VENV_PYTHON), "admin/sync_requirements.py"], "Syncing Requirements")
 
     # 3. Resolve Bump Type
     bump_type = args.type
@@ -183,9 +175,7 @@ def main():
         print(f"🔍 Detected bump type: {bump_type}")
 
     # 4. Version Bump
-    run_command(
-        [str(VENV_PYTHON), "admin/bump_version.py", bump_type], f"Bumping {bump_type}"
-    )
+    run_command([str(VENV_PYTHON), "admin/bump_version.py", bump_type], f"Bumping {bump_type}")
     new_version = get_current_version()
 
     # 5. Git Operations
@@ -200,9 +190,7 @@ def main():
             f"Tagging v{new_version}",
         )
         if args.push:
-            run_command(
-                ["git", "push", "origin", "main", "--tags"], "Pushing to remote"
-            )
+            run_command(["git", "push", "origin", "main", "--tags"], "Pushing to remote")
 
     # 5. Build
     build_cmd = [str(VENV_PYTHON), "admin/Crea Setup/build_dist.py"]
