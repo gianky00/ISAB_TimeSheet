@@ -97,9 +97,9 @@ class ThemeManager:
         app.setPalette(palette)
 
     def _apply_stylesheet(self, app: QApplication, theme_name: str):
-        """Carica e applica il file QSS principale."""
+        """Carica e applica il file QSS principale e gli overrides."""
+        # 1. Carica QSS del tema specifico
         qss_path = Path(get_asset_path(f"assets/styles/{theme_name}.qss"))
-
         qss_content = ""
         if qss_path.exists():
             try:
@@ -108,120 +108,21 @@ class ThemeManager:
             except Exception as e:
                 logger.error(f"Errore lettura QSS {qss_path}: {e}")
 
-        # Se il file manca o è vuoto, applica uno stile minimo basato sulla palette
         if not qss_content:
-            qss_content = (
-                f"QMainWindow {{ background-color: {self.palette.background}; }}"
-            )
+            qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
 
-        # Global Light Theme Enforcement for Popups & Windows
-        global_overrides = """
-            /* FORCE LIGHT THEME ON ALL DIALOGS AND MENUS */
-            QDialog, QMainWindow {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            /* Force all widgets INSIDE a Dialog to be light */
-            QDialog QWidget {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            /* But allow specific widgets to have their own backgrounds (like buttons) */
-            QDialog QPushButton {
-                background-color: #f8f9fa;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                padding: 5px 10px;
-            }
-            QDialog QPushButton:hover {
-                background-color: #e9ecef;
-            }
-            QDialog QLabel, QDialog QCheckBox {
-                background-color: transparent; /* inherit white from parent */
-                color: #000000;
-            }
+        # 2. Carica QSS degli Overrides globali (estratto in file esterno)
+        overrides_path = Path(get_asset_path("assets/styles/overrides.qss"))
+        overrides_content = ""
+        if overrides_path.exists():
+            try:
+                with open(overrides_path, "r", encoding="utf-8") as f:
+                    overrides_content = f.read()
+            except Exception as e:
+                logger.error(f"Errore lettura Overrides QSS: {e}")
 
-            QMenu {
-                background-color: #ffffff;
-                color: #000000;
-                border: 1px solid #ced4da;
-            }
-            QMenu::item {
-                background-color: transparent;
-                color: #000000;
-                padding: 6px 20px;
-            }
-            QMenu::item:selected {
-                background-color: #e9ecef;
-                color: #000000;
-            }
-            QMenuBar {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            QMenuBar::item {
-                background-color: transparent;
-                color: #000000;
-            }
-            QMenuBar::item:selected {
-                background-color: #e9ecef;
-            }
-
-            /* Tree View Force Light */
-            QTreeWidget, QTreeView {
-                background-color: #ffffff;
-                color: #000000;
-                alternate-background-color: #f8f9fa;
-                border: 1px solid #dee2e6;
-                selection-background-color: #e9ecef;
-                selection-color: #000000;
-            }
-            QTreeWidget::item, QTreeView::item {
-                color: #000000;
-            }
-            QTreeWidget::item:hover {
-                 background-color: #f1f3f5;
-                 color: #000000;
-            }
-            QTreeWidget::item:selected {
-                background-color: #e9ecef;
-                color: #000000;
-            }
-            QHeaderView::section {
-                background-color: #f8f9fa;
-                color: #000000;
-                border: none;
-                border-bottom: 2px solid #dee2e6;
-                padding: 4px;
-                font-weight: bold;
-            }
-
-            /* Scrollbars */
-            QScrollBar:vertical {
-                border: none;
-                background: #f1f3f5;
-                width: 10px;
-                margin: 0px;
-            }
-            QScrollBar::handle:vertical {
-                background: #ced4da;
-                min-height: 20px;
-                border-radius: 5px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-
-            /* Tooltips */
-            QToolTip {
-                background-color: #ffffff;
-                color: #424242;
-                border: 1px solid #bdbdbd;
-                border-radius: 4px;
-                padding: 5px;
-            }
-        """
-        app.setStyleSheet(qss_content + global_overrides)
+        # 3. Applica la combinazione degli stili
+        app.setStyleSheet(qss_content + overrides_content)
 
 
 def apply_theme(app: QApplication, theme_name: str = "light"):
