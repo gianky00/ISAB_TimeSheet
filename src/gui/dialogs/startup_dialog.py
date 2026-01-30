@@ -198,8 +198,8 @@ class StartupDialog(QDialog):
             "background:rgba(0,0,0,0.35); border-radius:16px; border:1px solid rgba(52,152,219,0.2);"
         )
         log_layout = QVBoxLayout(self.log_frame)
-        log_layout.setContentsMargins(20, 15, 20, 15)
-        log_layout.setSpacing(5)
+        log_layout.setContentsMargins(10, 10, 10, 10)  # Margini ridotti
+        log_layout.setSpacing(2)
 
         log_header = QLabel("INIZIALIZZAZIONE SISTEMA")
         log_header.setStyleSheet(
@@ -215,10 +215,10 @@ class StartupDialog(QDialog):
         self.log_labels = []
         for i in range(5):
             lbl = TypewriterLabel()  # Estratto
-            lbl.setWordWrap(True)  # Abilita a capo automatico
+            lbl.setWordWrap(False)  # Disabilita a capo automatico per singola riga
             lbl.setStyleSheet(
-                f"font-size:12px; color:rgba(255,255,255,{0.2 + i * 0.15}); "
-                f"font-family:'Consolas','Fira Code',monospace; padding:2px 0;"
+                f"font-size:10px; color:rgba(255,255,255,{0.2 + i * 0.15}); "
+                f"font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
             )
             log_layout.addWidget(lbl)
             self.log_labels.append(lbl)
@@ -328,8 +328,8 @@ class StartupDialog(QDialog):
                 is_last = i == len(self.current_logs) - 1
                 opacity = 1.0 if is_last else 0.25 + i * 0.12
                 self.log_labels[i].setStyleSheet(
-                    f"font-size:12px; color:rgba(255,255,255,{opacity}); "
-                    f"font-family:'Consolas','Fira Code',monospace; padding:2px 0;"
+                    f"font-size:10px; color:rgba(255,255,255,{opacity}); "
+                    f"font-family:'Consolas','Fira Code',monospace; padding:1px 0;"
                 )
                 if is_last:
                     self.log_labels[i].set_text_animated(self.current_logs[i], speed=18)
