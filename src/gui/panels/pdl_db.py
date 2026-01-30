@@ -3,19 +3,21 @@ SyncroJob - PDL Database Panel
 Pannello per la visualizzazione del Database PDL SafeWork.
 """
 
+import os
 from datetime import datetime
 from typing import Any, List, Optional, Tuple
 
+import pandas as pd
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
-    QPushButton,
     QScrollArea,
     QSplitter,
     QStyledItemDelegate,
@@ -27,6 +29,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.database import db_manager
 from src.gui.formatters import FastTableModel
+from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -157,10 +160,30 @@ class PDLDBPanel(QWidget):
 
         filter_layout.addStretch()
 
-        refresh_btn = QPushButton("Aggiorna")
-        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(refresh_btn)
+        # Clear Filters
+        self.clear_btn = ModernButton(
+            "RESETTA FILTRI",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+        )
+        self.clear_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.RESET), "#FFFFFF")
+        )
+        self.clear_btn.setToolTip("Resetta Filtri")
+        self.clear_btn.clicked.connect(self._reset_filters)
+        filter_layout.addWidget(self.clear_btn)
+
+        # Export Excel
+        self.export_btn = ModernButton(
+            "ESPORTA", variant=ModernButton.Variant.SUCCESS, size=ModernButton.Size.SMALL
+        )
+        self.export_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.EXCEL), "#FFFFFF")
+        )
+        self.export_btn.setToolTip("Esporta Excel")
+        self.export_btn.clicked.connect(self._export_to_excel)
+        filter_layout.addWidget(self.export_btn)
+
         main_layout.addLayout(filter_layout)
 
         # 2. Contenitore Splitter (Tabella | Dettaglio)
@@ -507,3 +530,101 @@ class PDLDBPanel(QWidget):
         )
         if count < 500:
             QTimer.singleShot(100, self.table.resizeRowsToContents)
+
+    def _reset_filters(self):
+        """Resetta tutti i filtri allo stato iniziale."""
+        # Blocca segnali per evitare reload multipli
+        self.group_filter.blockSignals(True)
+        self.site_filter.blockSignals(True)
+        self.area_filter.blockSignals(True)
+        self.unit_filter.blockSignals(True)
+        self.search_input.blockSignals(True)
+
+        self.search_input.clear()
+        self.group_filter.setCurrentIndex(0)  # Tutti
+        self.site_filter.setCurrentIndex(0)  # Tutti i siti
+
+        # Reset dinamico Area/Unità
+        self.area_filter.clear()
+        self.area_filter.addItem("Tutte")
+        self.area_filter.setCurrentIndex(0)
+
+        self.unit_filter.clear()
+        self.unit_filter.addItem("Tutte")
+        self.unit_filter.setCurrentIndex(0)
+
+        # Sblocca segnali
+        self.group_filter.blockSignals(False)
+        self.site_filter.blockSignals(False)
+        self.area_filter.blockSignals(False)
+        self.unit_filter.blockSignals(False)
+        self.search_input.blockSignals(False)
+
+        # Trigger update singolo
+        self.refresh_data()
+        # Ripopola per sicurezza (es. se aree erano filtrate)
+        QTimer.singleShot(100, self._update_areas)
+        QTimer.singleShot(150, self._update_units)
+
+    def _export_to_excel(self):
+        """Esporta i dati correnti in Excel secondo colonne specifiche."""
+        try:
+            # 1. Costruisce query senza limiti
+            query, params = self._build_pdl_query(self.current_sort_col)
+            # Rimuove LIMIT se presente (dalla logica attuale di _build_query che appende " LIMIT 2000")
+            if " LIMIT " in query:
+                query = query.split(" LIMIT ")[0]
+
+            # Esegue query
+            rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+
+            if not rows:
+                print("Nessun dato da esportare.")
+                return
+
+            # Colonne richieste (Ordine Specifico)
+            # Query originale: id, n_pdl, data_creazione, area, unita, ditta, descrizione_lavoro, tipologia, stato,
+            # apparecchiatura, richiedente, data_richiesta, emittente, data_emissione, aprente, data_apertura,
+            # priorita, contratto, ordine, sito, importato_il
+
+            # Map Indici Query -> Colonne Excel
+            # N° PDL [1], Data Creazione [2], Area [3], Unità [4], Descrizione [6], Stato [8],
+            # Apparecchiatura [9], Richiedente [10], Contratto [17], Ordine [18], Sito [19]
+
+            export_data = []
+            for r in rows:
+                export_data.append(
+                    {
+                        "N° PDL": r[1],
+                        "Data Creazione": r[2],
+                        "Area": r[3],
+                        "Unità": r[4],
+                        "Descrizione": r[6],
+                        "Stato": r[8],
+                        "Apparecchiatura": r[9],
+                        "Richiedente": r[10],
+                        "Contratto": r[17],
+                        "Ordine": r[18],
+                        "Sito": r[19],
+                    }
+                )
+
+            df = pd.DataFrame(export_data)
+
+            # Dialog Salva
+            filename, _ = QFileDialog.getSaveFileName(
+                self,
+                "Esporta Excel",
+                f"Export_PDL_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                "Excel Files (*.xlsx)",
+            )
+
+            if filename:
+                if not filename.endswith(".xlsx"):
+                    filename += ".xlsx"
+
+                df.to_excel(filename, index=False, engine="openpyxl")
+                os.startfile(filename)  # Apre il file automaticamente
+
+        except Exception as e:
+            print(f"Errore Export Excel: {e}")

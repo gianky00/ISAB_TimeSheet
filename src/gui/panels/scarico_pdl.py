@@ -384,6 +384,14 @@ class ScaricoPDLPanel(BaseBotPanel):
         # 3. Cleanup
         self._cleanup_telegram_flags()
 
+        # 4. Auto-Refresh PDL Database
+        if success:
+            win = self.window()
+            if win and hasattr(win, "pdl_db_panel"):
+                # Ricarica i dati nel pannello PDL se inizializzato
+                win.pdl_db_panel.refresh_data()
+                self._on_log("🔄 Aggiornamento Database PDL avviato.")
+
     def _handle_missing_pdls(self, missing_list: list):
         """Segnala PdL non trovati sulla card di stato."""
         if missing_list:
