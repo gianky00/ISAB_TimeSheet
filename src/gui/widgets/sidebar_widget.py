@@ -23,7 +23,7 @@ class SidebarChildButton(SidebarButton):
 
 
 class SidebarGroup(QWidget):
-    """Gruppo espandibile per la sidebar."""
+    """Gruppo espandibile per la sidebar con freccia animata."""
 
     def __init__(self, title, icon_path, parent=None):
         super().__init__(parent)
@@ -31,9 +31,24 @@ class SidebarGroup(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
+        # Container per header (pulsante + freccia)
+        header_container = QWidget()
+        header_layout = QHBoxLayout(header_container)
+        header_layout.setContentsMargins(0, 0, 10, 0)
+        header_layout.setSpacing(0)
+
         self.header_btn = SidebarButton(title, icon_path)
-        # Indicatore freccia (verrà gestito dinamicamente se necessario)
-        self.layout.addWidget(self.header_btn)
+        header_layout.addWidget(self.header_btn, stretch=1)
+
+        # Freccia indicatore (icona SVG)
+
+        self.arrow_label = QLabel()
+        self.arrow_label.setFixedSize(16, 16)
+        self.arrow_label.setStyleSheet("background: transparent;")
+        self._set_arrow_icon(expanded=False)
+        header_layout.addWidget(self.arrow_label)
+
+        self.layout.addWidget(header_container)
 
         self.content_area = QWidget()
         self.content_layout = QVBoxLayout(self.content_area)
@@ -47,6 +62,18 @@ class SidebarGroup(QWidget):
         self.children_btns = []
         self._was_expanded = False  # Memorizza stato apertura prima del collasso
 
+    def _set_arrow_icon(self, expanded: bool):
+        """Imposta l'icona della freccia."""
+        from src.utils.helpers import get_colored_icon
+
+        icon_enum = Icons.CHEVRON_DOWN if expanded else Icons.CHEVRON_RIGHT
+        icon = get_colored_icon(get_asset_path(icon_enum), "#FFFFFF")
+        self.arrow_label.setPixmap(icon.pixmap(14, 14))
+
+    def _update_arrow(self):
+        """Aggiorna l'icona della freccia in base allo stato."""
+        self._set_arrow_icon(self.content_area.isVisible())
+
     def add_child(self, btn: SidebarButton):
         self.content_layout.addWidget(btn)
         self.children_btns.append(btn)
@@ -56,9 +83,11 @@ class SidebarGroup(QWidget):
         self.content_area.setVisible(not is_visible)
         # Aggiorna anche lo stato memorizzato
         self._was_expanded = not is_visible
+        self._update_arrow()
 
     def set_collapsed(self, collapsed):
         self.header_btn.set_collapsed(collapsed)
+        self.arrow_label.setVisible(not collapsed)
         for btn in self.children_btns:
             btn.set_collapsed(collapsed)
 
@@ -69,6 +98,7 @@ class SidebarGroup(QWidget):
         else:
             # Ripristina lo stato salvato quando si espande
             self.content_area.setVisible(self._was_expanded)
+        self._update_arrow()
 
     def set_active_index(self, index, group_indices):
         """Gestisce lo stato attivo del gruppo e dei figli."""
@@ -77,6 +107,7 @@ class SidebarGroup(QWidget):
 
         if is_child_active and not self.header_btn._collapsed:
             self.content_area.setVisible(True)
+            self._update_arrow()
 
         for btn, idx in zip(self.children_btns, group_indices, strict=False):
             btn.setChecked(idx == index)
@@ -138,8 +169,15 @@ class SidebarWidget(QFrame):
 
     def _update_ui_state(self):
         """Aggiorna visibilità elementi in base allo stato."""
+        self.logo_icon.setVisible(not self._is_collapsed)
         self.logo_label.setVisible(not self._is_collapsed)
         self.separator.setVisible(not self._is_collapsed)
+
+        # Aggiorna separatori eleganti
+        if hasattr(self, "sep_1"):
+            self.sep_1.setVisible(not self._is_collapsed)
+        if hasattr(self, "sep_2"):
+            self.sep_2.setVisible(not self._is_collapsed)
 
         # Aggiorna pulsanti
         for btn in (
@@ -155,6 +193,28 @@ class SidebarWidget(QFrame):
         self.group_automazioni.set_collapsed(self._is_collapsed)
         self.group_notifiche.set_collapsed(self._is_collapsed)
 
+    def _create_elegant_separator(self) -> QFrame:
+        """Crea un separatore elegante con gradiente sfumato."""
+        sep = QFrame()
+        sep.setFixedHeight(1)
+        sep.setStyleSheet(
+            """
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:0,
+                    stop:0 transparent,
+                    stop:0.2 rgba(255, 255, 255, 0.15),
+                    stop:0.5 rgba(255, 255, 255, 0.25),
+                    stop:0.8 rgba(255, 255, 255, 0.15),
+                    stop:1 transparent
+                );
+                margin: 8px 15px;
+                border: none;
+            }
+        """
+        )
+        return sep
+
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 20, 5, 20)
@@ -163,8 +223,21 @@ class SidebarWidget(QFrame):
         # Header con Logo (Toggle rimosso)
         header_container = QFrame()
         header_layout = QHBoxLayout(header_container)
-        header_layout.setContentsMargins(15, 0, 0, 0)  # Padding sinistro per logo
-        header_layout.setSpacing(10)
+        header_layout.setContentsMargins(10, 0, 0, 0)  # Padding sinistro per logo
+        header_layout.setSpacing(8)
+
+        # Icona App
+        from PyQt6.QtCore import Qt as QtCore
+        from PyQt6.QtGui import QPixmap
+
+        self.logo_icon = QLabel()
+        logo_pixmap = QPixmap(get_asset_path("assets/app.ico"))
+        if not logo_pixmap.isNull():
+            self.logo_icon.setPixmap(
+                logo_pixmap.scaled(28, 28, QtCore.AspectRatioMode.KeepAspectRatio, QtCore.TransformationMode.SmoothTransformation)
+            )
+        self.logo_icon.setFixedSize(28, 28)
+        header_layout.addWidget(self.logo_icon)
 
         self.logo_label = QLabel("SyncroJob")
         self.logo_label.setObjectName("logoLabel")
@@ -207,6 +280,10 @@ class SidebarWidget(QFrame):
         self.btn_safework = SidebarChildButton("SafeWork", get_asset_path(Icons.SHIELD))
         self.btn_safework.clicked.connect(lambda: self._handle_automazione_click(1))
         self.group_automazioni.add_child(self.btn_safework)
+
+        # Separatore elegante
+        self.sep_1 = self._create_elegant_separator()
+        layout.addWidget(self.sep_1)
 
         # -- GRUPPO DATABASE (Livello 1) --
         self.group_db = SidebarGroup("Database", get_asset_path(Icons.DATABASE))
@@ -253,6 +330,10 @@ class SidebarWidget(QFrame):
         self.group_db.add_child(self.btn_storico_oda)
 
         layout.addStretch()
+
+        # Separatore elegante prima della sezione inferiore
+        self.sep_2 = self._create_elegant_separator()
+        layout.addWidget(self.sep_2)
 
         # 2: Lyra AI
         self.btn_lyra = SidebarButton("Lyra AI", get_asset_path(Icons.SPARKLES))

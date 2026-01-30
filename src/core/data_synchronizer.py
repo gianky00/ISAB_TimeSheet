@@ -277,10 +277,15 @@ class DataSynchronizer:
 
             query = f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) VALUES ({placeholders})"  # nosec B608
 
-            data = [
-                tuple(str(x).strip() if x is not None else "" for x in r)
-                for r in new_data
-            ]
+            # Preserve numeric types, only strip strings
+            def clean_value(x):
+                if x is None:
+                    return ""
+                if isinstance(x, (int, float)):
+                    return x
+                return str(x).strip()
+
+            data = [tuple(clean_value(x) for x in r) for r in new_data]
 
             try:
                 cursor.executemany(query, data)

@@ -71,6 +71,8 @@ class Icons:
     SEARCH = "assets/icons/search.svg"
     DOWNLOAD = "assets/icons/download.svg"
     UPLOAD = "assets/icons/upload.svg"
+    CHEVRON_RIGHT = "assets/icons/chevron-right.svg"
+    CHEVRON_DOWN = "assets/icons/chevron-down.svg"
     SEND = "assets/icons/send.svg"
 
     # Status

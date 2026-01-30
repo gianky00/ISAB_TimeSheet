@@ -97,13 +97,13 @@ class StoricoOdaPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         # Colonne della TreeView (Master)
-        # Sequence: Data OdA, OdA, Pos, Valore Netto, Stato
+        # Nuovo ordine: Data OdA, OdA, Pos, CREATO DA, Descrizione, Valore Netto, Stato
         self.master_headers = [
-            "CREATO DA",  # Nome Destinatario
-            "Descrizione",  # Descrizione
             "Data OdA",
             "OdA",
             "Pos",
+            "CREATO DA",
+            "Descrizione",
             "Valore Netto",
             "Stato",
         ]
@@ -207,9 +207,23 @@ class StoricoOdaPanel(QWidget):
         self.tree.collapsed.connect(self._on_item_collapsed)
         self.tree.doubleClicked.connect(self._on_tree_double_clicked)
 
-        # Header Styling
+        # Header Styling - Larghezze colonne in base al contenuto
         header = self.tree.header()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        # Nuovo ordine: 0=Data OdA, 1=OdA, 2=Pos, 3=CREATO DA, 4=Descrizione, 5=Valore Netto, 6=Stato
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Data OdA
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # OdA
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Pos
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # CREATO DA - stretch
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Descrizione - stretch
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Valore Netto
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Stato
+
+        # Larghezze minime per colonne compatte (più spaziatura)
+        header.setMinimumSectionSize(50)
+        self.tree.setColumnWidth(0, 100)  # Data OdA
+        self.tree.setColumnWidth(1, 90)   # OdA
+        self.tree.setColumnWidth(2, 50)   # Pos
+        self.tree.setColumnWidth(6, 80)   # Stato
 
         # Custom Delegate Style
         self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
@@ -422,13 +436,14 @@ class StoricoOdaPanel(QWidget):
                 item_stato = QStandardItem(str(r[4]))
 
                 # Parent items (initially not bold until expanded)
-                # List order must match self.master_headers
+                # List order must match self.master_headers:
+                # Data OdA, OdA, Pos, CREATO DA, Descrizione, Valore Netto, Stato
                 parent_row_items = [
-                    item_creato,
-                    item_desc,
                     item_data,
                     item_oda,
                     item_pos,
+                    item_creato,
+                    item_desc,
                     item_val,
                     item_stato,
                 ]
@@ -437,25 +452,25 @@ class StoricoOdaPanel(QWidget):
                     it.setEditable(False)
 
                 # Store full data on the parent too (representative of the position)
-                # Store on first column (CREATO DA)
-                item_creato.setData(r, Qt.ItemDataRole.UserRole)
+                # Store on first column (Data OdA)
+                item_data.setData(r, Qt.ItemDataRole.UserRole)
 
                 self.model.appendRow(parent_row_items)
                 groups[group_key] = (
-                    item_creato  # Keep reference to first item as parent
+                    item_data  # Keep reference to first item as parent
                 )
 
             parent_item = groups[group_key]
 
             # Create Child Row (The detailed line)
-            # Alignment for children (UPDATED LAYOUT 3 with new columns):
-            # Col 0 (CREATO DA)    -> Empty
-            # Col 1 (Descrizione)  -> {Testo Breve/Desc Detailed}
-            # Col 2 (Data OdA)     -> Empty
-            # Col 3 (OdA)          -> Empty
-            # Col 4 (Pos)          -> {Unità di Mis} {Quantità}
-            # Col 5 (Valore Netto) -> {Prezzo Lordo}
-            # Col 6 (Stato)        -> Empty
+            # Nuovo Layout colonne:
+            # Col 0 (Data OdA)      -> Empty
+            # Col 1 (OdA)           -> Empty
+            # Col 2 (Pos)           -> Empty
+            # Col 3 (CREATO DA)     -> {Testo Breve/Desc Merged}
+            # Col 4 (Descrizione)   -> Empty (merge visivo con Col 3)
+            # Col 5 (Valore Netto)  -> {Prezzo Lordo}
+            # Col 6 (Stato)         -> {UOM Qta}
 
             raw_testo = str(r[31]).strip() if r[31] else ""
             raw_desc = str(r[6]).strip() if r[6] else ""
@@ -465,36 +480,34 @@ class StoricoOdaPanel(QWidget):
             qta = r[28]
             uom = r[29]
 
-            # Col 0: Descrizione (Disegnata dal Delegate sulla Col 1 in merge con Col 0)
+            # Col 0, 1, 2: Empty
+            c_empty_0 = QStandardItem("")
+            c_empty_1 = QStandardItem("")
+            c_empty_2 = QStandardItem("")
+
+            # Col 3: Descrizione (merged)
             c_desc_merged = QStandardItem(str(desc))
             c_desc_merged.setTextAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             )
 
-            # Col 1: Empty (Usata dal delegate per disegnare esteso)
-            c_empty_1 = QStandardItem("")
-
-            # Col 2, 3: Empty
-            c_empty_2 = QStandardItem("")
-            c_empty_3 = QStandardItem("")
-
-            # Col 4: UOM + Qta
-            c_uom_qta = QStandardItem(f"{uom} {qta}")
+            # Col 4: Empty (merge visivo)
+            c_empty_4 = QStandardItem("")
 
             # Col 5: Prezzo Lordo
             c_prezzo = QStandardItem(format_currency_smart(str(prezzo)))
 
-            # Col 6: Empty
-            c_stato_empty = QStandardItem("")
+            # Col 6: UOM + Qta
+            c_uom_qta = QStandardItem(f"{uom} {qta}")
 
             child_row_items = [
-                c_desc_merged,
+                c_empty_0,
                 c_empty_1,
                 c_empty_2,
-                c_empty_3,
-                c_uom_qta,
+                c_desc_merged,
+                c_empty_4,
                 c_prezzo,
-                c_stato_empty,
+                c_uom_qta,
             ]
 
             # Child Read-only e Stile
