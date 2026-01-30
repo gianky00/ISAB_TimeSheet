@@ -250,6 +250,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.data_table = EditableDataTable([{"name": "NUMERO PDL", "type": "text"}])
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
+        self.data_table.data_changed.connect(self._reset_status_list)
         work_area.addWidget(self.data_table, stretch=8)
 
         # Destra: Contenitore Status con Header
@@ -317,6 +318,10 @@ class ScaricoPDLPanel(BaseBotPanel):
             "pdl_printer_name", self.printer_combo.currentText()
         )
         config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
+
+    def _reset_status_list(self):
+        """Resetta la lista degli stati quando la tabella viene modificata."""
+        self.status_list.clear()
 
     def _clear_table(self):
         if (
