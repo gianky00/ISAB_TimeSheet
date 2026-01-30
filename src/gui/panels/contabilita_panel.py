@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QPushButton,
     QTableWidget,
     QTabWidget,
     QTreeWidget,
@@ -28,6 +27,7 @@ from src.gui.widgets.contabilita.attivita_tab import AttivitaProgrammateTab
 from src.gui.widgets.contabilita.certificati_tab import CertificatiCampioneTab
 from src.gui.widgets.contabilita.giornaliere_tab import GiornaliereYearTab
 from src.gui.widgets.contabilita.year_tab import ContabilitaYearTab
+from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -93,33 +93,10 @@ class ContabilitaPanel(QWidget):
         self.status_lbl.setTextFormat(Qt.TextFormat.RichText)
 
         # Update Button
-        self.update_btn = QPushButton("Aggiorna")
-        self.update_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
-        )
-        self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.update_btn.setFixedSize(110, 34)  # Slightly larger
-        self.update_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #3b82f6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: 600;
-                font-size: 13px;
-                padding: 6px 12px;
-            }
-            QPushButton:hover {
-                background-color: #2563eb;
-            }
-            QPushButton:pressed {
-                background-color: #1d4ed8;
-            }
-            QPushButton:disabled {
-                background-color: #94a3b8;
-            }
-        """
+        self.update_btn = ModernButton(
+            "Aggiorna",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.REFRESH),
         )
         self.update_btn.clicked.connect(self.start_import_process)
 

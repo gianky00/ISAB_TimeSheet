@@ -5,9 +5,11 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
     QPushButton,
+    QVBoxLayout,
 )
 
 from src.core.constants import Icons
+from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -16,15 +18,23 @@ class AccountDialog(QDialog):
 
     def __init__(self, parent=None, username="", password=""):
         super().__init__(parent)
-        self.setWindowTitle("Account ISAB")
+        self.setWindowTitle("Account")
         self.setFixedWidth(350)
-        self.setStyleSheet("font-size: 15px;")
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+        )
 
-        layout = QFormLayout(self)
+        # Main Layout (Vertical) instead of Form for better control
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(15)
+
+        form = QFormLayout()
+        form.setSpacing(10)
 
         self.username_edit = QLineEdit(username)
         self.username_edit.setMinimumHeight(35)
-        layout.addRow("Username:", self.username_edit)
+        form.addRow("Username:", self.username_edit)
 
         self.password_edit = QLineEdit(password)
         self.password_edit.setMinimumHeight(35)
@@ -39,7 +49,7 @@ class AccountDialog(QDialog):
 
         self.toggle_pass_btn = QPushButton()
         self.toggle_pass_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.EYE), "#000000")
+            get_colored_icon(get_asset_path(Icons.EYE), "#555555")
         )
         self.toggle_pass_btn.setIconSize(QSize(20, 20))
         self.toggle_pass_btn.setToolTip("Mostra/Nascondi password")
@@ -49,43 +59,48 @@ class AccountDialog(QDialog):
             """
             QPushButton {
                 background-color: white;
-                border: 1px solid black;
+                border: 1px solid #ced4da;
                 border-radius: 4px;
-                font-size: 16px;
             }
             QPushButton:hover {
                 background-color: #f8f9fa;
+                border-color: #adb5bd;
             }
         """
         )
         self.toggle_pass_btn.clicked.connect(self._toggle_password_visibility)
         pass_layout.addWidget(self.toggle_pass_btn)
 
-        layout.addRow("Password:", pass_layout)
+        form.addRow("Password:", pass_layout)
+        main_layout.addLayout(form)
 
+        # Buttons
         btns = QHBoxLayout()
-        ok_btn = QPushButton("Salva")
-        ok_btn.setMinimumHeight(35)
-        ok_btn.clicked.connect(self.accept)
-        cancel_btn = QPushButton("Annulla")
-        cancel_btn.setMinimumHeight(35)
-        cancel_btn.clicked.connect(self.reject)
-        btns.addWidget(ok_btn)
-        btns.addWidget(cancel_btn)
+        btns.setSpacing(10)
+        btns.addStretch()
 
-        layout.addRow(btns)
+        cancel_btn = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
+        cancel_btn.clicked.connect(self.reject)
+
+        ok_btn = ModernButton("Salva", variant=ModernButton.Variant.PRIMARY)
+        ok_btn.clicked.connect(self.accept)
+
+        btns.addWidget(cancel_btn)
+        btns.addWidget(ok_btn)
+
+        main_layout.addLayout(btns)
 
     def _toggle_password_visibility(self):
         if self.password_edit.echoMode() == QLineEdit.EchoMode.Password:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Normal)
             self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.LOCK), "#000000")
+                get_colored_icon(get_asset_path(Icons.LOCK), "#555555")
             )
             self.toggle_pass_btn.setToolTip("Nascondi password")
         else:
             self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
             self.toggle_pass_btn.setIcon(
-                get_colored_icon(get_asset_path(Icons.EYE), "#000000")
+                get_colored_icon(get_asset_path(Icons.EYE), "#555555")
             )
             self.toggle_pass_btn.setToolTip("Mostra password")
 

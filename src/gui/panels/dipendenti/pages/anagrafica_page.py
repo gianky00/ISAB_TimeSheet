@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pandas as pd
 from PyQt6.QtCore import (
-    QSize,
     Qt,
     QTimer,
 )
@@ -23,7 +22,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QPushButton,
     QSizePolicy,
     QTableView,
     QVBoxLayout,
@@ -40,6 +38,7 @@ from src.gui.panels.dipendenti.shared import (
     create_field_row,
     create_info_card,
 )
+from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
@@ -89,39 +88,29 @@ class AnagraficaPage(QWidget):
 
         # 1. Filtri e Azioni
         filter_layout = QHBoxLayout()
-        filter_layout.setSpacing(5)
+        filter_layout.setSpacing(10)
 
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Cerca per nome, cognome, CF o badge...")
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
-        email_report_btn = QPushButton("Genera Report via Email")
-        email_report_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.SEND), "#ffffff")
-        )
-        email_report_btn.setIconSize(QSize(24, 24))
-        email_report_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #0d6efd;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px 15px;
-                font-weight: 600;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #0b5ed7;
-            }
-            QPushButton:pressed {
-                background-color: #0a58ca;
-            }
-        """
+        email_report_btn = ModernButton(
+            "Genera Report via Email",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.SEND),
         )
         email_report_btn.clicked.connect(self._generate_email_report)
         filter_layout.addWidget(email_report_btn)
+
+        # Update Button (Accanto a Genera Report)
+        self.update_btn = ModernButton(
+            "Aggiorna",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.REFRESH),
+        )
+        self.update_btn.clicked.connect(self.refresh_data)
+        filter_layout.addWidget(self.update_btn)
 
         main_layout.addLayout(filter_layout)
 
