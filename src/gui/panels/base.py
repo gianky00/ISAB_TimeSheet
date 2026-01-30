@@ -12,7 +12,6 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
-    QInputDialog,
     QVBoxLayout,
     QWidget,
 )
@@ -22,6 +21,7 @@ from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
 from src.core.stats_manager import StatsManager
 from src.gui.design.spacing import Spacing
+from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 from src.gui.widgets import MissionReportCard, TimelineWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.status_card import StatusCard
@@ -388,7 +388,7 @@ class BaseBotPanel(QWidget):
         self, prompt: str, result_container: dict, event: threading.Event
     ):
         """Callback per input utente dal worker (thread-safe via signal)."""
-        text, ok = QInputDialog.getText(self, "Richiesta Input", prompt)
+        text, ok = StandardInputDialog.get_input(self, "Richiesta Input", prompt)
         if ok:
             result_container["value"] = text
         else:

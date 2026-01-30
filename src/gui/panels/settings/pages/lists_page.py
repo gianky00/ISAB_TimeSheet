@@ -2,7 +2,6 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QListWidget,
     QListWidgetItem,
     QMenu,
@@ -15,6 +14,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.dialogs.account_dialog import AccountDialog
+from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 from src.gui.panels.settings.shared import (
     create_group_box,
     list_style,
@@ -398,7 +398,7 @@ class ListsPage(QWidget):
         return [list_widget.item(i).text() for i in range(list_widget.count())]
 
     def _add_simple(self, list_widget, title):
-        text, ok = QInputDialog.getText(self, "Aggiungi", title)
+        text, ok = StandardInputDialog.get_input(self, "Aggiungi", title)
         if ok and text:
             list_widget.addItem(text)
             self.settings_changed.emit()
@@ -406,7 +406,9 @@ class ListsPage(QWidget):
     def _edit_simple(self, list_widget, title):
         item = list_widget.currentItem()
         if item:
-            text, ok = QInputDialog.getText(self, "Modifica", title, text=item.text())
+            text, ok = StandardInputDialog.get_input(
+                self, "Modifica", title, text=item.text()
+            )
             if ok and text:
                 item.setText(text)
                 self.settings_changed.emit()
