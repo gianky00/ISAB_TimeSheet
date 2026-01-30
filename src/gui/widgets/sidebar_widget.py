@@ -138,6 +138,7 @@ class SidebarWidget(QFrame):
 
     def _update_ui_state(self):
         """Aggiorna visibilità elementi in base allo stato."""
+        self.logo_icon.setVisible(not self._is_collapsed)
         self.logo_label.setVisible(not self._is_collapsed)
         self.separator.setVisible(not self._is_collapsed)
 
@@ -163,8 +164,21 @@ class SidebarWidget(QFrame):
         # Header con Logo (Toggle rimosso)
         header_container = QFrame()
         header_layout = QHBoxLayout(header_container)
-        header_layout.setContentsMargins(15, 0, 0, 0)  # Padding sinistro per logo
-        header_layout.setSpacing(10)
+        header_layout.setContentsMargins(10, 0, 0, 0)  # Padding sinistro per logo
+        header_layout.setSpacing(8)
+
+        # Icona App
+        from PyQt6.QtCore import Qt as QtCore
+        from PyQt6.QtGui import QPixmap
+
+        self.logo_icon = QLabel()
+        logo_pixmap = QPixmap(get_asset_path("assets/app.ico"))
+        if not logo_pixmap.isNull():
+            self.logo_icon.setPixmap(
+                logo_pixmap.scaled(28, 28, QtCore.AspectRatioMode.KeepAspectRatio, QtCore.TransformationMode.SmoothTransformation)
+            )
+        self.logo_icon.setFixedSize(28, 28)
+        header_layout.addWidget(self.logo_icon)
 
         self.logo_label = QLabel("SyncroJob")
         self.logo_label.setObjectName("logoLabel")
