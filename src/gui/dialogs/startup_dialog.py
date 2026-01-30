@@ -28,7 +28,7 @@ from PyQt6.QtWidgets import (
 
 # Import widget specializzati
 from src.gui.widgets.startup.particle_background import ParticleBackground
-from src.gui.widgets.startup.resource_monitor import ResourceMonitor
+# from src.gui.widgets.startup.resource_monitor import ResourceMonitor
 from src.gui.widgets.startup.startup_widgets import (
     AnimatedBorder,
     GlowingProgressBar,
@@ -107,7 +107,7 @@ class StartupDialog(QDialog):
     def _setup_content(self):
         """Configura il contenuto principale (header, console, progress, footer)."""
         content_layout = QVBoxLayout(self.content)
-        content_layout.setContentsMargins(55, 45, 55, 45)
+        content_layout.setContentsMargins(30, 45, 30, 45)  # Ridotti margini laterali per logs
         content_layout.setSpacing(20)
 
         self._setup_header(content_layout)
@@ -215,6 +215,7 @@ class StartupDialog(QDialog):
         self.log_labels = []
         for i in range(5):
             lbl = TypewriterLabel()  # Estratto
+            lbl.setWordWrap(True)  # Abilita a capo automatico
             lbl.setStyleSheet(
                 f"font-size:12px; color:rgba(255,255,255,{0.2 + i * 0.15}); "
                 f"font-family:'Consolas','Fira Code',monospace; padding:2px 0;"
@@ -230,7 +231,7 @@ class StartupDialog(QDialog):
         parent_layout.addWidget(self.progress)
 
     def _setup_footer(self, parent_layout: QVBoxLayout):
-        """Configura il footer con indicatore, status e resource monitor."""
+        """Configura il footer con indicatore, status."""
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 5, 0, 0)
 
@@ -253,10 +254,8 @@ class StartupDialog(QDialog):
         footer.addWidget(self.dots)
 
         footer.addStretch()
-
-        # Resource Monitor (Estratto)
-        self.resource_mon = ResourceMonitor()
-        footer.addWidget(self.resource_mon)
+        
+        # Rimosso Resource Monitor
 
         parent_layout.addLayout(footer)
 
@@ -310,7 +309,7 @@ class StartupDialog(QDialog):
     def _on_progress(self, message: str, prog: int):
         """Aggiorna UI - chiamato dal thread principale via signal."""
         self.status.setText(message.upper())
-        self.resource_mon.trigger_activity()
+        # self.resource_mon.trigger_activity()
 
         if prog >= 90:
             self.indicator.setStyleSheet("background:#2ecc71; border-radius:4px;")
@@ -369,8 +368,8 @@ class StartupDialog(QDialog):
                 self._dot_timer.stop()
             with suppress(Exception):
                 self._pulse_timer.stop()
-            with suppress(Exception):
-                self.resource_mon.timer.stop()
+            # with suppress(Exception):
+            #     self.resource_mon.timer.stop()
             for lbl in self.log_labels:
                 with suppress(Exception):
                     lbl._timer.stop()
