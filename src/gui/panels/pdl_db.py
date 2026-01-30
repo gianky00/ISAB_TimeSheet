@@ -106,6 +106,8 @@ class PDLDBPanel(QWidget):
         self._setup_ui()
         QTimer.singleShot(50, self.refresh_data)
         QTimer.singleShot(100, self._populate_groups)
+        QTimer.singleShot(150, self._update_areas)
+        QTimer.singleShot(200, self._update_units)
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -125,6 +127,7 @@ class PDLDBPanel(QWidget):
         filter_layout.addWidget(QLabel("Gruppo:"))
         self.group_filter = QComboBox()
         self.group_filter.addItem("Tutti")
+        self.group_filter.setMinimumWidth(80)
         filter_layout.addWidget(self.group_filter)
 
         filter_layout.addWidget(QLabel("Sito:"))
@@ -132,9 +135,23 @@ class PDLDBPanel(QWidget):
         self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
         filter_layout.addWidget(self.site_filter)
 
+        filter_layout.addWidget(QLabel("Area:"))
+        self.area_filter = QComboBox()
+        self.area_filter.addItem("Tutte")
+        self.area_filter.setMinimumWidth(100)
+        filter_layout.addWidget(self.area_filter)
+
+        filter_layout.addWidget(QLabel("Unità:"))
+        self.unit_filter = QComboBox()
+        self.unit_filter.addItem("Tutte")
+        self.unit_filter.setMinimumWidth(80)
+        filter_layout.addWidget(self.unit_filter)
+
         # Connessioni segnali (DOPO inizializzazione widget per evitare crash)
         self.group_filter.currentTextChanged.connect(self.refresh_data)
-        self.site_filter.currentTextChanged.connect(self.refresh_data)
+        self.site_filter.currentTextChanged.connect(self._on_site_changed)
+        self.area_filter.currentTextChanged.connect(self._on_area_changed)
+        self.unit_filter.currentTextChanged.connect(self.refresh_data)
 
         filter_layout.addStretch()
 
@@ -201,19 +218,110 @@ class PDLDBPanel(QWidget):
         main_layout.addWidget(self.splitter)
 
     def _populate_groups(self):
-        """Popola la dropdown dei gruppi estraendoli dal database."""
+        """Popola la dropdown dei gruppi (indipendente)."""
         try:
-            query = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
-            rows = db_manager.execute_query(db_manager.DB_PDL, query)
+            query_grp = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
+            rows_grp = db_manager.execute_query(db_manager.DB_PDL, query_grp)
+            
             self.group_filter.blockSignals(True)
             self.group_filter.clear()
             self.group_filter.addItem("Tutti")
-            for r in rows:
+            for r in rows_grp:
                 if r[0]:
                     self.group_filter.addItem(str(r[0]))
             self.group_filter.blockSignals(False)
         except Exception as e:
             print(f"Errore popolamento gruppi: {e}")
+
+    def _update_areas(self):
+        """Aggiorna le aree in base al sito selezionato."""
+        site = self.site_filter.currentText()
+        query = "SELECT DISTINCT area FROM pdl WHERE area IS NOT NULL AND area != ''"
+        params = []
+        
+        if site != "Tutti i siti":
+            query += " AND sito = ?"
+            params.append(site)
+            
+        query += " ORDER BY area"
+        
+        try:
+            rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+            
+            current_area = self.area_filter.currentText()
+            self.area_filter.blockSignals(True)
+            self.area_filter.clear()
+            self.area_filter.addItem("Tutte")
+            
+            found = False
+            for r in rows:
+                if r[0]:
+                    self.area_filter.addItem(str(r[0]))
+                    if str(r[0]) == current_area:
+                        found = True
+                        
+            # Ripristina selezione se possibile, altrimenti Tutte
+            if found:
+                self.area_filter.setCurrentText(current_area)
+            else:
+                self.area_filter.setCurrentIndex(0)
+                
+            self.area_filter.blockSignals(False)
+        except Exception as e:
+            print(f"Errore update areas: {e}")
+
+    def _update_units(self):
+        """Aggiorna le unità in base a sito e area selezionati."""
+        site = self.site_filter.currentText()
+        area = self.area_filter.currentText()
+        
+        query = "SELECT DISTINCT unita FROM pdl WHERE unita IS NOT NULL AND unita != ''"
+        params = []
+        
+        if site != "Tutti i siti":
+            query += " AND sito = ?"
+            params.append(site)
+            
+        if area != "Tutte":
+            query += " AND area = ?"
+            params.append(area)
+            
+        query += " ORDER BY unita"
+        
+        try:
+            rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+            
+            current_unit = self.unit_filter.currentText()
+            self.unit_filter.blockSignals(True)
+            self.unit_filter.clear()
+            self.unit_filter.addItem("Tutte")
+            
+            found = False
+            for r in rows:
+                if r[0]:
+                    self.unit_filter.addItem(str(r[0]))
+                    if str(r[0]) == current_unit:
+                        found = True
+            
+            if found:
+                self.unit_filter.setCurrentText(current_unit)
+            else:
+                self.unit_filter.setCurrentIndex(0)
+                
+            self.unit_filter.blockSignals(False)
+        except Exception as e:
+            print(f"Errore update units: {e}")
+
+    def _on_site_changed(self):
+        """Gestisce il cambio sito: aggiorna aree (che aggiorneranno unità) e tabella."""
+        self._update_areas()
+        self._update_units()  # Forzato per sicurezza
+        self.refresh_data()
+
+    def _on_area_changed(self):
+        """Gestisce il cambio area: aggiorna unità e tabella."""
+        self._update_units()
+        self.refresh_data()
 
     def _on_selection_changed(self, selected, _deselected):
         """Aggiorna il pannello dettaglio quando si seleziona una riga."""
@@ -286,10 +394,30 @@ class PDLDBPanel(QWidget):
             query += " AND n_pdl LIKE ?"
             params.append(f"%/{group_filter}")
 
+        if self.area_filter.currentText() != "Tutte":
+            query += " AND area = ?"
+            params.append(self.area_filter.currentText())
+
+        if self.unit_filter.currentText() != "Tutte":
+            query += " AND unita = ?"
+            params.append(self.unit_filter.currentText())
+
         if search_text:
-            query += " AND (n_pdl LIKE ? OR area LIKE ? OR descrizione_lavoro LIKE ? OR ditta LIKE ? OR richiedente LIKE ? OR emittente LIKE ?)"
+            # Ricerca estesa su TUTTI i campi rilevanti
+            # Colonne: n_pdl, area, unita, ditta, descrizione_lavoro, tipologia, stato, 
+            # apparecchiatura, richiedente, emittente, aprente, priorita, contratto, ordine, sito
+            
+            search_cols = [
+                "n_pdl", "area", "unita", "ditta", "descrizione_lavoro", 
+                "tipologia", "stato", "apparecchiatura", "richiedente", 
+                "emittente", "aprente", "priorita", "contratto", "ordine", "sito"
+            ]
+            
+            OR_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
+            query += f" AND ({OR_clause})"
+            
             p = f"%{search_text}%"
-            params.extend([p, p, p, p, p, p])
+            params.extend([p] * len(search_cols))
 
         # Ordinamento
         order_map = {
