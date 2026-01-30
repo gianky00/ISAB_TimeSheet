@@ -69,7 +69,9 @@ class TestWaitForOverlay:
         mock_wait_class.return_value = mock_wait
         mock_wait.until.return_value = True
 
-        result = wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"), timeout=10)
+        result = wait_for_overlay_to_disappear(
+            mock_driver, (By.ID, "overlay"), timeout=10
+        )
         assert result is True
 
     @patch("src.bots.base.wait_helpers.WebDriverWait")
@@ -78,7 +80,9 @@ class TestWaitForOverlay:
         mock_wait_class.return_value = mock_wait
         mock_wait.until.side_effect = TimeoutException()
 
-        result = wait_for_overlay_to_disappear(mock_driver, (By.ID, "overlay"), timeout=1)
+        result = wait_for_overlay_to_disappear(
+            mock_driver, (By.ID, "overlay"), timeout=1
+        )
         assert result is False
 
 
@@ -127,7 +131,9 @@ class TestPollForFile:
 
     def test_file_not_found_timeout(self, temp_download_dir):
         """Test timeout se file non appare."""
-        result = poll_for_file(temp_download_dir, pattern="nonexistent.txt", timeout=1, poll_interval=0.1)
+        result = poll_for_file(
+            temp_download_dir, pattern="nonexistent.txt", timeout=1, poll_interval=0.1
+        )
         assert result is None
 
 
@@ -193,7 +199,9 @@ class TestPollForNewFile:
 
         # Modifica file in thread (simulate overwrite)
         def overwrite_file():
-            time.sleep(1.2)  # Sleep > 1s per garantire cambio mtime rilevabile (tolleranza è 1.0s)
+            time.sleep(
+                1.2
+            )  # Sleep > 1s per garantire cambio mtime rilevabile (tolleranza è 1.0s)
             target_file.write_text("version2")
 
         threading.Thread(target=overwrite_file).start()
@@ -214,7 +222,9 @@ class TestPollForNewFile:
         """Nessun cambiamento -> timeout."""
         files_before = {str(f.resolve()) for f in temp_download_dir.glob("*")}
 
-        result = poll_for_new_file(temp_download_dir, files_before, timeout=0.5, poll_interval=0.1)
+        result = poll_for_new_file(
+            temp_download_dir, files_before, timeout=0.5, poll_interval=0.1
+        )
         assert result is None
 
 
@@ -237,7 +247,9 @@ class TestSafeClickWithRetry:
 
     @patch("src.bots.base.wait_helpers.wait_for_element_clickable")
     @patch("src.bots.base.wait_helpers.time.sleep")
-    def test_click_retry_on_intercept(self, mock_sleep, mock_wait_clickable, mock_driver):
+    def test_click_retry_on_intercept(
+        self, mock_sleep, mock_wait_clickable, mock_driver
+    ):
         from selenium.common.exceptions import ElementClickInterceptedException
 
         mock_element = MagicMock()
@@ -249,7 +261,9 @@ class TestSafeClickWithRetry:
             None,
         ]
 
-        result = safe_click_with_retry(mock_driver, (By.ID, "button"), retries=3, retry_delay=0.1)
+        result = safe_click_with_retry(
+            mock_driver, (By.ID, "button"), retries=3, retry_delay=0.1
+        )
         assert result is True
         assert mock_element.click.call_count == 2
 

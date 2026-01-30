@@ -58,7 +58,9 @@ class AnimatedBorder(QWidget):
 
         for offset in [6, 4, 2]:
             glow_path = QPainterPath()
-            glow_path.addRoundedRect(-offset, -offset, w + offset * 2, h + offset * 2, r + offset, r + offset)
+            glow_path.addRoundedRect(
+                -offset, -offset, w + offset * 2, h + offset * 2, r + offset, r + offset
+            )
             alpha = int((25 - offset * 3) * intensity)
             pen = QPen(QColor(52, 152, 219, alpha), offset * 1.5)
             pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
@@ -204,9 +206,14 @@ class PulsingLogo(QWidget):
 
         size = int(64 * scale)
         scaled = self.pixmap.scaled(
-            size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+            size,
+            size,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
         )
-        painter.drawPixmap(int(cx - scaled.width() / 2), int(cy - scaled.height() / 2), scaled)
+        painter.drawPixmap(
+            int(cx - scaled.width() / 2), int(cy - scaled.height() / 2), scaled
+        )
 
 
 class TypewriterLabel(QLabel):

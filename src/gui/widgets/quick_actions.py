@@ -240,16 +240,24 @@ class QuickActions(QWidget):
         layout.setSpacing(2)  # Spazio minimo tra titolo e pulsanti
 
         title = QLabel("Azioni Rapide")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;")
+        title.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;"
+        )
         layout.addWidget(title)
 
         # Grid Layout per 2 righe (no scroll)
         self.chips_widget = QWidget()
-        self.chips_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.chips_widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         self.chips_layout = QGridLayout(self.chips_widget)
-        self.chips_layout.setContentsMargins(0, 4, 0, 0)  # Margine minimo sopra i pulsanti
+        self.chips_layout.setContentsMargins(
+            0, 4, 0, 0
+        )  # Margine minimo sopra i pulsanti
         self.chips_layout.setSpacing(8)  # Spazio tra i pulsanti
-        self.chips_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.chips_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
 
         layout.addWidget(self.chips_widget)
         layout.addStretch()

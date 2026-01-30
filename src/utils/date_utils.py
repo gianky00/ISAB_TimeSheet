@@ -16,7 +16,9 @@ DATE_FORMATS = [
 ]
 
 
-def parse_date_flexible(date_str: Optional[str], formats: Optional[list[str]] = None) -> Optional[date]:
+def parse_date_flexible(
+    date_str: Optional[str], formats: Optional[list[str]] = None
+) -> Optional[date]:
     """
     Tenta di parsare una stringa data usando più formati.
 
@@ -104,7 +106,9 @@ def format_date_iso(date_obj: Optional[date]) -> str:
     return date_obj.strftime("%Y-%m-%d")
 
 
-def calculate_days_diff(date_obj: Optional[date], from_date: Optional[date] = None) -> Optional[int]:
+def calculate_days_diff(
+    date_obj: Optional[date], from_date: Optional[date] = None
+) -> Optional[int]:
     """
     Calcola la differenza in giorni tra due date.
 
@@ -122,7 +126,9 @@ def calculate_days_diff(date_obj: Optional[date], from_date: Optional[date] = No
     return (from_date - date_obj).days
 
 
-def get_status_by_days(days: Optional[int], thresholds: Tuple[int, int] = (20, 30)) -> Tuple[str, str]:
+def get_status_by_days(
+    days: Optional[int], thresholds: Tuple[int, int] = (20, 30)
+) -> Tuple[str, str]:
     """
     Determina lo status e il colore in base ai giorni trascorsi.
 
@@ -167,7 +173,9 @@ def format_days_ago(days: Optional[int]) -> str:
         return f"{days} giorni fa"
 
 
-def get_date_range(days_back: int, from_date: Optional[date] = None) -> Tuple[date, date]:
+def get_date_range(
+    days_back: int, from_date: Optional[date] = None
+) -> Tuple[date, date]:
     """
     Calcola un range di date.
 

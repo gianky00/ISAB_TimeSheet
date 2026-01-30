@@ -48,7 +48,9 @@ class ResourceMonitor(QWidget):
         # Activity Indicator (Fake IO visualization)
         self.activity_bar = QFrame()
         self.activity_bar.setFixedSize(6, 28)
-        self.activity_bar.setStyleSheet("background: rgba(255,255,255,0.1); border-radius: 3px;")
+        self.activity_bar.setStyleSheet(
+            "background: rgba(255,255,255,0.1); border-radius: 3px;"
+        )
 
         layout.addStretch()
         layout.addLayout(stats_layout)
@@ -111,7 +113,9 @@ class ResourceMonitor(QWidget):
 
                 if delta_time > 0:
                     cpu_count = os.cpu_count() or 1
-                    cpu_percent = (delta_proc / (delta_time * 10_000_000 * cpu_count)) * 100
+                    cpu_percent = (
+                        delta_proc / (delta_time * 10_000_000 * cpu_count)
+                    ) * 100
                     self.cpu_lbl.setText(f"CPU: {cpu_percent:.1f}%")
 
             self.last_proc_time = current_proc

@@ -14,7 +14,7 @@ def temp_audit_db(tmp_path, mocker):
     mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
     # Patch signals to avoid PyQt6 issues
     mocker.patch("src.core.audit.manager.AuditSignals.instance")
-    
+
     # Force re-initialization for the singleton in test
     AuditManager._instance = None
     manager = AuditManager()
@@ -34,7 +34,9 @@ def mock_config_stats():
 class TestAuditManager:
     def test_log_action(self, temp_audit_db):
         manager = temp_audit_db
-        manager.log_action("Test Action", category="test", entity="user", params={"p": 1})
+        manager.log_action(
+            "Test Action", category="test", entity="user", params={"p": 1}
+        )
 
         # Verify data
         logs = manager.get_logs(limit=1)

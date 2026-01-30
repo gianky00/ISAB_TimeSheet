@@ -27,7 +27,9 @@ class DiagPage(QWidget):
         diag_layout.addStretch()
 
         open_folder_btn = QPushButton("  Apri Cartella Dati")
-        open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
+        open_folder_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
+        )
         open_folder_btn.clicked.connect(self._open_data_folder)
         style_button(open_folder_btn)
         diag_layout.addWidget(open_folder_btn)

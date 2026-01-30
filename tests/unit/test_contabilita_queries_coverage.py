@@ -13,8 +13,12 @@ class TestContabilitaQueriesCoverage:
         mocker.patch.object(DatabaseManager, "DB_CONTABILITA", p_cont)
         mocker.patch.object(DatabaseManager, "DB_TIMBRATURE", p_timb)
         mocker.patch.object(DatabaseManager, "DB_PDL", tmp_path / "queries_pdl.db")
-        mocker.patch.object(DatabaseManager, "DB_STORICO_ODA", tmp_path / "queries_oda.db")
-        mocker.patch.object(DatabaseManager, "DB_DIPENDENTI", tmp_path / "queries_dip.db")
+        mocker.patch.object(
+            DatabaseManager, "DB_STORICO_ODA", tmp_path / "queries_oda.db"
+        )
+        mocker.patch.object(
+            DatabaseManager, "DB_DIPENDENTI", tmp_path / "queries_dip.db"
+        )
 
         DatabaseManager().init_db()
         return p_cont
@@ -43,8 +47,12 @@ class TestContabilitaQueriesCoverage:
     def test_get_scarico_ore_data_sorting(self, db_path):
         """Verifica ordinamento decrescente (id DESC) per scarico ore."""
         manager = DatabaseManager()
-        manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')")
-        manager.execute_query(db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Ultima')")
+        manager.execute_query(
+            db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Prima')"
+        )
+        manager.execute_query(
+            db_path, "INSERT INTO scarico_ore (descrizione) VALUES ('Ultima')"
+        )
 
         rows = ContabilitaQueries.get_scarico_ore_data(db_path)
         # La colonna 'descrizione' è all'indice 8 nel mapping SCARICO_ORE_COLS

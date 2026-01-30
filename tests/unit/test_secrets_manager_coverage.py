@@ -45,7 +45,9 @@ class TestSecretsManager:
         keyring.get_password.return_value = valid_key_b64  # mocked
 
         # Ensure env file fallback fails
-        with patch.object(SecretsManager, "_get_env_file_path", return_value=Path("non_existent")):
+        with patch.object(
+            SecretsManager, "_get_env_file_path", return_value=Path("non_existent")
+        ):
             key = SecretsManager.get_license_key()
             assert key == base64.urlsafe_b64decode(valid_key_b64)
             keyring.get_password.assert_called_with("SyncroJob", "license_key")
@@ -53,7 +55,9 @@ class TestSecretsManager:
     def test_get_license_key_fallback(self, mock_env, mock_keyring):
         """Test fallback hardcoded key."""
         keyring.get_password.return_value = None
-        with patch.object(SecretsManager, "_get_env_file_path", return_value=Path("non_existent")):
+        with patch.object(
+            SecretsManager, "_get_env_file_path", return_value=Path("non_existent")
+        ):
             key = SecretsManager.get_license_key()
             # Should be the hardcoded one
             expected_b64 = "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="

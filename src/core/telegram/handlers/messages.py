@@ -9,7 +9,9 @@ from src.core.secrets_manager import SecretsManager
 from src.core.telegram.ui.keyboards import TelegramUI
 
 
-async def handle_text_input(service, update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_text_input(
+    service, update: Update, context: ContextTypes.DEFAULT_TYPE
+):
     """
     Main router for incoming text messages.
     Routes based on current user state (DB query, wizard) or passes to NLU.
@@ -63,7 +65,11 @@ async def _handle_nlu_or_query(service, chat_id, text):
 
 async def _handle_sequential_input(service, chat_id, state, text, update):
     """Handles multi-line or list inputs for specific wizards (PDL, OdA, Time)."""
-    items = [i.strip() for i in text.replace(",", "\n").replace(";", "\n").split("\n") if i.strip()]
+    items = [
+        i.strip()
+        for i in text.replace(",", "\n").replace(";", "\n").split("\n")
+        if i.strip()
+    ]
     if not items:
         return
 
@@ -81,7 +87,9 @@ async def _handle_sequential_input(service, chat_id, state, text, update):
             return
 
     service.user_states[chat_id] = None
-    await update.message.reply_text("✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard())
+    await update.message.reply_text(
+        "✅ Operazione completata.", reply_markup=TelegramUI.get_main_keyboard()
+    )
 
 
 async def handle_voice(service, update: Update, context: ContextTypes.DEFAULT_TYPE):

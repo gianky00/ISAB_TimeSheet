@@ -65,7 +65,9 @@ class TestDashboardPanelFull:
     def test_dashboard_initialization(self, qapp, mocker):
         """Verify the dashboard assembles all parts correctly."""
         # Mock Stats
-        mocker.patch("src.core.stats_manager.StatsManager.get_all_stats", return_value={})
+        mocker.patch(
+            "src.core.stats_manager.StatsManager.get_all_stats", return_value={}
+        )
         # Mock Audit
         mocker.patch("src.core.audit_manager.AuditManager.get_logs", return_value=[])
 
@@ -85,7 +87,9 @@ class TestDashboardPanelFull:
     def test_dashboard_quick_action_integration(self, qapp, mocker, qtbot):
         """Verify Quick Action click triggers navigation on MainWindow."""
         # Mock Stats & Audit to avoid side effects
-        mocker.patch("src.core.stats_manager.StatsManager.get_all_stats", return_value={})
+        mocker.patch(
+            "src.core.stats_manager.StatsManager.get_all_stats", return_value={}
+        )
         mocker.patch("src.core.audit_manager.AuditManager.get_logs", return_value=[])
 
         panel = DashboardPanel()

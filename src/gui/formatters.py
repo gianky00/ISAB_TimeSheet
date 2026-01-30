@@ -95,7 +95,9 @@ class FastTableModel(QAbstractTableModel):
         self._formatters[col_idx] = formatter_func
         # Default: se formattiamo numeri/valuta, allineiamo a destra
         if formatter_func in (format_currency_smart, format_number_smart):
-            self._alignments[col_idx] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            self._alignments[col_idx] = (
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            )
 
     def set_column_alignment(self, col_idx, alignment):
         """Forza allineamento per una colonna."""
@@ -127,7 +129,9 @@ class FastTableModel(QAbstractTableModel):
             return str(raw_value) if raw_value is not None else ""
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
-            return self._alignments.get(col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            return self._alignments.get(
+                col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
 
         # Per ordinamento standard se la view non usa sort() del modello (ma QTableView lo fa)
         if role == Qt.ItemDataRole.EditRole:
@@ -136,7 +140,10 @@ class FastTableModel(QAbstractTableModel):
         return None
 
     def headerData(self, section, orientation, role):
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+        if (
+            orientation == Qt.Orientation.Horizontal
+            and role == Qt.ItemDataRole.DisplayRole
+        ):
             return self._headers[section]
         return None
 

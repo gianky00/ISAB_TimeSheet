@@ -1,9 +1,10 @@
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
+
 class AuditPaginationBar(QWidget):
     """Barra di paginazione per l'Audit Log."""
-    
+
     page_changed = pyqtSignal(int)  # offset (1 per next, -1 per prev)
 
     def __init__(self, parent=None):
@@ -13,7 +14,7 @@ class AuditPaginationBar(QWidget):
     def _setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         self.prev_btn = QPushButton("Precedente")
         self.prev_btn.setEnabled(False)
         self.prev_btn.clicked.connect(lambda: self.page_changed.emit(-1))
@@ -35,7 +36,7 @@ class AuditPaginationBar(QWidget):
         total_pages = (total_logs + page_size - 1) // page_size
         if total_pages < 1:
             total_pages = 1
-        
+
         disp = current_page + 1
         self.page_lbl.setText(f"Pagina {disp} di {total_pages} (Tot: {total_logs})")
         self.prev_btn.setEnabled(current_page > 0)

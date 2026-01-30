@@ -49,7 +49,9 @@ class DocumentProcessor:
                 images_base64.append(b64_str)
             doc.close()
         except Exception:
-            logger.error(f"Errore conversione PDF in immagini: {file_path}", exc_info=True)
+            logger.error(
+                f"Errore conversione PDF in immagini: {file_path}", exc_info=True
+            )
 
         return images_base64
 

@@ -17,7 +17,7 @@ class TestAuditManager:
         mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_file)
         # Patch AuditSignals to avoid PyQt6 issues in headless
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
-        
+
         # Reset singleton
         AuditManager._instance = None
         manager = AuditManager()
@@ -33,7 +33,9 @@ class TestAuditManager:
         # Verify table exists
         with sqlite3.connect(temp_db_manager.DB_PATH) as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='audit_logs'")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='audit_logs'"
+            )
             assert cursor.fetchone() is not None
             # Verify columns
             cursor.execute("PRAGMA table_info(audit_logs)")
@@ -65,7 +67,9 @@ class TestAuditManager:
 
         # Tamper with DB
         with sqlite3.connect(manager.DB_PATH) as conn:
-            conn.execute("UPDATE audit_logs SET action = 'HACKED' WHERE action = 'TEST'")
+            conn.execute(
+                "UPDATE audit_logs SET action = 'HACKED' WHERE action = 'TEST'"
+            )
             conn.commit()
 
         assert manager.verify_integrity() is False

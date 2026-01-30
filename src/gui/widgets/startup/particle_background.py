@@ -180,7 +180,9 @@ class ParticleBackground(QWidget):
             target_size = p.size * 8
             x = int(p.x - target_size / 2)
             y = int(p.y - target_size / 2)
-            painter.drawPixmap(x, y, int(target_size), int(target_size), self._sprite_cache)
+            painter.drawPixmap(
+                x, y, int(target_size), int(target_size), self._sprite_cache
+            )
 
         painter.setOpacity(1.0)
         self._draw_connections(painter)

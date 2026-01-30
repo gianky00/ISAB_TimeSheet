@@ -12,6 +12,7 @@ from src.core.audit.signals import AuditSignals
 
 logger = logging.getLogger(__name__)
 
+
 class AuditManager:
     """
     Manager per l'Audit Log con meccanismi di integrità e severità.
@@ -56,6 +57,7 @@ class AuditManager:
                 return user
         try:
             import getpass
+
             return getpass.getuser()
         except Exception:
             return "unknown"
@@ -79,7 +81,9 @@ class AuditManager:
 
             # Normalizzazione
             status_val = status.value if isinstance(status, Status) else str(status)
-            severity_val = severity.value if isinstance(severity, Severity) else str(severity)
+            severity_val = (
+                severity.value if isinstance(severity, Severity) else str(severity)
+            )
 
             # Defaults
             entity = entity or "-"
@@ -95,32 +99,56 @@ class AuditManager:
             data_to_hash = f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status_val}|{severity_val}|{duration_ms}|{module}|{error_code}"
             current_hash = AuditIntegrity.calculate_hash(data_to_hash, prev_hash)
 
-            self.db.insert_log((
-                timestamp, user_id, action, category, entity, params_json,
-                status_val, severity_val, duration_ms, module, error_code, current_hash
-            ))
+            self.db.insert_log(
+                (
+                    timestamp,
+                    user_id,
+                    action,
+                    category,
+                    entity,
+                    params_json,
+                    status_val,
+                    severity_val,
+                    duration_ms,
+                    module,
+                    error_code,
+                    current_hash,
+                )
+            )
 
             # Segnali
             log_entry = {
-                "timestamp": timestamp, "user_id": user_id, "action": action,
-                "category": category, "entity": entity, "params": params_json,
-                "status": status_val, "severity": severity_val, "duration_ms": duration_ms,
-                "module": module, "error_code": error_code
+                "timestamp": timestamp,
+                "user_id": user_id,
+                "action": action,
+                "category": category,
+                "entity": entity,
+                "params": params_json,
+                "status": status_val,
+                "severity": severity_val,
+                "duration_ms": duration_ms,
+                "module": module,
+                "error_code": error_code,
             }
             self.signals.log_added.emit(log_entry)
             self.signals.logs_updated.emit()
 
             if notify:
-                self._generate_notification(action, entity, status_val, severity_val, params)
+                self._generate_notification(
+                    action, entity, status_val, severity_val, params
+                )
 
         except Exception as e:
             logger.error(f"Audit Log Error: {e}")
             traceback.print_exc()
 
-    def _generate_notification(self, action: str, entity: str, status_val: str, severity_val: str, params: Any):
+    def _generate_notification(
+        self, action: str, entity: str, status_val: str, severity_val: str, params: Any
+    ):
         """Genera una notifica utente basata sull'esito dell'azione auditata."""
         try:
             from src.core.notification_manager import NotificationManager
+
             level = "info"
             if status_val == "error" or severity_val == "high":
                 level = "error"
@@ -133,7 +161,9 @@ class AuditManager:
             if params and isinstance(params, dict) and "error_details" in params:
                 msg = params["error_details"]
 
-            NotificationManager.instance().add_notification(f"{action}: {entity}", msg, level=level)
+            NotificationManager.instance().add_notification(
+                f"{action}: {entity}", msg, level=level
+            )
         except Exception as e:
             logger.error(f"Notification error in Audit: {e}")
 
@@ -141,9 +171,12 @@ class AuditManager:
         """Verifica la catena di hash."""
         try:
             import sqlite3
+
             with self.db.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
-                rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
+                rows = conn.execute(
+                    "SELECT * FROM audit_logs ORDER BY id ASC"
+                ).fetchall()
 
                 prev_hash = "0" * 64
                 for row in rows:
@@ -157,7 +190,9 @@ class AuditManager:
                     if row["row_hash"] != calc_hash:
                         # Tentativo 2: Hash Legacy
                         data_legacy = AuditIntegrity.build_hash_string_legacy(row)
-                        calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
+                        calc_hash_legacy = AuditIntegrity.calculate_hash(
+                            data_legacy, prev_hash
+                        )
 
                         if row["row_hash"] != calc_hash_legacy:
                             return False
@@ -190,8 +225,14 @@ class AuditManager:
 
     def get_stats_by_day(self, days=30) -> Dict[str, Dict[str, int]]:
         cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-        stats = { (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"): 
-                 {"success": 0, "error": 0, "warning": 0} for i in range(days + 1) }
+        stats = {
+            (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"): {
+                "success": 0,
+                "error": 0,
+                "warning": 0,
+            }
+            for i in range(days + 1)
+        }
 
         try:
             with self.db.get_connection() as conn:
@@ -206,7 +247,8 @@ class AuditManager:
                     day, status, count = r
                     if day in stats:
                         s_key = status.lower()
-                        if s_key not in stats[day]: stats[day][s_key] = 0
+                        if s_key not in stats[day]:
+                            stats[day][s_key] = 0
                         stats[day][s_key] += count
         except Exception as e:
             logger.error(f"Stats Error: {e}")

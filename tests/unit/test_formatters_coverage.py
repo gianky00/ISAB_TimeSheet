@@ -83,12 +83,24 @@ class TestFastTableModel:
 
     def test_header_data(self, headers):
         model = FastTableModel([], headers)
-        assert model.headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole) == "Header1"
-        assert model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole) == "Header2"
+        assert (
+            model.headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+            == "Header1"
+        )
+        assert (
+            model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+            == "Header2"
+        )
 
         # Wrong orientation/role
-        assert model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole) is None
-        assert model.headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole) is None
+        assert (
+            model.headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole)
+            is None
+        )
+        assert (
+            model.headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole)
+            is None
+        )
 
     def test_update_data(self, sample_data):
         model = FastTableModel(sample_data)

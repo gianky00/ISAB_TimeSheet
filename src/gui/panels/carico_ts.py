@@ -101,7 +101,9 @@ class CaricoTSPanel(BaseBotPanel):
     def _clear_table(self):
         """Pulisce la tabella."""
         if (
-            QMessageBox.question(self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?")
+            QMessageBox.question(
+                self, "Conferma", "Sei sicuro di voler cancellare tutte le righe?"
+            )
             == QMessageBox.StandardButton.Yes
         ):
             self.data_table.set_data([])
@@ -130,7 +132,9 @@ class CaricoTSPanel(BaseBotPanel):
         username, password = self.get_credentials()
 
         if not username or not password:
-            ToastManager.instance().show("Configura le credenziali ISAB nelle Impostazioni.", "warning")
+            ToastManager.instance().show(
+                "Configura le credenziali ISAB nelle Impostazioni.", "warning"
+            )
             self._update_status("#C62828", "Credenziali mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)

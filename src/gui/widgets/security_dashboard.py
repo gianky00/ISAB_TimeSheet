@@ -68,7 +68,9 @@ class SecurityDashboard(QWidget):
 
         # 2. Daily Stats Chart (Simplified CSS Bars)
         chart_frame = QFrame()
-        chart_frame.setStyleSheet("background: white; border-radius: 10px; border: 1px solid #dee2e6;")
+        chart_frame.setStyleSheet(
+            "background: white; border-radius: 10px; border: 1px solid #dee2e6;"
+        )
         chart_layout = QVBoxLayout(chart_frame)
 
         chart_title = QLabel("Ultimi 7 Giorni")
@@ -122,9 +124,15 @@ class SecurityDashboard(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        self.kpi_layout.addWidget(self._create_kpi_card("Success Rate", f"{rate:.1f}%", "#198754"))
-        self.kpi_layout.addWidget(self._create_kpi_card("Errori (7gg)", str(total_err), "#dc3545"))
-        self.kpi_layout.addWidget(self._create_kpi_card("Warning (7gg)", str(total_warn), "#ffc107"))
+        self.kpi_layout.addWidget(
+            self._create_kpi_card("Success Rate", f"{rate:.1f}%", "#198754")
+        )
+        self.kpi_layout.addWidget(
+            self._create_kpi_card("Errori (7gg)", str(total_err), "#dc3545")
+        )
+        self.kpi_layout.addWidget(
+            self._create_kpi_card("Warning (7gg)", str(total_warn), "#ffc107")
+        )
 
     def _create_kpi_card(self, title, value, color):
         card = QFrame()

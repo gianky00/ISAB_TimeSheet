@@ -42,15 +42,21 @@ class StatisticsWidget(QWidget):
 
         # Table Title
         table_title = QLabel("Dettaglio Attività")
-        table_title.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 10px; color: #495057;")
+        table_title.setStyleSheet(
+            "font-size: 16px; font-weight: bold; margin-top: 10px; color: #495057;"
+        )
         layout.addWidget(table_title)
 
         # Table
         self.table = QTableWidget()
         self.table.verticalHeader().setVisible(False)
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Bot", "Esecuzioni", "Errori", "Ultima Esecuzione"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.setHorizontalHeaderLabels(
+            ["Bot", "Esecuzioni", "Errori", "Ultima Esecuzione"]
+        )
+        self.table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
         self.table.setStyleSheet(
             """
             QTableWidget {
@@ -126,17 +132,23 @@ class StatisticsWidget(QWidget):
 
         if icon_path:
             icon_lbl = QLabel()
-            icon_lbl.setPixmap(get_colored_icon(get_asset_path(icon_path), "#000000").pixmap(16, 16))
+            icon_lbl.setPixmap(
+                get_colored_icon(get_asset_path(icon_path), "#000000").pixmap(16, 16)
+            )
             title_layout.addWidget(icon_lbl)
 
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: bold; border: none;")
+        lbl_title.setStyleSheet(
+            "color: #6c757d; font-size: 13px; font-weight: bold; border: none;"
+        )
         title_layout.addWidget(lbl_title)
         title_layout.addStretch()
         layout.addLayout(title_layout)
 
         lbl_val = QLabel(str(value))
-        lbl_val.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 800; border: none;")
+        lbl_val.setStyleSheet(
+            f"color: {color}; font-size: 28px; font-weight: 800; border: none;"
+        )
         layout.addWidget(lbl_val)
 
         return card
@@ -158,10 +170,14 @@ class StatisticsWidget(QWidget):
         total_errors = sum(d.get("errors", 0) for d in stats.values())
 
         self.cards_layout.addWidget(
-            self._create_summary_card("Esecuzioni Totali", total_runs, "#0d6efd", Icons.ROCKET)
+            self._create_summary_card(
+                "Esecuzioni Totali", total_runs, "#0d6efd", Icons.ROCKET
+            )
         )
         self.cards_layout.addWidget(
-            self._create_summary_card("Errori Totali", total_errors, "#dc3545", Icons.X_CIRCLE)
+            self._create_summary_card(
+                "Errori Totali", total_errors, "#dc3545", Icons.X_CIRCLE
+            )
         )
 
     def _refresh_stats_table(self, stats: dict):
@@ -196,7 +212,9 @@ class StatisticsWidget(QWidget):
             self.table.setItem(
                 row,
                 1,
-                SortableTableWidgetItem(runs, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter),
+                SortableTableWidgetItem(
+                    runs, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                ),
             )
 
             err_item = SortableTableWidgetItem(

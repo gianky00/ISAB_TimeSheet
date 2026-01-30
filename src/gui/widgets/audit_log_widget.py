@@ -5,6 +5,7 @@ Refactoring modulare V2.
 """
 
 import logging
+
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -18,13 +19,14 @@ from PyQt6.QtWidgets import (
 
 from src.core.audit_manager import AuditManager
 from src.core.constants import Icons
+from src.gui.dialogs.audit_detail_dialog import AuditDetailDialog
 from src.gui.models.audit_model import AuditTableModel
 from src.gui.widgets.audit.audit_filter_bar import AuditFilterBar
 from src.gui.widgets.audit.audit_pagination_bar import AuditPaginationBar
-from src.gui.dialogs.audit_detail_dialog import AuditDetailDialog
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 logger = logging.getLogger(__name__)
+
 
 class AuditLogWidget(QWidget):
     """
@@ -65,7 +67,9 @@ class AuditLogWidget(QWidget):
         top_bar.addWidget(self.integrity_icon)
 
         self.integrity_lbl = QLabel("Verifica...")
-        self.integrity_lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: 600;")
+        self.integrity_lbl.setStyleSheet(
+            "color: #6c757d; font-size: 13px; font-weight: 600;"
+        )
         top_bar.addWidget(self.integrity_lbl)
 
         top_bar.addStretch()
@@ -84,7 +88,9 @@ class AuditLogWidget(QWidget):
         # --- DATA GRID ---
         self.table_view = QTableView()
         self.table_view.setAlternatingRowColors(True)
-        self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table_view.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.table_view.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_view.verticalHeader().setVisible(False)
         self.table_view.horizontalHeader().setStretchLastSection(True)
@@ -116,13 +122,15 @@ class AuditLogWidget(QWidget):
         self.filter_bar.set_categories(cats)
 
     def _toggle_live_mode(self, state):
-        is_live = (state == Qt.CheckState.Checked or state == 2) # Supporta sia Enum che Int
+        is_live = (
+            state == Qt.CheckState.Checked or state == 2
+        )  # Supporta sia Enum che Int
         if is_live:
             self.refresh(reset_page=True)
             self.live_timer.start()
         else:
             self.live_timer.stop()
-        
+
         self.filter_bar.set_enabled_dates(not is_live)
         self.pagination_bar.setEnabled(not is_live)
         if not is_live:
@@ -149,8 +157,10 @@ class AuditLogWidget(QWidget):
         self.total_logs = total
         self.model.update_data(logs)
         self.table_view.resizeColumnsToContents()
-        self.pagination_bar.update_state(self.current_page, self.total_logs, self.PAGE_SIZE)
-        
+        self.pagination_bar.update_state(
+            self.current_page, self.total_logs, self.PAGE_SIZE
+        )
+
         if self.current_page == 0:
             self._check_integrity()
 
@@ -159,8 +169,10 @@ class AuditLogWidget(QWidget):
         color = "#198754" if valid else "#dc3545"
         text = "Integro" if valid else "Legacy/Manomesso"
         icon = Icons.SHIELD if valid else Icons.ALERT_TRIANGLE
-        
-        self.integrity_icon.setPixmap(get_colored_icon(get_asset_path(icon), color).pixmap(18, 18))
+
+        self.integrity_icon.setPixmap(
+            get_colored_icon(get_asset_path(icon), color).pixmap(18, 18)
+        )
         self.integrity_lbl.setText(text)
         self.integrity_lbl.setStyleSheet(f"color: {color}; font-weight: bold;")
 

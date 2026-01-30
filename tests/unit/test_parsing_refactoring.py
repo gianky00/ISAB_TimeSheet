@@ -43,7 +43,9 @@ def test_parse_currency_formats():
     # Only dot
     assert parse_currency("1234.56") == 1234.56
     assert parse_currency("1.234.567") == 1234567.0
-    assert parse_currency("1.234") == 1.234  # Current logic: if len == 3, does nothing -> 1.234
+    assert (
+        parse_currency("1.234") == 1.234
+    )  # Current logic: if len == 3, does nothing -> 1.234
     assert parse_currency("10.5") == 10.5
     assert parse_currency("10.50") == 10.5
 

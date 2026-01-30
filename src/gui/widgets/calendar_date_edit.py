@@ -21,8 +21,12 @@ class CalendarDateEdit(QDateEdit):
         # Configura il widget calendario interno per evitare i "..."
         calendar = self.calendarWidget()
         calendar.setMinimumWidth(450)  # Ancora più largo
-        calendar.setHorizontalHeaderFormat(QCalendarWidget.HorizontalHeaderFormat.ShortDayNames)
-        calendar.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
+        calendar.setHorizontalHeaderFormat(
+            QCalendarWidget.HorizontalHeaderFormat.ShortDayNames
+        )
+        calendar.setVerticalHeaderFormat(
+            QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader
+        )
 
         calendar.setStyleSheet(
             """

@@ -44,7 +44,9 @@ def test_check_for_updates_no_url(mocker, mock_app_version, mock_msgbox):
     mock_requests_get.assert_not_called()
 
 
-def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_url, mock_msgbox):
+def test_check_for_updates_no_new_version(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.0.0", "url": "http://download.url"}
@@ -59,7 +61,9 @@ def test_check_for_updates_no_new_version(mocker, mock_app_version, mock_update_
     )
 
 
-def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_update_url, mock_msgbox):
+def test_check_for_updates_new_version_download(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.1.0", "url": "http://download.url"}
@@ -75,7 +79,9 @@ def test_check_for_updates_new_version_download(mocker, mock_app_version, mock_u
     mock_webbrowser_open.assert_called_once_with("http://download.url")
 
 
-def test_check_for_updates_new_version_no_download(mocker, mock_app_version, mock_update_url, mock_msgbox):
+def test_check_for_updates_new_version_no_download(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.1.0", "url": "http://download.url"}
@@ -91,7 +97,9 @@ def test_check_for_updates_new_version_no_download(mocker, mock_app_version, moc
     mock_webbrowser_open.assert_not_called()
 
 
-def test_check_for_updates_http_error(mocker, mock_app_version, mock_update_url, mock_msgbox):
+def test_check_for_updates_http_error(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
     mock_response = MagicMock()
     mock_response.status_code = 404
     mocker.patch("requests.get", return_value=mock_response)
@@ -101,7 +109,9 @@ def test_check_for_updates_http_error(mocker, mock_app_version, mock_update_url,
     mock_msgbox.information.assert_not_called()
 
 
-def test_check_for_updates_timeout(mocker, mock_app_version, mock_update_url, mock_msgbox):
+def test_check_for_updates_timeout(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
     mocker.patch("requests.get", side_effect=requests.Timeout)
 
     check_for_updates(silent=False)
@@ -109,15 +119,21 @@ def test_check_for_updates_timeout(mocker, mock_app_version, mock_update_url, mo
     mock_msgbox.information.assert_not_called()
 
 
-def test_check_for_updates_request_exception(mocker, mock_app_version, mock_update_url, mock_msgbox):
-    mocker.patch("requests.get", side_effect=requests.RequestException("Connection error"))
+def test_check_for_updates_request_exception(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
+    mocker.patch(
+        "requests.get", side_effect=requests.RequestException("Connection error")
+    )
 
     check_for_updates(silent=False)
 
     mock_msgbox.information.assert_not_called()
 
 
-def test_check_for_updates_silent_mode(mocker, mock_app_version, mock_update_url, mock_msgbox):
+def test_check_for_updates_silent_mode(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.0.0", "url": "http://download.url"}
@@ -128,7 +144,9 @@ def test_check_for_updates_silent_mode(mocker, mock_app_version, mock_update_url
     mock_msgbox.information.assert_not_called()
 
 
-def test_check_for_updates_no_download_url_provided(mocker, mock_app_version, mock_update_url, mock_msgbox):
+def test_check_for_updates_no_download_url_provided(
+    mocker, mock_app_version, mock_update_url, mock_msgbox
+):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"version": "1.1.0", "url": None}

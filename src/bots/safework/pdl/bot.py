@@ -129,12 +129,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         try:
             self.log(f"🔐 Inserimento credenziali per utente: {self.username}")
-            u_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente")))
+            u_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpUtente"))
+            )
             u_field.clear()
             u_field.send_keys(self.username)
             self.log("⌨️ Username inserito.")
 
-            p_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword")))
+            p_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpPassword"))
+            )
             p_field.clear()
             p_field.send_keys(self.password)
             self.log("⌨️ Password inserita.")
@@ -177,7 +181,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         for index, item in enumerate(data):
             try:
                 self._check_stop()
-                res = self._process_single_pdl_row(index, total, item, all_downloaded_pdl_paths)
+                res = self._process_single_pdl_row(
+                    index, total, item, all_downloaded_pdl_paths
+                )
                 if res:
                     success_count += 1
             except InterruptedError:
@@ -244,7 +250,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         assert self.wait and self.driver
         self.log(f"🔄 Ricerca PdL {pdl_num} in interfaccia...")
         try:
-            campo = self.wait.until(EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce")))
+            campo = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "fldRicercaPdLVeloce"))
+            )
             campo.clear()
             campo.send_keys(pdl_num)
             # No sleep needed: send_keys is synchronous
@@ -267,7 +275,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Verifica che il PDL sia stato caricato controllando presenza pulsante stampa
             try:
                 WebDriverWait(self.driver, 3).until(
-                    EC.presence_of_element_located((By.ID, "topIcon-acticonAnteprimaStampaMenu"))
+                    EC.presence_of_element_located(
+                        (By.ID, "topIcon-acticonAnteprimaStampaMenu")
+                    )
                 )
             except Exception:
                 self.log(f"❌ PDL {pdl_num} non caricato dopo alert. Salto.")
@@ -289,7 +299,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         ts = time.time()
 
         try:
-            self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-acticonAnteprimaStampaMenu"))).click()
+            self.wait.until(
+                EC.element_to_be_clickable(
+                    (By.ID, "topIcon-acticonAnteprimaStampaMenu")
+                )
+            ).click()
             # No sleep needed: wait esplicito su appItaliano
             self.wait.until(EC.element_to_be_clickable((By.ID, "appItaliano"))).click()
         except Exception as e:
@@ -389,7 +403,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 # Strategia 3: User Specific IDTXT (2E20B56F)
                 if not clicked:
                     try:
-                        self.driver.find_element(By.CSS_SELECTOR, "span[idtxt='2E20B56F']").click()
+                        self.driver.find_element(
+                            By.CSS_SELECTOR, "span[idtxt='2E20B56F']"
+                        ).click()
                         self.log("✓ Aperto tramite idtxt='2E20B56F'")
                         clicked = True
                     except Exception:
@@ -411,12 +427,16 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         assert self.driver and self.wait
         try:
             # Attende che il radio button "Tutte" sia cliccabile
-            btn_tutte = self.wait.until(EC.element_to_be_clickable((By.ID, "rbStampaTutte")))
+            btn_tutte = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "rbStampaTutte"))
+            )
             btn_tutte.click()
             self.log("✓ Selezionato radio button 'Tutte'")
 
             # Attende che il pulsante "Anteprima" sia cliccabile
-            btn_anteprima = self.wait.until(EC.element_to_be_clickable((By.ID, "btnAnteprima")))
+            btn_anteprima = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "btnAnteprima"))
+            )
             btn_anteprima.click()
             self.log("✓ Cliccato su 'Anteprima'")
         except Exception:
@@ -460,7 +480,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 from src.utils.document_processor import DocumentProcessor
 
                 if DocumentProcessor.merge_pdfs(all_paths, path_merge):
-                    self.log(f"✅ PDF Unico Sessione creato: {os.path.basename(path_merge)}")
+                    self.log(
+                        f"✅ PDF Unico Sessione creato: {os.path.basename(path_merge)}"
+                    )
                     self.downloaded_files.append(path_merge)
             except Exception as e:
                 self.log_error("Unione totale sessione", e)
@@ -478,7 +500,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
             # Cerca il testo specifico indicato dall'utente: <p idtxt="1C51D77B">
             try:
                 WebDriverWait(self.driver, 2).until(
-                    EC.visibility_of_element_located((By.CSS_SELECTOR, "p[idtxt='1C51D77B']"))
+                    EC.visibility_of_element_located(
+                        (By.CSS_SELECTOR, "p[idtxt='1C51D77B']")
+                    )
                 )
                 self.log("ℹ️ Rilevato popup 'Ricerca estesa'.")
             except Exception:
@@ -486,7 +510,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
             # Clicca su Si: <span idtxt="E421C594">
             try:
-                btn_si = self.driver.find_element(By.CSS_SELECTOR, "span[idtxt='E421C594']")
+                btn_si = self.driver.find_element(
+                    By.CSS_SELECTOR, "span[idtxt='E421C594']"
+                )
                 btn_si.click()
                 self.log("🖱️ Cliccato 'Si' per estendere la ricerca.")
             except Exception as e:
@@ -564,13 +590,17 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         scadenza = time.time() + timeout
         # Margine di 2 secondi per arrotondamenti filesystem
         tempo_riferimento_adjusted = tempo_riferimento - 2
-        self.log(f"⏳ Polling cartella download (Ref Time: {int(tempo_riferimento)})...")
+        self.log(
+            f"⏳ Polling cartella download (Ref Time: {int(tempo_riferimento)})..."
+        )
         download_path = Path(self.download_path)
         while time.time() < scadenza:
             files = list(download_path.glob("*.pdf"))
             # Escludi file temporanei (temp_p1_*, temp_p2_*) per evitare conflitti
             files = [f for f in files if not f.name.startswith("temp_p")]
-            nuovi_files = [f for f in files if f.stat().st_mtime > tempo_riferimento_adjusted]
+            nuovi_files = [
+                f for f in files if f.stat().st_mtime > tempo_riferimento_adjusted
+            ]
             if nuovi_files:
                 nuovi_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
                 ultimo_file = nuovi_files[0]

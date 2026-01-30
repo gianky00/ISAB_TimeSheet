@@ -27,7 +27,9 @@ class ExcelTableWidget(QTableWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.auto_copy_headers = False  # Flag per copiare automaticamente le intestazioni
+        self.auto_copy_headers = (
+            False  # Flag per copiare automaticamente le intestazioni
+        )
 
         # Non impostiamo SelectionBehavior/Mode qui per permettere alle istanze di configurarlo
         # Assicura che il click selezioni anche se clicco su una cella non editabile
@@ -157,7 +159,9 @@ class ExcelTableWidget(QTableWidget):
         lyra_selection_action.triggered.connect(self._analyze_selection)
         menu.addAction(lyra_selection_action)
 
-        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self)
+        copy_action = QAction(
+            get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self
+        )
         copy_action.triggered.connect(self.copy_selection)
         menu.addAction(copy_action)
         menu.exec(event.globalPos())
@@ -172,7 +176,11 @@ class ExcelTableWidget(QTableWidget):
         row_data = []
         for c in range(self.columnCount()):
             if not self.isColumnHidden(c):
-                header = self.horizontalHeaderItem(c).text() if self.horizontalHeaderItem(c) else f"Col {c}"
+                header = (
+                    self.horizontalHeaderItem(c).text()
+                    if self.horizontalHeaderItem(c)
+                    else f"Col {c}"
+                )
                 widget = self.cellWidget(row, c)
                 if isinstance(widget, QComboBox):
                     text = widget.currentText()
@@ -200,7 +208,9 @@ class ExcelTableWidget(QTableWidget):
             for c in range(self.columnCount()):
                 item = self.item(r, c)
                 if item and not self.isColumnHidden(c):
-                    row_data.append(f"{self.horizontalHeaderItem(c).text()}: {item.text()}")
+                    row_data.append(
+                        f"{self.horizontalHeaderItem(c).text()}: {item.text()}"
+                    )
             rows_text.append(" | ".join(row_data))
 
         context = "\n".join(rows_text)
@@ -294,7 +304,9 @@ class EditableDataTable(QWidget):
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -317,11 +329,15 @@ class EditableDataTable(QWidget):
         menu.addAction(lyra_action)
         menu.addSeparator()
 
-        copy_action = QAction(get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self)
+        copy_action = QAction(
+            get_colored_icon(get_asset_path(Icons.EDIT), "#000000"), "Copia", self
+        )
         copy_action.triggered.connect(self.table.copy_selection)
         menu.addAction(copy_action)
 
-        paste_action = QAction(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"), "Incolla", self)
+        paste_action = QAction(
+            get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"), "Incolla", self
+        )
         paste_action.triggered.connect(self.table.paste_selection)
         menu.addAction(paste_action)
 

@@ -48,7 +48,9 @@ class TimesheetProcessor:
             pos_values, first_pos_cleaned = TimesheetProcessor._analyze_pos_column(ws)
 
             # 2. Generazione Percorso Destinazione
-            dest_path = TimesheetProcessor._get_destination_path(dest_dir, odc, pos_values, first_pos_cleaned)
+            dest_path = TimesheetProcessor._get_destination_path(
+                dest_dir, odc, pos_values, first_pos_cleaned
+            )
 
             # 3. Trasformazione Foglio (Headers, Pulizia, Eliminazione, Autofit)
             TimesheetProcessor._apply_transformations(ws)
@@ -91,7 +93,9 @@ class TimesheetProcessor:
         return val
 
     @staticmethod
-    def _get_destination_path(dest_dir: Path, odc: str, pos_values: set[str], pos_cleaned: str) -> Path:
+    def _get_destination_path(
+        dest_dir: Path, odc: str, pos_values: set[str], pos_cleaned: str
+    ) -> Path:
         """Determina il nome file finale gestendo conflitti e conteggio POS."""
         if len(pos_values) > 1:
             base = f"{odc}_TS"

@@ -1,15 +1,17 @@
-import sqlite3
 import logging
+import sqlite3
 from contextlib import suppress
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
+
 from src.core.config_manager import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 
+
 class AuditDatabase:
     """Gestisce il database SQLite per l'Audit Log."""
-    
+
     DB_PATH = CONFIG_DIR / "data" / "audit_log.db"
 
     def __init__(self):
@@ -57,10 +59,16 @@ class AuditDatabase:
             for col_name, col_def in new_columns.items():
                 if col_name not in existing_cols:
                     with suppress(sqlite3.OperationalError):
-                        logger.info(f"[AUDIT DB] Migrazione: Aggiunta colonna {col_name}...")
-                        conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}")
+                        logger.info(
+                            f"[AUDIT DB] Migrazione: Aggiunta colonna {col_name}..."
+                        )
+                        conn.execute(
+                            f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}"
+                        )
 
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)"
+            )
             conn.commit()
 
     def get_connection(self):
@@ -70,7 +78,9 @@ class AuditDatabase:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1")
+                cursor.execute(
+                    "SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1"
+                )
                 row = cursor.fetchone()
                 return row[0] if row and row[0] else "0" * 64
         except Exception:
@@ -144,7 +154,9 @@ class AuditDatabase:
     def get_categories(self) -> List[str]:
         try:
             with self.get_connection() as conn:
-                res = conn.execute("SELECT DISTINCT category FROM audit_logs ORDER BY category")
+                res = conn.execute(
+                    "SELECT DISTINCT category FROM audit_logs ORDER BY category"
+                )
                 return [r[0] for r in res if r[0]]
         except Exception:
             return []
@@ -152,7 +164,9 @@ class AuditDatabase:
     def delete_older_than(self, cutoff_iso: str) -> int:
         try:
             with self.get_connection() as conn:
-                res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff_iso,))
+                res = conn.execute(
+                    "DELETE FROM audit_logs WHERE timestamp < ?", (cutoff_iso,)
+                )
                 return res.rowcount
         except Exception as e:
             logger.error(f"Audit DB Retention Error: {e}")

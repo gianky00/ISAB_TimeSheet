@@ -102,7 +102,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge._handle_intent(chat_id, intent)
 
         self.assertIn(int(chat_id), self.mock_telegram_service.pending_data)
-        self.assertEqual(self.mock_telegram_service.pending_data[int(chat_id)]["action"], "print")
+        self.assertEqual(
+            self.mock_telegram_service.pending_data[int(chat_id)]["action"], "print"
+        )
 
     @patch("src.core.telegram_bridge.InputValidator")
     def test_handle_data_pdl(self, MockInputValidator):
@@ -114,7 +116,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         # Setup specific mock attribute
         self.mock_main_window.pdl_panel.bot_id = "scarico_pdl"
 
-        self.mock_main_window.pdl_panel.data_table.get_data.return_value = [{"numero_pdl": "PDL001"}]
+        self.mock_main_window.pdl_panel.data_table.get_data.return_value = [
+            {"numero_pdl": "PDL001"}
+        ]
         MockInputValidator.validate_pdl.side_effect = [
             MagicMock(valid=True, sanitized_value="PDL002"),
             MagicMock(valid=True, sanitized_value="PDL001"),  # Duplicate
@@ -125,7 +129,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         items = ["PDL002", "PDL001", "INVALID_PDL"]
         self.bridge._handle_data(data_type, items)
 
-        self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with([{"numero_pdl": "PDL002"}])
+        self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with(
+            [{"numero_pdl": "PDL002"}]
+        )
         self.mock_main_window.navigate_to_panel.assert_called_once_with("scarico_pdl")
         self.mock_telegram_service.send_message_sync.assert_called_with(
             "✅ Aggiunti/Impostati 1\nℹ️ 1 duplicati ignorati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
@@ -164,8 +170,12 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge._handle_screenshot(mode="app")
 
         self.mock_main_window.grab.assert_called_once()
-        mock_buffer_instance.open.assert_called_once_with(MockQIODevice.OpenModeFlag.WriteOnly)
-        self.mock_main_window.grab.return_value.save.assert_called_once_with(mock_buffer_instance, "PNG")
+        mock_buffer_instance.open.assert_called_once_with(
+            MockQIODevice.OpenModeFlag.WriteOnly
+        )
+        self.mock_main_window.grab.return_value.save.assert_called_once_with(
+            mock_buffer_instance, "PNG"
+        )
         self.mock_telegram_service.send_photo_sync.assert_called_once_with(
             b"screenshot_bytes", caption="📸 **Screenshot: Solo App**"
         )
@@ -188,7 +198,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         target_func()
         MockLyraClient.assert_called_once_with(api_key="fake_api_key")
         mock_lyra_client_instance.ask.assert_called_once_with("What is the weather?")
-        self.mock_telegram_service.send_message_sync.assert_any_call("🤖 **AI Coach**\n\nAI response")
+        self.mock_telegram_service.send_message_sync.assert_any_call(
+            "🤖 **AI Coach**\n\nAI response"
+        )
 
     @patch("src.core.telegram_bridge.SecretsManager")
     @patch("src.core.telegram_bridge.threading.Thread")
@@ -212,7 +224,9 @@ class TestTelegramUIBridge(unittest.TestCase):
         self.bridge._handle_photo(123, photo_bytes, caption)
 
         MockSecretsManager.get_gemini_api_key.assert_called_once()
-        self.mock_telegram_service.send_message_sync.assert_any_call("🔍 **Analisi Documento...**")
+        self.mock_telegram_service.send_message_sync.assert_any_call(
+            "🔍 **Analisi Documento...**"
+        )
         MockThread.assert_called_once()
 
         args, kwargs = MockThread.call_args
@@ -260,7 +274,9 @@ class TestTelegramUIBridge(unittest.TestCase):
             "yesterday_date"
         )
         self.mock_main_window.timbrature_bot_panel.start_btn.click.assert_called_once()
-        self.mock_telegram_service.send_message_sync.assert_called_with("✅ Avvio Scarico Timbrature (ieri).")
+        self.mock_telegram_service.send_message_sync.assert_called_with(
+            "✅ Avvio Scarico Timbrature (ieri)."
+        )
 
 
 if __name__ == "__main__":

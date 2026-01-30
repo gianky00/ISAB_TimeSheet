@@ -5,7 +5,9 @@ from src.bots.portale_fornitori.scarico_ts.bot import ScaricaTSBot
 
 class TestScaricoTSBotDeep:
     def test_bot_workflow_simulation(self):
-        bot = ScaricaTSBot(username="u", password="p", data_da="01.01.2024", fornitore="F1")
+        bot = ScaricaTSBot(
+            username="u", password="p", data_da="01.01.2024", fornitore="F1"
+        )
 
         # Mock Selenium dependencies and internal wait
         with (

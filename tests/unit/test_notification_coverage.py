@@ -10,7 +10,9 @@ class TestNotificationCoverage:
     """Test suite per src/core/notification_manager.py"""
 
     @pytest.fixture(autouse=True)
-    def setup_manager(self, tmp_path, qapp):  # qapp fixture from pytest-qt needed for signals
+    def setup_manager(
+        self, tmp_path, qapp
+    ):  # qapp fixture from pytest-qt needed for signals
         """Setup isolato per NotificationManager."""
         # Reset Singleton
         NotificationManager._instance = None

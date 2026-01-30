@@ -71,7 +71,11 @@ with Diagram(
     scheduler >> safework_bot
 
     isab_bot >> Edge(label="Automation", color="red", style="dashed") >> isab_ext
-    (safework_bot >> Edge(label="Automation", color="red", style="dashed") >> safework_ext)
+    (
+        safework_bot
+        >> Edge(label="Automation", color="red", style="dashed")
+        >> safework_ext
+    )
 
     isab_bot >> Edge(label="Data Sync", color="green") >> db
     safework_bot >> Edge(label="Data Sync", color="green") >> db

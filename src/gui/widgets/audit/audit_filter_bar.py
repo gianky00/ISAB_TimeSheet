@@ -12,9 +12,10 @@ from src.core.constants import Icons
 from src.gui.widgets.calendar_date_edit import CalendarDateEdit
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+
 class AuditFilterBar(QFrame):
     """Barra dei filtri per l'Audit Log."""
-    
+
     filters_applied = pyqtSignal(dict)
 
     def __init__(self, parent=None):
@@ -55,14 +56,18 @@ class AuditFilterBar(QFrame):
 
         # Livello
         self.level_combo = QComboBox()
-        self.level_combo.addItems(["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"])
+        self.level_combo.addItems(
+            ["Tutti", "Info (Low)", "Warning (Med)", "Error (High)"]
+        )
         self.level_combo.setFixedWidth(130)
         layout.addWidget(self.level_combo)
 
         # Search
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Cerca nei log...")
-        self.search_edit.setStyleSheet("border: 1px solid #ced4da; border-radius: 4px; padding: 4px;")
+        self.search_edit.setStyleSheet(
+            "border: 1px solid #ced4da; border-radius: 4px; padding: 4px;"
+        )
         layout.addWidget(self.search_edit)
 
         # Btn Applica
@@ -88,17 +93,22 @@ class AuditFilterBar(QFrame):
     def _emit_filters(self):
         lvl_idx = self.level_combo.currentIndex()
         levels = None
-        if lvl_idx == 1: levels = ["low"]
-        elif lvl_idx == 2: levels = ["medium"]
-        elif lvl_idx == 3: levels = ["high"]
-        
-        self.filters_applied.emit({
-            "date_from": self.date_from.date().toPyDate(),
-            "date_to": self.date_to.date().toPyDate(),
-            "category": self.cat_combo.currentText(),
-            "levels": levels,
-            "search_text": self.search_edit.text().strip()
-        })
+        if lvl_idx == 1:
+            levels = ["low"]
+        elif lvl_idx == 2:
+            levels = ["medium"]
+        elif lvl_idx == 3:
+            levels = ["high"]
+
+        self.filters_applied.emit(
+            {
+                "date_from": self.date_from.date().toPyDate(),
+                "date_to": self.date_to.date().toPyDate(),
+                "category": self.cat_combo.currentText(),
+                "levels": levels,
+                "search_text": self.search_edit.text().strip(),
+            }
+        )
 
     def set_enabled_dates(self, enabled):
         self.date_from.setEnabled(enabled)
@@ -106,18 +116,24 @@ class AuditFilterBar(QFrame):
 
     def get_filters(self):
         from datetime import datetime
-        start_dt = datetime.combine(self.date_from.date().toPyDate(), datetime.min.time())
+
+        start_dt = datetime.combine(
+            self.date_from.date().toPyDate(), datetime.min.time()
+        )
         end_dt = datetime.combine(self.date_to.date().toPyDate(), datetime.max.time())
         lvl_idx = self.level_combo.currentIndex()
         levels = None
-        if lvl_idx == 1: levels = ["low"]
-        elif lvl_idx == 2: levels = ["medium"]
-        elif lvl_idx == 3: levels = ["high"]
-        
+        if lvl_idx == 1:
+            levels = ["low"]
+        elif lvl_idx == 2:
+            levels = ["medium"]
+        elif lvl_idx == 3:
+            levels = ["high"]
+
         return {
             "start_date": start_dt,
             "end_date": end_dt,
             "category": self.cat_combo.currentText(),
             "levels": levels,
-            "search_text": self.search_edit.text().strip()
+            "search_text": self.search_edit.text().strip(),
         }

@@ -225,7 +225,9 @@ class CertificatiCampioneTab(QWidget):
             costruttore = latest_cert[self.IDX_COSTRUTTORE] or "N/D"
 
             # Calcola giorni alla scadenza per il certificato più recente
-            days_to_expiry, status_dot_icon = self._calculate_days_and_status(latest_cert[self.IDX_SCADENZA])
+            days_to_expiry, status_dot_icon = self._calculate_days_and_status(
+                latest_cert[self.IDX_SCADENZA]
+            )
 
             # Aggiungi alla lista con priorità per ordinamento
             # Priorità: scaduti (negativo) < prossimi alla scadenza (0-15) < medi (16-30) < attivi (>30)
@@ -258,7 +260,9 @@ class CertificatiCampioneTab(QWidget):
             # Punto 4: Mostra giorni anche quando compresso
             days_text = self._format_days_text_short(days_to_expiry)
 
-            parent_label = f"{matricola}  •  {costruttore}  •  {modello}  •  {days_text}"
+            parent_label = (
+                f"{matricola}  •  {costruttore}  •  {modello}  •  {days_text}"
+            )
             parent_item = SortableTreeWidgetItem(self.tree, [parent_label])
             parent_item.setFirstColumnSpanned(True)
 
@@ -282,7 +286,9 @@ class CertificatiCampioneTab(QWidget):
 
                 if is_current:
                     # Certificato corrente: mostra stato reale con pallino
-                    self._apply_current_certificate_styling(row_item, cert, days_to_expiry, status_dot_icon)
+                    self._apply_current_certificate_styling(
+                        row_item, cert, days_to_expiry, status_dot_icon
+                    )
                 else:
                     # Certificato storico: sempre grigio, nessun alert
                     self._apply_historical_certificate_styling(row_item, cert)
@@ -329,7 +335,9 @@ class CertificatiCampioneTab(QWidget):
         except Exception:
             return None, Icons.STATUS_DOT_GRAY
 
-    def _apply_current_certificate_styling(self, item, cert, days_to_expiry, status_dot_icon):
+    def _apply_current_certificate_styling(
+        self, item, cert, days_to_expiry, status_dot_icon
+    ):
         """Applica styling al certificato CORRENTE (più recente) con stato reale."""
         # Colori e stati basati sui giorni alla scadenza
         # AGGIORNATO: Colori più distintivi per migliore visibilità
@@ -423,7 +431,10 @@ class CertificatiCampioneTab(QWidget):
             parent_visible = False
             for j in range(parent.childCount()):
                 child = parent.child(j)
-                match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
+                match = any(
+                    query in child.text(c).lower()
+                    for c in range(self.tree.columnCount())
+                )
                 child.setHidden(not match)
                 if match:
                     parent_visible = True
@@ -434,7 +445,9 @@ class CertificatiCampioneTab(QWidget):
         if not item or item.parent() is None:
             return
         menu = QMenu(self)
-        menu.addAction(QAction("Analizza con Lyra", self)).triggered.connect(lambda: self._analyze_item(item))
+        menu.addAction(QAction("Analizza con Lyra", self)).triggered.connect(
+            lambda: self._analyze_item(item)
+        )
         menu.exec(self.tree.viewport().mapToGlobal(pos))
 
     def _analyze_item(self, item):
@@ -442,7 +455,12 @@ class CertificatiCampioneTab(QWidget):
 
         mw = self.window()
         if isinstance(mw, MainWindow):
-            text = " | ".join([f"{self.HEADERS[c]}: {item.text(c)}" for c in range(self.tree.columnCount())])
+            text = " | ".join(
+                [
+                    f"{self.HEADERS[c]}: {item.text(c)}"
+                    for c in range(self.tree.columnCount())
+                ]
+            )
             mw.analyze_with_lyra(f"Certificato: {text}")
 
     def _run_analysis(self):
@@ -538,9 +556,13 @@ try {
     Show-CustomSummaryBox "Avviso Scadenze" $scad $prox $oggi $Global:ExcelFilePath
 } catch { [System.Windows.Forms.MessageBox]::Show($_.Exception.Message) }
 """
-        ps_script = ps_script_template.replace("__FILE_PATH_PLACEHOLDER__", path.replace("\\", "\\\\"))
+        ps_script = ps_script_template.replace(
+            "__FILE_PATH_PLACEHOLDER__", path.replace("\\", "\\\\")
+        )
         try:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False, encoding="utf-8") as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ps1", delete=False, encoding="utf-8"
+            ) as tmp:
                 tmp.write(ps_script)
                 tmp_path = tmp.name
 

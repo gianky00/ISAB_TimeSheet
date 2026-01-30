@@ -34,9 +34,7 @@ def card_style(border_color: str = COLORS["border_light"]) -> str:
     """
 
 
-CARD_STYLE_SIMPLE: Final[
-    str
-] = f"""
+CARD_STYLE_SIMPLE: Final[str] = f"""
     QFrame {{
         background-color: {COLORS["bg_white"]};
         border: 1px solid {COLORS["border_light"]};
@@ -49,9 +47,7 @@ CARD_STYLE_SIMPLE: Final[
 # BUTTON STYLES
 # =============================================================================
 
-BUTTON_PRIMARY: Final[
-    str
-] = f"""
+BUTTON_PRIMARY: Final[str] = f"""
     QPushButton {{
         background-color: {COLORS["primary_dark"]};
         color: white;
@@ -71,9 +67,7 @@ BUTTON_PRIMARY: Final[
     }}
 """
 
-BUTTON_SUCCESS: Final[
-    str
-] = f"""
+BUTTON_SUCCESS: Final[str] = f"""
     QPushButton {{
         background-color: {COLORS["success_dark"]};
         color: white;
@@ -87,9 +81,7 @@ BUTTON_SUCCESS: Final[
     }}
 """
 
-BUTTON_DANGER: Final[
-    str
-] = f"""
+BUTTON_DANGER: Final[str] = f"""
     QPushButton {{
         background-color: {COLORS["error_red"]};
         color: white;
@@ -103,9 +95,7 @@ BUTTON_DANGER: Final[
     }}
 """
 
-BUTTON_SECONDARY: Final[
-    str
-] = f"""
+BUTTON_SECONDARY: Final[str] = f"""
     QPushButton {{
         background-color: {COLORS["bg_light"]};
         color: {COLORS["text_dark"]};
@@ -118,9 +108,7 @@ BUTTON_SECONDARY: Final[
     }}
 """
 
-BUTTON_TRANSPARENT: Final[
-    str
-] = """
+BUTTON_TRANSPARENT: Final[str] = """
     QPushButton {
         background-color: transparent;
         border: none;
@@ -131,9 +119,7 @@ BUTTON_TRANSPARENT: Final[
     }
 """
 
-BUTTON_ICON_ONLY: Final[
-    str
-] = """
+BUTTON_ICON_ONLY: Final[str] = """
     QPushButton {
         background-color: transparent;
         border: none;
@@ -173,9 +159,7 @@ def label_subtitle(size: int = 12, color: str = COLORS["text_secondary"]) -> str
     """
 
 
-LABEL_MUTED: Final[
-    str
-] = f"""
+LABEL_MUTED: Final[str] = f"""
     QLabel {{
         font-size: 12px;
         color: {COLORS["text_muted"]};
@@ -189,9 +173,7 @@ LABEL_MUTED: Final[
 # INPUT STYLES
 # =============================================================================
 
-COMBOBOX_STYLE: Final[
-    str
-] = f"""
+COMBOBOX_STYLE: Final[str] = f"""
     QComboBox {{
         background-color: {COLORS["bg_white"]};
         border: 1px solid {COLORS["border_medium"]};
@@ -213,9 +195,7 @@ COMBOBOX_STYLE: Final[
     }}
 """
 
-COMBOBOX_LIGHT_ON_DARK: Final[
-    str
-] = """
+COMBOBOX_LIGHT_ON_DARK: Final[str] = """
     QComboBox {
         background-color: rgba(255,255,255,0.2);
         color: white;
@@ -226,9 +206,7 @@ COMBOBOX_LIGHT_ON_DARK: Final[
     QComboBox::drop-down { border: none; }
 """
 
-LINEEDIT_STYLE: Final[
-    str
-] = f"""
+LINEEDIT_STYLE: Final[str] = f"""
     QLineEdit {{
         background-color: {COLORS["bg_white"]};
         border: 1px solid {COLORS["border_medium"]};
@@ -241,9 +219,7 @@ LINEEDIT_STYLE: Final[
     }}
 """
 
-TIMEEDIT_STYLE: Final[
-    str
-] = f"""
+TIMEEDIT_STYLE: Final[str] = f"""
     QTimeEdit {{
         background-color: {COLORS["bg_white"]};
         border: 1px solid {COLORS["border_medium"]};
@@ -261,9 +237,7 @@ TIMEEDIT_STYLE: Final[
     }}
 """
 
-TIMEEDIT_SMALL: Final[
-    str
-] = f"""
+TIMEEDIT_SMALL: Final[str] = f"""
     QTimeEdit {{
         background-color: {COLORS["bg_white"]};
         border: 1px solid {COLORS["border_medium"]};
@@ -274,9 +248,7 @@ TIMEEDIT_SMALL: Final[
     }}
 """
 
-SPINBOX_STYLE: Final[
-    str
-] = f"""
+SPINBOX_STYLE: Final[str] = f"""
     QSpinBox {{
         background-color: {COLORS["bg_white"]};
         border: 1px solid {COLORS["border_medium"]};
@@ -294,9 +266,7 @@ SPINBOX_STYLE: Final[
 # CHECKBOX STYLES
 # =============================================================================
 
-CHECKBOX_STYLE: Final[
-    str
-] = f"""
+CHECKBOX_STYLE: Final[str] = f"""
     QCheckBox {{
         spacing: 8px;
         color: {COLORS["text_dark"]};
@@ -317,9 +287,7 @@ CHECKBOX_STYLE: Final[
     }}
 """
 
-CHECKBOX_TOGGLE: Final[
-    str
-] = f"""
+CHECKBOX_TOGGLE: Final[str] = f"""
     QCheckBox {{
         spacing: 8px;
     }}
@@ -339,9 +307,7 @@ CHECKBOX_TOGGLE: Final[
 # CONTAINER STYLES
 # =============================================================================
 
-SCROLL_AREA_TRANSPARENT: Final[
-    str
-] = """
+SCROLL_AREA_TRANSPARENT: Final[str] = """
     QScrollArea {
         background-color: transparent;
         border: none;
@@ -351,9 +317,7 @@ SCROLL_AREA_TRANSPARENT: Final[
     }
 """
 
-SCROLL_AREA_BORDERED: Final[
-    str
-] = f"""
+SCROLL_AREA_BORDERED: Final[str] = f"""
     QScrollArea {{
         background-color: {COLORS["bg_white"]};
         border: 1px solid {COLORS["border_light"]};
@@ -361,9 +325,7 @@ SCROLL_AREA_BORDERED: Final[
     }}
 """
 
-FRAME_HEADER: Final[
-    str
-] = """
+FRAME_HEADER: Final[str] = """
     QFrame {
         background-color: #6f42c1;
         border-radius: 8px;
@@ -410,9 +372,7 @@ def status_dot(color: str, size: int = 10) -> str:
     """
 
 
-LIVE_DOT: Final[
-    str
-] = """
+LIVE_DOT: Final[str] = """
     QLabel {
         background-color: #28a745;
         border-radius: 5px;
@@ -428,9 +388,7 @@ LIVE_DOT: Final[
 # EMPTY STATE
 # =============================================================================
 
-EMPTY_STATE_LABEL: Final[
-    str
-] = f"""
+EMPTY_STATE_LABEL: Final[str] = f"""
     QLabel {{
         color: {COLORS["text_muted"]};
         font-size: 14px;

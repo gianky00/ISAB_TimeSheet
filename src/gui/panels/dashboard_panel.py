@@ -116,7 +116,9 @@ class DashboardPanel(QWidget):
 
         # 2. Activity Feed (Bottom)
         subtitle = QLabel("Feed Attività")
-        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;")
+        subtitle.setStyleSheet(
+            "font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;"
+        )
         self.content_layout.addWidget(subtitle)
 
         self.activity_feed = ActivityFeed()
@@ -218,7 +220,9 @@ class DashboardPanel(QWidget):
 
                 QTimer.singleShot(
                     100,
-                    lambda: self._switch_tab_safe(main_window, "contabilita_panel", tab_idx),
+                    lambda: self._switch_tab_safe(
+                        main_window, "contabilita_panel", tab_idx
+                    ),
                 )
 
         except ValueError:
@@ -254,7 +258,9 @@ class DashboardPanel(QWidget):
                 main_window._navigate_to(7)
                 QTimer.singleShot(
                     100,
-                    lambda: self._switch_tab_safe(main_window, "settings_panel", tab_idx),
+                    lambda: self._switch_tab_safe(
+                        main_window, "settings_panel", tab_idx
+                    ),
                 )
             return True
         return False
@@ -277,7 +283,9 @@ class DashboardPanel(QWidget):
                     main_window._navigate_to(3)  # Timbrature Page
                     QTimer.singleShot(
                         100,
-                        lambda: self._switch_tab_safe(main_window, "timbrature_db_panel", tab_idx),
+                        lambda: self._switch_tab_safe(
+                            main_window, "timbrature_db_panel", tab_idx
+                        ),
                     )
             except ValueError:
                 pass

@@ -28,7 +28,9 @@ class TestBotPagesDeep:
             mock_label.text = "Trovati : 10"
             page.wait.until = MagicMock(return_value=mock_label)
 
-            res = page.process_oda("12345", "Contract1", "01.01.2024", "31.12.2024", Path("."), Path("."))
+            res = page.process_oda(
+                "12345", "Contract1", "01.01.2024", "31.12.2024", Path("."), Path(".")
+            )
             assert res is True
             mock_download.assert_called()
 

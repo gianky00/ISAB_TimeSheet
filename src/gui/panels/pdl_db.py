@@ -42,7 +42,9 @@ class PDLDelegate(QStyledItemDelegate):
         # Abilita il wrap per tutte le colonne tranne quelle date
         if index.column() not in self.date_columns:
             option.features |= option.ViewItemFeature.HasDisplay
-            option.displayAlignment = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            option.displayAlignment = (
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
             option.textElideMode = Qt.TextElideMode.ElideNone
         else:
             # Date: riga singola
@@ -175,7 +177,9 @@ class PDLDBPanel(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setItemDelegate(PDLDelegate([0], self.table))  # Data Creazione è indice 0
+        self.table.setItemDelegate(
+            PDLDelegate([0], self.table)
+        )  # Data Creazione è indice 0
 
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         header = self.table.horizontalHeader()
@@ -190,7 +194,9 @@ class PDLDBPanel(QWidget):
         detail_layout.setContentsMargins(5, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Completo PDL")
-        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
+        detail_title.setStyleSheet(
+            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
+        )
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -204,7 +210,9 @@ class PDLDBPanel(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            val_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -222,7 +230,7 @@ class PDLDBPanel(QWidget):
         try:
             query_grp = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
             rows_grp = db_manager.execute_query(db_manager.DB_PDL, query_grp)
-            
+
             self.group_filter.blockSignals(True)
             self.group_filter.clear()
             self.group_filter.addItem("Tutti")
@@ -238,34 +246,34 @@ class PDLDBPanel(QWidget):
         site = self.site_filter.currentText()
         query = "SELECT DISTINCT area FROM pdl WHERE area IS NOT NULL AND area != ''"
         params = []
-        
+
         if site != "Tutti i siti":
             query += " AND sito = ?"
             params.append(site)
-            
+
         query += " ORDER BY area"
-        
+
         try:
             rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
-            
+
             current_area = self.area_filter.currentText()
             self.area_filter.blockSignals(True)
             self.area_filter.clear()
             self.area_filter.addItem("Tutte")
-            
+
             found = False
             for r in rows:
                 if r[0]:
                     self.area_filter.addItem(str(r[0]))
                     if str(r[0]) == current_area:
                         found = True
-                        
+
             # Ripristina selezione se possibile, altrimenti Tutte
             if found:
                 self.area_filter.setCurrentText(current_area)
             else:
                 self.area_filter.setCurrentIndex(0)
-                
+
             self.area_filter.blockSignals(False)
         except Exception as e:
             print(f"Errore update areas: {e}")
@@ -274,40 +282,40 @@ class PDLDBPanel(QWidget):
         """Aggiorna le unità in base a sito e area selezionati."""
         site = self.site_filter.currentText()
         area = self.area_filter.currentText()
-        
+
         query = "SELECT DISTINCT unita FROM pdl WHERE unita IS NOT NULL AND unita != ''"
         params = []
-        
+
         if site != "Tutti i siti":
             query += " AND sito = ?"
             params.append(site)
-            
+
         if area != "Tutte":
             query += " AND area = ?"
             params.append(area)
-            
+
         query += " ORDER BY unita"
-        
+
         try:
             rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
-            
+
             current_unit = self.unit_filter.currentText()
             self.unit_filter.blockSignals(True)
             self.unit_filter.clear()
             self.unit_filter.addItem("Tutte")
-            
+
             found = False
             for r in rows:
                 if r[0]:
                     self.unit_filter.addItem(str(r[0]))
                     if str(r[0]) == current_unit:
                         found = True
-            
+
             if found:
                 self.unit_filter.setCurrentText(current_unit)
             else:
                 self.unit_filter.setCurrentIndex(0)
-                
+
             self.unit_filter.blockSignals(False)
         except Exception as e:
             print(f"Errore update units: {e}")
@@ -350,7 +358,9 @@ class PDLDBPanel(QWidget):
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""
         if self.current_sort_col == logical_index:
-            self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
+            self.current_sort_order = (
+                "DESC" if self.current_sort_order == "ASC" else "ASC"
+            )
         else:
             self.current_sort_col = logical_index
             self.current_sort_order = "ASC"
@@ -366,7 +376,9 @@ class PDLDBPanel(QWidget):
             full_rows = self._cache[cache_key]
         else:
             try:
-                full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+                full_rows = db_manager.execute_query(
+                    db_manager.DB_PDL, query, tuple(params)
+                )
                 self._cache[cache_key] = full_rows
             except Exception as e:
                 print(f"Errore caricamento PDL: {e}")
@@ -404,18 +416,30 @@ class PDLDBPanel(QWidget):
 
         if search_text:
             # Ricerca estesa su TUTTI i campi rilevanti
-            # Colonne: n_pdl, area, unita, ditta, descrizione_lavoro, tipologia, stato, 
+            # Colonne: n_pdl, area, unita, ditta, descrizione_lavoro, tipologia, stato,
             # apparecchiatura, richiedente, emittente, aprente, priorita, contratto, ordine, sito
-            
+
             search_cols = [
-                "n_pdl", "area", "unita", "ditta", "descrizione_lavoro", 
-                "tipologia", "stato", "apparecchiatura", "richiedente", 
-                "emittente", "aprente", "priorita", "contratto", "ordine", "sito"
+                "n_pdl",
+                "area",
+                "unita",
+                "ditta",
+                "descrizione_lavoro",
+                "tipologia",
+                "stato",
+                "apparecchiatura",
+                "richiedente",
+                "emittente",
+                "aprente",
+                "priorita",
+                "contratto",
+                "ordine",
+                "sito",
             ]
-            
+
             OR_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
             query += f" AND ({OR_clause})"
-            
+
             p = f"%{search_text}%"
             params.extend([p] * len(search_cols))
 
@@ -461,7 +485,9 @@ class PDLDBPanel(QWidget):
         master_rows = []
         for r in full_rows:
             row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
-            master_rows.append([("" if str(val).lower() in ["nan", "none"] else val) for val in row])
+            master_rows.append(
+                [("" if str(val).lower() in ["nan", "none"] else val) for val in row]
+            )
         return master_rows
 
     def _update_pdl_ui(self, count: int):
@@ -476,6 +502,8 @@ class PDLDBPanel(QWidget):
             if i != 6 and header.sectionSize(i) > 200:
                 header.resizeSection(i, 200)
 
-        QTimer.singleShot(10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch))
+        QTimer.singleShot(
+            10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+        )
         if count < 500:
             QTimer.singleShot(100, self.table.resizeRowsToContents)

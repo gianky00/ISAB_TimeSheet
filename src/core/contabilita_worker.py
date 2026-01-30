@@ -65,10 +65,14 @@ class ContabilitaWorker(QThread):
     def _calculate_total_ops(self) -> dict:
         """Calcola il totale operazioni e ritorna il dettaglio per stime accurate."""
         self.progress_signal.emit("⏳ Analisi carico di lavoro...")
-        sheets, files = ContabilitaManager.scan_workload(self.file_path, self.giornaliere_path)
+        sheets, files = ContabilitaManager.scan_workload(
+            self.file_path, self.giornaliere_path
+        )
 
         attivita = 1 if self.attivita_path and Path(self.attivita_path).exists() else 0
-        certificati = 1 if self.certificati_path and Path(self.certificati_path).exists() else 0
+        certificati = (
+            1 if self.certificati_path and Path(self.certificati_path).exists() else 0
+        )
 
         total = sheets + files + attivita + certificati
         if total == 0:
@@ -82,7 +86,9 @@ class ContabilitaWorker(QThread):
             "est_certificati": certificati,
         }
 
-    def _update_progress_dynamic(self, current_in_phase, total_in_phase, state, phase_key):
+    def _update_progress_dynamic(
+        self, current_in_phase, total_in_phase, state, phase_key
+    ):
         """
         Aggiorna il totale operazioni se il numero effettivo differisce dalla stima.
 
@@ -155,7 +161,9 @@ class ContabilitaWorker(QThread):
 
         success, msg, added, removed = ContabilitaManager.import_data_from_excel(
             self.file_path,
-            progress_callback=lambda c, t: self._update_progress_dynamic(c, t, state, "est_sheets"),
+            progress_callback=lambda c, t: self._update_progress_dynamic(
+                c, t, state, "est_sheets"
+            ),
         )
         self._update_state(
             state,
@@ -173,7 +181,9 @@ class ContabilitaWorker(QThread):
         # Nota: Import giornaliere scansiona internamente i file, ma noi passiamo callback
         success, msg, added, removed = ContabilitaManager.import_giornaliere(
             self.giornaliere_path,
-            progress_callback=lambda c, t: self._update_progress_dynamic(c, t, state, "est_files"),
+            progress_callback=lambda c, t: self._update_progress_dynamic(
+                c, t, state, "est_files"
+            ),
         )
         self._update_state(
             state,
@@ -188,23 +198,31 @@ class ContabilitaWorker(QThread):
         if not self.attivita_path:
             return
 
-        success, msg, added, removed = ContabilitaManager.import_attivita_programmate(self.attivita_path)
+        success, msg, added, removed = ContabilitaManager.import_attivita_programmate(
+            self.attivita_path
+        )
 
         # Aggiorna progresso (1 step)
         self._update_progress_dynamic(1, 1, state, "est_attivita")
 
-        self._update_state(state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}")
+        self._update_state(
+            state, success, added, removed, "Att. Prog: OK", f"Err Att. Prog: {msg}"
+        )
 
     def _phase_import_certificati(self, state):
         if not self.certificati_path:
             return
 
-        success, msg, added, removed = ContabilitaManager.import_certificati_campione(self.certificati_path)
+        success, msg, added, removed = ContabilitaManager.import_certificati_campione(
+            self.certificati_path
+        )
 
         # Aggiorna progresso (1 step)
         self._update_progress_dynamic(1, 1, state, "est_certificati")
 
-        self._update_state(state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}")
+        self._update_state(
+            state, success, added, removed, "Certificati: OK", f"Err Certificati: {msg}"
+        )
 
     def _update_state(self, state, success, added, removed, ok_msg, err_msg):
         state["added"] += added

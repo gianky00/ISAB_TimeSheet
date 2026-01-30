@@ -70,5 +70,7 @@ class GeneralPage(QWidget):
 
     def save_to_config(self, config_manager):
         """Salva i valori nella configurazione."""
-        config_manager.set_config_value("browser_headless", self.headless_check.isChecked())
+        config_manager.set_config_value(
+            "browser_headless", self.headless_check.isChecked()
+        )
         config_manager.set_config_value("browser_timeout", self.timeout_spin.value())

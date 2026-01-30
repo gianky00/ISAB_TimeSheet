@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from PyQt6.QtWidgets import QWidget
 
@@ -19,12 +19,16 @@ class TestLastSimpleBoost:
     def test_apply_theme_logic(self, qapp):
         # Mock Path.exists and open in theme_manager where they are used
         with (
-            patch("src.gui.styles.theme_manager.get_asset_path", return_value="fake.qss"),
+            patch(
+                "src.gui.styles.theme_manager.get_asset_path", return_value="fake.qss"
+            ),
             patch("src.gui.styles.theme_manager.Path.exists", return_value=True),
             patch("src.gui.styles.theme_manager.open", create=True) as mock_open,
         ):
             # Setup open mock to return specific content
-            mock_open.return_value.__enter__.return_value.read.return_value = "QWidget { color: red; }"
+            mock_open.return_value.__enter__.return_value.read.return_value = (
+                "QWidget { color: red; }"
+            )
             apply_theme(qapp, "light")
             assert "color: red" in qapp.styleSheet()
 

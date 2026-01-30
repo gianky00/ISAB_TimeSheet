@@ -114,7 +114,9 @@ class TestTelegramManagerCoverage:
         def test_cmd_start(self, mocker):
             # Patch config_manager inside the handler module
 
-            mock_commands_cm = mocker.patch("src.core.telegram.handlers.commands.config_manager")
+            mock_commands_cm = mocker.patch(
+                "src.core.telegram.handlers.commands.config_manager"
+            )
 
             # Mock config with an OTP
 
@@ -122,7 +124,9 @@ class TestTelegramManagerCoverage:
 
             loop = asyncio.new_event_loop()
 
-            update = loop.run_until_complete(self.async_mock_update(text="/start 123456", chat_id=123))
+            update = loop.run_until_complete(
+                self.async_mock_update(text="/start 123456", chat_id=123)
+            )
 
             self.service.connected_chat_id = None
 
@@ -130,7 +134,9 @@ class TestTelegramManagerCoverage:
 
             mock_context.args = ["123456"]
 
-            loop.run_until_complete(commands.cmd_start(self.service, update, mock_context))
+            loop.run_until_complete(
+                commands.cmd_start(self.service, update, mock_context)
+            )
 
             loop.close()
 
@@ -138,14 +144,18 @@ class TestTelegramManagerCoverage:
 
             assert mock_commands_cm.set_config_value.called
 
-            mock_commands_cm.set_config_value.assert_called_with("telegram_chat_id", "123")
+            mock_commands_cm.set_config_value.assert_called_with(
+                "telegram_chat_id", "123"
+            )
 
             update.message.reply_text.assert_called()
 
         def test_handle_text_input_nlu(self):
             loop = asyncio.new_event_loop()
 
-            update = loop.run_until_complete(self.async_mock_update(text="stampa report", chat_id=123))
+            update = loop.run_until_complete(
+                self.async_mock_update(text="stampa report", chat_id=123)
+            )
 
             self.service.connected_chat_id = "123"
 
@@ -153,7 +163,9 @@ class TestTelegramManagerCoverage:
                 "src.core.telegram.handlers.messages.process_with_ai",
                 new_callable=AsyncMock,
             ) as mock_ai:
-                loop.run_until_complete(messages.handle_text_input(self.service, update, None))
+                loop.run_until_complete(
+                    messages.handle_text_input(self.service, update, None)
+                )
 
                 mock_ai.assert_called_with(self.service, 123, "stampa report")
 
@@ -162,11 +174,15 @@ class TestTelegramManagerCoverage:
         def test_handle_text_input_query(self):
             loop = asyncio.new_event_loop()
 
-            update = loop.run_until_complete(self.async_mock_update(text="ciao", chat_id=123))
+            update = loop.run_until_complete(
+                self.async_mock_update(text="ciao", chat_id=123)
+            )
 
             self.service.connected_chat_id = "123"
 
-            loop.run_until_complete(messages.handle_text_input(self.service, update, None))
+            loop.run_until_complete(
+                messages.handle_text_input(self.service, update, None)
+            )
 
             loop.close()
 
@@ -175,13 +191,17 @@ class TestTelegramManagerCoverage:
         def test_handle_text_input_sequential_oda(self):
             loop = asyncio.new_event_loop()
 
-            update = loop.run_until_complete(self.async_mock_update(text="12345", chat_id=123))
+            update = loop.run_until_complete(
+                self.async_mock_update(text="12345", chat_id=123)
+            )
 
             self.service.connected_chat_id = "123"
 
             self.service.user_states[123] = "WAITING_ODA"
 
-            loop.run_until_complete(messages.handle_text_input(self.service, update, None))
+            loop.run_until_complete(
+                messages.handle_text_input(self.service, update, None)
+            )
 
             loop.close()
 
@@ -192,7 +212,9 @@ class TestTelegramManagerCoverage:
         def test_handle_button_menu_main(self):
             loop = asyncio.new_event_loop()
 
-            update = loop.run_until_complete(self.async_mock_update(data="menu_main", chat_id=123))
+            update = loop.run_until_complete(
+                self.async_mock_update(data="menu_main", chat_id=123)
+            )
 
             self.service.connected_chat_id = "123"
 
@@ -205,7 +227,9 @@ class TestTelegramManagerCoverage:
         def test_handle_button_direct_command(self):
             loop = asyncio.new_event_loop()
 
-            update = loop.run_until_complete(self.async_mock_update(data="run_ts", chat_id=123))
+            update = loop.run_until_complete(
+                self.async_mock_update(data="run_ts", chat_id=123)
+            )
 
             self.service.connected_chat_id = "123"
 
@@ -261,12 +285,16 @@ class TestTelegramManagerCoverage:
 
             loop.close()
 
-            self.service.send_message_sync.assert_called_with("⚠️ API Key mancante per intelligenza bot.")
+            self.service.send_message_sync.assert_called_with(
+                "⚠️ API Key mancante per intelligenza bot."
+            )
 
         def test_handle_db_query_input(self):
             loop = asyncio.new_event_loop()
 
-            update = loop.run_until_complete(self.async_mock_update(text="query", chat_id=123))
+            update = loop.run_until_complete(
+                self.async_mock_update(text="query", chat_id=123)
+            )
 
             self.service.user_states[123] = "WAITING_DB_QUERY_DBNAME_2025"
 
@@ -318,19 +346,27 @@ class TestTelegramManagerCoverage:
             "src.core.telegram.handlers.messages.process_with_ai",
             new_callable=AsyncMock,
         ) as mock_ai:
-            loop.run_until_complete(messages.handle_voice(self.service, update, context))
+            loop.run_until_complete(
+                messages.handle_voice(self.service, update, context)
+            )
             mock_ai.assert_called_with(self.service, 123, b"audio", is_audio=True)
         loop.close()
 
     def test_handle_utility_menus(self):
         loop = asyncio.new_event_loop()
-        update = loop.run_until_complete(self.async_mock_update(data="menu_settings", chat_id=123))
+        update = loop.run_until_complete(
+            self.async_mock_update(data="menu_settings", chat_id=123)
+        )
         self.service.connected_chat_id = "123"
 
-        with patch("src.core.telegram.handlers.callbacks.config_manager.load_config") as mock_conf:
+        with patch(
+            "src.core.telegram.handlers.callbacks.config_manager.load_config"
+        ) as mock_conf:
             mock_conf.return_value = {"fornitori": ["A"]}
             loop.run_until_complete(
-                callbacks._handle_utility_menus(self.service, "menu_settings", update.callback_query)
+                callbacks._handle_utility_menus(
+                    self.service, "menu_settings", update.callback_query
+                )
             )
 
         loop.close()
@@ -338,9 +374,13 @@ class TestTelegramManagerCoverage:
 
     def test_handle_autopilot_toggle(self):
         loop = asyncio.new_event_loop()
-        update = loop.run_until_complete(self.async_mock_update(data="toggle_autopilot", chat_id=123))
+        update = loop.run_until_complete(
+            self.async_mock_update(data="toggle_autopilot", chat_id=123)
+        )
 
-        with patch("src.core.telegram.handlers.callbacks.config_manager.load_config") as mock_conf:
+        with patch(
+            "src.core.telegram.handlers.callbacks.config_manager.load_config"
+        ) as mock_conf:
             mock_conf.return_value = {"timbrature_autopilot_enabled": False}
             loop.run_until_complete(
                 callbacks._handle_setting_changes(
@@ -349,14 +389,18 @@ class TestTelegramManagerCoverage:
             )
 
         loop.close()
-        self.service.command_received.emit.assert_called_with("set_autopilot", {"enabled": True})
+        self.service.command_received.emit.assert_called_with(
+            "set_autopilot", {"enabled": True}
+        )
 
     def test_send_message_sync_safe(self):
         self.service.loop = MagicMock()
         self.service.loop.is_running.return_value = True
         self.service.connected_chat_id = "123"
 
-        with patch("src.core.telegram.service.asyncio.run_coroutine_threadsafe") as mock_run:
+        with patch(
+            "src.core.telegram.service.asyncio.run_coroutine_threadsafe"
+        ) as mock_run:
             self.service.send_message_sync("msg")
             mock_run.assert_called()
 
@@ -365,7 +409,9 @@ class TestTelegramManagerCoverage:
         self.service.loop.is_running.return_value = True
         self.service.connected_chat_id = "123"
 
-        with patch("src.core.telegram.service.asyncio.run_coroutine_threadsafe") as mock_run:
+        with patch(
+            "src.core.telegram.service.asyncio.run_coroutine_threadsafe"
+        ) as mock_run:
             self.service.send_photo_sync(b"data", "cap")
             mock_run.assert_called()
 
@@ -374,6 +420,8 @@ class TestTelegramManagerCoverage:
         self.service.loop.is_running.return_value = True
         self.service.connected_chat_id = "123"
 
-        with patch("src.core.telegram.service.asyncio.run_coroutine_threadsafe") as mock_run:
+        with patch(
+            "src.core.telegram.service.asyncio.run_coroutine_threadsafe"
+        ) as mock_run:
             self.service.send_document_sync("path/to/file.pdf", "cap")
             mock_run.assert_called()

@@ -80,7 +80,9 @@ class DataTable(QWidget):
 
         # Actions
         self._refresh_btn = QPushButton(" Aggiorna")
-        self._refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
+        self._refresh_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
+        )
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(lambda: self.refresh())
         self._refresh_btn.setStyleSheet(

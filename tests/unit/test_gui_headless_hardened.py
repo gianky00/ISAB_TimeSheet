@@ -1,9 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtWidgets import QLabel, QWidget
+from PyQt6.QtWidgets import QWidget
 
-from src.gui.panels.dashboard_panel import DashboardPanel
 from src.gui.panels.settings.main_panel import SettingsPanel
 from src.gui.widgets.toast import Toast
 
@@ -16,7 +15,9 @@ class TestGUIHeadlessHardened:
             "src.gui.panels.settings.main_panel.config_manager.load_config",
             return_value={"browser_headless": False, "browser_timeout": 30},
         )
-        mocker.patch("src.gui.panels.settings.main_panel.config_manager.set_config_value")
+        mocker.patch(
+            "src.gui.panels.settings.main_panel.config_manager.set_config_value"
+        )
         mocker.patch(
             "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
             return_value="fake_key",
@@ -63,8 +64,14 @@ class TestGUIHeadlessHardened:
         initial_count = settings_panel.config_tab.lists_page.account_list.count()
         settings_panel.config_tab.lists_page._add_account()
 
-        assert settings_panel.config_tab.lists_page.account_list.count() == initial_count + 1
-        assert "new_user" in settings_panel.config_tab.lists_page.account_list.item(0).text()
+        assert (
+            settings_panel.config_tab.lists_page.account_list.count()
+            == initial_count + 1
+        )
+        assert (
+            "new_user"
+            in settings_panel.config_tab.lists_page.account_list.item(0).text()
+        )
 
     def test_settings_tab_change_refresh(self, settings_panel, mocker):
         """Verifica che il cambio tab aggiorni le statistiche."""

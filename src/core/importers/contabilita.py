@@ -70,7 +70,9 @@ class ContabilitaImporter(BaseImporter):
             file_obj, _ = cls._decrypt_if_encrypted(path)
             xls = cls._get_excel_file(file_obj)
 
-            valid_sheets = [str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))]
+            valid_sheets = [
+                str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))
+            ]
             if not valid_sheets:
                 return (
                     False,
@@ -79,7 +81,9 @@ class ContabilitaImporter(BaseImporter):
                     [],
                 )
 
-            all_rows, imported_years = cls._process_all_sheets(xls, valid_sheets, progress_callback)
+            all_rows, imported_years = cls._process_all_sheets(
+                xls, valid_sheets, progress_callback
+            )
 
             if not imported_years:
                 return (
@@ -131,7 +135,9 @@ class ContabilitaImporter(BaseImporter):
             pd = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
             try:
-                df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ")
+                df = pd.read_excel(
+                    xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ"
+                )
             except Exception:
                 df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
 
@@ -162,19 +168,32 @@ class ContabilitaImporter(BaseImporter):
                     df[col] = df[col].round(2)
 
                 elif col == "data_prev":
-                    df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d")
+                    df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime(
+                        "%Y-%m-%d"
+                    )
 
                 elif col == "resa":
                     df[col] = df[col].apply(
                         lambda x: (
                             str(round(float(x), 2))
                             if pd.notna(x)
-                            and str(x).replace(".", "").replace(",", "").replace("-", "").isdigit()
-                            else str(x).strip() if pd.notna(x) else ""
+                            and str(x)
+                            .replace(".", "")
+                            .replace(",", "")
+                            .replace("-", "")
+                            .isdigit()
+                            else str(x).strip()
+                            if pd.notna(x)
+                            else ""
                         )
                     )
                 else:
-                    df[col] = df[col].astype(str).str.strip().replace(r"(?i)^nan$", "", regex=True)
+                    df[col] = (
+                        df[col]
+                        .astype(str)
+                        .str.strip()
+                        .replace(r"(?i)^nan$", "", regex=True)
+                    )
 
             df = df.fillna("")
             return list(df.itertuples(index=False, name=None))
@@ -226,7 +245,9 @@ class ContabilitaImporter(BaseImporter):
         try:
             df = validate_contabilita(df)
         except Exception as e:
-            logging.warning(f"Validazione Pandera Contabilità fallita (uso fallback): {e})")
+            logging.warning(
+                f"Validazione Pandera Contabilità fallita (uso fallback): {e})"
+            )
 
         return df
 

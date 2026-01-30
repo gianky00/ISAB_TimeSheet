@@ -141,7 +141,9 @@ class NotificationManager(QObject):
             duration = duration_map.get(level, 3000)
 
             # Puliamo il messaggio per il toast (niente HTML pesante)
-            clean_msg = message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
+            clean_msg = (
+                message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
+            )
             if len(clean_msg) > 120:
                 clean_msg = clean_msg[:117] + "..."
 
@@ -155,7 +157,11 @@ class NotificationManager(QObject):
 
     def get_unread_count(self) -> int:
         """Restituisce il numero di notifiche di errore non lette."""
-        return sum(1 for n in self.notifications if not n.get("read", False) and n.get("level") == "error")
+        return sum(
+            1
+            for n in self.notifications
+            if not n.get("read", False) and n.get("level") == "error"
+        )
 
     def mark_as_read(self, notification_id: str):
         """Segna una notifica come letta."""
@@ -183,7 +189,9 @@ class NotificationManager(QObject):
 
     def delete_notification(self, notification_id: str):
         """Elimina una notifica."""
-        self.notifications = [n for n in self.notifications if n["id"] != notification_id]
+        self.notifications = [
+            n for n in self.notifications if n["id"] != notification_id
+        ]
         self._save_notifications()
         self.notifications_updated.emit()
         self.unread_count_changed.emit(self.get_unread_count())

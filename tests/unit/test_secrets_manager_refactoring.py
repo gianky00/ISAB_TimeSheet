@@ -80,11 +80,15 @@ def test_get_license_key_priority():
             assert SecretsManager.get_license_key() == b"file"
 
             # Priority 3: Keyring
-            with patch.object(SecretsManager, "_get_key_from_env_file", return_value=None):
+            with patch.object(
+                SecretsManager, "_get_key_from_env_file", return_value=None
+            ):
                 assert SecretsManager.get_license_key() == b"keyring"
 
                 # Priority 4: Fallback (Embedded)
-                with patch.object(SecretsManager, "_get_key_from_keyring", return_value=None):
+                with patch.object(
+                    SecretsManager, "_get_key_from_keyring", return_value=None
+                ):
                     fallback = SecretsManager.get_license_key()
                     assert fallback is not None
                     assert len(fallback) == 32

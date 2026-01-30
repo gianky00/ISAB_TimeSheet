@@ -16,7 +16,9 @@ class SidebarChildButton(SidebarButton):
         if not self._collapsed:
             # Sovrascriviamo per aggiungere indentazione extra
             current_style = self.styleSheet()
-            new_style = current_style.replace("padding: 12px 15px;", "padding: 10px 10px 10px 35px;")
+            new_style = current_style.replace(
+                "padding: 12px 15px;", "padding: 10px 10px 10px 35px;"
+            )
             self.setStyleSheet(new_style)
 
 
@@ -196,7 +198,9 @@ class SidebarWidget(QFrame):
         layout.addWidget(self.group_automazioni)
 
         # Figlio: Portale Fornitori
-        self.btn_fornitori = SidebarChildButton("Portale Fornitori", get_asset_path(Icons.GLOBE))
+        self.btn_fornitori = SidebarChildButton(
+            "Portale Fornitori", get_asset_path(Icons.GLOBE)
+        )
         self.btn_fornitori.clicked.connect(lambda: self._handle_automazione_click(0))
         self.group_automazioni.add_child(self.btn_fornitori)
 
@@ -209,17 +213,23 @@ class SidebarWidget(QFrame):
         layout.addWidget(self.group_db)
 
         # 3: Timbrature (Clock)
-        self.btn_timbrature = SidebarChildButton("Timbrature", get_asset_path(Icons.CLOCK))
+        self.btn_timbrature = SidebarChildButton(
+            "Timbrature", get_asset_path(Icons.CLOCK)
+        )
         self.btn_timbrature.clicked.connect(lambda: self._handle_child_click(3))
         self.group_db.add_child(self.btn_timbrature)
 
         # 4: Strumentale (Folder)
-        self.btn_strumentale = SidebarChildButton("Strumentale", get_asset_path(Icons.FOLDER))
+        self.btn_strumentale = SidebarChildButton(
+            "Strumentale", get_asset_path(Icons.FOLDER)
+        )
         self.btn_strumentale.clicked.connect(lambda: self._handle_child_click(4))
         self.group_db.add_child(self.btn_strumentale)
 
         # 5: DataEase (Cloud Download)
-        self.btn_dataease = SidebarChildButton("DataEase", get_asset_path(Icons.DOWNLOAD))
+        self.btn_dataease = SidebarChildButton(
+            "DataEase", get_asset_path(Icons.DOWNLOAD)
+        )
         self.btn_dataease.clicked.connect(lambda: self._handle_child_click(5))
         self.group_db.add_child(self.btn_dataease)
 
@@ -229,12 +239,16 @@ class SidebarWidget(QFrame):
         self.group_db.add_child(self.btn_pdl)
 
         # 11: Dipendenti (Users)
-        self.btn_dipendenti = SidebarChildButton("Dipendenti", get_asset_path(Icons.DIPENDENTI))
+        self.btn_dipendenti = SidebarChildButton(
+            "Dipendenti", get_asset_path(Icons.DIPENDENTI)
+        )
         self.btn_dipendenti.clicked.connect(lambda: self._handle_child_click(11))
         self.group_db.add_child(self.btn_dipendenti)
 
         # 10: Storico OdA
-        self.btn_storico_oda = SidebarChildButton("Storico OdA", get_asset_path(Icons.FILE_TEXT))
+        self.btn_storico_oda = SidebarChildButton(
+            "Storico OdA", get_asset_path(Icons.FILE_TEXT)
+        )
         self.btn_storico_oda.clicked.connect(lambda: self._handle_child_click(10))
         self.group_db.add_child(self.btn_storico_oda)
 
@@ -261,7 +275,9 @@ class SidebarWidget(QFrame):
         layout.addSpacing(10)
 
         # 7: Impostazioni
-        self.btn_settings = SidebarButton("Impostazioni", get_asset_path(Icons.SETTINGS))
+        self.btn_settings = SidebarButton(
+            "Impostazioni", get_asset_path(Icons.SETTINGS)
+        )
         self.btn_settings.clicked.connect(lambda: self._handle_click(7))
         layout.addWidget(self.btn_settings)
 
@@ -281,7 +297,9 @@ class SidebarWidget(QFrame):
     def _handle_notifications_click(self, tab_index):
         """Gestisce il click sui figli di Notifiche (indice pagina 9 fissa)."""
         self.navigation_requested.emit(9)  # Vai a Pagina Notifiche
-        self.notifications_tab_requested.emit(tab_index)  # Cambia tab interno (0: Notifiche, 1: Audit)
+        self.notifications_tab_requested.emit(
+            tab_index
+        )  # Cambia tab interno (0: Notifiche, 1: Audit)
 
     def set_active_button(self, index: int, sub_index: Optional[int] = None):
         """Aggiorna lo stato checked dei pulsanti."""
