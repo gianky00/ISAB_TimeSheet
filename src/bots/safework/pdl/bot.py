@@ -58,6 +58,11 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.merged_pdf_path: Optional[Path] = None
         self.downloaded_files: List[str] = []
         self.missing_pdls: List[str] = []
+        self.progress_callback = None
+
+    def set_progress_callback(self, callback):
+        """Imposta una callback per notificare il progresso (index, status)."""
+        self.progress_callback = callback
 
     def log_error(self, context: str, exception: Exception):
         """Logga un errore dettagliato con stack trace."""
@@ -184,6 +189,9 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 res = self._process_single_pdl_row(
                     index, total, item, all_downloaded_pdl_paths
                 )
+                if self.progress_callback:
+                    self.progress_callback(index, res)
+
                 if res:
                     success_count += 1
             except InterruptedError:

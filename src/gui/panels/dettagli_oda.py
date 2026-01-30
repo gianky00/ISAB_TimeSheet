@@ -231,3 +231,13 @@ class DettagliOdAPanel(BaseBotPanel):
         self.log_widget.append(f"  Periodo: {data_da} - {data_a}")
         self.worker.start()
         self.bot_started.emit()
+
+    def _on_worker_finished(self, success: bool):
+        """Override per aggiornare Storico OdA dopo il completamento."""
+        super()._on_worker_finished(success)
+
+        if success:
+            win = self.window()
+            if win and hasattr(win, "storico_oda_panel"):
+                win.storico_oda_panel.refresh_data()
+                self._on_log("🔄 Aggiornamento Storico OdA avviato.")

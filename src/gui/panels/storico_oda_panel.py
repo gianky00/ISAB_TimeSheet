@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QPushButton,
     QScrollArea,
     QSplitter,
     QStyle,
@@ -31,7 +30,7 @@ from src.core.database import db_manager
 from src.core.oda_manager import OdaManager
 from src.gui.formatters import format_currency_smart, format_date_it
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.utils.helpers import get_asset_path
 
 
 class ChildDescriptionDelegate(QStyledItemDelegate):
@@ -173,13 +172,15 @@ class StoricoOdaPanel(QWidget):
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
-        refresh_btn = QPushButton("Aggiorna")
-        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(refresh_btn)
+        from src.gui.widgets.modern_button import ModernButton
 
-        import_btn = QPushButton("Importa Excel")
-        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
+        filter_layout.addWidget(self.search_input)
+
+        import_btn = ModernButton(
+            "Importa Excel",
+            variant=ModernButton.Variant.GHOST,
+            icon=get_asset_path(Icons.UPLOAD)
+        )
         import_btn.clicked.connect(self._on_import_clicked)
         filter_layout.addWidget(import_btn)
 

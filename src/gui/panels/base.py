@@ -38,6 +38,7 @@ class BotWorker(QThread):
     status_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(bool)
     request_input_signal = pyqtSignal(str, dict, threading.Event)
+    row_status_signal = pyqtSignal(int, bool)  # New signal for row updates
 
     def __init__(self, bot, data, telegram_service=None):
         """
@@ -63,6 +64,10 @@ class BotWorker(QThread):
             # Setup input callback se supportato dal bot
             if hasattr(self.bot, "set_input_callback"):
                 self.bot.set_input_callback(self._request_input_wrapper)
+
+            # Setup progress callback se supportato
+            if hasattr(self.bot, "set_progress_callback"):
+                self.bot.set_progress_callback(self.row_status_signal.emit)
 
             result = self.bot.execute(self.data)
             self.finished_signal.emit(result)
