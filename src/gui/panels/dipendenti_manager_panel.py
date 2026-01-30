@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.audit_manager import AuditManager
 from src.core.employees import employee_manager
+from src.core.sync_tracker import SyncTracker
 from src.gui.widgets.modern_button import ModernButton
 
 
@@ -141,6 +142,13 @@ class DipendentiManagerPanel(QWidget):
 
         toolbar.addStretch()
 
+        # Sync Status
+        self.lbl_sync_status = QLabel("")
+        self.lbl_sync_status.setStyleSheet(
+            "color: #555; font-size: 11px; margin-right: 15px;"
+        )
+        toolbar.addWidget(self.lbl_sync_status)
+
         # Bottoni
         self.btn_refresh = ModernButton("Aggiorna", variant=ModernButton.Variant.GHOST)
         self.btn_refresh.clicked.connect(self.refresh_data)
@@ -198,6 +206,9 @@ class DipendentiManagerPanel(QWidget):
     def refresh_data(self):
         """Ricarica i dati dal DB."""
         try:
+            self.lbl_sync_status.setText(
+                f"Ultimo Sync: {SyncTracker.get_formatted_status('dipendenti')}"
+            )
             employees = employee_manager.get_all_employees()
             self.table.setRowCount(0)
 

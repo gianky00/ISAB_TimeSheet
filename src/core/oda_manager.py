@@ -28,6 +28,12 @@ class OdaManager:
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[bool, str, int, int]:
         """Importa i dati dal file Excel Storico OdA."""
+        import time
+
+        from src.core.sync_tracker import SyncTracker
+
+        start_time = time.time()
+
         success, message, imported_rows = ExcelImporter.import_storico_oda(
             file_path, progress_callback
         )
@@ -37,4 +43,8 @@ class OdaManager:
         total_added, total_removed = DataSynchronizer.sync_storico_oda(
             cls.DB_PATH, imported_rows
         )
+
+        duration = time.time() - start_time
+        SyncTracker.update_status("storico_oda", total_added, total_removed, duration)
+
         return True, message, total_added, total_removed

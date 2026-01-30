@@ -174,26 +174,22 @@ class StoricoOdaImporter(BaseImporter):
     def _clean_euro_num(x):
         """Helper for European numbers (1.234,56 -> 1234.56).
 
-        Returns integer if value has no decimal part (5.0 -> 5).
+        Always returns float to match SQLite REAL column behavior (5.0 -> '5.0').
         """
         import pandas as pd
 
         if pd.isna(x) or str(x).strip() == "":
-            return 0
+            return 0.0
         if isinstance(x, (int, float)):
-            val = float(x)
-        else:
-            s = str(x).strip()
-            if "." in s and "," in s:
-                s = s.replace(".", "").replace(",", ".")
-            elif "," in s:
-                s = s.replace(",", ".")
-            try:
-                val = float(s)
-            except ValueError:
-                return 0
+            return float(x)
 
-        # Return integer if no decimal part, else float
-        if val == int(val):
-            return int(val)
-        return val
+        s = str(x).strip()
+        if "." in s and "," in s:
+            s = s.replace(".", "").replace(",", ".")
+        elif "," in s:
+            s = s.replace(",", ".")
+
+        try:
+            return float(s)
+        except ValueError:
+            return 0.0

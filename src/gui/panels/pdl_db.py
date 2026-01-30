@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.database import db_manager
+from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
 from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
@@ -160,22 +161,29 @@ class PDLDBPanel(QWidget):
 
         filter_layout.addStretch()
 
+        # Sync Status
+        self.lbl_sync_status = QLabel("")
+        self.lbl_sync_status.setStyleSheet(
+            "color: #555; font-size: 11px; margin-right: 15px;"
+        )
+        filter_layout.addWidget(self.lbl_sync_status)
+
         # Clear Filters
         self.clear_btn = ModernButton(
             "RESETTA FILTRI",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
         )
-        self.clear_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.RESET), "#FFFFFF")
-        )
+        self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), "#FFFFFF"))
         self.clear_btn.setToolTip("Resetta Filtri")
         self.clear_btn.clicked.connect(self._reset_filters)
         filter_layout.addWidget(self.clear_btn)
 
         # Export Excel
         self.export_btn = ModernButton(
-            "ESPORTA", variant=ModernButton.Variant.SUCCESS, size=ModernButton.Size.SMALL
+            "ESPORTA",
+            variant=ModernButton.Variant.SUCCESS,
+            size=ModernButton.Size.SMALL,
         )
         self.export_btn.setIcon(
             get_colored_icon(get_asset_path(Icons.EXCEL), "#FFFFFF")
@@ -392,6 +400,10 @@ class PDLDBPanel(QWidget):
 
     def refresh_data(self, sort_col=None):
         """Aggiorna i dati della tabella PDL con sistema di cache."""
+        self.lbl_sync_status.setText(
+            f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}"
+        )
+
         query, params = self._build_pdl_query(sort_col)
         cache_key = f"{query}_{params}"
 
