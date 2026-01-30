@@ -54,7 +54,9 @@ class ScaricoOreImporter(BaseImporter):
                         if name.startswith("xl/worksheets/sheet"):
                             with z.open(name) as f:
                                 head = f.read(32768).decode("utf-8", errors="ignore")
-                                match = re.search(r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head)
+                                match = re.search(
+                                    r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head
+                                )
                                 if match:
                                     r = int(match.group(1))
                                     if r > cnt:

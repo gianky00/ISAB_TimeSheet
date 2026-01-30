@@ -23,7 +23,9 @@ class TestBotPagesSimpleLogic:
 
         with (
             patch.object(page, "_wait_for_overlay"),
-            patch("src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains") as mock_ac,
+            patch(
+                "src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page.ActionChains"
+            ) as mock_ac,
         ):
             res = page.setup_filters("KK123", "01.01.2024")
             assert res is True

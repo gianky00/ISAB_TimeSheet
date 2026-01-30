@@ -127,7 +127,9 @@ class MainWindow(QMainWindow):
         # Connect Autopilot real-time updates
         if hasattr(self, "timbrature_bot_panel"):
             with suppress(Exception):
-                self.timbrature_bot_panel.autopilot_changed.connect(self._update_autopilot_status_ui)
+                self.timbrature_bot_panel.autopilot_changed.connect(
+                    self._update_autopilot_status_ui
+                )
 
         # Show success toast
         QTimer.singleShot(
@@ -215,25 +217,39 @@ class MainWindow(QMainWindow):
         idx = self.page_stack.currentIndex()
         refresh_actions = {
             PageIndex.DASHBOARD: lambda: (
-                self.dashboard_panel.refresh_data() if hasattr(self, "dashboard_panel") else None
+                self.dashboard_panel.refresh_data()
+                if hasattr(self, "dashboard_panel")
+                else None
             ),
             PageIndex.TIMBRATURE: lambda: (
-                self.timbrature_db_panel.refresh_data() if hasattr(self, "timbrature_db_panel") else None
+                self.timbrature_db_panel.refresh_data()
+                if hasattr(self, "timbrature_db_panel")
+                else None
             ),
             PageIndex.STRUMENTALE: lambda: (
-                self.contabilita_panel.refresh_tabs() if hasattr(self, "contabilita_panel") else None
+                self.contabilita_panel.refresh_tabs()
+                if hasattr(self, "contabilita_panel")
+                else None
             ),
             PageIndex.DATAEASE: lambda: (
-                self.scarico_ore_panel._start_update() if hasattr(self, "scarico_ore_panel") else None
+                self.scarico_ore_panel._start_update()
+                if hasattr(self, "scarico_ore_panel")
+                else None
             ),
             PageIndex.ANAGRAFICHE: lambda: (
-                self.pdl_db_panel.refresh_data() if hasattr(self, "pdl_db_panel") else None
+                self.pdl_db_panel.refresh_data()
+                if hasattr(self, "pdl_db_panel")
+                else None
             ),
             PageIndex.STORICO_ODA: lambda: (
-                self.storico_oda_panel.refresh_data() if hasattr(self, "storico_oda_panel") else None
+                self.storico_oda_panel.refresh_data()
+                if hasattr(self, "storico_oda_panel")
+                else None
             ),
             PageIndex.DIPENDENTI: lambda: (
-                self.dipendenti_panel.refresh_data() if hasattr(self, "dipendenti_panel") else None
+                self.dipendenti_panel.refresh_data()
+                if hasattr(self, "dipendenti_panel")
+                else None
             ),
         }
         action = refresh_actions.get(idx)
@@ -250,7 +266,10 @@ class MainWindow(QMainWindow):
             if not getattr(self.timbrature_bot_panel, "_mw_signals_connected", False):
                 with suppress(Exception):
                     self.timbrature_bot_panel.status_changed.connect(
-                        lambda color, msg: self.status_bar_component.status_portale.setStatus(msg, color)
+                        lambda color,
+                        msg: self.status_bar_component.status_portale.setStatus(
+                            msg, color
+                        )
                     )
                     self.timbrature_bot_panel._mw_signals_connected = True
             from PyQt6.QtCore import QDate
@@ -263,7 +282,9 @@ class MainWindow(QMainWindow):
             elif mode == "mese":
                 data_da = QDate.currentDate().toString("01.MM.yyyy")
             ToastManager.instance().show(f"🚀 Avvio Timbrature ({mode})...", "info")
-            self.timbrature_bot_panel.run_externally({"data_da": data_da, "data_a": data_a})
+            self.timbrature_bot_panel.run_externally(
+                {"data_da": data_da, "data_a": data_a}
+            )
 
     def _on_scarico_ts_input(self, args: list):
         if not args or not args[0]:
@@ -296,7 +317,9 @@ class MainWindow(QMainWindow):
         if hasattr(self, "pdl_panel"):
             QTimer.singleShot(
                 200,
-                lambda: self.pdl_panel.run_externally({"single_item": {"numero_pdl": args[0]}}),
+                lambda: self.pdl_panel.run_externally(
+                    {"single_item": {"numero_pdl": args[0]}}
+                ),
             )
 
     def _on_prenota_bp_input(self, args: list):
@@ -306,7 +329,9 @@ class MainWindow(QMainWindow):
         if hasattr(self, "prenota_panel"):
             QTimer.singleShot(
                 200,
-                lambda: self.prenota_panel.run_externally({"single_item": {"numero_bp": args[0]}}),
+                lambda: self.prenota_panel.run_externally(
+                    {"single_item": {"numero_bp": args[0]}}
+                ),
             )
 
     def _run_carico_ts(self):
@@ -325,12 +350,16 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(500, self.contabilita_panel.start_import_process)
 
     def _handle_automation_tab_change(self, tab_index: int):
-        self.navigation_controller.navigate_to(PageIndex.AUTOMAZIONI, sub_index=tab_index)
+        self.navigation_controller.navigate_to(
+            PageIndex.AUTOMAZIONI, sub_index=tab_index
+        )
         if hasattr(self, "automazioni_widget"):
             self.automazioni_widget.setCurrentIndex(tab_index)
 
     def _handle_notifications_tab_change(self, tab_index: int):
-        self.navigation_controller.navigate_to(PageIndex.NOTIFICATIONS, sub_index=tab_index)
+        self.navigation_controller.navigate_to(
+            PageIndex.NOTIFICATIONS, sub_index=tab_index
+        )
         if hasattr(self, "notifications_panel"):
             self.notifications_panel.tabs.setCurrentIndex(tab_index)
 
@@ -346,7 +375,9 @@ class MainWindow(QMainWindow):
         if success:
             self.status_bar_component.footer_left.refresh_accounts()
             portal_name = "Portale Fornitori" if service_type == "isab" else "SafeWork"
-            ToastManager.instance().show(f"Account {portal_name} cambiato in: {new_user}", "info")
+            ToastManager.instance().show(
+                f"Account {portal_name} cambiato in: {new_user}", "info"
+            )
             if hasattr(self, "settings_panel") and self.settings_panel:
                 self.settings_panel.load_settings()
             AuditManager.instance().log_action(
@@ -374,8 +405,12 @@ class MainWindow(QMainWindow):
                 msg += f"🔴 {len(scaduti)} Abilitazioni SCADUTE (>30 gg)<br/>"
             if in_scadenza:
                 msg += f"🟠 {len(in_scadenza)} In scadenza (20-30 gg)<br/>"
-            msg += "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
-            ToastManager.instance().show(msg, "warning" if in_scadenza or scaduti else "info", 8000)
+            msg += (
+                "<br/><small>Controlla la tabella 'Dipendenti' per i dettagli.</small>"
+            )
+            ToastManager.instance().show(
+                msg, "warning" if in_scadenza or scaduti else "info", 8000
+            )
         except Exception as e:
             print(f"Errore monitoraggio autorizzazioni: {e}")
 
@@ -383,7 +418,9 @@ class MainWindow(QMainWindow):
         if hasattr(self, "sidebar"):
             self.sidebar.btn_lyra.set_badge(count)
         if count > 0:
-            ToastManager.instance().show(f"⚠️ Lyra ha rilevato {count} anomalie", "warning")
+            ToastManager.instance().show(
+                f"⚠️ Lyra ha rilevato {count} anomalie", "warning"
+            )
 
     def _show_update_banner(self, new_version, download_url, changelog):
         if hasattr(self, "update_banner"):
@@ -394,7 +431,9 @@ class MainWindow(QMainWindow):
     def _on_settings_saved(self):
         self.telegram.start_service()
         self._update_autopilot_status_ui()
-        if hasattr(self, "status_bar_component") and hasattr(self.status_bar_component, "footer_left"):
+        if hasattr(self, "status_bar_component") and hasattr(
+            self.status_bar_component, "footer_left"
+        ):
             self.status_bar_component.footer_left.refresh_accounts()
         ToastManager.instance().show("Impostazioni salvate!", "success")
 
@@ -415,9 +454,13 @@ class MainWindow(QMainWindow):
     def show_settings(self):
         self.navigation_controller.navigate_to(PageIndex.SETTINGS)
 
-    def show_background_notification(self, title: str, message: str, is_error: bool = False):
+    def show_background_notification(
+        self, title: str, message: str, is_error: bool = False
+    ):
         if hasattr(self, "tray_icon_component"):
-            self.tray_icon_component.show_background_notification(title, message, is_error)
+            self.tray_icon_component.show_background_notification(
+                title, message, is_error
+            )
 
     # --- Properties per compatibilità ---
     @property

@@ -109,7 +109,9 @@ class BugReporter:
             if not reports_dir.exists():
                 return
 
-            reports = sorted(reports_dir.glob("*.zip"), key=lambda x: x.stat().st_mtime, reverse=True)
+            reports = sorted(
+                reports_dir.glob("*.zip"), key=lambda x: x.stat().st_mtime, reverse=True
+            )
             for r in reports[max_reports:]:
                 try:
                     r.unlink()

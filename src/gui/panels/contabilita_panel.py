@@ -71,9 +71,13 @@ class ContabilitaPanel(QWidget):
 
         # Totali Selezione
         self.selection_count_label = QLabel("Righe: 0")
-        self.selection_count_label.setStyleSheet("color: #607D8B; font-weight: 600; font-size: 12px;")
+        self.selection_count_label.setStyleSheet(
+            "color: #607D8B; font-weight: 600; font-size: 12px;"
+        )
         self.selection_sum_label = QLabel("Totale ORE: 0")
-        self.selection_sum_label.setStyleSheet("color: #009688; font-weight: 700; font-size: 12px;")
+        self.selection_sum_label.setStyleSheet(
+            "color: #009688; font-weight: 700; font-size: 12px;"
+        )
 
         # Search Input
         self.search_input = QLineEdit()
@@ -90,7 +94,9 @@ class ContabilitaPanel(QWidget):
 
         # Update Button
         self.update_btn = QPushButton("Aggiorna")
-        self.update_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF"))
+        self.update_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
+        )
         self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_btn.setFixedSize(110, 34)  # Slightly larger
         self.update_btn.setStyleSheet(
@@ -332,7 +338,9 @@ class ContabilitaPanel(QWidget):
                     target.tree.itemSelectionChanged.disconnect()
                 except Exception:
                     pass
-                target.tree.itemSelectionChanged.connect(lambda: self._update_selection_total(target.tree))
+                target.tree.itemSelectionChanged.connect(
+                    lambda: self._update_selection_total(target.tree)
+                )
 
     def _update_selection_total(self, widget):
         """Calcola e visualizza i totali per le righe selezionate (Table o Tree)."""
@@ -348,7 +356,9 @@ class ContabilitaPanel(QWidget):
                 return
 
             target_col = self._find_ore_column(widget)
-            selected_rows, total_ore = self._calculate_selection_stats(widget, indexes, target_col)
+            selected_rows, total_ore = self._calculate_selection_stats(
+                widget, indexes, target_col
+            )
 
             fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
@@ -367,11 +377,15 @@ class ContabilitaPanel(QWidget):
                 return c
         return -1
 
-    def _calculate_selection_stats(self, widget, indexes, target_col) -> tuple[set[int], float]:
+    def _calculate_selection_stats(
+        self, widget, indexes, target_col
+    ) -> tuple[set[int], float]:
         selected_rows, total_ore = set(), 0.0
         for idx in indexes:
             row = idx.row()
-            if widget.isRowHidden(row) or (widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"):
+            if widget.isRowHidden(row) or (
+                widget.item(row, 0) and widget.item(row, 0).text() == "TOTALI"
+            ):
                 continue
             selected_rows.add(row)
 
@@ -380,7 +394,9 @@ class ContabilitaPanel(QWidget):
                 it = widget.item(row, target_col)
                 if it:
                     try:
-                        clean = str(it.text()).replace(".", "").replace(",", ".").strip()
+                        clean = (
+                            str(it.text()).replace(".", "").replace(",", ".").strip()
+                        )
                         if clean:
                             total_ore += float(clean)
                     except Exception:

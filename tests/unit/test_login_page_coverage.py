@@ -34,7 +34,9 @@ class TestLoginPageCoverage(unittest.TestCase):
             mock_wait_instance.until.side_effect = TimeoutException()
             res = self.page._attendi_scomparsa_overlay(5)
             self.assertFalse(res)
-            self.logger_mock.assert_any_call("⚠ Timeout (5s) attesa overlay. Proseguo con cautela.")
+            self.logger_mock.assert_any_call(
+                "⚠ Timeout (5s) attesa overlay. Proseguo con cautela."
+            )
 
     def test_perform_login_form_action_success(self):
         mock_user = MagicMock()
@@ -69,7 +71,9 @@ class TestLoginPageCoverage(unittest.TestCase):
 
         self.page._perform_login_form_action("u", "p")
 
-        self.mock_driver.execute_script.assert_called_with("arguments[0].click();", "fallback_element")
+        self.mock_driver.execute_script.assert_called_with(
+            "arguments[0].click();", "fallback_element"
+        )
 
     def test_check_and_handle_session_popup_found(self):
         with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
@@ -93,7 +97,9 @@ class TestLoginPageCoverage(unittest.TestCase):
         self.mock_driver.title = "Proxy Error"
         res = self.page.login("u", "p")
         self.assertFalse(res)
-        self.logger_mock.assert_any_call("⚠ Rilevato 'Proxy Error' durante l'accesso iniziale.")
+        self.logger_mock.assert_any_call(
+            "⚠ Rilevato 'Proxy Error' durante l'accesso iniziale."
+        )
 
     def test_login_already_logged_in(self):
         self.page._attendi_scomparsa_overlay = MagicMock()
@@ -129,7 +135,9 @@ class TestLoginPageCoverage(unittest.TestCase):
         with patch("src.bots.base.login_page.WebDriverWait") as MockWait:
             MockWait.return_value.until.side_effect = TimeoutException()
             self.page._verify_logged_in_via_ui = MagicMock(return_value=False)
-            self.page._perform_login_form_action = MagicMock(side_effect=Exception("Refresh failed"))
+            self.page._perform_login_form_action = MagicMock(
+                side_effect=Exception("Refresh failed")
+            )
 
             res = self.page.login("u", "p")
             self.assertFalse(res)

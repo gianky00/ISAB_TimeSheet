@@ -75,7 +75,9 @@ class AutopilotEventCard(QFrame):
         # Icon
         self.icon_label = QLabel()
         self.icon_label.setFixedSize(32, 32)
-        self.icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(20, 20))
+        self.icon_label.setPixmap(
+            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(20, 20)
+        )
         self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.icon_label.setStyleSheet(
             f"""
@@ -226,7 +228,9 @@ class AutopilotConfigCard(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
+        icon_label.setPixmap(
+            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18)
+        )
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -340,7 +344,9 @@ class AutopilotConfigCard(QFrame):
 
     def _on_config_changed(self):
         """Salva la configurazione quando viene modificata."""
-        config_manager.set_config_value(f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked())
+        config_manager.set_config_value(
+            f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked()
+        )
         config_manager.set_config_value(
             f"{self.bot_id}_autopilot_time", self.time_edit.time().toString("HH:mm")
         )
@@ -352,11 +358,21 @@ class AutopilotConfigCard(QFrame):
 
         # Aggiorna anche il footer (Account & Status Cards)
         if self.parent_widget:
-            if hasattr(self.parent_widget, "footer_left_widget") and self.parent_widget.footer_left_widget:
-                QTimer.singleShot(100, self.parent_widget.footer_left_widget.refresh_accounts)
+            if (
+                hasattr(self.parent_widget, "footer_left_widget")
+                and self.parent_widget.footer_left_widget
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.footer_left_widget.refresh_accounts
+                )
 
-            if hasattr(self.parent_widget, "status_bar") and self.parent_widget.status_bar:
-                QTimer.singleShot(100, self.parent_widget.status_bar.update_autopilot_ui)
+            if (
+                hasattr(self.parent_widget, "status_bar")
+                and self.parent_widget.status_bar
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.status_bar.update_autopilot_ui
+                )
 
 
 class AutopilotConfigCardWithInterval(QFrame):
@@ -397,7 +413,9 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(28, 28)
-        icon_label.setPixmap(get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18))
+        icon_label.setPixmap(
+            get_colored_icon(get_asset_path(icon_path), "#ffffff").pixmap(18, 18)
+        )
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setStyleSheet(
             f"""
@@ -535,11 +553,15 @@ class AutopilotConfigCardWithInterval(QFrame):
 
     def _on_config_changed(self):
         """Salva la configurazione quando viene modificata."""
-        config_manager.set_config_value(f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked())
+        config_manager.set_config_value(
+            f"{self.bot_id}_autopilot_enabled", self.enable_check.isChecked()
+        )
         config_manager.set_config_value(
             f"{self.bot_id}_autopilot_time", self.time_edit.time().toString("HH:mm")
         )
-        config_manager.set_config_value(f"{self.bot_id}_autopilot_interval_days", self.interval_spin.value())
+        config_manager.set_config_value(
+            f"{self.bot_id}_autopilot_interval_days", self.interval_spin.value()
+        )
 
         # Notifica il parent widget per refresh
         if self.parent_widget and hasattr(self.parent_widget, "refresh_events"):
@@ -547,11 +569,21 @@ class AutopilotConfigCardWithInterval(QFrame):
 
         # Aggiorna anche il footer (Account & Status Cards)
         if self.parent_widget:
-            if hasattr(self.parent_widget, "footer_left_widget") and self.parent_widget.footer_left_widget:
-                QTimer.singleShot(100, self.parent_widget.footer_left_widget.refresh_accounts)
+            if (
+                hasattr(self.parent_widget, "footer_left_widget")
+                and self.parent_widget.footer_left_widget
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.footer_left_widget.refresh_accounts
+                )
 
-            if hasattr(self.parent_widget, "status_bar") and self.parent_widget.status_bar:
-                QTimer.singleShot(100, self.parent_widget.status_bar.update_autopilot_ui)
+            if (
+                hasattr(self.parent_widget, "status_bar")
+                and self.parent_widget.status_bar
+            ):
+                QTimer.singleShot(
+                    100, self.parent_widget.status_bar.update_autopilot_ui
+                )
 
 
 class AutopilotWidget(QWidget):
@@ -596,7 +628,9 @@ class AutopilotWidget(QWidget):
         header_layout.setSpacing(10)
 
         title = QLabel("Autopilot")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;")
+        title.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #495057; margin-bottom: 0px;"
+        )
         header_layout.addWidget(title)
 
         # --- LIVE INDICATOR (Neon Dot) ---
@@ -634,7 +668,9 @@ class AutopilotWidget(QWidget):
 
         # Pulsante configurazione con icona settings
         self.config_btn = QPushButton()
-        self.config_btn.setIcon(get_colored_icon(get_asset_path(Icons.SETTINGS), "#6c757d"))
+        self.config_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.SETTINGS), "#6c757d")
+        )
         self.config_btn.setIconSize(QSize(20, 20))
         self.config_btn.setFixedSize(32, 32)
         self.config_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -752,7 +788,10 @@ class AutopilotWidget(QWidget):
         """Ferma e pulisce le animazioni del gear button se in esecuzione."""
         if hasattr(self, "_gear_animation") and self._gear_animation:
             try:
-                if self._gear_animation.state() == QParallelAnimationGroup.State.Running:
+                if (
+                    self._gear_animation.state()
+                    == QParallelAnimationGroup.State.Running
+                ):
                     self._gear_animation.stop()
                 self._gear_animation.deleteLater()
             except RuntimeError:
@@ -767,7 +806,10 @@ class AutopilotWidget(QWidget):
 
         if hasattr(self, "_gear_scale_sequence") and self._gear_scale_sequence:
             try:
-                if self._gear_scale_sequence.state() == QSequentialAnimationGroup.State.Running:
+                if (
+                    self._gear_scale_sequence.state()
+                    == QSequentialAnimationGroup.State.Running
+                ):
                     self._gear_scale_sequence.stop()
             except RuntimeError:
                 pass
@@ -842,8 +884,12 @@ class AutopilotWidget(QWidget):
 
         # Timer per cambio colore rapido (caleidoscopio)
         QTimer.singleShot(0, lambda: set_color("#0d6efd", "#0a58ca", "#0d6efd"))  # Blu
-        QTimer.singleShot(200, lambda: set_color("#8b5cf6", "#7c3aed", "#8b5cf6"))  # Viola
-        QTimer.singleShot(400, lambda: set_color("#10b981", "#059669", "#10b981"))  # Verde
+        QTimer.singleShot(
+            200, lambda: set_color("#8b5cf6", "#7c3aed", "#8b5cf6")
+        )  # Viola
+        QTimer.singleShot(
+            400, lambda: set_color("#10b981", "#059669", "#10b981")
+        )  # Verde
         QTimer.singleShot(750, restore_color)
 
     def _animate_gear_button(self):
@@ -873,7 +919,9 @@ class AutopilotWidget(QWidget):
         self._setup_color_transitions(original_style)
 
         # Cleanup quando finisce
-        parallel_group.finished.connect(lambda: parallel_group.deleteLater() if parallel_group else None)
+        parallel_group.finished.connect(
+            lambda: parallel_group.deleteLater() if parallel_group else None
+        )
 
         # Avvia e mantieni riferimenti
         parallel_group.start()
@@ -889,7 +937,10 @@ class AutopilotWidget(QWidget):
         # Stop any previous animation
         if hasattr(self, "_current_animation") and self._current_animation:
             try:
-                if self._current_animation.state() == QSequentialAnimationGroup.State.Running:
+                if (
+                    self._current_animation.state()
+                    == QSequentialAnimationGroup.State.Running
+                ):
                     self._current_animation.stop()
                 self._current_animation.deleteLater()
             except RuntimeError:
@@ -1015,7 +1066,9 @@ class AutopilotWidget(QWidget):
 
         # Aggiungi event cards in griglia 2 colonne
         for idx, event in enumerate(events):
-            card = AutopilotEventCard(event["name"], event["time"], event["icon"], event["color"], self)
+            card = AutopilotEventCard(
+                event["name"], event["time"], event["icon"], event["color"], self
+            )
             row = idx // 2  # Riga
             col = idx % 2  # Colonna (0 o 1)
             self.view_layout.addWidget(card, row, col)
@@ -1080,7 +1133,9 @@ class AutopilotWidget(QWidget):
         # Aggiungi config cards per bot giornalieri
         idx = 0
         for bot in bots:
-            card = AutopilotConfigCard(bot["id"], bot["name"], bot["icon"], bot["color"], self)
+            card = AutopilotConfigCard(
+                bot["id"], bot["name"], bot["icon"], bot["color"], self
+            )
             row = idx // 2  # Riga
             col = idx % 2  # Colonna (0 o 1)
             self.config_layout.addWidget(card, row, col)

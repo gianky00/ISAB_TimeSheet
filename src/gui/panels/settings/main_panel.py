@@ -165,7 +165,9 @@ class SettingsPanel(QWidget):
     def _import_settings(self):
         from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
-        path, _ = QFileDialog.getOpenFileName(self, "Importa Configurazione", "", "JSON Files (*.json)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Importa Configurazione", "", "JSON Files (*.json)"
+        )
         if path:
             res = QMessageBox.warning(
                 self,

@@ -11,7 +11,9 @@ class TestExcelImporter:
     @patch("src.core.importers.contabilita.pd.ExcelFile")
     @patch("src.core.importers.contabilita.pd.read_excel")
     @patch("src.core.importers.contabilita.Path.exists", return_value=True)
-    def test_import_contabilita_dati_success(self, mock_exists, mock_read_excel, mock_excel_file):
+    def test_import_contabilita_dati_success(
+        self, mock_exists, mock_read_excel, mock_excel_file
+    ):
         # Mock ExcelFile
         mock_xls = MagicMock()
         mock_xls.sheet_names = ["2024"]
@@ -59,7 +61,9 @@ class TestExcelImporter:
         )
 
         with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df):
-            year, rows, err = GiornaliereImporter._process_single_giornaliera((2024, Path("file.xlsx"), {}))
+            year, rows, err = GiornaliereImporter._process_single_giornaliera(
+                (2024, Path("file.xlsx"), {})
+            )
 
             assert err is None
             assert len(rows) == 1
@@ -96,13 +100,17 @@ class TestExcelImporter:
     @patch("src.core.importers.certificati.pd.read_excel")
     @patch("src.core.importers.certificati.pd.ExcelFile")
     @patch("src.core.importers.certificati.Path.exists", return_value=True)
-    def test_import_certificati_campione(self, mock_exists, mock_excel_file, mock_read_excel):
+    def test_import_certificati_campione(
+        self, mock_exists, mock_excel_file, mock_read_excel
+    ):
         mock_xls = MagicMock()
         mock_xls.sheet_names = ["Strumenti Campione"]
         mock_excel_file.return_value = mock_xls
 
         # Header detection mock
-        preview_df = pd.DataFrame([["Modello / Tipo", "Costruttore", "Matricola", "ID-COEMI"]])
+        preview_df = pd.DataFrame(
+            [["Modello / Tipo", "Costruttore", "Matricola", "ID-COEMI"]]
+        )
 
         main_df = pd.DataFrame(
             {
@@ -168,7 +176,9 @@ class TestExcelImporter:
     @patch("src.core.importers.attivita.pd.read_excel")
     @patch("src.core.importers.attivita.Path.exists", return_value=True)
     def test_import_attivita_programmate(self, mock_exists, mock_read_excel):
-        df = pd.DataFrame({"PS": ["P1"], "AREA": ["A1"], "DESCRIZIONE\nATTIVITA'": ["D1"]})
+        df = pd.DataFrame(
+            {"PS": ["P1"], "AREA": ["A1"], "DESCRIZIONE\nATTIVITA'": ["D1"]}
+        )
         mock_read_excel.return_value = df
 
         success, msg, rows = ExcelImporter.import_attivita_programmate("p.xlsx")

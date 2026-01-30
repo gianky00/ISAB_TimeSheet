@@ -127,7 +127,9 @@ class InteractiveStatusCard(QFrame):
         left_layout.addWidget(emoji_label)
 
         self.val_text = QLabel("0")
-        self.val_text.setStyleSheet(f"font-size: 30px; font-weight: 900; color: {color};")
+        self.val_text.setStyleSheet(
+            f"font-size: 30px; font-weight: 900; color: {color};"
+        )
         self.val_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.val_text)
 
@@ -144,14 +146,18 @@ class InteractiveStatusCard(QFrame):
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_title = QLabel(label.upper())
-        lbl_title.setStyleSheet("font-size: 14px; font-weight: 800; color: #495057; letter-spacing: 0.8px;")
+        lbl_title.setStyleSheet(
+            "font-size: 14px; font-weight: 800; color: #495057; letter-spacing: 0.8px;"
+        )
 
         lbl_desc = QLabel(description)
         lbl_desc.setStyleSheet(
             "font-size: 13px; color: #6c757d; font-weight: 600;"  # Aumentato a 13px e font-weight 600
         )
         lbl_desc.setWordWrap(False)  # Disabilita word wrap per evitare a capo
-        lbl_desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lbl_desc.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
         right_layout.addWidget(lbl_title)
         right_layout.addWidget(lbl_desc)

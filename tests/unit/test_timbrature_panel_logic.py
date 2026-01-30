@@ -50,7 +50,9 @@ def test_load_settings_data_filtering(panel):
 
 def test_update_employee_details(panel):
     """Test che il cambio di combo chiami lo storage."""
-    mock_employees = [{"nome": "Mario", "cognome": "Rossi", "reparto": "", "cantiere": ""}]
+    mock_employees = [
+        {"nome": "Mario", "cognome": "Rossi", "reparto": "", "cantiere": ""}
+    ]
     panel.storage.get_employees.return_value = mock_employees
     panel.reparti = ["R1", "R2"]
 
@@ -64,7 +66,9 @@ def test_update_employee_details(panel):
     combo.setCurrentText("R1")
 
     # Verify storage update called
-    panel.storage.update_employee_details.assert_called_with("Mario", "Rossi", reparto="R1")
+    panel.storage.update_employee_details.assert_called_with(
+        "Mario", "Rossi", reparto="R1"
+    )
 
 
 def test_import_excel_logic(panel):
@@ -87,14 +91,18 @@ def test_import_excel_logic(panel):
         # Case 2: Failure
         panel.storage.import_excel.return_value = False
         panel._import_excel_manually()
-        mock_toast.return_value.show.assert_called_with("Impossibile importare il file.", "error")
+        mock_toast.return_value.show.assert_called_with(
+            "Impossibile importare il file.", "error"
+        )
 
 
 def test_manage_list_dialog(panel, mocker):
     """Test aggiunta elemento a lista (reparti/cantieri)."""
     # Mock input dialogs
     mocker.patch("PyQt6.QtWidgets.QDialog.exec", return_value=True)  # Accept dialog
-    mocker.patch("PyQt6.QtWidgets.QInputDialog.getText", return_value=("NUOVO_REP", True))
+    mocker.patch(
+        "PyQt6.QtWidgets.QInputDialog.getText", return_value=("NUOVO_REP", True)
+    )
 
     panel.lists = {"reparti": []}
     pass

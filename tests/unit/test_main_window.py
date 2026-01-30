@@ -16,7 +16,9 @@ class TestMainWindow:
     @patch("src.gui.main_window.main.LyraSentinel")
     @patch("src.gui.main_window.main.config_manager.load_config")
     @patch("src.gui.main_window.main.apply_theme")
-    def test_init(self, mock_theme, mock_conf, mock_sentinel, mock_service, mock_timer, app, qtbot):
+    def test_init(
+        self, mock_theme, mock_conf, mock_sentinel, mock_service, mock_timer, app, qtbot
+    ):
         mock_conf.return_value = {}
 
         window = MainWindow()
@@ -32,8 +34,12 @@ class TestMainWindow:
             patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
             patch("src.gui.main_window.main.LyraSentinel"),
-            patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
-            patch("src.gui.main_window.main.config_manager.load_config", return_value={}),
+            patch(
+                "src.gui.panels.contabilita_panel.ContabilitaManager"
+            ) as mock_manager,
+            patch(
+                "src.gui.main_window.main.config_manager.load_config", return_value={}
+            ),
         ):
             mock_manager.get_available_years.return_value = []
             mock_manager.get_year_stats.return_value = {
@@ -64,8 +70,12 @@ class TestMainWindow:
             patch("src.gui.main_window.main.QTimer.singleShot"),
             patch("src.gui.main_window.main.ServiceController"),
             patch("src.gui.main_window.main.LyraSentinel"),
-            patch("src.gui.panels.contabilita_panel.ContabilitaManager") as mock_manager,
-            patch("src.gui.main_window.main.config_manager.load_config", return_value={}),
+            patch(
+                "src.gui.panels.contabilita_panel.ContabilitaManager"
+            ) as mock_manager,
+            patch(
+                "src.gui.main_window.main.config_manager.load_config", return_value={}
+            ),
         ):
             mock_manager.get_available_years.return_value = []
             mock_manager.get_year_stats.return_value = {
@@ -91,7 +101,9 @@ class TestMainWindow:
             assert window.page_stack.currentIndex() == PageIndex.AUTOMAZIONI
 
             # Automazioni panel is at index 1
-            automazioni_panel = window.navigation_controller.get_panel(PageIndex.AUTOMAZIONI)
+            automazioni_panel = window.navigation_controller.get_panel(
+                PageIndex.AUTOMAZIONI
+            )
             # Timbrature is at index 2 in Portale Fornitori (tab 0 of Automazioni)
             portale_fornitori_tab = automazioni_panel.widget(0)
             assert portale_fornitori_tab.currentIndex() == 2

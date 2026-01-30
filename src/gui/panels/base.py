@@ -38,6 +38,7 @@ class BotWorker(QThread):
     status_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(bool)
     request_input_signal = pyqtSignal(str, dict, threading.Event)
+    row_status_signal = pyqtSignal(int, bool)  # New signal for row updates
 
     def __init__(self, bot, data, telegram_service=None):
         """
@@ -63,6 +64,10 @@ class BotWorker(QThread):
             # Setup input callback se supportato dal bot
             if hasattr(self.bot, "set_input_callback"):
                 self.bot.set_input_callback(self._request_input_wrapper)
+
+            # Setup progress callback se supportato
+            if hasattr(self.bot, "set_progress_callback"):
+                self.bot.set_progress_callback(self.row_status_signal.emit)
 
             result = self.bot.execute(self.data)
             self.finished_signal.emit(result)
@@ -103,7 +108,9 @@ class BaseBotPanel(QWidget):
     bot_started = pyqtSignal()
     bot_stopped = pyqtSignal()
     bot_finished = pyqtSignal(bool)
-    bot_results_ready = pyqtSignal(str, list)  # bot_id, list of results (e.g. file paths)
+    bot_results_ready = pyqtSignal(
+        str, list
+    )  # bot_id, list of results (e.g. file paths)
     status_changed = pyqtSignal(str, str)  # status, message
 
     def __init__(self, bot_id: str, bot_name: str, bot_description: str, parent=None):
@@ -129,7 +136,9 @@ class BaseBotPanel(QWidget):
     def _setup_base_ui(self):
         """Inizializza l'interfaccia utente di base comune a tutti i pannelli bot."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(Spacing.md, Spacing.md, Spacing.md, Spacing.md)
+        self.main_layout.setContentsMargins(
+            Spacing.md, Spacing.md, Spacing.md, Spacing.md
+        )
         self.main_layout.setSpacing(Spacing.md)
 
         # Status Card (Model only, not in layout)
@@ -302,7 +311,11 @@ class BaseBotPanel(QWidget):
         report = MissionReportCard(duration, success)
         self.log_widget.timeline.add_widget(report)
 
-        dettagli = "Esecuzione completata correttamente" if success else "Esecuzione fallita o interrotta"
+        dettagli = (
+            "Esecuzione completata correttamente"
+            if success
+            else "Esecuzione fallita o interrotta"
+        )
 
         AuditManager.instance().log_action(
             action="Completamento Automazione",
@@ -316,7 +329,9 @@ class BaseBotPanel(QWidget):
         """Invia segnali e gestisce risultati per Telegram."""
         if self.worker and hasattr(self.worker.bot, "downloaded_files"):
             if self.worker.bot.downloaded_files:
-                self.bot_results_ready.emit(self.bot_id, self.worker.bot.downloaded_files)
+                self.bot_results_ready.emit(
+                    self.bot_id, self.worker.bot.downloaded_files
+                )
         self.bot_finished.emit(success)
 
     def _notify_completion(self, success: bool):
@@ -369,7 +384,9 @@ class BaseBotPanel(QWidget):
         # Using current status enum, but updating message
         self.status_changed.emit(self.status_card._status, status)
 
-    def _ask_user_input(self, prompt: str, result_container: dict, event: threading.Event):
+    def _ask_user_input(
+        self, prompt: str, result_container: dict, event: threading.Event
+    ):
         """Callback per input utente dal worker (thread-safe via signal)."""
         text, ok = QInputDialog.getText(self, "Richiesta Input", prompt)
         if ok:

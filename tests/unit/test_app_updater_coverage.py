@@ -57,7 +57,9 @@ class TestAppUpdater:
         mock_qmessagebox.question.assert_called_once()
         mock_webbrowser.assert_called_with("http://download.url")
 
-    def test_check_for_updates_not_newer(self, mock_requests, mock_qmessagebox, monkeypatch):
+    def test_check_for_updates_not_newer(
+        self, mock_requests, mock_qmessagebox, monkeypatch
+    ):
         monkeypatch.setattr(version, "UPDATE_URL", "http://test.url")
         monkeypatch.setattr(version, "__version__", "1.0.0")
 

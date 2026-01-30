@@ -33,7 +33,9 @@ class TestScaricoTSBotHardened:
         bot.validate_data = ScaricaTSBot.validate_data.__get__(bot, ScaricaTSBot)
 
         # Mock del metodo super().validate_data (BaseBot)
-        mocker.patch("src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, ""))
+        mocker.patch(
+            "src.bots.base.base_bot.BaseBot.validate_data", return_value=(True, "")
+        )
 
         # 1. Successo
         valid, msg = bot.validate_data([{"numero_oda": "123"}])
@@ -61,7 +63,9 @@ class TestScaricoTSBotHardened:
 
         # Mocking expected_conditions e ActionChains
         mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.EC")
-        m_actions = mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains")
+        m_actions = mocker.patch(
+            "src.bots.portale_fornitori.scarico_ts.bot.ActionChains"
+        )
         mocker.patch("time.sleep")
 
         # Mock elementi

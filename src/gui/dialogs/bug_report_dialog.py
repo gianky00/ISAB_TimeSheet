@@ -92,7 +92,9 @@ class BugReportDialog(QDialog):
         layout.addWidget(self.txt_description)
 
         # Options
-        self.chk_include_logs = QCheckBox("Includi file di log e screenshot di errore (Consigliato)")
+        self.chk_include_logs = QCheckBox(
+            "Includi file di log e screenshot di errore (Consigliato)"
+        )
         self.chk_include_logs.setChecked(True)
         self.chk_include_logs.setStyleSheet("margin-top: 10px; font-weight: 500;")
         layout.addWidget(self.chk_include_logs)
@@ -193,7 +195,9 @@ class BugReportDialog(QDialog):
             now = datetime.now()
 
             # Formati stringa
-            date_display = now.strftime("%d/%m/%Y %H:%M")  # Es: 25/01/2026 12:30 (No underscore)
+            date_display = now.strftime(
+                "%d/%m/%Y %H:%M"
+            )  # Es: 25/01/2026 12:30 (No underscore)
             date_file = now.strftime("%d-%m-%Y_%H-%M")  # Es: 25-01-2026_12-30 (Safe)
 
             rand_hex = f"{random.randint(0, 0xFFFF):04X}"
@@ -231,7 +235,9 @@ class BugReportDialog(QDialog):
 
             mail = outlook.CreateItem(0)
             mail.To = "gianky.allegretti@gmail.com"
-            mail.Subject = f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
+            mail.Subject = (
+                f"[Segnalazione Bug] SyncroJob v{current_ver} - {email_subject_suffix}"
+            )
 
             # Rename ZIP
             final_zip_path = attachment_path
@@ -247,7 +253,9 @@ class BugReportDialog(QDialog):
                 logger.error(f"Errore rinomina ZIP: {e}")
 
             # Costruzione Body HTML Layout 2 Colonne PULITO (No Giallo)
-            css_table_cell = "padding: 8px 12px; border-bottom: 1px solid #e0e0e0; color: #333;"
+            css_table_cell = (
+                "padding: 8px 12px; border-bottom: 1px solid #e0e0e0; color: #333;"
+            )
             css_table_header = "padding: 8px 12px; border-bottom: 2px solid #009688; font-weight: 600; color: #009688; text-align: left;"
 
             html_body = f"""

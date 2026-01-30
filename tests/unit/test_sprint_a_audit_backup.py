@@ -19,7 +19,7 @@ class TestSprintAAuditBackup:
         mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
         # Patch signals
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
-        
+
         # Forza reset singleton reale
         AuditManager._instance = None
         mgr = AuditManager()

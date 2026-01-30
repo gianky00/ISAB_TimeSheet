@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.audit_manager import AuditManager
 from src.core.audit.integrity import AuditIntegrity
+from src.core.audit_manager import AuditManager
 from src.core.database import DatabaseManager, db_manager
 from src.utils.security import PasswordManager
 
@@ -20,7 +20,7 @@ class TestHardeningAuditSecurity:
         mocker.patch("src.core.audit.database.AuditDatabase.DB_PATH", db_path)
         # Patch signals
         mocker.patch("src.core.audit.manager.AuditSignals.instance")
-        
+
         with patch("src.core.audit.manager.AuditManager._instance", None):
             manager = AuditManager()
             yield manager, db_path
@@ -87,7 +87,7 @@ class TestHardeningAuditSecurity:
             conn.execute(
                 """
                 INSERT INTO audit_logs
-                (timestamp, user_id, action, category, entity, params, status, severity, 
+                (timestamp, user_id, action, category, entity, params, status, severity,
                  duration_ms, module, error_code, row_hash)
                 VALUES (?, 'attacker', 'Exploit', 'general', '-', '{}', 'success', 'high', 0, '', '', ?)
                 """,
@@ -119,7 +119,9 @@ class TestHardeningAuditSecurity:
         sec_dir = tmp_path / "security"
         sec_dir.mkdir(parents=True, exist_ok=True)
         mocker.patch("src.utils.security.PasswordManager._KEY_DIR", sec_dir)
-        mocker.patch("src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key")
+        mocker.patch(
+            "src.utils.security.PasswordManager._KEY_FILE", sec_dir / "secret.key"
+        )
 
         with patch("src.utils.security.PasswordManager._instance", None):
             pm = PasswordManager()

@@ -80,7 +80,9 @@ class TestDettagliOdaPageCoverage:
         mock_close_btn = MagicMock()
         mock_close_btn.is_displayed.return_value = False
         with patch.object(page.driver, "find_element", return_value=mock_close_btn):
-            res = page.process_oda("123", "C1", "01.01.2024", "01.01.2025", source_dir, dest_dir)
+            res = page.process_oda(
+                "123", "C1", "01.01.2024", "01.01.2025", source_dir, dest_dir
+            )
 
         assert res is not None
         assert res.name == "dettaglio_oda_123.xlsx"
@@ -124,4 +126,6 @@ class TestDettagliOdaPageCoverage:
             page.expand_sidebar_if_collapsed()
 
         # Deve aver cliccato il pulsante di espansione
-        page.driver.execute_script.assert_called_with("arguments[0].click();", mock_expand_btn)
+        page.driver.execute_script.assert_called_with(
+            "arguments[0].click();", mock_expand_btn
+        )

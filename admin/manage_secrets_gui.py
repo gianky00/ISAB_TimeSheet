@@ -59,7 +59,9 @@ class SecretItem(QFrame):
 
         self.save_btn = QPushButton("Salva")
         self.save_btn.setMinimumHeight(35)
-        self.save_btn.setStyleSheet("font-weight: bold; border: 1px solid black; background: white;")
+        self.save_btn.setStyleSheet(
+            "font-weight: bold; border: 1px solid black; background: white;"
+        )
         self.save_btn.clicked.connect(self._save)
         row.addWidget(self.save_btn)
 
@@ -101,9 +103,15 @@ class AdminSecretsGUI(QWidget):
         self.secrets_layout = QVBoxLayout(container)
 
         # Aggiungi qui le chiavi necessarie
-        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "Exa API Key", "exa_api_key"))
-        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "GitHub API Token", "github_api_key"))
-        self.secrets_layout.addWidget(SecretItem(self.APP_NAME, "OpenAI API Key", "openai_api_key"))
+        self.secrets_layout.addWidget(
+            SecretItem(self.APP_NAME, "Exa API Key", "exa_api_key")
+        )
+        self.secrets_layout.addWidget(
+            SecretItem(self.APP_NAME, "GitHub API Token", "github_api_key")
+        )
+        self.secrets_layout.addWidget(
+            SecretItem(self.APP_NAME, "OpenAI API Key", "openai_api_key")
+        )
 
         self.secrets_layout.addStretch()
         layout.addWidget(container)

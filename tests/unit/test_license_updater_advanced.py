@@ -38,7 +38,9 @@ class TestLicenseUpdaterAdvanced:
         )
 
         # Salva timestamp (usa la logica interna di cifratura)
-        with patch("src.core.time_manager.get_trusted_time", return_value=(past_time, True)):
+        with patch(
+            "src.core.time_manager.get_trusted_time", return_value=(past_time, True)
+        ):
             update_grace_timestamp()
 
         # Verifica
@@ -53,7 +55,9 @@ class TestLicenseUpdaterAdvanced:
             return_value=(datetime.now(), True),
         )
 
-        with patch("src.core.time_manager.get_trusted_time", return_value=(past_time, True)):
+        with patch(
+            "src.core.time_manager.get_trusted_time", return_value=(past_time, True)
+        ):
             update_grace_timestamp()
 
         with pytest.raises(Exception, match="SCADUTO"):
@@ -99,7 +103,9 @@ class TestLicenseUpdaterAdvanced:
 
     def test_run_update_full_success(self, mock_license_dir, mocker):
         """Verifica aggiornamento completo con successo da GitHub."""
-        mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
+        mocker.patch(
+            "src.core.license_validator.get_hardware_id", return_value="FAKE-HWID"
+        )
 
         mock_resp_ok = MagicMock()
         mock_resp_ok.status_code = 200
@@ -114,7 +120,9 @@ class TestLicenseUpdaterAdvanced:
 
     def test_run_update_partial_404(self, mock_license_dir, mocker):
         """Verifica che un 404 su un file interrompa l'aggiornamento."""
-        mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
+        mocker.patch(
+            "src.core.license_validator.get_hardware_id", return_value="FAKE-HWID"
+        )
 
         def mock_get(url, **kwargs):
             resp = MagicMock()
@@ -134,7 +142,9 @@ class TestLicenseUpdaterAdvanced:
 
     def test_run_update_network_error(self, mock_license_dir, mocker):
         """Verifica gestione errore di rete (timeout)."""
-        mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE-HWID")
+        mocker.patch(
+            "src.core.license_validator.get_hardware_id", return_value="FAKE-HWID"
+        )
         mock_print = mocker.patch("builtins.print")
 
         with patch("requests.get", side_effect=requests.exceptions.Timeout("Timeout")):

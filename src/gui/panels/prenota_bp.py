@@ -43,7 +43,9 @@ class PrenotaBPPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Widget atomico per i parametri - Abilitato date range
-        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=False
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -151,7 +153,9 @@ class PrenotaBPPanel(BaseBotPanel):
                 item = params_override["single_item"]
                 if item:
                     rows = [item]
-                    self.log_widget.append(f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}")
+                    self.log_widget.append(
+                        f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}"
+                    )
 
         bot = PrenotaBPBot(
             username=username,

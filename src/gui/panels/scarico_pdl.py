@@ -6,7 +6,7 @@ Pannello per il bot Scarico PDL (SafeWork).
 import traceback
 from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import QSize, QTimer
+from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -15,9 +15,12 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.core import config_manager
@@ -28,6 +31,88 @@ from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 from src.utils.printing import get_installed_printers
+
+
+class StatusListWidget(QListWidget):
+    """Widget per visualizzare lo stato di elaborazione riga per riga."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setStyleSheet(
+            """
+            QListWidget {
+                background: transparent;
+                border: none;
+                outline: none;
+            }
+            QListWidget::item {
+                padding: 0px;
+                margin: 0px;
+                border: none;
+            }
+        """
+        )
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+    def initialize_rows(self, count: int, row_height: int = 30):
+        """Prepara n righe con stato 'Pending'."""
+        self.clear()
+        for _ in range(count):
+            item = QListWidgetItem()
+            # Altezza deve matchare la riga della tabella
+            # Prima riga include offset per header tabella (circa 25px)
+            effective_height = row_height
+            item.setSizeHint(QSize(40, effective_height))
+
+            icon_label = QLabel()
+            icon_label.setFixedSize(24, 24)
+            icon_label.setStyleSheet(
+                "background-color: #E0E0E0; border-radius: 12px; border: 1px solid #BDBDBD;"
+            )
+
+            # Usiamo un widget container per centrare
+            container = QWidget()
+            layout = QVBoxLayout(container)
+            layout.setContentsMargins(0, 3, 0, 3)
+            layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignCenter)
+
+            self.addItem(item)
+            self.setItemWidget(item, container)
+
+    def update_status(self, index: int, success: bool):
+        """Aggiorna l'icona della riga specificata."""
+        if index < 0 or index >= self.count():
+            return
+
+        item = self.item(index)
+        widget = self.itemWidget(item)
+        if not widget:
+            return
+
+        icon_label: QLabel = widget.findChild(QLabel)
+        if not icon_label:
+            return
+
+        if success:
+            # Spunta Verde
+            icon_path = get_asset_path(Icons.CHECK)
+            color = "#2E7D32" # Green 800
+            bg = "#C8E6C9" # Green 100
+            pixmap = get_colored_icon(icon_path, color).pixmap(16, 16)
+            icon_label.setPixmap(pixmap)
+            icon_label.setStyleSheet(f"background-color: {bg}; border-radius: 12px; border: 1px solid {color};")
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        else:
+            # Croce Rossa
+            icon_path = get_asset_path(Icons.X_CIRCLE)
+            color = "#C62828" # Red 800
+            bg = "#FFCDD2" # Red 100
+            pixmap = get_colored_icon(icon_path, color).pixmap(16, 16)
+            icon_label.setPixmap(pixmap)
+            icon_label.setStyleSheet(f"background-color: {bg}; border-radius: 12px; border: 1px solid {color};")
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
 
 class ScaricoPDLPanel(BaseBotPanel):
@@ -72,7 +157,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(35)
         self.printer_combo.setMinimumWidth(150)
-        self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.printer_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         self.printer_combo.setStyleSheet(
             """
             QComboBox {
@@ -140,6 +227,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         params_layout.addLayout(options_layout)
 
         # 3. Tabella Input
+        self.content_layout.addWidget(params_group)
+
+        # 3. Tabella Input e Status
         table_toolbar = QHBoxLayout()
         table_toolbar.addStretch()
         self.clear_btn = ModernButton(
@@ -152,12 +242,35 @@ class ScaricoPDLPanel(BaseBotPanel):
         table_toolbar.addWidget(self.clear_btn)
         params_layout.addLayout(table_toolbar)
 
+        # Area di Lavoro (Tabella | Status)
+        work_area = QHBoxLayout()
+        work_area.setSpacing(10)
+
+        # Sinistra: Tabella Input
         self.data_table = EditableDataTable([{"name": "NUMERO PDL", "type": "text"}])
         self.data_table.setMinimumHeight(250)
         self.data_table.data_changed.connect(self._save_data)
-        params_layout.addWidget(self.data_table)
+        self.data_table.data_changed.connect(self._reset_status_list)
+        work_area.addWidget(self.data_table, stretch=8)
 
-        self.content_layout.addWidget(params_group)
+        # Destra: Contenitore Status con Header
+        status_container = QVBoxLayout()
+        status_container.setSpacing(0)
+        status_container.setContentsMargins(0, 0, 0, 0)
+
+        status_header = QLabel("Progresso")
+        status_header.setStyleSheet(
+            "font-weight: bold; font-size: 12px; color: #424242; padding: 4px 0px;"
+        )
+        status_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        status_container.addWidget(status_header)
+
+        self.status_list = StatusListWidget()
+        status_container.addWidget(self.status_list)
+
+        work_area.addLayout(status_container, stretch=1)
+
+        params_layout.addLayout(work_area)
 
     def _refresh_printers(self):
         current = self.printer_combo.currentText()
@@ -195,10 +308,20 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _save_data(self):
         data = self.data_table.get_data()
         config_manager.set_config_value("last_pdl_data", data)
-        config_manager.set_config_value("pdl_print_enabled", self.print_check.isChecked())
-        config_manager.set_config_value("pdl_merge_all_session", self.merge_all_check.isChecked())
-        config_manager.set_config_value("pdl_printer_name", self.printer_combo.currentText())
+        config_manager.set_config_value(
+            "pdl_print_enabled", self.print_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "pdl_merge_all_session", self.merge_all_check.isChecked()
+        )
+        config_manager.set_config_value(
+            "pdl_printer_name", self.printer_combo.currentText()
+        )
         config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
+
+    def _reset_status_list(self):
+        """Resetta la lista degli stati quando la tabella viene modificata."""
+        self.status_list.clear()
 
     def _clear_table(self):
         if (
@@ -249,7 +372,9 @@ class ScaricoPDLPanel(BaseBotPanel):
             item = params_override["single_item"]
             if item:
                 rows = [item]
-                self.log_widget.append(f"ℹ️ Esecuzione singola per PDL: {item.get('numero_pdl', 'N/D')}")
+                self.log_widget.append(
+                    f"ℹ️ Esecuzione singola per PDL: {item.get('numero_pdl', 'N/D')}"
+                )
         else:
             if not self._validate_pdl_start(username, password):
                 return
@@ -266,6 +391,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.worker.log_signal.connect(self._on_log)
         self.worker.status_signal.connect(self._on_status)
         self.worker.finished_signal.connect(self._on_worker_finished)
+        self.worker.row_status_signal.connect(self._on_row_status)
+
+        self.status_list.initialize_rows(len(bot_data))
 
         self._finalize_start_ui()
         self.worker.start()
@@ -274,7 +402,9 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _validate_pdl_start(self, username, password) -> bool:
         """Verifica che i requisiti per l'avvio siano soddisfatti."""
         if not username or not password:
-            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
+            ToastManager.instance().show(
+                "Configura le credenziali SafeWork nelle Impostazioni.", "warning"
+            )
             self._update_status("#C62828", "Credenziali SafeWork mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
@@ -338,7 +468,9 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append("Avvio Scarico PDL SafeWork...")
         if self.print_check.isChecked():
-            self.log_widget.append(f"Stampa attiva su: {self.printer_combo.currentText()}")
+            self.log_widget.append(
+                f"Stampa attiva su: {self.printer_combo.currentText()}"
+            )
         if getattr(self, "merge_and_send_from_telegram", False):
             self.log_widget.append("Unione PDF per Telegram attiva")
 
@@ -348,7 +480,9 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         # Recupero dati prima di chiamare super (che pulisce il worker)
         missing_list: list[str] = (
-            self.worker.bot.missing_pdls if self.worker and hasattr(self.worker.bot, "missing_pdls") else []
+            self.worker.bot.missing_pdls
+            if self.worker and hasattr(self.worker.bot, "missing_pdls")
+            else []
         )
         files_to_send: list[str] = (
             self.worker.bot.downloaded_files
@@ -368,11 +502,23 @@ class ScaricoPDLPanel(BaseBotPanel):
         # 3. Cleanup
         self._cleanup_telegram_flags()
 
+        # 4. Auto-Refresh PDL Database
+        if success:
+            win = self.window()
+            if win and hasattr(win, "pdl_db_panel"):
+                # Ricarica i dati nel pannello PDL se inizializzato
+                win.pdl_db_panel.refresh_data()
+                self._on_log("🔄 Aggiornamento Database PDL avviato.")
+
     def _handle_missing_pdls(self, missing_list: list):
         """Segnala PdL non trovati sulla card di stato."""
         if missing_list:
             missing_str = ", ".join(missing_list)
             self._update_status("#2E7D32", f"Completato (Inesistenti: {missing_str})")
+
+    def _on_row_status(self, index: int, success: bool):
+        """Callback per aggiornamento stato riga."""
+        self.status_list.update_status(index, success)
 
     def _send_pdl_to_telegram(self, files: list):
         """Invia i file PDF prodotti al bot Telegram."""

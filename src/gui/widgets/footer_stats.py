@@ -26,7 +26,9 @@ from src.gui.widgets.animated_progress_bar import AnimatedProgressBar
 class FooterItemWidget(QWidget):
     """Elemento informativo con tag e valore."""
 
-    def __init__(self, label: str, value: str = "", color: str = "#607D8B", parent=None):
+    def __init__(
+        self, label: str, value: str = "", color: str = "#607D8B", parent=None
+    ):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 0, 5, 0)
@@ -39,7 +41,9 @@ class FooterItemWidget(QWidget):
         layout.addWidget(self.lbl_tag)
 
         self.lbl_val = QLabel(value)
-        self.lbl_val.setStyleSheet("color: #212529; font-size: 11px; background: transparent;")
+        self.lbl_val.setStyleSheet(
+            "color: #212529; font-size: 11px; background: transparent;"
+        )
         layout.addWidget(self.lbl_val)
 
     def set_text(self, text: str):
@@ -102,7 +106,8 @@ class ClickableLabel(QLabel):
     def enterEvent(self, event):
         # Hover: sfondo leggero (solid per evitare problemi di rendering)
         self.setStyleSheet(
-            self._base_style + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
+            self._base_style
+            + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
         )
         super().enterEvent(event)
 
@@ -142,7 +147,8 @@ class StatsCard(QFrame):
     def enterEvent(self, event):
         # Hover: sfondo leggero (solid per evitare problemi di rendering)
         self.setStyleSheet(
-            self._base_style + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
+            self._base_style
+            + " background-color: #f0f0f0; border-radius: 3px; padding: 2px 4px;"
         )
         super().enterEvent(event)
 
@@ -188,11 +194,15 @@ class FooterLeftWidget(QWidget):
         col1_layout.setSpacing(2)
 
         self.client_item = QLabel()
-        self.client_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
+        self.client_item.setStyleSheet(
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
+        )
         col1_layout.addWidget(self.client_item)
 
         self.expiry_item = QLabel()
-        self.expiry_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
+        self.expiry_item.setStyleSheet(
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
+        )
         col1_layout.addWidget(self.expiry_item)
         layout.addWidget(col1)
 
@@ -205,7 +215,9 @@ class FooterLeftWidget(QWidget):
         col2_layout.setSpacing(2)
 
         self.hw_id_item = QLabel()
-        self.hw_id_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
+        self.hw_id_item.setStyleSheet(
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
+        )
         col2_layout.addWidget(self.hw_id_item)
 
         self.last_login_item = QLabel()
@@ -224,12 +236,16 @@ class FooterLeftWidget(QWidget):
         col3_layout.setSpacing(2)
 
         self.portale_item = ClickableLabel()
-        self.portale_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
+        self.portale_item.setBaseStyle(
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
+        )
         self.portale_item.mousePressEvent = lambda e: self.portale_clicked.emit()
         col3_layout.addWidget(self.portale_item)
 
         self.safe_item = ClickableLabel()
-        self.safe_item.setBaseStyle(f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;")
+        self.safe_item.setBaseStyle(
+            f"color: {self.TEXT_COLOR}; font-size: 13px; background: transparent;"
+        )
         self.safe_item.mousePressEvent = lambda e: self.safework_clicked.emit()
         col3_layout.addWidget(self.safe_item)
         layout.addWidget(col3)
@@ -275,7 +291,9 @@ class FooterLeftWidget(QWidget):
         self._fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._fade_anim.start()
 
-    def update_info(self, client: str, expiry: str, last_login: str = "", hw_id: str = ""):
+    def update_info(
+        self, client: str, expiry: str, last_login: str = "", hw_id: str = ""
+    ):
         """Aggiorna le info di business (FASE 2)."""
         self.client_item.setText(f"<b>Cliente:</b> {client}")
         self.expiry_item.setText(f"<b>Scadenza:</b> {expiry}")
@@ -302,12 +320,16 @@ class FooterLeftWidget(QWidget):
 
         # Tooltips dinamici basati sul numero di account
         if len(accounts) > 1:
-            self.portale_item.setToolTip(f"Clicca per switchare account (Trovati: {len(accounts)})")
+            self.portale_item.setToolTip(
+                f"Clicca per switchare account (Trovati: {len(accounts)})"
+            )
         else:
             self.portale_item.setToolTip("Clicca per gestire gli account")
 
         if len(safework) > 1:
-            self.safe_item.setToolTip(f"Clicca per switchare account (Trovati: {len(safework)})")
+            self.safe_item.setToolTip(
+                f"Clicca per switchare account (Trovati: {len(safework)})"
+            )
         else:
             self.safe_item.setToolTip("Clicca per gestire gli account SafeWork")
 
@@ -568,7 +590,9 @@ class BootTelemetryWidget(QWidget):
             if net_connected:
                 self.lbl_net.setText("NET: <span style='color:#4CAF50'>●</span> Online")
             else:
-                self.lbl_net.setText("NET: <span style='color:#F44336'>●</span> Offline")
+                self.lbl_net.setText(
+                    "NET: <span style='color:#F44336'>●</span> Offline"
+                )
 
             # Col 6: THR / PID
             self.lbl_threads.setText(f"THR: {self.process.num_threads()}")
@@ -578,7 +602,12 @@ class BootTelemetryWidget(QWidget):
             self.lbl_session.setText(f"SID: {self.session_id}")
             net = psutil.net_io_counters()
             io_rate = (
-                (net.bytes_recv - self.last_net.bytes_recv + net.bytes_sent - self.last_net.bytes_sent)
+                (
+                    net.bytes_recv
+                    - self.last_net.bytes_recv
+                    + net.bytes_sent
+                    - self.last_net.bytes_sent
+                )
                 / dt
                 / 1024
             )
@@ -667,7 +696,9 @@ class FooterStatsManager(QWidget):
         self.right_widget = right_widget
         self.phase = "boot"  # 'boot' o 'operational'
 
-    def transition_to_operational(self, client_name: str = "", expiry: str = "", last_login: str = ""):
+    def transition_to_operational(
+        self, client_name: str = "", expiry: str = "", last_login: str = ""
+    ):
         """
         Transizione da FASE 1 (Boot) a FASE 2 (Operativo).
         Nasconde telemetria e progress, mostra business info e status cards.

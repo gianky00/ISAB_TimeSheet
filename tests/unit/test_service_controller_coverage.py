@@ -20,7 +20,9 @@ class TestServiceControllerCoverage(unittest.TestCase):
 
         self.controller.start_all()
 
-        self.mock_sentinel.anomalies_found.connect.assert_called_with(self.mock_mw._on_anomalies_found)
+        self.mock_sentinel.anomalies_found.connect.assert_called_with(
+            self.mock_mw._on_anomalies_found
+        )
         # Verify calls to singleShot (1000, 2000, 3000ms)
         self.assertTrue(mock_ss.called)
         mock_nm_instance.notification_added.connect.assert_called()

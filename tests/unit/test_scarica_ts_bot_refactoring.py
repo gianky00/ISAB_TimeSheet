@@ -60,7 +60,9 @@ def test_run_success_standard(mock_bot, mocker, tmp_path):
     mocker.patch.object(mock_bot, "_setup_filters", return_value=True)
     mocker.patch.object(mock_bot, "_attendi_scomparsa_overlay")
 
-    mocker.patch("src.bots.portale_fornitori.scarico_ts.bot.Path.home", return_value=tmp_path)
+    mocker.patch(
+        "src.bots.portale_fornitori.scarico_ts.bot.Path.home", return_value=tmp_path
+    )
 
     final_file = tmp_path / "dest" / "TS_ODA1-10.xlsx"
     mocker.patch.object(mock_bot, "_download_excel", return_value=final_file)

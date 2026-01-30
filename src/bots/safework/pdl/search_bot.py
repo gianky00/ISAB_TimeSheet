@@ -13,7 +13,9 @@ from src.core.database import db_manager
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
     """Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork."""
 
-    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
+    def __init__(
+        self, username, password, headless=False, timeout=30, download_path=""
+    ):
         super().__init__(username, password, headless, timeout, download_path)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
 
@@ -62,11 +64,15 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
         try:
             self.log(f"🔐 Inserimento credenziali per utente: {self.username}")
-            u_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente")))
+            u_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpUtente"))
+            )
             u_field.clear()
             u_field.send_keys(self.username)
 
-            p_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword")))
+            p_field = self.wait.until(
+                EC.visibility_of_element_located((By.ID, "inpPassword"))
+            )
             p_field.clear()
             p_field.send_keys(self.password)
 
@@ -114,13 +120,17 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return False
         try:
             self.log("🏠 Clic su Home Page...")
-            btn_home = self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-actHomePage")))
+            btn_home = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "topIcon-actHomePage"))
+            )
             btn_home.click()
             # No sleep needed: _attendi_scomparsa_overlay() has internal wait
             self._attendi_scomparsa_overlay()
 
             self.log("🔍 Clic su Ricerca PdL (sideBar)...")
-            btn_ricerca = self.wait.until(EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL")))
+            btn_ricerca = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL"))
+            )
             btn_ricerca.click()
             # No sleep needed: _attendi_scomparsa_overlay() has internal wait
             self._attendi_scomparsa_overlay()
@@ -134,7 +144,9 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         if not self.wait or not self.driver:
             return
         try:
-            checkbox = self.wait.until(EC.presence_of_element_located((By.ID, "fldEscludiChiusi")))
+            checkbox = self.wait.until(
+                EC.presence_of_element_located((By.ID, "fldEscludiChiusi"))
+            )
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"🖱️ Impostazione checkbox 'Escludi chiusi' a {exclude_closed}")
                 self.driver.execute_script("arguments[0].click();", checkbox)
@@ -180,7 +192,9 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             site_dropdown.click()
             # Wait for dropdown options to appear
             option = self.wait.until(
-                EC.element_to_be_clickable((By.XPATH, f"//li//span[text()='{site_name}']"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, f"//li//span[text()='{site_name}']")
+                )
             )
             option.click()
             # No sleep needed: next wait guarantees button availability
@@ -207,7 +221,9 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             # 1. Snapshot dei file PRE-CLICK (per rilevare il delta)
             # Questo approccio è immune a problemi di timestamp del server
             download_dir = Path(self.download_path)
-            files_before = {str(f.resolve()) for f in download_dir.glob("*") if f.is_file()}
+            files_before = {
+                str(f.resolve()) for f in download_dir.glob("*") if f.is_file()
+            }
 
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnEsporta"))).click()
 
@@ -272,6 +288,8 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)
 
-            self.log(f"✅ {len(data_to_insert)} righe importate correttamente nel database.")
+            self.log(
+                f"✅ {len(data_to_insert)} righe importate correttamente nel database."
+            )
         except Exception as e:
             self.log(f"❌ Errore importazione: {e}")

@@ -78,7 +78,9 @@ def test_get_panel_lazy_load_settings(mock_settings, controller, mock_mw):
     assert panel == new_widget
     # Verify signal connections
     new_widget.settings_saved.connect.assert_called_with(mock_mw._on_settings_saved)
-    new_widget.request_help_section.connect.assert_called_with(mock_mw._on_help_requested)
+    new_widget.request_help_section.connect.assert_called_with(
+        mock_mw._on_help_requested
+    )
 
 
 def test_get_panel_exception_handling(controller, mock_mw):

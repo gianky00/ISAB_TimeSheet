@@ -72,14 +72,18 @@ class HelpPanel(QWidget):
 
         # Icona Decorativa
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(get_colored_icon(get_asset_path(Icons.HELP), "#009688").pixmap(48, 48))
+        icon_lbl.setPixmap(
+            get_colored_icon(get_asset_path(Icons.HELP), "#009688").pixmap(48, 48)
+        )
         header_layout.addWidget(icon_lbl)
 
         layout.addWidget(header)
 
         # Splitter per Indice e Contenuto
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.splitter.setStyleSheet("QSplitter::handle { background-color: #ECEFF1; width: 1px; }")
+        self.splitter.setStyleSheet(
+            "QSplitter::handle { background-color: #ECEFF1; width: 1px; }"
+        )
 
         # Sidebar Sinistra
         sidebar = QWidget()

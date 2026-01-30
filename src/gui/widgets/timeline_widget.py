@@ -59,16 +59,22 @@ class HorizontalLogItem(QWidget):
 
         # 3. Content
         self.lbl_human = QLabel(human_msg)
-        self.lbl_human.setStyleSheet("font-weight: bold; font-size: 13px; color: #212529;")
+        self.lbl_human.setStyleSheet(
+            "font-weight: bold; font-size: 13px; color: #212529;"
+        )
         self.lbl_human.setWordWrap(True)
-        self.lbl_human.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_human.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addWidget(self.lbl_human)
         layout.addStretch()
 
         # 4. Actions
         self._setup_actions(layout, tech_msg, snap_path, fixit_act)
 
-    def _parse_metadata(self, tech_msg: str) -> tuple[Optional[str], Optional[str], str]:
+    def _parse_metadata(
+        self, tech_msg: str
+    ) -> tuple[Optional[str], Optional[str], str]:
         snap, fixit = None, None
         if m := re.search(r"\[IMG:(.*?)\]", tech_msg):
             snap = m.group(1)
@@ -105,11 +111,15 @@ class HorizontalLogItem(QWidget):
         row.setSpacing(5)
         icon_lbl = QLabel()
         icon_lbl.setPixmap(
-            get_colored_icon(get_asset_path(icons.get(category, Icons.HELP)), "#000000").pixmap(24, 24)
+            get_colored_icon(
+                get_asset_path(icons.get(category, Icons.HELP)), "#000000"
+            ).pixmap(24, 24)
         )
         row.addWidget(icon_lbl)
         time_lbl = QLabel(timestamp)
-        time_lbl.setStyleSheet("color: #adb5bd; font-size: 12px; font-family: monospace;")
+        time_lbl.setStyleSheet(
+            "color: #adb5bd; font-size: 12px; font-family: monospace;"
+        )
         row.addWidget(time_lbl)
         row.addStretch()
         return row
@@ -119,10 +129,14 @@ class HorizontalLogItem(QWidget):
         action_row.setSpacing(5)
         if snap_path:
             btn = self._create_btn(Icons.EYE, "#dc3545", "Apri Screenshot")
-            btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snap_path)))
+            btn.clicked.connect(
+                lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(snap_path))
+            )
             action_row.addWidget(btn)
         if fixit_act == "ACCOUNT":
-            btn = self._create_btn(Icons.SETTINGS, "#ffc107", "Configura Account", "black")
+            btn = self._create_btn(
+                Icons.SETTINGS, "#ffc107", "Configura Account", "black"
+            )
             btn.clicked.connect(self._open_settings)
             action_row.addWidget(btn)
         self._add_path_btns(action_row, tech_msg)
@@ -146,8 +160,12 @@ class HorizontalLogItem(QWidget):
         for p in set(matches):
             p = p.rstrip(".,';)]}").strip()
             if len(p) > 4 and "http" not in p:
-                btn = self._create_btn(Icons.FOLDER_OPEN, "#17a2b8", f"Apri: {Path(p).name}")
-                btn.clicked.connect(lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))
+                btn = self._create_btn(
+                    Icons.FOLDER_OPEN, "#17a2b8", f"Apri: {Path(p).name}"
+                )
+                btn.clicked.connect(
+                    lambda c, path=p: QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+                )
                 layout.addWidget(btn)
 
     def set_count(self, count):
@@ -178,7 +196,8 @@ class HorizontalTimelineContainer(QWidget):
         widgets = [
             self.main_layout.itemAt(i).widget()
             for i in range(self.main_layout.count())
-            if self.main_layout.itemAt(i).widget() and not self.main_layout.itemAt(i).widget().isHidden()
+            if self.main_layout.itemAt(i).widget()
+            and not self.main_layout.itemAt(i).widget().isHidden()
         ]
         if len(widgets) >= 2:
             start_x = widgets[0].geometry().center().x()
@@ -221,14 +240,18 @@ class HorizontalTimelineWidget(QScrollArea):
             items = [
                 self.container.main_layout.itemAt(i).widget()
                 for i in range(self.container.main_layout.count())
-                if isinstance(self.container.main_layout.itemAt(i).widget(), HorizontalLogItem)
+                if isinstance(
+                    self.container.main_layout.itemAt(i).widget(), HorizontalLogItem
+                )
             ]
             if items:
                 items[-1].set_count(self.consecutive_count)
                 return
         self.consecutive_count = 1
         self.last_category = cat
-        self.add_widget(HorizontalLogItem(human, tech, cat, datetime.now().strftime("%H:%M")))
+        self.add_widget(
+            HorizontalLogItem(human, tech, cat, datetime.now().strftime("%H:%M"))
+        )
 
     def _scroll_to_end(self):
         sb = self.horizontalScrollBar()
@@ -288,7 +311,9 @@ class MissionReportCard(QFrame):
         )
         layout = QVBoxLayout(self)
         title = "Missione Compiuta!" if status else "Missione Terminata"
-        lbl = QLabel(f"<b style='color:{'#198754' if status else '#dc3545'}; font-size:18px;'>{title}</b>")
+        lbl = QLabel(
+            f"<b style='color:{'#198754' if status else '#dc3545'}; font-size:18px;'>{title}</b>"
+        )
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl)
         stats = QHBoxLayout()

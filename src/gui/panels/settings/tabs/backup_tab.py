@@ -89,13 +89,17 @@ class BackupTab(QWidget):
         sett_layout.addStretch()
 
         backup_btn = QPushButton("  Esegui Backup Ora")
-        backup_btn.setIcon(get_colored_icon(get_asset_path(Icons.CLOUD_UPLOAD), "#000000"))
+        backup_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.CLOUD_UPLOAD), "#000000")
+        )
         backup_btn.clicked.connect(self._run_manual_backup)
         style_button(backup_btn)
         sett_layout.addWidget(backup_btn)
 
         open_folder_btn = QPushButton("  Apri Cartella Backup")
-        open_folder_btn.setIcon(get_colored_icon(get_asset_path(Icons.FOLDER), "#000000"))
+        open_folder_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.FOLDER), "#000000")
+        )
         open_folder_btn.clicked.connect(self._open_backup_folder)
         style_button(open_folder_btn)
         sett_layout.addWidget(open_folder_btn)
@@ -127,14 +131,18 @@ class BackupTab(QWidget):
         restore_controls.addWidget(self.restore_combo)
 
         self.refresh_backups_btn = QPushButton()
-        self.refresh_backups_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
+        self.refresh_backups_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
+        )
         self.refresh_backups_btn.setToolTip("Aggiorna lista backup")
         self.refresh_backups_btn.clicked.connect(self._refresh_backups_list)
         style_mini_button(self.refresh_backups_btn, "#6c757d")
         restore_controls.addWidget(self.refresh_backups_btn)
 
         self.restore_btn = QPushButton("  Ripristina")
-        self.restore_btn.setIcon(get_colored_icon(get_asset_path(Icons.UNDO), "#000000"))
+        self.restore_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.UNDO), "#000000")
+        )
         self.restore_btn.clicked.connect(self._restore_selected_backup)
         style_button(self.restore_btn)
         restore_controls.addWidget(self.restore_btn)
@@ -160,7 +168,9 @@ class BackupTab(QWidget):
             config_manager.set_config_value("backup_cloud_provider", provider)
 
     def _save_auto_backup(self):
-        config_manager.set_config_value("auto_backup", self.auto_backup_check.isChecked())
+        config_manager.set_config_value(
+            "auto_backup", self.auto_backup_check.isChecked()
+        )
 
     def _run_manual_backup(self):
         success, msg = BackupManager.create_backup()
@@ -209,7 +219,9 @@ class BackupTab(QWidget):
             "Sei sicuro di voler procedere?"
         )
         msg_box.setIcon(QMessageBox.Icon.Question)
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msg_box.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
 
         if msg_box.exec() == QMessageBox.StandardButton.Yes:
             success, msg = BackupManager.restore_backup(path)

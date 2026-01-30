@@ -446,7 +446,10 @@ def import_configuration(import_path: str) -> tuple[bool, str]:
         new_config.pop("_meta", None)
 
         # 2. Backup Configurazione Corrente
-        backup_file = CONFIG_DIR / f"config_backup_pre_import_{int(datetime.now().timestamp())}.json"
+        backup_file = (
+            CONFIG_DIR
+            / f"config_backup_pre_import_{int(datetime.now().timestamp())}.json"
+        )
 
         current_config = load_config()
         with backup_file.open("w", encoding="utf-8") as f:

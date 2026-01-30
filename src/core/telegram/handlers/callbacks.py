@@ -134,7 +134,9 @@ async def _handle_db_actions(service, data, query, chat_id):
 
 
 async def _handle_bot_actions(service, data, query, chat_id, update, context):
-    if await _handle_menu_and_input_dispatch(service, data, query, chat_id, update, context):
+    if await _handle_menu_and_input_dispatch(
+        service, data, query, chat_id, update, context
+    ):
         return
 
     if data.startswith("sel_print_run_"):
@@ -145,7 +147,9 @@ async def _handle_bot_actions(service, data, query, chat_id, update, context):
         _handle_direct_bot_commands(service, data, chat_id)
 
 
-async def _handle_menu_and_input_dispatch(service, data, query, chat_id, update, context):
+async def _handle_menu_and_input_dispatch(
+    service, data, query, chat_id, update, context
+):
     async def handle_menu_pdl():
         merge_all = service.pdl_settings.get(chat_id, {}).get("merge_all", False)
         await query.edit_message_text(
@@ -273,7 +277,9 @@ async def _handle_run_pdl_confirm(service, data, query, chat_id):
         msg = "✅ Avvio scarico"
 
     service.command_received.emit("run_pdl", params)
-    await query.edit_message_text(f"{msg}, invio PDF={params['merge_and_send']}, merge finale={merge_all}.")
+    await query.edit_message_text(
+        f"{msg}, invio PDF={params['merge_and_send']}, merge finale={merge_all}."
+    )
 
 
 def _get_full_printer_name(short_name: str) -> str:
@@ -304,7 +310,9 @@ async def _handle_utility_actions(service, data, query, chat_id):
     if data == "status":
         service.status_requested.emit(str(chat_id))
     elif data == "screenshot":
-        await query.edit_message_text("📸 Screenshot:", reply_markup=TelegramUI.get_screenshot_menu())
+        await query.edit_message_text(
+            "📸 Screenshot:", reply_markup=TelegramUI.get_screenshot_menu()
+        )
     elif data in ["snap_app", "snap_pc"]:
         service.screenshot_requested.emit(data.replace("snap_", ""))
     elif data == "stop_all":
@@ -315,7 +323,9 @@ async def _handle_utility_actions(service, data, query, chat_id):
         elif data == "app_conn_test":
             service.command_received.emit("test_connectivity", {})
     elif data == "menu_power":
-        await query.edit_message_text("⚡ Manutenzione:", reply_markup=TelegramUI.get_power_menu())
+        await query.edit_message_text(
+            "⚡ Manutenzione:", reply_markup=TelegramUI.get_power_menu()
+        )
     elif data.startswith("menu_"):
         await _handle_utility_menus(service, data, query)
     elif data.startswith("set_") or data.startswith("toggle_"):
@@ -326,22 +336,34 @@ async def _handle_utility_menus(service, data, query):
     if data == "menu_settings":
         config = config_manager.load_config()
         fornitori = config.get("fornitori", [])
-        await query.edit_message_text("⚙️ Impostazioni:", reply_markup=TelegramUI.get_settings_menu(fornitori))
+        await query.edit_message_text(
+            "⚙️ Impostazioni:", reply_markup=TelegramUI.get_settings_menu(fornitori)
+        )
     elif data == "menu_autopilot":
-        await query.edit_message_text("📅 Autopilot:", reply_markup=TelegramUI.get_autopilot_menu())
+        await query.edit_message_text(
+            "📅 Autopilot:", reply_markup=TelegramUI.get_autopilot_menu()
+        )
     elif data == "menu_printers":
         printers = get_installed_printers()
-        await query.edit_message_text("🖨️ Stampanti:", reply_markup=TelegramUI.get_printers_menu(printers))
+        await query.edit_message_text(
+            "🖨️ Stampanti:", reply_markup=TelegramUI.get_printers_menu(printers)
+        )
 
 
 async def _handle_setting_changes(service, data, query, chat_id):
     if data.startswith("set_forn_"):
-        service.command_received.emit("set_fornitore", {"fornitore": data.replace("set_forn_", "")})
+        service.command_received.emit(
+            "set_fornitore", {"fornitore": data.replace("set_forn_", "")}
+        )
     elif data == "toggle_autopilot":
-        enabled = not config_manager.load_config().get("timbrature_autopilot_enabled", False)
+        enabled = not config_manager.load_config().get(
+            "timbrature_autopilot_enabled", False
+        )
         service.command_received.emit("set_autopilot", {"enabled": enabled})
     elif data == "input_autopilot_time":
         service.user_states[chat_id] = "WAITING_AUTOPILOT_TIME"
         await query.edit_message_text("🕒 Inserisci orario (HH:MM):")
     elif data.startswith("set_print_"):
-        service.command_received.emit("set_printer", {"printer": data.replace("set_print_", "")})
+        service.command_received.emit(
+            "set_printer", {"printer": data.replace("set_print_", "")}
+        )

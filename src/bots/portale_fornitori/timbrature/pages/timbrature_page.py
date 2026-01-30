@@ -66,7 +66,9 @@ class TimbraturePage:
         """Navigates to Report -> Timbrature."""
         try:
             self.log("Navigazione verso pagina Timbrature...")
-            report_element = self.wait.until(EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU))
+            report_element = self.wait.until(
+                EC.element_to_be_clickable(TimbratureLocators.REPORT_MENU)
+            )
             report_element.click()
             # No sleep needed: keyboard actions have built-in pauses
 
@@ -112,13 +114,17 @@ class TimbraturePage:
             # Focus Date From
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_da:
-                actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.2)
+                actions.key_down(Keys.CONTROL).send_keys("a").key_up(
+                    Keys.CONTROL
+                ).pause(0.2)
                 actions.send_keys(data_da).pause(0.5)
 
             # Focus Date To
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_a:
-                actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).pause(0.2)
+                actions.key_down(Keys.CONTROL).send_keys("a").key_up(
+                    Keys.CONTROL
+                ).pause(0.2)
                 actions.send_keys(data_a).pause(0.5)
 
             # Checkbox "Verifica Presenza Timesheet"
@@ -161,19 +167,27 @@ class TimbraturePage:
                 try:
                     try:
                         arrow_element = self.wait.until(
-                            EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_SUPPLIER)
+                            EC.element_to_be_clickable(
+                                TimbratureLocators.COMBO_ARROW_SUPPLIER
+                            )
                         )
                     except TimeoutException:
                         arrow_element = self.wait.until(
-                            EC.element_to_be_clickable(TimbratureLocators.COMBO_ARROW_GENERIC)
+                            EC.element_to_be_clickable(
+                                TimbratureLocators.COMBO_ARROW_GENERIC
+                            )
                         )
 
                     if arrow_element:
                         # Use JS click if mouse interaction is flaky
                         try:
-                            ActionChains(self.driver).move_to_element(arrow_element).click().perform()
+                            ActionChains(self.driver).move_to_element(
+                                arrow_element
+                            ).click().perform()
                         except Exception:
-                            self.driver.execute_script("arguments[0].click();", arrow_element)
+                            self.driver.execute_script(
+                                "arguments[0].click();", arrow_element
+                            )
                         break
                 except Exception:
                     # Retry loop - no sleep needed, immediate retry is fine
@@ -193,7 +207,9 @@ class TimbraturePage:
                 EC.presence_of_element_located((By.XPATH, option_xpath))
             )
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'nearest'});", option
+            )
             # No sleep needed: scrollIntoView is synchronous
 
             try:
@@ -219,7 +235,9 @@ class TimbraturePage:
                 self.log("⚠️ Pulsante Excel non trovato.")
                 return ""
 
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", excel_btn)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center'});", excel_btn
+            )
             # No sleep needed: scrollIntoView is synchronous
 
             self.log("Clicco su Excel...")
@@ -247,7 +265,9 @@ class TimbraturePage:
 
         for locator in strategies:
             try:
-                return WebDriverWait(self.driver, 2).until(EC.element_to_be_clickable(locator))
+                return WebDriverWait(self.driver, 2).until(
+                    EC.element_to_be_clickable(locator)
+                )
             except TimeoutException:
                 continue
         return None
@@ -255,7 +275,11 @@ class TimbraturePage:
     def _rename_latest_download(self, new_name_base: str) -> str:
         """Finds latest download in configured download folder and moves it to temp folder."""
         # Chrome downloads directly to download_path (if configured)
-        source_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
+        source_dir = (
+            Path(self.download_path).resolve()
+            if self.download_path
+            else Path.home() / "Downloads"
+        )
         self._log(f"[DEBUG] Cerco file in: {source_dir}")
 
         from src.core.config_manager import CONFIG_DIR
@@ -269,7 +293,11 @@ class TimbraturePage:
 
         while time.time() - start_time < timeout:
             files = list(source_dir.glob("*"))
-            files = [f for f in files if not f.name.endswith((".crdownload", ".tmp")) and f.is_file()]
+            files = [
+                f
+                for f in files
+                if not f.name.endswith((".crdownload", ".tmp")) and f.is_file()
+            ]
 
             if files:
                 latest_file = max(files, key=lambda f: f.stat().st_mtime)
@@ -280,7 +308,9 @@ class TimbraturePage:
         if not latest_file:
             # Debug: lista file attuali
             current_files = list(source_dir.glob("*")) if source_dir.exists() else []
-            self._log(f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}")
+            self._log(
+                f"[DEBUG] File attuali nella cartella: {[f.name for f in current_files[:10]]}"
+            )
             return ""
 
         try:

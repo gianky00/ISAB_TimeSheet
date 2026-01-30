@@ -41,7 +41,9 @@ class TestBaseBot:
     @pytest.fixture(autouse=True)
     def mock_delays(self):
         # Patch automatico per tutti i test di questa classe
-        with (patch("src.bots.base.base_bot.WebDriverWait"),):  # Mock WebDriverWait costruttore
+        with (
+            patch("src.bots.base.base_bot.WebDriverWait"),
+        ):  # Mock WebDriverWait costruttore
             yield
 
     def test_init(self, bot):

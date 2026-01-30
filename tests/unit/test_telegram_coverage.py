@@ -70,7 +70,9 @@ class TestTelegramBridge:
 
         # Mock validators
         with patch("src.utils.validators.InputValidator.validate_pdl") as mock_val:
-            mock_val.side_effect = lambda x: MagicMock(valid=(x == "123456/C"), sanitized_value=x)
+            mock_val.side_effect = lambda x: MagicMock(
+                valid=(x == "123456/C"), sanitized_value=x
+            )
 
             with patch("asyncio.run_coroutine_threadsafe") as mock_run:
                 bridge._handle_intent("123", intent)

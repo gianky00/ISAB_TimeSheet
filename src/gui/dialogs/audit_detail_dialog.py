@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.utils.helpers import get_asset_path, get_colored_icon
 
+
 class AuditDetailDialog(QDialog):
     """Dialog per visualizzare i dettagli completi di un log."""
 

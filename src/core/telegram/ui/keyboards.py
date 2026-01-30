@@ -15,7 +15,9 @@ class TelegramUI:
                 ],
                 [
                     InlineKeyboardButton("✨ Lyra AI", callback_data="nav_lyra"),
-                    InlineKeyboardButton("⚙️ Utility & Stato", callback_data="nav_utility"),
+                    InlineKeyboardButton(
+                        "⚙️ Utility & Stato", callback_data="nav_utility"
+                    ),
                 ],
             ]
         )
@@ -39,8 +41,16 @@ class TelegramUI:
     def get_db_menu():
         """Returns the Database selection menu."""
         keyboard = [
-            [InlineKeyboardButton("⏱️ Timbrature Isab", callback_data="db_info_timbrature")],
-            [InlineKeyboardButton("📊 Strumentale", callback_data="db_select_year_strumentale")],
+            [
+                InlineKeyboardButton(
+                    "⏱️ Timbrature Isab", callback_data="db_info_timbrature"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📊 Strumentale", callback_data="db_select_year_strumentale"
+                )
+            ],
             [InlineKeyboardButton("🏗️ DataEase", callback_data="db_info_dataease")],
             [TelegramUI.get_back_button("menu_main")],
         ]
@@ -96,7 +106,9 @@ class TelegramUI:
         keyboard = []
         row = []
         for y in sorted(years, reverse=True):
-            row.append(InlineKeyboardButton(str(y), callback_data=f"db_year_strumentale_{y}"))
+            row.append(
+                InlineKeyboardButton(str(y), callback_data=f"db_year_strumentale_{y}")
+            )
             if len(row) == 3:
                 keyboard.append(row)
                 row = []
@@ -170,7 +182,11 @@ class TelegramUI:
         """Returns the Attendance (Timbrature) menu."""
         return InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("🕒 Ieri", callback_data="run_timbrature_yesterday")],
+                [
+                    InlineKeyboardButton(
+                        "🕒 Ieri", callback_data="run_timbrature_yesterday"
+                    )
+                ],
                 [InlineKeyboardButton("📅 Oggi", callback_data="run_timbrature_today")],
                 [TelegramUI.get_back_button("nav_portale")],
             ]
@@ -190,7 +206,11 @@ class TelegramUI:
     def get_printer_selection_menu(printers, back_callback):
         """Returns a keyboard for selecting a printer."""
         keyboard = [
-            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}")]
+            [
+                InlineKeyboardButton(
+                    f"🖨️ {p[:30]}", callback_data=f"sel_print_run_{p[:25]}"
+                )
+            ]
             for p in printers[:6]
         ]
         keyboard.append([TelegramUI.get_back_button(back_callback)])
@@ -202,8 +222,16 @@ class TelegramUI:
         suffix = "_noprint" if noprint else "_print"
         return InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("✅ Sì, invia", callback_data=f"confirm_merge_yes{suffix}")],
-                [InlineKeyboardButton("❌ No", callback_data=f"confirm_merge_no{suffix}")],
+                [
+                    InlineKeyboardButton(
+                        "✅ Sì, invia", callback_data=f"confirm_merge_yes{suffix}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "❌ No", callback_data=f"confirm_merge_no{suffix}"
+                    )
+                ],
                 [TelegramUI.get_back_button("menu_pdl")],
             ]
         )
@@ -233,7 +261,10 @@ class TelegramUI:
     @staticmethod
     def get_settings_menu(fornitori):
         """Returns the settings menu, including provider selection."""
-        keyboard = [[InlineKeyboardButton(f"🏢 {f}", callback_data=f"set_forn_{f}")] for f in fornitori[:6]]
+        keyboard = [
+            [InlineKeyboardButton(f"🏢 {f}", callback_data=f"set_forn_{f}")]
+            for f in fornitori[:6]
+        ]
         keyboard.extend(
             [
                 [InlineKeyboardButton("📅 Autopilot", callback_data="menu_autopilot")],
@@ -257,7 +288,8 @@ class TelegramUI:
     def get_printers_menu(printers):
         """Returns list of printers for configuration."""
         keyboard = [
-            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"set_print_{p[:30]}")] for p in printers[:6]
+            [InlineKeyboardButton(f"🖨️ {p[:30]}", callback_data=f"set_print_{p[:30]}")]
+            for p in printers[:6]
         ]
         keyboard.append([TelegramUI.get_back_button("menu_settings")])
         return InlineKeyboardMarkup(keyboard)

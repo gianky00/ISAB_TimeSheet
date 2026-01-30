@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QPushButton,
     QScrollArea,
     QSplitter,
     QStyle,
@@ -31,7 +30,7 @@ from src.core.database import db_manager
 from src.core.oda_manager import OdaManager
 from src.gui.formatters import format_currency_smart, format_date_it
 from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path, get_colored_icon
+from src.utils.helpers import get_asset_path
 
 
 class ChildDescriptionDelegate(QStyledItemDelegate):
@@ -167,17 +166,21 @@ class StoricoOdaPanel(QWidget):
         # 1. Filtri (Top)
         filter_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Cerca ovunque... (OdA, Fornitore, Descrizione, Contratto...)")
+        self.search_input.setPlaceholderText(
+            "Cerca ovunque... (OdA, Fornitore, Descrizione, Contratto...)"
+        )
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
-        refresh_btn = QPushButton("Aggiorna")
-        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(refresh_btn)
+        from src.gui.widgets.modern_button import ModernButton
 
-        import_btn = QPushButton("Importa Excel")
-        import_btn.setIcon(get_colored_icon(get_asset_path(Icons.UPLOAD), "#000000"))
+        filter_layout.addWidget(self.search_input)
+
+        import_btn = ModernButton(
+            "Importa Excel",
+            variant=ModernButton.Variant.GHOST,
+            icon=get_asset_path(Icons.UPLOAD)
+        )
         import_btn.clicked.connect(self._on_import_clicked)
         filter_layout.addWidget(import_btn)
 
@@ -219,7 +222,9 @@ class StoricoOdaPanel(QWidget):
         detail_layout.setContentsMargins(5, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Completo OdA")
-        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
+        detail_title.setStyleSheet(
+            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
+        )
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -234,7 +239,9 @@ class StoricoOdaPanel(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            val_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -317,7 +324,9 @@ class StoricoOdaPanel(QWidget):
         query, params = self._build_query()
 
         try:
-            full_rows = db_manager.execute_query(db_manager.DB_STORICO_ODA, query, tuple(params))
+            full_rows = db_manager.execute_query(
+                db_manager.DB_STORICO_ODA, query, tuple(params)
+            )
             self._raw_full_data = full_rows
             self._populate_tree(full_rows)
         except Exception as e:
@@ -432,7 +441,9 @@ class StoricoOdaPanel(QWidget):
                 item_creato.setData(r, Qt.ItemDataRole.UserRole)
 
                 self.model.appendRow(parent_row_items)
-                groups[group_key] = item_creato  # Keep reference to first item as parent
+                groups[group_key] = (
+                    item_creato  # Keep reference to first item as parent
+                )
 
             parent_item = groups[group_key]
 
@@ -456,7 +467,9 @@ class StoricoOdaPanel(QWidget):
 
             # Col 0: Descrizione (Disegnata dal Delegate sulla Col 1 in merge con Col 0)
             c_desc_merged = QStandardItem(str(desc))
-            c_desc_merged.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            c_desc_merged.setTextAlignment(
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
 
             # Col 1: Empty (Usata dal delegate per disegnare esteso)
             c_empty_1 = QStandardItem("")
@@ -516,10 +529,16 @@ class StoricoOdaPanel(QWidget):
             success, message, added, _ = OdaManager.import_oda_from_excel(file_path)
 
             if success:
-                ToastManager.instance().show(f"Importazione completata: {added} righe aggiornate.", "success")
+                ToastManager.instance().show(
+                    f"Importazione completata: {added} righe aggiornate.", "success"
+                )
                 self.refresh_data()
             else:
-                QMessageBox.warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
+                QMessageBox.warning(
+                    self, "Errore Importazione", f"Impossibile importare:\n{message}"
+                )
 
         except Exception as e:
-            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}")
+            QMessageBox.critical(
+                self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}"
+            )

@@ -30,7 +30,9 @@ def test_db_creation(temp_db, storage):
 
     conn = sqlite3.connect(temp_db)
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='timbrature'")
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='timbrature'"
+    )
     table = cursor.fetchone()
     conn.close()
 

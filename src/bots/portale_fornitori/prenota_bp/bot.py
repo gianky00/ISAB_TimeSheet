@@ -83,7 +83,9 @@ class PrenotaBPBot(BaseBot):
                 if self._process_single_bp(page, i, row):
                     processed_count += 1
 
-            self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
+            self.log(
+                f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati."
+            )
             return True
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {str(e)}")
@@ -111,7 +113,9 @@ class PrenotaBPBot(BaseBot):
             return False
 
         try:
-            page.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
+            page.filtra_buoni_prelievo(
+                self.fornitore, num_bp, self.data_da, self.data_a
+            )
             page.apri_dettagli_bp()
             page.gestisci_creazione_richiesta(note)
             try:

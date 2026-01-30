@@ -36,7 +36,9 @@ class TestExcelImporterAdvanced:
             }
         )
 
-        mocker.patch("src.core.importers.contabilita.pd.ExcelFile", return_value=mock_xls)
+        mocker.patch(
+            "src.core.importers.contabilita.pd.ExcelFile", return_value=mock_xls
+        )
         mocker.patch(
             "src.core.importers.contabilita.ContabilitaImporter._get_excel_file",
             return_value=mock_xls,
@@ -51,9 +53,13 @@ class TestExcelImporterAdvanced:
         mocker.patch(
             "src.core.importers.contabilita.pd.read_excel",
             side_effect=[
-                pd.DataFrame([["DATAPREV", "MESE", "NPREV", "TOTALE PREV", "ATTIVITA", "ODC"]]),  # Preview 1
+                pd.DataFrame(
+                    [["DATAPREV", "MESE", "NPREV", "TOTALE PREV", "ATTIVITA", "ODC"]]
+                ),  # Preview 1
                 df_dirty,  # Actual 1
-                pd.DataFrame([["DATAPREV", "MESE", "NPREV", "TOTALE PREV", "ATTIVITA", "ODC"]]),  # Preview 2
+                pd.DataFrame(
+                    [["DATAPREV", "MESE", "NPREV", "TOTALE PREV", "ATTIVITA", "ODC"]]
+                ),  # Preview 2
                 pd.DataFrame(
                     columns=[
                         "DATA PREV",
@@ -97,8 +103,12 @@ class TestExcelImporterAdvanced:
             }
         )
 
-        with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df_giorn):
-            year, rows, err = GiornaliereImporter._process_single_giornaliera((2026, Path("test.xlsx"), {}))
+        with patch(
+            "src.core.importers.giornaliere.pd.read_excel", return_value=df_giorn
+        ):
+            year, rows, err = GiornaliereImporter._process_single_giornaliera(
+                (2026, Path("test.xlsx"), {})
+            )
             assert err is None
             assert len(rows) == 2
             assert rows[0][2] == "Mario Rossi"
@@ -123,7 +133,9 @@ class TestExcelImporterAdvanced:
         lookup = {"P999": "54001234"}
 
         with patch("src.core.importers.giornaliere.pd.read_excel", return_value=df):
-            year, rows, err = GiornaliereImporter._process_single_giornaliera((2026, Path("f.xlsx"), lookup))
+            year, rows, err = GiornaliereImporter._process_single_giornaliera(
+                (2026, Path("f.xlsx"), lookup)
+            )
             assert len(rows) > 0
             assert rows[0][10] == "P999"
             assert rows[0][5] == "54001234"
@@ -177,7 +189,9 @@ class TestExcelImporterAdvanced:
 
     def test_import_attivita_programmate_not_found(self, tmp_path):
         """Test: Gestione file mancante per Attività Programmate."""
-        success, msg, rows = ExcelImporter.import_attivita_programmate(str(tmp_path / "missing.xlsx"))
+        success, msg, rows = ExcelImporter.import_attivita_programmate(
+            str(tmp_path / "missing.xlsx")
+        )
         assert success is False
         assert "non trovato" in msg
 

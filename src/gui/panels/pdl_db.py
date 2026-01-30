@@ -3,19 +3,21 @@ SyncroJob - PDL Database Panel
 Pannello per la visualizzazione del Database PDL SafeWork.
 """
 
+import os
 from datetime import datetime
 from typing import Any, List, Optional, Tuple
 
+import pandas as pd
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
-    QPushButton,
     QScrollArea,
     QSplitter,
     QStyledItemDelegate,
@@ -27,6 +29,7 @@ from PyQt6.QtWidgets import (
 from src.core.constants import Icons
 from src.core.database import db_manager
 from src.gui.formatters import FastTableModel
+from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -42,7 +45,9 @@ class PDLDelegate(QStyledItemDelegate):
         # Abilita il wrap per tutte le colonne tranne quelle date
         if index.column() not in self.date_columns:
             option.features |= option.ViewItemFeature.HasDisplay
-            option.displayAlignment = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            option.displayAlignment = (
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
             option.textElideMode = Qt.TextElideMode.ElideNone
         else:
             # Date: riga singola
@@ -106,6 +111,8 @@ class PDLDBPanel(QWidget):
         self._setup_ui()
         QTimer.singleShot(50, self.refresh_data)
         QTimer.singleShot(100, self._populate_groups)
+        QTimer.singleShot(150, self._update_areas)
+        QTimer.singleShot(200, self._update_units)
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -125,6 +132,7 @@ class PDLDBPanel(QWidget):
         filter_layout.addWidget(QLabel("Gruppo:"))
         self.group_filter = QComboBox()
         self.group_filter.addItem("Tutti")
+        self.group_filter.setMinimumWidth(80)
         filter_layout.addWidget(self.group_filter)
 
         filter_layout.addWidget(QLabel("Sito:"))
@@ -132,16 +140,50 @@ class PDLDBPanel(QWidget):
         self.site_filter.addItems(["Tutti i siti", "IGCC", "ISAB Nord", "ISAB Sud"])
         filter_layout.addWidget(self.site_filter)
 
+        filter_layout.addWidget(QLabel("Area:"))
+        self.area_filter = QComboBox()
+        self.area_filter.addItem("Tutte")
+        self.area_filter.setMinimumWidth(100)
+        filter_layout.addWidget(self.area_filter)
+
+        filter_layout.addWidget(QLabel("Unità:"))
+        self.unit_filter = QComboBox()
+        self.unit_filter.addItem("Tutte")
+        self.unit_filter.setMinimumWidth(80)
+        filter_layout.addWidget(self.unit_filter)
+
         # Connessioni segnali (DOPO inizializzazione widget per evitare crash)
         self.group_filter.currentTextChanged.connect(self.refresh_data)
-        self.site_filter.currentTextChanged.connect(self.refresh_data)
+        self.site_filter.currentTextChanged.connect(self._on_site_changed)
+        self.area_filter.currentTextChanged.connect(self._on_area_changed)
+        self.unit_filter.currentTextChanged.connect(self.refresh_data)
 
         filter_layout.addStretch()
 
-        refresh_btn = QPushButton("Aggiorna")
-        refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
-        refresh_btn.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(refresh_btn)
+        # Clear Filters
+        self.clear_btn = ModernButton(
+            "RESETTA FILTRI",
+            variant=ModernButton.Variant.DANGER,
+            size=ModernButton.Size.SMALL,
+        )
+        self.clear_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.RESET), "#FFFFFF")
+        )
+        self.clear_btn.setToolTip("Resetta Filtri")
+        self.clear_btn.clicked.connect(self._reset_filters)
+        filter_layout.addWidget(self.clear_btn)
+
+        # Export Excel
+        self.export_btn = ModernButton(
+            "ESPORTA", variant=ModernButton.Variant.SUCCESS, size=ModernButton.Size.SMALL
+        )
+        self.export_btn.setIcon(
+            get_colored_icon(get_asset_path(Icons.EXCEL), "#FFFFFF")
+        )
+        self.export_btn.setToolTip("Esporta Excel")
+        self.export_btn.clicked.connect(self._export_to_excel)
+        filter_layout.addWidget(self.export_btn)
+
         main_layout.addLayout(filter_layout)
 
         # 2. Contenitore Splitter (Tabella | Dettaglio)
@@ -158,7 +200,9 @@ class PDLDBPanel(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setItemDelegate(PDLDelegate([0], self.table))  # Data Creazione è indice 0
+        self.table.setItemDelegate(
+            PDLDelegate([0], self.table)
+        )  # Data Creazione è indice 0
 
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         header = self.table.horizontalHeader()
@@ -173,7 +217,9 @@ class PDLDBPanel(QWidget):
         detail_layout.setContentsMargins(5, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Completo PDL")
-        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
+        detail_title.setStyleSheet(
+            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
+        )
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -187,7 +233,9 @@ class PDLDBPanel(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            val_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -201,19 +249,110 @@ class PDLDBPanel(QWidget):
         main_layout.addWidget(self.splitter)
 
     def _populate_groups(self):
-        """Popola la dropdown dei gruppi estraendoli dal database."""
+        """Popola la dropdown dei gruppi (indipendente)."""
         try:
-            query = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
-            rows = db_manager.execute_query(db_manager.DB_PDL, query)
+            query_grp = "SELECT DISTINCT SUBSTR(n_pdl, INSTR(n_pdl, '/') + 1) as grp FROM pdl WHERE n_pdl LIKE '%/%' ORDER BY grp"
+            rows_grp = db_manager.execute_query(db_manager.DB_PDL, query_grp)
+
             self.group_filter.blockSignals(True)
             self.group_filter.clear()
             self.group_filter.addItem("Tutti")
-            for r in rows:
+            for r in rows_grp:
                 if r[0]:
                     self.group_filter.addItem(str(r[0]))
             self.group_filter.blockSignals(False)
         except Exception as e:
             print(f"Errore popolamento gruppi: {e}")
+
+    def _update_areas(self):
+        """Aggiorna le aree in base al sito selezionato."""
+        site = self.site_filter.currentText()
+        query = "SELECT DISTINCT area FROM pdl WHERE area IS NOT NULL AND area != ''"
+        params = []
+
+        if site != "Tutti i siti":
+            query += " AND sito = ?"
+            params.append(site)
+
+        query += " ORDER BY area"
+
+        try:
+            rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+
+            current_area = self.area_filter.currentText()
+            self.area_filter.blockSignals(True)
+            self.area_filter.clear()
+            self.area_filter.addItem("Tutte")
+
+            found = False
+            for r in rows:
+                if r[0]:
+                    self.area_filter.addItem(str(r[0]))
+                    if str(r[0]) == current_area:
+                        found = True
+
+            # Ripristina selezione se possibile, altrimenti Tutte
+            if found:
+                self.area_filter.setCurrentText(current_area)
+            else:
+                self.area_filter.setCurrentIndex(0)
+
+            self.area_filter.blockSignals(False)
+        except Exception as e:
+            print(f"Errore update areas: {e}")
+
+    def _update_units(self):
+        """Aggiorna le unità in base a sito e area selezionati."""
+        site = self.site_filter.currentText()
+        area = self.area_filter.currentText()
+
+        query = "SELECT DISTINCT unita FROM pdl WHERE unita IS NOT NULL AND unita != ''"
+        params = []
+
+        if site != "Tutti i siti":
+            query += " AND sito = ?"
+            params.append(site)
+
+        if area != "Tutte":
+            query += " AND area = ?"
+            params.append(area)
+
+        query += " ORDER BY unita"
+
+        try:
+            rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+
+            current_unit = self.unit_filter.currentText()
+            self.unit_filter.blockSignals(True)
+            self.unit_filter.clear()
+            self.unit_filter.addItem("Tutte")
+
+            found = False
+            for r in rows:
+                if r[0]:
+                    self.unit_filter.addItem(str(r[0]))
+                    if str(r[0]) == current_unit:
+                        found = True
+
+            if found:
+                self.unit_filter.setCurrentText(current_unit)
+            else:
+                self.unit_filter.setCurrentIndex(0)
+
+            self.unit_filter.blockSignals(False)
+        except Exception as e:
+            print(f"Errore update units: {e}")
+
+    def _on_site_changed(self):
+        """Gestisce il cambio sito: aggiorna aree (che aggiorneranno unità) e tabella."""
+        self._update_areas()
+        self._update_units()  # Forzato per sicurezza
+        self.refresh_data()
+
+    def _on_area_changed(self):
+        """Gestisce il cambio area: aggiorna unità e tabella."""
+        self._update_units()
+        self.refresh_data()
 
     def _on_selection_changed(self, selected, _deselected):
         """Aggiorna il pannello dettaglio quando si seleziona una riga."""
@@ -242,7 +381,9 @@ class PDLDBPanel(QWidget):
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""
         if self.current_sort_col == logical_index:
-            self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
+            self.current_sort_order = (
+                "DESC" if self.current_sort_order == "ASC" else "ASC"
+            )
         else:
             self.current_sort_col = logical_index
             self.current_sort_order = "ASC"
@@ -258,7 +399,9 @@ class PDLDBPanel(QWidget):
             full_rows = self._cache[cache_key]
         else:
             try:
-                full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+                full_rows = db_manager.execute_query(
+                    db_manager.DB_PDL, query, tuple(params)
+                )
                 self._cache[cache_key] = full_rows
             except Exception as e:
                 print(f"Errore caricamento PDL: {e}")
@@ -286,10 +429,42 @@ class PDLDBPanel(QWidget):
             query += " AND n_pdl LIKE ?"
             params.append(f"%/{group_filter}")
 
+        if self.area_filter.currentText() != "Tutte":
+            query += " AND area = ?"
+            params.append(self.area_filter.currentText())
+
+        if self.unit_filter.currentText() != "Tutte":
+            query += " AND unita = ?"
+            params.append(self.unit_filter.currentText())
+
         if search_text:
-            query += " AND (n_pdl LIKE ? OR area LIKE ? OR descrizione_lavoro LIKE ? OR ditta LIKE ? OR richiedente LIKE ? OR emittente LIKE ?)"
+            # Ricerca estesa su TUTTI i campi rilevanti
+            # Colonne: n_pdl, area, unita, ditta, descrizione_lavoro, tipologia, stato,
+            # apparecchiatura, richiedente, emittente, aprente, priorita, contratto, ordine, sito
+
+            search_cols = [
+                "n_pdl",
+                "area",
+                "unita",
+                "ditta",
+                "descrizione_lavoro",
+                "tipologia",
+                "stato",
+                "apparecchiatura",
+                "richiedente",
+                "emittente",
+                "aprente",
+                "priorita",
+                "contratto",
+                "ordine",
+                "sito",
+            ]
+
+            OR_clause = " OR ".join([f"{col} LIKE ?" for col in search_cols])
+            query += f" AND ({OR_clause})"
+
             p = f"%{search_text}%"
-            params.extend([p, p, p, p, p, p])
+            params.extend([p] * len(search_cols))
 
         # Ordinamento
         order_map = {
@@ -333,7 +508,9 @@ class PDLDBPanel(QWidget):
         master_rows = []
         for r in full_rows:
             row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
-            master_rows.append([("" if str(val).lower() in ["nan", "none"] else val) for val in row])
+            master_rows.append(
+                [("" if str(val).lower() in ["nan", "none"] else val) for val in row]
+            )
         return master_rows
 
     def _update_pdl_ui(self, count: int):
@@ -348,6 +525,106 @@ class PDLDBPanel(QWidget):
             if i != 6 and header.sectionSize(i) > 200:
                 header.resizeSection(i, 200)
 
-        QTimer.singleShot(10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch))
+        QTimer.singleShot(
+            10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+        )
         if count < 500:
             QTimer.singleShot(100, self.table.resizeRowsToContents)
+
+    def _reset_filters(self):
+        """Resetta tutti i filtri allo stato iniziale."""
+        # Blocca segnali per evitare reload multipli
+        self.group_filter.blockSignals(True)
+        self.site_filter.blockSignals(True)
+        self.area_filter.blockSignals(True)
+        self.unit_filter.blockSignals(True)
+        self.search_input.blockSignals(True)
+
+        self.search_input.clear()
+        self.group_filter.setCurrentIndex(0)  # Tutti
+        self.site_filter.setCurrentIndex(0)  # Tutti i siti
+
+        # Reset dinamico Area/Unità
+        self.area_filter.clear()
+        self.area_filter.addItem("Tutte")
+        self.area_filter.setCurrentIndex(0)
+
+        self.unit_filter.clear()
+        self.unit_filter.addItem("Tutte")
+        self.unit_filter.setCurrentIndex(0)
+
+        # Sblocca segnali
+        self.group_filter.blockSignals(False)
+        self.site_filter.blockSignals(False)
+        self.area_filter.blockSignals(False)
+        self.unit_filter.blockSignals(False)
+        self.search_input.blockSignals(False)
+
+        # Trigger update singolo
+        self.refresh_data()
+        # Ripopola per sicurezza (es. se aree erano filtrate)
+        QTimer.singleShot(100, self._update_areas)
+        QTimer.singleShot(150, self._update_units)
+
+    def _export_to_excel(self):
+        """Esporta i dati correnti in Excel secondo colonne specifiche."""
+        try:
+            # 1. Costruisce query senza limiti
+            query, params = self._build_pdl_query(self.current_sort_col)
+            # Rimuove LIMIT se presente (dalla logica attuale di _build_query che appende " LIMIT 2000")
+            if " LIMIT " in query:
+                query = query.split(" LIMIT ")[0]
+
+            # Esegue query
+            rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
+
+            if not rows:
+                print("Nessun dato da esportare.")
+                return
+
+            # Colonne richieste (Ordine Specifico)
+            # Query originale: id, n_pdl, data_creazione, area, unita, ditta, descrizione_lavoro, tipologia, stato,
+            # apparecchiatura, richiedente, data_richiesta, emittente, data_emissione, aprente, data_apertura,
+            # priorita, contratto, ordine, sito, importato_il
+
+            # Map Indici Query -> Colonne Excel
+            # N° PDL [1], Data Creazione [2], Area [3], Unità [4], Descrizione [6], Stato [8],
+            # Apparecchiatura [9], Richiedente [10], Contratto [17], Ordine [18], Sito [19]
+
+            export_data = []
+            for r in rows:
+                export_data.append(
+                    {
+                        "N° PDL": r[1],
+                        "Data Creazione": r[2],
+                        "Area": r[3],
+                        "Unità": r[4],
+                        "Descrizione": r[6],
+                        "Stato": r[8],
+                        "Apparecchiatura": r[9],
+                        "Richiedente": r[10],
+                        "Contratto": r[17],
+                        "Ordine": r[18],
+                        "Sito": r[19],
+                    }
+                )
+
+            df = pd.DataFrame(export_data)
+
+            # Dialog Salva
+            filename, _ = QFileDialog.getSaveFileName(
+                self,
+                "Esporta Excel",
+                f"Export_PDL_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                "Excel Files (*.xlsx)",
+            )
+
+            if filename:
+                if not filename.endswith(".xlsx"):
+                    filename += ".xlsx"
+
+                df.to_excel(filename, index=False, engine="openpyxl")
+                os.startfile(filename)  # Apre il file automaticamente
+
+        except Exception as e:
+            print(f"Errore Export Excel: {e}")

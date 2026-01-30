@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import MagicMock
+
 from src.core.app_initializer import AppInitializer
 from src.gui.main_window.page_index import PageIndex
+
 
 class TestAppInitializerDeep:
     """Test approfonditi sul generatore di avvio e logiche di idempotenza."""
@@ -10,10 +11,10 @@ class TestAppInitializerDeep:
         """Verifica che chiamate successive a initialize_core non rieseguano i compiti."""
         # Reset state
         AppInitializer._core_initialized = True
-        
+
         m_log = mocker.patch("src.core.app_initializer.AppInitializer._setup_logging")
         m_db = mocker.patch("src.core.database.db_manager.init_db")
-        
+
         # Should return immediately because _core_initialized is True
         assert AppInitializer.initialize_core() is True
         m_log.assert_not_called()
@@ -25,21 +26,21 @@ class TestAppInitializerDeep:
         mock_mw = MagicMock()
         mock_nav = MagicMock()
         mock_mw.navigation_controller = mock_nav
-        
+
         # Mock config_manager
         mocker.patch("src.core.config_manager.load_config", return_value={})
         mocker.patch("src.core.config_manager.set_config_value")
 
         # Create generator
         gen = AppInitializer.init_generator(mock_mw)
-        
+
         results = list(gen)
-        
+
         # Verify yields
         assert len(results) > 0
         assert any("Dashboard" in msg for msg, prog in results)
         assert any(prog == 100 for msg, prog in results)
-        
+
         # Verify that get_panel was called for the expected indices
         # We check some key indices from PageIndex
         mock_nav.get_panel.assert_any_call(PageIndex.DASHBOARD)
@@ -50,20 +51,20 @@ class TestAppInitializerDeep:
         mock_mw = MagicMock()
         mock_nav = MagicMock()
         mock_mw.navigation_controller = mock_nav
-        
+
         # Simulate failure for DASHBOARD
         def side_effect(idx):
             if idx == PageIndex.DASHBOARD:
                 raise Exception("Dashboard Crash")
             return MagicMock()
-            
+
         mock_nav.get_panel.side_effect = side_effect
-        
+
         mocker.patch("src.core.config_manager.load_config", return_value={})
-        
+
         gen = AppInitializer.init_generator(mock_mw)
         results = list(gen)
-        
+
         # Verify we still reached the end
         assert any(prog == 100 for msg, prog in results)
         # Verify other panels were still attempted
@@ -72,9 +73,10 @@ class TestAppInitializerDeep:
     def test_yield_helper(self, mocker):
         """Verifica che l'helper _yield chiami processEvents."""
         from src.core.app_initializer import _yield
+
         mock_app = mocker.patch("PyQt6.QtWidgets.QApplication.instance")
         mock_instance = MagicMock()
         mock_app.return_value = mock_instance
-        
+
         _yield()
         mock_instance.processEvents.assert_called_once()

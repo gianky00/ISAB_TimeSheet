@@ -104,7 +104,9 @@ class NotificationsPanel(QWidget):
         mark_read.clicked.connect(self.manager.mark_all_as_read)
         actions_layout.addWidget(mark_read)
 
-        clear = ModernButton("Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
+        clear = ModernButton(
+            "Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL
+        )
         clear.setMinimumWidth(120)
         clear.setFixedHeight(40)
         clear.clicked.connect(self._clear_notifications)
@@ -115,7 +117,9 @@ class NotificationsPanel(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self.scroll.setStyleSheet(
+            "QScrollArea { background: transparent; border: none; }"
+        )
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setSpacing(12)
@@ -193,7 +197,10 @@ class NotificationsPanel(QWidget):
         )
 
         # Use cached result if available
-        if self._last_filter_state == cache_key and self._cached_filter_result is not None:
+        if (
+            self._last_filter_state == cache_key
+            and self._cached_filter_result is not None
+        ):
             notifs = self._cached_filter_result
         else:
             notifs = self._get_filtered_sorted_notifications()
@@ -250,7 +257,9 @@ class NotificationsPanel(QWidget):
         # Sort notifications
         return self._sort_notifications(notifs)
 
-    def _render_groups(self, grouped: Dict[str, Dict[str, Any]], disable_animations: bool):
+    def _render_groups(
+        self, grouped: Dict[str, Dict[str, Any]], disable_animations: bool
+    ):
         """Renderizza i gruppi di notifiche nella scroll area."""
         for group_key, group_data in grouped.items():
             if not group_data["notifications"]:
@@ -277,7 +286,9 @@ class NotificationsPanel(QWidget):
                 card.card_deleted.connect(self._invalidate_and_refresh)
                 group_layout.addWidget(card)
 
-            self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, group_container)
+            self.scroll_layout.insertWidget(
+                self.scroll_layout.count() - 1, group_container
+            )
             self._group_widgets[group_key] = {
                 "header": header,
                 "container": group_container,
@@ -419,7 +430,9 @@ class NotificationsPanel(QWidget):
         empty_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("font-size: 20px; font-weight: bold; color: #495057; border: none;")
+        title_lbl.setStyleSheet(
+            "font-size: 20px; font-weight: bold; color: #495057; border: none;"
+        )
         title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(title_lbl)
 

@@ -77,7 +77,9 @@ class NotificationItem(QFrame):
         header_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(self.notification.get("title", "Notifica"))
-        title_lbl.setStyleSheet("font-weight: bold; font-size: 14px; border: none; background: transparent;")
+        title_lbl.setStyleSheet(
+            "font-weight: bold; font-size: 14px; border: none; background: transparent;"
+        )
         header_layout.addWidget(title_lbl)
 
         header_layout.addStretch()
@@ -90,7 +92,9 @@ class NotificationItem(QFrame):
             time_str = ""
 
         time_lbl = QLabel(time_str)
-        time_lbl.setStyleSheet("color: #6c757d; font-size: 12px; border: none; background: transparent;")
+        time_lbl.setStyleSheet(
+            "color: #6c757d; font-size: 12px; border: none; background: transparent;"
+        )
         header_layout.addWidget(time_lbl)
 
         # Delete Button
@@ -119,7 +123,9 @@ class NotificationItem(QFrame):
         # Message
         msg_lbl = QLabel(self.notification.get("message", ""))
         msg_lbl.setWordWrap(True)
-        msg_lbl.setStyleSheet("color: #212529; border: none; margin-top: 5px; background: transparent;")
+        msg_lbl.setStyleSheet(
+            "color: #212529; border: none; margin-top: 5px; background: transparent;"
+        )
         layout.addWidget(msg_lbl)
 
     def mousePressEvent(self, event):

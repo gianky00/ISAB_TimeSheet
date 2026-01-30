@@ -119,7 +119,9 @@ class AnimatedProgressBar(QWidget):
 
             # 4. Shimmer (riflesso luminoso)
             painter.setClipRect(chunk_rect)
-            shimmer_gradient = QLinearGradient(self._shimmer_pos, 0, self._shimmer_pos + 50, 0)
+            shimmer_gradient = QLinearGradient(
+                self._shimmer_pos, 0, self._shimmer_pos + 50, 0
+            )
             shimmer_gradient.setColorAt(0.0, QColor(255, 255, 255, 0))
             shimmer_gradient.setColorAt(0.5, QColor(255, 255, 255, 80))
             shimmer_gradient.setColorAt(1.0, QColor(255, 255, 255, 0))

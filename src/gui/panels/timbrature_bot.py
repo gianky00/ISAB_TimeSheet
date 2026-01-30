@@ -47,7 +47,9 @@ class TimbratureBotPanel(BaseBotPanel):
         params_layout = QVBoxLayout(params_group)
 
         # Widget atomico
-        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
+        self.params_widget = BotParametersWidget(
+            show_date_range=True, show_dest_path=False
+        )
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -72,11 +74,15 @@ class TimbratureBotPanel(BaseBotPanel):
             self.refresh_fornitori()
             config = config_manager.load_config()
 
-            self.params_widget.set_fornitore(config.get("last_timbrature_fornitore", ""))
+            self.params_widget.set_fornitore(
+                config.get("last_timbrature_fornitore", "")
+            )
 
             # Default dates: ALWAYS Yesterday
             yesterday = QDate.currentDate().addDays(-1)
-            self.params_widget.set_dates(yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy"))
+            self.params_widget.set_dates(
+                yesterday.toString("dd.MM.yyyy"), yesterday.toString("dd.MM.yyyy")
+            )
         finally:
             self._is_loading = False  # Fine blocco salvataggio
 
@@ -89,7 +95,9 @@ class TimbratureBotPanel(BaseBotPanel):
             return
 
         date_da, date_a = self.params_widget.get_dates()
-        config_manager.set_config_value("last_timbrature_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value(
+            "last_timbrature_fornitore", self.params_widget.get_fornitore()
+        )
         config_manager.set_config_value("last_timbrature_date_da", date_da)
         config_manager.set_config_value("last_timbrature_date_a", date_a)
 
@@ -133,7 +141,9 @@ class TimbratureBotPanel(BaseBotPanel):
                 # Se necessario gestire logica qui
                 pass
 
-        self.log_widget.append(f"DEBUG: Params -> Fornitore: {fornitore}, Utente: {username}")
+        self.log_widget.append(
+            f"DEBUG: Params -> Fornitore: {fornitore}, Utente: {username}"
+        )
 
         if not all([username, password, fornitore]):
             self.log_widget.append(
@@ -142,7 +152,9 @@ class TimbratureBotPanel(BaseBotPanel):
 
             # If running externally, maybe we can fallback to default config if UI is empty?
             # But normally params_override or UI should provide it.
-            ToastManager.instance().show("Verifica i parametri (Fornitore mancante).", "warning")
+            ToastManager.instance().show(
+                "Verifica i parametri (Fornitore mancante).", "warning"
+            )
             self._update_status("#C62828", "Parametri incompleti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)

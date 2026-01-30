@@ -20,7 +20,9 @@ class TestBotPanelsFinal:
             assert "Credenziali" in msg or ready is True
 
     def test_scarico_pdl_panel_ui(self, qapp, qtbot):
-        with patch("src.utils.printing.get_installed_printers", return_value=["Printer1"]):
+        with patch(
+            "src.utils.printing.get_installed_printers", return_value=["Printer1"]
+        ):
             panel = ScaricoPDLPanel()
             qtbot.addWidget(panel)
             assert panel.printer_combo.count() > 0
@@ -40,7 +42,9 @@ class TestBotPanelsFinal:
             mock_row[16] = "R1"
             mock_row[17] = "C1"
 
-            mock_storage.return_value.get_timbrature_with_reparto.return_value = [tuple(mock_row)]
+            mock_storage.return_value.get_timbrature_with_reparto.return_value = [
+                tuple(mock_row)
+            ]
             mock_storage.return_value.get_lists.return_value = {
                 "reparti": [],
                 "cantieri": [],
@@ -53,5 +57,7 @@ class TestBotPanelsFinal:
             assert panel.model.rowCount() == 1
 
             # Verifichiamo il valore formattato
-            display_val = panel.model.data(panel.model.index(0, 0), Qt.ItemDataRole.DisplayRole)
+            display_val = panel.model.data(
+                panel.model.index(0, 0), Qt.ItemDataRole.DisplayRole
+            )
             assert "01/01/2024" in display_val

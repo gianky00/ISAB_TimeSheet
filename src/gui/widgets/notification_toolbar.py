@@ -185,7 +185,9 @@ class NotificationToolbar(QWidget):
                 icon=config["icon"],
                 count=0,  # Will be updated dynamically
             )
-            chip.clicked.connect(lambda checked, k=config["key"]: self._on_filter_clicked(k))
+            chip.clicked.connect(
+                lambda checked, k=config["key"]: self._on_filter_clicked(k)
+            )
             self._filter_chips[config["key"]] = chip
             layout.addWidget(chip)
 

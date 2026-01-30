@@ -80,7 +80,11 @@ class DettagliOdABot(BaseBot):
 
         # Chrome downloads directly to download_path (if configured)
         # Source and dest are the same folder - we just rename the downloaded file
-        source_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
+        source_dir = (
+            Path(self.download_path)
+            if self.download_path
+            else Path.home() / "Downloads"
+        )
         dest_dir = source_dir
 
         success = 0
@@ -126,7 +130,9 @@ class DettagliOdABot(BaseBot):
             self.log("❌ Fornitore non selezionabile.")
             return False
 
-        downloaded_path = page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir)
+        downloaded_path = page.process_oda(
+            oda, contract, self.data_da, self.data_a, source_dir, dest_dir
+        )
 
         if downloaded_path:
             # Se è un ODA Generico (senza numero OdA), importiamo nel DB

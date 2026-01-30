@@ -69,7 +69,9 @@ class ThemeManager:
             # Backgrounds
             palette.setColor(group, QPalette.ColorRole.Window, q(p.background))
             palette.setColor(group, QPalette.ColorRole.Base, q(p.surface))
-            palette.setColor(group, QPalette.ColorRole.AlternateBase, q(p.surface_variant))
+            palette.setColor(
+                group, QPalette.ColorRole.AlternateBase, q(p.surface_variant)
+            )
             palette.setColor(group, QPalette.ColorRole.ToolTipBase, q(p.surface))
             palette.setColor(group, QPalette.ColorRole.Button, q(p.surface))
 
@@ -107,7 +109,9 @@ class ThemeManager:
                 logger.error(f"Errore lettura QSS {qss_path}: {e}")
 
         if not qss_content:
-            qss_content = f"QMainWindow {{ background-color: {self.palette.background}; }}"
+            qss_content = (
+                f"QMainWindow {{ background-color: {self.palette.background}; }}"
+            )
 
         # 2. Carica QSS degli Overrides globali (estratto in file esterno)
         overrides_path = Path(get_asset_path("assets/styles/overrides.qss"))

@@ -124,8 +124,12 @@ class BaseBot(ABC):
             try:
                 import re
 
-                clean_msg = re.sub(r"^[\\\\[]\\d{2}:\\d{2}:\\d{2}[\\\\]]\\s*", "", message.strip())
-                self._telegram_service.send_message_sync(f"🔹 *{self.name}*\n{clean_msg}")
+                clean_msg = re.sub(
+                    r"^[\\\\[]\\d{2}:\\d{2}:\\d{2}[\\\\]]\\s*", "", message.strip()
+                )
+                self._telegram_service.send_message_sync(
+                    f"🔹 *{self.name}*\n{clean_msg}"
+                )
             except Exception:
                 pass
 
@@ -246,7 +250,9 @@ class BaseBot(ABC):
         # Anti-detection
         self.driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
-            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
+            {
+                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            },
         )
 
     def _configure_waits_and_pages(self):
@@ -264,10 +270,14 @@ class BaseBot(ABC):
         self.log(msg)
         err_str = str(e).lower()
         if "chrome instance exited" in err_str:
-            self.log("💡 SUGGERIMENTO: Chrome è crashato all'avvio (Sandbox/Version Mismatch).")
+            self.log(
+                "💡 SUGGERIMENTO: Chrome è crashato all'avvio (Sandbox/Version Mismatch)."
+            )
             self.log("   - Assicurati che Chrome sia aggiornato.")
         elif "sessionnotcreatedexception" in err_str or "version" in err_str:
-            self.log("💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta.")
+            self.log(
+                "💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta."
+            )
             self.log("   1. Aggiorna Google Chrome all'ultima versione.")
             self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile.")
         raise e
@@ -374,7 +384,9 @@ class BaseBot(ABC):
         """Gestisce il popup di sessione multipla cliccando su 'SI'."""
         with suppress(Exception):
             if self.popup_wait:
-                btn = self.popup_wait.until(EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES))
+                btn = self.popup_wait.until(
+                    EC.element_to_be_clickable(CommonLocators.POPUP_SESSION_YES)
+                )
                 btn.click()
                 self.log("✅ Popup sessione gestito (SI).")
                 return True
