@@ -1,72 +1,131 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QVBoxLayout,
 )
 
+from src.core.constants import Icons
+from src.gui.widgets.modern_button import ModernButton
+from src.utils.helpers import get_asset_path, get_colored_icon
+
 
 class ConfirmationDialog(QDialog):
-    """Dialog di conferma personalizzato."""
+    """
+    Dialog standard per le conferme (Sì/No) o messaggi importanti.
+    Sostituisce QMessageBox.question/warning/information per mantenere lo stile.
+    """
 
-    def __init__(self, parent=None, title="Conferma", message="Sei sicuro?"):
+    class Variant:
+        INFO = "info"
+        WARNING = "warning"
+        ERROR = "error"
+        QUESTION = "question"
+
+    def __init__(self, parent=None, title="", message="", variant=Variant.QUESTION):
         super().__init__(parent)
         self.setWindowTitle(title)
-        self.setFixedWidth(350)
-        self.setStyleSheet("font-size: 15px; background-color: white;")
+        self.setMinimumWidth(380)
+        # Rimuovi pulsante aiuto
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+        )
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(20)
+        layout.setContentsMargins(25, 25, 25, 25)
 
-        # Messaggio
-        self.msg_label = QLabel(message)
-        self.msg_label.setWordWrap(True)
-        self.msg_label.setStyleSheet("color: #212529; font-weight: 500;")
-        layout.addWidget(self.msg_label)
+        # Header con icona (Opzionale) o solo testo
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(15)
 
-        # Pulsanti
-        btns = QHBoxLayout()
-        btns.setSpacing(10)
+        icon_label = QLabel()
+        icon_path = self._get_icon_path(variant)
+        icon_color = self._get_icon_color(variant)
+        if icon_path:
+            icon_label.setPixmap(get_colored_icon(icon_path, icon_color).pixmap(32, 32))
+            icon_label.setFixedSize(32, 32)
+            header_layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignTop)
 
-        self.ok_btn = QPushButton("Elimina")
-        self.ok_btn.setMinimumHeight(40)
-        self.ok_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """
+        msg_label = QLabel(message)
+        msg_label.setWordWrap(True)
+        msg_label.setTextFormat(Qt.TextFormat.RichText)
+        msg_label.setStyleSheet("font-size: 14px; color: #333;")
+        header_layout.addWidget(msg_label, 1)
+
+        layout.addLayout(header_layout)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(10)
+        btn_layout.addStretch()
+
+        if variant == self.Variant.QUESTION:
+            self.btn_cancel = ModernButton(
+                "Annulla", variant=ModernButton.Variant.GHOST
+            )
+            self.btn_cancel.clicked.connect(self.reject)
+            btn_layout.addWidget(self.btn_cancel)
+
+            self.btn_ok = ModernButton("Conferma", variant=ModernButton.Variant.PRIMARY)
+            self.btn_ok.clicked.connect(self.accept)
+            btn_layout.addWidget(self.btn_ok)
+        else:
+            # Info/Warning/Error usually have just OK
+            self.btn_ok = ModernButton("OK", variant=ModernButton.Variant.PRIMARY)
+            self.btn_ok.clicked.connect(self.accept)
+            btn_layout.addWidget(self.btn_ok)
+
+        layout.addLayout(btn_layout)
+
+    def _get_icon_path(self, variant):
+        if variant == self.Variant.INFO:
+            return get_asset_path(Icons.INFO)
+        elif variant == self.Variant.WARNING:
+            return get_asset_path(Icons.ALERT_TRIANGLE)
+        elif variant == self.Variant.ERROR:
+            return get_asset_path(Icons.X_CIRCLE)
+        elif variant == self.Variant.QUESTION:
+            return get_asset_path(Icons.HELP_CIRCLE)
+        return None
+
+    def _get_icon_color(self, variant):
+        if variant == self.Variant.INFO:
+            return "#0d6efd"
+        elif variant == self.Variant.WARNING:
+            return "#fd7e14"
+        elif variant == self.Variant.ERROR:
+            return "#dc3545"
+        elif variant == self.Variant.QUESTION:
+            return "#0d6efd"
+        return "#333"
+
+    @staticmethod
+    def confirm(parent, title, message) -> bool:
+        """Helper statico per conferme."""
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.QUESTION
         )
-        self.ok_btn.clicked.connect(self.accept)
+        return dlg.exec() == QDialog.DialogCode.Accepted
 
-        self.cancel_btn = QPushButton("Annulla")
-        self.cancel_btn.setMinimumHeight(40)
-        self.cancel_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #f8f9fa;
-                color: #212529;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #e9ecef;
-            }
-        """
+    @staticmethod
+    def show_info(parent, title, message):
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.INFO
         )
-        self.cancel_btn.clicked.connect(self.reject)
+        dlg.exec()
 
-        btns.addWidget(self.ok_btn)
-        btns.addWidget(self.cancel_btn)
+    @staticmethod
+    def show_warning(parent, title, message):
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.WARNING
+        )
+        dlg.exec()
 
-        layout.addLayout(btns)
+    @staticmethod
+    def show_error(parent, title, message):
+        dlg = ConfirmationDialog(
+            parent, title, message, variant=ConfirmationDialog.Variant.ERROR
+        )
+        dlg.exec()

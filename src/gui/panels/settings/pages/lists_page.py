@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMenu,
-    QMessageBox,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -14,6 +13,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.dialogs.account_dialog import AccountDialog
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 from src.gui.panels.settings.shared import (
     create_group_box,
@@ -313,10 +313,8 @@ class ListsPage(QWidget):
 
     def _remove_account(self):
         row = self.account_list.currentRow()
-        if (
-            row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
-            == QMessageBox.StandardButton.Yes
+        if row >= 0 and ConfirmationDialog.confirm(
+            self, "Conferma", "Rimuovere account?"
         ):
             self.account_list.takeItem(row)
             accs = self._get_accounts(self.account_list)
@@ -367,10 +365,8 @@ class ListsPage(QWidget):
 
     def _remove_sw_account(self):
         row = self.sw_account_list.currentRow()
-        if (
-            row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
-            == QMessageBox.StandardButton.Yes
+        if row >= 0 and ConfirmationDialog.confirm(
+            self, "Conferma", "Rimuovere account?"
         ):
             self.sw_account_list.takeItem(row)
             accs = self._get_accounts(self.sw_account_list)
@@ -415,10 +411,8 @@ class ListsPage(QWidget):
 
     def _remove_simple(self, list_widget):
         row = list_widget.currentRow()
-        if (
-            row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere elemento?")
-            == QMessageBox.StandardButton.Yes
+        if row >= 0 and ConfirmationDialog.confirm(
+            self, "Conferma", "Rimuovere elemento?"
         ):
             list_widget.takeItem(row)
             self.settings_changed.emit()
