@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtCore import QDate, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -15,10 +15,17 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.bots import create_bot
+from src.core import config_manager
 from src.core.audit_manager import AuditManager
+from src.core.constants import Icons
+from src.core.database import db_manager
 from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
+from src.gui.panels.base import BotWorker
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.toast import ToastManager
+from src.utils.helpers import get_asset_path
 
 
 class EmployeeEditorDialog(QDialog):
@@ -83,6 +90,7 @@ class DipendentiManagerPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("DipendentiManagerPanel")
+        self.worker = None
 
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
@@ -150,9 +158,20 @@ class DipendentiManagerPanel(QWidget):
         toolbar.addWidget(self.lbl_sync_status)
 
         # Bottoni
-        self.btn_refresh = ModernButton("Aggiorna", variant=ModernButton.Variant.GHOST)
+        self.btn_refresh = ModernButton(
+            "Aggiorna DB", variant=ModernButton.Variant.GHOST
+        )
         self.btn_refresh.clicked.connect(self.refresh_data)
         toolbar.addWidget(self.btn_refresh)
+
+        # Update Bot Button
+        self.btn_bot_update = ModernButton(
+            "Aggiorna",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.REFRESH),
+        )
+        self.btn_bot_update.clicked.connect(self._on_update_bot_clicked)
+        toolbar.addWidget(self.btn_bot_update)
 
         self.btn_sync = ModernButton(
             "Sync da CSV", variant=ModernButton.Variant.SECONDARY
@@ -161,7 +180,7 @@ class DipendentiManagerPanel(QWidget):
         toolbar.addWidget(self.btn_sync)
 
         self.btn_add = ModernButton(
-            "Nuovo Dipendente", variant=ModernButton.Variant.PRIMARY
+            "Nuovo Dipendente", variant=ModernButton.Variant.SUCCESS
         )
         self.btn_add.clicked.connect(self._add_employee)
         toolbar.addWidget(self.btn_add)
@@ -336,3 +355,145 @@ class DipendentiManagerPanel(QWidget):
                 )
             else:
                 QMessageBox.warning(self, "Errore", "Impossibile aggiornare i dati.")
+
+    def _on_update_bot_clicked(self):
+        """Avvia il bot Timbrature con date automatiche."""
+        try:
+            # 1. Recupera Credenziali
+            account = config_manager.get_default_account()
+            if not account:
+                QMessageBox.warning(
+                    self, "Attenzione", "Credenziali SafeWork non configurate."
+                )
+                return
+            username, password = account.get("username"), account.get("password")
+
+            # 2. Calcola Date
+            # Cerca ultima data nel DB Timbrature
+            last_date_str = None
+            try:
+                # Query veloce per il MAX data
+                query = "SELECT MAX(data) FROM timbrature"
+                # Usa una connessione diretta per sicurezza o tramite db_manager se supporta query su DB specifici per path
+                # Timbrature è su DB_TIMBRATURE
+                with db_manager.get_connection(
+                    db_manager.DB_TIMBRATURE, read_only=True
+                ) as conn:
+                    res = conn.execute(query).fetchone()
+                    if res and res[0]:
+                        last_date_str = res[0]
+            except Exception as e:
+                print(f"Errore query data: {e}")
+
+            if last_date_str:
+                # Parse YYYY-MM-DD
+                try:
+                    last_date = QDate.fromString(last_date_str, "yyyy-MM-dd")
+                    start_date = last_date.addDays(1)
+                except Exception:
+                    # Fallback
+                    start_date = QDate.currentDate().addDays(-30)
+            else:
+                # Default: ultimo mese se DB vuoto
+                start_date = QDate.currentDate().addDays(-30)
+
+            end_date = QDate.currentDate().addDays(-1)  # Ieri
+
+            if start_date > end_date:
+                QMessageBox.information(
+                    self,
+                    "Aggiornato",
+                    f"Il database è aggiornato fino a {last_date_str} (Ieri: {end_date.toString('yyyy-MM-dd')}). Nessun aggiornamento necessario.",
+                )
+                return
+
+            data_da_fmt = start_date.toString("dd.MM.yyyy")
+            data_a_fmt = end_date.toString("dd.MM.yyyy")
+
+            config = config_manager.load_config()
+            fornitore = config.get(
+                "last_timbrature_fornitore", "KK10608 - COEMI S.R.L."
+            )
+
+            # 3. Conferma
+            msg = f"Aggiornare timbrature dal <b>{data_da_fmt}</b> al <b>{data_a_fmt}</b>?<br>Fornitore: {fornitore}"
+            if not self._show_confirmation_dialog("Scarico Timbrature", msg):
+                return
+
+            self.btn_bot_update.setEnabled(False)
+            self.lbl_sync_status.setText("⏳ Bot Timbrature...")
+            ToastManager.instance().show("Avvio Bot Timbrature...", "info")
+
+            # 4. Avvia Bot
+            bot = create_bot(
+                "timbrature",
+                username=username,
+                password=password,
+                headless=config.get("browser_headless", False),
+                timeout=config.get("browser_timeout", 30),
+                download_path=str(config_manager.CONFIG_DIR / "temp"),  # Temp dir
+                data_da=data_da_fmt,
+                data_a=data_a_fmt,
+                fornitore=fornitore,
+            )
+
+            if not bot:
+                self.btn_bot_update.setEnabled(True)
+                return
+
+            bot_data = {
+                "data_da": data_da_fmt,
+                "data_a": data_a_fmt,
+                "fornitore": fornitore,
+            }
+            self.worker = BotWorker(bot, bot_data)
+            self.worker.finished_signal.connect(self._on_bot_finished)
+            self.worker.start()
+
+        except Exception as e:
+            self.btn_bot_update.setEnabled(True)
+            QMessageBox.critical(self, "Errore", f"Errore avvio bot: {e}")
+
+    def _on_bot_finished(self, success: bool):
+        self.btn_bot_update.setEnabled(True)
+        if success:
+            ToastManager.instance().show("Timbrature scaricate!", "success")
+            self.refresh_data()  # Magari aggiorna anche la UI se mostrassimo dati correlati
+        else:
+            self.lbl_sync_status.setText("❌ Errore Bot")
+            QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
+
+    def _show_confirmation_dialog(self, title: str, message: str) -> bool:
+        """Mostra una dialog di conferma con stile coerente."""
+        try:
+            dlg = QDialog(self)
+            dlg.setWindowTitle(title)
+            dlg.setMinimumWidth(350)
+            dlg.setWindowFlags(
+                dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+            )
+
+            layout = QVBoxLayout(dlg)
+            layout.setSpacing(20)
+            layout.setContentsMargins(20, 20, 20, 20)
+
+            lbl = QLabel(message)
+            lbl.setWordWrap(True)
+            lbl.setTextFormat(Qt.TextFormat.RichText)
+            layout.addWidget(lbl)
+
+            btn_layout = QHBoxLayout()
+            btn_layout.addStretch()
+
+            btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
+            btn_cancel.clicked.connect(dlg.reject)
+            btn_confirm = ModernButton("Avvia", variant=ModernButton.Variant.PRIMARY)
+            btn_confirm.clicked.connect(dlg.accept)
+
+            btn_layout.addWidget(btn_cancel)
+            btn_layout.addWidget(btn_confirm)
+            layout.addLayout(btn_layout)
+
+            return dlg.exec() == 1
+        except Exception:
+            return False
