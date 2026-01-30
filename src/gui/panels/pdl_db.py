@@ -274,42 +274,57 @@ class PDLDBPanel(QWidget):
     def _on_update_bot_clicked(self):
         """Avvia il bot Ricerca PDL per aggiornare i dati."""
         try:
-            # 1. Recupera Credenziali
-            account = config_manager.get_default_account()
-            if not account:
+            # 1. Recupera Credenziali SafeWork
+            # switch_default_account non è l'approccio giusto qui perché cambia lo stato globale
+            # Dobbiamo trovare l'account safework configurato o default
+            config = config_manager.load_config()
+            safework_accounts = config.get("safework_accounts", [])
+
+            username = ""
+            password = ""
+
+            # Cerca il default, o prendi il primo
+            if safework_accounts:
+                default_sw = next(
+                    (a for a in safework_accounts if a.get("default")),
+                    safework_accounts[0],
+                )
+                username = default_sw.get("username", "")
+                password = default_sw.get("password", "")
+
+            if not username or not password:
                 QMessageBox.warning(
-                    self, "Attenzione", "Credenziali SafeWork non configurate."
+                    self,
+                    "Attenzione",
+                    "Credenziali SafeWork non configurate. Vai in Impostazioni > Account.",
                 )
                 return
-            username, password = account.get("username"), account.get("password")
-
-            config = config_manager.load_config()
 
             # 3. Conferma
             if not self._show_confirmation_dialog(
-                "Aggiornamento PDL", "Avviare la ricerca e scarico dei PDL recenti?"
+                "Aggiornamento PDL",
+                f"Avviare la ricerca PDL con account <b>{username}</b>?",
             ):
                 return
 
             self.btn_bot_update.setEnabled(False)
             self.lbl_sync_status.setText("⏳ Bot PDL...")
-            ToastManager.instance().show("Avvio Bot PDL...", "info")
+            ToastManager.instance().show(f"Avvio Bot PDL ({username})...", "info")
 
             # 4. Avvia Bot
             bot = create_bot(
-                "ricerca_pdl",  # Usa il bot di ricerca massiva
+                "ricerca_pdl",
                 username=username,
                 password=password,
                 headless=config.get("browser_headless", False),
                 timeout=config.get("browser_timeout", 30),
-                download_path=str(config_manager.CONFIG_DIR / "temp"),  # Temp dir
+                download_path=str(config_manager.CONFIG_DIR / "temp"),
             )
 
             if not bot:
                 self.btn_bot_update.setEnabled(True)
                 return
 
-            # Parametri di default per aggiornamento
             bot_data = [{"site_selection": "Seleziona tutto", "exclude_closed": True}]
 
             self.worker = BotWorker(bot, bot_data)
