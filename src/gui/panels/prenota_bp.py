@@ -6,10 +6,11 @@ Pannello per il bot Prenota BP.
 from typing import Any, Dict, Optional
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QMessageBox, QVBoxLayout
+from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
@@ -104,14 +105,8 @@ class PrenotaBPPanel(BaseBotPanel):
         config_manager.set_config_value("last_prenota_date_to", date_a)
 
     def _clear_table(self):
-        if (
-            QMessageBox.question(
-                self,
-                "Conferma",
-                "Cancellare tutti i dati dalla lista?",
-                QMessageBox.StandardButton.Yes,
-            )
-            == QMessageBox.StandardButton.Yes
+        if ConfirmationDialog.confirm(
+            self, "Conferma", "Cancellare tutti i dati dalla lista?"
         ):
             self.data_table.set_data([])
             self._save_data()
@@ -123,7 +118,7 @@ class PrenotaBPPanel(BaseBotPanel):
         # Validazione form
         ready, msg = self.validate_ready()
         if not ready:
-            QMessageBox.warning(self, "Attenzione", msg)
+            ConfirmationDialog.show_warning(self, "Attenzione", msg)
             self._update_status("#C62828", "Validazione fallita")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)

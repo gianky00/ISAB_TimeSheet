@@ -7,10 +7,11 @@ import traceback
 from typing import Any, Dict, Optional
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QMessageBox, QVBoxLayout
+from PyQt6.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.widgets import BotParametersWidget, EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
@@ -124,10 +125,7 @@ class ScaricaTSPanel(BaseBotPanel):
 
     def _clear_table(self):
         """Pulisce la tabella."""
-        if (
-            QMessageBox.question(self, "Conferma", "Svuotare la tabella?")
-            == QMessageBox.StandardButton.Yes
-        ):
+        if ConfirmationDialog.confirm(self, "Conferma", "Svuotare la tabella?"):
             self.data_table.set_data([])
             self._save_data()
 
