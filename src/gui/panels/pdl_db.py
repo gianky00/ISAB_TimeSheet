@@ -12,12 +12,14 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
+    QDialog,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QScrollArea,
     QSplitter,
     QStyledItemDelegate,
@@ -26,10 +28,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.bots import create_bot
+from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database import db_manager
+from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
+from src.gui.panels.base import BotWorker
 from src.gui.widgets.modern_button import ModernButton
+from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -160,22 +167,38 @@ class PDLDBPanel(QWidget):
 
         filter_layout.addStretch()
 
+        # Sync Status
+        self.lbl_sync_status = QLabel("")
+        self.lbl_sync_status.setStyleSheet(
+            "color: #555; font-size: 11px; margin-right: 15px;"
+        )
+        filter_layout.addWidget(self.lbl_sync_status)
+
+        # Update Bot Button
+        self.btn_bot_update = ModernButton(
+            "Aggiorna",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.REFRESH),
+        )
+        self.btn_bot_update.clicked.connect(self._on_update_bot_clicked)
+        filter_layout.addWidget(self.btn_bot_update)
+
         # Clear Filters
         self.clear_btn = ModernButton(
             "RESETTA FILTRI",
             variant=ModernButton.Variant.DANGER,
             size=ModernButton.Size.SMALL,
         )
-        self.clear_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.RESET), "#FFFFFF")
-        )
+        self.clear_btn.setIcon(get_colored_icon(get_asset_path(Icons.RESET), "#FFFFFF"))
         self.clear_btn.setToolTip("Resetta Filtri")
         self.clear_btn.clicked.connect(self._reset_filters)
         filter_layout.addWidget(self.clear_btn)
 
         # Export Excel
         self.export_btn = ModernButton(
-            "ESPORTA", variant=ModernButton.Variant.SUCCESS, size=ModernButton.Size.SMALL
+            "ESPORTA",
+            variant=ModernButton.Variant.SUCCESS,
+            size=ModernButton.Size.SMALL,
         )
         self.export_btn.setIcon(
             get_colored_icon(get_asset_path(Icons.EXCEL), "#FFFFFF")
@@ -247,6 +270,114 @@ class PDLDBPanel(QWidget):
         self.splitter.setStretchFactor(1, 1)
 
         main_layout.addWidget(self.splitter)
+
+    def _on_update_bot_clicked(self):
+        """Avvia il bot Ricerca PDL per aggiornare i dati."""
+        try:
+            # 1. Recupera Credenziali SafeWork
+            # switch_default_account non è l'approccio giusto qui perché cambia lo stato globale
+            # Dobbiamo trovare l'account safework configurato o default
+            config = config_manager.load_config()
+            safework_accounts = config.get("safework_accounts", [])
+
+            username = ""
+            password = ""
+
+            # Cerca il default, o prendi il primo
+            if safework_accounts:
+                default_sw = next(
+                    (a for a in safework_accounts if a.get("default")),
+                    safework_accounts[0],
+                )
+                username = default_sw.get("username", "")
+                password = default_sw.get("password", "")
+
+            if not username or not password:
+                QMessageBox.warning(
+                    self,
+                    "Attenzione",
+                    "Credenziali SafeWork non configurate. Vai in Impostazioni > Account.",
+                )
+                return
+
+            # 3. Conferma
+            if not self._show_confirmation_dialog(
+                "Aggiornamento PDL",
+                f"Avviare la ricerca PDL con account <b>{username}</b>?",
+            ):
+                return
+
+            self.btn_bot_update.setEnabled(False)
+            self.lbl_sync_status.setText("⏳ Bot PDL...")
+            ToastManager.instance().show(f"Avvio Bot PDL ({username})...", "info")
+
+            # 4. Avvia Bot
+            bot = create_bot(
+                "ricerca_pdl",
+                username=username,
+                password=password,
+                headless=config.get("browser_headless", False),
+                timeout=config.get("browser_timeout", 30),
+                download_path=str(config_manager.CONFIG_DIR / "temp"),
+            )
+
+            if not bot:
+                self.btn_bot_update.setEnabled(True)
+                return
+
+            bot_data = [{"site_selection": "Seleziona tutto", "exclude_closed": True}]
+
+            self.worker = BotWorker(bot, bot_data)
+            self.worker.finished_signal.connect(self._on_bot_finished)
+            self.worker.start()
+
+        except Exception as e:
+            self.btn_bot_update.setEnabled(True)
+            QMessageBox.critical(self, "Errore", f"Errore avvio bot: {e}")
+
+    def _on_bot_finished(self, success: bool):
+        self.btn_bot_update.setEnabled(True)
+        if success:
+            ToastManager.instance().show("PDL Aggiornati!", "success")
+            self.refresh_data()
+        else:
+            self.lbl_sync_status.setText("❌ Errore Bot")
+            QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
+
+    def _show_confirmation_dialog(self, title: str, message: str) -> bool:
+        """Mostra una dialog di conferma con stile coerente."""
+        try:
+            dlg = QDialog(self)
+            dlg.setWindowTitle(title)
+            dlg.setMinimumWidth(350)
+            dlg.setWindowFlags(
+                dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+            )
+
+            layout = QVBoxLayout(dlg)
+            layout.setSpacing(20)
+            layout.setContentsMargins(20, 20, 20, 20)
+
+            lbl = QLabel(message)
+            lbl.setWordWrap(True)
+            lbl.setTextFormat(Qt.TextFormat.RichText)
+            layout.addWidget(lbl)
+
+            btn_layout = QHBoxLayout()
+            btn_layout.addStretch()
+
+            btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
+            btn_cancel.clicked.connect(dlg.reject)
+            btn_confirm = ModernButton("Avvia", variant=ModernButton.Variant.PRIMARY)
+            btn_confirm.clicked.connect(dlg.accept)
+
+            btn_layout.addWidget(btn_cancel)
+            btn_layout.addWidget(btn_confirm)
+            layout.addLayout(btn_layout)
+
+            return dlg.exec() == 1
+        except Exception:
+            return False
 
     def _populate_groups(self):
         """Popola la dropdown dei gruppi (indipendente)."""
@@ -392,6 +523,10 @@ class PDLDBPanel(QWidget):
 
     def refresh_data(self, sort_col=None):
         """Aggiorna i dati della tabella PDL con sistema di cache."""
+        self.lbl_sync_status.setText(
+            f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}"
+        )
+
         query, params = self._build_pdl_query(sort_col)
         cache_key = f"{query}_{params}"
 

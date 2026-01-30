@@ -131,7 +131,15 @@ class EmployeeManager:
             logger.error(f"File CSV non trovato: {csv_path}")
             return 0
 
+        import time
+
+        from src.core.sync_tracker import SyncTracker
+
+        start_time = time.time()
+        added_count = 0
+        updated_count = 0
         count = 0
+
         try:
             with open(path, "r", encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f, delimiter=";")
@@ -158,11 +166,6 @@ class EmployeeManager:
                     }
 
                     # Controlla se esiste già (per badge o ID)
-                    # Qui usiamo una logica 'UPSERT' semplificata:
-                    # Proviamo a inserire, se fallisce (es. ID duplicato) aggiorniamo
-
-                    # Nota: SQLite non ha UPSERT semplice in tutte le versioni,
-                    # facciamo una SELECT prima per sicurezza
                     existing = None
                     if id_risorsa:
                         existing = self.db.execute_query(
@@ -173,12 +176,21 @@ class EmployeeManager:
 
                     if existing and id_risorsa is not None:
                         self.update_employee(id_risorsa, data)
+                        updated_count += 1
                     else:
                         self.add_employee(data)
+                        added_count += 1
 
                     count += 1
 
-            logger.info(f"Importazione completata: {count} dipendenti processati.")
+            duration = time.time() - start_time
+            # Consideriamo "Added" i nuovi, e Removed 0.
+            # (In futuro si potrebbe calcolare removed se il CSV fosse l'unica fonte di verità)
+            SyncTracker.update_status("dipendenti", added_count, 0, duration)
+
+            logger.info(
+                f"Importazione completata: {count} dipendenti processati ({added_count} nuovi)."
+            )
             return count
 
         except Exception as e:

@@ -17,7 +17,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QPushButton,
     QTableView,
     QTabWidget,
     QVBoxLayout,
@@ -28,6 +27,7 @@ from src.core import config_manager
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.components.scarico_ore import FilterHeaderView, ScaricoOreTableModel
+from src.gui.widgets.modern_button import ModernButton
 from src.utils.helpers import get_asset_path, get_colored_icon
 
 
@@ -151,33 +151,10 @@ class ScaricoOrePanel(QWidget):
         self.status_label.setTextFormat(Qt.TextFormat.RichText)
 
         # Update Button
-        self.update_btn = QPushButton("Aggiorna")
-        self.update_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.REFRESH), "#FFFFFF")
-        )
-        self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.update_btn.setFixedSize(110, 34)
-        self.update_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #3b82f6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: 600;
-                font-size: 13px;
-                padding: 6px 12px;
-            }
-            QPushButton:hover {
-                background-color: #2563eb;
-            }
-            QPushButton:pressed {
-                background-color: #1d4ed8;
-            }
-            QPushButton:disabled {
-                background-color: #94a3b8;
-            }
-        """
+        self.update_btn = ModernButton(
+            "Aggiorna",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.REFRESH),
         )
         self.update_btn.clicked.connect(self._start_update)
 

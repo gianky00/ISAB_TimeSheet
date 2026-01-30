@@ -12,6 +12,7 @@ from src.bots.portale_fornitori.prenota_bp import PrenotaBPBot
 from src.bots.portale_fornitori.scarico_ts import ScaricaTSBot
 from src.bots.portale_fornitori.timbrature import TimbratureBot
 from src.bots.safework.pdl.bot import SafeWorkPDLBot
+from src.bots.safework.pdl.search_bot import SafeWorkPDLSearchBot
 
 # Registry dei bot disponibili
 BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
@@ -90,6 +91,14 @@ BOT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "icon": "🛡️",
         "columns": [{"name": "NUMERO PDL", "type": "text"}],
         "config_key": "last_pdl_data",
+    },
+    "ricerca_pdl": {
+        "class": SafeWorkPDLSearchBot,
+        "name": "Ricerca PDL",
+        "description": "Ricerca massiva e aggiornamento database PDL",
+        "icon": "🔍",
+        "columns": [],
+        "config_key": "last_pdl_search_data",
     },
 }
 

@@ -5,10 +5,11 @@ Pannello per la visualizzazione del Database Storico OdA con architettura Master
 
 from typing import Any, List, Tuple
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QDate, Qt, QTimer
 from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QDialog,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
@@ -25,10 +26,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.bots import create_bot
+from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database import db_manager
 from src.core.oda_manager import OdaManager
+from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import format_currency_smart, format_date_it
+from src.gui.panels.base import BotWorker
+from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.toast import ToastManager
 from src.utils.helpers import get_asset_path
 
@@ -149,6 +155,7 @@ class StoricoOdaPanel(QWidget):
         self.model.setHorizontalHeaderLabels(self.master_headers)
 
         self._raw_full_data = []  # Buffer per i dati completi
+        self.worker = None  # Worker per il bot
 
         # Timer per ricerca ritardata (Debounce)
         self.search_timer = QTimer()
@@ -172,14 +179,26 @@ class StoricoOdaPanel(QWidget):
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
-        from src.gui.widgets.modern_button import ModernButton
+        # Sync Status
+        self.lbl_sync_status = QLabel("")
+        self.lbl_sync_status.setStyleSheet(
+            "color: #555; font-size: 11px; margin-right: 15px;"
+        )
+        filter_layout.addWidget(self.lbl_sync_status)
 
-        filter_layout.addWidget(self.search_input)
+        # Update Button (Bot)
+        self.update_btn = ModernButton(
+            "Aggiorna",
+            variant=ModernButton.Variant.PRIMARY,
+            icon=get_asset_path(Icons.REFRESH),
+        )
+        self.update_btn.clicked.connect(self._on_update_clicked)
+        filter_layout.addWidget(self.update_btn)
 
         import_btn = ModernButton(
             "Importa Excel",
             variant=ModernButton.Variant.GHOST,
-            icon=get_asset_path(Icons.UPLOAD)
+            icon=get_asset_path(Icons.UPLOAD),
         )
         import_btn.clicked.connect(self._on_import_clicked)
         filter_layout.addWidget(import_btn)
@@ -210,20 +229,28 @@ class StoricoOdaPanel(QWidget):
         # Header Styling - Larghezze colonne in base al contenuto
         header = self.tree.header()
         # Nuovo ordine: 0=Data OdA, 1=OdA, 2=Pos, 3=CREATO DA, 4=Descrizione, 5=Valore Netto, 6=Stato
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Data OdA
+        header.setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents
+        )  # Data OdA
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # OdA
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Pos
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # CREATO DA - stretch
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Descrizione - stretch
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Valore Netto
+        header.setSectionResizeMode(
+            3, QHeaderView.ResizeMode.Stretch
+        )  # CREATO DA - stretch
+        header.setSectionResizeMode(
+            4, QHeaderView.ResizeMode.Stretch
+        )  # Descrizione - stretch
+        header.setSectionResizeMode(
+            5, QHeaderView.ResizeMode.ResizeToContents
+        )  # Valore Netto
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Stato
 
         # Larghezze minime per colonne compatte (più spaziatura)
         header.setMinimumSectionSize(50)
         self.tree.setColumnWidth(0, 100)  # Data OdA
-        self.tree.setColumnWidth(1, 90)   # OdA
-        self.tree.setColumnWidth(2, 50)   # Pos
-        self.tree.setColumnWidth(6, 80)   # Stato
+        self.tree.setColumnWidth(1, 90)  # OdA
+        self.tree.setColumnWidth(2, 50)  # Pos
+        self.tree.setColumnWidth(6, 80)  # Stato
 
         # Custom Delegate Style
         self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
@@ -335,6 +362,9 @@ class StoricoOdaPanel(QWidget):
 
     def refresh_data(self):
         """Aggiorna i dati della tabella."""
+        self.lbl_sync_status.setText(
+            f"Ultimo Sync: {SyncTracker.get_formatted_status('storico_oda')}"
+        )
         query, params = self._build_query()
 
         try:
@@ -456,9 +486,7 @@ class StoricoOdaPanel(QWidget):
                 item_data.setData(r, Qt.ItemDataRole.UserRole)
 
                 self.model.appendRow(parent_row_items)
-                groups[group_key] = (
-                    item_data  # Keep reference to first item as parent
-                )
+                groups[group_key] = item_data  # Keep reference to first item as parent
 
             parent_item = groups[group_key]
 
@@ -554,4 +582,143 @@ class StoricoOdaPanel(QWidget):
         except Exception as e:
             QMessageBox.critical(
                 self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}"
+            )
+
+    def _on_update_clicked(self):
+        """Avvia il bot Dettagli OdA per aggiornare i dati."""
+        try:
+            # 1. Recupera Credenziali
+            account = config_manager.get_default_account()
+            if not account:
+                QMessageBox.warning(
+                    self, "Attenzione", "Credenziali SafeWork non configurate."
+                )
+                return
+            username, password = account.get("username"), account.get("password")
+
+            # 2. Recupera Parametri dal Config (salvati dal pannello Dettagli OdA)
+            config = config_manager.load_config()
+            fornitore = config.get("last_oda_fornitore", "")
+            dest_path = config.get("path_dettagli_oda", "")
+
+            if not fornitore:
+                QMessageBox.warning(
+                    self,
+                    "Attenzione",
+                    "Fornitore non configurato. Vai nel pannello 'Dettagli OdA' e impostalo.",
+                )
+                return
+
+            # 3. Calcola Date (01.01.AnnoCorrente -> Oggi)
+            current_year = QDate.currentDate().year()
+            data_da = f"01.01.{current_year}"
+            data_a = QDate.currentDate().toString("dd.MM.yyyy")
+
+            # 4. Conferma
+            if not self._show_confirmation_dialog(
+                "Aggiornamento OdA",
+                f"Avviare scarico OdA per <b>{fornitore}</b>?<br><br>Periodo: {data_da} - {data_a}",
+            ):
+                return
+
+            self.update_btn.setEnabled(False)
+            self.lbl_sync_status.setText("⏳ Bot in esecuzione...")
+            ToastManager.instance().show("Avvio Bot Dettagli OdA...", "info")
+
+            # 5. Configura e Avvia Bot
+            bot = create_bot(
+                "dettagli_oda",
+                username=username,
+                password=password,
+                headless=config.get("browser_headless", False),
+                timeout=config.get("browser_timeout", 30),
+                download_path=dest_path,
+                fornitore=fornitore,
+                data_da=data_da,
+                data_a=data_a,
+            )
+
+            if not bot:
+                self.update_btn.setEnabled(True)
+                self.lbl_sync_status.setText("Errore creazione bot")
+                return
+
+            # Input data vuoto per triggerare "Lista Generale" nel bot
+            bot_data = {
+                "rows": [],
+                "fornitore": fornitore,
+                "data_da": data_da,
+                "data_a": data_a,
+            }
+
+            self.worker = BotWorker(bot, bot_data)
+            self.worker.log_signal.connect(
+                lambda msg: print(f"[BOT] {msg}")
+            )  # Opzionale: log su console
+            self.worker.finished_signal.connect(self._on_bot_finished)
+            self.worker.start()
+
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            self.update_btn.setEnabled(True)
+            self.lbl_sync_status.setText("❌ Errore")
+            QMessageBox.critical(
+                self, "Errore Critico", f"Errore durante l'avvio del bot:\n{e}"
+            )
+
+    def _show_confirmation_dialog(self, title: str, message: str) -> bool:
+        """Mostra una dialog di conferma con stile coerente."""
+        try:
+            dlg = QDialog(self)
+            dlg.setWindowTitle(title)
+            dlg.setMinimumWidth(350)
+
+            # Rimuovi il pulsante ? dalla barra del titolo
+            dlg.setWindowFlags(
+                dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+            )
+
+            layout = QVBoxLayout(dlg)
+            layout.setSpacing(20)
+            layout.setContentsMargins(20, 20, 20, 20)
+
+            lbl = QLabel(message)
+            lbl.setWordWrap(True)
+            lbl.setTextFormat(Qt.TextFormat.RichText)
+            lbl.setStyleSheet("font-size: 14px; color: #333;")
+            layout.addWidget(lbl)
+
+            btn_layout = QHBoxLayout()
+            btn_layout.setSpacing(10)
+            btn_layout.addStretch()
+
+            btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
+            btn_cancel.clicked.connect(dlg.reject)
+
+            btn_confirm = ModernButton("Avvia", variant=ModernButton.Variant.PRIMARY)
+            btn_confirm.clicked.connect(dlg.accept)
+
+            btn_layout.addWidget(btn_cancel)
+            btn_layout.addWidget(btn_confirm)
+
+            layout.addLayout(btn_layout)
+
+            # Usa 1 per Accepted (più sicuro di enum complessi in alcune versioni binding)
+            return dlg.exec() == 1
+        except Exception as e:
+            print(f"Errore Dialog: {e}")
+            return False
+
+    def _on_bot_finished(self, success: bool):
+        """Callback fine esecuzione bot."""
+        self.update_btn.setEnabled(True)
+        if success:
+            ToastManager.instance().show("Aggiornamento completato!", "success")
+            self.refresh_data()
+        else:
+            self.lbl_sync_status.setText("❌ Errore Bot")
+            QMessageBox.warning(
+                self, "Errore", "Il bot ha terminato con errori. Controlla i log."
             )

@@ -8,6 +8,8 @@ import logging
 import logging.handlers
 import os
 import sys
+import traceback
+from datetime import datetime
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -207,7 +209,26 @@ def main():
         sys.exit(exit_code)
     except Exception as e:
         logging.getLogger("crash").critical("Fatal error", exc_info=True)
-        QMessageBox.critical(None, "Errore", f"Errore fatale:\n{e}")
+
+        # Write explicitly to crash.txt for user visibility
+        try:
+            log_dir = CONFIG_DIR / "logs"
+            log_dir.mkdir(exist_ok=True, parents=True)
+            crash_file = log_dir / "crash.txt"
+            with open(crash_file, "w", encoding="utf-8") as f:
+                f.write("=== CRASH REPORT ===\n")
+                f.write(f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+                f.write(f"Error: {str(e)}\n\n")
+                f.write("=== TRACEBACK ===\n")
+                traceback.print_exc(file=f)
+        except Exception as io_error:
+            print(f"Failed to write crash.txt: {io_error}")
+
+        QMessageBox.critical(
+            None,
+            "Errore",
+            f"Errore fatale:\n{e}\n\nDettagli salvati in: {CONFIG_DIR}/logs/crash.txt",
+        )
         server.close()
         sys.exit(1)
 

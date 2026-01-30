@@ -17,7 +17,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -25,6 +24,7 @@ from PyQt6.QtWidgets import (
 
 from src.core import config_manager
 from src.core.constants import Icons
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
 from src.gui.panels.base import BaseBotPanel, BotWorker
 from src.gui.widgets import EditableDataTable
 from src.gui.widgets.modern_button import ModernButton
@@ -98,20 +98,24 @@ class StatusListWidget(QListWidget):
         if success:
             # Spunta Verde
             icon_path = get_asset_path(Icons.CHECK)
-            color = "#2E7D32" # Green 800
-            bg = "#C8E6C9" # Green 100
+            color = "#2E7D32"  # Green 800
+            bg = "#C8E6C9"  # Green 100
             pixmap = get_colored_icon(icon_path, color).pixmap(16, 16)
             icon_label.setPixmap(pixmap)
-            icon_label.setStyleSheet(f"background-color: {bg}; border-radius: 12px; border: 1px solid {color};")
+            icon_label.setStyleSheet(
+                f"background-color: {bg}; border-radius: 12px; border: 1px solid {color};"
+            )
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         else:
             # Croce Rossa
             icon_path = get_asset_path(Icons.X_CIRCLE)
-            color = "#C62828" # Red 800
-            bg = "#FFCDD2" # Red 100
+            color = "#C62828"  # Red 800
+            bg = "#FFCDD2"  # Red 100
             pixmap = get_colored_icon(icon_path, color).pixmap(16, 16)
             icon_label.setPixmap(pixmap)
-            icon_label.setStyleSheet(f"background-color: {bg}; border-radius: 12px; border: 1px solid {color};")
+            icon_label.setStyleSheet(
+                f"background-color: {bg}; border-radius: 12px; border: 1px solid {color};"
+            )
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
 
@@ -324,15 +328,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.status_list.clear()
 
     def _clear_table(self):
-        if (
-            QMessageBox.question(
-                self,
-                "Conferma",
-                "Cancellare tutti i PDL?",
-                QMessageBox.StandardButton.Yes,
-            )
-            == QMessageBox.StandardButton.Yes
-        ):
+        if ConfirmationDialog.confirm(self, "Conferma", "Cancellare tutti i PDL?"):
             self.data_table.set_data([])
             self._save_data()
 

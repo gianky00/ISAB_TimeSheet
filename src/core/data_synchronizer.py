@@ -231,8 +231,8 @@ class DataSynchronizer:
     def sync_storico_oda(
         cls, db_path: Path, rows_to_insert: List[Tuple]
     ) -> Tuple[int, int]:
-        """Sincronizza i dati Storico OdA in modalità Upsert (non cancella storico)."""
-        return cls._sync_upsert(
+        """Sincronizza i dati Storico OdA in modalità Upsert con calcolo diff intelligente."""
+        return cls._sync_upsert_smart(
             db_path,
             "storico_oda",
             ExcelImporter.STORICO_ODA_COLS,
@@ -240,44 +240,30 @@ class DataSynchronizer:
         )
 
     @classmethod
-    def _sync_generic(
+    def _sync_upsert_smart(
         cls, db_path: Path, table_name: str, columns: List[str], new_data: List[Tuple]
     ) -> Tuple[int, int]:
-        with db_manager.get_connection(db_path) as conn:
-            cursor = conn.cursor()
-            cls._create_temp_table(cursor, table_name, columns)
-            if new_data:
-                placeholders = ", ".join(["?"] * len(columns))
-                data = [
-                    tuple(str(x).strip() if x is not None else "" for x in r)
-                    for r in new_data
-                ]
-                cursor.executemany(
-                    f"INSERT INTO temp_{cls._validate_identifier(table_name)} VALUES ({placeholders})",  # nosec B608
-                    data,
-                )
-            added, removed = cls._get_diff_count(cursor, table_name, columns)
-            cls._replace_data(cursor, table_name, columns)
-            conn.commit()
-            return added, removed
-
-    @classmethod
-    def _sync_upsert(
-        cls, db_path: Path, table_name: str, columns: List[str], new_data: List[Tuple]
-    ) -> Tuple[int, int]:
-        """Esegue Upsert (Insert or Replace) per aggiornare o aggiungere record."""
+        """
+        Esegue Upsert (Insert or Replace) calcolando esattamente le righe modificate o aggiunte.
+        Usa una tabella temporanea e EXCEPT per confrontare i contenuti.
+        """
         if not new_data:
             return 0, 0
 
         with db_manager.get_connection(db_path) as conn:
             cursor = conn.cursor()
+
+            # 1. Crea temp table e inserisci dati
+            cls._create_temp_table(cursor, table_name, columns)
+
             safe_table = cls._validate_identifier(table_name)
             safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in columns])
+            safe_cast_cols = ", ".join(
+                [f'CAST("{cls._validate_identifier(c)}" AS TEXT)' for c in columns]
+            )
             placeholders = ", ".join(["?"] * len(columns))
 
-            query = f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) VALUES ({placeholders})"  # nosec B608
-
-            # Preserve numeric types, only strip strings
+            # Preserve numeric types, only strip strings (same as upsert)
             def clean_value(x):
                 if x is None:
                     return ""
@@ -287,12 +273,35 @@ class DataSynchronizer:
 
             data = [tuple(clean_value(x) for x in r) for r in new_data]
 
-            try:
-                cursor.executemany(query, data)
-                conn.commit()
-                # Con INSERT OR REPLACE difficile distinguere insert da update preciso senza query extra.
-                # Ritorniamo il numero di righe processate come "added" per semplicità.
-                return len(data), 0
-            except Exception as e:
-                # Log error or re-raise
-                raise e
+            # Inserimento in temp (tutto come TEXT/affinity dinamica se non specificato in create_temp)
+            # Nota: create_temp_table definisce le colonne come TEXT.
+            # I valori inseriti verranno convertiti in TEXT da SQLite se necessario.
+            cursor.executemany(
+                f"INSERT INTO temp_{safe_table} VALUES ({placeholders})",  # nosec B608
+                data,
+            )
+
+            # 2. Calcola Diff (Righe in Temp che sono diverse da Main)
+            # EXCEPT restituisce le righe di Temp che non trovano corrispondenza in Main
+            # (confronto colonna per colonna).
+            # Main viene castata a TEXT per confrontarsi con Temp (che è TEXT).
+            q_diff = f"""
+                SELECT COUNT(*) FROM (
+                    SELECT {safe_cols} FROM temp_{safe_table}
+                    EXCEPT
+                    SELECT {safe_cast_cols} FROM {safe_table}
+                )
+            """  # nosec B608
+
+            cursor.execute(q_diff)
+            added_or_updated = cursor.fetchone()[0]
+
+            # 3. Upsert effettivo
+            # Copiamo da Temp a Main
+            # INSERT OR REPLACE into main SELECT * FROM temp
+            q_upsert = f"INSERT OR REPLACE INTO {safe_table} ({safe_cols}) SELECT {safe_cols} FROM temp_{safe_table}"  # nosec B608
+
+            cursor.execute(q_upsert)
+            conn.commit()
+
+            return added_or_updated, 0

@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -8,6 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from src.bots.safework.base import SafeworkBaseBot
 from src.core.database import db_manager
+from src.core.sync_tracker import SyncTracker
 
 
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
@@ -241,9 +243,11 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return None
 
     def _import_to_db(self, file_path: str):
-        """Importazione massiva in SQLite."""
+        """Importazione massiva in SQLite con calcolo diff e persistenza stato."""
         try:
             self.log("🗄️ Importazione in database...")
+            start_time = time.time()
+
             df = pd.read_excel(file_path)
             mapping = {
                 "N° PDL": "n_pdl",
@@ -276,6 +280,39 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             # Sostituisce i valori NaN con stringhe vuote per evitare "nan" nel DB
             df.fillna("", inplace=True)
 
+            # --- Calcolo Diff ---
+            # 1. Ottieni ID esistenti (n_pdl)
+            try:
+                with db_manager.get_connection(
+                    db_manager.DB_PDL, read_only=True
+                ) as conn:
+                    existing_pdls = {
+                        row[0]
+                        for row in conn.execute("SELECT n_pdl FROM pdl").fetchall()
+                    }
+            except Exception:
+                existing_pdls = set()
+
+            # 2. Identifica nuovi ID
+            current_pdls = set(df["n_pdl"].astype(str))
+            # "Added" qui conta i nuovi PDL (mai visti prima)
+            # Se vogliamo contare anche gli aggiornamenti, dovremmo confrontare hash o last_modified
+            # Per ora contiamo come "Added" i NUOVI N° PDL + Updates.
+            # Ma il requisito "+1 -5" di solito separa Insert da Delete.
+            # Per PDL, siccome facciamo "Ricerca", non possiamo sapere cosa è stato cancellato globalmente.
+            # Assumiamo Removed = 0 (Safe)
+            # Assumiamo Added = Nuovi PDL.
+
+            new_pdls_count = len(current_pdls - existing_pdls)
+            # Consideriamo "Added" nel senso di "Processati/Aggiornati" per coerenza con DataEase?
+            # DataEase fa: Added = Inserted, Removed = Deleted.
+            # Qui facciamo un Merge. Quindi direi:
+            # Added = Nuovi record.
+            # I record esistenti vengono "Aggiornati", ma non contati come "Aggiunti".
+
+            added_count = new_pdls_count
+            removed_count = 0  # Non cancelliamo nulla in questa logica
+
             # Utilizza tutte le colonne definite nel mapping (che corrispondono al DB)
             columns = list(mapping.values())
 
@@ -288,8 +325,11 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             with db_manager.get_connection(db_manager.DB_PDL) as conn:
                 conn.executemany(query, data_to_insert)
 
+            duration = time.time() - start_time
+            SyncTracker.update_status("pdl", added_count, removed_count, duration)
+
             self.log(
-                f"✅ {len(data_to_insert)} righe importate correttamente nel database."
+                f"✅ Importazione completata: +{added_count} nuovi PDL su {len(data_to_insert)} righe processate."
             )
         except Exception as e:
             self.log(f"❌ Errore importazione: {e}")

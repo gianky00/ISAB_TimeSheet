@@ -2,11 +2,9 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QListWidget,
     QListWidgetItem,
     QMenu,
-    QMessageBox,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -15,6 +13,8 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.gui.dialogs.account_dialog import AccountDialog
+from src.gui.dialogs.confirmation_dialog import ConfirmationDialog
+from src.gui.dialogs.standard_input_dialog import StandardInputDialog
 from src.gui.panels.settings.shared import (
     create_group_box,
     list_style,
@@ -313,10 +313,8 @@ class ListsPage(QWidget):
 
     def _remove_account(self):
         row = self.account_list.currentRow()
-        if (
-            row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
-            == QMessageBox.StandardButton.Yes
+        if row >= 0 and ConfirmationDialog.confirm(
+            self, "Conferma", "Rimuovere account?"
         ):
             self.account_list.takeItem(row)
             accs = self._get_accounts(self.account_list)
@@ -367,10 +365,8 @@ class ListsPage(QWidget):
 
     def _remove_sw_account(self):
         row = self.sw_account_list.currentRow()
-        if (
-            row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere account?")
-            == QMessageBox.StandardButton.Yes
+        if row >= 0 and ConfirmationDialog.confirm(
+            self, "Conferma", "Rimuovere account?"
         ):
             self.sw_account_list.takeItem(row)
             accs = self._get_accounts(self.sw_account_list)
@@ -398,7 +394,7 @@ class ListsPage(QWidget):
         return [list_widget.item(i).text() for i in range(list_widget.count())]
 
     def _add_simple(self, list_widget, title):
-        text, ok = QInputDialog.getText(self, "Aggiungi", title)
+        text, ok = StandardInputDialog.get_input(self, "Aggiungi", title)
         if ok and text:
             list_widget.addItem(text)
             self.settings_changed.emit()
@@ -406,17 +402,17 @@ class ListsPage(QWidget):
     def _edit_simple(self, list_widget, title):
         item = list_widget.currentItem()
         if item:
-            text, ok = QInputDialog.getText(self, "Modifica", title, text=item.text())
+            text, ok = StandardInputDialog.get_input(
+                self, "Modifica", title, text=item.text()
+            )
             if ok and text:
                 item.setText(text)
                 self.settings_changed.emit()
 
     def _remove_simple(self, list_widget):
         row = list_widget.currentRow()
-        if (
-            row >= 0
-            and QMessageBox.question(self, "Conferma", "Rimuovere elemento?")
-            == QMessageBox.StandardButton.Yes
+        if row >= 0 and ConfirmationDialog.confirm(
+            self, "Conferma", "Rimuovere elemento?"
         ):
             list_widget.takeItem(row)
             self.settings_changed.emit()
