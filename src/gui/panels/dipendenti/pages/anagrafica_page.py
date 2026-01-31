@@ -5,12 +5,15 @@ from datetime import datetime
 from PyQt6.QtCore import (
     Qt,
     QTimer,
+    QDate,
 )
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QDialog,
     QFileDialog,
     QHBoxLayout,
     QHeaderView,
+    QLabel,
     QLineEdit,
     QMessageBox,
     QSizePolicy,
@@ -19,9 +22,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.bots import create_bot
+from src.core import config_manager
 from src.core.constants import Icons
 from src.core.database import db_manager
+from src.core.sync_tracker import SyncTracker
 from src.gui.formatters import FastTableModel
+from src.gui.panels.base import BotWorker
 from src.gui.panels.dipendenti.shared import (
     ColoredDotDelegate,
     InteractiveStatusCard,
@@ -46,6 +53,7 @@ class AnagraficaPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.worker = None
         self.master_headers = [
             "SCAD.\nISAB",
             "ID\nRISORSA",
@@ -91,9 +99,16 @@ class AnagraficaPage(QWidget):
         self.search_input.textChanged.connect(lambda: self.search_timer.start(500))
         filter_layout.addWidget(self.search_input)
 
+        # Sync Status Label
+        self.lbl_sync_status = QLabel("")
+        self.lbl_sync_status.setStyleSheet(
+            "color: #555; font-size: 11px; margin-left: 5px; margin-right: 5px;"
+        )
+        filter_layout.addWidget(self.lbl_sync_status)
+
         import_btn = ModernButton(
             "Importa CSV",
-            variant=ModernButton.Variant.OUTLINE,
+            variant=ModernButton.Variant.GHOST,
             icon=get_asset_path(Icons.UPLOAD),
         )
         import_btn.clicked.connect(self._on_import_clicked)
@@ -107,14 +122,14 @@ class AnagraficaPage(QWidget):
         email_report_btn.clicked.connect(self._generate_email_report)
         filter_layout.addWidget(email_report_btn)
 
-        # Update Button
-        self.update_btn = ModernButton(
+        # Update Bot Button
+        self.btn_bot_update = ModernButton(
             "Aggiorna",
             variant=ModernButton.Variant.PRIMARY,
             icon=get_asset_path(Icons.REFRESH),
         )
-        self.update_btn.clicked.connect(self.refresh_data)
-        filter_layout.addWidget(self.update_btn)
+        self.btn_bot_update.clicked.connect(self._on_update_bot_clicked)
+        filter_layout.addWidget(self.btn_bot_update)
 
         main_layout.addLayout(filter_layout)
 
@@ -265,6 +280,9 @@ class AnagraficaPage(QWidget):
             )
 
     def refresh_data(self):
+        self.lbl_sync_status.setText(
+            f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}"
+        )
         search_text = self.search_input.text().lower().strip()
         query = """
             SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
@@ -541,6 +559,10 @@ class AnagraficaPage(QWidget):
                         ),
                     )
                     count += 1
+            
+            # Aggiorna SyncTracker per i dipendenti
+            SyncTracker.update_status("dipendenti", added=count, removed=0)
+            
             ToastManager.instance().show(
                 f"Importazione completata: {count} dipendenti.", "success"
             )
@@ -551,3 +573,139 @@ class AnagraficaPage(QWidget):
 
     def _generate_email_report(self):
         ReportGenerator.generate_email_report(self)
+
+    def _on_update_bot_clicked(self):
+        """Avvia il bot Timbrature con date automatiche."""
+        try:
+            # 1. Recupera Credenziali
+            account = config_manager.get_default_account()
+            if not account:
+                QMessageBox.warning(
+                    self, "Attenzione", "Credenziali SafeWork non configurate."
+                )
+                return
+            username, password = account.get("username"), account.get("password")
+
+            # 2. Calcola Date
+            last_date_str = None
+            try:
+                query = "SELECT MAX(data) FROM timbrature"
+                with db_manager.get_connection(
+                    db_manager.DB_TIMBRATURE, read_only=True
+                ) as conn:
+                    res = conn.execute(query).fetchone()
+                    if res and res[0]:
+                        last_date_str = res[0]
+            except Exception as e:
+                logger.error(f"Errore query data: {e}")
+
+            if last_date_str:
+                try:
+                    last_date = QDate.fromString(last_date_str, "yyyy-MM-dd")
+                    start_date = last_date.addDays(1)
+                except Exception:
+                    start_date = QDate.currentDate().addDays(-30)
+            else:
+                start_date = QDate.currentDate().addDays(-30)
+
+            end_date = QDate.currentDate().addDays(-1)  # Ieri
+
+            if start_date > end_date:
+                if not self._show_confirmation_dialog(
+                    "Database Aggiornato",
+                    "Il database è aggiornato fino a ieri. Procedere comunque?",
+                    cancel_text="No",
+                    confirm_text="Sì"
+                ):
+                    return
+                # Se l'utente vuole procedere, forziamo il download di ieri
+                start_date = end_date
+
+            data_da_fmt = start_date.toString("dd.MM.yyyy")
+            data_a_fmt = end_date.toString("dd.MM.yyyy")
+
+            config = config_manager.load_config()
+            fornitore = config.get(
+                "last_timbrature_fornitore", "KK10608 - COEMI S.R.L."
+            )
+
+            # 3. Conferma
+            msg = f"Aggiornare timbrature dal <b>{data_da_fmt}</b> al <b>{data_a_fmt}</b>?<br>Fornitore: {fornitore}"
+            if not self._show_confirmation_dialog("Scarico Timbrature", msg):
+                return
+
+            self.btn_bot_update.setEnabled(False)
+            ToastManager.instance().show("Avvio Bot Timbrature...", "info")
+
+            # 4. Avvia Bot
+            bot = create_bot(
+                "timbrature",
+                username=username,
+                password=password,
+                headless=config.get("browser_headless", False),
+                timeout=config.get("browser_timeout", 30),
+                download_path=str(config_manager.CONFIG_DIR / "temp"),
+                data_da=data_da_fmt,
+                data_a=data_a_fmt,
+                fornitore=fornitore,
+            )
+
+            if not bot:
+                self.btn_bot_update.setEnabled(True)
+                return
+
+            bot_data = {
+                "data_da": data_da_fmt,
+                "data_a": data_a_fmt,
+                "fornitore": fornitore,
+            }
+            self.worker = BotWorker(bot, bot_data)
+            self.worker.finished_signal.connect(self._on_bot_finished)
+            self.worker.start()
+
+        except Exception as e:
+            self.btn_bot_update.setEnabled(True)
+            QMessageBox.critical(self, "Errore", f"Errore avvio bot: {e}")
+
+    def _on_bot_finished(self, success: bool):
+        self.btn_bot_update.setEnabled(True)
+        if success:
+            ToastManager.instance().show("Timbrature scaricate!", "success")
+            self.refresh_data()
+        else:
+            QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
+
+    def _show_confirmation_dialog(self, title: str, message: str, cancel_text="Annulla", confirm_text="Avvia") -> bool:
+        """Mostra una dialog di conferma con stile coerente."""
+        try:
+            dlg = QDialog(self)
+            dlg.setWindowTitle(title)
+            dlg.setMinimumWidth(350)
+            dlg.setWindowFlags(
+                dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+            )
+
+            layout = QVBoxLayout(dlg)
+            layout.setSpacing(20)
+            layout.setContentsMargins(20, 20, 20, 20)
+
+            lbl = QLabel(message)
+            lbl.setWordWrap(True)
+            lbl.setTextFormat(Qt.TextFormat.RichText)
+            layout.addWidget(lbl)
+
+            btn_layout = QHBoxLayout()
+            btn_layout.addStretch()
+
+            btn_cancel = ModernButton(cancel_text, variant=ModernButton.Variant.GHOST)
+            btn_cancel.clicked.connect(dlg.reject)
+            btn_confirm = ModernButton(confirm_text, variant=ModernButton.Variant.PRIMARY)
+            btn_confirm.clicked.connect(dlg.accept)
+
+            btn_layout.addWidget(btn_cancel)
+            btn_layout.addWidget(btn_confirm)
+            layout.addLayout(btn_layout)
+
+            return dlg.exec() == 1
+        except Exception:
+            return False
