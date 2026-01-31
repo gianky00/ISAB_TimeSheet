@@ -162,7 +162,7 @@ class MainWindow(QMainWindow):
 
         content_area = QWidget()
         content_layout = QVBoxLayout(content_area)
-        content_layout.setContentsMargins(10, 5, 10, 10)
+        content_layout.setContentsMargins(20, 20, 20, 20)
 
         (
             self.update_banner,
