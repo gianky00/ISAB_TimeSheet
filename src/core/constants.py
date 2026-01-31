@@ -108,6 +108,7 @@ class Icons:
     BAR_CHART = "assets/icons/bar-chart.svg"
     BUILDING = "assets/icons/building.svg"
     ACTIVITY = "assets/icons/activity.svg"
+    HEART = "assets/icons/activity.svg"  # Alias per Health (usa activity come fallback)
     GLOBE = "assets/icons/globe.svg"
     MESSAGE_SQUARE = "assets/icons/message-square.svg"
     ALERT_CIRCLE = "assets/icons/alert-circle.svg"

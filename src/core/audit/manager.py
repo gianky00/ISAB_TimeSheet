@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import traceback
 from datetime import datetime, timedelta
@@ -9,8 +8,9 @@ from src.core.audit.database import AuditDatabase
 from src.core.audit.integrity import AuditIntegrity
 from src.core.audit.models import Severity, Status
 from src.core.audit.signals import AuditSignals
+from src.core.logging import get_context, get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AuditManager:
@@ -74,10 +74,33 @@ class AuditManager:
         module: str = "",
         error_code: Optional[str] = None,
         notify: bool = False,
-    ):
-        """Registra un'azione dettagliata nell'audit log."""
+        trace_id: Optional[str] = None,
+    ) -> Optional[int]:
+        """
+        Registra un'azione dettagliata nell'audit log.
+
+        Args:
+            action: Descrizione dell'azione
+            category: Categoria (es. "bot", "sistema", "utente")
+            entity: Entità coinvolta (es. nome file, cantiere)
+            params: Parametri addizionali (dict convertito a JSON)
+            status: Status esito (SUCCESS, ERROR, WARNING)
+            severity: Gravità (LOW, MEDIUM, HIGH)
+            duration_ms: Durata operazione in millisecondi
+            module: Nome modulo/bot
+            error_code: Codice errore opzionale
+            notify: Se True, genera notifica utente
+            trace_id: ID trace dal logging system (auto-recuperato se non fornito)
+
+        Returns:
+            audit_id: ID della riga inserita, o None in caso di errore
+        """
         try:
             user_id = self._get_current_user()
+
+            # Auto-recupera trace_id dal context se non fornito
+            if trace_id is None:
+                trace_id = get_context().get("trace_id")
 
             # Normalizzazione
             status_val = status.value if isinstance(status, Status) else str(status)
@@ -99,7 +122,7 @@ class AuditManager:
             data_to_hash = f"{timestamp}|{user_id}|{action}|{category}|{entity}|{params_json}|{status_val}|{severity_val}|{duration_ms}|{module}|{error_code}"
             current_hash = AuditIntegrity.calculate_hash(data_to_hash, prev_hash)
 
-            self.db.insert_log(
+            audit_id = self.db.insert_log(
                 (
                     timestamp,
                     user_id,
@@ -114,6 +137,19 @@ class AuditManager:
                     error_code,
                     current_hash,
                 )
+            )
+
+            # Log strutturato correlato all'audit entry
+            log_level = "error" if status_val == "error" else "info"
+            getattr(logger, log_level)(
+                f"Audit: {action}",
+                audit_id=audit_id,
+                trace_id=trace_id,
+                category=category,
+                entity=entity,
+                status=status_val,
+                severity=severity_val,
+                duration_ms=duration_ms,
             )
 
             # Segnali
@@ -138,9 +174,12 @@ class AuditManager:
                     action, entity, status_val, severity_val, params
                 )
 
+            return audit_id
+
         except Exception as e:
-            logger.error(f"Audit Log Error: {e}")
+            logger.error("Audit Log Error", exc=e, action=action, category=category)
             traceback.print_exc()
+            return None
 
     def _generate_notification(
         self, action: str, entity: str, status_val: str, severity_val: str, params: Any

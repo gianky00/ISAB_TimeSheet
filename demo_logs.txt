@@ -1,0 +1,15 @@
+[2026-01-31T23:08:47] DEBUG    - demo.basic - Messaggio di debug
+[2026-01-31T23:08:47] INFO     - demo.basic - Operazione completata | items=42 | status=success
+[2026-01-31T23:08:47] WARNING  - demo.basic - Attenzione: memoria alta | memory_mb=450.5
+[2026-01-31T23:08:47] ERROR    - demo.basic - Errore connessione database | retry_count=3
+[2026-01-31T23:08:47] INFO     - demo.context - Bot avviato | trace_id=bot_run_ef26dc1d | bot_type=scarico_ts | cantiere=ISAB Raffineria | fornitore=ACME SRL
+[2026-01-31T23:08:47] INFO     - demo.context - Login in corso... | trace_id=bot_run_ef26dc1d | bot_type=scarico_ts | cantiere=ISAB Raffineria | fornitore=ACME SRL | span_id=login
+[2026-01-31T23:08:48] INFO     - demo.context - Login completato | trace_id=bot_run_ef26dc1d | bot_type=scarico_ts | cantiere=ISAB Raffineria | fornitore=ACME SRL | span_id=login | username=admin
+[2026-01-31T23:08:48] INFO     - demo.context - Download files in corso... | trace_id=bot_run_ef26dc1d | bot_type=scarico_ts | cantiere=ISAB Raffineria | fornitore=ACME SRL | span_id=download
+[2026-01-31T23:08:49] INFO     - demo.context - Download completato | trace_id=bot_run_ef26dc1d | bot_type=scarico_ts | cantiere=ISAB Raffineria | fornitore=ACME SRL | span_id=download | files_count=3 | total_mb=15.4
+[2026-01-31T23:08:49] INFO     - demo.context - Bot completato con successo | trace_id=bot_run_ef26dc1d | bot_type=scarico_ts | cantiere=ISAB Raffineria | fornitore=ACME SRL
+[2026-01-31T23:08:49] INFO     - demo.performance - Operazione veloce completata | span_id=span_0f41a699 | function=fast_operation
+[2026-01-31T23:08:49] DEBUG    - demo.performance - Function fast_operation executed | span_id=span_0f41a699 | function=fast_operation | duration_ms=301.55 | threshold_exceeded=False
+[2026-01-31T23:08:51] WARNING  - demo.performance - Operazione lenta completata | span_id=span_d80bc4f4 | function=slow_operation
+[2026-01-31T23:08:51] WARNING  - demo.performance - Function slow_operation executed | span_id=span_d80bc4f4 | function=slow_operation | duration_ms=1200.65 | threshold_exceeded=True
+[2026-01-31T23:08:51] ERROR    - demo.exceptions - Errore critico durante calcolo | operation=division | recovery_attempted=True

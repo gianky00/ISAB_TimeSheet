@@ -116,7 +116,7 @@ class TimbratureDetailView(QWidget):
 
             self.detail_labels[h].setText(val)
 
-    def _format_date(self, val_str, _strict=True):
+    def _format_date(self, val_str, strict=True):
         """Helper per formattazione date."""
         try:
             # Try ISO format first

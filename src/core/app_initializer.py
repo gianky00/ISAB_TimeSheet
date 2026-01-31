@@ -3,7 +3,6 @@ App Initializer con yield frequenti per animazioni fluide.
 """
 
 import logging
-import logging.handlers
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
@@ -131,27 +130,27 @@ class AppInitializer:
 
     @staticmethod
     def _setup_logging():
-        from pathlib import Path
+        """Configura il sistema di logging enterprise."""
+        try:
+            from src.core.logging import configure_logging
 
-        from src.core import config_manager
+            # Configura il nuovo sistema enterprise
+            configure_logging()
 
-        log_dir = Path(config_manager.get_logs_path())
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / "application.log"
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-        )
-        handler.setFormatter(formatter)
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.INFO)
-        if not any(
-            isinstance(h, logging.handlers.RotatingFileHandler)
-            for h in root_logger.handlers
-        ):
-            root_logger.addHandler(handler)
+            # Reindirizza anche i logger standard per compatibilità
+            import logging
+
+            logging.getLogger().setLevel(logging.INFO)
+
+        except Exception as e:
+            # Fallback al logging base se il nuovo sistema fallisce
+            import logging
+
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            )
+            logging.warning(f"Failed to initialize enterprise logging: {e}")
 
     @staticmethod
     def setup_app_style(app):

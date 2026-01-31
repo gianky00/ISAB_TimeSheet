@@ -15,6 +15,7 @@ from src.gui.panels.dipendenti.shared import create_field_row, create_info_card
 
 logger = logging.getLogger(__name__)
 
+
 class EmployeeDetailView(QWidget):
     """Pannello laterale per la visualizzazione dei dettagli del dipendente."""
 
@@ -162,11 +163,15 @@ class EmployeeDetailView(QWidget):
             )
         else:
             self.last_access_label.setText("-")
-            self.last_access_label.setStyleSheet("color: #2c3e50; font-weight: bold; font-size: 14px; padding: 5px 0;")
+            self.last_access_label.setStyleSheet(
+                "color: #2c3e50; font-weight: bold; font-size: 14px; padding: 5px 0;"
+            )
 
     def reset(self):
         """Resetta tutti i campi."""
         for widget in self.detail_labels.values():
             widget.setText("-")
         self.last_access_label.setText("-")
-        self.last_access_label.setStyleSheet("color: #2c3e50; font-weight: bold; font-size: 14px; padding: 5px 0;")
+        self.last_access_label.setStyleSheet(
+            "color: #2c3e50; font-weight: bold; font-size: 14px; padding: 5px 0;"
+        )

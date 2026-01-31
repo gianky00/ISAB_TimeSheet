@@ -331,15 +331,15 @@ class TimbratureStorage:
                 conn.commit()
 
             log(f"Importazione: {stats['added']} nuovi, {stats['skipped']} duplicati.")
-            
+
             # Aggiorna lo stato di sincronizzazione
             SyncTracker.update_status(
                 module="timbrature",
                 added=stats["added"],
                 removed=0,
-                duration=0.0  # La durata viene gestita meglio dal bot se necessario, qui mettiamo 0 per ora
+                duration=0.0,  # La durata viene gestita meglio dal bot se necessario, qui mettiamo 0 per ora
             )
-            
+
             return True
         except Exception as e:
             log(f"Errore lettura Excel: {e}")

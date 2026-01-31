@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.widgets.activity_feed import ActivityFeed
-from src.gui.widgets.autopilot_widget import AutopilotWidget
+from src.gui.widgets.autopilot import AutopilotWidget
 from src.gui.widgets.quick_actions import QuickActions
 
 
@@ -24,7 +24,7 @@ class DashboardPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(20, 20, 20, 20)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
         # Main Floating Container

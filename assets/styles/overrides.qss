@@ -1,4 +1,4 @@
-/* 
+/*
    SyncroJob - Global UI Overrides
    Forza il tema chiaro su componenti critici che potrebbero ereditare stili dal sistema operativo.
 */

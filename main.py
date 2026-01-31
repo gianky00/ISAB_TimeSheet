@@ -4,8 +4,6 @@ SyncroJob - Zero-Lag Startup Architecture
 Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
 """
 
-import logging
-import logging.handlers
 import os
 import sys
 import traceback
@@ -13,22 +11,35 @@ from datetime import datetime
 
 from src.core.config_manager import CONFIG_DIR
 
+# Setup path FIRST (before any other imports)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
-def setup_early_logging():
-    """Initialize early file logging before the application starts."""
+# Now we can import our logging system
+from src.core.logging import (  # noqa: E402
+    configure_logging,
+    generate_trace_id,
+    get_logger,
+)
+
+
+def setup_enterprise_logging():
+    """Initialize enterprise logging system."""
+    # Ensure config directory exists
     if not CONFIG_DIR.exists():
         CONFIG_DIR.mkdir(parents=True)
-    log_dir = CONFIG_DIR / "logs"
-    log_dir.mkdir(exist_ok=True)
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    handler = logging.FileHandler(log_dir / "startup.log", mode="w", encoding="utf-8")
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    root_logger.addHandler(handler)
+
+    # Configure logging system
+    configure_logging()
+
+    # Get startup logger
+    logger = get_logger("startup")
+    logger.info("Enterprise logging system initialized")
+
+    return logger
 
 
-setup_early_logging()
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
+# Initialize enterprise logging
+startup_logger = setup_enterprise_logging()
 
 
 def main():
@@ -38,6 +49,16 @@ def main():
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
     from PyQt6.QtNetwork import QLocalServer, QLocalSocket
     from PyQt6.QtWidgets import QApplication, QMessageBox
+
+    # Get loggers
+    logger = get_logger("main")
+    phase1_logger = get_logger("phase1")
+    startup_logger = get_logger("startup")
+    crash_logger = get_logger("crash")
+
+    # Application trace ID per questa sessione
+    app_trace_id = generate_trace_id()
+    logger.info("Application starting", app_trace_id=app_trace_id)
 
     warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
     app = QApplication(sys.argv)
@@ -93,11 +114,13 @@ def main():
             try:
                 from src.core.app_initializer import AppInitializer
 
+                phase1_logger.info("Starting Phase 1 initialization")
                 # FASE 1 ora usa initialize_core (ritorna bool)
                 success = AppInitializer.initialize_core()
+                phase1_logger.info("Phase 1 completed", success=success)
                 self.finished.emit(success)
             except Exception as e:
-                logging.getLogger("Phase1").error(f"Error: {e}")
+                phase1_logger.exception("Phase 1 initialization failed", exc=e)
                 self.finished.emit(False)
 
     # Variabili di stato
@@ -152,38 +175,36 @@ def main():
     def finalize_startup():
         """Called when initialization is complete."""
         try:
-            logging.getLogger("Startup").info("Finalizing startup sequence...")
+            startup_logger.info("Finalizing startup sequence...")
             splash.update_status("Avvio completato", 100)
 
-            logging.getLogger("Startup").info("Calling finalize_init...")
+            startup_logger.info("Calling finalize_init...")
             main_window_instance.finalize_init()
 
-            logging.getLogger("Startup").info("Showing main window...")
+            startup_logger.info("Showing main window...")
             # Show main window FIRST (hidden behind splash)
             main_window_instance.show()
             main_window_instance.showMaximized()
             main_window_instance.raise_()
             main_window_instance.activateWindow()
 
-            logging.getLogger("Startup").info("Main window shown, closing splash...")
+            startup_logger.info("Main window shown, closing splash...")
             # Process events to ensure window is rendered
             app.processEvents()
 
             # Close splash - main window will automatically come to front
             splash.close()
 
-            logging.getLogger("Startup").info("Startup finalized successfully")
+            startup_logger.info("Startup finalized successfully")
         except Exception as e:
-            logging.getLogger("Startup").critical(
-                f"Error in finalize_startup: {e}", exc_info=True
-            )
+            startup_logger.exception("Error in finalize_startup", exc=e)
 
     def process_next_step():
         """Execute one initialization step and yield to event loop."""
         try:
             # Esegue UN solo step e ritorna subito
             msg, prog = next(gui_init_gen)
-            logging.getLogger("Startup").info(f"Init step: {msg} ({prog}%)")
+            startup_logger.debug("Init step", step_message=msg, progress=prog)
             splash.update_status(msg, prog)
 
             # Pianifica il prossimo step al prossimo ciclo di eventi libero (0ms)
@@ -192,32 +213,37 @@ def main():
 
         except StopIteration:
             # Generatore esaurito = Init completata
-            logging.getLogger("Startup").info("Initialization generator completed")
+            startup_logger.info("Initialization generator completed")
             finalize_startup()
         except Exception as e:
-            logging.getLogger("Startup").error(
-                f"Error in init loop: {e}", exc_info=True
-            )
+            startup_logger.exception("Error in init loop", exc=e)
             finalize_startup()  # Try to proceed anyway
 
     # Avvia la catena di inizializzazione
     QTimer.singleShot(10, process_next_step)
 
     try:
+        logger.info("Application started successfully")
         exit_code = app.exec()
+        logger.info("Application exiting", exit_code=exit_code)
         server.close()
         sys.exit(exit_code)
     except Exception as e:
-        logging.getLogger("crash").critical("Fatal error", exc_info=True)
+        crash_logger.exception(
+            "Fatal application crash", exc=e, app_trace_id=app_trace_id
+        )
 
         # Write explicitly to crash.txt for user visibility
         try:
-            log_dir = CONFIG_DIR / "logs"
+            log_dir = CONFIG_DIR / "logs" / "errors"
             log_dir.mkdir(exist_ok=True, parents=True)
-            crash_file = log_dir / "crash.txt"
+            crash_file = (
+                log_dir / f"crash_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            )
             with open(crash_file, "w", encoding="utf-8") as f:
                 f.write("=== CRASH REPORT ===\n")
                 f.write(f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+                f.write(f"Trace ID: {app_trace_id}\n")
                 f.write(f"Error: {str(e)}\n\n")
                 f.write("=== TRACEBACK ===\n")
                 traceback.print_exc(file=f)
@@ -227,7 +253,7 @@ def main():
         QMessageBox.critical(
             None,
             "Errore",
-            f"Errore fatale:\n{e}\n\nDettagli salvati in: {CONFIG_DIR}/logs/crash.txt",
+            f"Errore fatale:\n{e}\n\nDettagli salvati in: {crash_file}",
         )
         server.close()
         sys.exit(1)

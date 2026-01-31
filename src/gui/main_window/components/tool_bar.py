@@ -23,7 +23,6 @@ class ToolBarComponent(QObject):
     def setup_content_toolbar(self, layout):
         """Creates the top toolbar in the content area (vertical layout)."""
         self.update_banner = UpdateBanner()
-        # Connect internally if possible, or expose signal
         self.update_banner.download_requested.connect(
             self.main_window._on_download_update_clicked
         )
@@ -34,7 +33,6 @@ class ToolBarComponent(QObject):
             "Ricerca Universale (OdA, Dipendenti, Log...) - Ctrl+F"
         )
         self.global_search.setMinimumHeight(40)
-        # Assuming search_controller is available on main_window
         self.global_search.returnPressed.connect(
             lambda: self.main_window.search_controller.perform_search(
                 self.global_search.text()

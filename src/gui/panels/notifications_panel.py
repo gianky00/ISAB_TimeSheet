@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.constants import Icons
 from src.core.notification_manager import NotificationManager
+from src.gui.panels.health_panel import HealthPanel
 from src.gui.widgets.audit_log_widget import AuditLogWidget
 from src.gui.widgets.modern_button import ModernButton
 from src.gui.widgets.notification_card import NotificationCard
@@ -50,7 +51,7 @@ class FilterState:
 
 
 class NotificationsPanel(QWidget):
-    """Pannello principale delle notifiche con schede Audit."""
+    """Pannello principale delle notifiche con schede Audit e Health."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -141,11 +142,23 @@ class NotificationsPanel(QWidget):
             get_colored_icon(get_asset_path(Icons.SHIELD), "#546E7A"),
             "Audit",
         )
+
+        # Tab Health
+        self.health_tab = HealthPanel()
+        self.tabs.addTab(
+            self.health_tab,
+            get_colored_icon(get_asset_path(Icons.HEART), "#546E7A"),
+            "Health",
+        )
+
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
     def _on_tab_changed(self, index):
-        if self.tabs.tabText(index) == "Audit":
+        tab_text = self.tabs.tabText(index)
+        if tab_text == "Audit":
             self.audit_tab.refresh()
+        elif tab_text == "Health":
+            self.health_tab.refresh()
 
     def _on_search_changed(self, query: str):
         """Handle search query change."""

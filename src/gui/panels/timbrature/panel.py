@@ -143,9 +143,11 @@ class TimbratureDBPanel(QWidget):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
 
-        self.db_table.selectionModel().selectionChanged.connect(
-            self._on_selection_changed
-        )
+        # Connessione protetta del selectionModel
+        if self.db_table.selectionModel():
+            self.db_table.selectionModel().selectionChanged.connect(
+                self._on_selection_changed
+            )
 
         splitter.addWidget(self.db_table)
 
@@ -208,18 +210,35 @@ class TimbratureDBPanel(QWidget):
             master_rows.append(m_row)
 
         self.model.update_data(master_rows, new_metadata=rows)
-        QTimer.singleShot(0, lambda: self.db_table.resizeColumnsToContents())
+        # Resize con protezione
+        QTimer.singleShot(
+            0,
+            lambda: self.db_table.resizeColumnsToContents() if self.db_table else None,
+        )
         # Reset detail
         self.detail_view.clear_fields()
 
     def _on_selection_changed(self, selected, _deselected):
-        indexes = self.db_table.selectionModel().selectedRows()
+        # Protezione contro selectionModel None
+        selection_model = self.db_table.selectionModel()
+        if not selection_model:
+            return
+
+        indexes = selection_model.selectedRows()
         if not indexes:
             return
 
         # Get raw full row from metadata
-        row_data = indexes[0].data(Qt.ItemDataRole.UserRole)
-        self.detail_view.display_data(row_data)
+        try:
+            row_data = indexes[0].data(Qt.ItemDataRole.UserRole)
+            if row_data:
+                self.detail_view.display_data(row_data)
+            else:
+                self.detail_view.clear_fields()
+        except (IndexError, RuntimeError, AttributeError) as e:
+            # Gestione errori durante l'accesso ai dati
+            print(f"Errore in _on_selection_changed: {e}")
+            self.detail_view.clear_fields()
 
     def _on_tab_changed(self, index):
         if index == 0:  # Database
