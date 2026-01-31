@@ -16,6 +16,7 @@ class OdaFilterWidget(QWidget):
 
     search_changed = pyqtSignal(str)
     update_clicked = pyqtSignal()
+    import_clicked = pyqtSignal()
     export_clicked = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -53,15 +54,22 @@ class OdaFilterWidget(QWidget):
         self.btn_bot_update.clicked.connect(self.update_clicked.emit)
         layout.addWidget(self.btn_bot_update)
 
+        # Import Excel Button
+        self.btn_import = ModernButton(
+            "Importa Excel",
+            variant=ModernButton.Variant.GHOST,
+            icon=get_asset_path(Icons.UPLOAD),
+        )
+        self.btn_import.clicked.connect(self.import_clicked.emit)
+        layout.addWidget(self.btn_import)
+
         # Export Excel
         self.export_btn = ModernButton(
-            "ESPORTA",
-            variant=ModernButton.Variant.SUCCESS,
+            "",
+            variant=ModernButton.Variant.GHOST,
             size=ModernButton.Size.SMALL,
         )
-        self.export_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.EXCEL), "#FFFFFF")
-        )
+        self.export_btn.setIcon(get_colored_icon(get_asset_path(Icons.EXCEL), "#555"))
         self.export_btn.setToolTip("Esporta Excel")
         self.export_btn.clicked.connect(self.export_clicked.emit)
         layout.addWidget(self.export_btn)

@@ -23,9 +23,9 @@ class OdaDetailView(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 0, 5, 0)
 
-        detail_title = QLabel("Dettaglio Posizione OdA")
+        detail_title = QLabel("Dettaglio Completo OdA")
         detail_title.setStyleSheet(
-            "font-weight: bold; font-size: 14px; color: #4CAF50; margin-bottom: 5px;"
+            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
         )
         layout.addWidget(detail_title)
 

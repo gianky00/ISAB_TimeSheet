@@ -6,7 +6,7 @@ Pannello per la visualizzazione del Database Storico OdA con architettura Master
 from datetime import datetime
 from typing import List, Tuple
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QDate, Qt, QTimer
 from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -41,54 +41,60 @@ class StoricoOdaPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.full_headers = [
+
+        # Colonne della TreeView (Master)
+        # Ordine originale: Data OdA, OdA, Pos, CREATO DA, Descrizione, Valore Netto, Stato
+        self.master_headers = [
+            "Data OdA",
             "OdA",
-            "Posizione",
-            "Riga",
+            "Pos",
+            "CREATO DA",
+            "Descrizione",
+            "Valore Netto",
+            "Stato",
+        ]
+
+        # Mapping completo per il Dettaglio
+        self.full_headers = [
             "Org. Acq.",
             "Data OdA",
+            "OdA",
+            "Pos OdA",
             "Stato",
             "Cat. Contab.",
             "Descrizione",
             "Qta",
-            "UoM",
+            "UOM",
             "Data Consegna",
-            "Valore Netto Pos",
-            "Valore Residuo",
-            "Valore Netto OdA",
+            "Valore Netto Pos. ODA",
+            "Valore Residuo ODA",
+            "Valore Netto ODA",
             "Divisione",
             "Destinatario",
-            "Nome Dest.",
-            "Cod. Fornitore",
-            "Desc. Fornitore",
-            "Emittente Fatt.",
-            "Desc. Emittente",
-            "Card",
+            "Nome Destinatario",
+            "Codice Fornitore",
+            "Descrizione Fornitore",
+            "Emittente Fattura",
+            "Descrizione Emittente Fattura",
+            "Contract Card",
             "Contratto",
-            "Pos. Contratto",
-            "Gr. Acquisti",
-            "Ind. Rilascio",
+            "Posizione Contratto",
+            "Gruppo Acquisti",
+            "Indicatore Rilascio",
             "Stato Rilascio",
             "Attività",
+            "Num riga",
             "Quantità",
-            "Unità Mis.",
-            "Prezzo Lordo",
-            "Testo Breve",
-            "Aggiornato il",
+            "Unità di Mis",
+            "Prezzo lordo",
+            "Testo breve",
         ]
 
         self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(
-            [
-                "OdA / Testo Breve",
-                "Fornitore / Stato",
-                "Data OdA",
-                "Netto Pos",
-                "Residuo",
-            ]
-        )
+        self.model.setHorizontalHeaderLabels(self.master_headers)
 
-        self._raw_data_map = {}  # Mappa ID -> riga completa per dettaglio
+        self._raw_full_data = []  # Buffer per i dati completi
+        self.worker = None  # Worker per il bot
 
         # Timer per ricerca ritardata
         self.search_timer = QTimer()
@@ -107,6 +113,7 @@ class StoricoOdaPanel(QWidget):
         self.filters = OdaFilterWidget()
         self.filters.search_changed.connect(lambda: self.search_timer.start(500))
         self.filters.update_clicked.connect(self._on_update_clicked)
+        self.filters.import_clicked.connect(self._on_import_clicked)
         self.filters.export_clicked.connect(self._export_to_excel)
         main_layout.addWidget(self.filters)
 
@@ -121,14 +128,34 @@ class StoricoOdaPanel(QWidget):
         self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tree.setUniformRowHeights(True)
         self.tree.setIndentation(25)
+        self.tree.setAnimated(True)
+        self.tree.setExpandsOnDoubleClick(False)
         self.tree.setItemDelegate(ChildDescriptionDelegate(self.tree))
 
+        # Selection & Interaction
         self.tree.selectionModel().selectionChanged.connect(self._on_selection_changed)
+        self.tree.expanded.connect(self._on_item_expanded)
+        self.tree.collapsed.connect(self._on_item_collapsed)
+        self.tree.doubleClicked.connect(self._on_tree_double_clicked)
 
+        # Header Styling
         header = self.tree.header()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
-        header.setDefaultSectionSize(150)
+        header.setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents
+        )  # Data OdA
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # OdA
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Pos
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # CREATO DA
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Descrizione
+        header.setSectionResizeMode(
+            5, QHeaderView.ResizeMode.ResizeToContents
+        )  # Valore Netto
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Stato
+
+        self.tree.setColumnWidth(0, 100)
+        self.tree.setColumnWidth(1, 90)
+        self.tree.setColumnWidth(2, 50)
+        self.tree.setColumnWidth(6, 80)
 
         self.splitter.addWidget(self.tree)
 
@@ -142,87 +169,117 @@ class StoricoOdaPanel(QWidget):
         main_layout.addWidget(self.splitter)
 
     def refresh_data(self):
-        """Carica i dati dal database e popola il modello gerarchico."""
+        """Aggiorna i dati della tabella."""
         self.filters.set_sync_status(
             f"Ultimo Sync: {SyncTracker.get_formatted_status('storico_oda')}"
         )
 
         search_text = self.filters.search_input.text().strip()
         try:
-            rows = OdaManager.get_all_oda(search_text if search_text else None)
-            self._populate_tree(rows)
+            full_rows = OdaManager.get_all_oda(search_text if search_text else None)
+            self._raw_full_data = full_rows
+            self._populate_tree(full_rows)
         except Exception as e:
-            print(f"Errore refresh OdA: {e}")
+            print(f"Errore caricamento Storico OdA: {e}")
 
-    def _populate_tree(self, rows: List[Tuple]):
-        """Crea la struttura OdA -> Posizioni."""
+    def _populate_tree(self, full_rows: List[Tuple]):
+        """Popola il modello ad albero raggruppando per ODA + POS."""
         self.model.removeRows(0, self.model.rowCount())
-        self._raw_data_map.clear()
 
-        # Raggruppa per OdA
-        groups = {}
-        for r in rows:
-            oda_id = str(r[0])
-            if oda_id not in groups:
-                groups[oda_id] = []
-            groups[oda_id].append(r)
+        groups = {}  # (oda, pos) -> ParentItem
 
-        font_bold = QFont()
-        font_bold.setBold(True)
+        for r in full_rows:
+            # Gli indici corrispondono alla query in OdaManager.get_all_oda:
+            # 0:org_acq, 1:data_oda, 2:oda, 3:pos_oda, 4:stato, 5:cat_contab, 6:descrizione,
+            # 10:valore_netto_pos, 15:nome_destinatario, 28:quantita, 29:unita_mis, 30:prezzo_lordo, 31:testo_breve
 
-        for oda_id, positions in groups.items():
-            # Riga Padre (OdA)
-            first_pos = positions[0]
-            fornitore = str(first_pos[18])  # Descrizione Fornitore
-            data_oda = format_date_it(str(first_pos[4]))
-            valore_oda = format_currency_smart(float(first_pos[13] or 0))
+            oda = r[2]
+            pos = r[3]
+            group_key = (oda, pos)
 
-            parent = QStandardItem(f"OdA {oda_id}")
-            parent.setFont(font_bold)
-            parent.setData(oda_id, Qt.ItemDataRole.UserRole)
+            # Create Parent Group if not exists
+            if group_key not in groups:
+                val_creato_da = str(r[15]) if r[15] else ""
+                val_desc = str(r[6]).strip() if r[6] else ""
 
-            item_forn = QStandardItem(fornitore)
-            item_date = QStandardItem(data_oda)
-            item_val = QStandardItem(valore_oda)
-            item_val.setTextAlignment(
-                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                item_creato = QStandardItem(val_creato_da)
+                item_desc = QStandardItem(val_desc)
+                item_data = QStandardItem(format_date_it(str(r[1])))
+                item_oda = QStandardItem(str(oda))
+                item_pos = QStandardItem(str(pos))
+                item_val = QStandardItem(format_currency_smart(str(r[10])))
+                item_stato = QStandardItem(str(r[4]))
+
+                parent_row_items = [
+                    item_data,
+                    item_oda,
+                    item_pos,
+                    item_creato,
+                    item_desc,
+                    item_val,
+                    item_stato,
+                ]
+
+                for it in parent_row_items:
+                    it.setEditable(False)
+
+                # Salviamo i dati completi nel primo item per il dettaglio
+                item_data.setData(r, Qt.ItemDataRole.UserRole)
+
+                self.model.appendRow(parent_row_items)
+                groups[group_key] = item_data
+
+            parent_item = groups[group_key]
+
+            # Create Child Row (The detailed line)
+            raw_testo = str(r[31]).strip() if r[31] else ""
+            raw_desc = str(r[6]).strip() if r[6] else ""
+            desc = raw_testo if raw_testo and raw_testo.lower() != "nan" else raw_desc
+
+            prezzo = r[30]
+            qta = r[28]
+            uom = r[29]
+
+            # Col 0: Descrizione (per merge con Col 1 via Delegate)
+            c_desc_merged = QStandardItem(str(desc))
+            c_desc_merged.setTextAlignment(
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             )
-            item_res = QStandardItem("")
+            c_desc_merged.setData(
+                r, Qt.ItemDataRole.UserRole
+            )  # Per dettaglio anche sui figli
 
-            self.model.appendRow([parent, item_forn, item_date, item_val, item_res])
+            # Col 1-4: Empty
+            c_empty_1 = QStandardItem("")
+            c_empty_2 = QStandardItem("")
+            c_empty_3 = QStandardItem("")
+            c_empty_4 = QStandardItem("")
 
-            # Righe Figlie (Posizioni)
-            for pos in positions:
-                testo_breve = str(pos[31]) or str(pos[7])  # Testo Breve o Descrizione
-                stato = str(pos[5])
-                val_pos = format_currency_smart(float(pos[11] or 0))
-                val_res = format_currency_smart(float(pos[12] or 0))
+            # Col 5: Prezzo Lordo
+            c_prezzo = QStandardItem(format_currency_smart(str(prezzo)))
 
-                # ID univoco per riga: ODA_POS_RIGA
-                row_key = f"{pos[0]}_{pos[1]}_{pos[2]}"
-                self._raw_data_map[row_key] = pos
+            # Col 6: UOM + Qta
+            c_uom_qta = QStandardItem(f"{uom} {qta}")
 
-                child_oda = QStandardItem(testo_breve)
-                child_oda.setData(row_key, Qt.ItemDataRole.UserRole)
-                child_oda.setForeground(Qt.GlobalColor.darkBlue)
+            child_row_items = [
+                c_desc_merged,
+                c_empty_1,
+                c_empty_2,
+                c_empty_3,
+                c_empty_4,
+                c_prezzo,
+                c_uom_qta,
+            ]
 
-                child_stato = QStandardItem(stato)
-                child_date = QStandardItem("")
-                child_val = QStandardItem(val_pos)
-                child_val.setTextAlignment(
-                    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-                )
-                child_res = QStandardItem(val_res)
-                child_res.setTextAlignment(
-                    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-                )
+            for it in child_row_items:
+                it.setEditable(False)
+                it.setForeground(Qt.GlobalColor.darkBlue)
+                if it != c_desc_merged:
+                    it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
-                parent.appendRow(
-                    [child_oda, child_stato, child_date, child_val, child_res]
-                )
+            parent_item.appendRow(child_row_items)
 
-        # Espandi i primi livelli se pochi risultati
-        if len(groups) < 10:
+        if len(groups) < 15:
             self.tree.expandAll()
 
     def _on_selection_changed(self, selected, _deselected):
@@ -232,102 +289,146 @@ class StoricoOdaPanel(QWidget):
             return
 
         index = indexes[0]
-        row_key = index.data(Qt.ItemDataRole.UserRole)
+        # I dati sono salvati nell'ItemDataRole.UserRole della riga (col 0 o col 3 dipendentemente dal tipo)
+        full_data = index.data(Qt.ItemDataRole.UserRole)
 
-        if row_key and row_key in self._raw_data_map:
-            self.detail_view.update_details(list(self._raw_data_map[row_key]))
+        if full_data:
+            self.detail_view.update_details(list(full_data))
         else:
             self.detail_view.clear()
+
+    def _on_item_expanded(self, index):
+        self._set_row_bold(index, True)
+
+    def _on_item_collapsed(self, index):
+        self._set_row_bold(index, False)
+
+    def _on_tree_double_clicked(self, index):
+        source_index = index.sibling(index.row(), 0)
+        if self.tree.isExpanded(source_index):
+            self.tree.collapse(source_index)
+        else:
+            self.tree.expand(source_index)
+
+    def _set_row_bold(self, parent_index, bold: bool):
+        row = parent_index.row()
+        font = QFont()
+        font.setBold(bold)
+        for col in range(self.model.columnCount()):
+            item = self.model.item(row, col)
+            if item:
+                item.setFont(font)
+
+    def _on_import_clicked(self):
+        """Gestisce l'importazione manuale del file Excel Storico OdA."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleziona File Storico OdA",
+            "",
+            "Excel Files (*.xlsx *.xls);;All Files (*)",
+        )
+        if not file_path:
+            return
+
+        try:
+            ToastManager.instance().show("Avvio importazione OdA...", "info")
+            success, message, added, _ = OdaManager.import_oda_from_excel(file_path)
+            if success:
+                ToastManager.instance().show(
+                    f"Importazione completata: {added} righe aggiornate.", "success"
+                )
+                self.refresh_data()
+            else:
+                QMessageBox.warning(
+                    self, "Errore Importazione", f"Impossibile importare:\n{message}"
+                )
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}"
+            )
 
     def _on_update_clicked(self):
         """Avvia il bot Dettagli OdA per sincronizzare i dati."""
         try:
-            config = config_manager.load_config()
-
-            # Recupero credenziali default (standard ISAB)
             account = config_manager.get_default_account()
             if not account:
                 QMessageBox.warning(
-                    self,
-                    "Attenzione",
-                    "Nessun account ISAB configurato in Impostazioni > Account.",
+                    self, "Attenzione", "Credenziali ISAB non configurate."
                 )
                 return
+            username, password = account.get("username"), account.get("password")
 
-            username = account.get("username", "")
-            password = account.get("password", "")
+            config = config_manager.load_config()
+            fornitore = config.get("last_oda_fornitore", "KK10608 - COEMI S.R.L.")
+            dest_path = config.get("path_dettagli_oda", "")
 
-            # Recupero fornitore default
-            fornitori = config.get("fornitori", [])
-            fornitore = (
-                fornitori[0] if fornitori else "KK10608 - COEMI S.R.L."
-            )  # Default fallback
-
-            if not username or not password:
-                QMessageBox.warning(
-                    self, "Attenzione", "Credenziali Portale Fornitori incomplete."
-                )
-                return
+            # Calcola Date (01.01.AnnoCorrente -> Oggi)
+            data_da = f"01.01.{QDate.currentDate().year()}"
+            data_a = QDate.currentDate().toString("dd.MM.yyyy")
 
             if not self._show_confirmation_dialog(
                 "Aggiornamento OdA",
-                f"Avviare la sincronizzazione OdA per il fornitore <b>{fornitore}</b>?",
+                f"Avviare scarico OdA per <b>{fornitore}</b>?<br><br>Periodo: {data_da} - {data_a}",
             ):
                 return
 
             self.filters.btn_bot_update.setEnabled(False)
-            ToastManager.instance().show(f"Avvio Sync OdA ({fornitore})...", "info")
-
-            # Calcola range date (01/01/YYYY -> Oggi)
-            date_from = f"01.01.{datetime.now().year}"
-            date_to = datetime.now().strftime("%d.%m.%Y")
+            ToastManager.instance().show("Avvio Bot Dettagli OdA...", "info")
 
             bot = create_bot(
                 "dettagli_oda",
                 username=username,
                 password=password,
-                headless=config.get("browser_headless", True),
+                headless=config.get("browser_headless", False),
+                timeout=config.get("browser_timeout", 30),
+                download_path=dest_path,
                 fornitore=fornitore,
-                data_da=date_from,
-                data_a=date_to,
+                data_da=data_da,
+                data_a=data_a,
             )
 
             if not bot:
                 self.filters.btn_bot_update.setEnabled(True)
                 return
 
-            # Passiamo una lista vuota per attivare la "lista generale" nel bot
-            bot_data = []
-
+            bot_data = {
+                "rows": [],
+                "fornitore": fornitore,
+                "data_da": data_da,
+                "data_a": data_a,
+            }
             self.worker = BotWorker(bot, bot_data)
             self.worker.finished_signal.connect(self._on_bot_finished)
             self.worker.start()
 
         except Exception as e:
             self.filters.btn_bot_update.setEnabled(True)
-            QMessageBox.critical(self, "Errore", f"Errore avvio bot: {e}")
+            QMessageBox.critical(self, "Errore", f"Errore durante l'avvio del bot: {e}")
 
     def _on_bot_finished(self, success: bool):
         self.filters.btn_bot_update.setEnabled(True)
         if success:
-            ToastManager.instance().show("OdA Sincronizzati!", "success")
+            ToastManager.instance().show("Aggiornamento completato!", "success")
             self.refresh_data()
         else:
-            ToastManager.instance().show("Errore durante il sync OdA", "danger")
+            QMessageBox.warning(
+                self, "Errore", "Il bot ha terminato con errori. Controlla i log."
+            )
 
     def _show_confirmation_dialog(self, title: str, message: str) -> bool:
         dlg = QDialog(self)
         dlg.setWindowTitle(title)
         dlg.setMinimumWidth(350)
+        dlg.setWindowFlags(
+            dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+        )
         layout = QVBoxLayout(dlg)
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
-
         lbl = QLabel(message)
         lbl.setWordWrap(True)
         lbl.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(lbl)
-
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         btn_cancel = ModernButton("Annulla", variant=ModernButton.Variant.GHOST)
@@ -337,7 +438,6 @@ class StoricoOdaPanel(QWidget):
         btn_layout.addWidget(btn_cancel)
         btn_layout.addWidget(btn_confirm)
         layout.addLayout(btn_layout)
-
         return dlg.exec() == 1
 
     def _export_to_excel(self):
@@ -351,13 +451,10 @@ class StoricoOdaPanel(QWidget):
             )
             if not filename:
                 return
-
             import pandas as pd
 
-            # Esportiamo i dati raw correnti filtrati
             search_text = self.filters.search_input.text().strip()
             rows = OdaManager.get_all_oda(search_text if search_text else None)
-
             df = pd.DataFrame(rows, columns=self.full_headers)
             df.to_excel(filename, index=False, engine="openpyxl")
             ToastManager.instance().show("Esportazione completata!", "success")

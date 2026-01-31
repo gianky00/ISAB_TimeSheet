@@ -25,16 +25,16 @@ class OdaManager:
     def get_all_oda(cls, search_text: Optional[str] = None) -> List[Tuple[Any, ...]]:
         """
         Recupera tutti gli OdA dal database, opzionalmente filtrati.
-        L'ordine delle colonne restituito corrisponde a full_headers in StoricoOdaPanel.
+        L'ordine delle colonne restituito corrisponde a quello originale del branch main.
         """
         query = """
             SELECT
-                oda, pos_oda, num_riga, org_acq, data_oda, stato, cat_contab, descrizione,
+                org_acq, data_oda, oda, pos_oda, stato, cat_contab, descrizione,
                 qta, uom, data_consegna, valore_netto_pos, valore_residuo, valore_netto_oda,
                 divisione, destinatario, nome_destinatario, codice_fornitore, descrizione_fornitore,
                 emittente_fattura, desc_emittente_fattura, contract_card, contratto,
                 posizione_contratto, gruppo_acquisti, indicatore_rilascio, stato_rilascio,
-                attivita, quantita, unita_mis, prezzo_lordo, testo_breve, updated_at
+                attivita, num_riga, quantita, unita_mis, prezzo_lordo, testo_breve
             FROM storico_oda
             WHERE 1=1
         """
