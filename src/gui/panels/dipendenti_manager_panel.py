@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -15,15 +15,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core import config_manager
 from src.core.audit_manager import AuditManager
-from src.core.constants import Icons
-from src.core.database import db_manager
 from src.core.employees import employee_manager
 from src.core.sync_tracker import SyncTracker
 from src.gui.widgets.modern_button import ModernButton
-from src.gui.widgets.toast import ToastManager
-from src.utils.helpers import get_asset_path
 
 
 class EmployeeEditorDialog(QDialog):

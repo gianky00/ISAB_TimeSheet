@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QGraphicsOpacityEffect, QPushButton, QStatusBar
 from src.core import config_manager
 from src.core.constants import Icons
 from src.core.license_validator import get_license_info
-from src.gui.widgets.footer_stats import (
+from src.gui.widgets.footer import (
     BootTelemetryWidget,
     FooterLeftWidget,
     FooterRightWidget,

@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.gui.widgets.activity_feed import ActivityFeed
-from src.gui.widgets.autopilot_widget import AutopilotWidget
+from src.gui.widgets.autopilot import AutopilotWidget
 from src.gui.widgets.quick_actions import QuickActions
 
 

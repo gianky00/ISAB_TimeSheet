@@ -150,8 +150,8 @@ class ContabilitaPanel(QWidget):
             "Certificati Campione",
         )
 
-        # 5. KPI
-        from src.gui.panels.contabilita_kpi_panel import ContabilitaKPIPanel
+        # Lazy load per evitare circolarità
+        from src.gui.panels.contabilita_kpi import ContabilitaKPIPanel
 
         self.kpi_panel = ContabilitaKPIPanel()
         self.main_tabs.addTab(

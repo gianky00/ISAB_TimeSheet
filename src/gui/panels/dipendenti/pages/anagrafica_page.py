@@ -3,9 +3,9 @@ import logging
 from datetime import datetime
 
 from PyQt6.QtCore import (
+    QDate,
     Qt,
     QTimer,
-    QDate,
 )
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -559,10 +559,10 @@ class AnagraficaPage(QWidget):
                         ),
                     )
                     count += 1
-            
+
             # Aggiorna SyncTracker per i dipendenti
             SyncTracker.update_status("dipendenti", added=count, removed=0)
-            
+
             ToastManager.instance().show(
                 f"Importazione completata: {count} dipendenti.", "success"
             )
@@ -615,7 +615,7 @@ class AnagraficaPage(QWidget):
                     "Database Aggiornato",
                     "Il database è aggiornato fino a ieri. Procedere comunque?",
                     cancel_text="No",
-                    confirm_text="Sì"
+                    confirm_text="Sì",
                 ):
                     return
                 # Se l'utente vuole procedere, forziamo il download di ieri
@@ -675,7 +675,9 @@ class AnagraficaPage(QWidget):
         else:
             QMessageBox.warning(self, "Errore", "Bot terminato con errori.")
 
-    def _show_confirmation_dialog(self, title: str, message: str, cancel_text="Annulla", confirm_text="Avvia") -> bool:
+    def _show_confirmation_dialog(
+        self, title: str, message: str, cancel_text="Annulla", confirm_text="Avvia"
+    ) -> bool:
         """Mostra una dialog di conferma con stile coerente."""
         try:
             dlg = QDialog(self)
@@ -699,7 +701,9 @@ class AnagraficaPage(QWidget):
 
             btn_cancel = ModernButton(cancel_text, variant=ModernButton.Variant.GHOST)
             btn_cancel.clicked.connect(dlg.reject)
-            btn_confirm = ModernButton(confirm_text, variant=ModernButton.Variant.PRIMARY)
+            btn_confirm = ModernButton(
+                confirm_text, variant=ModernButton.Variant.PRIMARY
+            )
             btn_confirm.clicked.connect(dlg.accept)
 
             btn_layout.addWidget(btn_cancel)
