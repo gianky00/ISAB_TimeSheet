@@ -1,4 +1,5 @@
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QStyle, QStyledItemDelegate
 
 
@@ -10,7 +11,32 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
         self.tree = tree_view
 
     def paint(self, painter, option, index):
-        # Verifica se siamo in una riga figlia (ha un genitore valido)
+        # 1. Applica colorazione per righe parent in base a STATO e Indicatore Rilascio
+        if not index.parent().isValid():  # Riga parent
+            # Recupera i dati completi dalla colonna 0
+            data_item = self.tree.model().item(index.row(), 0)
+            if data_item:
+                full_data = data_item.data(Qt.ItemDataRole.UserRole)
+                if full_data:
+                    stato = str(full_data[4]) if len(full_data) > 4 else ""
+                    ind_rilascio = str(full_data[24]) if len(full_data) > 24 else ""
+
+                    # Logica colorazione
+                    if "Cancellato" in stato or "cancellato" in stato:
+                        # 🔴 ROSSO per stato Cancellato
+                        option.backgroundBrush = QColor(255, 220, 220)  # Rosso chiaro
+                        painter.fillRect(option.rect, QColor(255, 220, 220))
+                    elif (
+                        "In attesa di Rilascio" in ind_rilascio
+                        or "in attesa" in ind_rilascio.lower()
+                    ):
+                        # 🟠 ARANCIONE per In attesa di Rilascio
+                        option.backgroundBrush = QColor(
+                            255, 235, 200
+                        )  # Arancione chiaro
+                        painter.fillRect(option.rect, QColor(255, 235, 200))
+
+        # 2. Verifica se siamo in una riga figlia (ha un genitore valido)
         if index.parent().isValid():
             col = index.column()
 

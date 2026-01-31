@@ -43,7 +43,7 @@ class StoricoOdaPanel(QWidget):
         super().__init__(parent)
 
         # Colonne della TreeView (Master)
-        # Ordine originale: Data OdA, OdA, Pos, CREATO DA, Descrizione, Valore Netto, Stato
+        # Ordine originale: Data OdA, OdA, Pos, CREATO DA, Descrizione, Valore Netto, Stato, Ind. Rilascio
         self.master_headers = [
             "Data OdA",
             "OdA",
@@ -52,6 +52,7 @@ class StoricoOdaPanel(QWidget):
             "Descrizione",
             "Valore Netto",
             "Stato",
+            "Ind. Rilascio",
         ]
 
         # Mapping completo per il Dettaglio
@@ -151,11 +152,15 @@ class StoricoOdaPanel(QWidget):
             5, QHeaderView.ResizeMode.ResizeToContents
         )  # Valore Netto
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Stato
+        header.setSectionResizeMode(
+            7, QHeaderView.ResizeMode.ResizeToContents
+        )  # Ind. Rilascio
 
         self.tree.setColumnWidth(0, 100)
         self.tree.setColumnWidth(1, 90)
         self.tree.setColumnWidth(2, 50)
         self.tree.setColumnWidth(6, 80)
+        self.tree.setColumnWidth(7, 120)
 
         self.splitter.addWidget(self.tree)
 
@@ -201,6 +206,7 @@ class StoricoOdaPanel(QWidget):
             if group_key not in groups:
                 val_creato_da = str(r[15]) if r[15] else ""
                 val_desc = str(r[6]).strip() if r[6] else ""
+                val_ind_rilascio = str(r[24]) if r[24] else ""
 
                 item_creato = QStandardItem(val_creato_da)
                 item_desc = QStandardItem(val_desc)
@@ -209,6 +215,7 @@ class StoricoOdaPanel(QWidget):
                 item_pos = QStandardItem(str(pos))
                 item_val = QStandardItem(format_currency_smart(str(r[10])))
                 item_stato = QStandardItem(str(r[4]))
+                item_ind_rilascio = QStandardItem(val_ind_rilascio)
 
                 parent_row_items = [
                     item_data,
@@ -218,6 +225,7 @@ class StoricoOdaPanel(QWidget):
                     item_desc,
                     item_val,
                     item_stato,
+                    item_ind_rilascio,
                 ]
 
                 for it in parent_row_items:
@@ -261,6 +269,9 @@ class StoricoOdaPanel(QWidget):
             # Col 6: UOM + Qta
             c_uom_qta = QStandardItem(f"{uom} {qta}")
 
+            # Col 7: Empty (Ind. Rilascio)
+            c_empty_7 = QStandardItem("")
+
             child_row_items = [
                 c_desc_merged,
                 c_empty_1,
@@ -269,6 +280,7 @@ class StoricoOdaPanel(QWidget):
                 c_empty_4,
                 c_prezzo,
                 c_uom_qta,
+                c_empty_7,
             ]
 
             for it in child_row_items:
