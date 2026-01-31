@@ -243,53 +243,61 @@ class StoricoOdaPanel(QWidget):
         """Avvia il bot Dettagli OdA per sincronizzare i dati."""
         try:
             config = config_manager.load_config()
-            fornitori = config.get("portale_fornitori_accounts", [])
 
-            username = ""
-            password = ""
-            vendor_code = ""
-
-            if fornitori:
-                default_vendor = next(
-                    (v for v in fornitori if v.get("default")), fornitori[0]
+            # Recupero credenziali default (standard ISAB)
+            account = config_manager.get_default_account()
+            if not account:
+                QMessageBox.warning(
+                    self,
+                    "Attenzione",
+                    "Nessun account ISAB configurato in Impostazioni > Account.",
                 )
-                username = default_vendor.get("username", "")
-                password = default_vendor.get("password", "")
-                vendor_code = default_vendor.get("vendor_code", "")
+                return
+
+            username = account.get("username", "")
+            password = account.get("password", "")
+
+            # Recupero fornitore default
+            fornitori = config.get("fornitori", [])
+            fornitore = (
+                fornitori[0] if fornitori else "KK10608 - COEMI S.R.L."
+            )  # Default fallback
 
             if not username or not password:
                 QMessageBox.warning(
-                    self, "Attenzione", "Credenziali Portale Fornitori non configurate."
+                    self, "Attenzione", "Credenziali Portale Fornitori incomplete."
                 )
                 return
 
             if not self._show_confirmation_dialog(
                 "Aggiornamento OdA",
-                f"Avviare la sincronizzazione OdA per il fornitore <b>{vendor_code}</b>?",
+                f"Avviare la sincronizzazione OdA per il fornitore <b>{fornitore}</b>?",
             ):
                 return
 
             self.filters.btn_bot_update.setEnabled(False)
-            ToastManager.instance().show(f"Avvio Sync OdA ({vendor_code})...", "info")
+            ToastManager.instance().show(f"Avvio Sync OdA ({fornitore})...", "info")
+
+            # Calcola range date (01/01/YYYY -> Oggi)
+            date_from = f"01.01.{datetime.now().year}"
+            date_to = datetime.now().strftime("%d.%m.%Y")
 
             bot = create_bot(
                 "dettagli_oda",
                 username=username,
                 password=password,
                 headless=config.get("browser_headless", True),
+                fornitore=fornitore,
+                data_da=date_from,
+                data_a=date_to,
             )
 
             if not bot:
                 self.filters.btn_bot_update.setEnabled(True)
                 return
 
-            # Calcola range date (01/01/YYYY -> Oggi)
-            date_from = f"01.01.{datetime.now().year}"
-            date_to = datetime.now().strftime("%d.%m.%Y")
-
-            bot_data = [
-                {"vendor_code": vendor_code, "date_from": date_from, "date_to": date_to}
-            ]
+            # Passiamo una lista vuota per attivare la "lista generale" nel bot
+            bot_data = []
 
             self.worker = BotWorker(bot, bot_data)
             self.worker.finished_signal.connect(self._on_bot_finished)
