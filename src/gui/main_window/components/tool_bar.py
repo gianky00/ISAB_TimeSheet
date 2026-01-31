@@ -25,8 +25,8 @@ class ToolBarComponent(QObject):
         self.toolbar_container = QWidget()
         self.toolbar_container.setObjectName("contentToolbarContainer")
         toolbar_layout = QVBoxLayout(self.toolbar_container)
-        toolbar_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_layout.setSpacing(10)
+        toolbar_layout.setContentsMargins(0, 0, 0, 5)
+        toolbar_layout.setSpacing(0)
 
         self.update_banner = UpdateBanner()
         self.update_banner.download_requested.connect(
