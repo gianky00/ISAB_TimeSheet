@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLineEdit
 
 from src.gui.widgets.sidebar_widget import SidebarWidget
 from src.gui.widgets.update_banner import UpdateBanner
@@ -22,17 +22,11 @@ class ToolBarComponent(QObject):
 
     def setup_content_toolbar(self, layout):
         """Creates the top toolbar in the content area (vertical layout)."""
-        self.toolbar_container = QWidget()
-        self.toolbar_container.setObjectName("contentToolbarContainer")
-        toolbar_layout = QVBoxLayout(self.toolbar_container)
-        toolbar_layout.setContentsMargins(0, 0, 0, 5)
-        toolbar_layout.setSpacing(0)
-
         self.update_banner = UpdateBanner()
         self.update_banner.download_requested.connect(
             self.main_window._on_download_update_clicked
         )
-        toolbar_layout.addWidget(self.update_banner)
+        layout.addWidget(self.update_banner)
 
         self.global_search = QLineEdit()
         self.global_search.setPlaceholderText(
@@ -44,8 +38,6 @@ class ToolBarComponent(QObject):
                 self.global_search.text()
             )
         )
-        toolbar_layout.addWidget(self.global_search)
-
-        layout.addWidget(self.toolbar_container)
+        layout.addWidget(self.global_search)
 
         return self.update_banner, self.global_search

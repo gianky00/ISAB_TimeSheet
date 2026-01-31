@@ -25,6 +25,10 @@ class PDLFilterWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
+        # Force compact height
+        from PyQt6.QtWidgets import QSizePolicy
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def _setup_ui(self):
         layout = QHBoxLayout(self)

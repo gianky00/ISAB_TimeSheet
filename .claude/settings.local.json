@@ -28,7 +28,8 @@
       "Bash(tasklist:*)",
       "Bash(findstr:*)",
       "Bash(powershell:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(git ls-tree:*)"
     ]
   }
 }
