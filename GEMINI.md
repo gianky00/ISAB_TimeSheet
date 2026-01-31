@@ -26,30 +26,32 @@ C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\
 
 ## 🛠️ Tech Stack
 
-*   **Language:** Python 3.12+
-*   **GUI:** PyQt6
-*   **Automation:** Selenium, Requests
-*   **Data Processing:** Pandas, OpenPyXL, PyArrow
-*   **Database:** SQLite (managed via internal ORM/Helpers)
-*   **Build System:** Poetry / PyInstaller
-*   **Linting/Formatting:** Ruff, Black, Mypy
+* **Language:** Python 3.12+
+* **GUI:** PyQt6
+* **Automation:** Selenium, Requests
+* **Data Processing:** Pandas, OpenPyXL, PyArrow
+* **Database:** SQLite (managed via internal ORM/Helpers)
+* **Build System:** Poetry / PyInstaller
+* **Linting/Formatting:** Ruff, Black, Mypy
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-*   Python 3.12 (recommended)
-*   Poetry (dependency manager)
-*   Google Chrome (latest version) for automation bots
+* Python 3.12 (recommended)
+* Poetry (dependency manager)
+* Google Chrome (latest version) for automation bots
 
 ### Installation
 
-1.  **Clone/Navigate to the repository:**
+1. **Clone/Navigate to the repository:**
+
     ```bash
     cd C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet
     ```
 
-2.  **Install dependencies:**
+2. **Install dependencies:**
+
     ```bash
     # Using Poetry (Recommended)
     poetry install
@@ -60,34 +62,42 @@ C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\
 
 ### Running the Application
 
-*   **Start the GUI:**
+* **Start the GUI:**
+
     ```bash
     python main.py
     ```
+
     Or use the poetry script:
+
     ```bash
     poetry run syncrojob
     ```
 
 ## 🧪 Testing & Quality Assurance
 
-*   **Run Unit Tests:**
+* **Run Unit Tests:**
+
     ```bash
     pytest tests/
     ```
+
     *See `tests/TESTING_PLAN_2026.md` for the current testing strategy.*
 
-*   **Linting:**
+* **Linting:**
+
     ```bash
     ruff check .
     ```
 
-*   **Type Checking:**
+* **Type Checking:**
+
     ```bash
     mypy .
     ```
 
-*   **Formatting:**
+* **Formatting:**
+
     ```bash
     black .
     ```
@@ -103,22 +113,73 @@ python "admin/Crea Setup/build_dist.py"
 ## 📐 Architecture & Patterns
 
 ### 1. Singleton Managers
+
 Core services like `AuditManager` and `NotificationManager` use a strict Singleton pattern.
-*   **Usage:** ALWAYS access via `.instance()`, never instantiate directly.
-*   **Signals:** Signals are decoupled into a nested `MySignals` class to avoid QObject multi-inheritance issues.
-    *   Example: `AuditManager.instance().signals.log_added.connect(...)`
+
+* **Usage:** ALWAYS access via `.instance()`, never instantiate directly.
+* **Signals:** Signals are decoupled into a nested `MySignals` class to avoid QObject multi-inheritance issues.
+  * Example: `AuditManager.instance().signals.log_added.connect(...)`
 
 ### 2. Bot Architecture
+
 All bots reside in `src/bots/` and inherit from `BaseBot`.
-*   **Structure:** Logic is separated into `pages/` (Page Object Model) and `locators.py`.
-*   **State:** Bots use `BotStatus` enum (IDLE, RUNNING, ERROR, etc.).
+
+* **Structure:** Logic is separated into `pages/` (Page Object Model) and `locators.py`.
+* **State:** Bots use `BotStatus` enum (IDLE, RUNNING, ERROR, etc.).
 
 ### 3. GUI Lazy Loading
+
 The `MainWindow` uses lazy loading for its panels to improve startup time. Panels are instantiated only when first accessed via the `NavigationController`.
 
 ## 📝 Conventions
 
-*   **Imports:** Absolute imports from `src` (e.g., `from src.core.constants import ...`).
-*   **GUI Styling:** Styles are separated in `assets/styles/*.qss`.
-*   **Logging:** Centralized crash logging in `main.py` and `src/core/audit_manager.py`.
-*   **Bots:** All bots should inherit from `src.bots.base.BaseBot` (or similar base classes) to ensure consistent error handling and logging.
+* **Imports:** Absolute imports from `src` (e.g., `from src.core.constants import ...`).
+* **GUI Styling:** Styles are separated in `assets/styles/*.qss`.
+* **Logging:** Use the enterprise logging system in `src/core/logging/`. See section below.
+* **Bots:** All bots should inherit from `src.bots.base.BaseBot` (or similar base classes) to ensure consistent error handling and logging.
+
+## 📋 Enterprise Logging System
+
+SyncroJob uses an AI-ready structured logging system in `src/core/logging/`.
+
+### Quick Start
+
+```python
+from src.core.logging import get_logger, with_context, measure_time
+
+logger = get_logger(__name__)
+
+with with_context(bot_type="scarico_ts", cantiere="ISAB"):
+    logger.info("Operation started", items=42)
+
+@measure_time(threshold_ms=5000)  # Warning if > 5s
+def slow_operation():
+    pass
+```
+
+### Key Features
+
+* **JSON Structured Logs**: AI-ready format in `logs/app.json`
+* **Context Propagation**: trace_id, span_id automatic correlation
+* **Performance Monitoring**: `@measure_time` decorator with baselines
+* **PII Masking**: Automatic filtering of passwords, CF, emails
+* **Audit Correlation**: `AuditManager.log_action()` returns audit_id
+
+### Documentation
+
+* **API Reference**: `src/core/logging/README.md`
+* **Migration Guide**: `src/core/logging/MIGRATION_GUIDE.md`
+* **Best Practices**: `src/core/logging/BEST_PRACTICES.md`
+
+### CLI Tools
+
+```bash
+# Query logs
+python tools/logs_cli.py query --level ERROR --bot scarico_ts
+
+# Reconstruct trace timeline
+python tools/logs_cli.py trace <trace_id>
+
+# System health report
+python tools/logs_cli.py health --hours 24
+```

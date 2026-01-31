@@ -13,6 +13,7 @@ from src.gui.widgets.toast import ToastManager
 
 logger = logging.getLogger(__name__)
 
+
 class ReportGenerator:
     """Gestisce la generazione e l'invio dei report per l'anagrafica dipendenti."""
 

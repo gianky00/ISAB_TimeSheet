@@ -86,14 +86,16 @@ class AuditDatabase:
         except Exception:
             return "0" * 64
 
-    def insert_log(self, data: tuple):
+    def insert_log(self, data: tuple) -> int:
+        """Inserisce un log entry e ritorna l'ID della riga inserita."""
         query = """INSERT INTO audit_logs
                    (timestamp, user_id, action, category, entity, params, status, severity,
                     duration_ms, module, error_code, row_hash)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
         with self.get_connection() as conn:
-            conn.execute(query, data)
+            cursor = conn.execute(query, data)
             conn.commit()
+            return cursor.lastrowid
 
     def fetch_filtered(
         self,

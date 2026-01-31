@@ -27,7 +27,7 @@
 
 
 
-         Riepilogo Pre-Flight Check         
+         Riepilogo Pre-Flight Check
 ┌──────────────────────────┬───────┬───────┐
 │ Controllo                │ Stato │ Tempo │
 ├──────────────────────────┼───────┼───────┤

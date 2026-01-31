@@ -234,7 +234,12 @@ class SidebarWidget(QFrame):
         logo_pixmap = QPixmap(get_asset_path("assets/app.ico"))
         if not logo_pixmap.isNull():
             self.logo_icon.setPixmap(
-                logo_pixmap.scaled(28, 28, QtCore.AspectRatioMode.KeepAspectRatio, QtCore.TransformationMode.SmoothTransformation)
+                logo_pixmap.scaled(
+                    28,
+                    28,
+                    QtCore.AspectRatioMode.KeepAspectRatio,
+                    QtCore.TransformationMode.SmoothTransformation,
+                )
             )
         self.logo_icon.setFixedSize(28, 28)
         header_layout.addWidget(self.logo_icon)
@@ -348,6 +353,10 @@ class SidebarWidget(QFrame):
         self.btn_audit.clicked.connect(lambda: self._handle_notifications_click(1))
         self.group_notifiche.add_child(self.btn_audit)
 
+        self.btn_health = SidebarChildButton("Health", get_asset_path(Icons.ACTIVITY))
+        self.btn_health.clicked.connect(lambda: self._handle_notifications_click(2))
+        self.group_notifiche.add_child(self.btn_health)
+
         # 8: Guida
         self.btn_help = SidebarButton("Guida", get_asset_path(Icons.HELP))
         self.btn_help.clicked.connect(lambda: self._handle_click(8))
@@ -402,13 +411,15 @@ class SidebarWidget(QFrame):
         self.group_db.set_active_index(index, db_indices)
 
         # Gestione Gruppo Notifiche (Indice 9)
-        # Notifiche (9) ha Audit (sub 1)
+        # Notifiche (9) ha Audit (sub 1), Health (sub 2)
         if index == 9:
             self.group_notifiche.header_btn.setChecked(True)
             self.btn_audit.setChecked(sub_index == 1)
+            self.btn_health.setChecked(sub_index == 2)
         else:
             self.group_notifiche.header_btn.setChecked(False)
             self.btn_audit.setChecked(False)
+            self.btn_health.setChecked(False)
 
         # Gestione Gruppo Automazioni (Indice 1)
         if index == 1:

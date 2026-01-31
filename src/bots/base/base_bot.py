@@ -3,7 +3,6 @@ Bot TS - Base Bot
 Classe base astratta per tutti i bot di automazione con State Machine e Validazione.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from pathlib import Path
@@ -20,8 +19,7 @@ from src.bots.base.login_page import LoginPage
 from src.bots.portale_fornitori.common.locators import CommonLocators
 from src.core import config_manager
 from src.core.constants import BotStatus, BrowserConfig, Timeouts, URLs
-
-logger = logging.getLogger(__name__)
+from src.core.logging import generate_trace_id, get_logger, measure_time, with_context
 
 
 class BaseBot(ABC):
@@ -67,6 +65,10 @@ class BaseBot(ABC):
         self.login_page: Optional[LoginPage] = None
         self._telegram_service: Any = None
 
+        # Enterprise logging
+        self._trace_id = generate_trace_id()
+        self._logger = get_logger(f"bot.{self.__class__.__name__}")
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -107,19 +109,28 @@ class BaseBot(ABC):
             return False, "Credenziali mancanti nelle impostazioni."
         return True, ""
 
-    def log(self, message: str):
+    def log(self, message: str, level: str = "INFO"):
         """
         Logga un messaggio in console, nel widget log e via Telegram se configurato.
 
         Args:
             message: Testo del messaggio da loggare.
+            level: Livello log (DEBUG, INFO, WARNING, ERROR, CRITICAL).
         """
-        # print(f"[{self.name}] {message}")
+        # Send to UI callback
         if self._log_callback:
             self._log_callback(message)
 
-        # Log to file via logging framework
-        logger.info(f"[{self.name}] {message}")
+        # Structured logging with bot context
+        log_method = getattr(self._logger, level.lower(), self._logger.info)
+        log_method(
+            message,
+            trace_id=self._trace_id,
+            bot_type=self.name.lower().replace(" ", "_"),
+            bot_status=self._status.name,
+        )
+
+        # Telegram notification
         if self._telegram_service:
             try:
                 import re
@@ -155,10 +166,14 @@ class BaseBot(ABC):
         if self._stop_requested:
             raise InterruptedError("Bot interrotto dall'utente")
 
+    @measure_time(threshold_ms=10000)
     def _init_driver(self):
         """Inizializzazione del driver Chrome con opzioni e configurazioni specifiche."""
         self.log("Inizializzazione browser...")
         self.status = BotStatus.INITIALIZING
+        self._logger.debug(
+            "Starting Chrome driver initialization", headless=self.headless
+        )
 
         options = self._get_chrome_options()
         driver_path = self._get_chromedriver_path()
@@ -170,6 +185,7 @@ class BaseBot(ABC):
                 raise RuntimeError("Chromedriver service non disponibile")
             self._setup_driver_instance(service, options)
             self._configure_waits_and_pages()
+            self._logger.info("Chrome driver initialized successfully")
         except Exception as e:
             self._handle_driver_error(e)
 
@@ -266,22 +282,40 @@ class BaseBot(ABC):
 
     def _handle_driver_error(self, e: Exception):
         """Gestisce gli errori critici di avvio del driver Chrome."""
-        msg = f"❌ ERRORE CRITICO DRIVER: {e}"
-        self.log(msg)
         err_str = str(e).lower()
+        error_type = "unknown"
+
         if "chrome instance exited" in err_str:
-            self.log(
-                "💡 SUGGERIMENTO: Chrome è crashato all'avvio (Sandbox/Version Mismatch)."
+            error_type = "chrome_crashed"
+            self._logger.error(
+                "Chrome driver initialization failed - browser crashed",
+                exc=e,
+                error_type=error_type,
+                suggestion="Ensure Chrome is updated",
             )
-            self.log("   - Assicurati che Chrome sia aggiornato.")
+            self.log("❌ ERRORE CRITICO DRIVER: Chrome è crashato all'avvio", "ERROR")
+            self.log("💡 SUGGERIMENTO: Assicurati che Chrome sia aggiornato.")
         elif "sessionnotcreatedexception" in err_str or "version" in err_str:
-            self.log(
-                "💡 SUGGERIMENTO: La tua versione di Chrome è troppo recente o obsoleta."
+            error_type = "version_mismatch"
+            self._logger.error(
+                "Chrome driver initialization failed - version mismatch",
+                exc=e,
+                error_type=error_type,
+                suggestion="Update Chrome or download compatible chromedriver",
             )
-            self.log("   1. Aggiorna Google Chrome all'ultima versione.")
-            self.log("   2. Oppure scarica manualmente 'chromedriver.exe' compatibile.")
+            self.log("❌ ERRORE CRITICO DRIVER: Versione incompatibile", "ERROR")
+            self.log(
+                "💡 SUGGERIMENTO: Aggiorna Chrome o scarica chromedriver compatibile."
+            )
+        else:
+            self._logger.exception(
+                "Chrome driver initialization failed", exc=e, error_type=error_type
+            )
+            self.log(f"❌ ERRORE CRITICO DRIVER: {e}", "ERROR")
+
         raise e
 
+    @measure_time(threshold_ms=5000)
     def execute(self, data: List[Dict[str, Any]]) -> bool:
         """
         Esegue il workflow completo del bot: Validazione -> Accesso -> Esecuzione -> Cleanup.
@@ -292,40 +326,55 @@ class BaseBot(ABC):
             bool: True se l'intera esecuzione ha avuto successo.
         """
         self._stop_requested = False
-        self.log(f"Avvio {self.name}...")
 
-        # 1. Validazione Preventiva
-        self.status = BotStatus.IDLE
-        valid, error_msg = self.validate_data(data)
-        if not valid:
-            self.log(f"❌ Validazione fallita: {error_msg}")
-            self.status = BotStatus.ERROR
-            return False
+        # Set up logging context for this bot execution
+        bot_type = self.name.lower().replace(" ", "_")
+        with with_context(
+            trace_id=self._trace_id,
+            bot_type=bot_type,
+            username=self.username[:3] + "***",  # Masked for privacy
+        ):
+            self._logger.info(
+                "Bot execution started",
+                data_count=len(data) if isinstance(data, list) else 1,
+            )
 
-        try:
-            # 2. Inizializzazione Browser
-            if not self._safe_login_with_retry():
+            # 1. Validazione Preventiva
+            self.status = BotStatus.IDLE
+            valid, error_msg = self.validate_data(data)
+            if not valid:
+                self._logger.error("Validation failed", error=error_msg)
+                self.log(f"❌ Validazione fallita: {error_msg}", "ERROR")
                 self.status = BotStatus.ERROR
                 return False
 
-            # 3. Esecuzione
-            self.status = BotStatus.RUNNING
-            result = self.run(data)
+            try:
+                # 2. Inizializzazione Browser
+                if not self._safe_login_with_retry():
+                    self.status = BotStatus.ERROR
+                    return False
 
-            self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
-            return result
+                # 3. Esecuzione
+                self.status = BotStatus.RUNNING
+                result = self.run(data)
 
-        except InterruptedError:
-            self.log("Bot interrotto")
-            self.status = BotStatus.STOPPED
-            return False
-        except Exception as e:
-            self.log(f"✗ Errore fatale: {e}")
-            self._save_error_state(str(e))
-            self.status = BotStatus.ERROR
-            return False
-        finally:
-            self.cleanup()
+                self.status = BotStatus.COMPLETED if result else BotStatus.ERROR
+                self._logger.info("Bot execution completed", success=result)
+                return result
+
+            except InterruptedError:
+                self._logger.warning("Bot execution interrupted by user")
+                self.log("Bot interrotto", "WARNING")
+                self.status = BotStatus.STOPPED
+                return False
+            except Exception as e:
+                self._logger.exception("Fatal bot error", exc=e)
+                self.log(f"✗ Errore fatale: {e}", "ERROR")
+                self._save_error_state(str(e))
+                self.status = BotStatus.ERROR
+                return False
+            finally:
+                self.cleanup()
 
     def _save_error_state(self, error_msg: str):
         """Salva uno screenshot e il sorgente HTML corrente per il debug post-mortem."""
@@ -351,15 +400,30 @@ class BaseBot(ABC):
             html_path = error_dir / f"error_{safe_name}_{timestamp}.html"
             html_path.write_text(self.driver.page_source, encoding="utf-8")
 
+            self._logger.info(
+                "Error state saved for debugging",
+                screenshot=str(screenshot_path),
+                html_source=str(html_path),
+                error_message=error_msg,
+            )
             self.log(f"📸 Stato errore salvato in: {error_dir.name}")
 
         except Exception as e:
-            self.log(f"⚠️ Impossibile salvare lo stato di errore: {e}")
+            self._logger.warning("Failed to save error state", exc=e)
+            self.log(f"⚠️ Impossibile salvare lo stato di errore: {e}", "WARNING")
 
+    @measure_time(threshold_ms=15000)
     def _login(self) -> bool:
         """Esegue il login al portale ISAB usando la LoginPage."""
+        self._logger.debug("Starting login process")
         if self.login_page:
-            return self.login_page.login(self.username, self.password)
+            result = self.login_page.login(self.username, self.password)
+            if result:
+                self._logger.info("Login successful")
+            else:
+                self._logger.error("Login failed")
+            return result
+        self._logger.error("Login page not initialized")
         return False
 
     def _attendi_scomparsa_overlay(self, timeout=None):

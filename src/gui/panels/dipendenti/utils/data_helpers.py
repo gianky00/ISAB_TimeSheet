@@ -8,6 +8,7 @@ def normalize_name(text):
         return ""
     return re.sub(r"\s+", " ", str(text).strip().upper())
 
+
 def build_timbrature_maps(accessi):
     today = datetime.now()
     last_by_cf = {}
@@ -34,12 +35,10 @@ def build_timbrature_maps(accessi):
                     if norm_cf:
                         if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
                             last_by_cf[norm_cf] = diff
-                    if (
-                        norm_key not in last_by_name
-                        or diff < last_by_name[norm_key]
-                    ):
+                    if norm_key not in last_by_name or diff < last_by_name[norm_key]:
                         last_by_name[norm_key] = diff
     return last_by_cf, last_by_name, normalize
+
 
 def compute_employee_status(r, last_by_cf, last_by_name, normalize):
     """Calcola lo stato del dipendente basandosi su timbrature e anagrafica."""
@@ -57,6 +56,7 @@ def compute_employee_status(r, last_by_cf, last_by_name, normalize):
         if diff_days is not None and not cf_val:
             cf_warning = True
     return diff_days, cf_warning, cog_val, nom_val, cf_val
+
 
 def format_db_date(date_str):
     if not date_str or date_str == "None":
