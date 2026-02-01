@@ -3,7 +3,7 @@ Filtri per sicurezza e privacy.
 """
 
 import re
-from typing import Any, Dict, List, Pattern, Tuple
+from typing import Any, Dict, List, Pattern, Sequence, Tuple, Union
 
 
 class SensitiveDataFilter:
@@ -111,7 +111,7 @@ class SensitiveDataFilter:
         if not isinstance(data, dict):
             return data
 
-        masked = {}
+        masked: Dict[str, Any] = {}
         for key, value in data.items():
             # Se la chiave è sensibile, maschera il valore
             if any(
@@ -131,7 +131,7 @@ class SensitiveDataFilter:
         return masked
 
     @classmethod
-    def mask_list(cls, data: List[Any]) -> List[Any]:
+    def mask_list(cls, data: Sequence[Any]) -> List[Any]:
         """
         Maschera dati sensibili in una lista (ricorsivo).
 
@@ -142,9 +142,9 @@ class SensitiveDataFilter:
             Nuova lista con dati sensibili mascherati
         """
         if not isinstance(data, (list, tuple)):
-            return data
+            return list(data) if isinstance(data, (list, tuple)) else [data]
 
-        masked = []
+        masked: List[Any] = []
         for item in data:
             if isinstance(item, dict):
                 masked.append(cls.mask_dict(item))

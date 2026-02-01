@@ -95,7 +95,9 @@ class AnomalyDetector:
         error_rate = report.get("error_rate_percent", 0)
 
         if error_rate > self.error_rate_threshold:
-            severity = "high" if error_rate > 15 else "medium"
+            severity: Literal["low", "medium", "high", "critical"] = "medium"
+            if error_rate > 15:
+                severity = "high"
             if error_rate > 25:
                 severity = "critical"
 
@@ -133,11 +135,11 @@ class AnomalyDetector:
             duration_ms = op.get("duration_ms", 0)
             operation = op.get("operation", "unknown")
 
-            severity = "low"
-            if duration_ms > 30000:  # > 30s
-                severity = "high"
-            elif duration_ms > 60000:  # > 1min
+            severity: Literal["low", "medium", "high", "critical"] = "low"
+            if duration_ms > 60000:  # > 1min
                 severity = "critical"
+            elif duration_ms > 30000:  # > 30s
+                severity = "high"
 
             anomalies.append(
                 Anomaly(
@@ -171,7 +173,7 @@ class AnomalyDetector:
             failure_rate = 100 - success_rate
 
             if failure_rate > self.failure_rate_threshold:
-                severity = "medium"
+                severity: Literal["low", "medium", "high", "critical"] = "medium"
                 if failure_rate > 30:
                     severity = "high"
                 if failure_rate > 50:
@@ -215,7 +217,7 @@ class PatternDetector:
         return patterns
 
     def find_repeated_errors(
-        self, hours: int = 24, min_count: int = None
+        self, hours: int = 24, min_count: Optional[int] = None
     ) -> List[Pattern]:
         """
         Trova errori che si ripetono frequentemente.
