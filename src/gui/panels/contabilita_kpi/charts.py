@@ -265,7 +265,7 @@ class KPIChartsManager:
             ax.text(
                 row["totale_prev"],
                 i + height / 2,
-                f" € {row['totale_prev']/1000:.1f}k",
+                f" € {row['totale_prev'] / 1000:.1f}k",
                 va="center",
                 fontsize=9,
                 color="#198754",
@@ -273,7 +273,7 @@ class KPIChartsManager:
             ax.text(
                 row["Costo"],
                 i - height / 2,
-                f" € {row['Costo']/1000:.1f}k",
+                f" € {row['Costo'] / 1000:.1f}k",
                 va="center",
                 fontsize=9,
                 color="#dc3545",

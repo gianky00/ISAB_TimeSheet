@@ -143,7 +143,7 @@ class AnomalyDetector:
                 Anomaly(
                     type="slow_operation",
                     severity=severity,
-                    message=f"Operazione lenta: {operation} ({duration_ms/1000:.1f}s)",
+                    message=f"Operazione lenta: {operation} ({duration_ms / 1000:.1f}s)",
                     details={
                         "operation": operation,
                         "duration_ms": duration_ms,

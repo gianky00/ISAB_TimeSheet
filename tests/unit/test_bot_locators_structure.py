@@ -26,9 +26,9 @@ class TestBotLocators:
                 By.CLASS_NAME,
                 By.CSS_SELECTOR,
             ], f"{attr_name} invalid By type"
-            assert isinstance(
-                locator[1], str
-            ), f"{attr_name} selector should be a string"
+            assert isinstance(locator[1], str), (
+                f"{attr_name} selector should be a string"
+            )
 
     def test_login_locators_structure(self):
         self._check_locators(LoginLocators)
