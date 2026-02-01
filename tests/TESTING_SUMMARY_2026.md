@@ -26,6 +26,12 @@ A targeted campaign was executed to increase test coverage and robustness for th
 - **StatsManager**: Bot usage tracking, error counting, and migration in `tests/unit/test_stats_manager.py`.
 - **LyraClient**: AI integration tests (model listing, ask/response, media analysis) in `tests/unit/test_lyra_client.py`.
 - **BugReporter**: Diagnostics ZIP creation, PII filtering, cleanup logic in `tests/unit/test_bug_reporter.py`.
+- **ReportHistory**: Trend calculation, history persistence, and malformed JSON handling in `tests/unit/test_report_history.py`.
+- **AppInitializer**: Core startup sequence, license check, logging setup in `tests/unit/test_app_initializer.py`.
+- **ContabilitaManager**: Excel import orchestration, DB queries delegation in `tests/unit/test_contabilita_manager.py`.
+- **OdaManager**: OdA retrieval, search filtering, Excel import in `tests/unit/test_oda_manager.py`.
+- **EmployeeManager**: CRUD operations, CSV import, schema fallback in `tests/unit/test_employee_manager.py`.
+- **ContabilitaSearch**: FTS5/LIKE search, extended multi-table search in `tests/unit/test_contabilita_search.py`.
 
 ### 3. Utility & Parsing
 
@@ -46,6 +52,12 @@ A targeted campaign was executed to increase test coverage and robustness for th
 - `tests/unit/test_stats_manager.py`
 - `tests/unit/test_lyra_client.py`
 - `tests/unit/test_bug_reporter.py`
+- `tests/unit/test_report_history.py`
+- `tests/unit/test_app_initializer.py`
+- `tests/unit/test_contabilita_manager.py`
+- `tests/unit/test_oda_manager.py`
+- `tests/unit/test_employee_manager.py`
+- `tests/unit/test_contabilita_search.py`
 
 ## Recommendations
 
