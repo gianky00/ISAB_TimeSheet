@@ -107,6 +107,7 @@ toast_error  # unused function (src/gui/widgets/toast.py)
 navigate_to_extended  # unused method (src/gui/controllers/navigation_controller.py)
 navigate_to_dataease  # unused method (src/gui/controllers/navigation_controller.py)
 _build_style_cache_only  # unused method (src/gui/scarico_ore_components.py)
+strict  # unused variable (src/gui/panels/timbrature/components/detail_view.py)
 
 # Accessibility Module (Future Use)
 make_accessible  # unused function (src/gui/accessibility.py)
