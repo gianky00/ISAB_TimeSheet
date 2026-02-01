@@ -1,0 +1,20 @@
+[
+    {
+        "id": "425ed7e7-133f-4f38-b1c6-451ceb2b01c7",
+        "title": "Persist",
+        "message": "Test persist",
+        "level": "warning",
+        "category": "system",
+        "priority": "low",
+        "source": "Sistema",
+        "timestamp": "2026-02-01T13:27:00.498652",
+        "read": false,
+        "archived": false,
+        "pinned": false,
+        "snoozed_until": null,
+        "tags": [],
+        "metadata": {},
+        "actions": [],
+        "related_id": null
+    }
+]

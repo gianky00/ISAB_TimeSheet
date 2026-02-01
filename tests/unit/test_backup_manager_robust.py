@@ -6,8 +6,9 @@ from src.core.backup_manager import BackupManager
 
 class TestBackupManager:
     @patch("src.core.backup_manager.os.environ", {"OneDrive": "C:\\MockOneDrive"})
+    @patch("src.core.backup_manager.Path.home", return_value=Path("C:/Users/Mock"))
     @patch("src.core.backup_manager.Path.is_dir", return_value=True)
-    def test_detect_cloud_paths(self, mock_is_dir):
+    def test_detect_cloud_paths(self, mock_is_dir, mock_home):
         paths = BackupManager.detect_cloud_paths()
         # On Windows, OneDrive env var is common
         assert "OneDrive" in paths
