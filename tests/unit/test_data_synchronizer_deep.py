@@ -2,6 +2,7 @@ import pytest
 
 from src.core.data_synchronizer import DataSynchronizer
 from src.core.database import DatabaseManager
+from src.core.database.migrations.contabilita import mig_contabilita_v1
 
 
 class TestDataSynchronizerDeep:
@@ -11,7 +12,7 @@ class TestDataSynchronizerDeep:
         # Inizializza schema minimo per il test
         manager = DatabaseManager()
         with manager.get_connection(p) as conn:
-            manager._mig_contabilita_v1(conn)
+            mig_contabilita_v1(conn)
         return p
 
     def test_sync_contabilita_dati_incremental(self, db_path):

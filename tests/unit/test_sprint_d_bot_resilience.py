@@ -110,5 +110,5 @@ class TestSprintDBotResilience:
         with pytest.raises(Exception, match="version mismatch"):
             bot._init_driver()
 
-        assert any("Chrome è troppo recente" in m for m in logs)
-        assert bot.status == BotStatus.INITIALIZING  # Stato impostato prima dell'errore
+        assert any("💡 SUGGERIMENTO: Aggiorna Chrome" in m for m in logs)
+        assert bot.status == BotStatus.INITIALIZING

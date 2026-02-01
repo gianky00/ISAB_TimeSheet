@@ -24,7 +24,7 @@ class TestContabilitaExtra:
                 "src.gui.panels.contabilita_panel.GiornaliereYearTab"
             ) as mock_giorn_tab,
             patch(
-                "src.gui.panels.contabilita_kpi_panel.ContabilitaKPIPanel"
+                "src.gui.panels.contabilita_kpi.ContabilitaKPIPanel"
             ) as mock_kpi_class,
             patch(
                 "src.gui.panels.contabilita_panel.AttivitaProgrammateTab"
@@ -85,7 +85,7 @@ class TestContabilitaExtra:
                 "src.gui.panels.contabilita_panel.GiornaliereYearTab"
             ) as mock_giorn_tab,
             patch(
-                "src.gui.panels.contabilita_kpi_panel.ContabilitaKPIPanel"
+                "src.gui.panels.contabilita_kpi.ContabilitaKPIPanel"
             ) as mock_kpi_class,
             patch(
                 "src.gui.panels.contabilita_panel.AttivitaProgrammateTab"

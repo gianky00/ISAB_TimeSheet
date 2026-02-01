@@ -3,7 +3,10 @@ Tests for BaseBot._init_driver refactoring.
 Ensures 100% coverage and parity before refactoring.
 """
 
+from unittest.mock import patch
+
 import pytest
+from selenium.common.exceptions import SessionNotCreatedException
 
 from src.bots.base.base_bot import BaseBot
 from src.core.constants import BotStatus
@@ -100,23 +103,30 @@ def test_init_driver_failure_handling(bot, mocker):
     with pytest.raises(Exception, match="chrome instance exited"):
         bot._init_driver()
 
-    assert any("SUGGERIMENTO: Chrome è crashato" in log for log in logs)
+    # Verifica che venga dato il suggerimento corretto
+    assert any(
+        "💡 SUGGERIMENTO: Assicurati che Chrome sia aggiornato" in log for log in logs
+    )
 
 
 def test_init_driver_version_error(bot, mocker):
-    """Test error handling for version mismatch."""
-    mocker.patch(
-        "src.bots.base.base_bot.webdriver.Chrome",
-        side_effect=Exception("sessionnotcreatedexception: version mismatch"),
+    """Test handling of driver version mismatch."""
+    # Mock driver setup to raise SessionNotCreatedException
+    with patch("src.bots.base.base_bot.webdriver.Chrome") as mock_chrome:
+        mock_chrome.side_effect = SessionNotCreatedException("version mismatch")
+
+        # Capture logs
+        logs = []
+        bot.set_log_callback(lambda m: logs.append(m))
+
+        with pytest.raises(SessionNotCreatedException):
+            bot._init_driver()
+
+    # Verify error logging
+    assert any(
+        "❌ ERRORE CRITICO DRIVER: Versione incompatibile" in log for log in logs
     )
-    mocker.patch(
-        "src.bots.base.base_bot.ChromeDriverManager"
-    ).return_value.install.return_value = "chromedriver.exe"
-
-    logs = []
-    bot.set_log_callback(lambda m: logs.append(m))
-
-    with pytest.raises(Exception, match="version mismatch"):
-        bot._init_driver()
-
-    assert any("SUGGERIMENTO: La tua versione di Chrome" in log for log in logs)
+    assert any(
+        "💡 SUGGERIMENTO: Aggiorna Chrome o scarica chromedriver compatibile." in log
+        for log in logs
+    )

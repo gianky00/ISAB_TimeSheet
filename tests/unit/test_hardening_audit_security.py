@@ -29,7 +29,7 @@ class TestHardeningAuditSecurity:
     def db_env(self, tmp_path, mocker):
         """Setup isolato per DatabaseManager e FTS5."""
         # Patch CONFIG_DIR per altri usi
-        mocker.patch("src.core.database.CONFIG_DIR", tmp_path)
+        mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
 
         # Patch i percorsi DB direttamente nella classe per sovrascrivere i valori statici
         data_dir = tmp_path / "data"

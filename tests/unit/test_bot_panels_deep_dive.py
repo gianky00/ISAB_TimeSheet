@@ -149,7 +149,8 @@ class TestBaseBotPanel:
         event = MagicMock()
 
         with patch(
-            "PyQt6.QtWidgets.QInputDialog.getText", return_value=("secret", True)
+            "src.gui.panels.base.StandardInputDialog.get_input",
+            return_value=("secret", True),
         ):
             panel._ask_user_input("Prompt", container, event)
             assert container["value"] == "secret"

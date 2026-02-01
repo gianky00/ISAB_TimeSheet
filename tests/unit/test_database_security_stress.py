@@ -13,7 +13,7 @@ class TestDatabaseSecurityStress:
     @pytest.fixture
     def db_mgr(self, tmp_path, mocker):
         # Patch CONFIG_DIR per usare tmp_path
-        mocker.patch("src.core.database.CONFIG_DIR", tmp_path)
+        mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
         mgr = DatabaseManager()
         return mgr
 

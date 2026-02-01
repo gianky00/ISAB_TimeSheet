@@ -164,7 +164,7 @@ class DataSynchronizer:
         cls, db_path: Path, rows_to_insert: List[Tuple]
     ) -> Tuple[int, int]:
         db_cols = list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ["styles"]
-        return cls._sync_generic(
+        return cls._sync_upsert_smart(
             db_path, "attivita_programmate", db_cols, rows_to_insert
         )
 
@@ -220,7 +220,7 @@ class DataSynchronizer:
     def sync_certificati_campione(
         cls, db_path: Path, rows_to_insert: List[Tuple]
     ) -> Tuple[int, int]:
-        return cls._sync_generic(
+        return cls._sync_upsert_smart(
             db_path,
             "certificati_campione",
             ExcelImporter.CERTIFICATI_CAMPIONE_COLS,

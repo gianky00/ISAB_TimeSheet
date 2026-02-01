@@ -18,7 +18,7 @@ class TestDatabaseManager:
             "src.core.database.DatabaseManager.DB_TIMBRATURE",
             tmp_path / "timbrature.db",
         )
-        mocker.patch("src.core.database.CONFIG_DIR", tmp_path)
+        mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
 
         # Reset singleton
         DatabaseManager._instance = None
