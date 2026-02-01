@@ -90,7 +90,8 @@ class TestSettingsPanelCoverage:
     def test_add_fornitore(self, panel, mocker):
         """Test adding a supplier."""
         mocker.patch(
-            "PyQt6.QtWidgets.QInputDialog.getText", return_value=("New Supplier", True)
+            "src.gui.dialogs.standard_input_dialog.StandardInputDialog.get_input",
+            return_value=("New Supplier", True),
         )
         lists_page = panel.config_tab.lists_page
         lists_page._add_fornitore()

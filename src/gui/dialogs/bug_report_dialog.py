@@ -1,17 +1,31 @@
+"""
+SyncroJob - Enhanced Bug Report Dialog
+
+Dialog per segnalazione bug con opzioni avanzate:
+- Opzioni configurabili (log enterprise, analytics, audit)
+- Preview contenuto ZIP
+- Integrazione Outlook
+"""
+
 import logging
 import os
 from pathlib import Path
+from typing import List, Optional
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
     QFileDialog,
+    QFrame,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QTextEdit,
     QVBoxLayout,
 )
@@ -25,21 +39,32 @@ logger = logging.getLogger(__name__)
 class ReportWorker(QThread):
     """Worker thread per generare il report senza bloccare la UI."""
 
-    finished = pyqtSignal(bool, str, str)  # success, message, file_path
+    finished = pyqtSignal(bool, str, str, list)  # success, message, file_path, files
 
-    def __init__(self, include_logs: bool):
+    def __init__(
+        self,
+        include_logs: bool,
+        include_analytics: bool,
+        include_audit: bool,
+        trace_id: Optional[str] = None,
+    ):
         super().__init__()
         self.include_logs = include_logs
+        self.include_analytics = include_analytics
+        self.include_audit = include_audit
+        self.trace_id = trace_id
 
     def run(self):
-        if self.include_logs:
-            path, msg = BugReporter.collect_diagnostics()
-            if path:
-                self.finished.emit(True, msg, str(path))
-            else:
-                self.finished.emit(False, msg, "")
+        path, msg, files = BugReporter.collect_diagnostics(
+            include_enterprise_logs=self.include_logs,
+            include_analytics=self.include_analytics,
+            include_audit=self.include_audit,
+            trace_id=self.trace_id if self.trace_id else None,
+        )
+        if path:
+            self.finished.emit(True, msg, str(path), files)
         else:
-            self.finished.emit(False, "Invio solo testo non supportato.", "")
+            self.finished.emit(False, msg, "", [])
 
 
 class BugReportDialog(QDialog):
@@ -48,14 +73,16 @@ class BugReportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Segnala un Problema")
-        self.resize(550, 450)
+        self.resize(600, 550)
         self.setup_ui()
         self.worker = None
+        self._update_size_estimate()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setSpacing(12)
 
-        # Style pulsanti (Hardcoded backup se stylesheet globale fallisce, ma usa colori standard app)
+        # Style
         btn_style = """
             QPushButton {
                 background-color: #009688;
@@ -77,36 +104,114 @@ class BugReportDialog(QDialog):
             "Descrivi il problema riscontrato con il maggior dettaglio possibile.\n"
             "Se possibile, indica i passaggi per riprodurlo."
         )
-        lbl_info.setStyleSheet("font-size: 14px; color: #424242; margin-bottom: 10px;")
+        lbl_info.setStyleSheet("font-size: 14px; color: #424242; margin-bottom: 5px;")
         lbl_info.setWordWrap(True)
         layout.addWidget(lbl_info)
 
         # Text Area
         self.txt_description = QTextEdit()
         self.txt_description.setPlaceholderText(
-            "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... Stavo lavorando sul cantiere X..."
+            "Es: Ho cliccato su Scarica PDL e l'app si è chiusa... "
+            "Stavo lavorando sul cantiere X..."
         )
         self.txt_description.setStyleSheet(
-            "background-color: white; border: 1px solid #BDBDBD; border-radius: 4px; padding: 8px;"
+            "background-color: white; border: 1px solid #BDBDBD; "
+            "border-radius: 4px; padding: 8px; min-height: 100px;"
         )
+        self.txt_description.setMaximumHeight(120)
         layout.addWidget(self.txt_description)
 
-        # Options
-        self.chk_include_logs = QCheckBox(
-            "Includi file di log e screenshot di errore (Consigliato)"
+        # Options Group
+        options_group = QGroupBox("Contenuto Report")
+        options_group.setStyleSheet(
+            "QGroupBox { font-weight: 600; color: #424242; margin-top: 10px; }"
         )
+        options_layout = QVBoxLayout(options_group)
+        options_layout.setSpacing(8)
+
+        self.chk_include_logs = QCheckBox("Includi Log Enterprise (app.json, app.log)")
         self.chk_include_logs.setChecked(True)
-        self.chk_include_logs.setStyleSheet("margin-top: 10px; font-weight: 500;")
-        layout.addWidget(self.chk_include_logs)
+        self.chk_include_logs.toggled.connect(self._update_size_estimate)
+        options_layout.addWidget(self.chk_include_logs)
+
+        self.chk_include_analytics = QCheckBox(
+            "Includi Analytics Report (anomalie, health score)"
+        )
+        self.chk_include_analytics.setChecked(True)
+        self.chk_include_analytics.toggled.connect(self._update_size_estimate)
+        options_layout.addWidget(self.chk_include_analytics)
+
+        self.chk_include_audit = QCheckBox("Includi Audit Trail (ultime 50 azioni)")
+        self.chk_include_audit.setChecked(True)
+        self.chk_include_audit.toggled.connect(self._update_size_estimate)
+        options_layout.addWidget(self.chk_include_audit)
+
+        # Trace ID (optional)
+        trace_layout = QHBoxLayout()
+        trace_layout.setSpacing(8)
+        lbl_trace = QLabel("Trace ID (opzionale):")
+        lbl_trace.setStyleSheet("color: #666; font-size: 12px;")
+        self.txt_trace_id = QLineEdit()
+        self.txt_trace_id.setPlaceholderText("Es: abc123def456")
+        self.txt_trace_id.setStyleSheet(
+            "background: white; border: 1px solid #ddd; border-radius: 4px; "
+            "padding: 4px 8px; font-family: monospace;"
+        )
+        self.txt_trace_id.setMaximumWidth(200)
+        trace_layout.addWidget(lbl_trace)
+        trace_layout.addWidget(self.txt_trace_id)
+        trace_layout.addStretch()
+        options_layout.addLayout(trace_layout)
+
+        layout.addWidget(options_group)
+
+        # Size Estimate
+        self.lbl_size = QLabel("Dimensione stimata: ~50 KB")
+        self.lbl_size.setStyleSheet("color: #666; font-size: 12px; margin-top: 5px;")
+        layout.addWidget(self.lbl_size)
+
+        # Privacy Warning
+        warning_frame = QFrame()
+        warning_frame.setStyleSheet(
+            "background-color: #FFF3E0; border: 1px solid #FFB74D; "
+            "border-radius: 6px; padding: 8px;"
+        )
+        warning_layout = QHBoxLayout(warning_frame)
+        warning_layout.setContentsMargins(8, 8, 8, 8)
+        lbl_warning = QLabel(
+            "⚠️ Il report potrebbe contenere informazioni sensibili. "
+            "Verifica il contenuto prima di inviare."
+        )
+        lbl_warning.setStyleSheet("color: #E65100; font-size: 12px;")
+        lbl_warning.setWordWrap(True)
+        warning_layout.addWidget(lbl_warning)
+        layout.addWidget(warning_frame)
 
         # Progress
         self.progress = QProgressBar()
         self.progress.setVisible(False)
         self.progress.setRange(0, 0)  # Indeterminate
         self.progress.setStyleSheet(
-            "QProgressBar { background: #E0E0E0; border: none; height: 6px; margin-top: 10px; } QProgressBar::chunk { background: #009688; }"
+            "QProgressBar { background: #E0E0E0; border: none; height: 6px; } "
+            "QProgressBar::chunk { background: #009688; }"
         )
         layout.addWidget(self.progress)
+
+        # Preview Area (initially hidden)
+        self.preview_group = QGroupBox("File inclusi nel report")
+        self.preview_group.setVisible(False)
+        preview_layout = QVBoxLayout(self.preview_group)
+        self.preview_scroll = QScrollArea()
+        self.preview_scroll.setWidgetResizable(True)
+        self.preview_scroll.setMaximumHeight(100)
+        self.preview_content = QLabel()
+        self.preview_content.setStyleSheet(
+            "font-family: monospace; font-size: 11px; color: #555;"
+        )
+        self.preview_content.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.preview_scroll.setWidget(self.preview_content)
+        preview_layout.addWidget(self.preview_scroll)
+        layout.addWidget(self.preview_group)
 
         # Buttons Area
         btn_layout = QHBoxLayout()
@@ -114,17 +219,30 @@ class BugReportDialog(QDialog):
 
         self.btn_cancel = QPushButton("Annulla")
         self.btn_cancel.setStyleSheet(
-            "background-color: #757575; color: white; border-radius: 6px; padding: 10px 20px;"
+            "background-color: #757575; color: white; "
+            "border-radius: 6px; padding: 10px 20px;"
         )
         self.btn_cancel.clicked.connect(self.reject)
 
-        self.btn_send = QPushButton("Invia con Outlook")
+        self.btn_send = QPushButton("Genera e Invia")
         self.btn_send.clicked.connect(self.start_generation)
 
         btn_layout.addWidget(self.btn_cancel)
         btn_layout.addWidget(self.btn_send)
 
         layout.addLayout(btn_layout)
+
+    def _update_size_estimate(self):
+        """Aggiorna stima dimensione ZIP."""
+        try:
+            size = BugReporter.get_estimated_size(
+                include_enterprise_logs=self.chk_include_logs.isChecked(),
+                include_analytics=self.chk_include_analytics.isChecked(),
+                include_audit=self.chk_include_audit.isChecked(),
+            )
+            self.lbl_size.setText(f"Dimensione stimata: {size}")
+        except Exception:
+            self.lbl_size.setText("Dimensione stimata: ~50 KB")
 
     def start_generation(self):
         desc = self.txt_description.toPlainText().strip()
@@ -140,23 +258,39 @@ class BugReportDialog(QDialog):
         self.txt_description.setDisabled(True)
         self.btn_send.setDisabled(True)
         self.btn_cancel.setDisabled(True)
+        self.chk_include_logs.setDisabled(True)
+        self.chk_include_analytics.setDisabled(True)
+        self.chk_include_audit.setDisabled(True)
+        self.txt_trace_id.setDisabled(True)
         self.progress.setVisible(True)
-        self.progress.setFormat("Generazione pacchetto diagnostico...")
+
+        # Get trace ID if provided
+        trace_id = self.txt_trace_id.text().strip() or None
 
         # Start Worker
-        self.worker = ReportWorker(self.chk_include_logs.isChecked())
+        self.worker = ReportWorker(
+            include_logs=self.chk_include_logs.isChecked(),
+            include_analytics=self.chk_include_analytics.isChecked(),
+            include_audit=self.chk_include_audit.isChecked(),
+            trace_id=trace_id,
+        )
         self.worker.finished.connect(self.on_report_generated)
         self.worker.start()
 
-    def on_report_generated(self, success: bool, msg: str, file_path: str):
+    def on_report_generated(
+        self, success: bool, msg: str, file_path: str, files: List[str]
+    ):
         self.progress.setVisible(False)
-        self.txt_description.setDisabled(False)
-        self.btn_send.setDisabled(False)
-        self.btn_cancel.setDisabled(False)
+        self._enable_ui()
 
         if not success:
             QMessageBox.critical(self, "Errore Generazione", msg)
             return
+
+        # Show preview
+        if files:
+            self.preview_group.setVisible(True)
+            self.preview_content.setText("\n".join(f"📄 {f}" for f in files))
 
         desc = self.txt_description.toPlainText().strip()
 
@@ -169,12 +303,23 @@ class BugReportDialog(QDialog):
                 self,
                 "Outlook non disponibile",
                 "Impossibile aprire Outlook automaticamente.\n"
-                "Il report è stato generato. Per favore, scegli dove salvarlo e invialo manualmente.",
+                "Il report è stato generato. Per favore, scegli dove salvarlo "
+                "e invialo manualmente.",
             )
             self.save_manually(file_path)
 
+    def _enable_ui(self):
+        """Riabilita controlli UI."""
+        self.txt_description.setDisabled(False)
+        self.btn_send.setDisabled(False)
+        self.btn_cancel.setDisabled(False)
+        self.chk_include_logs.setDisabled(False)
+        self.chk_include_analytics.setDisabled(False)
+        self.chk_include_audit.setDisabled(False)
+        self.txt_trace_id.setDisabled(False)
+
     def open_outlook(self, attachment_path: str, description: str) -> bool:
-        """Apre una nuova mail in Outlook con destinatario, oggetto e allegato precompilati."""
+        """Apre una nuova mail in Outlook con destinatario, oggetto e allegato."""
         try:
             import getpass
             import platform
@@ -193,18 +338,11 @@ class BugReportDialog(QDialog):
 
             # Genera Ticket ID Univoco
             now = datetime.now()
-
-            # Formati stringa
-            date_display = now.strftime(
-                "%d/%m/%Y %H:%M"
-            )  # Es: 25/01/2026 12:30 (No underscore)
-            date_file = now.strftime("%d-%m-%Y_%H-%M")  # Es: 25-01-2026_12-30 (Safe)
-
+            date_display = now.strftime("%d/%m/%Y %H:%M")
+            date_file = now.strftime("%d-%m-%Y_%H-%M")
             rand_hex = f"{random.randint(0, 0xFFFF):04X}"
             ticket_id_suffix = f"TKT-{rand_hex}"
 
-            # Stringhe complete
-            # Oggetto: [Segnalazione Bug] SyncroJob v1.7.2 - 25/01/2026 12:38 TKT-34C8
             email_subject_suffix = f"{date_display} {ticket_id_suffix}"
             full_ticket_file = f"{date_file}_{ticket_id_suffix}"
 
@@ -220,7 +358,8 @@ class BugReportDialog(QDialog):
                 hw_id = str(uuid.getnode())
             except Exception:
                 pass
-            # Recupero Cliente (Fonte Ufficiale: License Validator come Footer)
+
+            # Recupero Cliente
             cliente_info = "ISAB S.R.L."
             try:
                 from src.core.license_validator import get_license_info
@@ -229,7 +368,6 @@ class BugReportDialog(QDialog):
                 if lic_data and "Cliente" in lic_data:
                     cliente_info = lic_data["Cliente"]
             except ImportError:
-                # Fallback on config if validator missing
                 config = config_manager.load_config()
                 cliente_info = config.get("customer_name", "ISAB S.R.L.")
 
@@ -252,59 +390,59 @@ class BugReportDialog(QDialog):
             except Exception as e:
                 logger.error(f"Errore rinomina ZIP: {e}")
 
-            # Costruzione Body HTML Layout 2 Colonne PULITO (No Giallo)
-            css_table_cell = (
+            # Costruzione Body HTML
+            css_cell = (
                 "padding: 8px 12px; border-bottom: 1px solid #e0e0e0; color: #333;"
             )
-            css_table_header = "padding: 8px 12px; border-bottom: 2px solid #009688; font-weight: 600; color: #009688; text-align: left;"
+            css_header = (
+                "padding: 8px 12px; border-bottom: 2px solid #009688; "
+                "font-weight: 600; color: #009688; text-align: left;"
+            )
 
             html_body = f"""
-            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 900px; font-size: 14px;">
+            <div style="font-family: 'Segoe UI', Tahoma, sans-serif; color: #333; max-width: 900px; font-size: 14px;">
                 <h2 style="color: #009688; border-bottom: 2px solid #009688; padding-bottom: 10px; margin-top: 0; display: inline-block;">
                     Segnalazione Bug SyncroJob
                 </h2>
 
-                <!-- CONTAINER TABLE -->
                 <table style="width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px;">
                     <tr>
-                        <!-- LEFT COLUMN: METADATA -->
                         <td style="width: 320px; vertical-align: top; padding-right: 30px;">
                             <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
                                 <tr>
-                                    <th style="{css_table_header}" colspan="2">DETTAGLI SISTEMA</th>
+                                    <th style="{css_header}" colspan="2">DETTAGLI SISTEMA</th>
                                 </tr>
                                 <tr>
-                                    <td style="{css_table_cell} font-weight: 600;">Ticket ID</td>
-                                    <td style="{css_table_cell} font-family: monospace; color: #d63384; font-weight: bold;">{ticket_id_suffix}</td>
+                                    <td style="{css_cell} font-weight: 600;">Ticket ID</td>
+                                    <td style="{css_cell} font-family: monospace; color: #d63384; font-weight: bold;">{ticket_id_suffix}</td>
                                 </tr>
                                 <tr>
-                                    <td style="{css_table_cell} font-weight: 600;">Data/Ora</td>
-                                    <td style="{css_table_cell}">{date_display}</td>
+                                    <td style="{css_cell} font-weight: 600;">Data/Ora</td>
+                                    <td style="{css_cell}">{date_display}</td>
                                 </tr>
                                 <tr>
-                                    <td style="{css_table_cell} font-weight: 600;">Versione</td>
-                                    <td style="{css_table_cell}">{current_ver}</td>
+                                    <td style="{css_cell} font-weight: 600;">Versione</td>
+                                    <td style="{css_cell}">{current_ver}</td>
                                 </tr>
                                 <tr>
-                                    <td style="{css_table_cell} font-weight: 600;">Utente</td>
-                                    <td style="{css_table_cell}">{current_user}</td>
+                                    <td style="{css_cell} font-weight: 600;">Utente</td>
+                                    <td style="{css_cell}">{current_user}</td>
                                 </tr>
                                 <tr>
-                                    <td style="{css_table_cell} font-weight: 600;">Host</td>
-                                    <td style="{css_table_cell}">{hostname}</td>
+                                    <td style="{css_cell} font-weight: 600;">Host</td>
+                                    <td style="{css_cell}">{hostname}</td>
                                 </tr>
                                 <tr>
-                                    <td style="{css_table_cell} font-weight: 600;">Cliente</td>
-                                    <td style="{css_table_cell}">{cliente_info}</td>
+                                    <td style="{css_cell} font-weight: 600;">Cliente</td>
+                                    <td style="{css_cell}">{cliente_info}</td>
                                 </tr>
                                 <tr>
-                                    <td style="{css_table_cell} font-weight: 600;">HW ID</td>
-                                    <td style="{css_table_cell} font-family: monospace; font-size: 12px;">{hw_id}</td>
+                                    <td style="{css_cell} font-weight: 600;">HW ID</td>
+                                    <td style="{css_cell} font-family: monospace; font-size: 12px;">{hw_id}</td>
                                 </tr>
                             </table>
                         </td>
 
-                        <!-- RIGHT COLUMN: DESCRIPTION -->
                         <td style="vertical-align: top;">
                             <h3 style="color: #444; margin-top: 0; margin-bottom: 15px; font-size: 16px; border-bottom: 2px solid #ddd; padding-bottom: 8px;">
                                 Descrizione Problema
@@ -316,9 +454,8 @@ class BugReportDialog(QDialog):
                     </tr>
                 </table>
 
-                <!-- TECH INFO FOOTER -->
                 <div style="margin-top: 40px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
-                    <strong>Contenuto Allegato Tecnico:</strong> Log applicativi, Stacktrace errori critici, Configurazione ambiente, Screenshot (se disponibili).<br>
+                    <strong>Contenuto Allegato:</strong> Log enterprise, Analytics report, Audit trail, Info sistema, Screenshot errori.<br>
                     File: <code>{os.path.basename(final_zip_path)}</code>
                 </div>
             </div>
@@ -329,7 +466,7 @@ class BugReportDialog(QDialog):
             if os.path.exists(final_zip_path):
                 mail.Attachments.Add(str(final_zip_path))
 
-            mail.Display()  # Mostra la finestra all'utente
+            mail.Display()
             return True
         except Exception as e:
             logger.error(f"Errore automazione Outlook: {e}")
@@ -350,7 +487,8 @@ class BugReportDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Salvato",
-                    f"Report salvato in:\n{dest_path}\n\nInvia questo file a gianky.allegretti@gmail.com",
+                    f"Report salvato in:\n{dest_path}\n\n"
+                    "Invia questo file a gianky.allegretti@gmail.com",
                 )
                 self.accept()
             except Exception as e:

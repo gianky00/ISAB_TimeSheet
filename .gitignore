@@ -68,3 +68,7 @@ architecture.png
 node_modules/
 claude/
 .aider*
+failed_ids.txt
+test_output.txt
+temp_pytest_run/
+temp_pytest_panel/

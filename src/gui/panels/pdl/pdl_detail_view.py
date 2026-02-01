@@ -45,41 +45,6 @@ class PDLDetailView(QWidget):
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
-        scroll.set(scroll_content)
-        layout.addWidget(scroll)
-
-    def set(self, scroll_content):
-        # Fix per errore di battitura nel codice sopra se necessario,
-        # ma meglio usare il metodo corretto di QScrollArea
-        pass
-
-    # Sovrascrivo setup_ui per correggere l'errore di battitura 'set' vs 'setWidget'
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 0, 5, 0)
-
-        detail_title = QLabel("Dettaglio Completo PDL")
-        detail_title.setStyleSheet(
-            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
-        )
-        layout.addWidget(detail_title)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll_content = QWidget()
-        self.form_layout = QFormLayout(scroll_content)
-        self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-        self.form_layout.setSpacing(10)
-
-        for h in self.headers:
-            val_label = QLabel("-")
-            val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
-            self.detail_labels[h] = val_label
-            self.form_layout.addRow(f"<b>{h}:</b>", val_label)
-
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll)
 

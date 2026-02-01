@@ -5,10 +5,10 @@ Enhanced metadata enrichment per log entries.
 import os
 import platform
 import socket
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 try:
-    from src.core.version import VERSION
+    from src.core.version import __version__ as VERSION
 except ImportError:
     VERSION = "unknown"
 
@@ -24,8 +24,8 @@ class MetadataEnricher:
     - Informazioni session/request (se disponibili)
     """
 
-    _instance = None
-    _cache = None
+    _instance: Optional["MetadataEnricher"] = None
+    _cache: Optional[Dict[str, Any]] = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -114,6 +114,8 @@ class MetadataEnricher:
         Returns:
             Dict con metadata statici
         """
+        if self._cache is None:
+            return {}
         return self._cache.copy()
 
     def get_dynamic_metadata(self) -> Dict[str, Any]:
@@ -123,7 +125,7 @@ class MetadataEnricher:
         Returns:
             Dict con metadata dinamici
         """
-        metadata = {}
+        metadata: Dict[str, Any] = {}
 
         # Process info (può cambiare tra fork/spawn)
         metadata["process_id"] = os.getpid()

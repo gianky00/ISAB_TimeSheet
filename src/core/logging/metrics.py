@@ -290,7 +290,7 @@ class PerformanceTracker:
         Returns:
             Dict con report
         """
-        report = {
+        report: Dict[str, Any] = {
             "timestamp": datetime.now().isoformat() + "Z",
             "operations": {},
         }

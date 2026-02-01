@@ -63,9 +63,9 @@ class TestCertificatiImport(unittest.TestCase):
                     "Errore max %",
                 ],
             )
-            real_df[
-                "Scadenza Certificato"
-            ] = "2025-12-31"  # Add other cols to satisfy mapping if strictly needed or if they are just optional
+            real_df["Scadenza Certificato"] = (
+                "2025-12-31"  # Add other cols to satisfy mapping if strictly needed or if they are just optional
+            )
             real_df["Emissione Certificato"] = "2025-01-01"
             real_df["ID-COEMI"] = "ID001"
             real_df["Stato Certificato"] = "Valido"

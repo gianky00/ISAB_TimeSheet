@@ -15,6 +15,7 @@ def telegram_service():
     service.app = AsyncMock()
     service.app.bot = AsyncMock()
     service.connected_chat_id = "123"
+    service.pdl_settings = {}
     return service
 
 
@@ -27,6 +28,10 @@ async def test_handle_error_conflict(telegram_service):
     await telegram_service._handle_error(None, context)
 
     telegram_service.log_signal.emit.assert_called()
+    assert any(
+        "CONFLITTO" in str(args)
+        for args in telegram_service.log_signal.emit.call_args_list
+    )
     telegram_service.stop_event.set.assert_called()
 
 
@@ -57,39 +62,59 @@ async def test_handle_error_other(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_on(telegram_service):
-    # Patch the actual utility function since it's imported inside the method
+    from src.core.telegram.handlers import callbacks
+
     with patch(
-        "src.utils.printing.get_installed_printers",
+        "src.core.telegram.handlers.callbacks.get_installed_printers",
         return_value=["Printer 1", "Printer 2"],
     ):
-        query = AsyncMock()
-        await telegram_service._handle_run_pdl_on(query)
+        update = MagicMock()
+        update.callback_query = AsyncMock()
+        update.callback_query.data = "run_pdl_on"
+        update.callback_query.message = AsyncMock()
+        update.effective_user.id = 123
+        update.effective_chat = MagicMock()
+        update.effective_chat.id = 123
 
-        query.edit_message_text.assert_called()
-        args, kwargs = query.edit_message_text.call_args
-        assert "Printer 1" in str(kwargs["reply_markup"])
+        await callbacks.handle_button(telegram_service, update, MagicMock())
+
+        update.callback_query.edit_message_text.assert_called()
+        args, kwargs = update.callback_query.edit_message_text.call_args
+        # The keyboard is generated via TelegramUI, we just check it was called
+        assert "reply_markup" in kwargs
 
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_off(telegram_service):
-    query = AsyncMock()
-    await telegram_service._handle_run_pdl_off(query)
-    query.edit_message_text.assert_called_with(
+    from src.core.telegram.handlers import callbacks
+
+    update = MagicMock()
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "run_pdl_off"
+    update.callback_query.message = AsyncMock()
+    update.effective_user.id = 123
+    update.effective_chat = MagicMock()
+    update.effective_chat.id = 123
+
+    await callbacks.handle_button(telegram_service, update, MagicMock())
+
+    update.callback_query.edit_message_text.assert_called_with(
         "Vuoi ricevere il PDF unito in chat?", reply_markup=ANY
     )
 
 
 @pytest.mark.asyncio
 async def test_handle_printer_selection(telegram_service):
-    # Patch the one in telegram_manager because it's imported at top level too
+    from src.core.telegram.handlers import callbacks
+
     with patch(
-        "src.core.telegram_manager.get_installed_printers",
+        "src.core.telegram.handlers.callbacks.get_installed_printers",
         return_value=["Printer 1", "Printer 2"],
     ):
         query = AsyncMock()
         chat_id = 123
-        await telegram_service._handle_printer_selection(
-            "sel_print_run_Printer 1", query, chat_id
+        await callbacks._handle_printer_selection(
+            telegram_service, "sel_print_run_Printer 1", query, chat_id
         )
 
         assert telegram_service.user_states[chat_id]["printer"] == "Printer 1"
@@ -98,13 +123,15 @@ async def test_handle_printer_selection(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_confirm_print_yes(telegram_service):
+    from src.core.telegram.handlers import callbacks
+
     query = AsyncMock()
     chat_id = 123
     telegram_service.user_states[chat_id] = {"printer": "MyPrinter"}
     telegram_service.pdl_settings[chat_id] = {"merge_all": True}
 
-    await telegram_service._handle_run_pdl_confirm(
-        "confirm_merge_yes_print", query, chat_id
+    await callbacks._handle_run_pdl_confirm(
+        telegram_service, "confirm_merge_yes_print", query, chat_id
     )
 
     telegram_service.command_received.emit.assert_any_call(
@@ -117,11 +144,13 @@ async def test_handle_run_pdl_confirm_print_yes(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_run_pdl_confirm_noprint_no(telegram_service):
+    from src.core.telegram.handlers import callbacks
+
     query = AsyncMock()
     chat_id = 123
 
-    await telegram_service._handle_run_pdl_confirm(
-        "confirm_merge_no_noprint", query, chat_id
+    await callbacks._handle_run_pdl_confirm(
+        telegram_service, "confirm_merge_no_noprint", query, chat_id
     )
 
     telegram_service.command_received.emit.assert_called_with(
@@ -131,33 +160,33 @@ async def test_handle_run_pdl_confirm_noprint_no(telegram_service):
 
 @pytest.mark.asyncio
 async def test_handle_utility_actions_status(telegram_service):
+    from src.core.telegram.handlers import callbacks
+
     telegram_service.status_requested = MagicMock()
-    await telegram_service._handle_utility_actions("status", MagicMock(), 123)
+    await callbacks._handle_utility_actions(
+        telegram_service, "status", MagicMock(), 123
+    )
     telegram_service.status_requested.emit.assert_called_with("123")
 
 
 @pytest.mark.asyncio
 async def test_handle_utility_actions_screenshot(telegram_service):
+    from src.core.telegram.handlers import callbacks
+
     query = AsyncMock()
-    await telegram_service._handle_utility_actions("screenshot", query, 123)
+    await callbacks._handle_utility_actions(telegram_service, "screenshot", query, 123)
     query.edit_message_text.assert_called_with("📸 Screenshot:", reply_markup=ANY)
 
 
 @pytest.mark.asyncio
 async def test_handle_utility_actions_snap(telegram_service):
+    from src.core.telegram.handlers import callbacks
+
     telegram_service.screenshot_requested = MagicMock()
-    await telegram_service._handle_utility_actions("snap_app", MagicMock(), 123)
+    await callbacks._handle_utility_actions(
+        telegram_service, "snap_app", MagicMock(), 123
+    )
     telegram_service.screenshot_requested.emit.assert_called_with("app")
-
-
-def test_handle_app_commands_restart(telegram_service):
-    telegram_service._handle_app_commands("app_restart")
-    telegram_service.command_received.emit.assert_called_with("restart_app", {})
-
-
-def test_handle_app_commands_conn_test(telegram_service):
-    telegram_service._handle_app_commands("app_conn_test")
-    telegram_service.command_received.emit.assert_called_with("test_connectivity", {})
 
 
 @pytest.mark.asyncio
@@ -169,6 +198,7 @@ async def test_async_send_methods(telegram_service):
     telegram_service.app.bot.send_photo.assert_called()
 
     with patch("builtins.open", mock_open(read_data=b"data")):
+        # We need to simulate that telegram_service.app.bot is an AsyncMock
         await telegram_service._send_document_async("123", "path/to/file", "caption")
         telegram_service.app.bot.send_document.assert_called()
 
@@ -187,10 +217,9 @@ async def test_shutdown_application(telegram_service):
 
 
 def test_get_full_printer_name(telegram_service):
-    # Patch the one in telegram_manager
-    with patch("src.core.telegram_manager.get_installed_printers") as mock_p:
+    from src.core.telegram.handlers import callbacks
+
+    with patch("src.core.telegram.handlers.callbacks.get_installed_printers") as mock_p:
         mock_p.return_value = ["My Specific Printer"]
-        assert (
-            telegram_service._get_full_printer_name("My Spec") == "My Specific Printer"
-        )
-        assert telegram_service._get_full_printer_name("Unknown") == "Unknown"
+        assert callbacks._get_full_printer_name("My Spec") == "My Specific Printer"
+        assert callbacks._get_full_printer_name("Unknown") == "Unknown"

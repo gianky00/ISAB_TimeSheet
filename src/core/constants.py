@@ -115,6 +115,7 @@ class Icons:
     ALERT_TRIANGLE = "assets/icons/alert-triangle.svg"
     SMART_TOY = "assets/icons/sparkles.svg"  # Fallback/Alias for AI
     TERMINAL = "assets/icons/terminal.svg"
+    COMMAND_PALETTE = "assets/icons/command-palette.svg"
 
     ARCHIVE = "assets/icons/archive.svg"
     LOG_OUT = "assets/icons/log-out.svg"

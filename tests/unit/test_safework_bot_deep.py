@@ -90,6 +90,8 @@ class TestSafeWorkPDLBotDeep:
         bot.log = MagicMock()
         bot._check_stop = MagicMock()
         bot.downloaded_files = []
+        bot.progress_callback = None
+        bot.log_error = MagicMock()
 
         # Bind real methods to execute the pipeline
         bot.run = SafeWorkPDLBot.run.__get__(bot, SafeWorkPDLBot)
@@ -122,21 +124,22 @@ class TestSafeWorkPDLBotDeep:
         mocker.patch("src.bots.safework.pdl.bot.fitz.open", return_value=mock_doc)
 
         # PATCH CRUCIALE: DocumentProcessor
-        mock_processor = mocker.patch("src.utils.document_processor.DocumentProcessor")
-        mock_processor.merge_pdfs.return_value = True
+        mock_merge = mocker.patch(
+            "src.utils.document_processor.DocumentProcessor.merge_pdfs",
+            return_value=True,
+        )
 
         mocker.patch("src.bots.safework.pdl.bot.os.rename")
         mocker.patch("src.bots.safework.pdl.bot.os.remove")
         mocker.patch("src.bots.safework.pdl.bot.os.path.exists", return_value=True)
 
         data = [{"pdl_number": "123", "merge_all_session": True}]
-
         result = bot.run(data)
 
         assert result is True
         # Deve aver chiamato merge_pdfs 2 volte (P1+P2 e poi Sessione)
-        assert mock_processor.merge_pdfs.call_count >= 2
+        assert mock_merge.call_count >= 2
 
         # Verifica che il secondo argomento dell'ultima chiamata contenga il nome sessione
-        last_call_args = mock_processor.merge_pdfs.call_args[0]
+        last_call_args = mock_merge.call_args[0]
         assert "PDL_SESSIONE" in str(last_call_args[1])

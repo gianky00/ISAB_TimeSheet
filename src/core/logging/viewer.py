@@ -16,9 +16,9 @@ class LogQuery:
 
     def __init__(self, log_file: Path):
         self.log_file = log_file
-        self.filters = []
-        self._limit = None
-        self._offset = 0
+        self.filters: List[Any] = []
+        self._limit: Optional[int] = None
+        self._offset: int = 0
 
     def level(self, *levels: str) -> "LogQuery":
         """Filtra per livello."""
@@ -186,7 +186,7 @@ class LogViewer:
         Returns:
             Dict level -> count
         """
-        stats = defaultdict(int)
+        stats: Dict[str, int] = defaultdict(int)
 
         results = self.query().execute()
         for entry in results:
@@ -205,7 +205,7 @@ class LogViewer:
         Returns:
             Lista di errori con count
         """
-        error_messages = defaultdict(int)
+        error_messages: Dict[str, int] = defaultdict(int)
         error_details = {}
 
         results = self.query("errors").execute()
@@ -376,7 +376,7 @@ class LogViewer:
         results = self.query().time_range(start, end).execute()
 
         # Statistiche base
-        level_stats = defaultdict(int)
+        level_stats: Dict[str, int] = defaultdict(int)
         for entry in results:
             level_stats[entry.get("level", "UNKNOWN")] += 1
 

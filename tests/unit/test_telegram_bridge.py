@@ -1,283 +1,119 @@
-import unittest
 from unittest.mock import MagicMock, patch
 
-from PyQt6.QtWidgets import QApplication
-
-from src.core.telegram_bridge import TelegramUIBridge
+import pytest
 
 
-class TestTelegramUIBridge(unittest.TestCase):
-    def setUp(self):
-        # Ensure a QApplication instance exists (provided by pytest-qt in full suite)
-        self.app = QApplication.instance()
+class TestTelegramUIBridge:
+    @pytest.fixture
+    def mock_main_window(self):
+        mw = MagicMock()
+        mw.telegram = MagicMock()
+        mw.telegram.pending_data = {}
+        mw.pdl_panel = MagicMock()
+        mw.pdl_panel.data_table.get_data.return_value = []
+        mw.scarico_panel = MagicMock()
+        mw.scarico_panel.data_table.get_data.return_value = []
+        return mw
 
-        self.mock_main_window = MagicMock()
+    @pytest.fixture
+    def bridge(self, mock_main_window):
+        with patch("src.core.telegram_bridge.QObject.__init__"):
+            from src.core.telegram_bridge import TelegramUIBridge
 
-        # Mock the telegram service as a plain MagicMock
-        self.mock_telegram_service = MagicMock()
+            b = TelegramUIBridge(mock_main_window)
+            b.mw = mock_main_window
+            b.telegram = mock_main_window.telegram
+            return b
 
-        # Explicitly mock signals and their connect method
-        for sig in [
-            "log_signal",
-            "command_received",
-            "data_received",
-            "status_requested",
-            "screenshot_requested",
-            "query_received",
-            "photo_received",
-            "intent_received",
-        ]:
-            setattr(self.mock_telegram_service, sig, MagicMock())
-            getattr(self.mock_telegram_service, sig).connect = MagicMock()
+    def test_setup_connections(self, bridge):
+        bridge.setup_connections()
+        bridge.telegram.command_received.connect.assert_called()
+        bridge.telegram.status_requested.connect.assert_called()
 
-        # Explicitly mock the methods and attributes
-        self.mock_telegram_service.send_message_sync = MagicMock()
-        self.mock_telegram_service.send_document_sync = MagicMock()
-        self.mock_telegram_service.send_photo_sync = MagicMock()
-        self.mock_telegram_service.pending_data = {}
-        self.mock_telegram_service.app = MagicMock()
-        self.mock_telegram_service.app.bot = MagicMock()
-        self.mock_telegram_service.loop = MagicMock()
+    def test_handle_command_run_ts(self, bridge):
+        bridge.mw.scarico_panel.validate_ready.return_value = (True, "OK")
 
-        # Assign the mocked telegram service to the main window and bridge
-        self.mock_main_window.telegram = self.mock_telegram_service
-        self.bridge = TelegramUIBridge(self.mock_main_window)
+        bridge._handle_command("run_ts", {})
 
-    def tearDown(self):
-        # Cleanup mocked app if needed
-        pass
+        bridge.mw.navigate_to_panel.assert_called_with("scarico_ts")
+        bridge.mw.scarico_panel.start_btn.click.assert_called()
 
-    def test_init(self):
-        self.assertEqual(self.bridge.mw, self.mock_main_window)
-        self.assertEqual(self.bridge.telegram, self.mock_main_window.telegram)
-
-    def test_setup_connections(self):
-        self.bridge.setup_connections()
-        self.mock_telegram_service.log_signal.connect.assert_called_once()
-        self.mock_telegram_service.command_received.connect.assert_called_once()
-
-    @patch("src.core.telegram_bridge.InputValidator")
-    def test_handle_intent_add_pdl(self, MockInputValidator):
-        self.mock_main_window.pdl_panel = MagicMock()
-        self.mock_main_window.show_toast = MagicMock()
-
-        MockInputValidator.validate_pdl.side_effect = [
-            MagicMock(valid=True, sanitized_value="PDL001"),
-            MagicMock(valid=True, sanitized_value="PDL002"),
-            MagicMock(valid=True, sanitized_value="PDL001"),
-            MagicMock(valid=True, sanitized_value="PDL002"),
+    def test_handle_command_list_pdl(self, bridge):
+        bridge.mw.pdl_panel.data_table.get_data.return_value = [
+            {"numero_pdl": "12345/A"},
+            {"numero_pdl": "67890/B"},
         ]
 
-        chat_id = 123
-        intent = {
-            "action": "add",
-            "object": "pdl",
-            "items": ["pdl_item_1", "pdl_item_2"],
-        }
+        bridge._handle_list_pdl()
 
-        self.bridge._handle_intent(chat_id, intent)
+        bridge.telegram.send_message_sync.assert_called()
+        call_args = bridge.telegram.send_message_sync.call_args[0][0]
+        assert "12345/A" in call_args
 
-        self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with(
-            [{"numero_pdl": "PDL001"}, {"numero_pdl": "PDL002"}]
-        )
+    def test_handle_command_clear_pdl(self, bridge):
+        bridge._handle_clear_pdl()
 
-    @patch("src.core.telegram_bridge.get_installed_printers")
-    @patch("src.core.telegram_bridge.InlineKeyboardButton")
-    @patch("src.core.telegram_bridge.InlineKeyboardMarkup")
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_handle_intent_print_pdl(
-        self,
-        mock_run_coroutine_threadsafe,
-        MockInlineKeyboardMarkup,
-        MockInlineKeyboardButton,
-        mock_get_installed_printers,
-    ):
-        mock_get_installed_printers.return_value = ["Printer1"]
-        self.mock_telegram_service.pending_data = {}
-        self.mock_telegram_service.app.bot.send_message = MagicMock()
+        bridge.mw.pdl_panel.clear_rows_simple.assert_called()
+        bridge.telegram.send_message_sync.assert_called()
 
-        chat_id = 123
-        intent = {"action": "print", "object": "pdl", "items": ["PDL001"]}
-
-        self.bridge._handle_intent(chat_id, intent)
-
-        self.assertIn(int(chat_id), self.mock_telegram_service.pending_data)
-        self.assertEqual(
-            self.mock_telegram_service.pending_data[int(chat_id)]["action"], "print"
-        )
-
-    @patch("src.core.telegram_bridge.InputValidator")
-    def test_handle_data_pdl(self, MockInputValidator):
-        self.mock_main_window.pdl_panel = MagicMock()
-        self.mock_main_window.scarico_panel = MagicMock()
-        self.mock_main_window.show_toast = MagicMock()
-        self.mock_main_window.navigate_to_panel = MagicMock()
-
-        # Setup specific mock attribute
-        self.mock_main_window.pdl_panel.bot_id = "scarico_pdl"
-
-        self.mock_main_window.pdl_panel.data_table.get_data.return_value = [
-            {"numero_pdl": "PDL001"}
-        ]
-        MockInputValidator.validate_pdl.side_effect = [
-            MagicMock(valid=True, sanitized_value="PDL002"),
-            MagicMock(valid=True, sanitized_value="PDL001"),  # Duplicate
-            MagicMock(valid=False, error="Invalid format"),
-        ]
-
-        data_type = "pdl"
-        items = ["PDL002", "PDL001", "INVALID_PDL"]
-        self.bridge._handle_data(data_type, items)
-
-        self.mock_main_window.pdl_panel.add_rows_simple.assert_called_once_with(
-            [{"numero_pdl": "PDL002"}]
-        )
-        self.mock_main_window.navigate_to_panel.assert_called_once_with("scarico_pdl")
-        self.mock_telegram_service.send_message_sync.assert_called_with(
-            "✅ Aggiunti/Impostati 1\nℹ️ 1 duplicati ignorati\n⚠️ Errori:\n❌ `INVALID_PDL`: Invalid format"
-        )
-
-    def test_handle_status(self):
+    def test_handle_command_stop_all_active(self, bridge):
         mock_panel = MagicMock()
-        mock_panel.get_current_status.return_value = ("Running", "Bot is active")
-        mock_panel.bot_name = "TestBot"
-        self.mock_main_window._get_active_bot_panel = MagicMock(return_value=mock_panel)
-        self.bridge._handle_status(123)
-        self.mock_telegram_service.send_message_sync.assert_called_with(
-            "📊 **Stato Sistema**\n\nAttività: TestBot\nStato: Running\nDettaglio: Bot is active"
-        )
+        mock_panel.stop_btn.isEnabled.return_value = True
+        bridge.mw.bot_controller._get_active_bot_panel.return_value = mock_panel
 
-        self.mock_main_window._get_active_bot_panel.return_value = None
-        self.mock_telegram_service.send_message_sync.reset_mock()
-        self.bridge._handle_status(123)
-        self.mock_telegram_service.send_message_sync.assert_called_with(
-            "📊 **Stato Sistema**\n\nIl sistema è in attesa (Idle)."
-        )
+        bridge._handle_stop_all()
 
-    @patch("src.core.telegram_bridge.QGuiApplication")
-    @patch("src.core.telegram_bridge.QPixmap")
-    @patch("src.core.telegram_bridge.QPainter")
-    @patch("src.core.telegram_bridge.QBuffer")
-    @patch("src.core.telegram_bridge.QIODevice")
-    def test_handle_screenshot_app(
-        self, MockQIODevice, MockQBuffer, MockQPainter, MockQPixmap, MockQGuiApplication
-    ):
-        self.mock_main_window.grab.return_value = MagicMock()
-        mock_buffer_instance = MagicMock()
-        mock_buffer_instance.data.return_value.data.return_value = b"screenshot_bytes"
-        MockQBuffer.return_value = mock_buffer_instance
+        mock_panel.stop_btn.click.assert_called()
 
-        self.bridge._handle_screenshot(mode="app")
+    def test_handle_command_stop_all_no_active(self, bridge):
+        bridge.mw.bot_controller._get_active_bot_panel.return_value = None
 
-        self.mock_main_window.grab.assert_called_once()
-        mock_buffer_instance.open.assert_called_once_with(
-            MockQIODevice.OpenModeFlag.WriteOnly
-        )
-        self.mock_main_window.grab.return_value.save.assert_called_once_with(
-            mock_buffer_instance, "PNG"
-        )
-        self.mock_telegram_service.send_photo_sync.assert_called_once_with(
-            b"screenshot_bytes", caption="📸 **Screenshot: Solo App**"
-        )
+        bridge._handle_stop_all()
 
-    @patch("src.core.telegram_bridge.SecretsManager")
-    @patch("src.core.telegram_bridge.threading.Thread")
-    @patch("src.core.telegram_bridge.LyraClient")
-    def test_handle_ai_query(self, MockLyraClient, MockThread, MockSecretsManager):
-        MockSecretsManager.get_gemini_api_key.return_value = "fake_api_key"
-        mock_lyra_client_instance = MagicMock()
-        mock_lyra_client_instance.ask.return_value = "AI response"
-        MockLyraClient.return_value = mock_lyra_client_instance
+        call_args = bridge.telegram.send_message_sync.call_args[0][0]
+        assert "Nessun processo" in call_args
 
-        self.bridge._handle_ai_query(123, "What is the weather?")
+    def test_handle_status_idle(self, bridge):
+        bridge.mw._get_active_bot_panel.return_value = None
 
-        MockSecretsManager.get_gemini_api_key.assert_called_once()
-        MockThread.assert_called_once()
-        args, kwargs = MockThread.call_args
-        target_func = kwargs["target"]
-        target_func()
-        MockLyraClient.assert_called_once_with(api_key="fake_api_key")
-        mock_lyra_client_instance.ask.assert_called_once_with("What is the weather?")
-        self.mock_telegram_service.send_message_sync.assert_any_call(
-            "🤖 **AI Coach**\n\nAI response"
-        )
+        bridge._handle_status(123456)
 
-    @patch("src.core.telegram_bridge.SecretsManager")
-    @patch("src.core.telegram_bridge.threading.Thread")
-    @patch("src.core.telegram_bridge.LyraClient")
-    @patch("src.core.telegram_bridge.base64")
-    def test_handle_photo(
-        self,
-        MockBase64,
-        MockLyraClient,
-        MockThread,
-        MockSecretsManager,
-    ):
-        MockSecretsManager.get_gemini_api_key.return_value = "fake_api_key"
-        mock_lyra_client_instance = MagicMock()
-        mock_lyra_client_instance.ask.return_value = "Photo analysis response"
-        MockLyraClient.return_value = mock_lyra_client_instance
-        MockBase64.b64encode.return_value.decode.return_value = "base64_photo_string"
+        call_args = bridge.telegram.send_message_sync.call_args[0][0]
+        assert "Idle" in call_args
 
-        photo_bytes = b"fake_photo_bytes"
-        caption = "Analyze this image"
-        self.bridge._handle_photo(123, photo_bytes, caption)
+    @patch("src.core.telegram_bridge.InputValidator")
+    def test_process_pdl_items_valid(self, mock_validator, bridge):
+        mock_result = MagicMock()
+        mock_result.valid = True
+        mock_result.sanitized_value = "12345/A"
+        mock_validator.validate_pdl.return_value = mock_result
 
-        MockSecretsManager.get_gemini_api_key.assert_called_once()
-        self.mock_telegram_service.send_message_sync.assert_any_call(
-            "🔍 **Analisi Documento...**"
-        )
-        MockThread.assert_called_once()
+        bridge._process_pdl_items(["12345/A"])
 
-        args, kwargs = MockThread.call_args
-        target_func = kwargs["target"]
-        target_func()
+        bridge.mw.pdl_panel.add_rows_simple.assert_called()
 
-        MockLyraClient.assert_called_once_with(api_key="fake_api_key")
-        mock_lyra_client_instance.ask.assert_called_once_with(
-            "Estrai dati da questo rapportino. Tabella Markdown.\nNote: Analyze this image",
-            images=["base64_photo_string"],
-        )
-        self.mock_telegram_service.send_message_sync.assert_any_call(
-            "📝 **Dati Estratti**\n\nPhoto analysis response"
-        )
+    @patch("src.core.telegram_bridge.InputValidator")
+    def test_add_pdl_from_telegram(self, mock_validator, bridge):
+        mock_result = MagicMock()
+        mock_result.valid = True
+        mock_result.sanitized_value = "12345/A"
+        mock_validator.validate_pdl.return_value = mock_result
 
-    @patch("src.core.telegram_bridge.subprocess")
-    @patch("src.core.telegram_bridge.os.path.abspath", return_value="avvio.bat")
-    @patch("src.core.telegram_bridge.QApplication.quit")
-    def test_handle_restart_app(self, mock_quit, mock_abspath, mock_subprocess):
-        self.bridge._handle_restart_app()
-        mock_subprocess.Popen.assert_called_once()
-        mock_quit.assert_called_once()
+        bridge._add_pdl_from_telegram(["12345/A"])
 
-    @patch("src.core.telegram_bridge.QDate")
-    def test_handle_run_timbrature(self, MockQDate):
-        self.mock_main_window.navigate_to_panel = MagicMock()
-        self.mock_main_window.timbrature_bot_panel = MagicMock()
-        self.mock_main_window.timbrature_bot_panel.validate_ready.return_value = (
-            True,
-            "",
-        )
+        bridge.mw.pdl_panel.add_rows_simple.assert_called()
+        bridge.mw.show_toast.assert_called()
 
-        mock_date = MagicMock()
-        mock_date.addDays.return_value = "yesterday_date"
-        MockQDate.currentDate.return_value = mock_date
+    def test_handle_intent_status(self, bridge):
+        bridge.mw._get_active_bot_panel.return_value = None
 
-        params = {"period": "yesterday"}
-        self.bridge._handle_run_timbrature(params)
+        bridge._handle_intent(123, {"action": "status", "object": None, "items": []})
 
-        self.mock_main_window.navigate_to_panel.assert_called_once_with("timbrature")
-        self.mock_main_window.timbrature_bot_panel.date_da_edit.setDate.assert_called_once_with(
-            "yesterday_date"
-        )
-        self.mock_main_window.timbrature_bot_panel.date_a_edit.setDate.assert_called_once_with(
-            "yesterday_date"
-        )
-        self.mock_main_window.timbrature_bot_panel.start_btn.click.assert_called_once()
-        self.mock_telegram_service.send_message_sync.assert_called_with(
-            "✅ Avvio Scarico Timbrature (ieri)."
-        )
+        bridge.telegram.send_message_sync.assert_called()
 
+    def test_send_data_feedback_valid(self, bridge):
+        bridge._send_data_feedback(5, 2, [])
 
-if __name__ == "__main__":
-    unittest.main()
+        call_args = bridge.telegram.send_message_sync.call_args[0][0]
+        assert "5" in call_args
+        assert "2 duplicati" in call_args

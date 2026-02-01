@@ -4,6 +4,11 @@ import pandas as pd
 import pytest
 
 from src.core.database import DatabaseManager
+from src.core.database.migrations.contabilita import (
+    mig_contabilita_v1,
+    mig_contabilita_v2,
+    mig_contabilita_v3,
+)
 from src.core.excel_importer import ExcelImporter
 from src.core.lyra_sentinel import LyraSentinel
 from src.core.notification_manager import NotificationManager
@@ -12,7 +17,7 @@ from src.core.notification_manager import NotificationManager
 class TestE2EWorkflowsHardened:
     @pytest.fixture
     def db_mgr(self, tmp_path, mocker):
-        mocker.patch("src.core.database.CONFIG_DIR", tmp_path)
+        mocker.patch("src.core.database.manager.CONFIG_DIR", tmp_path)
         mgr = DatabaseManager()
         return mgr
 
@@ -24,9 +29,9 @@ class TestE2EWorkflowsHardened:
         db_mgr._ensure_dirs()
 
         with db_mgr.get_connection(db_path) as conn:
-            db_mgr._mig_contabilita_v1(conn)
-            db_mgr._mig_contabilita_v2(conn)
-            db_mgr._mig_contabilita_v3(conn)
+            mig_contabilita_v1(conn)
+            mig_contabilita_v2(conn)
+            mig_contabilita_v3(conn)
 
         # 2. Crea file Excel "scaricato dal bot" con intestazioni esatte
         excel_path = tmp_path / "bot_download.xlsx"

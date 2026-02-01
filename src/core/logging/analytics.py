@@ -95,7 +95,9 @@ class AnomalyDetector:
         error_rate = report.get("error_rate_percent", 0)
 
         if error_rate > self.error_rate_threshold:
-            severity = "high" if error_rate > 15 else "medium"
+            severity: Literal["low", "medium", "high", "critical"] = "medium"
+            if error_rate > 15:
+                severity = "high"
             if error_rate > 25:
                 severity = "critical"
 
@@ -111,7 +113,7 @@ class AnomalyDetector:
                             "ERROR", 0
                         ),
                     },
-                    suggestion="Verifica i log di errore recenti con: python tools/logs_cli.py query --level ERROR",
+                    suggestion="Controlla gli errori recenti nella sezione Audit",
                 )
             )
 
@@ -133,23 +135,23 @@ class AnomalyDetector:
             duration_ms = op.get("duration_ms", 0)
             operation = op.get("operation", "unknown")
 
-            severity = "low"
-            if duration_ms > 30000:  # > 30s
-                severity = "high"
-            elif duration_ms > 60000:  # > 1min
+            severity: Literal["low", "medium", "high", "critical"] = "low"
+            if duration_ms > 60000:  # > 1min
                 severity = "critical"
+            elif duration_ms > 30000:  # > 30s
+                severity = "high"
 
             anomalies.append(
                 Anomaly(
                     type="slow_operation",
                     severity=severity,
-                    message=f"Operazione lenta: {operation} ({duration_ms/1000:.1f}s)",
+                    message=f"Operazione lenta: {operation} ({duration_ms / 1000:.1f}s)",
                     details={
                         "operation": operation,
                         "duration_ms": duration_ms,
                         "threshold_ms": self.slow_op_threshold_ms,
                     },
-                    suggestion=f"Investigare performance di '{operation}'",
+                    suggestion="Verifica la connessione di rete o riprova più tardi",
                 )
             )
 
@@ -171,7 +173,7 @@ class AnomalyDetector:
             failure_rate = 100 - success_rate
 
             if failure_rate > self.failure_rate_threshold:
-                severity = "medium"
+                severity: Literal["low", "medium", "high", "critical"] = "medium"
                 if failure_rate > 30:
                     severity = "high"
                 if failure_rate > 50:
@@ -188,7 +190,7 @@ class AnomalyDetector:
                             "total_runs": bot_run.get("total_runs", 0),
                             "failed_runs": bot_run.get("failed_runs", 0),
                         },
-                        suggestion=f"Verifica configurazione e credenziali per '{bot_type}'",
+                        suggestion="Verifica le credenziali nelle Impostazioni",
                     )
                 )
 
@@ -215,7 +217,7 @@ class PatternDetector:
         return patterns
 
     def find_repeated_errors(
-        self, hours: int = 24, min_count: int = None
+        self, hours: int = 24, min_count: Optional[int] = None
     ) -> List[Pattern]:
         """
         Trova errori che si ripetono frequentemente.
@@ -326,9 +328,7 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
 
     # Suggerimenti generali basati su pattern
     if len([p for p in patterns if p.count > 10]) > 0:
-        suggestions.append(
-            "Molti errori ripetuti: considera di investigare la causa root"
-        )
+        suggestions.append("Problema ricorrente rilevato: contatta il supporto tecnico")
 
     return AnalyticsReport(
         anomalies=anomalies,

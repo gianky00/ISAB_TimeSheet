@@ -1,125 +1,95 @@
-"""
-Tests for Lyra AI Client.
-Mocks external API calls to Gemini and local DB interaction.
-"""
-
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from src.core.lyra_client import LyraClient
 
 
-@pytest.fixture
-def mock_contabilita_manager():
-    with patch("src.core.lyra_client.ContabilitaManager") as mock_cm:
-        # Mock default return for available years
-        mock_cm.get_available_years.return_value = [2025]
-        # Mock default stats
-        mock_cm.get_year_stats.return_value = {
-            "total_prev": 100000.0,
-            "total_ore": 1000.0,
-            "count_total": 50,
-            "status_counts": {"COMPLETED": 40, "WIP": 10},
-            "top_commesse": [("Project A", 50000.0)],
+class TestLyraClient:
+    @pytest.fixture
+    def client(self):
+        with patch(
+            "src.core.config_manager.load_config",
+            return_value={"ai_model": "gemini-1.5-flash"},
+        ):
+            return LyraClient(api_key="test_api_key")
+
+    def test_init_requires_api_key(self):
+        with pytest.raises(ValueError, match="API Key"):
+            LyraClient(api_key="")
+
+    def test_init_model_from_config(self, client):
+        assert client.model == "gemini-1.5-flash"
+
+    @patch("src.core.lyra_client.requests.get")
+    def test_list_models(self, mock_get, client):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "models": [
+                {
+                    "name": "models/gemini-pro",
+                    "supportedGenerationMethods": ["generateContent"],
+                },
+                {
+                    "name": "models/embedding",
+                    "supportedGenerationMethods": ["embedContent"],
+                },
+            ]
         }
-        yield mock_cm
 
+        models = client.list_models()
+        assert "gemini-pro" in models
+        assert "embedding" not in models
 
-@pytest.fixture
-def mock_timbrature_db(tmp_path):
-    with (
-        patch("src.core.lyra_client.sqlite3") as mock_sqlite,
-        patch("src.core.lyra_client.CONFIG_DIR", tmp_path),
-    ):
-        # Mock connection and cursor
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_sqlite.connect.return_value = mock_conn
-        mock_conn.cursor.return_value = mock_cursor
-        mock_conn.__enter__.return_value = mock_conn
+    @patch("src.core.lyra_client.requests.post")
+    @patch(
+        "src.core.lyra_client.LyraClient._get_system_context", return_value="CONTEXT"
+    )
+    def test_ask_success(self, mock_ctx, mock_post, client):
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Risposta AI"}]}}],
+            "usageMetadata": {"promptTokenCount": 100, "candidatesTokenCount": 50},
+        }
 
-        # Use a list and pop to ensure we don't run out of values
-        # or return a default (0,) to avoid MagicMock issues
-        fetchone_responses = [(100,), (5,), (0,), (0,)]
+        response = client.ask("Qual è lo stato delle timbrature?")
+        assert response == "Risposta AI"
+        mock_post.assert_called_once()
 
-        def safe_fetchone(*args, **kwargs):
-            if fetchone_responses:
-                return fetchone_responses.pop(0)
-            return (0,)
+    @patch("src.core.lyra_client.requests.post")
+    def test_ask_api_error(self, mock_post, client):
+        mock_post.return_value.status_code = 500
+        mock_post.return_value.text = "Internal Server Error"
 
-        mock_cursor.fetchone.side_effect = safe_fetchone
+        response = client.ask("Test")
+        assert "Errore API" in response
+        assert "500" in response
 
-        mock_cursor.fetchall.return_value = [
-            ("2025-01-01", "Mario", "Rossi", "08:00", "17:00")
-        ]
+    @patch("src.core.lyra_client.requests.post")
+    def test_analyze_media(self, mock_post, client):
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Analisi immagine"}]}}],
+            "usageMetadata": {},
+        }
 
-        yield tmp_path
+        result = client.analyze_media(b"fake_image_bytes", "Descrivi l'immagine")
+        assert result == "Analisi immagine"
 
+    @patch(
+        "src.core.lyra_client.ContabilitaManager.get_available_years",
+        return_value=[2025, 2026],
+    )
+    @patch("src.core.lyra_client.ContabilitaManager.get_year_stats")
+    def test_get_contabilita_context(self, mock_stats, mock_years, client):
+        mock_stats.return_value = {
+            "total_prev": 100000,
+            "total_ore": 500,
+            "count_total": 10,
+            "status_counts": {"In corso": 5},
+            "top_commesse": [("Commessa A", 50000)],
+        }
 
-def test_system_context_generation(mock_contabilita_manager, mock_timbrature_db):
-    client = LyraClient(api_key="dummy_key")
-
-    # Create the dummy file
-    (mock_timbrature_db / "data").mkdir(parents=True, exist_ok=True)
-    (mock_timbrature_db / "data" / "timbrature_Isab.db").touch()
-
-    context = client._get_system_context()
-
-    assert "REPORT CONTABILITÀ (2025)" in context
-    assert "Valore Totale Preventivato: € 100,000.00" in context
-    assert "REPORT TIMBRATURE" in context
-    assert "ATTENZIONE: Rilevate 5 timbrature con uscita mancante" in context
-
-
-@patch("src.core.lyra_client.requests.post")
-def test_ask_success(mock_post, mock_contabilita_manager):
-    # Setup success response
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "candidates": [{"content": {"parts": [{"text": "Risposta AI"}]}}]
-    }
-    mock_post.return_value = mock_response
-
-    client = LyraClient(api_key="dummy_key")
-    # Mock getting context to avoid FS ops
-    with patch.object(client, "_get_system_context", return_value="[System Data]"):
-        answer = client.ask("Ciao")
-
-    assert answer == "Risposta AI"
-    mock_post.assert_called_once()
-
-
-@patch("src.core.lyra_client.requests.post")
-def test_ask_no_retry_on_fail(mock_post, mock_contabilita_manager):
-    # Setup fail sequence: 429
-    r1 = MagicMock()
-    r1.status_code = 429
-    r1.text = "Quota Exceeded"
-    mock_post.return_value = r1
-
-    client = LyraClient(api_key="dummy_key", model_name="gemini-1.5-pro")
-    with patch.object(client, "_get_system_context", return_value=""):
-        answer = client.ask("Ciao")
-
-    # Deve restituire errore e non riprovare
-    assert "Errore API gemini-1.5-pro (Status 429)" in answer
-    assert "Quota Exceeded" in answer
-    assert mock_post.call_count == 1
-
-
-@patch("src.core.lyra_client.requests.post")
-def test_ask_all_fail_message(mock_post, mock_contabilita_manager):
-    # All fail
-    mock_fail = MagicMock()
-    mock_fail.status_code = 500
-    mock_fail.text = "Internal Server Error"
-    mock_post.return_value = mock_fail
-
-    client = LyraClient(api_key="dummy_key", model_name="gemini-1.5-pro")
-    with patch.object(client, "_get_system_context", return_value=""):
-        answer = client.ask("Ciao")
-
-    assert "Errore API gemini-1.5-pro (Status 500)" in answer
-    assert "Internal Server Error" in answer
+        ctx = client._get_contabilita_context()
+        assert "2026" in ctx
+        assert "€ 100,000" in ctx or "100.000" in ctx

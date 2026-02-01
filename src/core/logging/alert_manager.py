@@ -71,12 +71,12 @@ class AlertManager:
 
     def configure(
         self,
-        enabled: bool = None,
-        error_rate_threshold: float = None,
-        failure_rate_threshold: float = None,
-        slow_operation_ms: int = None,
-        cooldown_minutes: int = None,
-        min_severity: str = None,
+        enabled: Optional[bool] = None,
+        error_rate_threshold: Optional[float] = None,
+        failure_rate_threshold: Optional[float] = None,
+        slow_operation_ms: Optional[int] = None,
+        cooldown_minutes: Optional[int] = None,
+        min_severity: Optional[Literal["low", "medium", "high", "critical"]] = None,
     ):
         """Aggiorna configurazione alert."""
         if enabled is not None:

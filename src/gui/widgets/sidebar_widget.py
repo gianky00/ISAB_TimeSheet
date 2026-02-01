@@ -119,6 +119,7 @@ class SidebarWidget(QFrame):
     navigation_requested = pyqtSignal(int)
     automation_tab_requested = pyqtSignal(int)  # 0: Fornitori, 1: Safework
     notifications_tab_requested = pyqtSignal(int)  # 0: Notifiche, 1: Audit
+    palette_requested = pyqtSignal()  # Richiesta apertura Command Palette
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -185,6 +186,7 @@ class SidebarWidget(QFrame):
             self.btn_lyra,
             self.btn_help,
             self.btn_settings,
+            self.btn_palette,
         ):
             btn.set_collapsed(self._is_collapsed)
 
@@ -262,7 +264,17 @@ class SidebarWidget(QFrame):
         self.separator.setStyleSheet("color: rgba(255,255,255,0.3);")
         layout.addWidget(self.separator)
 
-        layout.addSpacing(15)
+        layout.addSpacing(10)
+
+        # Pulsante Apri Palette (sotto header)
+        self.btn_palette = SidebarButton(
+            "Apri Palette", get_asset_path(Icons.COMMAND_PALETTE)
+        )
+        self.btn_palette.setToolTip("Apri Command Palette (Ctrl+K)")
+        self.btn_palette.clicked.connect(self._on_palette_click)
+        layout.addWidget(self.btn_palette)
+
+        layout.addSpacing(10)
 
         # --- MENU ITEMS ---
 
@@ -345,9 +357,15 @@ class SidebarWidget(QFrame):
         self.btn_lyra.clicked.connect(lambda: self._handle_click(2))
         layout.addWidget(self.btn_lyra)
 
-        # -- GRUPPO NOTIFICHE (Livello 1) --
-        self.group_notifiche = SidebarGroup("Notifiche", get_asset_path(Icons.BELL))
+        # -- GRUPPO MONITORAGGIO (Livello 1) --
+        self.group_notifiche = SidebarGroup(
+            "Monitoraggio", get_asset_path(Icons.ACTIVITY)
+        )
         layout.addWidget(self.group_notifiche)
+
+        self.btn_notifiche = SidebarChildButton("Notifiche", get_asset_path(Icons.BELL))
+        self.btn_notifiche.clicked.connect(lambda: self._handle_notifications_click(0))
+        self.group_notifiche.add_child(self.btn_notifiche)
 
         self.btn_audit = SidebarChildButton("Audit", get_asset_path(Icons.SHIELD))
         self.btn_audit.clicked.connect(lambda: self._handle_notifications_click(1))
@@ -374,6 +392,10 @@ class SidebarWidget(QFrame):
     def _handle_click(self, index):
         """Gestisce il click sui pulsanti standard."""
         self.navigation_requested.emit(index)
+
+    def _on_palette_click(self):
+        """Emette segnale per aprire la Command Palette."""
+        self.palette_requested.emit()
 
     def _handle_child_click(self, index):
         """Gestisce il click sui figli diretti (Database)."""
@@ -410,14 +432,16 @@ class SidebarWidget(QFrame):
         db_indices = [3, 4, 5, 6, 11, 10]
         self.group_db.set_active_index(index, db_indices)
 
-        # Gestione Gruppo Notifiche (Indice 9)
-        # Notifiche (9) ha Audit (sub 1), Health (sub 2)
+        # Gestione Gruppo Monitoraggio (Indice 9)
+        # Monitoraggio (9) ha Notifiche (sub 0), Audit (sub 1), Health (sub 2)
         if index == 9:
             self.group_notifiche.header_btn.setChecked(True)
+            self.btn_notifiche.setChecked(sub_index == 0)
             self.btn_audit.setChecked(sub_index == 1)
             self.btn_health.setChecked(sub_index == 2)
         else:
             self.group_notifiche.header_btn.setChecked(False)
+            self.btn_notifiche.setChecked(False)
             self.btn_audit.setChecked(False)
             self.btn_health.setChecked(False)
 

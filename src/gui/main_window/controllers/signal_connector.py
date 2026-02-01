@@ -49,3 +49,4 @@ class SignalConnector(QObject):
         sidebar.notifications_tab_requested.connect(
             self.main_window._handle_notifications_tab_change
         )
+        sidebar.palette_requested.connect(self.main_window._open_command_palette)
