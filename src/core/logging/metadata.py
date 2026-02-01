@@ -8,7 +8,7 @@ import socket
 from typing import Any, Dict
 
 try:
-    from src.core.version import VERSION
+    from src.core.version import __version__ as VERSION
 except ImportError:
     VERSION = "unknown"
 
