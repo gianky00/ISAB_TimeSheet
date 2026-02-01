@@ -32,8 +32,15 @@ A targeted campaign was executed to increase test coverage and robustness for th
 - **OdaManager**: OdA retrieval, search filtering, Excel import in `tests/unit/test_oda_manager.py`.
 - **EmployeeManager**: CRUD operations, CSV import, schema fallback in `tests/unit/test_employee_manager.py`.
 - **ContabilitaSearch**: FTS5/LIKE search, extended multi-table search in `tests/unit/test_contabilita_search.py`.
+- **SyncTracker**: State persistence, formatted status output in `tests/unit/test_sync_tracker.py`.
+- **ContabilitaStats**: Year statistics, direct/indirect hours in `tests/unit/test_contabilita_stats.py`.
 
 ### 3. Utility & Parsing
+
+- **Parsing Utilities**: Currency parsing (IT/US formats), euro removal, negative values in `tests/unit/test_parsing.py`.
+- **TelegramBridge**: Command handling, data processing, intent routing in `tests/unit/test_telegram_bridge.py`.
+- **InputValidator**: PDL/OdA/CF validation, date parsing, SQL sanitization in `tests/unit/test_input_validator.py`.
+- **TelegramService**: Service lifecycle, thread safety, user state isolation in `tests/unit/test_telegram_service.py`.
 
 - **Parsing**: Comprehensive tests for currency and number parsing in `tests/unit/test_parsing_comprehensive.py`.
 - **Validators**: Centralized input validation tests.
@@ -58,6 +65,12 @@ A targeted campaign was executed to increase test coverage and robustness for th
 - `tests/unit/test_oda_manager.py`
 - `tests/unit/test_employee_manager.py`
 - `tests/unit/test_contabilita_search.py`
+- `tests/unit/test_sync_tracker.py`
+- `tests/unit/test_contabilita_stats.py`
+- `tests/unit/test_parsing.py`
+- `tests/unit/test_telegram_bridge.py`
+- `tests/unit/test_input_validator.py`
+- `tests/unit/test_telegram_service.py`
 
 ## Recommendations
 

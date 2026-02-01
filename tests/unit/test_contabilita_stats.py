@@ -1,128 +1,193 @@
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from src.core.contabilita_stats import ContabilitaStats
 
 
 class TestContabilitaStats:
-    @pytest.fixture
-    def mock_data(self):
-        # Sample data matching ExcelImporter.COLUMNS_MAPPING structure
-        # Index 2: n_prev, 3: v_prev, 7: status, 9: v_ore, 4: attivita
-        return [
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_giornaliere_by_year")
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_data_by_year")
+    def test_get_year_stats_basic(self, mock_data, mock_giorn):
+        mock_data.return_value = [
+            # year, col1, n_prev, v_prev, attivita, col5, col6, status, col8, v_ore
             (
-                1,
-                "Comm1",
-                "PREV001",
-                "1.000,00",
-                "Attivita A",
-                "Desc",
-                "Cantiere",
+                2024,
+                None,
+                "ODA001",
+                "1000.00",
+                "Manutenzione",
+                None,
+                None,
                 "APERTO",
-                "Data",
-                "100,00",
+                None,
+                "50.0",
             ),
             (
-                2,
-                "Comm2",
-                "PREV002",
-                "2.000,00",
-                "Attivita B",
-                "Desc",
-                "Cantiere",
+                2024,
+                None,
+                "ODA002",
+                "2500.50",
+                "Ispezione",
+                None,
+                None,
                 "CHIUSO",
-                "Data",
-                "200,00",
+                None,
+                "100.5",
             ),
-            (
-                3,
-                "Comm3",
-                "TOTALE",
-                "3.000,00",
-                "Skip me",
-                "Desc",
-                "Cantiere",
-                "APERTO",
-                "Data",
-                "0",
-            ),  # Should be skipped
         ]
+        mock_giorn.return_value = []
 
-    @pytest.fixture
-    def mock_giornaliere(self):
-        # Index 4: n_prev, 5: odc, 9: ore
-        return [
-            (
-                "Data",
-                "Pers",
-                "TCL",
-                "Desc",
-                "PREV001",
-                "ODC1",
-                "PDL",
-                "08:00",
-                "17:00",
-                "8,00",
-                "file",
-            ),  # Direct
-            (
-                "Data",
-                "Pers",
-                "TCL",
-                "Desc",
-                "",
-                "",
-                "PDL",
-                "08:00",
-                "12:00",
-                "4,00",
-                "file",
-            ),  # Indirect
-            (
-                "Data",
-                "Pers",
-                "TCL",
-                "Desc",
-                "nan",
-                "nan",
-                "PDL",
-                "08:00",
-                "10:00",
-                "2,00",
-                "file",
-            ),  # Indirect
-        ]
+        stats = ContabilitaStats.get_year_stats(MagicMock(), 2024)
 
-    @patch("src.core.contabilita_stats.ContabilitaQueries")
-    def test_get_year_stats(self, mock_queries, mock_data, mock_giornaliere):
-        mock_queries.get_data_by_year.return_value = mock_data
-        mock_queries.get_giornaliere_by_year.return_value = mock_giornaliere
-
-        stats = ContabilitaStats.get_year_stats(Path("fake.db"), 2024)
-
-        assert stats["total_prev"] == 3000.0  # 1000 + 2000
-        assert stats["total_ore"] == 300.0  # 100 + 200
         assert stats["count_total"] == 2
+        assert stats["total_prev"] == 3500.50
+        assert stats["total_ore"] == 150.5
         assert stats["status_counts"]["APERTO"] == 1
         assert stats["status_counts"]["CHIUSO"] == 1
 
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_giornaliere_by_year")
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_data_by_year")
+    def test_get_year_stats_top_commesse(self, mock_data, mock_giorn):
+        mock_data.return_value = [
+            (
+                2024,
+                None,
+                "ODA001",
+                "5000.00",
+                "Big Project",
+                None,
+                None,
+                "APERTO",
+                None,
+                "0",
+            ),
+            (
+                2024,
+                None,
+                "ODA002",
+                "1000.00",
+                "Small Task",
+                None,
+                None,
+                "APERTO",
+                None,
+                "0",
+            ),
+            (
+                2024,
+                None,
+                "ODA003",
+                "3000.00",
+                "Medium Work",
+                None,
+                None,
+                "APERTO",
+                None,
+                "0",
+            ),
+        ]
+        mock_giorn.return_value = []
+
+        stats = ContabilitaStats.get_year_stats(MagicMock(), 2024)
+
+        # Top commesse should be sorted by value (descending)
+        assert len(stats["top_commesse"]) == 3
+        assert stats["top_commesse"][0][0] == "Big Project"
+        assert stats["top_commesse"][0][1] == 5000.0
+
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_giornaliere_by_year")
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_data_by_year")
+    def test_get_year_stats_giornaliere_dirette_indirette(self, mock_data, mock_giorn):
+        mock_data.return_value = []
+        mock_giorn.return_value = [
+            # data, col1, col2, col3, n_prev, odc, col6, col7, col8, ore
+            (
+                "2024-01-15",
+                None,
+                None,
+                None,
+                "ODA001",
+                "ODC01",
+                None,
+                None,
+                None,
+                "8.0",
+            ),  # Direct
+            (
+                "2024-01-16",
+                None,
+                None,
+                None,
+                "",
+                "",
+                None,
+                None,
+                None,
+                "4.0",
+            ),  # Indirect
+            (
+                "2024-01-17",
+                None,
+                None,
+                None,
+                "nan",
+                "nan",
+                None,
+                None,
+                None,
+                "6.0",
+            ),  # Indirect
+        ]
+
+        stats = ContabilitaStats.get_year_stats(MagicMock(), 2024)
+
         assert stats["ore_dirette"] == 8.0
-        assert stats["ore_indirette"] == 6.0  # 4 + 2
+        assert stats["ore_indirette"] == 10.0
 
-        assert len(stats["top_commesse"]) == 2
-        assert stats["top_commesse"][0][0] == "Attivita B"
-        assert stats["top_commesse"][0][1] == 2000.0
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_giornaliere_by_year")
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_data_by_year")
+    def test_get_year_stats_empty_data(self, mock_data, mock_giorn):
+        mock_data.return_value = []
+        mock_giorn.return_value = []
 
-    def test_process_main_data_empty(self):
-        stats = {"total_prev": 0, "total_ore": 0, "count_total": 0, "status_counts": {}}
-        commesse = ContabilitaStats._process_main_data([], stats)
-        assert commesse == []
-        assert stats["total_prev"] == 0
+        stats = ContabilitaStats.get_year_stats(MagicMock(), 2024)
 
-    def test_process_giornaliere_stats_empty(self):
-        stats = {"ore_dirette": 0, "ore_indirette": 0}
-        ContabilitaStats._process_giornaliere_stats([], stats)
-        assert stats["ore_dirette"] == 0
-        assert stats["ore_indirette"] == 0
+        assert stats["count_total"] == 0
+        assert stats["total_prev"] == 0.0
+        assert stats["top_commesse"] == []
+
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_giornaliere_by_year")
+    @patch("src.core.contabilita_stats.ContabilitaQueries.get_data_by_year")
+    def test_skips_totale_rows(self, mock_data, mock_giorn):
+        mock_data.return_value = [
+            (
+                2024,
+                None,
+                "ODA001",
+                "1000.00",
+                "Work",
+                None,
+                None,
+                "APERTO",
+                None,
+                "10.0",
+            ),
+            (
+                2024,
+                None,
+                "TOTALE ANNO",
+                "5000.00",
+                "Totale",
+                None,
+                None,
+                "",
+                None,
+                "100.0",
+            ),
+        ]
+        mock_giorn.return_value = []
+
+        stats = ContabilitaStats.get_year_stats(MagicMock(), 2024)
+
+        # TOTALE row should be skipped
+        assert stats["count_total"] == 1
+        assert stats["total_prev"] == 1000.0

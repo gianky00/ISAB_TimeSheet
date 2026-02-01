@@ -1,5 +1,4 @@
-import json
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -8,76 +7,75 @@ from src.core.sync_tracker import SyncTracker
 
 class TestSyncTracker:
     @pytest.fixture(autouse=True)
-    def reset_tracker(self):
-        """Reset SyncTracker state between tests."""
+    def reset_state(self, tmp_path):
+        # Reset class state before each test
+        SyncTracker._cache = {}
+        SyncTracker._loaded = False
+        state_file = tmp_path / "sync_state.json"
+        with patch.object(SyncTracker, "STATE_FILE", state_file):
+            yield state_file
         SyncTracker._cache = {}
         SyncTracker._loaded = False
 
-    @patch("src.core.sync_tracker.SyncTracker.STATE_FILE")
-    def test_load_save_cycle(self, mock_file):
-        mock_file.exists.return_value = True
-        mock_data = {"pdl": {"added": 10, "removed": 2}}
+    def test_update_status(self, reset_state):
+        SyncTracker.update_status("pdl", added=10, removed=2, duration=5.5)
 
-        m_open = mock_open(read_data=json.dumps(mock_data))
-        with patch("src.core.sync_tracker.open", m_open):
-            SyncTracker._load()
-            assert SyncTracker._cache["pdl"]["added"] == 10
+        status = SyncTracker.get_status("pdl")
 
-        SyncTracker.update_status("dipendenti", 5, 0, 1.5)
+        assert status["added"] == 10
+        assert status["removed"] == 2
+        assert status["duration"] == 5.5
+        assert "timestamp" in status
 
-        # Check if saved
-        assert "dipendenti" in SyncTracker._cache
-        assert SyncTracker._cache["dipendenti"]["added"] == 5
+    def test_get_status_empty(self, reset_state):
+        status = SyncTracker.get_status("nonexistent")
+        assert status == {}
 
-    def test_get_status_empty(self):
-        with patch(
-            "src.core.sync_tracker.SyncTracker.STATE_FILE.exists", return_value=False
-        ):
-            status = SyncTracker.get_status("unknown")
-            assert status == {}
+    def test_get_formatted_status_never_synced(self, reset_state):
+        result = SyncTracker.get_formatted_status("nonexistent")
+        assert result == "Mai sincronizzato"
 
-    def test_formatted_status(self):
-        # Mocking get_status to avoid loading issues
-        with patch.object(SyncTracker, "get_status") as mock_get:
-            # Case: Mai sincronizzato
-            mock_get.return_value = {}
-            assert SyncTracker.get_formatted_status("mod") == "Mai sincronizzato"
+    def test_get_formatted_status_seconds(self, reset_state):
+        SyncTracker.update_status("test", added=5, removed=1, duration=30.5)
 
-            # Case: Normal sync
-            mock_get.return_value = {
-                "timestamp": "01/01/2026 10:00",
-                "added": 10,
-                "removed": 2,
-                "duration": 5.5,
-            }
-            res = SyncTracker.get_formatted_status("mod")
-            assert "01/01/2026 10:00" in res
-            assert "+10" in res
-            assert "-2" in res
-            assert "5.5s" in res
+        result = SyncTracker.get_formatted_status("test")
 
-            # Case: Long duration
-            mock_get.return_value = {
-                "timestamp": "01/01/2026 10:00",
-                "added": 0,
-                "removed": 0,
-                "duration": 65.0,
-            }
-            res = SyncTracker.get_formatted_status("mod")
-            assert "1m 5s" in res
+        assert "+5" in result
+        assert "-1" in result
+        assert "30.5s" in result
 
-    @patch("src.core.sync_tracker.SyncTracker.STATE_FILE")
-    @patch("src.core.sync_tracker.open", new_callable=mock_open)
-    def test_update_status_persistence(self, mock_file_open, mock_state_file):
-        mock_state_file.exists.return_value = False
-        mock_state_file.parent.mkdir = MagicMock()
+    def test_get_formatted_status_minutes(self, reset_state):
+        SyncTracker.update_status("test", added=100, removed=50, duration=125.0)
 
-        SyncTracker.update_status("test", 1, 1, 0.1)
+        result = SyncTracker.get_formatted_status("test")
 
-        mock_state_file.parent.mkdir.assert_called()
-        mock_file_open.assert_called()
-        # Check written content
-        handle = mock_file_open()
-        written = "".join(call.args[0] for call in handle.write.call_args_list)
-        data = json.loads(written)
-        assert data["test"]["added"] == 1
+        assert "2m 5s" in result
+
+    def test_persistence_save_and_load(self, reset_state):
+        SyncTracker.update_status("persist_test", added=20, removed=3, duration=10.0)
+
+        # Simulate app restart
+        SyncTracker._loaded = False
+        SyncTracker._cache = {}
+        SyncTracker._load()
+
+        status = SyncTracker.get_status("persist_test")
+        assert status["added"] == 20
+
+    def test_load_handles_corrupted_file(self, reset_state):
+        reset_state.parent.mkdir(parents=True, exist_ok=True)
+        reset_state.write_text("not valid json", encoding="utf-8")
+
+        SyncTracker._loaded = False
+        SyncTracker._load()
+
+        assert SyncTracker._cache == {}
+
+    def test_multiple_modules(self, reset_state):
+        SyncTracker.update_status("pdl", added=10, removed=0, duration=1.0)
+        SyncTracker.update_status("dipendenti", added=5, removed=2, duration=2.0)
+        SyncTracker.update_status("storico_oda", added=100, removed=10, duration=30.0)
+
+        assert SyncTracker.get_status("pdl")["added"] == 10
+        assert SyncTracker.get_status("dipendenti")["added"] == 5
+        assert SyncTracker.get_status("storico_oda")["added"] == 100
