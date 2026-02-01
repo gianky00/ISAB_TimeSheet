@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
 )
-
 from src.gui.panels.contabilita_kpi_panel import ContabilitaKPIPanel
+
 from src.gui.panels.contabilita_panel import ContabilitaPanel
 
 
