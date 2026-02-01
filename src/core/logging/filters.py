@@ -3,7 +3,7 @@ Filtri per sicurezza e privacy.
 """
 
 import re
-from typing import Any, Dict, List, Pattern, Sequence, Tuple, Union
+from typing import Any, Dict, List, Pattern, Sequence, Tuple
 
 
 class SensitiveDataFilter:
