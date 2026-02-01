@@ -118,6 +118,7 @@ class TimbratureDetailView(QWidget):
 
     def _format_date(self, val_str, strict=True):
         """Helper per formattazione date."""
+        _ = strict
         try:
             # Try ISO format first
             dt = datetime.strptime(val_str, "%Y-%m-%d")
