@@ -149,7 +149,7 @@ class AnomalyDetector:
                         "duration_ms": duration_ms,
                         "threshold_ms": self.slow_op_threshold_ms,
                     },
-                    suggestion=f"Verifica la connessione di rete o riprova più tardi",
+                    suggestion="Verifica la connessione di rete o riprova più tardi",
                 )
             )
 
@@ -326,9 +326,7 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
 
     # Suggerimenti generali basati su pattern
     if len([p for p in patterns if p.count > 10]) > 0:
-        suggestions.append(
-            "Problema ricorrente rilevato: contatta il supporto tecnico"
-        )
+        suggestions.append("Problema ricorrente rilevato: contatta il supporto tecnico")
 
     return AnalyticsReport(
         anomalies=anomalies,

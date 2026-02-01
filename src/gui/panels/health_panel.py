@@ -7,7 +7,7 @@ Design con tema chiaro coerente con il resto dell'applicazione.
 
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QTimer, QRectF
+from PyQt6.QtCore import QRectF, Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen
 from PyQt6.QtWidgets import (
     QFrame,
@@ -74,12 +74,16 @@ class HealthScoreBadge(QWidget):
 
         # Background track (grigio chiaro)
         track_color = QColor("#e9ecef")
-        painter.setPen(QPen(track_color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.setPen(
+            QPen(track_color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+        )
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawEllipse(rect)
 
         # Progress arc
-        painter.setPen(QPen(color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.setPen(
+            QPen(color, arc_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+        )
         span_angle = int(360 * 16 * self._score / 100)
         painter.drawArc(rect, 90 * 16, -span_angle)
 
@@ -113,7 +117,8 @@ class StatCard(QFrame):
         self._setup_ui(title, value, icon, color)
 
     def _setup_ui(self, title: str, value: str, icon: str, color: str):
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             QFrame {{
                 background-color: #ffffff;
                 border-radius: 12px;
@@ -125,7 +130,8 @@ class StatCard(QFrame):
                 border-left: 4px solid {color};
                 background-color: #f8f9fa;
             }}
-        """)
+        """
+        )
         self.setMinimumSize(140, 95)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
@@ -139,16 +145,20 @@ class StatCard(QFrame):
             icon_label = QLabel(icon)
             icon_label.setStyleSheet("font-size: 18px; border: none;")
             header.addWidget(icon_label)
-        
+
         title_label = QLabel(title)
-        title_label.setStyleSheet("color: #6c757d; font-size: 12px; font-weight: 500; border: none;")
+        title_label.setStyleSheet(
+            "color: #6c757d; font-size: 12px; font-weight: 500; border: none;"
+        )
         header.addWidget(title_label)
         header.addStretch()
         layout.addLayout(header)
 
         # Value
         self._value_label = QLabel(value)
-        self._value_label.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: bold; border: none;")
+        self._value_label.setStyleSheet(
+            f"color: {color}; font-size: 28px; font-weight: bold; border: none;"
+        )
         layout.addWidget(self._value_label)
 
     def set_value(self, value: str):
@@ -166,8 +176,9 @@ class AnomalyCard(QFrame):
     def _setup_ui(self, anomaly):
         border_color = self._get_severity_color(anomaly.severity)
         bg_color = self._get_bg_color(anomaly.severity)
-        
-        self.setStyleSheet(f"""
+
+        self.setStyleSheet(
+            f"""
             QFrame {{
                 background-color: {bg_color};
                 border-radius: 10px;
@@ -175,7 +186,8 @@ class AnomalyCard(QFrame):
                 border-left: 5px solid {border_color};
             }}
             QLabel {{ background: transparent; border: none; }}
-        """)
+        """
+        )
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
@@ -187,14 +199,15 @@ class AnomalyCard(QFrame):
         emoji = {"low": "ℹ️", "medium": "⚠️", "high": "🔴", "critical": "🚨"}.get(
             anomaly.severity, "📢"
         )
-        
+
         title = QLabel(f"{emoji}  {anomaly.message}")
         title.setStyleSheet("color: #343a40; font-weight: 600; font-size: 14px;")
         title.setWordWrap(True)
         header.addWidget(title, stretch=1)
 
         severity_badge = QLabel(anomaly.severity.upper())
-        severity_badge.setStyleSheet(f"""
+        severity_badge.setStyleSheet(
+            f"""
             QLabel {{
                 color: {border_color};
                 background-color: {border_color}20;
@@ -203,7 +216,8 @@ class AnomalyCard(QFrame):
                 font-size: 10px;
                 font-weight: bold;
             }}
-        """)
+        """
+        )
         header.addWidget(severity_badge)
 
         layout.addLayout(header)
@@ -267,12 +281,14 @@ class HealthPanel(QWidget):
         header = QHBoxLayout()
 
         title = QLabel("📊 System Health")
-        title.setStyleSheet("""
-            font-size: 24px; 
-            font-weight: bold; 
+        title.setStyleSheet(
+            """
+            font-size: 24px;
+            font-weight: bold;
             color: #343a40;
             border: none;
-        """)
+        """
+        )
         header.addWidget(title)
 
         header.addStretch()
@@ -305,13 +321,15 @@ class HealthPanel(QWidget):
 
         # Score Card Container
         score_card = QFrame()
-        score_card.setStyleSheet("""
+        score_card.setStyleSheet(
+            """
             QFrame {
                 background-color: #ffffff;
                 border-radius: 16px;
                 border: 1px solid #dee2e6;
             }
-        """)
+        """
+        )
         score_layout = QVBoxLayout(score_card)
         score_layout.setContentsMargins(24, 24, 24, 24)
         score_layout.setSpacing(12)
@@ -324,19 +342,23 @@ class HealthPanel(QWidget):
 
         # Status label
         self._status_label = QLabel("OTTIMO")
-        self._status_label.setStyleSheet("""
+        self._status_label.setStyleSheet(
+            """
             color: #28a745;
             font-size: 16px;
             font-weight: bold;
             letter-spacing: 2px;
             border: none;
-        """)
+        """
+        )
         self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         score_layout.addWidget(self._status_label)
 
         # Ultimo aggiornamento
         self._last_update = QLabel("Ultimo aggiornamento: --")
-        self._last_update.setStyleSheet("color: #6c757d; font-size: 11px; border: none;")
+        self._last_update.setStyleSheet(
+            "color: #6c757d; font-size: 11px; border: none;"
+        )
         self._last_update.setAlignment(Qt.AlignmentFlag.AlignCenter)
         score_layout.addWidget(self._last_update)
 
@@ -344,7 +366,9 @@ class HealthPanel(QWidget):
 
         # Stats title
         stats_title = QLabel("📈 Statistiche Ultime 24h")
-        stats_title.setStyleSheet("color: #495057; font-size: 14px; font-weight: 600; border: none;")
+        stats_title.setStyleSheet(
+            "color: #495057; font-size: 14px; font-weight: 600; border: none;"
+        )
         left_panel.addWidget(stats_title)
 
         # Stats Grid
@@ -379,17 +403,20 @@ class HealthPanel(QWidget):
         )
         anomalies_header.addWidget(anomalies_title)
         anomalies_header.addStretch()
-        
+
         self._anomaly_count_label = QLabel("0 problemi")
-        self._anomaly_count_label.setStyleSheet("color: #6c757d; font-size: 12px; border: none;")
+        self._anomaly_count_label.setStyleSheet(
+            "color: #6c757d; font-size: 12px; border: none;"
+        )
         anomalies_header.addWidget(self._anomaly_count_label)
-        
+
         right_panel.addLayout(anomalies_header)
 
         # Scroll area per anomalie
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
+        scroll.setStyleSheet(
+            """
             QScrollArea {
                 background-color: transparent;
                 border: none;
@@ -407,7 +434,8 @@ class HealthPanel(QWidget):
             QScrollBar::handle:vertical:hover {
                 background-color: #a8adb0;
             }
-        """)
+        """
+        )
 
         self._anomalies_container = QWidget()
         self._anomalies_layout = QVBoxLayout(self._anomalies_container)
@@ -432,18 +460,20 @@ class HealthPanel(QWidget):
 
             # Health score
             self._score_badge.score = report.health_score
-            
+
             # Status label update
             status_text = self._score_badge._get_status_text()
             status_color = self._score_badge._get_color().name()
             self._status_label.setText(status_text)
-            self._status_label.setStyleSheet(f"""
+            self._status_label.setStyleSheet(
+                f"""
                 color: {status_color};
                 font-size: 16px;
                 font-weight: bold;
                 letter-spacing: 2px;
                 border: none;
-            """)
+            """
+            )
 
             # Stats dal viewer
             viewer = LogViewer()
@@ -481,36 +511,42 @@ class HealthPanel(QWidget):
 
         # Update count
         count = len(anomalies)
-        self._anomaly_count_label.setText(f"{count} problema{'i' if count != 1 else ''}")
+        self._anomaly_count_label.setText(
+            f"{count} problema{'i' if count != 1 else ''}"
+        )
 
         if not anomalies:
             # Empty state card
             empty_card = QFrame()
-            empty_card.setStyleSheet("""
+            empty_card.setStyleSheet(
+                """
                 QFrame {
                     background-color: #e8f5e9;
                     border-radius: 12px;
                     border: 1px dashed #81c784;
                 }
-            """)
+            """
+            )
             empty_layout = QVBoxLayout(empty_card)
             empty_layout.setContentsMargins(24, 32, 24, 32)
-            
+
             emoji = QLabel("✨")
             emoji.setStyleSheet("font-size: 48px; border: none;")
             emoji.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty_layout.addWidget(emoji)
-            
+
             text = QLabel("Nessuna anomalia rilevata")
-            text.setStyleSheet("color: #2e7d32; font-size: 16px; font-weight: 600; border: none;")
+            text.setStyleSheet(
+                "color: #2e7d32; font-size: 16px; font-weight: 600; border: none;"
+            )
             text.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty_layout.addWidget(text)
-            
+
             subtext = QLabel("Il sistema funziona correttamente")
             subtext.setStyleSheet("color: #558b2f; font-size: 12px; border: none;")
             subtext.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty_layout.addWidget(subtext)
-            
+
             self._anomalies_layout.insertWidget(0, empty_card)
         else:
             for anomaly in anomalies:

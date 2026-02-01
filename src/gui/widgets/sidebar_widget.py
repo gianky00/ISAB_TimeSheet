@@ -267,7 +267,9 @@ class SidebarWidget(QFrame):
         layout.addSpacing(10)
 
         # Pulsante Apri Palette (sotto header)
-        self.btn_palette = SidebarButton("Apri Palette", get_asset_path(Icons.COMMAND_PALETTE))
+        self.btn_palette = SidebarButton(
+            "Apri Palette", get_asset_path(Icons.COMMAND_PALETTE)
+        )
         self.btn_palette.setToolTip("Apri Command Palette (Ctrl+K)")
         self.btn_palette.clicked.connect(self._on_palette_click)
         layout.addWidget(self.btn_palette)
@@ -356,7 +358,9 @@ class SidebarWidget(QFrame):
         layout.addWidget(self.btn_lyra)
 
         # -- GRUPPO MONITORAGGIO (Livello 1) --
-        self.group_notifiche = SidebarGroup("Monitoraggio", get_asset_path(Icons.ACTIVITY))
+        self.group_notifiche = SidebarGroup(
+            "Monitoraggio", get_asset_path(Icons.ACTIVITY)
+        )
         layout.addWidget(self.group_notifiche)
 
         self.btn_notifiche = SidebarChildButton("Notifiche", get_asset_path(Icons.BELL))
