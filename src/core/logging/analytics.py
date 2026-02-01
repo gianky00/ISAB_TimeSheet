@@ -111,7 +111,7 @@ class AnomalyDetector:
                             "ERROR", 0
                         ),
                     },
-                    suggestion="Verifica i log di errore recenti con: python tools/logs_cli.py query --level ERROR",
+                    suggestion="Controlla gli errori recenti nella sezione Audit",
                 )
             )
 
@@ -149,7 +149,7 @@ class AnomalyDetector:
                         "duration_ms": duration_ms,
                         "threshold_ms": self.slow_op_threshold_ms,
                     },
-                    suggestion=f"Investigare performance di '{operation}'",
+                    suggestion=f"Verifica la connessione di rete o riprova più tardi",
                 )
             )
 
@@ -188,7 +188,7 @@ class AnomalyDetector:
                             "total_runs": bot_run.get("total_runs", 0),
                             "failed_runs": bot_run.get("failed_runs", 0),
                         },
-                        suggestion=f"Verifica configurazione e credenziali per '{bot_type}'",
+                        suggestion="Verifica le credenziali nelle Impostazioni",
                     )
                 )
 
@@ -327,7 +327,7 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
     # Suggerimenti generali basati su pattern
     if len([p for p in patterns if p.count > 10]) > 0:
         suggestions.append(
-            "Molti errori ripetuti: considera di investigare la causa root"
+            "Problema ricorrente rilevato: contatta il supporto tecnico"
         )
 
     return AnalyticsReport(
