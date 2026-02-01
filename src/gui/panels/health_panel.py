@@ -6,6 +6,7 @@ Design con tema chiaro coerente con il resto dell'applicazione.
 """
 
 from datetime import datetime
+from typing import Optional
 
 from PyQt6.QtCore import QRectF, Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen
@@ -112,7 +113,7 @@ class StatCard(QFrame):
         parent=None,
     ):
         super().__init__(parent)
-        self._value_label = None
+        self._value_label: Optional[QLabel] = None
         self._color = color
         self._setup_ui(title, value, icon, color)
 

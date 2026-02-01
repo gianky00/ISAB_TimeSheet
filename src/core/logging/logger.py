@@ -75,7 +75,12 @@ class StructuredLogger:
             # Risali nello stack per trovare il caller reale
             # (salta frames interni del logger)
             frame = inspect.currentframe()
-            if frame is None:
+            if (
+                frame is None
+                or frame.f_back is None
+                or frame.f_back.f_back is None
+                or frame.f_back.f_back.f_back is None
+            ):
                 return {}
 
             # Salta i frame del logger stesso
