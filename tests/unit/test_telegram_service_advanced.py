@@ -13,8 +13,7 @@ class TestTelegramServiceAdvanced:
             "src.core.config_manager.load_config",
             return_value={"telegram_token": "FAKE_TOKEN", "telegram_chat_id": "12345"},
         )
-        with patch("PyQt6.QtCore.QObject.__init__"):
-            return TelegramService()
+        return TelegramService()
 
     def test_start_stop_service_logic(self, service, mocker):
         """Test: Avvio e arresto del thread di servizio."""

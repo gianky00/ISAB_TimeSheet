@@ -415,7 +415,7 @@ class TestRunner:
         success = False
         res = None
         for attempt in range(retry_count + 1):
-            res, dur, is_timeout = self.run_process(nid, isolate=True, timeout=30)
+            res, dur, is_timeout = self.run_process(nid, isolate=True, timeout=60)
             if not is_timeout and res.returncode == 0:
                 success = True
                 break

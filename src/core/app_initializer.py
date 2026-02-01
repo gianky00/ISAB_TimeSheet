@@ -93,6 +93,9 @@ class AppInitializer:
 
         base_prog = 45
         total = len(tasks)
+        import logging
+
+        logger = logging.getLogger("AppInitializer")
 
         for i, (idx, name) in enumerate(tasks):
             prog = base_prog + int((i / total) * 45)
@@ -101,16 +104,10 @@ class AppInitializer:
 
             # Heavy task - load panel with error handling
             try:
-                import logging
-
-                logger = logging.getLogger("AppInitializer")
                 logger.info(f"Loading panel {name} (index {idx})...")
                 mw_instance.navigation_controller.get_panel(idx)
                 logger.info(f"Panel {name} loaded successfully")
             except Exception as e:
-                import logging
-
-                logger = logging.getLogger("AppInitializer")
                 logger.error(
                     f"Error loading panel {name} (index {idx}): {e}", exc_info=True
                 )

@@ -85,12 +85,12 @@ class TestBackupManager:
             f.name = f"SyncroJob_Backup_{i}.zip"
             f.unlink = MagicMock()
 
-        with patch.object(Path, "glob", return_value=mock_files):
-            with patch("os.path.getmtime", side_effect=range(7)):
-                BackupManager._cleanup_old_backups(mock_dir, keep=5)
-                # Should delete 2 oldest
-                # backups is sorted reverse=True, so [6,5,4,3,2,1,0]
-                # backups[5:] is [1, 0]
-                assert mock_files[0].unlink.called
-                assert mock_files[1].unlink.called
-                assert not mock_files[6].unlink.called
+        mock_dir.glob.return_value = mock_files
+        with patch("os.path.getmtime", side_effect=range(7)):
+            BackupManager._cleanup_old_backups(mock_dir, keep=5)
+            # Should delete 2 oldest
+            # backups is sorted reverse=True, so [6,5,4,3,2,1,0]
+            # backups[5:] is [1, 0]
+            assert mock_files[0].unlink.called
+            assert mock_files[1].unlink.called
+            assert not mock_files[6].unlink.called
