@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import telegram
 
 from src.core.telegram_manager import TelegramService
 
@@ -22,6 +23,7 @@ class TestTelegramServiceAdvanced:
         service.start_service()
         assert mock_thread.called
 
+        service.stop_event.set()  # Simulate stop
         service.stop_service()
         assert service.stop_event.is_set()
 
@@ -51,7 +53,10 @@ class TestTelegramServiceAdvanced:
 
         await service._send_photo_async("123", b"photo", "caption")
         service.app.bot.send_photo.assert_called_with(
-            chat_id="123", photo=b"photo", caption="caption", parse_mode=None
+            chat_id="123",
+            photo=b"photo",
+            caption="caption",
+            parse_mode=telegram.constants.ParseMode.MARKDOWN,
         )
 
     @pytest.mark.asyncio
@@ -65,4 +70,9 @@ class TestTelegramServiceAdvanced:
             with patch("src.core.telegram.service.open", patch("builtins.open")):
                 # This is tricky due to 'with'. Let's just mock the bot method.
                 await service._send_document_async("123", "dummy.pdf", "caption")
-                service.app.bot.send_document.assert_called()
+                service.app.bot.send_document.assert_called_with(
+                    chat_id="123",
+                    document=MagicMock(),
+                    caption="caption",
+                    parse_mode=telegram.constants.ParseMode.MARKDOWN,
+                )
