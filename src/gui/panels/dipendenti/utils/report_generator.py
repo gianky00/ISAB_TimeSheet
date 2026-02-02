@@ -257,31 +257,37 @@ class ReportGenerator:
                 pythoncom.CoInitialize()
 
                 try:
+                    # Usa Dispatch dinamico (più sicuro per app compilate/PyInstaller)
+                    # Evita EnsureDispatch che tenta di scrivere nella cache (spesso read-only o mancante)
                     outlook = win32com.client.Dispatch("Outlook.Application")
-                except Exception:
-                    # Tenta con EnsureDispatch se Dispatch fallisce
-                    outlook = win32com.client.gencache.EnsureDispatch(
-                        "Outlook.Application"
+
+                    mail = outlook.CreateItem(0)
+                    mail.To = "luca.riccio@coemi.it"
+                    mail.CC = "isabsud@coemi.it"
+                    mail.Subject = subject
+                    mail.HTMLBody = body_html
+                    if excel_path and excel_path.exists():
+                        mail.Attachments.Add(str(excel_path))
+                    mail.Display()
+
+                    ReportHistory.save_report(
+                        data["warning_list"], data["expired_list"]
                     )
+                    ToastManager.instance().show(
+                        "Report generato in Outlook con allegato Excel",
+                        "success",
+                        duration=3000,
+                    )
+                    return
 
-                mail = outlook.CreateItem(0)
-                mail.To = "luca.riccio@coemi.it"
-                mail.CC = "isabsud@coemi.it"
-                mail.Subject = subject
-                mail.HTMLBody = body_html
-                if excel_path and excel_path.exists():
-                    mail.Attachments.Add(str(excel_path))
-                mail.Display()
+                except Exception as e:
+                    logger.error(f"Outlook automation error: {e}", exc_info=True)
+                    # Non fare raise qui, lascia che scenda al fallback
 
-                ReportHistory.save_report(data["warning_list"], data["expired_list"])
-                ToastManager.instance().show(
-                    "Report generato in Outlook con allegato Excel",
-                    "success",
-                    duration=3000,
-                )
-                return
             except Exception as e:
-                logger.warning(f"Outlook integration failed: {e}")
+                logger.warning(
+                    f"Outlook integration failed (module import or init): {e}"
+                )
 
         # Fallback Browser / Sistema
         from PyQt6.QtCore import QUrl
