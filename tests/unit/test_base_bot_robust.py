@@ -1,7 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, call
+
 from src.bots.base.base_bot import BaseBot
 from src.core.constants import BotStatus, Timeouts
+
 
 # Classe concreta minima per testare BaseBot (che è astratta)
 class ConcreteBot(BaseBot):
@@ -16,8 +19,8 @@ class ConcreteBot(BaseBot):
     def run(self, data):
         return True
 
-class TestBaseBotRobust:
 
+class TestBaseBotRobust:
     @pytest.fixture
     def mock_driver_cls(self):
         with patch("src.bots.base.base_bot.webdriver.Chrome") as mock:
@@ -56,71 +59,85 @@ class TestBaseBotRobust:
 
     # --- Driver Init Tests ---
 
-    def test_init_driver_success(self, bot, mock_driver_cls, mock_service, mock_chrome_manager, mock_options):
+    def test_init_driver_success(
+        self, bot, mock_driver_cls, mock_service, mock_chrome_manager, mock_options
+    ):
         """Test inizializzazione driver con successo."""
         # Mock chromedriver path
-        mock_chrome_manager.return_value.install.return_value = "C:/drivers/chromedriver.exe"
-        
+        mock_chrome_manager.return_value.install.return_value = (
+            "C:/drivers/chromedriver.exe"
+        )
+
         # Call
         bot._init_driver()
-        
+
         # Assertions
         mock_chrome_manager.return_value.install.assert_called_once()
         mock_service.assert_called_with("C:/drivers/chromedriver.exe")
         mock_driver_cls.assert_called_once()
-        
+
         # Check options
         # Options() viene istanziato
         # Ci aspettiamo che add_argument sia stato chiamato
         mock_opts_instance = mock_options.return_value
         assert mock_opts_instance.add_argument.call_count > 0
-        
+
         # Verifica anti-detection script
         bot.driver.execute_cdp_cmd.assert_called_with(
             "Page.addScriptToEvaluateOnNewDocument",
-            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"}
+            {
+                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            },
         )
         assert bot.status == BotStatus.INITIALIZING
 
-    def test_init_driver_headless_config(self, mock_driver_cls, mock_service, mock_chrome_manager):
+    def test_init_driver_headless_config(
+        self, mock_driver_cls, mock_service, mock_chrome_manager
+    ):
         """Test configurazione headless."""
         bot = ConcreteBot("user", "pass", headless=True)
-        
-        with patch("src.bots.base.base_bot.config_manager.load_config", return_value={}):
+
+        with patch(
+            "src.bots.base.base_bot.config_manager.load_config", return_value={}
+        ):
             bot._init_driver()
-            
+
             # Recupera options passate al driver
             _, kwargs = mock_driver_cls.call_args
-            options = kwargs['options']
-            
+            # options = kwargs["options"]  # Unused variable removed
+
             # Verifica che --headless=new sia stato aggiunto
             # Nota: Options è mockato, quindi dobbiamo vedere le chiamate su di esso
             # Ma qui Options è istanziato dentro _init_driver -> _get_chrome_options
             # Dobbiamo intercettare l'istanza di Options creata dentro.
             # Siccome non ho mockato Options in questo test specifico, uso un altro approccio
-            pass 
+            pass
             # (Il test precedente copriva le chiamate generiche, per headless specifico meglio mockare Options)
 
     def test_get_chrome_options_headless(self, bot):
         """Test _get_chrome_options logica headless."""
         bot.headless = True
-        with patch("src.bots.base.base_bot.config_manager.load_config", return_value={}):
+        with patch(
+            "src.bots.base.base_bot.config_manager.load_config", return_value={}
+        ):
             # Mock Options class inside the method context or assume it returns a mock if patched globally
             # Qui Options è reale (non mockato nella fixture globale di questo test method)
             # ma selenium.webdriver.chrome.options.Options è una classe reale.
-            
+
             options = bot._get_chrome_options()
-            
+
             # Verifica argomenti
             # selenium Options usa .arguments (lista) o ._arguments
-            args = [arg for arg in options.arguments]
+            args = list(options.arguments)
             assert "--headless=new" in args
             assert "--no-sandbox" in args
 
     def test_driver_error_handling(self, bot, mock_chrome_manager):
         """Test gestione errore init driver."""
-        mock_chrome_manager.return_value.install.side_effect = Exception("Download failed")
-        
+        mock_chrome_manager.return_value.install.side_effect = Exception(
+            "Download failed"
+        )
+
         # Dovrebbe catturare l'eccezione interna, fallire il download e poi fallire init service
         # perché non trova neanche driver locale (assumendo default mock environment)
         with pytest.raises(RuntimeError, match="Chromedriver service non disponibile"):
@@ -136,12 +153,12 @@ class TestBaseBotRobust:
         bot._login = MagicMock(return_value=True)
         bot.cleanup = MagicMock()
         bot.run = MagicMock(return_value=True)
-        
+
         data = [{"id": 1}]
-        
+
         # Execute
         res = bot.execute(data)
-        
+
         assert res is True
         bot._init_driver.assert_called_once()
         bot._login.assert_called_once()
@@ -153,9 +170,9 @@ class TestBaseBotRobust:
         """Test fallimento validazione."""
         bot.validate_data = MagicMock(return_value=(False, "Bad data"))
         bot.cleanup = MagicMock()
-        
+
         res = bot.execute([{"id": 1}])
-        
+
         assert res is False
         assert bot.status == BotStatus.ERROR
         # Cleanup non deve essere chiamato perché validation fallisce PRIMA del blocco try/finally del driver
@@ -167,12 +184,12 @@ class TestBaseBotRobust:
         bot._init_driver = MagicMock()
         bot._login = MagicMock(return_value=False)
         bot.cleanup = MagicMock()
-        
+
         res = bot.execute([{"id": 1}])
-        
+
         assert res is False
         assert bot.status == BotStatus.ERROR
-        bot.cleanup.assert_called() # Chiamato da _safe_login_with_retry o finally?
+        bot.cleanup.assert_called()  # Chiamato da _safe_login_with_retry o finally?
         # _safe_login_with_retry chiama cleanup se fallisce.
         # E execute chiama cleanup nel finally.
 
@@ -182,9 +199,9 @@ class TestBaseBotRobust:
         bot._login = MagicMock(return_value=True)
         bot.run = MagicMock(side_effect=Exception("Boom"))
         bot._save_error_state = MagicMock()
-        
+
         res = bot.execute([{"id": 1}])
-        
+
         assert res is False
         assert bot.status == BotStatus.ERROR
         bot._save_error_state.assert_called()
@@ -195,7 +212,7 @@ class TestBaseBotRobust:
         """Test richiesta stop."""
         bot.request_stop()
         assert bot._stop_requested is True
-        
+
         with pytest.raises(InterruptedError, match="Bot interrotto dall'utente"):
             bot._check_stop()
 
@@ -205,21 +222,21 @@ class TestBaseBotRobust:
         """Test cleanup chiude driver."""
         mock_driver = MagicMock()
         bot.driver = mock_driver
-        
+
         bot.cleanup()
-        
+
         mock_driver.quit.assert_called_once()
         assert bot.driver is None
 
     def test_cleanup_safe(self, bot):
         """Test cleanup non esplode se driver è None o quit fallisce."""
         bot.driver = None
-        bot.cleanup() # No error
-        
+        bot.cleanup()  # No error
+
         mock_driver = MagicMock()
         mock_driver.quit.side_effect = Exception("Error closing")
         bot.driver = mock_driver
-        bot.cleanup() # No error propagate
+        bot.cleanup()  # No error propagate
         assert bot.driver is None
 
     # --- Safe Login Tests ---
@@ -230,30 +247,30 @@ class TestBaseBotRobust:
         # Primo tentativo fallisce (raise Exception), secondo riesce (return None), poi _login True
         # _init_driver non ritorna nulla. Se fallisce alza eccezione.
         # _login ritorna bool.
-        
+
         # Tentativo 1: init ok, login fail -> cleanup, retry
         # Tentativo 2: init ok, login success -> return True
-        
+
         # Mock _login: False, True
         bot._login = MagicMock(side_effect=[False, True])
         bot.cleanup = MagicMock()
-        
+
         res = bot._safe_login_with_retry(max_retries=2)
-        
+
         assert res is True
         assert bot._init_driver.call_count == 2
         assert bot._login.call_count == 2
-        assert bot.cleanup.call_count == 1 # Chiamato dopo il primo fallimento
+        assert bot.cleanup.call_count == 1  # Chiamato dopo il primo fallimento
 
     def test_safe_login_retry_fail(self, bot):
         """Test login fallisce dopo tutti i tentativi."""
         bot._init_driver = MagicMock()
         bot._login = MagicMock(return_value=False)
         bot.cleanup = MagicMock()
-        
+
         res = bot._safe_login_with_retry(max_retries=2)
-        
+
         assert res is False
         assert bot._init_driver.call_count == 2
         assert bot._login.call_count == 2
-        assert bot.cleanup.call_count == 2 # Chiamato dopo ogni fallimento
+        assert bot.cleanup.call_count == 2  # Chiamato dopo ogni fallimento

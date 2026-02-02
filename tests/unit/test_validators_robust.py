@@ -1,7 +1,7 @@
 from src.utils.validators import InputValidator
 
+
 class TestValidatorsRobust:
-    
     # --- PDL Validation Tests ---
     def test_validate_pdl_valid_explicit(self):
         """Test PDL valido con suffisso esplicito."""
@@ -40,7 +40,9 @@ class TestValidatorsRobust:
 
     def test_validate_oda_invalid_chars(self):
         """Test caratteri non permessi in OdA."""
-        assert InputValidator.validate_oda("ODA-123").valid is False # trattino non in regex base
+        assert (
+            InputValidator.validate_oda("ODA-123").valid is False
+        )  # trattino non in regex base
         assert InputValidator.validate_oda("ODA 123").valid is False
 
     def test_validate_oda_too_long(self):
@@ -63,14 +65,16 @@ class TestValidatorsRobust:
     def test_validate_cf_format_error(self):
         """Test CF formato errato (regex)."""
         assert InputValidator.validate_codice_fiscale("123").valid is False
-        assert InputValidator.validate_codice_fiscale("RSSMRA80A01H5011").valid is False # Ultimo char numero
+        assert (
+            InputValidator.validate_codice_fiscale("RSSMRA80A01H5011").valid is False
+        )  # Ultimo char numero
 
     # --- Date Tests ---
     def test_validate_date_it_valid(self):
         """Test data valida."""
         res = InputValidator.validate_date_italian("31.01.2023")
         assert res.valid is True
-        
+
         # Test sostituzione slash
         res = InputValidator.validate_date_italian("31/01/2023")
         assert res.valid is True
@@ -78,7 +82,9 @@ class TestValidatorsRobust:
 
     def test_validate_date_it_invalid_value(self):
         """Test data impossibile."""
-        res = InputValidator.validate_date_italian("30.02.2023") # Febbraio non ha 30 giorni
+        res = InputValidator.validate_date_italian(
+            "30.02.2023"
+        )  # Febbraio non ha 30 giorni
         assert res.valid is False
         assert "non esistente" in res.error
 
@@ -89,8 +95,8 @@ class TestValidatorsRobust:
     # --- SQL Sanitize Tests ---
     def test_sanitize_sql(self):
         """Test sanitizzazione base."""
-        dirty = "Hello\x00World" # Null char
+        dirty = "Hello\x00World"  # Null char
         clean = InputValidator.sanitize_sql_string(dirty)
         assert clean == "HelloWorld"
-        
+
         assert InputValidator.sanitize_sql_string(None) == ""

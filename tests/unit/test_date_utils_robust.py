@@ -1,13 +1,10 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from unittest.mock import patch
-
-import pytest
 
 from src.utils import date_utils
 
 
 class TestDateUtilsRobust:
-    
     # --- Parsing Tests ---
     def test_parse_date_flexible_formats(self):
         """Test parsing di vari formati."""
@@ -16,8 +13,10 @@ class TestDateUtilsRobust:
         # Italian
         assert date_utils.parse_date_flexible("15/01/2024") == date(2024, 1, 15)
         # Italian with dot (common in Excel)
-        assert date_utils.parse_date_flexible("15.01.2024", formats=["%d.%m.%Y"]) == date(2024, 1, 15)
-        
+        assert date_utils.parse_date_flexible(
+            "15.01.2024", formats=["%d.%m.%Y"]
+        ) == date(2024, 1, 15)
+
     def test_parse_date_flexible_invalid(self):
         """Test parsing stringhe non valide."""
         assert date_utils.parse_date_flexible(None) is None
@@ -39,7 +38,7 @@ class TestDateUtilsRobust:
         d = date(2024, 1, 15)
         assert date_utils.format_date_it(d) == "15/01/2024"
         assert date_utils.format_date_it(None) == "-"
-        
+
         # Datetime with time
         dt = datetime(2024, 1, 15, 10, 30, 0)
         assert date_utils.format_date_it(dt, include_time=True) == "15/01/2024 10:30:00"
@@ -54,10 +53,10 @@ class TestDateUtilsRobust:
         """Test differenza giorni."""
         d_past = date(2024, 1, 1)
         d_ref = date(2024, 1, 10)
-        
+
         # Test con data di riferimento esplicita
         assert date_utils.calculate_days_diff(d_past, from_date=d_ref) == 9
-        
+
         # Test con oggi (mockato)
         with patch("src.utils.date_utils.date") as mock_date:
             mock_date.today.return_value = d_ref
@@ -98,14 +97,46 @@ class TestDateUtilsRobust:
         dt1 = datetime(2024, 1, 1, 10, 0)
         dt2 = datetime(2024, 1, 1, 23, 59)
         dt3 = datetime(2024, 1, 2, 0, 1)
-        
+
         assert date_utils.is_same_day(dt1, dt2) is True
         assert date_utils.is_same_day(dt1, dt3) is False
 
-    @patch("src.gui.styles.constants.MONTHS_IT", ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"])
-    @patch("src.gui.styles.constants.MONTHS_IT_FULL", ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"])
+    @patch(
+        "src.gui.styles.constants.MONTHS_IT",
+        [
+            "Gen",
+            "Feb",
+            "Mar",
+            "Apr",
+            "Mag",
+            "Giu",
+            "Lug",
+            "Ago",
+            "Set",
+            "Ott",
+            "Nov",
+            "Dic",
+        ],
+    )
+    @patch(
+        "src.gui.styles.constants.MONTHS_IT_FULL",
+        [
+            "Gennaio",
+            "Febbraio",
+            "Marzo",
+            "Aprile",
+            "Maggio",
+            "Giugno",
+            "Luglio",
+            "Agosto",
+            "Settembre",
+            "Ottobre",
+            "Novembre",
+            "Dicembre",
+        ],
+    )
     def test_get_month_name_it(self):
         """Test nomi mesi italiani."""
         assert date_utils.get_month_name_it(1) == "Gen"
         assert date_utils.get_month_name_it(1, full=True) == "Gennaio"
-        assert date_utils.get_month_name_it(13) == "" # Out of range
+        assert date_utils.get_month_name_it(13) == ""  # Out of range
