@@ -7,6 +7,7 @@ import logging
 from typing import Optional
 
 from PyQt6.QtCore import QObject
+from PyQt6.QtWidgets import QMessageBox
 
 # Importiamo PageIndex localmente o usiamo interi per evitare circular imports
 # PageIndex mappa:
@@ -181,7 +182,6 @@ class NavigationController(QObject):
 
         logger.error(f"❌ Critical Error loading panel {index}: {e}")
         logger.error(traceback.format_exc())
-        from PyQt6.QtWidgets import QMessageBox
 
         QMessageBox.critical(
             self.mw,
