@@ -154,6 +154,8 @@ class TelegramUIBridge(QObject):
             self._handle_command("run_ts", {})
         elif obj == "timbrature":
             self._handle_command("run_timbrature", {"period": "today"})
+        else:
+            self.telegram.send_message_sync(f"⚠️ Non so come scaricare '{obj}'.")
 
     def _handle_command(self, command, params):
         """Gestisce i comandi testuali da Telegram tramite dispatch map."""

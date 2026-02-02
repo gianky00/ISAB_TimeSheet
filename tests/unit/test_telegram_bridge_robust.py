@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from PyQt6.QtCore import QRect
 
 from src.core.telegram_bridge import TelegramUIBridge
 
@@ -14,6 +15,7 @@ class TestTelegramUIBridgeRobust:
         mw.telegram.app = MagicMock()
         mw.telegram.app.bot = MagicMock()
         mw.telegram.loop = MagicMock()
+        mw.telegram.pending_data = {}  # Dizionario reale per supportare operazioni 'in'
         mw.pdl_panel = MagicMock()
         mw.scarico_panel = MagicMock()
         return mw
@@ -51,18 +53,25 @@ class TestTelegramUIBridgeRobust:
         args = bridge.telegram.send_message_sync.call_args[0][0]
         assert "Non so come scaricare" in args
 
-    @patch("src.core.telegram_bridge.QApplication.primaryScreen")
+    @patch("src.core.telegram_bridge.QGuiApplication")
+    @patch("src.core.telegram_bridge.QPainter")
+    @patch("src.core.telegram_bridge.QPixmap")
     @patch("src.core.telegram_bridge.QBuffer")
-    def test_handle_screenshot(self, mock_buffer_cls, mock_screen, bridge):
-        # Mock screen setup
-        mock_pixmap = MagicMock()
-        mock_screen.return_value.grabWindow.return_value = mock_pixmap
-
-        # Mock buffer setup
+    def test_handle_screenshot(self, mock_buffer_cls, mock_pixmap_cls, mock_painter_cls, mock_qgui_app, bridge):
+        # Setup mocks for desktop screenshot path (when mode != "app")
+        mock_screen = MagicMock()
+        mock_screen.geometry.return_value = QRect(0, 0, 100, 100)
+        mock_qgui_app.screens.return_value = [mock_screen]
+        
+        mock_pixmap_instance = MagicMock()
+        mock_pixmap_cls.return_value = mock_pixmap_instance
+        
         mock_buffer = MagicMock()
         mock_buffer_cls.return_value = mock_buffer
         mock_buffer.data.return_value.data.return_value = b"fake_png_data"
 
+        # Call with argument that triggers the 'else' branch (not "app")
         bridge._handle_screenshot("chat_id")
 
         bridge.telegram.send_photo_sync.assert_called()
+        assert "Desktop" in bridge.telegram.send_photo_sync.call_args[1]['caption']
