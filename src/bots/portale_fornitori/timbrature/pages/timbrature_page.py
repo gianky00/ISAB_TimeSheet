@@ -114,21 +114,11 @@ class TimbraturePage:
             # Focus Date From
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_da:
-                # Safer clear: End -> many Backspaces (avoids CTRL stuck issues)
-                actions.send_keys(Keys.END)
-                for _ in range(12):
-                    actions.send_keys(Keys.BACK_SPACE)
-                actions.pause(0.2)
                 actions.send_keys(data_da).pause(0.5)
 
             # Focus Date To
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_a:
-                # Safer clear
-                actions.send_keys(Keys.END)
-                for _ in range(12):
-                    actions.send_keys(Keys.BACK_SPACE)
-                actions.pause(0.2)
                 actions.send_keys(data_a).pause(0.5)
 
             # Checkbox "Verifica Presenza Timesheet"
