@@ -57,15 +57,17 @@ class TestTelegramUIBridgeRobust:
     @patch("src.core.telegram_bridge.QPainter")
     @patch("src.core.telegram_bridge.QPixmap")
     @patch("src.core.telegram_bridge.QBuffer")
-    def test_handle_screenshot(self, mock_buffer_cls, mock_pixmap_cls, mock_painter_cls, mock_qgui_app, bridge):
+    def test_handle_screenshot(
+        self, mock_buffer_cls, mock_pixmap_cls, mock_painter_cls, mock_qgui_app, bridge
+    ):
         # Setup mocks for desktop screenshot path (when mode != "app")
         mock_screen = MagicMock()
         mock_screen.geometry.return_value = QRect(0, 0, 100, 100)
         mock_qgui_app.screens.return_value = [mock_screen]
-        
+
         mock_pixmap_instance = MagicMock()
         mock_pixmap_cls.return_value = mock_pixmap_instance
-        
+
         mock_buffer = MagicMock()
         mock_buffer_cls.return_value = mock_buffer
         mock_buffer.data.return_value.data.return_value = b"fake_png_data"
@@ -74,4 +76,4 @@ class TestTelegramUIBridgeRobust:
         bridge._handle_screenshot("chat_id")
 
         bridge.telegram.send_photo_sync.assert_called()
-        assert "Desktop" in bridge.telegram.send_photo_sync.call_args[1]['caption']
+        assert "Desktop" in bridge.telegram.send_photo_sync.call_args[1]["caption"]

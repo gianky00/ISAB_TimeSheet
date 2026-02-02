@@ -72,7 +72,7 @@ class TestTelegramServiceAdvanced:
 
         with patch("builtins.open", return_value=mock_file):
             await service._send_document_async("123", "dummy.pdf", "caption")
-            
+
             service.app.bot.send_document.assert_called_with(
                 chat_id="123",
                 document=mock_file,
