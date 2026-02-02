@@ -250,9 +250,20 @@ class ReportGenerator:
 
         if os.name == "nt":
             try:
+                import pythoncom
                 import win32com.client
 
-                outlook = win32com.client.Dispatch("Outlook.Application")
+                # Inizializza COM per il thread corrente (essenziale in app compilate)
+                pythoncom.CoInitialize()
+
+                try:
+                    outlook = win32com.client.Dispatch("Outlook.Application")
+                except Exception:
+                    # Tenta con EnsureDispatch se Dispatch fallisce
+                    outlook = win32com.client.gencache.EnsureDispatch(
+                        "Outlook.Application"
+                    )
+
                 mail = outlook.CreateItem(0)
                 mail.To = "luca.riccio@coemi.it"
                 mail.CC = "isabsud@coemi.it"
@@ -270,15 +281,27 @@ class ReportGenerator:
                 )
                 return
             except Exception as e:
-                logger.warning(f"Outlook failed: {e}")
+                logger.warning(f"Outlook integration failed: {e}")
 
-        # Fallback Browser
-        import webbrowser
+        # Fallback Browser / Sistema
+        from PyQt6.QtCore import QUrl
+        from PyQt6.QtGui import QDesktopServices
 
-        tmp_path = Path(os.environ["TEMP"]) / "report_isab.html"
-        tmp_path.write_text(body_html, encoding="utf-8")
-        webbrowser.open(f"file:///{tmp_path.as_posix()}")
-        ReportHistory.save_report(data["warning_list"], data["expired_list"])
-        ToastManager.instance().show(
-            "Outlook non trovato: aperto report nel browser", "warning", duration=4000
+        tmp_path = (
+            Path(os.environ["TEMP"])
+            / f"report_isab_{datetime.now().strftime('%H%M%S')}.html"
         )
+        try:
+            tmp_path.write_text(body_html, encoding="utf-8")
+            # Usa QDesktopServices per aprire il file con l'app predefinita del sistema
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(tmp_path)))
+
+            ReportHistory.save_report(data["warning_list"], data["expired_list"])
+            ToastManager.instance().show(
+                "Outlook non disponibile: aperto anteprima report",
+                "warning",
+                duration=4000,
+            )
+        except Exception as e:
+            logger.error(f"Errore fallback report: {e}")
+            ToastManager.instance().show("Impossibile aprire il report", "error")
