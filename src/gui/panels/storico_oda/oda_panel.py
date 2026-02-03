@@ -3,6 +3,7 @@ SyncroJob - Storico OdA Panel
 Pannello per la visualizzazione del Database Storico OdA con architettura Master-Detail e raggruppamento (QTreeView).
 """
 
+import os
 from datetime import datetime
 from typing import List, Tuple
 
@@ -372,7 +373,13 @@ class StoricoOdaPanel(QWidget):
 
             config = config_manager.load_config()
             fornitore = config.get("last_oda_fornitore", "KK10608 - COEMI S.R.L.")
-            dest_path = config.get("path_dettagli_oda", "")
+            
+            # Use configured path or default to app temp directory
+            dest_path = config.get("path_dettagli_oda")
+            if not dest_path:
+                dest_path = str(config_manager.CONFIG_DIR / "temp")
+                # Ensure directory exists
+                os.makedirs(dest_path, exist_ok=True)
 
             # Calcola Date (01.01.AnnoCorrente -> Oggi)
             data_da = f"01.01.{QDate.currentDate().year()}"

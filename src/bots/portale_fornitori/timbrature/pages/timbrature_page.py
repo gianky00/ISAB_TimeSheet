@@ -114,17 +114,11 @@ class TimbraturePage:
             # Focus Date From
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_da:
-                actions.key_down(Keys.CONTROL).send_keys("a").key_up(
-                    Keys.CONTROL
-                ).pause(0.2)
                 actions.send_keys(data_da).pause(0.5)
 
             # Focus Date To
             actions.send_keys(Keys.TAB).pause(0.5)
             if data_a:
-                actions.key_down(Keys.CONTROL).send_keys("a").key_up(
-                    Keys.CONTROL
-                ).pause(0.2)
                 actions.send_keys(data_a).pause(0.5)
 
             # Checkbox "Verifica Presenza Timesheet"

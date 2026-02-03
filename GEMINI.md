@@ -5,7 +5,7 @@
 ## 📂 Project Structure
 
 ```
-C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\
+C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet\
 ├── main.py                 # Application entry point
 ├── pyproject.toml          # Poetry configuration and dependencies
 ├── README.md               # General project documentation
@@ -47,7 +47,7 @@ C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet\
 1. **Clone/Navigate to the repository:**
 
     ```bash
-    cd C:\Users\gianc\Desktop\SCRIPT\ISAB_TimeSheet
+    cd C:\Users\Coemi\Desktop\SCRIPT\ISAB_TimeSheet
     ```
 
 2. **Install dependencies:**

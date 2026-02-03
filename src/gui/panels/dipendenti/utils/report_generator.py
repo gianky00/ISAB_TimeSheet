@@ -250,35 +250,64 @@ class ReportGenerator:
 
         if os.name == "nt":
             try:
+                import pythoncom
                 import win32com.client
 
-                outlook = win32com.client.Dispatch("Outlook.Application")
-                mail = outlook.CreateItem(0)
-                mail.To = "luca.riccio@coemi.it"
-                mail.CC = "isabsud@coemi.it"
-                mail.Subject = subject
-                mail.HTMLBody = body_html
-                if excel_path and excel_path.exists():
-                    mail.Attachments.Add(str(excel_path))
-                mail.Display()
+                # Inizializza COM per il thread corrente (essenziale in app compilate)
+                pythoncom.CoInitialize()
 
-                ReportHistory.save_report(data["warning_list"], data["expired_list"])
-                ToastManager.instance().show(
-                    "Report generato in Outlook con allegato Excel",
-                    "success",
-                    duration=3000,
-                )
-                return
+                try:
+                    # Usa Dispatch dinamico (più sicuro per app compilate/PyInstaller)
+                    # Evita EnsureDispatch che tenta di scrivere nella cache (spesso read-only o mancante)
+                    outlook = win32com.client.Dispatch("Outlook.Application")
+
+                    mail = outlook.CreateItem(0)
+                    mail.To = "luca.riccio@coemi.it"
+                    mail.CC = "isabsud@coemi.it"
+                    mail.Subject = subject
+                    mail.HTMLBody = body_html
+                    if excel_path and excel_path.exists():
+                        mail.Attachments.Add(str(excel_path))
+                    mail.Display()
+
+                    ReportHistory.save_report(
+                        data["warning_list"], data["expired_list"]
+                    )
+                    ToastManager.instance().show(
+                        "Report generato in Outlook con allegato Excel",
+                        "success",
+                        duration=3000,
+                    )
+                    return
+
+                except Exception as e:
+                    logger.error(f"Outlook automation error: {e}", exc_info=True)
+                    # Non fare raise qui, lascia che scenda al fallback
+
             except Exception as e:
-                logger.warning(f"Outlook failed: {e}")
+                logger.warning(
+                    f"Outlook integration failed (module import or init): {e}"
+                )
 
-        # Fallback Browser
-        import webbrowser
+        # Fallback Browser / Sistema
+        from PyQt6.QtCore import QUrl
+        from PyQt6.QtGui import QDesktopServices
 
-        tmp_path = Path(os.environ["TEMP"]) / "report_isab.html"
-        tmp_path.write_text(body_html, encoding="utf-8")
-        webbrowser.open(f"file:///{tmp_path.as_posix()}")
-        ReportHistory.save_report(data["warning_list"], data["expired_list"])
-        ToastManager.instance().show(
-            "Outlook non trovato: aperto report nel browser", "warning", duration=4000
+        tmp_path = (
+            Path(os.environ["TEMP"])
+            / f"report_isab_{datetime.now().strftime('%H%M%S')}.html"
         )
+        try:
+            tmp_path.write_text(body_html, encoding="utf-8")
+            # Usa QDesktopServices per aprire il file con l'app predefinita del sistema
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(tmp_path)))
+
+            ReportHistory.save_report(data["warning_list"], data["expired_list"])
+            ToastManager.instance().show(
+                "Outlook non disponibile: aperto anteprima report",
+                "warning",
+                duration=4000,
+            )
+        except Exception as e:
+            logger.error(f"Errore fallback report: {e}")
+            ToastManager.instance().show("Impossibile aprire il report", "error")

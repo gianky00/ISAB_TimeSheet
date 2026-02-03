@@ -4,6 +4,7 @@ Bot per il download automatico dei timesheet dal portale ISAB.
 Basato sullo script standalone funzionante.
 """
 
+import shutil
 import time
 from contextlib import suppress
 from pathlib import Path
@@ -418,8 +419,6 @@ class ScaricaTSBot(BaseBot):
 
     def _move_to_destination(self, src: Path, dest: Path) -> Optional[Path]:
         """Sposta il file scaricato nella posizione finale con retry logic."""
-        import shutil
-
         # Assicura directory esistente
         dest.parent.mkdir(parents=True, exist_ok=True)
 

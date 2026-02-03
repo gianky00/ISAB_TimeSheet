@@ -1,96 +1,152 @@
+import os
+import zipfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, patch
+
+import pytest
 
 from src.core.backup_manager import BackupManager
 
 
-class TestBackupManager:
-    @patch("src.core.backup_manager.os.environ", {"OneDrive": "C:\\MockOneDrive"})
-    @patch("src.core.backup_manager.Path.home", return_value=Path("C:/Users/Mock"))
-    @patch("src.core.backup_manager.Path.is_dir", return_value=True)
-    def test_detect_cloud_paths(self, mock_is_dir, mock_home):
+class TestBackupManagerRobust:
+    @pytest.fixture
+    def mock_config_dir(self, tmp_path):
+        """Mocka CONFIG_DIR con una directory temporanea."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+
+        # Crea file fake
+        (config_dir / "data.db").write_text("DB Content")
+        (config_dir / "settings.json").write_text("{}")
+        (config_dir / "ignored.txt").write_text("Ignore me")
+
+        # Mocka la variabile globale in backup_manager
+        with patch("src.core.backup_manager.CONFIG_DIR", config_dir):
+            yield config_dir
+
+    @pytest.fixture
+    def mock_audit(self):
+        """Mocka AuditManager per evitare scritture su DB reale."""
+        with patch("src.core.backup_manager.AuditManager") as mock:
+            yield mock.instance.return_value
+
+    @pytest.fixture
+    def mock_cloud_env(self, tmp_path):
+        """Simula ambiente con OneDrive."""
+        onedrive_path = tmp_path / "OneDrive"
+        onedrive_path.mkdir()
+
+        with patch.dict(os.environ, {"OneDrive": str(onedrive_path)}):
+            yield onedrive_path
+
+    def test_detect_cloud_paths(self, mock_cloud_env, tmp_path):
+        """Test rilevamento percorsi cloud."""
         paths = BackupManager.detect_cloud_paths()
-        # On Windows, OneDrive env var is common
         assert "OneDrive" in paths
-        assert str(paths["OneDrive"]) == "C:\\MockOneDrive"
+        assert paths["OneDrive"] == mock_cloud_env
 
-    @patch("src.core.backup_manager.load_config")
-    @patch("src.core.backup_manager.BackupManager.detect_cloud_paths")
-    def test_get_backup_dir_preferred(self, mock_detect, mock_load):
-        mock_detect.return_value = {"OneDrive": Path("C:/OD")}
-        mock_load.return_value = {"backup_cloud_provider": "OneDrive"}
+    def test_get_backup_dir_onedrive(self, mock_cloud_env):
+        """Test selezione automatica directory backup."""
+        with patch("src.core.backup_manager.load_config", return_value={}):
+            backup_dir = BackupManager.get_backup_dir()
+            assert backup_dir == mock_cloud_env / "SyncroJob_Backups"
+            assert backup_dir.exists()
 
-        with patch.object(Path, "mkdir") as mock_mkdir:
-            target = BackupManager.get_backup_dir()
-            assert target == Path("C:/OD/SyncroJob_Backups")
-            mock_mkdir.assert_called()
+    def test_create_backup_success(self, mock_config_dir, mock_cloud_env, mock_audit):
+        """Test creazione backup zip."""
+        with patch("src.core.backup_manager.load_config", return_value={}):
+            success, path_str = BackupManager.create_backup()
 
-    @patch("src.core.backup_manager.load_config")
-    @patch("src.core.backup_manager.BackupManager.detect_cloud_paths")
-    def test_get_backup_dir_fallback(self, mock_detect, mock_load):
-        mock_detect.return_value = {}
-        mock_load.return_value = {}
+            assert success is True
+            assert path_str.endswith(".zip")
+            zip_path = Path(path_str)
+            assert zip_path.exists()
 
-        with patch.object(Path, "mkdir"):
+            # Verifica contenuto zip
+            with zipfile.ZipFile(zip_path, "r") as z:
+                files = z.namelist()
+                assert "data.db" in files
+                assert "settings.json" in files
+                assert (
+                    "ignored.txt" not in files
+                )  # Estensione non inclusa in INCLUDE_EXT
+
+            mock_audit.log_action.assert_called_with(
+                action="Backup Creato",
+                category="sistema",
+                entity="BackupManager",
+                params=ANY,
+                severity="low",
+            )
+
+    def test_create_backup_empty(self, tmp_path, mock_audit):
+        """Test backup senza file validi."""
+        empty_conf = tmp_path / "empty_conf"
+        empty_conf.mkdir()
+
+        with patch("src.core.backup_manager.CONFIG_DIR", empty_conf):
             with patch(
-                "src.core.backup_manager.Path.home", return_value=Path("C:/Users/Test")
+                "src.core.backup_manager.BackupManager.get_backup_dir",
+                return_value=tmp_path,
             ):
-                target = BackupManager.get_backup_dir()
-                assert target == Path("C:/Users/Test/Documents/SyncroJob_Backups")
-
-    @patch("src.core.backup_manager.os.walk")
-    @patch("src.core.backup_manager.BackupManager.get_backup_dir")
-    @patch("src.core.backup_manager.zipfile.ZipFile")
-    @patch("src.core.backup_manager.AuditManager")
-    def test_create_backup_success(self, mock_audit, mock_zip, mock_get_dir, mock_walk):
-        mock_get_dir.return_value = Path("C:/Backup")
-        mock_walk.return_value = [
-            ("C:/Config", ["logs"], ["data.db", "config.json", "other.txt"]),
-        ]
-        # data.db and config.json match INCLUDE_EXT
-
-        # Mock actual zip write behavior
-        zip_inst = mock_zip.return_value.__enter__.return_value
-
-        with patch("src.core.backup_manager.CONFIG_DIR", Path("C:/Config")):
-            # Need to mock Path.stat().st_size for audit log
-            with patch("src.core.backup_manager.Path.stat") as mock_stat:
-                mock_stat.return_value.st_size = 1024
                 success, msg = BackupManager.create_backup()
+                assert success is False
+                assert "Nessun file" in msg
 
-                assert success is True
-                assert "SyncroJob_Backup_" in msg
-                assert zip_inst.write.call_count == 2  # .db and .json
+    def test_cleanup_old_backups(self, tmp_path):
+        """Test rotazione backup (keep=5)."""
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir()
 
-    @patch("src.core.backup_manager.BackupManager.get_backup_dir")
-    @patch("src.core.backup_manager.zipfile.is_zipfile", return_value=True)
-    @patch("src.core.backup_manager.zipfile.ZipFile")
-    @patch("src.core.backup_manager.AuditManager")
-    def test_restore_backup(self, mock_audit, mock_zip, mock_is_zip, mock_get_dir):
-        mock_zip_path = "C:/back.zip"
+        # Crea 10 file fake con timestamp diversi
+        for i in range(10):
+            f = backup_dir / f"SyncroJob_Backup_2023010{i}_000000.zip"
+            f.touch()
+            # Forza mtime per ordine
+            os.utime(f, (i * 1000, i * 1000))
 
-        with patch("src.core.backup_manager.Path.exists", return_value=True):
-            with patch("src.core.backup_manager.CONFIG_DIR", Path("C:/Config")):
-                success, msg = BackupManager.restore_backup(mock_zip_path)
-                assert success is True
-                assert "Ripristino completato" in msg
-                mock_zip.return_value.__enter__.return_value.extractall.assert_called_with(
-                    Path("C:/Config")
-                )
+        BackupManager._cleanup_old_backups(backup_dir, keep=5)
 
-    def test_cleanup_old_backups(self):
-        mock_dir = MagicMock(spec=Path)
-        mock_files = [MagicMock(spec=Path) for _ in range(7)]
-        for i, f in enumerate(mock_files):
-            f.name = f"SyncroJob_Backup_{i}.zip"
-            f.unlink = MagicMock()
+        files = list(backup_dir.glob("*.zip"))
+        assert len(files) == 5
+        # I file rimasti devono essere quelli con i > 4 (i più recenti)
+        dates = sorted([f.name for f in files])
+        assert "20230109" in dates[-1]  # Il più recente
 
-        mock_dir.glob.return_value = mock_files
-        with patch("os.path.getmtime", side_effect=range(7)):
-            BackupManager._cleanup_old_backups(mock_dir, keep=5)
-            # Should delete 2 oldest
-            # backups is sorted reverse=True, so [6,5,4,3,2,1,0]
-            # backups[5:] is [1, 0]
-            assert mock_files[0].unlink.called
-            assert mock_files[1].unlink.called
-            assert not mock_files[6].unlink.called
+    def test_restore_backup_success(self, mock_config_dir, tmp_path, mock_audit):
+        """Test ripristino backup."""
+        # 1. Crea uno zip valido
+        zip_path = tmp_path / "restore_test.zip"
+        with zipfile.ZipFile(zip_path, "w") as z:
+            z.writestr("restored_file.db", "Restored Content")
+
+        # 2. Esegui restore
+        success, msg = BackupManager.restore_backup(str(zip_path))
+
+        assert success is True
+        assert (mock_config_dir / "restored_file.db").exists()
+        assert (mock_config_dir / "restored_file.db").read_text() == "Restored Content"
+
+        mock_audit.log_action.assert_called()
+
+    def test_restore_backup_invalid(self, tmp_path):
+        """Test ripristino file non valido."""
+        bad_zip = tmp_path / "bad.zip"
+        bad_zip.write_text("Not a zip")
+
+        success, msg = BackupManager.restore_backup(str(bad_zip))
+        assert success is False
+        assert "non valido" in msg
+
+    def test_list_backups(self, tmp_path):
+        """Test listaggio backup."""
+        with patch(
+            "src.core.backup_manager.BackupManager.get_backup_dir",
+            return_value=tmp_path,
+        ):
+            (tmp_path / "SyncroJob_Backup_A.zip").touch()
+            (tmp_path / "OtherFile.txt").touch()
+
+            backups = BackupManager.list_backups()
+            assert len(backups) == 1
+            assert backups[0].name == "SyncroJob_Backup_A.zip"

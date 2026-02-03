@@ -209,7 +209,15 @@ def run_pyinstaller(obfuscated=False):
         cmd.extend(["--hidden-import", imp])
 
     # CRITICAL: Force include standard library handlers often missed in frozen environments
-    force_hidden_imports = ["win32con", "win32print", "win32ui", "logging.handlers"]
+    force_hidden_imports = [
+        "win32con",
+        "win32print",
+        "win32ui",
+        "logging.handlers",
+        "win32com",
+        "win32com.client",
+        "pythoncom",
+    ]
     for mod in force_hidden_imports:
         cmd.extend(["--hidden-import", mod])
 

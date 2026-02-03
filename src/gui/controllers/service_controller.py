@@ -2,10 +2,20 @@
 Controller per il coordinamento dei servizi di background (Telegram, Lyra, Update).
 """
 
+import logging
+import os
+import re
+from contextlib import suppress
+from datetime import datetime, timedelta
+
 from PyQt6.QtCore import QObject, QTimer
 
+from src.core import config_manager
 from src.core.app_updater import check_for_updates
+from src.core.database import db_manager
 from src.core.notification_manager import NotificationManager
+from src.core.report_history import ReportHistory
+from src.core.version import __version__
 
 
 class ServiceController(QObject):
@@ -60,10 +70,6 @@ class ServiceController(QObject):
         Implementa parallelismo intelligente: bot su siti diversi possono
         andare in parallelo, bot sullo stesso sito vanno in sequenza.
         """
-        from datetime import datetime
-
-        from src.core import config_manager
-
         config = config_manager.load_config()
         now = datetime.now().strftime("%H:%M")
 
@@ -148,8 +154,6 @@ class ServiceController(QObject):
             should_send = True
         else:
             try:
-                from datetime import datetime
-
                 last_dt = datetime.fromisoformat(last_sent_str)
                 days_passed = (datetime.now() - last_dt).days
                 if days_passed >= interval_days:
@@ -163,24 +167,11 @@ class ServiceController(QObject):
 
     def _send_scheduled_report_email(self):
         """Genera e invia il report email automaticamente (senza UI)."""
-        import logging
-        from datetime import datetime
-
-        from src.core import config_manager
-        from src.core.notification_manager import NotificationManager
-
         logger = logging.getLogger(__name__)
 
         try:
-            # Importa le dipendenze necessarie
             # Importa funzione helper per costruire le mappe timbrature
             # (la logica è duplicata per evitare dipendenze circolari)
-            import re
-            from contextlib import suppress
-            from datetime import timedelta
-
-            from src.core.database import db_manager
-            from src.core.report_history import ReportHistory
 
             def normalize(t):
                 return re.sub(r"\s+", " ", str(t).strip().upper())
@@ -271,15 +262,11 @@ class ServiceController(QObject):
             expired_list.sort(key=lambda x: x["giorni"], reverse=True)
 
             # Invia report via Outlook
-            import os
-
             if os.name != "nt":
                 logger.warning("Report email schedulato disponibile solo su Windows")
                 return
 
             import win32com.client
-
-            from src.core.version import __version__
 
             # Costruisci HTML semplificato per invio automatico
             current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
