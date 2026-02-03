@@ -51,10 +51,34 @@ class OdaManager:
                 CAST(pos_oda AS TEXT) LIKE ? OR
                 stato LIKE ? OR
                 cat_contab LIKE ? OR
-                testo_breve LIKE ?
+                testo_breve LIKE ? OR
+                org_acq LIKE ? OR
+                CAST(data_oda AS TEXT) LIKE ? OR
+                CAST(qta AS TEXT) LIKE ? OR
+                uom LIKE ? OR
+                CAST(data_consegna AS TEXT) LIKE ? OR
+                CAST(valore_netto_pos AS TEXT) LIKE ? OR
+                CAST(valore_residuo AS TEXT) LIKE ? OR
+                CAST(valore_netto_oda AS TEXT) LIKE ? OR
+                divisione LIKE ? OR
+                destinatario LIKE ? OR
+                nome_destinatario LIKE ? OR
+                emittente_fattura LIKE ? OR
+                desc_emittente_fattura LIKE ? OR
+                contract_card LIKE ? OR
+                CAST(posizione_contratto AS TEXT) LIKE ? OR
+                gruppo_acquisti LIKE ? OR
+                indicatore_rilascio LIKE ? OR
+                stato_rilascio LIKE ? OR
+                attivita LIKE ? OR
+                CAST(num_riga AS TEXT) LIKE ? OR
+                CAST(quantita AS TEXT) LIKE ? OR
+                unita_mis LIKE ? OR
+                CAST(prezzo_lordo AS TEXT) LIKE ?
             )"""
             p = f"%{search_text}%"
-            params.extend([p] * 9)
+            # 32 columns total in the OR clause
+            params.extend([p] * 32)
 
         # Ordinamento: Data decrescente, OdA decrescente, Posizione crescente
         query += (

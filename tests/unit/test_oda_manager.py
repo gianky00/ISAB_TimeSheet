@@ -59,10 +59,10 @@ class TestOdaManager:
 
         OdaManager.get_all_oda(search_text="fornitore")
 
-        # Verify LIKE params were added (9 params for search)
+        # Verify LIKE params were added (32 params for search)
         call_args = mock_query.call_args
         params = call_args[0][2]
-        assert len(params) == 9
+        assert len(params) == 32
         assert "%fornitore%" in params
 
     @patch(

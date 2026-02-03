@@ -45,7 +45,7 @@ class TestServiceControllerCoverage(unittest.TestCase):
         self.controller._forward_notification_to_telegram(notif)
         self.mock_tg.send_message_sync.assert_called()
 
-    @patch("datetime.datetime")
+    @patch("src.gui.controllers.service_controller.datetime")
     def test_check_scheduled_tasks_autopilot_trigger(self, mock_dt):
         mock_dt.now.return_value.strftime.return_value = "09:00"
 
@@ -65,7 +65,7 @@ class TestServiceControllerCoverage(unittest.TestCase):
         mock_panel._on_start.assert_called()
         mock_panel.log_widget.append.assert_called()
 
-    @patch("datetime.datetime")
+    @patch("src.gui.controllers.service_controller.datetime")
     def test_check_scheduled_tasks_no_trigger(self, mock_dt):
         mock_dt.now.return_value.strftime.return_value = "10:00"
 
