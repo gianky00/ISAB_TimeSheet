@@ -10,13 +10,25 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
+# --- AGGIUNTA SYS PATH PER ENTERPRISE LOGGING ---
+ROOT_DIR = Path(__file__).parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+try:
+    from src.core.logging import get_logger, with_context
+
+    HAS_ENTERPRISE_LOGGING = True
+except ImportError:
+    HAS_ENTERPRISE_LOGGING = False
+# ------------------------------------------------
+
 # Fix encoding for Windows console to support emoji
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 # --- CONFIGURAZIONE ---
-ROOT_DIR = Path(__file__).parent.parent
 STATE_FILE = Path(__file__).parent / ".test_session_state.json"
 REPORT_FILE = Path(__file__).parent / "test_report.md"
 DEFAULT_TIMEOUT = 60  # Secondi per file prima di considerare timeout
@@ -71,6 +83,12 @@ class TestRunner:
         self.start_time = 0
         self.queue_files = []
         self.interrupted = False
+
+        # Inizializzazione Logger Enterprise
+        if HAS_ENTERPRISE_LOGGING:
+            self.logger = get_logger("test_runner")
+        else:
+            self.logger = None
 
         # Gestione Ctrl+C
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -206,6 +224,7 @@ class TestRunner:
                     if isinstance(item, dict):
                         f.write(f"### `{item.get('id', 'Unknown')}`\n")
                         f.write(f"**Error:** `{item.get('error', 'Unknown')}`\n\n")
+                        f.write(f"**Timestamp:** `{item.get('timestamp', 'N/A')}`\n\n")
                         f.write("<details><summary>Full Output</summary>\n\n")
                         f.write("```text\n")
                         f.write(item.get("full_output", "No output captured"))
@@ -300,6 +319,9 @@ class TestRunner:
 
         Console.header("🛡️  ROBUST TEST RUNNER AVVIATO")
 
+        if self.logger:
+            self.logger.info("Robust test runner session started")
+
         # 1. Caricamento Stato o Inizio
         state = self.load_state()
 
@@ -354,8 +376,6 @@ class TestRunner:
         self.start_time = time.time()
 
         # 2. Execution Loop
-        len(self.queue_files)  # Aprossimativo se ripreso
-
         while self.queue_files:
             current_file = self.queue_files[0]
             node_ids = self.files_map.get(current_file, [])
@@ -366,8 +386,10 @@ class TestRunner:
 
             test_count = len(node_ids)
             progress_pct = (
-                (self.passed_tests + len(self.failed_tests)) / self.total_tests
-            ) * 100
+                ((self.passed_tests + len(self.failed_tests)) / self.total_tests) * 100
+                if self.total_tests > 0
+                else 0
+            )
 
             print(
                 f"\n📂 File: {Console.BOLD}{current_file}{Console.ENDC} ({test_count} tests)"
@@ -434,8 +456,23 @@ class TestRunner:
             full_log = res.stdout + res.stderr
             error_msg = self._extract_error_message(lines)
 
+        # Logging Enterprise con contesto
+        if self.logger:
+            with with_context(test_id=nid, phase="execution"):
+                self.logger.error(
+                    "Test failed during robust execution",
+                    error=error_msg,
+                    file=nid.split("::")[0],
+                )
+
         self.failed_tests.append(
-            {"id": nid, "error": error_msg, "log": full_log, "full_output": full_log}
+            {
+                "id": nid,
+                "error": error_msg,
+                "log": full_log,
+                "full_output": full_log,
+                "timestamp": datetime.datetime.now().isoformat(),
+            }
         )
 
         # Salvataggio immediato e generazione report ad ogni fail
@@ -459,8 +496,25 @@ class TestRunner:
     def finish(self):
         total_time = time.time() - self.start_time
         Console.header("🏁 ESECUZIONE COMPLETATA")
-        print(f"⏱️  Tempo Totale: {total_time:.2f}s")
-        print(f"✅ Passati: {self.passed_tests}")
+
+        # Tabella di riepilogo ANSI
+        print("\n┌──────────────────────────────────────┬────────────┐")
+        print(
+            f"│ {Console.BOLD}Metric{Console.ENDC}                               │ {Console.BOLD}Value{Console.ENDC}      │"
+        )
+        print("├──────────────────────────────────────┼────────────┤")
+        print(f"│ 🧪 Total Tests                       │ {self.total_tests:<10} │")
+        print(
+            f"│ ✅ Passed                            │ {Console.GREEN}{self.passed_tests:<10}{Console.ENDC} │"
+        )
+        print(
+            f"│ ❌ Failed                            │ {Console.FAIL}{len(self.failed_tests):<10}{Console.ENDC} │"
+        )
+        print(
+            f"│ ⏩ Skipped                           │ {Console.WARNING}{self.skipped_tests:<10}{Console.ENDC} │"
+        )
+        print(f"│ ⏱️  Total Duration                    │ {f'{total_time:.2f}s':<10} │")
+        print("└──────────────────────────────────────┴────────────┘\n")
 
         # Mostra Report Copertura Finale
         Console.header("📊 COPERTURA FINALE")
@@ -479,11 +533,16 @@ class TestRunner:
             print(f"❌ Falliti: {len(self.failed_tests)}")
             Console.warning(f"⚠️  Vedi {REPORT_FILE} per i dettagli completi.")
             self.generate_report()
-            # Non cancelliamo lo stato se ci sono fallimenti, per permettere re-run o debug
+            if self.logger:
+                self.logger.warning(
+                    "Test session finished with failures", count=len(self.failed_tests)
+                )
             sys.exit(1)
         else:
             Console.success("Tutti i test passati!")
             self.generate_report()
+            if self.logger:
+                self.logger.info("Test session finished successfully")
             if STATE_FILE.exists():
                 os.remove(STATE_FILE)
             sys.exit(0)

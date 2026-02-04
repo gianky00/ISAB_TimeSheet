@@ -1,6 +1,6 @@
 import pytest
 
-from src.gui.panels.contabilita_kpi_panel import ContabilitaKPIPanel
+from src.gui.panels.contabilita_kpi.kpi_panel import ContabilitaKPIPanel
 
 
 class TestGUIAdvanced:
