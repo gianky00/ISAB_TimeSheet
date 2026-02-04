@@ -1,0 +1,73 @@
+{
+  "summary": {
+    "total_duration": 5.445379018783569,
+    "timestamp": "2026-02-04T15:38:08.967543",
+    "success": true
+  },
+  "checks": [
+    {
+      "label": "Environment",
+      "success": true,
+      "msg": "Environment check partial fail",
+      "duration": 0.01200103759765625,
+      "name": "env",
+      "timestamp": "2026-02-04T15:38:03.538778"
+    },
+    {
+      "label": "Versions",
+      "success": true,
+      "msg": "v1.12.4",
+      "duration": 0.0010025501251220703,
+      "name": "ver",
+      "timestamp": "2026-02-04T15:38:03.539781"
+    },
+    {
+      "label": "Secrets",
+      "success": true,
+      "msg": "Keyring OK",
+      "duration": 0.0070383548736572266,
+      "name": "sec",
+      "timestamp": "2026-02-04T15:38:03.546819"
+    },
+    {
+      "label": "Database",
+      "success": true,
+      "msg": "Checked 6 DBs",
+      "duration": 0.4220011234283447,
+      "name": "db",
+      "timestamp": "2026-02-04T15:38:03.968820"
+    },
+    {
+      "label": "Lint/Format",
+      "success": true,
+      "msg": "",
+      "duration": 0.05939745903015137,
+      "name": "ruff",
+      "timestamp": "2026-02-04T15:38:04.039546"
+    },
+    {
+      "label": "Static Analysis",
+      "success": true,
+      "msg": "",
+      "duration": 4.974395513534546,
+      "name": "bandit",
+      "timestamp": "2026-02-04T15:38:08.956544"
+    },
+    {
+      "label": "Type Checking",
+      "success": true,
+      "msg": "",
+      "duration": 2.1733922958374023,
+      "name": "mypy",
+      "timestamp": "2026-02-04T15:38:08.956544"
+    },
+    {
+      "label": "Dead Code",
+      "success": true,
+      "msg": "",
+      "duration": 1.8103947639465332,
+      "name": "vulture",
+      "timestamp": "2026-02-04T15:38:08.956544"
+    }
+  ]
+}

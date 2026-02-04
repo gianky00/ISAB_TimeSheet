@@ -181,7 +181,7 @@ class AutopilotWidget(QWidget):
                     with suppress(RuntimeError):
                         w.timer.stop()
 
-    def _animate_to_config(self):
+    def _animate_gear_button(self):
         self._cleanup_gear_animations()
         original_pos = self.config_btn.pos()
         parallel_group = QParallelAnimationGroup(self)

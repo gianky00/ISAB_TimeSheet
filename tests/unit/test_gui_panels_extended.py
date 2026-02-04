@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.gui.panels.help_panel import HelpPanel
-from src.gui.panels.lyra_panel import LyraPanel
+from src.gui.panels.lyra.lyra_panel import LyraPanel
 from src.gui.panels.notifications_panel import NotificationsPanel
 
 

@@ -373,7 +373,7 @@ class StoricoOdaPanel(QWidget):
 
             config = config_manager.load_config()
             fornitore = config.get("last_oda_fornitore", "KK10608 - COEMI S.R.L.")
-            
+
             # Use configured path or default to app temp directory
             dest_path = config.get("path_dettagli_oda")
             if not dest_path:

@@ -1,244 +1,156 @@
 @echo off
 setlocal enabledelayedexpansion
-title SyncroJob - Master Developer Toolbox (Enterprise Edition)
+title SyncroJob - Master Developer Toolbox (Apex Edition)
 cd /d "%~dp0"
 cd ..
 
+:: Impostazione Colori (Cyan)
+color 0B
+
 :menu
 cls
-echo ============================================================
-echo 🚀 SYNCROJOB - MASTER DEVELOPER TOOLBOX (ENTERPRISE)
-echo ============================================================
 echo.
-echo [ QUALITY ^& INTEGRITY ]
-echo  1. FULL CHECK (Qualita, Sicurezza, Deps, Test) - Rich UI
-echo  2. FAST CHECK (Senza Test) - Rapido per commit
-echo  3. ONLY TESTS (Pytest Suite)
-echo  4. FIX STYLE  (Auto-fix Ruff)
+echo  ========================================================================
+echo    [#] SYNCROJOB - MASTER DEVELOPER TOOLBOX (APEX EDITION)
+echo  ========================================================================
 echo.
-echo [ DEEP TESTING ^& ARCHITECTURE ]
-echo  5. MUTATION TEST (Mutmut - Lento ma profondo)
-echo  6. COVERAGE HTML (Report Copertura)
-echo  7. GEN DIAGRAM   (Genera schema architettura PNG)
+echo    [ 0. SYSTEM BOOTSTRAP AND SETUP ]
+echo    ----------------------------------------------------------------------
+echo     0. INIT SYSTEM     - Installa/Aggiorna tutte le librerie (Poetry)
 echo.
-echo [ DOCUMENTATION ]
-echo  8. BUILD DOCS    (MkDocs - Genera sito statico)
-echo  9. SERVE DOCS    (MkDocs - Anteprima live)
+echo    [ A. QUALITY AND SECURITY ENGINE ]
+echo    ----------------------------------------------------------------------
+echo     1. FULL AUDIT      - Analisi totale: Sicurezza, Tipi, Stile e Test
+echo     2. FAST AUDIT      - Check completo saltando i test (Rapido)
+echo     3. SMART CHECK     - ANALISI INCREMENTALE: Solo file modificati Git
+echo     4. ONLY TESTS      - Esegue solo la suite unitaria di robustezza
+echo     5. AUTO-FIX        - Sistema automaticamente errori di stile Ruff
+echo     6. DASHBOARD       - Apre il report HTML dell'ultimo Audit
 echo.
-echo [ VERSIONING ^& DEPLOY ]
-echo 10. COMMIT WIZARD (Commitizen - Guida al commit standard)
-echo 11. BUMP VERSION  (Commitizen - Auto-incremento versione)
-echo 12. RELEASE       (Release Automatica - Full)
-echo 13. DEPLOY        (Release ^& Deploy - Full)
-echo 25. FAST DEPLOY   (Release ^& Deploy - Senza Test)
-echo 26. FAST RELEASE  (Build EXE - Senza Test)
+echo    [ B. SECURITY AND ARCHITECTURE ]
+echo    ----------------------------------------------------------------------
+echo     7. SECURITY SCAN   - Pip-audit: Verifica vulnerabilita CVE
+echo     8. COVERAGE        - Genera report HTML di copertura del codice
+echo     9. ARCHITECTURE    - Genera il diagramma delle classi (PNG)
 echo.
-echo [ TOOLS ]
-echo 14. INSPECTOR     (Universal Inspector)
-echo 15. SECRETS       (Secrets Manager)
-echo 16. PROFILING     (Scalene Performance)
-echo 17. DB MAINTAIN   (SQLite Vacuum ^& Check)
-echo 18. RAW METRICS   (Radon CC ^& MI)
-echo 19. CLEAN CODE    (Eradicate - Remove commented code)
-echo 20. SECURITY AUDIT(Pip-audit - Vulnerability scan)
-echo 21. MODERNIZE CODE(Refurb - Modern Python suggestions)
-echo 22. PROJECT STATS (Pygount - Lines of code ^& stats)
+echo    [ C. DOCUMENTATION AND KNOWLEDGE ]
+echo    ----------------------------------------------------------------------
+echo    10. BUILD DOCS      - Compila la documentazione MkDocs (Statica)
+echo    11. SERVE DOCS      - Avvia il server live per vedere i manuali
 echo.
-echo [ SYSTEM ]
-echo 23. RUN APP       (Dev Mode - Icecream enabled)
-echo 24. CLEAN         (Pulizia cache)
+echo    [ D. CI/CD, RELEASE AND DEPLOY ]
+echo    ----------------------------------------------------------------------
+echo    12. COMMIT WIZARD   - Guida al commit standard (Conventional Commits)
+echo    13. VERSION BUMP    - Incrementa versione e genera Changelog
+echo    14. FULL RELEASE    - Build EXE completo con test e controlli
+echo    15. FAST RELEASE    - Build EXE rapida (Salta i test)
+echo    16. FULL DEPLOY     - Release + Caricamento su server/distribuzione
 echo.
-echo [q] ESCI
+echo    [ E. ENTERPRISE POWER TOOLS ]
+echo    ----------------------------------------------------------------------
+echo    17. SECRETS MGMT    - Gestore grafico delle chiavi e credenziali
+echo    18. PERFORMANCE     - Profiling profondo (Scalene) per bottleneck
+echo    19. DB MAINTAIN     - Ottimizzazione e Integrity Check SQLite
+echo    20. RAW METRICS     - Complessita ciclotematica e indici tecnici
+echo    21. CLEAN CODE      - Rimuove codice commentato e dead code
+echo    22. DEPTY CHECK     - Verifica dipendenze inutilizzate (Deptry)
+echo    23. PROJECT STATS   - Statistiche linee di codice e linguaggi
 echo.
-echo ============================================================
+echo    [ F. SYSTEM AND RUN ]
+echo    ----------------------------------------------------------------------
+echo    24. RUN APP (DEV)   - Avvia l'app in modalita Sviluppo (Debug)
+echo    25. CLEAN CACHE     - Pulisce .pyc, __pycache__ e temp files
+echo    26. INSPECTOR       - Ispezione universale del sistema/log
+echo.
+echo    [ q. ESCI ]
+echo.
+echo  ========================================================================
+echo.
 
-set /p choice="Scegli (1-26): "
+set /p choice=" >> Seleziona un'operazione (0-26): "
 
 set VENV_PYTHON=.venv\Scripts\python.exe
 set VENV_BIN=.venv\Scripts
 
-if not exist !VENV_PYTHON! (
-    echo ❌ Errore: Ambiente virtuale .venv non trovato.
+:: --- GESTIONE OPZIONE 0 (BOOTSTRAP) ---
+if "%choice%"=="0" (
+    echo [INFO] Avvio procedura di installazione/aggiornamento...
+    where poetry >nul 2>nul
+    if %errorlevel% neq 0 (
+        echo [ERROR] Poetry non trovato! Installalo da https://python-poetry.org/
+        pause
+        goto menu
+    )
+    poetry install
     pause
     goto menu
 )
 
-if "%choice%"=="1" (
-    !VENV_PYTHON! admin/pre_flight_check.py
-    pause
+:: Verifica esistenza VENV
+if not exist %VENV_PYTHON% (
+    if /i not "%choice%"=="q" (
+        echo.
+        echo  [ERROR] Ambiente virtuale .venv non trovato!
+        echo          Premi '0' per inizializzare il sistema.
+        pause
+    )
+    if /i "%choice%"=="q" exit /b 0
     goto menu
 )
 
-if "%choice%"=="2" (
-    !VENV_PYTHON! admin/pre_flight_check.py --fast
-    pause
-    goto menu
-)
+:: --- LOGICA DI ESECUZIONE ---
 
-if "%choice%"=="3" (
-    !VENV_PYTHON! admin/pre_flight_check.py --test-only
-    pause
-    goto menu
-)
-
-if "%choice%"=="4" (
-    !VENV_PYTHON! admin/pre_flight_check.py --fix --fast
-    pause
-    goto menu
-)
-
-if "%choice%"=="5" (
-    echo [EXEC] Running Mutation Testing...
-    !VENV_BIN!\mutmut run
-    !VENV_BIN!\mutmut results
-    pause
-    goto menu
-)
-
+if "%choice%"=="1" (%VENV_PYTHON% admin/pre_flight_check.py & pause & goto menu)
+if "%choice%"=="2" (%VENV_PYTHON% admin/pre_flight_check.py --fast & pause & goto menu)
+if "%choice%"=="3" (echo [INFO] Analisi incrementale... & %VENV_PYTHON% admin/pre_flight_check.py --fast --inc & pause & goto menu)
+if "%choice%"=="4" (%VENV_PYTHON% admin/pre_flight_check.py --test-only & pause & goto menu)
+if "%choice%"=="5" (echo [INFO] Correzione automatica... & %VENV_PYTHON% admin/pre_flight_check.py --fix --fast & pause & goto menu)
 if "%choice%"=="6" (
-    echo [EXEC] Generating Coverage Report...
-    !VENV_BIN!\pytest --cov=src --cov-report=html
-    start htmlcov/index.html
-    pause
-    goto menu
+    if exist reports\preflight\dashboard.html (start reports\preflight\dashboard.html) else (echo [ERROR] Dashboard non trovata.)
+    pause & goto menu
 )
-
 if "%choice%"=="7" (
-    echo [EXEC] Generating Architecture Diagram...
-    !VENV_PYTHON! docs/generate_architecture.py
-    pause
-    goto menu
+    echo [EXEC] Pip-audit (Security Scan)...
+    echo [INFO] Analisi vulnerabilita CVE nelle dipendenze...
+    !VENV_BIN!\pip-audit.exe
+    pause & goto menu
 )
-
 if "%choice%"=="8" (
-    echo [EXEC] Building Documentation...
-    !VENV_BIN!\mkdocs build
-    echo Docs generate in 'site/'
-    pause
-    goto menu
+    %VENV_BIN%\pytest --cov=src --cov-report=html
+    start htmlcov/index.html
+    pause & goto menu
 )
-
-if "%choice%"=="9" (
-    echo [EXEC] Serving Documentation at http://127.0.0.1:8000
-    !VENV_BIN!\mkdocs serve
-    goto menu
-)
-
-if "%choice%"=="10" (
-    echo [INFO] Premi CTRL+F per interagire con il terminale se necessario.
-    !VENV_BIN!\cz commit
-    pause
-    goto menu
-)
-
-if "%choice%"=="11" (
-    echo [EXEC] Auto-bumping version and generating changelog...
-    !VENV_BIN!\cz bump --changelog
-    pause
-    goto menu
-)
-
-if "%choice%"=="12" (
-    !VENV_PYTHON! admin/release.py auto
-    pause
-    goto menu
-)
-
-if "%choice%"=="13" (
-    !VENV_PYTHON! admin/release.py auto --deploy
-    pause
-    goto menu
-)
-
-if "%choice%"=="25" (
-    !VENV_PYTHON! admin/release.py auto --deploy --skip-tests
-    pause
-    goto menu
-)
-
-if "%choice%"=="26" (
-    !VENV_PYTHON! admin/release.py auto --skip-tests
-    pause
-    goto menu
-)
-
-if "%choice%"=="14" (
-    !VENV_PYTHON! admin/universal_inspector.py
-    goto menu
-)
-
-if "%choice%"=="15" (
-    !VENV_PYTHON! admin/manage_secrets_gui.py
-    goto menu
-)
-
-if "%choice%"=="16" (
-    !VENV_BIN!\scalene.exe run --html --output profiling_report.html main.py
-    pause
-    goto menu
-)
-
-if "%choice%"=="17" (
-    !VENV_PYTHON! admin/db_maintenance.py
-    pause
-    goto menu
-)
-
-if "%choice%"=="18" (
-    echo [EXEC] Radon - Maintainability Index...
-    !VENV_BIN!\radon mi src -s
-    echo.
-    echo [EXEC] Radon - Cyclomatic Complexity (Risk only)...
-    !VENV_BIN!\radon cc src -a -nc --min B
-    pause
-    goto menu
-)
-
-if "%choice%"=="19" (
-    echo [EXEC] Eradicate - Removing commented out code...
-    !VENV_BIN!\pip install eradicate >nul
-    !VENV_BIN!\eradicate -r -i src
-    echo [INFO] Clean complete. Check git diff.
-    pause
-    goto menu
-)
-
+if "%choice%"=="9" (%VENV_PYTHON% docs/generate_architecture.py & pause & goto menu)
+if "%choice%"=="10" (%VENV_BIN%\mkdocs build & pause & goto menu)
+if "%choice%"=="11" (%VENV_BIN%\mkdocs serve & goto menu)
+if "%choice%"=="12" (%VENV_BIN%\cz commit & pause & goto menu)
+if "%choice%"=="13" (%VENV_BIN%\cz bump --changelog & pause & goto menu)
+if "%choice%"=="14" (%VENV_PYTHON% admin/release.py auto & pause & goto menu)
+if "%choice%"=="15" (%VENV_PYTHON% admin/release.py auto --skip-tests & pause & goto menu)
+if "%choice%"=="16" (%VENV_PYTHON% admin/release.py auto --deploy & pause & goto menu)
+if "%choice%"=="17" (%VENV_PYTHON% admin/manage_secrets_gui.py & goto menu)
+if "%choice%"=="18" (%VENV_BIN%\scalene.exe run --html --output profiling_report.html main.py & pause & goto menu)
+if "%choice%"=="19" (%VENV_PYTHON% admin/db_maintenance.py & pause & goto menu)
 if "%choice%"=="20" (
-    echo [EXEC] Pip-audit - Scanning for vulnerabilities...
-    !VENV_BIN!\pip-audit
-    pause
-    goto menu
+    %VENV_BIN%\radon mi src -s
+    %VENV_BIN%\radon cc src -a -nc --min B
+    pause & goto menu
 )
-
-if "%choice%"=="21" (
-    echo [EXEC] Refurb - Suggesting modern improvements...
-    !VENV_BIN!\refurb src
-    pause
-    goto menu
-)
-
+if "%choice%"=="21" (%VENV_BIN%\vulture src --min-confidence 80 & pause & goto menu)
 if "%choice%"=="22" (
-    echo [EXEC] Pygount - Project Statistics...
-    !VENV_BIN!\pygount --suffix=py --format=summary src
-    pause
-    goto menu
+    echo [EXEC] Deptry (Dependency Check)...
+    echo [INFO] Verifica dipendenze inutilizzate o mancanti...
+    !VENV_BIN!\deptry.exe .
+    pause & goto menu
 )
+if "%choice%"=="23" (%VENV_BIN%\pygount --suffix=py --format=summary src & pause & goto menu)
+if "%choice%"=="24" (%VENV_PYTHON% main.py & goto menu)
+if "%choice%"=="25" (%VENV_PYTHON% admin/clean_venv.py & pause & goto menu)
+if "%choice%"=="26" (%VENV_PYTHON% admin/universal_inspector.py & goto menu)
 
-if "%choice%"=="23" (
-    !VENV_PYTHON! main.py
-    goto menu
-)
+if /i "%choice%"=="q" exit /b 0
 
-if "%choice%"=="24" (
-    !VENV_PYTHON! admin/clean_venv.py
-    pause
-    goto menu
-)
-
-if "%choice%"=="q" (
-    exit /b 0
-)
-
-echo Scelta non valida.
-pause
+echo.
+echo  [WARNING] Scelta non valida.
+timeout /t 2 >nul
 goto menu
