@@ -62,6 +62,10 @@ secrets.json
 # Project specific
 temp/
 tmp/
+reports/
+admin/Crea Licenze/_intelleo-licenses/
+admin/Crea Licenze/PC_COEMI_GIGLIUTO/
+admin/Crea Licenze/PC_MILLO_COEMI/
 *.pkl
 test_cache.pkl
 architecture.png
