@@ -77,11 +77,17 @@ if "%choice%"=="0" (
     echo [INFO] Avvio procedura di installazione/aggiornamento...
     where poetry >nul 2>nul
     if %errorlevel% neq 0 (
-        echo [ERROR] Poetry non trovato! Installalo da https://python-poetry.org/
+        echo [ERROR] Poetry non trovato! Tento installazione via PIP...
+        %VENV_PYTHON% -m pip install -r requirements.txt
         pause
         goto menu
     )
+    echo [INFO] Esecuzione Poetry Install...
     poetry install
+    if !errorlevel! neq 0 (
+        echo [WARNING] Poetry ha fallito. Tento recupero via PIP (Resilience Mode)...
+        "%VENV_PYTHON%" -m pip install -r requirements.txt
+    )
     pause
     goto menu
 )
@@ -110,9 +116,8 @@ if "%choice%"=="6" (
     pause & goto menu
 )
 if "%choice%"=="7" (
-    echo [EXEC] Pip-audit (Security Scan)...
-    echo [INFO] Analisi vulnerabilita CVE nelle dipendenze...
-    !VENV_BIN!\pip-audit.exe
+    echo [INFO] Apex Security Scan (Bandit + Pip-Audit)...
+    %VENV_PYTHON% admin/pre_flight_check.py --target security
     pause & goto menu
 )
 if "%choice%"=="8" (
@@ -129,21 +134,33 @@ if "%choice%"=="14" (%VENV_PYTHON% admin/release.py auto & pause & goto menu)
 if "%choice%"=="15" (%VENV_PYTHON% admin/release.py auto --skip-tests & pause & goto menu)
 if "%choice%"=="16" (%VENV_PYTHON% admin/release.py auto --deploy & pause & goto menu)
 if "%choice%"=="17" (%VENV_PYTHON% admin/manage_secrets_gui.py & goto menu)
-if "%choice%"=="18" (%VENV_BIN%\scalene.exe run --html --output profiling_report.html main.py & pause & goto menu)
+if "%choice%"=="18" (
+    echo [INFO] Avvio Profiling con cProfile (Massima Stabilita)...
+    echo [NOTE] L'app potrebbe essere leggermente piu lenta durante il profiling.
+    "%VENV_PYTHON%" -m cProfile -o profiling_report.prof main.py
+    if exist profiling_report.prof (
+        echo [INFO] Generazione report visuale con SnakeViz...
+        echo [TIP] Se SnakeViz non si apre, installalo con: pip install snakeviz
+        "%VENV_PYTHON%" -m snakeviz profiling_report.prof
+    ) else (
+        echo [ERROR] Profiling non generato.
+    )
+    pause
+    goto menu
+)
 if "%choice%"=="19" (%VENV_PYTHON% admin/db_maintenance.py & pause & goto menu)
 if "%choice%"=="20" (
-    %VENV_BIN%\radon mi src -s
-    %VENV_BIN%\radon cc src -a -nc --min B
+    echo [INFO] Apex Metrics (Radon MI + CC Parallel)...
+    %VENV_PYTHON% admin/pre_flight_check.py --target metrics
     pause & goto menu
 )
-if "%choice%"=="21" (%VENV_BIN%\vulture src --min-confidence 80 & pause & goto menu)
+if "%choice%"=="21" (%VENV_PYTHON% admin/pre_flight_check.py --target clean & pause & goto menu)
 if "%choice%"=="22" (
-    echo [EXEC] Deptry (Dependency Check)...
-    echo [INFO] Verifica dipendenze inutilizzate o mancanti...
-    !VENV_BIN!\deptry.exe .
+    echo [INFO] Apex Dependency Check (Deptry)...
+    %VENV_PYTHON% admin/pre_flight_check.py --target deps
     pause & goto menu
 )
-if "%choice%"=="23" (%VENV_BIN%\pygount --suffix=py --format=summary src & pause & goto menu)
+if "%choice%"=="23" (%VENV_PYTHON% admin/pre_flight_check.py --target stats & pause & goto menu)
 if "%choice%"=="24" (%VENV_PYTHON% main.py & goto menu)
 if "%choice%"=="25" (%VENV_PYTHON% admin/clean_venv.py & pause & goto menu)
 if "%choice%"=="26" (%VENV_PYTHON% admin/universal_inspector.py & goto menu)
