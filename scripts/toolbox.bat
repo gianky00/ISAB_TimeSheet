@@ -77,11 +77,17 @@ if "%choice%"=="0" (
     echo [INFO] Avvio procedura di installazione/aggiornamento...
     where poetry >nul 2>nul
     if %errorlevel% neq 0 (
-        echo [ERROR] Poetry non trovato! Installalo da https://python-poetry.org/
+        echo [ERROR] Poetry non trovato! Tento installazione via PIP...
+        %VENV_PYTHON% -m pip install -r requirements.txt
         pause
         goto menu
     )
+    echo [INFO] Esecuzione Poetry Install...
     poetry install
+    if !errorlevel! neq 0 (
+        echo [WARNING] Poetry ha fallito. Tento recupero via PIP (Resilience Mode)...
+        "%VENV_PYTHON%" -m pip install -r requirements.txt
+    )
     pause
     goto menu
 )
@@ -99,146 +105,65 @@ if not exist %VENV_PYTHON% (
 )
 
 :: --- LOGICA DI ESECUZIONE ---
-:: Nota: Uso sintassi multi-line con "call" per evitare crash da caratteri speciali nell'output
 
-if "%choice%"=="1" (
-    call %VENV_PYTHON% admin/pre_flight_check.py
-    pause
-    goto menu
-)
-if "%choice%"=="2" (
-    call %VENV_PYTHON% admin/pre_flight_check.py --fast
-    pause
-    goto menu
-)
-if "%choice%"=="3" (
-    echo [INFO] Analisi incrementale...
-    call %VENV_PYTHON% admin/pre_flight_check.py --fast --inc
-    pause
-    goto menu
-)
-if "%choice%"=="4" (
-    call %VENV_PYTHON% admin/pre_flight_check.py --test-only
-    pause
-    goto menu
-)
-if "%choice%"=="5" (
-    echo [INFO] Correzione automatica...
-    call %VENV_PYTHON% admin/pre_flight_check.py --fix --fast
-    pause
-    goto menu
-)
+if "%choice%"=="1" (%VENV_PYTHON% admin/pre_flight_check.py & pause & goto menu)
+if "%choice%"=="2" (%VENV_PYTHON% admin/pre_flight_check.py --fast & pause & goto menu)
+if "%choice%"=="3" (echo [INFO] Analisi incrementale... & %VENV_PYTHON% admin/pre_flight_check.py --fast --inc & pause & goto menu)
+if "%choice%"=="4" (%VENV_PYTHON% admin/pre_flight_check.py --test-only & pause & goto menu)
+if "%choice%"=="5" (echo [INFO] Correzione automatica... & %VENV_PYTHON% admin/pre_flight_check.py --fix --fast & pause & goto menu)
 if "%choice%"=="6" (
-    if exist reports\preflight\dashboard.html (
-        start reports\preflight\dashboard.html
+    if exist reports\preflight\dashboard.html (start reports\preflight\dashboard.html) else (echo [ERROR] Dashboard non trovata.)
+    pause & goto menu
+)
+if "%choice%"=="7" (
+    echo [INFO] Apex Security Scan (Bandit + Pip-Audit)...
+    %VENV_PYTHON% admin/pre_flight_check.py --target security
+    pause & goto menu
+)
+if "%choice%"=="8" (
+    %VENV_BIN%\pytest --cov=src --cov-report=html
+    start htmlcov/index.html
+    pause & goto menu
+)
+if "%choice%"=="9" (%VENV_PYTHON% docs/generate_architecture.py & pause & goto menu)
+if "%choice%"=="10" (%VENV_BIN%\mkdocs build & pause & goto menu)
+if "%choice%"=="11" (%VENV_BIN%\mkdocs serve & goto menu)
+if "%choice%"=="12" (%VENV_BIN%\cz commit & pause & goto menu)
+if "%choice%"=="13" (%VENV_BIN%\cz bump --changelog & pause & goto menu)
+if "%choice%"=="14" (%VENV_PYTHON% admin/release.py auto & pause & goto menu)
+if "%choice%"=="15" (%VENV_PYTHON% admin/release.py auto --skip-tests & pause & goto menu)
+if "%choice%"=="16" (%VENV_PYTHON% admin/release.py auto --deploy & pause & goto menu)
+if "%choice%"=="17" (%VENV_PYTHON% admin/manage_secrets_gui.py & goto menu)
+if "%choice%"=="18" (
+    echo [INFO] Avvio Profiling con cProfile (Massima Stabilita)...
+    echo [NOTE] L'app potrebbe essere leggermente piu lenta durante il profiling.
+    "%VENV_PYTHON%" -m cProfile -o profiling_report.prof main.py
+    if exist profiling_report.prof (
+        echo [INFO] Generazione report visuale con SnakeViz...
+        echo [TIP] Se SnakeViz non si apre, installalo con: pip install snakeviz
+        "%VENV_PYTHON%" -m snakeviz profiling_report.prof
     ) else (
-        echo [ERROR] Dashboard non trovata.
+        echo [ERROR] Profiling non generato.
     )
     pause
     goto menu
 )
-if "%choice%"=="7" (
-    echo [EXEC] Pip-audit - Security Scan...
-    echo [INFO] Analisi vulnerabilita CVE nelle dipendenze...
-    call !VENV_BIN!\pip-audit.exe
-    pause
-    goto menu
-)
-if "%choice%"=="8" (
-    call %VENV_BIN%\pytest --cov=src --cov-report=html
-    start htmlcov/index.html
-    pause
-    goto menu
-)
-if "%choice%"=="9" (
-    call %VENV_PYTHON% docs/generate_architecture.py
-    pause
-    goto menu
-)
-if "%choice%"=="10" (
-    call %VENV_BIN%\mkdocs build
-    pause
-    goto menu
-)
-if "%choice%"=="11" (
-    call %VENV_BIN%\mkdocs serve
-    goto menu
-)
-if "%choice%"=="12" (
-    call %VENV_BIN%\cz commit
-    pause
-    goto menu
-)
-if "%choice%"=="13" (
-    call %VENV_BIN%\cz bump --changelog
-    pause
-    goto menu
-)
-if "%choice%"=="14" (
-    call %VENV_PYTHON% admin/release.py auto
-    pause
-    goto menu
-)
-if "%choice%"=="15" (
-    call %VENV_PYTHON% admin/release.py auto --skip-tests
-    pause
-    goto menu
-)
-if "%choice%"=="16" (
-    call %VENV_PYTHON% admin/release.py auto --deploy
-    pause
-    goto menu
-)
-if "%choice%"=="17" (
-    call %VENV_PYTHON% admin/manage_secrets_gui.py
-    goto menu
-)
-if "%choice%"=="18" (
-    call %VENV_BIN%\scalene.exe --html --outfile profiling_report.html main.py
-    pause
-    goto menu
-)
-if "%choice%"=="19" (
-    call %VENV_PYTHON% admin/db_maintenance.py
-    pause
-    goto menu
-)
+if "%choice%"=="19" (%VENV_PYTHON% admin/db_maintenance.py & pause & goto menu)
 if "%choice%"=="20" (
-    call %VENV_BIN%\radon mi src -s
-    call %VENV_BIN%\radon cc src -a -nc --min B
-    pause
-    goto menu
+    echo [INFO] Apex Metrics (Radon MI + CC Parallel)...
+    %VENV_PYTHON% admin/pre_flight_check.py --target metrics
+    pause & goto menu
 )
-if "%choice%"=="21" (
-    call %VENV_BIN%\vulture src --min-confidence 80
-    pause
-    goto menu
-)
+if "%choice%"=="21" (%VENV_PYTHON% admin/pre_flight_check.py --target clean & pause & goto menu)
 if "%choice%"=="22" (
-    echo [EXEC] Deptry - Dependency Check...
-    echo [INFO] Verifica dipendenze inutilizzate o mancanti...
-    call !VENV_BIN!\deptry.exe .
-    pause
-    goto menu
+    echo [INFO] Apex Dependency Check (Deptry)...
+    %VENV_PYTHON% admin/pre_flight_check.py --target deps
+    pause & goto menu
 )
-if "%choice%"=="23" (
-    call %VENV_BIN%\pygount --suffix=py --format=summary src
-    pause
-    goto menu
-)
-if "%choice%"=="24" (
-    call %VENV_PYTHON% main.py
-    goto menu
-)
-if "%choice%"=="25" (
-    call %VENV_PYTHON% admin/clean_venv.py
-    pause
-    goto menu
-)
-if "%choice%"=="26" (
-    call %VENV_PYTHON% admin/universal_inspector.py
-    goto menu
-)
+if "%choice%"=="23" (%VENV_PYTHON% admin/pre_flight_check.py --target stats & pause & goto menu)
+if "%choice%"=="24" (%VENV_PYTHON% main.py & goto menu)
+if "%choice%"=="25" (%VENV_PYTHON% admin/clean_venv.py & pause & goto menu)
+if "%choice%"=="26" (%VENV_PYTHON% admin/universal_inspector.py & goto menu)
 
 if /i "%choice%"=="q" exit /b 0
 

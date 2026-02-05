@@ -1,22 +1,24 @@
 import json
 import os
-import subprocess
-import tempfile
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QBrush, QColor, QFont, QIcon
+from PyQt6.QtGui import QAction, QBrush, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QDialog,
+    QFrame,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QMenu,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QTreeWidget,
     QVBoxLayout,
     QWidget,
@@ -26,8 +28,443 @@ from src.core import config_manager
 from src.core.config_manager import CONFIG_DIR
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
+from src.core.version import __app_name__, __version__
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
 from src.utils.helpers import get_asset_path
+
+
+class ScadenzeAnalysisDialog(QDialog):
+    """Finestra di analisi scadenze certificati - Design professionale."""
+
+    def __init__(self, certificates_data: list, parent=None):
+        super().__init__(parent)
+        self.certificates_data = certificates_data
+        self._setup_ui()
+
+    def _setup_ui(self):
+        self.setWindowTitle(f"Analisi Scadenze Certificati - {__app_name__}")
+        self.setMinimumSize(900, 650)
+        self.setStyleSheet(
+            """
+            QDialog {
+                background-color: #f8fafc;
+            }
+            """
+        )
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # === HEADER ===
+        self.header = QFrame()
+        header = self.header
+        header.setStyleSheet(
+            """
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #1e3a5f, stop:1 #2d5a87);
+                border: none;
+            }
+            """
+        )
+        header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(30, 25, 30, 25)
+
+        # Titolo e versione
+        title_row = QHBoxLayout()
+        title_label = QLabel("Analisi Scadenze Certificati")
+        title_label.setStyleSheet(
+            "color: white; font-size: 24px; font-weight: bold;"
+        )
+        title_row.addWidget(title_label)
+        title_row.addStretch()
+
+        version_label = QLabel(f"{__app_name__} v{__version__}")
+        version_label.setStyleSheet(
+            "color: rgba(255,255,255,0.7); font-size: 13px;"
+        )
+        title_row.addWidget(version_label)
+        header_layout.addLayout(title_row)
+
+        # Data analisi
+        date_label = QLabel(f"Generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}")
+        date_label.setStyleSheet(
+            "color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;"
+        )
+        header_layout.addWidget(date_label)
+
+        layout.addWidget(header)
+
+        # === STATISTICHE ===
+        self.stats_frame = QFrame()
+        stats_frame = self.stats_frame
+        stats_frame.setStyleSheet(
+            """
+            QFrame {
+                background-color: white;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            """
+        )
+        stats_layout = QHBoxLayout(stats_frame)
+        stats_layout.setContentsMargins(30, 20, 30, 20)
+        stats_layout.setSpacing(40)
+
+        # Calcola statistiche
+        scaduti = [c for c in self.certificates_data if c["days"] is not None and c["days"] < 0]
+        urgenti = [c for c in self.certificates_data if c["days"] is not None and 0 <= c["days"] <= 15]
+        attenzione = [c for c in self.certificates_data if c["days"] is not None and 16 <= c["days"] <= 30]
+        attivi = [c for c in self.certificates_data if c["days"] is not None and c["days"] > 30]
+        nd = [c for c in self.certificates_data if c["days"] is None]
+
+        stats_layout.addWidget(self._create_stat_card("Totale Monitorati", len(self.certificates_data), "#3b82f6"))
+        stats_layout.addWidget(self._create_stat_card("Scaduti", len(scaduti), "#dc2626"))
+        stats_layout.addWidget(self._create_stat_card("Urgenti (0-15gg)", len(urgenti), "#ea580c"))
+        stats_layout.addWidget(self._create_stat_card("Attenzione (16-30gg)", len(attenzione), "#ca8a04"))
+        stats_layout.addWidget(self._create_stat_card("Attivi (>30gg)", len(attivi), "#16a34a"))
+        stats_layout.addStretch()
+
+        layout.addWidget(stats_frame)
+
+        # === CONTENUTO SCROLLABILE ===
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet(
+            """
+            QScrollArea {
+                border: none;
+                background-color: #f8fafc;
+            }
+            """
+        )
+
+        self.content_widget = QWidget()
+        content = self.content_widget
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(30, 20, 30, 20)
+        content_layout.setSpacing(20)
+
+        # Sezioni per stato
+        if scaduti:
+            content_layout.addWidget(
+                self._create_section("SCADUTI", scaduti, "#dc2626", "#fef2f2")
+            )
+        if urgenti:
+            content_layout.addWidget(
+                self._create_section("IN SCADENZA (0-15 giorni)", urgenti, "#ea580c", "#fff7ed")
+            )
+        if attenzione:
+            content_layout.addWidget(
+                self._create_section("ATTENZIONE (16-30 giorni)", attenzione, "#ca8a04", "#fefce8")
+            )
+        if attivi:
+            content_layout.addWidget(
+                self._create_section("ATTIVI (oltre 30 giorni)", attivi, "#16a34a", "#f0fdf4")
+            )
+        if nd:
+            content_layout.addWidget(
+                self._create_section("DATA NON DISPONIBILE", nd, "#6b7280", "#f9fafb")
+            )
+
+        if not self.certificates_data:
+            empty_label = QLabel("Nessun certificato in monitoraggio.")
+            empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            empty_label.setStyleSheet("color: #6b7280; font-size: 16px; padding: 40px;")
+            content_layout.addWidget(empty_label)
+
+        content_layout.addStretch()
+        scroll.setWidget(content)
+        layout.addWidget(scroll)
+
+        # === FOOTER ===
+        self.footer = QFrame()
+        footer = self.footer
+        footer.setStyleSheet(
+            """
+            QFrame {
+                background-color: white;
+                border-top: 1px solid #e2e8f0;
+            }
+            """
+        )
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(30, 15, 30, 15)
+
+        footer_info = QLabel(f"Report generato da {__app_name__} v{__version__}")
+        footer_info.setStyleSheet("color: #94a3b8; font-size: 11px;")
+        footer_layout.addWidget(footer_info)
+        footer_layout.addStretch()
+
+        # Pulsante Invia Email
+        email_btn = QPushButton("Invia Email")
+        email_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #059669;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 25px;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #047857;
+            }
+            """
+        )
+        email_btn.clicked.connect(self._send_email)
+        footer_layout.addWidget(email_btn)
+
+        footer_layout.addSpacing(10)
+
+        close_btn = QPushButton("Chiudi")
+        close_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 30px;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #2563eb;
+            }
+            """
+        )
+        close_btn.clicked.connect(self.accept)
+        footer_layout.addWidget(close_btn)
+
+        layout.addWidget(footer)
+
+    def _create_stat_card(self, title: str, value: int, color: str) -> QFrame:
+        """Crea una card per le statistiche."""
+        card = QFrame()
+        card.setStyleSheet(
+            f"""
+            QFrame {{
+                background-color: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 10px;
+            }}
+            """
+        )
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(15, 10, 15, 10)
+        card_layout.setSpacing(5)
+
+        value_label = QLabel(str(value))
+        value_label.setStyleSheet(
+            f"color: {color}; font-size: 28px; font-weight: bold;"
+        )
+        value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        title_label = QLabel(title)
+        title_label.setStyleSheet(
+            "color: #64748b; font-size: 11px; font-weight: 500;"
+        )
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        card_layout.addWidget(value_label)
+        card_layout.addWidget(title_label)
+
+        return card
+
+    def _create_section(self, title: str, items: list, color: str, bg_color: str) -> QFrame:
+        """Crea una sezione con elenco certificati."""
+        section = QFrame()
+        section.setStyleSheet(
+            f"""
+            QFrame {{
+                background-color: {bg_color};
+                border: 1px solid {color}40;
+                border-radius: 8px;
+            }}
+            """
+        )
+        section_layout = QVBoxLayout(section)
+        section_layout.setContentsMargins(20, 15, 20, 15)
+        section_layout.setSpacing(10)
+
+        # Header sezione
+        header_layout = QHBoxLayout()
+        title_label = QLabel(f"{title} ({len(items)})")
+        title_label.setStyleSheet(
+            f"color: {color}; font-size: 14px; font-weight: bold;"
+        )
+        header_layout.addWidget(title_label)
+        header_layout.addStretch()
+        section_layout.addLayout(header_layout)
+
+        # Separator
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setStyleSheet(f"background-color: {color}30;")
+        sep.setFixedHeight(1)
+        section_layout.addWidget(sep)
+
+        # Items
+        for item in items:
+            item_layout = QHBoxLayout()
+            item_layout.setSpacing(15)
+
+            # Matricola
+            matricola_label = QLabel(item["matricola"])
+            matricola_label.setStyleSheet(
+                f"color: {color}; font-weight: 600; font-size: 13px; min-width: 120px;"
+            )
+            item_layout.addWidget(matricola_label)
+
+            # Modello + Range (per manometri)
+            modello_text = item["modello"]
+            if "MANOMETRO DIGITALE" in modello_text.upper() and item.get("range"):
+                modello_text += f" ({item['range']})"
+            modello_label = QLabel(modello_text)
+            modello_label.setStyleSheet("color: #475569; font-size: 12px;")
+            modello_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            item_layout.addWidget(modello_label)
+
+            # Costruttore
+            costruttore_label = QLabel(item["costruttore"])
+            costruttore_label.setStyleSheet("color: #64748b; font-size: 12px; min-width: 100px;")
+            item_layout.addWidget(costruttore_label)
+
+            # Scadenza
+            if item["days"] is not None:
+                if item["days"] < 0:
+                    days_text = f"Scaduto da {abs(item['days'])} gg"
+                else:
+                    days_text = f"Scade tra {item['days']} gg"
+            else:
+                days_text = "N/D"
+            days_label = QLabel(days_text)
+            days_label.setStyleSheet(
+                f"color: {color}; font-weight: 500; font-size: 12px; min-width: 130px;"
+            )
+            days_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+            item_layout.addWidget(days_label)
+
+            section_layout.addLayout(item_layout)
+
+        return section
+
+    def _send_email(self):
+        """Genera screenshot completo del report e apre il client email."""
+        import tempfile
+        import subprocess
+
+        try:
+            # Calcola l'altezza totale del contenuto
+            header_height = self.header.sizeHint().height()
+            stats_height = self.stats_frame.sizeHint().height()
+            content_height = self.content_widget.sizeHint().height()
+            footer_height = self.footer.sizeHint().height()
+
+            total_height = header_height + stats_height + content_height + footer_height + 40
+            total_width = max(900, self.width())
+
+            # Crea un pixmap per il report completo
+            pixmap = QPixmap(total_width, total_height)
+            pixmap.fill(QColor("#f8fafc"))
+
+            painter = QPainter(pixmap)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            # Renderizza ogni sezione
+            y_offset = 0
+
+            # Header
+            self.header.render(painter, targetOffset=self.header.pos())
+            y_offset += header_height
+
+            # Stats
+            self.stats_frame.render(
+                painter,
+                targetOffset=self.stats_frame.mapTo(self, self.stats_frame.rect().topLeft())
+            )
+            y_offset += stats_height
+
+            # Content (renderizza il widget interno dello scroll, non lo scroll)
+            self.content_widget.render(
+                painter,
+                targetOffset=self.content_widget.mapTo(self, self.content_widget.rect().topLeft())
+            )
+
+            painter.end()
+
+            # Salva come PNG temporaneo
+            temp_path = os.path.join(tempfile.gettempdir(), "syncrojob_scadenze_report.png")
+            pixmap.save(temp_path, "PNG")
+
+            # Tenta di usare la macro Excel se configurata, altrimenti apre file manager
+            config = config_manager.load_config()
+            excel_path = config.get("certificati_campione_path", "")
+
+            if excel_path and os.path.exists(excel_path):
+                # Prova ad eseguire la macro Excel per inviare email
+                try:
+                    ps_script = f'''
+$xl = New-Object -ComObject Excel.Application
+$xl.Visible = $false
+$wb = $xl.Workbooks.Open("{excel_path.replace(chr(92), chr(92)+chr(92))}")
+try {{
+    $xl.Run("'" + $wb.Name + "'!InviaEmailConScreenshotDaPS", "{temp_path.replace(chr(92), chr(92)+chr(92))}")
+}} catch {{
+    # Se la macro non esiste, apri solo il file
+    Start-Process "{temp_path.replace(chr(92), chr(92)+chr(92))}"
+}}
+$wb.Close($false)
+$xl.Quit()
+'''
+                    with tempfile.NamedTemporaryFile(
+                        mode="w", suffix=".ps1", delete=False, encoding="utf-8"
+                    ) as tmp:
+                        tmp.write(ps_script)
+                        ps_path = tmp.name
+
+                    CREATE_NO_WINDOW = 0x08000000
+                    subprocess.Popen(
+                        ["powershell", "-ExecutionPolicy", "Bypass", "-File", ps_path],
+                        creationflags=CREATE_NO_WINDOW,
+                    )
+
+                    QMessageBox.information(
+                        self,
+                        "Email in preparazione",
+                        f"Lo screenshot del report è stato generato.\n\n"
+                        f"Percorso: {temp_path}\n\n"
+                        "Se configurata, la macro Excel invierà l'email automaticamente.",
+                    )
+                except Exception:
+                    # Fallback: apri il file
+                    os.startfile(temp_path)
+                    QMessageBox.information(
+                        self,
+                        "Screenshot salvato",
+                        f"Lo screenshot è stato salvato in:\n{temp_path}\n\n"
+                        "Puoi allegarlo manualmente alla tua email.",
+                    )
+            else:
+                # Apri il file direttamente
+                os.startfile(temp_path)
+                QMessageBox.information(
+                    self,
+                    "Screenshot salvato",
+                    f"Lo screenshot è stato salvato in:\n{temp_path}\n\n"
+                    "Puoi allegarlo manualmente alla tua email.",
+                )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Errore",
+                f"Impossibile generare lo screenshot:\n{e}",
+            )
 
 
 class CertificatiCampioneTab(QWidget):
@@ -743,112 +1180,46 @@ class CertificatiCampioneTab(QWidget):
             mw.analyze_with_lyra(f"Certificato: {text}")
 
     def _run_analysis(self):
-        # Esegue lo script PowerShell di analisi.
-        config = config_manager.load_config()
-        path = config.get("certificati_campione_path", "")
-        if not path or not os.path.exists(path):
-            QMessageBox.warning(
-                self,
-                "Attenzione",
-                "File Certificati Campione non configurato o non trovato.",
-            )
-            return
+        """Apre la finestra di analisi scadenze con tutti i certificati monitorati."""
+        # Raccogli i dati dai nodi padre del tree (solo quelli NON esclusi)
+        certificates_data = []
 
-        ps_script_template = r"""
-# --- Parametri Iniziali ---
-$Global:ExcelFilePath = "__FILE_PATH_PLACEHOLDER__"
-$Global:SheetName = "strumenti campione ISAB SUD"
-$startRow = 9
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-Add-Type -ReferencedAssemblies System.Windows.Forms, System.Drawing -TypeDefinition @'
-    using System;
-    using System.Runtime.InteropServices;
-    using System.Drawing;
-    public class User32 {
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool PrintWindow(IntPtr hwnd, IntPtr hdcBlt, uint nFlags);
-    }
-'@
-function Show-CustomSummaryBox {
-    param ($Title, $Scaduti, $Prossimi, $Oggi, $ExcelPath)
-    $form = New-Object System.Windows.Forms.Form
-    $form.Text = $Title; $form.Width = 1052; $form.Height = 600; $form.StartPosition = "CenterScreen"
-    $rtb = New-Object System.Windows.Forms.RichTextBox
-    $rtb.Dock = "Fill"; $rtb.ReadOnly = $true; $rtb.Font = New-Object System.Drawing.Font("Consolas", 10)
-    $append = {
-        param($Text, $Color = ([System.Drawing.Color]::Black), $Bold = $false)
-        $rtb.SelectionStart = $rtb.TextLength
-        $rtb.SelectionColor = $Color
-        if ($Bold) {
-            $fontStyle = [System.Drawing.FontStyle]::Bold
-        } else {
-            $fontStyle = [System.Drawing.FontStyle]::Regular
-        }
-        $rtb.SelectionFont = New-Object System.Drawing.Font($rtb.SelectionFont, $fontStyle)
-        $rtb.AppendText("$Text`n")
-    }
-    $btnPanel = New-Object System.Windows.Forms.Panel; $btnPanel.Height = 50; $btnPanel.Dock = "Bottom"
-    $closeBtn = New-Object System.Windows.Forms.Button; $closeBtn.Text = "Chiudi"; $closeBtn.Add_Click({ $form.Close() })
-    $mailBtn = New-Object System.Windows.Forms.Button; $mailBtn.Text = "Invia Email"; $mailBtn.Width = 120
-    $mailBtn.Add_Click({
-        $bmp = New-Object System.Drawing.Bitmap($form.Width, $form.Height)
-        $g = [System.Drawing.Graphics]::FromImage($bmp); $hdc = $g.GetHdc()
-        [User32]::PrintWindow($form.Handle, $hdc, 0x2); $g.ReleaseHdc($hdc); $g.Dispose()
-        $p = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "cert_summary.png")
-        $bmp.Save($p, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
-        $xl = New-Object -ComObject Excel.Application
-        $wb = $xl.Workbooks.Open($ExcelPath)
-        $xl.Run("'" + $($wb.Name) + "'!InviaEmailConScreenshotDaPS", $p)
-        $wb.Close($false); $xl.Quit(); $form.Close()
-    })
-    $btnPanel.Controls.AddRange(@($mailBtn, $closeBtn))
-    $form.Controls.AddRange(@($rtb, $btnPanel))
-    &$append "RIEPILOGO SCADENZE (Analisi: $($Oggi.ToString('dd/MM/yyyy')))" ([System.Drawing.Color]::Black) $true
-    if ($Scaduti.Count -gt 0) {
-        &$append "--- SCADUTI ($($Scaduti.Count)) ---" ([System.Drawing.Color]::Red) $true
-        foreach ($i in $Scaduti) { &$append "ID: $($i.ID) | $($i.Name) | Scad: $($i.Date.ToString('dd/MM/yyyy'))" ([System.Drawing.Color]::Red) }
-    }
-    if ($Prossimi.Count -gt 0) {
-        &$append "--- IN SCADENZA ($($Prossimi.Count)) ---" ([System.Drawing.Color]::DarkOrange) $true
-        foreach ($i in $Prossimi) { &$append "ID: $($i.ID) | $($i.Name) | Scad: $($i.Date.ToString('dd/MM/yyyy'))" ([System.Drawing.Color]::DarkOrange) }
-    }
-    $form.TopMost = $true; $null = $form.ShowDialog(); $form.Dispose()
-}
-try {
-    $xl = New-Object -ComObject Excel.Application; $xl.Visible = $false
-    $wb = $xl.Workbooks.Open($Global:ExcelFilePath); $ws = $wb.Sheets.Item($Global:SheetName)
-    $last = $ws.Cells($ws.Rows.Count, "X").End(-4162).Row
-    $list = New-Object System.Collections.ArrayList; $oggi = (Get-Date).Date
-    for ($i = 9; $i -le $last; $i++) {
-        if ($ws.Cells($i, "X").Value2 -eq "SI") {
-            $null = $list.Add(([PSCustomObject]@{
-                Name = $ws.Cells($i, "G").Value2; ID = $ws.Cells($i, "V").Value2
-                Date = $oggi.AddDays([double]$ws.Cells($i, "W").Value2)
-            }))
-        }
-    }
-    $scad = $list | Where-Object {$_.Date -lt $oggi}
-    $prox = $list | Where-Object {$_.Date -ge $oggi -and $_.Date -le $oggi.AddDays(3)}
-    $wb.Close($false); $xl.Quit(); [System.Runtime.InteropServices.Marshal]::ReleaseComObject($xl)
-    Show-CustomSummaryBox "Avviso Scadenze" $scad $prox $oggi $Global:ExcelFilePath
-} catch { [System.Windows.Forms.MessageBox]::Show($_.Exception.Message) }
-"""
-        ps_script = ps_script_template.replace(
-            "__FILE_PATH_PLACEHOLDER__", path.replace("\\", "\\\\")
-        )
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".ps1", delete=False, encoding="utf-8"
-            ) as tmp:
-                tmp.write(ps_script)
-                tmp_path = tmp.name
+        for i in range(self.tree.topLevelItemCount()):
+            parent = self.tree.topLevelItem(i)
+            matricola = self._extract_matricola_from_parent(parent)
 
-            CREATE_NO_WINDOW = 0x08000000
-            subprocess.Popen(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp_path],
-                creationflags=CREATE_NO_WINDOW,
-            )
-        except Exception as e:
-            QMessageBox.critical(self, "Errore", f"Impossibile avviare l'analisi:\n{e}")
+            # Salta gli esclusi
+            if matricola in self._exclusions:
+                continue
+
+            # Estrai i dati dal UserRole
+            user_data = parent.data(0, Qt.ItemDataRole.UserRole)
+            days = user_data.get("days") if user_data else None
+
+            # Estrai altri dati dal testo del nodo padre
+            # Formato: "matricola  •  costruttore  •  modello  •  [range  •]  days_text"
+            text = parent.text(0)
+            parts = text.split("  •  ")
+
+            costruttore = parts[1].strip() if len(parts) > 1 else "N/D"
+            modello = parts[2].strip() if len(parts) > 2 else "N/D"
+
+            # Controlla se c'è il range (per manometri digitali)
+            range_strumento = ""
+            if "MANOMETRO DIGITALE" in modello.upper() and len(parts) > 4:
+                range_strumento = parts[3].strip()
+
+            certificates_data.append({
+                "matricola": matricola,
+                "costruttore": costruttore,
+                "modello": modello,
+                "range": range_strumento,
+                "days": days,
+            })
+
+        # Ordina per giorni (scaduti prima)
+        certificates_data.sort(key=lambda x: x["days"] if x["days"] is not None else 9999)
+
+        # Apri la finestra di analisi
+        dialog = ScadenzeAnalysisDialog(certificates_data, self)
+        dialog.exec()
