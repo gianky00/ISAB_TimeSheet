@@ -7,7 +7,6 @@ L'Oracolo del Progetto: Score, Dashboard HTML, Git-Hooks e Intelligence.
 
 import argparse
 import datetime
-import json
 import os
 import re
 import sqlite3
@@ -16,7 +15,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Rich Imports
 try:
@@ -91,11 +90,12 @@ def run_tool(name: str, cmd: List[str], label: str, cwd=PROJECT_ROOT) -> Tuple[b
 # --- APEX ENGINE ---
 
 class ApexAudit:
-    def __init__(self, fix=False, fast=False, incremental=False, test_only=False):
+    def __init__(self, fix=False, fast=False, incremental=False, test_only=False, force=False):
         self.fix = fix
         self.fast = fast
         self.incremental = incremental
         self.test_only = test_only
+        self.force = force
         self.results: List[CheckResult] = []
         self.start_time = time.time()
         self.changed_files = self._get_changed_files() if incremental else []
@@ -110,16 +110,27 @@ class ApexAudit:
     def _check_environment(self) -> Tuple[bool, str, float]:
         start_t = time.time()
         try:
+            c_ver = "N/A"
+            d_ver = "N/A"
             if sys.platform == "win32":
-                res = subprocess.run(["reg", "query", r"HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon", "/v", "version"], capture_output=True, text=True)
-                c_ver = re.search(r"REG_SZ\s+([\d\.]+)", res.stdout).group(1) if "REG_SZ" in res.stdout else "N/A"
+                try:
+                    res = subprocess.run(["reg", "query", r"HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon", "/v", "version"], capture_output=True, text=True, timeout=2)
+                    c_ver = re.search(r"REG_SZ\s+([\d\.]+)", res.stdout).group(1) if "REG_SZ" in res.stdout else "N/A"
+                except Exception: pass
             else:
-                res = subprocess.run(["google-chrome", "--version"], capture_output=True, text=True)
-                c_ver = re.search(r"([\d\.]+)", res.stdout).group(1) if res.returncode == 0 else "N/A"
-            d_res = subprocess.run(["chromedriver", "--version"], capture_output=True, text=True)
-            d_ver = re.search(r"([\d\.]+)", d_res.stdout).group(1) if d_res.returncode == 0 else "N/A"
+                try:
+                    res = subprocess.run(["google-chrome", "--version"], capture_output=True, text=True, timeout=2)
+                    c_ver = re.search(r"([\d\.]+)", res.stdout).group(1) if res.returncode == 0 else "N/A"
+                except Exception: pass
+            
+            try:
+                d_res = subprocess.run([get_bin("chromedriver"), "--version"], capture_output=True, text=True, timeout=2)
+                d_ver = re.search(r"([\d\.]+)", d_res.stdout).group(1) if d_res.returncode == 0 else "N/A"
+            except Exception: pass
+            
             return True, f"Chrome:{c_ver} Driver:{d_ver}", time.time() - start_t
-        except Exception: return False, "Env check failed", time.time() - start_t
+        except Exception as e: 
+            return False, f"Env check failed: {e}", time.time() - start_t
 
     def _check_versions(self) -> Tuple[bool, str, float]:
         start_t = time.time()
@@ -187,7 +198,7 @@ class ApexAudit:
         parallel_checks = [
             ("Lint (Ruff)", lambda: run_tool("ruff", [get_bin("ruff"), "check"] + targets + (["--fix"] if self.fix else []), "ruff"), "ruff"),
             ("Security (Bandit)", lambda: run_tool("bandit", [get_bin("bandit"), "-r", "src/", "-ll", "-q"], "bandit"), "bandit"),
-            ("Types (Mypy)", lambda: run_tool("mypy", ["src", "--ignore-missing-imports"], "mypy"), "mypy"),
+            ("Types (Mypy)", lambda: run_tool("mypy", [get_bin("mypy"), "src", "--ignore-missing-imports"], "mypy"), "mypy"),
             ("Complexity (Xenon)", lambda: run_tool("xenon", [get_bin("xenon"), "-a", "B", "src"], "xenon"), "xenon"),
             ("Modernize (Refurb)", lambda: run_tool("refurb", [get_bin("refurb"), "src"], "refurb"), "refurb"),
             ("Typos (Codespell)", lambda: run_tool("codespell", [get_bin("codespell"), "src"], "codespell"), "codespell"),
@@ -227,7 +238,11 @@ class ApexAudit:
         console.print(Panel(f"[bold cyan]🏆 SYNCRO-SCORE: {score}/100[/bold cyan]", border_style="cyan"))
         
         self._export_html(score)
-        if score < 80: sys.exit(1)
+        if score < 80:
+            if self.force:
+                console.print("[bold orange3]⚠️ Score sotto la soglia, ma procedo a causa del flag --force.[/bold orange3]")
+            else:
+                sys.exit(1)
 
     def _get_score(self) -> int:
         score = 100
@@ -249,5 +264,6 @@ if __name__ == "__main__":
     parser.add_argument("--fast", action="store_true")
     parser.add_argument("--inc", action="store_true")
     parser.add_argument("--test-only", action="store_true")
+    parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
-    ApexAudit(fix=args.fix, fast=args.fast, incremental=args.inc, test_only=args.test_only).run_all()
+    ApexAudit(fix=args.fix, fast=args.fast, incremental=args.inc, test_only=args.test_only, force=args.force).run_all()
