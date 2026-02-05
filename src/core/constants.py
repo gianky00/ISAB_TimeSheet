@@ -10,7 +10,7 @@ class URLs:
     """Application URLs."""
 
     ISAB_PORTAL = "https://portalefornitori.isab.com/Ui/"
-    UPDATE_URL = "https://raw.githubusercontent.com/Isab-Bot/SyncroJob-Update/main/"
+    UPDATE_URL = "https://projectjob-bot.netlify.app/"
 
 
 class Timeouts:

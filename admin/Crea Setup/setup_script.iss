@@ -31,6 +31,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\SyncroJob
 DefaultGroupName=SyncroJob
 DisableProgramGroupPage=yes
+AppMutex=SyncroJob_Instance_Connector
 
 ; Output configuration
 OutputDir={#OutputPath}
@@ -65,6 +66,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ; Main application files
 Source: "{#SourcePath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Copy drivers (CRITICAL for Bot Parity - ensures integrated driver works without internet)
+Source: "..\..\drivers\*"; DestDir: "{app}\drivers"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists(ExpandConstant('{src}\..\..\drivers'))
 
 ; Copy all assets (icons, styles, etc.)
 Source: "{#AssetsPath}\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs

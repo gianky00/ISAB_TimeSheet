@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QSortFilterProxyModel, QTimer
+from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer
 from PyQt6.QtWidgets import (
     QHeaderView,
     QTableView,

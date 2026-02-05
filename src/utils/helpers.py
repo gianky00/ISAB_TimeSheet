@@ -18,24 +18,11 @@ def get_asset_path(relative_path: str) -> str:
     """
     Restituisce il percorso assoluto di un asset.
     Funziona sia in sviluppo che nell'app installata.
+    Utilizza ResourceManager come fonte unica di verità.
     """
-    if getattr(sys, "frozen", False):
-        # PyInstaller 6+ mette tutto in _internal per la modalità onedir
-        exe_dir = os.path.dirname(sys.executable)
-        internal_path = os.path.join(exe_dir, "_internal")
+    from src.utils.resource_manager import ResourceManager
 
-        if Path(os.path.join(internal_path, relative_path.split("/")[0])).exists():
-            base_path = internal_path
-        else:
-            base_path = exe_dir
-    else:
-        # Percorso del sorgente (src/utils/helpers.py -> src -> root)
-        base_path = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-
-    path = os.path.join(base_path, relative_path.replace("/", os.sep))
-    return path
+    return ResourceManager.get_asset_path(relative_path)
 
 
 def get_app_icon_path() -> Optional[str]:

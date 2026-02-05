@@ -3,17 +3,18 @@ Debug script per diagnosticare problemi di importazione Giornaliere.
 Esegui con: .venv\Scripts\python.exe scripts\debug_giornaliere.py
 """
 
-import sys
 import os
+import sys
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import re
-from pathlib import Path
-import pandas as pd
+import re  # noqa: E402
+from pathlib import Path  # noqa: E402
 
-from src.core import config_manager
+import pandas as pd  # noqa: E402
+
+from src.core import config_manager  # noqa: E402
 
 
 def debug_giornaliere():
@@ -32,7 +33,7 @@ def debug_giornaliere():
         return
 
     root = Path(giornaliere_path)
-    print(f"    OK: Directory esiste")
+    print("    OK: Directory esiste")
 
     # 2. Scansiona cartelle
     print(f"\n[2] Scansione cartelle in: {root}")
@@ -54,7 +55,7 @@ def debug_giornaliere():
         return
 
     # 3. Per ogni cartella, analizza i file
-    print(f"\n[3] Analisi file Excel per ogni anno")
+    print("\n[3] Analisi file Excel per ogni anno")
     print("=" * 70)
 
     for year, folder in sorted(folders_found):
@@ -80,7 +81,7 @@ def debug_giornaliere():
                 print(f"        Fogli disponibili: {sheets}")
 
                 if "RIASSUNTO" not in sheets:
-                    print(f"        ERRORE: Foglio 'RIASSUNTO' non trovato!")
+                    print("        ERRORE: Foglio 'RIASSUNTO' non trovato!")
                     continue
 
                 # Leggi il foglio RIASSUNTO
@@ -91,13 +92,19 @@ def debug_giornaliere():
                 # Verifica se prima riga sembra un header valido
                 first_cols = [str(c).upper().strip() for c in df.columns]
                 expected_headers = ["DATA", "PERSONALE", "ORE", "TCL"]
-                headers_found = sum(1 for h in expected_headers if any(h in c for c in first_cols))
-                print(f"        Header validi trovati: {headers_found}/4 ({expected_headers})")
+                headers_found = sum(
+                    1 for h in expected_headers if any(h in c for c in first_cols)
+                )
+                print(
+                    f"        Header validi trovati: {headers_found}/4 ({expected_headers})"
+                )
 
                 if headers_found < 2:
-                    print(f"        ATTENZIONE: Header probabilmente in riga diversa!")
-                    print(f"        Prime 3 righe del file:")
-                    df_raw = pd.read_excel(file_path, sheet_name="RIASSUNTO", header=None, nrows=5)
+                    print("        ATTENZIONE: Header probabilmente in riga diversa!")
+                    print("        Prime 3 righe del file:")
+                    df_raw = pd.read_excel(
+                        file_path, sheet_name="RIASSUNTO", header=None, nrows=5
+                    )
                     for i, row in df_raw.head(3).iterrows():
                         print(f"            Riga {i}: {list(row.values)[:6]}...")
 
@@ -124,7 +131,9 @@ def debug_giornaliere():
                 for col in df.columns:
                     col_upper = str(col).upper().strip()
                     if "PREV" in col_upper or "CONSUNTIVO" in col_upper:
-                        print(f"        Colonna '{col}' - primi 5 valori: {df[col].head().tolist()}")
+                        print(
+                            f"        Colonna '{col}' - primi 5 valori: {df[col].head().tolist()}"
+                        )
 
             except Exception as e:
                 print(f"        ERRORE lettura: {e}")
@@ -143,9 +152,10 @@ def debug_import_simulation():
     print("DEBUG SIMULAZIONE IMPORTAZIONE")
     print("=" * 70)
 
-    from src.core.importers.giornaliere import GiornaliereImporter
-    from src.core import config_manager
     from pathlib import Path
+
+    from src.core import config_manager
+    from src.core.importers.giornaliere import GiornaliereImporter
 
     config = config_manager.load_config()
     giornaliere_path = config.get("giornaliere_path", "")
@@ -158,7 +168,7 @@ def debug_import_simulation():
     print(f"\n[1] MIN_IMPORT_YEAR: {GiornaliereImporter.MIN_IMPORT_YEAR}")
 
     # Simula raccolta task
-    print(f"\n[2] Raccolta task...")
+    print("\n[2] Raccolta task...")
     tasks = GiornaliereImporter._collect_giornaliere_tasks(root, {})
     print(f"    Task raccolti: {len(tasks)}")
 
@@ -171,7 +181,7 @@ def debug_import_simulation():
         print(f"    Anno {year}: {len(by_year[year])} file")
 
     # Prova a processare un file 2025
-    print(f"\n[3] Test processamento file 2025...")
+    print("\n[3] Test processamento file 2025...")
     tasks_2025 = [(y, p, lm) for y, p, lm in tasks if y == 2025]
 
     if not tasks_2025:
@@ -188,15 +198,16 @@ def debug_import_simulation():
         print(f"    Errore: {err}")
 
         if rows and len(rows) > 0:
-            print(f"\n    Prima riga (sample):")
+            print("\n    Prima riga (sample):")
             print(f"    {rows[0][:5]}...")  # Prime 5 colonne
     except Exception as e:
         print(f"    ERRORE: {e}")
         import traceback
+
         traceback.print_exc()
 
     # Controlla database attuale
-    print(f"\n[4] Stato database attuale...")
+    print("\n[4] Stato database attuale...")
     from src.core.contabilita_manager import ContabilitaManager
 
     for year in [2025, 2026]:
@@ -210,5 +221,5 @@ if __name__ == "__main__":
     debug_giornaliere()
     print("\n\nVuoi eseguire la simulazione di import? (s/n)")
     choice = input().strip().lower()
-    if choice == 's':
+    if choice == "s":
         debug_import_simulation()

@@ -7,50 +7,59 @@ import os
 import sys
 from pathlib import Path
 
-from src.core.config_manager import CONFIG_DIR
-
 
 class ResourceManager:
     """Gestore centralizzato per percorsi e risorse del sistema."""
 
     # Root del progetto (gestisce sia sorgenti che eseguibili congelati)
     if getattr(sys, "frozen", False):
-        # PyInstaller crea sys._MEIPASS (directory temporanea/interna)
-        # In onefile: _MEIPASS è la root temporanea.
-        # In onedir (PyInstaller 6+): contenuti in _internal accanto all'exe.
+        exe_path = Path(sys.executable).parent
+        meipass_path = Path(getattr(sys, "_MEIPASS", exe_path))
 
-        exe_dir = Path(os.path.dirname(sys.executable))
-        base_dir = Path(getattr(sys, "_MEIPASS", exe_dir))
-
-        # 1. Check in _MEIPASS (onefile or explicitly set)
-        if (base_dir / "assets").exists():
-            PROJECT_ROOT = base_dir
-        # 2. Check in _internal (onedir default for PyInstaller > 6)
-        elif (exe_dir / "_internal" / "assets").exists():
-            PROJECT_ROOT = exe_dir / "_internal"
-        # 3. Check directly next to exe (legacy onedir or manual copy)
-        elif (exe_dir / "assets").exists():
-            PROJECT_ROOT = exe_dir
+        if (exe_path / "_internal" / "assets").exists():
+            PROJECT_ROOT = exe_path / "_internal"
+        elif (meipass_path / "assets").exists():
+            PROJECT_ROOT = meipass_path
+        elif (exe_path / "assets").exists():
+            PROJECT_ROOT = exe_path
         else:
-            # Fallback safe
-            PROJECT_ROOT = base_dir
+            PROJECT_ROOT = meipass_path
     else:
-        PROJECT_ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
+        PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-    # Directory Standard
+    # Directory Standard (Sola Lettura Asset)
     ASSETS_DIR = PROJECT_ROOT / "assets"
     ICONS_DIR = ASSETS_DIR / "icons"
     STYLES_DIR = ASSETS_DIR / "styles"
     TEMP_DIR = PROJECT_ROOT / "temp"
 
-    # User Data (Config & Logs)
-    LOGS_DIR = CONFIG_DIR / "logs"
-    DATA_DIR = CONFIG_DIR / "data"
+    @classmethod
+    def _get_config_dir(cls) -> Path:
+        """Importazione lazy di CONFIG_DIR per evitare dipendenze circolari."""
+        from src.core.config_manager import CONFIG_DIR
+
+        return CONFIG_DIR
+
+    @classmethod
+    def get_logs_dir(cls) -> Path:
+        return cls._get_config_dir() / "logs"
+
+    @classmethod
+    def get_data_dir(cls) -> Path:
+        return cls._get_config_dir() / "data"
+
+    @classmethod
+    def get_asset_path(cls, relative_path: str) -> str:
+        """Restituisce il path assoluto di un asset basandosi sulla PROJECT_ROOT."""
+        if relative_path.startswith("assets/"):
+            relative_path = relative_path[len("assets/") :]
+
+        path = cls.ASSETS_DIR / relative_path.replace("/", os.sep)
+        return str(path)
 
     @classmethod
     def get_icon(cls, name: str) -> str:
         """Restituisce il path assoluto di un'icona."""
-        # Se il nome è già un path relativo completo (es. assets/icons/home.svg), estrai solo il nome
         if "assets/icons/" in name:
             name = name.split("/")[-1]
 
@@ -74,7 +83,8 @@ class ResourceManager:
     @classmethod
     def ensure_structure(cls):
         """Assicura che tutte le cartelle necessarie esistano."""
-        for d in (cls.TEMP_DIR, cls.LOGS_DIR, cls.DATA_DIR):
+        config_dir = cls._get_config_dir()
+        for d in (cls.TEMP_DIR, config_dir / "logs", config_dir / "data"):
             d.mkdir(parents=True, exist_ok=True)
 
 

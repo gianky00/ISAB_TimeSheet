@@ -1,81 +1,150 @@
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import telegram
+from telegram import Chat, Message, Update, User
+from telegram.ext import ContextTypes
 
-from src.core.telegram_manager import TelegramService
+from src.core.telegram.handlers import commands, messages
+from src.core.telegram.service import TelegramService
 
 
 class TestTelegramServiceAdvanced:
     @pytest.fixture
-    def service(self, mocker):
-        """Fixture per TelegramService con config mockato."""
-        mocker.patch(
-            "src.core.config_manager.load_config",
-            return_value={"telegram_token": "FAKE_TOKEN", "telegram_chat_id": "12345"},
+    def service(self, qtbot):
+        # Patching QObject.__init__ to avoid event loop issues in pure unit tests
+        with patch("src.core.telegram.service.QObject.__init__"):
+            svc = TelegramService()
+            svc.log_signal = MagicMock()
+            svc.command_received = MagicMock()
+            svc.data_received = MagicMock()
+            svc.status_requested = MagicMock()
+            svc.query_received = MagicMock()
+            svc.intent_received = MagicMock()
+            return svc
+
+    @pytest.fixture
+    def mock_update(self):
+        update = MagicMock(spec=Update)
+        update.effective_user = MagicMock(spec=User)
+        update.effective_user.id = 123456
+        update.effective_chat = MagicMock(spec=Chat)
+        update.effective_chat.id = 123456
+        update.message = MagicMock(spec=Message)
+        update.message.reply_text = AsyncMock()
+        update.message.reply_chat_action = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_context(self):
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.args = []
+        return context
+
+    @pytest.mark.asyncio
+    async def test_pairing_flow_success(self, service, mock_update, mock_context):
+        """Verifica l'accoppiamento con codice OTP corretto."""
+        mock_config = {"telegram_chat_id": "", "telegram_pairing_code": "999888"}
+        mock_context.args = ["999888"]
+
+        with patch(
+            "src.core.config_manager.load_config", return_value=mock_config
+        ), patch("src.core.config_manager.set_config_value") as mock_set:
+            await commands.cmd_start(service, mock_update, mock_context)
+
+            # Verifica che il chat_id sia stato salvato
+            assert service.connected_chat_id == "123456"
+            mock_set.assert_any_call("telegram_chat_id", "123456")
+
+            # Verifica che tra i messaggi inviati ci sia quello di associazione
+            all_messages = [
+                call.args[0] for call in mock_update.message.reply_text.call_args_list
+            ]
+            assert any("Dispositivo associato" in msg for msg in all_messages)
+            assert any("SyncroJob Command Center" in msg for msg in all_messages)
+
+    @pytest.mark.asyncio
+    async def test_pairing_flow_wrong_code(self, service, mock_update, mock_context):
+        """Verifica che un codice OTP errato venga rifiutato."""
+        mock_config = {"telegram_chat_id": "", "telegram_pairing_code": "999888"}
+        mock_context.args = ["wrong"]
+
+        with patch("src.core.config_manager.load_config", return_value=mock_config):
+            await commands.cmd_start(service, mock_update, mock_context)
+
+            assert service.connected_chat_id is None
+            args, _ = mock_update.message.reply_text.call_args
+            assert "Inserisci il codice" in args[0]
+
+    @pytest.mark.asyncio
+    async def test_unauthorized_user_blocked(self, service, mock_update):
+        """Verifica che utenti non autorizzati siano bloccati."""
+        service.connected_chat_id = "999999"  # Utente autorizzato diverso
+        mock_update.effective_user.id = 123456  # Utente attuale
+
+        is_auth = await service._check_auth(mock_update)
+        assert is_auth is False
+        mock_update.message.reply_text.assert_called_with("⛔ Accesso Negato")
+
+    @pytest.mark.asyncio
+    async def test_sequential_input_pdl(self, service, mock_update, mock_context):
+        """Testa l'inserimento di una lista di PDL separata da virgole."""
+        service.connected_chat_id = "123456"
+        service.user_states[123456] = "WAITING_PDL"
+        mock_update.message.text = "123456/C, 654321/S ; 111222"
+
+        await messages.handle_text_input(service, mock_update, mock_context)
+
+        # Dovrebbe aver emesso il segnale con la lista pulita
+        service.data_received.emit.assert_called_with(
+            "pdl", ["123456/C", "654321/S", "111222"]
         )
-        return TelegramService()
-
-    def test_start_stop_service_logic(self, service, mocker):
-        """Test: Avvio e arresto del thread di servizio."""
-        mock_thread = mocker.patch("threading.Thread")
-
-        service.start_service()
-        assert mock_thread.called
-
-        service.stop_event.set()  # Simulate stop
-        service.stop_service()
-        assert service.stop_event.is_set()
+        assert service.user_states[123456] is None
 
     @pytest.mark.asyncio
-    async def test_handle_error_conflict(self, service):
-        """Test: Gestione errore Conflict Telegram."""
-        context = MagicMock()
-        context.error = MagicMock()
-        # Simula telegram.error.Conflict senza importarlo se possibile, o usa patch
-        with patch("telegram.error.Conflict", Exception):
-            from telegram.error import Conflict
+    async def test_db_query_routing(self, service, mock_update, mock_context):
+        """Verifica il routing delle query al database browser."""
+        service.connected_chat_id = "123456"
+        service.user_states[123456] = "WAITING_DB_QUERY_CONTABILITA_2025"
+        mock_update.message.text = "COEMI"
 
-            context.error = Conflict("test")
-            service.stop_event = MagicMock()
-            service.log_signal = MagicMock()
+        await messages.handle_text_input(service, mock_update, mock_context)
 
-            await service._handle_error(None, context)
-
-            service.stop_event.set.assert_called_once()
-            service.log_signal.emit.assert_called()
-
-    @pytest.mark.asyncio
-    async def test_send_photo_async(self, service):
-        """Test invio foto asincrono."""
-        service.app = AsyncMock()
-        service.app.bot = AsyncMock()
-
-        await service._send_photo_async("123", b"photo", "caption")
-        service.app.bot.send_photo.assert_called_with(
-            chat_id="123",
-            photo=b"photo",
-            caption="caption",
-            parse_mode=telegram.constants.ParseMode.MARKDOWN,
+        # Dovrebbe emettere comando di ricerca con parametri corretti
+        expected_params = {
+            "db": "contabilita",
+            "query": "COEMI",
+            "chat_id": "123456",
+            "year": "2025",
+        }
+        service.command_received.emit.assert_called_with(
+            "search_db_pdf", expected_params
         )
 
-    @pytest.mark.asyncio
-    async def test_send_document_async(self, service):
-        """Test invio documento asincrono."""
-        service.app = AsyncMock()
-        service.app.bot = AsyncMock()
+    @patch(
+        "src.core.secrets_manager.SecretsManager.get_gemini_api_key",
+        return_value="fake_key",
+    )
+    @patch("src.core.lyra_client.LyraClient")
+    def test_process_with_ai_intent(self, mock_lyra_cls, mock_key, service):
+        """Verifica che Lyra AI venga invocata e l'intento riconosciuto emetta il segnale."""
+        mock_lyra = mock_lyra_cls.return_value
+        # Simula risposta JSON da Lyra
+        mock_lyra.ask.return_value = (
+            '```json\n{"action": "download", "object": "pdl", "items": ["123"]}\n```'
+        )
 
-        mock_file = MagicMock()
-        # Mock context manager behavior
-        mock_file.__enter__.return_value = mock_file
-        mock_file.__exit__.return_value = None
+        # Eseguiamo in modo sincrono per il test (sovrascrivendo l'executor)
+        with patch.object(service.ai_executor, "submit", side_effect=lambda f: f()):
+            asyncio.run(messages.process_with_ai(service, "123456", "scarica pdl 123"))
 
-        with patch("builtins.open", return_value=mock_file):
-            await service._send_document_async("123", "dummy.pdf", "caption")
+            service.intent_received.emit.assert_called()
+            args, _ = service.intent_received.emit.call_args
+            assert args[1]["action"] == "download"
 
-            service.app.bot.send_document.assert_called_with(
-                chat_id="123",
-                document=mock_file,
-                caption="caption",
-                parse_mode=telegram.constants.ParseMode.MARKDOWN,
-            )
+    def test_send_message_sync_safety(self, service):
+        """Verifica la sicurezza del metodo di invio sincrono."""
+        service.connected_chat_id = "123456"
+        # Senza loop attivo non deve crashare
+        service.send_message_sync("test")
+        service.log_signal.emit.assert_not_called()  # Non deve loggare errore se semplicemente il loop è chiuso

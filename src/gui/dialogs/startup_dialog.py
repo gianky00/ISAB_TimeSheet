@@ -128,10 +128,14 @@ class StartupDialog(QDialog):
         header.setSpacing(20)
 
         # Logo pulsante (Estratto)
+        from src.utils.helpers import get_asset_path
+
+        icon_path = get_asset_path("assets/app.ico")
+
         self.logo = PulsingLogo()
         self.logo.setFixedSize(85, 85)
-        if os.path.exists("assets/app.ico"):
-            self.logo.set_pixmap(QIcon("assets/app.ico").pixmap(64, 64))
+        if os.path.exists(icon_path):
+            self.logo.set_pixmap(QIcon(icon_path).pixmap(64, 64))
         header.addWidget(self.logo)
 
         # Titolo e versione

@@ -2,10 +2,9 @@ import json
 import os
 from collections import defaultdict
 from datetime import datetime
-from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QBrush, QColor, QFont, QIcon, QPainter, QPixmap
+from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -74,21 +73,19 @@ class ScadenzeAnalysisDialog(QDialog):
         # Titolo e versione
         title_row = QHBoxLayout()
         title_label = QLabel("Analisi Scadenze Certificati")
-        title_label.setStyleSheet(
-            "color: white; font-size: 24px; font-weight: bold;"
-        )
+        title_label.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         title_row.addWidget(title_label)
         title_row.addStretch()
 
         version_label = QLabel(f"{__app_name__} v{__version__}")
-        version_label.setStyleSheet(
-            "color: rgba(255,255,255,0.7); font-size: 13px;"
-        )
+        version_label.setStyleSheet("color: rgba(255,255,255,0.7); font-size: 13px;")
         title_row.addWidget(version_label)
         header_layout.addLayout(title_row)
 
         # Data analisi
-        date_label = QLabel(f"Generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}")
+        date_label = QLabel(
+            f"Generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}"
+        )
         date_label.setStyleSheet(
             "color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;"
         )
@@ -112,17 +109,43 @@ class ScadenzeAnalysisDialog(QDialog):
         stats_layout.setSpacing(40)
 
         # Calcola statistiche
-        scaduti = [c for c in self.certificates_data if c["days"] is not None and c["days"] < 0]
-        urgenti = [c for c in self.certificates_data if c["days"] is not None and 0 <= c["days"] <= 15]
-        attenzione = [c for c in self.certificates_data if c["days"] is not None and 16 <= c["days"] <= 30]
-        attivi = [c for c in self.certificates_data if c["days"] is not None and c["days"] > 30]
+        scaduti = [
+            c for c in self.certificates_data if c["days"] is not None and c["days"] < 0
+        ]
+        urgenti = [
+            c
+            for c in self.certificates_data
+            if c["days"] is not None and 0 <= c["days"] <= 15
+        ]
+        attenzione = [
+            c
+            for c in self.certificates_data
+            if c["days"] is not None and 16 <= c["days"] <= 30
+        ]
+        attivi = [
+            c
+            for c in self.certificates_data
+            if c["days"] is not None and c["days"] > 30
+        ]
         nd = [c for c in self.certificates_data if c["days"] is None]
 
-        stats_layout.addWidget(self._create_stat_card("Totale Monitorati", len(self.certificates_data), "#3b82f6"))
-        stats_layout.addWidget(self._create_stat_card("Scaduti", len(scaduti), "#dc2626"))
-        stats_layout.addWidget(self._create_stat_card("Urgenti (0-15gg)", len(urgenti), "#ea580c"))
-        stats_layout.addWidget(self._create_stat_card("Attenzione (16-30gg)", len(attenzione), "#ca8a04"))
-        stats_layout.addWidget(self._create_stat_card("Attivi (>30gg)", len(attivi), "#16a34a"))
+        stats_layout.addWidget(
+            self._create_stat_card(
+                "Totale Monitorati", len(self.certificates_data), "#3b82f6"
+            )
+        )
+        stats_layout.addWidget(
+            self._create_stat_card("Scaduti", len(scaduti), "#dc2626")
+        )
+        stats_layout.addWidget(
+            self._create_stat_card("Urgenti (0-15gg)", len(urgenti), "#ea580c")
+        )
+        stats_layout.addWidget(
+            self._create_stat_card("Attenzione (16-30gg)", len(attenzione), "#ca8a04")
+        )
+        stats_layout.addWidget(
+            self._create_stat_card("Attivi (>30gg)", len(attivi), "#16a34a")
+        )
         stats_layout.addStretch()
 
         layout.addWidget(stats_frame)
@@ -152,15 +175,21 @@ class ScadenzeAnalysisDialog(QDialog):
             )
         if urgenti:
             content_layout.addWidget(
-                self._create_section("IN SCADENZA (0-15 giorni)", urgenti, "#ea580c", "#fff7ed")
+                self._create_section(
+                    "IN SCADENZA (0-15 giorni)", urgenti, "#ea580c", "#fff7ed"
+                )
             )
         if attenzione:
             content_layout.addWidget(
-                self._create_section("ATTENZIONE (16-30 giorni)", attenzione, "#ca8a04", "#fefce8")
+                self._create_section(
+                    "ATTENZIONE (16-30 giorni)", attenzione, "#ca8a04", "#fefce8"
+                )
             )
         if attivi:
             content_layout.addWidget(
-                self._create_section("ATTIVI (oltre 30 giorni)", attivi, "#16a34a", "#f0fdf4")
+                self._create_section(
+                    "ATTIVI (oltre 30 giorni)", attivi, "#16a34a", "#f0fdf4"
+                )
             )
         if nd:
             content_layout.addWidget(
@@ -245,13 +274,13 @@ class ScadenzeAnalysisDialog(QDialog):
         """Crea una card per le statistiche."""
         card = QFrame()
         card.setStyleSheet(
-            f"""
-            QFrame {{
+            """
+            QFrame {
                 background-color: white;
                 border: 1px solid #e2e8f0;
                 border-radius: 8px;
                 padding: 10px;
-            }}
+            }
             """
         )
         card_layout = QVBoxLayout(card)
@@ -265,9 +294,7 @@ class ScadenzeAnalysisDialog(QDialog):
         value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         title_label = QLabel(title)
-        title_label.setStyleSheet(
-            "color: #64748b; font-size: 11px; font-weight: 500;"
-        )
+        title_label.setStyleSheet("color: #64748b; font-size: 11px; font-weight: 500;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         card_layout.addWidget(value_label)
@@ -275,7 +302,9 @@ class ScadenzeAnalysisDialog(QDialog):
 
         return card
 
-    def _create_section(self, title: str, items: list, color: str, bg_color: str) -> QFrame:
+    def _create_section(
+        self, title: str, items: list, color: str, bg_color: str
+    ) -> QFrame:
         """Crea una sezione con elenco certificati."""
         section = QFrame()
         section.setStyleSheet(
@@ -326,12 +355,16 @@ class ScadenzeAnalysisDialog(QDialog):
                 modello_text += f" ({item['range']})"
             modello_label = QLabel(modello_text)
             modello_label.setStyleSheet("color: #475569; font-size: 12px;")
-            modello_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            modello_label.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+            )
             item_layout.addWidget(modello_label)
 
             # Costruttore
             costruttore_label = QLabel(item["costruttore"])
-            costruttore_label.setStyleSheet("color: #64748b; font-size: 12px; min-width: 100px;")
+            costruttore_label.setStyleSheet(
+                "color: #64748b; font-size: 12px; min-width: 100px;"
+            )
             item_layout.addWidget(costruttore_label)
 
             # Scadenza
@@ -355,17 +388,28 @@ class ScadenzeAnalysisDialog(QDialog):
 
     def _send_email(self):
         """Genera screenshot completo del report e apre il client email."""
-        import tempfile
         import subprocess
+        import tempfile
 
         try:
-            # Calcola l'altezza totale del contenuto
-            header_height = self.header.sizeHint().height()
-            stats_height = self.stats_frame.sizeHint().height()
-            content_height = self.content_widget.sizeHint().height()
-            footer_height = self.footer.sizeHint().height()
+            # Assicura che il layout sia aggiornato e calcolato prima del rendering
+            self.header.adjustSize()
+            self.stats_frame.adjustSize()
+            self.content_widget.adjustSize()
+            self.footer.adjustSize()
 
-            total_height = header_height + stats_height + content_height + footer_height + 40
+            # Calcola l'altezza totale del contenuto con margini di sicurezza
+            header_height = self.header.height()
+            stats_height = self.stats_frame.height()
+            content_height = self.content_widget.height()
+            footer_height = self.footer.height()
+
+            total_height = (
+                header_height + stats_height + content_height + footer_height + 40
+            )
+
+            # Limite di sicurezza per evitare allocazioni pixmap eccessive (es. report infiniti)
+            total_height = min(total_height, 15000)
             total_width = max(900, self.width())
 
             # Crea un pixmap per il report completo
@@ -385,20 +429,26 @@ class ScadenzeAnalysisDialog(QDialog):
             # Stats
             self.stats_frame.render(
                 painter,
-                targetOffset=self.stats_frame.mapTo(self, self.stats_frame.rect().topLeft())
+                targetOffset=self.stats_frame.mapTo(
+                    self, self.stats_frame.rect().topLeft()
+                ),
             )
             y_offset += stats_height
 
             # Content (renderizza il widget interno dello scroll, non lo scroll)
             self.content_widget.render(
                 painter,
-                targetOffset=self.content_widget.mapTo(self, self.content_widget.rect().topLeft())
+                targetOffset=self.content_widget.mapTo(
+                    self, self.content_widget.rect().topLeft()
+                ),
             )
 
             painter.end()
 
             # Salva come PNG temporaneo
-            temp_path = os.path.join(tempfile.gettempdir(), "syncrojob_scadenze_report.png")
+            temp_path = os.path.join(
+                tempfile.gettempdir(), "syncrojob_scadenze_report.png"
+            )
             pixmap.save(temp_path, "PNG")
 
             # Tenta di usare la macro Excel se configurata, altrimenti apre file manager
@@ -408,7 +458,7 @@ class ScadenzeAnalysisDialog(QDialog):
             if excel_path and os.path.exists(excel_path):
                 # Prova ad eseguire la macro Excel per inviare email
                 try:
-                    ps_script = f'''
+                    ps_script = f"""
 $xl = New-Object -ComObject Excel.Application
 $xl.Visible = $false
 $wb = $xl.Workbooks.Open("{excel_path.replace(chr(92), chr(92)+chr(92))}")
@@ -420,7 +470,7 @@ try {{
 }}
 $wb.Close($false)
 $xl.Quit()
-'''
+"""
                     with tempfile.NamedTemporaryFile(
                         mode="w", suffix=".ps1", delete=False, encoding="utf-8"
                     ) as tmp:
@@ -823,13 +873,15 @@ class CertificatiCampioneTab(QWidget):
 
             # Per MANOMETRO DIGITALE, aggiungi il range strumento prima dello stato
             is_manometro_digitale = "MANOMETRO DIGITALE" in modello.upper()
-            range_part = f"  •  {range_strumento}" if is_manometro_digitale and range_strumento else ""
+            range_part = (
+                f"  •  {range_strumento}"
+                if is_manometro_digitale and range_strumento
+                else ""
+            )
 
             # Aggiungi indicatore [ESCLUSO] se necessario
             excluded_marker = "  [ESCLUSO]" if is_excluded else ""
-            parent_label = (
-                f"{matricola}  •  {costruttore}  •  {modello}{range_part}  •  {days_text}{excluded_marker}"
-            )
+            parent_label = f"{matricola}  •  {costruttore}  •  {modello}{range_part}  •  {days_text}{excluded_marker}"
             parent_item = SortableTreeWidgetItem(self.tree, [parent_label])
             parent_item.setFirstColumnSpanned(True)
 
@@ -843,7 +895,9 @@ class CertificatiCampioneTab(QWidget):
             # Punto 6: Grassetto solo se espanso (inizialmente no)
             # Salviamo lo stato per gestirlo dinamicamente
             parent_item.setData(
-                0, Qt.ItemDataRole.UserRole, {"days": days_to_expiry, "matricola": matricola}
+                0,
+                Qt.ItemDataRole.UserRole,
+                {"days": days_to_expiry, "matricola": matricola},
             )
 
             # Styling per elementi esclusi
@@ -1077,7 +1131,9 @@ class CertificatiCampioneTab(QWidget):
             cert_number = item.text(self.IDX_CERTIFICATO)
             if cert_number:
                 open_action = QAction("📄 Apri Certificato", self)
-                open_action.triggered.connect(lambda: self._open_certificate(cert_number))
+                open_action.triggered.connect(
+                    lambda: self._open_certificate(cert_number)
+                )
                 menu.addAction(open_action)
                 menu.addSeparator()
 
@@ -1095,13 +1151,17 @@ class CertificatiCampioneTab(QWidget):
                 is_excluded = matricola in self._exclusions
 
                 if is_excluded:
-                    include_action = QAction("✅ Includi strumento nel monitoraggio", self)
+                    include_action = QAction(
+                        "✅ Includi strumento nel monitoraggio", self
+                    )
                     include_action.triggered.connect(
                         lambda: self._include_matricola(matricola)
                     )
                     menu.addAction(include_action)
                 else:
-                    exclude_action = QAction("🚫 Escludi strumento dal monitoraggio", self)
+                    exclude_action = QAction(
+                        "🚫 Escludi strumento dal monitoraggio", self
+                    )
                     exclude_action.triggered.connect(
                         lambda: self._exclude_matricola(matricola)
                     )
@@ -1145,13 +1205,15 @@ class CertificatiCampioneTab(QWidget):
         ]
 
         found_path = None
-        for root, dirs, files in os.walk(cert_root):
+        for root, _, files in os.walk(cert_root):
             for file in files:
                 if any(file.lower() == pattern.lower() for pattern in search_patterns):
                     found_path = os.path.join(root, file)
                     break
                 # Match parziale: il file contiene il numero certificato
-                if cert_number.lower() in file.lower() and file.lower().endswith(".pdf"):
+                if cert_number.lower() in file.lower() and file.lower().endswith(
+                    ".pdf"
+                ):
                     found_path = os.path.join(root, file)
                     break
             if found_path:
@@ -1209,16 +1271,20 @@ class CertificatiCampioneTab(QWidget):
             if "MANOMETRO DIGITALE" in modello.upper() and len(parts) > 4:
                 range_strumento = parts[3].strip()
 
-            certificates_data.append({
-                "matricola": matricola,
-                "costruttore": costruttore,
-                "modello": modello,
-                "range": range_strumento,
-                "days": days,
-            })
+            certificates_data.append(
+                {
+                    "matricola": matricola,
+                    "costruttore": costruttore,
+                    "modello": modello,
+                    "range": range_strumento,
+                    "days": days,
+                }
+            )
 
         # Ordina per giorni (scaduti prima)
-        certificates_data.sort(key=lambda x: x["days"] if x["days"] is not None else 9999)
+        certificates_data.sort(
+            key=lambda x: x["days"] if x["days"] is not None else 9999
+        )
 
         # Apri la finestra di analisi
         dialog = ScadenzeAnalysisDialog(certificates_data, self)

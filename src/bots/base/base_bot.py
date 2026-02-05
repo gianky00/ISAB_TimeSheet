@@ -240,7 +240,19 @@ class BaseBot(ABC):
 
     def _get_chromedriver_path(self) -> Optional[str]:
         """Tenta di ottenere il path di chromedriver scaricandolo automaticamente o via fallback locale."""
-        # 1. Automatico
+        from src.utils.resource_manager import ResourceManager
+
+        # 1. Locale Bundled (Priorità massima per EXE e Parità)
+        # Cerca in PROJECT_ROOT/drivers/chromedriver.exe
+        bundled_driver = (
+            Path(ResourceManager.PROJECT_ROOT) / "drivers" / "chromedriver.exe"
+        )
+        if bundled_driver.exists():
+            path = str(bundled_driver.absolute())
+            self.log(f"Usando driver integrato: {path}")
+            return path
+
+        # 2. Automatico (Online)
         try:
             self.log("Verifica aggiornamenti driver...")
             path = ChromeDriverManager().install()
@@ -252,12 +264,6 @@ class BaseBot(ABC):
         except Exception as e:
             self.log(f"⚠️ Impossibile scaricare driver automatico: {e}")
 
-        # 2. Locale Fallback
-        local_driver = Path("drivers") / "chromedriver.exe"
-        if local_driver.exists():
-            path = str(local_driver.absolute())
-            self.log(f"Usando driver locale: {path}")
-            return path
         return None
 
     def _setup_driver_instance(self, service: Service, options: Options):

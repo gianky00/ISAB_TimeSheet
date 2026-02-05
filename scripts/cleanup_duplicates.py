@@ -1,15 +1,15 @@
-"""
+r"""
 Script per rimuovere i duplicati dalla tabella attivita_programmate.
 Esegui con: .venv\Scripts\python.exe scripts\cleanup_duplicates.py
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.config_manager import CONFIG_DIR
-from src.core.database import db_manager
+from src.core.config_manager import CONFIG_DIR  # noqa: E402
+from src.core.database import db_manager  # noqa: E402
 
 
 def cleanup_attivita_duplicates():
@@ -32,12 +32,14 @@ def cleanup_attivita_duplicates():
         print(f"\nRighe totali PRIMA: {total_before}")
 
         # Trova duplicati
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT ps, area, pdl, descrizione, COUNT(*) as cnt
             FROM attivita_programmate
             GROUP BY ps, area, pdl, descrizione
             HAVING cnt > 1
-        """)
+        """
+        )
         duplicates = cursor.fetchall()
         print(f"Gruppi di duplicati trovati: {len(duplicates)}")
 
@@ -47,14 +49,16 @@ def cleanup_attivita_duplicates():
                 print(f"  - PS={dup[0]}, PDL={dup[2]}, count={dup[4]}")
 
         # Rimuovi duplicati mantenendo solo la prima occorrenza (id minore)
-        cursor.execute("""
+        cursor.execute(
+            """
             DELETE FROM attivita_programmate
             WHERE id NOT IN (
                 SELECT MIN(id)
                 FROM attivita_programmate
                 GROUP BY ps, area, pdl, descrizione
             )
-        """)
+        """
+        )
 
         deleted = cursor.rowcount
         conn.commit()

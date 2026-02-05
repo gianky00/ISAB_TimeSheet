@@ -260,6 +260,9 @@ def run_pyinstaller(obfuscated=False):
         "keyring",
         "pymupdf",
         "fitz",
+        "lxml",
+        "openpyxl",
+        "PIL",
     ]
     for pkg in force_collect:
         cmd.extend(["--collect-all", pkg])

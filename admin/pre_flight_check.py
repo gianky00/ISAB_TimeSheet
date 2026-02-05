@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🚀 SyncroJob Master Developer Tool & Pre-Flight Check (Apex Edition)
+SyncroJob Master Developer Tool & Pre-Flight Check (Apex Edition)
 ====================================================================
 L'Oracolo del Progetto: Score, Dashboard HTML, Git-Hooks e Intelligence.
 """
@@ -15,7 +15,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Rich Imports
 try:
@@ -30,7 +30,7 @@ try:
     )
     from rich.table import Table
 except ImportError:
-    print("❌ Rich non installato. Esegui 'python -m pip install rich' prima.")
+    print("[ERROR] Rich non installato. Esegui 'python -m pip install rich' prima.")
     sys.exit(1)
 
 # Configurazione Base
@@ -43,7 +43,16 @@ VENV_BIN = (
     else PROJECT_ROOT / ".venv" / "bin"
 )
 
-console = Console()
+# Configurazione console con fallback ASCII per compatibilità Windows
+# Rileva se stiamo girando da subprocess/GUI (no TTY)
+is_subprocess = not sys.stdout.isatty() or os.getenv("TERM") == "dumb"
+
+console = Console(
+    legacy_windows=False,  # Disabilita rendering legacy Windows problematico
+    force_terminal=not is_subprocess,  # Plain text se subprocess
+    no_color=is_subprocess or os.getenv("NO_COLOR") == "1",
+    width=120 if is_subprocess else None,
+)
 
 
 class CheckResult:
@@ -101,7 +110,7 @@ def run_tool(
         duration = time.time() - start_t
         with open(log_file, "w", encoding="utf-8") as f:
             f.write(
-                f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'='*40}\n{result.stdout}\n{'='*40}\n{result.stderr}"
+                f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'=' * 40}\n{result.stdout}\n{'=' * 40}\n{result.stderr}"
             )
         return (
             (result.returncode == 0),
@@ -122,7 +131,7 @@ class ApexAudit:
         fast=False,
         incremental=False,
         test_only=False,
-        target: str = None,
+        target: Optional[str] = None,
     ):
         self.fix = fix
         self.fast = fast
@@ -160,11 +169,8 @@ class ApexAudit:
                     capture_output=True,
                     text=True,
                 )
-                c_ver = (
-                    re.search(r"REG_SZ\s+([\d\.]+)", res.stdout).group(1)
-                    if "REG_SZ" in res.stdout
-                    else "N/A"
-                )
+                match = re.search(r"REG_SZ\s+([\d\.]+)", res.stdout)
+                c_ver = match.group(1) if match else "N/A"
             else:
                 res = subprocess.run(
                     ["google-chrome", "--version"], capture_output=True, text=True
@@ -177,11 +183,8 @@ class ApexAudit:
             d_res = subprocess.run(
                 ["chromedriver", "--version"], capture_output=True, text=True
             )
-            d_ver = (
-                re.search(r"([\d\.]+)", d_res.stdout).group(1)
-                if d_res.returncode == 0
-                else "N/A"
-            )
+            d_match = re.search(r"([\d\.]+)", d_res.stdout)
+            d_ver = d_match.group(1) if d_match and d_res.returncode == 0 else "N/A"
             return True, f"Chrome:{c_ver} Driver:{d_ver}", time.time() - start_t
         except Exception:
             return False, "Env check failed", time.time() - start_t
@@ -190,11 +193,15 @@ class ApexAudit:
         start_t = time.time()
         try:
             pyproject = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-            v_toml = re.search(r'version\s*=\s*"(.*?)"', pyproject).group(1)
-            v_code = re.search(
+            toml_match = re.search(r'version\s*=\s*"(.*?)"', pyproject)
+            code_match = re.search(
                 r'__version__\s*=\s*"(.*?)"',
                 (PROJECT_ROOT / "src/core/version.py").read_text(encoding="utf-8"),
-            ).group(1)
+            )
+            if not toml_match or not code_match:
+                return False, "Version not found", time.time() - start_t
+            v_toml = toml_match.group(1)
+            v_code = code_match.group(1)
             return (v_toml == v_code), f"v{v_toml}", time.time() - start_t
         except Exception:
             return False, "Version mismatch", time.time() - start_t
@@ -261,13 +268,13 @@ class ApexAudit:
                     success, msg, dur = future.result()
                     self._add_res(label, success, msg, dur, name, always_show)
                     prog.update(
-                        tasks[label], completed=100, description=f"[green]✅ {label}"
+                        tasks[label], completed=100, description=f"[green][OK] {label}"
                     )
 
     def run_all(self):
         console.print(
             Panel.fit(
-                "[bold cyan]💎 SYNCROJOB APEX AUDIT ENGINE[/bold cyan]",
+                "[bold cyan]SYNCROJOB APEX AUDIT ENGINE[/bold cyan]",
                 border_style="cyan",
             )
         )
@@ -384,8 +391,11 @@ class ApexAudit:
 
         # Intelligence Checks
         if not self.target or self.target in ["all", "intelligence"]:
+            # Usa spinner ASCII-only se TERM=dumb (eseguito da GUI)
+            spinner_type = "dots" if os.getenv("TERM") == "dumb" else "dots"
+
             with Progress(
-                SpinnerColumn(),
+                SpinnerColumn(spinner_name=spinner_type),
                 TextColumn("[progress.description]{task.description}"),
                 console=console,
             ) as prog:
@@ -430,7 +440,7 @@ class ApexAudit:
 
         if not selected_checks and self.target:
             console.print(
-                f"[bold red]❌ Nessun check trovato per target: {self.target}[/bold red]"
+                f"[bold red][X] Nessun check trovato per target: {self.target}[/bold red]"
             )
             return
 
@@ -443,7 +453,7 @@ class ApexAudit:
         res = CheckResult(label, success, msg, dur, name)
         self.results.append(res)
         if not success:
-            console.print(f"[bold red]❌ {label} Fail ({dur:.2f}s)[/bold red]")
+            console.print(f"[bold red][X] {label} Fail ({dur:.2f}s)[/bold red]")
             if msg:
                 console.print(Panel(msg[:800], border_style="red"))
         elif always_show and msg.strip():
