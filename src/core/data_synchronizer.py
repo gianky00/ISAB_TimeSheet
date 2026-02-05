@@ -163,10 +163,48 @@ class DataSynchronizer:
     def sync_attivita_programmate(
         cls, db_path: Path, rows_to_insert: List[Tuple]
     ) -> Tuple[int, int]:
+        """
+        Sincronizzazione per Attività Programmate.
+        Usa DELETE ALL + INSERT per evitare duplicati (sostituzione completa).
+        """
         db_cols = list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ["styles"]
-        return cls._sync_upsert_smart(
-            db_path, "attivita_programmate", db_cols, rows_to_insert
-        )
+
+        with db_manager.get_connection(db_path) as conn:
+            cursor = conn.cursor()
+
+            # Count old rows before delete
+            cursor.execute("SELECT COUNT(*) FROM attivita_programmate")
+            old_count = cursor.fetchone()[0]
+
+            # DELETE ALL existing data (prevents duplicates)
+            cursor.execute("DELETE FROM attivita_programmate")
+
+            if rows_to_insert:
+                safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in db_cols])
+                placeholders = ", ".join(["?"] * len(db_cols))
+
+                # Clean values
+                def clean_value(x):
+                    if x is None:
+                        return ""
+                    if isinstance(x, (int, float)):
+                        return x
+                    return str(x).strip()
+
+                data = [tuple(clean_value(x) for x in r) for r in rows_to_insert]
+
+                cursor.executemany(
+                    f'INSERT INTO attivita_programmate ({safe_cols}) VALUES ({placeholders})',  # nosec B608
+                    data,
+                )
+
+            new_count = len(rows_to_insert) if rows_to_insert else 0
+            conn.commit()
+
+            added = max(0, new_count - old_count)
+            removed = max(0, old_count - new_count)
+
+            return added, removed
 
     @classmethod
     def sync_scarico_ore(

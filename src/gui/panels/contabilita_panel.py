@@ -202,11 +202,6 @@ class ContabilitaPanel(QWidget):
 
     def _on_main_tab_changed(self, index):
         """Gestisce il cambio del tab principale."""
-        # Pulisci ricerca al cambio tab per evitare confusione
-        self.search_input.blockSignals(True)
-        self.search_input.clear()
-        self.search_input.blockSignals(False)
-
         if "Analisi KPI" in self.main_tabs.tabText(index):
             self.selection_count_label.hide()
             self.selection_sum_label.hide()
@@ -216,6 +211,11 @@ class ContabilitaPanel(QWidget):
             self.selection_sum_label.show()
             self.search_input.show()
             self._connect_selection_signal()
+
+            # Applica il filtro corrente al nuovo tab (se presente)
+            current_text = self.search_input.text()
+            if current_text:
+                self._on_search_changed(current_text)
 
         # Refocus ricerca
         if self.search_input.isVisible():

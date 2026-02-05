@@ -81,12 +81,6 @@ class ContabilitaManager:
         current_year = datetime.now().year
 
         try:
-            # Cleanup: ensure no data from 2026+ exists (fix for bug)
-            with db_manager.get_connection(cls.DB_PATH) as conn:
-                conn.execute("DELETE FROM giornaliere WHERE year >= 2026")
-                conn.execute("DELETE FROM contabilita WHERE year >= 2026")
-                conn.commit()
-
             # 1. Lookup Map Preparation
             lookup_map = {}
             with suppress(Exception):

@@ -31,7 +31,8 @@
       "Bash(taskkill:*)",
       "Bash(git ls-tree:*)",
       "Bash(.venvScriptsscalene.exe --help)",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(.venvScriptspython.exe -m py_compile src/gui/widgets/contabilita/certificati_tab.py)"
     ]
   }
 }

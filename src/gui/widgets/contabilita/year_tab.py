@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QSortFilterProxyModel, QTimer
 from PyQt6.QtWidgets import (
     QHeaderView,
     QTableView,
@@ -14,6 +14,37 @@ from src.gui.formatters import (
     format_date_it,
     format_number_smart,
 )
+
+
+class MultiColumnFilterProxyModel(QSortFilterProxyModel):
+    """Proxy model che filtra su tutte le colonne con supporto multi-termine."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._filter_text = ""
+
+    def set_filter_text(self, text: str):
+        """Imposta il testo di filtro (supporta termini multipli separati da spazio)."""
+        self._filter_text = text.lower().strip()
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row: int, source_parent) -> bool:
+        if not self._filter_text:
+            return True
+
+        search_terms = self._filter_text.split()
+        model = self.sourceModel()
+
+        # Concatena tutte le colonne della riga
+        row_text = ""
+        for col in range(model.columnCount()):
+            index = model.index(source_row, col)
+            value = model.data(index, Qt.ItemDataRole.DisplayRole)
+            if value:
+                row_text += str(value).lower() + " "
+
+        # Tutti i termini devono essere presenti
+        return all(term in row_text for term in search_terms)
 
 
 class ContabilitaYearTab(QWidget):
@@ -49,6 +80,10 @@ class ContabilitaYearTab(QWidget):
         # Col 10: RESA -> Smart Number
         self.model.set_column_formatter(10, format_number_smart)
 
+        # Proxy model per filtraggio
+        self.proxy_model = MultiColumnFilterProxyModel(self)
+        self.proxy_model.setSourceModel(self.model)
+
         self._setup_ui()
         # Defer data loading for better responsiveness
         QTimer.singleShot(10, self._load_data)
@@ -58,7 +93,7 @@ class ContabilitaYearTab(QWidget):
         layout.setContentsMargins(0, 10, 0, 0)
 
         self.table = QTableView()
-        self.table.setModel(self.model)
+        self.table.setModel(self.proxy_model)
         self.table.setAlternatingRowColors(True)
 
         # --- Configurazione Selezione (Single row, come richiesto) ---
@@ -157,5 +192,9 @@ class ContabilitaYearTab(QWidget):
         header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # ANNOTAZIONI
 
     def set_search_query(self, query):
-        """Placeholder per la ricerca (da implementare nel modello se necessario)."""
-        pass
+        """Applica il filtro di ricerca."""
+        self.filter_data(query)
+
+    def filter_data(self, text):
+        """Filtra i dati in base al testo di ricerca."""
+        self.proxy_model.set_filter_text(text)

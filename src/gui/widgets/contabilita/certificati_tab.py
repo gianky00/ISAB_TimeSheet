@@ -1,15 +1,19 @@
+import json
 import os
 import subprocess
 import tempfile
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QBrush, QColor, QIcon
+from PyQt6.QtGui import QAction, QBrush, QColor, QFont, QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QHBoxLayout,
     QHeaderView,
+    QLabel,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -19,6 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core import config_manager
+from src.core.config_manager import CONFIG_DIR
 from src.core.constants import Icons
 from src.core.contabilita_manager import ContabilitaManager
 from src.gui.widgets.contabilita.helpers import SortableTreeWidgetItem
@@ -27,6 +32,15 @@ from src.utils.helpers import get_asset_path
 
 class CertificatiCampioneTab(QWidget):
     """Tab per Certificati Campione (Tree View)."""
+
+    # File per memorizzare le esclusioni
+    EXCLUSIONS_FILE = CONFIG_DIR / "data" / "certificati_exclusions.json"
+
+    # Stile per elementi esclusi
+    EXCLUDED_STYLE = """
+        color: #9ca3af;
+        text-decoration: line-through;
+    """
 
     HEADERS = [
         "Modello /\nTipo",
@@ -55,8 +69,36 @@ class CertificatiCampioneTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._exclusions: set[str] = set()  # Set di matricole escluse
+        self._show_excluded = False  # Flag per mostrare/nascondere esclusi
+        self._load_exclusions()
         self._setup_ui()
         self._load_data()
+
+    def _load_exclusions(self):
+        """Carica le esclusioni dal file JSON."""
+        try:
+            if self.EXCLUSIONS_FILE.exists():
+                with open(self.EXCLUSIONS_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self._exclusions = set(data.get("excluded_matricole", []))
+        except Exception:
+            self._exclusions = set()
+
+    def _save_exclusions(self):
+        """Salva le esclusioni nel file JSON."""
+        try:
+            # Assicura che la directory esista
+            self.EXCLUSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.EXCLUSIONS_FILE, "w", encoding="utf-8") as f:
+                json.dump(
+                    {"excluded_matricole": list(self._exclusions)},
+                    f,
+                    indent=2,
+                    ensure_ascii=False,
+                )
+        except Exception as e:
+            print(f"Errore salvataggio esclusioni: {e}")
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -158,6 +200,47 @@ class CertificatiCampioneTab(QWidget):
 
         toolbar.addWidget(btn_expand)
         toolbar.addWidget(btn_collapse)
+        toolbar.addSpacing(20)
+
+        # Checkbox per mostrare esclusi
+        self.show_excluded_check = QCheckBox("Mostra esclusi")
+        self.show_excluded_check.setChecked(False)
+        self.show_excluded_check.setStyleSheet(
+            """
+            QCheckBox {
+                padding: 8px 12px;
+                font-weight: 500;
+                color: #64748b;
+            }
+            QCheckBox:hover {
+                color: #334155;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+            }
+            QCheckBox::indicator:unchecked {
+                border: 2px solid #cbd5e1;
+                border-radius: 4px;
+                background: white;
+            }
+            QCheckBox::indicator:checked {
+                border: 2px solid #3b82f6;
+                border-radius: 4px;
+                background: #3b82f6;
+            }
+        """
+        )
+        self.show_excluded_check.stateChanged.connect(self._on_show_excluded_changed)
+        toolbar.addWidget(self.show_excluded_check)
+
+        # Label conteggio esclusi
+        self.excluded_count_label = QLabel("")
+        self.excluded_count_label.setStyleSheet(
+            "color: #94a3b8; font-size: 12px; padding: 0 8px;"
+        )
+        toolbar.addWidget(self.excluded_count_label)
+
         toolbar.addStretch()
 
         # Pulsante analisi con stile migliorato
@@ -186,6 +269,41 @@ class CertificatiCampioneTab(QWidget):
 
         layout.addLayout(toolbar)
         layout.addWidget(self.tree)
+
+    def _on_show_excluded_changed(self, state):
+        """Gestisce il cambio di stato della checkbox 'Mostra esclusi'."""
+        self._show_excluded = state == Qt.CheckState.Checked.value
+        self._apply_exclusion_visibility()
+
+    def _apply_exclusion_visibility(self):
+        """Applica la visibilità agli elementi in base allo stato di esclusione."""
+        for i in range(self.tree.topLevelItemCount()):
+            parent = self.tree.topLevelItem(i)
+            matricola = self._extract_matricola_from_parent(parent)
+            is_excluded = matricola in self._exclusions
+
+            # Nascondi o mostra in base al flag
+            if is_excluded and not self._show_excluded:
+                parent.setHidden(True)
+            else:
+                parent.setHidden(False)
+
+    def _extract_matricola_from_parent(self, parent_item) -> str:
+        """Estrae la matricola dal testo del nodo padre."""
+        # Il formato è: "matricola  •  costruttore  •  modello  •  days_text"
+        text = parent_item.text(0)
+        parts = text.split("  •  ")
+        if parts:
+            return parts[0].strip()
+        return ""
+
+    def _update_excluded_count_label(self):
+        """Aggiorna la label con il conteggio degli esclusi."""
+        count = len(self._exclusions)
+        if count > 0:
+            self.excluded_count_label.setText(f"({count} esclusi)")
+        else:
+            self.excluded_count_label.setText("")
 
     def refresh_data(self):
         """Ricarica i certificati dal database."""
@@ -223,6 +341,7 @@ class CertificatiCampioneTab(QWidget):
             latest_cert = certificates_sorted[0]
             modello = latest_cert[self.IDX_MODELLO] or "N/D"
             costruttore = latest_cert[self.IDX_COSTRUTTORE] or "N/D"
+            range_strumento = latest_cert[self.IDX_RANGE] or ""
 
             # Calcola giorni alla scadenza per il certificato più recente
             days_to_expiry, status_dot_icon = self._calculate_days_and_status(
@@ -237,6 +356,7 @@ class CertificatiCampioneTab(QWidget):
                     "matricola": matricola,
                     "costruttore": costruttore,
                     "modello": modello,
+                    "range_strumento": range_strumento,
                     "certificates": certificates_sorted,
                     "days_to_expiry": days_to_expiry,
                     "status_dot_icon": status_dot_icon,
@@ -252,26 +372,49 @@ class CertificatiCampioneTab(QWidget):
             matricola = group["matricola"]
             costruttore = group["costruttore"]
             modello = group["modello"]
+            range_strumento = group["range_strumento"]
             certificates_sorted = group["certificates"]
             days_to_expiry = group["days_to_expiry"]
             status_dot_icon = group["status_dot_icon"]
+
+            # Verifica se è escluso
+            is_excluded = matricola in self._exclusions
 
             # Costruisci label padre con icone separator e info giorni
             # Punto 4: Mostra giorni anche quando compresso
             days_text = self._format_days_text_short(days_to_expiry)
 
+            # Per MANOMETRO DIGITALE, aggiungi il range strumento prima dello stato
+            is_manometro_digitale = "MANOMETRO DIGITALE" in modello.upper()
+            range_part = f"  •  {range_strumento}" if is_manometro_digitale and range_strumento else ""
+
+            # Aggiungi indicatore [ESCLUSO] se necessario
+            excluded_marker = "  [ESCLUSO]" if is_excluded else ""
             parent_label = (
-                f"{matricola}  •  {costruttore}  •  {modello}  •  {days_text}"
+                f"{matricola}  •  {costruttore}  •  {modello}{range_part}  •  {days_text}{excluded_marker}"
             )
             parent_item = SortableTreeWidgetItem(self.tree, [parent_label])
             parent_item.setFirstColumnSpanned(True)
 
             # Pallino di stato sul padre (visibile anche quando compresso)
-            parent_item.setIcon(0, QIcon(get_asset_path(status_dot_icon)))
+            # Se escluso, usa pallino grigio
+            if is_excluded:
+                parent_item.setIcon(0, QIcon(get_asset_path(Icons.STATUS_DOT_GRAY)))
+            else:
+                parent_item.setIcon(0, QIcon(get_asset_path(status_dot_icon)))
 
             # Punto 6: Grassetto solo se espanso (inizialmente no)
             # Salviamo lo stato per gestirlo dinamicamente
-            parent_item.setData(0, Qt.ItemDataRole.UserRole, {"days": days_to_expiry})
+            parent_item.setData(
+                0, Qt.ItemDataRole.UserRole, {"days": days_to_expiry, "matricola": matricola}
+            )
+
+            # Styling per elementi esclusi
+            if is_excluded:
+                font = parent_item.font(0)
+                font.setStrikeOut(True)
+                parent_item.setFont(0, font)
+                parent_item.setForeground(0, QBrush(QColor("#9ca3af")))
 
             # Step 6: Aggiungi i certificati come figli
             for idx, cert in enumerate(certificates_sorted):
@@ -297,7 +440,16 @@ class CertificatiCampioneTab(QWidget):
         # IMPORTANTE: Comprimi tutto di default (punto 5)
         self.tree.collapseAll()
 
-        # Connetti segnale per gestire grassetto dinamico
+        # Applica visibilità esclusioni
+        self._apply_exclusion_visibility()
+        self._update_excluded_count_label()
+
+        # Connetti segnale per gestire grassetto dinamico (solo se non già connesso)
+        try:
+            self.tree.itemExpanded.disconnect(self._on_item_expanded)
+            self.tree.itemCollapsed.disconnect(self._on_item_collapsed)
+        except TypeError:
+            pass  # Non era connesso
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
 
@@ -442,13 +594,140 @@ class CertificatiCampioneTab(QWidget):
 
     def _show_context_menu(self, pos):
         item = self.tree.itemAt(pos)
-        if not item or item.parent() is None:
+        if not item:
             return
+
         menu = QMenu(self)
-        menu.addAction(QAction("Analizza con Lyra", self)).triggered.connect(
-            lambda: self._analyze_item(item)
-        )
+
+        # Determina se è un nodo padre o figlio
+        is_parent = item.parent() is None
+
+        if is_parent:
+            # Context menu per nodo PADRE (matricola)
+            matricola = self._extract_matricola_from_parent(item)
+            is_excluded = matricola in self._exclusions
+
+            if is_excluded:
+                # Opzione: Includi nel monitoraggio
+                include_action = QAction("✅ Includi nel monitoraggio", self)
+                include_action.triggered.connect(
+                    lambda: self._include_matricola(matricola)
+                )
+                menu.addAction(include_action)
+            else:
+                # Opzione: Escludi dal monitoraggio
+                exclude_action = QAction("🚫 Escludi dal monitoraggio", self)
+                exclude_action.triggered.connect(
+                    lambda: self._exclude_matricola(matricola)
+                )
+                menu.addAction(exclude_action)
+
+            menu.addSeparator()
+
+            # Espandi/Comprimi
+            if item.isExpanded():
+                collapse_action = QAction("Comprimi", self)
+                collapse_action.triggered.connect(lambda: self.tree.collapseItem(item))
+                menu.addAction(collapse_action)
+            else:
+                expand_action = QAction("Espandi", self)
+                expand_action.triggered.connect(lambda: self.tree.expandItem(item))
+                menu.addAction(expand_action)
+
+        else:
+            # Context menu per nodo FIGLIO (certificato)
+            # Azione: Apri Certificato
+            cert_number = item.text(self.IDX_CERTIFICATO)
+            if cert_number:
+                open_action = QAction("📄 Apri Certificato", self)
+                open_action.triggered.connect(lambda: self._open_certificate(cert_number))
+                menu.addAction(open_action)
+                menu.addSeparator()
+
+            # Azione: Analizza con Lyra
+            lyra_action = QAction("🔍 Analizza con Lyra", self)
+            lyra_action.triggered.connect(lambda: self._analyze_item(item))
+            menu.addAction(lyra_action)
+
+            menu.addSeparator()
+
+            # Opzione esclusione anche dal figlio (usa la matricola del padre)
+            parent_item = item.parent()
+            if parent_item:
+                matricola = self._extract_matricola_from_parent(parent_item)
+                is_excluded = matricola in self._exclusions
+
+                if is_excluded:
+                    include_action = QAction("✅ Includi strumento nel monitoraggio", self)
+                    include_action.triggered.connect(
+                        lambda: self._include_matricola(matricola)
+                    )
+                    menu.addAction(include_action)
+                else:
+                    exclude_action = QAction("🚫 Escludi strumento dal monitoraggio", self)
+                    exclude_action.triggered.connect(
+                        lambda: self._exclude_matricola(matricola)
+                    )
+                    menu.addAction(exclude_action)
+
         menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def _exclude_matricola(self, matricola: str):
+        """Esclude una matricola dal monitoraggio."""
+        self._exclusions.add(matricola)
+        self._save_exclusions()
+        self._load_data()  # Ricarica per aggiornare lo styling
+
+    def _include_matricola(self, matricola: str):
+        """Include una matricola nel monitoraggio (rimuove esclusione)."""
+        self._exclusions.discard(matricola)
+        self._save_exclusions()
+        self._load_data()  # Ricarica per aggiornare lo styling
+
+    def _open_certificate(self, cert_number: str):
+        """Apre il file PDF del certificato cercandolo ricorsivamente nella root configurata."""
+        config = config_manager.load_config()
+        cert_root = config.get("certificati_root_path", "")
+
+        if not cert_root or not os.path.exists(cert_root):
+            QMessageBox.warning(
+                self,
+                "Percorso non configurato",
+                "Configura il percorso root dei certificati nelle impostazioni.\n"
+                "Chiave: certificati_root_path",
+            )
+            return
+
+        # Cerca il file PDF ricorsivamente
+        # Il certificato "016-25" potrebbe essere in "2025/016-25.pdf" o simile
+        search_patterns = [
+            f"{cert_number}.pdf",
+            f"{cert_number}.PDF",
+            f"CERTIFICATO {cert_number}.pdf",
+            f"certificato {cert_number}.pdf",
+        ]
+
+        found_path = None
+        for root, dirs, files in os.walk(cert_root):
+            for file in files:
+                if any(file.lower() == pattern.lower() for pattern in search_patterns):
+                    found_path = os.path.join(root, file)
+                    break
+                # Match parziale: il file contiene il numero certificato
+                if cert_number.lower() in file.lower() and file.lower().endswith(".pdf"):
+                    found_path = os.path.join(root, file)
+                    break
+            if found_path:
+                break
+
+        if found_path:
+            os.startfile(found_path)
+        else:
+            QMessageBox.warning(
+                self,
+                "Certificato non trovato",
+                f"Impossibile trovare il certificato '{cert_number}' in:\n{cert_root}",
+            )
 
     def _analyze_item(self, item):
         from src.gui.main_window import MainWindow

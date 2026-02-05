@@ -59,10 +59,16 @@ class PathsPage(QWidget):
             cont_layout, self._browse_attivita
         )
 
-        # Certificati
-        cont_layout.addWidget(QLabel("File Certificati Campione:"))
+        # Certificati Excel
+        cont_layout.addWidget(QLabel("File Certificati Campione (Excel):"))
         self.certificati_path_edit = self._create_path_row(
             cont_layout, self._browse_certificati
+        )
+
+        # Certificati PDF Root
+        cont_layout.addWidget(QLabel("Cartella Certificati PDF (Root):"))
+        self.certificati_root_edit = self._create_path_row(
+            cont_layout, self._browse_certificati_root, folder=True
         )
 
         layout.addWidget(contabilita_group)
@@ -173,6 +179,11 @@ class PathsPage(QWidget):
         if p:
             self.certificati_path_edit.setText(p)
 
+    def _browse_certificati_root(self):
+        p = self._browse_folder("Seleziona Cartella Certificati PDF")
+        if p:
+            self.certificati_root_edit.setText(p)
+
     def _browse_dataease(self):
         p = self._browse_file("Seleziona DB DataEase", "Access DB (*.mdb *.accdb)")
         if p:
@@ -197,6 +208,9 @@ class PathsPage(QWidget):
         self.certificati_path_edit.setText(config.get("certificati_campione_path", ""))
         self._validate_path(self.certificati_path_edit)
 
+        self.certificati_root_edit.setText(config.get("certificati_root_path", ""))
+        self._validate_path(self.certificati_root_edit)
+
         self.dataease_path_edit.setText(config.get("dataease_db_path", ""))
         self._validate_path(self.dataease_path_edit)
 
@@ -215,6 +229,9 @@ class PathsPage(QWidget):
         )
         config_manager.set_config_value(
             "certificati_campione_path", self.certificati_path_edit.text()
+        )
+        config_manager.set_config_value(
+            "certificati_root_path", self.certificati_root_edit.text()
         )
         config_manager.set_config_value(
             "dataease_db_path", self.dataease_path_edit.text()
