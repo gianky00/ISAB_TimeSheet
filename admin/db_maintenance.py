@@ -6,9 +6,24 @@ Esegue operazioni di manutenzione ordinaria su TUTTI i database dell'applicazion
 3. Analyze (Ottimizzazione Query Planner)
 """
 
+import io
 import sqlite3
 import sys
 from pathlib import Path
+
+# Fix encoding for Windows console to support emoji
+if sys.platform == "win32":
+    try:
+        if hasattr(sys.stdout, "buffer"):
+            sys.stdout = io.TextIOWrapper(
+                sys.stdout.buffer, encoding="utf-8", errors="replace"
+            )
+        if hasattr(sys.stderr, "buffer"):
+            sys.stderr = io.TextIOWrapper(
+                sys.stderr.buffer, encoding="utf-8", errors="replace"
+            )
+    except Exception:
+        pass  # Fallback silenzioso se il wrapping fallisce
 
 from platformdirs import user_data_dir
 

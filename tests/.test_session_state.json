@@ -1,28 +1,5 @@
 {
   "queue": [
-    "tests/test_basic.py",
-    "tests/test_import.py",
-    "tests/test_timbrature.py",
-    "tests/unit/test_ai_sentinel_hardened.py",
-    "tests/unit/test_analytics.py",
-    "tests/unit/test_app_initializer.py",
-    "tests/unit/test_app_initializer_coverage.py",
-    "tests/unit/test_app_initializer_coverage_hardened.py",
-    "tests/unit/test_app_initializer_deep.py",
-    "tests/unit/test_app_initializer_robust.py",
-    "tests/unit/test_app_updater.py",
-    "tests/unit/test_app_updater_coverage.py",
-    "tests/unit/test_app_updater_robust.py",
-    "tests/unit/test_audit_log_refactoring.py",
-    "tests/unit/test_audit_manager_coverage.py",
-    "tests/unit/test_audit_manager_coverage_hardened.py",
-    "tests/unit/test_audit_manager_new.py",
-    "tests/unit/test_auth_monitor_robust.py",
-    "tests/unit/test_backup_features.py",
-    "tests/unit/test_backup_manager_coverage.py",
-    "tests/unit/test_backup_manager_robust.py",
-    "tests/unit/test_backup_resilience.py",
-    "tests/unit/test_base_bot.py",
     "tests/unit/test_base_bot_init_refactoring.py",
     "tests/unit/test_base_bot_logic.py",
     "tests/unit/test_base_bot_mocked.py",
@@ -56,6 +33,7 @@
     "tests/unit/test_config_safework.py",
     "tests/unit/test_constants_coverage.py",
     "tests/unit/test_contabilita_import.py",
+    "tests/unit/test_contabilita_kpi_panel_deep.py",
     "tests/unit/test_contabilita_logic.py",
     "tests/unit/test_contabilita_manager.py",
     "tests/unit/test_contabilita_manager_boost.py",
@@ -109,6 +87,7 @@
     "tests/unit/test_excel_table_refactoring.py",
     "tests/unit/test_final_simple_boost.py",
     "tests/unit/test_formatters_coverage.py",
+    "tests/unit/test_gui_advanced.py",
     "tests/unit/test_gui_contabilita_extra.py",
     "tests/unit/test_gui_contabilita_logic.py",
     "tests/unit/test_gui_deep_dive.py",
@@ -116,6 +95,7 @@
     "tests/unit/test_gui_headless_hardened.py",
     "tests/unit/test_gui_panels.py",
     "tests/unit/test_gui_panels_deep_dive.py",
+    "tests/unit/test_gui_panels_extended.py",
     "tests/unit/test_gui_panels_new.py",
     "tests/unit/test_gui_settings.py",
     "tests/unit/test_gui_small_widgets.py",
@@ -204,6 +184,7 @@
     "tests/unit/test_simple_coverage_boost.py",
     "tests/unit/test_sprint_a_audit_backup.py",
     "tests/unit/test_sprint_b_intelligence.py",
+    "tests/unit/test_sprint_c_gui_deep.py",
     "tests/unit/test_sprint_d_bot_resilience.py",
     "tests/unit/test_stats_manager.py",
     "tests/unit/test_stats_manager_coverage.py",
@@ -251,7 +232,7 @@
     "tests/unit/test_wait_helpers_robust.py"
   ],
   "failed": [],
-  "passed": 6,
+  "passed": 157,
   "skipped": 0,
   "total_files_map": {
     "tests/integration/test_config_security.py": [
@@ -704,6 +685,10 @@
     "tests/unit/test_contabilita_import.py": [
       "tests/unit/test_contabilita_import.py::TestContabilitaImport::test_import_preventivi_dynamic_header"
     ],
+    "tests/unit/test_contabilita_kpi_panel_deep.py": [
+      "tests/unit/test_contabilita_kpi_panel_deep.py::TestContabilitaKPIPanelDeep::test_load_kpi_data_and_plotting",
+      "tests/unit/test_contabilita_kpi_panel_deep.py::TestContabilitaKPIPanelDeep::test_format_currency"
+    ],
     "tests/unit/test_contabilita_logic.py": [
       "tests/unit/test_contabilita_logic.py::TestContabilitaLogic::test_import_data_success",
       "tests/unit/test_contabilita_logic.py::TestContabilitaLogic::test_import_giornaliere",
@@ -1078,6 +1063,12 @@
       "tests/unit/test_formatters_coverage.py::TestFastTableModel::test_header_data",
       "tests/unit/test_formatters_coverage.py::TestFastTableModel::test_update_data"
     ],
+    "tests/unit/test_gui_advanced.py": [
+      "tests/unit/test_gui_advanced.py::TestGUIAdvanced::test_kpi_panel_initialization",
+      "tests/unit/test_gui_advanced.py::TestGUIAdvanced::test_kpi_card_updates_on_year_change",
+      "tests/unit/test_gui_advanced.py::TestGUIAdvanced::test_kpi_colors_reflect_margin",
+      "tests/unit/test_gui_advanced.py::TestGUIAdvanced::test_info_label_callback"
+    ],
     "tests/unit/test_gui_contabilita_extra.py": [
       "tests/unit/test_gui_contabilita_extra.py::TestContabilitaExtra::test_contabilita_panel_init",
       "tests/unit/test_gui_contabilita_extra.py::TestContabilitaExtra::test_contabilita_panel_tab_switch"
@@ -1112,6 +1103,12 @@
       "tests/unit/test_gui_panels_deep_dive.py::TestGUIWorkerAndBase::test_bot_worker_exception",
       "tests/unit/test_gui_panels_deep_dive.py::TestGUIWorkerAndBase::test_base_bot_panel_status_updates",
       "tests/unit/test_gui_panels_deep_dive.py::TestGUIWorkerAndBase::test_base_bot_panel_rows_management"
+    ],
+    "tests/unit/test_gui_panels_extended.py": [
+      "tests/unit/test_gui_panels_extended.py::TestGUIPanelsExtended::test_lyra_panel_init",
+      "tests/unit/test_gui_panels_extended.py::TestGUIPanelsExtended::test_notifications_panel",
+      "tests/unit/test_gui_panels_extended.py::TestGUIPanelsExtended::test_help_panel_navigation",
+      "tests/unit/test_gui_panels_extended.py::TestGUIPanelsExtended::test_notifications_clear_all"
     ],
     "tests/unit/test_gui_panels_new.py": [
       "tests/unit/test_gui_panels_new.py::TestBotPanels::test_base_bot_panel",
@@ -1827,6 +1824,12 @@
       "tests/unit/test_sprint_b_intelligence.py::TestSprintBIntelligence::test_lyra_api_error_handling",
       "tests/unit/test_sprint_b_intelligence.py::TestSprintBIntelligence::test_lyra_media_analysis"
     ],
+    "tests/unit/test_sprint_c_gui_deep.py": [
+      "tests/unit/test_sprint_c_gui_deep.py::TestSprintCGUIDeep::test_contabilita_tab_synchronization",
+      "tests/unit/test_sprint_c_gui_deep.py::TestSprintCGUIDeep::test_kpi_card_formatting",
+      "tests/unit/test_sprint_c_gui_deep.py::TestSprintCGUIDeep::test_selection_sum_calculation",
+      "tests/unit/test_sprint_c_gui_deep.py::TestSprintCGUIDeep::test_search_filtering_proxy"
+    ],
     "tests/unit/test_sprint_d_bot_resilience.py": [
       "tests/unit/test_sprint_d_bot_resilience.py::TestSprintDBotResilience::test_bot_retry_logic_on_login_failure",
       "tests/unit/test_sprint_d_bot_resilience.py::TestSprintDBotResilience::test_bot_error_capture_screenshot",
@@ -2190,5 +2193,5 @@
       "tests/unit/test_wait_helpers_robust.py::TestWaitHelpersRobust::test_execute_with_wait"
     ]
   },
-  "timestamp": 1770214854.0800524
+  "timestamp": 1770283176.3661342
 }

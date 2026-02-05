@@ -29,7 +29,9 @@
       "Bash(findstr:*)",
       "Bash(powershell:*)",
       "Bash(taskkill:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(.venvScriptsscalene.exe --help)",
+      "Bash(cmd /c:*)"
     ]
   }
 }

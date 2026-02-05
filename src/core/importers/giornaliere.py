@@ -17,6 +17,9 @@ from src.core.schemas import validate_giornaliere
 class GiornaliereImporter(BaseImporter):
     """Importer per i dati delle Giornaliere."""
 
+    # Anno minimo per importazione (dal 2025 i file hanno il foglio RIASSUNTO)
+    MIN_IMPORT_YEAR = 2025
+
     GIORNALIERE_MAPPING = {
         "DATA": "data",
         "PERSONALE": "personale",
@@ -32,7 +35,7 @@ class GiornaliereImporter(BaseImporter):
 
     @classmethod
     def scan_files(cls, giornaliere_path: str) -> int:
-        """Conta i file validi nelle cartelle giornaliere."""
+        """Conta i file validi nelle cartelle giornaliere (solo anni >= MIN_IMPORT_YEAR)."""
         p_giorn = Path(giornaliere_path)
         if not giornaliere_path or not p_giorn.exists():
             return 0
@@ -47,7 +50,8 @@ class GiornaliereImporter(BaseImporter):
                 continue
 
             year = int(match.group(1))
-            if year > current_year:
+            # Salta anni futuri e anni prima di MIN_IMPORT_YEAR (senza foglio RIASSUNTO)
+            if year > current_year or year < cls.MIN_IMPORT_YEAR:
                 continue
 
             for file_path in folder.glob("*.xls*"):
@@ -92,6 +96,7 @@ class GiornaliereImporter(BaseImporter):
 
     @classmethod
     def _collect_giornaliere_tasks(cls, root: Path, lookup_map: Dict) -> List[Tuple]:
+        """Raccoglie i task di importazione (solo anni >= MIN_IMPORT_YEAR con foglio RIASSUNTO)."""
         tasks = []
         current_year = datetime.now().year
         for folder in root.iterdir():
@@ -102,7 +107,8 @@ class GiornaliereImporter(BaseImporter):
                 continue
 
             year = int(match.group(1))
-            if year > current_year:
+            # Salta anni futuri e anni prima di MIN_IMPORT_YEAR (senza foglio RIASSUNTO)
+            if year > current_year or year < cls.MIN_IMPORT_YEAR:
                 continue
 
             for file_path in folder.glob("*.xls*"):

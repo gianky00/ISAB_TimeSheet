@@ -23,6 +23,7 @@ VENV_PYTHON = (
 def run_command(cmd, description, exit_on_fail=True, capture=False):
     """Executes a subprocess command with error handling and optional output capture."""
     print(f"\n[STEP] {description}...")
+    sys.stdout.flush()
     try:
         if capture:
             result = subprocess.run(
@@ -32,8 +33,17 @@ def run_command(cmd, description, exit_on_fail=True, capture=False):
 
         result = subprocess.run(cmd, cwd=ROOT_DIR, check=exit_on_fail)
         return True
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Comando fallito: {description}")
+        print(f"        Exit code: {e.returncode}")
+        sys.stdout.flush()
+        if exit_on_fail:
+            sys.exit(1)
+        return False
     except Exception as e:
-        print(f"❌ Error during: {description}\n{e}")
+        print(f"[ERROR] Errore durante: {description}")
+        print(f"        Dettaglio: {e}")
+        sys.stdout.flush()
         if exit_on_fail:
             sys.exit(1)
         return False
@@ -134,8 +144,17 @@ def main():
     """Entry point for the release process, handling arguments and workflow execution."""
     # Fix encoding for Windows console to support emoji
     if sys.platform == "win32":
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+        try:
+            if hasattr(sys.stdout, "buffer"):
+                sys.stdout = io.TextIOWrapper(
+                    sys.stdout.buffer, encoding="utf-8", errors="replace"
+                )
+            if hasattr(sys.stderr, "buffer"):
+                sys.stderr = io.TextIOWrapper(
+                    sys.stderr.buffer, encoding="utf-8", errors="replace"
+                )
+        except Exception:
+            pass  # Fallback silenzioso se il wrapping fallisce
 
     parser = argparse.ArgumentParser(description="SyncroJob Automated Release Tool")
     parser.add_argument(
@@ -205,7 +224,8 @@ def main():
             )
 
     # 5. Build
-    build_cmd = [str(VENV_PYTHON), "admin/Crea Setup/build_dist.py"]
+    build_script = ROOT_DIR / "admin" / "Crea Setup" / "build_dist.py"
+    build_cmd = [str(VENV_PYTHON), str(build_script)]
     if not args.deploy:
         build_cmd.append("--no-deploy")
     run_command(build_cmd, "Building Distribution")
@@ -221,4 +241,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n[INFO] Operazione annullata dall'utente.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n[FATAL ERROR] Errore non gestito: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.stdout.flush()
+        sys.exit(1)
