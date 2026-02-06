@@ -5,6 +5,7 @@ Monitoraggio proattivo delle abilitazioni ISAB basato sulle timbrature.
 
 import logging
 import re
+from contextlib import suppress
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -26,34 +27,32 @@ def _build_access_maps(
     today = datetime.now()
 
     for cog, nom, cf, last_date_str in accessi_raw:
-        try:
-            date_part = str(last_date_str).split(" ")[0]
-            last_date = None
-            for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-                try:
-                    last_date = datetime.strptime(date_part, fmt)
-                    break
-                except ValueError:
-                    continue
-
-            if not last_date:
+        date_part = str(last_date_str).split(" ")[0]
+        last_date = None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+            try:
+                last_date = datetime.strptime(date_part, fmt)
+                break
+            except ValueError:
                 continue
 
-            delta = (today - last_date).days
-            formatted_date = last_date.strftime("%d/%m/%Y")
+        if not last_date:
+            continue
 
-            # Salva per CF
-            if cf and cf.strip():
-                norm_cf = cf.strip().upper()
-                if norm_cf not in last_by_cf or delta < last_by_cf[norm_cf][0]:
-                    last_by_cf[norm_cf] = (delta, formatted_date)
+        delta = (today - last_date).days
+        formatted_date = last_date.strftime("%d/%m/%Y")
 
-            # Salva per Nome/Cognome (sempre, come fallback)
+        # Salva per CF
+        if cf and cf.strip():
+            norm_cf = cf.strip().upper()
+            if norm_cf not in last_by_cf or delta < last_by_cf[norm_cf][0]:
+                last_by_cf[norm_cf] = (delta, formatted_date)
+
+        # Salva per Nome/Cognome (sempre, come fallback)
+        with suppress(Exception):
             norm_key = (_normalize(cog), _normalize(nom))
             if norm_key not in last_by_name or delta < last_by_name[norm_key][0]:
                 last_by_name[norm_key] = (delta, formatted_date)
-        except Exception:
-            continue
 
     return last_by_cf, last_by_name
 

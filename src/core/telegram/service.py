@@ -2,6 +2,7 @@ import asyncio
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 
 import telegram
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -211,11 +212,9 @@ class TelegramService(QObject):
             return False
         user_id = str(update.effective_user.id)
         if self.connected_chat_id and user_id != self.connected_chat_id:
-            try:
+            with suppress(Exception):
                 if hasattr(update, "message") and update.message:
                     await update.message.reply_text("⛔ Accesso Negato")
-            except Exception:
-                pass
             return False
         return True
 

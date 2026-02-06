@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -172,7 +173,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
     def _cleanup_temp_file(self, file_path: str):
         """Rimuove file temporaneo."""
         try:
-            os.remove(file_path)
+            Path(file_path).unlink()
             self.log(f"🗑️ File temporaneo rimosso: {os.path.basename(file_path)}")
         except Exception as e:
             self.log(f"⚠️ Impossibile rimuovere il file {file_path}: {e}")

@@ -1,4 +1,3 @@
-import os
 import time
 from pathlib import Path
 
@@ -155,7 +154,7 @@ class ContabilitaWorker(QThread):
         )
 
     def _phase_import_contabilita(self, state):
-        if not self.file_path or not os.path.exists(self.file_path):
+        if not self.file_path or not Path(self.file_path).exists():
             state["messages"].append("Contabilità: File non trovato.")
             return
 

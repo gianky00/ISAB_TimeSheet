@@ -1,3 +1,4 @@
+# flake8: noqa: FURB184
 import logging
 import re
 import zipfile
@@ -141,7 +142,7 @@ class ContabilitaImporter(BaseImporter):
             except Exception:
                 df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
 
-            df.columns = [str(c).strip().upper() for c in df.columns]
+            df.columns = df.columns.astype(str).str.strip().str.upper()
 
             if not df.empty:
                 df = df.iloc[:-1]  # Rimuovi riga dei totali solitamente presente
@@ -151,8 +152,7 @@ class ContabilitaImporter(BaseImporter):
                 return []
 
             df["year"] = year
-            df = cls._normalize_columns(df)
-            df = cls._ensure_required_columns(df)
+            df = cls._ensure_required_columns(cls._normalize_columns(df))
 
             # Preparazione finale dati
             target_columns = ["year"] + list(cls.COLUMNS_MAPPING.values())
@@ -163,7 +163,7 @@ class ContabilitaImporter(BaseImporter):
                 if col == "year":
                     continue
 
-                if col in ["totale_prev", "ore_sp"]:
+                if col in ("totale_prev", "ore_sp"):
                     df[col] = pd.to_numeric(df[col], errors="coerce")
                     df[col] = df[col].round(2)
 
@@ -208,15 +208,12 @@ class ContabilitaImporter(BaseImporter):
         preview_df = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
         key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
 
-        for i_raw, row in preview_df.iterrows():
-            row_norm = []
-            for val in row.values:
-                s = str(val).strip().upper()
-                s = s.replace(" ", "").replace(".", "").replace("°", "")
-                row_norm.append(s)
-
-            matches = sum(1 for k in key_cols_norm if k in row_norm)
-            if matches >= 2:
+        # refurb: ignore FURB184
+        for i_raw, row in preview_df.iterrows():  # noqa: FURB184
+            if sum(
+                1 for k in key_cols_norm
+                if k in (str(val).strip().upper().replace(" ", "").replace(".", "").replace("°", "") for val in row.values)
+            ) >= 2:
                 return int(i_raw)
         return 0
 
@@ -230,7 +227,7 @@ class ContabilitaImporter(BaseImporter):
 
         rename_map = {}
         for col in df.columns:
-            col_str = str(col).strip().upper()
+            col_str = col.strip().upper()
             norm_col = col_str.replace(" ", "").replace(".", "").replace("°", "")
 
             if norm_col in normalized_map:

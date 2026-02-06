@@ -4,6 +4,7 @@ Pannello per il bot Scarico PDL (SafeWork).
 """
 
 import traceback
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from PyQt6.QtCore import QSize, Qt, QTimer
@@ -347,8 +348,7 @@ class ScaricoPDLPanel(BaseBotPanel):
     def get_credentials(self) -> tuple:
         """Override: Recupera credenziali SafeWork."""
         # Prende il default da safework_accounts
-        config = config_manager.load_config()
-        accounts = config.get("safework_accounts", [])
+        accounts = config_manager.load_config().get("safework_accounts", [])
         if not accounts:
             return "", ""
 
@@ -529,13 +529,13 @@ class ScaricoPDLPanel(BaseBotPanel):
             cast_win: Any = win
             self._on_log(f"Invio di {len(files)} PDF a Telegram...")
             for f in files:
-                if os.path.exists(f):
+                if Path(f).exists():
                     caption = f"**PDL Scaricato**\n`{os.path.basename(f)}`"
                     cast_win.telegram.send_document_sync(f, caption)
             self._on_log("PDF inviati con successo.")
 
     def _cleanup_telegram_flags(self):
         """Pulisce i flag di stato temporanei."""
-        for attr in ["merge_and_send_from_telegram", "merge_all_session_from_telegram"]:
+        for attr in ("merge_and_send_from_telegram", "merge_all_session_from_telegram"):
             if hasattr(self, attr):
                 delattr(self, attr)

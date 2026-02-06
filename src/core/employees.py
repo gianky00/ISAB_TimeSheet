@@ -141,7 +141,7 @@ class EmployeeManager:
         count = 0
 
         try:
-            with open(path, "r", encoding="utf-8-sig") as f:
+            with path.open("r", encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f, delimiter=";")
 
                 # Normalizziamo i nomi delle colonne rimuovendo spazi extra

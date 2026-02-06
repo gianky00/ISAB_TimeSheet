@@ -82,7 +82,7 @@ def _group_ranges(numbers: List[int]) -> str:
     for i in range(1, len(numbers) + 1):
         if i == len(numbers) or numbers[i] != numbers[i - 1] + 1:
             end = numbers[i - 1]
-            ranges.append(f"{start}-{end}" if start != end else f"{start}")
+            ranges.append(f"{start}-{end}" if start != end else str(start))
             if i < len(numbers):
                 start = numbers[i]
     return ", ".join(ranges)

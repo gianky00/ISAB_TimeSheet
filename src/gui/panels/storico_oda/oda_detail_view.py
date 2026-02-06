@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFormLayout,
@@ -58,11 +60,9 @@ class OdaDetailView(QWidget):
                 val = ""
 
             # Formattazione speciale
-            if "valore" in h.lower() or "prezzo" in h.lower():
-                try:
+            if ("valore" in h.lower() or "prezzo" in h.lower()) and val:
+                with suppress(Exception):
                     val = format_currency_smart(float(val))
-                except Exception:
-                    pass
             elif "data" in h.lower() and val:
                 val = format_date_it(val)
 

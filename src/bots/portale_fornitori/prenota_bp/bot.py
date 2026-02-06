@@ -3,6 +3,7 @@ Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornito
 """
 
 import traceback
+from contextlib import suppress
 from typing import Any, Dict, List
 
 from src.bots.base.base_bot import BaseBot
@@ -88,7 +89,7 @@ class PrenotaBPBot(BaseBot):
             )
             return True
         except Exception as e:
-            self.log(f"❗ Errore fatale durante l'esecuzione: {str(e)}")
+            self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
             traceback.print_exc()
             return False
         finally:
@@ -118,18 +119,14 @@ class PrenotaBPBot(BaseBot):
             )
             page.apri_dettagli_bp()
             page.gestisci_creazione_richiesta(note)
-            try:
+            with suppress(Exception):
                 page.chiudi_dettagli_bp()
-            except Exception:
-                pass
 
             self.results.append({"NUMERO BP": num_bp, "STATO": "OK"})
             return True
         except Exception as e:
-            self.log(f"✗ Errore su BP {num_bp}: {str(e)}")
-            try:
+            self.log(f"✗ Errore su BP {num_bp}: {e}")
+            with suppress(Exception):
                 page.chiudi_dettagli_bp()
-            except Exception:
-                pass
             self.results.append({"NUMERO BP": num_bp, "STATO": "ERRORE", "MSG": str(e)})
             return False

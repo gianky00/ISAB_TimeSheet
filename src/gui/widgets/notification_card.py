@@ -263,7 +263,7 @@ class NotificationCard(QFrame):
         message = self.notification.get("message", "")
 
         # Use lightweight QLabel for simple text, QTextBrowser only for rich content
-        has_markdown = any(char in message for char in ["*", "`", "[", "]", "\n"])
+        has_markdown = any(char in message for char in ("*", "`", "[", "]", "\n"))
 
         if has_markdown or len(message) > 200:
             # Use QTextBrowser for rich content or long text
@@ -379,7 +379,7 @@ class NotificationCard(QFrame):
         """
         # Fast path: if no markdown syntax, return as-is with just <br> for newlines
         if (
-            not any(char in text for char in ["*", "`", "[", "]", "(", ")"])
+            not any(char in text for char in ("*", "`", "[", "]", "(", ")"))
             and "\n" not in text
         ):
             return text
@@ -432,8 +432,7 @@ class NotificationCard(QFrame):
             return "Ieri"
         elif diff.days < 7:
             return f"{diff.days} giorni fa"
-        else:
-            return dt.strftime("%d/%m/%Y")
+        return dt.strftime("%d/%m/%Y")
 
     def mousePressEvent(self, event):
         """Mark as read when clicked."""

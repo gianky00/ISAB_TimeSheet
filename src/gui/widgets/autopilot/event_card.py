@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTime, QTimer
 from PyQt6.QtWidgets import (
     QFrame,
@@ -126,32 +128,27 @@ class AutopilotEventCard(QFrame):
 
     def cleanup(self):
         """Clean up animations and effects before deletion."""
-        try:
+        with suppress(RuntimeError, AttributeError):
             # Stop animations
-            if hasattr(self, "pulse_anim") and self.pulse_anim is not None:
-                self.pulse_anim.stop()
-                self.pulse_anim.deleteLater()
+            if anim := getattr(self, "pulse_anim", None):
+                anim.stop()
+                anim.deleteLater()
 
-            if hasattr(self, "timer") and self.timer is not None:
-                self.timer.stop()
+            if timer := getattr(self, "timer", None):
+                timer.stop()
 
             # Remove graphics effect
-            if hasattr(self, "icon_label") and self.icon_label:
-                self.icon_label.setGraphicsEffect(None)
+            if lbl := getattr(self, "icon_label", None):
+                lbl.setGraphicsEffect(None)
 
             # Delete effect (may not exist if animation was disabled)
-            if hasattr(self, "icon_opacity") and self.icon_opacity:
-                self.icon_opacity.deleteLater()
-        except (RuntimeError, AttributeError):
-            pass  # Widget already deleted or attribute missing
+            if effect := getattr(self, "icon_opacity", None):
+                effect.deleteLater()
 
     def _update_countdown(self):
         """Aggiorna il countdown per il prossimo evento."""
-        target_time = QTime.fromString(self.target_time_str, "HH:mm")
-        now = QTime.currentTime()
-
         # Calcolo tempo residuo
-        secs_to = now.secsTo(target_time)
+        secs_to = QTime.currentTime().secsTo(QTime.fromString(self.target_time_str, "HH:mm"))
         if secs_to < 0:
             # Se l'orario è già passato, calcola per domani
             secs_to += 24 * 3600

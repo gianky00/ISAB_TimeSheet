@@ -488,7 +488,7 @@ class PDLDBPanel(QWidget):
         for r in full_rows:
             row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
             master_rows.append(
-                [("" if str(val).lower() in ["nan", "none"] else val) for val in row]
+                [("" if str(val).lower() in ("nan", "none") else val) for val in row]
             )
         return master_rows
 
@@ -548,23 +548,22 @@ class PDLDBPanel(QWidget):
             if not rows:
                 return
 
-            export_data = []
-            for r in rows:
-                export_data.append(
-                    {
-                        "N° PDL": r[1],
-                        "Data Creazione": r[2],
-                        "Area": r[3],
-                        "Unità": r[4],
-                        "Descrizione": r[6],
-                        "Stato": r[8],
-                        "Apparecchiatura": r[9],
-                        "Richiedente": r[10],
-                        "Contratto": r[17],
-                        "Ordine": r[18],
-                        "Sito": r[19],
-                    }
-                )
+            export_data = [
+                {
+                    "N° PDL": r[1],
+                    "Data Creazione": r[2],
+                    "Area": r[3],
+                    "Unità": r[4],
+                    "Descrizione": r[6],
+                    "Stato": r[8],
+                    "Apparecchiatura": r[9],
+                    "Richiedente": r[10],
+                    "Contratto": r[17],
+                    "Ordine": r[18],
+                    "Sito": r[19],
+                }
+                for r in rows
+            ]
 
             df = pd.DataFrame(export_data)
             filename, _ = QFileDialog.getSaveFileName(

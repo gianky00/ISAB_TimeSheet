@@ -5,6 +5,7 @@ Page Object Model for Dettagli OdA.
 
 import time
 import traceback
+from contextlib import suppress
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -48,13 +49,11 @@ class DettagliOdAPage:
 
     def _wait_for_overlay(self):
         """Attende che gli overlay di caricamento di ExtJS (maschere) siano invisibili."""
-        try:
+        with suppress(TimeoutException):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask')][not(contains(@style,'display: none'))]"
             WebDriverWait(self.driver, Timeouts.OVERLAY).until(
                 EC.invisibility_of_element_located((By.XPATH, xpath))
             )
-        except TimeoutException:
-            pass
 
     def navigate_to_dettagli(self, is_first_row: bool = True) -> bool:
         """
@@ -169,7 +168,7 @@ class DettagliOdAPage:
 
     def expand_sidebar_if_collapsed(self):
         """Espande la sidebar se collassata per rendere visibile il menu Report."""
-        try:
+        with suppress(Exception):
             # Cerca l'elemento di espansione
             expand_btn = self.driver.find_element(
                 *DettagliOdALocators.SIDEBAR_EXPAND_BUTTON
@@ -179,9 +178,6 @@ class DettagliOdAPage:
                 # Usa JS click per robustezza
                 self.driver.execute_script("arguments[0].click();", expand_btn)
                 self.log("  Menu espanso.")
-        except Exception:
-            # Se l'elemento non c'è o non è visibile, assumiamo sia già espanso
-            pass
 
     def process_oda(
         self,
@@ -310,10 +306,8 @@ class DettagliOdAPage:
             self.log(f"  ✗ Errore processamento: {e}")
             self.log(f"Stacktrace: {traceback.format_exc()}")
             # Ensure tabs are closed even on error
-            try:
+            with suppress(Exception):
                 self._close_all_tabs()
-            except Exception:
-                pass
             return None
 
     def _close_all_tabs(self):
@@ -426,10 +420,8 @@ class DettagliOdAPage:
         target_path = dest_dir / target_name
 
         if target_path.exists():
-            try:
+            with suppress(Exception):
                 target_path.unlink()
-            except Exception:
-                pass
 
         shutil.move(str(src), str(target_path))
         self.log(f"  ✓ Scaricato: {target_path.name}")

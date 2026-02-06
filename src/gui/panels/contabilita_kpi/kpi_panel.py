@@ -184,8 +184,9 @@ class ContabilitaKPIPanel(QWidget):
         self.year_combo.blockSignals(True)
         self.year_combo.clear()
         if years:
-            self.year_combo.addItems([str(y) for y in years])
-            if current in [str(y) for y in years]:
+            year_strs = tuple(str(y) for y in years)
+            self.year_combo.addItems(year_strs)
+            if current in year_strs:
                 self.year_combo.setCurrentText(current)
             else:
                 self.year_combo.setCurrentIndex(0)
@@ -232,7 +233,7 @@ class ContabilitaKPIPanel(QWidget):
             utile_ora = val_ora - HOURLY_COST_STD
 
             self.card_totale.lbl_value.setText(f"€ {self._format_currency(tot_prev)}")
-            self.card_ore.lbl_value.setText(f"{self._format_currency(tot_ore)}")
+            self.card_ore.lbl_value.setText(str(self._format_currency(tot_ore)))
             self.card_ore.set_info_callback(
                 lambda: (
                     f"<b>Totale Ore: {self._format_currency(tot_ore)} h</b><br>"
@@ -267,7 +268,7 @@ class ContabilitaKPIPanel(QWidget):
             df["resa"] = pd.to_numeric(df["resa"], errors="coerce")
 
             avg_resa = df["resa"].mean() or 0
-            self.card_resa.lbl_value.setText(f"{self._format_currency(avg_resa)}")
+            self.card_resa.lbl_value.setText(str(self._format_currency(avg_resa)))
             self.card_count.lbl_value.setText(str(count))
 
             # Style updates for margins

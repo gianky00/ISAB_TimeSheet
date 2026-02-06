@@ -96,8 +96,7 @@ class ReportHistory:
         Returns:
             Dict con i dati dell'ultimo report, o None se non esiste.
         """
-        data = cls._load_data()
-        return data.get("last_report")
+        return cls._load_data().get("last_report")
 
     @classmethod
     def calculate_trend(

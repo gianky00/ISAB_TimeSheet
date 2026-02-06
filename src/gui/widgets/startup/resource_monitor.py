@@ -6,6 +6,7 @@ HUD per il monitoraggio in tempo reale di RAM e CPU durante l'avvio.
 import ctypes
 import os
 import time
+from contextlib import suppress
 from ctypes import byref
 
 from PyQt6.QtCore import Qt, QTimer
@@ -68,7 +69,7 @@ class ResourceMonitor(QWidget):
 
     def _get_cpu_time(self):
         """Get total kernel + user time for this process in 100ns units."""
-        try:
+        with suppress(Exception):
             creation, exit, kernel, user = (
                 FILETIME(),
                 FILETIME(),
@@ -87,8 +88,6 @@ class ResourceMonitor(QWidget):
                     return (ft.dwHighDateTime << 32) + ft.dwLowDateTime
 
                 return ft_to_int(kernel) + ft_to_int(user)
-        except Exception:
-            pass
         return 0
 
     def _update_stats(self):
@@ -96,11 +95,9 @@ class ResourceMonitor(QWidget):
             return
 
         # Update RAM
-        try:
+        with suppress(Exception):
             mb = get_current_process_ram_mb()
             self.ram_lbl.setText(f"RAM: {int(mb)}MB")
-        except Exception:
-            pass
 
         # Update CPU
         try:
@@ -124,11 +121,9 @@ class ResourceMonitor(QWidget):
             self.cpu_lbl.setText("CPU: N/A")
 
         # Decay activity
-        try:
+        with suppress(Exception):
             self._activity_level = max(0, self._activity_level - 10)
             self._draw_activity()
-        except Exception:
-            pass
 
     def trigger_activity(self):
         """Chiamato quando c'è un log event per simulare carico CPU/IO."""

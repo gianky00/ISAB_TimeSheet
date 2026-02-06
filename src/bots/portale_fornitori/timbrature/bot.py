@@ -3,7 +3,7 @@ SyncroJob - Timbrature Bot
 Bot for accessing Timbrature section using Page Object Model.
 """
 
-import os
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
@@ -105,11 +105,10 @@ class TimbratureBot(BaseBot):
                 self.log(f"❌ Errore durante il salvataggio: {e}")
             finally:
                 # Cleanup
-                if os.path.exists(excel_path):
-                    try:
-                        os.remove(excel_path)
-                    except Exception:
-                        pass
+                p = Path(excel_path)
+                if p.exists():
+                    with suppress(Exception):
+                        p.unlink()
         else:
             self.log("⚠️ Non ho trovato dati o il download non è partito.")
 
@@ -121,5 +120,4 @@ class TimbratureBot(BaseBot):
         """
         Static method for manual import (GUI).
         """
-        storage = TimbratureStorage(db_path)
-        return storage.import_excel(excel_path, log_callback)
+        return TimbratureStorage(db_path).import_excel(excel_path, log_callback)

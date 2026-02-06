@@ -4,8 +4,8 @@ Gestisce l'inizializzazione dell'applicazione con animazioni fluide.
 """
 
 import logging
-import os
 from contextlib import suppress
+from pathlib import Path
 
 from PyQt6.QtCore import (
     QEasingCurve,
@@ -134,7 +134,7 @@ class StartupDialog(QDialog):
 
         self.logo = PulsingLogo()
         self.logo.setFixedSize(85, 85)
-        if os.path.exists(icon_path):
+        if Path(icon_path).exists():
             self.logo.set_pixmap(QIcon(icon_path).pixmap(64, 64))
         header.addWidget(self.logo)
 
@@ -374,27 +374,17 @@ class StartupDialog(QDialog):
 
     def closeEvent(self, event):
         """Cleanup - Stop all timers and threads safely."""
-        try:
-            with suppress(Exception):
-                self.particles.timer.stop()
-            with suppress(Exception):
-                self.border.timer.stop()
-            with suppress(Exception):
-                self.progress.timer.stop()
-            with suppress(Exception):
-                self.logo.timer.stop()
-            with suppress(Exception):
-                self._dot_timer.stop()
-            with suppress(Exception):
-                self._pulse_timer.stop()
-            # with suppress(Exception):
-            #     self.resource_mon.timer.stop()
+        with suppress(Exception):
+            self.particles.timer.stop()
+            self.border.timer.stop()
+            self.progress.timer.stop()
+            self.logo.timer.stop()
+            self._dot_timer.stop()
+            self._pulse_timer.stop()
+            # self.resource_mon.timer.stop()
             for lbl in self.log_labels:
-                with suppress(Exception):
-                    lbl._timer.stop()
+                lbl._timer.stop()
             if self._thread and self._thread.isRunning():
                 self._thread.quit()
                 self._thread.wait(500)
-        except Exception:
-            pass
         super().closeEvent(event)

@@ -28,12 +28,14 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
         self._filter_text = text.lower().strip()
         self.invalidateFilter()
 
-    def filterAcceptsRow(self, source_row: int, source_parent) -> bool:
+    def filterAcceptsRow(self, source_row: int, _source_parent) -> bool:
         if not self._filter_text:
             return True
 
         search_terms = self._filter_text.split()
         model = self.sourceModel()
+        if not model:
+            return False
 
         # Concatena tutte le colonne della riga
         row_text = ""

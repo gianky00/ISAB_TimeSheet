@@ -266,10 +266,7 @@ class ListsPage(QWidget):
     # --- LOGICA ACCOUNT ISAB ---
 
     def _get_accounts(self, list_widget):
-        accs = []
-        for i in range(list_widget.count()):
-            accs.append(list_widget.item(i).data(Qt.ItemDataRole.UserRole))
-        return accs
+        return [list_widget.item(i).data(Qt.ItemDataRole.UserRole) for i in range(list_widget.count())]
 
     def _render_accounts(self, list_widget, accounts):
         list_widget.clear()

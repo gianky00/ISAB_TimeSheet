@@ -41,7 +41,7 @@ class ChildDescriptionDelegate(QStyledItemDelegate):
             col = index.column()
 
             # --- GESTIONE MERGE COL 0 e COL 1 (Testo Breve) ---
-            if col == 0 or col == 1:
+            if col in (0, 1):
                 # Disegna il testo SOLO quando siamo sulla Col 1 (disegnando verso sinistra)
                 if col == 1:
                     # Recupera dati dalla Col 0 (dove sta il testo vero)

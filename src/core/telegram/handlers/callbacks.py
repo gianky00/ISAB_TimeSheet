@@ -313,7 +313,7 @@ async def _handle_utility_actions(service, data, query, chat_id):
         await query.edit_message_text(
             "📸 Screenshot:", reply_markup=TelegramUI.get_screenshot_menu()
         )
-    elif data in ["snap_app", "snap_pc"]:
+    elif data in ("snap_app", "snap_pc"):
         service.screenshot_requested.emit(data.replace("snap_", ""))
     elif data == "stop_all":
         service.command_received.emit("stop_all", {})

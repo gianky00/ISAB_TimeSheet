@@ -253,8 +253,7 @@ def _atomic_write_json(data: Dict[str, Any], target_path: Path):
 
 def get_config_value(key: str, default: Any = None) -> Any:
     """Ottiene un valore dalla configurazione."""
-    config = load_config()
-    return config.get(key, default)
+    return load_config().get(key, default)
 
 
 def set_config_value(key: str, value: Any):
@@ -388,7 +387,9 @@ def get_download_path() -> str:
         return path
 
     default_download = Path.home() / "Downloads"
-    return str(default_download) if default_download.exists() else str(Path.home())
+    if default_download.exists():
+        return str(default_download)
+    return str(Path.home())
 
 
 def export_configuration(export_path: str) -> tuple[bool, str]:
@@ -416,7 +417,7 @@ def export_configuration(export_path: str) -> tuple[bool, str]:
 
         return True, "Esportazione completata con successo."
     except Exception as e:
-        return False, f"Errore durante l'esportazione: {str(e)}"
+        return False, f"Errore durante l'esportazione: {e}"
 
 
 def import_configuration(import_path: str) -> tuple[bool, str]:
@@ -470,4 +471,4 @@ def import_configuration(import_path: str) -> tuple[bool, str]:
     except json.JSONDecodeError:
         return False, "Il file non è un JSON valido."
     except Exception as e:
-        return False, f"Errore critico importazione: {str(e)}"
+        return False, f"Errore critico importazione: {e}"

@@ -84,7 +84,7 @@ class DataTable(QWidget):
             get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
         )
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._refresh_btn.clicked.connect(lambda: self.refresh())
+        self._refresh_btn.clicked.connect(self.refresh)
         self._refresh_btn.setStyleSheet(
             f"""
             QPushButton {{
@@ -189,9 +189,7 @@ class DataTable(QWidget):
 
     def getSelectedRows(self) -> list[dict]:
         """Ritorna i dati delle righe selezionate."""
-        rows = set()
-        for item in self._table.selectedItems():
-            rows.add(item.row())
+        rows = {item.row() for item in self._table.selectedItems()}
         # Map table row back to data index?
         # CAUTION: If sorted, index.row() refers to visual row.
         # We need to get the item and find it in data?

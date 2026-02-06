@@ -13,6 +13,7 @@ import logging
 import os
 import platform
 import zipfile
+from contextlib import suppress
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -117,7 +118,7 @@ class BugReporter:
         # Log strutturati in application/
         app_dir = log_dir / "application"
         if app_dir.exists():
-            for log_file in ["app.json", "app.log"]:
+            for log_file in ("app.json", "app.log"):
                 f = app_dir / log_file
                 if f.exists():
                     zipf.write(f, arcname=f"logs/application/{log_file}")
@@ -260,7 +261,7 @@ class BugReporter:
             for k, v in os.environ.items()
             if not any(
                 s in k.upper()
-                for s in ["TOKEN", "KEY", "PASS", "SECRET", "API", "AUTH", "CREDENTIAL"]
+                for s in ("TOKEN", "KEY", "PASS", "SECRET", "API", "AUTH", "CREDENTIAL")
             )
         }
         sys_info["env_filtered"] = safe_env
@@ -294,14 +295,14 @@ class BugReporter:
         except ImportError:
             sys_info["memory"] = "psutil not installed"
         except Exception as e:
-            sys_info["system_info_error"] = str(e)
+            sys_info["system_info_error"] = e
 
         return sys_info
 
     @staticmethod
     def cleanup_old_reports(max_reports: int = 5):
         """Mantiene solo gli ultimi N report per risparmiare spazio."""
-        try:
+        with suppress(Exception):
             reports_dir = CONFIG_DIR / "reports"
             if not reports_dir.exists():
                 return
@@ -312,12 +313,8 @@ class BugReporter:
                 reverse=True,
             )
             for r in reports[max_reports:]:
-                try:
+                with suppress(Exception):
                     r.unlink()
-                except Exception:
-                    pass
-        except Exception:
-            pass
 
     @staticmethod
     def get_estimated_size(
@@ -344,5 +341,4 @@ class BugReporter:
 
         if size_kb < 1024:
             return f"~{size_kb} KB"
-        else:
-            return f"~{size_kb / 1024:.1f} MB"
+        return f"~{size_kb / 1024:.1f} MB"

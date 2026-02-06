@@ -3,6 +3,7 @@ import json
 import re
 import warnings
 import zipfile
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -73,16 +74,14 @@ class ScaricoOreImporter(BaseImporter):
             pass
 
         if msoffcrypto:
-            try:
+            with suppress(Exception):
                 decrypted = io.BytesIO()
-                with open(path, "rb") as f:
+                with path.open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")
+                    office_file.load_key(password="coemi")  # nosec
                     office_file.decrypt(decrypted)
                 decrypted.seek(0)
                 return _scan_zip(decrypted)
-            except Exception:
-                return 0
 
         return 0
 
@@ -118,17 +117,15 @@ class ScaricoOreImporter(BaseImporter):
         is_encrypted = False
 
         if msoffcrypto:
-            try:
-                with open(path, "rb") as f:
+            with suppress(Exception):
+                with path.open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")
+                    office_file.load_key(password="coemi")  # nosec
                     office_file.decrypt(wb_file)
                     is_encrypted = True
-            except Exception:
-                pass
 
         if not is_encrypted:
-            with open(path, "rb") as f:
+            with path.open("rb") as f:
                 wb_file.write(f.read())
 
         wb_file.seek(0)
@@ -200,7 +197,7 @@ class ScaricoOreImporter(BaseImporter):
         v_odc = c_odc.value
         v_pos = c_pos.value
 
-        if v_odc is None and v_pos is None:
+        if v_odc is v_pos is None:
             return None
 
         def _fmt(val):
@@ -222,28 +219,23 @@ class ScaricoOreImporter(BaseImporter):
                 s_data = s
         vals.append(s_data)
 
-        vals.append(_fmt(c_p1.value))
-        vals.append(_fmt(c_p2.value))
+        vals.extend((_fmt(c_p1.value), _fmt(c_p2.value)))
 
         s_odc = _fmt(v_odc)
-        if s_odc == "0" or s_odc == "0.0":
+        if s_odc in ("0", "0.0"):
             s_odc = ""
         vals.append(s_odc)
 
         s_pos = _fmt(v_pos)
-        if s_pos == "0" or s_pos == "0.0":
+        if s_pos in ("0", "0.0"):
             s_pos = ""
         vals.append(s_pos)
 
-        vals.append(_fmt(c_dalle.value))
-        vals.append(_fmt(c_alle.value))
-        vals.append(_fmt(c_tot.value))
-        vals.append(_fmt(c_desc.value))
-        vals.append(_fmt(c_fin.value))
+        vals.extend((_fmt(c_dalle.value), _fmt(c_alle.value), _fmt(c_tot.value), _fmt(c_desc.value), _fmt(c_fin.value)))
 
         v_comm = c_comm.value
         s_comm = _fmt(v_comm)
-        if s_comm == "0" or s_comm == "0.0":
+        if s_comm in ("0", "0.0"):
             s_comm = ""
         vals.append(s_comm)
 
@@ -291,17 +283,15 @@ class ScaricoOreImporter(BaseImporter):
                 continue
 
             cell = row[i]
-            try:
+            with suppress(AttributeError, TypeError):
                 font = cell.font
                 if font and font.color and font.color.type == "rgb":
                     rgb = str(font.color.rgb)
                     hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
                     if hex_code != "#000000":
                         row_styles.setdefault(key, {})["fg"] = hex_code
-            except (AttributeError, TypeError):
-                pass
 
-            try:
+            with suppress(AttributeError, TypeError):
                 fill = cell.fill
                 if fill and fill.patternType == "solid":
                     start_color = fill.start_color
@@ -310,7 +300,5 @@ class ScaricoOreImporter(BaseImporter):
                         hex_code = f"#{rgb[2:]}" if len(rgb) > 6 else f"#{rgb}"
                         if hex_code != "#000000" and hex_code != "#FFFFFF":
                             row_styles.setdefault(key, {})["bg"] = hex_code
-            except (AttributeError, TypeError):
-                pass
 
         return json.dumps(row_styles) if row_styles else ""

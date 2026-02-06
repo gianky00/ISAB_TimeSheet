@@ -4,6 +4,7 @@ Performance metrics tracking e storage.
 
 import json
 from collections import defaultdict
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -56,11 +57,9 @@ class MetricsSink:
         Args:
             metric: Metrica da scrivere
         """
-        try:
-            with open(self.metrics_file, "a", encoding="utf-8") as f:
+        with suppress(Exception):
+            with self.metrics_file.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(metric.to_dict(), ensure_ascii=False) + "\n")
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to write metric: {e}")
 
     def read_metrics(
         self,
@@ -83,8 +82,8 @@ class MetricsSink:
         metrics = []
         count = 0
 
-        try:
-            with open(self.metrics_file, "r", encoding="utf-8") as f:
+        with suppress(Exception):
+            with self.metrics_file.open("r", encoding="utf-8") as f:
                 for line in f:
                     if limit and count >= limit:
                         break
@@ -106,9 +105,6 @@ class MetricsSink:
 
                     metrics.append(metric)
                     count += 1
-
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to read metrics: {e}")
 
         return metrics
 
@@ -253,11 +249,9 @@ class PerformanceTracker:
         Args:
             file_path: Path al file JSON
         """
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
+        with suppress(Exception):
+            with file_path.open("r", encoding="utf-8") as f:
                 self._baselines = json.load(f)
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to load baselines: {e}")
 
     def save_baselines_to_file(self, file_path: Path):
         """
@@ -266,11 +260,9 @@ class PerformanceTracker:
         Args:
             file_path: Path al file JSON
         """
-        try:
-            with open(file_path, "w", encoding="utf-8") as f:
+        with suppress(Exception):
+            with file_path.open("w", encoding="utf-8") as f:
                 json.dump(self._baselines, f, indent=2)
-        except Exception as e:
-            print(f"[METRICS ERROR] Failed to save baselines: {e}")
 
     def auto_learn_baselines(self):
         """

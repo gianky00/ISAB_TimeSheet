@@ -118,9 +118,9 @@ class AppInitializer:
         if not config.get("telegram_chat_id") and not config.get(
             "telegram_pairing_code"
         ):
-            import random
+            import secrets
 
-            code = str(random.randint(100000, 999999))
+            code = str(secrets.randbelow(900000) + 100000)
             config_manager.set_config_value("telegram_pairing_code", code)
 
         yield "Sistema Pronto", 100

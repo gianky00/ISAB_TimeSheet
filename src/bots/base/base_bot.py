@@ -132,17 +132,13 @@ class BaseBot(ABC):
 
         # Telegram notification
         if self._telegram_service:
-            try:
+            with suppress(Exception):
                 import re
 
-                clean_msg = re.sub(
-                    r"^[\\\\[]\\d{2}:\\d{2}:\\d{2}[\\\\]]\\s*", "", message.strip()
-                )
+                clean_msg = re.sub(r"^\[\d{2}:\d{2}:\d{2}\]\s*", "", message.strip())
                 self._telegram_service.send_message_sync(
                     f"🔹 *{self.name}*\n{clean_msg}"
                 )
-            except Exception:
-                pass
 
     def set_log_callback(self, callback: Callable[[str], None]):
         """Imposta la callback per inoltrare i log all'interfaccia utente."""
@@ -488,10 +484,8 @@ class BaseBot(ABC):
     def cleanup(self):
         """Chiude il browser e pulisce le risorse del driver."""
         if self.driver:
-            try:
+            with suppress(Exception):
                 self.driver.quit()
-            except Exception:
-                pass
             self.driver = None
 
     @abstractmethod

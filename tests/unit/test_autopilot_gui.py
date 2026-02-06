@@ -98,9 +98,10 @@ class TestAutopilotGUI:
 
     def test_config_card_save(self, qtbot):
         """Testa il salvataggio dei dati quando la card viene modificata."""
-        with patch("src.core.config_manager.load_config", return_value={}), patch(
-            "src.core.config_manager.set_config_value"
-        ) as mock_set:
+        with (
+            patch("src.core.config_manager.load_config", return_value={}),
+            patch("src.core.config_manager.set_config_value") as mock_set,
+        ):
             card = AutopilotConfigCard("test_bot", "Test Bot", Icons.CLOCK, "#ff0000")
             qtbot.addWidget(card)
 
@@ -115,9 +116,10 @@ class TestAutopilotGUI:
 
     def test_config_card_interval_save(self, qtbot):
         """Testa il salvataggio per la card con intervallo."""
-        with patch("src.core.config_manager.load_config", return_value={}), patch(
-            "src.core.config_manager.set_config_value"
-        ) as mock_set:
+        with (
+            patch("src.core.config_manager.load_config", return_value={}),
+            patch("src.core.config_manager.set_config_value") as mock_set,
+        ):
             card = AutopilotConfigCardWithInterval(
                 "report", "Report", Icons.SEND, "#00ff00"
             )

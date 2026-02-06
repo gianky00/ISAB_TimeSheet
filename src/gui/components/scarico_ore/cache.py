@@ -154,7 +154,7 @@ class CacheWorker(QThread):
             return s_val
 
         try:
-            if len(s_val) >= 10 and s_val[4] == "-" and s_val[7] == "-":
+            if len(s_val) >= 10 and s_val[4] == s_val[7] == "-":
                 return f"{s_val[8:10]}/{s_val[5:7]}/{s_val[0:4]}"
             parts = s_val.split(" ")[0].split("-")
             return f"{parts[2]}/{parts[1]}/{parts[0]}" if len(parts) == 3 else s_val
@@ -192,6 +192,6 @@ class CacheWorker(QThread):
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.cache_path, "wb") as f:
-                pickle.dump((data, search, totals, style_cache, date_keys), f)
+                pickle.dump((data, search, totals, style_cache, date_keys), f)  # nosec B403
         except Exception as e:
             print(f"Error saving cache: {e}")

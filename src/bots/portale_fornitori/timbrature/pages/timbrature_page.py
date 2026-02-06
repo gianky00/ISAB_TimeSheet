@@ -5,6 +5,7 @@ Page Object Model for the Timbrature section of the ISAB portal.
 
 import shutil
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -185,7 +186,8 @@ class TimbraturePage:
                         break
                 except Exception:
                     # Retry loop - no sleep needed, immediate retry is fine
-                    pass
+                    with suppress(Exception):
+                        pass
 
             if not arrow_element:
                 raise Exception("Impossibile trovare la freccia del fornitore.")

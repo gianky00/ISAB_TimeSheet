@@ -3,7 +3,9 @@ Log viewer e query utility.
 """
 
 import json
+import operator
 from collections import defaultdict
+from contextlib import suppress
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -104,8 +106,8 @@ class LogQuery:
         results = []
         skipped = 0
 
-        try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+        with suppress(Exception):
+            with self.log_file.open("r", encoding="utf-8") as f:
                 for line in f:
                     entry = json.loads(line)
 
@@ -122,9 +124,6 @@ class LogQuery:
                         if self._limit and len(results) >= self._limit:
                             break
 
-        except Exception as e:
-            print(f"[QUERY ERROR] {e}")
-
         return results
 
     def count(self) -> int:
@@ -134,14 +133,12 @@ class LogQuery:
 
         count = 0
 
-        try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+        with suppress(Exception):
+            with self.log_file.open("r", encoding="utf-8") as f:
                 for line in f:
                     entry = json.loads(line)
                     if all(filter_fn(entry) for filter_fn in self.filters):
                         count += 1
-        except Exception as e:
-            print(f"[QUERY ERROR] {e}")
 
         return count
 
@@ -193,7 +190,7 @@ class LogViewer:
             level = entry.get("level", "UNKNOWN")
             stats[level] += 1
 
-        return dict(stats)
+        return stats.copy()
 
     def get_error_summary(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -228,7 +225,7 @@ class LogViewer:
 
         # Ordina per count
         sorted_errors = sorted(
-            error_details.values(), key=lambda x: x["count"], reverse=True
+            error_details.values(), key=operator.itemgetter("count"), reverse=True
         )
 
         return sorted_errors[:limit]
@@ -268,7 +265,7 @@ class LogViewer:
                 )
 
         # Ordina per durata
-        slow_ops.sort(key=lambda x: x["duration_ms"], reverse=True)
+        slow_ops.sort(key=operator.itemgetter("duration_ms"), reverse=True)
 
         return slow_ops[:limit]
 
@@ -358,7 +355,7 @@ class LogViewer:
             )
 
         # Ordina per start_time
-        summaries.sort(key=lambda x: x["start_time"], reverse=True)
+        summaries.sort(key=operator.itemgetter("start_time"), reverse=True)
 
         return summaries
 
@@ -394,7 +391,7 @@ class LogViewer:
             "timestamp": datetime.now().isoformat() + "Z",
             "period_hours": 24,
             "total_events": total,
-            "level_distribution": dict(level_stats),
+            "level_distribution": level_stats.copy(),
             "error_rate_percent": round(error_rate, 2),
             "bot_runs": {
                 "total": len(bot_runs),
@@ -422,8 +419,7 @@ def query_logs(log_type: str = "application") -> LogQuery:
     Returns:
         LogQuery instance
     """
-    viewer = LogViewer()
-    return viewer.query(log_type)
+    return LogViewer().query(log_type)
 
 
 def view_trace(trace_id: str) -> List[Dict[str, Any]]:
@@ -436,8 +432,7 @@ def view_trace(trace_id: str) -> List[Dict[str, Any]]:
     Returns:
         Lista di log entries
     """
-    viewer = LogViewer()
-    return viewer.reconstruct_trace(trace_id)
+    return LogViewer().reconstruct_trace(trace_id)
 
 
 def health_report() -> Dict[str, Any]:
@@ -447,5 +442,4 @@ def health_report() -> Dict[str, Any]:
     Returns:
         Health report
     """
-    viewer = LogViewer()
-    return viewer.generate_health_report()
+    return LogViewer().generate_health_report()

@@ -3,8 +3,9 @@ Bot TS - Contabilita Panel
 Pannello per la visualizzazione della Contabilità Strumentale.
 """
 
-import os
+from contextlib import suppress
 from datetime import datetime
+from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -303,25 +304,21 @@ class ContabilitaPanel(QWidget):
 
         if target:
             if hasattr(target, "table"):
-                try:
+                with suppress(Exception):
                     target.table.selectionModel().selectionChanged.disconnect()
-                except Exception:
-                    pass
                 target.table.selectionModel().selectionChanged.connect(
                     lambda s, d: self._update_selection_total(target.table)
                 )
             elif hasattr(target, "tree"):
-                try:
+                with suppress(Exception):
                     target.tree.itemSelectionChanged.disconnect()
-                except Exception:
-                    pass
                 target.tree.itemSelectionChanged.connect(
                     lambda: self._update_selection_total(target.tree)
                 )
 
     def _update_selection_total(self, widget):
         """Calcola e visualizza i totali per le righe selezionate (Table o Tree)."""
-        try:
+        with suppress(Exception):
             if isinstance(widget, QTreeWidget):
                 self._handle_tree_selection(widget)
                 return
@@ -340,8 +337,6 @@ class ContabilitaPanel(QWidget):
             fmt_ore = self._format_ore_display(total_ore)
             self.selection_count_label.setText(f"Righe: {len(selected_rows)}")
             self.selection_sum_label.setText(f"Totale ORE: {fmt_ore}")
-        except Exception:
-            pass
 
     def _handle_tree_selection(self, tree: QTreeWidget):
         self.selection_count_label.setText(f"Selezionati: {len(tree.selectedItems())}")
@@ -370,14 +365,12 @@ class ContabilitaPanel(QWidget):
             for row in selected_rows:
                 it = widget.item(row, target_col)
                 if it:
-                    try:
+                    with suppress(Exception):
                         clean = (
                             str(it.text()).replace(".", "").replace(",", ".").strip()
                         )
                         if clean:
                             total_ore += float(clean)
-                    except Exception:
-                        pass
         return selected_rows, total_ore
 
     def _format_ore_display(self, total: float) -> str:
@@ -388,7 +381,7 @@ class ContabilitaPanel(QWidget):
     def start_import_process(self):
         config = config_manager.load_config()
         path = config.get("contabilita_file_path", "")
-        if not path or not os.path.exists(path):
+        if not path or not Path(path).exists():
             self.status_lbl.setText("File non trovato.")
             return
 

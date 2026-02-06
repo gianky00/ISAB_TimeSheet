@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from PyQt6.QtCore import (
     QEasingCurve,
     QPropertyAnimation,
@@ -230,10 +232,8 @@ class CommandPaletteDialog(QDialog):
     def _finish_close(self):
         self.hide()
         self.is_closing = False
-        try:
+        with suppress(Exception):
             self.anim.finished.disconnect(self._finish_close)
-        except Exception:
-            pass
         self.closed.emit()
 
     def eventFilter(self, obj, event):
@@ -246,7 +246,7 @@ class CommandPaletteDialog(QDialog):
 
     def _handle_input_mode_key(self, event):
         key = event.key()
-        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._submit_input_step()
             return True
         elif key == Qt.Key.Key_Escape:
@@ -269,7 +269,7 @@ class CommandPaletteDialog(QDialog):
                 self.list_widget.setCurrentRow(idx - 1)
             return True
 
-        elif key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+        elif key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._execute_selected()
             return True
 

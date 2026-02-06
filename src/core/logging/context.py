@@ -31,8 +31,7 @@ class LoggingContext:
 
     def get(self, key: str, default=None):
         """Ottiene un valore dal context."""
-        context = self._get_context()
-        return context.get(key, default)
+        return self._get_context().get(key, default)
 
     def update(self, **kwargs):
         """Aggiorna context con multipli valori."""

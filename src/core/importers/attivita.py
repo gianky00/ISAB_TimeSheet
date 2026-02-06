@@ -77,7 +77,7 @@ class AttivitaImporter(BaseImporter):
 
     @classmethod
     def _normalize_attivita_columns(cls, df: pd.DataFrame) -> Optional[pd.DataFrame]:
-        df.columns = [str(c).strip() for c in df.columns]
+        df.columns = df.columns.astype(str).str.strip()
         rename_map = {}
 
         for excel_col, db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.items():
@@ -104,7 +104,7 @@ class AttivitaImporter(BaseImporter):
             if db_col not in df.columns:
                 df[db_col] = ""
 
-        check_cols = [c for c in ["ps", "area", "descrizione"] if c in df.columns]
+        check_cols = [c for c in ("ps", "area", "descrizione") if c in df.columns]
         if check_cols:
             df.dropna(how="all", subset=check_cols, inplace=True)
 

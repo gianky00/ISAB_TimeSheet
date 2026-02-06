@@ -1,4 +1,5 @@
 import logging
+import operator
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -82,7 +83,7 @@ class ReportGenerator:
                 "id": id_ris,
                 "cognome": cog,
                 "nome": nom,
-                "badge": badge if badge else "-",
+                "badge": badge or "-",
                 "giorni": diff_days,
                 "data": last_access_date.strftime("%d/%m/%Y"),
             }
@@ -93,8 +94,8 @@ class ReportGenerator:
                 expired_list.append(item)
 
         # Ordinamento per urgenza
-        warning_list.sort(key=lambda x: x["giorni"], reverse=True)
-        expired_list.sort(key=lambda x: x["giorni"], reverse=True)
+        warning_list.sort(key=operator.itemgetter("giorni"), reverse=True)
+        expired_list.sort(key=operator.itemgetter("giorni"), reverse=True)
 
         return {
             "warning_list": warning_list,
@@ -133,10 +134,10 @@ class ReportGenerator:
         )
         if trend:
             parts = []
-            for k, label in [
+            for k, label in (
                 ("warning_diff", "in scadenza"),
                 ("expired_diff", "scaduti"),
-            ]:
+            ):
                 diff = trend[k]
                 if diff > 0:
                     parts.append(
@@ -219,7 +220,7 @@ class ReportGenerator:
     def _create_report_excel(warning_list, expired_list):
         """Crea il file Excel temporaneo con i dati del report."""
         excel_data = []
-        for items, label in [(warning_list, "In Scadenza"), (expired_list, "Scaduto")]:
+        for items, label in ((warning_list, "In Scadenza"), (expired_list, "Scaduto")):
             for dip in items:
                 excel_data.append(
                     {

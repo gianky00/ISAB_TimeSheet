@@ -180,7 +180,9 @@ class DataSynchronizer:
             cursor.execute("DELETE FROM attivita_programmate")
 
             if rows_to_insert:
-                safe_cols = ", ".join([f'"{cls._validate_identifier(c)}"' for c in db_cols])
+                safe_cols = ", ".join(
+                    [f'"{cls._validate_identifier(c)}"' for c in db_cols]
+                )
                 placeholders = ", ".join(["?"] * len(db_cols))
 
                 # Clean values
@@ -194,7 +196,7 @@ class DataSynchronizer:
                 data = [tuple(clean_value(x) for x in r) for r in rows_to_insert]
 
                 cursor.executemany(
-                    f'INSERT INTO attivita_programmate ({safe_cols}) VALUES ({placeholders})',  # nosec B608
+                    f"INSERT INTO attivita_programmate ({safe_cols}) VALUES ({placeholders})",  # nosec B608
                     data,
                 )
 

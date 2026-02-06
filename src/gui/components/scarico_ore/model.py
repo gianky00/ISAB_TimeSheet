@@ -1,3 +1,4 @@
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
@@ -205,7 +206,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
             return self._get_style(real_row_idx, col, "fg")
 
         elif role == Qt.ItemDataRole.TextAlignmentRole:
-            if col in [3, 4, 5, 6, 7]:
+            if col in (3, 4, 5, 6, 7):
                 return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             if col == 0:
                 return Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
@@ -244,14 +245,14 @@ class ScaricoOreTableModel(QAbstractTableModel):
         return None
 
     def _get_style(self, real_row, col, style_type):
-        try:
+        with suppress(Exception):
             if real_row >= len(self._styles_cache):
                 return None
             styles = self._styles_cache[real_row]
             if not styles:
                 return None
 
-            keys = [
+            keys = (
                 "data",
                 "pers1",
                 "pers2",
@@ -263,12 +264,10 @@ class ScaricoOreTableModel(QAbstractTableModel):
                 "descrizione",
                 "finito",
                 "commessa",
-            ]
+            )
             key = keys[col]
             if key in styles:
                 color_hex = styles[key].get(style_type)
                 if color_hex:
                     return QColor(color_hex)
-        except Exception:
-            pass
         return None

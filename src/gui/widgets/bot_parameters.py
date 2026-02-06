@@ -3,6 +3,7 @@ SyncroJob - Bot Parameters Widget
 Widget riutilizzabile per i parametri comuni dei bot (Fornitore, Date, Percorso).
 """
 
+from contextlib import suppress
 from typing import Optional
 
 from PyQt6.QtCore import QDate, QSize, pyqtSignal
@@ -160,8 +161,7 @@ class BotParametersWidget(QWidget):
 
     def refresh_fornitori(self):
         """Ricarica l'elenco dei fornitori dalla configurazione globale."""
-        config = config_manager.load_config()
-        fornitori = config.get("fornitori", [])
+        fornitori = config_manager.load_config().get("fornitori", [])
         current = self.fornitore_combo.currentText()
 
         self.fornitore_combo.clear()
@@ -198,14 +198,12 @@ class BotParametersWidget(QWidget):
             date_da_str: Stringa data inizio (dd.mm.yyyy)
             date_a_str: Stringa data fine opzionale (dd.mm.yyyy)
         """
-        try:
+        with suppress(Exception):
             d, m, y = map(int, date_da_str.split("."))
             self.date_da.setDate(QDate(y, m, d))
             if self.show_date_range and date_a_str:
                 d, m, y = map(int, date_a_str.split("."))
                 self.date_a.setDate(QDate(y, m, d))
-        except Exception:
-            pass
 
     def get_dest_path(self) -> str:
         """Restituisce il percorso di destinazione selezionato."""

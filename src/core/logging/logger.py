@@ -4,6 +4,7 @@ Main logger implementation con multi-sink support.
 
 import inspect
 import sys
+from contextlib import suppress
 from typing import Any, Dict, Optional
 
 from .config import get_config
@@ -55,14 +56,13 @@ class StructuredLogger:
 
     def _parse_level(self, level_str: str) -> int:
         """Converte stringa livello a valore numerico."""
-        levels = {
+        return {
             "DEBUG": 10,
             "INFO": 20,
             "WARNING": 30,
             "ERROR": 40,
             "CRITICAL": 50,
-        }
-        return levels.get(level_str.upper(), 20)
+        }.get(level_str.upper(), 20)
 
     def _get_source_info(self) -> Dict[str, Any]:
         """
@@ -71,7 +71,7 @@ class StructuredLogger:
         Returns:
             Dict con file, function, line
         """
-        try:
+        with suppress(Exception):
             # Risali nello stack per trovare il caller reale
             # (salta frames interni del logger)
             frame = inspect.currentframe()
@@ -92,8 +92,6 @@ class StructuredLogger:
                     "function": caller_frame.f_code.co_name,
                     "line": caller_frame.f_lineno,
                 }
-        except Exception:
-            pass
 
         return {}
 
@@ -214,23 +212,23 @@ class StructuredLogger:
 
     def debug(self, message: str, **extra):
         """Log a livello DEBUG."""
-        self.log("DEBUG", message, extra=extra if extra else None)
+        self.log("DEBUG", message, extra=extra or None)
 
     def info(self, message: str, **extra):
         """Log a livello INFO."""
-        self.log("INFO", message, extra=extra if extra else None)
+        self.log("INFO", message, extra=extra or None)
 
     def warning(self, message: str, **extra):
         """Log a livello WARNING."""
-        self.log("WARNING", message, extra=extra if extra else None)
+        self.log("WARNING", message, extra=extra or None)
 
     def error(self, message: str, **extra):
         """Log a livello ERROR."""
-        self.log("ERROR", message, extra=extra if extra else None)
+        self.log("ERROR", message, extra=extra or None)
 
     def critical(self, message: str, **extra):
         """Log a livello CRITICAL."""
-        self.log("CRITICAL", message, extra=extra if extra else None)
+        self.log("CRITICAL", message, extra=extra or None)
 
     def exception(self, message: str, exc: Exception, **extra):
         """
@@ -241,7 +239,7 @@ class StructuredLogger:
             exc: Eccezione da loggare
             **extra: Dati extra
         """
-        self.log("ERROR", message, extra=extra if extra else None, exception=exc)
+        self.log("ERROR", message, extra=extra or None, exception=exc)
 
 
 def configure_logging(config=None):

@@ -44,13 +44,12 @@ class ExcelTableWidget(QTableWidget):
         Imposta il colore di sfondo della riga in base allo stato.
         Status: 'completato', 'errore', 'in_corso', 'da_processare'
         """
-        colors = {
+        color = {
             "completato": QColor("#C8E6C9"),  # Verde chiaro
             "errore": QColor("#FFCDD2"),  # Rosso chiaro
             "in_corso": QColor("#FFF9C4"),  # Giallo chiaro
             "da_processare": QColor("#FFFFFF"),  # Bianco
-        }
-        color = colors.get(status, QColor("white"))
+        }.get(status, QColor("white"))
 
         for col in range(self.columnCount()):
             item = self.item(row, col)
@@ -245,14 +244,12 @@ class ExcelTableWidget(QTableWidget):
 
     def _get_selected_rows_cols(self, ranges) -> tuple[list[int], list[int]]:
         """Estrae gli indici unici di riga e colonna dalla selezione."""
-        rows = set()
-        cols = set()
+        rows: set[int] = set()
+        cols: set[int] = set()
         for item in ranges:
             if hasattr(item, "topRow"):  # QTableWidgetSelectionRange
-                for r in range(item.topRow(), item.bottomRow() + 1):
-                    rows.add(r)
-                for c in range(item.leftColumn(), item.rightColumn() + 1):
-                    cols.add(c)
+                rows.update(range(item.topRow(), item.bottomRow() + 1))
+                cols.update(range(item.leftColumn(), item.rightColumn() + 1))
             elif hasattr(item, "row"):  # QModelIndex
                 rows.add(item.row())
                 cols.add(item.column())

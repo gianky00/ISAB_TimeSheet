@@ -11,7 +11,7 @@ def format_date_it(value):
     """
     if not value:
         return ""
-    try:
+    with suppress(Exception):
         if isinstance(value, str):
             # Tenta vari formati comuni
             for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d"):
@@ -19,11 +19,9 @@ def format_date_it(value):
                     dt = datetime.strptime(value.split(" ")[0], fmt)
                     return dt.strftime("%d/%m/%Y")
             return value  # Fallback se non è una data riconosciuta
-        elif isinstance(value, (datetime, float, int)):
+        if isinstance(value, (datetime, float, int)):
             # Se è già datetime o timestamp (non supportato qui ma per sicurezza)
             return value.strftime("%d/%m/%Y")
-    except Exception:
-        pass
     return str(value)
 
 

@@ -146,10 +146,9 @@ def get_status_by_days(
 
     if days <= warning_threshold:
         return ("ok", "#198754")
-    elif days <= expired_threshold:
+    if days <= expired_threshold:
         return ("warning", "#fd7e14")
-    else:
-        return ("expired", "#dc3545")
+    return ("expired", "#dc3545")
 
 
 def format_days_ago(days: Optional[int]) -> str:
@@ -167,10 +166,9 @@ def format_days_ago(days: Optional[int]) -> str:
 
     if days == 0:
         return "Oggi"
-    elif days == 1:
+    if days == 1:
         return "Ieri"
-    else:
-        return f"{days} giorni fa"
+    return f"{days} giorni fa"
 
 
 def get_date_range(
@@ -201,8 +199,7 @@ def format_datetime_for_filename(dt: Optional[datetime] = None) -> str:
     Returns:
         Stringa tipo "15-01-2024_14-30"
     """
-    dt = dt or datetime.now()
-    return dt.strftime("%d-%m-%Y_%H-%M")
+    return (dt or datetime.now()).strftime("%d-%m-%Y_%H-%M")
 
 
 def is_same_day(dt1: datetime, dt2: datetime) -> bool:
@@ -235,4 +232,5 @@ def get_month_name_it(month: int, full: bool = False) -> str:
     if not 1 <= month <= 12:
         return ""
 
-    return MONTHS_IT_FULL[month - 1] if full else MONTHS_IT[month - 1]
+    months = MONTHS_IT_FULL if full else MONTHS_IT
+    return months[month - 1]

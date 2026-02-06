@@ -5,6 +5,7 @@ Gestisce invio automatico alert su Telegram per anomalie e eventi critici.
 """
 
 import threading
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, Literal, Optional
@@ -61,12 +62,10 @@ class AlertManager:
     def telegram(self):
         """Lazy load TelegramService."""
         if self._telegram_service is None:
-            try:
+            with suppress(ImportError):
                 from src.core.telegram import TelegramService
 
                 self._telegram_service = TelegramService()
-            except ImportError:
-                pass
         return self._telegram_service
 
     def configure(
@@ -143,18 +142,17 @@ class AlertManager:
         ]
 
         if anomaly.suggestion:
-            lines.append("")
-            lines.append(f"💡 <i>{anomaly.suggestion}</i>")
+            lines.extend(("", f"💡 <i>{anomaly.suggestion}</i>"))
 
         # Aggiungi dettagli rilevanti
         if anomaly.details:
-            lines.append("")
-            lines.append("<b>Dettagli:</b>")
+            lines.extend(("", "<b>Dettagli:</b>"))
             for key, value in list(anomaly.details.items())[:3]:
                 lines.append(f"• {key}: {value}")
 
-        lines.append("")
-        lines.append(f"<code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>")
+        lines.extend(
+            ("", f"<code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>")
+        )
 
         return "\n".join(lines)
 
@@ -212,12 +210,10 @@ class AlertManager:
         for anomaly in anomalies:
             if self._should_alert(anomaly):
                 message = self._format_alert_message(anomaly)
-                try:
+                with suppress(Exception):
                     self.telegram.send_message_sync(message)
                     self._record_alert(anomaly)
                     alerts_sent += 1
-                except Exception:
-                    pass
 
         return alerts_sent
 
@@ -238,12 +234,11 @@ class AlertManager:
             return False
 
         message = self._format_alert_message(anomaly)
-        try:
+        with suppress(Exception):
             self.telegram.send_message_sync(message)
             self._record_alert(anomaly)
             return True
-        except Exception:
-            return False
+        return False
 
 
 # Singleton helper

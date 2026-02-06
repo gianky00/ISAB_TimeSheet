@@ -111,7 +111,6 @@ class AuditManager:
             # Defaults
             entity = entity or "-"
             category = category or "general"
-            module = module or ""
             error_code = error_code or ""
             params_json = json.dumps(params, ensure_ascii=False) if params else "{}"
             timestamp = datetime.now().isoformat()

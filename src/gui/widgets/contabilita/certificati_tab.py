@@ -1,7 +1,11 @@
+# flake8: noqa: FURB184
 import json
+import operator
 import os
 from collections import defaultdict
+from contextlib import suppress
 from datetime import datetime
+from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap
@@ -452,21 +456,20 @@ class ScadenzeAnalysisDialog(QDialog):
             pixmap.save(temp_path, "PNG")
 
             # Tenta di usare la macro Excel se configurata, altrimenti apre file manager
-            config = config_manager.load_config()
-            excel_path = config.get("certificati_campione_path", "")
+            excel_path = config_manager.load_config().get("certificati_campione_path", "")
 
-            if excel_path and os.path.exists(excel_path):
+            if excel_path and Path(excel_path).exists():
                 # Prova ad eseguire la macro Excel per inviare email
                 try:
                     ps_script = f"""
 $xl = New-Object -ComObject Excel.Application
 $xl.Visible = $false
-$wb = $xl.Workbooks.Open("{excel_path.replace(chr(92), chr(92)+chr(92))}")
+$wb = $xl.Workbooks.Open("{excel_path.replace(chr(92), chr(92) + chr(92))}")
 try {{
-    $xl.Run("'" + $wb.Name + "'!InviaEmailConScreenshotDaPS", "{temp_path.replace(chr(92), chr(92)+chr(92))}")
+    $xl.Run("'" + $wb.Name + "'!InviaEmailConScreenshotDaPS", "{temp_path.replace(chr(92), chr(92) + chr(92))}")
 }} catch {{
     # Se la macro non esiste, apri solo il file
-    Start-Process "{temp_path.replace(chr(92), chr(92)+chr(92))}"
+    Start-Process "{temp_path.replace(chr(92), chr(92) + chr(92))}"
 }}
 $wb.Close($false)
 $xl.Quit()
@@ -564,28 +567,24 @@ class CertificatiCampioneTab(QWidget):
 
     def _load_exclusions(self):
         """Carica le esclusioni dal file JSON."""
-        try:
+        with suppress(Exception):
             if self.EXCLUSIONS_FILE.exists():
-                with open(self.EXCLUSIONS_FILE, "r", encoding="utf-8") as f:
+                with self.EXCLUSIONS_FILE.open("r", encoding="utf-8") as f:
                     data = json.load(f)
                     self._exclusions = set(data.get("excluded_matricole", []))
-        except Exception:
-            self._exclusions = set()
 
     def _save_exclusions(self):
         """Salva le esclusioni nel file JSON."""
-        try:
+        with suppress(Exception):
             # Assicura che la directory esista
             self.EXCLUSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.EXCLUSIONS_FILE, "w", encoding="utf-8") as f:
+            with self.EXCLUSIONS_FILE.open("w", encoding="utf-8") as f:
                 json.dump(
                     {"excluded_matricole": list(self._exclusions)},
                     f,
                     indent=2,
                     ensure_ascii=False,
                 )
-        except Exception as e:
-            print(f"Errore salvataggio esclusioni: {e}")
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -852,7 +851,7 @@ class CertificatiCampioneTab(QWidget):
             )
 
         # Step 4: Ordina i gruppi per priorità (scaduti prima)
-        groups_with_priority.sort(key=lambda x: x["priority"])
+        groups_with_priority.sort(key=operator.itemgetter("priority"))
 
         # Step 5: Crea i nodi padre e figli
         for group in groups_with_priority:
@@ -931,16 +930,13 @@ class CertificatiCampioneTab(QWidget):
         # IMPORTANTE: Comprimi tutto di default (punto 5)
         self.tree.collapseAll()
 
-        # Applica visibilità esclusioni
         self._apply_exclusion_visibility()
         self._update_excluded_count_label()
 
         # Connetti segnale per gestire grassetto dinamico (solo se non già connesso)
-        try:
+        with suppress(TypeError):  # noqa: FURB184
             self.tree.itemExpanded.disconnect(self._on_item_expanded)
             self.tree.itemCollapsed.disconnect(self._on_item_collapsed)
-        except TypeError:
-            pass  # Non era connesso
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
 
@@ -951,8 +947,8 @@ class CertificatiCampioneTab(QWidget):
         Returns:
             tuple: (giorni_alla_scadenza, icona_pallino)
         """
-        try:
-            if not scadenza_str or scadenza_str == "":
+        with suppress(Exception):
+            if not scadenza_str:
                 return None, Icons.STATUS_DOT_GRAY
 
             # Parsing data italiana
@@ -965,18 +961,16 @@ class CertificatiCampioneTab(QWidget):
             if days < 0:
                 # Scaduto
                 return days, Icons.STATUS_DOT_RED
-            elif 0 <= days <= 15:
+            if 0 <= days <= 15:
                 # Scadenza entro 15 giorni
                 return days, Icons.STATUS_DOT_ORANGE
-            elif 16 <= days <= 30:
+            if 16 <= days <= 30:
                 # Scadenza tra 16-30 giorni
                 return days, Icons.STATUS_DOT_YELLOW
-            else:
-                # Attivo oltre 30 giorni
-                return days, Icons.STATUS_DOT_GREEN
+            # Attivo oltre 30 giorni
+            return days, Icons.STATUS_DOT_GREEN
 
-        except Exception:
-            return None, Icons.STATUS_DOT_GRAY
+        return None, Icons.STATUS_DOT_GRAY
 
     def _apply_current_certificate_styling(
         self, item, cert, days_to_expiry, status_dot_icon
@@ -1043,14 +1037,13 @@ class CertificatiCampioneTab(QWidget):
         """Formatta il testo dei giorni in versione breve per il nodo padre."""
         if days is None:
             return "N/D"
-        elif days < 0:
+        if days < 0:
             return f"🔴 Scaduto ({abs(days)}gg fa)"  # Rosso scuro
-        elif 0 <= days <= 15:
+        if 0 <= days <= 15:
             return f"🟠 Scade tra {days}gg"  # Arancione scuro (urgente)
-        elif 16 <= days <= 30:
+        if 16 <= days <= 30:
             return f"🟡 Scade tra {days}gg"  # Giallo chiaro (attenzione)
-        else:
-            return f"✅ Attivo ({days}gg rim.)"  # Verde
+        return f"✅ Attivo ({days}gg rim.)"  # Verde
 
     def _on_item_expanded(self, item):
         """Gestisce l'evento di espansione: applica grassetto."""
@@ -1183,10 +1176,9 @@ class CertificatiCampioneTab(QWidget):
 
     def _open_certificate(self, cert_number: str):
         """Apre il file PDF del certificato cercandolo ricorsivamente nella root configurata."""
-        config = config_manager.load_config()
-        cert_root = config.get("certificati_root_path", "")
+        cert_root = config_manager.load_config().get("certificati_root_path", "")
 
-        if not cert_root or not os.path.exists(cert_root):
+        if not cert_root or not Path(cert_root).exists():
             QMessageBox.warning(
                 self,
                 "Percorso non configurato",
@@ -1255,13 +1247,11 @@ class CertificatiCampioneTab(QWidget):
                 continue
 
             # Estrai i dati dal UserRole
-            user_data = parent.data(0, Qt.ItemDataRole.UserRole)
-            days = user_data.get("days") if user_data else None
+            days = (user_data := parent.data(0, Qt.ItemDataRole.UserRole)) and user_data.get("days")
 
             # Estrai altri dati dal testo del nodo padre
             # Formato: "matricola  •  costruttore  •  modello  •  [range  •]  days_text"
-            text = parent.text(0)
-            parts = text.split("  •  ")
+            parts = parent.text(0).split("  •  ")
 
             costruttore = parts[1].strip() if len(parts) > 1 else "N/D"
             modello = parts[2].strip() if len(parts) > 2 else "N/D"

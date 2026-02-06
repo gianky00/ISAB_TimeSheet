@@ -3,7 +3,6 @@ SyncroJob - Storico OdA Panel
 Pannello per la visualizzazione del Database Storico OdA con architettura Master-Detail e raggruppamento (QTreeView).
 """
 
-import os
 from datetime import datetime
 from typing import List, Tuple
 
@@ -182,7 +181,7 @@ class StoricoOdaPanel(QWidget):
 
         search_text = self.filters.search_input.text().strip()
         try:
-            full_rows = OdaManager.get_all_oda(search_text if search_text else None)
+            full_rows = OdaManager.get_all_oda(search_text or None)
             self._raw_full_data = full_rows
             self._populate_tree(full_rows)
         except Exception as e:
@@ -211,10 +210,10 @@ class StoricoOdaPanel(QWidget):
 
                 item_creato = QStandardItem(val_creato_da)
                 item_desc = QStandardItem(val_desc)
-                item_data = QStandardItem(format_date_it(str(r[1])))
+                item_data = QStandardItem(format_date_it(r[1]))
                 item_oda = QStandardItem(str(oda))
                 item_pos = QStandardItem(str(pos))
-                item_val = QStandardItem(format_currency_smart(str(r[10])))
+                item_val = QStandardItem(format_currency_smart(r[10]))
                 item_stato = QStandardItem(str(r[4]))
                 item_ind_rilascio = QStandardItem(val_ind_rilascio)
 
@@ -250,7 +249,7 @@ class StoricoOdaPanel(QWidget):
             uom = r[29]
 
             # Col 0: Descrizione (per merge con Col 1 via Delegate)
-            c_desc_merged = QStandardItem(str(desc))
+            c_desc_merged = QStandardItem(desc)
             c_desc_merged.setTextAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             )
@@ -265,7 +264,7 @@ class StoricoOdaPanel(QWidget):
             c_empty_4 = QStandardItem("")
 
             # Col 5: Prezzo Lordo
-            c_prezzo = QStandardItem(format_currency_smart(str(prezzo)))
+            c_prezzo = QStandardItem(format_currency_smart(prezzo))
 
             # Col 6: UOM + Qta
             c_uom_qta = QStandardItem(f"{uom} {qta}")
@@ -301,9 +300,8 @@ class StoricoOdaPanel(QWidget):
             self.detail_view.clear()
             return
 
-        index = indexes[0]
         # I dati sono salvati nell'ItemDataRole.UserRole della riga (col 0 o col 3 dipendentemente dal tipo)
-        full_data = index.data(Qt.ItemDataRole.UserRole)
+        full_data = indexes[0].data(Qt.ItemDataRole.UserRole)
 
         if full_data:
             self.detail_view.update_details(list(full_data))
@@ -357,7 +355,7 @@ class StoricoOdaPanel(QWidget):
                 )
         except Exception as e:
             QMessageBox.critical(
-                self, "Errore Critico", f"Errore durante l'importazione:\n{str(e)}"
+                self, "Errore Critico", f"Errore durante l'importazione:\n{e}"
             )
 
     def _on_update_clicked(self):
@@ -377,9 +375,9 @@ class StoricoOdaPanel(QWidget):
             # Use configured path or default to app temp directory
             dest_path = config.get("path_dettagli_oda")
             if not dest_path:
-                dest_path = str(config_manager.CONFIG_DIR / "temp")
-                # Ensure directory exists
-                os.makedirs(dest_path, exist_ok=True)
+                dest_path_obj = config_manager.CONFIG_DIR / "temp"
+                dest_path_obj.mkdir(parents=True, exist_ok=True)
+                dest_path = str(dest_path_obj)
 
             # Calcola Date (01.01.AnnoCorrente -> Oggi)
             data_da = f"01.01.{QDate.currentDate().year()}"
@@ -473,7 +471,7 @@ class StoricoOdaPanel(QWidget):
             import pandas as pd
 
             search_text = self.filters.search_input.text().strip()
-            rows = OdaManager.get_all_oda(search_text if search_text else None)
+            rows = OdaManager.get_all_oda(search_text or None)
             df = pd.DataFrame(rows, columns=self.full_headers)
             df.to_excel(filename, index=False, engine="openpyxl")
             ToastManager.instance().show("Esportazione completata!", "success")

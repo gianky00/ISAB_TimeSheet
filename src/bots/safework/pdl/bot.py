@@ -276,10 +276,8 @@ class SafeWorkPDLBot(SafeworkBaseBot):
 
         if self._gestisci_alert_ricerca():
             self.log(f"⚠️ Rilevato alert per {pdl_num}. Attesa resiliente...")
-            try:
+            with suppress(Exception):
                 self._attendi_scomparsa_overlay(timeout_secondi=5)
-            except Exception:
-                pass
             # Verifica che il PDL sia stato caricato controllando presenza pulsante stampa
             try:
                 WebDriverWait(self.driver, 3).until(
@@ -392,32 +390,26 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                 clicked = False
 
                 # Strategia 1: ID Label
-                try:
+                with suppress(Exception):
                     self.driver.find_element(By.ID, "lblTitoloParteSeconda").click()
                     clicked = True
-                except Exception:
-                    pass
 
                 # Strategia 2: Testo XPATH
                 if not clicked:
-                    try:
+                    with suppress(Exception):
                         self.driver.find_element(
                             By.XPATH, "//span[contains(text(), 'PARTE SECONDA')]"
                         ).click()
                         clicked = True
-                    except Exception:
-                        pass
 
                 # Strategia 3: User Specific IDTXT (2E20B56F)
                 if not clicked:
-                    try:
+                    with suppress(Exception):
                         self.driver.find_element(
                             By.CSS_SELECTOR, "span[idtxt='2E20B56F']"
                         ).click()
                         self.log("✓ Aperto tramite idtxt='2E20B56F'")
                         clicked = True
-                    except Exception:
-                        pass
 
                 # No sleep needed: next wait guarantees visibility
 
@@ -552,17 +544,15 @@ class SafeWorkPDLBot(SafeworkBaseBot):
         self.log("🔍 Controllo eventuali alert di errore ricerca...")
         end_time = time.time() + timeout
         while time.time() < end_time:
-            try:
+            with suppress(Exception):
                 # Cerca il testo dell'alert per il log
-                try:
+                with suppress(Exception):
                     alert_content = self.driver.find_element(
                         By.XPATH, "//div[contains(@class, 'modal-content')]"
                     )
                     if alert_content.is_displayed():
                         testo = alert_content.text.replace("\n", " ").strip()
                         self.log(f"🚩 ALERT RILEVATO: '{testo}'")
-                except Exception:
-                    pass
 
                 btn_ok = self.driver.find_element(
                     By.XPATH, "//button[contains(@class, 'btn dialog-btn btn-ok')]"
@@ -588,8 +578,6 @@ class SafeWorkPDLBot(SafeworkBaseBot):
                         time.sleep(0.5)
 
                     return True
-            except Exception:
-                pass
             # Polling interval handled by while loop condition
         return False
 

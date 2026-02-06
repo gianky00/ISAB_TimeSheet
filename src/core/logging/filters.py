@@ -174,8 +174,7 @@ class SensitiveDataFilter:
             return cls.mask_dict(data)
         elif isinstance(data, (list, tuple)):
             return cls.mask_list(data)
-        else:
-            return data
+        return data
 
 
 class SamplingFilter:

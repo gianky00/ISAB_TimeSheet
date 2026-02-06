@@ -122,9 +122,7 @@ class AuditLogWidget(QWidget):
         self.filter_bar.set_categories(cats)
 
     def _toggle_live_mode(self, state):
-        is_live = (
-            state == Qt.CheckState.Checked or state == 2
-        )  # Supporta sia Enum che Int
+        is_live = state in (Qt.CheckState.Checked, 2)  # Supporta sia Enum che Int
         if is_live:
             self.refresh(reset_page=True)
             self.live_timer.start()

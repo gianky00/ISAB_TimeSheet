@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import datetime
 
 from PyQt6.QtCore import Qt
@@ -59,11 +60,9 @@ class PDLDetailView(QWidget):
 
             # Formattazione "Importato il"
             if h == "Importato il" and val:
-                try:
+                with suppress(Exception):
                     dt = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
                     val = dt.strftime("%d/%m/%Y %H:%M:%S")
-                except Exception:
-                    pass
 
             self.detail_labels[h].setText(val)
 

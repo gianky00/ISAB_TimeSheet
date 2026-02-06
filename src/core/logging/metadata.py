@@ -5,6 +5,7 @@ Enhanced metadata enrichment per log entries.
 import os
 import platform
 import socket
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 try:
@@ -96,7 +97,7 @@ class MetadataEnricher:
 
         # Euristica: se eseguito da IDE (pycharm, vscode), è development
         if any(
-            ide in str(sys.executable).lower() for ide in ["pycharm", "vscode", "code"]
+            ide in sys.executable.lower() for ide in ("pycharm", "vscode", "code")
         ):
             return "development"
 
@@ -133,7 +134,7 @@ class MetadataEnricher:
 
         # Working directory
         try:
-            metadata["working_directory"] = os.getcwd()
+            metadata["working_directory"] = str(Path.cwd())
         except Exception:
             metadata["working_directory"] = "unknown"
 

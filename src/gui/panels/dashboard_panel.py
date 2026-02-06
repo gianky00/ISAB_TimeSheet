@@ -1,4 +1,5 @@
 import os
+from contextlib import suppress
 
 from PyQt6.QtCore import (  # type: ignore
     Qt,
@@ -198,7 +199,7 @@ class DashboardPanel(QWidget):
         if key.startswith("nav_sub_strumentale_"):
             return self._handle_strumentale_subtabs(key, main_window)
 
-        if key == "nav_page_2" or key == "nav_lyra_ask":
+        if key in ("nav_page_2", "nav_lyra_ask"):
             if hasattr(main_window, "_navigate_to"):
                 main_window._navigate_to(2)
 
@@ -211,8 +212,7 @@ class DashboardPanel(QWidget):
 
     def _handle_strumentale_subtabs(self, key, main_window) -> bool:
         """Helper per tab strumentale."""
-
-        try:
+        with suppress(ValueError):
             tab_idx = int(key.split("_")[-1])
 
             if hasattr(main_window, "_navigate_to"):
@@ -225,22 +225,15 @@ class DashboardPanel(QWidget):
                     ),
                 )
 
-        except ValueError:
-            pass
-
         return True
 
     def _handle_notifications_subtabs(self, key, main_window) -> bool:
         """Helper per tab notifiche."""
-
-        try:
+        with suppress(ValueError):
             tab_idx = int(key.split("_")[-1])
 
             if hasattr(main_window, "_handle_notifications_tab_change"):
                 main_window._handle_notifications_tab_change(tab_idx)
-
-        except ValueError:
-            pass
 
         return True
 
@@ -268,16 +261,14 @@ class DashboardPanel(QWidget):
     def _handle_navigation_fallback(self, key, main_window):
         """Gestisce navigazione generica di fallback."""
         if key.startswith("nav_page_"):
-            try:
+            with suppress(ValueError):
                 page_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_navigate_to"):
                     main_window._navigate_to(page_idx)
-            except ValueError:
-                pass
 
         elif key.startswith("nav_sub_timbrature_"):
             # Timbrature Sub-Tabs
-            try:
+            with suppress(ValueError):
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_navigate_to"):
                     main_window._navigate_to(3)  # Timbrature Page
@@ -287,17 +278,13 @@ class DashboardPanel(QWidget):
                             main_window, "timbrature_db_panel", tab_idx
                         ),
                     )
-            except ValueError:
-                pass
 
         elif key.startswith("nav_sub_automazioni_"):
             # Automazioni Sub-tabs (legacy)
-            try:
+            with suppress(ValueError):
                 tab_idx = int(key.split("_")[-1])
                 if hasattr(main_window, "_handle_automation_tab_change"):
                     main_window._handle_automation_tab_change(tab_idx)
-            except ValueError:
-                pass
 
     def _switch_tab_safe(self, main_window, panel_attr, tab_idx):
         """Helper to switch tabs on a target panel if it exists."""

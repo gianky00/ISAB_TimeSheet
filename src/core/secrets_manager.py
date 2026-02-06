@@ -43,12 +43,10 @@ class SecretsManager:
             return key
 
         # 4. Fallback Hardcoded (Embedded for Distribution)
-        try:
+        with suppress(Exception):
             return base64.urlsafe_b64decode(
                 "8kHs_rmwqaRUk1AQLGX65g4AEkWUDapWVsMFUQpN9Ek="
             )
-        except Exception:
-            pass
 
         return None
 
@@ -69,7 +67,7 @@ class SecretsManager:
                     for line in f:
                         if line.startswith("SYNCROJOB_LICENSE_KEY="):
                             key_str = line.split("=", 1)[1].strip()
-                            key_str = key_str.strip('"').strip("'")
+                            key_str = key_str.strip('"\'')
                             with suppress(Exception):
                                 return base64.urlsafe_b64decode(key_str)
         return None

@@ -51,8 +51,7 @@ class ResourceManager:
     @classmethod
     def get_asset_path(cls, relative_path: str) -> str:
         """Restituisce il path assoluto di un asset basandosi sulla PROJECT_ROOT."""
-        if relative_path.startswith("assets/"):
-            relative_path = relative_path[len("assets/") :]
+        relative_path = relative_path.removeprefix("assets/")
 
         path = cls.ASSETS_DIR / relative_path.replace("/", os.sep)
         return str(path)

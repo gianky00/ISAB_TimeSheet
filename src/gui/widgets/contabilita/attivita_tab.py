@@ -1,4 +1,5 @@
 import json
+from contextlib import suppress
 from datetime import datetime
 from typing import Any, Optional
 
@@ -191,12 +192,10 @@ class AttivitaProgrammateTab(QWidget):
         if s.lower() == "nan":
             return ""
         if col_idx == 12 and s:
-            try:
+            with suppress(Exception):
                 return datetime.strptime(s.split(" ")[0], "%Y-%m-%d").strftime(
                     "%d/%m/%Y"
                 )
-            except Exception:
-                pass
         return s
 
     def _apply_item_style(self, item: QTableWidgetItem, style: Optional[dict]):
@@ -215,10 +214,10 @@ class AttivitaProgrammateTab(QWidget):
             if it := self.table.item(r, 10):
                 stati.add(it.text())
 
-        for combo, values, all_text in [
+        for combo, values, all_text in (
             (self.combo_area, areas, "Tutte"),
             (self.combo_stato, stati, "Tutti"),
-        ]:
+        ):
             curr = combo.currentText()
             combo.blockSignals(True)
             combo.clear()

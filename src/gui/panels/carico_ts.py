@@ -94,8 +94,7 @@ class CaricoTSPanel(BaseBotPanel):
 
     def _load_saved_data(self):
         """Carica i dati salvati."""
-        config = config_manager.load_config()
-        saved_data = config.get("last_carico_ts_data", [])
+        saved_data = config_manager.load_config().get("last_carico_ts_data", [])
         if saved_data:
             self.data_table.set_data(saved_data)
 

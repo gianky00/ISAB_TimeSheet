@@ -13,7 +13,13 @@ class TestGUIAdvanced:
     @pytest.fixture
     def mock_manager(self, mocker):
         """Mock per ContabilitaManager."""
-        return mocker.patch("src.gui.panels.contabilita_kpi_panel.ContabilitaManager")
+        mock_charts = mocker.patch("src.gui.panels.contabilita_kpi.kpi_panel.KPIChartsManager")
+        instance = mock_charts.return_value
+        # Mocking all canvases required by the UI layout
+        for i in range(1, 6):
+            setattr(instance, f"canvas{i}", MagicMock())
+        
+        return mocker.patch("src.gui.panels.contabilita_kpi.kpi_panel.ContabilitaManager")
 
     def test_kpi_panel_initialization(self, qtbot, mock_manager):
         """Test: Inizializzazione del pannello e caricamento anni."""

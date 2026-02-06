@@ -138,8 +138,7 @@ class RicercaPDLPanel(BaseBotPanel):
     def get_credentials(self) -> tuple:
         """Override: Recupera credenziali SafeWork."""
         # Prende il default da safework_accounts
-        config = config_manager.load_config()
-        accounts = config.get("safework_accounts", [])
+        accounts = config_manager.load_config().get("safework_accounts", [])
         if not accounts:
             return "", ""
 

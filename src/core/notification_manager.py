@@ -73,7 +73,7 @@ class NotificationManager(QObject):
             "related_id": None,
         }
         # Merge: existing fields override defaults
-        return {**defaults, **notif}
+        return defaults | notif
 
     def _save_notifications(self):
         """Salva le notifiche su file."""

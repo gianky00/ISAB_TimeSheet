@@ -9,6 +9,7 @@ Dialog per segnalazione bug con opzioni avanzate:
 
 import logging
 import os
+from contextlib import suppress
 from pathlib import Path
 from typing import List, Optional
 
@@ -59,7 +60,7 @@ class ReportWorker(QThread):
             include_enterprise_logs=self.include_logs,
             include_analytics=self.include_analytics,
             include_audit=self.include_audit,
-            trace_id=self.trace_id if self.trace_id else None,
+            trace_id=self.trace_id or None,
         )
         if path:
             self.finished.emit(True, msg, str(path), files)
@@ -323,7 +324,6 @@ class BugReportDialog(QDialog):
         try:
             import getpass
             import platform
-            import random
             from datetime import datetime
 
             import win32com.client as win32
@@ -340,7 +340,9 @@ class BugReportDialog(QDialog):
             now = datetime.now()
             date_display = now.strftime("%d/%m/%Y %H:%M")
             date_file = now.strftime("%d-%m-%Y_%H-%M")
-            rand_hex = f"{random.randint(0, 0xFFFF):04X}"
+            import secrets
+
+            rand_hex = f"{secrets.randbelow(0x10000):04X}"
             ticket_id_suffix = f"TKT-{rand_hex}"
 
             email_subject_suffix = f"{date_display} {ticket_id_suffix}"
@@ -352,12 +354,10 @@ class BugReportDialog(QDialog):
 
             # Recupero Info Hardware
             hw_id = "UNKNOWN"
-            try:
+            with suppress(Exception):
                 import uuid
 
                 hw_id = str(uuid.getnode())
-            except Exception:
-                pass
 
             # Recupero Cliente
             cliente_info = "ISAB S.R.L."
@@ -383,8 +383,8 @@ class BugReportDialog(QDialog):
                 dir_name = os.path.dirname(attachment_path)
                 new_name = f"{full_ticket_file}.zip"
                 new_path = os.path.join(dir_name, new_name)
-                if os.path.exists(new_path):
-                    os.remove(new_path)
+                if Path(new_path).exists():
+                    Path(new_path).unlink()
                 os.rename(attachment_path, new_path)
                 final_zip_path = new_path
             except Exception as e:
@@ -463,8 +463,8 @@ class BugReportDialog(QDialog):
 
             mail.HTMLBody = html_body
 
-            if os.path.exists(final_zip_path):
-                mail.Attachments.Add(str(final_zip_path))
+            if Path(final_zip_path).exists():
+                mail.Attachments.Add(final_zip_path)
 
             mail.Display()
             return True

@@ -48,13 +48,13 @@ class LoggingConfig:
 
     def ensure_directories(self):
         """Crea tutte le directory necessarie."""
-        for directory in [
+        for directory in (
             self.base_dir,
             self.application_dir,
             self.errors_dir,
             self.metrics_dir,
             self.bots_dir,
-        ]:
+        ):
             directory.mkdir(parents=True, exist_ok=True)
 
     def get_bot_log_path(self, bot_name: str, trace_id: Optional[str] = None) -> Path:

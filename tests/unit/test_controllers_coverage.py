@@ -39,7 +39,7 @@ class TestControllersCoverage:
         ctrl = BotController(mw, mock_telegram)
 
         mocker.patch(
-            "src.gui.controllers.bot_controller.os.path.exists", return_value=True
+            "src.gui.controllers.bot_controller.Path.exists", return_value=True
         )
 
         ctrl._handle_bot_results("scarico_pdl", ["/pdl.pdf"])

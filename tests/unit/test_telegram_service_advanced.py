@@ -47,9 +47,10 @@ class TestTelegramServiceAdvanced:
         mock_config = {"telegram_chat_id": "", "telegram_pairing_code": "999888"}
         mock_context.args = ["999888"]
 
-        with patch(
-            "src.core.config_manager.load_config", return_value=mock_config
-        ), patch("src.core.config_manager.set_config_value") as mock_set:
+        with (
+            patch("src.core.config_manager.load_config", return_value=mock_config),
+            patch("src.core.config_manager.set_config_value") as mock_set,
+        ):
             await commands.cmd_start(service, mock_update, mock_context)
 
             # Verifica che il chat_id sia stato salvato

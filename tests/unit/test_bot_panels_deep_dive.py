@@ -288,7 +288,7 @@ class TestScaricoPDLPanel:
 
         with (
             patch.object(panel, "get_credentials", return_value=("u", "p")),
-            patch("os.path.exists", return_value=True),
+            patch("src.gui.panels.scarico_pdl.Path.exists", return_value=True),
         ):
             panel._on_start()
             panel._on_worker_finished(True)

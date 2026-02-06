@@ -1,3 +1,4 @@
+from contextlib import suppress
 from typing import Any, Dict, List, Optional, Set
 
 from PyQt6.QtCore import Qt
@@ -30,7 +31,7 @@ class DateFilterPopupWidget(QWidget):
         btn_all = QPushButton("Tutti")
         btn_none = QPushButton("Nessuno")
         btn_ok = QPushButton("OK")
-        for btn in [btn_all, btn_none, btn_ok]:
+        for btn in (btn_all, btn_none, btn_ok):
             btn.setStyleSheet("font-size: 11px; padding: 2px;")
 
         btn_all.clicked.connect(self.select_all)
@@ -78,18 +79,15 @@ class DateFilterPopupWidget(QWidget):
         for v in values:
             if not v:
                 continue
-            try:
+            with suppress(Exception):
                 parts = v.split("/")
-                if len(parts) != 3:
-                    continue
-                _, m, y = parts
-                if y not in structure:
-                    structure[y] = {}
-                if m not in structure[y]:
-                    structure[y][m] = []
-                structure[y][m].append(v)
-            except Exception:
-                continue
+                if len(parts) == 3:
+                    _, m, y = parts
+                    if y not in structure:
+                        structure[y] = {}
+                    if m not in structure[y]:
+                        structure[y][m] = []
+                    structure[y][m].append(v)
         return structure
 
     def _create_year_item(
@@ -165,7 +163,7 @@ class DateFilterPopupWidget(QWidget):
         return False
 
     def _get_month_name(self, m_str: str) -> str:
-        names = {
+        return {
             "01": "Gennaio",
             "02": "Febbraio",
             "03": "Marzo",
@@ -178,8 +176,7 @@ class DateFilterPopupWidget(QWidget):
             "10": "Ottobre",
             "11": "Novembre",
             "12": "Dicembre",
-        }
-        return names.get(m_str, m_str)
+        }.get(m_str, m_str)
 
     def _on_item_changed(self, item: QStandardItem) -> None:
         self.model.blockSignals(True)

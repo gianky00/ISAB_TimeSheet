@@ -103,10 +103,10 @@ class PDLFilterWidget(QWidget):
         layout.addWidget(self.export_btn)
 
         # Connessioni
-        self.group_filter.currentTextChanged.connect(lambda: self.filter_changed.emit())
+        self.group_filter.currentTextChanged.connect(self.filter_changed.emit)
         self.site_filter.currentTextChanged.connect(self.site_changed.emit)
         self.area_filter.currentTextChanged.connect(self.area_changed.emit)
-        self.unit_filter.currentTextChanged.connect(lambda: self.filter_changed.emit())
+        self.unit_filter.currentTextChanged.connect(self.filter_changed.emit)
         self.btn_bot_update.clicked.connect(self.update_clicked.emit)
         self.clear_btn.clicked.connect(self.reset_clicked.emit)
         self.export_btn.clicked.connect(self.export_clicked.emit)

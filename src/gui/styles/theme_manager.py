@@ -103,8 +103,7 @@ class ThemeManager:
         qss_content = ""
         if qss_path.exists():
             try:
-                with open(qss_path, "r", encoding="utf-8") as f:
-                    qss_content = f.read()
+                qss_content = qss_path.read_text(encoding="utf-8")
             except Exception as e:
                 logger.error(f"Errore lettura QSS {qss_path}: {e}")
 
@@ -118,8 +117,7 @@ class ThemeManager:
         overrides_content = ""
         if overrides_path.exists():
             try:
-                with open(overrides_path, "r", encoding="utf-8") as f:
-                    overrides_content = f.read()
+                overrides_content = overrides_path.read_text(encoding="utf-8")
             except Exception as e:
                 logger.error(f"Errore lettura Overrides QSS: {e}")
 

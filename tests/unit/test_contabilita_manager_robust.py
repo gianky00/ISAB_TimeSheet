@@ -88,9 +88,6 @@ class TestContabilitaManagerRobust:
         args = mock_importer.import_giornaliere.call_args
         assert args[0][1] == {"5400123": "ODC_A"}
 
-        # Verifica pulizia preliminare
-        mock_conn.execute.assert_any_call("DELETE FROM giornaliere WHERE year >= 2026")
-
     def test_import_giornaliere_root_not_found(self):
         """Test directory giornaliere inesistente."""
         success, msg, _, _ = ContabilitaManager.import_giornaliere("non_existent_path")

@@ -13,6 +13,7 @@ Autore: Refactoring Sprint 2026-01
 
 import logging
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
@@ -144,7 +145,7 @@ def poll_for_file(
     while time.time() - start_time < timeout:
         # Check se ci sono download in corso (crdownload, tmp, part)
         in_progress = any(
-            directory.glob(f"*{ext}") for ext in [".crdownload", ".tmp", ".part"]
+            directory.glob(f"*{ext}") for ext in (".crdownload", ".tmp", ".part")
         )
 
         if in_progress:
@@ -262,12 +263,10 @@ def poll_for_new_file(
     # Questo permette di rilevare sia NUOVI file che FILE AGGIORNATI (overwrite)
     snapshot_map = {}
     for f_path in files_before:
-        try:
+        with suppress(Exception):
             p = Path(f_path).resolve()
             if p.exists():
                 snapshot_map[p] = p.stat().st_mtime
-        except Exception:
-            pass
 
     start_time = time.time()
     logger.info(
@@ -287,7 +286,7 @@ def poll_for_new_file(
         detected_file = None
 
         for f in current_files:
-            try:
+            with suppress(Exception):
                 f_res = f.resolve()
                 if not f_res.is_file():
                     continue
@@ -304,8 +303,6 @@ def poll_for_new_file(
                     detected_file = f_res
                     logger.info(f"✅ FILE AGGIORNATO RILEVATO: {f_res.name}")
                     break
-            except Exception:
-                continue
 
         if detected_file:
             return str(detected_file)

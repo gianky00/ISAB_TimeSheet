@@ -34,7 +34,7 @@ class LyraWorker(QThread):
             self.finished.emit(answer)
         except Exception as e:
             self.finished.emit(
-                f"Errore critico nel Worker di Lyra:\n{str(e)}\n\n{traceback.format_exc()}"
+                f"Errore critico nel Worker di Lyra:\n{e}\n\n{traceback.format_exc()}"
             )
 
 

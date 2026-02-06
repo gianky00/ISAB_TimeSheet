@@ -3,6 +3,7 @@ Controller per il coordinamento dei Bot e l'aggiornamento dello stato UI.
 """
 
 import os
+from pathlib import Path
 
 from PyQt6.QtCore import QObject
 
@@ -35,7 +36,7 @@ class BotController(QObject):
         """Gestisce i risultati prodotti dai bot e li invia a Telegram."""
         if bot_id == "scarico_pdl":
             for file_path in results:
-                if os.path.exists(file_path):
+                if Path(file_path).exists():
                     self.telegram.send_document_sync(
                         file_path,
                         caption=f"📄 **PDL Scaricato**\nFile: `{os.path.basename(file_path)}`",

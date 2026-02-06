@@ -56,7 +56,7 @@ class AnimatedBorder(QWidget):
         outer_gradient1.setColorAt(1.0, QColor(52, 152, 219, 0))
         painter.fillPath(outer_glow1, outer_gradient1)
 
-        for offset in [6, 4, 2]:
+        for offset in (6, 4, 2):
             glow_path = QPainterPath()
             glow_path.addRoundedRect(
                 -offset, -offset, w + offset * 2, h + offset * 2, r + offset, r + offset

@@ -4,6 +4,7 @@ Pannello dedicato per lo Scarico Ore Cantiere.
 Aggiornato per usare Virtual Table (130k+ righe) e Filtri Avanzati.
 """
 
+import operator
 import time
 from contextlib import suppress
 from datetime import datetime
@@ -285,7 +286,7 @@ class ScaricoOrePanel(QWidget):
     def _format_number(self, value: float) -> str:
         """Formatta un numero: intero se non ha decimali, altrimenti 2 decimali."""
         if value % 1 == 0:
-            return f"{int(value)}"
+            return str(int(value))
         return f"{value:.2f}"
 
     def _update_totals(self):
@@ -333,8 +334,7 @@ class ScaricoOrePanel(QWidget):
 
     def _start_update(self):
         """Avvia il thread worker per aggiornare i dati dal file DataEase."""
-        config = config_manager.load_config()
-        path = config.get("dataease_path", "")
+        path = config_manager.load_config().get("dataease_path", "")
 
         if not path:
             QMessageBox.warning(
@@ -381,11 +381,9 @@ class ScaricoOrePanel(QWidget):
             self._last_update_status = final_status
 
             # Invalidate cache
-            try:
+            with suppress(Exception):
                 if ScaricoOreTableModel.CACHE_PATH.exists():
                     ScaricoOreTableModel.CACHE_PATH.unlink()
-            except Exception:
-                pass
 
             ScaricoOreTableModel._global_cache["loaded"] = False
             self._load_data()
@@ -435,7 +433,7 @@ class ScaricoOrePanel(QWidget):
 
     def _on_loading_progress(self, msg):
         """Aggiorna la label di stato con i messaggi di progresso del worker."""
-        self.status_label.setText(f"{msg}")
+        self.status_label.setText(str(msg))
         QApplication.processEvents()
 
     def _on_cache_loaded(self):
@@ -500,9 +498,7 @@ class ScaricoOrePanel(QWidget):
 
     def _copy_selection(self):
         """Copia le celle selezionate negli appunti in formato TSV."""
-        selection = self.table_view.selectionModel()
-        indexes = selection.selectedIndexes()
-        if not indexes:
+        if not (indexes := self.table_view.selectionModel().selectedIndexes()):
             return
 
         indexes.sort(key=lambda x: (x.row(), x.column()))
@@ -518,7 +514,7 @@ class ScaricoOrePanel(QWidget):
 
         tsv_lines = []
         for r in sorted(rows_text.keys()):
-            line = "\t".join([x[1] for x in sorted(rows_text[r], key=lambda y: y[0])])
+            line = "\t".join([x[1] for x in sorted(rows_text[r], key=operator.itemgetter(0))])
             tsv_lines.append(line)
 
         QApplication.clipboard().setText("\n".join(tsv_lines))

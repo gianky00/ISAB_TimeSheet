@@ -97,19 +97,18 @@ class StoricoOdaImporter(BaseImporter):
     @classmethod
     def _map_storico_oda_columns(cls, df: pd.DataFrame) -> dict:
         """Mappa le colonne dell'Excel a quelle del DB con precisione."""
-        cols_in_df = [str(c).strip() for c in df.columns]
-        df.columns = cols_in_df
+        df.columns = df.columns.astype(str).str.strip()
 
         rename_map = {}
         # 1. First Pass: Exact Matches
         for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
-            if excel_col in cols_in_df:
+            if excel_col in df.columns:
                 rename_map[excel_col] = db_col
 
         # 2. Second Pass: Case-insensitive fallback (Strict name)
         for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
             if excel_col not in rename_map:
-                for col in cols_in_df:
+                for col in df.columns:
                     if col.lower() == excel_col.lower():
                         rename_map[col] = db_col
                         break
@@ -127,7 +126,7 @@ class StoricoOdaImporter(BaseImporter):
         pd = cls._get_pd()
 
         # Date
-        for date_col in ["data_oda", "data_consegna"]:
+        for date_col in ("data_oda", "data_consegna"):
             df[date_col] = (
                 pd.to_datetime(df[date_col], errors="coerce")
                 .dt.strftime("%Y-%m-%d")

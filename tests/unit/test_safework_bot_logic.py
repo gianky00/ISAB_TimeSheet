@@ -70,8 +70,9 @@ class TestSafeWorkPDLBotLogic(unittest.TestCase):
         self.bot._safe_remove("non_esiste.pdf")  # Non deve alzare eccezione
 
         # Caso errore durante unlink
-        with patch("pathlib.Path.exists", return_value=True), patch(
-            "pathlib.Path.unlink", side_effect=Exception("Locked")
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.unlink", side_effect=Exception("Locked")),
         ):
             self.bot._safe_remove("locked.pdf")  # Deve gestire l'errore internamente
 

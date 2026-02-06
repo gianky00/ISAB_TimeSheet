@@ -4,6 +4,7 @@ Gestisce le interazioni con la pagina di login del portale ISAB.
 """
 
 import time
+from contextlib import suppress
 from typing import Callable, Optional
 
 from selenium.common.exceptions import (
@@ -33,7 +34,7 @@ class LoginPage:
     ):
         self.driver = driver
         self.wait = wait
-        self.log = logger if logger else print
+        self.log = logger or print
         self.isab_url = isab_url
 
     def _attendi_scomparsa_overlay(
@@ -116,13 +117,12 @@ class LoginPage:
 
     def _verify_logged_in_via_ui(self) -> bool:
         """Checks for post-login UI elements."""
-        try:
+        with suppress(Exception):
             WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located(CommonLocators.SETTINGS_BUTTON)
             )
             return True
-        except Exception:
-            return False
+        return False
 
     def login(self, username: str, password: str) -> bool:
         """

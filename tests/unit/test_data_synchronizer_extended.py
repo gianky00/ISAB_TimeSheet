@@ -57,14 +57,16 @@ class TestDataSynchronizerDetailed:
 
     def test_sync_attivita_programmate(self, mock_db):
         conn, cursor = mock_db
-        cursor.fetchone.side_effect = [(10,), (0,)]
+        # old_count = 10
+        cursor.fetchone.return_value = (10,)
 
         added, removed = DataSynchronizer.sync_attivita_programmate(
             Path("fake.db"), [("row", "style")]
         )
 
-        assert added == 10
-        assert removed == 0
+        # 1 new - 10 old = 0 added, 9 removed (net)
+        assert added == 0
+        assert removed == 9
         assert "attivita_programmate" in cursor.execute.call_args_list[1][0][0]
 
     def test_sync_scarico_ore(self, mock_db):

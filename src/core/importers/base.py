@@ -1,6 +1,7 @@
 import io
 import re
 import warnings
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional, Tuple
@@ -39,7 +40,7 @@ class BaseImporter:
     def _decrypt_if_encrypted(file_path: Path) -> Tuple[Any, bool]:
         """Tenta di decifrare un file Excel se protetto da password."""
         if msoffcrypto:
-            try:
+            with suppress(Exception):
                 from src.core import config_manager
 
                 config = config_manager.load_config()
@@ -53,9 +54,6 @@ class BaseImporter:
                     office_file.decrypt(temp_decrypted)
                     temp_decrypted.seek(0)
                     return temp_decrypted, True
-            except Exception:
-                # Non cifrato o errore msoffcrypto, procediamo col file originale
-                pass
         return file_path, False
 
     @classmethod
@@ -65,16 +63,12 @@ class BaseImporter:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # 1. Tentativo con Calamine (Rust-based, ultra veloce)
-            try:
+            with suppress(ImportError, ValueError, Exception):
                 return pd.ExcelFile(file_obj, engine="calamine")
-            except (ImportError, ValueError, Exception):
-                pass
 
             # 2. Tentativo Standard (Pandas auto-detect)
-            try:
+            with suppress(Exception):
                 return pd.ExcelFile(file_obj)
-            except Exception:
-                pass
 
             # 3. Fallback esplicito OpenPyXL
             return pd.ExcelFile(file_obj, engine="openpyxl")

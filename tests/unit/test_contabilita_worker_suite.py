@@ -5,7 +5,7 @@ from src.core.contabilita_worker import ContabilitaWorker
 
 class TestContabilitaWorkerLogic:
     @patch("src.core.contabilita_worker.ContabilitaManager")
-    @patch("os.path.exists", return_value=True)
+    @patch("src.core.contabilita_worker.Path.exists", return_value=True)
     def test_worker_run_sequence(self, mock_exists, mock_manager, qtbot):
         worker = ContabilitaWorker("f.xlsx", "g_path", "a.xlsx", "c.xlsx")
 
@@ -30,7 +30,7 @@ class TestContabilitaWorkerLogic:
         assert args[2] == 37  # 10+20+5+2
 
     @patch("src.core.contabilita_worker.ContabilitaManager")
-    @patch("os.path.exists", return_value=True)
+    @patch("src.core.contabilita_worker.Path.exists", return_value=True)
     def test_worker_error_handling(self, mock_exists, mock_manager):
         worker = ContabilitaWorker("f.xlsx")
         mock_manager.scan_workload.side_effect = Exception("Crash")

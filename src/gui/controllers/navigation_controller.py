@@ -74,8 +74,9 @@ class NavigationController(QObject):
             11: self._create_dipendenti,
         }
 
-        creator = creators.get(index)
-        return creator() if creator else None
+        if creator := creators.get(index):
+            return creator()
+        return None
 
     def _create_dashboard(self):
         from src.gui.panels import DashboardPanel

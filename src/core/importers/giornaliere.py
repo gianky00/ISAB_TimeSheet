@@ -208,7 +208,7 @@ class GiornaliereImporter(BaseImporter):
 
     @classmethod
     def _normalize_giornaliera_columns(cls, df: pd.DataFrame) -> Optional[pd.DataFrame]:
-        df.columns = [str(c).strip() for c in df.columns]
+        df.columns = df.columns.astype(str).str.strip()
         rename_map = {}
 
         for excel_col, db_col in cls.GIORNALIERE_MAPPING.items():

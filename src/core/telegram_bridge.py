@@ -4,6 +4,7 @@ import os
 import subprocess
 import threading
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import QBuffer, QDate, QIODevice, QObject, QRect, Qt
@@ -160,20 +161,19 @@ class TelegramUIBridge(QObject):
     def _handle_command(self, command, params):
         """Gestisce i comandi testuali da Telegram tramite dispatch map."""
         cmd_map = {
-            "search_db_pdf": lambda p: self._handle_search_db_pdf(p),
-            "run_pdl": lambda p: self._handle_run_pdl(p),
+            "search_db_pdf": self._handle_search_db_pdf,
+            "run_pdl": self._handle_run_pdl,
             "list_pdl": lambda _: self._handle_list_pdl(),
             "clear_pdl": lambda _: self._handle_clear_pdl(),
             "run_ts": lambda _: self._handle_run_ts(),
             "run_carico": lambda _: self._handle_run_carico(),
             "run_prenota_bp": lambda _: self._handle_run_prenota_bp(),
-            "run_timbrature": lambda p: self._handle_run_timbrature(p),
+            "run_timbrature": self._handle_run_timbrature,
             "restart_app": lambda _: self._handle_restart_app(),
             "stop_all": lambda _: self._handle_stop_all(),
         }
 
-        handler = cmd_map.get(command)
-        if handler:
+        if handler := cmd_map.get(command):
             handler(params)
 
     def _handle_run_pdl(self, params):
@@ -360,7 +360,7 @@ class TelegramUIBridge(QObject):
         path = str(temp_dir / filename)
 
         generate_pdf_from_html(html, path)
-        if os.path.exists(path):
+        if Path(path).exists():
             self.telegram.send_document_sync(path, caption=f"📄 Report {db_type}")
         else:
             self.telegram.send_message_sync("❌ Errore generazione PDF.")

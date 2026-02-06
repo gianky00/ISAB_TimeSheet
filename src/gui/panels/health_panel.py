@@ -5,6 +5,7 @@ Pannello completo per visualizzare health status, anomalie e analytics.
 Design con tema chiaro coerente con il resto dell'applicazione.
 """
 
+from contextlib import suppress
 from datetime import datetime
 from typing import Optional
 
@@ -45,22 +46,20 @@ class HealthScoreBadge(QWidget):
     def _get_color(self) -> QColor:
         if self._score >= 80:
             return QColor("#28a745")  # Verde
-        elif self._score >= 60:
+        if self._score >= 60:
             return QColor("#ffc107")  # Giallo
-        elif self._score >= 40:
+        if self._score >= 40:
             return QColor("#fd7e14")  # Arancio
-        else:
-            return QColor("#dc3545")  # Rosso
+        return QColor("#dc3545")  # Rosso
 
     def _get_status_text(self) -> str:
         if self._score >= 80:
             return "OTTIMO"
-        elif self._score >= 60:
+        if self._score >= 60:
             return "DISCRETO"
-        elif self._score >= 40:
+        if self._score >= 40:
             return "ATTENZIONE"
-        else:
-            return "CRITICO"
+        return "CRITICO"
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -592,22 +591,18 @@ class HealthPanel(QWidget):
 
     def _auto_check_alerts(self):
         """Check automatico anomalie."""
-        try:
+        with suppress(Exception):
             from src.core.logging.alert_manager import get_alert_manager
 
             alerts_sent = get_alert_manager().check_and_alert(hours=24)
             if alerts_sent > 0:
                 self._last_update.setText(f"🔔 {alerts_sent} alert inviati")
-        except Exception:
-            pass
 
     def _show_toast(self, message: str, level: str = "info"):
         """Mostra toast notification."""
-        try:
+        with suppress(Exception):
             from src.core.notification_manager import NotificationManager
 
             NotificationManager.instance().add(
                 title="Health Panel", message=message, level=level
             )
-        except Exception:
-            pass

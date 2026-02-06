@@ -33,7 +33,8 @@ class SyncTracker:
                 logger.error(f"Errore caricamento sync state: {e}")
                 cls._cache = {}
         else:
-            cls._cache = {}
+            cls._cache, cls._loaded = {}, True
+            return
 
         cls._loaded = True
 
@@ -62,8 +63,7 @@ class SyncTracker:
         """
         cls._load()
 
-        now = datetime.now()
-        timestamp_str = now.strftime("%d/%m/%Y %H:%M")
+        timestamp_str = datetime.now().strftime("%d/%m/%Y %H:%M")
 
         cls._cache[module] = {
             "timestamp": timestamp_str,

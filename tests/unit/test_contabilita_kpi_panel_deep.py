@@ -55,9 +55,9 @@ class TestContabilitaKPIPanelDeep:
         assert "100,00" in panel.card_ore.lbl_value.text()
 
         # Verify charts were drawn (canvases have figures with content)
-        assert len(panel.fig1.axes) > 0
-        assert len(panel.fig2.axes) > 0
-        assert len(panel.fig3.axes) > 0
+        assert len(panel.charts_manager.fig1.axes) > 0
+        assert len(panel.charts_manager.fig2.axes) > 0
+        assert len(panel.charts_manager.fig3.axes) > 0
 
     def test_format_currency(self, qapp):
         panel = ContabilitaKPIPanel()

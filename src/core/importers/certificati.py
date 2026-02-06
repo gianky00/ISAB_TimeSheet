@@ -80,14 +80,13 @@ class CertificatiImporter(BaseImporter):
         max_matches = 0
         target_columns = set(cls.CERTIFICATI_CAMPIONE_MAPPING.keys())
 
-        for i_raw, row in df_preview.iterrows():
-            i = int(str(i_raw))
+        for i, row in df_preview.iterrows():
             row_values = [str(val).strip() for val in row.values]
             matches = sum(1 for col in target_columns if col in row_values)
 
             if matches > max_matches:
                 max_matches = matches
-                header_row_idx = i
+                header_row_idx = int(str(i))
 
         if header_row_idx == -1 or max_matches < 3:
             header_row_idx = 5
@@ -99,7 +98,7 @@ class CertificatiImporter(BaseImporter):
         cls, df: pd.DataFrame, sheet_name: str, header_row_idx: int
     ) -> Tuple[bool, str, List[Tuple]]:
         """Processes the Certificati DataFrame and returns formatted rows."""
-        df.columns = [str(c).strip() for c in df.columns]
+        df.columns = df.columns.astype(str).str.strip()
 
         # 1. Mapping e Validazione Colonne
         rename_map = cls._build_certificati_rename_map(df.columns.tolist())
@@ -113,24 +112,22 @@ class CertificatiImporter(BaseImporter):
 
         df.rename(columns=rename_map, inplace=True)
 
-        # 2. Preparazione Schema
-        df = cls._normalize_certificati_schema(df)
+        # 2. Schema, 3. Formatting, 4. Cleanup
+        df = (
+            cls._apply_certificati_formatting(cls._normalize_certificati_schema(df))
+            .fillna("")
+            .astype(str)
+            .apply(lambda x: x.str.strip())
+        )
 
-        # 3. Formattazione Dati (Date e Stati)
-        df = cls._apply_certificati_formatting(df)
-
-        # 4. Pulizia Finale
-        df = df.fillna("").astype(str).apply(lambda x: x.str.strip())
-        rows = list(df.itertuples(index=False, name=None))
-
-        return True, f"Importate {len(rows)} righe in Certificati Campione.", rows
+        return True, f"Importate {len(df)} righe in Certificati Campione.", list(df.itertuples(index=False, name=None))
 
     @classmethod
     def _build_certificati_rename_map(cls, columns: List[str]) -> Dict[str, str]:
         """Costruisce la mappa di rinomina colonne basata sul mapping definito."""
         rename_map = {}
         for col in columns:
-            col_clean = str(col).strip()
+            col_clean = col.strip()
             # Cerca match esatto o parziale nel mapping
             for schema_col, db_col in cls.CERTIFICATI_CAMPIONE_MAPPING.items():
                 if schema_col.lower() == col_clean.lower():

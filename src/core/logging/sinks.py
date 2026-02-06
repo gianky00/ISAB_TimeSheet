@@ -3,6 +3,7 @@ Advanced sinks per output specializzati.
 """
 
 import json
+from contextlib import suppress
 from typing import Any, Dict, Optional
 
 from .config import get_config
@@ -74,10 +75,8 @@ class BotLogSink:
     def close_all(self):
         """Chiude tutti i file aperti."""
         for handle in self._open_files.values():
-            try:
+            with suppress(Exception):
                 handle.close()
-            except Exception:
-                pass
         self._open_files.clear()
 
     def get_bot_run_logs(self, bot_type: str, trace_id: str) -> list:

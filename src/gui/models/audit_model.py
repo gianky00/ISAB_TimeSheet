@@ -147,7 +147,7 @@ class AuditTableModel(QAbstractTableModel):
 
     def _get_alignment_data(self, col):
         """Restituisce l'allineamento della cella."""
-        if col in [0, 2]:
+        if col in (0, 2):
             return Qt.AlignmentFlag.AlignCenter
         return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 

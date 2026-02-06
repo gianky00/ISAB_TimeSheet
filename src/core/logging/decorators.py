@@ -115,8 +115,7 @@ def measure_time(
     # Support both @measure_time and @measure_time(threshold_ms=X)
     if func is None:
         return decorator
-    else:
-        return decorator(func)
+    return decorator(func)
 
 
 def log_entry_exit(
@@ -182,5 +181,4 @@ def log_entry_exit(
     # Support both @log_entry_exit and @log_entry_exit(log_args=True)
     if func is None:
         return decorator
-    else:
-        return decorator(func)
+    return decorator(func)

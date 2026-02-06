@@ -171,21 +171,27 @@ class TestCertificatiGUI:
         self.qtbot.addWidget(dialog)
 
         # Mocking heavy Qt GUI operations that cause COM crashes on Windows
-        with patch("PyQt6.QtGui.QPainter"), patch("PyQt6.QtGui.QPixmap"), patch(
-            "PyQt6.QtWidgets.QMessageBox.information"
-        ), patch("PyQt6.QtWidgets.QMessageBox.critical"), patch("os.startfile"), patch(
-            "subprocess.Popen"
-        ) as mock_popen:
+        with (
+            patch("PyQt6.QtGui.QPainter"),
+            patch("PyQt6.QtGui.QPixmap"),
+            patch("PyQt6.QtWidgets.QMessageBox.information"),
+            patch("PyQt6.QtWidgets.QMessageBox.critical"),
+            patch("os.startfile"),
+            patch("subprocess.Popen") as mock_popen,
+        ):
             # Caso 1: Senza macro Excel
             with patch("src.core.config_manager.load_config", return_value={}):
                 dialog._send_email()
                 assert not mock_popen.called
 
             # Caso 2: Con macro Excel (simulata)
-            with patch(
-                "src.core.config_manager.load_config",
-                return_value={"certificati_campione_path": "test.xlsx"},
-            ), patch("os.path.exists", return_value=True):
+            with (
+                patch(
+                    "src.core.config_manager.load_config",
+                    return_value={"certificati_campione_path": "test.xlsx"},
+                ),
+                patch("src.gui.widgets.contabilita.certificati_tab.Path.exists", return_value=True),
+            ):
                 dialog._send_email()
                 assert mock_popen.called
                 args, kwargs = mock_popen.call_args

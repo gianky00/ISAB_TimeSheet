@@ -1,4 +1,6 @@
 import os
+from contextlib import suppress
+from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QFont
@@ -179,12 +181,10 @@ class GiornaliereYearTab(QWidget):
             if not self.table.isRowHidden(r):
                 item = self.table.item(r, self.COL_ORE)
                 if item and item.text():
-                    try:
+                    with suppress(Exception):
                         # Pulisce la stringa formattata per fare la somma
                         clean_val = item.text().replace(".", "").replace(",", ".")
                         sum_ore += float(clean_val)
-                    except Exception:
-                        pass
         self.table.item(total_row_idx, self.COL_ORE).setText(
             self._format_number(sum_ore)
         )
@@ -244,7 +244,7 @@ class GiornaliereYearTab(QWidget):
             return
         found = None
         year_folder = os.path.join(root, f"Giornaliere {self.year}")
-        if os.path.exists(os.path.join(year_folder, filename)):
+        if Path(year_folder).joinpath(filename).exists():
             found = os.path.join(year_folder, filename)
         if not found:
             for r, _d, files in os.walk(root):

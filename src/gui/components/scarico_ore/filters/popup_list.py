@@ -35,7 +35,7 @@ class ListFilterPopupWidget(QWidget):
         btn_all = QPushButton("Tutti")
         btn_none = QPushButton("Nessuno")
         btn_ok = QPushButton("OK")
-        for btn in [btn_all, btn_none, btn_ok]:
+        for btn in (btn_all, btn_none, btn_ok):
             btn.setStyleSheet("font-size: 11px; padding: 2px;")
 
         btn_all.clicked.connect(self.select_all)

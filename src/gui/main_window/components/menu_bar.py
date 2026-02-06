@@ -1,6 +1,7 @@
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 from PyQt6.QtCore import QObject, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
@@ -89,7 +90,7 @@ class MenuBarComponent(QObject):
             os.execl(sys.executable, sys.executable, *sys.argv)
 
         def open_folder_path(path):
-            if os.path.exists(path):
+            if Path(path).exists():
                 QDesktopServices.openUrl(QUrl.fromLocalFile(path))
 
         mw = self.main_window

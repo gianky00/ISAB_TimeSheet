@@ -70,9 +70,7 @@ class LyraClient:
 
     def _get_system_context(self) -> str:
         """Raccoglie i dati dai database locali per il contesto AI."""
-        context = []
-        context.append(self._get_contabilita_context())
-        context.append(self._get_timbrature_context())
+        context = [self._get_contabilita_context(), self._get_timbrature_context()]
         return "\n".join(context)
 
     def _get_contabilita_context(self) -> str:
@@ -141,7 +139,7 @@ class LyraClient:
             for entry in last_entries:
                 d, n, c, i, u = entry
                 initials = f"{n[0]}. {c[0]}." if n and c else "N.D."
-                lines.append(f"  • {d}: {initials} ({i} -> {u if u else '---'})")
+                lines.append(f"  • {d}: {initials} ({i} -> {u or '---'})")
             return "\n".join(lines)
         except Exception as e:
             return f"Errore lettura Timbrature: {e}"
@@ -206,10 +204,10 @@ class LyraClient:
                     return f"Errore API {self.model} (Status {response.status_code}): {response.text}"
 
             except Exception as e:
-                return f"Errore connessione AI ({self.model}): {str(e)}"
+                return f"Errore connessione AI ({self.model}): {e}"
 
         except Exception as e:
-            return f"Si è verificato un errore critico: {str(e)}"
+            return f"Si è verificato un errore critico: {e}"
 
     def analyze_media(
         self,

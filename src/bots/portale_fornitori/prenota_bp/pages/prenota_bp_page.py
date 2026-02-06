@@ -2,6 +2,7 @@
 Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 """
 
+from contextlib import suppress
 from datetime import datetime, timedelta
 from typing import Callable, List, Optional, Tuple
 
@@ -37,11 +38,9 @@ class PrenotaBPPage:
 
     def _wait_for_overlay(self):
         """Attende la scomparsa di maschere di caricamento."""
-        try:
+        with suppress(TimeoutException):
             xpath = "//div[contains(@class, 'x-mask-msg') or contains(@class, 'x-mask') or contains(@class, 'full-loader')][not(contains(@style,'display: none'))]"
             self.short_wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
-        except TimeoutException:
-            pass
 
     def wait_and_click(self, locator, timeout=None):
         """
@@ -54,7 +53,7 @@ class PrenotaBPPage:
             WebElement: L'elemento cliccato.
         """
         self._wait_for_overlay()
-        wait_time = timeout if timeout else Timeouts.DEFAULT
+        wait_time = timeout or Timeouts.DEFAULT
 
         # Retry loop per gestire DOM instabile (ExtJS)
         for attempt in range(3):
@@ -77,7 +76,7 @@ class PrenotaBPPage:
 
             except (TimeoutException, AttributeError, Exception) as e:
                 if attempt == 2:  # Ultimo tentativo fallito
-                    self.log(f"⚠ Errore definitivo click su {locator}: {str(e)}")
+                    self.log(f"⚠ Errore definitivo click su {locator}: {e}")
                     raise e
                 self.log(f"  (Riprovo click su {locator}...)")
                 self._wait_for_overlay()
@@ -93,7 +92,7 @@ class PrenotaBPPage:
         """
         self._wait_for_overlay()
         wait = WebDriverWait(self.driver, timeout) if timeout else self.wait
-        el = wait.until(EC.visibility_of_element_located(locator))
+        el = wait.until(EC.visibility_of_element_located(locator))  # noqa: FURB184
         el.clear()
         el.send_keys(text)
         return el
@@ -101,11 +100,9 @@ class PrenotaBPPage:
     def login(self, username, password):
         """Metodo legacy per compatibilità, il login è ora gestito da BaseBot."""
         # Check immediato sessione
-        try:
+        with suppress(Exception):
             if self.driver.find_elements(*PrenotaBPLocators.USER_INFO_PANEL):
                 return
-        except Exception:
-            pass
 
         # Logica minima se chiamato esplicitamente
         self.log("Verifica sessione in corso...")
@@ -116,12 +113,10 @@ class PrenotaBPPage:
         self._wait_for_overlay()
 
         # Verifica se i filtri sono già visibili (siamo già nella pagina corretta)
-        try:
+        with suppress(Exception):
             if self.driver.find_elements(*PrenotaBPLocators.FILTER_FORNITORE):
                 self.log("Pagina Gestione BP già caricata.")
                 return
-        except Exception:
-            pass
 
         # Tentativo di click sul sottomenu se visibile
         try:
@@ -176,7 +171,7 @@ class PrenotaBPPage:
                 self._wait_for_overlay()
             except Exception as e:
                 self.log(
-                    f"  ⚠ Avviso: Selezione fornitore fallita ({str(e)}), tento inserimento manuale."
+                    f"  ⚠ Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale."
                 )
                 self.wait_and_fill(PrenotaBPLocators.FILTER_FORNITORE, fornitore)
 
@@ -273,12 +268,10 @@ class PrenotaBPPage:
             self.wait_and_click(PrenotaBPLocators.BT_SALVA)
             self.log(f"Prenotazione {numero_bp} salvata.")
         except Exception as e:
-            self.log(f"Errore durante la compilazione del form: {str(e)}")
+            self.log(f"Errore durante la compilazione del form: {e}")
             # Tenta di chiudere il popup in caso di errore per non bloccare i successivi
-            try:
+            with suppress(Exception):
                 self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
-            except Exception:
-                pass
             raise e
 
         self._wait_for_overlay()
@@ -309,11 +302,9 @@ class PrenotaBPPage:
 
             indices = []
             for i, row in enumerate(data_rows):
-                try:
+                with suppress(Exception):
                     row.find_element(*PrenotaBPLocators.CELL_MATERIALE_DISPONIBILE)
                     indices.append(i)
-                except Exception:
-                    pass
             return indices, len(data_rows)
         except Exception:
             self.log("⚠ Nessuna riga trovata per la richiesta.")
@@ -369,10 +360,8 @@ class PrenotaBPPage:
             self.log("Richiesta creata e salvata con successo.")
         except Exception as e:
             self.log(f"Errore nel flusso 'Crea Richiesta': {e}")
-            try:
+            with suppress(Exception):
                 self.wait_and_click(PrenotaBPLocators.BT_CHIUDI_POPUP, timeout=3)
-            except Exception:
-                pass
             raise e
 
     def _click_safe(self, element):

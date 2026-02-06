@@ -300,34 +300,27 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
         AnalyticsReport con anomalie, pattern e suggerimenti
     """
     viewer = LogViewer()
-    anomaly_detector = AnomalyDetector(viewer)
-    pattern_detector = PatternDetector(viewer)
-    health_scorer = HealthScorer()
+    anomaly_detector, pattern_detector, health_scorer = AnomalyDetector(viewer), PatternDetector(viewer), HealthScorer()
 
     # Rileva anomalie e pattern
-    anomalies = anomaly_detector.detect_all(hours)
-    patterns = pattern_detector.detect_all(hours)
+    anomalies, patterns = anomaly_detector.detect_all(hours), pattern_detector.detect_all(hours)
 
     # Calcola health score
     health_report = viewer.generate_health_report()
     error_rate = health_report.get("error_rate_percent", 0)
 
     # Bot success rate medio
-    bot_runs = health_report.get("bot_runs", {})
-    bot_success_rate = bot_runs.get("success_rate_percent", 100)
+    bot_success_rate = health_report.get("bot_runs", {}).get("success_rate_percent", 100)
 
     health_score = health_scorer.calculate(
         anomalies=anomalies, error_rate=error_rate, bot_success_rate=bot_success_rate
     )
 
     # Genera suggerimenti
-    suggestions = []
-    for anomaly in anomalies:
-        if anomaly.suggestion:
-            suggestions.append(anomaly.suggestion)
+    suggestions = [a.suggestion for a in anomalies if a.suggestion]
 
     # Suggerimenti generali basati su pattern
-    if len([p for p in patterns if p.count > 10]) > 0:
+    if any(p.count > 10 for p in patterns):
         suggestions.append("Problema ricorrente rilevato: contatta il supporto tecnico")
 
     return AnalyticsReport(

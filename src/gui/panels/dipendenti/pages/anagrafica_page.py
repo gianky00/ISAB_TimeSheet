@@ -425,12 +425,12 @@ class AnagraficaPage(QWidget):
             message = filter_messages.get(filter_type, f"Filtro: {filter_type}")
             ToastManager.instance().show(message, "info", duration=3000)
 
-        for card in [
+        for card in (
             self.card_ok,
             self.card_warning,
             self.card_expired,
             self.card_excluded,
-        ]:
+        ):
             is_active = card.filter_type == self.current_filter
             gradient = (
                 "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #e8f5e9, stop:1 #f8f9fa)"
@@ -468,7 +468,7 @@ class AnagraficaPage(QWidget):
                 if idx is not None and row_data[idx] is not None
                 else ""
             )
-            if val.lower() in ["nan", "none"]:
+            if val.lower() in ("nan", "none"):
                 val = ""
             if h == "Importato il":
                 val = format_db_date(val)

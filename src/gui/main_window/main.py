@@ -146,7 +146,7 @@ class MainWindow(QMainWindow):
     def _load_styles(self):
         from pathlib import Path
 
-        for qss in ["main_window.qss", "message_box.qss"]:
+        for qss in ("main_window.qss", "message_box.qss"):
             path = Path(f"assets/styles/{qss}")
             if path.exists():
                 self.setStyleSheet(self.styleSheet() + path.read_text(encoding="utf-8"))
@@ -252,8 +252,7 @@ class MainWindow(QMainWindow):
                 else None
             ),
         }
-        action = refresh_actions.get(idx)
-        if action:
+        if action := refresh_actions.get(idx):
             action()
 
     def _handle_f5(self):

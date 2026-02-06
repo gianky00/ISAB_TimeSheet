@@ -106,7 +106,7 @@ def test_import_giornaliere_collection(importer, tmp_path):
     """Test logica raccolta file giornaliere."""
     root = tmp_path / "Giornaliere"
 
-    past_year = root / "Giornaliere 2024"
+    past_year = root / "Giornaliere 2025"
     past_year.mkdir(parents=True)
     (past_year / "valid.xls").touch()
     (past_year / "~$lock.xls").touch()

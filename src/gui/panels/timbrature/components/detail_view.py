@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import datetime
 
 from PyQt6.QtCore import Qt
@@ -104,7 +105,7 @@ class TimbratureDetailView(QWidget):
                 else ""
             )
 
-            if val.lower() in ["nan", "none"]:
+            if val.lower() in ("nan", "none"):
                 val = ""
 
             # Formattazione
@@ -119,24 +120,20 @@ class TimbratureDetailView(QWidget):
     def _format_date(self, val_str, strict=True):
         """Helper per formattazione date."""
         _ = strict
-        try:
+        with suppress(Exception):
             # Try ISO format first
             dt = datetime.strptime(val_str, "%Y-%m-%d")
             return dt.strftime("%d/%m/%Y")
-        except Exception:
-            try:
-                # Try handling datetime string or other formats
-                date_part = val_str.split(" ")[0]
-                # If strict, we expect only date part to be valid iso or similar?
-                # Original code tried flexible parsing
-                for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-                    try:
-                        dt = datetime.strptime(date_part, fmt)
-                        return dt.strftime("%d/%m/%Y")
-                    except ValueError:
-                        continue
-            except Exception:
-                pass
+
+        with suppress(Exception):
+            # Try handling datetime string or other formats
+            date_part = val_str.split(" ")[0]
+            # If strict, we expect only date part to be valid iso or similar?
+            # Original code tried flexible parsing
+            for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+                with suppress(ValueError):
+                    dt = datetime.strptime(date_part, fmt)
+                    return dt.strftime("%d/%m/%Y")
         return val_str
 
     def clear_fields(self):

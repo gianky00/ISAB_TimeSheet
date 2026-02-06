@@ -16,7 +16,7 @@ class TestContabilitaWorkerDeep:
             patch(
                 "src.core.contabilita_manager.ContabilitaManager.import_data_from_excel"
             ) as mock_import,
-            patch("os.path.exists", return_value=True),
+            patch("src.core.contabilita_worker.Path.exists", return_value=True),
         ):
             mock_import.return_value = (True, "Successo", 10, 2)
 
@@ -40,7 +40,7 @@ class TestContabilitaWorkerDeep:
                 "src.core.contabilita_manager.ContabilitaManager.import_data_from_excel",
                 side_effect=Exception("Crash"),
             ),
-            patch("os.path.exists", return_value=True),
+            patch("src.core.contabilita_worker.Path.exists", return_value=True),
         ):
             # Direct call to run() instead of start() to see how it handles exception
             # Actually worker.run() has a try-except? Let's check

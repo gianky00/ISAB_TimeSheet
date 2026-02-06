@@ -3,6 +3,7 @@ Controller per il coordinamento dei servizi di background (Telegram, Lyra, Updat
 """
 
 import logging
+import operator
 import os
 import re
 from contextlib import suppress
@@ -242,7 +243,7 @@ class ServiceController(QObject):
                     "id": id_ris,
                     "cognome": cog,
                     "nome": nom,
-                    "badge": badge if badge else "-",
+                    "badge": badge or "-",
                     "giorni": diff_days,
                     "data": formatted_date,
                 }
@@ -258,8 +259,8 @@ class ServiceController(QObject):
                 return
 
             # Ordina per urgenza
-            warning_list.sort(key=lambda x: x["giorni"], reverse=True)
-            expired_list.sort(key=lambda x: x["giorni"], reverse=True)
+            warning_list.sort(key=operator.itemgetter("giorni"), reverse=True)
+            expired_list.sort(key=operator.itemgetter("giorni"), reverse=True)
 
             # Invia report via Outlook
             if os.name != "nt":
@@ -407,20 +408,18 @@ class ServiceController(QObject):
             # Rimuovi eventuali callback precedenti di ServiceController per questo pannello
             # per evitare esecuzioni multiple, senza disconnettere altri listener (es. BotController)
             if hasattr(panel, "_service_callback") and panel._service_callback:
-                try:
+                with suppress(Exception):
                     panel.status_changed.disconnect(panel._service_callback)
-                except Exception:
-                    pass
 
             # Crea una funzione di callback che cattura bot_id e site
             def on_bot_finished(status, message):
                 # Note: status is the color code from BaseBotPanel
                 # #2E7D32 = Success, #C62828 = Error, #ffc107 = Stopped/Pending
-                is_finished = status in ["completed", "error", "stopped"] or status in [
+                is_finished = status in ("completed", "error", "stopped") or status in (
                     "#2E7D32",
                     "#C62828",
                     "#ffc107",
-                ]
+                )
 
                 if is_finished:
                     self._on_bot_completed(bot_id, site, panel)
@@ -448,11 +447,9 @@ class ServiceController(QObject):
 
         # Disconnetti solo la callback specifica di questo controller
         if hasattr(panel, "_service_callback") and panel._service_callback:
-            try:
+            with suppress(Exception):
                 panel.status_changed.disconnect(panel._service_callback)
                 panel._service_callback = None
-            except Exception:
-                pass
 
         # Controlla se ci sono bot in coda per questo sito
         if self.pending_bots_by_site[site]:
@@ -477,7 +474,7 @@ class ServiceController(QObject):
             return
 
         level = notification.get("level", "info")
-        if level in ["success", "error", "warning"]:
+        if level in ("success", "error", "warning"):
             title = notification.get("title", "Notifica")
             msg = notification.get("message", "")
             icon = (
