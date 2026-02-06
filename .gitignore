@@ -76,3 +76,9 @@ failed_ids.txt
 test_output.txt
 temp_pytest_run/
 temp_pytest_panel/
+
+# Mutation testing (mutmut)
+.mutmutrc
+mutants/
+temp_patch*.py
+refurb_report.txt
