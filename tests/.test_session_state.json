@@ -1,6 +1,5 @@
 {
   "queue": [
-    "tests/unit/test_gui_deep_dive.py",
     "tests/unit/test_gui_dipendenti.py",
     "tests/unit/test_gui_headless_hardened.py",
     "tests/unit/test_gui_panels.py",
@@ -335,7 +334,7 @@
       "timestamp": "2026-02-06T12:52:28.184476"
     }
   ],
-  "passed": 680,
+  "passed": 683,
   "skipped": 0,
   "total_files_map": {
     "tests/integration/test_config_security.py": [
@@ -2344,5 +2343,5 @@
       "tests/unit/test_wait_helpers_robust.py::TestWaitHelpersRobust::test_execute_with_wait"
     ]
   },
-  "timestamp": 1770378862.4318552
+  "timestamp": 1770378888.6307905
 }
