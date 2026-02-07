@@ -38,11 +38,14 @@ repos:
         additional_dependencies: [tomli]
 
   # ── Deptry: dependency hygiene ──────────────────────────────
-  - repo: https://github.com/fpgmaas/deptry
-    rev: 0.24.0
+  - repo: local
     hooks:
       - id: deptry
-        args: [src, main.py]
+        name: deptry
+        entry: python -m deptry
+        language: system
+        pass_filenames: false
+        args: [src]
 
   # ── Poetry: validate pyproject.toml ─────────────────────────
   - repo: local

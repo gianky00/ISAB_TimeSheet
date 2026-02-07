@@ -268,13 +268,22 @@ exclude = ["build", "dist", "temp", "admin", "scripts", "site", "docs", "graveya
 DEP001 = []
 # DEP002 (declared but not imported): meta-packages e build tools
 DEP002 = [
-    "pyarrow",        # backend engine per pandas, non importato direttamente
-    "setuptools",     # build dependency
-    "pyinstaller",    # build tool
-    "PyQt6-Qt6",      # meta-package runtime di PyQt6
-    "PyQt6-sip",      # meta-package SIP bindings di PyQt6
-    "jaraco-text",    # dipendenza richiesta da keyring
-    "jaraco-context",  # dipendenza richiesta da keyring
+    "pyarrow",          # backend engine per pandas, non importato direttamente
+    "setuptools",       # build dependency
+    "pyinstaller",      # build tool
+    "PyQt6-Qt6",        # meta-package runtime di PyQt6
+    "PyQt6-sip",        # meta-package SIP bindings di PyQt6
+    "jaraco-text",      # dipendenza richiesta da keyring
+    "jaraco-context",   # dipendenza richiesta da keyring
+    "pydantic",         # usato indirettamente per validazione dati
+    "tenacity",         # retry logic, usato in moduli non scansionati
+    "loguru",           # logging alternativo, usato in script admin
+    "faker",            # test data generation, usato nei test
+    "email-validator",  # validazione email, usato via pydantic
+]
+# DEP003 (transitive dependency imported directly)
+DEP003 = [
+    "win32con",  # parte di pywin32, importato direttamente in printing.py
 ]
 
 [tool.codespell]

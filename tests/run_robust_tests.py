@@ -126,7 +126,10 @@ class TestRunner:
     def discover_tests(self, targets=None):
         Console.info("🔍 Rilevamento test in corso (pytest --collect-only)...")
 
-        cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q"]
+        if targets is None:
+            targets = ["tests"]
+
+        cmd = [sys.executable, "-m", "pytest", "--collect-only", "-qq"]
         if targets:
             if isinstance(targets, list):
                 cmd.extend(targets)
@@ -149,11 +152,19 @@ class TestRunner:
 
         for line in result.stdout.splitlines():
             line = line.strip()
-            # Un NodeID valido di pytest contiene '::' e non inizia con '=' o 'collected'
-            if "::" in line and not line.startswith("=") and not line.startswith("collected"):
-                # Alcune righe potrebbero avere avvisi extra, prendiamo solo la prima parte
+            # Un NodeID valido di pytest contiene '::'
+            if "::" in line:
+                # Se la riga contiene spazi (es. descrizioni), prendiamo solo il NodeID
                 node_id = line.split()[0] if " " in line else line
                 if "::" in node_id:
+                    # Rimuoviamo eventuali tag tipo <Module, <Class se presenti nel NodeID
+                    node_id = (
+                        node_id.replace("<Module ", "")
+                        .replace("<Class ", "")
+                        .replace("<Function ", "")
+                        .replace(">", "")
+                        .strip()
+                    )
                     file_path = node_id.split("::")[0]
                     files_map[file_path].append(node_id)
 
