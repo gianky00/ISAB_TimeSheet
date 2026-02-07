@@ -14,19 +14,24 @@ class TestGUIPanelsExtended:
 
     def test_lyra_panel_init(self, qtbot):
         with patch(
-            "src.gui.panels.lyra_panel.SecretsManager.get_gemini_api_key",
+            "src.gui.panels.lyra.lyra_panel.SecretsManager.get_gemini_api_key",
             return_value="fake_key",
         ):
             panel = LyraPanel()
             qtbot.addWidget(panel)
-            assert panel.chat_scroll is not None
-            assert panel.input_field is not None
+            assert panel.chat_area is not None
+            assert panel.input_bar is not None
 
-            # Test typing and sending (logic level)
-            panel.input_field.setText("Ciao Lyra")
-            with patch.object(panel, "ask_lyra") as mock_ask:
-                panel.send_btn.click()
-                mock_ask.assert_called_with("Ciao Lyra")
+            # Test typing and sending (verifichiamo l'effetto sulla chat area)
+            initial_count = panel.chat_area.chat_layout.count()
+            panel.input_bar.input_field.setText("Ciao Lyra")
+            
+            # Mockiamo il worker per evitare chiamate API reali
+            with patch("src.gui.panels.lyra.lyra_panel.LyraWorker"):
+                panel.input_bar.send_clicked.emit("Ciao Lyra")
+                
+            # Verifichiamo che il messaggio "Tu" sia stato aggiunto
+            assert panel.chat_area.chat_layout.count() > initial_count
 
     def test_notifications_panel(self, qtbot):
         with patch(

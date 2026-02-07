@@ -188,8 +188,9 @@ class TestCertificatiGUI:
                     "src.core.config_manager.load_config",
                     return_value={"certificati_campione_path": "test.xlsx"},
                 ),
-                patch("src.gui.widgets.contabilita.certificati_tab.Path.exists", return_value=True),
+                patch("src.gui.widgets.contabilita.certificati_tab.Path.exists") as mock_exists,
             ):
+                mock_exists.return_value = True
                 dialog._send_email()
                 assert mock_popen.called
                 args, _kwargs = mock_popen.call_args
