@@ -36,8 +36,8 @@ class TestSafeWorkPDLBotDeep:
         bot.log = MagicMock()
 
         # Bind real method
-        bot._attendi_e_ritorna_nuovo_pdf = (
-            SafeWorkPDLBot._attendi_e_ritorna_nuovo_pdf.__get__(bot, SafeWorkPDLBot)
+        bot._attendi_e_ritorna_nuovo_pdf = SafeWorkPDLBot._attendi_e_ritorna_nuovo_pdf.__get__(
+            bot, SafeWorkPDLBot
         )
 
         # Mock Path.glob and Path.stat
@@ -56,9 +56,7 @@ class TestSafeWorkPDLBotDeep:
             [],  # Iter 2: *.crdownload
         ]
 
-        mocker.patch(
-            "src.bots.safework.pdl.bot.time.time", side_effect=[100, 101, 102, 103, 104]
-        )
+        mocker.patch("src.bots.safework.pdl.bot.time.time", side_effect=[100, 101, 102, 103, 104])
         mocker.patch("src.bots.safework.pdl.bot.time.sleep")
 
         res = bot._attendi_e_ritorna_nuovo_pdf(150)
@@ -69,9 +67,7 @@ class TestSafeWorkPDLBotDeep:
         bot = MagicMock(spec=SafeWorkPDLBot)
         bot.driver = MagicMock()
         bot.log = MagicMock()
-        bot._gestisci_alert_ricerca = SafeWorkPDLBot._gestisci_alert_ricerca.__get__(
-            bot, SafeWorkPDLBot
-        )
+        bot._gestisci_alert_ricerca = SafeWorkPDLBot._gestisci_alert_ricerca.__get__(bot, SafeWorkPDLBot)
 
         mock_btn = MagicMock()
         bot.driver.find_element.return_value = mock_btn
@@ -95,18 +91,10 @@ class TestSafeWorkPDLBotDeep:
 
         # Bind real methods to execute the pipeline
         bot.run = SafeWorkPDLBot.run.__get__(bot, SafeWorkPDLBot)
-        bot._process_single_pdl_row = SafeWorkPDLBot._process_single_pdl_row.__get__(
-            bot, SafeWorkPDLBot
-        )
-        bot._unisci_e_stampa_pdl = SafeWorkPDLBot._unisci_e_stampa_pdl.__get__(
-            bot, SafeWorkPDLBot
-        )
-        bot._handle_session_merge = SafeWorkPDLBot._handle_session_merge.__get__(
-            bot, SafeWorkPDLBot
-        )
-        bot._sanitizza_pdl_number = SafeWorkPDLBot._sanitizza_pdl_number.__get__(
-            bot, SafeWorkPDLBot
-        )
+        bot._process_single_pdl_row = SafeWorkPDLBot._process_single_pdl_row.__get__(bot, SafeWorkPDLBot)
+        bot._unisci_e_stampa_pdl = SafeWorkPDLBot._unisci_e_stampa_pdl.__get__(bot, SafeWorkPDLBot)
+        bot._handle_session_merge = SafeWorkPDLBot._handle_session_merge.__get__(bot, SafeWorkPDLBot)
+        bot._sanitizza_pdl_number = SafeWorkPDLBot._sanitizza_pdl_number.__get__(bot, SafeWorkPDLBot)
         bot._safe_remove = MagicMock()
 
         bot.driver = MagicMock()
@@ -115,6 +103,7 @@ class TestSafeWorkPDLBotDeep:
 
         # Mock per evitare skip del ciclo
         mocker.patch.object(bot, "_esegui_ricerca_pdl", return_value=True)
+        mocker.patch.object(bot, "_attendi_e_ritorna_nuovo_pdf", return_value="/tmp/download.pdf")
         mocker.patch.object(bot, "_scarica_parte_prima", return_value="/tmp/p1.pdf")
         mocker.patch.object(bot, "_scarica_parte_seconda", return_value="/tmp/p2.pdf")
 
@@ -129,9 +118,9 @@ class TestSafeWorkPDLBotDeep:
             return_value=True,
         )
 
-        mocker.patch("src.bots.safework.pdl.bot.os.rename")
-        mocker.patch("src.bots.safework.pdl.bot.os.remove")
-        mocker.patch("src.bots.safework.pdl.bot.os.path.exists", return_value=True)
+        mocker.patch("src.bots.safework.pdl.bot.Path.rename")
+        mocker.patch("src.bots.safework.pdl.bot.Path.unlink")
+        mocker.patch("src.bots.safework.pdl.bot.Path.exists", return_value=True)
 
         data = [{"pdl_number": "123", "merge_all_session": True}]
         result = bot.run(data)

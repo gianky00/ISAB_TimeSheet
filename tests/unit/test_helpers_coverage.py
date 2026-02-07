@@ -15,16 +15,14 @@ from src.utils.helpers import (
 
 class TestHelpers:
     def test_get_asset_path(self):
-        # Development mode
-        with patch("sys.frozen", False, create=True):
-            path = get_asset_path("assets/test.txt")
-            assert "assets" in path
-            assert "test.txt" in path
+        # Test wrapper logic
+        with patch("src.utils.resource_manager.ResourceManager.get_asset_path") as mock_mgr:
+            mock_asset = "C:\\Fake\\assets\\test.txt"
+            mock_mgr.return_value = mock_asset
 
-        # Frozen mode
-        with patch("sys.frozen", True, create=True), patch("sys.executable", "C:\\App\\app.exe"):
             path = get_asset_path("assets/test.txt")
-            assert path.startswith("C:\\App")
+            assert path == mock_asset
+            mock_mgr.assert_called_once_with("assets/test.txt")
 
     def test_format_timestamp(self):
         dt = datetime(2026, 1, 15, 10, 30, 0)

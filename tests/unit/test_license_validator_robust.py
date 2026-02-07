@@ -26,32 +26,31 @@ class TestLicenseValidatorRobust:
             p.exists.return_value = True
         mock_paths.return_value = paths
 
-        # Setup manifest
-        with patch("builtins.open", MagicMock()):
-            with patch("json.load", return_value={"config.dat": "FAKE_HASH"}):
-                # Caso 1: Valida
-                mock_info.return_value = {
-                    "Hardware ID": "VALID_HWID",
-                    "Scadenza Licenza": "31/12/2026",
-                    "Cliente": "Test User",
-                }
-                mock_time.return_value = (datetime(2026, 2, 1), True)
+        # Setup manifest via Path.read_text
+        with patch("src.core.license_validator.Path.read_text", return_value='{"config.dat": "FAKE_HASH"}'):
+            # Caso 1: Valida
+            mock_info.return_value = {
+                "Hardware ID": "VALID_HWID",
+                "Scadenza Licenza": "31/12/2026",
+                "Cliente": "Test User",
+            }
+            mock_time.return_value = (datetime(2026, 2, 1), True)
 
-                status, msg = get_detailed_license_status()
-                assert status == LicenseStatus.VALID
-                assert "Test User" in msg
+            status, msg = get_detailed_license_status()
+            assert status == LicenseStatus.VALID
+            assert "Test User" in msg
 
-                # Caso 2: Scaduta
-                mock_info.return_value["Scadenza Licenza"] = "01/01/2026"
-                status, msg = get_detailed_license_status()
-                assert status == LicenseStatus.EXPIRED
+            # Caso 2: Scaduta
+            mock_info.return_value["Scadenza Licenza"] = "01/01/2026"
+            status, msg = get_detailed_license_status()
+            assert status == LicenseStatus.EXPIRED
 
-                # Caso 3: HWID Errato
-                mock_info.return_value["Scadenza Licenza"] = "31/12/2026"
-                mock_info.return_value["Hardware ID"] = "WRONG_HWID"
-                status, msg = get_detailed_license_status()
-                assert status == LicenseStatus.INVALID
-                assert "Hardware ID" in msg
+            # Caso 3: HWID Errato
+            mock_info.return_value["Scadenza Licenza"] = "31/12/2026"
+            mock_info.return_value["Hardware ID"] = "WRONG_HWID"
+            status, msg = get_detailed_license_status()
+            assert status == LicenseStatus.INVALID
+            assert "Hardware ID" in msg
 
     @patch("src.core.license_validator._get_license_paths")
     def test_verify_license_missing(self, mock_paths):
