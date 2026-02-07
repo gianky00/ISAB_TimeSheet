@@ -4,7 +4,7 @@ Bot for downloading timesheets using Page Object Model.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.scarico_ts.pages.scarico_ts_page import ScaricoTSPage
@@ -51,7 +51,7 @@ class ScaricaTSBot(BaseBot):
         super().__init__(**kwargs)
         self.data_da = data_da
 
-    def run(self, data: List[Dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]]) -> bool:
         """
         Executes the download workflow.
         """
@@ -83,11 +83,7 @@ class ScaricaTSBot(BaseBot):
         # 3. Process Rows
         success_count = 0
         # Chrome downloads directly to download_path (if configured)
-        download_dir = (
-            Path(self.download_path).resolve()
-            if self.download_path
-            else Path.home() / "Downloads"
-        )
+        download_dir = Path(self.download_path).resolve() if self.download_path else Path.home() / "Downloads"
 
         for i, row in enumerate(rows, 1):
             self._check_stop()

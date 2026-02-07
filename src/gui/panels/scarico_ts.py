@@ -4,7 +4,7 @@ Pannello per il bot Scarico TS.
 """
 
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout
@@ -46,9 +46,7 @@ class ScaricaTSPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Usiamo il widget atomico per i parametri comuni
-        self.params_widget = BotParametersWidget(
-            show_date_range=False, show_dest_path=True
-        )
+        self.params_widget = BotParametersWidget(show_date_range=False, show_dest_path=True)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -115,12 +113,8 @@ class ScaricaTSPanel(BaseBotPanel):
         date_da, _ = self.params_widget.get_dates()
         config_manager.set_config_value("last_ts_data", self.data_table.get_data())
         config_manager.set_config_value("last_ts_date", date_da)
-        config_manager.set_config_value(
-            "last_ts_fornitore", self.params_widget.get_fornitore()
-        )
-        config_manager.set_config_value(
-            "path_scarico_ts", self.params_widget.get_dest_path()
-        )
+        config_manager.set_config_value("last_ts_fornitore", self.params_widget.get_fornitore())
+        config_manager.set_config_value("path_scarico_ts", self.params_widget.get_dest_path())
         config_manager.set_config_value("elabora_ts", self.elabora_ts_check.isChecked())
 
     def _clear_table(self):
@@ -154,13 +148,13 @@ class ScaricaTSPanel(BaseBotPanel):
             return False, "Nessun dato OdA inserito in tabella."
         return True, ""
 
-    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):
         """Avvia il bot."""
         # Chiamiamo super senza argomenti (il BaseBotPanel._on_start che abbiamo appena modificato
         # si aspetta params_override ma qui non serve passarglielo, serve solo per il log/stato).
         super()._on_start(params_override)
 
-        username, password = self.get_credentials()
+        _username, _password = self.get_credentials()
         data = self.data_table.get_data()
         fornitore = self.params_widget.get_fornitore()
 
@@ -175,14 +169,10 @@ class ScaricaTSPanel(BaseBotPanel):
 
             # Single Shot Execution Override
             if "single_item" in params_override:
-                item = params_override[
-                    "single_item"
-                ]  # Expect dict like {"Numero OdA": "...", ...}
+                item = params_override["single_item"]  # Expect dict like {"Numero OdA": "...", ...}
                 if item:
                     data = [item]
-                    self.log_widget.append(
-                        f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}"
-                    )
+                    self.log_widget.append(f"ℹ️ Esecuzione singola per: {item.get('Numero OdA', 'N/D')}")
 
         if not params_override:
             self._save_data()

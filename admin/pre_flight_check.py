@@ -6,6 +6,7 @@ L'Oracolo del Progetto: Score, Dashboard HTML, Git-Hooks e Intelligence.
 """
 
 import argparse
+import contextlib
 import datetime
 import os
 import re
@@ -15,7 +16,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 # Rich Imports
 try:
@@ -37,11 +38,7 @@ except ImportError:
 PROJECT_ROOT = Path(__file__).parent.parent
 LOG_DIR = PROJECT_ROOT / "temp" / "logs"
 REPORT_DIR = PROJECT_ROOT / "reports" / "preflight"
-VENV_BIN = (
-    PROJECT_ROOT / ".venv" / "Scripts"
-    if sys.platform == "win32"
-    else PROJECT_ROOT / ".venv" / "bin"
-)
+VENV_BIN = PROJECT_ROOT / ".venv" / "Scripts" if sys.platform == "win32" else PROJECT_ROOT / ".venv" / "bin"
 
 # Configurazione console con fallback ASCII per compatibilità Windows
 # Rileva se stiamo girando da subprocess/GUI (no TTY)
@@ -64,7 +61,7 @@ class CheckResult:
         self.name = name
         self.timestamp = datetime.datetime.now().isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return self.__dict__
 
 
@@ -80,11 +77,7 @@ def get_bin(name):
     # 2. Prova in APPDATA (Windows fallback per installazioni --user)
     if sys.platform == "win32":
         appdata_path = (
-            Path(os.environ.get("APPDATA", ""))
-            / "Python"
-            / "Python312"
-            / "Scripts"
-            / f"{name}{ext}"
+            Path(os.environ.get("APPDATA", "")) / "Python" / "Python312" / "Scripts" / f"{name}{ext}"
         )
         if appdata_path.exists():
             return str(appdata_path)
@@ -92,9 +85,7 @@ def get_bin(name):
     return name
 
 
-def run_tool(
-    name: str, cmd: List[str], label: str, cwd=PROJECT_ROOT
-) -> Tuple[bool, str, float]:
+def run_tool(name: str, cmd: list[str], label: str, cwd=PROJECT_ROOT) -> tuple[bool, str, float]:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = LOG_DIR / f"{name}.log"
     start_t = time.time()
@@ -106,12 +97,13 @@ def run_tool(
             text=True,
             encoding="utf-8",
             errors="ignore",
+            check=False,
         )
         duration = time.time() - start_t
-        with open(log_file, "w", encoding="utf-8") as f:
-            f.write(
-                f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'=' * 40}\n{result.stdout}\n{'=' * 40}\n{result.stderr}"
-            )
+        log_file.write_text(
+            f"CMD: {' '.join(cmd)}\nEXIT: {result.returncode}\n{'=' * 40}\n{result.stdout}\n{'=' * 40}\n{result.stderr}",
+            encoding="utf-8",
+        )
         return (
             (result.returncode == 0),
             result.stdout if result.returncode != 0 else "",
@@ -131,30 +123,26 @@ class ApexAudit:
         fast=False,
         incremental=False,
         test_only=False,
-        target: Optional[str] = None,
+        target: str | None = None,
     ):
         self.fix = fix
         self.fast = fast
         self.incremental = incremental
         self.test_only = test_only
         self.target = target.lower() if target else None
-        self.results: List[CheckResult] = []
+        self.results: list[CheckResult] = []
         self.start_time = time.time()
         self.changed_files = self._get_changed_files() if incremental else []
 
-    def _get_changed_files(self) -> List[str]:
+    def _get_changed_files(self) -> list[str]:
         try:
             cmd = ["git", "diff", "HEAD", "--name-only"]
-            res = subprocess.run(cmd, capture_output=True, text=True, cwd=PROJECT_ROOT)
-            return [
-                f
-                for f in res.stdout.splitlines()
-                if f.endswith(".py") and Path(f).exists()
-            ]
+            res = subprocess.run(cmd, capture_output=True, text=True, cwd=PROJECT_ROOT, check=False)
+            return [f for f in res.stdout.splitlines() if f.endswith(".py") and Path(f).exists()]
         except Exception:
             return []
 
-    def _check_environment(self) -> Tuple[bool, str, float]:
+    def _check_environment(self) -> tuple[bool, str, float]:
         start_t = time.time()
         try:
             if sys.platform == "win32":
@@ -168,28 +156,23 @@ class ApexAudit:
                     ],
                     capture_output=True,
                     text=True,
+                    check=False,
                 )
                 match = re.search(r"REG_SZ\s+([\d\.]+)", res.stdout)
                 c_ver = match.group(1) if match else "N/A"
             else:
                 res = subprocess.run(
-                    ["google-chrome", "--version"], capture_output=True, text=True
+                    ["google-chrome", "--version"], capture_output=True, text=True, check=False
                 )
-                c_ver = (
-                    re.search(r"([\d\.]+)", res.stdout).group(1)
-                    if res.returncode == 0
-                    else "N/A"
-                )
-            d_res = subprocess.run(
-                ["chromedriver", "--version"], capture_output=True, text=True
-            )
+                c_ver = re.search(r"([\d\.]+)", res.stdout).group(1) if res.returncode == 0 else "N/A"
+            d_res = subprocess.run(["chromedriver", "--version"], capture_output=True, text=True, check=False)
             d_match = re.search(r"([\d\.]+)", d_res.stdout)
             d_ver = d_match.group(1) if d_match and d_res.returncode == 0 else "N/A"
             return True, f"Chrome:{c_ver} Driver:{d_ver}", time.time() - start_t
         except Exception:
             return False, "Env check failed", time.time() - start_t
 
-    def _check_versions(self) -> Tuple[bool, str, float]:
+    def _check_versions(self) -> tuple[bool, str, float]:
         start_t = time.time()
         try:
             pyproject = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
@@ -206,7 +189,7 @@ class ApexAudit:
         except Exception:
             return False, "Version mismatch", time.time() - start_t
 
-    def _check_db_integrity(self) -> Tuple[bool, str, float]:
+    def _check_db_integrity(self) -> tuple[bool, str, float]:
         start_t = time.time()
         from platformdirs import user_data_dir
 
@@ -214,7 +197,8 @@ class ApexAudit:
         if not data_dir.exists():
             return True, "No DBs", time.time() - start_t
         errors = []
-        for db in data_dir.glob("*.db"):
+        dbs = list(data_dir.glob("*.db"))
+        for db in dbs:
             try:
                 with sqlite3.connect(db) as conn:
                     if conn.execute("PRAGMA integrity_check;").fetchone()[0] != "ok":
@@ -223,23 +207,19 @@ class ApexAudit:
                 errors.append(db.name)
         return (
             (not errors),
-            f"Checked {len(list(data_dir.glob('*.db')))} DBs",
+            f"Checked {len(dbs)} DBs",
             time.time() - start_t,
         )
 
-    def _scan_for_secrets(self) -> Tuple[bool, str, float]:
+    def _scan_for_secrets(self) -> tuple[bool, str, float]:
         start_t = time.time()
-        patterns = {
-            "Key": r"(?:api_key|token)[\"']?\s*[:=]\s*[\"']([A-Za-z0-9_\-]{16,})[\"']"
-        }
+        patterns = {"Key": r"(?:api_key|token)[\"']?\s*[:=]\s*[\"']([A-Za-z0-9_\-]{16,})[\"']"}
         found = []
         for path in (PROJECT_ROOT / "src").rglob("*.py"):
-            try:
+            with contextlib.suppress(Exception):
                 content = path.read_text(encoding="utf-8")
-                if any(re.search(p, content, re.I) for p in patterns.values()):
+                if any(re.search(p, content, re.IGNORECASE) for p in patterns.values()):
                     found.append(path.name)
-            except Exception:
-                continue
         return (
             (not found),
             "No secrets found" if not found else f"Secrets in {found[0]}",
@@ -255,8 +235,7 @@ class ApexAudit:
             console=console,
         ) as prog:
             tasks = {
-                label: prog.add_task(f"Audit {label}...", total=100)
-                for label, _, _, _ in parallel_checks
+                label: prog.add_task(f"Audit {label}...", total=100) for label, _, _, _ in parallel_checks
             }
             with ThreadPoolExecutor(max_workers=len(parallel_checks)) as executor:
                 futures = {
@@ -267,9 +246,7 @@ class ApexAudit:
                     label, name, always_show = futures[future]
                     success, msg, dur = future.result()
                     self._add_res(label, success, msg, dur, name, always_show)
-                    prog.update(
-                        tasks[label], completed=100, description=f"[green][OK] {label}"
-                    )
+                    prog.update(tasks[label], completed=100, description=f"[green][OK] {label}")
 
     def run_all(self):
         console.print(
@@ -278,13 +255,6 @@ class ApexAudit:
                 border_style="cyan",
             )
         )
-
-        # Define all available checks: (Label, Function, Name, AlwaysShowOutput)
-        targets = (
-            self.changed_files if self.incremental and self.changed_files else ["src"]
-        )
-        if "." in targets and len(targets) == 1:
-            targets = ["src"]  # Fix specifically for tools expecting dirs
 
         # Helper to wrap commands
         def cmd(tool, args):
@@ -359,9 +329,7 @@ class ApexAudit:
             ),
             (
                 "Metrics (Radon CC)",
-                cmd(
-                    "radon", [get_bin("radon"), "cc", "src", "-a", "-nc", "--min", "B"]
-                ),
+                cmd("radon", [get_bin("radon"), "cc", "src", "-a", "-nc", "--min", "B"]),
                 "radon_cc",
                 True,
             ),
@@ -392,7 +360,7 @@ class ApexAudit:
         # Intelligence Checks
         if not self.target or self.target in ["all", "intelligence"]:
             # Usa spinner ASCII-only se TERM=dumb (eseguito da GUI)
-            spinner_type = "dots" if os.getenv("TERM") == "dumb" else "dots"
+            spinner_type = "dots"
 
             with Progress(
                 SpinnerColumn(spinner_name=spinner_type),
@@ -412,36 +380,26 @@ class ApexAudit:
         elif self.target == "deps":
             selected_checks = [c for c in all_checks if c[2] in ["deptry"]]
         elif self.target == "metrics":
-            selected_checks = [
-                c for c in all_checks if c[2] in ["radon_mi", "radon_cc"]
-            ]
+            selected_checks = [c for c in all_checks if c[2] in ["radon_mi", "radon_cc"]]
         elif self.target == "stats":
             selected_checks = [c for c in all_checks if c[2] in ["pygount"]]
         elif self.target == "clean":
             selected_checks = [c for c in all_checks if c[2] in ["vulture"]]
         elif self.target:
-            selected_checks = [
-                c
-                for c in all_checks
-                if self.target in c[2] or self.target in c[0].lower()
-            ]
+            selected_checks = [c for c in all_checks if self.target in c[2] or self.target in c[0].lower()]
         elif self.test_only:
             selected_checks = [c for c in all_checks if c[2] == "pytest"]
         else:  # Default (Full Audit)
             selected_checks = [
-                c
-                for c in all_checks
-                if c[2] not in ["radon_mi", "radon_cc", "pygount", "vulture"]
+                c for c in all_checks if c[2] not in ["radon_mi", "radon_cc", "pygount", "vulture"]
             ]
-            if not self.fast:
-                # Ensure pytest is in the list if not fast
-                if not any(c[2] == "pytest" for c in selected_checks):
-                    pass  # It is already in the list above unless filtered out
+            if not self.fast and not any(c[2] == "pytest" for c in selected_checks):
+                # Ensure pytest is included in default audit if not fast
+                # (Logic simplification: selected_checks already contains it unless filtered above)
+                pass
 
         if not selected_checks and self.target:
-            console.print(
-                f"[bold red][X] Nessun check trovato per target: {self.target}[/bold red]"
-            )
+            console.print(f"[bold red][X] Nessun check trovato per target: {self.target}[/bold red]")
             return
 
         self._run_parallel(selected_checks)
@@ -457,7 +415,7 @@ class ApexAudit:
             if msg:
                 console.print(Panel(msg[:800], border_style="red"))
         elif always_show and msg.strip():
-            console.print(f"[bold green]ℹ️ {label} Result ({dur:.2f}s)[/bold green]")
+            console.print(f"[bold green]i {label} Result ({dur:.2f}s)[/bold green]")
             console.print(Panel(msg.strip(), border_style="green", title=label))
 
     def summary(self):
@@ -525,10 +483,11 @@ if __name__ == "__main__":
         help="Specify target check or category (security, metrics, clean, deps, stats)",
     )
     args = parser.parse_args()
-    ApexAudit(
-        fix=args.fix,
-        fast=args.fast,
-        incremental=args.inc,
-        test_only=args.test_only,
-        target=args.target,
-    ).run_all()
+    with contextlib.suppress(KeyboardInterrupt):
+        ApexAudit(
+            fix=args.fix,
+            fast=args.fast,
+            incremental=args.inc,
+            test_only=args.test_only,
+            target=args.target,
+        ).run_all()

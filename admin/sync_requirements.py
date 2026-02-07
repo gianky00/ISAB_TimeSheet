@@ -10,8 +10,7 @@ def generate_requirements_content():
         print("Error: poetry.lock not found.")
         sys.exit(1)
 
-    with open(lock_file, "r", encoding="utf-8") as f:
-        lock_data = tomlkit.parse(f.read())
+    lock_data = tomlkit.parse(lock_file.read_text(encoding="utf-8"))
 
     packages = []
     for package in lock_data.get("package", []):
@@ -33,8 +32,7 @@ def sync(check_only=False):
 
     current_content = ""
     if req_file.exists():
-        with open(req_file, "r", encoding="utf-8") as f:
-            current_content = f.read()
+        current_content = req_file.read_text(encoding="utf-8")
 
     # Normalize newlines for comparison
     content = content.replace("\r\n", "\n")
@@ -45,8 +43,7 @@ def sync(check_only=False):
             print("FAILURE: requirements.txt is out of sync with poetry.lock")
             sys.exit(1)
         else:
-            with open(req_file, "w", encoding="utf-8") as f:
-                f.write(content)
+            req_file.write_text(content, encoding="utf-8")
             print("SUCCESS: requirements.txt updated from poetry.lock")
     else:
         print("SUCCESS: requirements.txt is already in sync.")

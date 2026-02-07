@@ -3,7 +3,7 @@ SyncroJob - Prenota BP Panel
 Pannello per il bot Prenota BP.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QVBoxLayout
@@ -44,9 +44,7 @@ class PrenotaBPPanel(BaseBotPanel):
         params_layout.setSpacing(10)
 
         # Widget atomico per i parametri - Abilitato date range
-        self.params_widget = BotParametersWidget(
-            show_date_range=True, show_dest_path=False
-        )
+        self.params_widget = BotParametersWidget(show_date_range=True, show_dest_path=False)
         self.params_widget.settings_requested.connect(self._open_settings)
         self.params_widget.changed.connect(self._save_data)
         params_layout.addWidget(self.params_widget)
@@ -105,13 +103,11 @@ class PrenotaBPPanel(BaseBotPanel):
         config_manager.set_config_value("last_prenota_date_to", date_a)
 
     def _clear_table(self):
-        if ConfirmationDialog.confirm(
-            self, "Conferma", "Cancellare tutti i dati dalla lista?"
-        ):
+        if ConfirmationDialog.confirm(self, "Conferma", "Cancellare tutti i dati dalla lista?"):
             self.data_table.set_data([])
             self._save_data()
 
-    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):
         """Override: Prepara e avvia il worker specifico."""
         super()._on_start(params_override)  # Call base to handle logs/status logic
 
@@ -148,9 +144,7 @@ class PrenotaBPPanel(BaseBotPanel):
                 item = params_override["single_item"]
                 if item:
                     rows = [item]
-                    self.log_widget.append(
-                        f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}"
-                    )
+                    self.log_widget.append(f"ℹ️ Esecuzione singola per BP: {item.get('numero_bp', 'N/D')}")
 
         bot = PrenotaBPBot(
             username=username,

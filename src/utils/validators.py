@@ -4,21 +4,21 @@ Framework di validazione input centralizzato.
 
 import re
 from dataclasses import dataclass
-from typing import Optional
+from typing import ClassVar
 
 
 @dataclass
 class ValidationResult:
     valid: bool
-    error: Optional[str] = None
-    sanitized_value: Optional[str] = None
+    error: str | None = None
+    sanitized_value: str | None = None
 
 
 class InputValidator:
     """Validatore centralizzato per tutti gli input utente."""
 
     # Pattern comuni
-    PATTERNS = {
+    PATTERNS: ClassVar[dict[str, str]] = {
         "oda_number": r"^[A-Za-z0-9]{1,20}$",
         "pdl_number": r"^[0-9]{6}/[CS]$",
         "codice_fiscale": r"^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$",
@@ -191,9 +191,9 @@ class InputValidator:
 
         # Verifica data valida
         try:
-            from datetime import datetime
+            from datetime import UTC, datetime
 
-            datetime.strptime(sanitized, "%d.%m.%Y")
+            datetime.strptime(sanitized, "%d.%m.%Y").replace(tzinfo=UTC)
         except ValueError:
             return ValidationResult(False, "Data non esistente")
 

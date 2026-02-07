@@ -8,8 +8,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.config_manager import CONFIG_DIR  # noqa: E402
-from src.core.database import db_manager  # noqa: E402
+from src.core.config_manager import CONFIG_DIR
+from src.core.database import db_manager
 
 
 def cleanup_attivita_duplicates():

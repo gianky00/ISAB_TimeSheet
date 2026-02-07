@@ -4,7 +4,6 @@ Gestisce tutte le query di lettura per i dati della Contabilità Strumentale.
 """
 
 from pathlib import Path
-from typing import List, Tuple
 
 from src.core.database import db_manager
 from src.core.excel_importer import ExcelImporter  # Per accedere ai COLUMNS_MAPPING
@@ -14,7 +13,7 @@ class ContabilitaQueries:
     """Gestore per le query di lettura del database della Contabilità Strumentale."""
 
     @classmethod
-    def get_available_years(cls, db_path: Path) -> List[int]:
+    def get_available_years(cls, db_path: Path) -> list[int]:
         """Restituisce la lista degli anni presenti nel DB (unione di Dati e Giornaliere)."""
         if not db_path.exists():
             return []
@@ -30,7 +29,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_data_by_year(cls, db_path: Path, year: int) -> List[Tuple]:
+    def get_data_by_year(cls, db_path: Path, year: int) -> list[tuple]:
         """Restituisce i dati tabella Dati per un anno specifico."""
         if not db_path.exists():
             return []
@@ -38,7 +37,9 @@ class ContabilitaQueries:
             with db_manager.get_connection(db_path, read_only=True) as conn:
                 cursor = conn.cursor()
                 cols = list(ExcelImporter.COLUMNS_MAPPING.values())
-                query = f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"  # nosec B608
+                query = (
+                    f"SELECT {', '.join(cols)} FROM contabilita WHERE year = ? ORDER BY n_prev DESC, id DESC"  # nosec B608
+                )
                 cursor.execute(query, (year,))
                 rows = cursor.fetchall()
                 return rows
@@ -46,7 +47,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_giornaliere_by_year(cls, db_path: Path, year: int) -> List[Tuple]:
+    def get_giornaliere_by_year(cls, db_path: Path, year: int) -> list[tuple]:
         """Restituisce i dati Giornaliere per un anno specifico."""
         if not db_path.exists():
             return []
@@ -66,7 +67,9 @@ class ContabilitaQueries:
                     "ore",
                     "nome_file",
                 ]
-                query = f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
+                query = (
+                    f"SELECT {', '.join(cols)} FROM giornaliere WHERE year = ? ORDER BY data DESC, id DESC"  # nosec B608
+                )
                 cursor.execute(query, (year,))
                 rows = cursor.fetchall()
                 return rows
@@ -74,7 +77,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_attivita_programmate_data(cls, db_path: Path) -> List[Tuple]:
+    def get_attivita_programmate_data(cls, db_path: Path) -> list[tuple]:
         """Restituisce i dati Attività Programmate (inclusi stili)."""
         if not db_path.exists():
             return []
@@ -90,7 +93,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_certificati_campione_data(cls, db_path: Path) -> List[Tuple]:
+    def get_certificati_campione_data(cls, db_path: Path) -> list[tuple]:
         """Restituisce i dati Certificati Campione."""
         if not db_path.exists():
             return []
@@ -106,7 +109,7 @@ class ContabilitaQueries:
             return []
 
     @classmethod
-    def get_scarico_ore_data(cls, db_path: Path) -> List[Tuple]:
+    def get_scarico_ore_data(cls, db_path: Path) -> list[tuple]:
         """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
         if not db_path.exists():
             return []

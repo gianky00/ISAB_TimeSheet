@@ -29,7 +29,7 @@ def test_cache_worker_build_caches_logic():
         ["13/01/2025", "U1", None, "5400", "20", "", "", "4,5", None, "No", "", None],
     ]
 
-    display, search, totals, styles, date_keys = worker._build_caches(raw_data)
+    display, search, totals, styles, _date_keys = worker._build_caches(raw_data)
 
     # Check row 1 (ISO Date)
 

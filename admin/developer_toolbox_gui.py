@@ -10,7 +10,6 @@ import sys
 import webbrowser
 from collections.abc import Callable
 from pathlib import Path
-from typing import Optional
 
 from PyQt6.QtCore import QProcess, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QTextCursor
@@ -43,7 +42,7 @@ class CommandRunner(QThread):
         super().__init__()
         self.command = command
         self.shell = shell
-        self.process: Optional[QProcess] = None
+        self.process: QProcess | None = None
 
     def run(self):
         """Esegue il comando e emette l'output in tempo reale"""
@@ -61,9 +60,7 @@ class CommandRunner(QThread):
             if self.shell:
                 # Per comandi shell (mkdocs serve, ecc.)
                 self.process = QProcess()
-                self.process.setProcessChannelMode(
-                    QProcess.ProcessChannelMode.MergedChannels
-                )
+                self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
 
                 # Imposta variabili d'ambiente
                 self.process.setEnvironment([f"{k}={v}" for k, v in env.items()])
@@ -108,7 +105,7 @@ class CommandRunner(QThread):
                 self.finished_signal.emit(returncode)
 
         except Exception as e:
-            self.output_received.emit(f"\n[ERROR] {str(e)}\n")
+            self.output_received.emit(f"\n[ERROR] {e!s}\n")
             self.finished_signal.emit(1)
 
     def _read_output(self):
@@ -137,7 +134,7 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.current_runner: Optional[CommandRunner] = None
+        self.current_runner: CommandRunner | None = None
         self.init_ui()
 
     def init_ui(self):
@@ -156,9 +153,7 @@ class DeveloperToolboxGUI(QMainWindow):
         # Pannello sinistro: comandi con scroll
         commands_scroll = QScrollArea()
         commands_scroll.setWidgetResizable(True)
-        commands_scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
+        commands_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         commands_widget = QWidget()
         commands_layout = QVBoxLayout()
         commands_widget.setLayout(commands_layout)
@@ -346,9 +341,7 @@ class DeveloperToolboxGUI(QMainWindow):
         clear_btn.clicked.connect(self.output_console.clear)
         stop_btn = QPushButton("Stop Process")
         stop_btn.clicked.connect(self._stop_current_process)
-        stop_btn.setStyleSheet(
-            "QPushButton { background-color: #c0392b; color: white; }"
-        )
+        stop_btn.setStyleSheet("QPushButton { background-color: #c0392b; color: white; }")
         console_controls.addWidget(clear_btn)
         console_controls.addWidget(stop_btn)
         console_controls.addStretch()
@@ -358,9 +351,7 @@ class DeveloperToolboxGUI(QMainWindow):
         self._log_output("=== SyncroJob Developer Toolbox ===\n")
         self._log_output("Seleziona un'operazione dal pannello sinistro.\n\n")
 
-    def _create_group(
-        self, title: str, buttons: list[tuple[str, Callable[[], None], str]]
-    ) -> QGroupBox:
+    def _create_group(self, title: str, buttons: list[tuple[str, Callable[[], None], str]]) -> QGroupBox:
         """Crea un gruppo di pulsanti con descrizioni"""
         group = QGroupBox(title)
         group.setStyleSheet(
@@ -488,9 +479,7 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _fast_audit(self):
         """Opzione 2: Fast Audit"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/pre_flight_check.py", "--fast"], "Fast Audit"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/pre_flight_check.py", "--fast"], "Fast Audit")
 
     def _smart_check(self):
         """Opzione 3: Smart Check"""
@@ -501,9 +490,7 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _only_tests(self):
         """Opzione 4: Only Tests"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/pre_flight_check.py", "--test-only"], "Only Tests"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/pre_flight_check.py", "--test-only"], "Only Tests")
 
     def _auto_fix(self):
         """Opzione 5: Auto-Fix"""
@@ -533,7 +520,6 @@ class DeveloperToolboxGUI(QMainWindow):
         self._run_command(
             [str(VENV_BIN / "pytest"), "--cov=src", "--cov-report=html"],
             "Code Coverage",
-            shell=True,
         )
 
     def _architecture(self):
@@ -545,33 +531,25 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _build_docs(self):
         """Opzione 10: Build Docs"""
-        self._run_command(
-            [str(VENV_BIN / "mkdocs"), "build"], "Build MkDocs", shell=True
-        )
+        self._run_command([str(VENV_BIN / "mkdocs"), "build"], "Build MkDocs")
 
     def _serve_docs(self):
         """Opzione 11: Serve Docs"""
         self._log_output("\n[INFO] Avvio server MkDocs...\n")
         self._log_output("[INFO] Premi 'Stop Process' per terminare il server.\n\n")
-        self._run_command(
-            [str(VENV_BIN / "mkdocs"), "serve"], "Serve MkDocs", shell=True
-        )
+        self._run_command([str(VENV_BIN / "mkdocs"), "serve"], "Serve MkDocs")
 
     def _commit_wizard(self):
         """Opzione 12: Commit Wizard"""
-        self._run_command([str(VENV_BIN / "cz"), "commit"], "Commit Wizard", shell=True)
+        self._run_command([str(VENV_BIN / "cz"), "commit"], "Commit Wizard")
 
     def _version_bump(self):
         """Opzione 13: Version Bump"""
-        self._run_command(
-            [str(VENV_BIN / "cz"), "bump", "--changelog"], "Version Bump", shell=True
-        )
+        self._run_command([str(VENV_BIN / "cz"), "bump", "--changelog"], "Version Bump")
 
     def _full_release(self):
         """Opzione 14: Full Release"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/release.py", "auto"], "Full Release"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/release.py", "auto"], "Full Release")
 
     def _fast_release(self):
         """Opzione 15: Fast Release"""
@@ -582,15 +560,11 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _full_deploy(self):
         """Opzione 16: Full Deploy"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/release.py", "auto", "--deploy"], "Full Deploy"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/release.py", "auto", "--deploy"], "Full Deploy")
 
     def _secrets_mgmt(self):
         """Opzione 17: Secrets Management"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/manage_secrets_gui.py"], "Secrets Management GUI"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/manage_secrets_gui.py"], "Secrets Management GUI")
 
     def _performance(self):
         """Opzione 18: Performance Profiling"""
@@ -608,9 +582,7 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _db_maintain(self):
         """Opzione 19: DB Maintenance"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/db_maintenance.py"], "Database Maintenance"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/db_maintenance.py"], "Database Maintenance")
 
     def _raw_metrics(self):
         """Opzione 20: Raw Metrics"""
@@ -650,15 +622,11 @@ class DeveloperToolboxGUI(QMainWindow):
 
     def _inspector(self):
         """Opzione 26: Inspector"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/universal_inspector.py"], "Universal Inspector"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/universal_inspector.py"], "Universal Inspector")
 
     def _dep_audit(self):
         """Opzione 27: Dependency Audit"""
-        self._run_command(
-            [str(VENV_PYTHON), "admin/analyze_dependencies.py"], "Dependency Audit"
-        )
+        self._run_command([str(VENV_PYTHON), "admin/analyze_dependencies.py"], "Dependency Audit")
 
 
 def main():

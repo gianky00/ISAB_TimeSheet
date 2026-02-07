@@ -4,7 +4,7 @@ Decorators per logging automatico.
 
 import functools
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from .context import generate_span_id, get_context, with_context
 from .logger import get_logger
@@ -12,10 +12,10 @@ from .metrics import get_tracker
 
 
 def measure_time(
-    func: Optional[Callable] = None,
+    func: Callable | None = None,
     *,
-    threshold_ms: Optional[float] = None,
-    logger_name: Optional[str] = None,
+    threshold_ms: float | None = None,
+    logger_name: str | None = None,
 ):
     """
     Decorator per misurare tempo esecuzione e loggarlo automaticamente.
@@ -119,9 +119,9 @@ def measure_time(
 
 
 def log_entry_exit(
-    func: Optional[Callable] = None,
+    func: Callable | None = None,
     *,
-    logger_name: Optional[str] = None,
+    logger_name: str | None = None,
     log_args: bool = False,
     log_result: bool = False,
 ):

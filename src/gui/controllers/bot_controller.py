@@ -67,7 +67,7 @@ class BotController(QObject):
         main_idx = self.mw.automazioni_widget.currentIndex()
         if main_idx == 0:  # Portale Fornitori
             return self.mw.tab_fornitori.currentWidget()
-        elif main_idx == 1:  # SafeWork
+        if main_idx == 1:  # SafeWork
             return self.mw.tab_safework.currentWidget()
         return None
 

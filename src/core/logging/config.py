@@ -3,7 +3,6 @@ Configurazione sistema di logging.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from src.core import config_manager
 
@@ -57,7 +56,7 @@ class LoggingConfig:
         ):
             directory.mkdir(parents=True, exist_ok=True)
 
-    def get_bot_log_path(self, bot_name: str, trace_id: Optional[str] = None) -> Path:
+    def get_bot_log_path(self, bot_name: str, trace_id: str | None = None) -> Path:
         """
         Restituisce path per log specifico bot.
 
@@ -68,10 +67,7 @@ class LoggingConfig:
         Returns:
             Path al file log del bot
         """
-        if trace_id:
-            filename = f"{bot_name}_{trace_id}.json"
-        else:
-            filename = f"{bot_name}.json"
+        filename = f"{bot_name}_{trace_id}.json" if trace_id else f"{bot_name}.json"
 
         return self.bots_dir / filename
 

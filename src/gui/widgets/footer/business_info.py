@@ -1,5 +1,3 @@
-from typing import Optional
-
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
@@ -54,9 +52,7 @@ class FooterLeftWidget(QWidget):
         self.hw_id_item = QLabel()
         self.hw_id_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px;")
         self.last_login_item = QLabel()
-        self.last_login_item.setStyleSheet(
-            f"color: {self.TEXT_COLOR}; font-size: 13px;"
-        )
+        self.last_login_item.setStyleSheet(f"color: {self.TEXT_COLOR}; font-size: 13px;")
         v2.addWidget(self.hw_id_item)
         v2.addWidget(self.last_login_item)
         layout.addWidget(col2)
@@ -91,9 +87,7 @@ class FooterLeftWidget(QWidget):
         )
         layout.addWidget(line)
 
-    def update_info(
-        self, client: str, expiry: str, last_login: str = "", hw_id: str = ""
-    ):
+    def update_info(self, client: str, expiry: str, last_login: str = "", hw_id: str = ""):
         self.client_item.setText(f"<b>Cliente:</b> {client}")
         self.expiry_item.setText(f"<b>Scadenza:</b> {expiry}")
         if hw_id:
@@ -108,7 +102,7 @@ class FooterLeftWidget(QWidget):
         self.portale_item.setText(f"<b>🌐 Portale:</b> {portale or 'N.C.'}")
         self.safe_item.setText(f"<b>🛡️ SafeWork:</b> {safe or 'N.C.'}")
 
-    def _get_def(self, accounts: list) -> Optional[str]:
+    def _get_def(self, accounts: list) -> str | None:
         for a in accounts:
             if a.get("default"):
                 return a.get("username")

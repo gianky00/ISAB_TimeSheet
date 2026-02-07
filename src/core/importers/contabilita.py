@@ -1,21 +1,23 @@
-# flake8: noqa: FURB184
 import logging
 import re
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import ClassVar
 
 import pandas as pd
 
 from src.core.importers.base import BaseImporter
 from src.core.schemas import validate_contabilita
 
+logger = logging.getLogger(__name__)
+
 
 class ContabilitaImporter(BaseImporter):
     """Importer specifico per i dati di Contabilità."""
 
     # Mapping colonne Excel -> DB
-    COLUMNS_MAPPING = {
+    COLUMNS_MAPPING: ClassVar[dict[str, str]] = {
         "DATA PREV.": "data_prev",
         "MESE": "mese",
         "N° PREV.": "n_prev",
@@ -51,15 +53,15 @@ class ContabilitaImporter(BaseImporter):
                 sheet_names = re.findall(r'name="([^"]+)"', wb_xml)
                 return len([s for s in sheet_names if re.search(r"(\d{4})", s)])
         except Exception as e:
-            logging.debug(f"Scan excel sheets error: {e}")
+            logger.debug(f"Scan excel sheets error: {e}")
             return 1
 
     @classmethod
     def import_contabilita_dati(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, list, list]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, list, list]:
         """
         Importa i dati dal file Excel specificato (Tabella Dati).
         """
@@ -71,9 +73,7 @@ class ContabilitaImporter(BaseImporter):
             file_obj, _ = cls._decrypt_if_encrypted(path)
             xls = cls._get_excel_file(file_obj)
 
-            valid_sheets = [
-                str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))
-            ]
+            valid_sheets = [str(s) for s in xls.sheet_names if cls._identify_sheet_year(str(s))]
             if not valid_sheets:
                 return (
                     False,
@@ -82,9 +82,7 @@ class ContabilitaImporter(BaseImporter):
                     [],
                 )
 
-            all_rows, imported_years = cls._process_all_sheets(
-                xls, valid_sheets, progress_callback
-            )
+            all_rows, imported_years = cls._process_all_sheets(xls, valid_sheets, progress_callback)
 
             if not imported_years:
                 return (
@@ -102,13 +100,13 @@ class ContabilitaImporter(BaseImporter):
             )
 
         except Exception as e:
-            logging.error(f"Errore importazione Excel: {e}")
+            logger.error(f"Errore importazione Excel: {e}")
             return False, f"Errore critico importazione: {e}", [], []
 
     @classmethod
     def _process_all_sheets(
-        cls, xls, sheet_names: List[str], progress_callback: Optional[Callable]
-    ) -> Tuple[List[Tuple], List[int]]:
+        cls, xls, sheet_names: list[str], progress_callback: Callable | None
+    ) -> tuple[list[tuple], list[int]]:
         """Cicla sui fogli e aggrega i risultati."""
         all_rows = []
         imported_years = []
@@ -130,17 +128,15 @@ class ContabilitaImporter(BaseImporter):
         return all_rows, imported_years
 
     @classmethod
-    def _process_single_sheet(cls, xls, sheet_name: str, year: int) -> List[Tuple]:
+    def _process_single_sheet(cls, xls, sheet_name: str, year: int) -> list[tuple]:
         """Processa un singolo foglio del file Excel di contabilità."""
         try:
-            pd = cls._get_pd()
+            pd_obj = cls._get_pd()
             header_row_idx = cls._find_header_row(xls, sheet_name)
             try:
-                df = pd.read_excel(
-                    xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ"
-                )
+                df = pd_obj.read_excel(xls, sheet_name=sheet_name, header=header_row_idx, usecols="A:AZ")
             except Exception:
-                df = pd.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
+                df = pd_obj.read_excel(xls, sheet_name=sheet_name, header=header_row_idx)
 
             df.columns = df.columns.astype(str).str.strip().str.upper()
 
@@ -155,7 +151,7 @@ class ContabilitaImporter(BaseImporter):
             df = cls._ensure_required_columns(cls._normalize_columns(df))
 
             # Preparazione finale dati
-            target_columns = ["year"] + list(cls.COLUMNS_MAPPING.values())
+            target_columns = ["year", *list(cls.COLUMNS_MAPPING.values())]
             df = df[target_columns].copy()
 
             # --- Gestione Tipi Intelligente ---
@@ -164,56 +160,52 @@ class ContabilitaImporter(BaseImporter):
                     continue
 
                 if col in ("totale_prev", "ore_sp"):
-                    df[col] = pd.to_numeric(df[col], errors="coerce")
+                    df[col] = pd_obj.to_numeric(df[col], errors="coerce")
                     df[col] = df[col].round(2)
 
                 elif col == "data_prev":
-                    df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime(
-                        "%Y-%m-%d"
-                    )
+                    df[col] = pd_obj.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d")
 
                 elif col == "resa":
                     df[col] = df[col].apply(
                         lambda x: (
                             str(round(float(x), 2))
-                            if pd.notna(x)
-                            and str(x)
-                            .replace(".", "")
-                            .replace(",", "")
-                            .replace("-", "")
-                            .isdigit()
+                            if pd_obj.notna(x)
+                            and str(x).replace(".", "").replace(",", "").replace("-", "").isdigit()
                             else str(x).strip()
-                            if pd.notna(x)
+                            if pd_obj.notna(x)
                             else ""
                         )
                     )
                 else:
-                    df[col] = (
-                        df[col]
-                        .astype(str)
-                        .str.strip()
-                        .replace(r"(?i)^nan$", "", regex=True)
-                    )
+                    df[col] = df[col].astype(str).str.strip().replace(r"(?i)^nan$", "", regex=True)
 
             df = df.fillna("")
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
-            logging.warning(f"Errore processamento foglio {sheet_name}: {e}")
+            logger.warning(f"Errore processamento foglio {sheet_name}: {e}")
             return []
 
     @classmethod
     def _find_header_row(cls, xls, sheet_name) -> int:
         """Cerca l'indice della riga di intestazione basandosi su colonne chiave."""
-        pd = cls._get_pd()
-        preview_df = pd.read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
+        pd_obj = cls._get_pd()
+        preview_df = pd_obj.read_excel(xls, sheet_name=sheet_name, header=None, nrows=15)
         key_cols_norm = ["DATAPREV", "MESE", "NPREV", "TOTALEPREV", "ATTIVITA", "ODC"]
 
-        # refurb: ignore FURB184
-        for i_raw, row in preview_df.iterrows():  # noqa: FURB184
-            if sum(
-                1 for k in key_cols_norm
-                if k in (str(val).strip().upper().replace(" ", "").replace(".", "").replace("°", "") for val in row.values)
-            ) >= 2:
+        for i_raw, row in preview_df.iterrows():
+            if (
+                sum(
+                    1
+                    for k in key_cols_norm
+                    if k
+                    in (
+                        str(val).strip().upper().replace(" ", "").replace(".", "").replace("°", "")
+                        for val in row.values
+                    )
+                )
+                >= 2
+            ):
                 return int(i_raw)
         return 0
 
@@ -242,9 +234,7 @@ class ContabilitaImporter(BaseImporter):
         try:
             df = validate_contabilita(df)
         except Exception as e:
-            logging.warning(
-                f"Validazione Pandera Contabilità fallita (uso fallback): {e})"
-            )
+            logger.warning(f"Validazione Pandera Contabilità fallita (uso fallback): {e}")
 
         return df
 

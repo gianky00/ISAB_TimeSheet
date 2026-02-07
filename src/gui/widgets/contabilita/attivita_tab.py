@@ -1,7 +1,7 @@
 import json
 from contextlib import suppress
-from datetime import datetime
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, ClassVar
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor
@@ -30,7 +30,7 @@ from src.utils.helpers import get_asset_path, get_colored_icon
 class AttivitaProgrammateTab(QWidget):
     """Tab per Attività Programmate."""
 
-    COLUMNS = [
+    COLUMNS: ClassVar[list[str]] = [
         "PS",
         "AREA",
         "PdL",
@@ -163,20 +163,14 @@ class AttivitaProgrammateTab(QWidget):
                 self.table.setColumnWidth(col, int(current_width * 1.1) + 15)
 
         # Imposta Stretch per colonne con testo lungo (dopo aver ridimensionato le altre)
-        header.setSectionResizeMode(
-            4, QHeaderView.ResizeMode.Stretch
-        )  # DESCRIZIONE ATTIVITA'
-        header.setSectionResizeMode(
-            11, QHeaderView.ResizeMode.Stretch
-        )  # STATO ATTIVITA'
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # DESCRIZIONE ATTIVITA'
+        header.setSectionResizeMode(11, QHeaderView.ResizeMode.Stretch)  # STATO ATTIVITA'
         header.setSectionResizeMode(15, QHeaderView.ResizeMode.Stretch)  # AVVISO
 
     def _populate_table_row(self, row_idx: int, row_data: tuple, db_keys: list):
         styles_idx = len(self.COLUMNS)
         row_styles = (
-            json.loads(row_data[styles_idx])
-            if len(row_data) > styles_idx and row_data[styles_idx]
-            else {}
+            json.loads(row_data[styles_idx]) if len(row_data) > styles_idx and row_data[styles_idx] else {}
         )
 
         for col_idx in range(len(self.COLUMNS)):
@@ -193,12 +187,10 @@ class AttivitaProgrammateTab(QWidget):
             return ""
         if col_idx == 12 and s:
             with suppress(Exception):
-                return datetime.strptime(s.split(" ")[0], "%Y-%m-%d").strftime(
-                    "%d/%m/%Y"
-                )
+                return datetime.strptime(s.split(" ")[0], "%Y-%m-%d").replace(tzinfo=UTC).strftime("%d/%m/%Y")
         return s
 
-    def _apply_item_style(self, item: QTableWidgetItem, style: Optional[dict]):
+    def _apply_item_style(self, item: QTableWidgetItem, style: dict | None):
         if not style:
             return
         if "fg" in style:
@@ -231,13 +223,9 @@ class AttivitaProgrammateTab(QWidget):
         f_ps, f_po = self.chk_ps.isChecked(), self.chk_po.isChecked()
         f_area, f_stato = self.combo_area.currentText(), self.combo_stato.currentText()
         for r in range(self.table.rowCount()):
-            self.table.setRowHidden(
-                r, self._should_hide_row(r, f_ps, f_po, f_area, f_stato)
-            )
+            self.table.setRowHidden(r, self._should_hide_row(r, f_ps, f_po, f_area, f_stato))
 
-    def _should_hide_row(
-        self, row: int, f_ps: bool, f_po: bool, f_area: str, f_stato: str
-    ) -> bool:
+    def _should_hide_row(self, row: int, f_ps: bool, f_po: bool, f_area: str, f_stato: str) -> bool:
         """Determina se una riga deve essere nascosta in base ai filtri attivi."""
         if self._is_ps_missing(row, f_ps):
             return True
@@ -245,9 +233,7 @@ class AttivitaProgrammateTab(QWidget):
             return True
         if self._is_area_mismatch(row, f_area):
             return True
-        if self._is_stato_mismatch(row, f_stato):
-            return True
-        return False
+        return bool(self._is_stato_mismatch(row, f_stato))
 
     def _is_ps_missing(self, row: int, active: bool) -> bool:
         if not active:
@@ -289,11 +275,7 @@ class AttivitaProgrammateTab(QWidget):
                 continue
             if text:
                 row_text = " ".join(
-                    [
-                        self.table.item(r, c).text().lower()
-                        for c in range(cols)
-                        if self.table.item(r, c)
-                    ]
+                    [self.table.item(r, c).text().lower() for c in range(cols) if self.table.item(r, c)]
                 )
                 if not all(term in row_text for term in search_terms):
                     self.table.setRowHidden(r, True)

@@ -40,6 +40,8 @@ tenacity = "*"
 loguru = "*"
 faker = "*"
 email-validator = "*"
+numpy = ">=1.26.0"
+psutil = ">=5.9.0"
 jaraco-text = "^4.0.0"
 jaraco-context = "^6.1.0"
 
@@ -49,7 +51,6 @@ pytest-qt = "4.3.1"
 pytest-mock = "3.12.0"
 pytest-cov = "*"
 pytest-asyncio = "*"
-black = "^25.12.0"
 ruff = "^0.14.10"
 scalene = "^2.0.1"
 mypy = "*"
@@ -87,23 +88,194 @@ syncrojob = "main:main"
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=src --cov-report=html --cov-report=term-missing"
 asyncio_mode = "auto"
+markers = [
+    "unit: Test unitari puri (veloci, no I/O, no GUI complessa)",
+    "gui: Test che istanziano widget PyQt (lenti, consumano risorse)",
+    "integration: Test che toccano DB o File System reali",
+    "slow: Test lenti da escludere nel dev loop rapido",
+]
+filterwarnings = [
+    "ignore:datetime.datetime.utcnow() is deprecated:DeprecationWarning",
+    "ignore::DeprecationWarning:openpyxl.*",
+]
 
-[tool.black]
+# ═══════════════════════════════════════════════════════════════
+# Ruff - Linter + Formatter (sostituisce Black, Isort, Flake8)
+# ═══════════════════════════════════════════════════════════════
+[tool.ruff]
+target-version = "py312"
 line-length = 110
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "temp",
+    "site",
+    "htmlcov",
+    "config/vulture_whitelist.py",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # Pyflakes (import/nome undefined)
+    "I",     # isort (ordinamento import)
+    "B",     # flake8-bugbear (bug comuni)
+    "SIM",   # flake8-simplify (semplificazioni)
+    "UP",    # pyupgrade (sintassi moderna py312)
+    "C4",    # flake8-comprehensions (list/dict comp migliori)
+    "PERF",  # perflint (performance antipattern)
+    "FURB",  # refurb (modernizzazione codice)
+    "RUF",   # regole ruff-specifiche
+    "TCH",   # flake8-type-checking (import solo per type hints → TYPE_CHECKING)
+    "PTH",   # flake8-use-pathlib (Path invece di os.path)
+    "DTZ",   # flake8-datetimez (timezone-aware datetime)
+    "RET",   # flake8-return (return inutili/mancanti)
+    "PIE",   # flake8-pie (antipattern vari)
+    "T20",   # flake8-print (print() rimasti nel codice)
+    "LOG",   # flake8-logging (logging antipattern)
+    "S",     # flake8-bandit (security checks, sostituisce bandit standalone)
+]
+ignore = [
+    "E501",   # line-too-long: gestito dal formatter
+    "RET504", # unnecessary-assign: a volte migliora leggibilita'
+    "DTZ005", # datetime.now() senza tz: troppo rumoroso su codice legacy
+    "T201",   # print found: il progetto usa print in script e console
+    "S603",   # subprocess-without-shell-check: gestito caso per caso
+    "S607",   # start-process-with-partial-path: idem
+    "S608",   # hardcoded-sql-expression: gia' ignorato in [tool.bandit]
+    "RUF001", # ambiguous-unicode-character-string: emoji sono intenzionali nella GUI
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test: permettiamo assert, password fittizie, print, temp files e nested with
+"tests/**/*.py" = ["S101", "S105", "S106", "S108", "ANN201", "T201", "DTZ", "SIM117", "F821", "F841"]
+# __init__.py: re-export senza uso diretto
+"**/__init__.py" = ["F401"]
+# Script e admin: meno severi
+"scripts/**/*.py" = ["T201", "DTZ", "PTH", "S108"]
+"admin/**/*.py" = ["T201", "DTZ", "PTH", "S108", "E402"]
+# main.py: entry point
+"main.py" = ["T201", "E402"]
+"tools/**/*.py" = ["T201", "PTH"]
+"*.py" = ["PTH"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+force-single-line = false
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
 
 [tool.mypy]
 mypy_path = "."
 explicit_package_bases = true
 namespace_packages = true
 exclude = ["build", "dist", "config/vulture_whitelist.py", "admin", "tests"]
+
+# ── Strict Core ──────────────────────────────────────────────
+# Ogni funzione DEVE avere type hints (elimina Any implicito)
+disallow_untyped_defs = true
+# Controlla anche il body delle funzioni non ancora tipizzate
+check_untyped_defs = true
+# Impedisce di decorare funzioni tipizzate con decoratori non tipizzati
+disallow_untyped_decorators = true
+# Vieta def foo(x=None) senza scrivere Optional[X] / X | None
+no_implicit_optional = true
+
+# ── Warn & Catch ─────────────────────────────────────────────
+# Se una funzione ritorna Any e lo usi come tipo strutturato → errore
+warn_return_any = true
+# Segnala # type: ignore rimasti orfani
+warn_unused_ignores = true
+# Segnala variabili/importazioni con tipo ridondante
+warn_redundant_casts = true
+# Segnala branch che non vengono mai raggiunti secondo i tipi
+warn_unreachable = true
+
+# ── Import Safety ────────────────────────────────────────────
+# NON ignorare globalmente gli import mancanti
+ignore_missing_imports = false
+
+# ── Strictness extras ───────────────────────────────────────
+# Impedisce chiamate a funzioni con troppi/pochi argomenti su Any
+disallow_any_generics = true
+# Forza annotazione esplicita per variabili quando il tipo e' Any
+disallow_any_unimported = true
+strict_equality = true
+strict_concatenate = true
+show_error_codes = true
+show_column_numbers = true
+pretty = true
+
+# ── Override per librerie terze SENZA type stubs ─────────────
+# Regola: aggiungi qui SOLO i moduli che non hanno stubs ufficiali.
+# Se esce uno stub nuovo (es. types-selenium), rimuovi la riga.
+
+[[tool.mypy.overrides]]
+module = [
+    "selenium.*",
+    "webdriver_manager.*",
+    "PIL.*",
+    "pyarrow.*",
+    "matplotlib.*",
+    "msoffcrypto.*",
+    "fitz.*",                    # pymupdf
+    "telegram.*",                # python-telegram-bot
+    "pandera.*",
+    "tenacity.*",
+    "loguru.*",
+    "faker.*",
+    "pyinstaller.*",
+    "PyInstaller.*",
+    "platformdirs.*",
+    "numpy.*",
+    "psutil.*",
+    "win32api.*",
+    "win32con.*",
+    "win32gui.*",
+    "win32print.*",
+    "win32ui.*",
+    "pywintypes.*",
+    "scalene.*",
+    "icecream.*",
+    "email_validator.*",
+    "jaraco.*",
+]
 ignore_missing_imports = true
-check_untyped_defs = false
+
+# ── Override per i test (piu' permissivo) ────────────────────
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_decorators = false
 
 [tool.deptry]
-ignore = ["DEP001", "DEP002", "DEP003", "DEP004"]
 known_first_party = ["src"]
+exclude = ["build", "dist", "temp", "admin", "scripts", "site", "docs", "graveyard"]
+# NON ignoriamo piu' globalmente: ogni eccezione e' documentata.
+[tool.deptry.per_rule_ignores]
+# DEP001 (imported but not declared): nessuna eccezione necessaria al momento
+DEP001 = []
+# DEP002 (declared but not imported): meta-packages e build tools
+DEP002 = [
+    "pyarrow",        # backend engine per pandas, non importato direttamente
+    "setuptools",     # build dependency
+    "pyinstaller",    # build tool
+    "PyQt6-Qt6",      # meta-package runtime di PyQt6
+    "PyQt6-sip",      # meta-package SIP bindings di PyQt6
+    "jaraco-text",    # dipendenza richiesta da keyring
+    "jaraco-context",  # dipendenza richiesta da keyring
+]
 
 [tool.codespell]
 skip = "*.pyc,*.ico,*.qss,*.lock,*.db,*.iss,*.csv,*.js,*.html,*.css,*.map,*.pem,./build/*,./dist/*,./temp/*,./.venv/*,./.git/*,./.ruff_cache/*,./.pytest_cache/*,./.hypothesis/*,./data/*,./htmlcov/*,./claude/*,./site/*,./admin/Crea Setup/*,./admin/Crea Licenze/*"

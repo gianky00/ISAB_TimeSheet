@@ -4,7 +4,6 @@ Implementa il Lazy Loading per ottimizzare le prestazioni.
 """
 
 import logging
-from typing import Optional
 
 from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QMessageBox
@@ -57,7 +56,7 @@ class NavigationController(QObject):
 
         return panel
 
-    def _create_panel_by_index(self, index: int) -> Optional[QObject]:
+    def _create_panel_by_index(self, index: int) -> QObject | None:
         """Factory method per la creazione dei pannelli in base all'indice."""
         creators = {
             0: self._create_dashboard,
@@ -87,15 +86,11 @@ class NavigationController(QObject):
         if hasattr(self.mw.dashboard_panel, "autopilot_widget"):
             # Aggiornamento Login Accounts
             if hasattr(self.mw, "footer_left"):
-                self.mw.dashboard_panel.autopilot_widget.set_footer_widget(
-                    self.mw.footer_left
-                )
+                self.mw.dashboard_panel.autopilot_widget.set_footer_widget(self.mw.footer_left)
 
             # Aggiornamento Status Cards (Autopilot UI)
             if hasattr(self.mw, "status_bar_component"):
-                self.mw.dashboard_panel.autopilot_widget.set_status_bar(
-                    self.mw.status_bar_component
-                )
+                self.mw.dashboard_panel.autopilot_widget.set_status_bar(self.mw.status_bar_component)
 
         return self.mw.dashboard_panel
 
@@ -202,9 +197,7 @@ class NavigationController(QObject):
             and not getattr(self.mw, "_timbrature_signals_connected", False)
         ):
             try:
-                self.mw.timbrature_bot_panel.data_updated.connect(
-                    self.mw.timbrature_db_panel.refresh_data
-                )
+                self.mw.timbrature_bot_panel.data_updated.connect(self.mw.timbrature_db_panel.refresh_data)
                 self.mw._timbrature_signals_connected = True
                 logger.info("Signal: Timbrature Bot -> DB connected.")
             except Exception as e:
@@ -217,9 +210,7 @@ class NavigationController(QObject):
             and not getattr(self.mw, "_timbrature_dipendenti_signals_connected", False)
         ):
             try:
-                self.mw.timbrature_bot_panel.data_updated.connect(
-                    self.mw.dipendenti_panel.refresh_data
-                )
+                self.mw.timbrature_bot_panel.data_updated.connect(self.mw.dipendenti_panel.refresh_data)
                 self.mw._timbrature_dipendenti_signals_connected = True
                 logger.info("Signal: Timbrature Bot -> Dipendenti connected.")
             except Exception as e:
@@ -232,26 +223,27 @@ class NavigationController(QObject):
             and not getattr(self.mw, "_pdl_signals_connected", False)
         ):
             try:
-                self.mw.pdl_search_panel.data_updated.connect(
-                    self.mw.pdl_db_panel.refresh_data
-                )
+                self.mw.pdl_search_panel.data_updated.connect(self.mw.pdl_db_panel.refresh_data)
                 self.mw._pdl_signals_connected = True
                 logger.info("Signal: PDL Search -> DB connected.")
             except Exception as e:
                 logger.error(f"Signal: PDL Search Connection Failed: {e}")
 
-    def navigate_to(self, index: int, sub_index: Optional[int] = None):
+    def navigate_to(self, index: int, sub_index: int | None = None):
         """Navigazione con Lazy Loading."""
         if index == self.mw._current_page_index and sub_index is None:
             self.mw.sidebar.set_active_button(index)
             return
 
         # Controllo salvataggio impostazioni se stiamo lasciando il pannello SETTINGS (7)
-        if self.mw._current_page_index == 7 and hasattr(self.mw, "settings_panel"):
-            if self.mw.settings_panel.has_unsaved_changes():
-                if not self.mw.settings_panel.prompt_save_if_needed():
-                    self.mw.sidebar.set_active_button(self.mw._current_page_index)
-                    return
+        if (
+            self.mw._current_page_index == 7
+            and hasattr(self.mw, "settings_panel")
+            and self.mw.settings_panel.has_unsaved_changes()
+            and not self.mw.settings_panel.prompt_save_if_needed()
+        ):
+            self.mw.sidebar.set_active_button(self.mw._current_page_index)
+            return
 
         # Assicurati che il pannello di destinazione sia caricato
         self.get_panel(index)
@@ -316,6 +308,4 @@ class NavigationController(QObject):
     def analyze_with_lyra(self, context_text: str):
         """Passa alla vista Lyra."""
         self.navigate_to(2)  # LYRA
-        self.mw.lyra_panel.ask_lyra(
-            "Analizza questi dati e dimmi se ci sono anomalie.", context_text
-        )
+        self.mw.lyra_panel.ask_lyra("Analizza questi dati e dimmi se ci sono anomalie.", context_text)

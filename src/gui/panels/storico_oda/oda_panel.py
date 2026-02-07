@@ -4,7 +4,6 @@ Pannello per la visualizzazione del Database Storico OdA con architettura Master
 """
 
 from datetime import datetime
-from typing import List, Tuple
 
 from PyQt6.QtCore import QDate, Qt, QTimer
 from PyQt6.QtGui import QFont, QStandardItem, QStandardItemModel
@@ -141,20 +140,14 @@ class StoricoOdaPanel(QWidget):
 
         # Header Styling
         header = self.tree.header()
-        header.setSectionResizeMode(
-            0, QHeaderView.ResizeMode.ResizeToContents
-        )  # Data OdA
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Data OdA
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # OdA
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Pos
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # CREATO DA
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)  # Descrizione
-        header.setSectionResizeMode(
-            5, QHeaderView.ResizeMode.ResizeToContents
-        )  # Valore Netto
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Valore Netto
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)  # Stato
-        header.setSectionResizeMode(
-            7, QHeaderView.ResizeMode.ResizeToContents
-        )  # Ind. Rilascio
+        header.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)  # Ind. Rilascio
 
         self.tree.setColumnWidth(0, 100)
         self.tree.setColumnWidth(1, 90)
@@ -175,9 +168,7 @@ class StoricoOdaPanel(QWidget):
 
     def refresh_data(self):
         """Aggiorna i dati della tabella."""
-        self.filters.set_sync_status(
-            f"Ultimo Sync: {SyncTracker.get_formatted_status('storico_oda')}"
-        )
+        self.filters.set_sync_status(f"Ultimo Sync: {SyncTracker.get_formatted_status('storico_oda')}")
 
         search_text = self.filters.search_input.text().strip()
         try:
@@ -187,7 +178,7 @@ class StoricoOdaPanel(QWidget):
         except Exception as e:
             print(f"Errore caricamento Storico OdA: {e}")
 
-    def _populate_tree(self, full_rows: List[Tuple]):
+    def _populate_tree(self, full_rows: list[tuple]):
         """Popola il modello ad albero raggruppando per ODA + POS."""
         self.model.removeRows(0, self.model.rowCount())
 
@@ -250,12 +241,8 @@ class StoricoOdaPanel(QWidget):
 
             # Col 0: Descrizione (per merge con Col 1 via Delegate)
             c_desc_merged = QStandardItem(desc)
-            c_desc_merged.setTextAlignment(
-                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-            )
-            c_desc_merged.setData(
-                r, Qt.ItemDataRole.UserRole
-            )  # Per dettaglio anche sui figli
+            c_desc_merged.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            c_desc_merged.setData(r, Qt.ItemDataRole.UserRole)  # Per dettaglio anche sui figli
 
             # Col 1-4: Empty
             c_empty_1 = QStandardItem("")
@@ -345,27 +332,19 @@ class StoricoOdaPanel(QWidget):
             ToastManager.instance().show("Avvio importazione OdA...", "info")
             success, message, added, _ = OdaManager.import_oda_from_excel(file_path)
             if success:
-                ToastManager.instance().show(
-                    f"Importazione completata: {added} righe aggiornate.", "success"
-                )
+                ToastManager.instance().show(f"Importazione completata: {added} righe aggiornate.", "success")
                 self.refresh_data()
             else:
-                QMessageBox.warning(
-                    self, "Errore Importazione", f"Impossibile importare:\n{message}"
-                )
+                QMessageBox.warning(self, "Errore Importazione", f"Impossibile importare:\n{message}")
         except Exception as e:
-            QMessageBox.critical(
-                self, "Errore Critico", f"Errore durante l'importazione:\n{e}"
-            )
+            QMessageBox.critical(self, "Errore Critico", f"Errore durante l'importazione:\n{e}")
 
     def _on_update_clicked(self):
         """Avvia il bot Dettagli OdA per sincronizzare i dati."""
         try:
             account = config_manager.get_default_account()
             if not account:
-                QMessageBox.warning(
-                    self, "Attenzione", "Credenziali ISAB non configurate."
-                )
+                QMessageBox.warning(self, "Attenzione", "Credenziali ISAB non configurate.")
                 return
             username, password = account.get("username"), account.get("password")
 
@@ -428,17 +407,13 @@ class StoricoOdaPanel(QWidget):
             ToastManager.instance().show("Aggiornamento completato!", "success")
             self.refresh_data()
         else:
-            QMessageBox.warning(
-                self, "Errore", "Il bot ha terminato con errori. Controlla i log."
-            )
+            QMessageBox.warning(self, "Errore", "Il bot ha terminato con errori. Controlla i log.")
 
     def _show_confirmation_dialog(self, title: str, message: str) -> bool:
         dlg = QDialog(self)
         dlg.setWindowTitle(title)
         dlg.setMinimumWidth(350)
-        dlg.setWindowFlags(
-            dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
-        )
+        dlg.setWindowFlags(dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
         layout = QVBoxLayout(dlg)
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -477,6 +452,6 @@ class StoricoOdaPanel(QWidget):
             ToastManager.instance().show("Esportazione completata!", "success")
             import os
 
-            os.startfile(filename)
+            os.startfile(filename)  # noqa: S606
         except Exception as e:
             QMessageBox.critical(self, "Errore Export", f"Impossibile esportare: {e}")

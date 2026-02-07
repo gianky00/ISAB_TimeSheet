@@ -8,7 +8,7 @@ from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .config import get_config
 
@@ -18,8 +18,8 @@ class LogQuery:
 
     def __init__(self, log_file: Path):
         self.log_file = log_file
-        self.filters: List[Any] = []
-        self._limit: Optional[int] = None
+        self.filters: list[Any] = []
+        self._limit: int | None = None
         self._offset: int = 0
 
     def level(self, *levels: str) -> "LogQuery":
@@ -46,10 +46,7 @@ class LogQuery:
 
         def filter_fn(entry):
             context = entry.get("context", {})
-            for key, value in kwargs.items():
-                if context.get(key) != value:
-                    return False
-            return True
+            return all(context.get(key) == value for key, value in kwargs.items())
 
         self.filters.append(filter_fn)
         return self
@@ -62,9 +59,7 @@ class LogQuery:
         """Filtra per bot_type."""
         return self.context_match(bot_type=bot_type)
 
-    def time_range(
-        self, start: Optional[datetime] = None, end: Optional[datetime] = None
-    ) -> "LogQuery":
+    def time_range(self, start: datetime | None = None, end: datetime | None = None) -> "LogQuery":
         """Filtra per range temporale."""
 
         def filter_fn(entry):
@@ -76,9 +71,7 @@ class LogQuery:
 
             if start and timestamp < start:
                 return False
-            if end and timestamp > end:
-                return False
-            return True
+            return not (end and timestamp > end)
 
         self.filters.append(filter_fn)
         return self
@@ -98,7 +91,7 @@ class LogQuery:
         self._offset = count
         return self
 
-    def execute(self) -> List[Dict[str, Any]]:
+    def execute(self) -> list[dict[str, Any]]:
         """Esegue query e restituisce risultati."""
         if not self.log_file.exists():
             return []
@@ -106,23 +99,22 @@ class LogQuery:
         results = []
         skipped = 0
 
-        with suppress(Exception):
-            with self.log_file.open("r", encoding="utf-8") as f:
-                for line in f:
-                    entry = json.loads(line)
+        with suppress(Exception), self.log_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                entry = json.loads(line)
 
-                    # Applica filtri
-                    if all(filter_fn(entry) for filter_fn in self.filters):
-                        # Applica offset
-                        if skipped < self._offset:
-                            skipped += 1
-                            continue
+                # Applica filtri
+                if all(filter_fn(entry) for filter_fn in self.filters):
+                    # Applica offset
+                    if skipped < self._offset:
+                        skipped += 1
+                        continue
 
-                        results.append(entry)
+                    results.append(entry)
 
-                        # Applica limit
-                        if self._limit and len(results) >= self._limit:
-                            break
+                    # Applica limit
+                    if self._limit and len(results) >= self._limit:
+                        break
 
         return results
 
@@ -133,12 +125,11 @@ class LogQuery:
 
         count = 0
 
-        with suppress(Exception):
-            with self.log_file.open("r", encoding="utf-8") as f:
-                for line in f:
-                    entry = json.loads(line)
-                    if all(filter_fn(entry) for filter_fn in self.filters):
-                        count += 1
+        with suppress(Exception), self.log_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                entry = json.loads(line)
+                if all(filter_fn(entry) for filter_fn in self.filters):
+                    count += 1
 
         return count
 
@@ -176,23 +167,23 @@ class LogViewer:
 
         return LogQuery(log_file)
 
-    def get_level_stats(self) -> Dict[str, int]:
+    def get_level_stats(self) -> dict[str, int]:
         """
         Statistiche per livello.
 
         Returns:
             Dict level -> count
         """
-        stats: Dict[str, int] = defaultdict(int)
+        stats: dict[str, int] = defaultdict(int)
 
         results = self.query().execute()
         for entry in results:
             level = entry.get("level", "UNKNOWN")
             stats[level] += 1
 
-        return stats.copy()
+        return dict(stats)
 
-    def get_error_summary(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_error_summary(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Summary errori più frequenti.
 
@@ -202,7 +193,7 @@ class LogViewer:
         Returns:
             Lista di errori con count
         """
-        error_messages: Dict[str, int] = defaultdict(int)
+        error_messages: dict[str, int] = defaultdict(int)
         error_details = {}
 
         results = self.query("errors").execute()
@@ -215,24 +206,18 @@ class LogViewer:
                 error_details[message] = {
                     "message": message,
                     "first_seen": entry.get("timestamp"),
-                    "exception_type": (
-                        entry.get("exception", {}).get("type", "unknown")
-                    ),
+                    "exception_type": (entry.get("exception", {}).get("type", "unknown")),
                     "count": 0,
                 }
 
             error_details[message]["count"] = error_messages[message]
 
         # Ordina per count
-        sorted_errors = sorted(
-            error_details.values(), key=operator.itemgetter("count"), reverse=True
-        )
+        sorted_errors = sorted(error_details.values(), key=operator.itemgetter("count"), reverse=True)
 
         return sorted_errors[:limit]
 
-    def get_slow_operations(
-        self, threshold_ms: float = 5000, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_slow_operations(self, threshold_ms: float = 5000, limit: int = 10) -> list[dict[str, Any]]:
         """
         Operazioni più lente.
 
@@ -255,9 +240,7 @@ class LogViewer:
                 slow_ops.append(
                     {
                         "timestamp": entry.get("timestamp"),
-                        "operation": entry.get("context", {}).get(
-                            "function", "unknown"
-                        ),
+                        "operation": entry.get("context", {}).get("function", "unknown"),
                         "duration_ms": duration,
                         "message": entry.get("message"),
                         "trace_id": entry.get("context", {}).get("trace_id"),
@@ -269,7 +252,7 @@ class LogViewer:
 
         return slow_ops[:limit]
 
-    def reconstruct_trace(self, trace_id: str) -> List[Dict[str, Any]]:
+    def reconstruct_trace(self, trace_id: str) -> list[dict[str, Any]]:
         """
         Ricostruisce timeline completa di un trace.
 
@@ -286,9 +269,7 @@ class LogViewer:
 
         return results
 
-    def get_bot_runs_summary(
-        self, bot_type: Optional[str] = None, hours: int = 24
-    ) -> List[Dict[str, Any]]:
+    def get_bot_runs_summary(self, bot_type: str | None = None, hours: int = 24) -> list[dict[str, Any]]:
         """
         Summary bot runs recenti.
 
@@ -328,12 +309,8 @@ class LogViewer:
 
             # Calcola durata totale
             try:
-                start_time = datetime.fromisoformat(
-                    first.get("timestamp", "").replace("Z", "")
-                )
-                end_time = datetime.fromisoformat(
-                    last.get("timestamp", "").replace("Z", "")
-                )
+                start_time = datetime.fromisoformat(first.get("timestamp", "").replace("Z", ""))
+                end_time = datetime.fromisoformat(last.get("timestamp", "").replace("Z", ""))
                 duration_sec = (end_time - start_time).total_seconds()
             except Exception:
                 duration_sec = 0
@@ -359,7 +336,7 @@ class LogViewer:
 
         return summaries
 
-    def generate_health_report(self) -> Dict[str, Any]:
+    def generate_health_report(self) -> dict[str, Any]:
         """
         Genera report salute sistema.
 
@@ -373,7 +350,7 @@ class LogViewer:
         results = self.query().time_range(start, end).execute()
 
         # Statistiche base
-        level_stats: Dict[str, int] = defaultdict(int)
+        level_stats: dict[str, int] = defaultdict(int)
         for entry in results:
             level_stats[entry.get("level", "UNKNOWN")] += 1
 
@@ -391,15 +368,13 @@ class LogViewer:
             "timestamp": datetime.now().isoformat() + "Z",
             "period_hours": 24,
             "total_events": total,
-            "level_distribution": level_stats.copy(),
+            "level_distribution": dict(level_stats),
             "error_rate_percent": round(error_rate, 2),
             "bot_runs": {
                 "total": len(bot_runs),
                 "successful": successful_runs,
                 "failed": failed_runs,
-                "success_rate_percent": (
-                    round(successful_runs / len(bot_runs) * 100, 2) if bot_runs else 0
-                ),
+                "success_rate_percent": (round(successful_runs / len(bot_runs) * 100, 2) if bot_runs else 0),
             },
             "top_errors": self.get_error_summary(limit=5),
             "slow_operations": self.get_slow_operations(limit=5),
@@ -422,7 +397,7 @@ def query_logs(log_type: str = "application") -> LogQuery:
     return LogViewer().query(log_type)
 
 
-def view_trace(trace_id: str) -> List[Dict[str, Any]]:
+def view_trace(trace_id: str) -> list[dict[str, Any]]:
     """
     Visualizza timeline completa di un trace.
 
@@ -435,7 +410,7 @@ def view_trace(trace_id: str) -> List[Dict[str, Any]]:
     return LogViewer().reconstruct_trace(trace_id)
 
 
-def health_report() -> Dict[str, Any]:
+def health_report() -> dict[str, Any]:
     """
     Genera health report del sistema.
 

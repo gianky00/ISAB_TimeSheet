@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -56,7 +56,7 @@ class TestTimeManager:
         assert dt.year == 2015
         assert dt.month == 10
         assert dt.day == 21
-        assert dt.tzinfo == timezone.utc
+        assert dt.tzinfo == UTC
 
     @patch("src.core.time_manager.requests.head")
     def test_get_network_time_fail(self, mock_head):
@@ -73,4 +73,4 @@ class TestTimeManager:
 
         assert dt is not None
         assert trusted is False
-        assert dt.tzinfo == timezone.utc
+        assert dt.tzinfo == UTC

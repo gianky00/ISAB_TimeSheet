@@ -4,7 +4,7 @@ Supporta gradient backgrounds, animations, rich content e inline actions.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, ClassVar
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QAction
@@ -46,7 +46,7 @@ class NotificationCard(QFrame):
     action_triggered = pyqtSignal(str, str)  # notification_id, action_key
 
     # Level styles (colors, gradients, icons)
-    LEVEL_STYLES = {
+    LEVEL_STYLES: ClassVar[dict[str, dict[str, Any]]] = {
         "error": {
             "accent": "#F44336",
             "gradient": "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fff5f5, stop:1 #ffffff)",
@@ -80,7 +80,7 @@ class NotificationCard(QFrame):
     def __init__(
         self,
         notification: dict,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
         disable_animations: bool = False,
     ):
         super().__init__(parent)
@@ -107,10 +107,7 @@ class NotificationCard(QFrame):
         gradient = style["gradient"]
 
         # Background: gradient for unread, white for read
-        if not is_read:
-            bg = gradient
-        else:
-            bg = "#ffffff"
+        bg = gradient if not is_read else "#ffffff"
 
         # Stylesheet con border 4px e hover effect
         self.setStyleSheet(
@@ -180,9 +177,7 @@ class NotificationCard(QFrame):
         icon_path = style["icon"]
         icon_color = style["icon_color"]
         badge_bg = style["badge_bg"]
-        badge.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(18, 18)
-        )
+        badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(18, 18))
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setStyleSheet(
             f"""
@@ -378,10 +373,7 @@ class NotificationCard(QFrame):
         - Newlines → <br>
         """
         # Fast path: if no markdown syntax, return as-is with just <br> for newlines
-        if (
-            not any(char in text for char in ("*", "`", "[", "]", "(", ")"))
-            and "\n" not in text
-        ):
+        if not any(char in text for char in ("*", "`", "[", "]", "(", ")")) and "\n" not in text:
             return text
 
         import re
@@ -428,9 +420,9 @@ class NotificationCard(QFrame):
                     return "Adesso"
                 return f"{minutes}m fa"
             return f"{hours}h fa"
-        elif diff.days == 1:
+        if diff.days == 1:
             return "Ieri"
-        elif diff.days < 7:
+        if diff.days < 7:
             return f"{diff.days} giorni fa"
         return dt.strftime("%d/%m/%Y")
 
@@ -477,14 +469,10 @@ class NotificationCard(QFrame):
         mark_action = QAction(mark_text, self)
         if is_read:
             mark_action.triggered.connect(
-                lambda: self.manager.update_notification(
-                    self.notification["id"], {"read": False}
-                )
+                lambda: self.manager.update_notification(self.notification["id"], {"read": False})
             )
         else:
-            mark_action.triggered.connect(
-                lambda: self.manager.mark_as_read(self.notification["id"])
-            )
+            mark_action.triggered.connect(lambda: self.manager.mark_as_read(self.notification["id"]))
         menu.addAction(mark_action)
 
         # Pin/Unpin
@@ -492,9 +480,7 @@ class NotificationCard(QFrame):
         pin_text = "Rimuovi pin" if is_pinned else "Fissa"
         pin_action = QAction(pin_text, self)
         pin_action.triggered.connect(
-            lambda: self.manager.pin_notification(
-                self.notification["id"], not is_pinned
-            )
+            lambda: self.manager.pin_notification(self.notification["id"], not is_pinned)
         )
         menu.addAction(pin_action)
 

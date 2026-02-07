@@ -51,7 +51,7 @@ class TestScaricoTSPage:
         page._wait_for_overlay = MagicMock()
         page._download_excel = MagicMock(return_value=True)
 
-        assert page.search_and_download("123", "1", Path(".")) is True
+        assert page.search_and_download("123", "1", Path()) is True
         mock_driver.execute_script.assert_called()
 
 

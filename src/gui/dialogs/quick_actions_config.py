@@ -193,9 +193,8 @@ class QuickActionsConfigDialog(QDialog):
         while iterator.value():
             item = iterator.value()
             key = item.data(0, Qt.ItemDataRole.UserRole)
-            if key:  # It's a leaf setup with a key
-                if item.checkState(0) == Qt.CheckState.Checked:
-                    selected.append(key)
+            if key and item.checkState(0) == Qt.CheckState.Checked:
+                selected.append(key)
             iterator += 1
 
         return selected

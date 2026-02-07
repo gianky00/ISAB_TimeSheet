@@ -17,10 +17,7 @@ class TestAppInitializerRobust:
     @pytest.fixture
     def mock_qapp(self):
         """Mocka QApplication."""
-        if not QApplication.instance():
-            app = QApplication([])
-        else:
-            app = QApplication.instance()
+        app = QApplication([]) if not QApplication.instance() else QApplication.instance()
         return app
 
     @patch("src.core.app_initializer.AppInitializer._setup_logging")
@@ -54,9 +51,7 @@ class TestAppInitializerRobust:
         "sys.modules",
         {"pandas": MagicMock(), "numpy": MagicMock(), "selenium": MagicMock()},
     )
-    def test_initialize_core_license_invalid(
-        self, mock_update, mock_status, mock_db, mock_log
-    ):
+    def test_initialize_core_license_invalid(self, mock_update, mock_status, mock_db, mock_log):
         """Test aggiornamento licenza se invalida."""
         from src.core.license_validator import LicenseStatus
 

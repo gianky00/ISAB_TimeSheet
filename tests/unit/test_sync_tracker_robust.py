@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -34,9 +35,8 @@ class TestSyncTrackerRobust:
 
         # Verifica persistenza su file
         assert reset_tracker.exists()
-        with open(reset_tracker, "r") as f:
-            data = json.load(f)
-            assert data["module_a"]["added"] == 10
+        data = json.loads(reset_tracker.read_text(encoding="utf-8"))
+        assert data["module_a"]["added"] == 10
 
     def test_persistence_reload(self, reset_tracker):
         """Test ricaricamento stato da file."""
@@ -91,8 +91,8 @@ class TestSyncTrackerRobust:
 
     def test_save_permission_error(self, reset_tracker):
         """Test gestione errore permessi in scrittura."""
-        # Mock open per lanciare eccezione durante il save
-        with patch("builtins.open", side_effect=PermissionError("Access Denied")):
+        # Mock Path.write_text per lanciare eccezione durante il save
+        with patch.object(Path, "write_text", side_effect=PermissionError("Access Denied")):
             # Non deve crashare
             SyncTracker.update_status("module_err", 1, 1)
 

@@ -12,9 +12,7 @@ class TestExcelImporter:
     @patch("src.core.importers.contabilita.ContabilitaImporter._get_excel_file")
     @patch("src.core.importers.base.BaseImporter._decrypt_if_encrypted")
     @patch("src.core.importers.contabilita.Path.exists", return_value=True)
-    def test_import_contabilita_dati_success(
-        self, mock_exists, mock_decrypt, mock_get_excel, mock_get_pd
-    ):
+    def test_import_contabilita_dati_success(self, mock_exists, mock_decrypt, mock_get_excel, mock_get_pd):
         # Mock decryption
         mock_decrypt.return_value = (MagicMock(), False)
 
@@ -52,7 +50,7 @@ class TestExcelImporter:
 
         # We don't use scan_sheets patch because import_contabilita_dati uses _get_excel_file directly
 
-        success, msg, rows, years = ExcelImporter.import_contabilita_dati("dummy.xlsx")
+        success, _msg, rows, years = ExcelImporter.import_contabilita_dati("dummy.xlsx")
 
         assert mock_pd.read_excel.called
         assert success
@@ -61,9 +59,7 @@ class TestExcelImporter:
 
     @patch("src.core.importers.contabilita.Path.exists", return_value=False)
     def test_import_contabilita_dati_file_not_found(self, mock_exists):
-        success, msg, rows, years = ExcelImporter.import_contabilita_dati(
-            "missing.xlsx"
-        )
+        success, msg, _rows, _years = ExcelImporter.import_contabilita_dati("missing.xlsx")
         assert not success
         assert "non trovato" in msg
 
@@ -72,9 +68,7 @@ class TestExcelImporter:
     @patch("src.core.importers.base.BaseImporter._decrypt_if_encrypted")
     @patch("src.core.importers.giornaliere.GiornaliereImporter._read_giornaliera_sheet")
     @patch("src.core.importers.giornaliere.ProcessPoolExecutor")
-    def test_import_giornaliere(
-        self, mock_executor_cls, mock_read_sheet, mock_decrypt
-    ):
+    def test_import_giornaliere(self, mock_executor_cls, mock_read_sheet, mock_decrypt):
         # Mock file system
         with patch("src.core.importers.giornaliere.Path") as MockPath:
             root = MagicMock()
@@ -127,9 +121,7 @@ class TestExcelImporter:
 
             lookup_map = {"C1": {"odc": "ODC1", "tcl": "TCL1"}}
 
-            success, msg, rows, years = ExcelImporter.import_giornaliere(
-                "root", lookup_map
-            )
+            success, _msg, rows, years = ExcelImporter.import_giornaliere("root", lookup_map)
 
             assert success
             assert len(rows) > 0
@@ -163,7 +155,7 @@ class TestExcelImporter:
         df = pd.DataFrame(data)
         mock_read.return_value = df
 
-        success, msg, rows = ExcelImporter.import_storico_oda("dummy.xlsx")
+        success, _msg, rows = ExcelImporter.import_storico_oda("dummy.xlsx")
         assert success
         assert len(rows) == 1
 
@@ -183,7 +175,7 @@ class TestExcelImporter:
         df = pd.DataFrame(data)
         mock_read.return_value = df
 
-        success, msg, rows = ExcelImporter.import_attivita_programmate("dummy.xlsx")
+        success, _msg, rows = ExcelImporter.import_attivita_programmate("dummy.xlsx")
         assert success
         assert len(rows) == 1
         # Check styles column is added (empty)
@@ -244,7 +236,7 @@ class TestExcelImporter:
         ws.iter_rows.return_value = [row_cells]
         ws.max_row = 7
 
-        success, msg, rows = ExcelImporter.import_scarico_ore("dummy.xlsx")
+        success, _msg, rows = ExcelImporter.import_scarico_ore("dummy.xlsx")
 
         assert success
         assert len(rows) == 1
@@ -278,7 +270,7 @@ class TestExcelImporter:
         df = pd.DataFrame(data)
         mock_read.return_value = df
 
-        success, msg, rows = ExcelImporter.import_certificati_campione("dummy.xlsx")
+        success, _msg, rows = ExcelImporter.import_certificati_campione("dummy.xlsx")
 
         assert success
         assert len(rows) == 1
@@ -305,9 +297,7 @@ class TestExcelImporter:
         "src.core.importers.contabilita.ContabilitaImporter.scan_sheets",
         return_value=["S1", "S2"],
     )
-    @patch(
-        "src.core.importers.giornaliere.GiornaliereImporter.scan_files", return_value=3
-    )
+    @patch("src.core.importers.giornaliere.GiornaliereImporter.scan_files", return_value=3)
     def test_scan_workload(self, mock_scan_files, mock_scan_sheets):
         sheets, files = ExcelImporter.scan_workload("cont.xlsx", "root_giornaliere")
         # Returns (list, count) or (list, list)?

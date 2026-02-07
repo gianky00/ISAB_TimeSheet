@@ -1,5 +1,5 @@
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFormLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
@@ -41,9 +41,7 @@ class TimbratureDetailView(QWidget):
         detail_layout.setContentsMargins(10, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Timbratura")
-        detail_title.setStyleSheet(
-            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
-        )
+        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
         detail_layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -56,9 +54,7 @@ class TimbratureDetailView(QWidget):
         for h in self.full_headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
+            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -99,11 +95,7 @@ class TimbratureDetailView(QWidget):
 
         for h in self.full_headers:
             idx = mapping.get(h)
-            val = (
-                str(data[idx])
-                if idx is not None and idx < len(data) and data[idx] is not None
-                else ""
-            )
+            val = str(data[idx]) if idx is not None and idx < len(data) and data[idx] is not None else ""
 
             if val.lower() in ("nan", "none"):
                 val = ""
@@ -122,7 +114,7 @@ class TimbratureDetailView(QWidget):
         _ = strict
         with suppress(Exception):
             # Try ISO format first
-            dt = datetime.strptime(val_str, "%Y-%m-%d")
+            dt = datetime.strptime(val_str, "%Y-%m-%d").replace(tzinfo=UTC)
             return dt.strftime("%d/%m/%Y")
 
         with suppress(Exception):
@@ -132,7 +124,7 @@ class TimbratureDetailView(QWidget):
             # Original code tried flexible parsing
             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                 with suppress(ValueError):
-                    dt = datetime.strptime(date_part, fmt)
+                    dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
                     return dt.strftime("%d/%m/%Y")
         return val_str
 

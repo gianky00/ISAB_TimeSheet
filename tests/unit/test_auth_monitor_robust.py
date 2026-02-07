@@ -28,7 +28,7 @@ class TestAuthMonitorRobust:
             mock_dt.now.return_value = mock_now
             mock_dt.strptime.side_effect = datetime.strptime  # Usa reale per parsing
 
-            last_by_cf, last_by_name = _build_access_maps(raw)
+            last_by_cf, _last_by_name = _build_access_maps(raw)
 
             assert "CF1" in last_by_cf
             assert last_by_cf["CF1"][0] == 9  # delta days

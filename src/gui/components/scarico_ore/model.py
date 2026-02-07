@@ -1,7 +1,7 @@
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import ClassVar
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
@@ -26,7 +26,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
     Usa dati pre-formattati per rendering O(1).
     """
 
-    COLUMNS = [
+    COLUMNS: ClassVar[list[str]] = [
         "DATA",
         "PERS1",
         "PERS2",
@@ -40,10 +40,10 @@ class ScaricoOreTableModel(QAbstractTableModel):
         "COMMESSA",
     ]
 
-    CACHE_PATH = Path("data/scarico_ore_cache.pkl")
+    CACHE_PATH: ClassVar[Path] = Path("data/scarico_ore_cache.pkl")
 
     # ⚡ SINGLETON CACHE
-    _global_cache = {
+    _global_cache: ClassVar[dict] = {
         "display_data": [],  # List[List[str]]
         "search_index": [],  # List[str]
         "totals": [],  # List[float]
@@ -129,9 +129,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
     def set_data(self, data):
         worker = CacheWorker(self.CACHE_PATH)
-        display_data, search, totals, style_cache, date_keys = worker._build_caches(
-            data
-        )
+        display_data, search, totals, style_cache, date_keys = worker._build_caches(data)
         self._on_worker_finished(display_data, search, totals, style_cache, date_keys)
 
     def set_filter(self, text, col_filters=None):
@@ -151,15 +149,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self._filtered_count = len(self._visible_indices)
         self.endResetModel()
 
-    def _apply_global_search(self, indices: List[int], terms: List[str]) -> List[int]:
+    def _apply_global_search(self, indices: list[int], terms: list[str]) -> list[int]:
         if not terms:
             return indices
         s_idx = self._search_index
         return [i for i in indices if all(t in s_idx[i] for t in terms)]
 
-    def _apply_column_filters(
-        self, indices: List[int], col_filters: Optional[dict]
-    ) -> List[int]:
+    def _apply_column_filters(self, indices: list[int], col_filters: dict | None) -> list[int]:
         if not col_filters:
             return indices
 
@@ -199,13 +195,13 @@ class ScaricoOreTableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.DisplayRole:
             return self._display_data[real_row_idx][col]
 
-        elif role == Qt.ItemDataRole.BackgroundRole:
+        if role == Qt.ItemDataRole.BackgroundRole:
             return self._get_style(real_row_idx, col, "bg")
 
-        elif role == Qt.ItemDataRole.ForegroundRole:
+        if role == Qt.ItemDataRole.ForegroundRole:
             return self._get_style(real_row_idx, col, "fg")
 
-        elif role == Qt.ItemDataRole.TextAlignmentRole:
+        if role == Qt.ItemDataRole.TextAlignmentRole:
             if col in (3, 4, 5, 6, 7):
                 return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             if col == 0:
@@ -214,9 +210,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
 
         return None
 
-    def sort(
-        self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
-    ) -> None:
+    def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
         self.layoutAboutToBeChanged.emit()
 
         reverse = order == Qt.SortOrder.DescendingOrder
@@ -225,11 +219,10 @@ class ScaricoOreTableModel(QAbstractTableModel):
             try:
                 if column == 0:
                     return self._date_keys[idx]
-                elif column == 7:
+                if column == 7:
                     return self._float_totals[idx]
-                else:
-                    val = self._display_data[idx][column]
-                    return val.lower() if val else ""
+                val = self._display_data[idx][column]
+                return val.lower() if val else ""
             except IndexError:
                 return ""
 
@@ -237,10 +230,7 @@ class ScaricoOreTableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if (
-            orientation == Qt.Orientation.Horizontal
-            and role == Qt.ItemDataRole.DisplayRole
-        ):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self.COLUMNS[section]
         return None
 

@@ -1,5 +1,5 @@
 import traceback
-from typing import Any, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -16,7 +16,7 @@ class LyraWorker(QThread):
         api_key: str,
         question: str,
         context: str = "",
-        images: Optional[List[Any]] = None,
+        images: list[Any] | None = None,
     ):
         super().__init__()
         self.api_key = api_key
@@ -33,9 +33,7 @@ class LyraWorker(QThread):
             answer = client.ask(self.question, self.context, self.images)
             self.finished.emit(answer)
         except Exception as e:
-            self.finished.emit(
-                f"Errore critico nel Worker di Lyra:\n{e}\n\n{traceback.format_exc()}"
-            )
+            self.finished.emit(f"Errore critico nel Worker di Lyra:\n{e}\n\n{traceback.format_exc()}")
 
 
 class ModelListWorker(QThread):

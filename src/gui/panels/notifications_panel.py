@@ -5,7 +5,7 @@ Pannello per la visualizzazione delle notifiche e Audit Log Dashboard.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -37,7 +37,7 @@ class FilterState:
     levels: list[str] = field(default_factory=lambda: ["all"])
     categories: list[str] = field(default_factory=list)
     priorities: list[str] = field(default_factory=list)
-    date_range: Optional[tuple[datetime, datetime]] = None
+    date_range: tuple[datetime, datetime] | None = None
     show_read: bool = True
     show_unread: bool = True
     show_archived: bool = False
@@ -105,9 +105,7 @@ class NotificationsPanel(QWidget):
         mark_read.clicked.connect(self.manager.mark_all_as_read)
         actions_layout.addWidget(mark_read)
 
-        clear = ModernButton(
-            "Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL
-        )
+        clear = ModernButton("Svuota", variant=ModernButton.Variant.DANGER, size=ModernButton.Size.SMALL)
         clear.setMinimumWidth(120)
         clear.setFixedHeight(40)
         clear.clicked.connect(self._clear_notifications)
@@ -118,9 +116,7 @@ class NotificationsPanel(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll.setStyleSheet(
-            "QScrollArea { background: transparent; border: none; }"
-        )
+        self.scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setSpacing(12)
@@ -210,10 +206,7 @@ class NotificationsPanel(QWidget):
         )
 
         # Use cached result if available
-        if (
-            self._last_filter_state == cache_key
-            and self._cached_filter_result is not None
-        ):
+        if self._last_filter_state == cache_key and self._cached_filter_result is not None:
             notifs = self._cached_filter_result
         else:
             notifs = self._get_filtered_sorted_notifications()
@@ -242,7 +235,7 @@ class NotificationsPanel(QWidget):
         # Render groups
         self._render_groups(grouped, disable_animations)
 
-    def _get_filtered_sorted_notifications(self) -> List[Dict[str, Any]]:
+    def _get_filtered_sorted_notifications(self) -> list[dict[str, Any]]:
         """Restituisce le notifiche filtrate e ordinate."""
         # Get notifications based on filter
         if self.current_filter == "unread":
@@ -270,9 +263,7 @@ class NotificationsPanel(QWidget):
         # Sort notifications
         return self._sort_notifications(notifs)
 
-    def _render_groups(
-        self, grouped: Dict[str, Dict[str, Any]], disable_animations: bool
-    ):
+    def _render_groups(self, grouped: dict[str, dict[str, Any]], disable_animations: bool):
         """Renderizza i gruppi di notifiche nella scroll area."""
         for group_key, group_data in grouped.items():
             if not group_data["notifications"]:
@@ -299,9 +290,7 @@ class NotificationsPanel(QWidget):
                 card.card_deleted.connect(self._invalidate_and_refresh)
                 group_layout.addWidget(card)
 
-            self.scroll_layout.insertWidget(
-                self.scroll_layout.count() - 1, group_container
-            )
+            self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, group_container)
             self._group_widgets[group_key] = {
                 "header": header,
                 "container": group_container,
@@ -329,16 +318,16 @@ class NotificationsPanel(QWidget):
         """Sort notifications based on current_sort."""
         if self.current_sort == "date_desc":
             return sorted(notifs, key=lambda n: n.get("timestamp", ""), reverse=True)
-        elif self.current_sort == "date_asc":
+        if self.current_sort == "date_asc":
             return sorted(notifs, key=lambda n: n.get("timestamp", ""))
-        elif self.current_sort == "priority":
+        if self.current_sort == "priority":
             priority_map = {"high": 3, "medium": 2, "low": 1}
             return sorted(
                 notifs,
                 key=lambda n: priority_map.get(n.get("priority", "low"), 1),
                 reverse=True,
             )
-        elif self.current_sort == "level":
+        if self.current_sort == "level":
             level_map = {"error": 4, "warning": 3, "success": 2, "info": 1}
             return sorted(
                 notifs,
@@ -347,11 +336,11 @@ class NotificationsPanel(QWidget):
             )
         return notifs
 
-    def _group_notifications_by_time(self, notifs: list) -> Dict[str, Dict[str, Any]]:
+    def _group_notifications_by_time(self, notifs: list) -> dict[str, dict[str, Any]]:
         """Group notifications by time buckets."""
         now = datetime.now()
         # Initialize with explicit types to satisfy mypy
-        groups: Dict[str, Dict[str, Any]] = {
+        groups: dict[str, dict[str, Any]] = {
             "pinned": {"title": "Fissate", "icon": "📌", "notifications": []},
             "today": {"title": "Oggi", "icon": "📅", "notifications": []},
             "yesterday": {"title": "Ieri", "icon": "📆", "notifications": []},
@@ -443,9 +432,7 @@ class NotificationsPanel(QWidget):
         empty_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet(
-            "font-size: 20px; font-weight: bold; color: #495057; border: none;"
-        )
+        title_lbl.setStyleSheet("font-size: 20px; font-weight: bold; color: #495057; border: none;")
         title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(title_lbl)
 

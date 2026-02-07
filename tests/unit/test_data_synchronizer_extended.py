@@ -22,7 +22,7 @@ class TestDataSynchronizerDetailed:
         assert removed == 0
 
     def test_sync_giornaliere_logic(self, mock_db):
-        conn, cursor = mock_db
+        _conn, cursor = mock_db
         # Mock fetchone for counts (added, removed)
         cursor.fetchone.side_effect = [(5,), (2,)]
 
@@ -44,9 +44,7 @@ class TestDataSynchronizerDetailed:
         ]
         years = [2024]
 
-        added, removed = DataSynchronizer.sync_giornaliere(
-            Path("fake.db"), new_rows, years
-        )
+        added, removed = DataSynchronizer.sync_giornaliere(Path("fake.db"), new_rows, years)
 
         assert added == 5
         assert removed == 2
@@ -56,13 +54,11 @@ class TestDataSynchronizerDetailed:
         assert "CREATE TEMPORARY TABLE temp_giornaliere" in args[0]
 
     def test_sync_attivita_programmate(self, mock_db):
-        conn, cursor = mock_db
+        _conn, cursor = mock_db
         # old_count = 10
         cursor.fetchone.return_value = (10,)
 
-        added, removed = DataSynchronizer.sync_attivita_programmate(
-            Path("fake.db"), [("row", "style")]
-        )
+        added, removed = DataSynchronizer.sync_attivita_programmate(Path("fake.db"), [("row", "style")])
 
         # 1 new - 10 old = 0 added, 9 removed (net)
         assert added == 0
@@ -70,7 +66,7 @@ class TestDataSynchronizerDetailed:
         assert "attivita_programmate" in cursor.execute.call_args_list[1][0][0]
 
     def test_sync_scarico_ore(self, mock_db):
-        conn, cursor = mock_db
+        _conn, cursor = mock_db
         # New logic: gets old_count (10), then calculates diff vs new_count (15)
         cursor.fetchone.return_value = (10,)
 

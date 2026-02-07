@@ -7,7 +7,7 @@ import os
 import sys
 import threading
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .context import get_context
 from .filters import SensitiveDataFilter
@@ -34,9 +34,9 @@ class JSONFormatter:
         level: str,
         logger_name: str,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        exception: Optional[Exception] = None,
-        source_info: Optional[Dict[str, Any]] = None,
+        extra: dict[str, Any] | None = None,
+        exception: Exception | None = None,
+        source_info: dict[str, Any] | None = None,
     ) -> str:
         """
         Formatta log entry come JSON.
@@ -111,8 +111,8 @@ class JSONFormatter:
         self,
         level: str,
         message: str,
-        context: Dict[str, Any],
-        extra: Optional[Dict[str, Any]],
+        context: dict[str, Any],
+        extra: dict[str, Any] | None,
     ) -> list:
         """Genera tags automatici per ricerca."""
         tags = [level.lower()]
@@ -172,9 +172,9 @@ class HumanFormatter:
         level: str,
         logger_name: str,
         message: str,
-        extra: Optional[Dict[str, Any]] = None,
-        exception: Optional[Exception] = None,
-        source_info: Optional[Dict[str, Any]] = None,
+        extra: dict[str, Any] | None = None,
+        exception: Exception | None = None,
+        source_info: dict[str, Any] | None = None,
     ) -> str:
         """
         Formatta log entry come stringa human-readable.
@@ -194,10 +194,7 @@ class HumanFormatter:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Colorizza livello
-        if self.colorize:
-            level_colored = self._colorize_level(level)
-        else:
-            level_colored = f"{level:8}"
+        level_colored = self._colorize_level(level) if self.colorize else f"{level:8}"
 
         # Build line base
         line = f"[{timestamp}] {level_colored} - {logger_name:30} - {message}"

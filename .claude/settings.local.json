@@ -57,7 +57,11 @@
       "Bash(export NO_COLOR=1)",
       "Bash(export PYTHONIOENCODING=utf-8)",
       "Bash(export PYTHONUTF8=1)",
-      "Bash(export PYTHONUNBUFFERED=1)"
+      "Bash(export PYTHONUNBUFFERED=1)",
+      "Bash({)",
+      "Bash(})",
+      "Bash(ls:*)",
+      "Bash(poetry lock:*)"
     ]
   }
 }

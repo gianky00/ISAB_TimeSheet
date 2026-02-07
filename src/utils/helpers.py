@@ -9,7 +9,6 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from PyQt6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
 
@@ -25,7 +24,7 @@ def get_asset_path(relative_path: str) -> str:
     return ResourceManager.get_asset_path(relative_path)
 
 
-def get_app_icon_path() -> Optional[str]:
+def get_app_icon_path() -> str | None:
     """Restituisce il percorso dell'icona dell'applicazione."""
     icon_path = get_asset_path("assets/app.ico")
 
@@ -34,9 +33,7 @@ def get_app_icon_path() -> Optional[str]:
     return None
 
 
-def setup_logging(
-    name: str = "BotTS", log_file: Optional[str] = None
-) -> logging.Logger:
+def setup_logging(name: str = "BotTS", log_file: str | None = None) -> logging.Logger:
     """
     Configura il sistema di logging.
 
@@ -72,7 +69,7 @@ def setup_logging(
     return logger
 
 
-def format_timestamp(dt: Optional[datetime] = None) -> str:
+def format_timestamp(dt: datetime | None = None) -> str:
     """
     Formatta un timestamp per la visualizzazione.
 
@@ -87,7 +84,7 @@ def format_timestamp(dt: Optional[datetime] = None) -> str:
     return dt.strftime("%d/%m/%Y %H:%M:%S")
 
 
-def get_months_list() -> List[str]:
+def get_months_list() -> list[str]:
     """Restituisce la lista dei mesi in italiano."""
     return [
         "Gennaio",
@@ -105,7 +102,7 @@ def get_months_list() -> List[str]:
     ]
 
 
-def get_years_list(start_offset: int = -2, end_offset: int = 2) -> List[str]:
+def get_years_list(start_offset: int = -2, end_offset: int = 2) -> list[str]:
     """
     Restituisce una lista di anni.
 
@@ -117,10 +114,7 @@ def get_years_list(start_offset: int = -2, end_offset: int = 2) -> List[str]:
         Lista di anni come stringhe
     """
     current_year = datetime.now().year
-    return [
-        str(year)
-        for year in range(current_year + start_offset, current_year + end_offset + 1)
-    ]
+    return [str(year) for year in range(current_year + start_offset, current_year + end_offset + 1)]
 
 
 def is_windows() -> bool:
@@ -140,16 +134,17 @@ def open_folder(path: str) -> bool:
     """
     import subprocess
 
-    if not Path(path).exists():
+    path_obj = Path(path)
+    if not path_obj.exists():
         return False
 
     try:
         if is_windows():
-            os.startfile(path)
+            os.startfile(str(path_obj))  # noqa: S606
         elif sys.platform == "darwin":
-            subprocess.run(["open", path])
+            subprocess.run(["open", str(path_obj)], check=False)
         else:
-            subprocess.run(["xdg-open", path])
+            subprocess.run(["xdg-open", str(path_obj)], check=False)
         return True
     except Exception:
         return False

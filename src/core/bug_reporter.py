@@ -17,7 +17,7 @@ from contextlib import suppress
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from src.core.config_manager import CONFIG_DIR, get_version
 
@@ -41,9 +41,9 @@ class BugReporter:
         include_enterprise_logs: bool = True,
         include_analytics: bool = True,
         include_audit: bool = True,
-        trace_id: Optional[str] = None,
+        trace_id: str | None = None,
         hours: int = 24,
-    ) -> Tuple[Optional[Path], str, List[str]]:
+    ) -> tuple[Path | None, str, list[str]]:
         """
         Raccoglie tutti i file diagnostici e crea un archivio ZIP.
 
@@ -57,7 +57,7 @@ class BugReporter:
         Returns:
             Tuple[Path, str, List[str]]: (Path ZIP, messaggio, lista file inclusi)
         """
-        included_files: List[str] = []
+        included_files: list[str] = []
 
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -72,9 +72,7 @@ class BugReporter:
             with zipfile.ZipFile(report_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # 1. Enterprise Logs
                 if include_enterprise_logs and log_dir.exists():
-                    included_files.extend(
-                        BugReporter._add_enterprise_logs(zipf, log_dir)
-                    )
+                    included_files.extend(BugReporter._add_enterprise_logs(zipf, log_dir))
 
                 # 2. Bot Errors (screenshot/html)
                 error_dir = log_dir / "errors"
@@ -101,9 +99,7 @@ class BugReporter:
                 zipf.writestr("system_info.json", json.dumps(sys_info, indent=2))
                 included_files.append("system_info.json")
 
-            logger.info(
-                f"Bug report creato: {report_path} ({len(included_files)} file)"
-            )
+            logger.info(f"Bug report creato: {report_path} ({len(included_files)} file)")
             return report_path, "Report generato con successo.", included_files
 
         except Exception as e:
@@ -111,7 +107,7 @@ class BugReporter:
             return None, f"Errore creazione report: {e}", []
 
     @staticmethod
-    def _add_enterprise_logs(zipf: zipfile.ZipFile, log_dir: Path) -> List[str]:
+    def _add_enterprise_logs(zipf: zipfile.ZipFile, log_dir: Path) -> list[str]:
         """Aggiunge log enterprise allo ZIP."""
         added = []
 
@@ -147,7 +143,7 @@ class BugReporter:
         return added
 
     @staticmethod
-    def _add_bot_errors(zipf: zipfile.ZipFile, error_dir: Path) -> List[str]:
+    def _add_bot_errors(zipf: zipfile.ZipFile, error_dir: Path) -> list[str]:
         """Aggiunge ultimi errori bot (screenshot/html)."""
         added = []
         files = sorted(
@@ -162,7 +158,7 @@ class BugReporter:
         return added
 
     @staticmethod
-    def _add_analytics_report(zipf: zipfile.ZipFile, hours: int) -> List[str]:
+    def _add_analytics_report(zipf: zipfile.ZipFile, hours: int) -> list[str]:
         """Aggiunge report analytics con anomalie e health score."""
         try:
             from src.core.logging import generate_analytics_report
@@ -189,7 +185,7 @@ class BugReporter:
             return []
 
     @staticmethod
-    def _add_audit_trail(zipf: zipfile.ZipFile, limit: int = 50) -> List[str]:
+    def _add_audit_trail(zipf: zipfile.ZipFile, limit: int = 50) -> list[str]:
         """Aggiunge audit trail recente."""
         try:
             from src.core.audit import AuditManager
@@ -214,7 +210,7 @@ class BugReporter:
             return []
 
     @staticmethod
-    def _add_trace_timeline(zipf: zipfile.ZipFile, trace_id: str) -> List[str]:
+    def _add_trace_timeline(zipf: zipfile.ZipFile, trace_id: str) -> list[str]:
         """Aggiunge timeline di un trace specifico."""
         try:
             from src.core.logging import view_trace
@@ -242,9 +238,9 @@ class BugReporter:
             return []
 
     @staticmethod
-    def _collect_system_info() -> Dict[str, Any]:
+    def _collect_system_info() -> dict[str, Any]:
         """Raccoglie informazioni di sistema."""
-        sys_info: Dict[str, Any] = {
+        sys_info: dict[str, Any] = {
             "app_version": get_version(),
             "os": platform.system(),
             "os_release": platform.release(),
@@ -260,8 +256,7 @@ class BugReporter:
             k: v
             for k, v in os.environ.items()
             if not any(
-                s in k.upper()
-                for s in ("TOKEN", "KEY", "PASS", "SECRET", "API", "AUTH", "CREDENTIAL")
+                s in k.upper() for s in ("TOKEN", "KEY", "PASS", "SECRET", "API", "AUTH", "CREDENTIAL")
             )
         }
         sys_info["env_filtered"] = safe_env

@@ -9,12 +9,12 @@ import sys
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import re  # noqa: E402
-from pathlib import Path  # noqa: E402
+import re
+from pathlib import Path
 
-import pandas as pd  # noqa: E402
+import pandas as pd
 
-from src.core import config_manager  # noqa: E402
+from src.core import config_manager
 
 
 def debug_giornaliere():
@@ -92,19 +92,13 @@ def debug_giornaliere():
                 # Verifica se prima riga sembra un header valido
                 first_cols = [str(c).upper().strip() for c in df.columns]
                 expected_headers = ["DATA", "PERSONALE", "ORE", "TCL"]
-                headers_found = sum(
-                    1 for h in expected_headers if any(h in c for c in first_cols)
-                )
-                print(
-                    f"        Header validi trovati: {headers_found}/4 ({expected_headers})"
-                )
+                headers_found = sum(1 for h in expected_headers if any(h in c for c in first_cols))
+                print(f"        Header validi trovati: {headers_found}/4 ({expected_headers})")
 
                 if headers_found < 2:
                     print("        ATTENZIONE: Header probabilmente in riga diversa!")
                     print("        Prime 3 righe del file:")
-                    df_raw = pd.read_excel(
-                        file_path, sheet_name="RIASSUNTO", header=None, nrows=5
-                    )
+                    df_raw = pd.read_excel(file_path, sheet_name="RIASSUNTO", header=None, nrows=5)
                     for i, row in df_raw.head(3).iterrows():
                         print(f"            Riga {i}: {list(row.values)[:6]}...")
 
@@ -131,9 +125,7 @@ def debug_giornaliere():
                 for col in df.columns:
                     col_upper = str(col).upper().strip()
                     if "PREV" in col_upper or "CONSUNTIVO" in col_upper:
-                        print(
-                            f"        Colonna '{col}' - primi 5 valori: {df[col].head().tolist()}"
-                        )
+                        print(f"        Colonna '{col}' - primi 5 valori: {df[col].head().tolist()}")
 
             except Exception as e:
                 print(f"        ERRORE lettura: {e}")

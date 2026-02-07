@@ -30,10 +30,7 @@ class TestDataSynchronizerRobust:
 
     def test_validate_identifier(self):
         """Test validazione identificatori SQL."""
-        assert (
-            DataSynchronizer._validate_identifier("valid_table_123")
-            == "valid_table_123"
-        )
+        assert DataSynchronizer._validate_identifier("valid_table_123") == "valid_table_123"
         with pytest.raises(ValueError, match="non sicuro"):
             DataSynchronizer._validate_identifier("table; DROP TABLE users")
         with pytest.raises(ValueError, match="non sicuro"):
@@ -43,7 +40,7 @@ class TestDataSynchronizerRobust:
         """Test sincronizzazione contabilità con diffing per anno."""
         from src.core.excel_importer import ExcelImporter
 
-        cols = ["year"] + list(ExcelImporter.COLUMNS_MAPPING.values())
+        cols = ["year", *list(ExcelImporter.COLUMNS_MAPPING.values())]
 
         # Inseriamo un record esistente per il 2023
         with db_manager.get_connection(test_db) as conn:
@@ -59,18 +56,14 @@ class TestDataSynchronizerRobust:
 
         # 2. Sync: Nuovo record per 2023, mantieni lo stesso (0 add, 0 remove)
         data_same = [tuple(row)]
-        added, removed = DataSynchronizer.sync_contabilita_dati(
-            test_db, data_same, [2023]
-        )
+        added, removed = DataSynchronizer.sync_contabilita_dati(test_db, data_same, [2023])
         assert added == 0
         assert removed == 0
 
         # 3. Sync: Cambia record 2023 (1 add, 1 remove)
         row_new = list(row)
         row_new[2] = "changed"
-        added, removed = DataSynchronizer.sync_contabilita_dati(
-            test_db, [tuple(row_new)], [2023]
-        )
+        added, removed = DataSynchronizer.sync_contabilita_dati(test_db, [tuple(row_new)], [2023])
         assert added == 1
         assert removed == 1
 
@@ -100,9 +93,7 @@ class TestDataSynchronizerRobust:
 
         # Verifica persistenza
         with db_manager.get_connection(test_db) as conn:
-            res = conn.execute(
-                "SELECT COUNT(*) FROM giornaliere WHERE year = 2024"
-            ).fetchone()
+            res = conn.execute("SELECT COUNT(*) FROM giornaliere WHERE year = 2024").fetchone()
             assert res[0] == 1
 
     def test_sync_scarico_ore_massive(self, test_db):
@@ -146,15 +137,11 @@ class TestDataSynchronizerRobust:
         data = [(1, "bold"), (2, "italic")]
 
         # Primo sync (tutto nuovo)
-        added, updated = DataSynchronizer._sync_upsert_smart(
-            test_db, "attivita_programmate", cols, data
-        )
+        added, _ = DataSynchronizer._sync_upsert_smart(test_db, "attivita_programmate", cols, data)
         assert added == 2
 
         # Secondo sync (identico)
-        added, updated = DataSynchronizer._sync_upsert_smart(
-            test_db, "attivita_programmate", cols, data
-        )
+        added, _updated = DataSynchronizer._sync_upsert_smart(test_db, "attivita_programmate", cols, data)
         assert added == 0
 
     def test_sync_empty_data(self, test_db):
@@ -165,6 +152,4 @@ class TestDataSynchronizerRobust:
     def test_sync_error_handling(self, test_db):
         """Test gestione errori SQL."""
         with pytest.raises(sqlite3.OperationalError):
-            DataSynchronizer._sync_upsert_smart(
-                test_db, "non_existent_table", ["col1"], [(1,)]
-            )
+            DataSynchronizer._sync_upsert_smart(test_db, "non_existent_table", ["col1"], [(1,)])

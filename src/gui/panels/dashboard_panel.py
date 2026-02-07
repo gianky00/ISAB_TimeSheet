@@ -117,9 +117,7 @@ class DashboardPanel(QWidget):
 
         # 2. Activity Feed (Bottom)
         subtitle = QLabel("Feed Attività")
-        subtitle.setStyleSheet(
-            "font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;"
-        )
+        subtitle.setStyleSheet("font-size: 16px; font-weight: 700; color: #6c757d; margin-top: 20px;")
         self.content_layout.addWidget(subtitle)
 
         self.activity_feed = ActivityFeed()
@@ -153,13 +151,13 @@ class DashboardPanel(QWidget):
         if key == "cmd_sync":
             self.refresh_data()
             return True
-        elif key == "cmd_open_folder":
+        if key == "cmd_open_folder":
             from src.core.config_manager import BASE_DIR
 
             output_dir = BASE_DIR / "output"
             output_dir.mkdir(exist_ok=True)
             if os.name == "nt":
-                os.startfile(output_dir)
+                os.startfile(output_dir)  # noqa: S606
             else:
                 import subprocess
 
@@ -220,9 +218,7 @@ class DashboardPanel(QWidget):
 
                 QTimer.singleShot(
                     100,
-                    lambda: self._switch_tab_safe(
-                        main_window, "contabilita_panel", tab_idx
-                    ),
+                    lambda: self._switch_tab_safe(main_window, "contabilita_panel", tab_idx),
                 )
 
         return True
@@ -251,9 +247,7 @@ class DashboardPanel(QWidget):
                 main_window._navigate_to(7)
                 QTimer.singleShot(
                     100,
-                    lambda: self._switch_tab_safe(
-                        main_window, "settings_panel", tab_idx
-                    ),
+                    lambda: self._switch_tab_safe(main_window, "settings_panel", tab_idx),
                 )
             return True
         return False
@@ -274,9 +268,7 @@ class DashboardPanel(QWidget):
                     main_window._navigate_to(3)  # Timbrature Page
                     QTimer.singleShot(
                         100,
-                        lambda: self._switch_tab_safe(
-                            main_window, "timbrature_db_panel", tab_idx
-                        ),
+                        lambda: self._switch_tab_safe(main_window, "timbrature_db_panel", tab_idx),
                     )
 
         elif key.startswith("nav_sub_automazioni_"):

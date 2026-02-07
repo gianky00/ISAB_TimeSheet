@@ -2,6 +2,8 @@
 Tabella dati con sorting, filtering e row styling, basata su ExcelTableWidget.
 """
 
+from typing import ClassVar
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (
@@ -30,7 +32,7 @@ class DataTable(QWidget):
     rowDoubleClicked = pyqtSignal(int, dict)  # row_index, row_data
 
     # Status colors
-    STATUS_COLORS = {
+    STATUS_COLORS: ClassVar[dict[str, str]] = {
         "completato": "#C8E6C9",  # Green
         "errore": "#FFCDD2",  # Red
         "in_corso": "#FFF9C4",  # Yellow
@@ -80,9 +82,7 @@ class DataTable(QWidget):
 
         # Actions
         self._refresh_btn = QPushButton(" Aggiorna")
-        self._refresh_btn.setIcon(
-            get_colored_icon(get_asset_path(Icons.REFRESH), "#000000")
-        )
+        self._refresh_btn.setIcon(get_colored_icon(get_asset_path(Icons.REFRESH), "#000000"))
         self._refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._refresh_btn.clicked.connect(self.refresh)
         self._refresh_btn.setStyleSheet(
@@ -126,7 +126,6 @@ class DataTable(QWidget):
 
     def _apply_table_style(self):
         """Redundant with global QSS. Can be used for very specific overrides if needed."""
-        pass
 
     def setData(self, data: list[dict]):
         """Popola la tabella con dati."""
@@ -208,7 +207,6 @@ class DataTable(QWidget):
 
     def refresh(self):
         """Ricarica dati (da sovrascrivere o connettere)."""
-        pass
 
     def get_table_widget(self):
         """Returns the internal ExcelTableWidget."""

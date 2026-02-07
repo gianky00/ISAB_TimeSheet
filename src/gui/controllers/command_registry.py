@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional
+from typing import Optional
 
 from src.core.constants import Icons
 
@@ -17,14 +18,14 @@ class CommandNode:
     shortcut: str = ""
 
     # Se definito, questo nodo è un'azione eseguibile
-    action: Optional[Callable] = None
+    action: Callable | None = None
 
     # Se definito, questo nodo è un menu con figli statici
-    children: List["CommandNode"] = field(default_factory=list)
+    children: list["CommandNode"] = field(default_factory=list)
 
     # Se definito, questo nodo genera i figli dinamicamente
     # (es. lista file, lista account) al momento dell'apertura
-    dynamic_provider: Optional[Callable[[], List["CommandNode"]]] = None
+    dynamic_provider: Callable[[], list["CommandNode"]] | None = None
 
     # Se True, la palette si chiude dopo l'azione.
     # Se False, rimane aperta (utile per toggle rapidi).
@@ -32,17 +33,17 @@ class CommandNode:
 
     # --- INPUT MODE EXTENSION ---
     # Lista di prompt per richiedere input sequenziali (es. ["Inserisci OdA", "Inserisci Pos"])
-    input_prompts: List[str] = field(default_factory=list)
+    input_prompts: list[str] = field(default_factory=list)
 
     # Callback eseguita al termine degli input. Riceve una lista di valori str.
-    on_input_complete: Optional[Callable[[List[str]], None]] = None
+    on_input_complete: Callable[[list[str]], None] | None = None
 
     @property
     def is_leaf(self) -> bool:
         """Ritorna True se è un nodo finale eseguibile (azione o input)."""
         return self.action is not None or bool(self.input_prompts)
 
-    def get_children(self) -> List["CommandNode"]:
+    def get_children(self) -> list["CommandNode"]:
         """Recupera i figli, gestendo anche i provider dinamici."""
         if self.dynamic_provider:
             return self.dynamic_provider()
@@ -70,5 +71,5 @@ class CommandRegistry:
         if self._root:
             self._root.children.append(node)
 
-    def get_root_nodes(self) -> List[CommandNode]:
+    def get_root_nodes(self) -> list[CommandNode]:
         return self._root.children if self._root else []

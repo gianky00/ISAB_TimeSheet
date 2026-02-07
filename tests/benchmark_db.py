@@ -1,71 +1,68 @@
-import os
 import sqlite3
 import time
+from pathlib import Path
 
-DB_PATH = "benchmark_contabilita_db.db"
+DB_PATH = Path("benchmark_contabilita_db.db")
 
 
 def create_large_db(rows=200000):
-    if os.path.exists(DB_PATH):
-        os.remove(DB_PATH)
+    if DB_PATH.exists():
+        DB_PATH.unlink()
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE contabilita (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                year INTEGER NOT NULL,
+                data_prev TEXT
+            )
         """
-        CREATE TABLE contabilita (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            year INTEGER NOT NULL,
-            data_prev TEXT
         )
-    """
-    )
 
-    years = [2020, 2021, 2022, 2023, 2024]
-    data = []
-    print(f"Generating {rows} rows...")
-    for i in range(rows):
-        year = years[i % 5]
-        data.append((year, "2024-01-01"))
+        years = [2020, 2021, 2022, 2023, 2024]
+        data = []
+        print(f"Generating {rows} rows...")
+        for i in range(rows):
+            year = years[i % 5]
+            data.append((year, "2024-01-01"))
 
-    cursor.executemany("INSERT INTO contabilita (year, data_prev) VALUES (?, ?)", data)
-    conn.commit()
-    conn.close()
+        cursor.executemany("INSERT INTO contabilita (year, data_prev) VALUES (?, ?)", data)
+        conn.commit()
 
 
 def benchmark_delete_no_index():
     print("Benchmarking DELETE (No Index)...")
     create_large_db()
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
 
-    start = time.time()
-    cursor.execute("DELETE FROM contabilita WHERE year = 2020")
-    conn.commit()
-    end = time.time()
-    print(f"DELETE time (no index): {end - start:.4f}s")
-    conn.close()
+        start = time.time()
+        cursor.execute("DELETE FROM contabilita WHERE year = 2020")
+        conn.commit()
+        end = time.time()
+        print(f"DELETE time (no index): {end - start:.4f}s")
 
 
 def benchmark_delete_with_index():
     print("Benchmarking DELETE (With Index)...")
     create_large_db()
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
 
-    cursor.execute("CREATE INDEX idx_year ON contabilita(year)")
-    conn.commit()
+        cursor.execute("CREATE INDEX idx_year ON contabilita(year)")
+        conn.commit()
 
-    start = time.time()
-    cursor.execute("DELETE FROM contabilita WHERE year = 2020")
-    conn.commit()
-    end = time.time()
-    print(f"DELETE time (WITH index): {end - start:.4f}s")
-    conn.close()
+        start = time.time()
+        cursor.execute("DELETE FROM contabilita WHERE year = 2020")
+        conn.commit()
+        end = time.time()
+        print(f"DELETE time (WITH index): {end - start:.4f}s")
 
 
 if __name__ == "__main__":
     benchmark_delete_no_index()
     benchmark_delete_with_index()
-    if os.path.exists(DB_PATH):
-        os.remove(DB_PATH)
+    if DB_PATH.exists():
+        DB_PATH.unlink()

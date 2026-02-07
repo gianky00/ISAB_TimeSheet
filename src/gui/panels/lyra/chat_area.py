@@ -20,16 +20,14 @@ class ChatArea(QScrollArea):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setStyleSheet(
-            "background-color: white; border: 1px solid #dee2e6; border-radius: 8px;"
-        )
+        self.setStyleSheet("background-color: white; border: 1px solid #dee2e6; border-radius: 8px;")
 
         self.container = QWidget()
         self.container.setStyleSheet("background-color: white;")
-        self.layout = QVBoxLayout(self.container)
-        self.layout.setContentsMargins(5, 10, 5, 10)
-        self.layout.setSpacing(5)
-        self.layout.addStretch()
+        self.chat_layout = QVBoxLayout(self.container)
+        self.chat_layout.setContentsMargins(5, 10, 5, 10)
+        self.chat_layout.setSpacing(5)
+        self.chat_layout.addStretch()
 
         self.setWidget(self.container)
 
@@ -37,7 +35,7 @@ class ChatArea(QScrollArea):
         """Aggiunge una bolla di messaggio alla chat."""
         is_lyra = sender == "Lyra"
         bubble = MessageBubble(sender, text, is_lyra=is_lyra)
-        self.layout.insertWidget(self.layout.count() - 1, bubble)
+        self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
 
         # Scroll to bottom
         QApplication.processEvents()
@@ -50,7 +48,7 @@ class ChatArea(QScrollArea):
 
     def clear(self):
         """Rimuove tutti i messaggi dalla chat."""
-        while self.layout.count() > 1:
-            item = self.layout.takeAt(0)
+        while self.chat_layout.count() > 1:
+            item = self.chat_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()

@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
 from PyQt6.QtWidgets import (
@@ -22,8 +21,8 @@ class ActivityItem(QFrame):
     Rappresenta una singola voce nella timeline orizzontale (Compact) con animazioni moderne.
     """
 
-    opacity_effect: Optional[QGraphicsOpacityEffect]
-    fade_in_animation: Optional[QPropertyAnimation]
+    opacity_effect: QGraphicsOpacityEffect | None
+    fade_in_animation: QPropertyAnimation | None
 
     def __init__(self, log_entry: dict, parent=None, animate=True):
         super().__init__(parent)
@@ -96,9 +95,7 @@ class ActivityItem(QFrame):
         # Badge container
         badge = QLabel()
         badge.setFixedSize(32, 32)
-        badge.setPixmap(
-            get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 20)
-        )
+        badge.setPixmap(get_colored_icon(get_asset_path(icon_path), icon_color).pixmap(20, 20))
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setStyleSheet(
             f"""
@@ -120,10 +117,7 @@ class ActivityItem(QFrame):
         action_text = log_entry.get("action", "Azione")
         entity = log_entry.get("entity", "")
 
-        if entity and entity != "-":
-            full_text = f"{action_text} - {entity}"
-        else:
-            full_text = action_text
+        full_text = f"{action_text} - {entity}" if entity and entity != "-" else action_text
 
         action_lbl = QLabel(full_text)
         action_lbl.setStyleSheet(
@@ -248,12 +242,8 @@ class ActivityFeed(QWidget):
             }
         """
         )
-        self.scroll_area.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
-        self.scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         self.feed_widget = QWidget()
         self.feed_layout = QHBoxLayout(self.feed_widget)  # Horizontal!
@@ -285,10 +275,7 @@ class ActivityFeed(QWidget):
                 if item.widget():
                     widget = item.widget()
                     # Ferma animazioni e rimuovi effetti prima di eliminare
-                    if (
-                        hasattr(widget, "fade_in_animation")
-                        and widget.fade_in_animation is not None
-                    ):
+                    if hasattr(widget, "fade_in_animation") and widget.fade_in_animation is not None:
                         widget.fade_in_animation.stop()
                     if widget.graphicsEffect():
                         widget.setGraphicsEffect(None)

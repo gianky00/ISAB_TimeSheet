@@ -1,3 +1,4 @@
+import contextlib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -19,12 +20,8 @@ class TestSyncFlowHardened(unittest.TestCase):
 
         # Patch del path del DB in tutti i moduli interessati
         self.patchers = [
-            patch(
-                "src.core.contabilita_manager.ContabilitaManager.DB_PATH", self.test_db
-            ),
-            patch(
-                "src.core.database.manager.DatabaseManager.DB_CONTABILITA", self.test_db
-            ),
+            patch("src.core.contabilita_manager.ContabilitaManager.DB_PATH", self.test_db),
+            patch("src.core.database.manager.DatabaseManager.DB_CONTABILITA", self.test_db),
         ]
         for p in self.patchers:
             p.start()
@@ -36,13 +33,9 @@ class TestSyncFlowHardened(unittest.TestCase):
         for p in self.patchers:
             p.stop()
         if self.test_db.exists():
-            with patch(
-                "src.core.database.manager.db_manager.get_connection"
-            ):  # Evita lock
-                try:
+            with patch("src.core.database.manager.db_manager.get_connection"):  # Evita lock
+                with contextlib.suppress(Exception):
                     self.test_db.unlink()
-                except Exception:
-                    pass
 
     def test_full_certificati_sync_cycle(self):
         """Simula un ciclo completo: Import Excel -> Sync DB -> Verifica Query."""
@@ -77,9 +70,7 @@ class TestSyncFlowHardened(unittest.TestCase):
         ]
 
         # 2. Esegui sincronizzazione
-        added, removed = DataSynchronizer.sync_certificati_campione(
-            self.test_db, imported_rows
-        )
+        added, removed = DataSynchronizer.sync_certificati_campione(self.test_db, imported_rows)
 
         self.assertEqual(added, 2)
         self.assertEqual(removed, 0)
@@ -122,9 +113,7 @@ class TestSyncFlowHardened(unittest.TestCase):
             ),
         ]
 
-        added2, removed2 = DataSynchronizer.sync_certificati_campione(
-            self.test_db, updated_rows
-        )
+        _added2, _removed2 = DataSynchronizer.sync_certificati_campione(self.test_db, updated_rows)
 
         # Il synchronizer dovrebbe aver aggiunto 1 riga (quella nuova per MAT-100)
         # Nota: a seconda della logica di sync_certificati_campione, potrebbe aggiungere tutto lo storico o fare upsert
@@ -159,11 +148,11 @@ class TestSyncFlowHardened(unittest.TestCase):
         results = ContabilitaManager.search_extended("LEICA")
 
         # Verifica chiavi (maiuscole nel sistema reale)
-        keys_upper = [k.upper() for k in results.keys()]
+        keys_upper = [k.upper() for k in results]
         self.assertIn("CERTIFICATI", keys_upper)
 
         # Trova la chiave corretta indipendentemente dal case
-        cert_key = next(k for k in results.keys() if k.upper() == "CERTIFICATI")
+        cert_key = next(k for k in results if k.upper() == "CERTIFICATI")
         self.assertTrue(any("ST-001" in str(r) for r in results[cert_key]))
 
 

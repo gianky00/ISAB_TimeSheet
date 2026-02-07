@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
 import pytest
@@ -39,13 +39,9 @@ def test_get_license_dir(mocker):
 
 
 def test_update_grace_timestamp(mocker, mock_license_dir):
-    mocker.patch(
-        "src.core.license_updater.get_license_dir", return_value=mock_license_dir
-    )
-    fixed_now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    mocker.patch(
-        "src.core.time_manager.get_trusted_time", return_value=(fixed_now, True)
-    )
+    mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
+    fixed_now = datetime(2026, 1, 1, tzinfo=UTC)
+    mocker.patch("src.core.time_manager.get_trusted_time", return_value=(fixed_now, True))
 
     update_grace_timestamp()
 
@@ -61,12 +57,10 @@ def test_update_grace_timestamp(mocker, mock_license_dir):
 
 
 def test_check_grace_period_valid(mocker, mock_license_dir):
-    mocker.patch(
-        "src.core.license_updater.get_license_dir", return_value=mock_license_dir
-    )
+    mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Create valid token (1 day ago)
-    last_online = datetime.now(timezone.utc) - timedelta(days=1)
+    last_online = datetime.now(UTC) - timedelta(days=1)
     cipher = Fernet(GRACE_PERIOD_KEY)
     encrypted_time = cipher.encrypt(last_online.isoformat().encode("utf-8"))
 
@@ -76,19 +70,17 @@ def test_check_grace_period_valid(mocker, mock_license_dir):
 
     mocker.patch(
         "src.core.time_manager.get_trusted_time",
-        return_value=(datetime.now(timezone.utc), True),
+        return_value=(datetime.now(UTC), True),
     )
 
     assert check_grace_period() is True
 
 
 def test_check_grace_period_expired(mocker, mock_license_dir):
-    mocker.patch(
-        "src.core.license_updater.get_license_dir", return_value=mock_license_dir
-    )
+    mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Create expired token (4 days ago)
-    last_online = datetime.now(timezone.utc) - timedelta(days=4)
+    last_online = datetime.now(UTC) - timedelta(days=4)
     cipher = Fernet(GRACE_PERIOD_KEY)
     encrypted_time = cipher.encrypt(last_online.isoformat().encode("utf-8"))
 
@@ -98,7 +90,7 @@ def test_check_grace_period_expired(mocker, mock_license_dir):
 
     mocker.patch(
         "src.core.time_manager.get_trusted_time",
-        return_value=(datetime.now(timezone.utc), True),
+        return_value=(datetime.now(UTC), True),
     )
 
     with pytest.raises(Exception, match="SCADUTO"):
@@ -106,24 +98,20 @@ def test_check_grace_period_expired(mocker, mock_license_dir):
 
 
 def test_check_emergency_grace_period_new(mocker, mock_license_dir):
-    mocker.patch(
-        "src.core.license_updater.get_license_dir", return_value=mock_license_dir
-    )
+    mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
     mocker.patch(
         "src.core.time_manager.get_trusted_time",
-        return_value=(datetime.now(timezone.utc), True),
+        return_value=(datetime.now(UTC), True),
     )
 
-    allowed, msg, days = check_emergency_grace_period()
+    allowed, _msg, days = check_emergency_grace_period()
     assert allowed is True
     assert days == 3
     assert os.path.exists(os.path.join(mock_license_dir, "emergency_grace.token"))
 
 
 def test_is_license_folder_empty(mocker, mock_license_dir):
-    mocker.patch(
-        "src.core.license_updater.get_license_dir", return_value=mock_license_dir
-    )
+    mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
 
     # Initially empty
     assert is_license_folder_empty() is True
@@ -138,12 +126,8 @@ def test_is_license_folder_empty(mocker, mock_license_dir):
 
 
 def test_run_update_success(mocker, mock_license_dir):
-    mocker.patch(
-        "src.core.license_updater.get_license_dir", return_value=mock_license_dir
-    )
-    mocker.patch(
-        "src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID"
-    )
+    mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
+    mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
 
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -157,12 +141,8 @@ def test_run_update_success(mocker, mock_license_dir):
 
 
 def test_run_update_fail(mocker, mock_license_dir):
-    mocker.patch(
-        "src.core.license_updater.get_license_dir", return_value=mock_license_dir
-    )
-    mocker.patch(
-        "src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID"
-    )
+    mocker.patch("src.core.license_updater.get_license_dir", return_value=mock_license_dir)
+    mocker.patch("src.core.license_validator.get_hardware_id", return_value="FAKE_HW_ID")
 
     mock_response = MagicMock()
     mock_response.status_code = 404

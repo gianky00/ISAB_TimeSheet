@@ -10,9 +10,7 @@ from src.core.license_validator import (
 
 class TestLicenseValidatorRobust:
     @patch("platform.system", return_value="Windows")
-    @patch(
-        "src.core.license_validator._get_windows_hardware_id", return_value="MOCK_HWID"
-    )
+    @patch("src.core.license_validator._get_windows_hardware_id", return_value="MOCK_HWID")
     def test_get_hardware_id_windows(self, mock_win, mock_plat):
         assert get_hardware_id() == "MOCK_HWID"
 
@@ -21,9 +19,7 @@ class TestLicenseValidatorRobust:
     @patch("src.core.license_validator._calculate_sha256", return_value="FAKE_HASH")
     @patch("src.core.license_validator.get_hardware_id", return_value="VALID_HWID")
     @patch("src.core.time_manager.get_trusted_time")
-    def test_verify_license_full_logic(
-        self, mock_time, mock_hwid, mock_sha, mock_info, mock_paths
-    ):
+    def test_verify_license_full_logic(self, mock_time, mock_hwid, mock_sha, mock_info, mock_paths):
         # Setup percorsi mock
         paths = {"dir": MagicMock(), "config": MagicMock(), "manifest": MagicMock()}
         for p in paths.values():
@@ -64,7 +60,7 @@ class TestLicenseValidatorRobust:
         paths["config"].exists.return_value = False  # Manca file config
         mock_paths.return_value = paths
 
-        status, msg = get_detailed_license_status()
+        status, _msg = get_detailed_license_status()
         assert status == LicenseStatus.MISSING
 
     @patch("src.core.license_validator.get_license_info", return_value=None)

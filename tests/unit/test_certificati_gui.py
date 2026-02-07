@@ -63,7 +63,7 @@ class TestCertificatiGUI:
         assert "Scaduto" in cert_tab._format_days_text_short(-10)
         assert "Scade tra 5gg" in cert_tab._format_days_text_short(5)
         assert "Attivo" in cert_tab._format_days_text_short(60)
-        assert "N/D" == cert_tab._format_days_text_short(None)
+        assert cert_tab._format_days_text_short(None) == "N/D"
 
     def test_exclusions_io(self, cert_tab, tmp_path):
         """Testa il caricamento e salvataggio delle esclusioni."""
@@ -164,9 +164,7 @@ class TestCertificatiGUI:
 
     def test_screenshot_generation_logic(self, cert_tab):
         """Testa la logica di preparazione dello screenshot (senza esecuzione effettiva)."""
-        test_data = [
-            {"matricola": "M1", "days": 10, "modello": "Mod1", "costruttore": "C1"}
-        ]
+        test_data = [{"matricola": "M1", "days": 10, "modello": "Mod1", "costruttore": "C1"}]
         dialog = ScadenzeAnalysisDialog(test_data, cert_tab)
         self.qtbot.addWidget(dialog)
 
@@ -194,5 +192,5 @@ class TestCertificatiGUI:
             ):
                 dialog._send_email()
                 assert mock_popen.called
-                args, kwargs = mock_popen.call_args
+                args, _kwargs = mock_popen.call_args
                 assert "powershell" in args[0]

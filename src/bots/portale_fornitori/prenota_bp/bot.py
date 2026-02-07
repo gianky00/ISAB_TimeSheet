@@ -4,7 +4,7 @@ Bot per la prenotazione automatica dei Badge Provvisori (BP) sul Portale Fornito
 
 import traceback
 from contextlib import suppress
-from typing import Any, Dict, List
+from typing import Any
 
 from src.bots.base.base_bot import BaseBot
 
@@ -49,7 +49,7 @@ class PrenotaBPBot(BaseBot):
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
-        self.results: List[Dict[str, Any]] = []
+        self.results: list[dict[str, Any]] = []
 
     def _get_row_value(self, row: dict, target_key: str) -> str:
         """Estrae un valore dalla riga in modo robusto (ignora case, spazi e underscore)."""
@@ -84,9 +84,7 @@ class PrenotaBPBot(BaseBot):
                 if self._process_single_bp(page, i, row):
                     processed_count += 1
 
-            self.log(
-                f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati."
-            )
+            self.log(f"✓ Elaborazione completata: {processed_count}/{len(rows)} BP prenotati.")
             return True
         except Exception as e:
             self.log(f"❗ Errore fatale durante l'esecuzione: {e}")
@@ -95,7 +93,7 @@ class PrenotaBPBot(BaseBot):
         finally:
             self.log("Fine sessione Prenota BP.")
 
-    def _init_run_data(self, data: Any) -> List[dict]:
+    def _init_run_data(self, data: Any) -> list[dict]:
         """Inizializza i parametri della sessione."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da") or self.data_da
@@ -114,9 +112,7 @@ class PrenotaBPBot(BaseBot):
             return False
 
         try:
-            page.filtra_buoni_prelievo(
-                self.fornitore, num_bp, self.data_da, self.data_a
-            )
+            page.filtra_buoni_prelievo(self.fornitore, num_bp, self.data_da, self.data_a)
             page.apri_dettagli_bp()
             page.gestisci_creazione_richiesta(note)
             with suppress(Exception):

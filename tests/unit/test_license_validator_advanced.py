@@ -29,9 +29,7 @@ class TestLicenseValidatorAdvanced:
             "config": config_file,
             "manifest": manifest_file,
         }
-        mocker.patch(
-            "src.core.license_validator._get_license_paths", return_value=paths
-        )
+        mocker.patch("src.core.license_validator._get_license_paths", return_value=paths)
 
         return lic_dir, config_file, manifest_file
 
@@ -56,7 +54,7 @@ class TestLicenseValidatorAdvanced:
 
     def test_license_integrity_failure(self, license_env, mocker):
         """Test: Fallimento validazione se l'hash del file config non corrisponde al manifest."""
-        lic_dir, config_file, manifest_file = license_env
+        _lic_dir, config_file, manifest_file = license_env
         config_file.write_text("tampered data")
         manifest_file.write_text(json.dumps({"config.dat": "wrong_hash"}))
         mocker.patch("src.core.license_validator.AuditManager")
@@ -67,7 +65,7 @@ class TestLicenseValidatorAdvanced:
 
     def test_license_data_validation_flow(self, license_env, mocker):
         """Test: Workflow completo di validazione (Integrity -> Decrypt -> Data)."""
-        lic_dir, config_file, manifest_file = license_env
+        _lic_dir, config_file, manifest_file = license_env
 
         # 1. Setup Chiave e Fernet
         key = Fernet.generate_key()
@@ -92,34 +90,24 @@ class TestLicenseValidatorAdvanced:
         manifest_file.write_text(json.dumps({"config.dat": conf_hash}))
 
         # 4. Mock HWID Corrente e Trusted Time
-        mocker.patch(
-            "src.core.license_validator.get_hardware_id", return_value="MY-HWID"
-        )
+        mocker.patch("src.core.license_validator.get_hardware_id", return_value="MY-HWID")
         mock_dt = datetime(2026, 1, 1)
-        mocker.patch(
-            "src.core.license_validator.get_trusted_time", return_value=(mock_dt, True)
-        )
+        mocker.patch("src.core.license_validator.get_trusted_time", return_value=(mock_dt, True))
 
-        status, msg = get_detailed_license_status()
+        status, _msg = get_detailed_license_status()
         assert status == LicenseStatus.VALID
 
     def test_license_hardware_mismatch(self, license_env, mocker):
         """Test: Fallimento se HWID nella licenza è diverso da quello attuale."""
-        lic_dir, config_file, manifest_file = license_env
+        _lic_dir, config_file, manifest_file = license_env
 
         # Assicura che i file esistano fisicamente per evitare LicenseStatus.MISSING
         config_file.write_text("dummy")
-        manifest_file.write_text(
-            json.dumps({"config.dat": hashlib.sha256(b"dummy").hexdigest()})
-        )
+        manifest_file.write_text(json.dumps({"config.dat": hashlib.sha256(b"dummy").hexdigest()}))
 
         payload = {"Hardware ID": "WRONG-ID", "Scadenza Licenza": "31/12/2099"}
-        mocker.patch(
-            "src.core.license_validator.get_license_info", return_value=payload
-        )
-        mocker.patch(
-            "src.core.license_validator.get_hardware_id", return_value="ACTUAL-ID"
-        )
+        mocker.patch("src.core.license_validator.get_license_info", return_value=payload)
+        mocker.patch("src.core.license_validator.get_hardware_id", return_value="ACTUAL-ID")
         mocker.patch(
             "src.core.license_validator._check_integrity_with_manifest",
             return_value=(LicenseStatus.VALID, ""),

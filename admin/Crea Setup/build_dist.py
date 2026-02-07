@@ -14,7 +14,9 @@ import sys
 
 # Add admin folder to path to import analyzer
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analyze_dependencies import get_all_imports  # noqa: E402
+import contextlib
+
+from analyze_dependencies import get_all_imports
 
 # Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,8 +47,8 @@ def log(message):
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(str(message) + "\n")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Warning: Build distribution process error: {e}")
 
 
 def run_command(cmd, cwd=None, shell=False, check=True):
@@ -97,12 +99,12 @@ def get_version():
     """Read version from version.py"""
     version_file = os.path.join(ROOT_DIR, "src", "core", "version.py")
     try:
-        with open(version_file, "r") as f:
+        with open(version_file) as f:
             for line in f:
                 if line.startswith("__version__"):
                     return line.split('"')[1]
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Warning: Build distribution process error: {e}")
     return "0.0.0"
 
 
@@ -447,9 +449,7 @@ def deploy_netlify(netlify_dir):
     use_shell = os.name == "nt"
 
     try:
-        subprocess.run(
-            ["netlify", "--version"], shell=use_shell, capture_output=True, check=True
-        )
+        subprocess.run(["netlify", "--version"], shell=use_shell, capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         log("[WARNING] Netlify CLI not found. Skipping deploy.")
         return False
@@ -473,9 +473,7 @@ def deploy_netlify(netlify_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Bot TS Build Script")
-    parser.add_argument(
-        "--no-deploy", action="store_true", help="Skip Netlify deployment"
-    )
+    parser.add_argument("--no-deploy", action="store_true", help="Skip Netlify deployment")
     parser.add_argument("--skip-installer", action="store_true", help="Skip Inno Setup")
     parser.add_argument(
         "--debug-no-obfuscate",
@@ -485,10 +483,8 @@ def main():
     args = parser.parse_args()
 
     if os.path.exists(LOG_FILE):
-        try:
+        with contextlib.suppress(OSError):
             os.remove(LOG_FILE)
-        except OSError:
-            pass
 
     log("=" * 60)
     log(f"  SYNCROJOB BUILD SCRIPT - v{get_version()}")

@@ -1,6 +1,6 @@
 import csv
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from PyQt6.QtCore import (
     QDate,
@@ -230,9 +230,7 @@ class AnagraficaPage(QWidget):
 
         # Verifica stato monitoraggio corrente
         query = "SELECT monitoraggio_attivo FROM dipendenti WHERE id_risorsa = ?"
-        result = db_manager.execute_query(
-            db_manager.DB_DIPENDENTI, query, (id_risorsa,)
-        )
+        result = db_manager.execute_query(db_manager.DB_DIPENDENTI, query, (id_risorsa,))
         is_monitored = result[0][0] if result and result[0][0] is not None else 1
 
         from PyQt6.QtGui import QAction
@@ -262,9 +260,7 @@ class AnagraficaPage(QWidget):
         """Attiva o disattiva il monitoraggio per un dipendente."""
         try:
             query = "UPDATE dipendenti SET monitoraggio_attivo = ? WHERE id_risorsa = ?"
-            db_manager.execute_query(
-                db_manager.DB_DIPENDENTI, query, (1 if enable else 0, id_risorsa)
-            )
+            db_manager.execute_query(db_manager.DB_DIPENDENTI, query, (1 if enable else 0, id_risorsa))
 
             status_text = "riattivato" if enable else "escluso"
             ToastManager.instance().show(
@@ -275,14 +271,10 @@ class AnagraficaPage(QWidget):
             self.refresh_data()
         except Exception as e:
             logger.error(f"Errore toggle monitoraggio: {e}")
-            QMessageBox.critical(
-                self, "Errore", f"Impossibile modificare il monitoraggio:\n{e}"
-            )
+            QMessageBox.critical(self, "Errore", f"Impossibile modificare il monitoraggio:\n{e}")
 
     def refresh_data(self):
-        self.lbl_sync_status.setText(
-            f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}"
-        )
+        self.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('timbrature')}")
         search_text = self.search_input.text().lower().strip()
         query = """
             SELECT id_risorsa, cognome, nome, data_nascita, badge, data_assunzione, created_at, codice_fiscale, monitoraggio_attivo
@@ -304,9 +296,7 @@ class AnagraficaPage(QWidget):
         )
 
         try:
-            full_rows = db_manager.execute_query(
-                db_manager.DB_DIPENDENTI, query, tuple(params)
-            )
+            full_rows = db_manager.execute_query(db_manager.DB_DIPENDENTI, query, tuple(params))
             master_rows = self._process_employee_rows(full_rows)
             self.model.update_data(master_rows)
             self.model.set_column_formatter(0, self._inactivation_formatter)
@@ -324,9 +314,7 @@ class AnagraficaPage(QWidget):
 
         for r in full_rows:
             is_monitored = r[8] if len(r) > 8 and r[8] is not None else 1
-            diff_days, cf_warning, _, _, _ = compute_employee_status(
-                r, last_by_cf, last_by_name, normalize
-            )
+            diff_days, cf_warning, _, _, _ = compute_employee_status(r, last_by_cf, last_by_name, normalize)
 
             # 1. Aggiornamento Conteggi
             self._update_status_counts(counts, is_monitored, diff_days)
@@ -389,10 +377,7 @@ class AnagraficaPage(QWidget):
             return True
         if self.current_filter == "warning" and (diff_days <= 20 or diff_days > 30):
             return True
-        if self.current_filter == "expired" and diff_days <= 30:
-            return True
-
-        return False
+        return bool(self.current_filter == "expired" and diff_days <= 30)
 
     def _inactivation_formatter(self, value):
         if value is None or value == "":
@@ -463,11 +448,7 @@ class AnagraficaPage(QWidget):
 
         details_dict = {}
         for h, idx in mapping.items():
-            val = (
-                str(row_data[idx])
-                if idx is not None and row_data[idx] is not None
-                else ""
-            )
+            val = str(row_data[idx]) if idx is not None and row_data[idx] is not None else ""
             if val.lower() in ("nan", "none"):
                 val = ""
             if h == "Importato il":
@@ -490,9 +471,7 @@ class AnagraficaPage(QWidget):
             ORDER BY data DESC LIMIT 1
         """
         try:
-            res = db_manager.execute_query(
-                db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome)
-            )
+            res = db_manager.execute_query(db_manager.DB_TIMBRATURE, query, (norm_cognome, norm_nome))
             if not res:
                 return "Mai effettuato", "-", "#6c757d"
 
@@ -501,7 +480,7 @@ class AnagraficaPage(QWidget):
             last_date = None
             for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                 try:
-                    last_date = datetime.strptime(date_part, fmt)
+                    last_date = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
                     break
                 except ValueError:
                     continue
@@ -514,14 +493,13 @@ class AnagraficaPage(QWidget):
 
             if delta <= 20:
                 return f"{formatted_date} ({delta} gg fa)", str(delta), "#198754"
-            elif delta <= 30:
+            if delta <= 30:
                 return f"{formatted_date} ({delta} gg fa)", str(delta), "#fd7e14"
-            else:
-                return (
-                    f"{formatted_date} (SCADUTA - {delta} gg fa)",
-                    str(delta),
-                    "#dc3545",
-                )
+            return (
+                f"{formatted_date} (SCADUTA - {delta} gg fa)",
+                str(delta),
+                "#dc3545",
+            )
         except Exception as e:
             logger.error(f"Errore recupero ultimo accesso ISAB: {e}")
             return "Errore", "-", "#6c757d"
@@ -536,7 +514,7 @@ class AnagraficaPage(QWidget):
         if not file_path:
             return
         try:
-            with open(file_path, mode="r", encoding="utf-8-sig") as f:
+            with open(file_path, encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f, delimiter=";")
                 count = 0
                 for row in reader:
@@ -563,9 +541,7 @@ class AnagraficaPage(QWidget):
             # Aggiorna SyncTracker per i dipendenti
             SyncTracker.update_status("dipendenti", added=count, removed=0)
 
-            ToastManager.instance().show(
-                f"Importazione completata: {count} dipendenti.", "success"
-            )
+            ToastManager.instance().show(f"Importazione completata: {count} dipendenti.", "success")
             self.refresh_data()
         except Exception as e:
             logger.error(f"Errore import CSV: {e}")
@@ -580,9 +556,7 @@ class AnagraficaPage(QWidget):
             # 1. Recupera Credenziali
             account = config_manager.get_default_account()
             if not account:
-                QMessageBox.warning(
-                    self, "Attenzione", "Credenziali SafeWork non configurate."
-                )
+                QMessageBox.warning(self, "Attenzione", "Credenziali SafeWork non configurate.")
                 return
             username, password = account.get("username"), account.get("password")
 
@@ -590,9 +564,7 @@ class AnagraficaPage(QWidget):
             last_date_str = None
             try:
                 query = "SELECT MAX(data) FROM timbrature"
-                with db_manager.get_connection(
-                    db_manager.DB_TIMBRATURE, read_only=True
-                ) as conn:
+                with db_manager.get_connection(db_manager.DB_TIMBRATURE, read_only=True) as conn:
                     res = conn.execute(query).fetchone()
                     if res and res[0]:
                         last_date_str = res[0]
@@ -625,9 +597,7 @@ class AnagraficaPage(QWidget):
             data_a_fmt = end_date.toString("dd.MM.yyyy")
 
             config = config_manager.load_config()
-            fornitore = config.get(
-                "last_timbrature_fornitore", "KK10608 - COEMI S.R.L."
-            )
+            fornitore = config.get("last_timbrature_fornitore", "KK10608 - COEMI S.R.L.")
 
             # 3. Conferma
             msg = f"Aggiornare timbrature dal <b>{data_da_fmt}</b> al <b>{data_a_fmt}</b>?<br>Fornitore: {fornitore}"
@@ -683,9 +653,7 @@ class AnagraficaPage(QWidget):
             dlg = QDialog(self)
             dlg.setWindowTitle(title)
             dlg.setMinimumWidth(350)
-            dlg.setWindowFlags(
-                dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
-            )
+            dlg.setWindowFlags(dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
             layout = QVBoxLayout(dlg)
             layout.setSpacing(20)
@@ -701,9 +669,7 @@ class AnagraficaPage(QWidget):
 
             btn_cancel = ModernButton(cancel_text, variant=ModernButton.Variant.GHOST)
             btn_cancel.clicked.connect(dlg.reject)
-            btn_confirm = ModernButton(
-                confirm_text, variant=ModernButton.Variant.PRIMARY
-            )
+            btn_confirm = ModernButton(confirm_text, variant=ModernButton.Variant.PRIMARY)
             btn_confirm.clicked.connect(dlg.accept)
 
             btn_layout.addWidget(btn_cancel)

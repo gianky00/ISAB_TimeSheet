@@ -35,12 +35,8 @@ class CacheWorker(QThread):
                 date_keys,
             ) = self._build_caches(self.data_source)
             self.progress.emit("Salvataggio cache...")
-            self._save_cache(
-                display_data, search_index, float_totals, style_cache, date_keys
-            )
-            self.finished.emit(
-                display_data, search_index, float_totals, style_cache, date_keys
-            )
+            self._save_cache(display_data, search_index, float_totals, style_cache, date_keys)
+            self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
         else:
             if not self.cache_path.exists():
                 self.finished.emit([], [], [], [], [])
@@ -49,7 +45,7 @@ class CacheWorker(QThread):
             try:
                 self.progress.emit("Caricamento cache...")
                 with open(self.cache_path, "rb") as f:
-                    loaded = pickle.load(f)  # nosec B301
+                    loaded = pickle.load(f)  # noqa: S301 # nosec B301
                     if len(loaded) == 3:
                         raw_data = loaded[0]
                         (
@@ -100,9 +96,7 @@ class CacheWorker(QThread):
                             date_keys,
                         ) = ([], [], [], [], [])
 
-                self.finished.emit(
-                    display_data, search_index, float_totals, style_cache, date_keys
-                )
+                self.finished.emit(display_data, search_index, float_totals, style_cache, date_keys)
             except Exception as e:
                 print(f"Error loading cache: {e}")
                 self.finished.emit([], [], [], [], [])

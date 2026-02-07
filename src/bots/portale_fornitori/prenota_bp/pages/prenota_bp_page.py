@@ -2,9 +2,9 @@
 Page Object per la gestione Prenotazioni BP sul Portale Fornitori.
 """
 
+from collections.abc import Callable
 from contextlib import suppress
 from datetime import datetime, timedelta
-from typing import Callable, List, Optional, Tuple
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -23,9 +23,7 @@ class PrenotaBPPage:
     Gestisce la navigazione nei menu, il filtraggio e l'inserimento di nuove prenotazioni.
     """
 
-    def __init__(
-        self, driver: WebDriver, log_callback: Optional[Callable[[str], None]] = None
-    ):
+    def __init__(self, driver: WebDriver, log_callback: Callable[[str], None] | None = None):
         """Inizializza la pagina con il driver e configura i tempi di attesa."""
         self.driver = driver
         self.wait = WebDriverWait(driver, Timeouts.DEFAULT)
@@ -64,9 +62,7 @@ class PrenotaBPPage:
                 )
 
                 # Scroll al centro
-                self.driver.execute_script(
-                    "arguments[0].scrollIntoView({block: 'center'});", el
-                )
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
                 try:
                     el.click()
                 except Exception:
@@ -80,6 +76,7 @@ class PrenotaBPPage:
                     raise e
                 self.log(f"  (Riprovo click su {locator}...)")
                 self._wait_for_overlay()
+        return None
 
     def wait_and_fill(self, locator, text, timeout=None):
         """
@@ -92,7 +89,7 @@ class PrenotaBPPage:
         """
         self._wait_for_overlay()
         wait = WebDriverWait(self.driver, timeout) if timeout else self.wait
-        el = wait.until(EC.visibility_of_element_located(locator))  # noqa: FURB184
+        el = wait.until(EC.visibility_of_element_located(locator))
         el.clear()
         el.send_keys(text)
         return el
@@ -129,23 +126,17 @@ class PrenotaBPPage:
             # Espansione menu principale
             self.log("Espansione menu 'Buono di Prelievo'...")
             self.wait_and_click(PrenotaBPLocators.MENU_BUONO_PRELIEVO)
-            submenu = self.wait.until(
-                EC.element_to_be_clickable(PrenotaBPLocators.SUBMENU_GESTIONE_BP)
-            )
+            submenu = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.SUBMENU_GESTIONE_BP))
             self.driver.execute_script("arguments[0].click();", submenu)
 
         self._wait_for_overlay()
 
         # Attesa caricamento pagina (presenza del campo Fornitore)
         self.log("Attesa caricamento filtri...")
-        self.wait.until(
-            EC.presence_of_element_located(PrenotaBPLocators.FILTER_FORNITORE)
-        )
+        self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.FILTER_FORNITORE))
         self.log("Sezione Gestione BP caricata.")
 
-    def filtra_buoni_prelievo(
-        self, fornitore=None, numero_bp=None, data_da=None, data_a=None
-    ):
+    def filtra_buoni_prelievo(self, fornitore=None, numero_bp=None, data_da=None, data_a=None):
         """Imposta i filtri di ricerca e clicca su Cerca."""
         self.log("Impostazione filtri di ricerca...")
 
@@ -155,24 +146,18 @@ class PrenotaBPPage:
                 # 1. Click sulla freccia della combo (usando ActionChains per simulare click utente)
                 from selenium.webdriver.common.action_chains import ActionChains
 
-                arrow = self.wait.until(
-                    EC.element_to_be_clickable(PrenotaBPLocators.FILTER_FORNITORE_ARROW)
-                )
+                arrow = self.wait.until(EC.element_to_be_clickable(PrenotaBPLocators.FILTER_FORNITORE_ARROW))
                 ActionChains(self.driver).move_to_element(arrow).click().perform()
                 option_xpath = f"//li[normalize-space(text())='{fornitore}']"
                 option = WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, option_xpath))
                 )
 
-                self.driver.execute_script(
-                    "arguments[0].scrollIntoView({block: 'nearest'});", option
-                )
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", option)
                 self.driver.execute_script("arguments[0].click();", option)
                 self._wait_for_overlay()
             except Exception as e:
-                self.log(
-                    f"  ⚠ Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale."
-                )
+                self.log(f"  ⚠ Avviso: Selezione fornitore fallita ({e}), tento inserimento manuale.")
                 self.wait_and_fill(PrenotaBPLocators.FILTER_FORNITORE, fornitore)
 
         if numero_bp:
@@ -195,9 +180,7 @@ class PrenotaBPPage:
             self.wait_and_click(PrenotaBPLocators.ICON_DETTAGLI)
             self._wait_for_overlay()
             # Attesa apertura tab dettagli
-            self.wait.until(
-                EC.visibility_of_element_located(PrenotaBPLocators.WINDOW_DETTAGLI)
-            )
+            self.wait.until(EC.visibility_of_element_located(PrenotaBPLocators.WINDOW_DETTAGLI))
         except Exception as e:
             self.log(f"Impossibile aprire i dettagli: {e}")
             raise e
@@ -212,9 +195,7 @@ class PrenotaBPPage:
         self.log("Verifica disponibilità materiali...")
         try:
             # Attende che le righe siano caricate
-            self.wait.until(
-                EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI)
-            )
+            self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI))
             rows = self.driver.find_elements(*PrenotaBPLocators.GRID_ROWS_DETTAGLI)
         except TimeoutException:
             self.log("⚠ Nessuna riga trovata nei dettagli o timeout.")
@@ -292,12 +273,10 @@ class PrenotaBPPage:
         # 3. Form
         self._compila_form_richiesta(note)
 
-    def _analizza_disponibilita(self) -> Tuple[List[int], int]:
+    def _analizza_disponibilita(self) -> tuple[list[int], int]:
         """Recupera le righe disponibili per la richiesta."""
         try:
-            self.wait.until(
-                EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI)
-            )
+            self.wait.until(EC.presence_of_element_located(PrenotaBPLocators.GRID_ROWS_DETTAGLI))
             data_rows = self.driver.find_elements(*PrenotaBPLocators.GRID_ROWS_DETTAGLI)
 
             indices = []
@@ -310,7 +289,7 @@ class PrenotaBPPage:
             self.log("⚠ Nessuna riga trovata per la richiesta.")
             return [], 0
 
-    def _esegui_selezione(self, available_indices: List[int], total_rows: int) -> bool:
+    def _esegui_selezione(self, available_indices: list[int], total_rows: int) -> bool:
         """Esegue il click sui materiali disponibili."""
         count_available = len(available_indices)
         if count_available == 0:
@@ -322,9 +301,7 @@ class PrenotaBPPage:
             self.wait_and_click(PrenotaBPLocators.HEADER_CHECKBOX_SELECT_ALL)
             return True
 
-        self.log(
-            f"⚠ Disponibili {count_available} su {total_rows}. Selezione puntuale."
-        )
+        self.log(f"⚠ Disponibili {count_available} su {total_rows}. Selezione puntuale.")
         checkers = self.driver.find_elements(*PrenotaBPLocators.GRID_CHECKERS)
 
         count_selected = 0
@@ -346,9 +323,7 @@ class PrenotaBPPage:
             ora_attuale = now.strftime("%H%M")
             ora_fine = (now + timedelta(minutes=30)).strftime("%H%M")
 
-            self.wait.until(
-                EC.visibility_of_element_located(PrenotaBPLocators.FORM_DATA_RITIRO)
-            )
+            self.wait.until(EC.visibility_of_element_located(PrenotaBPLocators.FORM_DATA_RITIRO))
             self.wait_and_fill(PrenotaBPLocators.FORM_DATA_RITIRO, data_oggi)
             self.wait_and_fill(PrenotaBPLocators.FORM_ORA_INIZIO, ora_attuale)
             self.wait_and_fill(PrenotaBPLocators.FORM_ORA_FINE, ora_fine)
@@ -367,9 +342,7 @@ class PrenotaBPPage:
     def _click_safe(self, element):
         """Esegue un click sicuro tramite scroll e JS fallback."""
         try:
-            self.driver.execute_script(
-                "arguments[0].scrollIntoView({block: 'center'});", element
-            )
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
             element.click()
         except Exception:
             self.driver.execute_script("arguments[0].click();", element)

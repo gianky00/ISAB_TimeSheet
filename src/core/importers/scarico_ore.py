@@ -1,11 +1,13 @@
 import io
 import json
+import logging
 import re
 import warnings
 import zipfile
+from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, ClassVar
 
 try:
     import msoffcrypto  # type: ignore
@@ -22,11 +24,13 @@ except ImportError:
 
 from src.core.importers.base import BaseImporter
 
+logger = logging.getLogger(__name__)
+
 
 class ScaricoOreImporter(BaseImporter):
     """Importer per lo Scarico Ore Cantiere (con OpenPyXL per stili)."""
 
-    SCARICO_ORE_COLS = [
+    SCARICO_ORE_COLS: ClassVar[list[str]] = [
         "data",
         "pers1",
         "pers2",
@@ -55,9 +59,7 @@ class ScaricoOreImporter(BaseImporter):
                         if name.startswith("xl/worksheets/sheet"):
                             with z.open(name) as f:
                                 head = f.read(32768).decode("utf-8", errors="ignore")
-                                match = re.search(
-                                    r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head
-                                )
+                                match = re.search(r'<dimension ref="[A-Z]+[0-9]+:[A-Z]+(\d+)"', head)
                                 if match:
                                     r = int(match.group(1))
                                     if r > cnt:
@@ -70,15 +72,15 @@ class ScaricoOreImporter(BaseImporter):
             res = _scan_zip(path)
             if res > 0:
                 return res
-        except (zipfile.BadZipFile, Exception):
-            pass
+        except (zipfile.BadZipFile, Exception) as e:
+            logger.debug(f"Scan excel rows error: {e}")
 
         if msoffcrypto:
             with suppress(Exception):
                 decrypted = io.BytesIO()
                 with path.open("rb") as f:
                     office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")  # nosec
+                    office_file.load_key(password="coemi")  # noqa: S106 # nosec: B106
                     office_file.decrypt(decrypted)
                 decrypted.seek(0)
                 return _scan_zip(decrypted)
@@ -89,8 +91,8 @@ class ScaricoOreImporter(BaseImporter):
     def import_scarico_ore(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, List[Tuple]]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, list[tuple]]:
         path = Path(file_path)
         if not path.exists():
             return False, f"File Scarico Ore non trovato: {file_path}", []
@@ -117,12 +119,11 @@ class ScaricoOreImporter(BaseImporter):
         is_encrypted = False
 
         if msoffcrypto:
-            with suppress(Exception):
-                with path.open("rb") as f:
-                    office_file = msoffcrypto.OfficeFile(f)
-                    office_file.load_key(password="coemi")  # nosec
-                    office_file.decrypt(wb_file)
-                    is_encrypted = True
+            with suppress(Exception), path.open("rb") as f:
+                office_file = msoffcrypto.OfficeFile(f)
+                office_file.load_key(password="coemi")  # noqa: S106 # nosec: B106
+                office_file.decrypt(wb_file)
+                is_encrypted = True
 
         if not is_encrypted:
             with path.open("rb") as f:
@@ -143,8 +144,8 @@ class ScaricoOreImporter(BaseImporter):
     def _process_all_scarico_rows(
         cls,
         ws,
-        progress_callback: Optional[Callable],
-    ) -> List[Tuple]:
+        progress_callback: Callable | None,
+    ) -> list[tuple]:
         start_row = 6
         col_keys = [
             "data",
@@ -161,7 +162,7 @@ class ScaricoOreImporter(BaseImporter):
         ]
         total_rows = ws.max_row
 
-        rows_to_insert: List[Tuple] = []
+        rows_to_insert: list[tuple] = []
         rows_to_insert_append = rows_to_insert.append
 
         progress_interval = 5000
@@ -179,7 +180,7 @@ class ScaricoOreImporter(BaseImporter):
         return rows_to_insert
 
     @classmethod
-    def _extract_row_values(cls, row) -> Optional[List[str]]:
+    def _extract_row_values(cls, row) -> list[str] | None:
         (
             c_data,
             c_p1,
@@ -197,7 +198,7 @@ class ScaricoOreImporter(BaseImporter):
         v_odc = c_odc.value
         v_pos = c_pos.value
 
-        if v_odc is v_pos is None:
+        if v_odc is None and v_pos is None:
             return None
 
         def _fmt(val):
@@ -231,7 +232,15 @@ class ScaricoOreImporter(BaseImporter):
             s_pos = ""
         vals.append(s_pos)
 
-        vals.extend((_fmt(c_dalle.value), _fmt(c_alle.value), _fmt(c_tot.value), _fmt(c_desc.value), _fmt(c_fin.value)))
+        vals.extend(
+            (
+                _fmt(c_dalle.value),
+                _fmt(c_alle.value),
+                _fmt(c_tot.value),
+                _fmt(c_desc.value),
+                _fmt(c_fin.value),
+            )
+        )
 
         v_comm = c_comm.value
         s_comm = _fmt(v_comm)
@@ -242,7 +251,7 @@ class ScaricoOreImporter(BaseImporter):
         return vals
 
     @classmethod
-    def _process_scarico_ore_row(cls, row, col_keys) -> Optional[Tuple]:
+    def _process_scarico_ore_row(cls, row, col_keys) -> tuple | None:
         vals = cls._extract_row_values(row)
         if not vals:
             return None
@@ -271,13 +280,11 @@ class ScaricoOreImporter(BaseImporter):
     def _validate_scarico_row(vals) -> bool:
         if not vals[3] or not vals[4] or not vals[7]:
             return False
-        if not vals[1] and not vals[2]:
-            return False
-        return True
+        return bool(vals[1] or vals[2])
 
     @staticmethod
     def _extract_row_styles(row, col_keys, vals) -> str:
-        row_styles: Dict[str, Dict[str, str]] = {}
+        row_styles: dict[str, dict[str, str]] = {}
         for i, key in enumerate(col_keys):
             if vals[i] == "":
                 continue

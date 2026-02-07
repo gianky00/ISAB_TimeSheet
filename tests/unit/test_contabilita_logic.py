@@ -30,9 +30,7 @@ class TestContabilitaLogic:
     @patch("src.core.excel_importer.pd.read_sql")
     @patch("src.core.excel_importer.pd.read_excel")
     @patch("src.core.excel_importer.pd.ExcelFile")
-    def test_import_data_success(
-        self, mock_excel_file, mock_read_excel, mock_read_sql, mock_sync, mock_db
-    ):
+    def test_import_data_success(self, mock_excel_file, mock_read_excel, mock_read_sql, mock_sync, mock_db):
         """Test importazione contabilità con successo."""
         # 1. Mock Excel File structure
         mock_file_instance = MagicMock()
@@ -65,7 +63,8 @@ class TestContabilitaLogic:
         mock_read_excel.return_value = df
 
         # 3. Mock SQL return (Empty existing data)
-        db_cols = ["year"] + [
+        db_cols = [
+            "year",
             "data_prev",
             "mese",
             "n_prev",
@@ -86,7 +85,7 @@ class TestContabilitaLogic:
 
         # 4. Call import
         with patch("pathlib.Path.exists", return_value=True):
-            success, msg, added, removed = ContabilitaManager.import_data_from_excel(
+            success, msg, _added, _removed = ContabilitaManager.import_data_from_excel(
                 "C:/Fake/Contabilita_2024.xlsx"
             )
 
@@ -96,9 +95,7 @@ class TestContabilitaLogic:
 
     @patch("src.core.contabilita_manager.DataSynchronizer")
     @patch("src.core.contabilita_manager.ExcelImporter")
-    def test_import_giornaliere(
-        self, mock_excel_importer, mock_data_synchronizer, mock_db
-    ):
+    def test_import_giornaliere(self, mock_excel_importer, mock_data_synchronizer, mock_db):
         # Mock ExcelImporter.import_giornaliere
         imported_rows = [
             (
@@ -131,16 +128,12 @@ class TestContabilitaLogic:
             path_inst = MockPath.return_value
             path_inst.exists.return_value = True
 
-            success, msg, added, removed = ContabilitaManager.import_giornaliere(
-                "dummy_folder"
-            )
+            success, _msg, added, removed = ContabilitaManager.import_giornaliere("dummy_folder")
 
         assert success is True
         assert added == 1
         assert removed == 0
-        mock_excel_importer.import_giornaliere.assert_called_once_with(
-            "dummy_folder", ANY, ANY
-        )
+        mock_excel_importer.import_giornaliere.assert_called_once_with("dummy_folder", ANY, ANY)
         mock_data_synchronizer.sync_giornaliere.assert_called_once_with(
             ContabilitaManager.DB_PATH, imported_rows, imported_years
         )
@@ -157,5 +150,5 @@ class TestContabilitaLogic:
             z.namelist.return_value = ["xl/workbook.xml"]
             z.read.return_value = b'name="2023"'
 
-            sheets, files = ContabilitaManager.scan_workload(str(f), str(d))
+            sheets, _files = ContabilitaManager.scan_workload(str(f), str(d))
             assert sheets == 1

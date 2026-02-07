@@ -3,7 +3,7 @@ PriorityBadge - Badge component per visualizzare la priorità di una notifica.
 Supporta High (con pulse animation), Medium e Low.
 """
 
-from typing import Optional
+from typing import ClassVar
 
 from PyQt6.QtCore import QVariantAnimation, pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
@@ -20,13 +20,13 @@ class PriorityBadge(QWidget):
     """
 
     # Color mapping
-    PRIORITY_COLORS = {
+    PRIORITY_COLORS: ClassVar[dict[str, str]] = {
         "high": "#F44336",  # Red
         "medium": "#FF9800",  # Orange
         "low": "#4CAF50",  # Green
     }
 
-    def __init__(self, priority: str = "low", parent: Optional[QWidget] = None):
+    def __init__(self, priority: str = "low", parent: QWidget | None = None):
         super().__init__(parent)
         self.priority = priority.lower()
         self._pulse_scale = 1.0

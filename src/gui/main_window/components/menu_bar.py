@@ -30,9 +30,7 @@ class MenuBarComponent(QObject):
         except Exception as e:
             print(f"Error opening bug report dialog: {e}")
             if hasattr(self.main_window, "show_toast"):
-                self.main_window.show_toast(
-                    f"Errore apertura segnalazione: {e}", "error"
-                )
+                self.main_window.show_toast(f"Errore apertura segnalazione: {e}", "error")
 
     def _setup_shortcuts(self):
         # Shortcut per Command Palette (Spotlight)
@@ -41,9 +39,7 @@ class MenuBarComponent(QObject):
         self.shortcut_palette.activated.connect(self.open_command_palette)
 
         # Fallback Shortcut (Ctrl+Shift+P) per conflitti
-        self.shortcut_palette_sec = QShortcut(
-            QKeySequence("Ctrl+Shift+P"), self.main_window
-        )
+        self.shortcut_palette_sec = QShortcut(QKeySequence("Ctrl+Shift+P"), self.main_window)
         self.shortcut_palette_sec.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_palette_sec.activated.connect(self.open_command_palette)
 
@@ -87,7 +83,7 @@ class MenuBarComponent(QObject):
             from PyQt6.QtWidgets import QApplication
 
             QApplication.quit()
-            os.execl(sys.executable, sys.executable, *sys.argv)
+            os.execl(sys.executable, sys.executable, *sys.argv)  # noqa: S606
 
         def open_folder_path(path):
             if Path(path).exists():
@@ -148,9 +144,7 @@ class MenuBarComponent(QObject):
                             "Processa le righe salvate nel pannello",
                             Icons.PLAY,
                             action=lambda: (
-                                mw.scarico_panel.run_externally({})
-                                if hasattr(mw, "scarico_panel")
-                                else None
+                                mw.scarico_panel.run_externally({}) if hasattr(mw, "scarico_panel") else None
                             ),
                         ),
                     ],

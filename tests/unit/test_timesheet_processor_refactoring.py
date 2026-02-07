@@ -37,9 +37,7 @@ def sample_timesheet(tmp_path):
 
 
 def test_process_and_move_file_not_found():
-    success, msg = TimesheetProcessor.process_and_move(
-        Path("non_existent.xlsx"), Path("dest")
-    )
+    success, msg = TimesheetProcessor.process_and_move(Path("non_existent.xlsx"), Path("dest"))
     assert success is False
     assert "non trovato" in msg
 
@@ -67,7 +65,7 @@ def test_process_and_move_missing_odc(tmp_path):
 
 def test_process_and_move_success_single_pos(sample_timesheet, tmp_path):
     dest_dir = tmp_path / "dest"
-    success, msg = TimesheetProcessor.process_and_move(sample_timesheet, dest_dir)
+    success, _msg = TimesheetProcessor.process_and_move(sample_timesheet, dest_dir)
 
     assert success is True
     # ODC123 and POS 10 -> ODC123_10_TS.xlsx
@@ -87,7 +85,7 @@ def test_process_and_move_success_multiple_pos(tmp_path):
     wb.save(path)
 
     dest_dir = tmp_path / "dest"
-    success, msg = TimesheetProcessor.process_and_move(path, dest_dir)
+    success, _msg = TimesheetProcessor.process_and_move(path, dest_dir)
 
     assert success is True
     # Multiple POS -> ODCMULTI_TS.xlsx
@@ -101,7 +99,7 @@ def test_process_and_move_conflict_handling(sample_timesheet, tmp_path):
     conflict_path = dest_dir / "ODC123_10_TS.xlsx"
     conflict_path.write_text("dummy")
 
-    success, msg = TimesheetProcessor.process_and_move(sample_timesheet, dest_dir)
+    success, _msg = TimesheetProcessor.process_and_move(sample_timesheet, dest_dir)
     assert success is True
 
     # It should have created a second file with timestamp
@@ -114,9 +112,7 @@ def test_process_and_move_mkdir_error(tmp_path):
     wb = openpyxl.Workbook()
     wb.save(src)
 
-    with patch(
-        "src.core.timesheet_processor.Path.mkdir", side_effect=Exception("Perm error")
-    ):
+    with patch("src.core.timesheet_processor.Path.mkdir", side_effect=Exception("Perm error")):
         success, msg = TimesheetProcessor.process_and_move(src, tmp_path / "new_dir")
         assert success is False
         assert "Impossibile creare dest_dir" in msg
@@ -124,8 +120,6 @@ def test_process_and_move_mkdir_error(tmp_path):
 
 def test_process_and_move_critical_exception(sample_timesheet, tmp_path):
     with patch("openpyxl.load_workbook", side_effect=Exception("Memory Error")):
-        success, msg = TimesheetProcessor.process_and_move(
-            sample_timesheet, tmp_path / "dest"
-        )
+        success, msg = TimesheetProcessor.process_and_move(sample_timesheet, tmp_path / "dest")
         assert success is False
         assert "Memory Error" in msg

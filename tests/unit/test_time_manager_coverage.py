@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 from src.core.time_manager import get_network_time, get_trusted_time
@@ -20,7 +20,7 @@ class TestTimeManager:
         assert dt.month == 10
         assert dt.day == 21
         assert dt.hour == 7
-        assert dt.tzinfo == timezone.utc
+        assert dt.tzinfo == UTC
 
     @patch("src.core.time_manager.requests.head")
     def test_get_network_time_failure_no_header(self, mock_head):
@@ -42,7 +42,7 @@ class TestTimeManager:
 
     @patch("src.core.time_manager.get_network_time")
     def test_get_trusted_time_network(self, mock_get_net):
-        fake_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        fake_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
         mock_get_net.return_value = fake_time
 
         dt, trusted = get_trusted_time()
@@ -57,5 +57,5 @@ class TestTimeManager:
         assert isinstance(dt, datetime)
         assert trusted is False
         # Ensure fallback is roughly now (UTC)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         assert abs((dt - now).total_seconds()) < 1.0

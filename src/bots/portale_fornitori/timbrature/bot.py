@@ -5,7 +5,7 @@ Bot for accessing Timbrature section using Page Object Model.
 
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.timbrature.pages.timbrature_page import TimbraturePage
@@ -35,51 +35,44 @@ class TimbratureBot(BaseBot):
         """Metodo statico che restituisce la descrizione del bot."""
         return "Scarica e archivia le timbrature dal portale ISAB"
 
-    def __init__(
-        self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs
-    ):
+    def __init__(self, data_da: str = "", data_a: str = "", fornitore: str = "", **kwargs):
         super().__init__(**kwargs)
         self.data_da = data_da
         self.data_a = data_a
         self.fornitore = fornitore
         self.storage = TimbratureStorage()
 
-    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
         """Validazione specifica per Timbrature."""
         base_valid, base_msg = super().validate_data(data)
         if not base_valid:
             return False, base_msg
 
-        if not self.fornitore:
-            if isinstance(data, dict) and not data.get("fornitore"):
-                return False, "Fornitore non specificato."
-            elif not isinstance(data, dict):
-                return False, "Fornitore non specificato."
+        if not self.fornitore and (not data or not any("fornitore" in row for row in data)):
+            return False, "Fornitore non specificato."
 
         if not self.data_da:
-            if isinstance(data, dict) and data.get("data_da"):
-                self.data_da = data.get("data_da")
+            if data and data[0].get("data_da"):
+                self.data_da = str(data[0].get("data_da"))
             else:
                 return False, "Data Inizio non specificata."
 
         return True, ""
 
-    def run(self, data: Union[List[Dict[str, Any]], Dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]]) -> bool:
         """
         Executes the Timbrature workflow: Navigate -> Filter -> Download -> Import.
         """
-        if isinstance(data, dict):
-            self.data_da = data.get("data_da", self.data_da)
-            self.data_a = data.get("data_a", self.data_a)
-            self.fornitore = data.get("fornitore", self.fornitore)
+        if data and isinstance(data, list):
+            row = data[0]
+            self.data_da = row.get("data_da", self.data_da)
+            self.data_a = row.get("data_a", self.data_a)
+            self.fornitore = row.get("fornitore", self.fornitore)
 
-        self.log(
-            f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})..."
-        )
+        self.log(f"🚀 Inizio recupero timbrature per {self.fornitore} ({self.data_da} - {self.data_a})...")
 
         if not self.driver:
             return False
-        assert self.driver
 
         page = TimbraturePage(self.driver, self.log, self.download_path)
 

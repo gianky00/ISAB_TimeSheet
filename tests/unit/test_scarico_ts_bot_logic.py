@@ -50,7 +50,7 @@ class TestScaricaTSBotLogic(unittest.TestCase):
             "fornitore": "NEW FORN",
             "elabora_ts": True,
         }
-        rows, dest = self.bot._prepare_run_environment(data)
+        rows, _dest = self.bot._prepare_run_environment(data)
 
         self.assertEqual(len(rows), 1)
         self.assertEqual(self.bot.data_da, "05/05/2026")

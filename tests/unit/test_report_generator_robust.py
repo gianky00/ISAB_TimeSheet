@@ -17,12 +17,8 @@ class TestReportGeneratorRobust(unittest.TestCase):
         self.logger_patcher.stop()
 
     @patch("src.gui.panels.dipendenti.utils.report_generator.db_manager")
-    @patch(
-        "src.gui.panels.dipendenti.utils.report_generator.ReportGenerator._send_report_email"
-    )
-    @patch(
-        "src.gui.panels.dipendenti.utils.report_generator.ReportGenerator._create_report_excel"
-    )
+    @patch("src.gui.panels.dipendenti.utils.report_generator.ReportGenerator._send_report_email")
+    @patch("src.gui.panels.dipendenti.utils.report_generator.ReportGenerator._create_report_excel")
     @patch("src.gui.panels.dipendenti.utils.report_generator.build_timbrature_maps")
     def test_generate_email_report_success(
         self, mock_build_maps, mock_create_excel, mock_send_email, mock_db
@@ -46,9 +42,7 @@ class TestReportGeneratorRobust(unittest.TestCase):
     @patch("pythoncom.CoInitialize", create=True)
     @patch("src.gui.panels.dipendenti.utils.report_generator.ReportHistory")
     @patch("src.gui.panels.dipendenti.utils.report_generator.ToastManager")
-    def test_send_report_email_outlook_success(
-        self, mock_toast, mock_history, mock_coinit, mock_dispatch
-    ):
+    def test_send_report_email_outlook_success(self, mock_toast, mock_history, mock_coinit, mock_dispatch):
         """Test successful email sending via Outlook."""
         mock_outlook = MagicMock()
         mock_dispatch.return_value = mock_outlook
@@ -76,19 +70,17 @@ class TestReportGeneratorRobust(unittest.TestCase):
     ):
         """Test fallback when Outlook fails or is not available."""
         # Force Outlook failure by making Dispatch raise
-        with patch(
-            "win32com.client.Dispatch",
-            side_effect=Exception("Outlook not found"),
-            create=True,
+        with (
+            patch(
+                "win32com.client.Dispatch",
+                side_effect=Exception("Outlook not found"),
+                create=True,
+            ),
+            patch("src.gui.panels.dipendenti.utils.report_generator.os.name", "nt"),
         ):
-            with patch(
-                "src.gui.panels.dipendenti.utils.report_generator.os.name", "nt"
-            ):
-                data = {"warning_list": [], "expired_list": []}
-                ReportGenerator._send_report_email("<html></html>", None, data)
+            data = {"warning_list": [], "expired_list": []}
+            ReportGenerator._send_report_email("<html></html>", None, data)
 
         mock_write.assert_called_once()
         mock_open_url.assert_called_once()
-        self.assertIn(
-            "Outlook non disponibile", mock_toast.instance().show.call_args[0][0]
-        )
+        self.assertIn("Outlook non disponibile", mock_toast.instance().show.call_args[0][0])

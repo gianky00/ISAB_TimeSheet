@@ -71,7 +71,7 @@ class TestAutopilotGUI:
             assert len(cards) == 2
             # Verifica dettagli di una card tramite attributi
             assert any("Timbrature" in c.bot_name for c in cards)
-            assert any("10:30" == c.target_time_str for c in cards)
+            assert any(c.target_time_str == "10:30" for c in cards)
 
     def test_config_card_loading(self, qtbot, mocker):
         """Testa il caricamento dei dati in una config card."""
@@ -82,9 +82,7 @@ class TestAutopilotGUI:
         }
 
         # Mocking radicale del config_manager nel modulo della card
-        mock_manager = mocker.patch(
-            "src.gui.widgets.autopilot.config_cards.config_manager"
-        )
+        mock_manager = mocker.patch("src.gui.widgets.autopilot.config_cards.config_manager")
         mock_manager.load_config.return_value = test_config
 
         card = AutopilotConfigCard("test_bot", "Test Bot", Icons.CLOCK, "#ff0000")
@@ -120,9 +118,7 @@ class TestAutopilotGUI:
             patch("src.core.config_manager.load_config", return_value={}),
             patch("src.core.config_manager.set_config_value") as mock_set,
         ):
-            card = AutopilotConfigCardWithInterval(
-                "report", "Report", Icons.SEND, "#00ff00"
-            )
+            card = AutopilotConfigCardWithInterval("report", "Report", Icons.SEND, "#00ff00")
             qtbot.addWidget(card)
 
             card.interval_spin.setValue(10)

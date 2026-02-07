@@ -5,7 +5,7 @@ Pannello per il bot Scarico PDL (SafeWork).
 
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -162,9 +162,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.printer_combo = QComboBox()
         self.printer_combo.setMinimumHeight(35)
         self.printer_combo.setMinimumWidth(150)
-        self.printer_combo.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToContents
-        )
+        self.printer_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.printer_combo.setStyleSheet(
             """
             QComboBox {
@@ -264,9 +262,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         status_container.setContentsMargins(0, 0, 0, 0)
 
         status_header = QLabel("Progresso")
-        status_header.setStyleSheet(
-            "font-weight: bold; font-size: 12px; color: #424242; padding: 4px 0px;"
-        )
+        status_header.setStyleSheet("font-weight: bold; font-size: 12px; color: #424242; padding: 4px 0px;")
         status_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_container.addWidget(status_header)
 
@@ -313,15 +309,9 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _save_data(self):
         data = self.data_table.get_data()
         config_manager.set_config_value("last_pdl_data", data)
-        config_manager.set_config_value(
-            "pdl_print_enabled", self.print_check.isChecked()
-        )
-        config_manager.set_config_value(
-            "pdl_merge_all_session", self.merge_all_check.isChecked()
-        )
-        config_manager.set_config_value(
-            "pdl_printer_name", self.printer_combo.currentText()
-        )
+        config_manager.set_config_value("pdl_print_enabled", self.print_check.isChecked())
+        config_manager.set_config_value("pdl_merge_all_session", self.merge_all_check.isChecked())
+        config_manager.set_config_value("pdl_printer_name", self.printer_combo.currentText())
         config_manager.set_config_value("path_scarico_pdl", self.dest_path_edit.text())
 
     def _reset_status_list(self):
@@ -356,7 +346,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         default_acc = next((a for a in accounts if a.get("default")), accounts[0])
         return default_acc.get("username", ""), default_acc.get("password", "")
 
-    def _on_start(self, params_override: Optional[Dict[str, Any]] = None):
+    def _on_start(self, params_override: dict[str, Any] | None = None):
         super()._on_start(params_override)
         username, password = self.get_credentials()
 
@@ -368,9 +358,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             item = params_override["single_item"]
             if item:
                 rows = [item]
-                self.log_widget.append(
-                    f"ℹ️ Esecuzione singola per PDL: {item.get('numero_pdl', 'N/D')}"
-                )
+                self.log_widget.append(f"ℹ️ Esecuzione singola per PDL: {item.get('numero_pdl', 'N/D')}")
         else:
             if not self._validate_pdl_start(username, password):
                 return
@@ -398,9 +386,7 @@ class ScaricoPDLPanel(BaseBotPanel):
     def _validate_pdl_start(self, username, password) -> bool:
         """Verifica che i requisiti per l'avvio siano soddisfatti."""
         if not username or not password:
-            ToastManager.instance().show(
-                "Configura le credenziali SafeWork nelle Impostazioni.", "warning"
-            )
+            ToastManager.instance().show("Configura le credenziali SafeWork nelle Impostazioni.", "warning")
             self._update_status("#C62828", "Credenziali SafeWork mancanti")
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
@@ -413,7 +399,7 @@ class ScaricoPDLPanel(BaseBotPanel):
             return False
         return True
 
-    def _prepare_bot_data(self, rows: list) -> List[dict]:
+    def _prepare_bot_data(self, rows: list) -> list[dict]:
         """Prepara il payload per il bot."""
         print_enabled = self.print_check.isChecked()
         printer_name = self.printer_combo.currentText()
@@ -464,9 +450,7 @@ class ScaricoPDLPanel(BaseBotPanel):
         self.log_widget.clear()
         self.log_widget.append("Avvio Scarico PDL SafeWork...")
         if self.print_check.isChecked():
-            self.log_widget.append(
-                f"Stampa attiva su: {self.printer_combo.currentText()}"
-            )
+            self.log_widget.append(f"Stampa attiva su: {self.printer_combo.currentText()}")
         if getattr(self, "merge_and_send_from_telegram", False):
             self.log_widget.append("Unione PDF per Telegram attiva")
 
@@ -476,9 +460,7 @@ class ScaricoPDLPanel(BaseBotPanel):
 
         # Recupero dati prima di chiamare super (che pulisce il worker)
         missing_list: list[str] = (
-            self.worker.bot.missing_pdls
-            if self.worker and hasattr(self.worker.bot, "missing_pdls")
-            else []
+            self.worker.bot.missing_pdls if self.worker and hasattr(self.worker.bot, "missing_pdls") else []
         )
         files_to_send: list[str] = (
             self.worker.bot.downloaded_files

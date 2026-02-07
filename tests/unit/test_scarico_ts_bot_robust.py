@@ -10,15 +10,11 @@ class TestScaricaTSBotRobust(unittest.TestCase):
         self.mock_logger = MagicMock()
 
         # Patch BaseBot logger
-        self.logger_patcher = patch(
-            "src.bots.base.base_bot.get_logger", return_value=self.mock_logger
-        )
+        self.logger_patcher = patch("src.bots.base.base_bot.get_logger", return_value=self.mock_logger)
         self.logger_patcher.start()
 
         # Patch TimesheetProcessor
-        self.processor_patcher = patch(
-            "src.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor"
-        )
+        self.processor_patcher = patch("src.bots.portale_fornitori.scarico_ts.bot.TimesheetProcessor")
         self.mock_processor = self.processor_patcher.start()
 
     def tearDown(self):
@@ -56,7 +52,7 @@ class TestScaricaTSBotRobust(unittest.TestCase):
         bot = ScaricaTSBot(username="u", password="p", fornitore="")
         valid_data = {"fornitore": "Dynamic Provider", "rows": [{"numero_oda": "123"}]}
 
-        is_valid, msg = bot.validate_data(valid_data)
+        is_valid, _msg = bot.validate_data(valid_data)
         self.assertTrue(is_valid)
 
     @patch("src.bots.portale_fornitori.scarico_ts.bot.Path")
@@ -85,9 +81,7 @@ class TestScaricaTSBotRobust(unittest.TestCase):
     @patch("src.bots.portale_fornitori.scarico_ts.bot.ActionChains")
     def test_setup_filters_success(self, mock_action_chains):
         """Test successful setting of provider and date filters."""
-        bot = ScaricaTSBot(
-            username="u", password="p", fornitore="Test Provider", data_da="01.01.2024"
-        )
+        bot = ScaricaTSBot(username="u", password="p", fornitore="Test Provider", data_da="01.01.2024")
 
         # Setup mocks
         bot.driver = MagicMock()
@@ -137,9 +131,7 @@ class TestScaricaTSBotRobust(unittest.TestCase):
 
         self.assertTrue(success)
         # Verify scripts executed to set values (React/ExtJS workaround)
-        self.assertEqual(
-            bot.driver.execute_script.call_count, 4
-        )  # 2 sets + 2 dispatches
+        self.assertEqual(bot.driver.execute_script.call_count, 4)  # 2 sets + 2 dispatches
         bot._attendi_scomparsa_overlay.assert_called_with(90)
 
     @patch("src.bots.portale_fornitori.scarico_ts.bot.Path")
@@ -149,9 +141,7 @@ class TestScaricaTSBotRobust(unittest.TestCase):
         "src.bots.portale_fornitori.scarico_ts.bot.sanitize_filename",
         side_effect=lambda x: x,
     )
-    def test_download_excel_success(
-        self, mock_sanitize, mock_shutil, mock_time, mock_path_cls
-    ):
+    def test_download_excel_success(self, mock_sanitize, mock_shutil, mock_time, mock_path_cls):
         """Test successful file download sequence."""
         bot = ScaricaTSBot(username="u", password="p")
         bot.driver = MagicMock()

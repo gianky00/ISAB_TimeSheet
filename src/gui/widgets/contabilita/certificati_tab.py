@@ -1,11 +1,11 @@
-# flake8: noqa: FURB184
 import json
 import operator
 import os
 from collections import defaultdict
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import ClassVar
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPixmap
@@ -87,12 +87,8 @@ class ScadenzeAnalysisDialog(QDialog):
         header_layout.addLayout(title_row)
 
         # Data analisi
-        date_label = QLabel(
-            f"Generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}"
-        )
-        date_label.setStyleSheet(
-            "color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;"
-        )
+        date_label = QLabel(f"Generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}")
+        date_label.setStyleSheet("color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;")
         header_layout.addWidget(date_label)
 
         layout.addWidget(header)
@@ -113,43 +109,19 @@ class ScadenzeAnalysisDialog(QDialog):
         stats_layout.setSpacing(40)
 
         # Calcola statistiche
-        scaduti = [
-            c for c in self.certificates_data if c["days"] is not None and c["days"] < 0
-        ]
-        urgenti = [
-            c
-            for c in self.certificates_data
-            if c["days"] is not None and 0 <= c["days"] <= 15
-        ]
-        attenzione = [
-            c
-            for c in self.certificates_data
-            if c["days"] is not None and 16 <= c["days"] <= 30
-        ]
-        attivi = [
-            c
-            for c in self.certificates_data
-            if c["days"] is not None and c["days"] > 30
-        ]
+        scaduti = [c for c in self.certificates_data if c["days"] is not None and c["days"] < 0]
+        urgenti = [c for c in self.certificates_data if c["days"] is not None and 0 <= c["days"] <= 15]
+        attenzione = [c for c in self.certificates_data if c["days"] is not None and 16 <= c["days"] <= 30]
+        attivi = [c for c in self.certificates_data if c["days"] is not None and c["days"] > 30]
         nd = [c for c in self.certificates_data if c["days"] is None]
 
         stats_layout.addWidget(
-            self._create_stat_card(
-                "Totale Monitorati", len(self.certificates_data), "#3b82f6"
-            )
+            self._create_stat_card("Totale Monitorati", len(self.certificates_data), "#3b82f6")
         )
-        stats_layout.addWidget(
-            self._create_stat_card("Scaduti", len(scaduti), "#dc2626")
-        )
-        stats_layout.addWidget(
-            self._create_stat_card("Urgenti (0-15gg)", len(urgenti), "#ea580c")
-        )
-        stats_layout.addWidget(
-            self._create_stat_card("Attenzione (16-30gg)", len(attenzione), "#ca8a04")
-        )
-        stats_layout.addWidget(
-            self._create_stat_card("Attivi (>30gg)", len(attivi), "#16a34a")
-        )
+        stats_layout.addWidget(self._create_stat_card("Scaduti", len(scaduti), "#dc2626"))
+        stats_layout.addWidget(self._create_stat_card("Urgenti (0-15gg)", len(urgenti), "#ea580c"))
+        stats_layout.addWidget(self._create_stat_card("Attenzione (16-30gg)", len(attenzione), "#ca8a04"))
+        stats_layout.addWidget(self._create_stat_card("Attivi (>30gg)", len(attivi), "#16a34a"))
         stats_layout.addStretch()
 
         layout.addWidget(stats_frame)
@@ -174,31 +146,21 @@ class ScadenzeAnalysisDialog(QDialog):
 
         # Sezioni per stato
         if scaduti:
-            content_layout.addWidget(
-                self._create_section("SCADUTI", scaduti, "#dc2626", "#fef2f2")
-            )
+            content_layout.addWidget(self._create_section("SCADUTI", scaduti, "#dc2626", "#fef2f2"))
         if urgenti:
             content_layout.addWidget(
-                self._create_section(
-                    "IN SCADENZA (0-15 giorni)", urgenti, "#ea580c", "#fff7ed"
-                )
+                self._create_section("IN SCADENZA (0-15 giorni)", urgenti, "#ea580c", "#fff7ed")
             )
         if attenzione:
             content_layout.addWidget(
-                self._create_section(
-                    "ATTENZIONE (16-30 giorni)", attenzione, "#ca8a04", "#fefce8"
-                )
+                self._create_section("ATTENZIONE (16-30 giorni)", attenzione, "#ca8a04", "#fefce8")
             )
         if attivi:
             content_layout.addWidget(
-                self._create_section(
-                    "ATTIVI (oltre 30 giorni)", attivi, "#16a34a", "#f0fdf4"
-                )
+                self._create_section("ATTIVI (oltre 30 giorni)", attivi, "#16a34a", "#f0fdf4")
             )
         if nd:
-            content_layout.addWidget(
-                self._create_section("DATA NON DISPONIBILE", nd, "#6b7280", "#f9fafb")
-            )
+            content_layout.addWidget(self._create_section("DATA NON DISPONIBILE", nd, "#6b7280", "#f9fafb"))
 
         if not self.certificates_data:
             empty_label = QLabel("Nessun certificato in monitoraggio.")
@@ -292,9 +254,7 @@ class ScadenzeAnalysisDialog(QDialog):
         card_layout.setSpacing(5)
 
         value_label = QLabel(str(value))
-        value_label.setStyleSheet(
-            f"color: {color}; font-size: 28px; font-weight: bold;"
-        )
+        value_label.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: bold;")
         value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         title_label = QLabel(title)
@@ -306,9 +266,7 @@ class ScadenzeAnalysisDialog(QDialog):
 
         return card
 
-    def _create_section(
-        self, title: str, items: list, color: str, bg_color: str
-    ) -> QFrame:
+    def _create_section(self, title: str, items: list, color: str, bg_color: str) -> QFrame:
         """Crea una sezione con elenco certificati."""
         section = QFrame()
         section.setStyleSheet(
@@ -327,9 +285,7 @@ class ScadenzeAnalysisDialog(QDialog):
         # Header sezione
         header_layout = QHBoxLayout()
         title_label = QLabel(f"{title} ({len(items)})")
-        title_label.setStyleSheet(
-            f"color: {color}; font-size: 14px; font-weight: bold;"
-        )
+        title_label.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold;")
         header_layout.addWidget(title_label)
         header_layout.addStretch()
         section_layout.addLayout(header_layout)
@@ -359,16 +315,12 @@ class ScadenzeAnalysisDialog(QDialog):
                 modello_text += f" ({item['range']})"
             modello_label = QLabel(modello_text)
             modello_label.setStyleSheet("color: #475569; font-size: 12px;")
-            modello_label.setSizePolicy(
-                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
-            )
+            modello_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             item_layout.addWidget(modello_label)
 
             # Costruttore
             costruttore_label = QLabel(item["costruttore"])
-            costruttore_label.setStyleSheet(
-                "color: #64748b; font-size: 12px; min-width: 100px;"
-            )
+            costruttore_label.setStyleSheet("color: #64748b; font-size: 12px; min-width: 100px;")
             item_layout.addWidget(costruttore_label)
 
             # Scadenza
@@ -380,9 +332,7 @@ class ScadenzeAnalysisDialog(QDialog):
             else:
                 days_text = "N/D"
             days_label = QLabel(days_text)
-            days_label.setStyleSheet(
-                f"color: {color}; font-weight: 500; font-size: 12px; min-width: 130px;"
-            )
+            days_label.setStyleSheet(f"color: {color}; font-weight: 500; font-size: 12px; min-width: 130px;")
             days_label.setAlignment(Qt.AlignmentFlag.AlignRight)
             item_layout.addWidget(days_label)
 
@@ -408,9 +358,7 @@ class ScadenzeAnalysisDialog(QDialog):
             content_height = self.content_widget.height()
             footer_height = self.footer.height()
 
-            total_height = (
-                header_height + stats_height + content_height + footer_height + 40
-            )
+            total_height = header_height + stats_height + content_height + footer_height + 40
 
             # Limite di sicurezza per evitare allocazioni pixmap eccessive (es. report infiniti)
             total_height = min(total_height, 15000)
@@ -433,26 +381,20 @@ class ScadenzeAnalysisDialog(QDialog):
             # Stats
             self.stats_frame.render(
                 painter,
-                targetOffset=self.stats_frame.mapTo(
-                    self, self.stats_frame.rect().topLeft()
-                ),
+                targetOffset=self.stats_frame.mapTo(self, self.stats_frame.rect().topLeft()),
             )
             y_offset += stats_height
 
             # Content (renderizza il widget interno dello scroll, non lo scroll)
             self.content_widget.render(
                 painter,
-                targetOffset=self.content_widget.mapTo(
-                    self, self.content_widget.rect().topLeft()
-                ),
+                targetOffset=self.content_widget.mapTo(self, self.content_widget.rect().topLeft()),
             )
 
             painter.end()
 
             # Salva come PNG temporaneo
-            temp_path = os.path.join(
-                tempfile.gettempdir(), "syncrojob_scadenze_report.png"
-            )
+            temp_path = os.path.join(tempfile.gettempdir(), "syncrojob_scadenze_report.png")
             pixmap.save(temp_path, "PNG")
 
             # Tenta di usare la macro Excel se configurata, altrimenti apre file manager
@@ -495,7 +437,7 @@ $xl.Quit()
                     )
                 except Exception:
                     # Fallback: apri il file
-                    os.startfile(temp_path)
+                    os.startfile(temp_path)  # noqa: S606
                     QMessageBox.information(
                         self,
                         "Screenshot salvato",
@@ -504,7 +446,7 @@ $xl.Quit()
                     )
             else:
                 # Apri il file direttamente
-                os.startfile(temp_path)
+                os.startfile(temp_path)  # noqa: S606
                 QMessageBox.information(
                     self,
                     "Screenshot salvato",
@@ -524,15 +466,15 @@ class CertificatiCampioneTab(QWidget):
     """Tab per Certificati Campione (Tree View)."""
 
     # File per memorizzare le esclusioni
-    EXCLUSIONS_FILE = CONFIG_DIR / "data" / "certificati_exclusions.json"
+    EXCLUSIONS_FILE: ClassVar[Path] = CONFIG_DIR / "data" / "certificati_exclusions.json"
 
     # Stile per elementi esclusi
-    EXCLUDED_STYLE = """
+    EXCLUDED_STYLE: ClassVar[str] = """
         color: #9ca3af;
         text-decoration: line-through;
     """
 
-    HEADERS = [
+    HEADERS: ClassVar[list[str]] = [
         "Modello /\nTipo",
         "Costruttore",
         "Matricola",
@@ -722,9 +664,7 @@ class CertificatiCampioneTab(QWidget):
 
         # Label conteggio esclusi
         self.excluded_count_label = QLabel("")
-        self.excluded_count_label.setStyleSheet(
-            "color: #94a3b8; font-size: 12px; padding: 0 8px;"
-        )
+        self.excluded_count_label.setStyleSheet("color: #94a3b8; font-size: 12px; padding: 0 8px;")
         toolbar.addWidget(self.excluded_count_label)
 
         toolbar.addStretch()
@@ -816,10 +756,10 @@ class CertificatiCampioneTab(QWidget):
                 date_str = cert[self.IDX_EMISSIONE] or ""
                 try:
                     if "/" in date_str:
-                        return datetime.strptime(date_str, "%d/%m/%Y")
-                    return datetime.min
+                        return datetime.strptime(date_str, "%d/%m/%Y").replace(tzinfo=UTC)
+                    return datetime.min.replace(tzinfo=UTC)
                 except Exception:
-                    return datetime.min
+                    return datetime.min.replace(tzinfo=UTC)
 
             certificates_sorted = sorted(certificates, key=parse_date, reverse=True)
 
@@ -830,9 +770,7 @@ class CertificatiCampioneTab(QWidget):
             range_strumento = latest_cert[self.IDX_RANGE] or ""
 
             # Calcola giorni alla scadenza per il certificato più recente
-            days_to_expiry, status_dot_icon = self._calculate_days_and_status(
-                latest_cert[self.IDX_SCADENZA]
-            )
+            days_to_expiry, status_dot_icon = self._calculate_days_and_status(latest_cert[self.IDX_SCADENZA])
 
             # Aggiungi alla lista con priorità per ordinamento
             # Priorità: scaduti (negativo) < prossimi alla scadenza (0-15) < medi (16-30) < attivi (>30)
@@ -872,15 +810,13 @@ class CertificatiCampioneTab(QWidget):
 
             # Per MANOMETRO DIGITALE, aggiungi il range strumento prima dello stato
             is_manometro_digitale = "MANOMETRO DIGITALE" in modello.upper()
-            range_part = (
-                f"  •  {range_strumento}"
-                if is_manometro_digitale and range_strumento
-                else ""
-            )
+            range_part = f"  •  {range_strumento}" if is_manometro_digitale and range_strumento else ""
 
             # Aggiungi indicatore [ESCLUSO] se necessario
             excluded_marker = "  [ESCLUSO]" if is_excluded else ""
-            parent_label = f"{matricola}  •  {costruttore}  •  {modello}{range_part}  •  {days_text}{excluded_marker}"
+            parent_label = (
+                f"{matricola}  •  {costruttore}  •  {modello}{range_part}  •  {days_text}{excluded_marker}"
+            )
             parent_item = SortableTreeWidgetItem(self.tree, [parent_label])
             parent_item.setFirstColumnSpanned(True)
 
@@ -919,9 +855,7 @@ class CertificatiCampioneTab(QWidget):
 
                 if is_current:
                     # Certificato corrente: mostra stato reale con pallino
-                    self._apply_current_certificate_styling(
-                        row_item, cert, days_to_expiry, status_dot_icon
-                    )
+                    self._apply_current_certificate_styling(row_item, cert, days_to_expiry, status_dot_icon)
                 else:
                     # Certificato storico: sempre grigio, nessun alert
                     self._apply_historical_certificate_styling(row_item, cert)
@@ -934,7 +868,7 @@ class CertificatiCampioneTab(QWidget):
         self._update_excluded_count_label()
 
         # Connetti segnale per gestire grassetto dinamico (solo se non già connesso)
-        with suppress(TypeError):  # noqa: FURB184
+        with suppress(TypeError):
             self.tree.itemExpanded.disconnect(self._on_item_expanded)
             self.tree.itemCollapsed.disconnect(self._on_item_collapsed)
         self.tree.itemExpanded.connect(self._on_item_expanded)
@@ -951,9 +885,8 @@ class CertificatiCampioneTab(QWidget):
             if not scadenza_str:
                 return None, Icons.STATUS_DOT_GRAY
 
-            # Parsing data italiana
-            scadenza_date = datetime.strptime(scadenza_str, "%d/%m/%Y")
-            today = datetime.now()
+            scadenza_date = datetime.strptime(scadenza_str, "%d/%m/%Y").replace(tzinfo=UTC)
+            today = datetime.now(UTC)
             delta = scadenza_date - today
             days = delta.days
 
@@ -972,9 +905,7 @@ class CertificatiCampioneTab(QWidget):
 
         return None, Icons.STATUS_DOT_GRAY
 
-    def _apply_current_certificate_styling(
-        self, item, cert, days_to_expiry, status_dot_icon
-    ):
+    def _apply_current_certificate_styling(self, item, cert, days_to_expiry, status_dot_icon):
         """Applica styling al certificato CORRENTE (più recente) con stato reale."""
         # Colori e stati basati sui giorni alla scadenza
         # AGGIORNATO: Colori più distintivi per migliore visibilità
@@ -1067,10 +998,7 @@ class CertificatiCampioneTab(QWidget):
             parent_visible = False
             for j in range(parent.childCount()):
                 child = parent.child(j)
-                match = any(
-                    query in child.text(c).lower()
-                    for c in range(self.tree.columnCount())
-                )
+                match = any(query in child.text(c).lower() for c in range(self.tree.columnCount()))
                 child.setHidden(not match)
                 if match:
                     parent_visible = True
@@ -1094,16 +1022,12 @@ class CertificatiCampioneTab(QWidget):
             if is_excluded:
                 # Opzione: Includi nel monitoraggio
                 include_action = QAction("✅ Includi nel monitoraggio", self)
-                include_action.triggered.connect(
-                    lambda: self._include_matricola(matricola)
-                )
+                include_action.triggered.connect(lambda: self._include_matricola(matricola))
                 menu.addAction(include_action)
             else:
                 # Opzione: Escludi dal monitoraggio
                 exclude_action = QAction("🚫 Escludi dal monitoraggio", self)
-                exclude_action.triggered.connect(
-                    lambda: self._exclude_matricola(matricola)
-                )
+                exclude_action.triggered.connect(lambda: self._exclude_matricola(matricola))
                 menu.addAction(exclude_action)
 
             menu.addSeparator()
@@ -1124,9 +1048,7 @@ class CertificatiCampioneTab(QWidget):
             cert_number = item.text(self.IDX_CERTIFICATO)
             if cert_number:
                 open_action = QAction("📄 Apri Certificato", self)
-                open_action.triggered.connect(
-                    lambda: self._open_certificate(cert_number)
-                )
+                open_action.triggered.connect(lambda: self._open_certificate(cert_number))
                 menu.addAction(open_action)
                 menu.addSeparator()
 
@@ -1144,20 +1066,12 @@ class CertificatiCampioneTab(QWidget):
                 is_excluded = matricola in self._exclusions
 
                 if is_excluded:
-                    include_action = QAction(
-                        "✅ Includi strumento nel monitoraggio", self
-                    )
-                    include_action.triggered.connect(
-                        lambda: self._include_matricola(matricola)
-                    )
+                    include_action = QAction("✅ Includi strumento nel monitoraggio", self)
+                    include_action.triggered.connect(lambda: self._include_matricola(matricola))
                     menu.addAction(include_action)
                 else:
-                    exclude_action = QAction(
-                        "🚫 Escludi strumento dal monitoraggio", self
-                    )
-                    exclude_action.triggered.connect(
-                        lambda: self._exclude_matricola(matricola)
-                    )
+                    exclude_action = QAction("🚫 Escludi strumento dal monitoraggio", self)
+                    exclude_action.triggered.connect(lambda: self._exclude_matricola(matricola))
                     menu.addAction(exclude_action)
 
         menu.exec(self.tree.viewport().mapToGlobal(pos))
@@ -1203,16 +1117,14 @@ class CertificatiCampioneTab(QWidget):
                     found_path = os.path.join(root, file)
                     break
                 # Match parziale: il file contiene il numero certificato
-                if cert_number.lower() in file.lower() and file.lower().endswith(
-                    ".pdf"
-                ):
+                if cert_number.lower() in file.lower() and file.lower().endswith(".pdf"):
                     found_path = os.path.join(root, file)
                     break
             if found_path:
                 break
 
         if found_path:
-            os.startfile(found_path)
+            os.startfile(found_path)  # noqa: S606
         else:
             QMessageBox.warning(
                 self,
@@ -1225,12 +1137,7 @@ class CertificatiCampioneTab(QWidget):
 
         mw = self.window()
         if isinstance(mw, MainWindow):
-            text = " | ".join(
-                [
-                    f"{self.HEADERS[c]}: {item.text(c)}"
-                    for c in range(self.tree.columnCount())
-                ]
-            )
+            text = " | ".join([f"{self.HEADERS[c]}: {item.text(c)}" for c in range(self.tree.columnCount())])
             mw.analyze_with_lyra(f"Certificato: {text}")
 
     def _run_analysis(self):
@@ -1272,9 +1179,7 @@ class CertificatiCampioneTab(QWidget):
             )
 
         # Ordina per giorni (scaduti prima)
-        certificates_data.sort(
-            key=lambda x: x["days"] if x["days"] is not None else 9999
-        )
+        certificates_data.sort(key=lambda x: x["days"] if x["days"] is not None else 9999)
 
         # Apri la finestra di analisi
         dialog = ScadenzeAnalysisDialog(certificates_data, self)

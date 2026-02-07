@@ -2,7 +2,7 @@ import logging
 import sqlite3
 from contextlib import suppress
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from src.core.config_manager import CONFIG_DIR
 
@@ -59,16 +59,10 @@ class AuditDatabase:
             for col_name, col_def in new_columns.items():
                 if col_name not in existing_cols:
                     with suppress(sqlite3.OperationalError):
-                        logger.info(
-                            f"[AUDIT DB] Migrazione: Aggiunta colonna {col_name}..."
-                        )
-                        conn.execute(
-                            f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}"
-                        )
+                        logger.info(f"[AUDIT DB] Migrazione: Aggiunta colonna {col_name}...")
+                        conn.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}")
 
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)"
-            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)")
             conn.commit()
 
     def get_connection(self):
@@ -78,9 +72,7 @@ class AuditDatabase:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1"
-                )
+                cursor.execute("SELECT row_hash FROM audit_logs ORDER BY id DESC LIMIT 1")
                 row = cursor.fetchone()
                 return row[0] if row and row[0] else "0" * 64
         except Exception:
@@ -99,20 +91,20 @@ class AuditDatabase:
 
     def fetch_filtered(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        levels: Optional[List[str]] = None,
-        category: Optional[str] = None,
-        search_text: Optional[str] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        levels: list[str] | None = None,
+        category: str | None = None,
+        search_text: str | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> Tuple[List[Dict[str, Any]], int]:
+    ) -> tuple[list[dict[str, Any]], int]:
         logs = []
         total = 0
         try:
             query = "SELECT * FROM audit_logs WHERE 1=1"
             c_query = "SELECT COUNT(*) FROM audit_logs WHERE 1=1"
-            params: List[Any] = []
+            params: list[Any] = []
 
             if start_date:
                 query += " AND timestamp >= ?"
@@ -153,12 +145,10 @@ class AuditDatabase:
             logger.error(f"Audit DB Fetch Error: {e}")
         return logs, total
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         try:
             with self.get_connection() as conn:
-                res = conn.execute(
-                    "SELECT DISTINCT category FROM audit_logs ORDER BY category"
-                )
+                res = conn.execute("SELECT DISTINCT category FROM audit_logs ORDER BY category")
                 return [r[0] for r in res if r[0]]
         except Exception:
             return []
@@ -166,9 +156,7 @@ class AuditDatabase:
     def delete_older_than(self, cutoff_iso: str) -> int:
         try:
             with self.get_connection() as conn:
-                res = conn.execute(
-                    "DELETE FROM audit_logs WHERE timestamp < ?", (cutoff_iso,)
-                )
+                res = conn.execute("DELETE FROM audit_logs WHERE timestamp < ?", (cutoff_iso,))
                 return res.rowcount
         except Exception as e:
             logger.error(f"Audit DB Retention Error: {e}")

@@ -5,7 +5,7 @@ Context management per correlation e tracing.
 import threading
 import uuid
 from contextlib import contextmanager
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class LoggingContext:
@@ -18,7 +18,7 @@ class LoggingContext:
     def __init__(self):
         self._local = threading.local()
 
-    def _get_context(self) -> Dict[str, Any]:
+    def _get_context(self) -> dict[str, Any]:
         """Restituisce context del thread corrente."""
         if not hasattr(self._local, "context"):
             self._local.context = {}
@@ -43,7 +43,7 @@ class LoggingContext:
         if hasattr(self._local, "context"):
             self._local.context = {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Restituisce copia del context corrente."""
         return self._get_context().copy()
 
@@ -116,7 +116,7 @@ def generate_span_id() -> str:
     return f"span_{uuid.uuid4().hex[:8]}"
 
 
-def get_current_trace_id() -> Optional[str]:
+def get_current_trace_id() -> str | None:
     """
     Restituisce il trace_id corrente, se esiste.
 
@@ -126,7 +126,7 @@ def get_current_trace_id() -> Optional[str]:
     return get_context().get("trace_id")
 
 
-def get_current_span_id() -> Optional[str]:
+def get_current_span_id() -> str | None:
     """
     Restituisce lo span_id corrente, se esiste.
 
@@ -146,7 +146,7 @@ def set_audit_id(audit_id: int):
     get_context().set("audit_id", audit_id)
 
 
-def get_current_audit_id() -> Optional[int]:
+def get_current_audit_id() -> int | None:
     """
     Restituisce l'audit_id corrente, se esiste.
 

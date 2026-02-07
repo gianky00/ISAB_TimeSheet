@@ -28,14 +28,14 @@ class TestConfigManagerRobust:
         self.mock_config_file = self.mock_config_dir / "config.json"
 
         # Patch variabili globali
-        with patch("src.core.config_manager.CONFIG_DIR", self.mock_config_dir):
-            with patch("src.core.config_manager.CONFIG_FILE", self.mock_config_file):
-                # Mock SecretsManager per evitare keyring
-                with patch("src.core.config_manager.SecretsManager") as mock_sec:
-                    mock_sec.is_available.return_value = (
-                        False  # Force file encryption fallback
-                    )
-                    yield
+        with (
+            patch("src.core.config_manager.CONFIG_DIR", self.mock_config_dir),
+            patch("src.core.config_manager.CONFIG_FILE", self.mock_config_file),
+            patch("src.core.config_manager.SecretsManager") as mock_sec,
+        ):
+            # Mock SecretsManager per evitare keyring
+            mock_sec.is_available.return_value = False  # Force file encryption fallback
+            yield
 
     def test_load_config_defaults(self):
         """Test caricamento configurazione di default."""
@@ -54,9 +54,8 @@ class TestConfigManagerRobust:
 
         assert config["browser_timeout"] == 60
         # Verifica su file
-        with open(self.mock_config_file) as f:
-            data = json.load(f)
-            assert data["browser_timeout"] == 60
+        data = json.loads(self.mock_config_file.read_text(encoding="utf-8"))
+        assert data["browser_timeout"] == 60
 
     def test_env_var_override(self):
         """Test override tramite variabili d'ambiente."""
@@ -102,8 +101,7 @@ class TestConfigManagerRobust:
     def test_legacy_migration(self):
         """Test migrazione vecchia configurazione."""
         legacy_data = {"isab_username": "legacy_user", "isab_password": "legacy_pass"}
-        with open(self.mock_config_file, "w") as f:
-            json.dump(legacy_data, f)
+        self.mock_config_file.write_text(json.dumps(legacy_data), encoding="utf-8")
 
         _reset_configuration_for_testing()
         config = load_config()
@@ -117,8 +115,7 @@ class TestConfigManagerRobust:
     def test_import_configuration(self, tmp_path):
         """Test importazione configurazione da file esterno."""
         import_file = tmp_path / "import.json"
-        with open(import_file, "w") as f:
-            json.dump({"browser_timeout": 999, "accounts": []}, f)
+        import_file.write_text(json.dumps({"browser_timeout": 999, "accounts": []}), encoding="utf-8")
 
         success, msg = import_configuration(str(import_file))
 
@@ -147,13 +144,13 @@ class TestConfigManagerRobust:
         """Test getter dei percorsi."""
         from src.core.config_manager import get_data_path, get_logs_path
 
-        data = get_data_path()
-        logs = get_logs_path()
+        data_path = get_data_path()
+        logs_path = get_logs_path()
 
-        assert str(self.mock_config_dir / "data") == data
-        assert str(self.mock_config_dir / "logs") == logs
-        assert Path(data).exists()
-        assert Path(logs).exists()
+        assert str(self.mock_config_dir / "data") == data_path
+        assert str(self.mock_config_dir / "logs") == logs_path
+        assert Path(data_path).exists()
+        assert Path(logs_path).exists()
 
     @patch("src.core.config_manager.SecretsManager")
     def test_credential_encryption_fallback(self, mock_sec):
@@ -162,23 +159,24 @@ class TestConfigManagerRobust:
         mock_sec.get_credential.return_value = None  # Force fallback to file
 
         # Setup mock encryption
-        with patch(
-            "src.utils.security.password_manager.encrypt",
-            side_effect=lambda x: f"ENC_{x}",
-        ):
-            with patch(
+        with (
+            patch(
+                "src.utils.security.password_manager.encrypt",
+                side_effect=lambda x: f"ENC_{x}",
+            ),
+            patch(
                 "src.utils.security.password_manager.decrypt",
                 side_effect=lambda x: x.replace("ENC_", ""),
-            ):
-                add_account("user_enc", "secret")
+            ),
+        ):
+            add_account("user_enc", "secret")
 
-                # Verifica su disco che sia criptata
-                with open(self.mock_config_file) as f:
-                    disk_data = json.load(f)
-                    acc = disk_data["accounts"][0]
-                    assert acc["password"] == "ENC_secret"
+            # Verifica su disco che sia criptata
+            disk_data = json.loads(self.mock_config_file.read_text(encoding="utf-8"))
+            acc = disk_data["accounts"][0]
+            assert acc["password"] == "ENC_secret"
 
-                # Verifica in memoria che sia decriptata
-                _reset_configuration_for_testing()
-                config = load_config()
-                assert config["accounts"][0]["password"] == "secret"
+            # Verifica in memoria che sia decriptata
+            _reset_configuration_for_testing()
+            config = load_config()
+            assert config["accounts"][0]["password"] == "secret"

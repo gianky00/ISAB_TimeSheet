@@ -19,9 +19,7 @@ class TestLicenseUpdater:
     @pytest.fixture
     def mock_paths(self, tmp_path, mocker):
         license_dir = tmp_path / "Licenza"
-        mocker.patch(
-            "src.core.license_updater.get_license_dir", return_value=license_dir
-        )
+        mocker.patch("src.core.license_updater.get_license_dir", return_value=license_dir)
         return license_dir
 
     def test_get_github_token(self):
@@ -89,7 +87,7 @@ class TestLicenseUpdater:
         check_emergency_grace_period()
         with patch("src.core.time_manager.get_trusted_time") as mock_time:
             mock_time.return_value = (datetime.now() - timedelta(hours=2), False)
-            success, msg, days = check_emergency_grace_period()
+            success, msg, _days = check_emergency_grace_period()
             assert success is False
             assert "manipolazione" in msg
 

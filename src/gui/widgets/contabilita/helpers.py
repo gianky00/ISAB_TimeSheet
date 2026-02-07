@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Optional
+from datetime import UTC, datetime
 
 from PyQt6.QtWidgets import QTreeWidgetItem
 
@@ -30,15 +29,17 @@ class SortableTreeWidgetItem(QTreeWidgetItem):
 
         return t1.lower() < t2.lower()
 
-    def _compare_dates(self, t1: str, t2: str) -> Optional[bool]:
+    def _compare_dates(self, t1: str, t2: str) -> bool | None:
         for fmt in ("%d/%m/%Y", "%Y/%m/%d"):
             try:
-                return datetime.strptime(t1, fmt) < datetime.strptime(t2, fmt)
+                return datetime.strptime(t1, fmt).replace(tzinfo=UTC) < datetime.strptime(t2, fmt).replace(
+                    tzinfo=UTC
+                )
             except ValueError:
                 continue
         return None
 
-    def _compare_numeric(self, t1: str, t2: str) -> Optional[bool]:
+    def _compare_numeric(self, t1: str, t2: str) -> bool | None:
         if not t1 or not t2:
             return None
         try:

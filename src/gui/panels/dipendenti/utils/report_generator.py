@@ -47,9 +47,7 @@ class ReportGenerator:
         except Exception as e:
             logger.error(f"Errore generazione email report: {e}")
             if parent_widget:
-                QMessageBox.critical(
-                    parent_widget, "Errore", f"Impossibile generare il report:\n{e}"
-                )
+                QMessageBox.critical(parent_widget, "Errore", f"Impossibile generare il report:\n{e}")
 
     @staticmethod
     def _gather_report_data():
@@ -129,9 +127,7 @@ class ReportGenerator:
 
         # Trend calculation
         trend_html = ""
-        trend = ReportHistory.calculate_trend(
-            len(data["warning_list"]), len(data["expired_list"])
-        )
+        trend = ReportHistory.calculate_trend(len(data["warning_list"]), len(data["expired_list"]))
         if trend:
             parts = []
             for k, label in (
@@ -140,9 +136,7 @@ class ReportGenerator:
             ):
                 diff = trend[k]
                 if diff > 0:
-                    parts.append(
-                        f'<span style="color: #dc3545;">+{diff} {label}</span>'
-                    )
+                    parts.append(f'<span style="color: #dc3545;">+{diff} {label}</span>')
                 elif diff < 0:
                     parts.append(f'<span style="color: #198754;">{diff} {label}</span>')
             if parts:
@@ -201,9 +195,7 @@ class ReportGenerator:
     @staticmethod
     def _build_html_table(items, color, rows_per_col=10):
         """Crea tabelle HTML multi-colonna."""
-        chunks = [
-            items[i : i + rows_per_col] for i in range(0, len(items), rows_per_col)
-        ]
+        chunks = [items[i : i + rows_per_col] for i in range(0, len(items), rows_per_col)]
         html = '<table cellpadding="0" cellspacing="0" border="0"><tr>'
         for col_idx, chunk in enumerate(chunks[:4]):
             if col_idx > 0:
@@ -221,25 +213,24 @@ class ReportGenerator:
         """Crea il file Excel temporaneo con i dati del report."""
         excel_data = []
         for items, label in ((warning_list, "In Scadenza"), (expired_list, "Scaduto")):
-            for dip in items:
-                excel_data.append(
-                    {
-                        "Cognome": dip["cognome"],
-                        "Nome": dip["nome"],
-                        "Badge": dip["badge"],
-                        "Ultimo Accesso": dip["data"],
-                        "Giorni": dip["giorni"],
-                        "Stato": label,
-                    }
-                )
+            excel_data.extend(
+                {
+                    "Cognome": dip["cognome"],
+                    "Nome": dip["nome"],
+                    "Badge": dip["badge"],
+                    "Ultimo Accesso": dip["data"],
+                    "Giorni": dip["giorni"],
+                    "Stato": label,
+                }
+                for dip in items
+            )
 
         if not excel_data:
             return None
 
         df_report = pd.DataFrame(excel_data)
         path = (
-            Path(os.environ["TEMP"])
-            / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
+            Path(os.environ["TEMP"]) / f"report Accessi ISAB {datetime.now().strftime('%d-%m-%Y_%H-%M')}.xlsx"
         )
         df_report.to_excel(path, index=False, sheet_name="Dipendenti")
         return path
@@ -271,9 +262,7 @@ class ReportGenerator:
                         mail.Attachments.Add(str(excel_path))
                     mail.Display()
 
-                    ReportHistory.save_report(
-                        data["warning_list"], data["expired_list"]
-                    )
+                    ReportHistory.save_report(data["warning_list"], data["expired_list"])
                     ToastManager.instance().show(
                         "Report generato in Outlook con allegato Excel",
                         "success",
@@ -286,18 +275,13 @@ class ReportGenerator:
                     # Non fare raise qui, lascia che scenda al fallback
 
             except Exception as e:
-                logger.warning(
-                    f"Outlook integration failed (module import or init): {e}"
-                )
+                logger.warning(f"Outlook integration failed (module import or init): {e}")
 
         # Fallback Browser / Sistema
         from PyQt6.QtCore import QUrl
         from PyQt6.QtGui import QDesktopServices
 
-        tmp_path = (
-            Path(os.environ["TEMP"])
-            / f"report_isab_{datetime.now().strftime('%H%M%S')}.html"
-        )
+        tmp_path = Path(os.environ["TEMP"]) / f"report_isab_{datetime.now().strftime('%H%M%S')}.html"
         try:
             tmp_path.write_text(body_html, encoding="utf-8")
             # Usa QDesktopServices per aprire il file con l'app predefinita del sistema

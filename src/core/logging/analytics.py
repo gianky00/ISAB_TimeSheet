@@ -6,7 +6,7 @@ Anomaly detection, pattern detection e health scoring per log analysis.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from .viewer import LogViewer
 
@@ -15,14 +15,12 @@ from .viewer import LogViewer
 class Anomaly:
     """Rappresenta un'anomalia rilevata nei log."""
 
-    type: Literal[
-        "error_spike", "slow_operation", "unusual_pattern", "high_failure_rate"
-    ]
+    type: Literal["error_spike", "slow_operation", "unusual_pattern", "high_failure_rate"]
     severity: Literal["low", "medium", "high", "critical"]
     message: str
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
-    suggestion: Optional[str] = None
+    suggestion: str | None = None
 
 
 @dataclass
@@ -32,18 +30,18 @@ class Pattern:
     type: Literal["repeated_error", "correlation", "time_based"]
     message: str
     count: int
-    examples: List[str] = field(default_factory=list)
-    first_seen: Optional[datetime] = None
-    last_seen: Optional[datetime] = None
+    examples: list[str] = field(default_factory=list)
+    first_seen: datetime | None = None
+    last_seen: datetime | None = None
 
 
 @dataclass
 class AnalyticsReport:
     """Report aggregato con anomalie, pattern e suggerimenti."""
 
-    anomalies: List[Anomaly] = field(default_factory=list)
-    patterns: List[Pattern] = field(default_factory=list)
-    suggestions: List[str] = field(default_factory=list)
+    anomalies: list[Anomaly] = field(default_factory=list)
+    patterns: list[Pattern] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
     health_score: int = 100  # 0-100
     generated_at: datetime = field(default_factory=datetime.now)
 
@@ -66,7 +64,7 @@ class AnomalyDetector:
     - High failure rate (tasso di fallimento bot elevato)
     """
 
-    def __init__(self, viewer: Optional[LogViewer] = None):
+    def __init__(self, viewer: LogViewer | None = None):
         self.viewer = viewer or LogViewer()
 
         # Baseline thresholds (configurabili)
@@ -74,7 +72,7 @@ class AnomalyDetector:
         self.slow_op_threshold_ms = 10000  # 10 secondi
         self.failure_rate_threshold = 10.0  # % fallimenti bot
 
-    def detect_all(self, hours: int = 24) -> List[Anomaly]:
+    def detect_all(self, hours: int = 24) -> list[Anomaly]:
         """Rileva tutte le anomalie nelle ultime N ore."""
         anomalies = []
         anomalies.extend(self.detect_error_rate_spike(hours))
@@ -82,7 +80,7 @@ class AnomalyDetector:
         anomalies.extend(self.detect_high_failure_rate(hours))
         return anomalies
 
-    def detect_error_rate_spike(self, hours: int = 24) -> List[Anomaly]:
+    def detect_error_rate_spike(self, hours: int = 24) -> list[Anomaly]:
         """
         Rileva spike nel tasso di errori.
 
@@ -109,9 +107,7 @@ class AnomalyDetector:
                     details={
                         "current_rate": error_rate,
                         "threshold": self.error_rate_threshold,
-                        "total_errors": report.get("level_distribution", {}).get(
-                            "ERROR", 0
-                        ),
+                        "total_errors": report.get("level_distribution", {}).get("ERROR", 0),
                     },
                     suggestion="Controlla gli errori recenti nella sezione Audit",
                 )
@@ -119,7 +115,7 @@ class AnomalyDetector:
 
         return anomalies
 
-    def detect_slow_operations(self, hours: int = 24) -> List[Anomaly]:
+    def detect_slow_operations(self, hours: int = 24) -> list[Anomaly]:
         """
         Rileva operazioni più lente del normale.
 
@@ -127,9 +123,7 @@ class AnomalyDetector:
             Lista di anomalie per operazioni lente
         """
         anomalies = []
-        slow_ops = self.viewer.get_slow_operations(
-            threshold_ms=self.slow_op_threshold_ms, limit=5
-        )
+        slow_ops = self.viewer.get_slow_operations(threshold_ms=self.slow_op_threshold_ms, limit=5)
 
         for op in slow_ops:
             duration_ms = op.get("duration_ms", 0)
@@ -157,7 +151,7 @@ class AnomalyDetector:
 
         return anomalies
 
-    def detect_high_failure_rate(self, hours: int = 24) -> List[Anomaly]:
+    def detect_high_failure_rate(self, hours: int = 24) -> list[Anomaly]:
         """
         Rileva tasso di fallimento bot elevato.
 
@@ -206,19 +200,17 @@ class PatternDetector:
     - Correlazioni (errori che seguono sempre altri errori)
     """
 
-    def __init__(self, viewer: Optional[LogViewer] = None):
+    def __init__(self, viewer: LogViewer | None = None):
         self.viewer = viewer or LogViewer()
         self.min_count = 3  # Minimo occorrenze per pattern
 
-    def detect_all(self, hours: int = 24) -> List[Pattern]:
+    def detect_all(self, hours: int = 24) -> list[Pattern]:
         """Rileva tutti i pattern nelle ultime N ore."""
         patterns = []
         patterns.extend(self.find_repeated_errors(hours))
         return patterns
 
-    def find_repeated_errors(
-        self, hours: int = 24, min_count: Optional[int] = None
-    ) -> List[Pattern]:
+    def find_repeated_errors(self, hours: int = 24, min_count: int | None = None) -> list[Pattern]:
         """
         Trova errori che si ripetono frequentemente.
 
@@ -250,7 +242,7 @@ class HealthScorer:
 
     def calculate(
         self,
-        anomalies: List[Anomaly],
+        anomalies: list[Anomaly],
         error_rate: float = 0,
         bot_success_rate: float = 100,
     ) -> int:
@@ -300,7 +292,11 @@ def generate_analytics_report(hours: int = 24) -> AnalyticsReport:
         AnalyticsReport con anomalie, pattern e suggerimenti
     """
     viewer = LogViewer()
-    anomaly_detector, pattern_detector, health_scorer = AnomalyDetector(viewer), PatternDetector(viewer), HealthScorer()
+    anomaly_detector, pattern_detector, health_scorer = (
+        AnomalyDetector(viewer),
+        PatternDetector(viewer),
+        HealthScorer(),
+    )
 
     # Rileva anomalie e pattern
     anomalies, patterns = anomaly_detector.detect_all(hours), pattern_detector.detect_all(hours)
@@ -337,11 +333,11 @@ def get_health_score(hours: int = 24) -> int:
     return generate_analytics_report(hours).health_score
 
 
-def get_anomalies(hours: int = 24) -> List[Anomaly]:
+def get_anomalies(hours: int = 24) -> list[Anomaly]:
     """Restituisce lista anomalie."""
     return AnomalyDetector().detect_all(hours)
 
 
-def get_patterns(hours: int = 24) -> List[Pattern]:
+def get_patterns(hours: int = 24) -> list[Pattern]:
     """Restituisce lista pattern."""
     return PatternDetector().detect_all(hours)

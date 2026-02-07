@@ -42,7 +42,7 @@ class ResponsiveContainer(QWidget):
         """Determina la modalità di visualizzazione (mobile, tablet, desktop) in base alla larghezza."""
         if width < self.BREAKPOINT_MOBILE:
             return "mobile"
-        elif width < self.BREAKPOINT_TABLET:
+        if width < self.BREAKPOINT_TABLET:
             return "tablet"
         return "desktop"
 

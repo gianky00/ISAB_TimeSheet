@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -23,7 +23,7 @@ class TestLicenseUpdaterRobust:
     @pytest.fixture
     def mock_time(self):
         """Mocka il tempo fidato."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         with patch("src.core.time_manager.get_trusted_time") as mock:
             mock.return_value = (now, True)
             yield mock
@@ -54,9 +54,7 @@ class TestLicenseUpdaterRobust:
 
         mock_requests.side_effect = side_effect
 
-        with patch(
-            "src.core.license_validator.get_hardware_id", return_value="HWID123"
-        ):
+        with patch("src.core.license_validator.get_hardware_id", return_value="HWID123"):
             success = license_updater.run_update()
 
         assert success is True
@@ -69,9 +67,7 @@ class TestLicenseUpdaterRobust:
         """Test fallimento aggiornamento per offline."""
         mock_requests.side_effect = requests.RequestException("Connection Error")
 
-        with patch(
-            "src.core.license_validator.get_hardware_id", return_value="HWID123"
-        ):
+        with patch("src.core.license_validator.get_hardware_id", return_value="HWID123"):
             success = license_updater.run_update()
 
         assert success is False
@@ -83,9 +79,7 @@ class TestLicenseUpdaterRobust:
         resp.status_code = 404
         mock_requests.return_value = resp
 
-        with patch(
-            "src.core.license_validator.get_hardware_id", return_value="HWID123"
-        ):
+        with patch("src.core.license_validator.get_hardware_id", return_value="HWID123"):
             success = license_updater.run_update()
 
         assert success is False
@@ -94,7 +88,7 @@ class TestLicenseUpdaterRobust:
         """Test periodo di grazia valido."""
         # Crea token valido (1 giorno fa)
         cipher = Fernet(GRACE_PERIOD_KEY)
-        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        yesterday = datetime.now(UTC) - timedelta(days=1)
         token = cipher.encrypt(yesterday.isoformat().encode("utf-8"))
         (mock_data_dir / "validity.token").write_bytes(token)
 
@@ -104,7 +98,7 @@ class TestLicenseUpdaterRobust:
         """Test periodo di grazia scaduto (>3 giorni)."""
         # Crea token vecchio (4 giorni fa)
         cipher = Fernet(GRACE_PERIOD_KEY)
-        old_time = datetime.now(timezone.utc) - timedelta(days=4)
+        old_time = datetime.now(UTC) - timedelta(days=4)
         token = cipher.encrypt(old_time.isoformat().encode("utf-8"))
         (mock_data_dir / "validity.token").write_bytes(token)
 
@@ -115,7 +109,7 @@ class TestLicenseUpdaterRobust:
         """Test manipolazione orologio (token nel futuro)."""
         # Crea token futuro
         cipher = Fernet(GRACE_PERIOD_KEY)
-        future_time = datetime.now(timezone.utc) + timedelta(days=1)
+        future_time = datetime.now(UTC) + timedelta(days=1)
         token = cipher.encrypt(future_time.isoformat().encode("utf-8"))
         (mock_data_dir / "validity.token").write_bytes(token)
 
@@ -152,11 +146,11 @@ class TestLicenseUpdaterRobust:
         """Test periodo emergenza scaduto."""
         # Crea token vecchio
         cipher = Fernet(GRACE_PERIOD_KEY)
-        old = datetime.now(timezone.utc) - timedelta(days=4)
+        old = datetime.now(UTC) - timedelta(days=4)
         token = cipher.encrypt(old.isoformat().encode("utf-8"))
         (mock_data_dir / "emergency_grace.token").write_bytes(token)
 
-        success, msg, days = license_updater.check_emergency_grace_period()
+        success, msg, _days = license_updater.check_emergency_grace_period()
         assert success is False
         assert "SCADUTO" in msg
 

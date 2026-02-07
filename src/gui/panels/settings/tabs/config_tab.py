@@ -33,9 +33,7 @@ class ConfigTab(QWidget):
         # Search Bar
         search_layout = QHBoxLayout()
         search_icon = QLabel()
-        search_icon.setPixmap(
-            get_colored_icon(get_asset_path(Icons.SEARCH), "#6c757d").pixmap(20, 20)
-        )
+        search_icon.setPixmap(get_colored_icon(get_asset_path(Icons.SEARCH), "#6c757d").pixmap(20, 20))
         search_layout.addWidget(search_icon)
 
         self.search_bar = QLineEdit()
@@ -110,7 +108,6 @@ class ConfigTab(QWidget):
         # Implementazione base: espande tutto se c'è testo?
         # QToolBox non supporta il filtraggio interno facile.
         # Per ora lasciamo vuoto o espandiamo la pagina che matcha.
-        pass
 
     def load_from_config(self, config):
         for page in self.pages:

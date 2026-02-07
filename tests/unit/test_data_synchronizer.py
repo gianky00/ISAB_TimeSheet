@@ -16,9 +16,7 @@ class TestDataSynchronizer:
         # Setup tables
         # Contabilita
         cols_cont = list(ExcelImporter.COLUMNS_MAPPING.values())
-        schema_cont = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join(
-            [f"{c} TEXT" for c in cols_cont]
-        )
+        schema_cont = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join([f"{c} TEXT" for c in cols_cont])
         cursor.execute(f"CREATE TABLE contabilita ({schema_cont})")
 
         # Giornaliere
@@ -35,31 +33,23 @@ class TestDataSynchronizer:
             "ore",
             "nome_file",
         ]
-        schema_g = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join(
-            [f"{c} TEXT" for c in g_cols]
-        )
+        schema_g = "id INTEGER PRIMARY KEY, year INTEGER, " + ", ".join([f"{c} TEXT" for c in g_cols])
         cursor.execute(f"CREATE TABLE giornaliere ({schema_g})")
 
         # Storico OdA
         s_cols = ExcelImporter.STORICO_ODA_COLS
-        schema_s = "id INTEGER PRIMARY KEY, " + ", ".join(
-            [f'"{c}" TEXT' for c in s_cols]
-        )
+        schema_s = "id INTEGER PRIMARY KEY, " + ", ".join([f'"{c}" TEXT' for c in s_cols])
         cursor.execute(f"CREATE TABLE storico_oda ({schema_s})")
 
         # Attivita Programmate
         # ATTIVITA_PROGRAMMATE_COLS already includes "styles"
         a_cols = ExcelImporter.ATTIVITA_PROGRAMMATE_COLS
-        schema_a = "id INTEGER PRIMARY KEY, " + ", ".join(
-            [f'"{c}" TEXT' for c in a_cols]
-        )
+        schema_a = "id INTEGER PRIMARY KEY, " + ", ".join([f'"{c}" TEXT' for c in a_cols])
         cursor.execute(f"CREATE TABLE attivita_programmate ({schema_a})")
 
         # Scarico Ore
         so_cols = ExcelImporter.SCARICO_ORE_COLS
-        schema_so = "id INTEGER PRIMARY KEY, " + ", ".join(
-            [f'"{c}" TEXT' for c in so_cols]
-        )
+        schema_so = "id INTEGER PRIMARY KEY, " + ", ".join([f'"{c}" TEXT' for c in so_cols])
         cursor.execute(f"CREATE TABLE scarico_ore ({schema_so})")
 
         conn.commit()
@@ -84,7 +74,7 @@ class TestDataSynchronizer:
         # Create a row with 'year' + other cols.
         # Length of ExcelImporter.COLUMNS_MAPPING
         num_cols = len(ExcelImporter.COLUMNS_MAPPING)
-        row1 = (year,) + tuple(f"val_{i}" for i in range(num_cols))
+        row1 = (year, *tuple(f"val_{i}" for i in range(num_cols)))
 
         added, removed = DataSynchronizer.sync_contabilita_dati(temp_db, [row1], [year])
         assert added == 1
@@ -104,7 +94,7 @@ class TestDataSynchronizer:
         assert removed == 0
 
         # Update: new row, old removed
-        row2 = (year,) + tuple(f"val_new_{i}" for i in range(num_cols))
+        row2 = (year, *tuple(f"val_new_{i}" for i in range(num_cols)))
         added, removed = DataSynchronizer.sync_contabilita_dati(temp_db, [row2], [year])
         assert added == 1
         assert removed == 1
@@ -197,12 +187,10 @@ class TestDataSynchronizer:
         # Code: `db_cols = list(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ["styles"]`
         # `rows_to_insert` must match these cols.
 
-        num_cols = (
-            len(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()) + 1
-        )  # + styles
+        num_cols = len(ExcelImporter.ATTIVITA_PROGRAMMATE_MAPPING.values()) + 1  # + styles
         row1 = tuple(f"act_{i}" for i in range(num_cols))
 
-        added, removed = DataSynchronizer.sync_attivita_programmate(temp_db, [row1])
+        added, _removed = DataSynchronizer.sync_attivita_programmate(temp_db, [row1])
         assert added == 1
 
     def test_sync_scarico_ore(self, temp_db):

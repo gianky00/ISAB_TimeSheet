@@ -1,5 +1,5 @@
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 
 from PyQt6.QtWidgets import QTableWidgetItem
 
@@ -92,5 +92,5 @@ class SortableTableWidgetItem(QTableWidgetItem):
             with suppress(ValueError):
                 # Gestisce anche date parziali troncando il testo se necessario?
                 # Meglio match esatto per evitare falsi positivi
-                return datetime.strptime(text, fmt)
+                return datetime.strptime(text, fmt).replace(tzinfo=UTC)
         raise ValueError("Not a date")

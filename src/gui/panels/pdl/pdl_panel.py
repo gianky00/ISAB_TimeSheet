@@ -5,7 +5,7 @@ Pannello per la visualizzazione del Database PDL SafeWork.
 
 import os
 from datetime import datetime
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 from PyQt6.QtCore import Qt, QTimer
@@ -110,9 +110,7 @@ class PDLDBPanel(QWidget):
         self.filters.update_clicked.connect(self._on_update_bot_clicked)
         self.filters.reset_clicked.connect(self._reset_filters)
         self.filters.export_clicked.connect(self._export_to_excel)
-        self.filters.search_input.textChanged.connect(
-            lambda: self.search_timer.start(500)
-        )
+        self.filters.search_input.textChanged.connect(lambda: self.search_timer.start(500))
 
         main_layout.addWidget(self.filters)
 
@@ -130,9 +128,7 @@ class PDLDBPanel(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.table.setItemDelegate(
-            PDLDelegate([0], self.table)
-        )  # Data Creazione è indice 0
+        self.table.setItemDelegate(PDLDelegate([0], self.table))  # Data Creazione è indice 0
 
         self.table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         header = self.table.horizontalHeader()
@@ -223,9 +219,7 @@ class PDLDBPanel(QWidget):
             dlg = QDialog(self)
             dlg.setWindowTitle(title)
             dlg.setMinimumWidth(350)
-            dlg.setWindowFlags(
-                dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
-            )
+            dlg.setWindowFlags(dlg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
             layout = QVBoxLayout(dlg)
             layout.setSpacing(20)
@@ -371,9 +365,7 @@ class PDLDBPanel(QWidget):
     def _on_header_clicked(self, logical_index):
         """Gestisce il toggle dell'ordinamento."""
         if self.current_sort_col == logical_index:
-            self.current_sort_order = (
-                "DESC" if self.current_sort_order == "ASC" else "ASC"
-            )
+            self.current_sort_order = "DESC" if self.current_sort_order == "ASC" else "ASC"
         else:
             self.current_sort_col = logical_index
             self.current_sort_order = "ASC"
@@ -382,9 +374,7 @@ class PDLDBPanel(QWidget):
 
     def refresh_data(self, sort_col=None):
         """Aggiorna i dati della tabella PDL con sistema di cache."""
-        self.filters.lbl_sync_status.setText(
-            f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}"
-        )
+        self.filters.lbl_sync_status.setText(f"Ultimo Sync: {SyncTracker.get_formatted_status('pdl')}")
 
         query, params = self._build_pdl_query(sort_col)
         cache_key = f"{query}_{params}"
@@ -393,9 +383,7 @@ class PDLDBPanel(QWidget):
             full_rows = self._cache[cache_key]
         else:
             try:
-                full_rows = db_manager.execute_query(
-                    db_manager.DB_PDL, query, tuple(params)
-                )
+                full_rows = db_manager.execute_query(db_manager.DB_PDL, query, tuple(params))
                 self._cache[cache_key] = full_rows
             except Exception as e:
                 print(f"Errore caricamento PDL: {e}")
@@ -406,7 +394,7 @@ class PDLDBPanel(QWidget):
         self.model.update_data(master_rows)
         self._update_pdl_ui(len(master_rows))
 
-    def _build_pdl_query(self, sort_col: Optional[int]) -> Tuple[str, List[Any]]:
+    def _build_pdl_query(self, sort_col: int | None) -> tuple[str, list[Any]]:
         """Costruisce la query SQL per i PDL."""
         f = self.filters.get_filters()
         search_text = f["search"]
@@ -482,14 +470,12 @@ class PDLDBPanel(QWidget):
         query += " LIMIT 2000"
         return query, params
 
-    def _process_pdl_rows(self, full_rows: List[Tuple]) -> List[List[Any]]:
+    def _process_pdl_rows(self, full_rows: list[tuple]) -> list[list[Any]]:
         """Pulisce e formatta le righe per la visualizzazione Master."""
         master_rows = []
         for r in full_rows:
             row = [r[2], r[10], r[1], r[3], r[4], r[8], r[6]]
-            master_rows.append(
-                [("" if str(val).lower() in ("nan", "none") else val) for val in row]
-            )
+            master_rows.append([("" if str(val).lower() in ("nan", "none") else val) for val in row])
         return master_rows
 
     def _update_pdl_ui(self, count: int):
@@ -503,9 +489,7 @@ class PDLDBPanel(QWidget):
             if i != 6 and header.sectionSize(i) > 200:
                 header.resizeSection(i, 200)
 
-        QTimer.singleShot(
-            10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
-        )
+        QTimer.singleShot(10, lambda: header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch))
         if count < 500:
             QTimer.singleShot(100, self.table.resizeRowsToContents)
 
@@ -577,7 +561,7 @@ class PDLDBPanel(QWidget):
                 if not filename.endswith(".xlsx"):
                     filename += ".xlsx"
                 df.to_excel(filename, index=False, engine="openpyxl")
-                os.startfile(filename)
+                os.startfile(filename)  # noqa: S606
 
         except Exception as e:
             print(f"Errore Export Excel: {e}")

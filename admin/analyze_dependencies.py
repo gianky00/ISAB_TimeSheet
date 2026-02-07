@@ -4,9 +4,10 @@ Scansiona il progetto in modo aggressive per trovare TUTTE le dipendenze possibi
 """
 
 import ast
-import os
+import contextlib
 import sys
 from modulefinder import ModuleFinder
+from pathlib import Path
 
 
 def get_all_imports(script_path, src_path):
@@ -16,37 +17,29 @@ def get_all_imports(script_path, src_path):
 
     # 1. Analisi Statica (ModuleFinder)
     # Aggiungi src al path
-    sys.path.insert(0, src_path)
+    sys.path.insert(0, str(src_path))
 
     finder = ModuleFinder(path=sys.path)
-    finder.run_script(script_path)
+    finder.run_script(str(script_path))
 
     found_modules = set()
 
     # 2. Analisi AST (Abstract Syntax Tree) su tutto il progetto
     # Questo trova importazioni anche in file non direttamente toccati da main.py
     print("[ANALYZER] 🔍 Scansione AST ricorsiva su 'src'...")
-    for root, _, files in os.walk(src_path):
-        for file in files:
-            if file.endswith(".py"):
-                path = os.path.join(root, file)
-                try:
-                    with open(path, "r", encoding="utf-8") as f:
-                        tree = ast.parse(f.read())
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Import):
-                            for alias in node.names:
-                                found_modules.add(alias.name.split(".")[0])
-                        elif isinstance(node, ast.ImportFrom):
-                            if node.module:
-                                found_modules.add(node.module.split(".")[0])
-                except Exception:
-                    pass  # Ignore parse errors
+    src_dir = Path(src_path)
+    for path in src_dir.rglob("*.py"):
+        with contextlib.suppress(Exception):
+            with path.open(encoding="utf-8") as f:
+                tree = ast.parse(f.read())
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        found_modules.add(alias.name.split(".")[0])
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    found_modules.add(node.module.split(".")[0])
 
     # 3. Inclusione Forzata di Famiglie Critiche
-    # Se troviamo un modulo base, forziamo l'inclusione di sotto-componenti critici
-    # che spesso sfuggono all'analisi statica/dinamica.
-
     critical_families = {
         "cryptography": [
             "cryptography",
@@ -113,10 +106,10 @@ def get_all_imports(script_path, src_path):
     print("[ANALYZER] 🛡️  Applicazione regole famiglie critiche...")
 
     # Merge dei risultati AST con quelli del ModuleFinder
-    for name, _ in finder.modules.items():
-        root = name.split(".")[0]
-        if root not in sys.builtin_module_names:
-            found_modules.add(root)
+    for name in finder.modules:
+        root_mod = name.split(".")[0]
+        if root_mod not in sys.builtin_module_names:
+            found_modules.add(root_mod)
 
     final_imports = set()
 
@@ -139,19 +132,17 @@ def get_all_imports(script_path, src_path):
             continue  # Skip internal modules usually
         cleaned_imports.add(imp)
 
-    print(
-        f"[ANALYZER] ✅ Identificati {len(cleaned_imports)} moduli univoci da includere."
-    )
+    print(f"[ANALYZER] ✅ Identificati {len(cleaned_imports)} moduli univoci da includere.")
     return sorted(cleaned_imports)
 
 
 if __name__ == "__main__":
     # Test run
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    main_py = os.path.join(root, "main.py")
-    src = os.path.join(root, "src")
+    root = Path(__file__).parent.parent.resolve()
+    main_py_file = root / "main.py"
+    src_dir_path = root / "src"
 
-    imports = get_all_imports(main_py, src)
+    imports_list = get_all_imports(main_py_file, src_dir_path)
     print("\n[ANALYZER] LISTA FINALE Hidden Imports:")
-    for i in imports:
+    for i in imports_list:
         print(f"  --hidden-import {i}")

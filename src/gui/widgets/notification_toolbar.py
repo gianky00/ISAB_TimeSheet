@@ -3,8 +3,6 @@ NotificationToolbar - Barra degli strumenti per filtrare, cercare e ordinare not
 Include filter chips, search bar, sort dropdown e bulk actions menu.
 """
 
-from typing import Dict, Optional
-
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -29,9 +27,9 @@ class FilterChip(QPushButton):
         self,
         label: str,
         key: str,
-        icon: Optional[str] = None,
+        icon: str | None = None,
         count: int = 0,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent)
         self.key = key
@@ -49,10 +47,7 @@ class FilterChip(QPushButton):
 
     def _update_text(self, label: str):
         """Update button text with count badge."""
-        if self._count > 0:
-            text = f"{label} ({self._count})"
-        else:
-            text = label
+        text = f"{label} ({self._count})" if self._count > 0 else label
 
         self.setText(text)
 
@@ -132,9 +127,9 @@ class NotificationToolbar(QWidget):
     sort_changed = pyqtSignal(str)  # sort_key
     bulk_action_triggered = pyqtSignal(str)  # action_key
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self._filter_chips: Dict[str, FilterChip] = {}
+        self._filter_chips: dict[str, FilterChip] = {}
         self._current_filter = "all"
         self._debounce_timer = QTimer()
         self._debounce_timer.setSingleShot(True)
@@ -185,9 +180,7 @@ class NotificationToolbar(QWidget):
                 icon=config["icon"],
                 count=0,  # Will be updated dynamically
             )
-            chip.clicked.connect(
-                lambda checked, k=config["key"]: self._on_filter_clicked(k)
-            )
+            chip.clicked.connect(lambda checked, k=config["key"]: self._on_filter_clicked(k))
             self._filter_chips[config["key"]] = chip
             layout.addWidget(chip)
 

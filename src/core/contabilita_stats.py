@@ -6,7 +6,7 @@ Gestisce il calcolo delle statistiche per i dati della Contabilità Strumentale.
 import operator
 from contextlib import suppress
 from pathlib import Path
-from typing import Dict, List, TypedDict
+from typing import TypedDict
 
 from src.core.contabilita_queries import ContabilitaQueries  # Per accedere ai dati
 from src.utils.parsing import parse_currency
@@ -16,8 +16,8 @@ class YearStats(TypedDict):
     total_prev: float
     total_ore: float
     count_total: int
-    status_counts: Dict[str, int]
-    top_commesse: List[tuple]
+    status_counts: dict[str, int]
+    top_commesse: list[tuple]
     ore_dirette: float
     ore_indirette: float
 
@@ -43,9 +43,7 @@ class ContabilitaStats:
 
         # 1. Processo Tabella Dati (KPI OdA)
         commesse = cls._process_main_data(data, stats)
-        stats["top_commesse"] = sorted(
-            commesse, key=operator.itemgetter(1), reverse=True
-        )[:5]
+        stats["top_commesse"] = sorted(commesse, key=operator.itemgetter(1), reverse=True)[:5]
 
         # 2. Processo Giornaliere (KPI Diretti/Indiretti)
         cls._process_giornaliere_stats(giornaliere, stats)
@@ -53,7 +51,7 @@ class ContabilitaStats:
         return stats
 
     @classmethod
-    def _process_main_data(cls, data, stats) -> List[tuple]:
+    def _process_main_data(cls, data, stats) -> list[tuple]:
         """Processa i dati OdA principali per calcolare totali e status."""
         commesse: list[tuple] = []
         if not data:
@@ -74,9 +72,7 @@ class ContabilitaStats:
 
                 status = str(row[7]).strip().upper()
                 if status:
-                    stats["status_counts"][status] = (
-                        stats["status_counts"].get(status, 0) + 1
-                    )
+                    stats["status_counts"][status] = stats["status_counts"].get(status, 0) + 1
 
                 if v_prev > 0:
                     attivita = str(row[4]).strip() or "N/D"
@@ -95,9 +91,7 @@ class ContabilitaStats:
                 odc = str(row[5]).strip()
                 ore = parse_currency(row[9])
 
-                is_direct = (n_prev and n_prev.lower() != "nan") or (
-                    odc and odc.lower() != "nan"
-                )
+                is_direct = (n_prev and n_prev.lower() != "nan") or (odc and odc.lower() != "nan")
 
                 if is_direct:
                     stats["ore_dirette"] += ore

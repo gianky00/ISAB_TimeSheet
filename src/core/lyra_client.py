@@ -5,7 +5,7 @@ Gestisce l'interazione con l'intelligenza artificiale (Google Gemini).
 
 import json
 import sqlite3
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
@@ -17,7 +17,7 @@ from src.core.contabilita_manager import ContabilitaManager
 class LyraClient:
     """Client per interagire con l'API di Google Gemini (Lyra)."""
 
-    def __init__(self, api_key: str, model_name: Optional[str] = None):
+    def __init__(self, api_key: str, model_name: str | None = None):
         if not api_key:
             raise ValueError("API Key for Gemini is required.")
         self._api_key = api_key
@@ -83,9 +83,7 @@ class LyraClient:
             latest_year = max(years)
             stats = ContabilitaManager.get_year_stats(latest_year)
             margine = stats["total_prev"] - (stats["total_ore"] * 30.0)
-            marginalita = (
-                (margine / stats["total_prev"] * 100) if stats["total_prev"] > 0 else 0
-            )
+            marginalita = (margine / stats["total_prev"] * 100) if stats["total_prev"] > 0 else 0
 
             lines = [
                 f"=== REPORT CONTABILITÀ ({latest_year}) ===",
@@ -129,9 +127,7 @@ class LyraClient:
 
             lines = ["\n=== REPORT TIMBRATURE ===", f"- Record Totali: {total_count}"]
             if missing_out > 0:
-                lines.append(
-                    f"- ⚠️ ATTENZIONE: Rilevate {missing_out} timbrature con uscita mancante."
-                )
+                lines.append(f"- ⚠️ ATTENZIONE: Rilevate {missing_out} timbrature con uscita mancante.")
             else:
                 lines.append("- Nessuna anomalia (uscite mancanti) rilevata.")
 
@@ -148,7 +144,7 @@ class LyraClient:
         self,
         question: str,
         extra_context: str = "",
-        images: Optional[List[Any]] = None,
+        images: list[Any] | None = None,
     ) -> str:
         """Invia una domanda a Gemini con il contesto ed eventuali immagini."""
         try:
@@ -161,13 +157,12 @@ class LyraClient:
             full_prompt = f"{self.context_prompt}\n{system_data}{ctx}\n\nUtente: {question}\nLyra:"
 
             # Costruzione parti del messaggio
-            parts: List[Dict[str, Any]] = [{"text": full_prompt}]
+            parts: list[dict[str, Any]] = [{"text": full_prompt}]
 
             if images:
-                for img_b64 in images:
-                    parts.append(
-                        {"inline_data": {"mime_type": "image/png", "data": img_b64}}
-                    )
+                parts.extend(
+                    {"inline_data": {"mime_type": "image/png", "data": img_b64}} for img_b64 in images
+                )
 
             payload = {"contents": [{"parts": parts}]}
 

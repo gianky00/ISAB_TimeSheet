@@ -3,16 +3,18 @@ Script to clean up invalid distributions (directories starting with ~) in site-p
 These are leftovers from failed pip operations and cause warnings.
 """
 
-import os
+import contextlib
 import shutil
 import sys
+from pathlib import Path
 
 
 def get_site_packages():
     """Retrieves the site-packages directory path from sys.path."""
     # Attempt to find site-packages directory
-    for path in sys.path:
-        if "site-packages" in path and os.path.isdir(path):
+    for path_str in sys.path:
+        path = Path(path_str)
+        if "site-packages" in path_str and path.is_dir():
             return path
     return None
 
@@ -27,23 +29,23 @@ def clean_invalid_dists():
     print(f"Checking for invalid distributions in: {site_pkg}")
 
     found = False
-    for name in os.listdir(site_pkg):
-        if name.startswith("~"):
-            full_path = os.path.join(site_pkg, name)
-            print(f"Found invalid distribution: {name}")
+    for item in site_pkg.iterdir():
+        if item.name.startswith("~"):
+            print(f"Found invalid distribution: {item.name}")
             try:
-                if os.path.isdir(full_path):
-                    shutil.rmtree(full_path)
+                if item.is_dir():
+                    shutil.rmtree(item)
                 else:
-                    os.remove(full_path)
-                print(f"  Successfully removed: {full_path}")
+                    item.unlink()
+                print(f"  Successfully removed: {item}")
                 found = True
             except Exception as e:
-                print(f"  Error removing {name}: {e}")
+                print(f"  Error removing {item.name}: {e}")
 
     if not found:
         print("No invalid distributions found.")
 
 
 if __name__ == "__main__":
-    clean_invalid_dists()
+    with contextlib.suppress(KeyboardInterrupt):
+        clean_invalid_dists()

@@ -2,8 +2,11 @@
 Sistema di notifiche toast non-blocking con supporto hover e tempi differenziati.
 """
 
+from typing import ClassVar, Optional
+
 from PyQt6.QtCore import (
     QEasingCurve,
+    QObject,
     QPropertyAnimation,
     QSize,
     Qt,
@@ -37,7 +40,7 @@ class Toast(QWidget):
         WARNING = "warning"
         ERROR = "error"
 
-    TYPE_CONFIG = {
+    TYPE_CONFIG: ClassVar[dict[str, tuple[str, str]]] = {
         Type.INFO: (Icons.HELP, "info"),
         Type.SUCCESS: (Icons.CHECK_CIRCLE, "success"),
         Type.WARNING: (Icons.ALERT, "warning"),
@@ -59,9 +62,7 @@ class Toast(QWidget):
         self._palette = get_palette()
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.Tool
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -85,9 +86,7 @@ class Toast(QWidget):
         container_layout = QHBoxLayout(self.container)
         container_layout.setContentsMargins(16, 12, 16, 12)
 
-        icon_path, color_key = self.TYPE_CONFIG.get(
-            self._type, self.TYPE_CONFIG[self.Type.INFO]
-        )
+        icon_path, color_key = self.TYPE_CONFIG.get(self._type, self.TYPE_CONFIG[self.Type.INFO])
         accent = getattr(self._palette, color_key, self._palette.info)
 
         self.container.setStyleSheet(
@@ -182,11 +181,11 @@ class Toast(QWidget):
         self._hide_timer.start(self._duration)
 
 
-class ToastManager:
+class ToastManager(QObject):
     """Singleton per la gestione dei toast."""
 
-    _instance = None
-    _active_toasts: list[Toast] = []
+    _instance: ClassVar[Optional["ToastManager"]] = None
+    _active_toasts: ClassVar[list[Toast]] = []
 
     @classmethod
     def instance(cls):
@@ -226,9 +225,7 @@ class ToastManager:
 
         self._active_toasts.append(toast)
         toast.destroyed.connect(
-            lambda: self._active_toasts.remove(toast)
-            if toast in self._active_toasts
-            else None
+            lambda: self._active_toasts.remove(toast) if toast in self._active_toasts else None
         )
         toast.show_at(x, y)
 

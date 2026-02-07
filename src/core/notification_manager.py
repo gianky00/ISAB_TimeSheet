@@ -8,7 +8,6 @@ import threading
 import uuid
 from contextlib import suppress
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -49,13 +48,12 @@ class NotificationManager(QObject):
         """Carica le notifiche dal file JSON con migrazione automatica."""
         if not self.notifications_file.exists():
             return []
-        with suppress(Exception):
-            with self.notifications_file.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-                # Applica migrazione per retrocompatibilità
-                data = [self._migrate_notification(n) for n in data]
-                # Ordina per timestamp (più recenti prima)
-                return sorted(data, key=lambda x: x.get("timestamp", ""), reverse=True)
+        with suppress(Exception), self.notifications_file.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            # Applica migrazione per retrocompatibilità
+            data = [self._migrate_notification(n) for n in data]
+            # Ordina per timestamp (più recenti prima)
+            return sorted(data, key=lambda x: x.get("timestamp", ""), reverse=True)
         return []
 
     def _migrate_notification(self, notif: dict) -> dict:
@@ -91,10 +89,10 @@ class NotificationManager(QObject):
         category: str = "system",
         priority: str = "low",
         source: str = "Sistema",
-        tags: Optional[list] = None,
-        metadata: Optional[dict] = None,
-        actions: Optional[list] = None,
-        related_id: Optional[str] = None,
+        tags: list | None = None,
+        metadata: dict | None = None,
+        actions: list | None = None,
+        related_id: str | None = None,
         show_toast: bool = False,
     ):
         """
@@ -141,9 +139,7 @@ class NotificationManager(QObject):
             duration = duration_map.get(level, 3000)
 
             # Puliamo il messaggio per il toast (niente HTML pesante)
-            clean_msg = (
-                message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
-            )
+            clean_msg = message.replace("<b>", "").replace("</b>", "").replace("<br>", " ")
             if len(clean_msg) > 120:
                 clean_msg = clean_msg[:117] + "..."
 
@@ -157,11 +153,7 @@ class NotificationManager(QObject):
 
     def get_unread_count(self) -> int:
         """Restituisce il numero di notifiche di errore non lette."""
-        return sum(
-            1
-            for n in self.notifications
-            if not n.get("read", False) and n.get("level") == "error"
-        )
+        return sum(1 for n in self.notifications if not n.get("read", False) and n.get("level") == "error")
 
     def mark_as_read(self, notification_id: str):
         """Segna una notifica come letta."""
@@ -189,9 +181,7 @@ class NotificationManager(QObject):
 
     def delete_notification(self, notification_id: str):
         """Elimina una notifica."""
-        self.notifications = [
-            n for n in self.notifications if n["id"] != notification_id
-        ]
+        self.notifications = [n for n in self.notifications if n["id"] != notification_id]
         self._save_notifications()
         self.notifications_updated.emit()
         self.unread_count_changed.emit(self.get_unread_count())

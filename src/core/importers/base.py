@@ -4,7 +4,7 @@ import warnings
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any
 
 # Lazy import placeholder
 _pd = None
@@ -37,7 +37,7 @@ class BaseImporter:
         return _pd
 
     @staticmethod
-    def _decrypt_if_encrypted(file_path: Path) -> Tuple[Any, bool]:
+    def _decrypt_if_encrypted(file_path: Path) -> tuple[Any, bool]:
         """Tenta di decifrare un file Excel se protetto da password."""
         if msoffcrypto:
             with suppress(Exception):
@@ -74,7 +74,7 @@ class BaseImporter:
             return pd.ExcelFile(file_obj, engine="openpyxl")
 
     @classmethod
-    def _identify_sheet_year(cls, sheet_name: str) -> Optional[int]:
+    def _identify_sheet_year(cls, sheet_name: str) -> int | None:
         """Estrae l'anno dal nome del foglio o usa l'anno corrente per nomi specifici."""
         match = re.search(r"(\d{4})", sheet_name)
         if match:

@@ -5,12 +5,12 @@ from .status_bar import FooterRightWidget
 from .telemetry import BootTelemetryWidget
 
 __all__ = [
-    "FooterItemWidget",
-    "StartupConsole",
-    "ClickableLabel",
-    "StatsCard",
-    "FooterLeftWidget",
     "BootTelemetryWidget",
+    "ClickableLabel",
+    "FooterItemWidget",
+    "FooterLeftWidget",
     "FooterRightWidget",
     "FooterStatsManager",
+    "StartupConsole",
+    "StatsCard",
 ]

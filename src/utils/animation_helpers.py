@@ -3,8 +3,8 @@ SyncroJob - Helper per Animazioni PyQt6
 Funzioni centralizzate per creare e gestire animazioni UI.
 """
 
+from collections.abc import Callable
 from contextlib import suppress
-from typing import Callable, Optional
 
 from PyQt6.QtCore import (
     QAbstractAnimation,
@@ -125,7 +125,7 @@ def create_position_animation(
     return anim
 
 
-def cleanup_animation_safely(anim: Optional[QAbstractAnimation]) -> None:
+def cleanup_animation_safely(anim: QAbstractAnimation | None) -> None:
     """
     Ferma e pulisce un'animazione in modo sicuro.
 
@@ -141,9 +141,7 @@ def cleanup_animation_safely(anim: Optional[QAbstractAnimation]) -> None:
         anim.deleteLater()
 
 
-def cleanup_effect_safely(
-    widget: Optional[QWidget], effect: Optional[QGraphicsOpacityEffect]
-) -> None:
+def cleanup_effect_safely(widget: QWidget | None, effect: QGraphicsOpacityEffect | None) -> None:
     """
     Rimuove e pulisce un effetto grafico in modo sicuro.
 
@@ -254,9 +252,7 @@ def create_animation_timer(
     return timer
 
 
-def delayed_call(
-    callback: Callable, delay: int = 100, parent: Optional[QWidget] = None
-) -> None:
+def delayed_call(callback: Callable, delay: int = 100, parent: QWidget | None = None) -> None:
     """
     Esegue una funzione dopo un ritardo.
 

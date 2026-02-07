@@ -6,6 +6,7 @@ Monitoraggio risorse di sistema (RAM, CPU) tramite API native Windows.
 import ctypes
 import logging
 from ctypes import Structure, byref, sizeof, wintypes
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class PROCESS_MEMORY_COUNTERS_EX(Structure):
     """Struttura Windows per i contatori di memoria del processo."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, Any]]] = [
         ("cb", wintypes.DWORD),
         ("PageFaultCount", wintypes.DWORD),
         ("PeakWorkingSetSize", ctypes.c_size_t),
@@ -35,7 +36,10 @@ class PROCESS_MEMORY_COUNTERS_EX(Structure):
 class FILETIME(Structure):
     """Struttura Windows per timestamp di sistema."""
 
-    _fields_ = [("dwLowDateTime", wintypes.DWORD), ("dwHighDateTime", wintypes.DWORD)]
+    _fields_: ClassVar[list[tuple[str, Any]]] = [
+        ("dwLowDateTime", wintypes.DWORD),
+        ("dwHighDateTime", wintypes.DWORD),
+    ]
 
 
 def get_current_process_ram_mb() -> float:

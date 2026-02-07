@@ -1,6 +1,7 @@
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import ClassVar
 
 import pandas as pd
 
@@ -10,7 +11,7 @@ from src.core.importers.base import BaseImporter
 class AttivitaImporter(BaseImporter):
     """Importer per le Attività Programmate."""
 
-    ATTIVITA_PROGRAMMATE_MAPPING = {
+    ATTIVITA_PROGRAMMATE_MAPPING: ClassVar[dict[str, str]] = {
         "PS": "ps",
         "AREA": "area",
         "PdL": "pdl",
@@ -29,14 +30,14 @@ class AttivitaImporter(BaseImporter):
         "AVVISO": "avviso",
     }
 
-    ATTIVITA_PROGRAMMATE_COLS = list(ATTIVITA_PROGRAMMATE_MAPPING.values()) + ["styles"]
+    ATTIVITA_PROGRAMMATE_COLS: ClassVar[list[str]] = [*list(ATTIVITA_PROGRAMMATE_MAPPING.values()), "styles"]
 
     @classmethod
     def import_attivita_programmate(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, List[Tuple]]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, list[tuple]]:
         """Importa il file Attività Programmate (veloce, senza colori)."""
         path = Path(file_path)
         if not path.exists():
@@ -58,15 +59,15 @@ class AttivitaImporter(BaseImporter):
             return False, f"Errore importazione Attività Programmate: {e}", []
 
     @classmethod
-    def _read_attivita_programmate_sheet(cls, path: Path) -> Optional[pd.DataFrame]:
+    def _read_attivita_programmate_sheet(cls, path: Path) -> pd.DataFrame | None:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            pd = cls._get_pd()
+            pd_obj = cls._get_pd()
             try:
-                return pd.read_excel(path, sheet_name="Riepilogo", header=2)
+                return pd_obj.read_excel(path, sheet_name="Riepilogo", header=2)
             except (ValueError, Exception):
                 try:
-                    return pd.read_excel(
+                    return pd_obj.read_excel(
                         path,
                         sheet_name="Riepilogo",
                         header=2,
@@ -76,7 +77,7 @@ class AttivitaImporter(BaseImporter):
                     return None
 
     @classmethod
-    def _normalize_attivita_columns(cls, df: pd.DataFrame) -> Optional[pd.DataFrame]:
+    def _normalize_attivita_columns(cls, df: pd.DataFrame) -> pd.DataFrame | None:
         df.columns = df.columns.astype(str).str.strip()
         rename_map = {}
 
@@ -85,10 +86,7 @@ class AttivitaImporter(BaseImporter):
                 rename_map[excel_col] = db_col
             else:
                 for col in df.columns:
-                    if (
-                        excel_col.replace("\n", " ").strip()
-                        == col.replace("\n", " ").strip()
-                    ):
+                    if excel_col.replace("\n", " ").strip() == col.replace("\n", " ").strip():
                         rename_map[col] = db_col
                         break
 
@@ -99,7 +97,7 @@ class AttivitaImporter(BaseImporter):
         return df
 
     @classmethod
-    def _prepare_attivita_rows(cls, df: pd.DataFrame) -> List[Tuple]:
+    def _prepare_attivita_rows(cls, df: pd.DataFrame) -> list[tuple]:
         for db_col in cls.ATTIVITA_PROGRAMMATE_MAPPING.values():
             if db_col not in df.columns:
                 df[db_col] = ""
@@ -111,7 +109,7 @@ class AttivitaImporter(BaseImporter):
         df = df.fillna("").astype(str).apply(lambda x: x.str.strip())
         df["styles"] = ""
 
-        db_cols = list(cls.ATTIVITA_PROGRAMMATE_MAPPING.values()) + ["styles"]
+        db_cols = [*list(cls.ATTIVITA_PROGRAMMATE_MAPPING.values()), "styles"]
         df = df[db_cols]
 
         return list(df.itertuples(index=False, name=None))

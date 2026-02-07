@@ -4,47 +4,48 @@ Genera file di licenza per i client.
 """
 
 import base64
+import contextlib
 import hashlib
 import json
-import os
 import shutil
 import subprocess
 import sys
 import tkinter as tk
 from datetime import date, timedelta
+from pathlib import Path
 from tkinter import messagebox, simpledialog, ttk
 
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 
 # Add project root to sys.path to allow importing src modules
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir))
-sys.path.insert(0, project_root)
+current_dir = Path(__file__).parent.resolve()
+project_root = current_dir.parent.parent
+sys.path.insert(0, str(project_root))
 
-from src.core.secrets_manager import SecretsManager  # noqa: E402
+from src.core.secrets_manager import SecretsManager
 
 # Carica variabili d'ambiente
 load_dotenv()
 
 # Path per il file clienti
-CLIENTS_FILE = os.path.join(current_dir, "clients.json")
+CLIENTS_FILE = current_dir / "clients.json"
 
 
 def get_signing_key():
     """Recupera la chiave di firma/cifratura in modo sicuro."""
     # 1. Environment Variable
+    import os
+
     env_key = os.getenv("LICENSE_SECRET_KEY")
     if env_key:
         return env_key.encode()
 
     # 2. SecretsManager (se configurato localmente per admin)
-    try:
+    with contextlib.suppress(Exception):
         raw_key = SecretsManager.get_license_key()
         if raw_key:
             return base64.urlsafe_b64encode(raw_key)
-    except Exception:
-        pass
 
     return b""
 
@@ -52,7 +53,7 @@ def get_signing_key():
 def _calculate_sha256(filepath):
     """Calcola l'hash SHA256 di un file."""
     sha256_hash = hashlib.sha256()
-    with open(filepath, "rb") as f:
+    with Path(filepath).open("rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
@@ -60,12 +61,9 @@ def _calculate_sha256(filepath):
 
 def load_clients():
     """Carica i clienti dal file JSON."""
-    if os.path.exists(CLIENTS_FILE):
-        try:
-            with open(CLIENTS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
+    if CLIENTS_FILE.exists():
+        with contextlib.suppress(Exception), CLIENTS_FILE.open(encoding="utf-8") as f:
+            return json.load(f)
     # Default clients
     return {
         "PC_COEMI_GIGLIUTO": "0026_B768_5B05_C4F5",
@@ -75,7 +73,7 @@ def load_clients():
 
 def save_clients(clients):
     """Salva i clienti nel file JSON."""
-    with open(CLIENTS_FILE, "w", encoding="utf-8") as f:
+    with CLIENTS_FILE.open("w", encoding="utf-8") as f:
         json.dump(clients, f, indent=2, ensure_ascii=False)
 
 
@@ -101,9 +99,7 @@ class LicenseAdminApp:
         # Header
         header_frame = ttk.Frame(root)
         header_frame.pack(fill="x", pady=15)
-        ttk.Label(
-            header_frame, text="🔑 Generatore Licenza SyncroJob", style="Header.TLabel"
-        ).pack()
+        ttk.Label(header_frame, text="🔑 Generatore Licenza SyncroJob", style="Header.TLabel").pack()
 
         # === Sezione Clienti Salvati ===
         clients_frame = ttk.LabelFrame(root, text="📋 Clienti Salvati", padding=10)
@@ -127,17 +123,17 @@ class LicenseAdminApp:
         self.cmb_clients.bind("<<ComboboxSelected>>", self.on_client_selected)
 
         # Pulsanti gestione clienti
-        ttk.Button(
-            combo_frame, text="➕ Aggiungi", command=self.add_client, width=10
-        ).pack(side="left", padx=2)
+        ttk.Button(combo_frame, text="➕ Aggiungi", command=self.add_client, width=10).pack(
+            side="left", padx=2
+        )
 
-        ttk.Button(
-            combo_frame, text="✏️ Modifica", command=self.edit_client, width=10
-        ).pack(side="left", padx=2)
+        ttk.Button(combo_frame, text="✏️ Modifica", command=self.edit_client, width=10).pack(
+            side="left", padx=2
+        )
 
-        ttk.Button(
-            combo_frame, text="🗑️ Elimina", command=self.delete_client, width=10
-        ).pack(side="left", padx=2)
+        ttk.Button(combo_frame, text="🗑️ Elimina", command=self.delete_client, width=10).pack(
+            side="left", padx=2
+        )
 
         # Main container
         frm = ttk.LabelFrame(root, text="Dati Licenza", padding=20)
@@ -157,9 +153,7 @@ class LicenseAdminApp:
         )
 
         # Nome Cliente
-        ttk.Label(frm, text="Nome Cliente (riferimento):").pack(
-            anchor="w", pady=(15, 0)
-        )
+        ttk.Label(frm, text="Nome Cliente (riferimento):").pack(anchor="w", pady=(15, 0))
         self.ent_name = ttk.Entry(frm, width=60)
         self.ent_name.pack(fill="x", pady=5)
 
@@ -187,13 +181,13 @@ class LicenseAdminApp:
             command=lambda: self.set_expiry_days(180),
         ).pack(side="left", padx=2)
 
-        ttk.Button(
-            date_frame, text="3 Mesi", width=8, command=lambda: self.set_expiry_days(90)
-        ).pack(side="left", padx=2)
+        ttk.Button(date_frame, text="3 Mesi", width=8, command=lambda: self.set_expiry_days(90)).pack(
+            side="left", padx=2
+        )
 
-        ttk.Button(
-            date_frame, text="1 Mese", width=8, command=lambda: self.set_expiry_days(30)
-        ).pack(side="left", padx=2)
+        ttk.Button(date_frame, text="1 Mese", width=8, command=lambda: self.set_expiry_days(30)).pack(
+            side="left", padx=2
+        )
 
         # Default: 1 mese
         self.set_expiry_days(30)
@@ -243,15 +237,11 @@ class LicenseAdminApp:
 
     def add_client(self):
         """Aggiunge un nuovo cliente."""
-        name = simpledialog.askstring(
-            "Nuovo Cliente", "Nome cliente:", parent=self.root
-        )
+        name = simpledialog.askstring("Nuovo Cliente", "Nome cliente:", parent=self.root)
         if not name:
             return
 
-        hw_id = simpledialog.askstring(
-            "Nuovo Cliente", f"Hardware ID per '{name}':", parent=self.root
-        )
+        hw_id = simpledialog.askstring("Nuovo Cliente", f"Hardware ID per '{name}':", parent=self.root)
         if not hw_id:
             return
 
@@ -305,9 +295,7 @@ class LicenseAdminApp:
             messagebox.showwarning("Attenzione", "Seleziona prima un cliente!")
             return
 
-        if messagebox.askyesno(
-            "Conferma", f"Eliminare il cliente '{name}'?", parent=self.root
-        ):
+        if messagebox.askyesno("Conferma", f"Eliminare il cliente '{name}'?", parent=self.root):
             del self.clients[name]
             save_clients(self.clients)
             self.refresh_clients_combo()
@@ -318,11 +306,9 @@ class LicenseAdminApp:
 
     def paste_disk(self):
         """Incolla dagli appunti."""
-        try:
+        with contextlib.suppress(Exception):
             self.ent_disk.delete(0, tk.END)
             self.ent_disk.insert(0, self.root.clipboard_get().strip())
-        except Exception:
-            pass
 
     def set_expiry_days(self, days):
         """Imposta la data di scadenza."""
@@ -335,48 +321,49 @@ class LicenseAdminApp:
         try:
             # Path del repository locale (da clonare se non esiste)
             repo_name = "gianky00/intelleo-licenses"
-            temp_repo_dir = os.path.join(current_dir, "_intelleo-licenses")
+            temp_repo_dir = current_dir / "_intelleo-licenses"
 
             # Clone o pull del repository
-            if os.path.exists(temp_repo_dir):
+            if temp_repo_dir.exists():
                 # Pull latest
                 subprocess.run(
-                    ["git", "-C", temp_repo_dir, "pull", "--rebase"],
+                    ["git", "-C", str(temp_repo_dir), "pull", "--rebase"],
                     check=True,
                     capture_output=True,
                 )
             else:
                 # Clone
                 subprocess.run(
-                    ["gh", "repo", "clone", repo_name, temp_repo_dir],
+                    ["gh", "repo", "clone", repo_name, str(temp_repo_dir)],
                     check=True,
                     capture_output=True,
                 )
 
             # Cartella destinazione nel repo
-            license_dir = os.path.join(temp_repo_dir, "licenses", hw_id)
-            os.makedirs(license_dir, exist_ok=True)
+            license_dir = temp_repo_dir / "licenses" / hw_id
+            license_dir.mkdir(parents=True, exist_ok=True)
 
             # Copia i file
-            shutil.copy2(os.path.join(target_dir, "config.dat"), license_dir)
-            shutil.copy2(os.path.join(target_dir, "manifest.json"), license_dir)
+            target_path = Path(target_dir)
+            shutil.copy2(target_path / "config.dat", license_dir)
+            shutil.copy2(target_path / "manifest.json", license_dir)
 
             # Git add, commit, push
             subprocess.run(
-                ["git", "-C", temp_repo_dir, "add", "."],
+                ["git", "-C", str(temp_repo_dir), "add", "."],
                 check=True,
                 capture_output=True,
             )
 
             commit_msg = f"Update license for {hw_id}"
             subprocess.run(
-                ["git", "-C", temp_repo_dir, "commit", "-m", commit_msg],
+                ["git", "-C", str(temp_repo_dir), "commit", "-m", commit_msg],
                 check=True,
                 capture_output=True,
             )
 
             subprocess.run(
-                ["git", "-C", temp_repo_dir, "push"],
+                ["git", "-C", str(temp_repo_dir), "push"],
                 check=True,
                 capture_output=True,
             )
@@ -390,7 +377,7 @@ class LicenseAdminApp:
                 return True, "File già aggiornati (nessuna modifica)"
             return False, f"Errore git: {error_msg}"
         except Exception as e:
-            return False, f"Errore: {str(e)}"
+            return False, f"Errore: {e!s}"
 
     def generate(self):
         """Genera i file di licenza."""
@@ -419,21 +406,19 @@ class LicenseAdminApp:
 
         # Pulisci nome per cartella
         folder_name = (
-            "".join(c for c in client_name if c.isalnum() or c in (" ", "_", "-"))
-            .strip()
-            .replace(" ", "_")
+            "".join(c for c in client_name if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
         )
 
         # Paths
-        base_output = os.path.dirname(os.path.abspath(__file__))
-        client_dir = os.path.join(base_output, folder_name)
-        target_dir = os.path.join(client_dir, "Licenza")
+        base_output = Path(__file__).parent.resolve()
+        client_dir = base_output / folder_name
+        target_dir = client_dir / "Licenza"
 
         try:
             # Crea/pulisci cartella
-            if os.path.exists(target_dir):
+            if target_dir.exists():
                 shutil.rmtree(target_dir)
-            os.makedirs(target_dir)
+            target_dir.mkdir(parents=True, exist_ok=True)
 
             # Formatta data
             try:
@@ -459,9 +444,8 @@ class LicenseAdminApp:
             encrypted_data = cipher.encrypt(json_payload)
 
             # Scrivi config.dat
-            config_path = os.path.join(target_dir, "config.dat")
-            with open(config_path, "wb") as f:
-                f.write(encrypted_data)
+            config_path = target_dir / "config.dat"
+            config_path.write_bytes(encrypted_data)
 
             # Genera manifest
             manifest = {
@@ -470,15 +454,11 @@ class LicenseAdminApp:
                 "client": client_name,
             }
 
-            manifest_path = os.path.join(target_dir, "manifest.json")
-            with open(manifest_path, "w") as f:
-                json.dump(manifest, f, indent=4)
+            manifest_path = target_dir / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest, indent=4), encoding="utf-8")
 
             # Salva/aggiorna cliente nella memoria
-            if (
-                client_name not in self.clients
-                or self.clients.get(client_name) != hw_id
-            ):
+            if client_name not in self.clients or self.clients.get(client_name) != hw_id:
                 self.clients[client_name] = hw_id
                 save_clients(self.clients)
                 self.refresh_clients_combo()
@@ -487,10 +467,7 @@ class LicenseAdminApp:
             github_status = ""
             if self.upload_var.get():
                 success, github_msg = self.upload_to_github(hw_id, target_dir)
-                if success:
-                    github_status = f"\n\n✅ GitHub: {github_msg}"
-                else:
-                    github_status = f"\n\n⚠️ GitHub: {github_msg}"
+                github_status = f"\n\n✅ GitHub: {github_msg}" if success else f"\n\n⚠️ GitHub: {github_msg}"
 
             # Messaggio successo
             msg = (
@@ -505,11 +482,13 @@ class LicenseAdminApp:
             messagebox.showinfo("Successo", msg)
 
             # Apri cartella (Windows)
+            import os
+
             if os.name == "nt":
-                os.startfile(target_dir)
+                os.startfile(target_dir)  # noqa: S606
 
         except Exception as e:
-            messagebox.showerror("Errore", f"Generazione fallita:\n{str(e)}")
+            messagebox.showerror("Errore", f"Generazione fallita:\n{e!s}")
 
 
 def main():

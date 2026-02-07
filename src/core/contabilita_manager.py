@@ -3,10 +3,10 @@ Bot TS - Contabilita Manager
 Gestione dell'importazione e archiviazione dati della Contabilità Strumentale.
 """
 
+from collections.abc import Callable
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
 
 from src.core.config_manager import CONFIG_DIR
 from src.core.contabilita_queries import ContabilitaQueries
@@ -29,7 +29,7 @@ class ContabilitaManager:
         return ExcelImporter.scan_scarico_ore_rows(file_path)
 
     @classmethod
-    def scan_workload(cls, file_path: str, giornaliere_path: str) -> Tuple[int, int]:
+    def scan_workload(cls, file_path: str, giornaliere_path: str) -> tuple[int, int]:
         """Scansiona rapidamente il carico di lavoro (fogli e file) per stima ETA."""
         return ExcelImporter.scan_workload(file_path, giornaliere_path)
 
@@ -42,8 +42,8 @@ class ContabilitaManager:
     def import_data_from_excel(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, int, int]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, int, int]:
         """Importa i dati dal file Excel specificato (Tabella Dati)."""
         (
             success,
@@ -63,8 +63,8 @@ class ContabilitaManager:
     def import_giornaliere(
         cls,
         root_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, int, int]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, int, int]:
         """
         Scansiona e importa i dati dalle cartelle annuali delle giornaliere.
 
@@ -83,14 +83,13 @@ class ContabilitaManager:
         try:
             # 1. Lookup Map Preparation
             lookup_map = {}
-            with suppress(Exception):
-                with db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
-                    lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
-                    cursor = conn.cursor()
-                    cursor.execute(lookup_query)
-                    rows = cursor.fetchall()
-                    # Creazione dizionario n_prev -> odc, ignorando duplicati (usa l'ultimo trovato)
-                    lookup_map = {row[0]: row[1] for row in rows if row[0]}
+            with suppress(Exception), db_manager.get_connection(cls.DB_PATH, read_only=True) as conn:
+                lookup_query = "SELECT n_prev, odc FROM contabilita WHERE odc IS NOT NULL AND odc != ''"
+                cursor = conn.cursor()
+                cursor.execute(lookup_query)
+                rows = cursor.fetchall()
+                # Creazione dizionario n_prev -> odc, ignorando duplicati (usa l'ultimo trovato)
+                lookup_map = {row[0]: row[1] for row in rows if row[0]}
 
             # 2. Import Giornaliere data
             (
@@ -98,9 +97,7 @@ class ContabilitaManager:
                 message,
                 all_new_rows,
                 years_encountered,
-            ) = ExcelImporter.import_giornaliere(
-                root_path, lookup_map, progress_callback
-            )
+            ) = ExcelImporter.import_giornaliere(root_path, lookup_map, progress_callback)
             if not success:
                 return False, message, 0, 0
 
@@ -112,9 +109,7 @@ class ContabilitaManager:
             if not years_encountered and not all_new_rows:
                 return (
                     True,
-                    "Nessuna nuova giornaliera trovata (check anno >= "
-                    + str(current_year)
-                    + ").",
+                    "Nessuna nuova giornaliera trovata (check anno >= " + str(current_year) + ").",
                     0,
                     0,
                 )
@@ -132,8 +127,8 @@ class ContabilitaManager:
     def import_attivita_programmate(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, int, int]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, int, int]:
         """Importa il file Attività Programmate (veloce, senza colori)."""
         success, message, imported_rows = ExcelImporter.import_attivita_programmate(
             file_path, progress_callback
@@ -141,35 +136,29 @@ class ContabilitaManager:
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_attivita_programmate(
-            cls.DB_PATH, imported_rows
-        )
+        total_added, total_removed = DataSynchronizer.sync_attivita_programmate(cls.DB_PATH, imported_rows)
         return True, message, total_added, total_removed
 
     @classmethod
     def import_scarico_ore(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, int, int]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, int, int]:
         """Importa il file Scarico Ore Cantiere (OpenPyXL per colori + Diff Logic)."""
-        success, message, imported_rows = ExcelImporter.import_scarico_ore(
-            file_path, progress_callback
-        )
+        success, message, imported_rows = ExcelImporter.import_scarico_ore(file_path, progress_callback)
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_scarico_ore(
-            cls.DB_PATH, imported_rows
-        )
+        total_added, total_removed = DataSynchronizer.sync_scarico_ore(cls.DB_PATH, imported_rows)
         return True, message, total_added, total_removed
 
     @classmethod
     def import_certificati_campione(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, int, int]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, int, int]:
         """Importa il file Certificati Campione."""
         success, message, imported_rows = ExcelImporter.import_certificati_campione(
             file_path, progress_callback
@@ -177,43 +166,41 @@ class ContabilitaManager:
         if not success:
             return False, message, 0, 0
 
-        total_added, total_removed = DataSynchronizer.sync_certificati_campione(
-            cls.DB_PATH, imported_rows
-        )
+        total_added, total_removed = DataSynchronizer.sync_certificati_campione(cls.DB_PATH, imported_rows)
         return True, message, total_added, total_removed
 
     @classmethod
-    def get_available_years(cls) -> List[int]:
+    def get_available_years(cls) -> list[int]:
         """Restituisce la lista degli anni presenti nel DB (unione di Dati e Giornaliere)."""
         return ContabilitaQueries.get_available_years(cls.DB_PATH)
 
     @classmethod
-    def get_data_by_year(cls, year: int) -> List[Tuple]:
+    def get_data_by_year(cls, year: int) -> list[tuple]:
         """Restituisce i dati tabella Dati per un anno specifico."""
         return ContabilitaQueries.get_data_by_year(cls.DB_PATH, year)
 
     @classmethod
-    def get_giornaliere_by_year(cls, year: int) -> List[Tuple]:
+    def get_giornaliere_by_year(cls, year: int) -> list[tuple]:
         """Restituisce i dati Giornaliere per un anno specifico."""
         return ContabilitaQueries.get_giornaliere_by_year(cls.DB_PATH, year)
 
     @classmethod
-    def get_attivita_programmate_data(cls) -> List[Tuple]:
+    def get_attivita_programmate_data(cls) -> list[tuple]:
         """Restituisce i dati Attività Programmate (inclusi stili)."""
         return ContabilitaQueries.get_attivita_programmate_data(cls.DB_PATH)
 
     @classmethod
-    def get_certificati_campione_data(cls) -> List[Tuple]:
+    def get_certificati_campione_data(cls) -> list[tuple]:
         """Restituisce i dati Certificati Campione."""
         return ContabilitaQueries.get_certificati_campione_data(cls.DB_PATH)
 
     @classmethod
-    def get_scarico_ore_data(cls) -> List[Tuple]:
+    def get_scarico_ore_data(cls) -> list[tuple]:
         """Restituisce tutti i dati della tabella scarico_ore inclusi gli stili."""
         return ContabilitaQueries.get_scarico_ore_data(cls.DB_PATH)
 
     @classmethod
-    def search_oda(cls, query: str) -> List[Dict]:
+    def search_oda(cls, query: str) -> list[dict]:
         """
         Cerca OdA per codice, descrizione o ODC.
         Returns:
@@ -222,9 +209,7 @@ class ContabilitaManager:
         return ContabilitaSearch.search_oda(cls.DB_PATH, query)
 
     @classmethod
-    def search_extended(
-        cls, query: str, year: int | None = None, limit: int = 100
-    ) -> Dict[str, List[Dict]]:
+    def search_extended(cls, query: str, year: int | None = None, limit: int = 100) -> dict[str, list[dict]]:
         """
         Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati).
         Returns: Dict con liste di risultati per categoria.

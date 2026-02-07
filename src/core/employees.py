@@ -2,7 +2,7 @@ import csv
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.database import db_manager
 
@@ -19,7 +19,7 @@ class EmployeeManager:
     def __init__(self):
         self.db = db_manager
 
-    def get_all_employees(self, active_only: bool = True) -> List[Dict[str, Any]]:
+    def get_all_employees(self, active_only: bool = True) -> list[dict[str, Any]]:
         """Restituisce tutti i dipendenti dal database come lista di dizionari."""
         # Selezioniamo colonne esplicite per sicurezza
         query = "SELECT id_risorsa, cognome, nome, badge, codice_fiscale, data_assunzione, monitoraggio_attivo FROM dipendenti"
@@ -62,13 +62,13 @@ class EmployeeManager:
             logger.error(f"Errore recupero dipendenti: {e}")
             return []
 
-    def get_employee_by_badge(self, badge: str) -> Optional[sqlite3.Row]:
+    def get_employee_by_badge(self, badge: str) -> sqlite3.Row | None:
         """Cerca un dipendente per numero di badge."""
         query = "SELECT * FROM dipendenti WHERE badge = ?"
         results = self.db.execute_query(self.db.DB_DIPENDENTI, query, (badge,))
         return results[0] if results else None
 
-    def add_employee(self, employee_data: Dict[str, Any]) -> bool:
+    def add_employee(self, employee_data: dict[str, Any]) -> bool:
         """
         Aggiunge un nuovo dipendente.
         employee_data deve contenere: nome, cognome, badge, ecc.
@@ -80,9 +80,7 @@ class EmployeeManager:
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         params = (
-            employee_data.get(
-                "id_risorsa"
-            ),  # Può essere None (autoincrement) o specifico
+            employee_data.get("id_risorsa"),  # Può essere None (autoincrement) o specifico
             employee_data["cognome"].upper(),
             employee_data["nome"].upper(),
             employee_data.get("data_nascita"),
@@ -100,7 +98,7 @@ class EmployeeManager:
             logger.error(f"Errore inserimento dipendente: {e}")
             return False
 
-    def update_employee(self, id_risorsa: int, data: Dict[str, Any]) -> bool:
+    def update_employee(self, id_risorsa: int, data: dict[str, Any]) -> bool:
         """Aggiorna i dati di un dipendente esistente."""
         # Costruiamo la query dinamicamente in base ai campi forniti
         fields = []
@@ -151,9 +149,7 @@ class EmployeeManager:
                 for row in reader:
                     # Mappatura CSV -> DB
                     id_val = row.get("id_risorsa") or row.get("ID")
-                    id_risorsa = (
-                        int(id_val) if id_val and str(id_val).isdigit() else None
-                    )
+                    id_risorsa = int(id_val) if id_val and str(id_val).isdigit() else None
 
                     data = {
                         "id_risorsa": id_risorsa,
@@ -188,9 +184,7 @@ class EmployeeManager:
             # (In futuro si potrebbe calcolare removed se il CSV fosse l'unica fonte di verità)
             SyncTracker.update_status("dipendenti", added_count, 0, duration)
 
-            logger.info(
-                f"Importazione completata: {count} dipendenti processati ({added_count} nuovi)."
-            )
+            logger.info(f"Importazione completata: {count} dipendenti processati ({added_count} nuovi).")
             return count
 
         except Exception as e:

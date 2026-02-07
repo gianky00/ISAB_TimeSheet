@@ -1,7 +1,6 @@
-import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 from selenium.webdriver.common.by import By
@@ -16,9 +15,7 @@ from src.core.sync_tracker import SyncTracker
 class SafeWorkPDLSearchBot(SafeworkBaseBot):
     """Bot per la ricerca massiva ed esportazione Excel dei PDL da SafeWork."""
 
-    def __init__(
-        self, username, password, headless=False, timeout=30, download_path=""
-    ):
+    def __init__(self, username, password, headless=False, timeout=30, download_path=""):
         super().__init__(username, password, headless, timeout, download_path)
         self.sites = ["IGCC", "ISAB Nord", "ISAB Sud"]
 
@@ -63,19 +60,15 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             opzione_isab.click()
             self.log("✅ Sito ISAB Sud selezionato per login.")
         except Exception as e:
-            self.log(f"ℹ️ Selezione sito non necessaria o fallita (proseguo): {e}")
+            self.log(f"i Selezione sito non necessaria o fallita (proseguo): {e}")
 
         try:
             self.log(f"🔐 Inserimento credenziali per utente: {self.username}")
-            u_field = self.wait.until(
-                EC.visibility_of_element_located((By.ID, "inpUtente"))
-            )
+            u_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpUtente")))
             u_field.clear()
             u_field.send_keys(self.username)
 
-            p_field = self.wait.until(
-                EC.visibility_of_element_located((By.ID, "inpPassword"))
-            )
+            p_field = self.wait.until(EC.visibility_of_element_located((By.ID, "inpPassword")))
             p_field.clear()
             p_field.send_keys(self.password)
 
@@ -96,7 +89,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
 
         return True
 
-    def run(self, data: List[Dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]]) -> bool:
         """Esegue la ricerca e l'esportazione dei PDL."""
         if not self.driver or not self.wait:
             self.log("❌ Driver non inizializzato correttamente.")
@@ -123,17 +116,13 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             return False
         try:
             self.log("🏠 Clic su Home Page...")
-            btn_home = self.wait.until(
-                EC.element_to_be_clickable((By.ID, "topIcon-actHomePage"))
-            )
+            btn_home = self.wait.until(EC.element_to_be_clickable((By.ID, "topIcon-actHomePage")))
             btn_home.click()
             # No sleep needed: _attendi_scomparsa_overlay() has internal wait
             self._attendi_scomparsa_overlay()
 
             self.log("🔍 Clic su Ricerca PdL (sideBar)...")
-            btn_ricerca = self.wait.until(
-                EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL"))
-            )
+            btn_ricerca = self.wait.until(EC.element_to_be_clickable((By.ID, "sideBar-actRicercaPdL")))
             btn_ricerca.click()
             # No sleep needed: _attendi_scomparsa_overlay() has internal wait
             self._attendi_scomparsa_overlay()
@@ -147,9 +136,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         if not self.wait or not self.driver:
             return
         try:
-            checkbox = self.wait.until(
-                EC.presence_of_element_located((By.ID, "fldEscludiChiusi"))
-            )
+            checkbox = self.wait.until(EC.presence_of_element_located((By.ID, "fldEscludiChiusi")))
             if checkbox.is_selected() != exclude_closed:
                 self.log(f"🖱️ Impostazione checkbox 'Escludi chiusi' a {exclude_closed}")
                 self.driver.execute_script("arguments[0].click();", checkbox)
@@ -162,7 +149,8 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
         sites = self.sites if site_selection == "Seleziona tutto" else [site_selection]
         for site in sites:
             if self._select_site_and_search(site):
-                if excel_file := self._export_excel(site):
+                excel_file = self._export_excel(site)
+                if excel_file:
                     self._import_to_db(excel_file)
                     self._cleanup_temp_file(excel_file)
                 else:
@@ -173,8 +161,9 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
     def _cleanup_temp_file(self, file_path: str):
         """Rimuove file temporaneo."""
         try:
-            Path(file_path).unlink()
-            self.log(f"🗑️ File temporaneo rimosso: {os.path.basename(file_path)}")
+            p = Path(file_path)
+            p.unlink()
+            self.log(f"🗑️ File temporaneo rimosso: {p.name}")
         except Exception as e:
             self.log(f"⚠️ Impossibile rimuovere il file {file_path}: {e}")
 
@@ -195,9 +184,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             site_dropdown.click()
             # Wait for dropdown options to appear
             option = self.wait.until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, f"//li//span[text()='{site_name}']")
-                )
+                EC.element_to_be_clickable((By.XPATH, f"//li//span[text()='{site_name}']"))
             )
             option.click()
             # No sleep needed: next wait guarantees button availability
@@ -209,7 +196,7 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.log(f"❌ Errore selezione/ricerca: {e}")
             return False
 
-    def _export_excel(self, site_name: str) -> Optional[str]:
+    def _export_excel(self, site_name: str) -> str | None:
         """Esporta e attende download."""
         if not self.wait:
             return None
@@ -217,16 +204,11 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             self.log(f"📥 Esportazione Excel per {site_name}...")
             self.log(f"🔎 DEBUG: Attendo file in: '{self.download_path}'")
             # Use helper for efficient polling
-            from pathlib import Path
-
             from src.bots.base.wait_helpers import poll_for_new_file
 
             # 1. Snapshot dei file PRE-CLICK (per rilevare il delta)
-            # Questo approccio è immune a problemi di timestamp del server
             download_dir = Path(self.download_path)
-            files_before = {
-                str(f.resolve()) for f in download_dir.glob("*") if f.is_file()
-            }
+            files_before = {str(f.resolve()) for f in download_dir.glob("*") if f.is_file()}
 
             self.wait.until(EC.element_to_be_clickable((By.ID, "btnEsporta"))).click()
 
@@ -284,32 +266,14 @@ class SafeWorkPDLSearchBot(SafeworkBaseBot):
             # --- Calcolo Diff ---
             # 1. Ottieni ID esistenti (n_pdl)
             try:
-                with db_manager.get_connection(
-                    db_manager.DB_PDL, read_only=True
-                ) as conn:
-                    existing_pdls = {
-                        row[0]
-                        for row in conn.execute("SELECT n_pdl FROM pdl").fetchall()
-                    }
+                with db_manager.get_connection(db_manager.DB_PDL, read_only=True) as conn:
+                    existing_pdls = {row[0] for row in conn.execute("SELECT n_pdl FROM pdl").fetchall()}
             except Exception:
                 existing_pdls = set()
 
             # 2. Identifica nuovi ID
             current_pdls = set(df["n_pdl"].astype(str))
-            # "Added" qui conta i nuovi PDL (mai visti prima)
-            # Se vogliamo contare anche gli aggiornamenti, dovremmo confrontare hash o last_modified
-            # Per ora contiamo come "Added" i NUOVI N° PDL + Updates.
-            # Ma il requisito "+1 -5" di solito separa Insert da Delete.
-            # Per PDL, siccome facciamo "Ricerca", non possiamo sapere cosa è stato cancellato globalmente.
-            # Assumiamo Removed = 0 (Safe)
-            # Assumiamo Added = Nuovi PDL.
-
             new_pdls_count = len(current_pdls - existing_pdls)
-            # Consideriamo "Added" nel senso di "Processati/Aggiornati" per coerenza con DataEase?
-            # DataEase fa: Added = Inserted, Removed = Deleted.
-            # Qui facciamo un Merge. Quindi direi:
-            # Added = Nuovi record.
-            # I record esistenti vengono "Aggiornati", ma non contati come "Aggiunti".
 
             added_count = new_pdls_count
             removed_count = 0  # Non cancelliamo nulla in questa logica

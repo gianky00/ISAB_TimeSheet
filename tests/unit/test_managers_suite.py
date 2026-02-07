@@ -34,9 +34,7 @@ def mock_config_stats():
 class TestAuditManager:
     def test_log_action(self, temp_audit_db):
         manager = temp_audit_db
-        manager.log_action(
-            "Test Action", category="test", entity="user", params={"p": 1}
-        )
+        manager.log_action("Test Action", category="test", entity="user", params={"p": 1})
 
         # Verify data
         logs = manager.get_logs(limit=1)
@@ -69,7 +67,7 @@ class TestStatsManager:
         mock_cfg.set_config_value.assert_called()
 
     def test_increment_error(self, mock_config_stats):
-        manager, mock_cfg = mock_config_stats
+        manager, _mock_cfg = mock_config_stats
         manager.increment_error("bot_1")
 
         stats = manager.get_all_stats()

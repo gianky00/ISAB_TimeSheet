@@ -57,7 +57,7 @@ class TestConfigManagerHardened:
         assert setup_config.exists()
 
         # Verifica contenuto
-        with open(setup_config, "r") as f:
+        with open(setup_config) as f:
             saved = json.load(f)
             assert saved["test_key"] == "test_val"
 
@@ -71,9 +71,7 @@ class TestConfigManagerHardened:
         setup_config.write_text(json.dumps(old_data))
 
         # Mock password_manager per decrittare la vecchia pass
-        with patch(
-            "src.utils.security.password_manager.decrypt", return_value="plain_pass"
-        ):
+        with patch("src.utils.security.password_manager.decrypt", return_value="plain_pass"):
             config = load_config()
 
         assert "isab_username" not in config
@@ -113,12 +111,8 @@ class TestConfigManagerHardened:
 
     def test_credential_storage_priority(self, mocker):
         """Verifica che il keyring abbia priorità sul file."""
-        mocker.patch(
-            "src.core.secrets_manager.SecretsManager.is_available", return_value=True
-        )
-        m_store = mocker.patch(
-            "src.core.secrets_manager.SecretsManager.store_credential"
-        )
+        mocker.patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True)
+        m_store = mocker.patch("src.core.secrets_manager.SecretsManager.store_credential")
 
         config = load_config()
         config["accounts"] = [{"username": "boss", "password": "top_secret"}]
@@ -128,6 +122,6 @@ class TestConfigManagerHardened:
         # Deve aver salvato nel keyring e rimosso la pass dal file
         m_store.assert_called_with("isab_portal", "boss", "top_secret")
 
-        with open(config_manager.CONFIG_FILE, "r") as f:
+        with open(config_manager.CONFIG_FILE) as f:
             data = json.load(f)
             assert "password" not in data["accounts"][0]

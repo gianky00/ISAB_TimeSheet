@@ -1,6 +1,7 @@
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import ClassVar
 
 import pandas as pd
 
@@ -10,7 +11,7 @@ from src.core.importers.base import BaseImporter
 class StoricoOdaImporter(BaseImporter):
     """Importer per lo Storico OdA."""
 
-    STORICO_ODA_MAPPING = {
+    STORICO_ODA_MAPPING: ClassVar[dict[str, str]] = {
         "Org. Acq.": "org_acq",
         "Data OdA": "data_oda",
         "OdA": "oda",
@@ -45,14 +46,14 @@ class StoricoOdaImporter(BaseImporter):
         "Testo breve": "testo_breve",
     }
 
-    STORICO_ODA_COLS = list(STORICO_ODA_MAPPING.values())
+    STORICO_ODA_COLS: ClassVar[list[str]] = list(STORICO_ODA_MAPPING.values())
 
     @classmethod
     def import_storico_oda(
         cls,
         file_path: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> Tuple[bool, str, List[Tuple]]:
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[bool, str, list[tuple]]:
         """Importa il file Storico OdA."""
         path = Path(file_path)
         if not path.exists():
@@ -86,24 +87,24 @@ class StoricoOdaImporter(BaseImporter):
     @classmethod
     def _read_storico_oda_excel(cls, path: Path) -> pd.DataFrame:
         """Legge il file excel tentando diversi fogli."""
-        pd = cls._get_pd()
+        pd_obj = cls._get_pd()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                return pd.read_excel(path, sheet_name="Formato PF")
+                return pd_obj.read_excel(path, sheet_name="Formato PF")
             except ValueError:
-                return pd.read_excel(path, sheet_name=0)
+                return pd_obj.read_excel(path, sheet_name=0)
 
     @classmethod
     def _map_storico_oda_columns(cls, df: pd.DataFrame) -> dict:
         """Mappa le colonne dell'Excel a quelle del DB con precisione."""
         df.columns = df.columns.astype(str).str.strip()
 
-        rename_map = {}
-        # 1. First Pass: Exact Matches
-        for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
-            if excel_col in df.columns:
-                rename_map[excel_col] = db_col
+        rename_map = {
+            excel_col: db_col
+            for excel_col, db_col in cls.STORICO_ODA_MAPPING.items()
+            if excel_col in df.columns
+        }
 
         # 2. Second Pass: Case-insensitive fallback (Strict name)
         for excel_col, db_col in cls.STORICO_ODA_MAPPING.items():
@@ -123,14 +124,12 @@ class StoricoOdaImporter(BaseImporter):
     @classmethod
     def _clean_storico_oda_data(cls, df: pd.DataFrame):
         """Pulisce date, numeri e ID."""
-        pd = cls._get_pd()
+        pd_obj = cls._get_pd()
 
         # Date
         for date_col in ("data_oda", "data_consegna"):
             df[date_col] = (
-                pd.to_datetime(df[date_col], errors="coerce")
-                .dt.strftime("%Y-%m-%d")
-                .fillna("")
+                pd_obj.to_datetime(df[date_col], errors="coerce").dt.strftime("%Y-%m-%d").fillna("")
             )
 
         # Numeri
@@ -156,17 +155,11 @@ class StoricoOdaImporter(BaseImporter):
             "posizione_contratto",
         ]
         for str_col in id_cols:
-            df[str_col] = (
-                df[str_col]
-                .fillna(0)
-                .astype(str)
-                .str.replace(r"\\.0$", "", regex=True)
-                .str.strip()
-            )
+            df[str_col] = df[str_col].fillna(0).astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
 
         # Altre stringhe
         for col in df.columns:
-            if col not in num_cols + ["data_oda", "data_consegna"] + id_cols:
+            if col not in [*num_cols, "data_oda", "data_consegna", *id_cols]:
                 df[col] = df[col].fillna("").astype(str).str.strip()
 
     @staticmethod
@@ -175,8 +168,6 @@ class StoricoOdaImporter(BaseImporter):
 
         Always returns float to match SQLite REAL column behavior (5.0 -> '5.0').
         """
-        import pandas as pd
-
         if pd.isna(x) or str(x).strip() == "":
             return 0.0
         if isinstance(x, (int, float)):

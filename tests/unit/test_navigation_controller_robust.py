@@ -63,17 +63,15 @@ class TestNavigationControllerRobust:
         """Test gestione errore creazione pannello."""
         mock_mw._panel_initialized_0 = False
 
-        with patch.object(
-            nav_controller, "_create_dashboard", side_effect=Exception("Boom")
+        with (
+            patch.object(nav_controller, "_create_dashboard", side_effect=Exception("Boom")),
+            patch("src.gui.controllers.navigation_controller.QMessageBox.critical") as mock_box,
         ):
-            with patch(
-                "src.gui.controllers.navigation_controller.QMessageBox.critical"
-            ) as mock_box:
-                panel = nav_controller.get_panel(0)
+            panel = nav_controller.get_panel(0)
 
-                # Ritorna il placeholder originale (o quello che widget(0) ritorna)
-                assert panel == mock_mw.page_stack.widget.return_value
-                mock_box.assert_called()
+            # Ritorna il placeholder originale (o quello che widget(0) ritorna)
+            assert panel == mock_mw.page_stack.widget.return_value
+            mock_box.assert_called()
 
     def test_navigate_to_same_page(self, nav_controller, mock_mw):
         """Test navigazione stessa pagina."""
@@ -103,9 +101,7 @@ class TestNavigationControllerRobust:
         mock_mw._current_page_index = 7  # Settings
         mock_mw.settings_panel = MagicMock()
         mock_mw.settings_panel.has_unsaved_changes.return_value = True
-        mock_mw.settings_panel.prompt_save_if_needed.return_value = (
-            True  # Save/Discard -> True
-        )
+        mock_mw.settings_panel.prompt_save_if_needed.return_value = True  # Save/Discard -> True
 
         # Mock get_panel per target
         with patch.object(nav_controller, "get_panel"):
@@ -120,9 +116,7 @@ class TestNavigationControllerRobust:
 
         # Mock get_panel per automazioni (idx 1)
         with patch.object(nav_controller, "get_panel"):
-            nav_controller.navigate_to_panel(
-                "dettagli_oda"
-            )  # Mapped to (0, 0) -> Auto index 1, sub 0
+            nav_controller.navigate_to_panel("dettagli_oda")  # Mapped to (0, 0) -> Auto index 1, sub 0
 
             assert mock_mw._current_page_index == 1
             mock_mw.automazioni_widget.set_active_tab.assert_called_with(0, 0)

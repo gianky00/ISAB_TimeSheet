@@ -5,25 +5,25 @@ Gestisce le funzionalità di ricerca per i dati della Contabilità Strumentale.
 
 import logging
 import sqlite3
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 from src.core.database import db_manager
+
+logger = logging.getLogger(__name__)
 
 
 class ContabilitaSearch:
     """Gestore per le funzionalità di ricerca nel database della Contabilità Strumentale."""
 
     @classmethod
-    def search_oda(cls, db_path: Path, query: str) -> List[Dict]:
+    def search_oda(cls, db_path: Path, query: str) -> list[dict]:
         """
         Cerca OdA per codice, descrizione o ODC.
         Returns:
             List[Dict]: Lista di risultati [{'codice_oda': '...', 'descrizione': '...'}, ...]
         """
         if not db_path.exists():
-            logging.debug("[DEBUG] DB Contabilità non trovato")
+            logger.debug("[DEBUG] DB Contabilità non trovato")
             return []
 
         query = query.strip().lower()
@@ -64,32 +64,32 @@ class ContabilitaSearch:
                     cursor.execute(sql_like, (like_query, like_query, like_query))
                     rows = cursor.fetchall()
 
-                logging.debug(f"[DEBUG] Search '{query}' found {len(rows)} matches")
+                logger.debug(f"[DEBUG] Search '{query}' found {len(rows)} matches")
 
-                for row in rows:
-                    results.append(
-                        {
-                            "type": "ODA",
-                            "codice_oda": row[0],
-                            "descrizione": row[1] or "Nessuna descrizione",
-                            "odc": row[2],
-                        }
-                    )
+                results.extend(
+                    {
+                        "type": "ODA",
+                        "codice_oda": row[0],
+                        "descrizione": row[1] or "Nessuna descrizione",
+                        "odc": row[2],
+                    }
+                    for row in rows
+                )
         except Exception as e:
-            logging.error(f"Search Error: {e}")
+            logger.error(f"Search Error: {e}")
 
         return results
 
     @classmethod
     def search_extended(
         cls, db_path: Path, query: str, year: int | None = None, limit: int = 100
-    ) -> Dict[str, List[Dict]]:
+    ) -> dict[str, list[dict]]:
         """Ricerca estesa in tutti i moduli (Giornaliere, Scarico Ore, Certificati)."""
         if not db_path.exists() or len(query.strip()) < 2:
             return {}
 
         query = query.strip().lower()
-        out: Dict[str, List[Dict]] = {
+        out: dict[str, list[dict]] = {
             "GIORNALIERE": [],
             "CANTIERE": [],
             "CERTIFICATI": [],
@@ -107,7 +107,7 @@ class ContabilitaSearch:
                 out["CERTIFICATI"] = cls._search_certificati(cursor, query, limit)
 
         except Exception as e:
-            logging.error(f"Extended Search Error: {e}")
+            logger.error(f"Extended Search Error: {e}")
 
         return out
 
@@ -117,13 +117,18 @@ class ContabilitaSearch:
         try:
             if not val:
                 return ""
-            dt = datetime.strptime(str(val).split()[0], "%Y-%m-%d")
-            return dt.strftime("%d/%m/%Y")
+            # dt = datetime.strptime(str(val).split()[0], "%Y-%m-%d")
+            # return dt.strftime("%d/%m/%Y")
+            # Simplified: assuming standard date format
+            parts = str(val).split()[0].split("-")
+            if len(parts) == 3:
+                return f"{parts[2]}/{parts[1]}/{parts[0]}"
+            return str(val)
         except Exception:
             return str(val)
 
     @classmethod
-    def _search_giornaliere(cls, cursor, query, year, limit) -> List[Dict]:
+    def _search_giornaliere(cls, cursor, query, year, limit) -> list[dict]:
         """Esegue la ricerca specifica nelle timbrature giornaliere."""
         like = f"%{query}%"
         params = [like, like]
@@ -138,12 +143,11 @@ class ContabilitaSearch:
         params.append(limit)
         cursor.execute(sql, params)
         return [
-            {"data": cls._fmt_date(r[0]), "personale": r[1], "descrizione": r[2]}
-            for r in cursor.fetchall()
+            {"data": cls._fmt_date(r[0]), "personale": r[1], "descrizione": r[2]} for r in cursor.fetchall()
         ]
 
     @classmethod
-    def _search_scarico_ore(cls, cursor, query, year, limit) -> List[Dict]:
+    def _search_scarico_ore(cls, cursor, query, year, limit) -> list[dict]:
         """Esegue la ricerca specifica nello scarico ore (cantiere)."""
         like = f"%{query}%"
         params = [like, like, like]
@@ -169,13 +173,10 @@ class ContabilitaSearch:
         ]
 
     @classmethod
-    def _search_certificati(cls, cursor, query, limit) -> List[Dict]:
+    def _search_certificati(cls, cursor, query, limit) -> list[dict]:
         """Esegue la ricerca specifica nei certificati campione."""
         like = f"%{query}%"
         sql = """SELECT modello, costruttore, matricola FROM certificati_campione
                  WHERE lower(matricola) LIKE ? OR lower(modello) LIKE ? OR lower(costruttore) LIKE ? LIMIT ?"""
         cursor.execute(sql, [like, like, like, limit])
-        return [
-            {"modello": r[0], "costruttore": r[1], "matricola": r[2]}
-            for r in cursor.fetchall()
-        ]
+        return [{"modello": r[0], "costruttore": r[1], "matricola": r[2]} for r in cursor.fetchall()]

@@ -3,7 +3,7 @@ SyncroJob - Dettagli OdA Bot
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from src.bots.base import BaseBot
 from src.bots.portale_fornitori.dettagli_oda.pages.dettagli_oda_page import (
@@ -53,7 +53,7 @@ class DettagliOdABot(BaseBot):
         self.data_a = data_a
         self.fornitore = fornitore
 
-    def validate_data(self, data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+    def validate_data(self, data: list[dict[str, Any]]) -> tuple[bool, str]:
         """Validazione specifica per Dettagli OdA."""
         # Non chiamiamo super().validate_data(data) perché bloccherebbe se data è vuoto.
         # Verifichiamo manualmente le credenziali e il fornitore.
@@ -66,25 +66,20 @@ class DettagliOdABot(BaseBot):
         # Il bot può partire anche se data è vuoto (per la lista generale)
         return True, ""
 
-    def run(self, data: List[Dict[str, Any]]) -> bool:
+    def run(self, data: list[dict[str, Any]]) -> bool:
         """Esegue lo scarico dei dettagli per ogni Ordine di Acquisto fornito."""
         rows = self._prepare_rows(data)
         self.log(f"🚀 Avvio scarico dettagli per {len(rows)} OdA...")
 
         if not self.driver:
             return False
-        assert self.driver
 
         page = DettagliOdAPage(self.driver, self.log)
         OdaManager.init_db()
 
         # Chrome downloads directly to download_path (if configured)
         # Source and dest are the same folder - we just rename the downloaded file
-        source_dir = (
-            Path(self.download_path)
-            if self.download_path
-            else Path.home() / "Downloads"
-        )
+        source_dir = Path(self.download_path) if self.download_path else Path.home() / "Downloads"
         dest_dir = source_dir
 
         success = 0
@@ -95,7 +90,7 @@ class DettagliOdABot(BaseBot):
         self.log("✨ Procedura conclusa.")
         return success == len(rows)
 
-    def _prepare_rows(self, data: Any) -> List[Dict[str, Any]]:
+    def _prepare_rows(self, data: Any) -> list[dict[str, Any]]:
         """Prepara la lista di righe da processare."""
         if isinstance(data, dict):
             self.data_da = data.get("data_da", self.data_da)
@@ -130,9 +125,7 @@ class DettagliOdABot(BaseBot):
             self.log("❌ Fornitore non selezionabile.")
             return False
 
-        downloaded_path = page.process_oda(
-            oda, contract, self.data_da, self.data_a, source_dir, dest_dir
-        )
+        downloaded_path = page.process_oda(oda, contract, self.data_da, self.data_a, source_dir, dest_dir)
 
         if downloaded_path:
             # Se è un ODA Generico (senza numero OdA), importiamo nel DB

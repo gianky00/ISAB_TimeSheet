@@ -21,13 +21,11 @@ def test_validate_real_anagrafica():
 
         validated_df = validate_dipendenti(df)
 
-        console.print(
-            f"[green]✅ Validazione completata con successo per {len(validated_df)} righe.[/green]"
-        )
+        console.print(f"[green]✅ Validazione completata con successo per {len(validated_df)} righe.[/green]")
         assert not validated_df.empty
 
     except Exception as e:
-        console.print(f"[red]❌ Errore durante la validazione:[/red] {str(e)}")
+        console.print(f"[red]❌ Errore durante la validazione:[/red] {e!s}")
         pytest.fail(f"Validazione fallita: {e}")
 
 

@@ -3,24 +3,19 @@ Bot TS - Version Bumper
 Incrementa la versione dell'applicazione.
 """
 
+import contextlib
 import io
-import os
 import re
 import sys
+from pathlib import Path
 
 # Fix encoding for Windows console to support emoji
 if sys.platform == "win32":
-    try:
+    with contextlib.suppress(Exception):
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout = io.TextIOWrapper(
-                sys.stdout.buffer, encoding="utf-8", errors="replace"
-            )
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
         if hasattr(sys.stderr, "buffer"):
-            sys.stderr = io.TextIOWrapper(
-                sys.stderr.buffer, encoding="utf-8", errors="replace"
-            )
-    except Exception:
-        pass  # Fallback silenzioso se il wrapping fallisce
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 def bump_version(part="patch"):
@@ -31,15 +26,14 @@ def bump_version(part="patch"):
         part: 'major', 'minor', o 'patch'
     """
     # admin/bump_version.py -> admin -> root
-    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    version_file = os.path.join(root_dir, "src", "core", "version.py")
+    root_dir = Path(__file__).parent.parent.resolve()
+    version_file = root_dir / "src" / "core" / "version.py"
 
-    if not os.path.exists(version_file):
+    if not version_file.exists():
         print(f"Errore: File versione non trovato: {version_file}")
         sys.exit(1)
 
-    with open(version_file, "r", encoding="utf-8") as f:
-        content = f.read()
+    content = version_file.read_text(encoding="utf-8")
 
     # Estrai versione corrente
     match = re.search(r'__version__\s*=\s*"(\d+)\.(\d+)\.(\d+)"', content)
@@ -64,18 +58,14 @@ def bump_version(part="patch"):
     new_version = f"{major}.{minor}.{patch}"
 
     # Sostituisci nel contenuto di version.py
-    new_content = re.sub(
-        r'__version__\s*=\s*".*"', f'__version__ = "{new_version}"', content
-    )
+    new_content = re.sub(r'__version__\s*=\s*".*"', f'__version__ = "{new_version}"', content)
 
-    with open(version_file, "w", encoding="utf-8") as f:
-        f.write(new_content)
+    version_file.write_text(new_content, encoding="utf-8")
 
     # Aggiorna pyproject.toml
-    pyproject_file = os.path.join(root_dir, "pyproject.toml")
-    if os.path.exists(pyproject_file):
-        with open(pyproject_file, "r", encoding="utf-8") as f:
-            pp_content = f.read()
+    pyproject_file = root_dir / "pyproject.toml"
+    if pyproject_file.exists():
+        pp_content = pyproject_file.read_text(encoding="utf-8")
 
         # Sostituisci solo la prima occorrenza di version = "..." (quella del pacchetto)
         pp_new_content = re.sub(
@@ -85,8 +75,7 @@ def bump_version(part="patch"):
             flags=re.MULTILINE,
         )
 
-        with open(pyproject_file, "w", encoding="utf-8") as f:
-            f.write(pp_new_content)
+        pyproject_file.write_text(pp_new_content, encoding="utf-8")
         print(f"✓ pyproject.toml aggiornato alla versione {new_version}")
 
     print(f"✓ Versione aggiornata: {old_version} → {new_version}")
@@ -96,9 +85,7 @@ def bump_version(part="patch"):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Incrementa la versione dell'applicazione"
-    )
+    parser = argparse.ArgumentParser(description="Incrementa la versione dell'applicazione")
     parser.add_argument(
         "part",
         choices=["major", "minor", "patch"],

@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from unittest.mock import patch
 
@@ -23,10 +22,9 @@ class TestHelpers:
             assert "test.txt" in path
 
         # Frozen mode
-        with patch("sys.frozen", True, create=True):
-            with patch("sys.executable", "C:\\App\\app.exe"):
-                path = get_asset_path("assets/test.txt")
-                assert path.startswith("C:\\App")
+        with patch("sys.frozen", True, create=True), patch("sys.executable", "C:\\App\\app.exe"):
+            path = get_asset_path("assets/test.txt")
+            assert path.startswith("C:\\App")
 
     def test_format_timestamp(self):
         dt = datetime(2026, 1, 15, 10, 30, 0)
@@ -66,13 +64,12 @@ class TestHelpers:
         assert sanitize_filename(None) == "unnamed_file"
 
     def test_setup_logging(self, tmp_path):
-        log_file = str(tmp_path / "test.log")
-        logger = setup_logging("TestLogger", log_file)
+        log_file_path = tmp_path / "test.log"
+        logger = setup_logging("TestLogger", str(log_file_path))
 
         assert logger.name == "TestLogger"
         assert len(logger.handlers) >= 1
 
         logger.info("Test message")
-        assert os.path.exists(log_file)
-        with open(log_file, "r") as f:
-            assert "Test message" in f.read()
+        assert log_file_path.exists()
+        assert "Test message" in log_file_path.read_text(encoding="utf-8")

@@ -8,7 +8,6 @@ class TestGUIAdvanced:
     def app(self, qtbot):
         """Fixture per l'applicazione Qt."""
         # qtbot gestisce automaticamente il loop eventi
-        pass
 
     @pytest.fixture
     def mock_manager(self, mocker):
@@ -18,7 +17,7 @@ class TestGUIAdvanced:
         # Mocking all canvases required by the UI layout
         for i in range(1, 6):
             setattr(instance, f"canvas{i}", MagicMock())
-        
+
         return mocker.patch("src.gui.panels.contabilita_kpi.kpi_panel.ContabilitaManager")
 
     @pytest.mark.skip(reason="Unknown environment error with Matplotlib in this test")

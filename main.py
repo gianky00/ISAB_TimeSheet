@@ -4,18 +4,19 @@ SyncroJob - Zero-Lag Startup Architecture
 Animazioni fluide a 60fps garantite tramite thread separato per il caricamento.
 """
 
-import os
 import sys
 import traceback
 from datetime import datetime
+from pathlib import Path
+
+# Setup path FIRST (before any other imports)
+ROOT_DIR = Path(__file__).parent.resolve()
+sys.path.insert(0, str(ROOT_DIR / "src"))
 
 from src.core.config_manager import CONFIG_DIR
 
-# Setup path FIRST (before any other imports)
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
-
 # Now we can import our logging system
-from src.core.logging import (  # noqa: E402
+from src.core.logging import (
     configure_logging,
     generate_trace_id,
     get_logger,
@@ -39,7 +40,7 @@ def setup_enterprise_logging():
 
 
 # Initialize enterprise logging
-startup_logger = setup_enterprise_logging()
+startup_logger_global = setup_enterprise_logging()
 
 
 def main():
@@ -229,31 +230,32 @@ def main():
         server.close()
         sys.exit(exit_code)
     except Exception as e:
-        crash_logger.exception(
-            "Fatal application crash", exc=e, app_trace_id=app_trace_id
-        )
+        crash_logger.exception("Fatal application crash", exc=e, app_trace_id=app_trace_id)
 
         # Write explicitly to crash.txt for user visibility
+        crash_file = None
         try:
             log_dir = CONFIG_DIR / "logs" / "errors"
             log_dir.mkdir(exist_ok=True, parents=True)
-            crash_file = (
-                log_dir / f"crash_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            crash_file = log_dir / f"crash_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            report = []
+            report.append("=== TRACEBACK ===\n")
+            report.append(traceback.format_exc())
+
+            crash_file.write_text(
+                f"=== CRASH REPORT ===\n"
+                f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
+                f"Trace ID: {app_trace_id}\n"
+                f"Error: {e!s}\n\n" + "".join(report),
+                encoding="utf-8",
             )
-            with open(crash_file, "w", encoding="utf-8") as f:
-                f.write("=== CRASH REPORT ===\n")
-                f.write(f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
-                f.write(f"Trace ID: {app_trace_id}\n")
-                f.write(f"Error: {str(e)}\n\n")
-                f.write("=== TRACEBACK ===\n")
-                traceback.print_exc(file=f)
         except Exception as io_error:
             print(f"Failed to write crash.txt: {io_error}")
 
         QMessageBox.critical(
             None,
             "Errore",
-            f"Errore fatale:\n{e}\n\nDettagli salvati in: {crash_file}",
+            f"Errore fatale:\n{e}\n\nDettagli salvati in: {crash_file if crash_file else 'logs'}",
         )
         server.close()
         sys.exit(1)

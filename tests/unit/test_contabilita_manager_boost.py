@@ -43,15 +43,11 @@ class TestContabilitaManagerBoost:
             "File.xlsx",
         )
 
-        m_import = mocker.patch(
-            "src.core.excel_importer.ExcelImporter.import_giornaliere"
-        )
+        m_import = mocker.patch("src.core.excel_importer.ExcelImporter.import_giornaliere")
         m_import.return_value = (True, "OK", [mock_row], [2024])
 
         # Esegui import
-        success, msg, added, removed = ContabilitaManager.import_giornaliere(
-            str(db_path.parent)
-        )
+        success, _msg, _added, _removed = ContabilitaManager.import_giornaliere(str(db_path.parent))
 
         assert success is True
         # Nota: La sincronizzazione finale dovrebbe aver usato la lookup_map passata all'importer
@@ -69,9 +65,7 @@ class TestContabilitaManagerBoost:
             db_path,
             "INSERT INTO contabilita (year, attivita) VALUES (2030, 'Dirty Data')",
         )
-        manager.execute_query(
-            db_path, "INSERT INTO giornaliere (year, personale) VALUES (2031, 'Alien')"
-        )
+        manager.execute_query(db_path, "INSERT INTO giornaliere (year, personale) VALUES (2031, 'Alien')")
 
         # L'importazione attiva il cleanup per gli anni incontrati
         with patch(
@@ -81,23 +75,21 @@ class TestContabilitaManagerBoost:
             ContabilitaManager.import_giornaliere(str(db_path.parent))
 
         # Verifica cancellazione
-        count_cont = manager.execute_query(
-            db_path, "SELECT COUNT(*) FROM contabilita WHERE year >= 2030"
-        )[0][0]
-        count_giorn = manager.execute_query(
-            db_path, "SELECT COUNT(*) FROM giornaliere WHERE year >= 2030"
-        )[0][0]
+        count_cont = manager.execute_query(db_path, "SELECT COUNT(*) FROM contabilita WHERE year >= 2030")[0][
+            0
+        ]
+        count_giorn = manager.execute_query(db_path, "SELECT COUNT(*) FROM giornaliere WHERE year >= 2030")[
+            0
+        ][0]
         assert count_cont == 0
         assert count_giorn == 0
 
     def test_import_data_from_excel_failure_handling(self, db_setup, mocker):
         """Verifica gestione fallimento dell'importer Excel."""
-        m_import = mocker.patch(
-            "src.core.excel_importer.ExcelImporter.import_contabilita_dati"
-        )
+        m_import = mocker.patch("src.core.excel_importer.ExcelImporter.import_contabilita_dati")
         m_import.return_value = (False, "File Corrotto", [], [])
 
-        success, msg, a, r = ContabilitaManager.import_data_from_excel("fake.xlsx")
+        success, msg, _a, _r = ContabilitaManager.import_data_from_excel("fake.xlsx")
         assert success is False
         assert "Corrotto" in msg
 

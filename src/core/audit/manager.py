@@ -2,7 +2,7 @@ import json
 import os
 import traceback
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from src.core.audit.database import AuditDatabase
 from src.core.audit.integrity import AuditIntegrity
@@ -72,10 +72,10 @@ class AuditManager:
         severity: Any = Severity.LOW,
         duration_ms: int = 0,
         module: str = "",
-        error_code: Optional[str] = None,
+        error_code: str | None = None,
         notify: bool = False,
-        trace_id: Optional[str] = None,
-    ) -> Optional[int]:
+        trace_id: str | None = None,
+    ) -> int | None:
         """
         Registra un'azione dettagliata nell'audit log.
 
@@ -104,9 +104,7 @@ class AuditManager:
 
             # Normalizzazione
             status_val = status.value if isinstance(status, Status) else str(status)
-            severity_val = (
-                severity.value if isinstance(severity, Severity) else str(severity)
-            )
+            severity_val = severity.value if isinstance(severity, Severity) else str(severity)
 
             # Defaults
             entity = entity or "-"
@@ -169,9 +167,7 @@ class AuditManager:
             self.signals.logs_updated.emit()
 
             if notify:
-                self._generate_notification(
-                    action, entity, status_val, severity_val, params
-                )
+                self._generate_notification(action, entity, status_val, severity_val, params)
 
             return audit_id
 
@@ -199,9 +195,7 @@ class AuditManager:
             if params and isinstance(params, dict) and "error_details" in params:
                 msg = params["error_details"]
 
-            NotificationManager.instance().add_notification(
-                f"{action}: {entity}", msg, level=level
-            )
+            NotificationManager.instance().add_notification(f"{action}: {entity}", msg, level=level)
         except Exception as e:
             logger.error(f"Notification error in Audit: {e}")
 
@@ -212,9 +206,7 @@ class AuditManager:
 
             with self.db.get_connection() as conn:
                 conn.row_factory = sqlite3.Row
-                rows = conn.execute(
-                    "SELECT * FROM audit_logs ORDER BY id ASC"
-                ).fetchall()
+                rows = conn.execute("SELECT * FROM audit_logs ORDER BY id ASC").fetchall()
 
                 prev_hash = "0" * 64
                 for row in rows:
@@ -228,9 +220,7 @@ class AuditManager:
                     if row["row_hash"] != calc_hash:
                         # Tentativo 2: Hash Legacy
                         data_legacy = AuditIntegrity.build_hash_string_legacy(row)
-                        calc_hash_legacy = AuditIntegrity.calculate_hash(
-                            data_legacy, prev_hash
-                        )
+                        calc_hash_legacy = AuditIntegrity.calculate_hash(data_legacy, prev_hash)
 
                         if row["row_hash"] != calc_hash_legacy:
                             return False
@@ -240,14 +230,14 @@ class AuditManager:
         except Exception:
             return False
 
-    def get_logs(self, limit: int = 200) -> List[Dict[str, Any]]:
+    def get_logs(self, limit: int = 200) -> list[dict[str, Any]]:
         logs, _ = self.get_filtered_logs(limit=limit)
         return logs
 
-    def get_filtered_logs(self, **kwargs) -> Tuple[List[Dict[str, Any]], int]:
+    def get_filtered_logs(self, **kwargs) -> tuple[list[dict[str, Any]], int]:
         return self.db.fetch_filtered(**kwargs)
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         return self.db.get_categories()
 
     def run_retention_policy(self, days: int = 90):
@@ -261,7 +251,7 @@ class AuditManager:
                 severity=Severity.LOW,
             )
 
-    def get_stats_by_day(self, days=30) -> Dict[str, Dict[str, int]]:
+    def get_stats_by_day(self, days=30) -> dict[str, dict[str, int]]:
         cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
         stats = {
             (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d"): {

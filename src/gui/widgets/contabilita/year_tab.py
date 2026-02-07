@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from PyQt6.QtCore import QSortFilterProxyModel, Qt, QTimer
 from PyQt6.QtWidgets import (
     QHeaderView,
@@ -52,7 +54,7 @@ class MultiColumnFilterProxyModel(QSortFilterProxyModel):
 class ContabilitaYearTab(QWidget):
     """Tab per un singolo anno ottimizzato per massima reattività."""
 
-    COLUMNS = [
+    COLUMNS: ClassVar[list[str]] = [
         "DATA\nPREV.",
         "MESE",
         "N°\nPREV.",

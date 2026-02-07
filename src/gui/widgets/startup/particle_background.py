@@ -25,16 +25,16 @@ class Particle:
 
     def __init__(self, w, h):
         self.reset(w, h)
-        self.y = random.uniform(0, h)  # Posizione iniziale casuale
+        self.y = random.uniform(0, h)  # noqa: S311 # Posizione iniziale casuale
 
     def reset(self, w, h):
         """Reset particle to bottom with random properties."""
-        self.x = random.uniform(0, w)
+        self.x = random.uniform(0, w)  # noqa: S311
         self.y = h + 10
-        self.size = random.uniform(1.5, 3.5)
-        self.speed = random.uniform(0.3, 0.8)
-        self.opacity = random.uniform(0.2, 0.5)
-        self.phase = random.uniform(0, math.pi * 2)
+        self.size = random.uniform(1.5, 3.5)  # noqa: S311
+        self.speed = random.uniform(0.3, 0.8)  # noqa: S311
+        self.opacity = random.uniform(0.2, 0.5)  # noqa: S311
+        self.phase = random.uniform(0, math.pi * 2)  # noqa: S311
         self.w, self.h = w, h
 
     def update(self):
@@ -180,9 +180,7 @@ class ParticleBackground(QWidget):
             target_size = p.size * 8
             x = int(p.x - target_size / 2)
             y = int(p.y - target_size / 2)
-            painter.drawPixmap(
-                x, y, int(target_size), int(target_size), self._sprite_cache
-            )
+            painter.drawPixmap(x, y, int(target_size), int(target_size), self._sprite_cache)
 
         painter.setOpacity(1.0)
         self._draw_connections(painter)

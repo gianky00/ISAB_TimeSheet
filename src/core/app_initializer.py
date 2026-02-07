@@ -50,7 +50,7 @@ class AppInitializer:
                 get_detailed_license_status,
             )
 
-            status, msg = get_detailed_license_status()
+            status, _msg = get_detailed_license_status()
             if status != LicenseStatus.VALID:
                 step("Sincronizzazione Licenza Cloud")
                 run_update()
@@ -93,9 +93,6 @@ class AppInitializer:
 
         base_prog = 45
         total = len(tasks)
-        import logging
-
-        logger = logging.getLogger("AppInitializer")
 
         for i, (idx, name) in enumerate(tasks):
             prog = base_prog + int((i / total) * 45)
@@ -108,16 +105,12 @@ class AppInitializer:
                 mw_instance.navigation_controller.get_panel(idx)
                 logger.info(f"Panel {name} loaded successfully")
             except Exception as e:
-                logger.error(
-                    f"Error loading panel {name} (index {idx}): {e}", exc_info=True
-                )
+                logger.error(f"Error loading panel {name} (index {idx}): {e}", exc_info=True)
                 # Continue anyway - app should still work without this panel
 
         yield "Monitoraggio Sicurezza Telegram", 94
         config = config_manager.load_config()
-        if not config.get("telegram_chat_id") and not config.get(
-            "telegram_pairing_code"
-        ):
+        if not config.get("telegram_chat_id") and not config.get("telegram_pairing_code"):
             import secrets
 
             code = str(secrets.randbelow(900000) + 100000)
@@ -147,7 +140,7 @@ class AppInitializer:
                 level=logging.INFO,
                 format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             )
-            logging.warning(f"Failed to initialize enterprise logging: {e}")
+            logging.getLogger().warning(f"Failed to initialize enterprise logging: {e}")
 
     @staticmethod
     def setup_app_style(app):

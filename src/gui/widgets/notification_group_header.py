@@ -3,8 +3,6 @@ NotificationGroupHeader - Header collapsible per raggruppamenti di notifiche.
 Supporta time-based, category-based e priority-based grouping.
 """
 
-from typing import Optional
-
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QWidget
 
@@ -29,7 +27,7 @@ class NotificationGroupHeader(QFrame):
         group_key: str,
         count: int = 0,
         icon: str = "📁",
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ):
         super().__init__(parent)
         self.group_key = group_key

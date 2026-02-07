@@ -1,6 +1,6 @@
 import re
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 def normalize_name(text):
@@ -10,7 +10,7 @@ def normalize_name(text):
 
 
 def build_timbrature_maps(accessi):
-    today = datetime.now()
+    today = datetime.now(UTC)
     last_by_cf = {}
     last_by_name = {}
 
@@ -26,15 +26,15 @@ def build_timbrature_maps(accessi):
                 d_dt = None
                 for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
                     try:
-                        d_dt = datetime.strptime(date_part, fmt)
+                        d_dt = datetime.strptime(date_part, fmt).replace(tzinfo=UTC)
                         break
                     except ValueError:
                         continue
                 if d_dt:
                     diff = (today - d_dt).days
-                    if norm_cf:
-                        if norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]:
-                            last_by_cf[norm_cf] = diff
+                    if norm_cf and (norm_cf not in last_by_cf or diff < last_by_cf[norm_cf]):
+                        last_by_cf[norm_cf] = diff
+
                     if norm_key not in last_by_name or diff < last_by_name[norm_key]:
                         last_by_name[norm_key] = diff
     return last_by_cf, last_by_name, normalize
@@ -62,8 +62,8 @@ def format_db_date(date_str):
     if not date_str or date_str == "None":
         return "-"
     try:
-        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime(
-            "%d/%m/%Y %H:%M:%S"
+        return (
+            datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC).strftime("%d/%m/%Y %H:%M:%S")
         )
     except Exception:
         return date_str

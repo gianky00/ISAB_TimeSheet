@@ -38,7 +38,7 @@ def clean_config_env(tmp_path):
 
 def test_load_config_default(clean_config_env):
     """Test loading config when file doesn't exist."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     if mock_file.exists():
         mock_file.unlink()
     config = load_config()
@@ -48,7 +48,7 @@ def test_load_config_default(clean_config_env):
 
 def test_load_config_from_file(clean_config_env):
     """Test loading config from an existing file."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     data = {"ai_model": "custom-model", "browser_headless": True}
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -61,7 +61,7 @@ def test_load_config_from_file(clean_config_env):
 
 def test_load_config_corrupted_file(clean_config_env):
     """Test loading config from a corrupted file."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     mock_file.write_text("invalid json{", encoding="utf-8")
 
     config = load_config()
@@ -70,7 +70,7 @@ def test_load_config_corrupted_file(clean_config_env):
 
 def test_load_config_with_credentials_keyring(clean_config_env):
     """Test loading config with credentials stored in keyring."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     data = {
         "accounts": [{"username": "user1", "password": "encrypted_pw"}],
         "safework_accounts": [{"username": "sw_user", "password": "sw_encrypted"}],
@@ -95,7 +95,7 @@ def test_load_config_with_credentials_keyring(clean_config_env):
 
 def test_load_config_with_credentials_fallback(clean_config_env):
     """Test loading config with credentials decrypted from file (fallback)."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     data = {
         "accounts": [{"username": "user1", "password": "encrypted_pw"}],
         "safework_accounts": [{"username": "sw_user", "password": "sw_encrypted"}],
@@ -103,9 +103,7 @@ def test_load_config_with_credentials_fallback(clean_config_env):
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
     with (
-        patch(
-            "src.core.secrets_manager.SecretsManager.get_credential", return_value=None
-        ),
+        patch("src.core.secrets_manager.SecretsManager.get_credential", return_value=None),
         patch("src.utils.security.password_manager.decrypt") as mock_decrypt,
     ):
         mock_decrypt.side_effect = lambda x: f"decrypted_{x}"
@@ -117,7 +115,7 @@ def test_load_config_with_credentials_fallback(clean_config_env):
 
 def test_load_config_legacy_migration(clean_config_env):
     """Test migration from old config keys."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     data = {"isab_username": "legacy_user", "isab_password": "legacy_password"}
     mock_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -130,16 +128,14 @@ def test_load_config_legacy_migration(clean_config_env):
 
 def test_save_config_with_keyring(clean_config_env):
     """Test saving config when keyring is available."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     config = {
         "accounts": [{"username": "user1", "password": "plain_password"}],
         "safework_accounts": [{"username": "sw1", "password": "sw_plain"}],
     }
 
     with (
-        patch(
-            "src.core.secrets_manager.SecretsManager.is_available", return_value=True
-        ),
+        patch("src.core.secrets_manager.SecretsManager.is_available", return_value=True),
         patch("src.core.secrets_manager.SecretsManager.store_credential") as mock_store,
     ):
         save_config(config)
@@ -156,16 +152,12 @@ def test_save_config_with_keyring(clean_config_env):
 
 def test_save_config_fallback_encryption(clean_config_env):
     """Test saving config when keyring is NOT available (fallback to encryption)."""
-    mock_dir, mock_file = clean_config_env
+    _mock_dir, mock_file = clean_config_env
     config = {"accounts": [{"username": "user1", "password": "plain_password"}]}
 
     with (
-        patch(
-            "src.core.secrets_manager.SecretsManager.is_available", return_value=False
-        ),
-        patch(
-            "src.utils.security.password_manager.encrypt", return_value="encrypted_val"
-        ),
+        patch("src.core.secrets_manager.SecretsManager.is_available", return_value=False),
+        patch("src.utils.security.password_manager.encrypt", return_value="encrypted_val"),
     ):
         save_config(config)
 
@@ -176,16 +168,14 @@ def test_save_config_fallback_encryption(clean_config_env):
 def test_save_config_io_error(clean_config_env):
     """Test handling of IO errors during save."""
     config = {"test": "data"}
-    with patch("os.replace", side_effect=IOError("Permission denied")):
+    with patch("os.replace", side_effect=OSError("Permission denied")):
         save_config(config)
 
 
 def test_save_config_critical_exception(clean_config_env):
     """Test handling of unexpected exceptions during save."""
     config = {"test": "data"}
-    with patch(
-        "src.core.config_manager.json.dump", side_effect=Exception("Critical Failure")
-    ):
+    with patch("src.core.config_manager.json.dump", side_effect=Exception("Critical Failure")):
         save_config(config)
 
 

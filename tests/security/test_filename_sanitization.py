@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 import unittest
@@ -5,12 +6,8 @@ import unittest
 # Ensure src can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-try:
+with contextlib.suppress(ImportError):
     from src.utils.helpers import sanitize_filename
-except ImportError:
-    # Allow test file to exist before implementation for TDD,
-    # but it will fail if run.
-    pass
 
 
 class TestFilenameSanitization(unittest.TestCase):

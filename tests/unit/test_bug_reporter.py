@@ -14,23 +14,25 @@ class TestBugReporter:
         logs_dir = tmp_path / "logs"
         logs_dir.mkdir(parents=True)
 
-        with patch(
-            "src.core.bug_reporter.BugReporter._add_enterprise_logs",
-            return_value=["log1.txt"],
-        ):
-            with patch(
+        with (
+            patch(
+                "src.core.bug_reporter.BugReporter._add_enterprise_logs",
+                return_value=["log1.txt"],
+            ),
+            patch(
                 "src.core.bug_reporter.BugReporter._add_analytics_report",
                 return_value=[],
-            ):
-                with patch(
-                    "src.core.bug_reporter.BugReporter._add_audit_trail",
-                    return_value=[],
-                ):
-                    path, msg, files = BugReporter.collect_diagnostics(
-                        include_enterprise_logs=True,
-                        include_analytics=False,
-                        include_audit=False,
-                    )
+            ),
+            patch(
+                "src.core.bug_reporter.BugReporter._add_audit_trail",
+                return_value=[],
+            ),
+        ):
+            path, msg, files = BugReporter.collect_diagnostics(
+                include_enterprise_logs=True,
+                include_analytics=False,
+                include_audit=False,
+            )
 
         assert path is not None
         assert "Report generato" in msg

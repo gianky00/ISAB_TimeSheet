@@ -1,5 +1,5 @@
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -25,9 +25,7 @@ class PDLDetailView(QWidget):
         layout.setContentsMargins(5, 0, 5, 0)
 
         detail_title = QLabel("Dettaglio Completo PDL")
-        detail_title.setStyleSheet(
-            "font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;"
-        )
+        detail_title.setStyleSheet("font-weight: bold; font-size: 14px; color: #2196F3; margin-bottom: 5px;")
         layout.addWidget(detail_title)
 
         scroll = QScrollArea()
@@ -40,9 +38,7 @@ class PDLDetailView(QWidget):
         for h in self.headers:
             val_label = QLabel("-")
             val_label.setWordWrap(True)
-            val_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
+            val_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.detail_labels[h] = val_label
             self.form_layout.addRow(f"<b>{h}:</b>", val_label)
 
@@ -61,7 +57,7 @@ class PDLDetailView(QWidget):
             # Formattazione "Importato il"
             if h == "Importato il" and val:
                 with suppress(Exception):
-                    dt = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+                    dt = datetime.strptime(val, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
                     val = dt.strftime("%d/%m/%Y %H:%M:%S")
 
             self.detail_labels[h].setText(val)

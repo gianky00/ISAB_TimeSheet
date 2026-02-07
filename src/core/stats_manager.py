@@ -37,12 +37,11 @@ class StatsManager:
         if not config.get("statistics"):
             old_file = config_manager.CONFIG_DIR / "statistics.json"
             if old_file.exists():
-                with suppress(Exception):
-                    with old_file.open("r", encoding="utf-8") as f:
-                        old_stats = json.load(f)
-                        if old_stats:
-                            config_manager.set_config_value("statistics", old_stats)
-                            return old_stats
+                with suppress(Exception), old_file.open("r", encoding="utf-8") as f:
+                    old_stats = json.load(f)
+                    if old_stats:
+                        config_manager.set_config_value("statistics", old_stats)
+                        return old_stats
             return {}
 
         return config.get("statistics", {})

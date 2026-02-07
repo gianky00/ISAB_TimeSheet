@@ -3,9 +3,8 @@ SyncroJob - LicenseUpdater
 Gestisce l'aggiornamento e la validazione della licenza.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
 
 import requests
 from cryptography.fernet import Fernet
@@ -84,7 +83,7 @@ def update_grace_timestamp():
     """Salva il timestamp corrente cifrato per il periodo di grazia offline."""
     try:
         token_path = _get_validity_token_path()
-        current_time, is_trusted = time_manager.get_trusted_time()
+        current_time, _ = time_manager.get_trusted_time()
 
         cipher = Fernet(GRACE_PERIOD_KEY)
         encrypted_time = cipher.encrypt(current_time.isoformat().encode("utf-8"))
@@ -107,8 +106,7 @@ def check_grace_period():
 
     if not token_path.exists():
         raise Exception(
-            "Nessuna validazione online precedente.\n"
-            "Connessione internet richiesta per il primo avvio."
+            "Nessuna validazione online precedente.\nConnessione internet richiesta per il primo avvio."
         )
 
     try:
@@ -118,13 +116,11 @@ def check_grace_period():
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         last_online = datetime.fromisoformat(decrypted_data)
 
-        now, is_trusted = time_manager.get_trusted_time()
-
-        from datetime import timezone
+        now, _ = time_manager.get_trusted_time()
 
         def to_utc(dt):
             """Converte in UTC aware. Se naive, assume orario locale di sistema."""
-            return dt.astimezone(timezone.utc)
+            return dt.astimezone(UTC)
 
         now_utc = to_utc(now)
         last_online_utc = to_utc(last_online)
@@ -152,7 +148,7 @@ def check_grace_period():
 def check_emergency_grace_period():
     """Gestisce il periodo di grazia di 3 giorni per licenze mancanti o invalide."""
     token_path = _get_emergency_grace_token_path()
-    current_time, is_trusted = time_manager.get_trusted_time()
+    current_time, _ = time_manager.get_trusted_time()
 
     if not token_path.exists():
         try:
@@ -171,10 +167,8 @@ def check_emergency_grace_period():
         decrypted_data = cipher.decrypt(encrypted_data).decode("utf-8")
         start_time = datetime.fromisoformat(decrypted_data)
 
-        from datetime import timezone
-
         def to_utc(dt):
-            return dt.astimezone(timezone.utc)
+            return dt.astimezone(UTC)
 
         now_utc = to_utc(current_time)
         start_utc = to_utc(start_time)
@@ -239,12 +233,12 @@ def run_update() -> bool:
     return success
 
 
-def _ensure_license_dir(path: Union[str, Path]) -> bool:
+def _ensure_license_dir(path: str | Path) -> bool:
     """Assicura l'esistenza della cartella licenza."""
-    path = Path(path)
-    if not path.exists():
+    path_obj = Path(path)
+    if not path_obj.exists():
         try:
-            path.mkdir(parents=True)
+            path_obj.mkdir(parents=True)
             print("[LICENZA] Cartella licenza creata")
         except OSError as e:
             print(f"[ERRORE] Creazione cartella licenza: {e}")
@@ -252,7 +246,7 @@ def _ensure_license_dir(path: Union[str, Path]) -> bool:
     return True
 
 
-def _download_license_files(base_url: str) -> Tuple[Dict[str, bytes], Optional[str]]:
+def _download_license_files(base_url: str) -> tuple[dict[str, bytes], str | None]:
     """Tenta il download dei file manifest e config da GitHub."""
     token = get_github_token()
     headers = {
@@ -275,11 +269,12 @@ def _download_license_files(base_url: str) -> Tuple[Dict[str, bytes], Optional[s
     return downloaded, None
 
 
-def _save_license_files(license_dir: Union[str, Path], files: Dict[str, bytes]) -> bool:
+def _save_license_files(license_dir: str | Path, files: dict[str, bytes]) -> bool:
     """Salva i file scaricati su disco."""
     try:
+        dir_path = Path(license_dir)
         for name, content in files.items():
-            (Path(license_dir) / name).write_bytes(content)
+            (dir_path / name).write_bytes(content)
         print("[LICENZA] ✓ Aggiornamento completato")
         update_grace_timestamp()
         return True

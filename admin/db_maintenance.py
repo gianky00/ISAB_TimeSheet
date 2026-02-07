@@ -6,26 +6,21 @@ Esegue operazioni di manutenzione ordinaria su TUTTI i database dell'applicazion
 3. Analyze (Ottimizzazione Query Planner)
 """
 
+import contextlib
 import io
 import sqlite3
 import sys
 from pathlib import Path
 
+from platformdirs import user_data_dir
+
 # Fix encoding for Windows console to support emoji
 if sys.platform == "win32":
-    try:
+    with contextlib.suppress(Exception):
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout = io.TextIOWrapper(
-                sys.stdout.buffer, encoding="utf-8", errors="replace"
-            )
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
         if hasattr(sys.stderr, "buffer"):
-            sys.stderr = io.TextIOWrapper(
-                sys.stderr.buffer, encoding="utf-8", errors="replace"
-            )
-    except Exception:
-        pass  # Fallback silenzioso se il wrapping fallisce
-
-from platformdirs import user_data_dir
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # Configurazione Percorsi
 APP_NAME = "SyncroJob"
@@ -52,35 +47,32 @@ def maintain_db(db_name):
         return
 
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
 
-        # 1. Integrity Check
-        print("   🔍 Checking Integrity...", end=" ")
-        cursor.execute("PRAGMA integrity_check")
-        result = cursor.fetchone()
-        if result[0] == "ok":
-            print("✅ OK")
-        else:
-            print(f"❌ ERRORE: {result[0]}")
-            conn.close()
-            return
+            # 1. Integrity Check
+            print("   🔍 Checking Integrity...", end=" ")
+            cursor.execute("PRAGMA integrity_check")
+            result = cursor.fetchone()
+            if result[0] == "ok":
+                print("✅ OK")
+            else:
+                print(f"❌ ERRORE: {result[0]}")
+                return
 
-        # 2. Vacuum
-        print("   🧹 Vacuuming...", end=" ")
-        cursor.execute("VACUUM")
-        print("✅ Done")
+            # 2. Vacuum
+            print("   🧹 Vacuuming...", end=" ")
+            cursor.execute("VACUUM")
+            print("✅ Done")
 
-        # 3. Analyze
-        print("   📊 Analyzing...", end=" ")
-        cursor.execute("ANALYZE")
-        print("✅ Done")
+            # 3. Analyze
+            print("   📊 Analyzing...", end=" ")
+            cursor.execute("ANALYZE")
+            print("✅ Done")
 
-        # 4. Check Size
-        size_mb = db_path.stat().st_size / (1024 * 1024)
-        print(f"   📉 Size: {size_mb:.2f} MB")
-
-        conn.close()
+            # 4. Check Size
+            size_mb = db_path.stat().st_size / (1024 * 1024)
+            print(f"   📉 Size: {size_mb:.2f} MB")
 
     except Exception as e:
         print(f"   ❌ ERRORE CRITICO: {e}")

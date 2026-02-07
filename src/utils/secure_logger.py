@@ -4,13 +4,14 @@ Logger sicuro che maschera informazioni sensibili.
 
 import logging
 import re
-from typing import Pattern
+from re import Pattern
+from typing import ClassVar
 
 
 class SensitiveDataFilter(logging.Filter):
     """Filtra dati sensibili dai log."""
 
-    PATTERNS: list[tuple[Pattern, str]] = [
+    PATTERNS: ClassVar[list[tuple[Pattern, str]]] = [
         # Password in vari formati
         (
             re.compile(r'password["\s:=]+["\']?[\w@#$%^&*!]+["\']?', re.IGNORECASE),

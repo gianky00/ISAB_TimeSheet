@@ -46,9 +46,7 @@ class TestConfigManager:
 
     def test_add_remove_account(self, mocker):
         # Mock SecretsManager to avoid keyring issues
-        mocker.patch(
-            "src.core.config_manager.SecretsManager.is_available", return_value=False
-        )
+        mocker.patch("src.core.config_manager.SecretsManager.is_available", return_value=False)
         mocker.patch(
             "src.utils.security.password_manager.encrypt",
             side_effect=lambda x: f"enc_{x}",
@@ -95,9 +93,8 @@ class TestConfigManager:
         target = tmp_path / "fail.json"
 
         # Mock Path.open to fail (since we use temp_file.open)
-        with patch("pathlib.Path.open", side_effect=OSError("Disk full")):
-            with pytest.raises(OSError):
-                _atomic_write_json({"data": 1}, target)
+        with patch("pathlib.Path.open", side_effect=OSError("Disk full")), pytest.raises(OSError):
+            _atomic_write_json({"data": 1}, target)
 
         assert not target.exists()
         assert not (tmp_path / "fail.tmp").exists()
