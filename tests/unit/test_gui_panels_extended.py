@@ -25,18 +25,16 @@ class TestGUIPanelsExtended:
             # Test typing and sending (verifichiamo l'effetto sulla chat area)
             initial_count = panel.chat_area.chat_layout.count()
             panel.input_bar.input_field.setText("Ciao Lyra")
-            
+
             # Mockiamo il worker per evitare chiamate API reali
             with patch("src.gui.panels.lyra.lyra_panel.LyraWorker"):
                 panel.input_bar.send_clicked.emit("Ciao Lyra")
-                
+
             # Verifichiamo che il messaggio "Tu" sia stato aggiunto
             assert panel.chat_area.chat_layout.count() > initial_count
 
     def test_notifications_panel(self, qtbot):
-        with patch(
-            "src.core.notification_manager.NotificationManager.instance"
-        ) as mock_inst:
+        with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
             mock_manager.get_notifications.return_value = [
@@ -67,9 +65,7 @@ class TestGUIPanelsExtended:
         assert panel.search_edit.text() == "installazione"
 
     def test_notifications_clear_all(self, qtbot):
-        with patch(
-            "src.core.notification_manager.NotificationManager.instance"
-        ) as mock_inst:
+        with patch("src.core.notification_manager.NotificationManager.instance") as mock_inst:
             mock_manager = MagicMock()
             mock_inst.return_value = mock_manager
 

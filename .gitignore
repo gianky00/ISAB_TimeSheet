@@ -82,3 +82,4 @@ temp_pytest_panel/
 mutants/
 temp_patch*.py
 refurb_report.txt
+nul
