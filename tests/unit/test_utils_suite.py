@@ -34,12 +34,16 @@ class TestUtilsHelpers:
         assert sanitize_filename("   space_at_ends.txt   ") == "space_at_ends.txt"
 
     def test_get_app_icon_path(self):
-        with patch("os.path.exists", return_value=True), patch("sys.frozen", False, create=True):
+        with (
+            patch("src.utils.helpers.Path.exists", return_value=True),
+            patch("sys.frozen", False, create=True),
+        ):
             path = get_app_icon_path()
+            assert path is not None
             assert "assets" in path
             assert "app.ico" in path
 
-        with patch("os.path.exists", return_value=False):
+        with patch("src.utils.helpers.Path.exists", return_value=False):
             assert get_app_icon_path() is None
 
     def test_setup_logging(self):

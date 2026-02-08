@@ -13,9 +13,7 @@ class TestDateUtilsRobust:
         # Italian
         assert date_utils.parse_date_flexible("15/01/2024") == date(2024, 1, 15)
         # Italian with dot (common in Excel)
-        assert date_utils.parse_date_flexible(
-            "15.01.2024", formats=["%d.%m.%Y"]
-        ) == date(2024, 1, 15)
+        assert date_utils.parse_date_flexible("15.01.2024", formats=["%d.%m.%Y"]) == date(2024, 1, 15)
 
     def test_parse_date_flexible_invalid(self):
         """Test parsing stringhe non valide."""
@@ -31,6 +29,8 @@ class TestDateUtilsRobust:
         assert isinstance(res, datetime)
         assert res.hour == 14
         assert res.minute == 30
+        # Deve essere aware (UTC)
+        assert res.tzinfo is not None
 
     # --- Formatting Tests ---
     def test_format_date_it(self):
@@ -58,10 +58,11 @@ class TestDateUtilsRobust:
         assert date_utils.calculate_days_diff(d_past, from_date=d_ref) == 9
 
         # Test con oggi (mockato)
-        with patch("src.utils.date_utils.date") as mock_date:
-            mock_date.today.return_value = d_ref
-            # Nota: calculate_days_diff usa date.today() internamente
-            # Dobbiamo essere sicuri che chiami il mock
+        # Mocking datetime.now(UTC).date()
+        with patch("src.utils.date_utils.datetime") as mock_dt:
+            # Setup mock_dt.now(UTC).date() -> d_ref
+            mock_dt.now.return_value.date.return_value = d_ref
+
             res = date_utils.calculate_days_diff(d_past)
             assert res == 9
 

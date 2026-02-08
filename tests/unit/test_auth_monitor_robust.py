@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from src.core import auth_monitor
@@ -22,11 +22,12 @@ class TestAuthMonitorRobust:
         ]
 
         # Mock datetime.now -> 2024-01-10 (9 giorni dopo)
-        mock_now = datetime(2024, 1, 10)
+        mock_now = datetime(2024, 1, 10, tzinfo=UTC)
 
         with patch("src.core.auth_monitor.datetime") as mock_dt:
             mock_dt.now.return_value = mock_now
             mock_dt.strptime.side_effect = datetime.strptime  # Usa reale per parsing
+            mock_dt.UTC = UTC
 
             last_by_cf, _last_by_name = _build_access_maps(raw)
 
@@ -45,10 +46,11 @@ class TestAuthMonitorRobust:
             ("ROSSI", "MARIO", "CF1", "2024-01-05"),  # 5 giorni fa (Vince)
         ]
 
-        mock_now = datetime(2024, 1, 10)
+        mock_now = datetime(2024, 1, 10, tzinfo=UTC)
         with patch("src.core.auth_monitor.datetime") as mock_dt:
             mock_dt.now.return_value = mock_now
             mock_dt.strptime.side_effect = datetime.strptime
+            mock_dt.UTC = UTC
 
             last_by_cf, _ = _build_access_maps(raw)
 
@@ -85,12 +87,13 @@ class TestAuthMonitorRobust:
         ]
 
         # Configura mock per restituire prima dipendenti poi accessi
-        mock_query.side_effect = [dipendenti, accessi]
+        mock_query.side_effect = [dipendenti, accessi, accessi]
 
-        mock_now = datetime(2024, 2, 1)
+        mock_now = datetime(2024, 2, 1, tzinfo=UTC)
         with patch("src.core.auth_monitor.datetime") as mock_dt:
             mock_dt.now.return_value = mock_now
             mock_dt.strptime.side_effect = datetime.strptime
+            mock_dt.UTC = UTC
 
             results = auth_monitor.check_expiring_isab_authorizations()
 

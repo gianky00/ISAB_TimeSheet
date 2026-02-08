@@ -8,11 +8,15 @@ from src.core.excel_importer import ExcelImporter
 
 class TestExcelImporter:
     # --- Contabilita Dati ---
-    @patch("src.core.importers.base.BaseImporter._get_pd")
+    @patch("src.core.importers.contabilita.validate_contabilita", side_effect=lambda x: x)
     @patch("src.core.importers.contabilita.ContabilitaImporter._get_excel_file")
     @patch("src.core.importers.base.BaseImporter._decrypt_if_encrypted")
     @patch("src.core.importers.contabilita.Path.exists", return_value=True)
-    def test_import_contabilita_dati_success(self, mock_exists, mock_decrypt, mock_get_excel, mock_get_pd):
+    @patch("pandas.read_excel")
+    def test_import_contabilita_dati_success(
+        self, mock_read_excel, mock_exists, mock_decrypt, mock_get_excel, mock_validate
+    ):
+        """Test importazione dati contabilità."""
         # Mock decryption
         mock_decrypt.return_value = (MagicMock(), False)
 
@@ -21,38 +25,35 @@ class TestExcelImporter:
         mock_xls.sheet_names = ["Dati 2024"]
         mock_get_excel.return_value = mock_xls
 
-        # Mock pandas module
-        mock_pd = MagicMock()
-        mock_get_pd.return_value = mock_pd
-
-        # Mock dataframe
-        # Columns must match COLUMNS_MAPPING for normalization
-        # Add EXTRA ROW because _process_single_sheet removes the last row (totals)
+        # Dataframe di test con tipi corretti
         df = pd.DataFrame(
             {
                 "DATA PREV.": ["2024-01-01", "Totale"],
                 "MESE": ["Gennaio", ""],
                 "N° PREV.": ["P1", ""],
-                "TOTALE PREV.": [1000, 0],
+                "TOTALE PREV.": [1000.0, 0.0],
                 "ATTIVITA'": ["A1", ""],
                 "TCL": ["T1", ""],
                 "ODC": ["O1", ""],
                 "STATO ATTIVITA'": ["Aperta", ""],
                 "TIPOLOGIA": ["Tip", ""],
-                "ORE SP": [8, 0],
-                "RESA": [100, 0],
+                "ORE SP": [8.0, 0.0],
+                "RESA": ["100", ""],
                 "ANNOTAZIONI": ["Notes", ""],
                 "INDIRIZZO CONSUNTIVO": ["Path", ""],
                 "NOME FILE": ["File", ""],
             }
         )
-        mock_pd.read_excel.return_value = df
 
-        # We don't use scan_sheets patch because import_contabilita_dati uses _get_excel_file directly
+        def mock_read_excel_side_effect(*args, **kwargs):
+            if kwargs.get("header") is None:
+                return pd.DataFrame([df.columns.tolist(), *df.values.tolist()])
+            return df
+
+        mock_read_excel.side_effect = mock_read_excel_side_effect
 
         success, _msg, rows, years = ExcelImporter.import_contabilita_dati("dummy.xlsx")
 
-        assert mock_pd.read_excel.called
         assert success
         assert len(rows) > 0
         assert 2024 in years

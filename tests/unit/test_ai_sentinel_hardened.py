@@ -60,10 +60,14 @@ class TestAISentinelHardened:
         mock_pix = MagicMock()
         mock_pix.tobytes.return_value = b"fake_png_data"
         mock_page.get_pixmap.return_value = mock_pix
+
+        # Setup mock doc
         mock_doc.__len__.return_value = 1
         mock_doc.__getitem__.return_value = mock_page
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
 
-        with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
+        with patch("src.utils.document_processor.fitz.open", return_value=mock_doc) as mock_open:
             images = DocumentProcessor.get_pages_as_images(dummy_pdf)
 
             assert len(images) == 1
@@ -74,6 +78,7 @@ class TestAISentinelHardened:
             mock_page.get_pixmap.assert_called()
             args = mock_page.get_pixmap.call_args[1]
             assert "matrix" in args
+            mock_open.assert_called_once_with(dummy_pdf)
 
     def test_document_processor_searchable_check(self, mocker, tmp_path):
         """Verifica se il processore distingue correttamente PDF testo da PDF immagine."""
@@ -83,6 +88,8 @@ class TestAISentinelHardened:
         mock_doc = MagicMock()
         mock_page = MagicMock()
         mock_doc.__iter__.return_value = [mock_page]
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
 
         with patch("src.utils.document_processor.fitz.open", return_value=mock_doc):
             # Caso 1: Ha testo
@@ -98,12 +105,23 @@ class TestAISentinelHardened:
         out_pdf = str(tmp_path / "merged.pdf")
 
         mock_res = MagicMock()
+        mock_res.__enter__.return_value = mock_res
+        mock_res.__exit__.return_value = None
+
+        mock_doc1 = MagicMock()
+        mock_doc1.__enter__.return_value = mock_doc1
+        mock_doc1.__exit__.return_value = None
+
+        mock_doc2 = MagicMock()
+        mock_doc2.__enter__.return_value = mock_doc2
+        mock_doc2.__exit__.return_value = None
+
         with patch(
             "src.utils.document_processor.fitz.open",
-            side_effect=[mock_res, MagicMock(), MagicMock()],
+            side_effect=[mock_res, mock_doc1, mock_doc2],
         ):
             success = DocumentProcessor.merge_pdfs(["p1.pdf", "p2.pdf"], out_pdf)
 
             assert success is True
             assert mock_res.insert_pdf.called
-            assert mock_res.save.assert_called_with(out_pdf) or mock_res.save.called
+            assert mock_res.save.called

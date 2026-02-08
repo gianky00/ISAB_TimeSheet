@@ -61,7 +61,17 @@
       "Bash({)",
       "Bash(})",
       "Bash(ls:*)",
-      "Bash(poetry lock:*)"
+      "Bash(poetry lock:*)",
+      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" diff tests/run_robust_tests.py)",
+      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" log --oneline -5)",
+      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" add tests/run_robust_tests.py)",
+      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" commit -m \"$\\(cat <<''EOF''\nfix: use -qq flag in test discovery for flat nodeID output\n\npytest --collect-only -q now outputs tree format instead of flat nodeIDs,\nbreaking the parser. Switch to -qq to restore the expected format.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(pip install:*)",
+      "Bash(where:*)",
+      "Bash(pre-commit install:*)",
+      "Bash(cargo --version:*)",
+      "Bash(git -C \"C:\\\\Users\\\\gianc\\\\Desktop\\\\SCRIPT\\\\ISAB_TimeSheet\" diff)"
     ]
   }
 }

@@ -17,6 +17,8 @@ class TestDocumentProcessorCoverage:
     def test_extract_text_success(self, mock_fitz):
         """Verifica estrazione testo da più pagine."""
         mock_doc = MagicMock()
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
         mock_page1 = MagicMock()
         mock_page1.get_text.return_value = "Pagina 1"
         mock_page2 = MagicMock()
@@ -27,11 +29,12 @@ class TestDocumentProcessorCoverage:
 
         text = DocumentProcessor.extract_text(Path("test.pdf"))
         assert text == "Pagina 1Pagina 2"
-        mock_doc.close.assert_called_once()
 
     def test_get_pages_as_images_limit(self, mock_fitz):
         """Verifica conversione in base64 con limite pagine."""
         mock_doc = MagicMock()
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
         mock_doc.__len__.return_value = 10  # 10 pagine
 
         mock_page = MagicMock()
@@ -51,6 +54,8 @@ class TestDocumentProcessorCoverage:
     def test_is_pdf_searchable_true(self, mock_fitz):
         """Verifica rilevamento PDF con testo."""
         mock_doc = MagicMock()
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
         mock_page = MagicMock()
         mock_page.get_text.return_value = "  Testo presente  "
         mock_doc.__iter__.return_value = [mock_page]
@@ -61,6 +66,8 @@ class TestDocumentProcessorCoverage:
     def test_is_pdf_searchable_false(self, mock_fitz):
         """Verifica rilevamento PDF immagine (senza testo)."""
         mock_doc = MagicMock()
+        mock_doc.__enter__.return_value = mock_doc
+        mock_doc.__exit__.return_value = None
         mock_page = MagicMock()
         mock_page.get_text.return_value = "   "  # Solo spazi
         mock_doc.__iter__.return_value = [mock_page]
@@ -71,7 +78,12 @@ class TestDocumentProcessorCoverage:
     def test_merge_pdfs_logic(self, mock_fitz):
         """Verifica la sequenza di unione dei file."""
         mock_result_doc = MagicMock()
+        mock_result_doc.__enter__.return_value = mock_result_doc
+        mock_result_doc.__exit__.return_value = None
+
         mock_source_doc = MagicMock()
+        mock_source_doc.__enter__.return_value = mock_source_doc
+        mock_source_doc.__exit__.return_value = None
 
         # fitz.open() senza argomenti crea il doc di destinazione
         # fitz.open(path) apre il sorgente
@@ -83,7 +95,6 @@ class TestDocumentProcessorCoverage:
         assert success is True
         assert mock_result_doc.insert_pdf.call_count == 2
         mock_result_doc.save.assert_called_with("out.pdf")
-        mock_result_doc.close.assert_called_once()
 
     def test_merge_pdfs_missing_fitz(self, mocker):
         """Verifica gestione errore se fitz non è installato."""

@@ -142,7 +142,7 @@ def poll_for_file(
 
     while time.time() - start_time < timeout:
         # Check se ci sono download in corso (crdownload, tmp, part)
-        in_progress = any(directory.glob(f"*{ext}") for ext in (".crdownload", ".tmp", ".part"))
+        in_progress = any(any(directory.glob(f"*{ext}")) for ext in (".crdownload", ".tmp", ".part"))
 
         if in_progress:
             time.sleep(poll_interval)

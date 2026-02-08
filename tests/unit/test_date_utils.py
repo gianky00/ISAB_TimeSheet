@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 from src.utils.date_utils import (
     calculate_days_diff,
@@ -29,12 +29,8 @@ class TestDateUtils:
         assert parse_date_flexible("invalid") is None
 
     def test_parse_datetime_flexible(self):
-        assert parse_datetime_flexible("2024-01-15 14:30:00") == datetime(
-            2024, 1, 15, 14, 30, 0
-        )
-        assert parse_datetime_flexible("15/01/2024 14:30:00") == datetime(
-            2024, 1, 15, 14, 30, 0
-        )
+        assert parse_datetime_flexible("2024-01-15 14:30:00") == datetime(2024, 1, 15, 14, 30, 0, tzinfo=UTC)
+        assert parse_datetime_flexible("15/01/2024 14:30:00") == datetime(2024, 1, 15, 14, 30, 0, tzinfo=UTC)
         assert parse_datetime_flexible("invalid") is None
 
     def test_format_date_it(self):

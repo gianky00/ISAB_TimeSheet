@@ -160,11 +160,11 @@ class ContabilitaImporter(BaseImporter):
                     continue
 
                 if col in ("totale_prev", "ore_sp"):
-                    df[col] = pd_obj.to_numeric(df[col], errors="coerce")
+                    df[col] = pd_obj.to_numeric(df[col], errors="coerce").fillna(0.0).astype(float)
                     df[col] = df[col].round(2)
 
                 elif col == "data_prev":
-                    df[col] = pd_obj.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d")
+                    df[col] = pd_obj.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d").fillna("")
 
                 elif col == "resa":
                     df[col] = df[col].apply(
@@ -178,9 +178,14 @@ class ContabilitaImporter(BaseImporter):
                         )
                     )
                 else:
-                    df[col] = df[col].astype(str).str.strip().replace(r"(?i)^nan$", "", regex=True)
+                    df[col] = df[col].astype(str).str.strip().replace(r"(?i)^nan$", "", regex=True).fillna("")
 
-            df = df.fillna("")
+            # Validazione Pandera finale su dati puliti
+            try:
+                df = validate_contabilita(df)
+            except Exception as e:
+                logger.warning(f"Validazione Pandera Contabilità fallita (uso fallback): {e}")
+
             return list(df.itertuples(index=False, name=None))
         except Exception as e:
             logger.warning(f"Errore processamento foglio {sheet_name}: {e}")
@@ -230,12 +235,6 @@ class ContabilitaImporter(BaseImporter):
                 elif "PREV" in norm_col and ("NUM" in norm_col or "N." in norm_col):
                     rename_map[col] = "n_prev"
         df.rename(columns=rename_map, inplace=True)
-
-        try:
-            df = validate_contabilita(df)
-        except Exception as e:
-            logger.warning(f"Validazione Pandera Contabilità fallita (uso fallback): {e}")
-
         return df
 
     @classmethod

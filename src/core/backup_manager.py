@@ -142,16 +142,17 @@ class BackupManager:
             file_count = 0
 
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                # Scansione ricorsiva manuale per gestire esclusioni tramite Path
-                for path in source_dir.rglob("*"):
-                    # Controlla se il file è in una cartella esclusa
-                    if any(part in BackupManager.EXCLUDE_DIRS for part in path.parts):
-                        continue
+                # Usiamo os.walk per massima compatibilità con filesystem simulati e reali
+                for root, dirs, files in os.walk(source_dir):
+                    # Filtra directory escluse
+                    dirs[:] = [d for d in dirs if d not in BackupManager.EXCLUDE_DIRS]
 
-                    if path.is_file() and path.suffix in BackupManager.INCLUDE_EXT:
-                        arcname = path.relative_to(source_dir)
-                        zipf.write(path, arcname)
-                        file_count += 1
+                    for file in files:
+                        file_path = Path(root) / file
+                        if file_path.suffix in BackupManager.INCLUDE_EXT:
+                            arcname = file_path.relative_to(source_dir)
+                            zipf.write(file_path, arcname)
+                            file_count += 1
 
             if file_count > 0:
                 # Audit

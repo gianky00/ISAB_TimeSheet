@@ -86,3 +86,40 @@ class TestDataSynchronizerDetailed:
         cursor.execute.assert_any_call("DELETE FROM scarico_ore")
         # Should insert new rows
         assert cursor.executemany.called
+
+    def test_sync_contabilita_full_replace(self, mock_db):
+        """Test _replace_data with year=None."""
+        _conn, cursor = mock_db
+        DataSynchronizer._replace_data(cursor, "contabilita", ["col1"], year=None)
+        cursor.execute.assert_any_call("DELETE FROM contabilita")
+
+    def test_sync_attivita_programmate_special_values(self, mock_db):
+        """Test clean_value logic with None and numeric types."""
+        _conn, cursor = mock_db
+        cursor.fetchone.return_value = (0,)
+        rows = [(None, 123, 45.6, " string ")]
+        DataSynchronizer.sync_attivita_programmate(Path("fake.db"), rows)
+        # Should work without error
+        assert cursor.executemany.called
+
+    def test_sync_certificati_campione(self, mock_db):
+        """Test sync_certificati_campione wrapper."""
+        _conn, cursor = mock_db
+        # _sync_upsert_smart returns (added, 0)
+        cursor.fetchone.return_value = (3,)
+        added, removed = DataSynchronizer.sync_certificati_campione(Path("fake.db"), [(1, 2)])
+        assert added == 3
+        assert removed == 0
+
+    def test_sync_upsert_smart_edge_cases(self, mock_db):
+        """Test _sync_upsert_smart with empty data and None."""
+        _conn, cursor = mock_db
+
+        # Empty
+        added, _ = DataSynchronizer._sync_upsert_smart(Path("fake.db"), "table", ["c1"], [])
+        assert added == 0
+
+        # With None
+        cursor.fetchone.return_value = (1,)
+        added, _ = DataSynchronizer._sync_upsert_smart(Path("fake.db"), "table", ["c1"], [(None,)])
+        assert added == 1

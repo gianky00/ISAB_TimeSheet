@@ -117,11 +117,9 @@ class ContabilitaSearch:
         try:
             if not val:
                 return ""
-            # dt = datetime.strptime(str(val).split()[0], "%Y-%m-%d")
-            # return dt.strftime("%d/%m/%Y")
-            # Simplified: assuming standard date format
             parts = str(val).split()[0].split("-")
-            if len(parts) == 3:
+            # Verifica che sia un formato YYYY-MM-DD plausibile
+            if len(parts) == 3 and len(parts[0]) == 4 and parts[0].isdigit():
                 return f"{parts[2]}/{parts[1]}/{parts[0]}"
             return str(val)
         except Exception:
