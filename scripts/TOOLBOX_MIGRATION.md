@@ -102,7 +102,7 @@ scripts\toolbox_gui.bat
 5. Usa **"Stop Process"** per terminare comandi lunghi
 
 ### Comandi Interattivi
-Alcuni comandi aprono interfacce interattive:
+Alcuni comandi aprono interface interattive:
 - **Commit Wizard** (cz commit)
 - **Serve Docs** (mkdocs serve) - usa Stop Process per terminare
 - **Secrets Mgmt** (apre GUI separata)

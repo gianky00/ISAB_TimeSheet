@@ -206,7 +206,7 @@ I — Interface Segregation Principle (ISP)
 
 "Nessun client dovrebbe dipendere da metodi che non usa."
 
-IN PYTHON si applica con Protocol (typing) invece di interfacce Java:
+IN PYTHON si applica con Protocol (typing) invece di interface Java:
 
 ```python
 # ❌ PRIMA: Interfaccia grassa — chi legge non ha bisogno di write
@@ -436,7 +436,7 @@ project/
 │   ├── application/         # Layer 2: Use Cases / Servizi applicativi
 │   │   ├── __init__.py      # (orchestra domain + ports)
 │   │   ├── services.py      # Servizi che implementano i use case
-│   │   └── ports.py         # Protocol/ABC — interfacce verso l'esterno
+│   │   └── ports.py         # Protocol/ABC — interface verso l'esterno
 │   │
 │   ├── infrastructure/      # Layer 3: Implementazioni concrete
 │   │   ├── __init__.py      # (database, API, file system)
